@@ -1,0 +1,312 @@
+/* header */
+h1 {
+    display: none;
+}
+h2 {
+    border-left: 5px solid #415db9;
+    background-color: #c6ddff;
+    margin-top: 30px;
+    margin-bottom: 10px;
+    padding: 10px;
+    font-size: 20px;
+    color: gray;
+}
+h2::before {
+    /* checkmark */
+    font-family: "Font Awesome 5 Free";
+    content: '\f00c'; 
+    font-weight: 900;
+    padding: 10px;
+}
+h3 {
+    border-left: solid 3px #415db9;
+    padding: 10px 14px;
+    font-size: 16px;
+    margin: 20px auto 10px;
+}
+.note {
+    font-size: small;
+}
+.paginate {
+    display: block;
+    margin-left: 30px;
+    color: lightgray;
+    font-size: small;
+}
+a.paginate, span.paginate {
+    color: lightgray;
+    font-size: small;
+}
+input[type=number] {text-align: right;}
+
+header {
+    background-color: #415db9;
+    color: white;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 36px;
+    text-align: right;
+    z-index: 2
+}
+header ul {
+    margin: 0;
+    padding: 0;
+}
+header .right_align {
+    text-align: right;
+    margin-right: 20px;
+}
+header li {
+    display: inline-block;
+    list-style: none;
+}
+header a, header span {
+    display: block;
+    padding: 11px;
+    color: #fff;
+    text-decoration: none;
+    transition: background-color .2s linear;
+}
+header a,span {
+    text-decoration: none;
+    font-size: small;
+}
+header a:hover {
+    background-color: #fd8e52;
+}
+/* Tips: padding以外は必須です */
+header .usrname span::before {
+    font-family: "Font Awesome 5 Free";
+    content: '\f4fc';
+    font-weight: 900;
+    padding: 10px;
+}
+header .pptx a::before {
+    font-family: "Font Awesome 5 Free";
+    content: '\f1c4';
+    font-weight: 900;
+    padding: 10px;
+}
+header .xlsx a::before {
+    font-family: "Font Awesome 5 Free";
+    content: '\f1c3';
+    font-weight: 900;
+    padding: 10px;
+}
+header .logout a::before {
+    font-family: "Font Awesome 5 Free";
+    content: '\f2f5';
+    font-weight: 900;
+    padding: 10px;
+}
+#main {
+    width: 1500px;
+    margin: 36px auto 30px;
+    z-index: 1
+}
+footer {
+    background-color: #415db9;
+    color: white;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 30px;
+    text-align: center;
+    z-index: 2
+}
+footer p {
+    font-size: small;
+    margin-block-start: 0.6em;
+}
+footer a:link, footer a:visited { color: white; }
+  
+
+/* card design */
+.cards ul {
+    margin: 30px;
+    padding: 0px;
+}
+.cards li {
+    display: inline-block;
+    list-style: none;
+}
+.card {
+    width: 216px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px #ccc;
+    margin-top: 20px;
+}
+.card-img {
+    display: block;
+    margin: auto;
+}
+
+.card-content {
+    padding: 20px;
+}
+.card-title {
+    font-size: 14px;
+    margin-bottom: 20px;
+    height: 28px;
+    color: #333;
+}
+.card-text {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #777;
+    height: 60px;
+}
+.card-link {
+    text-align: center;
+    border-top: 1px solid #eee;
+    padding: 20px;
+}
+.card-link a {
+    text-decoration: none;
+    color: #0bd;
+    margin: 0 10px;
+}
+.card-link a:hover {
+    color: #0090aa;
+}
+
+/* specific_form */
+ul.specific_form {
+    list-style: none;
+}
+.specific_form li {
+    margin: 10px;
+}
+.specific_form label {
+    display:block;
+    float: left;
+    width: 70px;
+}
+.specific_form .btn-flat-border {
+    display: inline-block;
+    padding: 0.3em 1em;
+    text-decoration: none;
+    color: #67c5ff;
+    border: solid 2px #67c5ff;
+    border-radius: 3px;
+    transition: .4s;
+}
+.specific_form input[type="submit"] {
+    margin-right: 20px;
+}
+
+#shopinfomation {
+    background-color: #415db9;
+    width: 200px;
+    height: 500px;
+    color: white;
+    font-size: small;
+}
+.wrapper {
+    display: flex;
+    width: 700px;
+    height: 500px;
+}
+
+ul.errorlist {
+    list-style-type: none;
+}
+ul.errorlist li {
+    padding: 10px;
+}
+ul.errorlist ul.errorlist {
+    background: #FFCB72;
+}
+ul.errorlist ul.errorlist li {
+    color: #ff0000;
+}
+
+.marginleft100 {
+    margin-left: 100px;
+}
+
+.edit_data table{
+    width: 100%;
+    border-collapse:separate;
+    border-spacing: 0;
+}
+  
+.edit_data table th:first-child{
+    border-radius: 5px 0 0 0;
+}
+  
+.edit_data table th:last-child{
+    border-radius: 0 5px 0 0;
+    border-right: 1px solid #415db9;
+}
+  
+.edit_data table th{
+    text-align: center;
+    color:white;
+    background: #415db9;
+    border-left: 1px solid #415db9;
+    border-top: 1px solid #415db9;
+    border-bottom: 1px solid #415db9;
+    box-shadow: 0px 1px 1px rgba(255,255,255,0.3) inset;
+    width: 25%;
+    padding: 10px 0;
+}
+  
+.edit_data table td{
+    text-align: center;
+    border-left: 1px solid #a8b7c5;
+    border-bottom: 1px solid #a8b7c5;
+    border-top:none;
+    box-shadow: 0px -3px 5px 1px #eee inset;
+    width: 25%;
+    padding: 10px 0;
+    cursor: pointer;
+}
+  
+.edit_data table td:last-child{
+    border-right: 1px solid #a8b7c5;
+}
+  
+.edit_data table tr:last-child td:first-child {
+    border-radius: 0 0 0 5px;
+}
+  
+.edit_data table tr:last-child td:last-child {
+    border-radius: 0 0 5px 0;
+}
+
+.edit_data .edit_record {
+    display: none;
+}
+.edit_data .edit_record td {
+    height: 100px;
+}
+.edit_data .edit_record input {
+    position: relative;
+    top: -12px;
+}
+.edit_data .edit_record input[type="text"], .edit_data .edit_record input[type="number"] {
+    border-radius: 4px;
+    height: 22px;
+}
+.edit_data .edit_record input[type="submit"] {
+    margin-left: 10px;
+    border-radius: 4px;
+    height: 30px;
+}
+.edit_data .edit_record input:nth-child(n+2), .edit_data .edit_record textarea:nth-child(n+2) {
+    margin-left: 10px;
+    vertical-align: middle;
+}
+.edit_data .edit_record textarea {
+    top: 9px;
+    position: relative;
+    resize: none;
+    border-radius: 4px;
+    height:66px;
+}
+.edit_data .edit_record #id_code {
+    background-color: lightgray;
+}

@@ -1,0 +1,131 @@
+"""子供のurls.pyがこの処理を呼び出します"""
+import json
+from datetime import datetime
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.http import urlencode
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
+from django.http.response import JsonResponse
+from django.db.models import Count, Case, When, IntegerField
+from .forms import ArticleForm, WatchlistForm, ExchangeForm
+from .service.market_vietnam import MarketVietnam
+from .models import WatchList, Likes, Articles
+from django.contrib.auth.decorators import login_required
+
+
+def index(request):
+    """いわばhtmlのページ単位の構成物です"""
+
+    # GETだったら MarketVietnam(), nasdaqが選ばれたらMarketNasdaq()
+    mkt = MarketVietnam()
+
+    exchanged = {}
+    if request.method == 'POST':
+        # ウォッチリスト登録処理
+        watchlist_form = WatchlistForm(request.POST)
+        if watchlist_form.is_valid():
+            watchlist = WatchList()
+            watchlist.symbol = watchlist_form.cleaned_data['buy_symbol']
+            watchlist.already_has = True
+            watchlist.bought_day = watchlist_form.cleaned_data['buy_date']
+            watchlist.stocks_price = watchlist_form.cleaned_data['buy_cost']
+            watchlist.stocks_count = watchlist_form.cleaned_data['buy_stocks']
+            watchlist.bikou = watchlist_form.cleaned_data['buy_bikou']
+            watchlist.save()
+            return redirect('vnm:index')
+
+        # 為替計算処理
+        exchange_form = ExchangeForm(request.POST)
+        if exchange_form.is_valid():
+            exchanged['current_balance'] = exchange_form.cleaned_data['current_balance']
+            exchanged['unit_price'] = exchange_form.cleaned_data['unit_price']
+            exchanged['quantity'] = exchange_form.cleaned_data['quantity']
+            exchanged['price_no_fee'] = exchanged['unit_price'] * exchanged['quantity']
+            exchanged['fee'] = mkt.calc_fee(price_no_fee=exchanged['price_no_fee'])
+            exchanged['price_in_fee'] = exchanged['price_no_fee'] + exchanged['fee']
+            exchanged['deduction_price'] = exchanged['current_balance'] - exchanged['price_in_fee']
+            response = redirect('vnm:index')
+            response['location'] += '?' + urlencode(exchanged)
+            return response
+
+    else:
+        exchange_form = ExchangeForm()
+        params = ['current_balance', 'unit_price', 'quantity', 'price_no_fee', 'fee', 'price_in_fee', 'deduction_price']
+        for param in params:
+            if param in request.GET:
+                exchanged[param] = request.GET.get(param)
+        watchlist_form = WatchlistForm()
+        watchlist_form.buy_date = datetime.today().strftime("%Y/%m/%d")
+
+    # articlesとlike
+    try:
+        loginid = get_user_model().objects.values('id').get(email=request.user)['id']
+    except get_user_model().DoesNotExist:
+        loginid = None
+    articles = Articles.objects.annotate(likes_cnt=Count('likes'))
+    articles = articles.select_related('user')
+    like_list = Likes.objects.filter(user_id=loginid).values('articles_id')
+    articles = articles.annotate(
+        is_like=Case(
+            When(likes__articles_id__in=like_list, then=1), default=0, output_field=IntegerField()
+        )
+    ).order_by('-created_at')[:3]
+
+    context = {
+        'industry_count': json.dumps(mkt.get_radar_chart_count(), ensure_ascii=False),
+        'industry_cap': json.dumps(mkt.get_radar_chart_cap(), ensure_ascii=False),
+        'industry_stack': json.dumps(mkt.get_industry_stack(), ensure_ascii=False),
+        'vnindex_timeline': json.dumps(mkt.get_national_stock_timeline(), ensure_ascii=False),
+        'vnindex_layers': json.dumps(mkt.get_national_stock_layers(), ensure_ascii=False),
+        'articles': articles,
+        'basicinfo': mkt.get_basicinfo(),
+        'watchlist': mkt.get_watchlist(),
+        'sbi_topics': mkt.get_sbi_topics(),
+        'uptrends': json.dumps(mkt.get_uptrends(), ensure_ascii=False),
+        'exchange_form': exchange_form,
+        'exchanged': exchanged,
+    }
+
+    return render(request, 'vietnam_research/index.html', context)
+
+
+@login_required
+def likes(request, user_id, article_id):
+    """いいね！ボタンをクリックしたとき"""
+    if request.method == 'POST':
+        print(json.loads(request.body), json.loads(request.body).get('status'))
+        query = Likes.objects.filter(user=user_id, articles_id=article_id)
+        if query.count() == 0:
+            likes_tbl = Likes()
+            likes_tbl.articles_id = article_id
+            likes_tbl.user_id = user_id
+            likes_tbl.save()
+        else:
+            query.delete()
+        return JsonResponse({"status": "responded by views.py"})
+
+
+class ArticleCreateView(LoginRequiredMixin, CreateView):
+    """いいね！記事作成画面"""
+    model = Articles
+    template_name = "vietnam_research/articles/create.html"
+    form_class = ArticleForm
+    success_url = reverse_lazy("vnm:index")
+
+    def form_valid(self, form):
+        form.instance.user_id = self.request.user.id
+        return super().form_valid(form)
+
+
+class WatchListRegister(CreateView):
+    """WatchList作成画面"""
+    model = WatchList
+    template_name = "vietnam_research/watchlist/register.html"
+    form_class = WatchlistForm
+    success_url = reverse_lazy("vnm:index")
+
+    def form_valid(self, form):
+        form.instance.already_has = 1
+        return super().form_valid(form)

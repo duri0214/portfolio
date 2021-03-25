@@ -1,0 +1,272 @@
+{% extends "vietnam_research/base.html" %}
+{% block content %}
+{% load static %}
+{% load humanize %}
+<a href="#exchange">為替計算</a>
+<div class="flex-container">
+    <div class="flex-item ratio45">
+        <h2>いいね！機能</h2>
+        {% for article in articles %}
+        <div class="article">
+            <span class="title">{{ article.title }}</span>
+            <p>{{ article.note }}</p>
+            <p class="author">{{ article.user.email }}</p>
+            <ul>
+                <li>
+                    <a role="button" aria-pressed='{{ article.is_like | yesno:"true,false" }}' onclick="likes(event, '{{ user.id }}', '{{ article.id }}')">
+                        いいね！<span>({{ article.likes_cnt }})</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        {% endfor %}
+        <a href="{% url 'vnm:article_create' %}">投稿</a>
+    </div>
+
+    <!-- basicinfo -->
+    <div class="flex-item ratio45 basicinfo">
+        <h2>ベトナム基本情報</h2>
+        <table><tbody>
+        {% for idx, row in basicinfo.iterrows %}
+            <tr>
+                <th><p>{{ row.item }}</p></th>
+                <td><p>{{ row.description }}</p></td>
+            </tr>
+        {% endfor %}
+        </tbody></table>
+        <p class="note"><a href="https://www.jetro.go.jp/world/asia/vn/stat_01.html">基礎的経済指標（日本貿易振興機構 jetro.go.jp）</a>※IMFデータをもとにSBI証券が作成を参考に</p>
+    </div>
+</div>
+
+<!-- todo -->
+<div class="content-container90 margin-c">
+    <h2>Todo</h2>
+    <ul class="todo">
+        <li><a href="http://www.fao.org/home/en/">FAOから種類別肉さかな消費量のグラフ</a></li>
+        <li>東南アジア各地のグラフで切り替えられるように</li>
+        <li>国の成長期に金融が稼げる理由は？</li>
+        <li>セクター別リターン</li>
+        <li>個社利率</li>
+        <li>配当性向</li>
+        <li>50万円で大口株主になれる先リスト</li>
+        <li>センチメント分析</li>
+        <li>ニュース・有報から上方修正先を抽出</li>
+        <li>この予算（＋手数料）であと何株買えるの？の計算式をフォームで</li>
+        <li>スクレイピング: 上場日</li>
+    </ul>
+</div>
+
+<div class="content-container90 margin-c">
+<H2>SBI TOPICS</H2>
+<p>{{ sbi_topics|safe }}</p>
+</div>
+
+<!-- macro by industry -->
+<div class="content-container90 margin-c">
+    <h2>業種別マクロ分析</h2>
+    <p>これで3年分ぐらいを重ねてみたい</p>
+    <p>足元の鉱業の不調は、かつてベトナムの主力輸出品であった原油の生産量が原油価格低迷に伴い減少したことが主因と見られる。
+        他方、足元で製造業の伸び率が加速している点については、ベトナムに進出した外資系企業による鉄鋼や電機製品などの生産が
+        拡大したことに影響されたと見られる。中国やタイに比べて低いとされてきたベトナムの賃金は、近年、上昇が続いており、
+        ベトナムに進出した日系企業にとって悩みの種となっている。<BR>
+    </p>
+    <div class="flex-container">
+        <div class="flex-item ratio45 c radarChart1"></div>
+        <div class="flex-item ratio45 c radarChart2"></div>
+    </div>
+    <p><a class="note" href="https://www.murc.jp/wp-content/uploads/2018/03/report_180316.pdf">MURCベトナム経済の現状と今後の展望(20180316)</a></p>
+</div>
+
+<!-- trading price by industry -->
+<div class="content-container90 margin-c">
+    <h2>業種別売買代金（10億ドン[÷1,000,000,000]）</h2>
+    <canvas id="barChart1" class="ratio90 margin-c" style="height:400px"></canvas>
+</div>
+
+<!-- vn-index -->
+<div class="content-container90 margin-c">
+    <h2>National stock index（国を代表する株価指数の超長期時系列）</h2>
+    <canvas id="vnChart" class="ratio90 margin-c" style="height:300px"></canvas>
+</div>
+
+<!-- National stock index annual layer -->
+<div class="content-container90 margin-c">
+    <h2>VN-Index（年単位ミルフィーユ）</h2>
+    <p>季節要因は特に感じられない</p>
+    <canvas id="vnChart_layer" class="ratio90 margin-c" style="height:300px"></canvas>
+</div>
+
+<!-- uptrends -->
+<div class="content-container90 margin-c">
+    <h2>株価直近（14日線/7日線/3日線）上昇銘柄（SBI証券取り扱い銘柄のみ）</h2>
+    <div id="uptrends_wrapper"></div>
+</div>
+<script>
+    json = JSON.parse('{{ uptrends|safe }}');
+    const uptrends = document.getElementById('uptrends_wrapper');
+    let h3;
+    let ul;
+    let mkt;
+    let price_latest;
+    let symbol;
+    let price_delta;
+    let price_delta_sign;
+    let img;
+    let li;
+    let a;
+    let p;
+    for (const industry in json) {
+        h3 = document.createElement('h3');
+        h3.textContent = json[industry]['ind_name'];
+        ul = document.createElement("ul");
+        for (const i in json[industry]['datasets']) {
+            mkt = json[industry]['datasets'][i]['mkt'];
+            symbol = json[industry]['datasets'][i]['symbol'];
+            price_latest = json[industry]['datasets'][i]['stocks_price_latest'];
+            price_delta = json[industry]['datasets'][i]['stocks_price_delta'];
+            price_delta_sign = Math.sign(price_delta) < 0 ? "▲" : "＋";
+            price_delta = Math.abs(price_delta);
+            img = document.createElement('img');
+            img.src = "{% static 'vietnam_research/chart' %}" + '/' + symbol + '.png';
+            img.alt = symbol;
+            a = document.createElement('a');
+            a.href = "https://www.viet-kabu.com/" + mkt + '/' + symbol + '.html';
+            a.target = "_blank";
+            p = document.createElement('p');
+            p.textContent = symbol + ': ' + price_latest + '（' + price_delta_sign + price_delta + '）';
+            li = document.createElement("li");
+            li.className = 'uptrends';
+            a.appendChild(img);
+            li.appendChild(a);
+            li.appendChild(p);
+            ul.appendChild(li);
+        }
+        uptrends.appendChild(h3);
+        uptrends.appendChild(ul);
+    }
+</script>
+
+<!-- exchange -->
+<div id="exchange" class="content-container90 margin-c">
+    <h2>ドンから日本円へ</h2>
+    ドンを200で割ると、ざっくり日本円になります。1,000don -> 5円<br>
+    <a href="https://search.sbisec.co.jp/v2/popwin/info/stock/foreign_exp.pdf">外国株式取引に関する説明書</a>
+    <table>
+    <tbody>
+        <tr>
+            <th>取引種類</th>
+            <td>インターネット、またはお客様からの電話による現物取引</td>
+        </tr>
+        <tr>
+            <th>価格</th>
+            <td>指値のみ（当日注文のみ）</td>
+        </tr>
+        <tr>
+            <th>取引単位</th>
+            <td>ホーチミン証券取引所（HOSE）：10 株単位<br>
+            ハノイ証券取引所（HNX）:100 株単位<br>
+            売買単位は当社ウェブサイトにてご確認ください。<br>
+            1 注文の上限数量： ホーチミン証券取引所 1,999 単位<br>
+            ハノイ証券取引所 199 単位</td>
+        </tr>
+        <tr>
+            <th>呼値</th>
+            <td>ホーチミン証券取引所（HOSE)銘柄<br>
+             1 万ドン未満 10 ドン刻み<br>
+            1 万ドン以上 5 万ドン未満 50 ドン刻み<br>
+            5 万ドン以上 100 ドン刻み<br>
+            ハノイ証券取引所（HNX）銘柄<br>
+             100 ドン刻み<br>
+            各銘柄の呼値は当社ウェブサイトをご覧ください</td>
+        </tr>
+        <tr>
+            <th>決済方法</th>
+            <td>ベトナムドンによる｢外貨決済｣のみ ※前金制</td>
+        </tr>
+        <tr>
+            <th>制限値幅</th>
+            <td>ホーチミン証券取引所（HOSE）：前営業日終値±7%<br>
+            ハノイ証券取引所（HNX）：前営業日取引平均価格±10%</td>
+        </tr>
+        <tr>
+            <th>注文受付時間・約定日･受渡日</th>
+            <td>インターネットによる注文受付時間は、月曜日～金曜日の場合、00：00-10：00（当日注文）、19：30-24：00（翌立会日注文）です。（いずれも日本時間）土曜日・日曜日は一部の時間を除き、翌立会日に発注する予約注文を受付しております。</td>
+        </tr>
+        <tr>
+            <th>最低手数料</th>
+            <td>約定代金の2%（税込2.2％）<br><a href="https://site3.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_DataStoreID=DSWPLETmgR001Control&burl=search_foreign&cat1=foreign&cat2=vn&dir=vn%2F&file=foreign_vn_01.html&getFlg=on#:~:text=%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3%83%88%E3%81%8A%E3%82%88%E3%81%B3%E3%81%8A%E9%9B%BB%E8%A9%B1%E3%81%8B%E3%82%89%E3%81%94%E6%B3%A8%E6%96%87%E5%8F%AF%E8%83%BD%EF%BC%81&text=%E2%80%BB%E5%A3%B2%E5%8D%B4%E4%BB%A3%E9%87%91%E3%81%8C%E6%9C%80%E4%BD%8E,%E3%81%A6%E6%89%8B%E6%95%B0%E6%96%99%E3%81%8C%E6%B1%BA%E3%81%BE%E3%82%8A%E3%81%BE%E3%81%99%E3%80%82" target="_blank">最低手数料：1,200,000ベトナムドン（税込1,320,000ベトナムドン）</a></td>
+        </tr>
+    </tbody>
+    </table>
+    <form method="post">
+        {% csrf_token %}
+        {{ exchange_form.as_p }}
+        <button type="submit" class="">計算</button>
+    </form>
+    残高(VND): {{ exchanged.current_balance | intcomma }}<br>
+    @{{ exchanged.unit_price | intcomma }} * {{ exchanged.quantity | intcomma }} = {{ exchanged.price_no_fee | intcomma }}VND<br>
+    手数料(VND): {{ exchanged.fee | intcomma }}<br>
+    差引残高(VND): {{ exchanged.deduction_price | intcomma }}<br>
+    <a href="https://www.google.com/search?q={{ exchanged.deduction_price | intcomma }}vnd" target="_blank">{{ exchanged.deduction_price | intcomma }}(VND)を変換</a><br>
+
+</div>
+
+<!-- watchlist -->
+<div class="content-container90 margin-c">
+    <h2>ウォッチリスト</h2>
+    <div class="cards">
+        <ul>
+        {% for idx, row in watchlist.iterrows %}
+            <li>
+                <section class="card">
+                    <img class="card-img" src="{% static 'vietnam_research/chart' %}/{{ row.symbol }}.png" alt="{{ row.symbol }}">
+                    <div class="card-content">
+                        <h3 class="card-title">{{ row.company_name }}</h3>
+                        <p class="card-text">
+                            symbol: {{ row.symbol }}<br>
+                            buy date: {{ row.bought_day }}<br>
+                            buy price: @{{ row.stocks_price }} VND<br>
+                            buy price: @{{ row.stocks_price_yen }} 円<br>
+                            now price: @{{ row.closing_price }} VND({{ row.stocks_price_delta }}%)<br>
+                            buy count: {{ row.stocks_count }}株<br>
+                            備考：{{ row.buy_price_yen }}円<br>
+                        </p>
+                    </div>
+                    <div class="card-link">
+                        <a href="https://www.viet-kabu.com/{{ row.mkt }}/{{ row.symbol }}.html" target="_blank">link</a>
+                    </div>
+                </section>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+    <a href="{% url 'vnm:watchlist_register' %}">ウォッチリスト登録</a>
+</div>
+
+<!-- what is PER?? -->
+<div class="content-container90 margin-c">
+    <h2>PERとは</h2>
+    <img src="{% static 'vietnam_research/images/PER.png' %}" alt="PER">
+</div>
+
+<script>
+var radarChartOptions = {
+    w: 290,
+    h: 350,
+    margin: { top: 50, right: 130, bottom: 50, left: 80 },
+    levels: 5,
+    roundStrokes: true,
+    color: d3.scaleOrdinal().range(['rgb(255,89,0)']), // orange"#ff5900"
+    dotRadius: 3,
+    format: '.1f',
+    legend: { title: '業種別集計', translateX: 150, translateY: 40 },
+    unit: '%'
+};
+
+RadarChart(".radarChart1", JSON.parse('{{ industry_count|safe }}'), radarChartOptions);
+RadarChart(".radarChart2", JSON.parse('{{ industry_cap|safe }}'), radarChartOptions);
+BarChart_stack("barChart1", JSON.parse('{{ industry_stack|safe }}'));
+LineChart("vnChart", JSON.parse('{{ vnindex_timeline|safe }}'));
+LineChart("vnChart_layer", JSON.parse('{{ vnindex_layers|safe }}'));
+</script>
+{% endblock %}

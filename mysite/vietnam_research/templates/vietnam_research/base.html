@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-43097095-9"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-43097095-9');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>VNMビューア</title>
+
+    <!-- css -->
+    <link rel="stylesheet" href="{% static 'vietnam_research/css/reset.css' %}"> 
+    <link rel="stylesheet" href="{% static 'vietnam_research/css/index.css' %}"> 
+
+    <!-- chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script src="{% static 'vietnam_research/js/lineChart.js' %}" charset="utf-8"></script>
+    <script src="{% static 'vietnam_research/js/barChart.js' %}" charset="utf-8"></script>
+
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+    <script src="https://d3js.org/d3-path.v1.min.js" charset="utf-8"></script>
+    <script src="{% static 'vietnam_research/js/radarChart.js' %}" charset="utf-8"></script>
+
+    <!-- likes -->
+    <script src="{% static 'vietnam_research/js/ajax.js' %}" charset="utf-8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>    
+
+    <!-- font -->
+    <link href="https://fonts.googleapis.com/css?family=Sawarabi+Gothic" rel="stylesheet">
+    <!-- fontawesome -->
+    <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
+
+    <!-- favicon -->
+    <link rel="shortcut icon" href="{% static 'vietnam_research/s_v.ico' %}">
+    
+    <!-- for ajax -->
+    <script>let myurl = {"base": "{% url 'vnm:index' %}"};</script>
+</head>
+<body>
+    <!-- nav -->
+    <h1></h1>
+    <header>
+        <ul class="right_align">
+            <li><a href="{% url 'vnm:index' %}">VIETNAM</a></li>
+            <li><a href="{% url 'mrk:index' %}">GMARKER</a></li>
+            <li><a href="{% url 'shp:index' %}">SHOPPING</a></li>
+            <li><a href="{% url 'upl:index' %}">UPLOADER</a></li>
+            <li><a href="{% url 'war:index' %}">WAREHOUSE</a></li>
+            {% if user.is_authenticated %}
+                <li>{{ user.username }}さん</li>
+            {% else %}
+                <li>ゲストさん</li>
+            {% endif %}
+            {% if user.is_authenticated %}
+                <li class="logout"><a href="{% url 'register:logout' %}">LOGOUT</a></li>
+            {% else %}
+                <li class="logout"><a href="{% url 'register:login' %}">LOGIN</a></li>
+            {% endif %}
+        </ul>
+    </header>
+
+    <div id="main">
+        {% block content %}{% endblock %}
+    </div>
+    <footer>
+        <p>© 2019 henojiya. / <a href="https://github.com/duri0214" target="_blank">github portfolio</a></p>
+    </footer>
+
+</body>
+</html>

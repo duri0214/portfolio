@@ -1,0 +1,39 @@
+{% extends 'warehouse/base.html' %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'warehouse/css/invoice_list.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <h2>請求書リスト</h2>
+    <h3>{{ billing_status.name }} を表示します</h3>
+
+    <table class="shelf-list">
+        <thead>
+            <tr>
+                <td>請求書番号</td>
+                <td>請求先会社名</td>
+                <td>請求先担当者</td>
+                <td>営業担当者</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in object_list  %}
+                <tr>
+                    <td>{{ invoice.id }}</td>
+                    <td>{{ invoice.company.name }}</td>
+                    <td>{{ invoice.billing_person.name }}</td>
+                    <td>{{ invoice.staff.name }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <form method="GET" class="registration" action="{% url 'war:index' %}">
+        {% csrf_token %}
+        <button type="submit">戻る</button>
+    </form>
+
+{% endblock %}

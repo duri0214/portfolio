@@ -1,0 +1,14 @@
+__pycache__/
+import/
+favicon/
+output/
+migrations/
+data/
+__init__.py
+result.log
+db.sqlite3
+/.idea/
+/venv/
+/mysite/vietnam_research/static/vietnam_research/chart/
+/mysite/vietnam_research/static/vietnam_research/chart_uptrend/
+/.vagrant/

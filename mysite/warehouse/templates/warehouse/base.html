@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-43097095-9"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'UA-43097095-9');
+        </script>
+
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>warehouse</title>
+
+        <!-- datepicker -->
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+        <!-- css -->
+        <link rel="stylesheet" href="{% static 'warehouse/css/reset.css' %}">
+        {% block style %}{% endblock %}
+        <!-- favicon -->
+        <link rel="icon" href="{% static 'warehouse/s_w.ico' %}">
+
+        <!-- font -->
+        <link href="https://fonts.googleapis.com/css?family=Sawarabi+Gothic" rel="stylesheet">
+        <!-- fontawesome -->
+        <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
+
+        <!-- for ajax -->
+        <script>let myurl = {"base": "{% url 'war:index' %}"};</script>
+
+    </head>
+
+    <body>
+        
+        <h1></h1>
+        <header>
+            <ul class="right_align">
+                <li><a href="{% url 'vnm:index' %}">VIETNAM</a></li>
+                <li><a href="{% url 'mrk:index' %}">GMARKER</a></li>
+                <li><a href="{% url 'shp:index' %}">SHOPPING</a></li>
+                <li><a href="{% url 'upl:index' %}">UPLOADER</a></li>
+                <li><a href="{% url 'war:index' %}">WAREHOUSE</a></li>
+                {% if user.is_authenticated %}
+                    <li>{{ user.username }}さん</li>
+                {% else %}
+                    <li>ゲストさん</li>
+                {% endif %}
+                {% if user.is_authenticated %}
+                    <li class="logout"><a href="{% url 'register:logout' %}">LOGOUT</a></li>
+                {% else %}
+                    <li class="logout"><a href="{% url 'register:login' %}">LOGIN</a></li>
+                {% endif %}
+            </ul>
+        </header>
+    
+        <div id="main">
+            {% block content %}
+            {% endblock %}
+        </div>
+        
+        <footer>
+            <p>© 2019 henojiya. / <a href="https://github.com/duri0214" target="_blank">github portfolio</a></p>
+        </footer>
+        <script>
+            $(function () {
+                // 日付は、年-月-日 の形式でお願いする。
+                let dateFormat = 'yy-mm-dd';
+                $('.datepicker').datepicker({
+                  dateFormat: dateFormat
+                });
+            });
+        </script>
+    </body>
+</html>

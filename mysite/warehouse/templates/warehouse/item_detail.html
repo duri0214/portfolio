@@ -1,0 +1,19 @@
+{% extends 'warehouse/base.html' %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'warehouse/css/item_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <h2>貸出</h2>
+    <h3>{{ object.name }}</h3>
+    <p class="lead">{{ object.price }}円</p>
+
+    <form method="GET" class="registration" action="{% url 'war:index' %}">
+        {% csrf_token %}
+        <button type="submit">戻る</button>
+    </form>
+
+{% endblock %}
