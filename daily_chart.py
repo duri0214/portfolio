@@ -75,12 +75,11 @@ for key, values in AGG.groupby('symbol'):
             x_offset = len(values) - days[i]
             x_scale_shifted = range(x_offset, days[i] + x_offset)
             plt.plot(x_scale_shifted, (slope * x_scale + intercept), "g--")
-    if (key in WATCH_LIST['symbol'].to_list()) or (score == iteration_count):
-        # save png: w640, h480
-        outpath = OUTFOLDER + '/{0}.png'.format(key)
-        plt.savefig(outpath)
-        # resize png: w250, h200
-        Image.open(outpath).resize((250, 200), Image.LANCZOS).save(outpath)
+            # save png: w640, h480
+            outpath = OUTFOLDER + '/{0}.png'.format(key)
+            plt.savefig(outpath)
+            # resize png: w250, h200
+            Image.open(outpath).resize((250, 200), Image.LANCZOS).save(outpath)
     if score == iteration_count:
         # stack param
         IND_NAMES.append(values['ind_name'].head(1).iloc[0])
