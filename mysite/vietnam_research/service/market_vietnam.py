@@ -141,17 +141,11 @@ class MarketVietnam(MarketAbstract):
         data = pd.read_sql_query(
             '''
             SELECT
-                  pub_date
+                  DATE_FORMAT(pub_date, '%%Y%%m%%d') pub_date
                 , industry1
-                , truncate(trade_price_of_a_day / 1000000, 2) trade_price_of_a_day
-            FROM (
-                SELECT
-                      DATE_FORMAT(pub_date, '%Y%m%d') pub_date
-                    , industry1
-                    , SUM(trade_price_of_a_day) AS trade_price_of_a_day
-                FROM vietnam_research_industry
-                GROUP BY pub_date, industry1
-            ) Q
+                , truncate(SUM(trade_price_of_a_day) / 1000000, 2) AS trade_price_of_a_day
+            FROM vietnam_research_industry
+            GROUP BY pub_date, industry1
             ORDER BY pub_date, industry1;
             ''', self._con)
         industry_pivot = pd.pivot_table(data, index='pub_date',
