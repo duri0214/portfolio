@@ -52,19 +52,33 @@ def edit_text_file(input_folder):
 
 
 def get_weekly_topics_us():
-    ymd = datetime.today().strftime("%Y%m%d")[-6:]  # e.g. 210215
-    print(ymd)
-    url = f'https://site3.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_PageID=WPLETmgR001Mdtl20&_DataStoreID=DSWPLETmgR001Control&_ActionID=DefaultAID&getFlg=on&burl=search_market&cat1=market&cat2=report&dir=report&file=market_report_fo_us_wm_{ymd}.html'
+    args = {
+        'OutSide': 'on',
+        '_ControlID': 'WPLETmgR001Control',
+        '_DataStoreID': 'DSWPLETmgR001Control',
+        'burl': 'search_foreign',
+        'cat1': 'foreign',
+        'cat2': 'us',
+        'dir': 'us%2F',
+        'file': 'foreign_us_01.html',
+        'getFlg': 'on'
+    }
+    url = f'https://site3.sbisec.co.jp/ETGate/?'
+    for var, val in args.items():
+        url += var + '=' + val + '&'
+    print(url)
+
     # soup
     soup = BeautifulSoup(urllib.request.urlopen(url).read(), 'lxml')
 
-    for tag_ul in soup.find_all('ul', class_='mgl10 md-l-utl-mt10 fl01'):
-        # Symbol, company_name, date
-        temp = tag_ul.find_all('li')
-        print('a')
-        if temp:
-            print(temp)
-    print('end')
+    li_list = []
+    for ul in soup.find_all('ul', class_='md-l-box-menu-link-list md-l-text-sz-01 md-l-list-01'):
+        for li in ul.find_all('li'):
+            if li and li.string is not None:
+                temp = li.string.replace('\n', '').replace('\r', '')
+                if len(temp) > 0:
+                    li_list.append(temp)
+    print('\n'.join(li_list))
 
     # # mysql
     # con_str = 'mysql+mysqldb://python:python123@127.0.0.1/pythondb?charset=utf8&use_unicode=1'
@@ -88,3 +102,6 @@ work_folder = os.path.dirname(os.path.abspath(__file__)) + '/mysite/vietnam_rese
 download_pdf(work_folder)
 convert_pdf_to_text(work_folder)
 edit_text_file(work_folder)
+
+if __name__ == '__main__':
+    get_weekly_topics_us()
