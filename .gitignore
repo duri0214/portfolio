@@ -9,6 +9,5 @@ result.log
 db.sqlite3
 /.idea/
 /venv/
-/mysite/vietnam_research/static/vietnam_research/chart/
-/mysite/vietnam_research/static/vietnam_research/chart_uptrend/
+/mysite/vietnam_research/static/vietnam_research/chart/*.png
 /.vagrant/
