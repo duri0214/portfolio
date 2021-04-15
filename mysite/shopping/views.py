@@ -14,7 +14,7 @@ from .models import Products, BuyingHistory
 from .forms import EditForm, RegisterFormSingle, RegisterFormBulk
 
 # read APIKEY
-with open(settings.BASE_DIR + '/shopping/api_setting/apikey.txt', mode='r') as file:
+with open(settings.BASE_DIR.joinpath('shopping/api_setting/apikey.txt'), mode='r') as file:
     stripe.api_key = file.read()
 
 

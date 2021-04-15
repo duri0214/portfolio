@@ -29,7 +29,7 @@ class MarketVietnam(MarketAbstract):
     """ベトナムのマーケットを処理します"""
 
     def get_sbi_topics(self) -> str:
-        filepath = settings.BASE_DIR + '/vietnam_research/static/vietnam_research/sbi_topics/market_report_fo_em_topic.txt'
+        filepath = settings.BASE_DIR.joinpath('vietnam_research/static/vietnam_research/sbi_topics/market_report_fo_em_topic.txt')
         f = open(filepath, encoding="utf8")
         sbi_topics = f.read()  # ファイル終端まで全て読んだデータを返す
         f.close()

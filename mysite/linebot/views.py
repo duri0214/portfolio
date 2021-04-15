@@ -9,7 +9,7 @@ from django.conf import settings
 from .models import LinePush
 
 # read accesstoken
-with open(settings.BASE_DIR + '/linebot/api_setting/accesstoken.txt', mode='r') as file:
+with open(settings.BASE_DIR.joinpath('linebot/api_setting/accesstoken.txt'), mode='r') as file:
     ACCESSTOKEN = file.read()
 
 @csrf_exempt

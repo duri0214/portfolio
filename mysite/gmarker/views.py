@@ -8,7 +8,7 @@ from django.conf import settings
 from .models import StoreInformation, SignageMenuName
 
 # read APIKEY
-with open(settings.BASE_DIR + '/gmarker/api_setting/apikey.txt', mode='r') as file:
+with open(settings.BASE_DIR.joinpath('gmarker/api_setting/apikey.txt'), mode='r') as file:
     APIKEY = file.read()
 
 def index(request, searchcode='9'):
