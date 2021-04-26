@@ -141,7 +141,7 @@ class MarketVietnam(MarketAbstract):
         data = pd.read_sql_query(
             '''
             SELECT
-                  DATE_FORMAT(pub_date, '%Y%m%d') pub_date
+                  DATE_FORMAT(pub_date, '%Y%m%d') AS pub_date
                 , industry1
                 , truncate(SUM(trade_price_of_a_day) / 1000000, 2) AS trade_price_of_a_day
             FROM vietnam_research_industry
