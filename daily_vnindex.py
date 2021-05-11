@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from bs4 import BeautifulSoup
 import pandas as pd
 
+
 def scraping():
     """
     url先の <div id="last_last"> の <tr> を取得する。
@@ -28,10 +29,12 @@ def scraping():
     today = datetime.date.today()
     con_str = 'mysql+mysqldb://python:python123@127.0.0.1/pythondb?charset=utf8&use_unicode=1'
     con = create_engine(con_str, echo=False).connect()
-    sql = 'DELETE FROM vietnam_research_vnindex WHERE Y = {Y} AND M = {M}'
-    sql = sql.format(Y=today.year, M=today.month)
+    year = today.year
+    month = today.month
+    sql = f'DELETE FROM vietnam_research_vnindex WHERE Y = {year} AND M = {month}'
     con.execute(sql)
-    vn_index.to_sql('vietnam_research_vnindex', con, if_exists='append', index=None)
+    vn_index.to_sql('vietnam_research_vnindex', con, if_exists='append', index=False)
+
 
 scraping()
 
