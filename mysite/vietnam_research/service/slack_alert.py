@@ -4,7 +4,7 @@ from stripe.http_client import requests
 
 def send_message(message: str):
     response = requests.post(
-        'https://hooks.slack.com/services/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',
+        'https://hooks.slack.com/services/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',
         data=json.dumps({
             "channel": "random",
             "text": message,
