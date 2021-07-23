@@ -11,26 +11,23 @@
     {% endif %}
 
     <h2>商品一覧</h2>
-    <div class="cards">
-        <ul>
-            {% for product in products %}
-            <li>
-                <section class="card">
-                    <img class="card-img" src="{% static 'shopping/img' %}/{{ product.code }}.jpg" alt="{{ product.code }}">
-                    <div class="card-content">
-                        <h3 class="card-title">{{ product.name }}</h3>
-                        <p class="card-text">
+
+    <div class="card-group">
+        {% for product in products %}
+            <div class="col">
+                <div class="card" style="width: 15rem; height: 20rem">
+                    <img src="{% static 'shopping/img' %}/{{ product.code }}.jpg" class="card-img-top" alt="{{ product.code }}">
+                    <div class="card-body">
+                        <h8 class="card-title">{{ product.name | truncatechars:12 }}</h8>
+                        <p style="font-size: small;" class="card-text">
                             price: @{{ product.price | intcomma }} 円<br>
-                            {{ product.description | truncatechars:20 }}<br>
+                            {{ product.description | truncatechars:20 }}
                         </p>
+                        <a href="{% url 'shp:detail' product.pk %}" style="font-size: small;">もっと詳しく</a>
                     </div>
-                    <div class="card-link">
-                        <a href="{% url 'shp:detail' product.pk %}">もっと詳しく</a>
-                    </div>
-                </section>
-            </li>
-            {% endfor %}
-        </ul>
+                </div>
+            </div>
+        {% endfor %}
     </div>
 
     <!-- previous paginate -->
