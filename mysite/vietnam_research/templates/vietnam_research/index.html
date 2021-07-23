@@ -2,70 +2,72 @@
 {% load static %}
 {% load humanize %}
 {% block content %}
-    <div class="container">
-      <!-- Content here -->
+    <div class="jumbotron">
+        <h1 class="display-4">Let's analyze Vietnam!</h1>
+        <p class="lead">it's interesting Vietnam</p>
+        <hr class="my-4">
+        <p>You can calculate the exchange</p>
+        <a class="btn btn-primary btn-lg" href="#exchange" role="button">為替計算</a>
     </div>
 
-    <a href="#exchange">為替計算</a>
-    <div class="flex-container">
-        <div class="flex-item ratio45">
-            <h2>いいね！機能</h2>
-            {% for article in articles %}
-            <div class="article">
-                <span class="title">{{ article.title }}</span>
-                <p>{{ article.note }}</p>
-                <p class="author">{{ article.user.email }}</p>
-                <ul>
-                    <li>
-                        <a role="button" aria-pressed='{{ article.is_like | yesno:"true,false" }}' onclick="likes(event, '{{ user.id }}', '{{ article.id }}')">
-                            いいね！<span>({{ article.likes_cnt }})</span>
-                        </a>
-                    </li>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm">
+                <h2>いいね！機能</h2>
+                <h6>'like' function</h6>
+                {% for article in articles %}
+                    <div class="card" style="width: 18rem;">
+                        <h5>{{ article.title }}</h5>
+                        <p>{{ article.note }}</p>
+                        <p class="author" style="font-size: xx-small">{{ article.user.email }}</p>
+                        <div class="card-body">
+                            <a role="button" aria-pressed='{{ article.is_like | yesno:"true,false" }}' onclick="likes(event, '{{ user.id }}', '{{ article.id }}')">
+                            <p class="card-text">いいね！<span>({{ article.likes_cnt }})</span></p>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+                <a href="{% url 'vnm:article_create' %}">投稿</a>
+            </div>
+            <div class="col-sm">
+                <h2>ベトナム基本情報</h2>
+                <h6>Vietnam basic information</h6>
+                <table><tbody>
+                {% for idx, row in basicinfo.iterrows %}
+                    <tr>
+                        <th><p>{{ row.item }}</p></th>
+                        <td><p>{{ row.description }}</p></td>
+                    </tr>
+                {% endfor %}
+                </tbody></table>
+                <p class="note"><a href="https://www.jetro.go.jp/world/asia/vn/stat_01.html">基礎的経済指標（日本貿易振興機構 jetro.go.jp）</a>※IMFデータをもとにSBI証券が作成を参考に</p>
+            </div>
+            <div class="col-sm">
+                <h2>改修予定</h2>
+                <h6>Scheduled to be repaired</h6>
+                <ul class="todo">
+                    <li><a href="http://www.fao.org/home/en/">FAOから種類別肉さかな消費量のグラフ</a></li>
+                    <li>東南アジア各地のグラフで切り替えられるように</li>
+                    <li>国の成長期に金融が稼げる理由は？</li>
+                    <li>セクター別リターン</li>
+                    <li>個社利率</li>
+                    <li>配当性向</li>
+                    <li>50万円で大口株主になれる先リスト</li>
+                    <li>センチメント分析</li>
+                    <li>ニュース・有報から上方修正先を抽出</li>
+                    <li>この予算（＋手数料）であと何株買えるの？の計算式をフォームで</li>
+                    <li>スクレイピング: 上場日</li>
                 </ul>
             </div>
-            {% endfor %}
-            <a href="{% url 'vnm:article_create' %}">投稿</a>
-        </div>
-
-        <!-- basicinfo -->
-        <div class="flex-item ratio45 basicinfo">
-            <h2>ベトナム基本情報</h2>
-            <table><tbody>
-            {% for idx, row in basicinfo.iterrows %}
-                <tr>
-                    <th><p>{{ row.item }}</p></th>
-                    <td><p>{{ row.description }}</p></td>
-                </tr>
-            {% endfor %}
-            </tbody></table>
-            <p class="note"><a href="https://www.jetro.go.jp/world/asia/vn/stat_01.html">基礎的経済指標（日本貿易振興機構 jetro.go.jp）</a>※IMFデータをもとにSBI証券が作成を参考に</p>
         </div>
     </div>
 
-    <!-- todo -->
-    <div class="content-container90 margin-c">
-        <h2>Todo</h2>
-        <ul class="todo">
-            <li><a href="http://www.fao.org/home/en/">FAOから種類別肉さかな消費量のグラフ</a></li>
-            <li>東南アジア各地のグラフで切り替えられるように</li>
-            <li>国の成長期に金融が稼げる理由は？</li>
-            <li>セクター別リターン</li>
-            <li>個社利率</li>
-            <li>配当性向</li>
-            <li>50万円で大口株主になれる先リスト</li>
-            <li>センチメント分析</li>
-            <li>ニュース・有報から上方修正先を抽出</li>
-            <li>この予算（＋手数料）であと何株買えるの？の計算式をフォームで</li>
-            <li>スクレイピング: 上場日</li>
-        </ul>
-    </div>
     <div class="jumbotron">
       <h2 class="display-4">SBI TOPICS</h2>
       {{ sbi_topics|safe }}
     </div>
 
-    <!-- macro by industry -->
-    <div class="content-container90 margin-c">
+    <div class="container">
         <h2>業種別マクロ分析</h2>
         <p>これで3年分ぐらいを重ねてみたい</p>
         <p>足元の鉱業の不調は、かつてベトナムの主力輸出品であった原油の生産量が原油価格低迷に伴い減少したことが主因と見られる。
@@ -73,11 +75,15 @@
             拡大したことに影響されたと見られる。中国やタイに比べて低いとされてきたベトナムの賃金は、近年、上昇が続いており、
             ベトナムに進出した日系企業にとって悩みの種となっている。<BR>
         </p>
-        <div class="flex-container">
-            <div class="flex-item ratio45 c radarChart1"></div>
-            <div class="flex-item ratio45 c radarChart2"></div>
+        <div class="row">
+            <div class="col-sm">
+                <div class="flex-item ratio45 c radarChart1"></div>
+            </div>
+            <div class="col-sm">
+                <div class="flex-item ratio45 c radarChart2"></div>
+            </div>
+            <p><a class="note" href="https://www.murc.jp/wp-content/uploads/2018/03/report_180316.pdf">MURCベトナム経済の現状と今後の展望(20180316)</a></p>
         </div>
-        <p><a class="note" href="https://www.murc.jp/wp-content/uploads/2018/03/report_180316.pdf">MURCベトナム経済の現状と今後の展望(20180316)</a></p>
     </div>
 
     <!-- trading price by industry -->
