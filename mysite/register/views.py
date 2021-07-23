@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 from django.views import generic
 from .forms import UserCreateForm
 
+
 # signup
 class UserCreate(generic.CreateView):
     """ユーザー仮登録"""
@@ -33,9 +34,9 @@ class UserCreate(generic.CreateView):
             'token': dumps(user.pk),
             'user': user,
         }
-        folder = settings.BASE_DIR + '/register/templates/register/mail_template/'
-        subject = render_to_string(folder + 'subject.txt', context)
-        message = render_to_string(folder + 'message.txt', context)
+        folder = settings.BASE_DIR.joinpath('register/templates/register/mail_template')
+        subject = render_to_string(folder.joinpath('subject.txt'), context)
+        message = render_to_string(folder.joinpath('message.txt'), context)
 
         user.email_user(subject, message)
         return redirect('register:user_create_done')
