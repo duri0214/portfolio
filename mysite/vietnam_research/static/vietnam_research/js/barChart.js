@@ -21,7 +21,7 @@ function BarChart_stack(chart_id, data){
                         borderDash: [5, 5]
                     },
                     ticks: {
-                        max: 20000
+                        max: 40000
                     }
                 }],
             }

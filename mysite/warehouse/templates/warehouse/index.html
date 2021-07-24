@@ -3,6 +3,13 @@
 {% load humanize %}
 
 {% block content %}
+    <div class="jumbotron">
+        <h1 class="display-4">Let's issue an invoice.</h1>
+        <p class="lead">The system that forms the basis of work</p>
+        <hr class="my-4">
+        <p>You can issue invoice.</p>
+    </div>
+
     <h2>menu</h2>
     <ul>
         <li><a href="{% url 'war:register' %}">アイテム登録</a></li>
@@ -32,7 +39,7 @@
 
     <h2 id="info">在庫リスト</h2>
     <h3>棚のどこにありますか？</h3>
-    <table class="shelf-matrix">
+    <table class="table table-sm">
         {% for row in shelf %}
             <tr>
                 {% for col in row %}
@@ -42,7 +49,7 @@
         {% endfor %}
     </table>
     <h3>貸し出しできるアイテム</h3>
-    <table class="shelf-list">
+    <table class="table table-sm">
         <thead>
             <tr>
                 <td>段</td>
@@ -58,9 +65,8 @@
                     <td>{{ item.pos_y }}</td>
                     <td>{{ item.pos_x }}</td>
                     <td>{{ item.serial_number }}</td>
-                    <td>{{ item.name }}</td>
+                    <td><a href="{% url 'war:detail' item.pk %}">{{ item.name }}</a></td>
                     <td>{{ item.price }}円</td>
-                    <td><a href="{% url 'war:detail' item.pk %}">詳細</a></td>
                     <td>
                         <form method="post" action="{% url 'war:index_choose' item.id %}">
                             {% csrf_token %}

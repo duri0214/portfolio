@@ -83,10 +83,10 @@
         </p>
         <div class="row">
             <div class="col-sm">
-                <div class="flex-item ratio45 c radarChart1"></div>
+                <div class="radarChart1"></div>
             </div>
             <div class="col-sm">
-                <div class="flex-item ratio45 c radarChart2"></div>
+                <div class="radarChart2"></div>
             </div>
             <p><a class="note" href="https://www.murc.jp/wp-content/uploads/2018/03/report_180316.pdf">MURCベトナム経済の現状と今後の展望(20180316)</a></p>
         </div>
@@ -234,7 +234,7 @@
     <div class="card-group">
         {% for idx, row in watchlist.iterrows %}
             <div class="col">
-                <div class="card" style="width: 15rem; height: 28rem">
+                <div class="card" style="width: 15rem; height: 30rem">
                     <img src="{% static 'vietnam_research/chart' %}/{{ row.symbol }}.png" class="card-img-top" alt="{{ row.symbol }}">
                     <div class="card-body">
                         <h8 class="card-title">{{ row.company_name | truncatechars:12 }}</h8>
@@ -243,12 +243,14 @@
                                 buy date: {{ row.bought_day }}<br>
                                 buy price: @{{ row.stocks_price }} VND<br>
                                 buy price: @{{ row.stocks_price_yen }} 円<br>
-                                now price: @{{ row.closing_price }} VND({{ row.stocks_price_delta }}%)<br>
+                                now price: @{{ row.closing_price }} VND<br>
+                                Difference: {{ row.stocks_price_delta }}%<br>
                                 buy count: {{ row.stocks_count }}株<br>
                                 備考：{{ row.buy_price_yen }}円<br>
                             </p>
-                        <a href="https://www.viet-kabu.com/{{ row.mkt }}/{{ row.symbol }}.html" target="_blank">link</a>
+{#                        <a href="https://www.viet-kabu.com/{{ row.mkt }}/{{ row.symbol }}.html" target="_blank">link</a>#}
                     </div>
+                    <div class="card-footer text-muted"><a href="https://www.viet-kabu.com/{{ row.mkt }}/{{ row.symbol }}.html" target="_blank">link</a></div>
                 </div>
             </div>
         {% endfor %}

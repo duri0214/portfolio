@@ -1,1 +1,20 @@
 body { padding-top: 48px; }
+
+#uptrends_wrapper li {
+  display: inline-block;
+}
+.uptrends {
+  position: relative;
+}
+.uptrends p {
+  position: absolute;
+  margin: 0px;
+  color: white;
+  background: skyblue;
+  font-weight: bold;
+  font-family :Kameron, sans-serif;
+  top: 0px;
+  left: 31px;
+  padding: 5px 10px;
+  font-size: 12px;
+}

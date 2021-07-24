@@ -1,1 +1,35 @@
 body { padding-top: 48px; }
+
+.edit_record {
+    display: none;
+}
+.edit_record td {
+    height: 100px;
+}
+.edit_record input {
+    position: relative;
+    top: -12px;
+}
+.edit_record input[type="text"], .edit_record input[type="number"] {
+    border-radius: 4px;
+    height: 22px;
+}
+.edit_record input[type="submit"] {
+    margin-left: 10px;
+    border-radius: 4px;
+    height: 30px;
+}
+.edit_record input:nth-child(n+2), .edit_record textarea:nth-child(n+2) {
+    margin-left: 10px;
+    vertical-align: middle;
+}
+.edit_record textarea {
+    top: 9px;
+    position: relative;
+    resize: none;
+    border-radius: 4px;
+    height:66px;
+}
+.edit_record #id_code {
+    background-color: lightgray;
+}
