@@ -17,17 +17,23 @@
                 <h6>'like' function</h6>
                 {% for article in articles %}
                     <div class="card" style="width: 18rem;">
-                        <h5>{{ article.title }}</h5>
-                        <p>{{ article.note }}</p>
-                        <p class="author" style="font-size: xx-small">{{ article.user.email }}</p>
-                        <div class="card-body">
-                            <a role="button" aria-pressed='{{ article.is_like | yesno:"true,false" }}' onclick="likes(event, '{{ user.id }}', '{{ article.id }}')">
-                            <p class="card-text">いいね！<span>({{ article.likes_cnt }})</span></p>
-                            </a>
+                        <div class="card-header">
+                            {{ article.title }}
                         </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <p style="font-size: small">{{ article.note | truncatechars:80 }}</p>
+                                <p class="author text-right text-secondary" style="font-size: xx-small">{{ article.user.email }}</p>
+                                <div class="card-body">
+                                    <a role="button" aria-pressed='{{ article.is_like | yesno:"true,false" }}' onclick="likes(event, '{{ user.id }}', '{{ article.id }}')">
+                                    <button type="button" class="btn btn-light">いいね！<span>({{ article.likes_cnt }})</span></button>
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
                 {% endfor %}
-                <a href="{% url 'vnm:article_create' %}">投稿</a>
+                <a href="{% url 'vnm:article_create' %}" class="btn btn-default btn-sm" role="button">投稿</a>
             </div>
             <div class="col-sm">
                 <h2>ベトナム基本情報</h2>
@@ -55,7 +61,7 @@
                     <li>50万円で大口株主になれる先リスト</li>
                     <li>センチメント分析</li>
                     <li>ニュース・有報から上方修正先を抽出</li>
-                    <li>この予算（＋手数料）であと何株買えるの？の計算式をフォームで</li>
+                    <li><del>この予算（＋手数料）であと何株買えるの？の計算式をフォームで</del></li>
                     <li>スクレイピング: 上場日</li>
                 </ul>
             </div>
@@ -86,23 +92,27 @@
         </div>
     </div>
 
-    <!-- trading price by industry -->
-    <div class="content-container90 margin-c">
-        <h2>業種別売買代金（10億ドン[÷1,000,000,000]）</h2>
-        <canvas id="barChart1" class="ratio90 margin-c" style="height:400px"></canvas>
+    <div class="container">
+        <h2>業種別売買代金</h2>
+        <h6>trading price by industry</h6>
+        <p>10億ドン[÷1,000,000,000]</p>
+        <canvas id="barChart1" style="margin:auto; display: block; width: 800px; height: 400px;"></canvas>
     </div>
-
-    <!-- vn-index -->
-    <div class="content-container90 margin-c">
-        <h2>National stock index（国を代表する株価指数の超長期時系列）</h2>
-        <canvas id="vnChart" class="ratio90 margin-c" style="height:300px"></canvas>
-    </div>
-
-    <!-- National stock index annual layer -->
-    <div class="content-container90 margin-c">
-        <h2>VN-Index（年単位ミルフィーユ）</h2>
-        <p>季節要因は特に感じられない</p>
-        <canvas id="vnChart_layer" class="ratio90 margin-c" style="height:300px"></canvas>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm">
+                <h2>National stock index</h2>
+                <h6>vn-index long-term time series</h6>
+                <p>超長期時系列</p>
+                <canvas id="vnChart" style="display: inline-block; width: 400px; height: 400px;"></canvas>
+            </div>
+            <div class="col-sm">
+                <h2>National stock index</h2>
+                <h6>vn-index annual layer</h6>
+                <p>季節要因は特に感じられない</p>
+                <canvas id="vnChart_layer" style="display: inline-block; width: 400px; height: 400px;"></canvas>
+            </div>
+        </div>
     </div>
 
     <!-- uptrends -->
