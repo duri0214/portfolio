@@ -24,7 +24,6 @@ urlpatterns = [
     path('gmarker/', include('gmarker.urls')),
     path('shopping/', include('shopping.urls')),
     path('linebot/', include('linebot.urls')),
-    path('uploader/', include('uploader.urls')),
     path('warehouse/', include('warehouse.urls')),
     path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
