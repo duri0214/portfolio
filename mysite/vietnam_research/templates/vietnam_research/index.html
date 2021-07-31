@@ -134,6 +134,7 @@
         let li;
         let a;
         let p;
+        let badge;
         for (const industry in json) {
             h3 = document.createElement('h3');
             h3.textContent = json[industry]['ind_name'];
@@ -152,6 +153,7 @@
                 a.href = "https://www.viet-kabu.com/" + mkt + '/' + symbol + '.html';
                 a.target = "_blank";
                 p = document.createElement('p');
+                p.className = 'badge badge-secondary';
                 p.textContent = symbol + ': ' + price_latest + '（' + price_delta_sign + price_delta + '）';
                 li = document.createElement("li");
                 li.className = 'uptrends';
