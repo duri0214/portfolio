@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'linebot.apps.LinebotConfig',
     'register.apps.RegisterConfig',
-    'uploader.apps.UploaderConfig',
     'warehouse.apps.WarehouseConfig',
 ]
 
