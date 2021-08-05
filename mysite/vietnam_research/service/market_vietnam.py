@@ -117,8 +117,12 @@ class MarketVietnam(MarketAbstract):
                 , u.stocks_price_oldest
                 , u.stocks_price_latest
                 , u.stocks_price_delta
-            FROM vietnam_research_dailyuptrends u INNER JOIN vietnam_research_industry i
-                ON u.symbol = i.symbol
+            FROM vietnam_research_dailyuptrends u INNER JOIN vietnam_research_industry i ON u.symbol = i.symbol
+            WHERE i.symbol IN (
+                SELECT symbol FROM pythondb.vietnam_research_industry WHERE pub_date = (
+                    SELECT max(pub_date) pub_date FROM pythondb.vietnam_research_industry
+                )
+            )
             ORDER BY u.ind_name, stocks_price_delta DESC;
             ''', self._con)
         for groups in data.groupby('ind_name'):
