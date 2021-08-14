@@ -108,7 +108,7 @@ class Unit(models.Model):
 
 class FinancialResultWatch(models.Model):
     """決算ウォッチ"""
-    date = models.DateField
+    date = models.DateField()
     ticker = models.CharField(max_length=10)
     quarter = models.IntegerField()
     eps_ok = models.BooleanField()
