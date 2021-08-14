@@ -99,3 +99,26 @@ class Likes(models.Model):
     articles = models.ForeignKey('Articles', on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Unit(models.Model):
+    """財務単位"""
+    name = models.CharField(max_length=10)
+
+
+class FinancialResultWatch(models.Model):
+    """決算ウォッチ"""
+    date = models.DateField
+    ticker = models.CharField(max_length=10)
+    quarter = models.IntegerField()
+    eps_ok = models.BooleanField()
+    sales_ok = models.BooleanField()
+    guidance_ok = models.BooleanField()
+    eps_unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='r_eps_unit')
+    eps_estimate = models.FloatField(default=0.00)
+    eps_actual = models.FloatField(default=0.00)
+    sales_unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='r_sales_unit')
+    sales_estimate = models.FloatField(default=0.00)
+    sales_actual = models.FloatField(default=0.00)
+    y_over_y_growth_rate = models.FloatField(default=0.00)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
