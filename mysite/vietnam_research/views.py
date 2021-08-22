@@ -155,7 +155,7 @@ class FinancialResultsDetailListView(ListView):
         return FinancialResultWatch.objects.filter(ticker=ticker).order_by('date')
 
 
-class FinancialResultsCreateView(CreateView):
+class FinancialResultsCreateView(LoginRequiredMixin, CreateView):
     """決算データ登録画面"""
     model = FinancialResultWatch
     template_name = "vietnam_research/financial_results/create.html"

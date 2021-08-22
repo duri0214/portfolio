@@ -44,4 +44,3 @@ class FinancialResultsForm(forms.ModelForm):
     class Meta:
         model = FinancialResultWatch
         fields = ('date', 'ticker', 'quarter', 'eps_ok', 'sales_ok', 'guidance_ok', 'eps_unit', 'eps_estimate', 'eps_actual', 'sales_unit', 'sales_estimate', 'sales_actual', 'y_over_y_growth_rate', 'note_url')
-        exclude = ('user_id',)
