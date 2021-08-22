@@ -1,0 +1,36 @@
+{% extends "vietnam_research/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+<table class="table table-sm">
+
+    <div class="jumbotron">
+        <h1 class="display-4">Let's analyze U.S. stocks!</h1>
+        <p class="lead">it's interesting U.S. stocks</p>
+        <hr class="my-4">
+        <p>You can register note financial_results</p>
+        <a href="{% url 'vnm:financial_results_create' %}" class="btn btn-primary btn-sm" role="button">登録</a>
+    </div>
+
+    <thead>
+        <tr>
+            <td>ticker</td>
+            <td>cnt</td>
+            <td>eps</td>
+            <td>売上</td>
+            <td>ガイダンス</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for financial_result in object_list %}
+            <tr>
+                <td><a href="{% url 'vnm:financial_results_detail' financial_result.ticker %}" class="btn btn-secondary btn-sm" role="button">{{ financial_result.ticker }}</a></td>
+                <td>{{ financial_result.cnt }}</td>
+                <td>{{ financial_result.eps_ok|add:"0" }}</td>
+                <td>{{ financial_result.sales_ok|add:"0" }}</td>
+                <td>{{ financial_result.guidance_ok|add:"0" }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

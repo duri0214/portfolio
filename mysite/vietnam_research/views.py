@@ -5,13 +5,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.http import urlencode
-from django.views.generic import CreateView
+from django.views.generic import CreateView, ListView
 from django.urls import reverse_lazy
 from django.http.response import JsonResponse
-from django.db.models import Count, Case, When, IntegerField
-from .forms import ArticleForm, WatchlistForm, ExchangeForm
+from django.db.models import Count, Case, When, IntegerField, Sum
+from .forms import ArticleForm, WatchlistForm, ExchangeForm, FinancialResultsForm
 from .service.market_vietnam import MarketVietnam
-from .models import WatchList, Likes, Articles
+from .models import WatchList, Likes, Articles, FinancialResultWatch
 from django.contrib.auth.decorators import login_required
 
 
@@ -128,4 +128,40 @@ class WatchListRegister(CreateView):
 
     def form_valid(self, form):
         form.instance.already_has = 1
+        return super().form_valid(form)
+
+
+class FinancialResultsListView(ListView):
+    template_name = 'vietnam_research/financial_results/index.html'
+    model = FinancialResultWatch
+
+    def get_queryset(self, **kwargs):
+        return FinancialResultWatch.objects\
+            .values('ticker') \
+            .annotate(cnt=Count('ticker')) \
+            .annotate(eps_ok=Sum('eps_ok')) \
+            .annotate(sales_ok=Sum('sales_ok')) \
+            .annotate(guidance_ok=Sum('guidance_ok')) \
+            .values('ticker', 'cnt', 'eps_ok', 'sales_ok', 'guidance_ok') \
+            .order_by('-cnt', '-eps_ok', '-sales_ok', '-guidance_ok')
+
+
+class FinancialResultsDetailListView(ListView):
+    template_name = 'vietnam_research/financial_results/detail.html'
+    model = FinancialResultWatch
+
+    def get_queryset(self):
+        ticker = self.kwargs['ticker']
+        return FinancialResultWatch.objects.filter(ticker=ticker).order_by('date')
+
+
+class FinancialResultsCreateView(CreateView):
+    """決算データ登録画面"""
+    model = FinancialResultWatch
+    template_name = "vietnam_research/financial_results/create.html"
+    form_class = FinancialResultsForm
+    success_url = reverse_lazy("vnm:financial_results")
+
+    def form_valid(self, form):
+        form.instance.user_id = self.request.user.id
         return super().form_valid(form)

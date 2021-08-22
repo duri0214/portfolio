@@ -1,6 +1,6 @@
 """フォーム集積場所"""
 from django import forms
-from .models import Articles, WatchList
+from .models import Articles, WatchList, FinancialResultWatch
 
 
 class ExchangeForm(forms.Form):
@@ -36,3 +36,12 @@ class ArticleForm(forms.ModelForm):
     class Meta:
         model = Articles
         fields = ("title", "note")
+
+
+class FinancialResultsForm(forms.ModelForm):
+    """決算データの入力フォームです"""
+
+    class Meta:
+        model = FinancialResultWatch
+        fields = ('date', 'ticker', 'quarter', 'eps_ok', 'sales_ok', 'guidance_ok', 'eps_unit', 'eps_estimate', 'eps_actual', 'sales_unit', 'sales_estimate', 'sales_actual', 'y_over_y_growth_rate', 'note_url')
+        exclude = ('user_id',)

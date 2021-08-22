@@ -105,6 +105,9 @@ class Unit(models.Model):
     """財務単位"""
     name = models.CharField(max_length=10)
 
+    def __str__(self):
+        return '%s' % self.name
+
 
 class FinancialResultWatch(models.Model):
     """決算ウォッチ"""
@@ -121,4 +124,5 @@ class FinancialResultWatch(models.Model):
     sales_estimate = models.FloatField(default=0.00)
     sales_actual = models.FloatField(default=0.00)
     y_over_y_growth_rate = models.FloatField(default=0.00)
+    note_url = models.URLField(null=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
