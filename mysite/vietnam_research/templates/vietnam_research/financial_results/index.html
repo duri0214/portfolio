@@ -9,7 +9,11 @@
         <p class="lead">it's interesting U.S. stocks</p>
         <hr class="my-4">
         <p>You can register note financial_results</p>
-        <a href="{% url 'vnm:financial_results_create' %}" class="btn btn-primary btn-sm" role="button">登録</a>
+        {% if user.is_superuser %}
+            <a href="{% url 'vnm:financial_results_create' %}" class="btn btn-primary btn-sm" role="button">登録</a>
+        {% else %}
+            <a href="{% url 'vnm:financial_results_create' %}" class="btn btn-secondary btn-sm disabled" role="button">登録</a>
+        {% endif %}
     </div>
 
     <thead>
