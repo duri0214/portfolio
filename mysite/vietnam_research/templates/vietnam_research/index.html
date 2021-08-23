@@ -7,7 +7,13 @@
         <p class="lead">it's interesting Vietnam</p>
         <hr class="my-4">
         <p>You can calculate the exchange</p>
+        <a class="btn btn-secondary btn-sm" href="#sbi_topics" role="button">SBI TOPICS</a>
+        <a class="btn btn-secondary btn-sm" href="#macro_analysis_by_industry" role="button">業種別マクロ分析</a>
+        <a class="btn btn-secondary btn-sm" href="#trading_value_by_industry" role="button">業種別売買代金</a>
+        <a class="btn btn-secondary btn-sm" href="#uptrend" role="button">移動平均線上昇トレンド銘柄</a>
         <a class="btn btn-secondary btn-sm" href="#exchange" role="button">為替計算</a>
+        <a class="btn btn-secondary btn-sm" href="#watchlist" role="button">ウォッチリスト</a>
+        <a class="btn btn-secondary btn-sm" href="#what_is_per" role="button">What is PER?</a>
         <a href="{% url 'vnm:financial_results' %}" class="btn btn-secondary btn-sm" role="button">決算ウォッチング</a>
     </div>
 
@@ -52,7 +58,7 @@
             <div class="col-sm">
                 <h2>改修予定</h2>
                 <h6>Scheduled to be repaired</h6>
-                <ul class="todo">
+                <ul>
                     <li><a href="http://www.fao.org/home/en/">FAOから種類別肉さかな消費量のグラフ</a></li>
                     <li>東南アジア各地のグラフで切り替えられるように</li>
                     <li>国の成長期に金融が稼げる理由は？</li>
@@ -69,12 +75,12 @@
         </div>
     </div>
 
-    <div class="jumbotron">
+    <div id="sbi_topics" class="jumbotron">
       <h2 class="display-4">SBI TOPICS</h2>
       {{ sbi_topics|safe }}
     </div>
 
-    <div class="container">
+    <div id="macro_analysis_by_industry" class="container">
         <h2>業種別マクロ分析</h2>
         <p>これで3年分ぐらいを重ねてみたい</p>
         <p>足元の鉱業の不調は、かつてベトナムの主力輸出品であった原油の生産量が原油価格低迷に伴い減少したことが主因と見られる。
@@ -93,7 +99,7 @@
         </div>
     </div>
 
-    <div class="container">
+    <div id="trading_value_by_industry" class="container">
         <h2>業種別売買代金</h2>
         <h6>trading price by industry</h6>
         <p>10億ドン[÷1,000,000,000]</p>
@@ -116,8 +122,7 @@
         </div>
     </div>
 
-    <!-- uptrends -->
-    <div class="content-container90 margin-c">
+    <div id="uptrend">
         <h2>株価直近（14日線/7日線/3日線）上昇銘柄（SBI証券取り扱い銘柄のみ）</h2>
         <div id="uptrends_wrapper"></div>
     </div>
@@ -168,8 +173,7 @@
         }
     </script>
 
-    <!-- exchange -->
-    <div id="exchange" class="content-container90 margin-c">
+    <div id="exchange">
         <h2>ドンから日本円へ</h2>
         ドンを200で割ると、ざっくり日本円になります。1,000don -> 5円<br>
         <a href="https://search.sbisec.co.jp/v2/popwin/info/stock/foreign_exp.pdf">外国株式取引に関する説明書</a>
@@ -223,7 +227,7 @@
         <form method="post">
             {% csrf_token %}
             {{ exchange_form.as_p }}
-            <button type="submit" class="">計算</button>
+            <button type="submit">計算</button>
         </form>
         残高(VND): {{ exchanged.current_balance | intcomma }}<br>
         @{{ exchanged.unit_price | intcomma }} * {{ exchanged.quantity | intcomma }} = {{ exchanged.price_no_fee | intcomma }}VND<br>
@@ -233,7 +237,9 @@
 
     </div>
 
-    <!-- watchlist -->
+    <div id="watchlist">
+        <h2>ウォッチリスト</h2>
+    </div>
     <div class="card-group">
         {% for idx, row in watchlist.iterrows %}
             <div class="col">
@@ -241,17 +247,16 @@
                     <img src="{% static 'vietnam_research/chart' %}/{{ row.symbol }}.png" class="card-img-top" alt="{{ row.symbol }}">
                     <div class="card-body">
                         <h8 class="card-title">{{ row.company_name | truncatechars:12 }}</h8>
-                            <p class="card-text" style="font-size: small;">
-                                symbol: {{ row.symbol }}<br>
-                                buy date: {{ row.bought_day }}<br>
-                                buy price: @{{ row.stocks_price }} VND<br>
-                                buy price: @{{ row.stocks_price_yen }} 円<br>
-                                now price: @{{ row.closing_price }} VND<br>
-                                Difference: {{ row.stocks_price_delta }}%<br>
-                                buy count: {{ row.stocks_count }}株<br>
-                                備考：{{ row.buy_price_yen }}円<br>
-                            </p>
-{#                        <a href="https://www.viet-kabu.com/{{ row.mkt }}/{{ row.symbol }}.html" target="_blank">link</a>#}
+                        <p class="card-text" style="font-size: small;">
+                            symbol: {{ row.symbol }}<br>
+                            buy date: {{ row.bought_day }}<br>
+                            buy price: @{{ row.stocks_price }} VND<br>
+                            buy price: @{{ row.stocks_price_yen }} 円<br>
+                            now price: @{{ row.closing_price }} VND<br>
+                            Difference: {{ row.stocks_price_delta }}%<br>
+                            buy count: {{ row.stocks_count }}株<br>
+                            備考：{{ row.buy_price_yen }}円<br>
+                        </p>
                     </div>
                     <div class="card-footer text-muted"><a href="https://www.viet-kabu.com/{{ row.mkt }}/{{ row.symbol }}.html" target="_blank">link</a></div>
                 </div>
@@ -259,8 +264,7 @@
         {% endfor %}
     </div>
 
-    <!-- what is PER?? -->
-    <div class="content-container90 margin-c">
+    <div id="what_is_per">
         <h2>PERとは</h2>
         <img src="{% static 'vietnam_research/images/PER.png' %}" alt="PER">
     </div>
