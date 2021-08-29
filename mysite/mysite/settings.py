@@ -152,3 +152,5 @@ STRIPE_PUBLIC_KEY = 'pk_test_eiOWUzSaLn51lXt0POuRBskA009JsTTAb5'
 
 # 'django.contrib.humanize' 3桁カンマ
 NUMBER_GROUPING = 3
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
