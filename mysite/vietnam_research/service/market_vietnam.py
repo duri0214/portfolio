@@ -1,8 +1,11 @@
 from django.conf import settings
+from django.db.models import Sum
 from sqlalchemy.engine.base import Connection
 
 from .market_abstract import MarketAbstract
 import pandas as pd
+
+from ..models import Industry
 
 
 class QueryFactory(object):
@@ -142,16 +145,15 @@ class MarketVietnam(MarketAbstract):
         return uptrends
 
     def get_industry_stack(self):
-        data = pd.read_sql_query(
-            '''
-            SELECT
-                  DATE_FORMAT(pub_date, '%%Y%%m%%d') AS pub_date
-                , industry1
-                , truncate(SUM(trade_price_of_a_day) / 1000000, 2) AS trade_price_of_a_day
-            FROM vietnam_research_industry
-            GROUP BY pub_date, industry1
-            ORDER BY pub_date, industry1;
-            ''', self._con)
+        data = Industry.objects\
+            .values('pub_date', 'industry1')\
+            .annotate(trade_price_of_a_day=Sum('trade_price_of_a_day'))\
+            .order_by('pub_date', 'industry1')\
+            .values('pub_date', 'industry1', 'trade_price_of_a_day')
+        data = pd.DataFrame(list(data))
+        data['pub_date'] = data['pub_date'].astype(str).replace('-', '')
+        data['trade_price_of_a_day'] = data['trade_price_of_a_day'].astype(float) / 1000000
+
         industry_pivot = pd.pivot_table(data, index='pub_date',
                                         columns='industry1', values='trade_price_of_a_day', aggfunc='sum')
         industry_stack = {"labels": list(industry_pivot.index), "datasets": []}
