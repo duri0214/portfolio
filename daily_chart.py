@@ -83,7 +83,7 @@ for key, values in AGG.groupby('symbol'):
             Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
     if score == iteration_count:
         # stack param
-        IND_NAMES.append(values['ind_name'].head(1).iふぉloc[0])
+        IND_NAMES.append(values['ind_name'].head(1).iloc[0])
         MARKET_CODES.append(values['market_code'].head(1).iloc[0])
         SYMBOLS.append(key)
         price_inner.append(values.tail(max(days))['closing_price'].head(1).iloc[0])
