@@ -138,12 +138,8 @@ class FinancialResultsListView(ListView):
     def get_queryset(self, **kwargs):
         return FinancialResultWatch.objects\
             .values('ticker') \
-            .annotate(cnt=Count('ticker'),
-                      eps_ok=Sum('eps_ok'),
-                      sales_ok=Sum('sales_ok'),
-                      guidance_ok=Sum('guidance_ok')
-                      ) \
-            .order_by('-cnt', '-eps_ok', '-sales_ok', '-guidance_ok')
+            .annotate(Count('ticker'), Sum('eps_ok'), Sum('sales_ok'), Sum('guidance_ok')) \
+            .order_by('-ticker__count', '-eps_ok__sum', '-sales_ok__sum', '-guidance_ok__sum')
 
 
 class FinancialResultsDetailListView(ListView):
