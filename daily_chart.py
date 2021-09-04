@@ -1,8 +1,9 @@
 """
 傾斜を出して、uptrendを算出
 """
+from glob import glob
 import os
-import shutil
+from pathlib import Path
 import time
 import datetime
 from sqlalchemy import create_engine
@@ -18,10 +19,10 @@ CON = create_engine(CON_STR, echo=False).connect()
 
 # uptrend by industry
 print('\n' + 'uptrend')
-OUTFOLDER = os.path.dirname(os.path.abspath(__file__))
-OUTFOLDER = OUTFOLDER + '/mysite/vietnam_research/static/vietnam_research/chart'
-shutil.rmtree(OUTFOLDER)
-os.mkdir(OUTFOLDER)
+OUTFOLDER = Path(__file__).resolve().joinpath('/mysite/vietnam_research/static/vietnam_research/chart')
+for filename in glob(Path(OUTFOLDER).joinpath('*.png').__str__()):
+    os.remove(filename)
+
 CON.execute('DELETE FROM vietnam_research_dailyuptrends')
 WATCH_LIST = pd.read_sql_query('''SELECT * FROM pythondb.vietnam_research_watchlist''', CON)
 AGG = pd.read_sql_query(
@@ -76,13 +77,13 @@ for key, values in AGG.groupby('symbol'):
             x_scale_shifted = range(x_offset, days[i] + x_offset)
             plt.plot(x_scale_shifted, (slope * x_scale + intercept), "g--")
             # save png: w640, h480
-            outpath = OUTFOLDER + '/{0}.png'.format(key)
-            plt.savefig(outpath)
+            out_path = Path(OUTFOLDER).joinpath('/{0}.png').__str__().format(key)
+            plt.savefig(out_path)
             # resize png: w250, h200
-            Image.open(outpath).resize((250, 200), Image.LANCZOS).save(outpath)
+            Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
     if score == iteration_count:
         # stack param
-        IND_NAMES.append(values['ind_name'].head(1).iloc[0])
+        IND_NAMES.append(values['ind_name'].head(1).iふぉloc[0])
         MARKET_CODES.append(values['market_code'].head(1).iloc[0])
         SYMBOLS.append(key)
         price_inner.append(values.tail(max(days))['closing_price'].head(1).iloc[0])
