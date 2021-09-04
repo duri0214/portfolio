@@ -143,7 +143,6 @@ class FinancialResultsListView(ListView):
                       sales_ok=Sum('sales_ok'),
                       guidance_ok=Sum('guidance_ok')
                       ) \
-            .values('ticker', 'cnt', 'eps_ok', 'sales_ok', 'guidance_ok') \
             .order_by('-cnt', '-eps_ok', '-sales_ok', '-guidance_ok')
 
 
