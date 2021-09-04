@@ -240,6 +240,12 @@
     <div id="watchlist">
         <h2>ウォッチリスト</h2>
     </div>
+    {% if user.is_superuser %}
+        <a href="{% url 'vnm:watchlist_register' %}" class="btn btn-primary btn-sm" role="button">登録</a>
+    {% else %}
+        <a href="#" class="btn btn-secondary btn-sm disabled" role="button">登録</a>
+    {% endif %}
+
     <div class="card-group">
         {% for idx, row in watchlist.iterrows %}
             <div class="col">
