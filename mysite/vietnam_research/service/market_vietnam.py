@@ -33,10 +33,11 @@ class MarketVietnam(MarketAbstract):
 
     def get_sbi_topics(self) -> str:
         filepath = settings.BASE_DIR.joinpath('vietnam_research/static/vietnam_research/sbi_topics/market_report_fo_em_topic.txt')
-        f = open(filepath, encoding="utf8")
-        sbi_topics = f.read()  # ファイル終端まで全て読んだデータを返す
-        f.close()
-        return sbi_topics
+        if filepath.exists():
+            with open(filepath, encoding="utf8") as f:
+                sbi_topics = f.read()  # ファイル終端まで全て読んだデータを返す
+                f.close()
+                return sbi_topics
 
     def get_watchlist(self) -> pd.DataFrame:
         """ウォッチリストを作成します"""
