@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from PIL import Image
-
+from mysite.mysite.settings import BASE_DIR
 
 # mysql
 CON_STR = 'mysql+mysqldb://python:python123@127.0.0.1/pythondb?charset=utf8&use_unicode=1'
@@ -19,7 +19,7 @@ CON = create_engine(CON_STR, echo=False).connect()
 
 # uptrend by industry
 print('\n' + 'uptrend')
-OUTFOLDER = Path(__file__).resolve().joinpath('/mysite/vietnam_research/static/vietnam_research/chart')
+OUTFOLDER = BASE_DIR.resolve().joinpath('vietnam_research/static/vietnam_research/chart')
 for filename in glob(Path(OUTFOLDER).joinpath('*.png').__str__()):
     os.remove(filename)
 
@@ -77,7 +77,7 @@ for key, values in AGG.groupby('symbol'):
             x_scale_shifted = range(x_offset, days[i] + x_offset)
             plt.plot(x_scale_shifted, (slope * x_scale + intercept), "g--")
             # save png: w640, h480
-            out_path = Path(OUTFOLDER).joinpath('/{0}.png').__str__().format(key)
+            out_path = Path(OUTFOLDER).joinpath('{0}.png').__str__().format(key)
             plt.savefig(out_path)
             # resize png: w250, h200
             Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
