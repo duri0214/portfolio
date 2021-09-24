@@ -25,7 +25,7 @@ SECRET_KEY = 'wk$)s6c6ss_2&=f-k4h3#hzbtmcsi_&gqsm2trhqq#ts*l1+5#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['.henojiya.net', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['.henojiya.net', '127.0.0.1', 'localhost', '153.126.200.229']
 
 
 # Application definition
