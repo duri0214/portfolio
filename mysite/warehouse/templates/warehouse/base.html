@@ -54,18 +54,13 @@
                         {% else %}
                             <li class="nav-link"><a href="{% url 'register:login' %}">LOGIN</a></li>
                         {% endif %}
-
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Application
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="{% url 'vnm:index' %}">VIETNAM</a>
-                                <a class="dropdown-item" href="{% url 'mrk:index' %}">GMARKER</a>
-                                <a class="dropdown-item" href="{% url 'shp:index' %}">SHOPPING</a>
-                                <a class="dropdown-item" href="{% url 'war:index' %}">WAREHOUSE</a>
-                            </div>
-                        </li>
+                        <select class="select2-1" onChange="location.href=value;">
+                            <option></option>
+                            <option value="{% url 'vnm:index' %}">VIETNAM</option>
+                            <option value="{% url 'mrk:index' %}">GMARKER</option>
+                            <option value="{% url 'shp:index' %}">SHOPPING</option>
+                            <option value="{% url 'war:index' %}" selected>WAREHOUSE</option>
+                        </select>
                     </ul>
                     <form class="form-inline my-2 my-lg-0">
                         <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
@@ -97,5 +92,18 @@
                 });
             });
         </script>
+
+        <!-- for select2 -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            $(function () {
+                $('.select2-1').select2({
+                    // コントロールのプレースホルダを指定します。
+                    placeholder: 'Please Select',
+                });
+            });
+        </script>
+        <link rel="stylesheet" href="{% static 'vietnam_research/css/index_select2.css' %}">
     </body>
 </html>
