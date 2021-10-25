@@ -1,3 +1,6 @@
+from decimal import Decimal, ROUND_HALF_UP
+
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db.models import Sum
 from sqlalchemy.engine.base import Connection
@@ -5,7 +8,7 @@ from sqlalchemy.engine.base import Connection
 from .market_abstract import MarketAbstract
 import pandas as pd
 
-from ..models import Industry
+from ..models import Industry, IndClass
 
 
 class QueryFactory(object):
@@ -13,13 +16,6 @@ class QueryFactory(object):
     dataframe_store = {}
     sql_store = {
         'vnindex': 'SELECT DISTINCT Y, M, closing_price FROM vietnam_research_vnindex ORDER BY Y, M;',
-        'radar_chart': """
-            SELECT
-                CONCAT(c.industry_class, '|', i.industry1) AS ind_name,
-                i.marketcap
-            FROM vietnam_research_industry i INNER JOIN vietnam_research_indclass c ON i.industry1 = c.industry1
-            WHERE DATE(pub_date) = (SELECT DATE(MAX(pub_date)) pub_date FROM vietnam_research_industry);
-        """
     }
 
     def get(self, param: str, con: Connection):
@@ -28,9 +24,37 @@ class QueryFactory(object):
         return self.dataframe_store.get(param)
 
 
+def get_industry_with_ind_class(target_day: list, target_column: str) -> pd.DataFrame:
+    """
+    いまはたぶん３日分が合計されて１つのグラフになっている
+    Args:
+        target_day: '2021-10-24'  today: 2021-10-24
+        target_column: 'marketcap'
+    Returns:
+        dataframe
+    """
+    df_ind_class = pd.DataFrame(list(IndClass.objects.all().values()))
+    df_industry = pd.DataFrame(list(Industry.objects.filter(pub_date__in=target_day).values('industry1', target_column)))
+    return df_industry.merge(df_ind_class, how='inner', on='industry1').drop('id', axis=1)
+
+
+def get_end_of_months(month_dating_back: int) -> list:
+    """ xヶ月前の月末を取得する
+    Args:
+        month_dating_back: e.g. -3 today: 2021-10-24
+    Returns:
+         datetime.date(2021, 7, 30)
+    """
+    days = []
+    df_days = pd.DataFrame(list(Industry.objects.all().order_by('pub_date').values('pub_date')))
+    list_days = list(df_days.groupby('pub_date').groups.keys())
+    adjusted = list_days[-1] + relativedelta(months=month_dating_back)
+    days.append([x for x in list_days if x.strftime("%Y-%m") == adjusted.strftime("%Y-%m")][-1])
+    return days
+
+
 class MarketVietnam(MarketAbstract):
     """ベトナムのマーケットを処理します"""
-
     def get_sbi_topics(self) -> str:
         filepath = settings.BASE_DIR.joinpath('vietnam_research/static/vietnam_research/sbi_topics/market_report_fo_em_topic.txt')
         if filepath.exists():
@@ -176,32 +200,38 @@ class MarketVietnam(MarketAbstract):
 
     def get_radar_chart_count(self):
         """業種別企業数の占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333"""
-        query = QueryFactory()
-        data = query.get('radar_chart', self._con)
-        one_of_category = data.groupby('ind_name').count()
-        all_of_category = len(data)
-        # One を All で割ったあとの marketcap を list で返す（行のラベルは業種名）
-        data = pd.DataFrame({
-            'cnt_per': (one_of_category / all_of_category)['marketcap'].values.tolist()
-        }, index=list(data.groupby('ind_name').groups.keys()))
-        data['cnt_per'] = (data['cnt_per'] * 100).round(1)
-        inner = []
-        for row in data.iterrows():
-            inner.append({"axis": row[0], "value": row[1]["cnt_per"]})
-        return [{"name": '企業数', "axes": inner}]
+        months_dating_back = [0, -3, -6]
+        result = []
+        for m in months_dating_back:
+            data = get_industry_with_ind_class(get_end_of_months(m), 'marketcap')
+            data['ind_name'] = data['industry_class'].astype(str) + '|' + data['industry1']
+            each_category = data[['marketcap', 'ind_name']].groupby('ind_name')
+            count_of_all = data['marketcap'].count()
+            occupancy = each_category['marketcap'].count() / count_of_all
+            occupancy = [Decimal(str(x)).quantize(Decimal('0.00') * 100, rounding=ROUND_HALF_UP) for x in occupancy]
+            occupancy = [float(x) for x in occupancy]  # DecimalはJSON変換できない
+            data = pd.DataFrame({'cnt_per': occupancy}, index=list(each_category.groups.keys()))
+            inner = []
+            for row in data.iterrows():
+                inner.append({"axis": row[0], "value": row[1]["cnt_per"]})
+            result.append({"name": '企業数 {0}ヶ月前'.format(m), "axes": inner})
+        return result
 
     def get_radar_chart_cap(self):
         """業種別時価総額の占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190"""
-        query = QueryFactory()
-        data = query.get('radar_chart', self._con)
-        one_of_category = data.groupby('ind_name').sum()
-        all_of_category = data['marketcap'].sum()
-        # One を All で割ったあとの marketcap を list で返す（行のラベルは業種名）
-        data = pd.DataFrame({
-            'cap_per': (one_of_category / all_of_category)['marketcap'].values.tolist()
-        }, index=list(data.groupby('ind_name').groups.keys()))
-        data['cap_per'] = (data['cap_per'] * 100).round(1)
-        inner = []
-        for row in data.iterrows():
-            inner.append({"axis": row[0], "value": row[1]["cap_per"]})
-        return [{"name": '時価総額', "axes": inner}]
+        months_dating_back = [0, -3, -6]
+        result = []
+        for m in months_dating_back:
+            data = get_industry_with_ind_class(get_end_of_months(m), 'marketcap')
+            data['ind_name'] = data['industry_class'].astype(str) + '|' + data['industry1']
+            each_category = data[['marketcap', 'ind_name']].groupby('ind_name')
+            sum_of_all = data['marketcap'].sum()
+            occupancy = each_category['marketcap'].sum() / sum_of_all
+            occupancy = [Decimal(str(x)).quantize(Decimal('0.00') * 100, rounding=ROUND_HALF_UP) for x in occupancy]
+            occupancy = [float(x) for x in occupancy]  # DecimalはJSON変換できない
+            data = pd.DataFrame({'cap_per': occupancy}, index=list(each_category.groups.keys()))
+            inner = []
+            for row in data.iterrows():
+                inner.append({"axis": row[0], "value": row[1]["cap_per"]})
+            result.append({"name": '時価総額 {0}ヶ月前'.format(m), "axes": inner})
+        return result
