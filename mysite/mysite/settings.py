@@ -11,25 +11,22 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
+# read at .env
+env = environ.Env(DEBUG=(bool, False))
+environ.Env.read_env(Path(BASE_DIR, '.env'))
+DEBUG = env('DEBUG')  # read DEBUG at .env
+SECRET_KEY = env('SECRET_KEY')  # read SECRET_KEY at .env
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'wk$)s6c6ss_2&=f-k4h3#hzbtmcsi_&gqsm2trhqq#ts*l1+5#'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
 ALLOWED_HOSTS = ['.henojiya.net', '127.0.0.1', 'localhost', '153.126.200.229']
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -82,10 +79,10 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pythondb',
-        'USER': 'python',
-        'PASSWORD': 'python123',
+        'ENGINE': env('ENGINE'),
+        'NAME': env('NAME'),
+        'USER': env('USER'),
+        'PASSWORD': env('PASSWORD'),
         'TEST': {
             'NAME': 'test_portfolio',
         },

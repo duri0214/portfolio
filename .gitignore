@@ -11,3 +11,5 @@ db.sqlite3
 /venv/
 /mysite/vietnam_research/static/vietnam_research/chart/*.png
 /.vagrant/
+mysql_dump.sql
+mysite/.env
