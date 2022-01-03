@@ -9,18 +9,17 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
-import environ
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
 # read at .env
-env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env(Path(BASE_DIR, '.env'))
-DEBUG = env('DEBUG')  # read DEBUG at .env
-SECRET_KEY = env('SECRET_KEY')  # read SECRET_KEY at .env
+load_dotenv()
+DEBUG = os.environ.get('DEBUG')  # read DEBUG at .env
+SECRET_KEY = os.environ.get('SECRET_KEY')  # read SECRET_KEY at .env
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -79,10 +78,10 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': env('ENGINE'),
-        'NAME': env('NAME'),
-        'USER': env('USER'),
-        'PASSWORD': env('PASSWORD'),
+        'ENGINE': os.environ.get('ENGINE'),
+        'NAME': os.environ.get('NAME'),
+        'USER': os.environ.get('USER'),
+        'PASSWORD': os.environ.get('PASSWORD'),
         'TEST': {
             'NAME': 'test_portfolio',
         },
@@ -131,10 +130,10 @@ AUTH_USER_MODEL = 'register.User'
 # mail
 with open(Path(BASE_DIR).joinpath('register/api_setting/gmailpw.txt'), mode='r', encoding='utf8') as file:
     GMAILPW = file.read()
-EMAIL_BACKEND = env('EMAIL_BACKEND')
-EMAIL_HOST = env('EMAIL_HOST')
-EMAIL_PORT = env('EMAIL_PORT')
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = os.environ.get('EMAIL_PORT')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = GMAILPW
 EMAIL_USE_TLS = True
 
