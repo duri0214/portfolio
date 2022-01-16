@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
 # read at .env
-load_dotenv()
+load_dotenv(BASE_DIR / '.env')
 DEBUG = os.environ.get('DEBUG')  # read DEBUG at .env
 SECRET_KEY = os.environ.get('SECRET_KEY')  # read SECRET_KEY at .env
 
