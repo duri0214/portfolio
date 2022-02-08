@@ -129,13 +129,11 @@ LOGOUT_REDIRECT_URL = "vnm:index"
 AUTH_USER_MODEL = 'register.User'
 
 # mail
-with open(Path(BASE_DIR).joinpath('register/api_setting/gmailpw.txt'), mode='r', encoding='utf8') as file:
-    GMAILPW = file.read()
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
 EMAIL_HOST = os.environ.get('EMAIL_HOST')
 EMAIL_PORT = os.environ.get('EMAIL_PORT')
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = GMAILPW
+EMAIL_HOST_PASSWORD = os.environ.get('REGISTER')
 EMAIL_USE_TLS = True
 
 # Static files (CSS, JavaScript, Images)

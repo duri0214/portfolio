@@ -13,9 +13,8 @@ import stripe
 from .models import Products, BuyingHistory
 from .forms import EditForm, RegisterFormSingle, RegisterFormBulk
 
-# read APIKEY
-with open(settings.BASE_DIR.joinpath('shopping/api_setting/apikey.txt'), mode='r') as file:
-    stripe.api_key = file.read()
+# stripe api key
+stripe.api_key = os.environ.get('SHOPPING')
 
 
 class UploadSingleView(CreateView):
