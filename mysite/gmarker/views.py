@@ -19,19 +19,19 @@ def index(request, search_code='9'):
             if query.count() > 0:
                 query.delete()
             # api search
-            searchword = SignageMenuName.objects.get(menu_code=search_code).menu_name
-            print('search at:', searchword)
+            search_word = SignageMenuName.objects.get(menu_code=search_code).menu_name
+            print('search at:', search_word)
             centerlatlng = StoreInformation.objects.get(category=9).shop_latlng
             types = 'restaurant'
             radius = 1500
-            shops = near_by_search(os.environ.get('GMARKER'), searchword, centerlatlng, types, radius)
+            shops = near_by_search(os.environ.get('GMARKER'), search_word, centerlatlng, types, radius)
             # insert as category 1
             if shops:
                 for shop in shops:
                     # print(shop["place_id"])
                     store = StoreInformation()
                     store.category = 1
-                    store.searchword = searchword
+                    store.searchword = search_word
                     store.place_id = shop["place_id"]
                     store.shop_name = shop["name"]
                     store.shop_latlng = ','.join(map(str, shop["geometry"]["location"].values()))
