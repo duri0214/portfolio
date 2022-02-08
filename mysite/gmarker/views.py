@@ -1,34 +1,30 @@
 """views.py"""
+import os
 import urllib.request
 import json
 from django.shortcuts import render, redirect
 from django.http.response import JsonResponse
-
-from django.conf import settings
 from .models import StoreInformation, SignageMenuName
 
-# read APIKEY
-with open(settings.BASE_DIR.joinpath('gmarker/api_setting/apikey.txt'), mode='r') as file:
-    APIKEY = file.read()
 
-def index(request, searchcode='9'):
-    """searchcode9は自拠点"""
+def index(request, search_code='9'):
+    """search_code9は自拠点"""
 
-    print("searchcode: ", searchcode)
+    print("search_code: ", search_code)
     if request.method == 'POST':
         temp = []
-        if searchcode[:1] == '1':
+        if search_code[:1] == '1':
             # delete if record exists
             query = StoreInformation.objects.filter(category=1)
             if query.count() > 0:
                 query.delete()
             # api search
-            searchword = SignageMenuName.objects.get(menu_code=searchcode).menu_name
+            searchword = SignageMenuName.objects.get(menu_code=search_code).menu_name
             print('search at:', searchword)
             centerlatlng = StoreInformation.objects.get(category=9).shop_latlng
             types = 'restaurant'
             radius = 1500
-            shops = nearbysearch(APIKEY, searchword, centerlatlng, types, radius)
+            shops = near_by_search(os.environ.get('GMARKER'), searchword, centerlatlng, types, radius)
             # insert as category 1
             if shops:
                 for shop in shops:
@@ -41,7 +37,7 @@ def index(request, searchcode='9'):
                     store.shop_latlng = ','.join(map(str, shop["geometry"]["location"].values()))
                     temp.append(store)
                 StoreInformation.objects.bulk_create(temp)
-        elif searchcode[:1] == '2':
+        elif search_code[:1] == '2':
             # delete if record exists
             query = StoreInformation.objects.filter(category=2)
             if query.count() > 0:
@@ -59,15 +55,15 @@ def index(request, searchcode='9'):
                     store.shop_latlng = ','.join(map(str, shop["geometry"]["location"].values()))
                     temp.append(store)
                 StoreInformation.objects.bulk_create(temp)
-            # responce json
-            return JsonResponse({"status" : "OK"})
+            # response json
+            return JsonResponse({"status": "OK"})
 
         # redirect 1 or 3
-        return redirect('/gmarker/result/' + searchcode[:1])
+        return redirect('/gmarker/result/' + search_code[:1])
 
     else:
         # select category
-        temp = StoreInformation.objects.filter(category=searchcode)
+        temp = StoreInformation.objects.filter(category=search_code)
         shops = []
         for i, row in enumerate(temp):
             shops.append({
@@ -93,12 +89,14 @@ def index(request, searchcode='9'):
         # render
         return render(request, 'gmarker/index.html', context)
 
-def searchdetail(request, place_id):
-    '''ajaxから利用されます'''
-    return JsonResponse({"detail" : get_details(APIKEY, place_id)})
 
-def nearbysearch(apikey, place, centerlatlng, types, radius):
-    '''
+def search_detail(request, place_id):
+    """ajaxから利用されます"""
+    return JsonResponse({"detail": get_details(os.environ.get('GMARKER'), place_id)})
+
+
+def near_by_search(api_key, place, centerlatlng, types, radius):
+    """
     dependency
     ----------
     Places API
@@ -111,23 +109,27 @@ def nearbysearch(apikey, place, centerlatlng, types, radius):
     --------
     a place\n
     place_id, rating\n
-    e.g. CmRaAAAARRAYThPn0sTB1aE-Afx0_..., 4
-    '''
+    e.g. CmRaThPn0sTB1aE-Afx0_..., 4
+
+    Args:
+        api_key:
+    """
     url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?' \
         'location={}&radius={}&type={}&keyword={}&' \
         'key={}'
-    url = url.format(centerlatlng, radius, types, urllib.parse.quote(place), apikey)
-    # print("nearbysearch:", url)
+    url = url.format(centerlatlng, radius, types, urllib.parse.quote(place), api_key)
+    # print("near_by_search:", url)
     res = urllib.request.urlopen(url)
-    retvalue = None
+    ret_value = None
     if res.code == 200:
         res_json = json.loads(res.read())
         if res_json.get("results"):
-            retvalue = res_json["results"]
-    return retvalue
+            ret_value = res_json["results"]
+    return ret_value
 
-def get_details(apikey, place_id):
-    '''
+
+def get_details(api_key, place_id):
+    """
     dependency
     ----------
     Places API
@@ -137,18 +139,21 @@ def get_details(apikey, place_id):
     return
     ------
     e.g. https://maps.google.com/?cid=10281119596374313554
-    '''
-    retvalue = '#'
+
+    Args:
+        api_key:
+    """
+    ret_value = '#'
     if place_id:
         fields = 'address_component,adr_address,formatted_address,geometry,icon,name,' \
             'permanently_closed,photo,place_id,plus_code,type,url,utc_offset,vicinity,' \
             'formatted_phone_number,international_phone_number,opening_hours,' \
             'website,price_level,rating,review,user_ratings_total'
         url = 'https://maps.googleapis.com/maps/api/place/details/json?' \
-            'place_id={}&fields={}&key={}'.format(place_id, fields, apikey)
+            'place_id={}&fields={}&key={}'.format(place_id, fields, api_key)
         # print('url:', url)
         res = urllib.request.urlopen(url)
         if res.code == 200:
             res_json = json.loads(res.read())
-            retvalue = res_json["result"]
-    return retvalue
+            ret_value = res_json["result"]
+    return ret_value
