@@ -1,11 +1,12 @@
 import json
+import os
 import requests
 
 
 def send_message(message: str):
     channel_id = 'C8TG6TW6B'
     response = requests.post(
-        'https://hooks.slack.com/services/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',
+        os.environ.get('SLACK_WEBHOOK_URL'),
         data=json.dumps({
             "channel": channel_id,
             "text": message,
