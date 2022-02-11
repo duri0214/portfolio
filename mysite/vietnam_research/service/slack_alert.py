@@ -1,12 +1,13 @@
 import json
-from stripe.http_client import requests
+import requests
 
 
 def send_message(message: str):
+    channel_id = 'C8TG6TW6B'
     response = requests.post(
-        'https://hooks.slack.com/services/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',
+        'https://hooks.slack.com/services/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',
         data=json.dumps({
-            "channel": "random",
+            "channel": channel_id,
             "text": message,
             "icon_emoji": ":mostly_sunny:",
             "username": "weather_bot"
