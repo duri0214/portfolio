@@ -17,7 +17,7 @@ function addRowHandler() {
                     tr_edit = tr.nextElementSibling;
                     tr_edit.style.display = "table-row";
                     tr_prev = tr;
-                    fetch(myurl.base + "edit/0/", {
+                    fetch(myurl.base + "product/edit/0/", {
                         method: 'POST',
                         headers: {
                             "Content-Type": "application/json; charset=utf-8",

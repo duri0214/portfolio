@@ -35,7 +35,7 @@
                             price: @{{ product.price | intcomma }} 円<br>
                             {{ product.description | truncatechars:20 }}
                         </p>
-                        <a href="{% url 'shp:detail' product.pk %}" style="font-size: small;">もっと詳しく</a>
+                        <a href="{% url 'shp:product_detail' product.pk %}" style="font-size: small;">もっと詳しく</a>
                     </div>
                 </div>
             </div>
@@ -60,8 +60,8 @@
     </div>
 
     <h2 id="maintain">管理用</h2>
-    <a href="{% url 'shp:register_single' %}">単品登録</a>
-    <a href="{% url 'shp:register_bulk' %}">CSV登録</a>
+    <a href="{% url 'shp:product_register_single' %}">単品登録</a>
+    <a href="{% url 'shp:product_register_bulk' %}">CSV登録</a>
 
     <h3>編集</h3>
     <table id="edit_table" class="table">
@@ -82,7 +82,7 @@
                 <td>{{ item.description | truncatechars:20 }}</td>
             </tr>
             <tr class="edit_record">
-                <form action="{% url 'shp:edit_data' 1 %}" method="POST">
+                <form action="{% url 'shp:product_edit' 1 %}" method="POST">
                     {% csrf_token %}
                     <td colspan="4">
                         {{ editable_form.code }}

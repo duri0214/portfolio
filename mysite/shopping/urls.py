@@ -5,8 +5,9 @@ from .views import IndexView, ProductDetailView, UploadSingleView, UploadBulkVie
 app_name = 'shp'
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
-    path('detail/<int:pk>/', ProductDetailView.as_view(), name='detail'),
-    path('regist/single/', UploadSingleView.as_view(), name='register_single'),
-    path('regist/bulk/', UploadBulkView.as_view(), name='register_bulk'),
-    path('edit/<int:mode>/', IndexView.as_view(), name='edit_data')
+    path('product/edit/<int:mode>/', IndexView.as_view(), name='product_edit'),
+    path('product/detail/<int:pk>/', ProductDetailView.as_view(), name='product_detail'),
+    path('product/regist/single/', UploadSingleView.as_view(), name='product_register_single'),
+    path('product/regist/bulk/', UploadBulkView.as_view(), name='product_register_bulk'),
+    # path('staff/detail/<int:pk>/', StaffDetailView.as_view(), name='staff_detail')
 ]

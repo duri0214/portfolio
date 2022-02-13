@@ -20,7 +20,7 @@
         <tr><td>beer5</td><td>アサヒスーパードライ</td><td>305</td><td>缶　３５０ｍｌ</td></tr>
     </tbody>
 </table>
-<form action="{% url 'shp:register_bulk' %}" method="POST" class="registration" enctype="multipart/form-data">
+<form action="{% url 'shp:product_register_bulk' %}" method="POST" class="registration" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">UPLOAD</button>
