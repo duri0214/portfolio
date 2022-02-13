@@ -1,0 +1,43 @@
+{% extends 'shopping/base.html' %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'shopping/css/staff/detail.css' %}">
+{% endblock %}
+
+{% block content %}
+    <h3>店員プロフィール</h3>
+
+    <div class="cards-container">
+
+        <div class="card card-one">
+            <header>
+                <div class="avatar">
+                    <img src="{{ object.image.url }}" alt="missing picture" />
+                </div>
+            </header>
+
+            <h3>{{ object.name }}</h3>
+            <div class="desc">
+                {{ object.description }}
+            </div>
+            <div class="contacts">
+                <a href=""><i class="fa fa-plus"></i></a>
+                <a href=""><i class="fa fa-whatsapp"></i></a>
+                <a href=""><i class="fa fa-envelope"></i></a>
+                <div class="clear"></div>
+            </div>
+
+            <footer>
+                <a href=""><i class="fa fa-facebook"></i></a>
+                <a href=""><i class="fa fa-linkedin"></i></a>
+                <a href=""><i class="fa fa-twitter"></i></a>
+                <a href=""><i class="fa fa-instagram"></i></a>
+            </footer>
+        </div>
+
+        <div class="clear"></div>
+    </div>
+
+    <a href="{% url 'shp:index' %}">もどる</a>
+{% endblock %}

@@ -2,15 +2,15 @@
 {% load static %}
 
 {% block style %}
-    <link rel="stylesheet" href="{% static 'shopping/css/product/register_single.css' %}">
+    <link rel="stylesheet" href="{% static 'shopping/css/product/index.css' %}">
 {% endblock %}
 
 {% block content %}
-<h1>単品登録</h1>
-<form action="{% url 'shp:product_register_single' %}" method="post" class="registration" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">送信</button>
-</form>
-<a href="{% url 'shp:index' %}">もどる</a>
+    <h1>単品登録</h1>
+    <form action="{% url 'shp:product_register_single' %}" method="post" class="registration" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">送信</button>
+    </form>
+    <a href="{% url 'shp:index' %}">もどる</a>
 {% endblock %}

@@ -2,6 +2,10 @@
 {% load static %}
 {% load humanize %}
 
+{% block style %}
+    <link rel="stylesheet" href="{% static 'shopping/css/index.css' %}">
+{% endblock %}
+
 {% block content %}
 
     {% if messages %}
@@ -19,9 +23,15 @@
     </div>
 
     <h2>店員一覧</h2>
-    {% for staff in staffs %}
-        <img src="{{ staff.image.url }}" width="100px" alt="missing picture">
-    {% endfor %}
+    {% if staffs %}
+        {% for staff in staffs %}
+            <a href="{% url 'shp:staff_detail' staff.pk %}">
+                <img src="{{ staff.image.url }}" width="100px" alt="missing picture">
+            </a>
+        {% endfor %}
+    {% else %}
+        店員がいません
+    {% endif %}
     
     <h2>商品一覧</h2>
     <div class="card-group">

@@ -6,7 +6,7 @@ import json
 from django.conf import settings
 from django.shortcuts import redirect, render
 from django.http.response import JsonResponse
-from django.views.generic import TemplateView, DetailView, CreateView, FormView
+from django.views.generic import TemplateView, DetailView, CreateView, FormView, UpdateView
 from django.contrib import messages
 from django.urls import reverse_lazy
 import stripe
@@ -118,7 +118,7 @@ class IndexView(TemplateView):
 
 class ProductDetailView(DetailView):
     """DetailView"""
-    template_name = 'shopping/detail.html'
+    template_name = 'shopping/product/detail.html'
     model = Products
 
     def post(self, request, *args, **kwargs):
@@ -148,3 +148,18 @@ class ProductDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['public_key'] = settings.STRIPE_PUBLIC_KEY
         return context
+
+
+class StaffDetailView(DetailView):
+    """DetailView"""
+    template_name = 'shopping/staff/detail.html'
+    model = Staff
+
+
+class StaffEditView(UpdateView):
+    pass
+
+
+class StaffCreateView(CreateView):
+    pass
+
