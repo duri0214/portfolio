@@ -4,6 +4,32 @@ from django.db import models
 from django.utils import timezone
 
 
+class Store(models.Model):
+    """店舗"""
+    name = models.CharField('店名', max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
+class Staff(models.Model):
+    """店舗スタッフ"""
+    name = models.CharField('表示名', max_length=50)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, verbose_name='ログインユーザー', on_delete=models.CASCADE
+    )
+    store = models.ForeignKey(Store, verbose_name='店舗', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='shopping/staff', verbose_name='プロフィール画像', null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'store'], name='unique_staff'),
+        ]
+
+    def __str__(self):
+        return f'{self.store.name} - {self.name}'
+
+
 class Products(models.Model):
     """商品"""
     code = models.CharField('商品コード', max_length=200)

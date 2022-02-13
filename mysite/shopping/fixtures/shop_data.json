@@ -1,0 +1,16 @@
+[
+  {
+    "model": "shopping.store",
+    "fields": {
+      "id": 1,
+      "name": "笹塚"
+    }
+  },
+  {
+    "model": "shopping.store",
+    "fields": {
+      "id": 2,
+      "name": "新宿"
+    }
+  }
+]

@@ -10,7 +10,7 @@ from django.views.generic import TemplateView, DetailView, CreateView, FormView
 from django.contrib import messages
 from django.urls import reverse_lazy
 import stripe
-from .models import Products, BuyingHistory
+from .models import Products, BuyingHistory, Staff
 from .forms import EditForm, RegisterFormSingle, RegisterFormBulk
 
 # stripe api key
@@ -112,6 +112,7 @@ class IndexView(TemplateView):
         context['products'] = Products.objects.all()
         context['editable_list'] = Products.objects.order_by('id')[:5]
         context['editable_form'] = EditForm()
+        context['staffs'] = Staff.objects.all()
         return context
 
 

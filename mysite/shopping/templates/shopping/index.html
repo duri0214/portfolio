@@ -18,6 +18,11 @@
         <a class="btn btn-primary btn-lg" href="#maintain" role="button">管理用</a>
     </div>
 
+    <h2>店員一覧</h2>
+    {% for staff in staffs %}
+        <img src="{{ staff.image.url }}" width="100px" alt="missing picture">
+    {% endfor %}
+    
     <h2>商品一覧</h2>
     <div class="card-group">
         {% for product in products %}
