@@ -15,11 +15,12 @@ class Store(models.Model):
 class Staff(models.Model):
     """店舗スタッフ"""
     name = models.CharField('表示名', max_length=50)
+    description = models.TextField(verbose_name='自己紹介', null=True, blank=True)
+    image = models.ImageField(upload_to='shopping/staff', verbose_name='プロフィール画像', null=True, blank=True)
+    store = models.ForeignKey(Store, verbose_name='店舗', on_delete=models.CASCADE)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, verbose_name='ログインユーザー', on_delete=models.CASCADE
     )
-    store = models.ForeignKey(Store, verbose_name='店舗', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='shopping/staff', verbose_name='プロフィール画像', null=True, blank=True)
 
     class Meta:
         constraints = [

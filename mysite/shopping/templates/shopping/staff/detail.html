@@ -23,9 +23,7 @@
                 {{ object.description }}
             </div>
             <div class="contacts">
-                <a href=""><i class="fa fa-plus"></i></a>
-                <a href=""><i class="fa fa-whatsapp"></i></a>
-                <a href=""><i class="fa fa-envelope"></i></a>
+                <a href="{% url 'shp:staff_edit' object.pk %}"><i class="fa fa-pencil-square-o"></i></a>
                 <div class="clear"></div>
             </div>
 

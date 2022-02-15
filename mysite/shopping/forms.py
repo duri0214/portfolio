@@ -1,6 +1,6 @@
 """forms.py"""
 from django import forms
-from .models import Products
+from .models import Products, Staff
 
 
 class RegisterFormSingle(forms.ModelForm):
@@ -23,8 +23,8 @@ class RegisterFormBulk(forms.Form):
         return file
 
 
-class EditForm(forms.ModelForm):
-    """ EditForm """
+class ProductEditForm(forms.ModelForm):
+    """ ProductEditForm """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['code'].widget.attrs['readonly'] = 'readonly'

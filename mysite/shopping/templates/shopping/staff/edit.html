@@ -1,0 +1,17 @@
+{% extends 'shopping/base.html' %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'shopping/css/staff/detail.css' %}">
+{% endblock %}
+
+{% block content %}
+    <h1>店員プロフィール（編集）</h1>
+
+    <form method="post">{% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Update">
+    </form>
+
+    <a href="{% url 'shp:staff_detail' object.pk %}">もどる</a>
+{% endblock %}

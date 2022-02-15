@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 import stripe
 from .models import Products, BuyingHistory, Staff
-from .forms import EditForm, RegisterFormSingle, RegisterFormBulk
+from .forms import ProductEditForm, RegisterFormSingle, RegisterFormBulk
 
 # stripe api key
 stripe.api_key = os.environ.get('SHOPPING')
@@ -86,7 +86,7 @@ class IndexView(TemplateView):
         mode = self.kwargs.get("mode")
         if mode != 0:
             # update
-            form = EditForm(request.POST)
+            form = ProductEditForm(request.POST)
             if form.is_valid():
                 product = Products.objects.get(code=form.cleaned_data['code'])
                 product.code = form.cleaned_data['code']
@@ -111,7 +111,7 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['products'] = Products.objects.all()
         context['editable_list'] = Products.objects.order_by('id')[:5]
-        context['editable_form'] = EditForm()
+        context['editable_form'] = ProductEditForm()
         context['staffs'] = Staff.objects.all()
         return context
 
@@ -157,7 +157,10 @@ class StaffDetailView(DetailView):
 
 
 class StaffEditView(UpdateView):
-    pass
+    template_name = 'shopping/staff/edit.html'
+    success_url = reverse_lazy('shp:index')
+    model = Staff
+    fields = ('name', 'description', 'image', 'store')
 
 
 class StaffCreateView(CreateView):
