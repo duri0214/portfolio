@@ -164,5 +164,8 @@ class StaffEditView(UpdateView):
 
 
 class StaffCreateView(CreateView):
-    pass
+    template_name = "shopping/staff/create.html"
+    success_url = reverse_lazy('shp:index')
+    model = Staff
+    fields = ('name', 'description', 'image', 'store', 'user')
 

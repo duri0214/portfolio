@@ -1,0 +1,18 @@
+{% extends 'shopping/base.html' %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'shopping/css/staff/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <h1>店員作成</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Create">
+    </form>
+    <a href="{% url 'shp:index' %}">もどる</a>
+
+{% endblock %}
