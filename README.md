@@ -1,4 +1,8 @@
 # Portfolio
+## TODO
+- WarehouseのDatepickerが動かない
+- tabindexの研究
+
 ## vietnam_research
 
 vietnam statistics
