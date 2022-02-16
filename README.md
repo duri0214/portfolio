@@ -1,5 +1,7 @@
 # Portfolio
 ## TODO
+- registerの last_name, first_name を編集したい！
+  - https://hodalog.com/how-to-create-user-sign-up-view/
 - WarehouseのDatepickerが動かない
 - tabindexの研究
 

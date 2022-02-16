@@ -1,5 +1,10 @@
 body { padding-top: 48px; }
-
+.jumbotron li
+{
+  display: inline-block;
+  list-style-type: none;
+  padding-top: 5px;
+}
 #uptrends_wrapper li {
   display: inline-block;
 }
@@ -8,11 +13,11 @@ body { padding-top: 48px; }
 }
 .uptrends p {
   position: absolute;
-  margin: 0px;
+  margin: 0;
   color: white;
   font-weight: bold;
   font-family :Kameron, sans-serif;
-  top: 0px;
+  top: 0;
   left: 31px;
   padding: 5px 10px;
   font-size: 12px;
