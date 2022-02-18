@@ -5,11 +5,11 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.http import urlencode
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView, ListView, UpdateView
 from django.urls import reverse_lazy
 from django.http.response import JsonResponse
 from django.db.models import Count, Case, When, IntegerField, Sum
-from .forms import ArticleForm, WatchlistForm, ExchangeForm, FinancialResultsForm
+from .forms import ArticleForm, WatchlistCreateForm, ExchangeForm, FinancialResultsForm
 from .service.market_vietnam import MarketVietnam
 from .models import WatchList, Likes, Articles, FinancialResultWatch
 from django.contrib.auth.decorators import login_required
@@ -24,7 +24,7 @@ def index(request):
     exchanged = {}
     if request.method == 'POST':
         # ウォッチリスト登録処理
-        watchlist_form = WatchlistForm(request.POST)
+        watchlist_form = WatchlistCreateForm(request.POST)
         if watchlist_form.is_valid():
             watchlist = WatchList()
             watchlist.symbol = watchlist_form.cleaned_data['buy_symbol']
@@ -56,7 +56,7 @@ def index(request):
         for param in params:
             if param in request.GET:
                 exchanged[param] = request.GET.get(param)
-        watchlist_form = WatchlistForm()
+        watchlist_form = WatchlistCreateForm()
         watchlist_form.buy_date = datetime.today().strftime("%Y/%m/%d")
 
     # articlesとlike
@@ -123,12 +123,23 @@ class WatchListRegister(CreateView):
     """WatchList作成画面"""
     model = WatchList
     template_name = "vietnam_research/watchlist/register.html"
-    form_class = WatchlistForm
+    form_class = WatchlistCreateForm
     success_url = reverse_lazy("vnm:index")
 
     def form_valid(self, form):
         form.instance.already_has = 1
         return super().form_valid(form)
+
+
+class WatchListEdit(UpdateView):
+    """WatchList編集画面"""
+    model = WatchList
+    template_name = "vietnam_research/watchlist/edit.html"
+    success_url = reverse_lazy('vnm:index')
+    fields = ('symbol', 'bought_day', 'stocks_price', 'stocks_count', 'already_has')
+
+    def get_queryset(self, **kwargs):
+        return WatchList.objects.filter(pk=self.kwargs['pk'])
 
 
 class FinancialResultsListView(ListView):

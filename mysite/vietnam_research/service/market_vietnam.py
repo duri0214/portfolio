@@ -74,7 +74,8 @@ class MarketVietnam(MarketAbstract):
                 WHERE i.pub_date = (SELECT MAX(i.pub_date) pub_date FROM vietnam_research_industry i)
             )
             SELECT DISTINCT
-                CASE
+                w.id
+                , CASE
                     WHEN market_code = 'HOSE' THEN 'hcm'
                     WHEN market_code = 'HNX' THEN 'hn'
                 END mkt

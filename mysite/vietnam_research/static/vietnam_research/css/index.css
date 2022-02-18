@@ -22,3 +22,9 @@ body { padding-top: 48px; }
   padding: 5px 10px;
   font-size: 12px;
 }
+.watchlist li
+{
+  display: inline-block;
+  list-style-type: none;
+  padding-top: 4px;
+}

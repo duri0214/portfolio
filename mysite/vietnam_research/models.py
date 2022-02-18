@@ -48,7 +48,7 @@ class VnIndex(models.Model):
 
 class WatchList(models.Model):
     """ウォッチリスト"""
-    symbol = models.CharField(max_length=10, primary_key=True)
+    symbol = models.CharField(max_length=10)
     already_has = models.BooleanField(blank=True, null=True, default=1)
     bought_day = models.DateTimeField(blank=True, null=True)
     stocks_price = models.PositiveIntegerField(blank=True, null=True, default=0)

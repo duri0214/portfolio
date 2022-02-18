@@ -242,11 +242,13 @@
     <div id="watchlist">
         <h2>ウォッチリスト</h2>
     </div>
-    {% if user.is_superuser %}
-        <a href="{% url 'vnm:watchlist_register' %}" class="btn btn-primary btn-sm" role="button">登録</a>
-    {% else %}
-        <a href="#" class="btn btn-secondary btn-sm disabled" role="button">登録</a>
-    {% endif %}
+    <ul class="watchlist">
+        {% if user.is_superuser %}
+            <li><a href="{% url 'vnm:watchlist_register' %}" class="btn btn-primary btn-sm" role="button">登録</a></li>
+        {% else %}
+            <li><a href="#" class="btn btn-secondary btn-sm disabled" role="button">登録</a></li>
+        {% endif %}
+    </ul>
 
     <div class="card-group">
         {% for idx, row in watchlist.iterrows %}
@@ -266,7 +268,10 @@
                             備考：{{ row.buy_price_yen }}円<br>
                         </p>
                     </div>
-                    <div class="card-footer text-muted"><a href="https://www.viet-kabu.com/{{ row.mkt }}/{{ row.symbol }}.html" target="_blank">link</a></div>
+                    <div class="card-footer text-muted">
+                        <a href="{% url 'vnm:watchlist_edit' row.id %}">編集</a>
+                        <a href="https://www.viet-kabu.com/{{ row.mkt }}/{{ row.symbol }}.html" target="_blank">link</a>
+                    </div>
                 </div>
             </div>
         {% endfor %}

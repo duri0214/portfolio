@@ -21,7 +21,7 @@ class ExchangeForm(forms.Form):
     )
 
 
-class WatchlistForm(forms.ModelForm):
+class WatchlistCreateForm(forms.ModelForm):
     """ウォッチリスト登録時の入力フォームです"""
 
     class Meta:
