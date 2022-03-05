@@ -2,6 +2,7 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 
+
 class UserCreateForm(UserCreationForm):
     """ユーザー登録用フォーム"""
 
