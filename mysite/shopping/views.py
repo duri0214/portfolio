@@ -124,7 +124,7 @@ class ProductDetailView(DetailView):
     def post(self, request, *args, **kwargs):
         """post"""
         product = self.get_object()
-        token = request.POST['stripeToken']  # 'stripeToken' will made by form submit
+        token = request.POST['stripeToken']  # 'stripeToken' will be made by form submit
         try:
             # buy
             charge = stripe.Charge.create(
@@ -137,7 +137,7 @@ class ProductDetailView(DetailView):
             # errors: Payment was not successful. e.g. payment limit over
             context = self.get_context_data()
             context['message'] = errors.error.message
-            return render(request, 'shopping/product_detail.html', context)
+            return render(request, 'shopping/product/detail.html', context)
         else:
             # ok
             BuyingHistory.objects.create(product=product, user=request.user, stripe_id=charge.id)
@@ -168,4 +168,3 @@ class StaffCreateView(CreateView):
     success_url = reverse_lazy('shp:index')
     model = Staff
     fields = ('name', 'description', 'image', 'store', 'user')
-
