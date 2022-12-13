@@ -11,7 +11,7 @@ from django.http.response import JsonResponse
 from django.db.models import Count, Case, When, IntegerField, Sum
 from .forms import ArticleForm, WatchlistCreateForm, ExchangeForm, FinancialResultsForm
 from .service.market_vietnam import MarketVietnam
-from .models import WatchList, Likes, Articles, FinancialResultWatch
+from .models import WatchList, Likes, Articles, FinancialResultWatch, BasicInformation
 from django.contrib.auth.decorators import login_required
 
 
@@ -80,7 +80,7 @@ def index(request):
         'vnindex_timeline': json.dumps(mkt.get_national_stock_timeline(), ensure_ascii=False),
         'vnindex_layers': json.dumps(mkt.get_national_stock_layers(), ensure_ascii=False),
         'articles': articles,
-        'basicinfo': mkt.get_basicinfo(),
+        'basicinfo': BasicInformation.objects.order_by('id').values('item', 'description'),
         'watchlist': mkt.get_watchlist(),
         'sbi_topics': mkt.get_sbi_topics(),
         'uptrends': json.dumps(mkt.get_uptrends(), ensure_ascii=False),

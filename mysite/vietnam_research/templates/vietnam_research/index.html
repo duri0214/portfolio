@@ -47,14 +47,16 @@
             <div class="col-sm">
                 <h2>ベトナム基本情報</h2>
                 <h6>Vietnam basic information</h6>
-                <table><tbody>
-                {% for idx, row in basicinfo.iterrows %}
-                    <tr>
-                        <th><p>{{ row.item }}</p></th>
-                        <td><p>{{ row.description }}</p></td>
-                    </tr>
-                {% endfor %}
-                </tbody></table>
+                <table>
+                    <tbody>
+                        {% for row in basicinfo %}
+                            <tr>
+                                <th><p>{{ row.item }}</p></th>
+                                <td><p>{{ row.description }}</p></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
                 <p class="note"><a href="https://www.jetro.go.jp/world/asia/vn/stat_01.html">基礎的経済指標（日本貿易振興機構 jetro.go.jp）</a>※IMFデータをもとにSBI証券が作成を参考に</p>
             </div>
             <div class="col-sm">

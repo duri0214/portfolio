@@ -97,17 +97,6 @@ class MarketVietnam(MarketAbstract):
             ORDER BY bought_day;
             ''', self._con)
 
-    def get_basicinfo(self) -> pd.DataFrame:
-        """国の基本情報"""
-        return pd.read_sql_query(
-            '''
-            SELECT
-                  b.item
-                , b.description
-            FROM vietnam_research_basicinformation b
-            ORDER BY b.id;
-            ''', self._con)
-
     def get_national_stock_timeline(self):
         """シンプルな時系列を作成します"""
         query = QueryFactory()
