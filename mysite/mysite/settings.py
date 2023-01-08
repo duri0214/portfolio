@@ -138,9 +138,9 @@ EMAIL_USE_TLS = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
-STATIC_ROOT = Path(BASE_DIR).joinpath('static')
+STATIC_ROOT = BASE_DIR / "static"
 STATIC_URL = '/static/'
-MEDIA_ROOT = Path(BASE_DIR).joinpath('media')
+MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = '/media/'
 
 STRIPE_PUBLIC_KEY = 'pk_test_eiOWUzSaLn51lXt0POuRBskA009JsTTAb5'
