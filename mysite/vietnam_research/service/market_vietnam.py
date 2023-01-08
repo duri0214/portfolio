@@ -23,7 +23,7 @@ class MarketVietnam(MarketAbstract):
         See Also https://search.sbisec.co.jp/v2/popwin/info/stock/market_report_fo_em_topic.pdf
 
         Returns:
-            新興国ウィークリーレポート
+            str: 新興国ウィークリーレポート
         """
         filepath = settings.STATIC_ROOT / Path('vietnam_research/sbi_topics/market_report_fo_em_topic.txt')
         try:
