@@ -12,14 +12,6 @@ class MarketAbstract(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_national_stock_timeline(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def get_national_stock_layers(self):
-        raise NotImplementedError()
-
-    @abstractmethod
     def get_uptrends(self):
         raise NotImplementedError()
 
