@@ -1,8 +1,15 @@
+
+/**
+ * ChartJsを使って線グラフを作成する
+ * @param {string} chart_id
+ * @param {*} data
+ * @see https://www.chartjs.org/docs/latest/getting-started/
+ */
 const LineChart = function (chart_id, data) {
 
-  var ctx = document.getElementById(chart_id).getContext('2d');
+  const ctx = document.getElementById(chart_id).getContext('2d');
 
-  var chart = new Chart(ctx, {
+  new Chart(ctx, {
       // The type of chart we want to create
       type: 'line',
 
@@ -15,5 +22,4 @@ const LineChart = function (chart_id, data) {
         maintainAspectRatio: false
       }
   });
-
 }
