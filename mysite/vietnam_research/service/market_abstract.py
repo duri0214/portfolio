@@ -24,13 +24,5 @@ class MarketAbstract(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_radar_chart_count(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def get_radar_chart_cap(self):
-        raise NotImplementedError()
-
-    @abstractmethod
     def calc_fee(self, price_no_fee):
         raise NotImplementedError()
