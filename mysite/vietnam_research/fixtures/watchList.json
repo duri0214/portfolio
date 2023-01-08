@@ -1,0 +1,57 @@
+[
+  {
+    "model": "vietnam_research.watchList",
+    "fields": {
+      "symbol_id":61,
+      "already_has":1,
+      "bought_day":"2020-01-14",
+      "stocks_price":28834,
+      "stocks_count":600,
+      "user_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.watchList",
+    "fields": {
+      "symbol_id":262,
+      "already_has":1,
+      "bought_day":"2019-07-15",
+      "stocks_price":287001,
+      "stocks_count":150,
+      "user_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.watchList",
+    "fields": {
+      "symbol_id":298,
+      "already_has":1,
+      "bought_day":"2020-04-29",
+      "stocks_price":60285,
+      "stocks_count":400,
+      "user_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.watchList",
+    "fields": {
+      "symbol_id":715,
+      "already_has":1,
+      "bought_day":"2019-10-06",
+      "stocks_price":111300,
+      "stocks_count":400,
+      "user_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.watchList",
+    "fields": {
+      "symbol_id":360,
+      "already_has":0,
+      "bought_day":"2019-11-07",
+      "stocks_price":102400,
+      "stocks_count":401,
+      "user_id":1
+    }
+  }
+]
