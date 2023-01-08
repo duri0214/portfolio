@@ -8,49 +8,7 @@ from sqlalchemy.engine.base import Connection
 from .market_abstract import MarketAbstract
 import pandas as pd
 
-from ..models import Industry, IndClass
-
-
-class QueryFactory(object):
-    """Flyweightパターン"""
-    dataframe_store = {}
-    sql_store = {
-        'vnindex': 'SELECT DISTINCT Y, M, closing_price FROM vietnam_research_vnindex ORDER BY Y, M;',
-    }
-
-    def get(self, param: str, con: Connection):
-        if not (param in self.dataframe_store):
-            self.dataframe_store[param] = pd.read_sql_query(self.sql_store.get(param), con)
-        return self.dataframe_store.get(param)
-
-
-def get_industry_with_ind_class(target_day: list, target_column: str) -> pd.DataFrame:
-    """
-    いまはたぶん３日分が合計されて１つのグラフになっている
-    Args:
-        target_day: '2021-10-24'  today: 2021-10-24
-        target_column: 'marketcap'
-    Returns:
-        dataframe
-    """
-    df_ind_class = pd.DataFrame(list(IndClass.objects.all().values()))
-    df_industry = pd.DataFrame(list(Industry.objects.filter(pub_date__in=target_day).values('industry1', target_column)))
-    return df_industry.merge(df_ind_class, how='inner', on='industry1').drop('id', axis=1)
-
-
-def get_end_of_months(month_dating_back: int) -> list:
-    """ xヶ月前の月末を取得する
-    Args:
-        month_dating_back: e.g. -3 today: 2021-10-24
-    Returns:
-         datetime.date(2021, 7, 30)
-    """
-    days = []
-    df_days = pd.DataFrame(list(Industry.objects.all().order_by('pub_date').values('pub_date')))
-    list_days = list(df_days.groupby('pub_date').groups.keys())
-    adjusted = list_days[-1] + relativedelta(months=month_dating_back)
-    days.append([x for x in list_days if x.strftime("%Y-%m") == adjusted.strftime("%Y-%m")][-1])
-    return days
+from ..models import Industry, WatchList, VnIndex
 
 
 class MarketVietnam(MarketAbstract):
