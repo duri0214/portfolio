@@ -27,23 +27,24 @@ class Industry(models.Model):
     pub_date = models.DateField()
 
 
-class IndClass(models.Model):
-    """
-    viet-kabuの産業名を産業区分1-3に
-    """
-    industry1 = models.CharField(max_length=10)
-    industry_class = models.IntegerField()
+
+class VnIndexQuerySet(models.QuerySet):
+    def time_series_closing_price(self) -> QuerySet:
+        return self.order_by('Y', 'M').values('Y', 'M', 'closing_price').distinct()
 
 
 class VnIndex(models.Model):
     """
-    データ元:
-    https://jp.investing.com/indices/vn-historical-data
+    ベトナムの世界での日経平均のような数字
+
+    See Also https://jp.investing.com/indices/vn-historical-data\n
+    TODO: decimalじゃなくてfloatでいいのでは？
     """
     Y = models.CharField(max_length=4)
     M = models.CharField(max_length=2)
     closing_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    pub_date = models.DateTimeField()
+
+    objects = VnIndexQuerySet.as_manager()
 
 
 class WatchList(models.Model):
