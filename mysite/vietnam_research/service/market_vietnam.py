@@ -6,20 +6,33 @@ from django.db.models import Sum
 from sqlalchemy.engine.base import Connection
 
 from .market_abstract import MarketAbstract
+from pathlib import Path
 import pandas as pd
 
 from ..models import Industry, WatchList, VnIndex
 
 
 class MarketVietnam(MarketAbstract):
-    """ベトナムのマーケットを処理します"""
+    """
+    ベトナムのマーケットを処理します
+    """
     def get_sbi_topics(self) -> str:
-        filepath = settings.BASE_DIR.joinpath('vietnam_research/static/vietnam_research/sbi_topics/market_report_fo_em_topic.txt')
-        if filepath.exists():
+        """
+        あらかじめバッチ（daily_sbi_topics.py download_pdf）で取り込んで決まった場所においたtxtを読み込んで返す
+
+        See Also https://search.sbisec.co.jp/v2/popwin/info/stock/market_report_fo_em_topic.pdf
+
+        Returns:
+            新興国ウィークリーレポート
+        """
+        filepath = settings.STATIC_ROOT / Path('vietnam_research/sbi_topics/market_report_fo_em_topic.txt')
+        try:
             with open(filepath, encoding="utf8") as f:
-                sbi_topics = f.read()  # ファイル終端まで全て読んだデータを返す
-                f.close()
-                return sbi_topics
+                sbi_topics = f.read()
+        except FileNotFoundError:
+            sbi_topics = None
+
+        return sbi_topics
 
     def get_watchlist(self) -> pd.DataFrame:
         """ウォッチリストを作成します"""
