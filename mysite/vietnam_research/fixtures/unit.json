@@ -1,0 +1,10 @@
+[
+  {
+    "model": "vietnam_research.unit",
+    "fields": {"id":1,"name":"¢"}
+  },
+  {
+    "model": "vietnam_research.unit",
+    "fields": {"id":2,"name":"100M$"}
+  }
+]

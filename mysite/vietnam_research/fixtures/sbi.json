@@ -1,0 +1,2116 @@
+[
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"AAA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"AAM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ABT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ACB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ACL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"ADC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"AGR"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"AME"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"AMV"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ANV"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"APC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"APG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"API"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"APP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"APS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ASM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ASP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"BBC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"BBS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"BCC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"BCE"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"BID"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"BKC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"BMC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"BMI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"BMP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"BTP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"BTS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"BTT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"BVH"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"BVS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"C92"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"CAN"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"CAP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CCI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CDC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CII"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"CKV"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CLC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CMG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CMX"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"COM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CSM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"CTB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"CTC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CTD"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CTG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CTI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"CTS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DBC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DBT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DC4"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DCL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DHA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DHC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DHG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"DHT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DIG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DLG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DMC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DPM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DPR"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DQC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DRC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DSN"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DTA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DTL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DVP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"DXG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"DXP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"DZM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"EIB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"EID"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ELC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"EVE"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"FMC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"FPT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"FRT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"FTS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"GAS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"GDT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"GIL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"GLT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"GMC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"GMD"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HAD"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HAG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HAI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HAP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HAS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HAT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HAX"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HBC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HBS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HCC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HCM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HCT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HDC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HDG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HGM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HHC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HJS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HLC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HMC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HMH"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HOM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HPG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HQC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HRC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HSG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HT1"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HTI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"HTV"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"HUT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"ICG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"IDJ"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"IJC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"IMP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"INN"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ITA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ITC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"KBC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"KDC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"KDH"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"KHP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"KKC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"KMR"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"KSB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"KTT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"L10"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"L62"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LAF"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LBM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LCG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"LDP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LGC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LGL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LHG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LIX"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"LM7"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LM8"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LPB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"LSS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"LUT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"MBB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"MCG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"MIM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"MSN"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"NBB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"NBC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"NBP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"NCT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"NET"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"NHA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"NNC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"NSC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"NTL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"NTP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"NVB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"NVT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"OGC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"ONE"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"OPC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PAC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PAN"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PDR"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PET"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PGC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PGD"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PGS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PHC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PHR"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PIT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PLC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PMC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PNJ"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"POM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"POT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PPC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PSI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PTC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PTL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PTS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PV2"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PVC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PVD"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PVG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PVI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PVL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"PVS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"PVT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"QCG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"QST"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"RAL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"REE"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SAB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SAM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SBT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SCD"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SCR"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SD5"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SD6"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SD9"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SDG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SDN"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SDT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SEB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SED"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SFC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SFI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SGC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SGD"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SGH"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SGT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SHB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SHN"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SHS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SJD"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SJS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SMA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SPM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SRC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SRF"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SSC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SSI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"SSM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"ST8"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"STB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"STC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"STG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"STP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SVC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"SVI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TBC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"TC6"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TCB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TCL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TCM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TCT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TDC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TDH"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TDW"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"THB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"THT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"TIG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TIX"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"TKC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TLG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TLH"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TMP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TMS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TMT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TNA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TNC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"TNG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TPC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TPB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TRA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TRC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TTF"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"TV4"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"TYA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"UDC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"UIC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VBC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VC7"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VCB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VCF"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VCG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VCS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VDL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VFG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VGP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VHC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VHL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VHM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VIC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VIG"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VIP"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VIX"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VJC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VLA"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VMD"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VNC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VND"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VNE"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VNL"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VNM"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VNR"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VNS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VNT"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VOS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VPH"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VRE"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VSC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VSH"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VSI"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VTB"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"VTC"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HOSE",
+      "symbol":"VTO"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code":"HNX",
+      "symbol":"WCS"
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "market_code": "HNX",
+      "symbol": "WSS"
+    }
+  }
+]

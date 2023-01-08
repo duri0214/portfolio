@@ -1,0 +1,11 @@
+[
+  {
+    "model": "vietnam_research.articles",
+    "fields": {
+      "title": "Hello",
+      "note": "おげんきですか？",
+      "created_at": "2021-09-03 14:27:39.389428000",
+      "user_id": 1
+    }
+  }
+]

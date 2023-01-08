@@ -1,0 +1,7070 @@
+[
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2020-12-01",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":76,
+      "eps_actual":99,
+      "sales_estimate":6.94,
+      "sales_actual":7.77,
+      "y_over_y_growth_rate":136,
+      "note_url":null,
+      "symbol_id":5777,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2020-12-03",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-1,
+      "eps_actual":4,
+      "sales_estimate":2.03,
+      "sales_actual":2.17,
+      "y_over_y_growth_rate":42.1,
+      "note_url":null,
+      "symbol_id":4100,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2020-12-03",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":0,
+      "eps_actual":8,
+      "sales_estimate":2.14,
+      "sales_actual":2.33,
+      "y_over_y_growth_rate":85.9,
+      "note_url":null,
+      "symbol_id":2008,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2020-12-03",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-26,
+      "eps_actual":-1.01,
+      "sales_estimate":1.48,
+      "sales_actual":1.6,
+      "y_over_y_growth_rate":118.6,
+      "note_url":null,
+      "symbol_id":4947,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2020-12-04",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":10,
+      "eps_actual":22,
+      "sales_estimate":3.61,
+      "sales_actual":3.83,
+      "y_over_y_growth_rate":53.5,
+      "note_url":null,
+      "symbol_id":2210,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-15",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":8.26,
+      "eps_actual":10.18,
+      "sales_estimate":42.8,
+      "sales_actual":44.8,
+      "y_over_y_growth_rate":12.6,
+      "note_url":null,
+      "symbol_id":1524,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-15",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":2.65,
+      "eps_actual":3.79,
+      "sales_estimate":287.4,
+      "sales_actual":292.2,
+      "y_over_y_growth_rate":3,
+      "note_url":null,
+      "symbol_id":3291,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-15",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":1.31,
+      "eps_actual":2.08,
+      "sales_estimate":167.1,
+      "sales_actual":165,
+      "y_over_y_growth_rate":-10.2,
+      "note_url":null,
+      "symbol_id":1658,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-16",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":63,
+      "eps_actual":64,
+      "sales_estimate":180,
+      "sales_actual":179.3,
+      "y_over_y_growth_rate":-9.7,
+      "note_url":null,
+      "symbol_id":5622,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-19",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":7.36,
+      "eps_actual":12.08,
+      "sales_estimate":100.7,
+      "sales_actual":117.4,
+      "y_over_y_growth_rate":17.9,
+      "note_url":null,
+      "symbol_id":2851,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-19",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":54,
+      "eps_actual":59,
+      "sales_estimate":207.6,
+      "sales_actual":201,
+      "y_over_y_growth_rate":-9.9,
+      "note_url":null,
+      "symbol_id":1396,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-20",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":1.41,
+      "eps_actual":1.19,
+      "sales_estimate":66.2,
+      "sales_actual":66.4,
+      "y_over_y_growth_rate":21.5,
+      "note_url":null,
+      "symbol_id":3920,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-20",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":151,
+      "eps_actual":164,
+      "sales_estimate":192.3,
+      "sales_actual":197.5,
+      "y_over_y_growth_rate":8.3,
+      "note_url":null,
+      "symbol_id":4304,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-20",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":128,
+      "eps_actual":181,
+      "sales_estimate":115.3,
+      "sales_actual":136.4,
+      "y_over_y_growth_rate":25.6,
+      "note_url":null,
+      "symbol_id":3802,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-22",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":1.11,
+      "eps_actual":1.52,
+      "sales_estimate":174.8,
+      "sales_actual":200,
+      "y_over_y_growth_rate":-1,
+      "note_url":null,
+      "symbol_id":3177,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-26",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":9,
+      "eps_actual":8,
+      "sales_estimate":216.2,
+      "sales_actual":219.3,
+      "y_over_y_growth_rate":-16.4,
+      "note_url":null,
+      "symbol_id":2720,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-27",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":183,
+      "eps_actual":186,
+      "sales_estimate":216,
+      "sales_actual":225,
+      "y_over_y_growth_rate":8.7,
+      "note_url":null,
+      "symbol_id":3285,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-27",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":6.41,
+      "eps_actual":6.38,
+      "sales_estimate":169.2,
+      "sales_actual":170.3,
+      "y_over_y_growth_rate":7.3,
+      "note_url":null,
+      "symbol_id":3518,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-27",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":141,
+      "eps_actual":203,
+      "sales_estimate":402.3,
+      "sales_actual":430.8,
+      "y_over_y_growth_rate":16.7,
+      "note_url":null,
+      "symbol_id":3809,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-27",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":30,
+      "eps_actual":52,
+      "sales_estimate":30.3,
+      "sales_actual":32.4,
+      "y_over_y_growth_rate":52.3,
+      "note_url":null,
+      "symbol_id":1118,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-28",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":3.24,
+      "eps_actual":3.88,
+      "sales_estimate":264,
+      "sales_actual":281,
+      "y_over_y_growth_rate":33.2,
+      "note_url":null,
+      "symbol_id":null,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-28",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":141,
+      "eps_actual":168,
+      "sales_estimate":1032.4,
+      "sales_actual":1114,
+      "y_over_y_growth_rate":21.4,
+      "note_url":null,
+      "symbol_id":888,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-01-28",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":103,
+      "eps_actual":80,
+      "sales_estimate":103.8,
+      "sales_actual":107,
+      "y_over_y_growth_rate":44.9,
+      "note_url":null,
+      "symbol_id":5310,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-02",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":214,
+      "eps_actual":266,
+      "sales_estimate":228.5,
+      "sales_actual":249,
+      "y_over_y_growth_rate":21,
+      "note_url":null,
+      "symbol_id":5407,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-03",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":715,
+      "eps_actual":1409,
+      "sales_estimate":1197.3,
+      "sales_actual":1255.6,
+      "y_over_y_growth_rate":43.6,
+      "note_url":null,
+      "symbol_id":1149,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-03",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":1598,
+      "eps_actual":2230,
+      "sales_estimate":528.6,
+      "sales_actual":569,
+      "y_over_y_growth_rate":23.5,
+      "note_url":null,
+      "symbol_id":2815,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-03",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":54,
+      "eps_actual":53,
+      "sales_estimate":6.5,
+      "sales_actual":6.51,
+      "y_over_y_growth_rate":19.1,
+      "note_url":null,
+      "symbol_id":3823,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-04",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":100,
+      "eps_actual":108,
+      "sales_estimate":60.9,
+      "sales_actual":61.2,
+      "y_over_y_growth_rate":23.3,
+      "note_url":null,
+      "symbol_id":4483,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-04",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":1,
+      "eps_estimate":2.1,
+      "eps_actual":2.17,
+      "sales_estimate":82.6,
+      "sales_actual":82.3,
+      "y_over_y_growth_rate":62.2,
+      "note_url":null,
+      "symbol_id":4488,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-04",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":1.42,
+      "eps_actual":1.46,
+      "sales_estimate":107.4,
+      "sales_actual":110.7,
+      "y_over_y_growth_rate":39.3,
+      "note_url":null,
+      "symbol_id":1547,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-05",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":12,
+      "eps_actual":18,
+      "sales_estimate":10.3,
+      "sales_actual":10.6,
+      "y_over_y_growth_rate":128.4,
+      "note_url":null,
+      "symbol_id":4463,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-05",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":32,
+      "eps_actual":43,
+      "sales_estimate":6.47,
+      "sales_actual":7.06,
+      "y_over_y_growth_rate":76.4,
+      "note_url":null,
+      "symbol_id":4330,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-10",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":31,
+      "eps_actual":38,
+      "sales_estimate":11.9,
+      "sales_actual":12.9,
+      "y_over_y_growth_rate":28.1,
+      "note_url":null,
+      "symbol_id":null,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-10",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-68,
+      "eps_actual":-58,
+      "sales_estimate":5.61,
+      "sales_actual":5.7,
+      "y_over_y_growth_rate":-44,
+      "note_url":null,
+      "symbol_id":3588,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-11",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":-55,
+      "eps_actual":-54,
+      "sales_estimate":35.6,
+      "sales_actual":31.7,
+      "y_over_y_growth_rate":-15.5,
+      "note_url":null,
+      "symbol_id":5362,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-11",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":99,
+      "eps_actual":117,
+      "sales_estimate":5.9,
+      "sales_actual":6.46,
+      "y_over_y_growth_rate":14.9,
+      "note_url":null,
+      "symbol_id":4966,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-12",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":82,
+      "eps_actual":118,
+      "sales_estimate":3.7,
+      "sales_actual":4.56,
+      "y_over_y_growth_rate":24.7,
+      "note_url":null,
+      "symbol_id":5499,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-12",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-34,
+      "eps_actual":32,
+      "sales_estimate":158.8,
+      "sales_actual":162.5,
+      "y_over_y_growth_rate":-22.2,
+      "note_url":null,
+      "symbol_id":2176,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-12",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-76,
+      "eps_actual":-45,
+      "sales_estimate":1.89,
+      "sales_actual":2.04,
+      "y_over_y_growth_rate":56.9,
+      "note_url":null,
+      "symbol_id":1000,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-16",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":143,
+      "eps_actual":170,
+      "sales_estimate":3.46,
+      "sales_actual":3.37,
+      "y_over_y_growth_rate":1.8,
+      "note_url":null,
+      "symbol_id":5297,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-17",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":121,
+      "eps_actual":158,
+      "sales_estimate":9.13,
+      "sales_actual":9.78,
+      "y_over_y_growth_rate":93.6,
+      "note_url":null,
+      "symbol_id":4844,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-18",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-10,
+      "eps_actual":-9,
+      "sales_estimate":0.8203,
+      "sales_actual":0.826,
+      "y_over_y_growth_rate":40,
+      "note_url":null,
+      "symbol_id":2642,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-18",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-7,
+      "eps_actual":4,
+      "sales_estimate":4.55,
+      "sales_actual":5.48,
+      "y_over_y_growth_rate":65.5,
+      "note_url":null,
+      "symbol_id":5339,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-18",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-57,
+      "eps_actual":-134,
+      "sales_estimate":0.9907,
+      "sales_actual":1,
+      "y_over_y_growth_rate":51.5,
+      "note_url":null,
+      "symbol_id":4039,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-18",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":10,
+      "eps_actual":13,
+      "sales_estimate":0.541,
+      "sales_actual":0.559,
+      "y_over_y_growth_rate":89.5,
+      "note_url":null,
+      "symbol_id":2675,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-18",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":19,
+      "eps_actual":24,
+      "sales_estimate":35.6,
+      "sales_actual":40.5,
+      "y_over_y_growth_rate":17,
+      "note_url":null,
+      "symbol_id":4005,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-19",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":10,
+      "eps_actual":12,
+      "sales_estimate":24,
+      "sales_actual":21.7,
+      "y_over_y_growth_rate":-59.6,
+      "note_url":null,
+      "symbol_id":3605,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-19",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-3,
+      "eps_actual":49,
+      "sales_estimate":6.17,
+      "sales_actual":6.5,
+      "y_over_y_growth_rate":58,
+      "note_url":null,
+      "symbol_id":4655,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-23",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":10,
+      "eps_actual":12,
+      "sales_estimate":1.3,
+      "sales_actual":1.4,
+      "y_over_y_growth_rate":53.3,
+      "note_url":null,
+      "symbol_id":5769,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-24",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":24,
+      "eps_actual":32,
+      "sales_estimate":31.1,
+      "sales_actual":31.6,
+      "y_over_y_growth_rate":143.2,
+      "note_url":null,
+      "symbol_id":5001,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-25",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":1.98,
+      "eps_actual":3.1,
+      "sales_estimate":48.2,
+      "sales_actual":50,
+      "y_over_y_growth_rate":61.1,
+      "note_url":null,
+      "symbol_id":4024,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-25",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":7,
+      "eps_actual":7,
+      "sales_estimate":0.9786,
+      "sales_actual":1,
+      "y_over_y_growth_rate":54,
+      "note_url":null,
+      "symbol_id":4307,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-25",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-27,
+      "eps_actual":-307,
+      "sales_estimate":3.79,
+      "sales_actual":3.83,
+      "y_over_y_growth_rate":145,
+      "note_url":null,
+      "symbol_id":5165,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-26",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-36,
+      "eps_actual":-69,
+      "sales_estimate":2.79,
+      "sales_actual":5.71,
+      "y_over_y_growth_rate":3948,
+      "note_url":null,
+      "symbol_id":3793,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-26",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":75,
+      "eps_actual":104,
+      "sales_estimate":56.8,
+      "sales_actual":58.2,
+      "y_over_y_growth_rate":19.9,
+      "note_url":null,
+      "symbol_id":1994,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-26",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":8,
+      "eps_actual":10,
+      "sales_estimate":1.47,
+      "sales_actual":1.57,
+      "y_over_y_growth_rate":55,
+      "note_url":null,
+      "symbol_id":5779,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-26",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":88,
+      "eps_actual":114,
+      "sales_estimate":39.6,
+      "sales_actual":47,
+      "y_over_y_growth_rate":143.7,
+      "note_url":null,
+      "symbol_id":4620,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-26",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-31,
+      "eps_actual":-267,
+      "sales_estimate":9.42,
+      "sales_actual":9.7,
+      "y_over_y_growth_rate":225.5,
+      "note_url":null,
+      "symbol_id":2119,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-27",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":-33,
+      "eps_actual":-31,
+      "sales_estimate":46,
+      "sales_actual":0,
+      "y_over_y_growth_rate":0,
+      "note_url":null,
+      "symbol_id":4975,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-02-27",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-49,
+      "eps_actual":-69,
+      "sales_estimate":2.32,
+      "sales_actual":3.22,
+      "y_over_y_growth_rate":146,
+      "note_url":null,
+      "symbol_id":2181,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-02",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":79,
+      "eps_actual":122,
+      "sales_estimate":8.11,
+      "sales_actual":8.82,
+      "y_over_y_growth_rate":368.8,
+      "note_url":null,
+      "symbol_id":5777,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-02",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-16,
+      "eps_actual":-13,
+      "sales_estimate":0.4728,
+      "sales_actual":0.491,
+      "y_over_y_growth_rate":19,
+      "note_url":null,
+      "symbol_id":1032,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-02",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":10,
+      "eps_actual":9,
+      "sales_estimate":1.72,
+      "sales_actual":1.73,
+      "y_over_y_growth_rate":2.7,
+      "note_url":null,
+      "symbol_id":2140,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-03",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":63,
+      "eps_actual":78,
+      "sales_estimate":3.8,
+      "sales_actual":3.97,
+      "y_over_y_growth_rate":27.4,
+      "note_url":null,
+      "symbol_id":5469,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-03",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":8,
+      "eps_actual":14,
+      "sales_estimate":0.5767,
+      "sales_actual":0.621,
+      "y_over_y_growth_rate":8.5,
+      "note_url":null,
+      "symbol_id":1111,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-04",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-1,
+      "eps_actual":6,
+      "sales_estimate":2.22,
+      "sales_actual":2.35,
+      "y_over_y_growth_rate":40.3,
+      "note_url":null,
+      "symbol_id":4100,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-04",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-17,
+      "eps_actual":-70,
+      "sales_estimate":1.79,
+      "sales_actual":1.91,
+      "y_over_y_growth_rate":117.2,
+      "note_url":null,
+      "symbol_id":4947,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-10",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-39,
+      "eps_actual":-33,
+      "sales_estimate":1.57,
+      "sales_actual":1.71,
+      "y_over_y_growth_rate":38.4,
+      "note_url":null,
+      "symbol_id":3651,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-10",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":6,
+      "eps_actual":1,
+      "sales_estimate":2.82,
+      "sales_actual":2.89,
+      "y_over_y_growth_rate":58.1,
+      "note_url":null,
+      "symbol_id":2234,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-11",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-4,
+      "eps_actual":-1,
+      "sales_estimate":1.63,
+      "sales_actual":1.65,
+      "y_over_y_growth_rate":31.1,
+      "note_url":null,
+      "symbol_id":1539,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-11",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-8,
+      "eps_actual":-14,
+      "sales_estimate":0.625,
+      "sales_actual":0.68,
+      "y_over_y_growth_rate":95,
+      "note_url":null,
+      "symbol_id":4875,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-11",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-12,
+      "eps_actual":-7,
+      "sales_estimate":0.5213,
+      "sales_actual":0.542,
+      "y_over_y_growth_rate":22.3,
+      "note_url":null,
+      "symbol_id":5080,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-12",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":13,
+      "eps_actual":37,
+      "sales_estimate":4.08,
+      "sales_actual":4.31,
+      "y_over_y_growth_rate":56.7,
+      "note_url":null,
+      "symbol_id":2210,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-12",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":6,
+      "eps_actual":8,
+      "sales_estimate":1.48,
+      "sales_actual":1.54,
+      "y_over_y_growth_rate":35.5,
+      "note_url":null,
+      "symbol_id":2718,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-03-17",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":8,
+      "eps_actual":13,
+      "sales_estimate":2.51,
+      "sales_actual":2.65,
+      "y_over_y_growth_rate":74.2,
+      "note_url":null,
+      "symbol_id":2008,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-01",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":9,
+      "eps_actual":6,
+      "sales_estimate":0.533,
+      "sales_actual":0.566,
+      "y_over_y_growth_rate":47,
+      "note_url":null,
+      "symbol_id":3889,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-09",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":24,
+      "eps_actual":34,
+      "sales_estimate":12.5,
+      "sales_actual":13.1,
+      "y_over_y_growth_rate":-13.3,
+      "note_url":null,
+      "symbol_id":3460,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-14",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":893,
+      "eps_actual":186,
+      "sales_estimate":117.4,
+      "sales_actual":177,
+      "y_over_y_growth_rate":102.4,
+      "note_url":null,
+      "symbol_id":2851,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-14",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":294,
+      "eps_actual":450,
+      "sales_estimate":299.7,
+      "sales_actual":323,
+      "y_over_y_growth_rate":14.3,
+      "note_url":null,
+      "symbol_id":3291,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-14",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":65,
+      "eps_actual":105,
+      "sales_estimate":174.2,
+      "sales_actual":180.6,
+      "y_over_y_growth_rate":2,
+      "note_url":null,
+      "symbol_id":5622,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-15",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":112,
+      "eps_actual":121,
+      "sales_estimate":145.4,
+      "sales_actual":148.2,
+      "y_over_y_growth_rate":6.8,
+      "note_url":null,
+      "symbol_id":4278,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-15",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":824,
+      "eps_actual":777,
+      "sales_estimate":42.9,
+      "sales_actual":44,
+      "y_over_y_growth_rate":18.5,
+      "note_url":null,
+      "symbol_id":1524,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-15",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":62,
+      "eps_actual":86,
+      "sales_estimate":216.7,
+      "sales_actual":228,
+      "y_over_y_growth_rate":0.1,
+      "note_url":null,
+      "symbol_id":1396,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-15",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":218,
+      "eps_actual":362,
+      "sales_estimate":183.4,
+      "sales_actual":193,
+      "y_over_y_growth_rate":-6,
+      "note_url":null,
+      "symbol_id":1658,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-17",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":158,
+      "eps_actual":219,
+      "sales_estimate":134.8,
+      "sales_actual":157.2,
+      "y_over_y_growth_rate":65.7,
+      "note_url":null,
+      "symbol_id":3802,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-19",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":50,
+      "eps_actual":55,
+      "sales_estimate":85.8,
+      "sales_actual":90,
+      "y_over_y_growth_rate":4.7,
+      "note_url":null,
+      "symbol_id":3371,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-20",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":90,
+      "eps_actual":168,
+      "sales_estimate":12.6,
+      "sales_actual":14.2,
+      "y_over_y_growth_rate":29.4,
+      "note_url":null,
+      "symbol_id":2983,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-20",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":162,
+      "eps_actual":177,
+      "sales_estimate":173.5,
+      "sales_actual":177.3,
+      "y_over_y_growth_rate":0.9,
+      "note_url":null,
+      "symbol_id":3073,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-20",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":632,
+      "eps_actual":656,
+      "sales_estimate":164.2,
+      "sales_actual":162.6,
+      "y_over_y_growth_rate":3.9,
+      "note_url":null,
+      "symbol_id":3518,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-20",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":120,
+      "eps_actual":126,
+      "sales_estimate":180,
+      "sales_actual":181,
+      "y_over_y_growth_rate":5.1,
+      "note_url":null,
+      "symbol_id":4304,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-20",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":140,
+      "eps_actual":157,
+      "sales_estimate":73.3,
+      "sales_actual":75.9,
+      "y_over_y_growth_rate":6,
+      "note_url":null,
+      "symbol_id":4362,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-21",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":294,
+      "eps_actual":375,
+      "sales_estimate":71.3,
+      "sales_actual":71.6,
+      "y_over_y_growth_rate":24.2,
+      "note_url":null,
+      "symbol_id":3920,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-22",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":11,
+      "eps_actual":12,
+      "sales_estimate":47.8,
+      "sales_actual":47.8,
+      "y_over_y_growth_rate":-11.9,
+      "note_url":null,
+      "symbol_id":1505,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":73,
+      "eps_actual":93,
+      "sales_estimate":98.9,
+      "sales_actual":103.9,
+      "y_over_y_growth_rate":74,
+      "note_url":null,
+      "symbol_id":5310,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":74,
+      "eps_actual":83,
+      "sales_estimate":7.18,
+      "sales_actual":7.36,
+      "y_over_y_growth_rate":19.1,
+      "note_url":null,
+      "symbol_id":1739,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":155,
+      "eps_actual":163,
+      "sales_estimate":295.5,
+      "sales_actual":299.6,
+      "y_over_y_growth_rate":15.1,
+      "note_url":null,
+      "symbol_id":1888,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":73,
+      "eps_actual":90,
+      "sales_estimate":152.7,
+      "sales_actual":152.5,
+      "y_over_y_growth_rate":34.3,
+      "note_url":null,
+      "symbol_id":4686,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":1,
+      "eps_actual":3,
+      "sales_estimate":176.6,
+      "sales_actual":171.2,
+      "y_over_y_growth_rate":-16.6,
+      "note_url":null,
+      "symbol_id":2720,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":172,
+      "eps_actual":277,
+      "sales_estimate":206.2,
+      "sales_actual":229.1,
+      "y_over_y_growth_rate":27,
+      "note_url":null,
+      "symbol_id":5407,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-28",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":7,
+      "eps_actual":11,
+      "sales_estimate":4.72,
+      "sales_actual":4.85,
+      "y_over_y_growth_rate":78.4,
+      "note_url":null,
+      "symbol_id":4330,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-28",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":44,
+      "eps_actual":52,
+      "sales_estimate":32,
+      "sales_actual":34.4,
+      "y_over_y_growth_rate":92.9,
+      "note_url":null,
+      "symbol_id":1118,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-28",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":177,
+      "eps_actual":195,
+      "sales_estimate":408.3,
+      "sales_actual":417.1,
+      "y_over_y_growth_rate":19.1,
+      "note_url":null,
+      "symbol_id":3809,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-28",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":1564,
+      "eps_actual":2629,
+      "sales_estimate":514,
+      "sales_actual":553,
+      "y_over_y_growth_rate":34.4,
+      "note_url":null,
+      "symbol_id":2815,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-29",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":232,
+      "eps_actual":330,
+      "sales_estimate":236.1,
+      "sales_actual":262,
+      "y_over_y_growth_rate":47.7,
+      "note_url":null,
+      "symbol_id":null,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-29",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":98,
+      "eps_actual":140,
+      "sales_estimate":768.4,
+      "sales_actual":895.8,
+      "y_over_y_growth_rate":53.6,
+      "note_url":null,
+      "symbol_id":888,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-29",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-57,
+      "eps_actual":13,
+      "sales_estimate":4.52,
+      "sales_actual":4.54,
+      "y_over_y_growth_rate":150.9,
+      "note_url":null,
+      "symbol_id":5165,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-30",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":955,
+      "eps_actual":1579,
+      "sales_estimate":1045.9,
+      "sales_actual":1085.2,
+      "y_over_y_growth_rate":43.8,
+      "note_url":null,
+      "symbol_id":1149,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-30",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":85,
+      "eps_actual":90,
+      "sales_estimate":318.2,
+      "sales_actual":320.3,
+      "y_over_y_growth_rate":1.7,
+      "note_url":null,
+      "symbol_id":2076,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-04-30",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":53,
+      "eps_actual":65,
+      "sales_estimate":553.6,
+      "sales_actual":591.5,
+      "y_over_y_growth_rate":5.3,
+      "note_url":null,
+      "symbol_id":5723,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-04",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":11,
+      "eps_actual":13,
+      "sales_estimate":1.45,
+      "sales_actual":1.53,
+      "y_over_y_growth_rate":50.3,
+      "note_url":null,
+      "symbol_id":5769,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-04",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":78,
+      "eps_actual":93,
+      "sales_estimate":134.1,
+      "sales_actual":145.8,
+      "y_over_y_growth_rate":44.6,
+      "note_url":null,
+      "symbol_id":4292,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-06",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":-55,
+      "eps_actual":-6,
+      "sales_estimate":32.6,
+      "sales_actual":29,
+      "y_over_y_growth_rate":-10.7,
+      "note_url":null,
+      "symbol_id":5362,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-06",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":89,
+      "eps_actual":89,
+      "sales_estimate":41.9,
+      "sales_actual":45.8,
+      "y_over_y_growth_rate":235.6,
+      "note_url":null,
+      "symbol_id":4620,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-06",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-10,
+      "eps_actual":5,
+      "sales_estimate":5.34,
+      "sales_actual":5.9,
+      "y_over_y_growth_rate":61.7,
+      "note_url":null,
+      "symbol_id":5339,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-06",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":101,
+      "eps_actual":122,
+      "sales_estimate":58.9,
+      "sales_actual":60.3,
+      "y_over_y_growth_rate":30.6,
+      "note_url":null,
+      "symbol_id":4483,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-06",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":-11,
+      "eps_actual":-12,
+      "sales_estimate":0.8508,
+      "sales_actual":0.8485,
+      "y_over_y_growth_rate":34.9,
+      "note_url":null,
+      "symbol_id":2642,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-07",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":16,
+      "eps_actual":41,
+      "sales_estimate":32.8,
+      "sales_actual":50.6,
+      "y_over_y_growth_rate":266.4,
+      "note_url":null,
+      "symbol_id":5001,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-07",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-13,
+      "eps_actual":54,
+      "sales_estimate":4.91,
+      "sales_actual":5.74,
+      "y_over_y_growth_rate":79,
+      "note_url":null,
+      "symbol_id":4655,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-10",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":81,
+      "eps_actual":141,
+      "sales_estimate":2.17,
+      "sales_actual":2.2,
+      "y_over_y_growth_rate":36.8,
+      "note_url":null,
+      "symbol_id":5320,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-11",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-26,
+      "eps_actual":-106,
+      "sales_estimate":1.98,
+      "sales_actual":2.31,
+      "y_over_y_growth_rate":66.8,
+      "note_url":null,
+      "symbol_id":1000,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-11",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":13,
+      "eps_actual":-46,
+      "sales_estimate":4.91,
+      "sales_actual":3.87,
+      "y_over_y_growth_rate":139.5,
+      "note_url":null,
+      "symbol_id":4537,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-12",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":4,
+      "eps_actual":4,
+      "sales_estimate":3.32,
+      "sales_actual":3.41,
+      "y_over_y_growth_rate":48.8,
+      "note_url":null,
+      "symbol_id":4355,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-12",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-12,
+      "eps_actual":-10,
+      "sales_estimate":2.17,
+      "sales_actual":2.35,
+      "y_over_y_growth_rate":40.6,
+      "note_url":null,
+      "symbol_id":5356,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-12",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-12,
+      "eps_actual":-4,
+      "sales_estimate":0.4218,
+      "sales_actual":0.467,
+      "y_over_y_growth_rate":40.7,
+      "note_url":null,
+      "symbol_id":1480,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-12",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":5,
+      "eps_actual":8,
+      "sales_estimate":0.767,
+      "sales_actual":0.812,
+      "y_over_y_growth_rate":34.5,
+      "note_url":null,
+      "symbol_id":3260,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-13",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":21,
+      "eps_actual":38,
+      "sales_estimate":2.18,
+      "sales_actual":2.48,
+      "y_over_y_growth_rate":42,
+      "note_url":null,
+      "symbol_id":5744,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-13",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":0,
+      "eps_actual":169,
+      "sales_estimate":1.65,
+      "sales_actual":1.71,
+      "y_over_y_growth_rate":43.4,
+      "note_url":null,
+      "symbol_id":1539,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-14",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":27,
+      "eps_actual":79,
+      "sales_estimate":159.9,
+      "sales_actual":156.1,
+      "y_over_y_growth_rate":-13.4,
+      "note_url":null,
+      "symbol_id":2176,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-14",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":7,
+      "eps_actual":7,
+      "sales_estimate":1.6,
+      "sales_actual":1.6,
+      "y_over_y_growth_rate":20.2,
+      "note_url":null,
+      "symbol_id":2718,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-14",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-114,
+      "eps_actual":-195,
+      "sales_estimate":7.18,
+      "sales_actual":8.87,
+      "y_over_y_growth_rate":5.4,
+      "note_url":null,
+      "symbol_id":902,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-18",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":121,
+      "eps_actual":169,
+      "sales_estimate":1315.3,
+      "sales_actual":1383,
+      "y_over_y_growth_rate":2.7,
+      "note_url":null,
+      "symbol_id":5657,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-18",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-47,
+      "eps_actual":39,
+      "sales_estimate":42.3,
+      "sales_actual":47.1,
+      "y_over_y_growth_rate":56,
+      "note_url":null,
+      "symbol_id":3595,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-19",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":293,
+      "eps_actual":386,
+      "sales_estimate":336.8,
+      "sales_actual":375,
+      "y_over_y_growth_rate":32.7,
+      "note_url":null,
+      "symbol_id":2925,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-21",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":151,
+      "eps_actual":163,
+      "sales_estimate":54,
+      "sales_actual":55.8,
+      "y_over_y_growth_rate":41.1,
+      "note_url":null,
+      "symbol_id":1110,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-25",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":-29,
+      "eps_actual":-72,
+      "sales_estimate":0,
+      "sales_actual":0,
+      "y_over_y_growth_rate":0,
+      "note_url":null,
+      "symbol_id":4609,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-26",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":7,
+      "eps_actual":15,
+      "sales_estimate":1.64,
+      "sales_actual":1.76,
+      "y_over_y_growth_rate":59.6,
+      "note_url":null,
+      "symbol_id":5779,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-20,
+      "eps_actual":-10,
+      "sales_estimate":2.39,
+      "sales_actual":2.51,
+      "y_over_y_growth_rate":37.3,
+      "note_url":null,
+      "symbol_id":4100,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":328,
+      "eps_actual":366,
+      "sales_estimate":54.1,
+      "sales_actual":56.6,
+      "y_over_y_growth_rate":83.8,
+      "note_url":null,
+      "symbol_id":4024,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-27",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-16,
+      "eps_actual":-70,
+      "sales_estimate":2.13,
+      "sales_actual":2.29,
+      "y_over_y_growth_rate":110.4,
+      "note_url":null,
+      "symbol_id":4947,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":186,
+      "eps_actual":293,
+      "sales_estimate":15.3,
+      "sales_actual":17.5,
+      "y_over_y_growth_rate":41.6,
+      "note_url":null,
+      "symbol_id":5682,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-05-28",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":78,
+      "eps_actual":91,
+      "sales_estimate":4.1,
+      "sales_actual":4.34,
+      "y_over_y_growth_rate":28.6,
+      "note_url":null,
+      "symbol_id":5469,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-02",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":98,
+      "eps_actual":132,
+      "sales_estimate":9.08,
+      "sales_actual":9.56,
+      "y_over_y_growth_rate":191.4,
+      "note_url":null,
+      "symbol_id":5777,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-02",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":20,
+      "eps_actual":25,
+      "sales_estimate":0.951,
+      "sales_actual":0.9508,
+      "y_over_y_growth_rate":141.6,
+      "note_url":null,
+      "symbol_id":1200,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-03",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-27,
+      "eps_actual":-24,
+      "sales_estimate":0.506,
+      "sales_actual":0.5228,
+      "y_over_y_growth_rate":25.6,
+      "note_url":null,
+      "symbol_id":1032,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-03",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":48,
+      "eps_actual":62,
+      "sales_estimate":8.29,
+      "sales_actual":8.34,
+      "y_over_y_growth_rate":-6.7,
+      "note_url":null,
+      "symbol_id":1815,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-04",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":6,
+      "eps_actual":10,
+      "sales_estimate":2.92,
+      "sales_actual":3.03,
+      "y_over_y_growth_rate":70,
+      "note_url":null,
+      "symbol_id":2008,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-04",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":28,
+      "eps_actual":44,
+      "sales_estimate":4.38,
+      "sales_actual":4.69,
+      "y_over_y_growth_rate":57.9,
+      "note_url":null,
+      "symbol_id":2210,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-04",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-36,
+      "eps_actual":-15,
+      "sales_estimate":1.7,
+      "sales_actual":1.82,
+      "y_over_y_growth_rate":39.4,
+      "note_url":null,
+      "symbol_id":3651,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-04",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-28,
+      "eps_actual":-21,
+      "sales_estimate":0.7014,
+      "sales_actual":0.7667,
+      "y_over_y_growth_rate":60.7,
+      "note_url":null,
+      "symbol_id":1260,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-04",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":646,
+      "eps_actual":662,
+      "sales_estimate":65.1,
+      "sales_actual":66.1,
+      "y_over_y_growth_rate":15.1,
+      "note_url":null,
+      "symbol_id":1344,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-08",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":7,
+      "eps_actual":17,
+      "sales_estimate":0.761,
+      "sales_actual":0.904,
+      "y_over_y_growth_rate":32,
+      "note_url":null,
+      "symbol_id":3870,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-10",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":106,
+      "eps_actual":189,
+      "sales_estimate":2.33,
+      "sales_actual":2.66,
+      "y_over_y_growth_rate":65.7,
+      "note_url":null,
+      "symbol_id":4197,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-10",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":412,
+      "eps_actual":489,
+      "sales_estimate":7.58,
+      "sales_actual":8.61,
+      "y_over_y_growth_rate":82,
+      "note_url":null,
+      "symbol_id":4605,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-06-11",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-16,
+      "eps_actual":40,
+      "sales_estimate":2.58,
+      "sales_actual":2.65,
+      "y_over_y_growth_rate":66,
+      "note_url":null,
+      "symbol_id":4343,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-01",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":171,
+      "eps_actual":188,
+      "sales_estimate":72.6,
+      "sales_actual":74.2,
+      "y_over_y_growth_rate":36.5,
+      "note_url":null,
+      "symbol_id":3843,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-09",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":9,
+      "eps_actual":23,
+      "sales_estimate":12.1,
+      "sales_actual":12.8,
+      "y_over_y_growth_rate":156.5,
+      "note_url":null,
+      "symbol_id":3460,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-09",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-1,
+      "eps_actual":3,
+      "sales_estimate":0.6381,
+      "sales_actual":0.679,
+      "y_over_y_growth_rate":25.7,
+      "note_url":null,
+      "symbol_id":2137,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-13",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":153,
+      "eps_actual":172,
+      "sales_estimate":179.5,
+      "sales_actual":192.2,
+      "y_over_y_growth_rate":20.5,
+      "note_url":null,
+      "symbol_id":4278,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-13",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":985,
+      "eps_actual":1502,
+      "sales_estimate":121.7,
+      "sales_actual":153.9,
+      "y_over_y_growth_rate":15.8,
+      "note_url":null,
+      "symbol_id":2851,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-14",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":309,
+      "eps_actual":378,
+      "sales_estimate":297.1,
+      "sales_actual":305,
+      "y_over_y_growth_rate":-7.9,
+      "note_url":null,
+      "symbol_id":3291,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-14",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":76,
+      "eps_actual":103,
+      "sales_estimate":217.7,
+      "sales_actual":215,
+      "y_over_y_growth_rate":-3.6,
+      "note_url":null,
+      "symbol_id":1396,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-14",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-135,
+      "eps_actual":-107,
+      "sales_estimate":62.5,
+      "sales_actual":71.3,
+      "y_over_y_growth_rate":385.6,
+      "note_url":null,
+      "symbol_id":2112,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-15",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":91,
+      "eps_actual":138,
+      "sales_estimate":176.9,
+      "sales_actual":202.7,
+      "y_over_y_growth_rate":10.8,
+      "note_url":null,
+      "symbol_id":5622,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-15",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":188,
+      "eps_actual":285,
+      "sales_estimate":171.8,
+      "sales_actual":175,
+      "y_over_y_growth_rate":-11.5,
+      "note_url":null,
+      "symbol_id":1658,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-15",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":940,
+      "eps_actual":1003,
+      "sales_estimate":46.1,
+      "sales_actual":48.2,
+      "y_over_y_growth_rate":33.7,
+      "note_url":null,
+      "symbol_id":1524,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-16",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":166,
+      "eps_actual":185,
+      "sales_estimate":139.9,
+      "sales_actual":147.6,
+      "y_over_y_growth_rate":8,
+      "note_url":null,
+      "symbol_id":3802,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-20",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":229,
+      "eps_actual":233,
+      "sales_estimate":183,
+      "sales_actual":187.5,
+      "y_over_y_growth_rate":3.4,
+      "note_url":null,
+      "symbol_id":3073,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-21",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":316,
+      "eps_actual":297,
+      "sales_estimate":73.2,
+      "sales_actual":73.4,
+      "y_over_y_growth_rate":19.4,
+      "note_url":null,
+      "symbol_id":3920,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-21",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":229,
+      "eps_actual":248,
+      "sales_estimate":225.4,
+      "sales_actual":233.1,
+      "y_over_y_growth_rate":27.1,
+      "note_url":null,
+      "symbol_id":3285,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-21",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":56,
+      "eps_actual":68,
+      "sales_estimate":93,
+      "sales_actual":101,
+      "y_over_y_growth_rate":40.3,
+      "note_url":null,
+      "symbol_id":3371,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-22",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-396,
+      "eps_actual":-391,
+      "sales_estimate":53.3,
+      "sales_actual":54.7,
+      "y_over_y_growth_rate":270.9,
+      "note_url":null,
+      "symbol_id":5359,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-22",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":183,
+      "eps_actual":199,
+      "sales_estimate":43.6,
+      "sales_actual":45.8,
+      "y_over_y_growth_rate":41.4,
+      "note_url":null,
+      "symbol_id":5348,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-22",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":37,
+      "eps_actual":40,
+      "sales_estimate":29.4,
+      "sales_actual":29.9,
+      "y_over_y_growth_rate":32.6,
+      "note_url":null,
+      "symbol_id":2026,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-23",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":7,
+      "eps_actual":20,
+      "sales_estimate":10.6,
+      "sales_actual":11.9,
+      "y_over_y_growth_rate":74.2,
+      "note_url":null,
+      "symbol_id":null,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-26",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":652,
+      "eps_actual":713,
+      "sales_estimate":169.3,
+      "sales_actual":170.3,
+      "y_over_y_growth_rate":5,
+      "note_url":null,
+      "symbol_id":3518,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-27",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":98,
+      "eps_actual":145,
+      "sales_estimate":114,
+      "sales_actual":119.6,
+      "y_over_y_growth_rate":98,
+      "note_url":null,
+      "symbol_id":5310,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-27",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":281,
+      "eps_actual":306,
+      "sales_estimate":231.7,
+      "sales_actual":234.2,
+      "y_over_y_growth_rate":14.5,
+      "note_url":null,
+      "symbol_id":5407,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-28",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":78,
+      "eps_actual":101,
+      "sales_estimate":72.6,
+      "sales_actual":75,
+      "y_over_y_growth_rate":77.6,
+      "note_url":null,
+      "symbol_id":4754,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-28",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":192,
+      "eps_actual":217,
+      "sales_estimate":443,
+      "sales_actual":461.5,
+      "y_over_y_growth_rate":21.3,
+      "note_url":null,
+      "symbol_id":3809,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-28",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":101,
+      "eps_actual":130,
+      "sales_estimate":734.8,
+      "sales_actual":814,
+      "y_over_y_growth_rate":36.4,
+      "note_url":null,
+      "symbol_id":888,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-28",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":1908,
+      "eps_actual":2726,
+      "sales_estimate":560.8,
+      "sales_actual":618.8,
+      "y_over_y_growth_rate":61.6,
+      "note_url":null,
+      "symbol_id":2815,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-28",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":54,
+      "eps_actual":63,
+      "sales_estimate":36.1,
+      "sales_actual":38.5,
+      "y_over_y_growth_rate":99.3,
+      "note_url":null,
+      "symbol_id":1118,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-28",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-54,
+      "eps_actual":-86,
+      "sales_estimate":5,
+      "sales_actual":5.03,
+      "y_over_y_growth_rate":108.7,
+      "note_url":null,
+      "symbol_id":5165,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-29",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":302,
+      "eps_actual":361,
+      "sales_estimate":278.9,
+      "sales_actual":290.8,
+      "y_over_y_growth_rate":55.6,
+      "note_url":null,
+      "symbol_id":null,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-29",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":112,
+      "eps_actual":115,
+      "sales_estimate":62.7,
+      "sales_actual":62.4,
+      "y_over_y_growth_rate":18.6,
+      "note_url":null,
+      "symbol_id":4483,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-30",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":1224,
+      "eps_actual":1512,
+      "sales_estimate":1150.8,
+      "sales_actual":1130.8,
+      "y_over_y_growth_rate":27,
+      "note_url":null,
+      "symbol_id":1149,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-07-30",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":13,
+      "eps_actual":25,
+      "sales_estimate":5.62,
+      "sales_actual":6.13,
+      "y_over_y_growth_rate":125,
+      "note_url":null,
+      "symbol_id":4330,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-03",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":46,
+      "eps_actual":79,
+      "sales_estimate":32.8,
+      "sales_actual":31.5,
+      "y_over_y_growth_rate":115.1,
+      "note_url":null,
+      "symbol_id":3605,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-04",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-25,
+      "eps_actual":-5,
+      "sales_estimate":7,
+      "sales_actual":7.65,
+      "y_over_y_growth_rate":125.5,
+      "note_url":null,
+      "symbol_id":3588,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-04",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-11,
+      "eps_actual":-5,
+      "sales_estimate":0.9153,
+      "sales_actual":1.02,
+      "y_over_y_growth_rate":38.5,
+      "note_url":null,
+      "symbol_id":1950,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-04",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":55,
+      "eps_actual":52,
+      "sales_estimate":6.92,
+      "sales_actual":7.07,
+      "y_over_y_growth_rate":27.4,
+      "note_url":null,
+      "symbol_id":3823,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-04",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":-85,
+      "eps_actual":-115,
+      "sales_estimate":6.78,
+      "sales_actual":6.63,
+      "y_over_y_growth_rate":165.2,
+      "note_url":null,
+      "symbol_id":2887,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-05",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-53,
+      "eps_actual":58,
+      "sales_estimate":37.6,
+      "sales_actual":39.3,
+      "y_over_y_growth_rate":105,
+      "note_url":null,
+      "symbol_id":5362,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-05",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":14,
+      "eps_actual":52,
+      "sales_estimate":6.18,
+      "sales_actual":6.45,
+      "y_over_y_growth_rate":81.2,
+      "note_url":null,
+      "symbol_id":4655,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-05",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":64,
+      "eps_actual":68,
+      "sales_estimate":5.26,
+      "sales_actual":5.29,
+      "y_over_y_growth_rate":23.5,
+      "note_url":null,
+      "symbol_id":2422,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-05",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-18,
+      "eps_actual":-15,
+      "sales_estimate":0.8598,
+      "sales_actual":0.8503,
+      "y_over_y_growth_rate":13.9,
+      "note_url":null,
+      "symbol_id":2642,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-05",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":14,
+      "eps_actual":19,
+      "sales_estimate":0.7482,
+      "sales_actual":0.753,
+      "y_over_y_growth_rate":59.9,
+      "note_url":null,
+      "symbol_id":2675,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-05",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":56,
+      "eps_actual":63,
+      "sales_estimate":3.29,
+      "sales_actual":3.58,
+      "y_over_y_growth_rate":44.9,
+      "note_url":null,
+      "symbol_id":5744,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-05",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":3,
+      "eps_actual":9,
+      "sales_estimate":2.12,
+      "sales_actual":2.34,
+      "y_over_y_growth_rate":66.8,
+      "note_url":null,
+      "symbol_id":2141,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-06",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-11,
+      "eps_actual":-6,
+      "sales_estimate":0.4681,
+      "sales_actual":0.4901,
+      "y_over_y_growth_rate":34.9,
+      "note_url":null,
+      "symbol_id":1480,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-06",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-7,
+      "eps_actual":5,
+      "sales_estimate":1.81,
+      "sales_actual":1.88,
+      "y_over_y_growth_rate":104.2,
+      "note_url":null,
+      "symbol_id":4833,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-06",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":9,
+      "eps_actual":19,
+      "sales_estimate":1.29,
+      "sales_actual":1.29,
+      "y_over_y_growth_rate":99.1,
+      "note_url":null,
+      "symbol_id":4307,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-06",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":1.41,
+      "eps_actual":1.4,
+      "sales_estimate":92.8,
+      "sales_actual":90.3,
+      "y_over_y_growth_rate":110.4,
+      "note_url":null,
+      "symbol_id":3688,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-10",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":-9,
+      "eps_actual":-14,
+      "sales_estimate":1.99,
+      "sales_actual":1.74,
+      "y_over_y_growth_rate":62.7,
+      "note_url":null,
+      "symbol_id":4781,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-10",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":-10,
+      "eps_actual":-14,
+      "sales_estimate":0.0433,
+      "sales_actual":0.0292,
+      "y_over_y_growth_rate":-4,
+      "note_url":null,
+      "symbol_id":5574,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-11",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":257,
+      "eps_actual":642,
+      "sales_estimate":18.3,
+      "sales_actual":20.3,
+      "y_over_y_growth_rate":1040,
+      "note_url":null,
+      "symbol_id":1928,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-11",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-12,
+      "eps_actual":-2,
+      "sales_estimate":2.42,
+      "sales_actual":2.74,
+      "y_over_y_growth_rate":48.4,
+      "note_url":null,
+      "symbol_id":5356,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-11",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":25,
+      "eps_actual":62,
+      "sales_estimate":1.58,
+      "sales_actual":1.94,
+      "y_over_y_growth_rate":1017,
+      "note_url":null,
+      "symbol_id":5408,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-11",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":8,
+      "eps_actual":11,
+      "sales_estimate":0.6362,
+      "sales_actual":0.727,
+      "y_over_y_growth_rate":99.7,
+      "note_url":null,
+      "symbol_id":2209,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-12",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-6,
+      "eps_actual":12,
+      "sales_estimate":3.15,
+      "sales_actual":3.79,
+      "y_over_y_growth_rate":51.9,
+      "note_url":null,
+      "symbol_id":4966,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-12",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":1,
+      "eps_actual":-6,
+      "sales_estimate":1.79,
+      "sales_actual":1.86,
+      "y_over_y_growth_rate":37.8,
+      "note_url":null,
+      "symbol_id":1539,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-12",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-8,
+      "eps_actual":-29,
+      "sales_estimate":1.02,
+      "sales_actual":1.22,
+      "y_over_y_growth_rate":76.2,
+      "note_url":null,
+      "symbol_id":3784,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-12",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":1,
+      "eps_actual":8,
+      "sales_estimate":1.75,
+      "sales_actual":1.77,
+      "y_over_y_growth_rate":43.2,
+      "note_url":null,
+      "symbol_id":2718,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-13",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-43,
+      "eps_actual":-11,
+      "sales_estimate":12.7,
+      "sales_actual":13.4,
+      "y_over_y_growth_rate":298.7,
+      "note_url":null,
+      "symbol_id":902,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-13",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":55,
+      "eps_actual":80,
+      "sales_estimate":167.6,
+      "sales_actual":170.2,
+      "y_over_y_growth_rate":44.5,
+      "note_url":null,
+      "symbol_id":2176,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-13",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-19,
+      "eps_actual":-30,
+      "sales_estimate":11,
+      "sales_actual":12.4,
+      "y_over_y_growth_rate":83.1,
+      "note_url":null,
+      "symbol_id":2119,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-13",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":2,
+      "eps_actual":3,
+      "sales_estimate":1.4,
+      "sales_actual":1.5,
+      "y_over_y_growth_rate":35.5,
+      "note_url":null,
+      "symbol_id":3593,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-13",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":9,
+      "eps_actual":14,
+      "sales_estimate":1.92,
+      "sales_actual":1.97,
+      "y_over_y_growth_rate":93,
+      "note_url":null,
+      "symbol_id":3648,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-13",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-11,
+      "eps_actual":-4,
+      "sales_estimate":1.12,
+      "sales_actual":1.23,
+      "y_over_y_growth_rate":88.9,
+      "note_url":null,
+      "symbol_id":4680,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-13",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-31,
+      "eps_actual":-146,
+      "sales_estimate":0.4831,
+      "sales_actual":0.5059,
+      "y_over_y_growth_rate":45,
+      "note_url":null,
+      "symbol_id":5721,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-17",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":24,
+      "eps_actual":-25,
+      "sales_estimate":6.89,
+      "sales_actual":4.54,
+      "y_over_y_growth_rate":126.6,
+      "note_url":null,
+      "symbol_id":4537,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-26",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-66,
+      "eps_actual":-64,
+      "sales_estimate":2.57,
+      "sales_actual":2.72,
+      "y_over_y_growth_rate":104.5,
+      "note_url":null,
+      "symbol_id":4947,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-26",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":258,
+      "eps_actual":324,
+      "sales_estimate":18,
+      "sales_actual":19.5,
+      "y_over_y_growth_rate":30.7,
+      "note_url":null,
+      "symbol_id":5682,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-27",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-32,
+      "eps_actual":-105,
+      "sales_estimate":9.29,
+      "sales_actual":9.37,
+      "y_over_y_growth_rate":54.4,
+      "note_url":null,
+      "symbol_id":4463,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-08-31",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":116,
+      "eps_actual":136,
+      "sales_estimate":9.9,
+      "sales_actual":10.2,
+      "y_over_y_growth_rate":54,
+      "note_url":null,
+      "symbol_id":5777,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-01",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":9,
+      "eps_actual":11,
+      "sales_estimate":3.23,
+      "sales_actual":3.38,
+      "y_over_y_growth_rate":70,
+      "note_url":null,
+      "symbol_id":2008,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-02",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-33,
+      "eps_actual":-11,
+      "sales_estimate":2.93,
+      "sales_actual":3.16,
+      "y_over_y_growth_rate":57.7,
+      "note_url":null,
+      "symbol_id":4100,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-02",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-28,
+      "eps_actual":-37,
+      "sales_estimate":0.5127,
+      "sales_actual":0.5241,
+      "y_over_y_growth_rate":29.5,
+      "note_url":null,
+      "symbol_id":1032,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-02",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":86,
+      "eps_actual":94,
+      "sales_estimate":4.51,
+      "sales_actual":4.56,
+      "y_over_y_growth_rate":28.8,
+      "note_url":null,
+      "symbol_id":5469,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-02",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-6,
+      "eps_actual":-2,
+      "sales_estimate":0.6372,
+      "sales_actual":0.665,
+      "y_over_y_growth_rate":36.3,
+      "note_url":null,
+      "symbol_id":3889,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-03",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":40,
+      "eps_actual":47,
+      "sales_estimate":4.88,
+      "sales_actual":5.12,
+      "y_over_y_growth_rate":50,
+      "note_url":null,
+      "symbol_id":2210,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-03",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-40,
+      "eps_actual":-24,
+      "sales_estimate":1.84,
+      "sales_actual":1.99,
+      "y_over_y_growth_rate":43.7,
+      "note_url":null,
+      "symbol_id":3651,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-03",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-25,
+      "eps_actual":-23,
+      "sales_estimate":0.291,
+      "sales_actual":0.2955,
+      "y_over_y_growth_rate":87.9,
+      "note_url":null,
+      "symbol_id":3424,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-03",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":234,
+      "eps_actual":324,
+      "sales_estimate":3.08,
+      "sales_actual":3.29,
+      "y_over_y_growth_rate":71.2,
+      "note_url":null,
+      "symbol_id":4197,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-03",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-15,
+      "eps_actual":-13,
+      "sales_estimate":0.6555,
+      "sales_actual":0.6754,
+      "y_over_y_growth_rate":33.2,
+      "note_url":null,
+      "symbol_id":4259,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-08",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-6,
+      "eps_actual":1,
+      "sales_estimate":1.87,
+      "sales_actual":1.96,
+      "y_over_y_growth_rate":40.3,
+      "note_url":null,
+      "symbol_id":4221,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-08",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-6,
+      "eps_actual":26,
+      "sales_estimate":1.63,
+      "sales_actual":1.79,
+      "y_over_y_growth_rate":42.3,
+      "note_url":null,
+      "symbol_id":1949,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-09",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-20,
+      "eps_actual":-20,
+      "sales_estimate":0.4037,
+      "sales_actual":0.4575,
+      "y_over_y_growth_rate":121.3,
+      "note_url":null,
+      "symbol_id":4714,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-10",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-24,
+      "eps_actual":-48,
+      "sales_estimate":2.24,
+      "sales_actual":2.62,
+      "y_over_y_growth_rate":70.8,
+      "note_url":null,
+      "symbol_id":1000,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-10",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":9,
+      "eps_actual":14,
+      "sales_estimate":1.87,
+      "sales_actual":1.97,
+      "y_over_y_growth_rate":56.5,
+      "note_url":null,
+      "symbol_id":5779,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-24",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":112,
+      "eps_actual":116,
+      "sales_estimate":124.7,
+      "sales_actual":122.5,
+      "y_over_y_growth_rate":15.6,
+      "note_url":null,
+      "symbol_id":3938,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-09-30",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":50,
+      "eps_actual":49,
+      "sales_estimate":6.48,
+      "sales_actual":7.9,
+      "y_over_y_growth_rate":26,
+      "note_url":null,
+      "symbol_id":null,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-01",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":52,
+      "eps_actual":48,
+      "sales_estimate":20.6,
+      "sales_actual":19.9,
+      "y_over_y_growth_rate":-26.2,
+      "note_url":null,
+      "symbol_id":1414,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-05",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":2,
+      "eps_actual":8,
+      "sales_estimate":0.6016,
+      "sales_actual":0.7089,
+      "y_over_y_growth_rate":35.7,
+      "note_url":null,
+      "symbol_id":3870,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-05",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":1.73,
+      "eps_actual":1.79,
+      "sales_estimate":193.9,
+      "sales_actual":201.9,
+      "y_over_y_growth_rate":11.6,
+      "note_url":null,
+      "symbol_id":4278,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-07",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":37,
+      "eps_actual":48,
+      "sales_estimate":14.8,
+      "sales_actual":15,
+      "y_over_y_growth_rate":40.9,
+      "note_url":null,
+      "symbol_id":3460,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-13",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":300,
+      "eps_actual":374,
+      "sales_estimate":296,
+      "sales_actual":296.4,
+      "y_over_y_growth_rate":1,
+      "note_url":null,
+      "symbol_id":3291,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-13",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":15,
+      "eps_actual":30,
+      "sales_estimate":84.6,
+      "sales_actual":91.5,
+      "y_over_y_growth_rate":199,
+      "note_url":null,
+      "symbol_id":2112,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-14",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":70,
+      "eps_actual":85,
+      "sales_estimate":216,
+      "sales_actual":227.7,
+      "y_over_y_growth_rate":11.9,
+      "note_url":null,
+      "symbol_id":1396,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-14",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":94,
+      "eps_actual":117,
+      "sales_estimate":183.1,
+      "sales_actual":188.3,
+      "y_over_y_growth_rate":-0.1,
+      "note_url":null,
+      "symbol_id":5622,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-15",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":2,
+      "eps_actual":2,
+      "sales_estimate":0.6909,
+      "sales_actual":0.7085,
+      "y_over_y_growth_rate":21.5,
+      "note_url":null,
+      "symbol_id":2137,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-21",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":161,
+      "eps_actual":186,
+      "sales_estimate":137,
+      "sales_actual":137.6,
+      "y_over_y_growth_rate":56.8,
+      "note_url":null,
+      "symbol_id":5310,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-26",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":318,
+      "eps_actual":322,
+      "sales_estimate":295.2,
+      "sales_actual":290.1,
+      "y_over_y_growth_rate":35.1,
+      "note_url":null,
+      "symbol_id":null,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-26",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":255,
+      "eps_actual":271,
+      "sales_estimate":225.7,
+      "sales_actual":231.8,
+      "y_over_y_growth_rate":9.2,
+      "note_url":null,
+      "symbol_id":5407,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-27",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":2337,
+      "eps_actual":2799,
+      "sales_estimate":633.5,
+      "sales_actual":651.2,
+      "y_over_y_growth_rate":41,
+      "note_url":null,
+      "symbol_id":2815,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-27",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":208,
+      "eps_actual":227,
+      "sales_estimate":440,
+      "sales_actual":453.2,
+      "y_over_y_growth_rate":22,
+      "note_url":null,
+      "symbol_id":3809,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-29",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":896,
+      "eps_actual":612,
+      "sales_estimate":1116,
+      "sales_actual":1108.1,
+      "y_over_y_growth_rate":15.3,
+      "note_url":null,
+      "symbol_id":1149,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-10-29",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":124,
+      "eps_actual":124,
+      "sales_estimate":849.4,
+      "sales_actual":834,
+      "y_over_y_growth_rate":28.9,
+      "note_url":null,
+      "symbol_id":888,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-02",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":281,
+      "eps_actual":294,
+      "sales_estimate":14.8,
+      "sales_actual":19.1,
+      "y_over_y_growth_rate":165.3,
+      "note_url":null,
+      "symbol_id":2476,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-02",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":19,
+      "eps_actual":5,
+      "sales_estimate":174,
+      "sales_actual":172,
+      "y_over_y_growth_rate":11.6,
+      "note_url":null,
+      "symbol_id":1797,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-02",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":12,
+      "eps_actual":13,
+      "sales_estimate":1.84,
+      "sales_actual":1.98,
+      "y_over_y_growth_rate":60.1,
+      "note_url":null,
+      "symbol_id":5769,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-02",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":124,
+      "eps_actual":138,
+      "sales_estimate":55.9,
+      "sales_actual":60.2,
+      "y_over_y_growth_rate":42.5,
+      "note_url":null,
+      "symbol_id":4005,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-03",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-3,
+      "eps_actual":5,
+      "sales_estimate":8.61,
+      "sales_actual":8.64,
+      "y_over_y_growth_rate":73,
+      "note_url":null,
+      "symbol_id":3588,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-03",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":58,
+      "eps_actual":43,
+      "sales_estimate":8.04,
+      "sales_actual":8.02,
+      "y_over_y_growth_rate":25.3,
+      "note_url":null,
+      "symbol_id":3823,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-03",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-9,
+      "eps_actual":-6,
+      "sales_estimate":1.09,
+      "sales_actual":1.1,
+      "y_over_y_growth_rate":32.8,
+      "note_url":null,
+      "symbol_id":1950,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-03",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":-2,
+      "eps_actual":-2.17,
+      "sales_estimate":1.72,
+      "sales_actual":1.53,
+      "y_over_y_growth_rate":2248,
+      "note_url":null,
+      "symbol_id":3887,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-04",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":6,
+      "eps_actual":48,
+      "sales_estimate":6.81,
+      "sales_actual":6.8,
+      "y_over_y_growth_rate":50.5,
+      "note_url":null,
+      "symbol_id":4655,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-04",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-18,
+      "eps_actual":11,
+      "sales_estimate":0.8374,
+      "sales_actual":0.8674,
+      "y_over_y_growth_rate":22.8,
+      "note_url":null,
+      "symbol_id":2642,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-04",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":3.87,
+      "eps_actual":4.13,
+      "sales_estimate":44.8,
+      "sales_actual":44.6,
+      "y_over_y_growth_rate":157.8,
+      "note_url":null,
+      "symbol_id":4479,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-04",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":2.26,
+      "eps_actual":2.55,
+      "sales_estimate":88.4,
+      "sales_actual":93.2,
+      "y_over_y_growth_rate":43.4,
+      "note_url":null,
+      "symbol_id":4488,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-04",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":-35,
+      "eps_actual":231,
+      "sales_estimate":8.69,
+      "sales_actual":8.51,
+      "y_over_y_growth_rate":113,
+      "note_url":null,
+      "symbol_id":2887,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-05",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":-114,
+      "eps_actual":-125,
+      "sales_estimate":8.09,
+      "sales_actual":8.05,
+      "y_over_y_growth_rate":6.2,
+      "note_url":null,
+      "symbol_id":4463,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-05",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":-6,
+      "eps_actual":-5,
+      "sales_estimate":1.97,
+      "sales_actual":1.94,
+      "y_over_y_growth_rate":48.7,
+      "note_url":null,
+      "symbol_id":4833,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-05",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":70,
+      "eps_actual":122,
+      "sales_estimate":20.6,
+      "sales_actual":22.4,
+      "y_over_y_growth_rate":66.7,
+      "note_url":null,
+      "symbol_id":902,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-05",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":6,
+      "eps_actual":13,
+      "sales_estimate":2.48,
+      "sales_actual":2.71,
+      "y_over_y_growth_rate":74.9,
+      "note_url":null,
+      "symbol_id":2141,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-05",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":37,
+      "eps_actual":37,
+      "sales_estimate":44.8,
+      "sales_actual":38.4,
+      "y_over_y_growth_rate":26.7,
+      "note_url":null,
+      "symbol_id":5001,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-07",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":15,
+      "eps_actual":22,
+      "sales_estimate":2.14,
+      "sales_actual":2.44,
+      "y_over_y_growth_rate":61.6,
+      "note_url":null,
+      "symbol_id":4694,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-09",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":4,
+      "eps_actual":4,
+      "sales_estimate":3.86,
+      "sales_actual":3.92,
+      "y_over_y_growth_rate":35.5,
+      "note_url":null,
+      "symbol_id":4355,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-10",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":172,
+      "eps_actual":162,
+      "sales_estimate":15.8,
+      "sales_actual":12.4,
+      "y_over_y_growth_rate":330.6,
+      "note_url":null,
+      "symbol_id":1928,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-10",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":21,
+      "eps_actual":19,
+      "sales_estimate":0.7354,
+      "sales_actual":0.794,
+      "y_over_y_growth_rate":76.1,
+      "note_url":null,
+      "symbol_id":2209,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-10",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":33,
+      "eps_actual":60,
+      "sales_estimate":2.15,
+      "sales_actual":2.28,
+      "y_over_y_growth_rate":249.5,
+      "note_url":null,
+      "symbol_id":5408,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-10",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-7,
+      "eps_actual":-6,
+      "sales_estimate":2.66,
+      "sales_actual":2.86,
+      "y_over_y_growth_rate":42.6,
+      "note_url":null,
+      "symbol_id":5356,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-10",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":9,
+      "eps_actual":11,
+      "sales_estimate":1.45,
+      "sales_actual":1.62,
+      "y_over_y_growth_rate":80.6,
+      "note_url":null,
+      "symbol_id":4108,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-11",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":3,
+      "eps_actual":1,
+      "sales_estimate":1.45,
+      "sales_actual":1.48,
+      "y_over_y_growth_rate":12.4,
+      "note_url":null,
+      "symbol_id":3593,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-11",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-87,
+      "eps_actual":-98,
+      "sales_estimate":0.605,
+      "sales_actual":0.636,
+      "y_over_y_growth_rate":40.4,
+      "note_url":null,
+      "symbol_id":2258,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-11",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-30,
+      "eps_actual":-113,
+      "sales_estimate":2.49,
+      "sales_actual":2.69,
+      "y_over_y_growth_rate":54.8,
+      "note_url":null,
+      "symbol_id":1000,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-11",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-14,
+      "eps_actual":-8,
+      "sales_estimate":1.19,
+      "sales_actual":1.32,
+      "y_over_y_growth_rate":56,
+      "note_url":null,
+      "symbol_id":3784,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-11",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":9,
+      "eps_actual":9,
+      "sales_estimate":1.95,
+      "sales_actual":1.95,
+      "y_over_y_growth_rate":39,
+      "note_url":null,
+      "symbol_id":2718,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-11",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":38,
+      "eps_actual":0,
+      "sales_estimate":6.98,
+      "sales_actual":7.27,
+      "y_over_y_growth_rate":90.4,
+      "note_url":null,
+      "symbol_id":1196,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-12",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":70,
+      "eps_actual":82,
+      "sales_estimate":14.4,
+      "sales_actual":14.8,
+      "y_over_y_growth_rate":26.3,
+      "note_url":null,
+      "symbol_id":5267,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-12",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":10,
+      "eps_actual":11,
+      "sales_estimate":1.88,
+      "sales_actual":1.94,
+      "y_over_y_growth_rate":24.7,
+      "note_url":null,
+      "symbol_id":3648,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-16",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":338,
+      "eps_actual":392,
+      "sales_estimate":348.7,
+      "sales_actual":368.2,
+      "y_over_y_growth_rate":9.8,
+      "note_url":null,
+      "symbol_id":2925,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-16",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":139,
+      "eps_actual":145,
+      "sales_estimate":1342.6,
+      "sales_actual":1405,
+      "y_over_y_growth_rate":4.3,
+      "note_url":null,
+      "symbol_id":5657,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-18",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":111,
+      "eps_actual":117,
+      "sales_estimate":68.1,
+      "sales_actual":71,
+      "y_over_y_growth_rate":50.3,
+      "note_url":null,
+      "symbol_id":4024,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-23",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":110,
+      "eps_actual":111,
+      "sales_estimate":10.2,
+      "sales_actual":10.5,
+      "y_over_y_growth_rate":35,
+      "note_url":null,
+      "symbol_id":5777,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-11-24",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":56,
+      "eps_actual":39,
+      "sales_estimate":35.4,
+      "sales_actual":36.4,
+      "y_over_y_growth_rate":17.7,
+      "note_url":null,
+      "symbol_id":null,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-01",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":12,
+      "eps_actual":14,
+      "sales_estimate":2.12,
+      "sales_actual":2.31,
+      "y_over_y_growth_rate":61.7,
+      "note_url":null,
+      "symbol_id":5779,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-01",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":92,
+      "eps_actual":127,
+      "sales_estimate":68,
+      "sales_actual":68.6,
+      "y_over_y_growth_rate":26.6,
+      "note_url":null,
+      "symbol_id":1994,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-01",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":0,
+      "eps_actual":7,
+      "sales_estimate":17,
+      "sales_actual":17,
+      "y_over_y_growth_rate":56,
+      "note_url":null,
+      "symbol_id":2737,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-02",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-6,
+      "eps_actual":-4,
+      "sales_estimate":0.6662,
+      "sales_actual":0.7004,
+      "y_over_y_growth_rate":29.1,
+      "note_url":null,
+      "symbol_id":3889,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-02",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":10,
+      "eps_actual":17,
+      "sales_estimate":3.64,
+      "sales_actual":3.8,
+      "y_over_y_growth_rate":63.5,
+      "note_url":null,
+      "symbol_id":2008,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-02",
+      "quarter":3,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-6,
+      "eps_actual":-51,
+      "sales_estimate":3.06,
+      "sales_actual":3.34,
+      "y_over_y_growth_rate":109.5,
+      "note_url":null,
+      "symbol_id":4947,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-02",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":88,
+      "eps_actual":97,
+      "sales_estimate":4.66,
+      "sales_actual":4.76,
+      "y_over_y_growth_rate":26.1,
+      "note_url":null,
+      "symbol_id":5469,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-02",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-23,
+      "eps_actual":-7,
+      "sales_estimate":3.27,
+      "sales_actual":3.51,
+      "y_over_y_growth_rate":61.3,
+      "note_url":null,
+      "symbol_id":4100,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-02",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-29,
+      "eps_actual":-23,
+      "sales_estimate":0.5695,
+      "sales_actual":0.5826,
+      "y_over_y_growth_rate":40.9,
+      "note_url":null,
+      "symbol_id":1032,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-03",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":46,
+      "eps_actual":58,
+      "sales_estimate":5.31,
+      "sales_actual":5.45,
+      "y_over_y_growth_rate":42.4,
+      "note_url":null,
+      "symbol_id":2210,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-03",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-34,
+      "eps_actual":-32,
+      "sales_estimate":0.6431,
+      "sales_actual":0.651,
+      "y_over_y_growth_rate":21.5,
+      "note_url":null,
+      "symbol_id":2213,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-03",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-27,
+      "eps_actual":-23,
+      "sales_estimate":0.939,
+      "sales_actual":1,
+      "y_over_y_growth_rate":70.3,
+      "note_url":null,
+      "symbol_id":1260,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-07",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-38,
+      "eps_actual":-11,
+      "sales_estimate":2.05,
+      "sales_actual":2.27,
+      "y_over_y_growth_rate":50.5,
+      "note_url":null,
+      "symbol_id":3651,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-07",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":2,
+      "eps_actual":31,
+      "sales_estimate":1.78,
+      "sales_actual":1.86,
+      "y_over_y_growth_rate":39.7,
+      "note_url":null,
+      "symbol_id":1949,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-08",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-18,
+      "eps_actual":-15,
+      "sales_estimate":0.4958,
+      "sales_actual":0.5602,
+      "y_over_y_growth_rate":128.1,
+      "note_url":null,
+      "symbol_id":4714,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-09",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":659,
+      "eps_actual":703,
+      "sales_estimate":9.8,
+      "sales_actual":10.1,
+      "y_over_y_growth_rate":19.2,
+      "note_url":null,
+      "symbol_id":4605,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-09",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":22,
+      "eps_actual":25,
+      "sales_estimate":3.11,
+      "sales_actual":3.06,
+      "y_over_y_growth_rate":13.4,
+      "note_url":null,
+      "symbol_id":2056,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-09",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":15,
+      "eps_actual":20,
+      "sales_estimate":0.969,
+      "sales_actual":1.04,
+      "y_over_y_growth_rate":13.7,
+      "note_url":null,
+      "symbol_id":3870,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2021-12-10",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":140,
+      "eps_actual":162,
+      "sales_estimate":14.4,
+      "sales_actual":14.5,
+      "y_over_y_growth_rate":29.8,
+      "note_url":null,
+      "symbol_id":3566,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-13",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":15,
+      "eps_actual":22,
+      "sales_estimate":92.9,
+      "sales_actual":94.7,
+      "y_over_y_growth_rate":138.4,
+      "note_url":null,
+      "symbol_id":2112,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-14",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":1014,
+      "eps_actual":1042,
+      "sales_estimate":51.5,
+      "sales_actual":51.1,
+      "y_over_y_growth_rate":14,
+      "note_url":null,
+      "symbol_id":1524,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-14",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":304,
+      "eps_actual":336,
+      "sales_estimate":297.8,
+      "sales_actual":292.6,
+      "y_over_y_growth_rate":-0.3,
+      "note_url":null,
+      "symbol_id":3291,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-14",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":100,
+      "eps_actual":138,
+      "sales_estimate":186.1,
+      "sales_actual":208.6,
+      "y_over_y_growth_rate":12.8,
+      "note_url":null,
+      "symbol_id":5622,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-14",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":166,
+      "eps_actual":146,
+      "sales_estimate":167.8,
+      "sales_actual":170.2,
+      "y_over_y_growth_rate":1.1,
+      "note_url":null,
+      "symbol_id":1658,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-18",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":1188,
+      "eps_actual":1081,
+      "sales_estimate":120.8,
+      "sales_actual":126.4,
+      "y_over_y_growth_rate":7.7,
+      "note_url":null,
+      "symbol_id":2851,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-18",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":125,
+      "eps_actual":138,
+      "sales_estimate":55.96,
+      "sales_actual":55.9,
+      "y_over_y_growth_rate":-1.6,
+      "note_url":null,
+      "symbol_id":5183,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-19",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":null,
+      "eps_estimate":76,
+      "eps_actual":107,
+      "sales_estimate":221.9,
+      "sales_actual":220.6,
+      "y_over_y_growth_rate":9.8,
+      "note_url":null,
+      "symbol_id":1396,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-20",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":165,
+      "eps_actual":166,
+      "sales_estimate":203.4,
+      "sales_actual":209.5,
+      "y_over_y_growth_rate":6.1,
+      "note_url":null,
+      "symbol_id":4304,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-20",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-209,
+      "eps_actual":-160,
+      "sales_estimate":79.6,
+      "sales_actual":81.9,
+      "y_over_y_growth_rate":140.1,
+      "note_url":null,
+      "symbol_id":5359,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-20",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":29,
+      "eps_actual":25,
+      "sales_estimate":55,
+      "sales_actual":55.2,
+      "y_over_y_growth_rate":0.4,
+      "note_url":null,
+      "symbol_id":1505,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-20",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-148,
+      "eps_actual":-142,
+      "sales_estimate":93.8,
+      "sales_actual":94.3,
+      "y_over_y_growth_rate":134.1,
+      "note_url":null,
+      "symbol_id":882,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-21",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":82,
+      "eps_actual":133,
+      "sales_estimate":77.1,
+      "sales_actual":77.1,
+      "y_over_y_growth_rate":16,
+      "note_url":null,
+      "symbol_id":null,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-21",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":41,
+      "eps_actual":42,
+      "sales_estimate":33.2,
+      "sales_actual":34.3,
+      "y_over_y_growth_rate":21.4,
+      "note_url":null,
+      "symbol_id":2026,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-24",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":34,
+      "eps_actual":92,
+      "sales_estimate":40.9,
+      "sales_actual":42.8,
+      "y_over_y_growth_rate":32.1,
+      "note_url":null,
+      "symbol_id":2893,
+      "eps_unit_id":2,
+      "sales_unit_id":1
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-25",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":203,
+      "eps_actual":216,
+      "sales_estimate":21.3,
+      "sales_actual":21.7,
+      "y_over_y_growth_rate":0.7,
+      "note_url":"https://note.com/hirosetakao/n/nff3448e19804?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":4327,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-25",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":82,
+      "eps_actual":92,
+      "sales_estimate":213.2,
+      "sales_actual":203,
+      "y_over_y_growth_rate":-7.4,
+      "note_url":"https://note.com/hirosetakao/n/nb4960fa6ff5a?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2720,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-25",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":202,
+      "eps_actual":231,
+      "sales_estimate":85.8,
+      "sales_actual":86.1,
+      "y_over_y_growth_rate":0.3,
+      "note_url":"https://note.com/hirosetakao/n/n5243cbad8355?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":3738,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-25",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":1,
+      "eps_estimate":212,
+      "eps_actual":213,
+      "sales_estimate":252.9,
+      "sales_actual":248,
+      "y_over_y_growth_rate":10.4,
+      "note_url":"https://note.com/hirosetakao/n/n91b939cf0381?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":3285,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-26",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":232,
+      "eps_actual":248,
+      "sales_estimate":508,
+      "sales_actual":517.3,
+      "y_over_y_growth_rate":20.1,
+      "note_url":"https://note.com/hirosetakao/n/n52e17eb6c168?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":3809,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-26",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":73,
+      "eps_actual":85,
+      "sales_estimate":19.7,
+      "sales_actual":22.5,
+      "y_over_y_growth_rate":59.1,
+      "note_url":"https://note.com/hirosetakao/n/n629e0a94bcde?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2934,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-27",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":236,
+      "eps_actual":254,
+      "sales_estimate":166.5,
+      "sales_actual":177.2,
+      "y_over_y_growth_rate":65.6,
+      "note_url":"https://note.com/hirosetakao/n/ned3e38a5921c?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":5310,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-27",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":851,
+      "eps_actual":853,
+      "sales_estimate":44.1,
+      "sales_actual":42.3,
+      "y_over_y_growth_rate":22.3,
+      "note_url":"https://note.com/hirosetakao/n/n6b1a1c3bd2e7?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":3546,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-27",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":596,
+      "eps_actual":600,
+      "sales_estimate":90,
+      "sales_actual":86,
+      "y_over_y_growth_rate":-15.8,
+      "note_url":"https://note.com/hirosetakao/n/n3b548e7eff91?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":3958,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-01-28",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":189,
+      "eps_actual":210,
+      "sales_estimate":1185.3,
+      "sales_actual":1239.5,
+      "y_over_y_growth_rate":11.3,
+      "note_url":"https://note.com/hirosetakao/n/n92c7362dd7f9?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":888,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-01",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":214,
+      "eps_actual":254,
+      "sales_estimate":5.09,
+      "sales_actual":5.48,
+      "y_over_y_growth_rate":12.9,
+      "note_url":"https://note.com/hirosetakao/n/na29fb6743751?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2005,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-01",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":310,
+      "eps_actual":359,
+      "sales_estimate":270.7,
+      "sales_actual":277.1,
+      "y_over_y_growth_rate":11.3,
+      "note_url":"https://note.com/hirosetakao/n/na5db3ed6a9b1?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":5407,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-01",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":194,
+      "eps_actual":205,
+      "sales_estimate":845.8,
+      "sales_actual":849.7,
+      "y_over_y_growth_rate":82.6,
+      "note_url":"https://note.com/hirosetakao/n/n30e42d6c1d44?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":5723,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-01",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":2735,
+      "eps_actual":3069,
+      "sales_estimate":718.1,
+      "sales_actual":753.3,
+      "y_over_y_growth_rate":32,
+      "note_url":"https://note.com/hirosetakao/n/n8e7b703df651?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2815,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-02",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":112,
+      "eps_actual":111,
+      "sales_estimate":68.9,
+      "sales_actual":69.2,
+      "y_over_y_growth_rate":13.1,
+      "note_url":"https://note.com/hirosetakao/n/n94eda1ff5c8e?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":4483,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-02",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":76,
+      "eps_actual":92,
+      "sales_estimate":45.2,
+      "sales_actual":48.3,
+      "y_over_y_growth_rate":48.8,
+      "note_url":"https://note.com/hirosetakao/n/n5b31333efb69?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":1118,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-02",
+      "quarter":1,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":80,
+      "eps_actual":72,
+      "sales_estimate":79.5,
+      "sales_actual":80.5,
+      "y_over_y_growth_rate":19.3,
+      "note_url":"https://note.com/hirosetakao/n/n202c94a6b3c7?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":4754,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-02",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":60,
+      "eps_actual":60,
+      "sales_estimate":8.22,
+      "sales_actual":8.07,
+      "y_over_y_growth_rate":23.8,
+      "note_url":"https://note.com/hirosetakao/n/n9e371506acaf?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":3823,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-03",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":383,
+      "eps_actual":367,
+      "sales_estimate":334.4,
+      "sales_actual":336.7,
+      "y_over_y_growth_rate":19.8,
+      "note_url":"https://note.com/hirosetakao/n/n60b2629fab50?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":null,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-04",
+      "quarter":4,
+      "eps_ok":null,
+      "sales_ok":0,
+      "guidance_ok":0,
+      "eps_estimate":354,
+      "eps_actual":470,
+      "sales_estimate":1376.3,
+      "sales_actual":1374.1,
+      "y_over_y_growth_rate":9.4,
+      "note_url":"https://note.com/hirosetakao/n/n8357ad7f650e?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":1149,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-04",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":-7,
+      "eps_actual":-5,
+      "sales_estimate":2.96,
+      "sales_actual":3.16,
+      "y_over_y_growth_rate":43.4,
+      "note_url":"https://note.com/hirosetakao/n/neafb80779568?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":5356,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-04",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":46,
+      "eps_actual":49,
+      "sales_estimate":8.28,
+      "sales_actual":8.47,
+      "y_over_y_growth_rate":20,
+      "note_url":"https://note.com/hirosetakao/n/ncaf5fa203f25?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":4330,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-09",
+      "quarter":3,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":12,
+      "eps_actual":29,
+      "sales_estimate":0.8627,
+      "sales_actual":0.9788,
+      "y_over_y_growth_rate":66.7,
+      "note_url":"https://note.com/hirosetakao/n/nd28cd1b65246?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2209,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-09",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":529,
+      "eps_actual":558,
+      "sales_estimate":19.6,
+      "sales_actual":19.6,
+      "y_over_y_growth_rate":22,
+      "note_url":"https://note.com/hirosetakao/n/ne65643480ca1?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":1875,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-09",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":11,
+      "eps_actual":18,
+      "sales_estimate":18.1,
+      "sales_actual":18.5,
+      "y_over_y_growth_rate":74.2,
+      "note_url":"https://note.com/hirosetakao/n/ne7e73f8236e6?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2737,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-09",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":59,
+      "eps_actual":73,
+      "sales_estimate":4,
+      "sales_actual":4.13,
+      "y_over_y_growth_rate":55.8,
+      "note_url":"https://note.com/hirosetakao/n/nf83b1de01eb2?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2359,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-10",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":63,
+      "eps_actual":106,
+      "sales_estimate":209.6,
+      "sales_actual":218.2,
+      "y_over_y_growth_rate":34.3,
+      "note_url":"https://note.com/hirosetakao/n/n0fd67c383833?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2176,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-10",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-22,
+      "eps_actual":-20,
+      "sales_estimate":7.69,
+      "sales_actual":8.43,
+      "y_over_y_growth_rate":53.8,
+      "note_url":"https://note.com/hirosetakao/n/n20bde8db1ce4?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":5339,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-11",
+      "quarter":2,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-22,
+      "eps_actual":-57,
+      "sales_estimate":3.33,
+      "sales_actual":3.61,
+      "y_over_y_growth_rate":77,
+      "note_url":"https://note.com/hirosetakao/n/n5e76969f8c51?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":1000,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-16",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":4,
+      "eps_actual":8,
+      "sales_estimate":14.6,
+      "sales_actual":15.3,
+      "y_over_y_growth_rate":78.3,
+      "note_url":"https://note.com/hirosetakao/n/ncea8d070df1f?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":902,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-16",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":51,
+      "eps_actual":89,
+      "sales_estimate":2.63,
+      "sales_actual":3.05,
+      "y_over_y_growth_rate":251.8,
+      "note_url":"https://note.com/hirosetakao/n/nb472b9f4996e?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":5408,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-16",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":13,
+      "eps_actual":18,
+      "sales_estimate":2.08,
+      "sales_actual":2.22,
+      "y_over_y_growth_rate":59.1,
+      "note_url":"https://note.com/hirosetakao/n/n5fb5aa1b5a84?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":5769,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-16",
+      "quarter":1,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":179,
+      "eps_actual":194,
+      "sales_estimate":26.1,
+      "sales_actual":26.9,
+      "y_over_y_growth_rate":72.2,
+      "note_url":"https://note.com/hirosetakao/n/n02c354940885?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":954,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-16",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":74,
+      "eps_actual":72,
+      "sales_estimate":17.8,
+      "sales_actual":18.4,
+      "y_over_y_growth_rate":106.3,
+      "note_url":"https://note.com/hirosetakao/n/n6d91390dfe76?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2969,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-17",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":122,
+      "eps_actual":132,
+      "sales_estimate":74.3,
+      "sales_actual":76.4,
+      "y_over_y_growth_rate":52.8,
+      "note_url":"https://note.com/hirosetakao/n/n4bcc7c123436?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":4024,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-17",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":null,
+      "eps_estimate":-27,
+      "eps_actual":-45,
+      "sales_estimate":12.8,
+      "sales_actual":13,
+      "y_over_y_growth_rate":34,
+      "note_url":"https://note.com/hirosetakao/n/n40582870dc8b?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2119,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-17",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":-16,
+      "eps_actual":-10,
+      "sales_estimate":0.9248,
+      "sales_actual":0.9772,
+      "y_over_y_growth_rate":18.2,
+      "note_url":"https://note.com/hirosetakao/n/n5de9803d3bd3?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2642,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-17",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":37,
+      "eps_actual":8,
+      "sales_estimate":7.77,
+      "sales_actual":7.93,
+      "y_over_y_growth_rate":55.6,
+      "note_url":"https://note.com/hirosetakao/n/neaa0d86c5c39?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":1196,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-17",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":84,
+      "eps_actual":87,
+      "sales_estimate":4.42,
+      "sales_actual":4.43,
+      "y_over_y_growth_rate":17.9,
+      "note_url":"https://note.com/hirosetakao/n/n31dcd7ab6a30?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":5744,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-17",
+      "quarter":4,
+      "eps_ok":0,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":4,
+      "eps_actual":2,
+      "sales_estimate":4.18,
+      "sales_actual":4.33,
+      "y_over_y_growth_rate":34.4,
+      "note_url":"https://note.com/hirosetakao/n/n3137fdbf4650?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":4355,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date":"2022-02-17",
+      "quarter":4,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":1,
+      "eps_estimate":11,
+      "eps_actual":22,
+      "sales_estimate":0.7682,
+      "sales_actual":0.798,
+      "y_over_y_growth_rate":42.8,
+      "note_url":"https://note.com/hirosetakao/n/n94577b48346f?magazine_key=m68d7ed5c9b0f",
+      "symbol_id":2675,
+      "eps_unit_id":1,
+      "sales_unit_id":2
+    }
+  },
+  {
+    "model": "vietnam_research.financialResultWatch",
+    "fields": {
+      "recorded_date": "2022-02-25",
+      "quarter": 2,
+      "eps_ok": 1,
+      "sales_ok": 1,
+      "guidance_ok": 0,
+      "eps_estimate": 11,
+      "eps_actual": 13,
+      "sales_estimate": 2.42,
+      "sales_actual": 2.56,
+      "y_over_y_growth_rate": 62.7,
+      "note_url": "https://note.com/hirosetakao/n/n4e9e5af89628?magazine_key=m68d7ed5c9b0f",
+      "symbol_id": 5779,
+      "eps_unit_id": 1,
+      "sales_unit_id": 2
+    }
+  }
+]

@@ -1,0 +1,36 @@
+[
+  {
+    "model": "vietnam_research.market",
+    "fields": {
+      "id": 1,
+      "code":"HOSE",
+      "name":"ホーチミン証券取引所",
+      "url_file_name":"hcm"
+    }
+  },
+  {
+    "model": "vietnam_research.market",
+    "fields": {
+      "id": 2,
+      "code":"HNX",
+      "name":"ハノイ証券取引所",
+      "url_file_name":"hn"
+    }
+  },
+  {
+    "model": "vietnam_research.market",
+    "fields": {
+      "id": 3,
+      "code":"NASDAQ",
+      "name":"ナスダック"
+    }
+  },
+  {
+    "model": "vietnam_research.market",
+    "fields": {
+      "id": 4,
+      "code":"NYSE",
+      "name":"ニューヨーク証券取引所"
+    }
+  }
+]
