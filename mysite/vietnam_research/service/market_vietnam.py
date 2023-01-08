@@ -55,25 +55,43 @@ class MarketVietnam(MarketAbstract):
             ORDER BY bought_day;
             ''', self._con)
 
-    def get_national_stock_timeline(self):
-        """シンプルな時系列を作成します"""
-        query = QueryFactory()
-        data = query.get('vnindex', self._con)
-        vnindex_timeline = {"labels": list(data['Y'] + data['M']), "datasets": []}
-        inner = {"label": 'VN-Index', "data": list(data['closing_price'])}
-        vnindex_timeline["datasets"].append(inner)
+    @staticmethod
+    def vnindex_timeline() -> dict:
+        """
+        vn-indexのシンプルなYM時系列データセットを作成します
+
+        See Also https://www.chartjs.org/docs/latest/getting-started/
+        """
+        records = VnIndex.objects.time_series_closing_price()
+        vnindex_timeline = {
+            "labels": [record['Y'] + record['M'] for record in records.order_by('Y', 'M')],
+            "datasets": [{
+                "label": 'VN-Index',
+                "data": [float(record['closing_price']) for record in records.order_by('Y', 'M')]
+            }]
+        }
+        # print('\nvnindex_timeline: ', vnindex_timeline)
+
         return vnindex_timeline
 
-    def get_national_stock_layers(self):
-        """annual layer"""
-        query = QueryFactory()
-        data = query.get('vnindex', self._con)
-        vnindex_pivot = data.pivot('Y', 'M', 'closing_price').fillna(0)
-        vnindex_layers = {"labels": list(vnindex_pivot.columns.values), "datasets": []}
-        for i, yyyy in enumerate(vnindex_pivot.iterrows()):
-            inner = {"label": yyyy[0], "data": list(yyyy[1])}
+    @staticmethod
+    def vnindex_annual_layers() -> dict:
+        """
+        vn-indexの１２ヶ月ぶんの終値を１つの折れ線にして、年次でグラフに追加していく
+
+        See Also https://www.chartjs.org/docs/latest/getting-started/
+        """
+        records = VnIndex.objects.time_series_closing_price()
+        vnindex_layers = {
+            "labels": [record['M'] for record in records.values('M').distinct().order_by('M')],
+            "datasets": []
+        }
+        for year in [record['Y'] for record in records.values('Y').distinct().order_by('Y')]:
+            a_year_records = records.filter(Y=year).order_by('Y', 'M').values('closing_price')
+            inner = {"label": year, "data": [float(record['closing_price']) for record in a_year_records]}
             vnindex_layers["datasets"].append(inner)
-        # print('vnindex_pivot: ', vnindex_pivot)
+        # print('\nvnindex_layers: ', vnindex_layers)
+
         return vnindex_layers
 
     def get_uptrends(self):
