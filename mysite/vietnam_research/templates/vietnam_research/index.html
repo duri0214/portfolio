@@ -32,7 +32,7 @@
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
                                 <p style="font-size: small">{{ article.note | truncatechars:80 }}</p>
-                                <p class="author text-right text-secondary" style="font-size: xx-small">{{ article.user.email }}</p>
+                                <p class="author text-right text-secondary" style="font-size: xx-small">投稿者: {{ article.user.email | truncatechars:3 }} さん</p>
                                 <div class="card-body">
                                     <a role="button" aria-pressed='{{ article.is_like | yesno:"true,false" }}' onclick="likes(event, '{{ user.id }}', '{{ article.id }}')">
                                     <button type="button" class="btn btn-light">いいね！<span>({{ article.likes_cnt }})</span></button>
@@ -236,8 +236,7 @@
         残高(VND): {{ exchanged.current_balance | intcomma }}<br>
         @{{ exchanged.unit_price | intcomma }} * {{ exchanged.quantity | intcomma }} = {{ exchanged.price_no_fee | intcomma }}VND<br>
         手数料(VND): {{ exchanged.fee | intcomma }}<br>
-        差引残高(VND): {{ exchanged.deduction_price | intcomma }}<br>
-        <a href="https://www.google.com/search?q={{ exchanged.deduction_price | intcomma }}vnd" target="_blank">{{ exchanged.deduction_price | intcomma }}(VND)を変換</a><br>
+        差引残高: {{ exchanged.deduction_price | intcomma }} VND（<a href="https://www.google.com/search?q={{ exchanged.deduction_price | intcomma }}vnd" target="_blank">日本円に変換する <i class="fas fa-external-link-alt"></i></a>）
 
     </div>
 
