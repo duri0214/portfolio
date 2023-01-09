@@ -8,7 +8,7 @@ class MarketAbstract(metaclass=ABCMeta):
     _con = create_engine(_con_str, echo=False).connect()
 
     @abstractmethod
-    def get_watchlist(self):
+    def watchlist(self):
         raise NotImplementedError()
 
     @abstractmethod

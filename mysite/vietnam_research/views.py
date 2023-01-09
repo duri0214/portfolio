@@ -11,7 +11,7 @@ from django.http.response import JsonResponse
 from django.db.models import Count, Case, When, IntegerField, Sum
 from .forms import ArticleForm, WatchlistCreateForm, ExchangeForm, FinancialResultsForm
 from .service.market_vietnam import MarketVietnam
-from .models import WatchList, Likes, Articles, FinancialResultWatch, BasicInformation
+from .models import Watchlist, Likes, Articles, FinancialResultWatch, BasicInformation
 from django.contrib.auth.decorators import login_required
 
 
@@ -26,7 +26,7 @@ def index(request):
         # ウォッチリスト登録処理
         watchlist_form = WatchlistCreateForm(request.POST)
         if watchlist_form.is_valid():
-            watchlist = WatchList()
+            watchlist = Watchlist()
             watchlist.symbol = watchlist_form.cleaned_data['buy_symbol']
             watchlist.already_has = True
             watchlist.bought_day = watchlist_form.cleaned_data['buy_date']
@@ -81,7 +81,7 @@ def index(request):
         'vnindex_layers': json.dumps(mkt.get_national_stock_layers(), ensure_ascii=False),
         'articles': articles,
         'basicinfo': BasicInformation.objects.order_by('id').values('item', 'description'),
-        'watchlist': mkt.get_watchlist(),
+        'watchlist': mkt.watchlist(),
         'sbi_topics': mkt.get_sbi_topics(),
         'uptrends': json.dumps(mkt.get_uptrends(), ensure_ascii=False),
         'exchange_form': exchange_form,
@@ -119,9 +119,9 @@ class ArticleCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class WatchListRegister(CreateView):
-    """WatchList作成画面"""
-    model = WatchList
+class WatchlistRegister(CreateView):
+    """Watchlist作成画面"""
+    model = Watchlist
     template_name = "vietnam_research/watchlist/register.html"
     form_class = WatchlistCreateForm
     success_url = reverse_lazy("vnm:index")
@@ -131,15 +131,15 @@ class WatchListRegister(CreateView):
         return super().form_valid(form)
 
 
-class WatchListEdit(UpdateView):
-    """WatchList編集画面"""
-    model = WatchList
+class WatchlistEdit(UpdateView):
+    """Watchlist編集画面"""
+    model = Watchlist
     template_name = "vietnam_research/watchlist/edit.html"
     success_url = reverse_lazy('vnm:index')
     fields = ('symbol', 'bought_day', 'stocks_price', 'stocks_count', 'already_has')
 
     def get_queryset(self, **kwargs):
-        return WatchList.objects.filter(pk=self.kwargs['pk'])
+        return Watchlist.objects.filter(pk=self.kwargs['pk'])
 
 
 class FinancialResultsListView(ListView):

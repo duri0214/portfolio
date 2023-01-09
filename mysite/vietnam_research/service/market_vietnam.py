@@ -1,15 +1,12 @@
 from decimal import Decimal, ROUND_HALF_UP
-
-from dateutil.relativedelta import relativedelta
+from django.db.models import Sum, F, QuerySet, Value
+from django.db.models.functions import Concat, Round
 from django.conf import settings
-from django.db.models import Sum
-from sqlalchemy.engine.base import Connection
 
 from .market_abstract import MarketAbstract
 from pathlib import Path
 import pandas as pd
-
-from ..models import Industry, WatchList, VnIndex
+from ..models import Industry, Watchlist, VnIndex
 
 
 class MarketVietnam(MarketAbstract):
@@ -34,39 +31,26 @@ class MarketVietnam(MarketAbstract):
 
         return sbi_topics
 
-    def get_watchlist(self) -> pd.DataFrame:
-        """ウォッチリストを作成します"""
-        return pd.read_sql_query(
-            '''
-            WITH latest AS (
-                SELECT
-                    i.symbol, i.closing_price * 1000 closing_price
-                FROM vietnam_research_industry i
-                WHERE i.pub_date = (SELECT MAX(i.pub_date) pub_date FROM vietnam_research_industry i)
-            )
-            SELECT DISTINCT
-                w.id
-                , CASE
-                    WHEN market_code = 'HOSE' THEN 'hcm'
-                    WHEN market_code = 'HNX' THEN 'hn'
-                END mkt
-                , w.symbol
-                , LEFT(CONCAT(i.industry1, ': ', i.company_name), 14) AS company_name
-                , CONCAT(YEAR(w.bought_day), '/', MONTH(w.bought_day), '/',
-                    DAY(w.bought_day)) AS bought_day
-                , FORMAT(w.stocks_price, 0) AS stocks_price
-                , FORMAT(w.stocks_price / 100 / 2, 0) AS stocks_price_yen
-                , FORMAT((w.stocks_price / 100 / 2) * w.stocks_count, 0) AS buy_price_yen
-                , w.stocks_count
-                , i.industry1
-                , FORMAT(latest.closing_price, 0) AS closing_price
-                , ROUND(((latest.closing_price / w.stocks_price) -1) *100, 2) AS stocks_price_delta
-            FROM vietnam_research_watchlist w
-                INNER JOIN vietnam_research_industry i ON w.symbol = i.symbol
-                INNER JOIN latest ON w.symbol = latest.symbol
-            WHERE already_has = 1
-            ORDER BY bought_day;
-            ''', self._con)
+    def watchlist(self) -> QuerySet:
+        """
+        ウォッチリストを作成します
+
+        closing_price: 終値は1,000VND単位なので、表示上は1,000を掛けている（1VND単位で表示）\n
+        stocks_price_yen: VND→JPNへの変換は 200VND ≒ 1JPY\n
+        buy_price_yen: 当初購入額（単価×購入株数）\n
+        stocks_price_delta: 直近終値÷当初購入単価
+
+        Returns:
+            QuerySet: Watchlistをベースに換算額などの計算を組み合わせたもの
+        """
+
+        return Watchlist.objects\
+            .filter(already_has=1)\
+            .filter(symbol__industry__recorded_date=Industry.objects.slipped_month_end(0).formatted_recorded_date())\
+            .annotate(closing_price=Round(F('symbol__industry__closing_price') * 1000))\
+            .annotate(stocks_price_yen=F('stocks_price') / 200)\
+            .annotate(buy_price_yen=F('stocks_price_yen') * F('stocks_count'))\
+            .annotate(stocks_price_delta=Round((F('closing_price') / F('stocks_price') - 1) * 100, 2))
 
     @staticmethod
     def vnindex_timeline() -> dict:

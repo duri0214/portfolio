@@ -253,26 +253,25 @@
     </ul>
 
     <div class="card-group">
-        {% for idx, row in watchlist.iterrows %}
+        {% for row in watchlist %}
             <div class="col">
                 <div class="card" style="width: 15rem; height: 30rem">
-                    <img src="{% static 'vietnam_research/chart' %}/{{ row.symbol }}.png" class="card-img-top" alt="{{ row.symbol }}">
+                    <img src="{% static 'vietnam_research/chart' %}/{{ row.symbol.code }}.png" class="card-img-top" alt="{{ row.symbol.code }}">
                     <div class="card-body">
-                        <h8 class="card-title">{{ row.company_name | truncatechars:12 }}</h8>
+                        <h6 class="card-title">{{ row.symbol.name | truncatechars:12 }}</h6>
                         <p class="card-text" style="font-size: small;">
-                            symbol: {{ row.symbol }}<br>
-                            buy date: {{ row.bought_day }}<br>
-                            buy price: @{{ row.stocks_price }} VND<br>
-                            buy price: @{{ row.stocks_price_yen }} 円<br>
-                            now price: @{{ row.closing_price }} VND<br>
-                            Difference: {{ row.stocks_price_delta }}%<br>
-                            buy count: {{ row.stocks_count }}株<br>
-                            備考：{{ row.buy_price_yen }}円<br>
+                            symbol: {{ row.symbol.code }}<br>
+                            purchase date: {{ row.bought_day }}<br>
+                            purchase price: @{{ row.stocks_price | intcomma }} VND（@{{ row.stocks_price_yen | intcomma }} 円）<br>
+                            purchase count: {{ row.stocks_count | intcomma }}株<br>
+                            purchase price×count：{{ row.buy_price_yen | intcomma }}円<br>
+                            now price: @{{ row.closing_price | intcomma }} VND<br>
+                            Rate of change: @{{ row.stocks_price_delta | intcomma }}%<br>
                         </p>
                     </div>
                     <div class="card-footer text-muted">
                         <a href="{% url 'vnm:watchlist_edit' row.id %}">編集</a>
-                        <a href="https://www.viet-kabu.com/{{ row.mkt }}/{{ row.symbol }}.html" target="_blank">link</a>
+                        <a href="https://www.viet-kabu.com/{{ row.symbol.market.url_file_name }}/{{ row.symbol.code }}.html" target="_blank">VIET-KABUで見る</a>
                     </div>
                 </div>
             </div>

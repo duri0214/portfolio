@@ -1,6 +1,6 @@
 """フォーム集積場所"""
 from django import forms
-from .models import Articles, WatchList, FinancialResultWatch
+from .models import Articles, Watchlist, FinancialResultWatch
 
 
 class ExchangeForm(forms.Form):
@@ -25,7 +25,7 @@ class WatchlistCreateForm(forms.ModelForm):
     """ウォッチリスト登録時の入力フォームです"""
 
     class Meta:
-        model = WatchList
+        model = Watchlist
         fields = ('symbol', 'bought_day', 'stocks_price', 'stocks_count')
         exclude = ('already_has',)
 

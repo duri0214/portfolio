@@ -1,6 +1,6 @@
 [
   {
-    "model": "vietnam_research.watchList",
+    "model": "vietnam_research.watchlist",
     "fields": {
       "symbol_id":61,
       "already_has":1,
@@ -11,7 +11,7 @@
     }
   },
   {
-    "model": "vietnam_research.watchList",
+    "model": "vietnam_research.watchlist",
     "fields": {
       "symbol_id":262,
       "already_has":1,
@@ -22,7 +22,7 @@
     }
   },
   {
-    "model": "vietnam_research.watchList",
+    "model": "vietnam_research.watchlist",
     "fields": {
       "symbol_id":298,
       "already_has":1,
@@ -33,7 +33,7 @@
     }
   },
   {
-    "model": "vietnam_research.watchList",
+    "model": "vietnam_research.watchlist",
     "fields": {
       "symbol_id":715,
       "already_has":1,
@@ -44,7 +44,7 @@
     }
   },
   {
-    "model": "vietnam_research.watchList",
+    "model": "vietnam_research.watchlist",
     "fields": {
       "symbol_id":360,
       "already_has":0,
