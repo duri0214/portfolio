@@ -58,7 +58,7 @@ class MarketVietnam(MarketAbstract):
         """
         vn-indexのシンプルなYM時系列データセットを作成します
 
-        See Also https://www.chartjs.org/docs/latest/getting-started/
+        See Also: https://www.chartjs.org/docs/latest/getting-started/
         """
         records = VnIndex.objects.time_series_closing_price()
         vnindex_timeline = {
@@ -77,7 +77,7 @@ class MarketVietnam(MarketAbstract):
         """
         vn-indexの１２ヶ月ぶんの終値を１つの折れ線にして、年次でグラフに追加していく
 
-        See Also https://www.chartjs.org/docs/latest/getting-started/
+        See Also: https://www.chartjs.org/docs/latest/getting-started/
         """
         records = VnIndex.objects.time_series_closing_price()
         vnindex_layers = {
