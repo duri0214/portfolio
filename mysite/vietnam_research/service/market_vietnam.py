@@ -1,5 +1,6 @@
-from decimal import Decimal, ROUND_HALF_UP
-from django.db.models import Sum, F, QuerySet, Value
+import logging
+
+from django.db.models import Sum, F, QuerySet, Value, Count, CharField, FloatField
 from django.db.models.functions import Concat, Round
 from django.conf import settings
 
@@ -161,40 +162,92 @@ class MarketVietnam(MarketAbstract):
         minimum_fee_including_tax = 1320000
         return fee if fee > minimum_fee_including_tax else minimum_fee_including_tax
 
-    def get_radar_chart_count(self):
-        """業種別企業数の占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333"""
-        months_dating_back = [0, -3, -6]
+    @staticmethod
+    def radar_chart_count() -> list:
+        """
+        企業数の業種別占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333\n
+        時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
+        [
+            {
+                "name": "企業数 0ヶ月前",
+                "axes": [{"axis": "1|農林水産業", "value": 0.04}, {"axis": "2|建設業", "value": 0.11}, ... ]
+            },
+            ...
+        ]
+
+        See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
+        """
+        months_dating_back = [-1, -4, -7, -300]
         result = []
         for m in months_dating_back:
-            data = get_industry_with_ind_class(get_end_of_months(m), 'marketcap')
-            data['ind_name'] = data['industry_class'].astype(str) + '|' + data['industry1']
-            each_category = data[['marketcap', 'ind_name']].groupby('ind_name')
-            count_of_all = data['marketcap'].count()
-            occupancy = each_category['marketcap'].count() / count_of_all
-            occupancy = [Decimal(str(x)).quantize(Decimal('0.00') * 100, rounding=ROUND_HALF_UP) for x in occupancy]
-            occupancy = [float(x) for x in occupancy]  # DecimalはJSON変換できない
-            data = pd.DataFrame({'cnt_per': occupancy}, index=list(each_category.groups.keys()))
+            try:
+                lastday_of_the_month = Industry.objects.slipped_month_end(m).formatted_recorded_date()
+            except Industry.DoesNotExist as e:
+                logging.warning(f"market_vietnam.py radar_chart_count() の{m}ヶ月は存在しないため、無視されました")
+                continue
+            denominator = len(Industry.objects.filter(recorded_date=lastday_of_the_month))
+            industry_records = Industry.objects\
+                .filter(recorded_date=lastday_of_the_month)\
+                .annotate(ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'), output_field=CharField()))\
+                .values('ind_name')\
+                .annotate(count=Count('id'))\
+                .annotate(cnt_per=Round(F('count') / denominator * 100, precision=2, output_field=FloatField()))\
+                .order_by('ind_name')
             inner = []
-            for row in data.iterrows():
-                inner.append({"axis": row[0], "value": row[1]["cnt_per"]})
-            result.append({"name": '企業数 {0}ヶ月前'.format(m), "axes": inner})
+            # print("industry_records(sql): ", industry_records.query)
+            for industry_record in industry_records:
+                inner.append({
+                    "axis": industry_record["ind_name"],
+                    "value": industry_record["cnt_per"]
+                })
+            result.append({
+                "name": f"企業数 {m}ヶ月前",
+                "axes": inner
+            })
+
         return result
 
-    def get_radar_chart_cap(self):
-        """業種別時価総額の占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190"""
-        months_dating_back = [0, -3, -6]
+    @staticmethod
+    def radar_chart_cap() -> list:
+        """
+        時価総額の業種別占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190\n
+        時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
+        [
+            {
+                "name": "時価総額 -1ヶ月前",
+                "axes": [{"axis": "1|農林水産業", "value": 0}, {"axis": "2|建設業", "value": 0}, ... ]
+            },
+            ...
+        ]
+
+        See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
+        """
+        months_dating_back = [-1, -4, -7, -300]
         result = []
         for m in months_dating_back:
-            data = get_industry_with_ind_class(get_end_of_months(m), 'marketcap')
-            data['ind_name'] = data['industry_class'].astype(str) + '|' + data['industry1']
-            each_category = data[['marketcap', 'ind_name']].groupby('ind_name')
-            sum_of_all = data['marketcap'].sum()
-            occupancy = each_category['marketcap'].sum() / sum_of_all
-            occupancy = [Decimal(str(x)).quantize(Decimal('0.00') * 100, rounding=ROUND_HALF_UP) for x in occupancy]
-            occupancy = [float(x) for x in occupancy]  # DecimalはJSON変換できない
-            data = pd.DataFrame({'cap_per': occupancy}, index=list(each_category.groups.keys()))
+            try:
+                lastday_of_the_month = Industry.objects.slipped_month_end(m).formatted_recorded_date()
+            except Industry.DoesNotExist as e:
+                logging.warning(f"market_vietnam.py radar_chart_count() の{m}ヶ月は存在しないため、無視されました")
+                continue
+            denominator = sum([float(x["marketcap"]) for x in Industry.objects.filter(recorded_date=lastday_of_the_month).values('marketcap')])
+            industry_records = Industry.objects\
+                .filter(recorded_date=lastday_of_the_month)\
+                .annotate(ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'), output_field=CharField()))\
+                .values('ind_name')\
+                .annotate(marketcap_sum=Sum('marketcap'))\
+                .annotate(cap_per=Round(F('marketcap_sum') / denominator * 100, precision=2, output_field=FloatField()))\
+                .order_by('ind_name')
+            # print("industry_records(sql): ", industry_records.query)
             inner = []
-            for row in data.iterrows():
-                inner.append({"axis": row[0], "value": row[1]["cap_per"]})
-            result.append({"name": '時価総額 {0}ヶ月前'.format(m), "axes": inner})
+            for industry_record in industry_records:
+                inner.append({
+                    "axis": industry_record["ind_name"],
+                    "value": industry_record["cap_per"]
+                })
+            result.append({
+                "name": f"時価総額 {m}ヶ月前",
+                "axes": inner
+            })
+
         return result

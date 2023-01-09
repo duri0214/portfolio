@@ -74,8 +74,8 @@ def index(request):
     ).order_by('-created_at')[:3]
 
     context = {
-        'industry_count': json.dumps(mkt.get_radar_chart_count(), ensure_ascii=False),
-        'industry_cap': json.dumps(mkt.get_radar_chart_cap(), ensure_ascii=False),
+        'industry_count': json.dumps(mkt.radar_chart_count(), ensure_ascii=False),
+        'industry_cap': json.dumps(mkt.radar_chart_cap(), ensure_ascii=False),
         'industry_stack': json.dumps(mkt.get_industry_stack(), ensure_ascii=False),
         'vnindex_timeline': json.dumps(mkt.get_national_stock_timeline(), ensure_ascii=False),
         'vnindex_layers': json.dumps(mkt.get_national_stock_layers(), ensure_ascii=False),
