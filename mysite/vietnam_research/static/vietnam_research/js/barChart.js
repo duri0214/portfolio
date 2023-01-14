@@ -1,6 +1,6 @@
 function BarChart_stack(chart_id, data){
-    var ctx = document.getElementById(chart_id).getContext("2d");
-    var cht = new Chart(ctx, {
+    const ctx = document.getElementById(chart_id).getContext("2d");
+    new Chart(ctx, {
         type: 'bar',
         data: data,
         options: {

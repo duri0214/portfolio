@@ -133,27 +133,57 @@ class MarketVietnam(MarketAbstract):
             uptrends.append(inner)
         return uptrends
 
-    def get_industry_stack(self):
-        data = Industry.objects\
-            .values('pub_date', 'industry1')\
-            .annotate(trade_price_of_a_day=Sum('trade_price_of_a_day'))\
-            .order_by('pub_date', 'industry1')\
-            .values('pub_date', 'industry1', 'trade_price_of_a_day')
-        data = pd.DataFrame(list(data))
-        data['pub_date'] = data['pub_date'].astype(str).replace('-', '')
-        data['trade_price_of_a_day'] = data['trade_price_of_a_day'].astype(float) / 1000000
+    def industry_stack(self):
+        """
+        Industryテーブルの業種別積み上げを時系列で表示
 
-        industry_pivot = pd.pivot_table(data, index='pub_date',
-                                        columns='industry1', values='trade_price_of_a_day', aggfunc='sum')
-        industry_stack = {"labels": list(industry_pivot.index), "datasets": []}
+        type: "bar",
+        data: {
+            labels:  ["2020-05-25", "2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29"],
+            datasets: [
+                {
+                    label: "サービス業",
+                    backgroundColor: "red"
+                    data: [3000, 3020, 3010, 3015, 3010],
+                },
+                {
+                    label: "不動産業",
+                    backgroundColor: "blue"
+                    data: [3000, 3020, 3010, 3015, 3010],
+                }
+            ]
+        },
+
+        See Also: https://yawatosho.hateblo.jp/entry/2016/09/12/223407
+        """
+        industry_records = Industry.objects\
+            .values('recorded_date', 'ind_class__industry1')\
+            .annotate(industry1=F('ind_class__industry1'))\
+            .annotate(trade_price_of_a_day=Sum('trade_price_of_a_day') / 1000000)\
+            .order_by('recorded_date', 'industry1')\
+            .values('recorded_date', 'industry1', 'trade_price_of_a_day')
+        industry_records = list(industry_records)
+        # print(f"industry_records({type(industry_records)}): ", industry_records)
+
+        records = Industry.objects.values('recorded_date').distinct()
+        industry_stack = {
+            "labels": [record['recorded_date'].strftime('%Y-%m-%d') for record in records],
+            "datasets": []
+        }
+
+        # TODO: 色と業種を辞書で対応させちゃおう（Chart.jsに自動的に適切な色にする方法はあるらしい）
         colors = ['#7b9ad0', '#f8e352', '#c8d627', '#d5848b', '#e5ab47']
         colors.extend(['#e1cea3', '#51a1a2', '#b1d7e4', '#66b7ec', '#c08e47', '#ae8dbc'])
-        for i, ele in enumerate(data.groupby('industry1').groups.keys()):
-            industry_stack["datasets"].append({"label": ele, "backgroundColor": colors[i]})
-            value = list(data.groupby('industry1').get_group(ele)['trade_price_of_a_day'])
-            industry_stack["datasets"][i]["data"] = value
-        # print('\n【data from】\n', industry_pivot)
+
+        industry_names = Industry.objects.values('ind_class__industry1').distinct()
+        for i, industry_name in enumerate([x['ind_class__industry1'] for x in industry_names]):
+            industry_stack["datasets"].append({
+                "label": industry_name,
+                "backgroundColor": colors[i],
+                "data": [float(x['trade_price_of_a_day']) for x in industry_records if x['industry1'] == industry_name]
+            })
         # print('\n【data to】\n', industry_stack, '\n')
+
         return industry_stack
 
     def calc_fee(self, price_no_fee):

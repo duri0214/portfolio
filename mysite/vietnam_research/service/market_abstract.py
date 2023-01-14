@@ -20,7 +20,7 @@ class MarketAbstract(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_industry_stack(self):
+    def industry_stack(self):
         raise NotImplementedError()
 
     @abstractmethod

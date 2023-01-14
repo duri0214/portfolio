@@ -15,7 +15,7 @@ class Market(models.Model):
     market_name: ホーチミンなら「ホーチミン証券取引所」\n
     url_file_name: ホーチミンなら「hcm」
 
-    See Also https://www.viet-kabu.com/stock/hcm.html
+    See Also: https://www.viet-kabu.com/stock/hcm.html
     """
     code = models.CharField(max_length=10)
     name = models.CharField(max_length=50)
@@ -29,7 +29,7 @@ class Symbol(models.Model):
     """
     シンボルマスタ
 
-    See Also https://www.viet-kabu.com/stock/hcm.html
+    See Also: https://www.viet-kabu.com/stock/hcm.html
     """
     code = models.CharField(max_length=10)
     name = models.CharField(max_length=50)
@@ -50,7 +50,7 @@ class IndClass(models.Model):
     industry2: サイゴンビールなら、食品・飲料
     industry_class: サイゴンビールなら、2（加工業）
 
-    See Also https://www.viet-kabu.com/stock/hcm.html
+    See Also: https://www.viet-kabu.com/stock/hcm.html
     """
     industry1 = models.CharField(max_length=10)
     industry2 = models.CharField(max_length=20)
@@ -90,7 +90,7 @@ class Industry(models.Model):
     marketcap: 時価総額（億円）\n
     TODO: decimalじゃなくてfloatでいいのでは？
 
-    See Also https://www.viet-kabu.com/stock/hcm.html
+    See Also: https://www.viet-kabu.com/stock/hcm.html
     """
     recorded_date = models.DateField()
     market = models.ForeignKey(Market, on_delete=models.CASCADE)
