@@ -184,7 +184,11 @@ class MarketVietnam(MarketAbstract):
         [
             {
                 "name": "企業数 0ヶ月前",
-                "axes": [{"axis": "1|農林水産業", "value": 0.04}, {"axis": "2|建設業", "value": 0.11}, ... ]
+                "axes": [
+                    {"axis": "1|農林水産業", "value": 0.04},
+                    {"axis": "2|建設業", "value": 0.11},
+                     ...
+                 ]
             },
             ...
         ]
