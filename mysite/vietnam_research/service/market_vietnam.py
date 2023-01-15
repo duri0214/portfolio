@@ -92,7 +92,7 @@ class MarketVietnam(MarketAbstract):
 
         return vnindex_layers
 
-    def get_uptrends(self):
+    def uptrends(self):
         """daily: 移動平均チャート"""
         uptrends = []
         data = pd.read_sql_query(

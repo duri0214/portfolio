@@ -14,7 +14,7 @@ class MarketAbstract(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_uptrends(self):
+    def uptrends(self):
         raise NotImplementedError()
 
     @abstractmethod

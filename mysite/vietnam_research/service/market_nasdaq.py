@@ -60,7 +60,7 @@ class MarketNasdaq(MarketAbstract):
             ORDER BY bought_day;
             ''', self._con)
 
-    def get_uptrends(self):
+    def uptrends(self):
         """daily: 移動平均チャート"""
         pass
 
