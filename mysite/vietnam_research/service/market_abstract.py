@@ -1,4 +1,6 @@
 from abc import ABCMeta, abstractmethod
+
+from django.db.models import QuerySet
 from sqlalchemy import create_engine
 
 
@@ -8,7 +10,7 @@ class MarketAbstract(metaclass=ABCMeta):
     _con = create_engine(_con_str, echo=False).connect()
 
     @abstractmethod
-    def watchlist(self):
+    def watchlist(self) -> QuerySet:
         raise NotImplementedError()
 
     @abstractmethod
@@ -16,13 +18,14 @@ class MarketAbstract(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_sbi_topics(self):
+    def get_sbi_topics(self) -> str:
         raise NotImplementedError()
 
     @abstractmethod
-    def industry_stack(self):
+    def industry_stack(self) -> dict:
         raise NotImplementedError()
 
+    @staticmethod
     @abstractmethod
-    def calc_fee(self, price_no_fee):
+    def calc_fee(price_without_fees: float) -> float:
         raise NotImplementedError()
