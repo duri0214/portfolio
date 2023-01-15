@@ -183,7 +183,11 @@ class Sbi(models.Model):
 
 
 class BasicInformation(models.Model):
-    """基本情報"""
+    """
+    基本情報
+
+    See Also: https://www.jetro.go.jp/world/asia/vn/basic_01.html
+    """
     item = models.TextField()
     description = models.TextField(blank=True, null=True)
 
