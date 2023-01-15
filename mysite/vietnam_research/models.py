@@ -219,19 +219,22 @@ class Unit(models.Model):
 
 
 class FinancialResultWatch(models.Model):
-    """決算ウォッチ"""
-    date = models.DateField()
-    ticker = models.CharField(max_length=10)
-    quarter = models.IntegerField()
+    """
+    決算ウォッチ
+
+    recorded_date: 計上日
+    """
+    recorded_date = models.DateField()
+    quarter = models.SmallIntegerField()
     eps_ok = models.BooleanField(null=True)
     sales_ok = models.BooleanField(null=True)
     guidance_ok = models.BooleanField(null=True)
-    eps_unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='r_eps_unit')
     eps_estimate = models.FloatField(default=0.00)
     eps_actual = models.FloatField(default=0.00)
-    sales_unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='r_sales_unit')
     sales_estimate = models.FloatField(default=0.00)
     sales_actual = models.FloatField(default=0.00)
     y_over_y_growth_rate = models.FloatField(default=0.00)
     note_url = models.URLField(null=True)
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
+    eps_unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='r_eps_unit')
+    sales_unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='r_sales_unit')
