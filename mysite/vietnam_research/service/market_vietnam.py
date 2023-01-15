@@ -212,7 +212,7 @@ class MarketVietnam(MarketAbstract):
         for m in months_dating_back:
             try:
                 lastday_of_the_month = Industry.objects.slipped_month_end(m).formatted_recorded_date()
-            except Industry.DoesNotExist as e:
+            except Industry.DoesNotExist:
                 logging.warning(f"market_vietnam.py radar_chart_count() の{m}ヶ月は存在しないため、無視されました")
                 continue
             denominator = len(Industry.objects.filter(recorded_date=lastday_of_the_month))
@@ -257,7 +257,7 @@ class MarketVietnam(MarketAbstract):
         for m in months_dating_back:
             try:
                 lastday_of_the_month = Industry.objects.slipped_month_end(m).formatted_recorded_date()
-            except Industry.DoesNotExist as e:
+            except Industry.DoesNotExist:
                 logging.warning(f"market_vietnam.py radar_chart_count() の{m}ヶ月は存在しないため、無視されました")
                 continue
             denominator = sum([float(x["marketcap"]) for x in Industry.objects.filter(recorded_date=lastday_of_the_month).values('marketcap')])
