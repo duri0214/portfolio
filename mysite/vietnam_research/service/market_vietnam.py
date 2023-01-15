@@ -18,7 +18,7 @@ class MarketVietnam(MarketAbstract):
         """
         あらかじめバッチ（daily_sbi_topics.py download_pdf）で取り込んで決まった場所においたtxtを読み込んで返す
 
-        See Also https://search.sbisec.co.jp/v2/popwin/info/stock/market_report_fo_em_topic.pdf
+        See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/market_report_fo_em_topic.pdf
 
         Returns:
             str: 新興国ウィークリーレポート
