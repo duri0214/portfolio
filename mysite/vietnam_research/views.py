@@ -43,7 +43,7 @@ def index(request):
             exchanged['unit_price'] = exchange_form.cleaned_data['unit_price']
             exchanged['quantity'] = exchange_form.cleaned_data['quantity']
             exchanged['price_no_fee'] = exchanged['unit_price'] * exchanged['quantity']
-            exchanged['fee'] = mkt.calc_fee(price_no_fee=exchanged['price_no_fee'])
+            exchanged['fee'] = mkt.calc_fee(price_without_fees=exchanged['price_no_fee'])
             exchanged['price_in_fee'] = exchanged['price_no_fee'] + exchanged['fee']
             exchanged['deduction_price'] = exchanged['current_balance'] - exchanged['price_in_fee']
             response = redirect('vnm:index')
