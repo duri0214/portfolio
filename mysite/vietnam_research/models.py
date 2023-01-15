@@ -212,7 +212,10 @@ class Unit(models.Model):
     name = models.CharField(max_length=10)
 
     def __str__(self):
-        return '%s' % self.name
+        return self.name
+
+    class Meta:
+        db_table = 'vietnam_research_m_unit'
 
 
 class FinancialResultWatch(models.Model):
