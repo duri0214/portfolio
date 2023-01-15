@@ -19,7 +19,11 @@ class QueryFactory(object):
 
 
 class MarketNasdaq(MarketAbstract):
-    """Nasdaqのマーケットを処理します(scraping)"""
+    """
+    Nasdaqのマーケットを処理します(scraping)
+
+    See Also: https://site3.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_PageID=WPLETmgR001Mdtl20&_DataStoreID=DSWPLETmgR001Control&_ActionID=DefaultAID&getFlg=on&burl=search_market&cat1=market&cat2=report&dir=report&file=market_report_fo_us_wm.html
+    """
     def get_sbi_topics(self) -> str:
         return pd.read_sql_query(
             '''
@@ -56,18 +60,6 @@ class MarketNasdaq(MarketAbstract):
             ORDER BY bought_day;
             ''', self._con)
 
-    def get_basicinfo(self) -> pd.DataFrame:
-        """国の基本情報"""
-        pass
-
-    def get_national_stock_timeline(self):
-        """シンプルな時系列を作成します"""
-        pass
-
-    def get_national_stock_layers(self):
-        """annual layer"""
-        pass
-
     def get_uptrends(self):
         """daily: 移動平均チャート"""
         pass
@@ -75,16 +67,20 @@ class MarketNasdaq(MarketAbstract):
     def industry_stack(self):
         pass
 
-    def calc_fee(self, price_no_fee):
-        """上限手数料（税込み）を上回れば上限手数料を返す"""
-        fee = price_no_fee * 0.00495
-        maximum_fee_including_tax = 22
-        return fee if fee <= maximum_fee_including_tax else maximum_fee_including_tax
+    @staticmethod
+    def calc_fee(price_without_fees: float) -> float:
+        """
+        手数料を加味した金額を算出
 
-    def get_radar_chart_count(self):
-        """業種別企業数の占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333"""
-        pass
+        Args:
+            price_without_fees: 手数料を加味する前の金額
 
-    def get_radar_chart_cap(self):
-        """業種別時価総額の占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190"""
-        pass
+        Returns:
+            float: 手数料（約定代金の0.495％）を加味した金額を返す（上限手数料を上回る場合は上限手数料 22USD）
+
+        See Also: https://search.sbisec.co.jp/v2/popwin/attention/trading/stock_gai_23.html
+        """
+        price_with_fees = price_without_fees * 0.00495
+        maximum_fees = 22
+
+        return price_with_fees if price_with_fees <= maximum_fees else maximum_fees
