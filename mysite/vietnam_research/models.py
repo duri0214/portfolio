@@ -170,9 +170,16 @@ class DailyUptrends(models.Model):
 
 
 class Sbi(models.Model):
-    """SBI証券取り扱い銘柄"""
+    """
+    SBI証券取り扱い銘柄
+
+    See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/pop6040_usequity_list.html
+    """
     market_code = models.CharField(max_length=4)
     symbol = models.CharField(max_length=10)
+
+    class Meta:
+        db_table = 'vietnam_research_m_sbi'
 
 
 class BasicInformation(models.Model):
