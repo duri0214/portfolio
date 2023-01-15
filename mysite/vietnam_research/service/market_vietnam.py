@@ -170,11 +170,23 @@ class MarketVietnam(MarketAbstract):
 
         return industry_stack
 
-    def calc_fee(self, price_no_fee):
-        """最低手数料（税込み）を下回れば最低手数料を返す"""
-        fee = price_no_fee * 0.022
-        minimum_fee_including_tax = 1320000
-        return fee if fee > minimum_fee_including_tax else minimum_fee_including_tax
+    @staticmethod
+    def calc_fee(price_without_fees: float) -> float:
+        """
+        手数料を算出
+
+        Args:
+            price_without_fees: 手数料を加味する前の金額
+
+        Returns:
+            float: 手数料（約定代金の2.2％）を返す（最低手数料を下回る場合は最低手数料 1,200,000VND）
+
+        See Also: https://www.sbisec.co.jp/ETGate/?_ControlID=WPLETmgR001Control&_DataStoreID=DSWPLETmgR001Control&burl=search_foreign&cat1=foreign&cat2=vn&dir=vn%2F&file=foreign_vn_01.html
+        """
+        fees = price_without_fees * 0.022
+        minimum_fees = 1200000
+
+        return fees if fees > minimum_fees else minimum_fees
 
     @staticmethod
     def radar_chart_count() -> list:
