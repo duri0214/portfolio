@@ -1,4 +1,3 @@
-from django.conf import settings
 from sqlalchemy.engine.base import Connection
 
 from .market_abstract import MarketAbstract
@@ -27,7 +26,7 @@ class MarketNasdaq(MarketAbstract):
             SELECT * FROM SBI_TOPICS 
             ''', self._con)
 
-    def get_watchlist(self) -> pd.DataFrame:
+    def watchlist(self) -> pd.DataFrame:
         """ウォッチリストを作成します"""
         return pd.read_sql_query(
             '''
@@ -73,7 +72,7 @@ class MarketNasdaq(MarketAbstract):
         """daily: 移動平均チャート"""
         pass
 
-    def get_industry_stack(self):
+    def industry_stack(self):
         pass
 
     def calc_fee(self, price_no_fee):
