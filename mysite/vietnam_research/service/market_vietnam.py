@@ -133,26 +133,10 @@ class MarketVietnam(MarketAbstract):
             uptrends.append(inner)
         return uptrends
 
-    def industry_stack(self):
+    def industry_stack(self) -> dict:
         """
-        Industryテーブルの業種別積み上げを時系列で表示
-
-        type: "bar",
-        data: {
-            labels:  ["2020-05-25", "2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29"],
-            datasets: [
-                {
-                    label: "サービス業",
-                    backgroundColor: "red"
-                    data: [3000, 3020, 3010, 3015, 3010],
-                },
-                {
-                    label: "不動産業",
-                    backgroundColor: "blue"
-                    data: [3000, 3020, 3010, 3015, 3010],
-                }
-            ]
-        },
+        Industryテーブルの業種別積み上げを時系列で表示\n
+        TODO: パフォーマンス分析すると、1発のクエリが 65519ms(65秒) ほどかかるので、非同期化をする
 
         See Also: https://yawatosho.hateblo.jp/entry/2016/09/12/223407
         """
