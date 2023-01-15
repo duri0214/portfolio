@@ -24,7 +24,7 @@ class MarketNasdaq(MarketAbstract):
 
     See Also: https://site3.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_PageID=WPLETmgR001Mdtl20&_DataStoreID=DSWPLETmgR001Control&_ActionID=DefaultAID&getFlg=on&burl=search_market&cat1=market&cat2=report&dir=report&file=market_report_fo_us_wm.html
     """
-    def get_sbi_topics(self) -> str:
+    def sbi_topics(self) -> str:
         return pd.read_sql_query(
             '''
             SELECT * FROM SBI_TOPICS 

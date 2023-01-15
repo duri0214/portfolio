@@ -14,7 +14,7 @@ class MarketVietnam(MarketAbstract):
     """
     ベトナムのマーケットを処理します
     """
-    def get_sbi_topics(self) -> str:
+    def sbi_topics(self) -> str:
         """
         あらかじめバッチ（daily_sbi_topics.py download_pdf）で取り込んで決まった場所においたtxtを読み込んで返す
 

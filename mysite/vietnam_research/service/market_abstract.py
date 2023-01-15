@@ -18,7 +18,7 @@ class MarketAbstract(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_sbi_topics(self) -> str:
+    def sbi_topics(self) -> str:
         raise NotImplementedError()
 
     @abstractmethod
