@@ -24,19 +24,20 @@ for filename in glob(Path(OUTFOLDER).joinpath('*.png').__str__()):
     os.remove(filename)
 
 CON.execute('DELETE FROM vietnam_research_dailyuptrends')
-WATCH_LIST = pd.read_sql_query('''SELECT * FROM pythondb.vietnam_research_watchlist''', CON)
 AGG = pd.read_sql_query(
     '''
     SELECT
-          CONCAT(c.industry_class, '|', i.industry1) AS ind_name
-        , i.market_code
-        , i.symbol
-        , i.pub_date
-        , i.closing_price
-    FROM (vietnam_research_industry i INNER JOIN vietnam_research_indclass c
-        ON i.industry1 = c.industry1) INNER JOIN vietnam_research_sbi s
-        ON i.market_code = s.market_code AND i.symbol = s.symbol
-    ORDER BY ind_name, i.symbol, i.pub_date;
+          CONCAT(c.industry_class, '|', c.industry1) AS ind_name
+        , vrmm.code market_code
+        , vrms.code symbol
+        , i.recorded_date 
+        , i.closing_price 
+    FROM (vietnam_research_industry i 
+        INNER JOIN vietnam_research_m_industry_class c ON i.ind_class_id = c.id)
+        inner join vietnam_research_m_symbol vrms ON i.symbol_id = vrms.id 
+        inner join vietnam_research_m_market vrmm on vrms.market_id = vrmm.id 
+        INNER JOIN vietnam_research_m_sbi s ON vrmm.code = s.market_code AND vrms.code = s.symbol
+    ORDER BY ind_name, i.symbol_id, i.recorded_date;
     ''', CON)
 IND_NAMES = []
 MARKET_CODES = []
@@ -102,7 +103,7 @@ extract = pd.DataFrame({
     'stocks_price_latest': PRICE_LATEST,
     'stocks_price_delta': PRICE_DELTAS
 })
-extract = extract.sort_values(['ind_name', 'stocks_price_delta'], ascending=['True', 'False'])
+extract = extract.sort_values(['ind_name', 'stocks_price_delta'], ascending=[True, False])
 extract.to_sql('vietnam_research_dailyuptrends', CON, if_exists='append', index=None)
 
 # log
