@@ -104,22 +104,32 @@ class MarketVietnam(MarketAbstract):
                     WHEN u.market_code = 'HNX' THEN 'hn'
                   END mkt
                 , u.symbol
-                , i.industry1
-                , i.company_name
+                , c.industry1
+                , vrms.name company_name
                 , u.stocks_price_oldest
                 , u.stocks_price_latest
                 , u.stocks_price_delta
-            FROM vietnam_research_dailyuptrends u INNER JOIN vietnam_research_industry i ON u.symbol = i.symbol
-            WHERE i.symbol IN (
-                SELECT symbol FROM pythondb.vietnam_research_industry WHERE pub_date = (
-                    SELECT max(pub_date) pub_date FROM pythondb.vietnam_research_industry
+            FROM vietnam_research_industry i
+                inner join vietnam_research_m_symbol vrms ON i.symbol_id = vrms.id 
+                INNER JOIN vietnam_research_dailyuptrends u ON vrms.code = u.symbol 
+                INNER JOIN vietnam_research_m_industry_class c ON i.ind_class_id = c.id
+                inner join vietnam_research_m_market vrmm on vrms.market_id = vrmm.id 
+            WHERE i.symbol_id IN (
+                SELECT symbol_id FROM pythondb.vietnam_research_industry WHERE created_at = (
+                    SELECT max(created_at) created_at FROM pythondb.vietnam_research_industry
                 )
             )
             ORDER BY u.ind_name, stocks_price_delta DESC;
             ''', self._con)
+
+        industry_names = Industry.objects.values('ind_class__industry1').distinct()
+        # print("industry_names: ", industry_names)
         for groups in data.groupby('ind_name'):
             # print('\n', groups[0])
-            inner = {"ind_name": groups[0], "datasets": []}
+            inner = {
+                "ind_name": groups[0],
+                "datasets": []
+            }
             for row in groups[1].iterrows():
                 inner["datasets"].append({
                     "mkt": row[1]['mkt'],
@@ -131,6 +141,7 @@ class MarketVietnam(MarketAbstract):
                     "stocks_price_delta": row[1]['stocks_price_delta']
                 })
             uptrends.append(inner)
+
         return uptrends
 
     def industry_stack(self) -> dict:
