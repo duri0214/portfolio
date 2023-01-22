@@ -21,8 +21,7 @@ def scraping():
     vn_index = pd.DataFrame({
         'Y': ymd.split('/')[0],
         'M': ymd.split('/')[1],
-        'closing_price': price,
-        'pub_date': '-'.join(ymd.split('/'))
+        'closing_price': price
     }, index=[0])
 
     # mysql
@@ -40,7 +39,7 @@ scraping()
 
 # log
 with open(dirname(abspath(__file__)) + '/result.log', mode='a') as f:
-    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + 'vn_index.py')
+    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + 'daily_vnindex.py')
 
 # finish
 print('Congrats!')
