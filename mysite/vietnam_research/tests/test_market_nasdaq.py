@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from mysite.vietnam_research.service.market_nasdaq import MarketNasdaq
+from vietnam_research.service.market_nasdaq import MarketNasdaq
 
 
 class TestMarketNasdaq(TestCase):
