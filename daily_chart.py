@@ -108,7 +108,7 @@ extract.to_sql('vietnam_research_dailyuptrends', CON, if_exists='append', index=
 
 # log
 with open(os.path.dirname(os.path.abspath(__file__)) + '/result.log', mode='a') as f:
-    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + 'stock_chart.py')
+    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + 'daily_chart.py')
 
 # Output
 print('Congrats!')
