@@ -144,43 +144,6 @@ class MarketVietnam(MarketAbstract):
 
         return uptrends
 
-    def industry_stack(self) -> dict:
-        """
-        Industryテーブルの業種別積み上げを時系列で表示\n
-        TODO: パフォーマンス分析すると、1発のクエリが 65519ms(65秒) ほどかかるので、非同期化をする
-
-        See Also: https://yawatosho.hateblo.jp/entry/2016/09/12/223407
-        """
-        industry_records = Industry.objects\
-            .values('recorded_date', 'ind_class__industry1')\
-            .annotate(industry1=F('ind_class__industry1'))\
-            .annotate(trade_price_of_a_day=Sum('trade_price_of_a_day') / 1000000)\
-            .order_by('recorded_date', 'industry1')\
-            .values('recorded_date', 'industry1', 'trade_price_of_a_day')
-        industry_records = list(industry_records)
-        # print(f"industry_records({type(industry_records)}): ", industry_records)
-
-        records = Industry.objects.values('recorded_date').distinct()
-        industry_stack = {
-            "labels": [record['recorded_date'].strftime('%Y-%m-%d') for record in records],
-            "datasets": []
-        }
-
-        # TODO: 色と業種を辞書で対応させちゃおう（Chart.jsに自動的に適切な色にする方法はあるらしい）
-        colors = ['#7b9ad0', '#f8e352', '#c8d627', '#d5848b', '#e5ab47']
-        colors.extend(['#e1cea3', '#51a1a2', '#b1d7e4', '#66b7ec', '#c08e47', '#ae8dbc'])
-
-        industry_names = Industry.objects.values('ind_class__industry1').distinct()
-        for i, industry_name in enumerate([x['ind_class__industry1'] for x in industry_names]):
-            industry_stack["datasets"].append({
-                "label": industry_name,
-                "backgroundColor": colors[i],
-                "data": [float(x['trade_price_of_a_day']) for x in industry_records if x['industry1'] == industry_name]
-            })
-        # print('\n【data to】\n', industry_stack, '\n')
-
-        return industry_stack
-
     @staticmethod
     def calc_fee(price_without_fees: float) -> float:
         """

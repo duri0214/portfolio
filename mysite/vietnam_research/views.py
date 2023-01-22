@@ -76,7 +76,6 @@ def index(request):
     context = {
         'industry_count': json.dumps(mkt.radar_chart_count(), ensure_ascii=False),
         'industry_cap': json.dumps(mkt.radar_chart_cap(), ensure_ascii=False),
-        'industry_stack': json.dumps(mkt.industry_stack(), ensure_ascii=False),
         'vnindex_timeline': json.dumps(mkt.vnindex_timeline(), ensure_ascii=False),
         'vnindex_layers': json.dumps(mkt.vnindex_annual_layers(), ensure_ascii=False),
         'articles': articles,

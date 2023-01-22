@@ -21,10 +21,6 @@ class MarketAbstract(metaclass=ABCMeta):
     def sbi_topics(self) -> str:
         raise NotImplementedError()
 
-    @abstractmethod
-    def industry_stack(self) -> dict:
-        raise NotImplementedError()
-
     @staticmethod
     @abstractmethod
     def calc_fee(price_without_fees: float) -> float:
