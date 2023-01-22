@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.core.management.base import BaseCommand
 from django.db.models import Sum, F
 
@@ -65,9 +67,16 @@ class Command(BaseCommand):
 
         plt.gcf().set_size_inches(20, 10)
         plt.xticks(rotation=90)
-        plt.legend(loc='upper left', labels=df.columns, prop={"family": ["IPAMincho", "MS Gothic"]})
         plt.subplots_adjust(left=0.05, right=0.95, top=0.95)
 
+        font_path = '/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf'
+        if Path.exists(Path(font_path).resolve()):
+            # for ubuntu jp font
+            plt.legend(loc='upper left', labels=df.columns, prop={"family": "IPAMincho"})
+        else:
+            plt.legend(loc='upper left', labels=df.columns, prop={"family": "MS Gothic"})
+
+        # png save
         out_path = STATIC_ROOT.resolve() / 'vietnam_research/chart/daily_industry_stacked_bar_chart.png'
         plt.savefig(out_path)
         out_path = BASE_DIR.resolve() / 'vietnam_research/static/vietnam_research/chart/daily_industry_stacked_bar_chart.png'
