@@ -52108,5 +52108,14 @@
       "code": "ZYXI",
       "name": "Zynex Inc"
     }
+  },
+  {
+    "model": "vietnam_research.symbol",
+    "fields": {
+      "id": 5791,
+      "market_id":2,
+      "code":"PVP",
+      "name":"太平洋石油運輸"
+    }
   }
 ]
