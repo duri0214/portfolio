@@ -65,7 +65,7 @@ class Command(BaseCommand):
 
         plt.gcf().set_size_inches(20, 10)
         plt.xticks(rotation=90)
-        plt.legend(loc='upper left', labels=df.columns, prop={"family": "MS Gothic"})
+        plt.legend(loc='upper left', labels=df.columns, prop={"family": ["IPAMincho", "MS Gothic"]})
         plt.subplots_adjust(left=0.05, right=0.95, top=0.95)
 
         out_path = STATIC_ROOT.resolve() / 'vietnam_research/chart/daily_industry_stacked_bar_chart.png'
