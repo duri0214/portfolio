@@ -101,6 +101,7 @@ class MarketVietnam(MarketAbstract):
                   CONCAT(c.industry_class, '|', c.industry1) ind_name
                 , vrmm.url_file_name mkt
                 , vrms.code symbol
+                , c.industry_class
                 , c.industry1
                 , vrms.name company_name
                 , u.stocks_price_oldest
