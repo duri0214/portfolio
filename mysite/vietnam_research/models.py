@@ -152,21 +152,21 @@ class Watchlist(models.Model):
 
 class DailyTop5(models.Model):
     """日次Top5"""
-    ind_name = models.CharField(max_length=10)
-    market_code = models.CharField(max_length=4)
-    symbol = models.CharField(max_length=10)
     trade_price_of_a_day = models.FloatField(default=0.00)
     per = models.FloatField(default=0.00)
+    ind_class = models.ForeignKey(IndClass, on_delete=models.CASCADE)
+    market = models.ForeignKey(Market, on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
 
 
 class DailyUptrends(models.Model):
     """日次Uptrends（傾き計算考慮）"""
-    ind_name = models.CharField(max_length=10)
-    market_code = models.CharField(max_length=4)
-    symbol = models.CharField(max_length=10)
     stocks_price_oldest = models.FloatField()
     stocks_price_latest = models.FloatField()
     stocks_price_delta = models.FloatField()
+    ind_class = models.ForeignKey(IndClass, on_delete=models.CASCADE)
+    market = models.ForeignKey(Market, on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
 
 
 class Sbi(models.Model):
@@ -175,8 +175,8 @@ class Sbi(models.Model):
 
     See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/pop6040_usequity_list.html
     """
-    market_code = models.CharField(max_length=4)
-    symbol = models.CharField(max_length=10)
+    market = models.ForeignKey(Market, on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
 
     class Meta:
         db_table = 'vietnam_research_m_sbi'

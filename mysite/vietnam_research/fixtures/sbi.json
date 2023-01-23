@@ -2,2115 +2,2115 @@
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"AAA"
+      "symbol_id":1,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"AAM"
+      "symbol_id":2,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ABT"
+      "symbol_id":4,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ACB"
+      "symbol_id":390,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ACL"
+      "symbol_id":6,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"ADC"
+      "symbol_id":392,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"AGR"
+      "symbol_id":10,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"AME"
+      "symbol_id":395,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"AMV"
+      "symbol_id":396,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ANV"
+      "symbol_id":12,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"APC"
+      "symbol_id":13,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"APG"
+      "symbol_id":14,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"API"
+      "symbol_id":397,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"APP"
+      "symbol_id":398,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"APS"
+      "symbol_id":399,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ASM"
+      "symbol_id":15,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ASP"
+      "symbol_id":16,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"BBC"
+      "symbol_id":19,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"BBS"
+      "symbol_id":404,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"BCC"
+      "symbol_id":405,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"BCE"
+      "symbol_id":20,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"BID"
+      "symbol_id":25,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"BKC"
+      "symbol_id":410,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"BMC"
+      "symbol_id":26,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"BMI"
+      "symbol_id":27,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"BMP"
+      "symbol_id":28,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"BTP"
+      "symbol_id":31,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"BTS"
+      "symbol_id":415,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"BTT"
+      "symbol_id":32,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"BVH"
+      "symbol_id":33,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"BVS"
+      "symbol_id":417,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"C92"
+      "symbol_id":420,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"CAN"
+      "symbol_id":422,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"CAP"
+      "symbol_id":423,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CCI"
+      "symbol_id":38,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CDC"
+      "symbol_id":40,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CII"
+      "symbol_id":44,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"CKV"
+      "symbol_id":429,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CLC"
+      "symbol_id":46,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CMG"
+      "symbol_id":50,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CMX"
+      "symbol_id":52,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"COM"
+      "symbol_id":54,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CSM"
+      "symbol_id":57,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"CTB"
+      "symbol_id":436,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"CTC"
+      "symbol_id":437,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CTD"
+      "symbol_id":59,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CTG"
+      "symbol_id":61,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CTI"
+      "symbol_id":62,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"CTS"
+      "symbol_id":63,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DBC"
+      "symbol_id":69,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DBT"
+      "symbol_id":446,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DC4"
+      "symbol_id":448,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DCL"
+      "symbol_id":71,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DHA"
+      "symbol_id":74,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DHC"
+      "symbol_id":75,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DHG"
+      "symbol_id":76,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"DHT"
+      "symbol_id":452,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DIG"
+      "symbol_id":79,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DLG"
+      "symbol_id":80,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DMC"
+      "symbol_id":81,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DPM"
+      "symbol_id":83,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DPR"
+      "symbol_id":84,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DQC"
+      "symbol_id":85,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DRC"
+      "symbol_id":86,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DSN"
+      "symbol_id":89,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DTA"
+      "symbol_id":90,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DTL"
+      "symbol_id":91,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DVP"
+      "symbol_id":93,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"DXG"
+      "symbol_id":94,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"DXP"
+      "symbol_id":466,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"DZM"
+      "symbol_id":467,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"EIB"
+      "symbol_id":97,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"EID"
+      "symbol_id":471,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ELC"
+      "symbol_id":98,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"EVE"
+      "symbol_id":100,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"FMC"
+      "symbol_id":108,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"FPT"
+      "symbol_id":109,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"FRT"
+      "symbol_id":110,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"FTS"
+      "symbol_id":112,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"GAS"
+      "symbol_id":120,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"GDT"
+      "symbol_id":121,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"GIL"
+      "symbol_id":124,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"GLT"
+      "symbol_id":477,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"GMC"
+      "symbol_id":125,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"GMD"
+      "symbol_id":126,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HAD"
+      "symbol_id":479,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HAG"
+      "symbol_id":131,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HAI"
+      "symbol_id":133,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HAP"
+      "symbol_id":134,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HAS"
+      "symbol_id":136,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HAT"
+      "symbol_id":480,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HAX"
+      "symbol_id":137,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HBC"
+      "symbol_id":138,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HBS"
+      "symbol_id":482,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HCC"
+      "symbol_id":483,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HCM"
+      "symbol_id":140,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HCT"
+      "symbol_id":484,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HDC"
+      "symbol_id":142,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HDG"
+      "symbol_id":143,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HGM"
+      "symbol_id":487,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HHC"
+      "symbol_id":488,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HJS"
+      "symbol_id":491,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HLC"
+      "symbol_id":494,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HMC"
+      "symbol_id":147,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HMH"
+      "symbol_id":497,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HOM"
+      "symbol_id":499,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HPG"
+      "symbol_id":150,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HQC"
+      "symbol_id":152,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HRC"
+      "symbol_id":153,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HSG"
+      "symbol_id":154,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HT1"
+      "symbol_id":156,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HTI"
+      "symbol_id":157,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"HTV"
+      "symbol_id":161,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"HUT"
+      "symbol_id":503,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"ICG"
+      "symbol_id":505,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"IDJ"
+      "symbol_id":507,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"IJC"
+      "symbol_id":172,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"IMP"
+      "symbol_id":174,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"INN"
+      "symbol_id":510,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ITA"
+      "symbol_id":175,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ITC"
+      "symbol_id":176,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"KBC"
+      "symbol_id":179,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"KDC"
+      "symbol_id":180,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"KDH"
+      "symbol_id":181,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"KHP"
+      "symbol_id":182,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"KKC"
+      "symbol_id":515,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"KMR"
+      "symbol_id":183,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"KSB"
+      "symbol_id":186,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"KTT"
+      "symbol_id":523,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"L10"
+      "symbol_id":187,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"L62"
+      "symbol_id":530,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LAF"
+      "symbol_id":188,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LBM"
+      "symbol_id":189,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LCG"
+      "symbol_id":190,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"LDP"
+      "symbol_id":535,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LGC"
+      "symbol_id":194,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LGL"
+      "symbol_id":195,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LHG"
+      "symbol_id":196,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LIX"
+      "symbol_id":197,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"LM7"
+      "symbol_id":538,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LM8"
+      "symbol_id":198,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LPB"
+      "symbol_id":774,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"LSS"
+      "symbol_id":200,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"LUT"
+      "symbol_id":540,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"MBB"
+      "symbol_id":201,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"MCG"
+      "symbol_id":202,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"MIM"
+      "symbol_id":553,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"MSN"
+      "symbol_id":207,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"NBB"
+      "symbol_id":211,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"NBC"
+      "symbol_id":560,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"NBP"
+      "symbol_id":561,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"NCT"
+      "symbol_id":212,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"NET"
+      "symbol_id":565,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"NHA"
+      "symbol_id":568,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"NNC"
+      "symbol_id":216,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"NSC"
+      "symbol_id":217,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"NTL"
+      "symbol_id":219,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"NTP"
+      "symbol_id":575,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"NVB"
+      "symbol_id":576,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"NVT"
+      "symbol_id":221,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"OGC"
+      "symbol_id":222,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"ONE"
+      "symbol_id":578,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"OPC"
+      "symbol_id":223,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PAC"
+      "symbol_id":224,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PAN"
+      "symbol_id":225,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PDR"
+      "symbol_id":228,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PET"
+      "symbol_id":229,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PGC"
+      "symbol_id":230,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PGD"
+      "symbol_id":231,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PGS"
+      "symbol_id":587,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PHC"
+      "symbol_id":233,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PHR"
+      "symbol_id":234,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PIT"
+      "symbol_id":235,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PLC"
+      "symbol_id":594,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PMC"
+      "symbol_id":596,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PNJ"
+      "symbol_id":242,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"POM"
+      "symbol_id":243,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"POT"
+      "symbol_id":599,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PPC"
+      "symbol_id":245,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PSI"
+      "symbol_id":608,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PTC"
+      "symbol_id":247,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PTL"
+      "symbol_id":248,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PTS"
+      "symbol_id":612,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PV2"
+      "symbol_id":613,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PVC"
+      "symbol_id":615,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PVD"
+      "symbol_id":249,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PVG"
+      "symbol_id":617,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PVI"
+      "symbol_id":618,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PVL"
+      "symbol_id":619,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"PVS"
+      "symbol_id":620,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"PVT"
+      "symbol_id":250,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"QCG"
+      "symbol_id":255,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"QST"
+      "symbol_id":624,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"RAL"
+      "symbol_id":256,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"REE"
+      "symbol_id":258,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SAB"
+      "symbol_id":262,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SAM"
+      "symbol_id":263,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SBT"
+      "symbol_id":266,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SCD"
+      "symbol_id":269,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SCR"
+      "symbol_id":270,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SD5"
+      "symbol_id":634,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SD6"
+      "symbol_id":635,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SD9"
+      "symbol_id":636,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SDG"
+      "symbol_id":639,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SDN"
+      "symbol_id":640,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SDT"
+      "symbol_id":641,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SEB"
+      "symbol_id":643,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SED"
+      "symbol_id":644,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SFC"
+      "symbol_id":272,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SFI"
+      "symbol_id":274,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SGC"
+      "symbol_id":646,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SGD"
+      "symbol_id":647,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SGH"
+      "symbol_id":648,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SGT"
+      "symbol_id":277,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SHB"
+      "symbol_id":649,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SHN"
+      "symbol_id":651,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SHS"
+      "symbol_id":652,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SJD"
+      "symbol_id":282,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SJS"
+      "symbol_id":284,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SMA"
+      "symbol_id":286,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SPM"
+      "symbol_id":289,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SRC"
+      "symbol_id":290,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SRF"
+      "symbol_id":291,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SSC"
+      "symbol_id":292,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SSI"
+      "symbol_id":293,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"SSM"
+      "symbol_id":662,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"ST8"
+      "symbol_id":294,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"STB"
+      "symbol_id":295,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"STC"
+      "symbol_id":663,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"STG"
+      "symbol_id":296,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"STP"
+      "symbol_id":664,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SVC"
+      "symbol_id":298,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"SVI"
+      "symbol_id":299,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TBC"
+      "symbol_id":304,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"TC6"
+      "symbol_id":670,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TCB"
+      "symbol_id":305,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TCL"
+      "symbol_id":308,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TCM"
+      "symbol_id":309,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TCT"
+      "symbol_id":312,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TDC"
+      "symbol_id":313,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TDH"
+      "symbol_id":315,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TDW"
+      "symbol_id":317,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"THB"
+      "symbol_id":676,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"THT"
+      "symbol_id":678,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"TIG"
+      "symbol_id":679,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TIX"
+      "symbol_id":323,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"TKC"
+      "symbol_id":681,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TLG"
+      "symbol_id":325,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TLH"
+      "symbol_id":326,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TMP"
+      "symbol_id":327,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TMS"
+      "symbol_id":328,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TMT"
+      "symbol_id":329,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TNA"
+      "symbol_id":331,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TNC"
+      "symbol_id":332,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"TNG"
+      "symbol_id":686,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TPC"
+      "symbol_id":336,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TPB"
+      "symbol_id":335,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TRA"
+      "symbol_id":337,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TRC"
+      "symbol_id":338,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TTF"
+      "symbol_id":343,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"TV4"
+      "symbol_id":697,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"TYA"
+      "symbol_id":348,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"UDC"
+      "symbol_id":349,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"UIC"
+      "symbol_id":350,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VBC"
+      "symbol_id":705,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VC7"
+      "symbol_id":710,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VCB"
+      "symbol_id":352,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VCF"
+      "symbol_id":353,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VCG"
+      "symbol_id":713,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VCS"
+      "symbol_id":715,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VDL"
+      "symbol_id":716,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VFG"
+      "symbol_id":357,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VGP"
+      "symbol_id":723,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VHC"
+      "symbol_id":359,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VHL"
+      "symbol_id":726,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VHM"
+      "symbol_id":360,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VIC"
+      "symbol_id":361,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VIG"
+      "symbol_id":729,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VIP"
+      "symbol_id":363,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VIX"
+      "symbol_id":731,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VJC"
+      "symbol_id":365,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VLA"
+      "symbol_id":733,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VMD"
+      "symbol_id":366,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VNC"
+      "symbol_id":737,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VND"
+      "symbol_id":367,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VNE"
+      "symbol_id":368,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VNL"
+      "symbol_id":370,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VNM"
+      "symbol_id":371,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VNR"
+      "symbol_id":739,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VNS"
+      "symbol_id":372,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VNT"
+      "symbol_id":740,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VOS"
+      "symbol_id":373,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VPH"
+      "symbol_id":377,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VRE"
+      "symbol_id":381,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VSC"
+      "symbol_id":382,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VSH"
+      "symbol_id":383,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VSI"
+      "symbol_id":384,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VTB"
+      "symbol_id":385,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"VTC"
+      "symbol_id":743,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HOSE",
-      "symbol":"VTO"
+      "symbol_id":386,
+      "market_id":1
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code":"HNX",
-      "symbol":"WCS"
+      "symbol_id":750,
+      "market_id":2
     }
   },
   {
     "model": "vietnam_research.sbi",
     "fields": {
-      "market_code": "HNX",
-      "symbol": "WSS"
+      "symbol_id":751,
+      "market_id":2
     }
   }
 ]

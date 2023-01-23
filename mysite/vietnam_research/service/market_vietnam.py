@@ -45,12 +45,12 @@ class MarketVietnam(MarketAbstract):
             QuerySet: Watchlistをベースに換算額などの計算を組み合わせたもの
         """
 
-        return Watchlist.objects\
-            .filter(already_has=1)\
-            .filter(symbol__industry__recorded_date=Industry.objects.slipped_month_end(0).formatted_recorded_date())\
-            .annotate(closing_price=Round(F('symbol__industry__closing_price') * 1000))\
-            .annotate(stocks_price_yen=F('stocks_price') / 200)\
-            .annotate(buy_price_yen=F('stocks_price_yen') * F('stocks_count'))\
+        return Watchlist.objects \
+            .filter(already_has=1) \
+            .filter(symbol__industry__recorded_date=Industry.objects.slipped_month_end(0).formatted_recorded_date()) \
+            .annotate(closing_price=Round(F('symbol__industry__closing_price') * 1000)) \
+            .annotate(stocks_price_yen=F('stocks_price') / 200) \
+            .annotate(buy_price_yen=F('stocks_price_yen') * F('stocks_count')) \
             .annotate(stocks_price_delta=Round((F('closing_price') / F('stocks_price') - 1) * 100, 2))
 
     @staticmethod
@@ -98,12 +98,9 @@ class MarketVietnam(MarketAbstract):
         data = pd.read_sql_query(
             '''
             SELECT DISTINCT
-                  u.ind_name
-                , CASE
-                    WHEN u.market_code = 'HOSE' THEN 'hcm'
-                    WHEN u.market_code = 'HNX' THEN 'hn'
-                  END mkt
-                , u.symbol
+                  CONCAT(c.industry_class, '|', c.industry1) ind_name
+                , vrmm.url_file_name mkt
+                , vrms.code symbol
                 , c.industry1
                 , vrms.name company_name
                 , u.stocks_price_oldest
@@ -111,7 +108,7 @@ class MarketVietnam(MarketAbstract):
                 , u.stocks_price_delta
             FROM vietnam_research_industry i
                 inner join vietnam_research_m_symbol vrms ON i.symbol_id = vrms.id 
-                INNER JOIN vietnam_research_dailyuptrends u ON vrms.code = u.symbol 
+                INNER JOIN vietnam_research_dailyuptrends u ON vrms.id = u.symbol_id
                 INNER JOIN vietnam_research_m_industry_class c ON i.ind_class_id = c.id
                 inner join vietnam_research_m_market vrmm on vrms.market_id = vrmm.id 
             WHERE i.symbol_id IN (
@@ -119,7 +116,7 @@ class MarketVietnam(MarketAbstract):
                     SELECT max(created_at) created_at FROM pythondb.vietnam_research_industry
                 )
             )
-            ORDER BY u.ind_name, stocks_price_delta DESC;
+            ORDER BY c.industry_class, c.industry1, stocks_price_delta DESC;
             ''', self._con)
 
         industry_names = Industry.objects.values('ind_class__industry1').distinct()
@@ -155,7 +152,8 @@ class MarketVietnam(MarketAbstract):
         Returns:
             float: 手数料（約定代金の2.2％）を返す（最低手数料を下回る場合は最低手数料 1,200,000VND）
 
-        See Also: https://www.sbisec.co.jp/ETGate/?_ControlID=WPLETmgR001Control&_DataStoreID=DSWPLETmgR001Control&burl=search_foreign&cat1=foreign&cat2=vn&dir=vn%2F&file=foreign_vn_01.html
+        See Also: https://www.sbisec.co.jp/ETGate/?_ControlID=WPLETmgR001Control&_DataStoreID=DSWPLETmgR001Control&
+        burl=search_foreign&cat1=foreign&cat2=vn&dir=vn%2F&file=foreign_vn_01.html
         """
         fees = price_without_fees * 0.022
         minimum_fees = 1200000
@@ -190,12 +188,13 @@ class MarketVietnam(MarketAbstract):
                 logging.warning(f"market_vietnam.py radar_chart_count() の{m}ヶ月は存在しないため、無視されました")
                 continue
             denominator = len(Industry.objects.filter(recorded_date=lastday_of_the_month))
-            industry_records = Industry.objects\
-                .filter(recorded_date=lastday_of_the_month)\
-                .annotate(ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'), output_field=CharField()))\
-                .values('ind_name')\
-                .annotate(count=Count('id'))\
-                .annotate(cnt_per=Round(F('count') / denominator * 100, precision=2, output_field=FloatField()))\
+            industry_records = Industry.objects \
+                .filter(recorded_date=lastday_of_the_month) \
+                .annotate(ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'),
+                                          output_field=CharField())) \
+                .values('ind_name') \
+                .annotate(count=Count('id')) \
+                .annotate(cnt_per=Round(F('count') / denominator * 100, precision=2, output_field=FloatField())) \
                 .order_by('ind_name')
             inner = []
             # print("industry_records(sql): ", industry_records.query)
@@ -234,13 +233,16 @@ class MarketVietnam(MarketAbstract):
             except Industry.DoesNotExist:
                 logging.warning(f"market_vietnam.py radar_chart_count() の{m}ヶ月は存在しないため、無視されました")
                 continue
-            denominator = sum([float(x["marketcap"]) for x in Industry.objects.filter(recorded_date=lastday_of_the_month).values('marketcap')])
-            industry_records = Industry.objects\
-                .filter(recorded_date=lastday_of_the_month)\
-                .annotate(ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'), output_field=CharField()))\
-                .values('ind_name')\
-                .annotate(marketcap_sum=Sum('marketcap'))\
-                .annotate(cap_per=Round(F('marketcap_sum') / denominator * 100, precision=2, output_field=FloatField()))\
+            records = Industry.objects.filter(recorded_date=lastday_of_the_month).values('marketcap')
+            denominator = sum([float(record["marketcap"]) for record in records])
+            industry_records = Industry.objects \
+                .filter(recorded_date=lastday_of_the_month) \
+                .annotate(ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'),
+                                          output_field=CharField())) \
+                .values('ind_name') \
+                .annotate(marketcap_sum=Sum('marketcap')) \
+                .annotate(cap_per=Round(F('marketcap_sum') / denominator * 100, precision=2,
+                                        output_field=FloatField())) \
                 .order_by('ind_name')
             # print("industry_records(sql): ", industry_records.query)
             inner = []

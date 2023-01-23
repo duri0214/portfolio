@@ -27,7 +27,8 @@ CON.execute('DELETE FROM vietnam_research_dailyuptrends')
 AGG = pd.read_sql_query(
     '''
     SELECT
-          CONCAT(c.industry_class, '|', c.industry1) AS ind_name
+          c.industry1
+        , c.industry2
         , vrmm.code market_code
         , vrms.code symbol
         , i.recorded_date 
@@ -36,8 +37,8 @@ AGG = pd.read_sql_query(
         INNER JOIN vietnam_research_m_industry_class c ON i.ind_class_id = c.id)
         inner join vietnam_research_m_symbol vrms ON i.symbol_id = vrms.id 
         inner join vietnam_research_m_market vrmm on vrms.market_id = vrmm.id 
-        INNER JOIN vietnam_research_m_sbi s ON vrmm.code = s.market_code AND vrms.code = s.symbol
-    ORDER BY ind_name, i.symbol_id, i.recorded_date;
+        INNER JOIN vietnam_research_m_sbi s ON vrmm.id = s.market_id AND vrms.id = s.symbol_id
+    ORDER BY c.industry1, c.industry2, i.symbol_id, i.recorded_date;
     ''', CON)
 IND_NAMES = []
 MARKET_CODES = []
@@ -45,7 +46,7 @@ SYMBOLS = []
 PRICE_OLDEST = []
 PRICE_LATEST = []
 PRICE_DELTAS = []
-for key, values in AGG.groupby('symbol'):
+for symbol_code, values in AGG.groupby('symbol'):
     days = [14, 7, 3]
     # plot: closing_price
     plt.clf()
@@ -78,32 +79,43 @@ for key, values in AGG.groupby('symbol'):
             x_scale_shifted = range(x_offset, days[i] + x_offset)
             plt.plot(x_scale_shifted, (slope * x_scale + intercept), "g--")
             # save png: w640, h480
-            out_path = Path(OUTFOLDER).joinpath('{0}.png').__str__().format(key)
+            out_path = Path(OUTFOLDER).joinpath('{0}.png').__str__().format(symbol_code)
             plt.savefig(out_path)
             # resize png: w250, h200
             Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
     if score == iteration_count:
-        # stack param
-        IND_NAMES.append(values['ind_name'].head(1).iloc[0])
+        # stack param（Notes: ひとつのsymbol_codeがすべての期間のデータを持っているので、head(1)で処理する）
+        IND_NAMES.append(values['industry1'].head(1).iloc[0] + values['industry2'].head(1).iloc[0])
         MARKET_CODES.append(values['market_code'].head(1).iloc[0])
-        SYMBOLS.append(key)
+        SYMBOLS.append(symbol_code)
         price_inner.append(values.tail(max(days))['closing_price'].head(1).iloc[0])
         price_inner.append(values.tail(max(days))['closing_price'].tail(1).iloc[0])
         price_inner.append(round(price_inner[1] - price_inner[0], 2))
         PRICE_OLDEST.append(price_inner[0])
         PRICE_LATEST.append(price_inner[1])
         PRICE_DELTAS.append(price_inner[2])
-    print(key, slope_inner, score, price_inner)
+    print(symbol_code, slope_inner, score, price_inner)
 
+m_market = CON.execute("SELECT id, code FROM pythondb.vietnam_research_m_market")
+market_code_to_id = {row['code']: row['id'] for row in m_market}
+
+m_symbol = CON.execute("SELECT x. * FROM pythondb.vietnam_research_m_symbol x WHERE market_id between 1 and 2")
+symbol_code_to_id = {row['code']: {'id': row['id'], 'market_id': row['market_id']} for row in m_symbol}
+symbol_ids = [symbol_code_to_id[symbol] for symbol in SYMBOLS]  # TODO: スキーマ変更の影響で見にくいけど idsだけど SYMBOLS ですりきりした m_symbol
+
+m_ind_class = CON.execute("SELECT concat(industry1, industry2) industry, id FROM pythondb.vietnam_research_m_industry_class")
+industry_name_to_ind_class_id = {row['industry']: row['id'] for row in m_ind_class}
+
+ind_class_ids = [industry_name_to_ind_class_id[industry_name] for industry_name in list(IND_NAMES)]
 extract = pd.DataFrame({
-    'ind_name': IND_NAMES,
-    'market_code': MARKET_CODES,
-    'symbol': SYMBOLS,
     'stocks_price_oldest': PRICE_OLDEST,
     'stocks_price_latest': PRICE_LATEST,
-    'stocks_price_delta': PRICE_DELTAS
+    'stocks_price_delta': PRICE_DELTAS,
+    'symbol_id': [x['id'] for x in symbol_ids],
+    'market_id': [x['market_id'] for x in symbol_ids],
+    'ind_class_id': ind_class_ids
 })
-extract = extract.sort_values(['ind_name', 'stocks_price_delta'], ascending=[True, False])
+extract = extract.sort_values(['ind_class_id', 'stocks_price_delta'], ascending=[True, False])
 extract.to_sql('vietnam_research_dailyuptrends', CON, if_exists='append', index=None)
 
 # log
