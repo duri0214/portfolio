@@ -15,32 +15,35 @@ def scraping():
     """
     url先の <div class="accTbl01"> の <tr> を取得する。
     """
-    market_code = []
-    symbol_code = []
+    symbol_codes = []
     url = 'https://search.sbisec.co.jp/v2/popwin/info/stock/pop6040_vn_list.html'
     soup = BeautifulSoup(urllib.request.urlopen(url).read(), 'lxml')
 
     for tag_tr in soup.find(class_="accTbl01").tbody.find_all("tr"):
-        symbol_code.append(tag_tr.th.p.string)                  # AAA
-        market_code.append(tag_tr.find_all('td')[2].p.string)   # HOSE
-
-    sbi = pd.DataFrame({
-        'market_code': market_code,
-        'symbol': symbol_code,
-    })
+        symbol_codes.append(tag_tr.th.p.string)                  # AAA
 
     # mysql
     con_str = 'mysql+mysqldb://python:python123@127.0.0.1/pythondb?charset=utf8&use_unicode=1'
     con = create_engine(con_str, echo=False).connect()
+    m_symbol = con.execute("SELECT x. * FROM pythondb.vietnam_research_m_symbol x WHERE market_id between 1 and 2")
+    m_symbol_records = {row['code']: {'symbol_id': row['id'], 'market_id': row['market_id']} for row in m_symbol}
+
+    sbi = pd.DataFrame({
+        'market_id': [m_symbol_records[symbol_code]['market_id'] for symbol_code in symbol_codes],
+        'symbol_id': [m_symbol_records[symbol_code]['symbol_id'] for symbol_code in symbol_codes],
+    })
+
     con.execute('DELETE FROM vietnam_research_m_sbi')
     sbi.to_sql('vietnam_research_m_sbi', con, if_exists='append', index=False)
 
+    return len(sbi)
 
-scraping()
+
+insert_records = scraping()
 
 # log
 with open(dirname(abspath(__file__)) + '/result.log', mode='a') as f:
-    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + 'daily_sbi.py')
+    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + f"daily_sbi.py({len(insert_records)})")
 
 # Output
 print('Congrats!')
