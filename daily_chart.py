@@ -40,7 +40,6 @@ AGG = pd.read_sql_query(
         INNER JOIN vietnam_research_m_sbi s ON vrmm.id = s.market_id AND vrms.id = s.symbol_id
     ORDER BY c.industry1, c.industry2, i.symbol_id, i.recorded_date;
     ''', CON)
-print(AGG)
 IND_NAMES = []
 MARKET_CODES = []
 SYMBOLS = []
