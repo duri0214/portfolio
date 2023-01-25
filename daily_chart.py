@@ -40,6 +40,7 @@ AGG = pd.read_sql_query(
         INNER JOIN vietnam_research_m_sbi s ON vrmm.id = s.market_id AND vrms.id = s.symbol_id
     ORDER BY c.industry1, c.industry2, i.symbol_id, i.recorded_date;
     ''', CON)
+print(AGG)
 IND_NAMES = []
 MARKET_CODES = []
 SYMBOLS = []
@@ -80,6 +81,7 @@ for symbol_code, values in AGG.groupby('symbol'):
             plt.plot(x_scale_shifted, (slope * x_scale + intercept), "g--")
             # save png: w640, h480
             out_path = Path(OUTFOLDER).joinpath('{0}.png').__str__().format(symbol_code)
+            print(os.path.exists(out_path), out_path)
             plt.savefig(out_path)
             # resize png: w250, h200
             Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
