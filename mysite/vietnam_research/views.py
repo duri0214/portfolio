@@ -73,6 +73,7 @@ def index(request):
         )
     ).order_by('-created_at')[:3]
 
+    print("mkt.uptrends(): ", mkt.uptrends())
     context = {
         'industry_count': json.dumps(mkt.radar_chart_count(), ensure_ascii=False),
         'industry_cap': json.dumps(mkt.radar_chart_cap(), ensure_ascii=False),

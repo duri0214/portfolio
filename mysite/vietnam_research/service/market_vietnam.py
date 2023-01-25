@@ -119,6 +119,7 @@ class MarketVietnam(MarketAbstract):
             )
             ORDER BY c.industry_class, c.industry1, stocks_price_delta DESC;
             ''', self._con)
+        print("data: ", data)
 
         industry_names = Industry.objects.values('ind_class__industry1').distinct()
         # print("industry_names: ", industry_names)
