@@ -20,6 +20,8 @@ CON = create_engine(CON_STR, echo=False).connect()
 # uptrend by industry
 print('\n' + 'uptrend')
 OUTFOLDER = BASE_DIR.resolve().joinpath('vietnam_research/static/vietnam_research/chart')
+if not os.path.exists(OUTFOLDER):
+    os.makedirs(OUTFOLDER)
 for filename in glob(Path(OUTFOLDER).joinpath('*.png').__str__()):
     os.remove(filename)
 

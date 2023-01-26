@@ -20,6 +20,9 @@ def download_pdf(out_folder):
 
 def convert_pdf_to_text(input_folder):
     """pdfからtextへ変換"""
+    if not os.path.exists(input_folder):
+        os.makedirs(input_folder)
+
     input_path = input_folder + '/market_report_fo_em_topic.pdf'
     output_path = input_path.replace(".pdf", ".txt")
     manager = PDFResourceManager()
