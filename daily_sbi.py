@@ -43,7 +43,7 @@ insert_records = scraping()
 
 # log
 with open(dirname(abspath(__file__)) + '/result.log', mode='a') as f:
-    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + f"daily_sbi.py({len(insert_records)})")
+    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + f"daily_sbi.py({insert_records})")
 
 # Output
 print('Congrats!')
