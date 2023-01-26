@@ -34,12 +34,14 @@ def scraping():
     con.execute(sql)
     vn_index.to_sql('vietnam_research_vnindex', con, if_exists='append', index=False)
 
+    return vn_index.shape[0]
 
-scraping()
+
+insert_records = scraping()
 
 # log
 with open(dirname(abspath(__file__)) + '/result.log', mode='a') as f:
-    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + 'daily_vnindex.py')
+    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + f"daily_vnindex.py({insert_records})")
 
 # finish
 print('Congrats!')

@@ -145,7 +145,7 @@ CNT += scraping('https://www.viet-kabu.com/stock/hn.html', 'HNX')
 
 # log
 with open(dirname(abspath(__file__)) + '/result.log', mode='a') as f:
-    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + 'daily_industry.py')
+    f.write('\n' + datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S ") + f"daily_industry.py({CNT})")
 
 # finish
 print(CNT, 'congrats!')
