@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from django.core.management.base import BaseCommand
@@ -78,6 +79,10 @@ class Command(BaseCommand):
 
         # png save
         out_path = STATIC_ROOT.resolve() / 'vietnam_research/chart/daily_industry_stacked_bar_chart.png'
+        if not os.path.exists(out_path.parent):
+            os.makedirs(out_path.parent)
         plt.savefig(out_path)
         out_path = BASE_DIR.resolve() / 'vietnam_research/static/vietnam_research/chart/daily_industry_stacked_bar_chart.png'
+        if not os.path.exists(out_path.parent):
+            os.makedirs(out_path.parent)
         plt.savefig(out_path)
