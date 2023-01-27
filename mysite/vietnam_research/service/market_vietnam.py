@@ -181,7 +181,7 @@ class MarketVietnam(MarketAbstract):
 
         See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
         """
-        months_dating_back = [-1, -4, -7, -300]
+        months_dating_back = [-1, -4, -7]
         result = []
         for m in months_dating_back:
             try:
@@ -227,7 +227,7 @@ class MarketVietnam(MarketAbstract):
 
         See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
         """
-        months_dating_back = [-1, -4, -7, -300]
+        months_dating_back = [-1, -4, -7]
         result = []
         for m in months_dating_back:
             try:
