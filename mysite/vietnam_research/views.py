@@ -82,7 +82,7 @@ def index(request):
         'basicinfo': BasicInformation.objects.order_by('id').values('item', 'description'),
         'watchlist': mkt.watchlist(),
         'sbi_topics': mkt.sbi_topics(),
-        'uptrends': json.dumps(mkt.uptrends(), ensure_ascii=False),
+        'uptrends': mkt.uptrends(),
         'exchange_form': exchange_form,
         'exchanged': exchanged,
     }

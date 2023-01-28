@@ -130,7 +130,7 @@
             <div id="uptrends_wrapper"></div>
         </div>
         <script>
-            json = JSON.parse('{{ uptrends|safe }}');
+            data = {{ uptrends|safe }};
             const uptrends = document.getElementById('uptrends_wrapper');
             let h3;
             let ul;
@@ -144,15 +144,15 @@
             let a;
             let p;
             let badge;
-            for (const industry in json) {
+            for (const industry in data) {
                 h3 = document.createElement('h6');
-                h3.textContent = json[industry]['ind_name'];
+                h3.textContent = data[industry]['ind_name'];
                 ul = document.createElement("ul");
-                for (const i in json[industry]['datasets']) {
-                    mkt = json[industry]['datasets'][i]['mkt'];
-                    symbol = json[industry]['datasets'][i]['symbol'];
-                    price_latest = json[industry]['datasets'][i]['stocks_price_latest'];
-                    price_delta = json[industry]['datasets'][i]['stocks_price_delta'];
+                for (const i in data[industry]['datasets']) {
+                    mkt = data[industry]['datasets'][i]['url_file_name'];
+                    symbol = data[industry]['datasets'][i]['code'];
+                    price_latest = data[industry]['datasets'][i]['stocks_price_latest'];
+                    price_delta = data[industry]['datasets'][i]['stocks_price_delta'];
                     price_delta_sign = Math.sign(price_delta) < 0 ? "▲" : "＋";
                     price_delta = Math.abs(price_delta);
                     img = document.createElement('img');

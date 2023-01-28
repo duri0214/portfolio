@@ -6,7 +6,6 @@ from django.conf import settings
 
 from .market_abstract import MarketAbstract
 from pathlib import Path
-import pandas as pd
 from ..models import Industry, Watchlist, VnIndex
 
 
@@ -92,54 +91,56 @@ class MarketVietnam(MarketAbstract):
 
         return vnindex_layers
 
-    def uptrends(self):
-        """daily: 移動平均チャート"""
-        uptrends = []
-        data = pd.read_sql_query(
-            '''
-            SELECT DISTINCT
-                  CONCAT(c.industry_class, '|', c.industry1) ind_name
-                , vrmm.url_file_name mkt
-                , vrms.code symbol
-                , c.industry_class
-                , c.industry1
-                , vrms.name company_name
-                , u.stocks_price_oldest
-                , u.stocks_price_latest
-                , u.stocks_price_delta
-            FROM vietnam_research_industry i
-                inner join vietnam_research_m_symbol vrms ON i.symbol_id = vrms.id 
-                INNER JOIN vietnam_research_dailyuptrends u ON vrms.id = u.symbol_id
-                INNER JOIN vietnam_research_m_industry_class c ON i.ind_class_id = c.id
-                inner join vietnam_research_m_market vrmm on vrms.market_id = vrmm.id 
-            WHERE i.symbol_id IN (
-                SELECT symbol_id FROM pythondb.vietnam_research_industry WHERE created_at = (
-                    SELECT max(created_at) created_at FROM pythondb.vietnam_research_industry
-                )
-            )
-            ORDER BY c.industry_class, c.industry1, stocks_price_delta DESC;
-            ''', self._con)
-        print("data: ", data)
+    @staticmethod
+    def uptrends() -> list:
+        """
+        日次移動平均チャート
+        [
+            {
+                'ind_name': '1|農林水産業',
+                'datasets': [
+                    {
+                        'ind_name': '1|農林水産業', 'url_file_name': 'hcm', 'code': 'ANV',
+                        'stocks_price_latest': 31.1, 'stocks_price_delta': 8.55
+                    },
+                    ...
+                ]
+            },
+             ...
+        ]
 
-        industry_names = Industry.objects.values('ind_class__industry1').distinct()
-        # print("industry_names: ", industry_names)
-        for groups in data.groupby('ind_name'):
-            # print('\n', groups[0])
-            inner = {
-                "ind_name": groups[0],
-                "datasets": []
-            }
-            for row in groups[1].iterrows():
-                inner["datasets"].append({
-                    "mkt": row[1]['mkt'],
-                    "symbol": row[1]['symbol'],
-                    "industry1": row[1]['industry1'],
-                    "company_name": row[1]['company_name'],
-                    "stocks_price_oldest": row[1]['stocks_price_oldest'],
-                    "stocks_price_latest": row[1]['stocks_price_latest'],
-                    "stocks_price_delta": row[1]['stocks_price_delta']
-                })
-            uptrends.append(inner)
+        Returns:
+            list: 
+        """
+
+        # TODO: パフォーマンスカイゼンして！原因はsymbolマスタにtickerかぶり（社名変更）があるため。バッチの新規Symbol取り込み部分もなおす
+        # TODO: -400日が何月何日なのか表示
+        industry_records = Industry.objects \
+            .filter(market__in=[1, 2]) \
+            .filter(market__isnull=False) \
+            .filter(symbol__isnull=False) \
+            .filter(ind_class__dailyuptrends__isnull=False) \
+            .filter(recorded_date=Industry.objects.slipped_month_end(0).formatted_recorded_date()) \
+            .annotate(
+                industry_class=F('ind_class__industry_class'),
+                ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'),
+                                output_field=CharField()),
+                url_file_name=F('ind_class__dailyuptrends__market__url_file_name'),
+                code=F('ind_class__dailyuptrends__symbol__code'),
+                name=F('ind_class__dailyuptrends__symbol__name'),
+                stocks_price_latest=F('ind_class__dailyuptrends__stocks_price_latest'),
+                stocks_price_delta=F('ind_class__dailyuptrends__stocks_price_delta')
+            ) \
+            .distinct() \
+            .order_by('ind_class__industry_class', 'ind_class__industry1', '-stocks_price_delta') \
+            .values('ind_name', 'code', 'url_file_name', 'stocks_price_latest', 'stocks_price_delta')
+
+        uptrends = []
+        for industry_name in list(industry_records.values('ind_name').order_by('ind_name').distinct()):
+            uptrends.append({
+                "ind_name": industry_name['ind_name'],
+                "datasets": [x for x in list(industry_records) if x['ind_name'] == industry_name['ind_name']]
+            })
 
         return uptrends
 
@@ -173,7 +174,7 @@ class MarketVietnam(MarketAbstract):
                 "axes": [
                     {"axis": "1|農林水産業", "value": 0.04},
                     {"axis": "2|建設業", "value": 0.11},
-                     ...
+                    ...
                  ]
             },
             ...
