@@ -1,12 +1,11 @@
 import logging
+from pathlib import Path
 
+from django.conf import settings
 from django.db.models import Sum, F, QuerySet, Value, Count, CharField, FloatField
 from django.db.models.functions import Concat, Round
-from django.conf import settings
-
-from .market_abstract import MarketAbstract
-from pathlib import Path
-from ..models import Industry, Watchlist, VnIndex
+from vietnam_research.service.market_abstract import MarketAbstract
+from vietnam_research.models import Industry, Watchlist, VnIndex
 
 
 class MarketVietnam(MarketAbstract):
