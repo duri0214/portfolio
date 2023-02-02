@@ -1,4 +1,4 @@
-from unittest import TestCase
+from django.test import TestCase
 
 from vietnam_research.service.market_nasdaq import MarketNasdaq
 
