@@ -13,11 +13,6 @@ class MarketAbstract(metaclass=ABCMeta):
     def watchlist(self) -> QuerySet:
         raise NotImplementedError()
 
-    @staticmethod
-    @abstractmethod
-    def uptrends():
-        raise NotImplementedError()
-
     @abstractmethod
     def sbi_topics(self) -> str:
         raise NotImplementedError()
