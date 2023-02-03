@@ -1,7 +1,7 @@
 from django.test import TestCase
 import pandas as pd
 
-from vietnam_research.management.commands.daily_industry_uptrends import calc_price, formatted_text
+from vietnam_research.management.commands.daily_industry_chart_and_uptrends import calc_price, formatted_text
 
 
 class Test(TestCase):
