@@ -17,29 +17,12 @@ class Market(models.Model):
 
     See Also: https://www.viet-kabu.com/stock/hcm.html
     """
-    code = models.CharField(max_length=10)
+    code = models.CharField(max_length=20)
     name = models.CharField(max_length=50)
     url_file_name = models.CharField(max_length=10, null=True)
 
     class Meta:
         db_table = 'vietnam_research_m_market'
-
-
-class Symbol(models.Model):
-    """
-    シンボルマスタ
-
-    See Also: https://www.viet-kabu.com/stock/hcm.html
-    """
-    code = models.CharField(max_length=10)
-    name = models.CharField(max_length=50)
-    market = models.ForeignKey(Market, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'vietnam_research_m_symbol'
-
-    def __str__(self):
-        return f"{self.market.name}｜{self.code}｜{self.name}"
 
 
 class IndClass(models.Model):
@@ -58,6 +41,24 @@ class IndClass(models.Model):
 
     class Meta:
         db_table = 'vietnam_research_m_industry_class'
+
+
+class Symbol(models.Model):
+    """
+    シンボルマスタ
+
+    See Also: https://www.viet-kabu.com/stock/hcm.html
+    """
+    code = models.CharField(max_length=10)
+    name = models.CharField(max_length=255, unique=True)
+    market = models.ForeignKey(Market, on_delete=models.CASCADE)
+    ind_class = models.ForeignKey(IndClass, on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        db_table = 'vietnam_research_m_symbol'
+
+    def __str__(self):
+        return f"{self.market.name}｜{self.code}｜{self.name}"
 
 
 class IndustryQuerySet(models.QuerySet):
@@ -88,22 +89,19 @@ class Industry(models.Model):
     volume: 出来高（株）\n
     trade_price_of_a_day: 売買代金（千ドン）\n
     marketcap: 時価総額（億円）\n
-    TODO: decimalじゃなくてfloatでいいのでは？
 
     See Also: https://www.viet-kabu.com/stock/hcm.html
     """
     recorded_date = models.DateField()
-    market = models.ForeignKey(Market, on_delete=models.CASCADE)
     symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
-    ind_class = models.ForeignKey(IndClass, on_delete=models.CASCADE)
-    open_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    high_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    low_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    closing_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    volume = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    trade_price_of_a_day = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
-    marketcap = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    per = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    open_price = models.FloatField()
+    high_price = models.FloatField()
+    low_price = models.FloatField()
+    closing_price = models.FloatField()
+    volume = models.FloatField()
+    trade_price_of_a_day = models.FloatField()
+    marketcap = models.FloatField()
+    per = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     objects = IndustryQuerySet.as_manager()
@@ -130,12 +128,11 @@ class VnIndex(models.Model):
     """
     ベトナムの世界での日経平均のような数字
 
-    TODO: decimalじゃなくてfloatでいいのでは？\n
     See Also: https://jp.investing.com/indices/vn-historical-data
     """
     Y = models.CharField(max_length=4)
     M = models.CharField(max_length=2)
-    closing_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    closing_price = models.FloatField()
 
     objects = VnIndexQuerySet.as_manager()
 
@@ -152,8 +149,8 @@ class Watchlist(models.Model):
 
 class DailyTop5(models.Model):
     """日次Top5"""
-    trade_price_of_a_day = models.FloatField(default=0.00)
-    per = models.FloatField(default=0.00)
+    trade_price_of_a_day = models.FloatField()
+    per = models.FloatField()
     ind_class = models.ForeignKey(IndClass, on_delete=models.CASCADE)
     market = models.ForeignKey(Market, on_delete=models.CASCADE)
     symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
@@ -173,6 +170,7 @@ class Sbi(models.Model):
     """
     SBI証券取り扱い銘柄
 
+    See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/pop6040_vn_list.html
     See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/pop6040_usequity_list.html
     """
     market = models.ForeignKey(Market, on_delete=models.CASCADE)
@@ -229,11 +227,11 @@ class FinancialResultWatch(models.Model):
     eps_ok = models.BooleanField(null=True)
     sales_ok = models.BooleanField(null=True)
     guidance_ok = models.BooleanField(null=True)
-    eps_estimate = models.FloatField(default=0.00)
-    eps_actual = models.FloatField(default=0.00)
-    sales_estimate = models.FloatField(default=0.00)
-    sales_actual = models.FloatField(default=0.00)
-    y_over_y_growth_rate = models.FloatField(default=0.00)
+    eps_estimate = models.FloatField()
+    eps_actual = models.FloatField()
+    sales_estimate = models.FloatField()
+    sales_actual = models.FloatField()
+    y_over_y_growth_rate = models.FloatField()
     note_url = models.URLField(null=True)
     symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
     eps_unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='r_eps_unit')
