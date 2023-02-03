@@ -12,10 +12,10 @@
       "sales_estimate":6.94,
       "sales_actual":7.77,
       "y_over_y_growth_rate":136,
-      "note_url":null,
-      "symbol_id":5777,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5799
     }
   },
   {
@@ -31,10 +31,10 @@
       "sales_estimate":2.03,
       "sales_actual":2.17,
       "y_over_y_growth_rate":42.1,
-      "note_url":null,
-      "symbol_id":4100,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4103
     }
   },
   {
@@ -50,10 +50,10 @@
       "sales_estimate":2.14,
       "sales_actual":2.33,
       "y_over_y_growth_rate":85.9,
-      "note_url":null,
-      "symbol_id":2008,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1965
     }
   },
   {
@@ -69,10 +69,10 @@
       "sales_estimate":1.48,
       "sales_actual":1.6,
       "y_over_y_growth_rate":118.6,
-      "note_url":null,
-      "symbol_id":4947,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4949
     }
   },
   {
@@ -88,10 +88,10 @@
       "sales_estimate":3.61,
       "sales_actual":3.83,
       "y_over_y_growth_rate":53.5,
-      "note_url":null,
-      "symbol_id":2210,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2173
     }
   },
   {
@@ -107,10 +107,10 @@
       "sales_estimate":42.8,
       "sales_actual":44.8,
       "y_over_y_growth_rate":12.6,
-      "note_url":null,
-      "symbol_id":1524,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1475
     }
   },
   {
@@ -126,10 +126,10 @@
       "sales_estimate":287.4,
       "sales_actual":292.2,
       "y_over_y_growth_rate":3,
-      "note_url":null,
-      "symbol_id":3291,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3266
     }
   },
   {
@@ -145,10 +145,10 @@
       "sales_estimate":167.1,
       "sales_actual":165,
       "y_over_y_growth_rate":-10.2,
-      "note_url":null,
-      "symbol_id":1658,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1612
     }
   },
   {
@@ -164,10 +164,10 @@
       "sales_estimate":180,
       "sales_actual":179.3,
       "y_over_y_growth_rate":-9.7,
-      "note_url":null,
-      "symbol_id":5622,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5637
     }
   },
   {
@@ -183,10 +183,10 @@
       "sales_estimate":100.7,
       "sales_actual":117.4,
       "y_over_y_growth_rate":17.9,
-      "note_url":null,
-      "symbol_id":2851,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2821
     }
   },
   {
@@ -202,10 +202,10 @@
       "sales_estimate":207.6,
       "sales_actual":201,
       "y_over_y_growth_rate":-9.9,
-      "note_url":null,
-      "symbol_id":1396,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1342
     }
   },
   {
@@ -221,10 +221,10 @@
       "sales_estimate":66.2,
       "sales_actual":66.4,
       "y_over_y_growth_rate":21.5,
-      "note_url":null,
-      "symbol_id":3920,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3915
     }
   },
   {
@@ -240,10 +240,10 @@
       "sales_estimate":192.3,
       "sales_actual":197.5,
       "y_over_y_growth_rate":8.3,
-      "note_url":null,
-      "symbol_id":4304,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4302
     }
   },
   {
@@ -259,10 +259,10 @@
       "sales_estimate":115.3,
       "sales_actual":136.4,
       "y_over_y_growth_rate":25.6,
-      "note_url":null,
-      "symbol_id":3802,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3791
     }
   },
   {
@@ -278,10 +278,10 @@
       "sales_estimate":174.8,
       "sales_actual":200,
       "y_over_y_growth_rate":-1,
-      "note_url":null,
-      "symbol_id":3177,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3148
     }
   },
   {
@@ -297,10 +297,10 @@
       "sales_estimate":216.2,
       "sales_actual":219.3,
       "y_over_y_growth_rate":-16.4,
-      "note_url":null,
-      "symbol_id":2720,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2692
     }
   },
   {
@@ -316,10 +316,10 @@
       "sales_estimate":216,
       "sales_actual":225,
       "y_over_y_growth_rate":8.7,
-      "note_url":null,
-      "symbol_id":3285,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3259
     }
   },
   {
@@ -335,10 +335,10 @@
       "sales_estimate":169.2,
       "sales_actual":170.3,
       "y_over_y_growth_rate":7.3,
-      "note_url":null,
-      "symbol_id":3518,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3497
     }
   },
   {
@@ -354,10 +354,10 @@
       "sales_estimate":402.3,
       "sales_actual":430.8,
       "y_over_y_growth_rate":16.7,
-      "note_url":null,
-      "symbol_id":3809,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3798
     }
   },
   {
@@ -373,29 +373,10 @@
       "sales_estimate":30.3,
       "sales_actual":32.4,
       "y_over_y_growth_rate":52.3,
-      "note_url":null,
-      "symbol_id":1118,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2021-01-28",
-      "quarter":4,
-      "eps_ok":1,
-      "sales_ok":1,
-      "guidance_ok":null,
-      "eps_estimate":3.24,
-      "eps_actual":3.88,
-      "sales_estimate":264,
-      "sales_actual":281,
-      "y_over_y_growth_rate":33.2,
-      "note_url":null,
-      "symbol_id":null,
-      "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1056
     }
   },
   {
@@ -411,10 +392,10 @@
       "sales_estimate":1032.4,
       "sales_actual":1114,
       "y_over_y_growth_rate":21.4,
-      "note_url":null,
-      "symbol_id":888,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":826
     }
   },
   {
@@ -430,10 +411,10 @@
       "sales_estimate":103.8,
       "sales_actual":107,
       "y_over_y_growth_rate":44.9,
-      "note_url":null,
-      "symbol_id":5310,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5319
     }
   },
   {
@@ -449,10 +430,10 @@
       "sales_estimate":228.5,
       "sales_actual":249,
       "y_over_y_growth_rate":21,
-      "note_url":null,
-      "symbol_id":5407,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5417
     }
   },
   {
@@ -468,10 +449,10 @@
       "sales_estimate":1197.3,
       "sales_actual":1255.6,
       "y_over_y_growth_rate":43.6,
-      "note_url":null,
-      "symbol_id":1149,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1089
     }
   },
   {
@@ -487,10 +468,10 @@
       "sales_estimate":528.6,
       "sales_actual":569,
       "y_over_y_growth_rate":23.5,
-      "note_url":null,
-      "symbol_id":2815,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2783
     }
   },
   {
@@ -506,10 +487,10 @@
       "sales_estimate":6.5,
       "sales_actual":6.51,
       "y_over_y_growth_rate":19.1,
-      "note_url":null,
-      "symbol_id":3823,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3812
     }
   },
   {
@@ -525,10 +506,10 @@
       "sales_estimate":60.9,
       "sales_actual":61.2,
       "y_over_y_growth_rate":23.3,
-      "note_url":null,
-      "symbol_id":4483,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4482
     }
   },
   {
@@ -544,10 +525,10 @@
       "sales_estimate":82.6,
       "sales_actual":82.3,
       "y_over_y_growth_rate":62.2,
-      "note_url":null,
-      "symbol_id":4488,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4488
     }
   },
   {
@@ -563,10 +544,10 @@
       "sales_estimate":107.4,
       "sales_actual":110.7,
       "y_over_y_growth_rate":39.3,
-      "note_url":null,
-      "symbol_id":1547,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1499
     }
   },
   {
@@ -582,10 +563,10 @@
       "sales_estimate":10.3,
       "sales_actual":10.6,
       "y_over_y_growth_rate":128.4,
-      "note_url":null,
-      "symbol_id":4463,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4462
     }
   },
   {
@@ -601,29 +582,10 @@
       "sales_estimate":6.47,
       "sales_actual":7.06,
       "y_over_y_growth_rate":76.4,
-      "note_url":null,
-      "symbol_id":4330,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2021-02-10",
-      "quarter":4,
-      "eps_ok":1,
-      "sales_ok":1,
-      "guidance_ok":1,
-      "eps_estimate":31,
-      "eps_actual":38,
-      "sales_estimate":11.9,
-      "sales_actual":12.9,
-      "y_over_y_growth_rate":28.1,
-      "note_url":null,
-      "symbol_id":null,
-      "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4329
     }
   },
   {
@@ -639,10 +601,10 @@
       "sales_estimate":5.61,
       "sales_actual":5.7,
       "y_over_y_growth_rate":-44,
-      "note_url":null,
-      "symbol_id":3588,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3569
     }
   },
   {
@@ -658,10 +620,10 @@
       "sales_estimate":35.6,
       "sales_actual":31.7,
       "y_over_y_growth_rate":-15.5,
-      "note_url":null,
-      "symbol_id":5362,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5370
     }
   },
   {
@@ -677,10 +639,10 @@
       "sales_estimate":5.9,
       "sales_actual":6.46,
       "y_over_y_growth_rate":14.9,
-      "note_url":null,
-      "symbol_id":4966,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4968
     }
   },
   {
@@ -696,10 +658,10 @@
       "sales_estimate":3.7,
       "sales_actual":4.56,
       "y_over_y_growth_rate":24.7,
-      "note_url":null,
-      "symbol_id":5499,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5513
     }
   },
   {
@@ -715,10 +677,10 @@
       "sales_estimate":158.8,
       "sales_actual":162.5,
       "y_over_y_growth_rate":-22.2,
-      "note_url":null,
-      "symbol_id":2176,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2137
     }
   },
   {
@@ -734,10 +696,10 @@
       "sales_estimate":1.89,
       "sales_actual":2.04,
       "y_over_y_growth_rate":56.9,
-      "note_url":null,
-      "symbol_id":1000,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":937
     }
   },
   {
@@ -753,10 +715,10 @@
       "sales_estimate":3.46,
       "sales_actual":3.37,
       "y_over_y_growth_rate":1.8,
-      "note_url":null,
-      "symbol_id":5297,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5305
     }
   },
   {
@@ -772,10 +734,10 @@
       "sales_estimate":9.13,
       "sales_actual":9.78,
       "y_over_y_growth_rate":93.6,
-      "note_url":null,
-      "symbol_id":4844,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4846
     }
   },
   {
@@ -791,10 +753,10 @@
       "sales_estimate":0.8203,
       "sales_actual":0.826,
       "y_over_y_growth_rate":40,
-      "note_url":null,
-      "symbol_id":2642,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2614
     }
   },
   {
@@ -810,10 +772,10 @@
       "sales_estimate":4.55,
       "sales_actual":5.48,
       "y_over_y_growth_rate":65.5,
-      "note_url":null,
-      "symbol_id":5339,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5346
     }
   },
   {
@@ -829,10 +791,10 @@
       "sales_estimate":0.9907,
       "sales_actual":1,
       "y_over_y_growth_rate":51.5,
-      "note_url":null,
-      "symbol_id":4039,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4040
     }
   },
   {
@@ -848,10 +810,10 @@
       "sales_estimate":0.541,
       "sales_actual":0.559,
       "y_over_y_growth_rate":89.5,
-      "note_url":null,
-      "symbol_id":2675,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2646
     }
   },
   {
@@ -867,10 +829,10 @@
       "sales_estimate":35.6,
       "sales_actual":40.5,
       "y_over_y_growth_rate":17,
-      "note_url":null,
-      "symbol_id":4005,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4006
     }
   },
   {
@@ -886,10 +848,10 @@
       "sales_estimate":24,
       "sales_actual":21.7,
       "y_over_y_growth_rate":-59.6,
-      "note_url":null,
-      "symbol_id":3605,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3587
     }
   },
   {
@@ -905,10 +867,10 @@
       "sales_estimate":6.17,
       "sales_actual":6.5,
       "y_over_y_growth_rate":58,
-      "note_url":null,
-      "symbol_id":4655,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4654
     }
   },
   {
@@ -924,10 +886,10 @@
       "sales_estimate":1.3,
       "sales_actual":1.4,
       "y_over_y_growth_rate":53.3,
-      "note_url":null,
-      "symbol_id":5769,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5791
     }
   },
   {
@@ -943,10 +905,10 @@
       "sales_estimate":31.1,
       "sales_actual":31.6,
       "y_over_y_growth_rate":143.2,
-      "note_url":null,
-      "symbol_id":5001,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5000
     }
   },
   {
@@ -962,10 +924,10 @@
       "sales_estimate":48.2,
       "sales_actual":50,
       "y_over_y_growth_rate":61.1,
-      "note_url":null,
-      "symbol_id":4024,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4025
     }
   },
   {
@@ -981,10 +943,10 @@
       "sales_estimate":0.9786,
       "sales_actual":1,
       "y_over_y_growth_rate":54,
-      "note_url":null,
-      "symbol_id":4307,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4305
     }
   },
   {
@@ -1000,10 +962,10 @@
       "sales_estimate":3.79,
       "sales_actual":3.83,
       "y_over_y_growth_rate":145,
-      "note_url":null,
-      "symbol_id":5165,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5164
     }
   },
   {
@@ -1019,10 +981,10 @@
       "sales_estimate":2.79,
       "sales_actual":5.71,
       "y_over_y_growth_rate":3948,
-      "note_url":null,
-      "symbol_id":3793,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3782
     }
   },
   {
@@ -1038,10 +1000,10 @@
       "sales_estimate":56.8,
       "sales_actual":58.2,
       "y_over_y_growth_rate":19.9,
-      "note_url":null,
-      "symbol_id":1994,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1951
     }
   },
   {
@@ -1057,10 +1019,10 @@
       "sales_estimate":1.47,
       "sales_actual":1.57,
       "y_over_y_growth_rate":55,
-      "note_url":null,
-      "symbol_id":5779,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5802
     }
   },
   {
@@ -1076,10 +1038,10 @@
       "sales_estimate":39.6,
       "sales_actual":47,
       "y_over_y_growth_rate":143.7,
-      "note_url":null,
-      "symbol_id":4620,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4618
     }
   },
   {
@@ -1095,10 +1057,10 @@
       "sales_estimate":9.42,
       "sales_actual":9.7,
       "y_over_y_growth_rate":225.5,
-      "note_url":null,
-      "symbol_id":2119,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2080
     }
   },
   {
@@ -1114,10 +1076,10 @@
       "sales_estimate":46,
       "sales_actual":0,
       "y_over_y_growth_rate":0,
-      "note_url":null,
-      "symbol_id":4975,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4977
     }
   },
   {
@@ -1133,10 +1095,10 @@
       "sales_estimate":2.32,
       "sales_actual":3.22,
       "y_over_y_growth_rate":146,
-      "note_url":null,
-      "symbol_id":2181,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2144
     }
   },
   {
@@ -1152,10 +1114,10 @@
       "sales_estimate":8.11,
       "sales_actual":8.82,
       "y_over_y_growth_rate":368.8,
-      "note_url":null,
-      "symbol_id":5777,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5799
     }
   },
   {
@@ -1171,10 +1133,10 @@
       "sales_estimate":0.4728,
       "sales_actual":0.491,
       "y_over_y_growth_rate":19,
-      "note_url":null,
-      "symbol_id":1032,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":969
     }
   },
   {
@@ -1190,10 +1152,10 @@
       "sales_estimate":1.72,
       "sales_actual":1.73,
       "y_over_y_growth_rate":2.7,
-      "note_url":null,
-      "symbol_id":2140,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2101
     }
   },
   {
@@ -1209,10 +1171,10 @@
       "sales_estimate":3.8,
       "sales_actual":3.97,
       "y_over_y_growth_rate":27.4,
-      "note_url":null,
-      "symbol_id":5469,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5482
     }
   },
   {
@@ -1228,10 +1190,10 @@
       "sales_estimate":0.5767,
       "sales_actual":0.621,
       "y_over_y_growth_rate":8.5,
-      "note_url":null,
-      "symbol_id":1111,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1049
     }
   },
   {
@@ -1247,10 +1209,10 @@
       "sales_estimate":2.22,
       "sales_actual":2.35,
       "y_over_y_growth_rate":40.3,
-      "note_url":null,
-      "symbol_id":4100,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4103
     }
   },
   {
@@ -1266,10 +1228,10 @@
       "sales_estimate":1.79,
       "sales_actual":1.91,
       "y_over_y_growth_rate":117.2,
-      "note_url":null,
-      "symbol_id":4947,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4949
     }
   },
   {
@@ -1285,10 +1247,10 @@
       "sales_estimate":1.57,
       "sales_actual":1.71,
       "y_over_y_growth_rate":38.4,
-      "note_url":null,
-      "symbol_id":3651,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3635
     }
   },
   {
@@ -1304,10 +1266,10 @@
       "sales_estimate":2.82,
       "sales_actual":2.89,
       "y_over_y_growth_rate":58.1,
-      "note_url":null,
-      "symbol_id":2234,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2197
     }
   },
   {
@@ -1323,10 +1285,10 @@
       "sales_estimate":1.63,
       "sales_actual":1.65,
       "y_over_y_growth_rate":31.1,
-      "note_url":null,
-      "symbol_id":1539,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1490
     }
   },
   {
@@ -1342,10 +1304,10 @@
       "sales_estimate":0.625,
       "sales_actual":0.68,
       "y_over_y_growth_rate":95,
-      "note_url":null,
-      "symbol_id":4875,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4877
     }
   },
   {
@@ -1361,10 +1323,10 @@
       "sales_estimate":0.5213,
       "sales_actual":0.542,
       "y_over_y_growth_rate":22.3,
-      "note_url":null,
-      "symbol_id":5080,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5078
     }
   },
   {
@@ -1380,10 +1342,10 @@
       "sales_estimate":4.08,
       "sales_actual":4.31,
       "y_over_y_growth_rate":56.7,
-      "note_url":null,
-      "symbol_id":2210,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2173
     }
   },
   {
@@ -1399,10 +1361,10 @@
       "sales_estimate":1.48,
       "sales_actual":1.54,
       "y_over_y_growth_rate":35.5,
-      "note_url":null,
-      "symbol_id":2718,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2690
     }
   },
   {
@@ -1418,10 +1380,10 @@
       "sales_estimate":2.51,
       "sales_actual":2.65,
       "y_over_y_growth_rate":74.2,
-      "note_url":null,
-      "symbol_id":2008,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1965
     }
   },
   {
@@ -1437,10 +1399,10 @@
       "sales_estimate":0.533,
       "sales_actual":0.566,
       "y_over_y_growth_rate":47,
-      "note_url":null,
-      "symbol_id":3889,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3884
     }
   },
   {
@@ -1456,10 +1418,10 @@
       "sales_estimate":12.5,
       "sales_actual":13.1,
       "y_over_y_growth_rate":-13.3,
-      "note_url":null,
-      "symbol_id":3460,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3439
     }
   },
   {
@@ -1475,10 +1437,10 @@
       "sales_estimate":117.4,
       "sales_actual":177,
       "y_over_y_growth_rate":102.4,
-      "note_url":null,
-      "symbol_id":2851,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2821
     }
   },
   {
@@ -1494,10 +1456,10 @@
       "sales_estimate":299.7,
       "sales_actual":323,
       "y_over_y_growth_rate":14.3,
-      "note_url":null,
-      "symbol_id":3291,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3266
     }
   },
   {
@@ -1513,10 +1475,10 @@
       "sales_estimate":174.2,
       "sales_actual":180.6,
       "y_over_y_growth_rate":2,
-      "note_url":null,
-      "symbol_id":5622,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5637
     }
   },
   {
@@ -1532,10 +1494,10 @@
       "sales_estimate":145.4,
       "sales_actual":148.2,
       "y_over_y_growth_rate":6.8,
-      "note_url":null,
-      "symbol_id":4278,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4276
     }
   },
   {
@@ -1551,10 +1513,10 @@
       "sales_estimate":42.9,
       "sales_actual":44,
       "y_over_y_growth_rate":18.5,
-      "note_url":null,
-      "symbol_id":1524,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1475
     }
   },
   {
@@ -1570,10 +1532,10 @@
       "sales_estimate":216.7,
       "sales_actual":228,
       "y_over_y_growth_rate":0.1,
-      "note_url":null,
-      "symbol_id":1396,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1342
     }
   },
   {
@@ -1589,10 +1551,10 @@
       "sales_estimate":183.4,
       "sales_actual":193,
       "y_over_y_growth_rate":-6,
-      "note_url":null,
-      "symbol_id":1658,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1612
     }
   },
   {
@@ -1608,10 +1570,10 @@
       "sales_estimate":134.8,
       "sales_actual":157.2,
       "y_over_y_growth_rate":65.7,
-      "note_url":null,
-      "symbol_id":3802,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3791
     }
   },
   {
@@ -1627,10 +1589,10 @@
       "sales_estimate":85.8,
       "sales_actual":90,
       "y_over_y_growth_rate":4.7,
-      "note_url":null,
-      "symbol_id":3371,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3346
     }
   },
   {
@@ -1646,10 +1608,10 @@
       "sales_estimate":12.6,
       "sales_actual":14.2,
       "y_over_y_growth_rate":29.4,
-      "note_url":null,
-      "symbol_id":2983,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2949
     }
   },
   {
@@ -1665,10 +1627,10 @@
       "sales_estimate":173.5,
       "sales_actual":177.3,
       "y_over_y_growth_rate":0.9,
-      "note_url":null,
-      "symbol_id":3073,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3043
     }
   },
   {
@@ -1684,10 +1646,10 @@
       "sales_estimate":164.2,
       "sales_actual":162.6,
       "y_over_y_growth_rate":3.9,
-      "note_url":null,
-      "symbol_id":3518,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3497
     }
   },
   {
@@ -1703,10 +1665,10 @@
       "sales_estimate":180,
       "sales_actual":181,
       "y_over_y_growth_rate":5.1,
-      "note_url":null,
-      "symbol_id":4304,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4302
     }
   },
   {
@@ -1722,10 +1684,10 @@
       "sales_estimate":73.3,
       "sales_actual":75.9,
       "y_over_y_growth_rate":6,
-      "note_url":null,
-      "symbol_id":4362,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4363
     }
   },
   {
@@ -1741,10 +1703,10 @@
       "sales_estimate":71.3,
       "sales_actual":71.6,
       "y_over_y_growth_rate":24.2,
-      "note_url":null,
-      "symbol_id":3920,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3915
     }
   },
   {
@@ -1760,10 +1722,10 @@
       "sales_estimate":47.8,
       "sales_actual":47.8,
       "y_over_y_growth_rate":-11.9,
-      "note_url":null,
-      "symbol_id":1505,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1455
     }
   },
   {
@@ -1779,10 +1741,10 @@
       "sales_estimate":98.9,
       "sales_actual":103.9,
       "y_over_y_growth_rate":74,
-      "note_url":null,
-      "symbol_id":5310,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5319
     }
   },
   {
@@ -1798,10 +1760,10 @@
       "sales_estimate":7.18,
       "sales_actual":7.36,
       "y_over_y_growth_rate":19.1,
-      "note_url":null,
-      "symbol_id":1739,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1697
     }
   },
   {
@@ -1817,10 +1779,10 @@
       "sales_estimate":295.5,
       "sales_actual":299.6,
       "y_over_y_growth_rate":15.1,
-      "note_url":null,
-      "symbol_id":1888,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1848
     }
   },
   {
@@ -1836,10 +1798,10 @@
       "sales_estimate":152.7,
       "sales_actual":152.5,
       "y_over_y_growth_rate":34.3,
-      "note_url":null,
-      "symbol_id":4686,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4686
     }
   },
   {
@@ -1855,10 +1817,10 @@
       "sales_estimate":176.6,
       "sales_actual":171.2,
       "y_over_y_growth_rate":-16.6,
-      "note_url":null,
-      "symbol_id":2720,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2692
     }
   },
   {
@@ -1874,10 +1836,10 @@
       "sales_estimate":206.2,
       "sales_actual":229.1,
       "y_over_y_growth_rate":27,
-      "note_url":null,
-      "symbol_id":5407,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5417
     }
   },
   {
@@ -1893,10 +1855,10 @@
       "sales_estimate":4.72,
       "sales_actual":4.85,
       "y_over_y_growth_rate":78.4,
-      "note_url":null,
-      "symbol_id":4330,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4329
     }
   },
   {
@@ -1912,10 +1874,10 @@
       "sales_estimate":32,
       "sales_actual":34.4,
       "y_over_y_growth_rate":92.9,
-      "note_url":null,
-      "symbol_id":1118,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1056
     }
   },
   {
@@ -1931,10 +1893,10 @@
       "sales_estimate":408.3,
       "sales_actual":417.1,
       "y_over_y_growth_rate":19.1,
-      "note_url":null,
-      "symbol_id":3809,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3798
     }
   },
   {
@@ -1950,29 +1912,10 @@
       "sales_estimate":514,
       "sales_actual":553,
       "y_over_y_growth_rate":34.4,
-      "note_url":null,
-      "symbol_id":2815,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2021-04-29",
-      "quarter":1,
-      "eps_ok":1,
-      "sales_ok":1,
-      "guidance_ok":null,
-      "eps_estimate":232,
-      "eps_actual":330,
-      "sales_estimate":236.1,
-      "sales_actual":262,
-      "y_over_y_growth_rate":47.7,
-      "note_url":null,
-      "symbol_id":null,
-      "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2783
     }
   },
   {
@@ -1988,10 +1931,10 @@
       "sales_estimate":768.4,
       "sales_actual":895.8,
       "y_over_y_growth_rate":53.6,
-      "note_url":null,
-      "symbol_id":888,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":826
     }
   },
   {
@@ -2007,10 +1950,10 @@
       "sales_estimate":4.52,
       "sales_actual":4.54,
       "y_over_y_growth_rate":150.9,
-      "note_url":null,
-      "symbol_id":5165,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5164
     }
   },
   {
@@ -2026,10 +1969,10 @@
       "sales_estimate":1045.9,
       "sales_actual":1085.2,
       "y_over_y_growth_rate":43.8,
-      "note_url":null,
-      "symbol_id":1149,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1089
     }
   },
   {
@@ -2045,10 +1988,10 @@
       "sales_estimate":318.2,
       "sales_actual":320.3,
       "y_over_y_growth_rate":1.7,
-      "note_url":null,
-      "symbol_id":2076,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2036
     }
   },
   {
@@ -2064,10 +2007,10 @@
       "sales_estimate":553.6,
       "sales_actual":591.5,
       "y_over_y_growth_rate":5.3,
-      "note_url":null,
-      "symbol_id":5723,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5743
     }
   },
   {
@@ -2083,10 +2026,10 @@
       "sales_estimate":1.45,
       "sales_actual":1.53,
       "y_over_y_growth_rate":50.3,
-      "note_url":null,
-      "symbol_id":5769,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5791
     }
   },
   {
@@ -2102,10 +2045,10 @@
       "sales_estimate":134.1,
       "sales_actual":145.8,
       "y_over_y_growth_rate":44.6,
-      "note_url":null,
-      "symbol_id":4292,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4290
     }
   },
   {
@@ -2121,10 +2064,10 @@
       "sales_estimate":32.6,
       "sales_actual":29,
       "y_over_y_growth_rate":-10.7,
-      "note_url":null,
-      "symbol_id":5362,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5370
     }
   },
   {
@@ -2140,10 +2083,10 @@
       "sales_estimate":41.9,
       "sales_actual":45.8,
       "y_over_y_growth_rate":235.6,
-      "note_url":null,
-      "symbol_id":4620,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4618
     }
   },
   {
@@ -2159,10 +2102,10 @@
       "sales_estimate":5.34,
       "sales_actual":5.9,
       "y_over_y_growth_rate":61.7,
-      "note_url":null,
-      "symbol_id":5339,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5346
     }
   },
   {
@@ -2178,10 +2121,10 @@
       "sales_estimate":58.9,
       "sales_actual":60.3,
       "y_over_y_growth_rate":30.6,
-      "note_url":null,
-      "symbol_id":4483,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4482
     }
   },
   {
@@ -2197,10 +2140,10 @@
       "sales_estimate":0.8508,
       "sales_actual":0.8485,
       "y_over_y_growth_rate":34.9,
-      "note_url":null,
-      "symbol_id":2642,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2614
     }
   },
   {
@@ -2216,10 +2159,10 @@
       "sales_estimate":32.8,
       "sales_actual":50.6,
       "y_over_y_growth_rate":266.4,
-      "note_url":null,
-      "symbol_id":5001,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5000
     }
   },
   {
@@ -2235,10 +2178,10 @@
       "sales_estimate":4.91,
       "sales_actual":5.74,
       "y_over_y_growth_rate":79,
-      "note_url":null,
-      "symbol_id":4655,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4654
     }
   },
   {
@@ -2254,10 +2197,10 @@
       "sales_estimate":2.17,
       "sales_actual":2.2,
       "y_over_y_growth_rate":36.8,
-      "note_url":null,
-      "symbol_id":5320,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5328
     }
   },
   {
@@ -2273,10 +2216,10 @@
       "sales_estimate":1.98,
       "sales_actual":2.31,
       "y_over_y_growth_rate":66.8,
-      "note_url":null,
-      "symbol_id":1000,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":937
     }
   },
   {
@@ -2292,10 +2235,10 @@
       "sales_estimate":4.91,
       "sales_actual":3.87,
       "y_over_y_growth_rate":139.5,
-      "note_url":null,
-      "symbol_id":4537,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4535
     }
   },
   {
@@ -2311,10 +2254,10 @@
       "sales_estimate":3.32,
       "sales_actual":3.41,
       "y_over_y_growth_rate":48.8,
-      "note_url":null,
-      "symbol_id":4355,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4355
     }
   },
   {
@@ -2330,10 +2273,10 @@
       "sales_estimate":2.17,
       "sales_actual":2.35,
       "y_over_y_growth_rate":40.6,
-      "note_url":null,
-      "symbol_id":5356,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5363
     }
   },
   {
@@ -2349,10 +2292,10 @@
       "sales_estimate":0.4218,
       "sales_actual":0.467,
       "y_over_y_growth_rate":40.7,
-      "note_url":null,
-      "symbol_id":1480,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1430
     }
   },
   {
@@ -2368,10 +2311,10 @@
       "sales_estimate":0.767,
       "sales_actual":0.812,
       "y_over_y_growth_rate":34.5,
-      "note_url":null,
-      "symbol_id":3260,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3234
     }
   },
   {
@@ -2387,10 +2330,10 @@
       "sales_estimate":2.18,
       "sales_actual":2.48,
       "y_over_y_growth_rate":42,
-      "note_url":null,
-      "symbol_id":5744,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5766
     }
   },
   {
@@ -2406,10 +2349,10 @@
       "sales_estimate":1.65,
       "sales_actual":1.71,
       "y_over_y_growth_rate":43.4,
-      "note_url":null,
-      "symbol_id":1539,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1490
     }
   },
   {
@@ -2425,10 +2368,10 @@
       "sales_estimate":159.9,
       "sales_actual":156.1,
       "y_over_y_growth_rate":-13.4,
-      "note_url":null,
-      "symbol_id":2176,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2137
     }
   },
   {
@@ -2444,10 +2387,10 @@
       "sales_estimate":1.6,
       "sales_actual":1.6,
       "y_over_y_growth_rate":20.2,
-      "note_url":null,
-      "symbol_id":2718,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2690
     }
   },
   {
@@ -2463,10 +2406,10 @@
       "sales_estimate":7.18,
       "sales_actual":8.87,
       "y_over_y_growth_rate":5.4,
-      "note_url":null,
-      "symbol_id":902,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":838
     }
   },
   {
@@ -2482,10 +2425,10 @@
       "sales_estimate":1315.3,
       "sales_actual":1383,
       "y_over_y_growth_rate":2.7,
-      "note_url":null,
-      "symbol_id":5657,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5673
     }
   },
   {
@@ -2501,10 +2444,10 @@
       "sales_estimate":42.3,
       "sales_actual":47.1,
       "y_over_y_growth_rate":56,
-      "note_url":null,
-      "symbol_id":3595,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3576
     }
   },
   {
@@ -2520,10 +2463,10 @@
       "sales_estimate":336.8,
       "sales_actual":375,
       "y_over_y_growth_rate":32.7,
-      "note_url":null,
-      "symbol_id":2925,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2892
     }
   },
   {
@@ -2539,10 +2482,10 @@
       "sales_estimate":54,
       "sales_actual":55.8,
       "y_over_y_growth_rate":41.1,
-      "note_url":null,
-      "symbol_id":1110,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1048
     }
   },
   {
@@ -2558,10 +2501,10 @@
       "sales_estimate":0,
       "sales_actual":0,
       "y_over_y_growth_rate":0,
-      "note_url":null,
-      "symbol_id":4609,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4608
     }
   },
   {
@@ -2577,10 +2520,10 @@
       "sales_estimate":1.64,
       "sales_actual":1.76,
       "y_over_y_growth_rate":59.6,
-      "note_url":null,
-      "symbol_id":5779,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5802
     }
   },
   {
@@ -2596,10 +2539,10 @@
       "sales_estimate":2.39,
       "sales_actual":2.51,
       "y_over_y_growth_rate":37.3,
-      "note_url":null,
-      "symbol_id":4100,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4103
     }
   },
   {
@@ -2615,10 +2558,10 @@
       "sales_estimate":54.1,
       "sales_actual":56.6,
       "y_over_y_growth_rate":83.8,
-      "note_url":null,
-      "symbol_id":4024,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4025
     }
   },
   {
@@ -2634,10 +2577,10 @@
       "sales_estimate":2.13,
       "sales_actual":2.29,
       "y_over_y_growth_rate":110.4,
-      "note_url":null,
-      "symbol_id":4947,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4949
     }
   },
   {
@@ -2653,10 +2596,10 @@
       "sales_estimate":15.3,
       "sales_actual":17.5,
       "y_over_y_growth_rate":41.6,
-      "note_url":null,
-      "symbol_id":5682,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5699
     }
   },
   {
@@ -2672,10 +2615,10 @@
       "sales_estimate":4.1,
       "sales_actual":4.34,
       "y_over_y_growth_rate":28.6,
-      "note_url":null,
-      "symbol_id":5469,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5482
     }
   },
   {
@@ -2691,10 +2634,10 @@
       "sales_estimate":9.08,
       "sales_actual":9.56,
       "y_over_y_growth_rate":191.4,
-      "note_url":null,
-      "symbol_id":5777,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5799
     }
   },
   {
@@ -2710,10 +2653,10 @@
       "sales_estimate":0.951,
       "sales_actual":0.9508,
       "y_over_y_growth_rate":141.6,
-      "note_url":null,
-      "symbol_id":1200,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1140
     }
   },
   {
@@ -2729,10 +2672,10 @@
       "sales_estimate":0.506,
       "sales_actual":0.5228,
       "y_over_y_growth_rate":25.6,
-      "note_url":null,
-      "symbol_id":1032,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":969
     }
   },
   {
@@ -2748,10 +2691,10 @@
       "sales_estimate":8.29,
       "sales_actual":8.34,
       "y_over_y_growth_rate":-6.7,
-      "note_url":null,
-      "symbol_id":1815,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1774
     }
   },
   {
@@ -2767,10 +2710,10 @@
       "sales_estimate":2.92,
       "sales_actual":3.03,
       "y_over_y_growth_rate":70,
-      "note_url":null,
-      "symbol_id":2008,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1965
     }
   },
   {
@@ -2786,10 +2729,10 @@
       "sales_estimate":4.38,
       "sales_actual":4.69,
       "y_over_y_growth_rate":57.9,
-      "note_url":null,
-      "symbol_id":2210,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2173
     }
   },
   {
@@ -2805,10 +2748,10 @@
       "sales_estimate":1.7,
       "sales_actual":1.82,
       "y_over_y_growth_rate":39.4,
-      "note_url":null,
-      "symbol_id":3651,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3635
     }
   },
   {
@@ -2824,10 +2767,10 @@
       "sales_estimate":0.7014,
       "sales_actual":0.7667,
       "y_over_y_growth_rate":60.7,
-      "note_url":null,
-      "symbol_id":1260,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1202
     }
   },
   {
@@ -2843,10 +2786,10 @@
       "sales_estimate":65.1,
       "sales_actual":66.1,
       "y_over_y_growth_rate":15.1,
-      "note_url":null,
-      "symbol_id":1344,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1288
     }
   },
   {
@@ -2862,10 +2805,10 @@
       "sales_estimate":0.761,
       "sales_actual":0.904,
       "y_over_y_growth_rate":32,
-      "note_url":null,
-      "symbol_id":3870,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3863
     }
   },
   {
@@ -2881,10 +2824,10 @@
       "sales_estimate":2.33,
       "sales_actual":2.66,
       "y_over_y_growth_rate":65.7,
-      "note_url":null,
-      "symbol_id":4197,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4200
     }
   },
   {
@@ -2900,10 +2843,10 @@
       "sales_estimate":7.58,
       "sales_actual":8.61,
       "y_over_y_growth_rate":82,
-      "note_url":null,
-      "symbol_id":4605,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4604
     }
   },
   {
@@ -2919,10 +2862,10 @@
       "sales_estimate":2.58,
       "sales_actual":2.65,
       "y_over_y_growth_rate":66,
-      "note_url":null,
-      "symbol_id":4343,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4341
     }
   },
   {
@@ -2938,10 +2881,10 @@
       "sales_estimate":72.6,
       "sales_actual":74.2,
       "y_over_y_growth_rate":36.5,
-      "note_url":null,
-      "symbol_id":3843,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3833
     }
   },
   {
@@ -2957,10 +2900,10 @@
       "sales_estimate":12.1,
       "sales_actual":12.8,
       "y_over_y_growth_rate":156.5,
-      "note_url":null,
-      "symbol_id":3460,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3439
     }
   },
   {
@@ -2976,10 +2919,10 @@
       "sales_estimate":0.6381,
       "sales_actual":0.679,
       "y_over_y_growth_rate":25.7,
-      "note_url":null,
-      "symbol_id":2137,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2098
     }
   },
   {
@@ -2995,10 +2938,10 @@
       "sales_estimate":179.5,
       "sales_actual":192.2,
       "y_over_y_growth_rate":20.5,
-      "note_url":null,
-      "symbol_id":4278,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4276
     }
   },
   {
@@ -3014,10 +2957,10 @@
       "sales_estimate":121.7,
       "sales_actual":153.9,
       "y_over_y_growth_rate":15.8,
-      "note_url":null,
-      "symbol_id":2851,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2821
     }
   },
   {
@@ -3033,10 +2976,10 @@
       "sales_estimate":297.1,
       "sales_actual":305,
       "y_over_y_growth_rate":-7.9,
-      "note_url":null,
-      "symbol_id":3291,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3266
     }
   },
   {
@@ -3052,10 +2995,10 @@
       "sales_estimate":217.7,
       "sales_actual":215,
       "y_over_y_growth_rate":-3.6,
-      "note_url":null,
-      "symbol_id":1396,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1342
     }
   },
   {
@@ -3071,10 +3014,10 @@
       "sales_estimate":62.5,
       "sales_actual":71.3,
       "y_over_y_growth_rate":385.6,
-      "note_url":null,
-      "symbol_id":2112,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2074
     }
   },
   {
@@ -3090,10 +3033,10 @@
       "sales_estimate":176.9,
       "sales_actual":202.7,
       "y_over_y_growth_rate":10.8,
-      "note_url":null,
-      "symbol_id":5622,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5637
     }
   },
   {
@@ -3109,10 +3052,10 @@
       "sales_estimate":171.8,
       "sales_actual":175,
       "y_over_y_growth_rate":-11.5,
-      "note_url":null,
-      "symbol_id":1658,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1612
     }
   },
   {
@@ -3128,10 +3071,10 @@
       "sales_estimate":46.1,
       "sales_actual":48.2,
       "y_over_y_growth_rate":33.7,
-      "note_url":null,
-      "symbol_id":1524,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1475
     }
   },
   {
@@ -3147,10 +3090,10 @@
       "sales_estimate":139.9,
       "sales_actual":147.6,
       "y_over_y_growth_rate":8,
-      "note_url":null,
-      "symbol_id":3802,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3791
     }
   },
   {
@@ -3166,10 +3109,10 @@
       "sales_estimate":183,
       "sales_actual":187.5,
       "y_over_y_growth_rate":3.4,
-      "note_url":null,
-      "symbol_id":3073,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3043
     }
   },
   {
@@ -3185,10 +3128,10 @@
       "sales_estimate":73.2,
       "sales_actual":73.4,
       "y_over_y_growth_rate":19.4,
-      "note_url":null,
-      "symbol_id":3920,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3915
     }
   },
   {
@@ -3204,10 +3147,10 @@
       "sales_estimate":225.4,
       "sales_actual":233.1,
       "y_over_y_growth_rate":27.1,
-      "note_url":null,
-      "symbol_id":3285,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3259
     }
   },
   {
@@ -3223,10 +3166,10 @@
       "sales_estimate":93,
       "sales_actual":101,
       "y_over_y_growth_rate":40.3,
-      "note_url":null,
-      "symbol_id":3371,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3346
     }
   },
   {
@@ -3242,10 +3185,10 @@
       "sales_estimate":53.3,
       "sales_actual":54.7,
       "y_over_y_growth_rate":270.9,
-      "note_url":null,
-      "symbol_id":5359,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5366
     }
   },
   {
@@ -3261,10 +3204,10 @@
       "sales_estimate":43.6,
       "sales_actual":45.8,
       "y_over_y_growth_rate":41.4,
-      "note_url":null,
-      "symbol_id":5348,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5356
     }
   },
   {
@@ -3280,29 +3223,10 @@
       "sales_estimate":29.4,
       "sales_actual":29.9,
       "y_over_y_growth_rate":32.6,
-      "note_url":null,
-      "symbol_id":2026,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2021-07-23",
-      "quarter":2,
-      "eps_ok":1,
-      "sales_ok":1,
-      "guidance_ok":1,
-      "eps_estimate":7,
-      "eps_actual":20,
-      "sales_estimate":10.6,
-      "sales_actual":11.9,
-      "y_over_y_growth_rate":74.2,
-      "note_url":null,
-      "symbol_id":null,
-      "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1983
     }
   },
   {
@@ -3318,10 +3242,10 @@
       "sales_estimate":169.3,
       "sales_actual":170.3,
       "y_over_y_growth_rate":5,
-      "note_url":null,
-      "symbol_id":3518,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3497
     }
   },
   {
@@ -3337,10 +3261,10 @@
       "sales_estimate":114,
       "sales_actual":119.6,
       "y_over_y_growth_rate":98,
-      "note_url":null,
-      "symbol_id":5310,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5319
     }
   },
   {
@@ -3356,10 +3280,10 @@
       "sales_estimate":231.7,
       "sales_actual":234.2,
       "y_over_y_growth_rate":14.5,
-      "note_url":null,
-      "symbol_id":5407,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5417
     }
   },
   {
@@ -3375,10 +3299,10 @@
       "sales_estimate":72.6,
       "sales_actual":75,
       "y_over_y_growth_rate":77.6,
-      "note_url":null,
-      "symbol_id":4754,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4755
     }
   },
   {
@@ -3394,10 +3318,10 @@
       "sales_estimate":443,
       "sales_actual":461.5,
       "y_over_y_growth_rate":21.3,
-      "note_url":null,
-      "symbol_id":3809,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3798
     }
   },
   {
@@ -3413,10 +3337,10 @@
       "sales_estimate":734.8,
       "sales_actual":814,
       "y_over_y_growth_rate":36.4,
-      "note_url":null,
-      "symbol_id":888,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":826
     }
   },
   {
@@ -3432,10 +3356,10 @@
       "sales_estimate":560.8,
       "sales_actual":618.8,
       "y_over_y_growth_rate":61.6,
-      "note_url":null,
-      "symbol_id":2815,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2783
     }
   },
   {
@@ -3451,10 +3375,10 @@
       "sales_estimate":36.1,
       "sales_actual":38.5,
       "y_over_y_growth_rate":99.3,
-      "note_url":null,
-      "symbol_id":1118,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1056
     }
   },
   {
@@ -3470,29 +3394,10 @@
       "sales_estimate":5,
       "sales_actual":5.03,
       "y_over_y_growth_rate":108.7,
-      "note_url":null,
-      "symbol_id":5165,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2021-07-29",
-      "quarter":2,
-      "eps_ok":1,
-      "sales_ok":1,
-      "guidance_ok":null,
-      "eps_estimate":302,
-      "eps_actual":361,
-      "sales_estimate":278.9,
-      "sales_actual":290.8,
-      "y_over_y_growth_rate":55.6,
-      "note_url":null,
-      "symbol_id":null,
-      "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5164
     }
   },
   {
@@ -3508,10 +3413,10 @@
       "sales_estimate":62.7,
       "sales_actual":62.4,
       "y_over_y_growth_rate":18.6,
-      "note_url":null,
-      "symbol_id":4483,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4482
     }
   },
   {
@@ -3527,10 +3432,10 @@
       "sales_estimate":1150.8,
       "sales_actual":1130.8,
       "y_over_y_growth_rate":27,
-      "note_url":null,
-      "symbol_id":1149,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1089
     }
   },
   {
@@ -3546,10 +3451,10 @@
       "sales_estimate":5.62,
       "sales_actual":6.13,
       "y_over_y_growth_rate":125,
-      "note_url":null,
-      "symbol_id":4330,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4329
     }
   },
   {
@@ -3565,10 +3470,10 @@
       "sales_estimate":32.8,
       "sales_actual":31.5,
       "y_over_y_growth_rate":115.1,
-      "note_url":null,
-      "symbol_id":3605,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3587
     }
   },
   {
@@ -3584,10 +3489,10 @@
       "sales_estimate":7,
       "sales_actual":7.65,
       "y_over_y_growth_rate":125.5,
-      "note_url":null,
-      "symbol_id":3588,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3569
     }
   },
   {
@@ -3603,10 +3508,10 @@
       "sales_estimate":0.9153,
       "sales_actual":1.02,
       "y_over_y_growth_rate":38.5,
-      "note_url":null,
-      "symbol_id":1950,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1908
     }
   },
   {
@@ -3622,10 +3527,10 @@
       "sales_estimate":6.92,
       "sales_actual":7.07,
       "y_over_y_growth_rate":27.4,
-      "note_url":null,
-      "symbol_id":3823,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3812
     }
   },
   {
@@ -3641,10 +3546,10 @@
       "sales_estimate":6.78,
       "sales_actual":6.63,
       "y_over_y_growth_rate":165.2,
-      "note_url":null,
-      "symbol_id":2887,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2856
     }
   },
   {
@@ -3660,10 +3565,10 @@
       "sales_estimate":37.6,
       "sales_actual":39.3,
       "y_over_y_growth_rate":105,
-      "note_url":null,
-      "symbol_id":5362,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5370
     }
   },
   {
@@ -3679,10 +3584,10 @@
       "sales_estimate":6.18,
       "sales_actual":6.45,
       "y_over_y_growth_rate":81.2,
-      "note_url":null,
-      "symbol_id":4655,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4654
     }
   },
   {
@@ -3698,10 +3603,10 @@
       "sales_estimate":5.26,
       "sales_actual":5.29,
       "y_over_y_growth_rate":23.5,
-      "note_url":null,
-      "symbol_id":2422,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2392
     }
   },
   {
@@ -3717,10 +3622,10 @@
       "sales_estimate":0.8598,
       "sales_actual":0.8503,
       "y_over_y_growth_rate":13.9,
-      "note_url":null,
-      "symbol_id":2642,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2614
     }
   },
   {
@@ -3736,10 +3641,10 @@
       "sales_estimate":0.7482,
       "sales_actual":0.753,
       "y_over_y_growth_rate":59.9,
-      "note_url":null,
-      "symbol_id":2675,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2646
     }
   },
   {
@@ -3755,10 +3660,10 @@
       "sales_estimate":3.29,
       "sales_actual":3.58,
       "y_over_y_growth_rate":44.9,
-      "note_url":null,
-      "symbol_id":5744,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5766
     }
   },
   {
@@ -3774,10 +3679,10 @@
       "sales_estimate":2.12,
       "sales_actual":2.34,
       "y_over_y_growth_rate":66.8,
-      "note_url":null,
-      "symbol_id":2141,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2102
     }
   },
   {
@@ -3793,10 +3698,10 @@
       "sales_estimate":0.4681,
       "sales_actual":0.4901,
       "y_over_y_growth_rate":34.9,
-      "note_url":null,
-      "symbol_id":1480,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1430
     }
   },
   {
@@ -3812,10 +3717,10 @@
       "sales_estimate":1.81,
       "sales_actual":1.88,
       "y_over_y_growth_rate":104.2,
-      "note_url":null,
-      "symbol_id":4833,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4835
     }
   },
   {
@@ -3831,10 +3736,10 @@
       "sales_estimate":1.29,
       "sales_actual":1.29,
       "y_over_y_growth_rate":99.1,
-      "note_url":null,
-      "symbol_id":4307,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4305
     }
   },
   {
@@ -3850,10 +3755,10 @@
       "sales_estimate":92.8,
       "sales_actual":90.3,
       "y_over_y_growth_rate":110.4,
-      "note_url":null,
-      "symbol_id":3688,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3671
     }
   },
   {
@@ -3869,10 +3774,10 @@
       "sales_estimate":1.99,
       "sales_actual":1.74,
       "y_over_y_growth_rate":62.7,
-      "note_url":null,
-      "symbol_id":4781,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4780
     }
   },
   {
@@ -3888,10 +3793,10 @@
       "sales_estimate":0.0433,
       "sales_actual":0.0292,
       "y_over_y_growth_rate":-4,
-      "note_url":null,
-      "symbol_id":5574,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5588
     }
   },
   {
@@ -3907,10 +3812,10 @@
       "sales_estimate":18.3,
       "sales_actual":20.3,
       "y_over_y_growth_rate":1040,
-      "note_url":null,
-      "symbol_id":1928,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1888
     }
   },
   {
@@ -3926,10 +3831,10 @@
       "sales_estimate":2.42,
       "sales_actual":2.74,
       "y_over_y_growth_rate":48.4,
-      "note_url":null,
-      "symbol_id":5356,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5363
     }
   },
   {
@@ -3945,10 +3850,10 @@
       "sales_estimate":1.58,
       "sales_actual":1.94,
       "y_over_y_growth_rate":1017,
-      "note_url":null,
-      "symbol_id":5408,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5418
     }
   },
   {
@@ -3964,10 +3869,10 @@
       "sales_estimate":0.6362,
       "sales_actual":0.727,
       "y_over_y_growth_rate":99.7,
-      "note_url":null,
-      "symbol_id":2209,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2172
     }
   },
   {
@@ -3983,10 +3888,10 @@
       "sales_estimate":3.15,
       "sales_actual":3.79,
       "y_over_y_growth_rate":51.9,
-      "note_url":null,
-      "symbol_id":4966,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4968
     }
   },
   {
@@ -4002,10 +3907,10 @@
       "sales_estimate":1.79,
       "sales_actual":1.86,
       "y_over_y_growth_rate":37.8,
-      "note_url":null,
-      "symbol_id":1539,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1490
     }
   },
   {
@@ -4021,10 +3926,10 @@
       "sales_estimate":1.02,
       "sales_actual":1.22,
       "y_over_y_growth_rate":76.2,
-      "note_url":null,
-      "symbol_id":3784,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3772
     }
   },
   {
@@ -4040,10 +3945,10 @@
       "sales_estimate":1.75,
       "sales_actual":1.77,
       "y_over_y_growth_rate":43.2,
-      "note_url":null,
-      "symbol_id":2718,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2690
     }
   },
   {
@@ -4059,10 +3964,10 @@
       "sales_estimate":12.7,
       "sales_actual":13.4,
       "y_over_y_growth_rate":298.7,
-      "note_url":null,
-      "symbol_id":902,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":838
     }
   },
   {
@@ -4078,10 +3983,10 @@
       "sales_estimate":167.6,
       "sales_actual":170.2,
       "y_over_y_growth_rate":44.5,
-      "note_url":null,
-      "symbol_id":2176,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2137
     }
   },
   {
@@ -4097,10 +4002,10 @@
       "sales_estimate":11,
       "sales_actual":12.4,
       "y_over_y_growth_rate":83.1,
-      "note_url":null,
-      "symbol_id":2119,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2080
     }
   },
   {
@@ -4116,10 +4021,10 @@
       "sales_estimate":1.4,
       "sales_actual":1.5,
       "y_over_y_growth_rate":35.5,
-      "note_url":null,
-      "symbol_id":3593,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3574
     }
   },
   {
@@ -4135,10 +4040,10 @@
       "sales_estimate":1.92,
       "sales_actual":1.97,
       "y_over_y_growth_rate":93,
-      "note_url":null,
-      "symbol_id":3648,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3632
     }
   },
   {
@@ -4154,10 +4059,10 @@
       "sales_estimate":1.12,
       "sales_actual":1.23,
       "y_over_y_growth_rate":88.9,
-      "note_url":null,
-      "symbol_id":4680,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4679
     }
   },
   {
@@ -4173,10 +4078,10 @@
       "sales_estimate":0.4831,
       "sales_actual":0.5059,
       "y_over_y_growth_rate":45,
-      "note_url":null,
-      "symbol_id":5721,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5741
     }
   },
   {
@@ -4192,10 +4097,10 @@
       "sales_estimate":6.89,
       "sales_actual":4.54,
       "y_over_y_growth_rate":126.6,
-      "note_url":null,
-      "symbol_id":4537,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4535
     }
   },
   {
@@ -4211,10 +4116,10 @@
       "sales_estimate":2.57,
       "sales_actual":2.72,
       "y_over_y_growth_rate":104.5,
-      "note_url":null,
-      "symbol_id":4947,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4949
     }
   },
   {
@@ -4230,10 +4135,10 @@
       "sales_estimate":18,
       "sales_actual":19.5,
       "y_over_y_growth_rate":30.7,
-      "note_url":null,
-      "symbol_id":5682,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5699
     }
   },
   {
@@ -4249,10 +4154,10 @@
       "sales_estimate":9.29,
       "sales_actual":9.37,
       "y_over_y_growth_rate":54.4,
-      "note_url":null,
-      "symbol_id":4463,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4462
     }
   },
   {
@@ -4268,10 +4173,10 @@
       "sales_estimate":9.9,
       "sales_actual":10.2,
       "y_over_y_growth_rate":54,
-      "note_url":null,
-      "symbol_id":5777,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5799
     }
   },
   {
@@ -4287,10 +4192,10 @@
       "sales_estimate":3.23,
       "sales_actual":3.38,
       "y_over_y_growth_rate":70,
-      "note_url":null,
-      "symbol_id":2008,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1965
     }
   },
   {
@@ -4306,10 +4211,10 @@
       "sales_estimate":2.93,
       "sales_actual":3.16,
       "y_over_y_growth_rate":57.7,
-      "note_url":null,
-      "symbol_id":4100,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4103
     }
   },
   {
@@ -4325,10 +4230,10 @@
       "sales_estimate":0.5127,
       "sales_actual":0.5241,
       "y_over_y_growth_rate":29.5,
-      "note_url":null,
-      "symbol_id":1032,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":969
     }
   },
   {
@@ -4344,10 +4249,10 @@
       "sales_estimate":4.51,
       "sales_actual":4.56,
       "y_over_y_growth_rate":28.8,
-      "note_url":null,
-      "symbol_id":5469,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5482
     }
   },
   {
@@ -4363,10 +4268,10 @@
       "sales_estimate":0.6372,
       "sales_actual":0.665,
       "y_over_y_growth_rate":36.3,
-      "note_url":null,
-      "symbol_id":3889,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3884
     }
   },
   {
@@ -4382,10 +4287,10 @@
       "sales_estimate":4.88,
       "sales_actual":5.12,
       "y_over_y_growth_rate":50,
-      "note_url":null,
-      "symbol_id":2210,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2173
     }
   },
   {
@@ -4401,10 +4306,10 @@
       "sales_estimate":1.84,
       "sales_actual":1.99,
       "y_over_y_growth_rate":43.7,
-      "note_url":null,
-      "symbol_id":3651,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3635
     }
   },
   {
@@ -4420,10 +4325,10 @@
       "sales_estimate":0.291,
       "sales_actual":0.2955,
       "y_over_y_growth_rate":87.9,
-      "note_url":null,
-      "symbol_id":3424,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3401
     }
   },
   {
@@ -4439,10 +4344,10 @@
       "sales_estimate":3.08,
       "sales_actual":3.29,
       "y_over_y_growth_rate":71.2,
-      "note_url":null,
-      "symbol_id":4197,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4200
     }
   },
   {
@@ -4458,10 +4363,10 @@
       "sales_estimate":0.6555,
       "sales_actual":0.6754,
       "y_over_y_growth_rate":33.2,
-      "note_url":null,
-      "symbol_id":4259,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4257
     }
   },
   {
@@ -4477,10 +4382,10 @@
       "sales_estimate":1.87,
       "sales_actual":1.96,
       "y_over_y_growth_rate":40.3,
-      "note_url":null,
-      "symbol_id":4221,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4221
     }
   },
   {
@@ -4496,10 +4401,10 @@
       "sales_estimate":1.63,
       "sales_actual":1.79,
       "y_over_y_growth_rate":42.3,
-      "note_url":null,
-      "symbol_id":1949,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1907
     }
   },
   {
@@ -4515,10 +4420,10 @@
       "sales_estimate":0.4037,
       "sales_actual":0.4575,
       "y_over_y_growth_rate":121.3,
-      "note_url":null,
-      "symbol_id":4714,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4714
     }
   },
   {
@@ -4534,10 +4439,10 @@
       "sales_estimate":2.24,
       "sales_actual":2.62,
       "y_over_y_growth_rate":70.8,
-      "note_url":null,
-      "symbol_id":1000,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":937
     }
   },
   {
@@ -4553,10 +4458,10 @@
       "sales_estimate":1.87,
       "sales_actual":1.97,
       "y_over_y_growth_rate":56.5,
-      "note_url":null,
-      "symbol_id":5779,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5802
     }
   },
   {
@@ -4572,29 +4477,10 @@
       "sales_estimate":124.7,
       "sales_actual":122.5,
       "y_over_y_growth_rate":15.6,
-      "note_url":null,
-      "symbol_id":3938,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2021-09-30",
-      "quarter":1,
-      "eps_ok":0,
-      "sales_ok":1,
-      "guidance_ok":null,
-      "eps_estimate":50,
-      "eps_actual":49,
-      "sales_estimate":6.48,
-      "sales_actual":7.9,
-      "y_over_y_growth_rate":26,
-      "note_url":null,
-      "symbol_id":null,
-      "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3937
     }
   },
   {
@@ -4610,10 +4496,10 @@
       "sales_estimate":20.6,
       "sales_actual":19.9,
       "y_over_y_growth_rate":-26.2,
-      "note_url":null,
-      "symbol_id":1414,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1361
     }
   },
   {
@@ -4629,10 +4515,10 @@
       "sales_estimate":0.6016,
       "sales_actual":0.7089,
       "y_over_y_growth_rate":35.7,
-      "note_url":null,
-      "symbol_id":3870,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3863
     }
   },
   {
@@ -4648,10 +4534,10 @@
       "sales_estimate":193.9,
       "sales_actual":201.9,
       "y_over_y_growth_rate":11.6,
-      "note_url":null,
-      "symbol_id":4278,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4276
     }
   },
   {
@@ -4667,10 +4553,10 @@
       "sales_estimate":14.8,
       "sales_actual":15,
       "y_over_y_growth_rate":40.9,
-      "note_url":null,
-      "symbol_id":3460,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3439
     }
   },
   {
@@ -4686,10 +4572,10 @@
       "sales_estimate":296,
       "sales_actual":296.4,
       "y_over_y_growth_rate":1,
-      "note_url":null,
-      "symbol_id":3291,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3266
     }
   },
   {
@@ -4705,10 +4591,10 @@
       "sales_estimate":84.6,
       "sales_actual":91.5,
       "y_over_y_growth_rate":199,
-      "note_url":null,
-      "symbol_id":2112,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2074
     }
   },
   {
@@ -4724,10 +4610,10 @@
       "sales_estimate":216,
       "sales_actual":227.7,
       "y_over_y_growth_rate":11.9,
-      "note_url":null,
-      "symbol_id":1396,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1342
     }
   },
   {
@@ -4743,10 +4629,10 @@
       "sales_estimate":183.1,
       "sales_actual":188.3,
       "y_over_y_growth_rate":-0.1,
-      "note_url":null,
-      "symbol_id":5622,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5637
     }
   },
   {
@@ -4762,10 +4648,10 @@
       "sales_estimate":0.6909,
       "sales_actual":0.7085,
       "y_over_y_growth_rate":21.5,
-      "note_url":null,
-      "symbol_id":2137,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2098
     }
   },
   {
@@ -4781,29 +4667,10 @@
       "sales_estimate":137,
       "sales_actual":137.6,
       "y_over_y_growth_rate":56.8,
-      "note_url":null,
-      "symbol_id":5310,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2021-10-26",
-      "quarter":3,
-      "eps_ok":1,
-      "sales_ok":0,
-      "guidance_ok":0,
-      "eps_estimate":318,
-      "eps_actual":322,
-      "sales_estimate":295.2,
-      "sales_actual":290.1,
-      "y_over_y_growth_rate":35.1,
-      "note_url":null,
-      "symbol_id":null,
-      "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5319
     }
   },
   {
@@ -4819,10 +4686,10 @@
       "sales_estimate":225.7,
       "sales_actual":231.8,
       "y_over_y_growth_rate":9.2,
-      "note_url":null,
-      "symbol_id":5407,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5417
     }
   },
   {
@@ -4838,10 +4705,10 @@
       "sales_estimate":633.5,
       "sales_actual":651.2,
       "y_over_y_growth_rate":41,
-      "note_url":null,
-      "symbol_id":2815,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2783
     }
   },
   {
@@ -4857,10 +4724,10 @@
       "sales_estimate":440,
       "sales_actual":453.2,
       "y_over_y_growth_rate":22,
-      "note_url":null,
-      "symbol_id":3809,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3798
     }
   },
   {
@@ -4876,10 +4743,10 @@
       "sales_estimate":1116,
       "sales_actual":1108.1,
       "y_over_y_growth_rate":15.3,
-      "note_url":null,
-      "symbol_id":1149,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1089
     }
   },
   {
@@ -4895,10 +4762,10 @@
       "sales_estimate":849.4,
       "sales_actual":834,
       "y_over_y_growth_rate":28.9,
-      "note_url":null,
-      "symbol_id":888,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":826
     }
   },
   {
@@ -4914,10 +4781,10 @@
       "sales_estimate":14.8,
       "sales_actual":19.1,
       "y_over_y_growth_rate":165.3,
-      "note_url":null,
-      "symbol_id":2476,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2447
     }
   },
   {
@@ -4933,10 +4800,10 @@
       "sales_estimate":174,
       "sales_actual":172,
       "y_over_y_growth_rate":11.6,
-      "note_url":null,
-      "symbol_id":1797,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1756
     }
   },
   {
@@ -4952,10 +4819,10 @@
       "sales_estimate":1.84,
       "sales_actual":1.98,
       "y_over_y_growth_rate":60.1,
-      "note_url":null,
-      "symbol_id":5769,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5791
     }
   },
   {
@@ -4971,10 +4838,10 @@
       "sales_estimate":55.9,
       "sales_actual":60.2,
       "y_over_y_growth_rate":42.5,
-      "note_url":null,
-      "symbol_id":4005,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4006
     }
   },
   {
@@ -4990,10 +4857,10 @@
       "sales_estimate":8.61,
       "sales_actual":8.64,
       "y_over_y_growth_rate":73,
-      "note_url":null,
-      "symbol_id":3588,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3569
     }
   },
   {
@@ -5009,10 +4876,10 @@
       "sales_estimate":8.04,
       "sales_actual":8.02,
       "y_over_y_growth_rate":25.3,
-      "note_url":null,
-      "symbol_id":3823,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3812
     }
   },
   {
@@ -5028,10 +4895,10 @@
       "sales_estimate":1.09,
       "sales_actual":1.1,
       "y_over_y_growth_rate":32.8,
-      "note_url":null,
-      "symbol_id":1950,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1908
     }
   },
   {
@@ -5047,10 +4914,10 @@
       "sales_estimate":1.72,
       "sales_actual":1.53,
       "y_over_y_growth_rate":2248,
-      "note_url":null,
-      "symbol_id":3887,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3882
     }
   },
   {
@@ -5066,10 +4933,10 @@
       "sales_estimate":6.81,
       "sales_actual":6.8,
       "y_over_y_growth_rate":50.5,
-      "note_url":null,
-      "symbol_id":4655,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4654
     }
   },
   {
@@ -5085,10 +4952,10 @@
       "sales_estimate":0.8374,
       "sales_actual":0.8674,
       "y_over_y_growth_rate":22.8,
-      "note_url":null,
-      "symbol_id":2642,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2614
     }
   },
   {
@@ -5104,10 +4971,10 @@
       "sales_estimate":44.8,
       "sales_actual":44.6,
       "y_over_y_growth_rate":157.8,
-      "note_url":null,
-      "symbol_id":4479,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4478
     }
   },
   {
@@ -5123,10 +4990,10 @@
       "sales_estimate":88.4,
       "sales_actual":93.2,
       "y_over_y_growth_rate":43.4,
-      "note_url":null,
-      "symbol_id":4488,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4488
     }
   },
   {
@@ -5142,10 +5009,10 @@
       "sales_estimate":8.69,
       "sales_actual":8.51,
       "y_over_y_growth_rate":113,
-      "note_url":null,
-      "symbol_id":2887,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2856
     }
   },
   {
@@ -5161,10 +5028,10 @@
       "sales_estimate":8.09,
       "sales_actual":8.05,
       "y_over_y_growth_rate":6.2,
-      "note_url":null,
-      "symbol_id":4463,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4462
     }
   },
   {
@@ -5180,10 +5047,10 @@
       "sales_estimate":1.97,
       "sales_actual":1.94,
       "y_over_y_growth_rate":48.7,
-      "note_url":null,
-      "symbol_id":4833,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4835
     }
   },
   {
@@ -5199,10 +5066,10 @@
       "sales_estimate":20.6,
       "sales_actual":22.4,
       "y_over_y_growth_rate":66.7,
-      "note_url":null,
-      "symbol_id":902,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":838
     }
   },
   {
@@ -5218,10 +5085,10 @@
       "sales_estimate":2.48,
       "sales_actual":2.71,
       "y_over_y_growth_rate":74.9,
-      "note_url":null,
-      "symbol_id":2141,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2102
     }
   },
   {
@@ -5237,10 +5104,10 @@
       "sales_estimate":44.8,
       "sales_actual":38.4,
       "y_over_y_growth_rate":26.7,
-      "note_url":null,
-      "symbol_id":5001,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5000
     }
   },
   {
@@ -5256,10 +5123,10 @@
       "sales_estimate":2.14,
       "sales_actual":2.44,
       "y_over_y_growth_rate":61.6,
-      "note_url":null,
-      "symbol_id":4694,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4694
     }
   },
   {
@@ -5275,10 +5142,10 @@
       "sales_estimate":3.86,
       "sales_actual":3.92,
       "y_over_y_growth_rate":35.5,
-      "note_url":null,
-      "symbol_id":4355,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4355
     }
   },
   {
@@ -5294,10 +5161,10 @@
       "sales_estimate":15.8,
       "sales_actual":12.4,
       "y_over_y_growth_rate":330.6,
-      "note_url":null,
-      "symbol_id":1928,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1888
     }
   },
   {
@@ -5313,10 +5180,10 @@
       "sales_estimate":0.7354,
       "sales_actual":0.794,
       "y_over_y_growth_rate":76.1,
-      "note_url":null,
-      "symbol_id":2209,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2172
     }
   },
   {
@@ -5332,10 +5199,10 @@
       "sales_estimate":2.15,
       "sales_actual":2.28,
       "y_over_y_growth_rate":249.5,
-      "note_url":null,
-      "symbol_id":5408,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5418
     }
   },
   {
@@ -5351,10 +5218,10 @@
       "sales_estimate":2.66,
       "sales_actual":2.86,
       "y_over_y_growth_rate":42.6,
-      "note_url":null,
-      "symbol_id":5356,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5363
     }
   },
   {
@@ -5370,10 +5237,10 @@
       "sales_estimate":1.45,
       "sales_actual":1.62,
       "y_over_y_growth_rate":80.6,
-      "note_url":null,
-      "symbol_id":4108,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4111
     }
   },
   {
@@ -5389,10 +5256,10 @@
       "sales_estimate":1.45,
       "sales_actual":1.48,
       "y_over_y_growth_rate":12.4,
-      "note_url":null,
-      "symbol_id":3593,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3574
     }
   },
   {
@@ -5408,10 +5275,10 @@
       "sales_estimate":0.605,
       "sales_actual":0.636,
       "y_over_y_growth_rate":40.4,
-      "note_url":null,
-      "symbol_id":2258,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2221
     }
   },
   {
@@ -5427,10 +5294,10 @@
       "sales_estimate":2.49,
       "sales_actual":2.69,
       "y_over_y_growth_rate":54.8,
-      "note_url":null,
-      "symbol_id":1000,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":937
     }
   },
   {
@@ -5446,10 +5313,10 @@
       "sales_estimate":1.19,
       "sales_actual":1.32,
       "y_over_y_growth_rate":56,
-      "note_url":null,
-      "symbol_id":3784,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3772
     }
   },
   {
@@ -5465,10 +5332,10 @@
       "sales_estimate":1.95,
       "sales_actual":1.95,
       "y_over_y_growth_rate":39,
-      "note_url":null,
-      "symbol_id":2718,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2690
     }
   },
   {
@@ -5484,10 +5351,10 @@
       "sales_estimate":6.98,
       "sales_actual":7.27,
       "y_over_y_growth_rate":90.4,
-      "note_url":null,
-      "symbol_id":1196,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1136
     }
   },
   {
@@ -5503,10 +5370,10 @@
       "sales_estimate":14.4,
       "sales_actual":14.8,
       "y_over_y_growth_rate":26.3,
-      "note_url":null,
-      "symbol_id":5267,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5275
     }
   },
   {
@@ -5522,10 +5389,10 @@
       "sales_estimate":1.88,
       "sales_actual":1.94,
       "y_over_y_growth_rate":24.7,
-      "note_url":null,
-      "symbol_id":3648,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3632
     }
   },
   {
@@ -5541,10 +5408,10 @@
       "sales_estimate":348.7,
       "sales_actual":368.2,
       "y_over_y_growth_rate":9.8,
-      "note_url":null,
-      "symbol_id":2925,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2892
     }
   },
   {
@@ -5560,10 +5427,10 @@
       "sales_estimate":1342.6,
       "sales_actual":1405,
       "y_over_y_growth_rate":4.3,
-      "note_url":null,
-      "symbol_id":5657,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5673
     }
   },
   {
@@ -5579,10 +5446,10 @@
       "sales_estimate":68.1,
       "sales_actual":71,
       "y_over_y_growth_rate":50.3,
-      "note_url":null,
-      "symbol_id":4024,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4025
     }
   },
   {
@@ -5598,29 +5465,10 @@
       "sales_estimate":10.2,
       "sales_actual":10.5,
       "y_over_y_growth_rate":35,
-      "note_url":null,
-      "symbol_id":5777,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2021-11-24",
-      "quarter":3,
-      "eps_ok":0,
-      "sales_ok":1,
-      "guidance_ok":null,
-      "eps_estimate":56,
-      "eps_actual":39,
-      "sales_estimate":35.4,
-      "sales_actual":36.4,
-      "y_over_y_growth_rate":17.7,
-      "note_url":null,
-      "symbol_id":null,
-      "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5799
     }
   },
   {
@@ -5636,10 +5484,10 @@
       "sales_estimate":2.12,
       "sales_actual":2.31,
       "y_over_y_growth_rate":61.7,
-      "note_url":null,
-      "symbol_id":5779,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5802
     }
   },
   {
@@ -5655,10 +5503,10 @@
       "sales_estimate":68,
       "sales_actual":68.6,
       "y_over_y_growth_rate":26.6,
-      "note_url":null,
-      "symbol_id":1994,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1951
     }
   },
   {
@@ -5674,10 +5522,10 @@
       "sales_estimate":17,
       "sales_actual":17,
       "y_over_y_growth_rate":56,
-      "note_url":null,
-      "symbol_id":2737,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2711
     }
   },
   {
@@ -5693,10 +5541,10 @@
       "sales_estimate":0.6662,
       "sales_actual":0.7004,
       "y_over_y_growth_rate":29.1,
-      "note_url":null,
-      "symbol_id":3889,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3884
     }
   },
   {
@@ -5712,10 +5560,10 @@
       "sales_estimate":3.64,
       "sales_actual":3.8,
       "y_over_y_growth_rate":63.5,
-      "note_url":null,
-      "symbol_id":2008,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1965
     }
   },
   {
@@ -5731,10 +5579,10 @@
       "sales_estimate":3.06,
       "sales_actual":3.34,
       "y_over_y_growth_rate":109.5,
-      "note_url":null,
-      "symbol_id":4947,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4949
     }
   },
   {
@@ -5750,10 +5598,10 @@
       "sales_estimate":4.66,
       "sales_actual":4.76,
       "y_over_y_growth_rate":26.1,
-      "note_url":null,
-      "symbol_id":5469,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5482
     }
   },
   {
@@ -5769,10 +5617,10 @@
       "sales_estimate":3.27,
       "sales_actual":3.51,
       "y_over_y_growth_rate":61.3,
-      "note_url":null,
-      "symbol_id":4100,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4103
     }
   },
   {
@@ -5788,10 +5636,10 @@
       "sales_estimate":0.5695,
       "sales_actual":0.5826,
       "y_over_y_growth_rate":40.9,
-      "note_url":null,
-      "symbol_id":1032,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":969
     }
   },
   {
@@ -5807,10 +5655,10 @@
       "sales_estimate":5.31,
       "sales_actual":5.45,
       "y_over_y_growth_rate":42.4,
-      "note_url":null,
-      "symbol_id":2210,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2173
     }
   },
   {
@@ -5826,10 +5674,10 @@
       "sales_estimate":0.6431,
       "sales_actual":0.651,
       "y_over_y_growth_rate":21.5,
-      "note_url":null,
-      "symbol_id":2213,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2177
     }
   },
   {
@@ -5845,10 +5693,10 @@
       "sales_estimate":0.939,
       "sales_actual":1,
       "y_over_y_growth_rate":70.3,
-      "note_url":null,
-      "symbol_id":1260,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1202
     }
   },
   {
@@ -5864,10 +5712,10 @@
       "sales_estimate":2.05,
       "sales_actual":2.27,
       "y_over_y_growth_rate":50.5,
-      "note_url":null,
-      "symbol_id":3651,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3635
     }
   },
   {
@@ -5883,10 +5731,10 @@
       "sales_estimate":1.78,
       "sales_actual":1.86,
       "y_over_y_growth_rate":39.7,
-      "note_url":null,
-      "symbol_id":1949,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1907
     }
   },
   {
@@ -5902,10 +5750,10 @@
       "sales_estimate":0.4958,
       "sales_actual":0.5602,
       "y_over_y_growth_rate":128.1,
-      "note_url":null,
-      "symbol_id":4714,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4714
     }
   },
   {
@@ -5921,10 +5769,10 @@
       "sales_estimate":9.8,
       "sales_actual":10.1,
       "y_over_y_growth_rate":19.2,
-      "note_url":null,
-      "symbol_id":4605,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4604
     }
   },
   {
@@ -5940,10 +5788,10 @@
       "sales_estimate":3.11,
       "sales_actual":3.06,
       "y_over_y_growth_rate":13.4,
-      "note_url":null,
-      "symbol_id":2056,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2013
     }
   },
   {
@@ -5959,10 +5807,10 @@
       "sales_estimate":0.969,
       "sales_actual":1.04,
       "y_over_y_growth_rate":13.7,
-      "note_url":null,
-      "symbol_id":3870,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3863
     }
   },
   {
@@ -5978,10 +5826,10 @@
       "sales_estimate":14.4,
       "sales_actual":14.5,
       "y_over_y_growth_rate":29.8,
-      "note_url":null,
-      "symbol_id":3566,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3547
     }
   },
   {
@@ -5997,10 +5845,10 @@
       "sales_estimate":92.9,
       "sales_actual":94.7,
       "y_over_y_growth_rate":138.4,
-      "note_url":null,
-      "symbol_id":2112,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2074
     }
   },
   {
@@ -6016,10 +5864,10 @@
       "sales_estimate":51.5,
       "sales_actual":51.1,
       "y_over_y_growth_rate":14,
-      "note_url":null,
-      "symbol_id":1524,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1475
     }
   },
   {
@@ -6035,10 +5883,10 @@
       "sales_estimate":297.8,
       "sales_actual":292.6,
       "y_over_y_growth_rate":-0.3,
-      "note_url":null,
-      "symbol_id":3291,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":3266
     }
   },
   {
@@ -6054,10 +5902,10 @@
       "sales_estimate":186.1,
       "sales_actual":208.6,
       "y_over_y_growth_rate":12.8,
-      "note_url":null,
-      "symbol_id":5622,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5637
     }
   },
   {
@@ -6073,10 +5921,10 @@
       "sales_estimate":167.8,
       "sales_actual":170.2,
       "y_over_y_growth_rate":1.1,
-      "note_url":null,
-      "symbol_id":1658,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1612
     }
   },
   {
@@ -6092,10 +5940,10 @@
       "sales_estimate":120.8,
       "sales_actual":126.4,
       "y_over_y_growth_rate":7.7,
-      "note_url":null,
-      "symbol_id":2851,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2821
     }
   },
   {
@@ -6111,10 +5959,10 @@
       "sales_estimate":55.96,
       "sales_actual":55.9,
       "y_over_y_growth_rate":-1.6,
-      "note_url":null,
-      "symbol_id":5183,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5183
     }
   },
   {
@@ -6130,10 +5978,10 @@
       "sales_estimate":221.9,
       "sales_actual":220.6,
       "y_over_y_growth_rate":9.8,
-      "note_url":null,
-      "symbol_id":1396,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1342
     }
   },
   {
@@ -6149,10 +5997,10 @@
       "sales_estimate":203.4,
       "sales_actual":209.5,
       "y_over_y_growth_rate":6.1,
-      "note_url":null,
-      "symbol_id":4304,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":4302
     }
   },
   {
@@ -6168,10 +6016,10 @@
       "sales_estimate":79.6,
       "sales_actual":81.9,
       "y_over_y_growth_rate":140.1,
-      "note_url":null,
-      "symbol_id":5359,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":5366
     }
   },
   {
@@ -6187,10 +6035,10 @@
       "sales_estimate":55,
       "sales_actual":55.2,
       "y_over_y_growth_rate":0.4,
-      "note_url":null,
-      "symbol_id":1505,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1455
     }
   },
   {
@@ -6206,29 +6054,10 @@
       "sales_estimate":93.8,
       "sales_actual":94.3,
       "y_over_y_growth_rate":134.1,
-      "note_url":null,
-      "symbol_id":882,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2022-01-21",
-      "quarter":4,
-      "eps_ok":1,
-      "sales_ok":1,
-      "guidance_ok":0,
-      "eps_estimate":82,
-      "eps_actual":133,
-      "sales_estimate":77.1,
-      "sales_actual":77.1,
-      "y_over_y_growth_rate":16,
-      "note_url":null,
-      "symbol_id":null,
-      "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":820
     }
   },
   {
@@ -6244,10 +6073,10 @@
       "sales_estimate":33.2,
       "sales_actual":34.3,
       "y_over_y_growth_rate":21.4,
-      "note_url":null,
-      "symbol_id":2026,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":1983
     }
   },
   {
@@ -6263,10 +6092,10 @@
       "sales_estimate":40.9,
       "sales_actual":42.8,
       "y_over_y_growth_rate":32.1,
-      "note_url":null,
-      "symbol_id":2893,
+      "note_url":"",
       "eps_unit_id":2,
-      "sales_unit_id":1
+      "sales_unit_id":1,
+      "symbol_id":2862
     }
   },
   {
@@ -6283,9 +6112,9 @@
       "sales_actual":21.7,
       "y_over_y_growth_rate":0.7,
       "note_url":"https://note.com/hirosetakao/n/nff3448e19804?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":4327,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":4326
     }
   },
   {
@@ -6302,9 +6131,9 @@
       "sales_actual":203,
       "y_over_y_growth_rate":-7.4,
       "note_url":"https://note.com/hirosetakao/n/nb4960fa6ff5a?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2720,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2692
     }
   },
   {
@@ -6321,9 +6150,9 @@
       "sales_actual":86.1,
       "y_over_y_growth_rate":0.3,
       "note_url":"https://note.com/hirosetakao/n/n5243cbad8355?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":3738,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":3726
     }
   },
   {
@@ -6340,9 +6169,9 @@
       "sales_actual":248,
       "y_over_y_growth_rate":10.4,
       "note_url":"https://note.com/hirosetakao/n/n91b939cf0381?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":3285,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":3259
     }
   },
   {
@@ -6359,9 +6188,9 @@
       "sales_actual":517.3,
       "y_over_y_growth_rate":20.1,
       "note_url":"https://note.com/hirosetakao/n/n52e17eb6c168?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":3809,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":3798
     }
   },
   {
@@ -6378,9 +6207,9 @@
       "sales_actual":22.5,
       "y_over_y_growth_rate":59.1,
       "note_url":"https://note.com/hirosetakao/n/n629e0a94bcde?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2934,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2901
     }
   },
   {
@@ -6397,9 +6226,9 @@
       "sales_actual":177.2,
       "y_over_y_growth_rate":65.6,
       "note_url":"https://note.com/hirosetakao/n/ned3e38a5921c?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":5310,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":5319
     }
   },
   {
@@ -6416,9 +6245,9 @@
       "sales_actual":42.3,
       "y_over_y_growth_rate":22.3,
       "note_url":"https://note.com/hirosetakao/n/n6b1a1c3bd2e7?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":3546,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":3526
     }
   },
   {
@@ -6435,9 +6264,9 @@
       "sales_actual":86,
       "y_over_y_growth_rate":-15.8,
       "note_url":"https://note.com/hirosetakao/n/n3b548e7eff91?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":3958,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":3958
     }
   },
   {
@@ -6454,9 +6283,9 @@
       "sales_actual":1239.5,
       "y_over_y_growth_rate":11.3,
       "note_url":"https://note.com/hirosetakao/n/n92c7362dd7f9?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":888,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":826
     }
   },
   {
@@ -6473,9 +6302,9 @@
       "sales_actual":5.48,
       "y_over_y_growth_rate":12.9,
       "note_url":"https://note.com/hirosetakao/n/na29fb6743751?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2005,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":1962
     }
   },
   {
@@ -6492,9 +6321,9 @@
       "sales_actual":277.1,
       "y_over_y_growth_rate":11.3,
       "note_url":"https://note.com/hirosetakao/n/na5db3ed6a9b1?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":5407,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":5417
     }
   },
   {
@@ -6511,9 +6340,9 @@
       "sales_actual":849.7,
       "y_over_y_growth_rate":82.6,
       "note_url":"https://note.com/hirosetakao/n/n30e42d6c1d44?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":5723,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":5743
     }
   },
   {
@@ -6530,9 +6359,9 @@
       "sales_actual":753.3,
       "y_over_y_growth_rate":32,
       "note_url":"https://note.com/hirosetakao/n/n8e7b703df651?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2815,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2783
     }
   },
   {
@@ -6549,9 +6378,9 @@
       "sales_actual":69.2,
       "y_over_y_growth_rate":13.1,
       "note_url":"https://note.com/hirosetakao/n/n94eda1ff5c8e?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":4483,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":4482
     }
   },
   {
@@ -6568,9 +6397,9 @@
       "sales_actual":48.3,
       "y_over_y_growth_rate":48.8,
       "note_url":"https://note.com/hirosetakao/n/n5b31333efb69?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":1118,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":1056
     }
   },
   {
@@ -6587,9 +6416,9 @@
       "sales_actual":80.5,
       "y_over_y_growth_rate":19.3,
       "note_url":"https://note.com/hirosetakao/n/n202c94a6b3c7?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":4754,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":4755
     }
   },
   {
@@ -6606,28 +6435,9 @@
       "sales_actual":8.07,
       "y_over_y_growth_rate":23.8,
       "note_url":"https://note.com/hirosetakao/n/n9e371506acaf?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":3823,
       "eps_unit_id":1,
-      "sales_unit_id":2
-    }
-  },
-  {
-    "model": "vietnam_research.financialResultWatch",
-    "fields": {
-      "recorded_date":"2022-02-03",
-      "quarter":4,
-      "eps_ok":0,
-      "sales_ok":1,
-      "guidance_ok":0,
-      "eps_estimate":383,
-      "eps_actual":367,
-      "sales_estimate":334.4,
-      "sales_actual":336.7,
-      "y_over_y_growth_rate":19.8,
-      "note_url":"https://note.com/hirosetakao/n/n60b2629fab50?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":null,
-      "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":3812
     }
   },
   {
@@ -6644,9 +6454,9 @@
       "sales_actual":1374.1,
       "y_over_y_growth_rate":9.4,
       "note_url":"https://note.com/hirosetakao/n/n8357ad7f650e?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":1149,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":1089
     }
   },
   {
@@ -6663,9 +6473,9 @@
       "sales_actual":3.16,
       "y_over_y_growth_rate":43.4,
       "note_url":"https://note.com/hirosetakao/n/neafb80779568?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":5356,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":5363
     }
   },
   {
@@ -6682,9 +6492,9 @@
       "sales_actual":8.47,
       "y_over_y_growth_rate":20,
       "note_url":"https://note.com/hirosetakao/n/ncaf5fa203f25?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":4330,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":4329
     }
   },
   {
@@ -6701,9 +6511,9 @@
       "sales_actual":0.9788,
       "y_over_y_growth_rate":66.7,
       "note_url":"https://note.com/hirosetakao/n/nd28cd1b65246?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2209,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2172
     }
   },
   {
@@ -6720,9 +6530,9 @@
       "sales_actual":19.6,
       "y_over_y_growth_rate":22,
       "note_url":"https://note.com/hirosetakao/n/ne65643480ca1?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":1875,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":1834
     }
   },
   {
@@ -6739,9 +6549,9 @@
       "sales_actual":18.5,
       "y_over_y_growth_rate":74.2,
       "note_url":"https://note.com/hirosetakao/n/ne7e73f8236e6?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2737,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2711
     }
   },
   {
@@ -6758,9 +6568,9 @@
       "sales_actual":4.13,
       "y_over_y_growth_rate":55.8,
       "note_url":"https://note.com/hirosetakao/n/nf83b1de01eb2?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2359,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2327
     }
   },
   {
@@ -6777,9 +6587,9 @@
       "sales_actual":218.2,
       "y_over_y_growth_rate":34.3,
       "note_url":"https://note.com/hirosetakao/n/n0fd67c383833?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2176,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2137
     }
   },
   {
@@ -6796,9 +6606,9 @@
       "sales_actual":8.43,
       "y_over_y_growth_rate":53.8,
       "note_url":"https://note.com/hirosetakao/n/n20bde8db1ce4?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":5339,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":5346
     }
   },
   {
@@ -6815,9 +6625,9 @@
       "sales_actual":3.61,
       "y_over_y_growth_rate":77,
       "note_url":"https://note.com/hirosetakao/n/n5e76969f8c51?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":1000,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":937
     }
   },
   {
@@ -6834,9 +6644,9 @@
       "sales_actual":15.3,
       "y_over_y_growth_rate":78.3,
       "note_url":"https://note.com/hirosetakao/n/ncea8d070df1f?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":902,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":838
     }
   },
   {
@@ -6853,9 +6663,9 @@
       "sales_actual":3.05,
       "y_over_y_growth_rate":251.8,
       "note_url":"https://note.com/hirosetakao/n/nb472b9f4996e?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":5408,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":5418
     }
   },
   {
@@ -6872,9 +6682,9 @@
       "sales_actual":2.22,
       "y_over_y_growth_rate":59.1,
       "note_url":"https://note.com/hirosetakao/n/n5fb5aa1b5a84?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":5769,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":5791
     }
   },
   {
@@ -6891,9 +6701,9 @@
       "sales_actual":26.9,
       "y_over_y_growth_rate":72.2,
       "note_url":"https://note.com/hirosetakao/n/n02c354940885?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":954,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":892
     }
   },
   {
@@ -6910,9 +6720,9 @@
       "sales_actual":18.4,
       "y_over_y_growth_rate":106.3,
       "note_url":"https://note.com/hirosetakao/n/n6d91390dfe76?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2969,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2934
     }
   },
   {
@@ -6929,9 +6739,9 @@
       "sales_actual":76.4,
       "y_over_y_growth_rate":52.8,
       "note_url":"https://note.com/hirosetakao/n/n4bcc7c123436?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":4024,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":4025
     }
   },
   {
@@ -6948,9 +6758,9 @@
       "sales_actual":13,
       "y_over_y_growth_rate":34,
       "note_url":"https://note.com/hirosetakao/n/n40582870dc8b?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2119,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2080
     }
   },
   {
@@ -6967,9 +6777,9 @@
       "sales_actual":0.9772,
       "y_over_y_growth_rate":18.2,
       "note_url":"https://note.com/hirosetakao/n/n5de9803d3bd3?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2642,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2614
     }
   },
   {
@@ -6986,9 +6796,9 @@
       "sales_actual":7.93,
       "y_over_y_growth_rate":55.6,
       "note_url":"https://note.com/hirosetakao/n/neaa0d86c5c39?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":1196,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":1136
     }
   },
   {
@@ -7005,9 +6815,9 @@
       "sales_actual":4.43,
       "y_over_y_growth_rate":17.9,
       "note_url":"https://note.com/hirosetakao/n/n31dcd7ab6a30?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":5744,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":5766
     }
   },
   {
@@ -7024,9 +6834,9 @@
       "sales_actual":4.33,
       "y_over_y_growth_rate":34.4,
       "note_url":"https://note.com/hirosetakao/n/n3137fdbf4650?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":4355,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":4355
     }
   },
   {
@@ -7043,28 +6853,28 @@
       "sales_actual":0.798,
       "y_over_y_growth_rate":42.8,
       "note_url":"https://note.com/hirosetakao/n/n94577b48346f?magazine_key=m68d7ed5c9b0f",
-      "symbol_id":2675,
       "eps_unit_id":1,
-      "sales_unit_id":2
+      "sales_unit_id":2,
+      "symbol_id":2646
     }
   },
   {
     "model": "vietnam_research.financialResultWatch",
     "fields": {
-      "recorded_date": "2022-02-25",
-      "quarter": 2,
-      "eps_ok": 1,
-      "sales_ok": 1,
-      "guidance_ok": 0,
-      "eps_estimate": 11,
-      "eps_actual": 13,
-      "sales_estimate": 2.42,
-      "sales_actual": 2.56,
-      "y_over_y_growth_rate": 62.7,
-      "note_url": "https://note.com/hirosetakao/n/n4e9e5af89628?magazine_key=m68d7ed5c9b0f",
-      "symbol_id": 5779,
-      "eps_unit_id": 1,
-      "sales_unit_id": 2
+      "recorded_date":"2022-02-25",
+      "quarter":2,
+      "eps_ok":1,
+      "sales_ok":1,
+      "guidance_ok":0,
+      "eps_estimate":11,
+      "eps_actual":13,
+      "sales_estimate":2.42,
+      "sales_actual":2.56,
+      "y_over_y_growth_rate":62.7,
+      "note_url":"https://note.com/hirosetakao/n/n4e9e5af89628?magazine_key=m68d7ed5c9b0f",
+      "eps_unit_id":1,
+      "sales_unit_id":2,
+      "symbol_id":5802
     }
   }
 ]

@@ -2,7 +2,7 @@
   {
     "model": "vietnam_research.market",
     "fields": {
-      "id": 1,
+      "id":1,
       "code":"HOSE",
       "name":"ホーチミン証券取引所",
       "url_file_name":"hcm"
@@ -11,7 +11,7 @@
   {
     "model": "vietnam_research.market",
     "fields": {
-      "id": 2,
+      "id":2,
       "code":"HNX",
       "name":"ハノイ証券取引所",
       "url_file_name":"hn"
@@ -20,17 +20,37 @@
   {
     "model": "vietnam_research.market",
     "fields": {
-      "id": 3,
+      "id":3,
       "code":"NASDAQ",
-      "name":"ナスダック"
+      "name":"ナスダック",
+      "url_file_name":""
     }
   },
   {
     "model": "vietnam_research.market",
     "fields": {
-      "id": 4,
+      "id":4,
       "code":"NYSE",
-      "name":"ニューヨーク証券取引所"
+      "name":"ニューヨーク証券取引所",
+      "url_file_name":""
+    }
+  },
+  {
+    "model": "vietnam_research.market",
+    "fields": {
+      "id":5,
+      "code":"NYSE American",
+      "name":"旧アメリカン証券取引所",
+      "url_file_name":""
+    }
+  },
+  {
+    "model": "vietnam_research.market",
+    "fields": {
+      "id":6,
+      "code":"NYSE Arca",
+      "name":"旧アーキペラーゴ",
+      "url_file_name":""
     }
   }
 ]
