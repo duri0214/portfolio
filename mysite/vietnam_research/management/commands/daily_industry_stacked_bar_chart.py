@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
-
-from django.core.management.base import BaseCommand
-from django.db.models import Sum, F
-
 import numpy as np
 import pandas as pd
+
+from django.core.management.base import BaseCommand
+from django.db.models import Sum, F, Min, Value, CharField
+from django.db.models.functions import Concat, ExtractYear, ExtractMonth
 from matplotlib import pyplot as plt
 
 from mysite.settings import STATIC_ROOT, BASE_DIR
@@ -53,13 +53,15 @@ class Command(BaseCommand):
         ax.set_xticklabels(df.index)
 
         # Thinning of X axis labels.
-        first_days = {}
-        records = Industry.objects.values('recorded_date').distinct()
-        for record in records:
-            first_days.setdefault(record['recorded_date'].strftime('%Y-%m'),
-                                  record['recorded_date'].strftime('%Y-%m-%d'))
+        first_days = Industry.objects \
+            .annotate(year=ExtractYear("recorded_date"), month=ExtractMonth("recorded_date"),
+                      concat=Concat("year", Value("-"), "month", output_field=CharField())) \
+            .values('concat') \
+            .annotate(Min("recorded_date")) \
+            .values("recorded_date__min")
+        first_days = [x['recorded_date__min'].strftime('%Y-%m-%d') for x in list(first_days)]
         for label in ax.get_xticklabels():
-            label.set_visible(True if label.get_text() in first_days.values() else False)
+            label.set_visible(True if label.get_text() in first_days else False)
 
         # Draw a stacked bar chart
         for i in range(len(df.columns)):
@@ -78,11 +80,12 @@ class Command(BaseCommand):
             plt.legend(loc='upper left', labels=df.columns, prop={"family": "MS Gothic"})
 
         # png save
-        out_path = STATIC_ROOT.resolve() / 'vietnam_research/chart/daily_industry_stacked_bar_chart.png'
+        file_name = 'daily_industry_stacked_bar_chart.png'
+        out_path = STATIC_ROOT.resolve() / 'vietnam_research/chart' / file_name
         if not os.path.exists(out_path.parent):
             os.makedirs(out_path.parent)
         plt.savefig(out_path)
-        out_path = BASE_DIR.resolve() / 'vietnam_research/static/vietnam_research/chart/daily_industry_stacked_bar_chart.png'
+        out_path = BASE_DIR.resolve() / 'vietnam_research/static/vietnam_research/chart' / file_name
         if not os.path.exists(out_path.parent):
             os.makedirs(out_path.parent)
         plt.savefig(out_path)
