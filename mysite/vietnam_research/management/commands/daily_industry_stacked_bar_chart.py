@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 
 from mysite.settings import STATIC_ROOT, BASE_DIR
 from vietnam_research.models import Industry
+from vietnam_research.service import log_writter
 
 
 def get_data() -> pd.DataFrame:
@@ -89,3 +90,4 @@ class Command(BaseCommand):
         if not os.path.exists(out_path.parent):
             os.makedirs(out_path.parent)
         plt.savefig(out_path)
+        log_writter.batch_is_done()
