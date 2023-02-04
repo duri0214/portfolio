@@ -147,22 +147,11 @@ class Watchlist(models.Model):
     stocks_count = models.IntegerField(blank=True, null=True, default=0)
 
 
-class DailyTop5(models.Model):
-    """日次Top5"""
-    trade_price_of_a_day = models.FloatField()
-    per = models.FloatField()
-    ind_class = models.ForeignKey(IndClass, on_delete=models.CASCADE)
-    market = models.ForeignKey(Market, on_delete=models.CASCADE)
-    symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
-
-
 class DailyUptrends(models.Model):
     """日次Uptrends（傾き計算考慮）"""
     stocks_price_oldest = models.FloatField()
     stocks_price_latest = models.FloatField()
     stocks_price_delta = models.FloatField()
-    ind_class = models.ForeignKey(IndClass, on_delete=models.CASCADE)
-    market = models.ForeignKey(Market, on_delete=models.CASCADE)
     symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
 
 
@@ -173,7 +162,6 @@ class Sbi(models.Model):
     See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/pop6040_vn_list.html
     See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/pop6040_usequity_list.html
     """
-    market = models.ForeignKey(Market, on_delete=models.CASCADE)
     symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
 
     class Meta:
