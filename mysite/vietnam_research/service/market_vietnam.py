@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db.models import Sum, F, QuerySet, Value, Count, CharField, FloatField, Max
 from django.db.models.functions import Concat, Round
 from vietnam_research.service.market_abstract import MarketAbstract
-from vietnam_research.models import Industry, Watchlist, VnIndex, DailyUptrends
+from vietnam_research.models import Industry, Watchlist, VnIndex, Uptrends
 
 
 class MarketVietnam(MarketAbstract):
@@ -210,7 +210,7 @@ class MarketVietnam(MarketAbstract):
 
     @staticmethod
     def uptrends() -> dict:
-        uptrends = DailyUptrends.objects.prefetch_related('symbol', 'ind_class') \
+        uptrends = Uptrends.objects.prefetch_related('symbol', 'ind_class') \
             .annotate(
             industry1=F('symbol__ind_class__industry1'),
             industry_class=F('symbol__ind_class__industry_class'),
@@ -223,7 +223,7 @@ class MarketVietnam(MarketAbstract):
             .values('industry1', 'ind_name', 'code', 'url_file_name', 'stocks_price_latest', 'stocks_price_delta')
 
         result = {}
-        ind_names = DailyUptrends.objects \
+        ind_names = Uptrends.objects \
             .annotate(
                 ind_name=Concat(F('symbol__ind_class__industry_class'), Value('|'), F('symbol__ind_class__industry1'),
                                 output_field=CharField())

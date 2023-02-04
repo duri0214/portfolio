@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import F
 from matplotlib import pyplot as plt
 from mysite.settings import BASE_DIR
-from vietnam_research.models import Industry, DailyUptrends, Symbol
+from vietnam_research.models import Industry, Uptrends, Symbol
 from vietnam_research.service import log_writter
 
 
@@ -53,7 +53,7 @@ class Command(BaseCommand):
         if not os.path.exists(out_folder):
             os.makedirs(out_folder)
         [os.remove(filepath) for filepath in glob(str(Path(out_folder) / '*.png'))]
-        DailyUptrends.objects.all().delete()  # TODO: 多分indexがリセットされないのでTRUNCATEにしたい
+        Uptrends.objects.all().delete()  # TODO: 多分indexがリセットされないのでTRUNCATEにしたい
 
         # only stocks handled by SBI Securities
         industry_records = Industry.objects \
@@ -117,14 +117,14 @@ class Command(BaseCommand):
                 # e.g. 14 days ago to today
                 closing_price = values[-max(days):]['closing_price'].reset_index(drop=True)
                 price = calc_price(closing_price)
-                passed_records.append(DailyUptrends(
+                passed_records.append(Uptrends(
                     symbol=m_symbol.get(code=symbol_code),
                     stocks_price_oldest=price['initial'],
                     stocks_price_latest=price['latest'],
                     stocks_price_delta=price['delta']
                 ))
             logging.info(formatted_text(symbol_code, slopes, passed, price))
-        DailyUptrends.objects.bulk_create(passed_records)
+        Uptrends.objects.bulk_create(passed_records)
         log_writter.batch_is_done(len(symbol_codes))
 
         # TODO: パフォーマンスカイゼンして！原因はsymbolマスタにtickerかぶり（社名変更）があるため。バッチの新規Symbol取り込み部分もなおす
