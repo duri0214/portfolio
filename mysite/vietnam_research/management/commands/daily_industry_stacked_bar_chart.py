@@ -21,8 +21,8 @@ def get_data() -> pd.DataFrame:
         DataFrame:
     """
     industry_records = Industry.objects \
-        .values('recorded_date', 'ind_class__industry1') \
-        .annotate(industry1=F('ind_class__industry1')) \
+        .values('recorded_date', 'symbol__ind_class__industry1') \
+        .annotate(industry1=F('symbol__ind_class__industry1')) \
         .annotate(trade_price_of_a_day=Sum('trade_price_of_a_day') / 1000000) \
         .order_by('recorded_date', 'industry1') \
         .values('recorded_date', 'industry1', 'trade_price_of_a_day')
