@@ -2,10 +2,10 @@ import logging
 from pathlib import Path
 
 from django.conf import settings
-from django.db.models import Sum, F, QuerySet, Value, Count, CharField, FloatField
+from django.db.models import Sum, F, QuerySet, Value, Count, CharField, FloatField, Max
 from django.db.models.functions import Concat, Round
 from vietnam_research.service.market_abstract import MarketAbstract
-from vietnam_research.models import Industry, Watchlist, VnIndex
+from vietnam_research.models import Industry, Watchlist, VnIndex, DailyUptrends
 
 
 class MarketVietnam(MarketAbstract):
@@ -45,7 +45,7 @@ class MarketVietnam(MarketAbstract):
 
         return Watchlist.objects \
             .filter(already_has=1) \
-            .filter(symbol__industry__recorded_date=Industry.objects.slipped_month_end(0).formatted_recorded_date()) \
+            .filter(symbol__industry__recorded_date=latest_date) \
             .annotate(closing_price=Round(F('symbol__industry__closing_price') * 1000)) \
             .annotate(stocks_price_yen=F('stocks_price') / 200) \
             .annotate(buy_price_yen=F('stocks_price_yen') * F('stocks_count')) \
@@ -192,8 +192,8 @@ class MarketVietnam(MarketAbstract):
             denominator = len(Industry.objects.filter(recorded_date=lastday_of_the_month))
             industry_records = Industry.objects \
                 .filter(recorded_date=lastday_of_the_month) \
-                .annotate(ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'),
-                                          output_field=CharField())) \
+                .annotate(ind_name=Concat(F('symbol__ind_class__industry_class'), Value('|'),
+                                          F('symbol__ind_class__industry1'), output_field=CharField())) \
                 .values('ind_name') \
                 .annotate(count=Count('id')) \
                 .annotate(cnt_per=Round(F('count') / denominator * 100, precision=2, output_field=FloatField())) \
@@ -239,8 +239,8 @@ class MarketVietnam(MarketAbstract):
             denominator = sum([float(record["marketcap"]) for record in records])
             industry_records = Industry.objects \
                 .filter(recorded_date=lastday_of_the_month) \
-                .annotate(ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'),
-                                          output_field=CharField())) \
+                .annotate(ind_name=Concat(F('symbol__ind_class__industry_class'), Value('|'),
+                                          F('symbol__ind_class__industry1'), output_field=CharField())) \
                 .values('ind_name') \
                 .annotate(marketcap_sum=Sum('marketcap')) \
                 .annotate(cap_per=Round(F('marketcap_sum') / denominator * 100, precision=2,
