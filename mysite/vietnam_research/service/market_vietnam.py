@@ -64,7 +64,7 @@ class MarketVietnam(MarketAbstract):
             "labels": [record['Y'] + record['M'] for record in records.order_by('Y', 'M')],
             "datasets": [{
                 "label": 'VN-Index',
-                "data": [float(record['closing_price']) for record in records.order_by('Y', 'M')]
+                "data": [record['closing_price'] for record in records.order_by('Y', 'M')]
             }]
         }
         # print('\nvnindex_timeline: ', vnindex_timeline)
@@ -85,64 +85,11 @@ class MarketVietnam(MarketAbstract):
         }
         for year in [record['Y'] for record in records.values('Y').distinct().order_by('Y')]:
             a_year_records = records.filter(Y=year).order_by('Y', 'M').values('closing_price')
-            inner = {"label": year, "data": [float(record['closing_price']) for record in a_year_records]}
+            inner = {"label": year, "data": [record['closing_price'] for record in a_year_records]}
             vnindex_layers["datasets"].append(inner)
         # print('\nvnindex_layers: ', vnindex_layers)
 
         return vnindex_layers
-
-    @staticmethod
-    def uptrends() -> list:
-        """
-        日次移動平均チャート
-        [
-            {
-                'ind_name': '1|農林水産業',
-                'datasets': [
-                    {
-                        'ind_name': '1|農林水産業', 'url_file_name': 'hcm', 'code': 'ANV',
-                        'stocks_price_latest': 31.1, 'stocks_price_delta': 8.55
-                    },
-                    ...
-                ]
-            },
-             ...
-        ]
-
-        Returns:
-            list: 
-        """
-
-        # TODO: パフォーマンスカイゼンして！原因はsymbolマスタにtickerかぶり（社名変更）があるため。バッチの新規Symbol取り込み部分もなおす
-        # TODO: -400日が何月何日なのか表示
-        industry_records = Industry.objects \
-            .filter(market__in=[1, 2]) \
-            .filter(market__isnull=False) \
-            .filter(symbol__isnull=False) \
-            .filter(ind_class__dailyuptrends__isnull=False) \
-            .filter(recorded_date=Industry.objects.slipped_month_end(0).formatted_recorded_date()) \
-            .annotate(
-                industry_class=F('ind_class__industry_class'),
-                ind_name=Concat(F('ind_class__industry_class'), Value('|'), F('ind_class__industry1'),
-                                output_field=CharField()),
-                url_file_name=F('ind_class__dailyuptrends__market__url_file_name'),
-                code=F('ind_class__dailyuptrends__symbol__code'),
-                name=F('ind_class__dailyuptrends__symbol__name'),
-                stocks_price_latest=F('ind_class__dailyuptrends__stocks_price_latest'),
-                stocks_price_delta=F('ind_class__dailyuptrends__stocks_price_delta')
-            ) \
-            .distinct() \
-            .order_by('ind_class__industry_class', 'ind_class__industry1', '-stocks_price_delta') \
-            .values('ind_name', 'code', 'url_file_name', 'stocks_price_latest', 'stocks_price_delta')
-
-        uptrends = []
-        for industry_name in list(industry_records.values('ind_name').order_by('ind_name').distinct()):
-            uptrends.append({
-                "ind_name": industry_name['ind_name'],
-                "datasets": [x for x in list(industry_records) if x['ind_name'] == industry_name['ind_name']]
-            })
-
-        return uptrends
 
     @staticmethod
     def calc_fee(price_without_fees: float) -> float:
@@ -237,7 +184,7 @@ class MarketVietnam(MarketAbstract):
                 logging.warning(f"market_vietnam.py radar_chart_count() の{m}ヶ月は存在しないため、無視されました")
                 continue
             records = Industry.objects.filter(recorded_date=lastday_of_the_month).values('marketcap')
-            denominator = sum([float(record["marketcap"]) for record in records])
+            denominator = sum([record["marketcap"] for record in records])
             industry_records = Industry.objects \
                 .filter(recorded_date=lastday_of_the_month) \
                 .annotate(ind_name=Concat(F('symbol__ind_class__industry_class'), Value('|'),
@@ -258,5 +205,35 @@ class MarketVietnam(MarketAbstract):
                 "name": f"時価総額 {m}ヶ月前",
                 "axes": inner
             })
+
+        return result
+
+    @staticmethod
+    def uptrends() -> dict:
+        uptrends = DailyUptrends.objects.prefetch_related('symbol', 'ind_class') \
+            .annotate(
+            industry1=F('symbol__ind_class__industry1'),
+            industry_class=F('symbol__ind_class__industry_class'),
+            ind_name=Concat(F('symbol__ind_class__industry_class'), Value('|'), F('symbol__ind_class__industry1'),
+                            output_field=CharField()),
+            url_file_name=F('symbol__market__url_file_name'),
+            code=F('symbol__code')
+        ) \
+            .order_by('symbol__ind_class__industry_class', 'symbol__ind_class__industry1', '-stocks_price_delta') \
+            .values('industry1', 'ind_name', 'code', 'url_file_name', 'stocks_price_latest', 'stocks_price_delta')
+
+        result = {}
+        ind_names = DailyUptrends.objects \
+            .annotate(
+                ind_name=Concat(F('symbol__ind_class__industry_class'), Value('|'), F('symbol__ind_class__industry1'),
+                                output_field=CharField())
+            ) \
+            .distinct() \
+            .order_by('ind_name') \
+            .values('ind_name')
+
+        ind_names = [x['ind_name'] for x in list(ind_names)]
+        for ind_name in ind_names:
+            result[ind_name] = [x for x in uptrends if x['ind_name'] == ind_name]
 
         return result
