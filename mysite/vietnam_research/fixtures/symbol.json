@@ -16182,7 +16182,7 @@
     "fields": {
       "id":1708,
       "code":"CEG",
-      "name":"Constellation Energy Corp(1)",
+      "name":"Constellation Energy Corp",
       "market_id":3
     }
   },
@@ -16191,7 +16191,7 @@
     "fields": {
       "id":1709,
       "code":"CEGVV",
-      "name":"Constellation Energy Corp(2)",
+      "name":"Constellation Energy Corp",
       "market_id":3
     }
   },
@@ -49509,7 +49509,7 @@
     "fields": {
       "id":5411,
       "code":"UONE",
-      "name":"Urban One Inc(1)",
+      "name":"Urban One Inc",
       "market_id":3
     }
   },
@@ -49518,7 +49518,7 @@
     "fields": {
       "id":5412,
       "code":"UONEK",
-      "name":"Urban One Inc(2)",
+      "name":"Urban One Inc",
       "market_id":3
     }
   },
