@@ -42,6 +42,7 @@ class MarketVietnam(MarketAbstract):
         Returns:
             QuerySet: Watchlistをベースに換算額などの計算を組み合わせたもの
         """
+        latest_date = Industry.objects.aggregate(Max('recorded_date'))['recorded_date__max']
 
         return Watchlist.objects \
             .filter(already_has=1) \
