@@ -55,6 +55,13 @@ class Command(BaseCommand):
         [os.remove(filepath) for filepath in glob(str(Path(out_folder) / '*.png'))]
         Uptrends.objects.all().delete()  # TODO: 多分indexがリセットされないのでTRUNCATEにしたい
 
+        # all tickers are plotting by matplotlib
+        industry_records = Industry.objects \
+            .filter(symbol__market__in=[1, 2]) \
+            .filter(symbol__sbi__isnull=False) \
+            .distinct().values('symbol__code')
+        tickers = [x['symbol__code'] for x in industry_records]
+
         # only stocks handled by SBI Securities
         industry_records = Industry.objects \
             .filter(symbol__market__in=[1, 2]) \
@@ -69,19 +76,15 @@ class Command(BaseCommand):
 
         m_symbol = Symbol.objects.filter(market__in=[1, 2]).prefetch_related('market', 'ind_class')
 
-        # TODO: 処理対象レコードのシンボルが新規だった場合にm_symbolと突合して登録
-
-        # all tickers are plotting by matplotlib
-        symbol_codes = [x['symbol__code'] for x in
-                        Industry.objects.filter(symbol__market__in=[1, 2]).filter(symbol__sbi__isnull=False).distinct().values('symbol__code')]
         days = [14, 7, 3]
         passed_records = []
-        for symbol_code in symbol_codes:
-            values = pd.DataFrame([x for x in industry_records if x['symbol_code'] == symbol_code])  # TODO: a_company_recordsに名称変更する
+        for ticker in tickers:
+            closing_price = pd.DataFrame([x['closing_price'] for x in industry_records if x['symbol_code'] == ticker])
             plt.clf()
-            plt.plot(range(len(values)), values['closing_price'], "ro")
-            plt.plot(range(len(values)), values['closing_price'].rolling(20).mean(), "r-", label="20 Simple Moving Average")
-            plt.plot(range(len(values)), values['closing_price'].rolling(40).mean(), "g-", label="40 Simple Moving Average")
+            x_range = range(len(closing_price))
+            plt.plot(x_range, closing_price, "ro")
+            plt.plot(x_range, closing_price.rolling(20).mean(), "r-", label="20 Simple Moving Average")
+            plt.plot(x_range, closing_price.rolling(40).mean(), "g-", label="40 Simple Moving Average")
             plt.legend(loc="upper left")
             plt.ylabel('closing_price')
             plt.grid()
@@ -90,11 +93,11 @@ class Command(BaseCommand):
             attempts = passed = 0
             price = {}
             for day in days:
-                if len(values) < day:
+                if len(closing_price) < day:
                     continue
                 attempts += 1
                 # e.g. 3 days ago to today, 7 days ago to today, 14 days ago to today
-                closing_price_in_period = values[-day:]['closing_price'].astype(float)
+                closing_price_in_period = closing_price[-day:].astype(float)
                 x_range = range(len(closing_price_in_period))
                 # specific array for linear regression in numpy
                 specific_array = np.array([x_range, np.ones(len(x_range))]).T
@@ -105,27 +108,27 @@ class Command(BaseCommand):
                 if slope > 0:
                     passed += 1
                 # plot the slope line with green dotted lines
-                date_back_to = len(values) - day
+                date_back_to = len(closing_price) - day
                 regression_range = range(date_back_to, date_back_to + day)
                 plt.plot(regression_range, (slope * x_range + intercept), "g--")
                 # save png as w640, h480
-                out_path = str(Path(out_folder) / f"{symbol_code}.png")
+                out_path = str(Path(out_folder) / f"{ticker}.png")
                 plt.savefig(out_path)
                 # resize png as w250, h200
                 Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
             if attempts == passed:
                 # e.g. 14 days ago to today
-                closing_price = values[-max(days):]['closing_price'].reset_index(drop=True)
+                closing_price = closing_price[-max(days):].reset_index(drop=True)
                 price = calc_price(closing_price)
                 passed_records.append(Uptrends(
-                    symbol=m_symbol.get(code=symbol_code),
+                    symbol=m_symbol.get(code=ticker),
                     stocks_price_oldest=price['initial'],
                     stocks_price_latest=price['latest'],
                     stocks_price_delta=price['delta']
                 ))
-            logging.info(formatted_text(symbol_code, slopes, passed, price))
+            logging.info(formatted_text(ticker, slopes, passed, price))
         Uptrends.objects.bulk_create(passed_records)
-        log_writter.batch_is_done(len(symbol_codes))
+        log_writter.batch_is_done(len(tickers))
 
         # TODO: パフォーマンスカイゼンして！原因はsymbolマスタにtickerかぶり（社名変更）があるため。バッチの新規Symbol取り込み部分もなおす
         # TODO: -400日が何月何日なのか表示
