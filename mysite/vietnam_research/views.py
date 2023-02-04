@@ -74,15 +74,15 @@ def index(request):
     ).order_by('-created_at')[:3]
 
     context = {
-        'industry_count': json.dumps(mkt.radar_chart_count(), ensure_ascii=False),
-        'industry_cap': json.dumps(mkt.radar_chart_cap(), ensure_ascii=False),
-        'vnindex_timeline': json.dumps(mkt.vnindex_timeline(), ensure_ascii=False),
-        'vnindex_layers': json.dumps(mkt.vnindex_annual_layers(), ensure_ascii=False),
+        'industry_count': json.dumps(mkt.radar_chart_count()),
+        'industry_cap': json.dumps(mkt.radar_chart_cap()),
+        'vnindex_timeline': json.dumps(mkt.vnindex_timeline()),
+        'vnindex_layers': json.dumps(mkt.vnindex_annual_layers()),
         'articles': articles,
         'basicinfo': BasicInformation.objects.order_by('id').values('item', 'description'),
         'watchlist': mkt.watchlist(),
         'sbi_topics': mkt.sbi_topics(),
-        'uptrends': mkt.uptrends(),
+        'uptrends': json.dumps(mkt.uptrends()),
         'exchange_form': exchange_form,
         'exchanged': exchanged,
     }
