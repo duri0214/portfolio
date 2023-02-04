@@ -132,27 +132,16 @@
         <script>
             data = {{ uptrends|safe }};
             const uptrends = document.getElementById('uptrends_wrapper');
-            let h3;
-            let ul;
-            let mkt;
-            let price_latest;
-            let symbol;
-            let price_delta;
-            let price_delta_sign;
-            let img;
-            let li;
-            let a;
-            let p;
-            let badge;
+            let h6, ul, mkt, price_latest, symbol, price_delta, price_delta_sign, img, li, a, p, badge;
             for (const industry in data) {
-                h3 = document.createElement('h6');
-                h3.textContent = data[industry]['ind_name'];
+                h6 = document.createElement('h6');
+                h6.textContent = industry;
                 ul = document.createElement("ul");
-                for (const i in data[industry]['datasets']) {
-                    mkt = data[industry]['datasets'][i]['url_file_name'];
-                    symbol = data[industry]['datasets'][i]['code'];
-                    price_latest = data[industry]['datasets'][i]['stocks_price_latest'];
-                    price_delta = data[industry]['datasets'][i]['stocks_price_delta'];
+                for (const i in data[industry]) {
+                    mkt = data[industry][i]['url_file_name'];
+                    symbol = data[industry][i]['code'];
+                    price_latest = data[industry][i]['stocks_price_latest'];
+                    price_delta = data[industry][i]['stocks_price_delta'];
                     price_delta_sign = Math.sign(price_delta) < 0 ? "▲" : "＋";
                     price_delta = Math.abs(price_delta);
                     img = document.createElement('img');
@@ -171,7 +160,7 @@
                     li.appendChild(p);
                     ul.appendChild(li);
                 }
-                uptrends.appendChild(h3);
+                uptrends.appendChild(h6);
                 uptrends.appendChild(ul);
             }
         </script>
@@ -236,7 +225,6 @@
             @{{ exchanged.unit_price | intcomma }} * {{ exchanged.quantity | intcomma }} = {{ exchanged.price_no_fee | intcomma }}VND<br>
             手数料(VND): {{ exchanged.fee | intcomma }}<br>
             差引残高: {{ exchanged.deduction_price | intcomma }} VND（<a href="https://www.google.com/search?q={{ exchanged.deduction_price | intcomma }}vnd" target="_blank">日本円に変換する <i class="fas fa-external-link-alt"></i></a>）
-
         </div>
 
         <div id="watchlist" class="mt-5">
