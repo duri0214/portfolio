@@ -50,12 +50,18 @@ class Symbol(models.Model):
     See Also: https://www.viet-kabu.com/stock/hcm.html
     """
     code = models.CharField(max_length=10)
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     market = models.ForeignKey(Market, on_delete=models.CASCADE)
     ind_class = models.ForeignKey(IndClass, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'vietnam_research_m_symbol'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["code", "name"],
+                name="code_name_unique"
+            )
+        ]
 
     def __str__(self):
         return f"{self.market.name}｜{self.code}｜{self.name}"
