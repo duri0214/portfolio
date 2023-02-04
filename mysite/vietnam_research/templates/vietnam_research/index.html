@@ -156,14 +156,14 @@
                     price_delta_sign = Math.sign(price_delta) < 0 ? "▲" : "＋";
                     price_delta = Math.abs(price_delta);
                     img = document.createElement('img');
-                    img.src = "{% static 'vietnam_research/chart' %}" + '/' + symbol + '.png';
+                    img.src = `{% static 'vietnam_research/chart' %}/${symbol}.png`;
                     img.alt = symbol;
                     a = document.createElement('a');
-                    a.href = "https://www.viet-kabu.com/" + mkt + '/' + symbol + '.html';
+                    a.href = `https://www.viet-kabu.com/${mkt}/${symbol}.html`;
                     a.target = "_blank";
                     p = document.createElement('p');
                     p.className = 'badge badge-secondary';
-                    p.textContent = symbol + ': ' + price_latest + '（' + price_delta_sign + price_delta + '）';
+                    p.textContent = `${symbol}: ${price_latest}（${price_delta_sign}${price_delta}）`;
                     li = document.createElement("li");
                     li.className = 'uptrends';
                     a.appendChild(img);
