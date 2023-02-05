@@ -44,7 +44,6 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
             'industry': Industry(),
         }, ... ]
     """
-    # TODO: Symbolマスタにhogeレコードが入ってしまっているので db reset → ubuntuも db reset
     m_ind_class = IndClass.objects.all()
     vietkabu = []
     for tag_tr in soup.find_all('tr', id=True):
