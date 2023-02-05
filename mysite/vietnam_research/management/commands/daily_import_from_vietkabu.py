@@ -32,6 +32,7 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
     """
     vietkabuの銘柄リストから、新規登録しなければならないsymbolのリストをあぶり出す\n
     中央寄せtd（css-class: table_list_center）の[0]にはsymbol情報、[1]には業種が入っている\n
+    シンボル名には「＊」がついていることがあるので除外する箇所がある（注意銘柄だと思う）
 
     Args:
         soup: vietkabuの銘柄リスト（既存シンボルもあるし、新規シンボルもあるかもしれない）
@@ -50,17 +51,17 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
         tag_td_string_type = tag_tr.find_all('td', class_='table_list_center')
         if not tag_td_string_type:
             continue
-        symbol = re.sub("＊", '', tag_td_string_type[0].text.strip())
+        symbol_code = re.sub("＊", '', tag_td_string_type[0].text.strip())
         company_name = tag_td_string_type[0].a.get('title')
         industry1 = re.sub(r'\[(.+)]', '', tag_td_string_type[1].img.get('title'))
         industry2 = re.search(r'(?<=\[).*?(?=])', tag_td_string_type[1].img.get('title')).group()
         try:
             ind_class = m_ind_class.get(industry1=industry1, industry2=industry2)
         except ObjectDoesNotExist:
-            log_writter.batch_information(f"{industry1}[{industry2}] が業種マスタに存在しないため {symbol} が処理対象外になりました")
+            log_writter.batch_information(f"{industry1}[{industry2}] が業種マスタに存在しないため {symbol_code} が処理対象外になりました")
             continue
         vietkabu.append({
-            'symbol': symbol,
+            'symbol': symbol_code,
             'name': company_name,
             'industry': ind_class
         })
@@ -68,7 +69,7 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
         "vietkabu": set([x["symbol"] for x in vietkabu]),
         "m_symbol": set([x['code'] for x in compare_m_symbol.values('code')])
     }
-    newcomer_symbols = list(symbols["vietkabu"].symmetric_difference(symbols["m_symbol"]))
+    newcomer_symbols = list(symbols["vietkabu"].difference(symbols["m_symbol"]))
 
     return [x for x in vietkabu if x["symbol"] in newcomer_symbols]
 
