@@ -4455,7 +4455,7 @@
       "id":446,
       "code":"DBT",
       "name":"ベンチェー製薬",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":18
     }
   },
@@ -4475,7 +4475,7 @@
       "id":448,
       "code":"DC4",
       "name":"第4DIC建設",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":6
     }
   },
@@ -4495,7 +4495,7 @@
       "id":450,
       "code":"DGC",
       "name":"ドゥックザン洗濯用洗剤化学品",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":16
     }
   },
@@ -4895,7 +4895,7 @@
       "id":490,
       "code":"HHP",
       "name":"ハイフォン・ホアンハ製紙",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":19
     }
   },
@@ -5675,7 +5675,7 @@
       "id":568,
       "code":"NHA",
       "name":"ハノイ南部住宅都市投資開発",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":4
     }
   },
@@ -6485,7 +6485,7 @@
       "id":649,
       "code":"SHB",
       "name":"サイゴンハノイ銀行",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":52
     }
   },
@@ -7125,7 +7125,7 @@
       "id":713,
       "code":"VCG",
       "name":"ビナコネックス",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":4
     }
   },
@@ -7305,7 +7305,7 @@
       "id":731,
       "code":"VIX",
       "name":"IB証券",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":51
     }
   },
@@ -7835,7 +7835,7 @@
       "id":784,
       "code":"DXS",
       "name":"ダットサイン不動産サービス",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":37
     }
   },
@@ -7845,7 +7845,7 @@
       "id":785,
       "code":"KHG",
       "name":"カイホアンランド不動産",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":37
     }
   },
@@ -8145,7 +8145,7 @@
       "id":815,
       "code":"PVP",
       "name":"太平洋石油運輸",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":45
     }
   },
