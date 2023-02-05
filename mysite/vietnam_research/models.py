@@ -58,8 +58,8 @@ class Symbol(models.Model):
         db_table = 'vietnam_research_m_symbol'
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "name"],
-                name="code_name_unique"
+                fields=["code", "market_id"],
+                name="code_market_id_unique"
             )
         ]
 
