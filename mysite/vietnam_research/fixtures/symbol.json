@@ -44,7 +44,7 @@
     "fields": {
       "id":5,
       "code":"ACC",
-      "name":"ベカメックス・コンクリート",
+      "name":"ビンズオンACC投資建設",
       "market_id":1,
       "ind_class_id":8
     }
@@ -134,7 +134,7 @@
     "fields": {
       "id":14,
       "code":"APG",
-      "name":"アンファット証券",
+      "name":"APG証券",
       "market_id":1,
       "ind_class_id":51
     }
@@ -3895,7 +3895,7 @@
       "id":390,
       "code":"ACB",
       "name":"アジアコマーシャル銀行",
-      "market_id":2,
+      "market_id":1,
       "ind_class_id":52
     }
   },
