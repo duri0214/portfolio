@@ -15,19 +15,19 @@ class Test(TestCase):
             market=Market.objects.create(code='HOSE', name='ホーチミン証券取引所'))
 
     def test_retrieve_market_date(self):
-        self.assertEqual(retrieve_transaction_date('ホーチミン証取株価（2019/08/16 15:00VNT）'), datetime(2019, 8, 16, 15, 0, 0))
+        self.assertEqual(retrieve_transaction_date('ホーチミン証取株価（2019/08/16 VNT）'), datetime(2019, 8, 16, 17, 0, 0))
 
-        res = retrieve_transaction_date('ホーチミン証取株価（2019/08/16 15:00VNT）')
+        res = retrieve_transaction_date('ホーチミン証取株価（2019/08/16 VNT）')
         self.assertEqual(res.year, 2019)
         self.assertEqual(res.month, 8)
         self.assertEqual(res.day, 16)
-        self.assertEqual(res.hour, 15)
+        self.assertEqual(res.hour, 17)
         self.assertEqual(res.minute, 0)
         self.assertEqual(res.second, 0)
 
     def test_retrieve_market_date_invalid_value(self):
         with self.assertRaises(ValueError):
-            self.assertEqual(retrieve_transaction_date('カッコのない文字'), datetime(2019, 8, 16, 15, 0))
+            self.assertEqual(retrieve_transaction_date('カッコのない文字'), datetime(2019, 8, 16, 17, 0))
 
     def test_extract_newcomer(self):
         """

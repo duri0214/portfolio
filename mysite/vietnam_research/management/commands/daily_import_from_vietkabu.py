@@ -14,18 +14,19 @@ from vietnam_research.service import log_writter
 
 def retrieve_transaction_date(target_text: str) -> datetime:
     """
-    vietkabuの登録日をdatetimeに変換する
+    vietkabuの登録日をdatetimeに変換する\n
+    webページ側が仕様変更で17:00が更新時間になったうえに時刻が取れなくなったため、17:00固定とする
 
     Args:
-        target_text: ホーチミン証取株価（2019/08/16 15:00VNT）
+        target_text: ホーチミン証取株価（2019/08/16 VNT）
 
-    Returns: 2019-08-16 15:00:00
+    Returns: 2019-08-16 17:00:00
     """
     extracted = re.search('(?<=（).*?(?=VNT）)', target_text)
     if not extracted:
         raise ValueError('想定されたテキストが入力されませんでした（カッコのないテキスト）')
 
-    return datetime.strptime(f"{extracted.group()}:00", '%Y/%m/%d %H:%M:%S')
+    return datetime.strptime(f"{extracted.group()[:10]} 17:00:00", '%Y/%m/%d %H:%M:%S')
 
 
 def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
