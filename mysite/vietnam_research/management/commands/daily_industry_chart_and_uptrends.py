@@ -79,7 +79,8 @@ class Command(BaseCommand):
         days = [14, 7, 3]
         passed_records = []
         for ticker in tickers:
-            closing_price = pd.DataFrame([x['closing_price'] for x in industry_records if x['symbol_code'] == ticker])
+            closing_price = [x['closing_price'] for x in industry_records if x['symbol_code'] == ticker]
+            closing_price = pd.Series(closing_price, name='closing_price')
             plt.clf()
             x_range = range(len(closing_price))
             plt.plot(x_range, closing_price, "ro")
