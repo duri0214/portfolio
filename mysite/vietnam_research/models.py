@@ -1,4 +1,3 @@
-"""このファイル内に、必要なテーブルがすべて定義されます"""
 import datetime
 
 from dateutil.relativedelta import relativedelta
@@ -58,8 +57,8 @@ class Symbol(models.Model):
         db_table = 'vietnam_research_m_symbol'
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "market_id"],
-                name="code_market_id_unique"
+                fields=['code', 'market_id'],
+                name='code_market_id_unique'
             )
         ]
 
@@ -141,6 +140,14 @@ class VnIndex(models.Model):
     closing_price = models.FloatField()
 
     objects = VnIndexQuerySet.as_manager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['Y', 'M'],
+                name='y_m_unique'
+            )
+        ]
 
 
 class Watchlist(models.Model):
