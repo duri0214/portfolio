@@ -124,6 +124,7 @@ class Command(BaseCommand):
                 Symbol.objects.bulk_create(add_records)
 
             add_records = []
+            update_records = []
             for tag_tr in soup.find_all('tr', id=True):
                 tag_td_string_type = tag_tr.find_all('td', class_='table_list_center')
                 if not tag_td_string_type:
@@ -134,6 +135,8 @@ class Command(BaseCommand):
                 try:
                     symbol_code = re.sub("＊", '', tag_td_string_type[0].text.strip())
                     symbol = m_symbol.get(code=symbol_code)
+                    symbol.name = tag_td_string_type[0].a.get('title')
+                    update_records.append(symbol)
                 except ObjectDoesNotExist:
                     log_writter.batch_information(f"{symbol_code}がシンボルマスタに存在しないため処理対象外になりました")
                     continue
@@ -155,4 +158,5 @@ class Command(BaseCommand):
             if len(add_records) > 0:
                 print([x.symbol.code for x in add_records])
                 Industry.objects.bulk_create(add_records)
+                Symbol.objects.bulk_update(update_records, fields=['name'])
             log_writter.batch_is_done(len(add_records))
