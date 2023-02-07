@@ -1,9 +1,10 @@
 import logging
 from pathlib import Path
 
-from django.conf import settings
 from django.db.models import Sum, F, QuerySet, Value, Count, CharField, FloatField, Max
 from django.db.models.functions import Concat, Round
+
+from mysite.settings import STATIC_ROOT
 from vietnam_research.service.market_abstract import MarketAbstract
 from vietnam_research.models import Industry, Watchlist, VnIndex, Uptrends
 
@@ -14,14 +15,15 @@ class MarketVietnam(MarketAbstract):
     """
     def sbi_topics(self) -> str:
         """
-        あらかじめバッチ（daily_sbi_topics.py download_pdf）で取り込んで決まった場所においたtxtを読み込んで返す
+        あらかじめバッチ（daily_sbi_topics.py download_pdf）で取り込んで決まった場所においたtxtを読み込んで返す\n
+        バッチは viet/static/viet/sbi_topics に出力して、ここでの読み出しは static/viet/sbi_topics から読むので注意
 
         Returns:
             str: 新興国ウィークリーレポート
 
         See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/market_report_fo_em_topic.pdf
         """
-        filepath = settings.STATIC_ROOT / Path('vietnam_research/sbi_topics/market_report_fo_em_topic.txt')
+        filepath = STATIC_ROOT / Path('vietnam_research/sbi_topics/market_report_fo_em_topic.txt')
         try:
             with open(filepath, encoding="utf8") as f:
                 sbi_topics = f.read()
