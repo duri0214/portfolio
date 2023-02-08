@@ -7,7 +7,8 @@ from vietnam_research.models import Symbol, IndClass, Market
 
 
 class Test(TestCase):
-    def setUp(self) -> None:
+    @classmethod
+    def setUpTestData(cls):
         Symbol.objects.create(
             code='AAA',
             name='アンファット・バイオプラスチック',
