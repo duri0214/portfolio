@@ -23,9 +23,6 @@ def process_the_text(text_in_pdf: str):
     Args:
         text_in_pdf:
     """
-    pos = text_in_pdf.find('【韓国】')
-    report_date = text_in_pdf[:pos - 1]
-    report_date = report_date.replace('\n', '')
     pos = text_in_pdf.find('【ベトナム】') + len('【ベトナム】')
     text_in_pdf = text_in_pdf[pos:]
     text_in_pdf = text_in_pdf.replace('\n', '')
@@ -36,7 +33,7 @@ def process_the_text(text_in_pdf: str):
     text_in_pdf = text_in_pdf[:pos - 1]
     text_in_pdf = re.sub(r'(,\d{4}).*', '', text_in_pdf)
 
-    return report_date + '<br>' + text_in_pdf
+    return f"新興国ウィークリーレポート<br>{text_in_pdf}"
 
 
 def weekly_topics_us():
