@@ -96,11 +96,8 @@ def likes(request, user_id, article_id):
     if request.method == 'POST':
         print(json.loads(request.body), json.loads(request.body).get('status'))
         query = Likes.objects.filter(user=user_id, articles_id=article_id)
-        if query.count() == 0:
-            likes_tbl = Likes()
-            likes_tbl.articles_id = article_id
-            likes_tbl.user_id = user_id
-            likes_tbl.save()
+        if not query.exists():
+            Likes.objects.create(articles_id=article_id, user_id=user_id)
         else:
             query.delete()
         return JsonResponse({"status": "responded by views.py"})
