@@ -104,11 +104,10 @@ class Command(BaseCommand):
             tag_th_string_type = soup.find('th', class_='table_list_left')
             transaction_date = retrieve_transaction_date(tag_th_string_type.text.strip())
 
-            # delete records on transaction date
-            Industry.objects \
-                .filter(recorded_date=transaction_date) \
-                .filter(symbol__market__code=processing['mkt']) \
-                .delete()
+            # bypass if exists transaction date
+            if Industry.objects.filter(recorded_date=transaction_date, symbol__market__code=processing['mkt']).exists():
+                log_writter.batch_information(f"{processing['mkt']}の当日データがあったので処理対象外になりました")
+                continue
 
             # register if the symbols to be processed is new
             add_records = []
