@@ -22,14 +22,13 @@ class Command(BaseCommand):
         soup = BeautifulSoup(urllib.request.urlopen(url).read(), 'lxml')
         transaction_date = datetime.datetime.strptime(soup.find(class_="price-datetime").text.split()[-1], '%Y/%m/%d')
 
-        # delete records on transaction date
         today = datetime.date.today()
-        VnIndex.objects.filter(Y=today.year, M=today.month).delete()
-
-        # insert
-        VnIndex.objects.create(
-            Y=transaction_date.strftime('%Y'),
-            M=transaction_date.strftime('%m'),
-            closing_price=soup.find(class_="price").text.replace(',', '')
-        )
-        log_writter.batch_is_done(1)
+        if not VnIndex.objects.filter(Y=today.strftime('%Y'), M=today.strftime('%m')).exists():
+            VnIndex.objects.create(
+                Y=transaction_date.strftime('%Y'),
+                M=transaction_date.strftime('%m'),
+                closing_price=soup.find(class_="price").text.replace(',', '')
+            )
+            log_writter.batch_is_done(1)
+        else:
+            log_writter.batch_is_done(0)
