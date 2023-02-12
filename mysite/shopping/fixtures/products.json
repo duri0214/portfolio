@@ -1,0 +1,90 @@
+[
+  {
+    "model": "shopping.products",
+    "fields": {
+      "code":"asparagus",
+      "name":"モッツァレラとアスパラベーコンのピザ",
+      "price":2680,
+      "description":"旨みのある生ハムやベーコンを贅沢にトッピング、アスパラの食感やモッツァレラチーズのクリーミーな味わいが楽しめます。彩り鮮やかに仕上げました。※モッツァレラとアスパラベーコンのピザを味わえる「プライムクォーター」はクォーターシリーズにございます。",
+      "picture":"shopping/products/asparagus.jpg",
+      "created_at":"2023-02-12 00:00:00"
+    }
+  },
+  {
+    "model": "shopping.products",
+    "fields": {
+      "code":"bulgogipotato",
+      "name":"プルコギポテト",
+      "price":2580,
+      "description":"甘辛ダレのプルコギとスライスポテトが相性抜群！ボリュームたっぷりに仕上げ、お子様も食べやすいプルコギピザ。※プルコギポテトを味わえる「よくばりクォーター」はクォーターシリーズにございます。",
+      "picture":"shopping/products/bulgogipotato.jpg",
+      "created_at":"2023-02-12 00:00:00"
+    }
+  },
+  {
+    "model": "shopping.products",
+    "fields": {
+      "code":"cheeserubber",
+      "name":"ピザーラチーズラバー",
+      "price":2580,
+      "description":"ピザーラが「チーズＬＯＶＥＲ」に贈る１枚！\n北海道生乳１００％で仕上げたマスカルポーネ、イタリア産モッツァレラチーズ、そしてクリームチーズとカマンベールチーズで作った特製チーズソースに熟成パルメザンチーズをまぶして焼き上げました。チーズを存分にお楽しみ下さい。※ピザーラチーズラバーを味わえる「よくばりクォーター」はクォーターシリーズにございます。",
+      "picture":"shopping/products/cheesehoney.jpg",
+      "created_at":"2023-02-12 00:00:00"
+    }
+  },
+  {
+    "model": "shopping.products",
+    "fields": {
+      "code":"freshtomato",
+      "name":"フレッシュトマト＆バジル",
+      "price":2680,
+      "description":"フレッシュトマトとチェリートマトにバジルを使用した、素材の味を楽しめるピザです。\n※フレッシュバジルは他のトッピングと共に焼いてお届けします。※フレッシュトマト＆バジルを味わえる「カニマヨグラタンのよくばりクォーター」はクォーターシリーズにございます。",
+      "picture":"shopping/products/freshtomato.jpg",
+      "created_at":"2023-02-12 00:00:00"
+    }
+  },
+  {
+    "model": "shopping.products",
+    "fields": {
+      "code":"juicysteak",
+      "name":"ジューシーステーキ",
+      "price":2980,
+      "description":"チーズと相性抜群のバーベキューソースを絡めた、ピザーラ特製ビーフステーキの旨味が口の中いっぱいに広がります。\n※ジューシーステーキを味わえる「ステーキ＆シュリンプクォーター」はクォーターシリーズにございます。",
+      "picture":"shopping/products/juicysteak.jpg",
+      "created_at":"2023-02-12 00:00:00"
+    }
+  },
+  {
+    "model": "shopping.products",
+    "fields": {
+      "code":"margherita",
+      "name":"マルゲリータ",
+      "price":2140,
+      "description":"フレッシュトマトとモッツァレラチーズのトッピングに、共に焼き上げたフレッシュバジルの爽やかな香りがたまらない！！フレッシュバジルは抜くことができます。※ＥＶオリーブオイルは別添えです。※フレッシュバジルは他のトッピングと共に焼いてお届けします。",
+      "picture":"shopping/products/margherita.jpg",
+      "created_at":"2023-02-12 00:00:00"
+    }
+  },
+  {
+    "model": "shopping.products",
+    "fields": {
+      "code":"mascarpone",
+      "name":"マスカルポーネと熟成サラミ",
+      "price":2680,
+      "description":"トマトソースに、熟成サラミの旨味と北海道生乳１００％で仕上げたフレッシュ、かつクリーミーなマスカルポーネチーズで仕上げた味わい深いピザです。\n※マスカルポーネと熟成サラミを味わえる「グルメクォーター」はクォーターシリーズにございます。",
+      "picture":"shopping/products/mascarpone.jpg",
+      "created_at":"2023-02-12 00:00:00"
+    }
+  },
+  {
+    "model": "shopping.products",
+    "fields": {
+      "code":"pepperonirubber",
+      "name":"ペパロニラバー",
+      "price":2480,
+      "description":"トマトソースをベースに熟成サラミの旨味とパルメザンチーズのコクが味わえるアメリカンな商品。\n※ペパロニラバーが味わえる「よくばりクォーター」はクォーターシリーズにございます。",
+      "picture":"shopping/products/pepperonirubber.jpg",
+      "created_at":"2023-02-12 00:00:00"
+    }
+  }
+]

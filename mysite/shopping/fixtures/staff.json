@@ -1,0 +1,12 @@
+[
+  {
+    "model": "shopping.store",
+    "fields": {
+      "name": "スタッフ1",
+      "description": "男性スタッフです",
+      "image": "shopping/staff/pose_dance_ukareru_man.png",
+      "store_id": 1,
+      "user_id": 1
+    }
+  }
+]

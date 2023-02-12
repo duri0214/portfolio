@@ -1,4 +1,3 @@
-"""models.py"""
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -24,7 +23,10 @@ class Staff(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'store'], name='unique_staff'),
+            models.UniqueConstraint(
+                fields=['user', 'store'],
+                name='unique_user_store'
+            ),
         ]
 
     def __str__(self):
