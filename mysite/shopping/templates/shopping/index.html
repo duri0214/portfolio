@@ -40,7 +40,7 @@
             {% for product in products %}
                 <div class="col">
                     <div class="card mt-3" style="width: 15rem; height: 20rem">
-                        <img src="{% static 'shopping/img' %}/{{ product.code }}.jpg" class="card-img-top" alt="{{ product.code }}">
+                        <img src="{{ product.picture.url }}" class="card-img-top" alt="{{ product.code }}">
                         <div class="card-body">
                             <h8 class="card-title">{{ product.name | truncatechars:12 }}</h8>
                             <p style="font-size: small;" class="card-text">
