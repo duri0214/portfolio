@@ -10,7 +10,7 @@ class Warehouse(models.Model):
     height = models.PositiveSmallIntegerField()
     depth = models.PositiveSmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.name
@@ -21,7 +21,7 @@ class Company(models.Model):
     name = models.TextField(blank=True, null=True)
     address = models.TextField(blank=False, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.name
@@ -33,7 +33,7 @@ class BillingPerson(models.Model):
     name = models.TextField(blank=True, null=True)
     email = models.EmailField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.name
@@ -54,7 +54,7 @@ class Staff(models.Model):
     name = models.TextField(blank=False, null=False)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.name
@@ -69,7 +69,7 @@ class Invoice(models.Model):
     billing_status = models.ForeignKey(BillingStatus, default=1, on_delete=models.CASCADE)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class Item(models.Model):
@@ -85,7 +85,7 @@ class Item(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, null=True)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.name
