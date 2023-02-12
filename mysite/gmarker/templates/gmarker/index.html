@@ -9,30 +9,28 @@
         <div id="map_canvas1" style="width: 500px; height: 500px"></div>
     </div>
 
-    <h2>サーバーサイド</h2>
-    <h3>カテゴリー2</h3>
-    <form class="specific_form">
+    <h5>カテゴリーサーチ</h5>
+    <form class="ml-4" action="{% url 'mrk:index_search' '1A' %}" method="POST">
         {% csrf_token %}
-        <input type="button" class="btn-flat-border" value="2" onclick="do_pattern2(this)"> 1回押すと管理者選択モード、marker[0+]選択後に2回目を押すと選択したピンが表示される
+        <input type="submit" class="btn-flat-border" value="1A: ラーメン" /> My拠点を中心に半径1500mのラーメン屋のピンが表示される
     </form>
-
-    <h2>クライアントサイド</h2>
-    <h3>カテゴリー1</h3>
-    <form class="specific_form" action="{% url 'mrk:index_search' '1A' %}" method="POST">
+    <form class="ml-4" action="{% url 'mrk:index_search' '1B' %}" method="POST">
         {% csrf_token %}
-        <input type="submit" class="btn-flat-border" value="ラーメン" /> My拠点を中心に半径1500mのラーメン屋のピンが表示される
+        <input type="submit" class="btn-flat-border" value="1B: 洋食" /> My拠点を中心に半径1500mの洋食屋のピンが表示される
     </form>
-    <form class="specific_form" action="{% url 'mrk:index_search' '1B' %}" method="POST">
+    <form class="ml-4" action="{% url 'mrk:index_search' '1C' %}" method="POST">
         {% csrf_token %}
-        <input type="submit" class="btn-flat-border" value="洋食" /> My拠点を中心に半径1500mの洋食屋のピンが表示される
+        <input type="submit" class="btn-flat-border" value="1C: 和食" /> My拠点を中心に半径1500mの和食屋のピンが表示される
     </form>
-    <form class="specific_form" action="{% url 'mrk:index_search' '1C' %}" method="POST">
+    <h5 class="mt-4">管理者選択モード</h5>
+    ※スクリプト不具合 あり
+    <form class="ml-4">
         {% csrf_token %}
-        <input type="submit" class="btn-flat-border" value="和食" /> My拠点を中心に半径1500mの和食屋のピンが表示される
+        <input type="submit" class="btn-flat-border" value="2" onclick="do_pattern2(this)"> 1回押すと管理者選択モード、marker[0+]選択後に2回目を押すと選択したピンが表示される
     </form>
-    <h3>カテゴリー3</h3>
-    <form class="specific_form" action="{% url 'mrk:index_search' '3' %}" method="POST">
+    <h5 class="mt-4">マニュアルサーチ</h5>
+    <form class="ml-4" action="{% url 'mrk:index_search' '3' %}" method="POST">
         {% csrf_token %}
-        <input type="submit" class="btn-flat-border" value="3" /> 手で登録したピンが表示される
+        <input type="submit" class="btn-flat-border" value="3" /> 手でdb登録したピンが表示される（カテゴリー3で登録する）
     </form>
 {% endblock %}

@@ -1,13 +1,13 @@
-var map;
-var markers = [];
-var infowindow;
-var json;
+let map;
+const markers = [];
+let infowindow;
+let json;
 let is_editing = false;
 let keep_markers = [];
 
 function mapinit(_json) {
 
-    var options = {
+    const options = {
         zoom: 14,
         mapTypeId: google.maps.MapTypeId.ROADMAP, // 既定: いつもの地図タイプ
         mapTypeControl: false, // 左上「地図／航空写真」切り替えボタン off
@@ -25,8 +25,9 @@ function mapinit(_json) {
 
 // get_category が使います
 function createMarkers(json) {
-    if (typeof json != 'undefined' && json.shops.length > 0){
-        for (i = 0; i < json.shops.length; i++) {
+    let latlng;
+    if (typeof json != 'undefined' && json.shops.length > 0) {
+        for (let i = 0; i < json.shops.length; i++) {
             latlng = new google.maps.LatLng(json.shops[i].geometry.location.lat, json.shops[i].geometry.location.lng);
             markers[i] = new google.maps.Marker({
                 position: latlng,
@@ -79,7 +80,7 @@ function markerEvent(i) {
                 .catch(error => {
                     shopinfomation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
                 })
-            }; 
+            }
         } else {
             keep_markers.push(json.shops[i])
             markers[i].setMap(null);
@@ -104,17 +105,15 @@ function markerEvent(i) {
 }
 
 function do_pattern2(button) {
+    console.log('is_editing: ', is_editing)
     if (!is_editing) {
-
         // red: 選択中
         button.style.border = 'solid 2px #ff0000';
         button.style.color = '#ff0000';
         alert('管理者選択モード');
-
     } else {
-
-        // blue: 登録
-        var confirm = window.confirm("登録しますか？");
+        // blue: 登録対象のピン
+        const confirm = window.confirm("登録しますか？");
         if (confirm) {
             fetch(myurl.base + 'search/2', {
                 method: 'POST',
@@ -129,7 +128,7 @@ function do_pattern2(button) {
                 alert(json.status + ': 登録が完了しました。');
                 keep_markers = [];
                 location.href = myurl.base + 'result/2';
-                button.style.border = 'solid 2px #67c5ff';
+                button.style.border = 'solid 2px';
                 button.style.color = '#67c5ff';
             })
             .catch(error => {

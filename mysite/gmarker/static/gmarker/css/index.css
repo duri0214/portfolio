@@ -1,1 +1,4 @@
 body { padding-top: 48px; }
+input[type="submit"] {
+    width: 150px;
+}

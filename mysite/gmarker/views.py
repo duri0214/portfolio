@@ -1,4 +1,3 @@
-"""views.py"""
 import os
 import urllib.request
 import json

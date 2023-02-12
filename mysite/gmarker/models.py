@@ -1,10 +1,10 @@
-"""models.py"""
 from django.db import models
 
-# Create your models here.
+
 class StoreInformation(models.Model):
     """
     StoreInformation
+    search_code9は自拠点
     """
     category = models.IntegerField()
     searchword = models.CharField(null=True, blank=True, max_length=100)
@@ -12,6 +12,7 @@ class StoreInformation(models.Model):
     shop_name = models.CharField(max_length=200)
     shop_latlng = models.CharField(max_length=100)
     create_at = models.DateTimeField(auto_now=True)
+
 
 class SignageMenuName(models.Model):
     """
