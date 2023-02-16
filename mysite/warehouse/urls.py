@@ -5,7 +5,7 @@ from .views import IndexView, ItemCreateView, ItemDetailView, InvoiceCreateView,
 app_name = 'war'
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
-    path('register/', ItemCreateView.as_view(), name='item_create'),
+    path('create/', ItemCreateView.as_view(), name='item_create'),
     path('detail/<int:pk>/', ItemDetailView.as_view(), name='item_detail'),
     path('choose/<int:pk>/', IndexView.as_view(), name='index_choose'),
     path('reset/', IndexView.as_view(), name='reset'),
