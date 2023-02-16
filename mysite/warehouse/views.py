@@ -63,6 +63,7 @@ class IndexView(TemplateView):
 
 
 class ItemDetailView(DetailView):
+    template_name = 'warehouse/item/detail.html'
     model = Item
 
 

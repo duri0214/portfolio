@@ -7,10 +7,11 @@
 
 {% block content %}
     <div class="container">
-        <h2>貸出</h2>
-        <h3>{{ object.name }}</h3>
-        <p class="lead">{{ object.price }}円</p>
-
+        <h4>アイテム詳細</h4>
+        <ul>
+            <li>名称: {{ object.name }}</li>
+            <li>金額: {{ object.price }}円</li>
+        </ul>
         <form method="GET" class="registration" action="{% url 'war:index' %}">
             {% csrf_token %}
             <button type="submit">戻る</button>
