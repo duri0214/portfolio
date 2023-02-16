@@ -91,14 +91,13 @@ class InvoiceCreateView(CreateView):
         context = super().get_context_data(**kwargs)
         staff = Staff.objects.get(pk=1)
         warehouse = Warehouse.objects.get(pk=staff.warehouse_id)  # TODO: ユーザー情報から倉庫を取得
-        context['invoice_items'] = Item.objects.filter(warehouse_id=warehouse.id).filter(rental_status=RentalStatus.RENTAL)
+        context['invoice_items'] = Item.objects.filter(warehouse_id=warehouse.id, rental_status=RentalStatus.RENTAL)
         return context
 
     def get_success_url(self):
-        Item.objects.filter(rental_status=RentalStatus.objects.get(pk=4)).update(
-            invoice=self.object.id,
-            rental_status=RentalStatus(id=2)
-        )
+        rental_status = RentalStatus.objects.get(pk=RentalStatus.RENTAL)
+        # 貸出中の関連アイテムに請求書を紐づける TODO: どの請求先企業の関連アイテム？の絞りが未対応
+        Item.objects.filter(rental_status=rental_status).update(invoice=self.object.id)
         return reverse('war:index')
 
 
