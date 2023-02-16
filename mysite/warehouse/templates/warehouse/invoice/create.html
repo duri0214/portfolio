@@ -1,0 +1,48 @@
+{% extends 'warehouse/base.html' %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'warehouse/css/invoice/create.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <h2>請求書</h2>
+        {% if invoice_items|length > 0 %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <td>シリアルナンバー</td>
+                        <td>アイテム名</td>
+                        <td>金額</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice_items %}
+                        <tr>
+                            <td>{{ item.serial_number }}</td>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.price }}円</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <ul>
+                <li>請求書はありません</li>
+            </ul>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="決定">
+        </form>
+        <form method="GET" class="registration" action="{% url 'war:index' %}">
+            {% csrf_token %}
+            <button type="submit">戻る</button>
+        </form>
+    </div>
+
+{% endblock %}

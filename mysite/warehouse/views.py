@@ -4,25 +4,32 @@ from django.urls import reverse
 from django.views.generic import TemplateView, CreateView, DetailView, ListView
 from sqlalchemy import create_engine
 
-from .forms import RegisterForm, InvoiceForm
+from .forms import ItemCreateForm, InvoiceCreateForm
 from .models import Warehouse, Item, RentalStatus, Invoice, Staff, BillingStatus
 import pandas as pd
 import numpy as np
 
 
 class IndexView(TemplateView):
-    """IndexView"""
     template_name = 'warehouse/index.html'
 
-    def post(self, request, *args, **kwargs):
+    @staticmethod
+    def post(request, *args, **kwargs):
         if request.path == '/warehouse/reset/':
-            # reset
-            Item.objects.filter(rental_status=RentalStatus.objects.get(pk=4)).update(rental_status=RentalStatus(id=1))
+            # reset all rentals
+            update_records = []
+            items = Item.objects.filter(rental_status_id=RentalStatus.RENTAL)
+            for item in items:
+                item.rental_status_id = RentalStatus.STOCK
+                update_records.append(item)
+            if len(update_records) > 0:
+                Item.objects.bulk_update(update_records, ['rental_status_id'])
         else:
-            # choose
-            item = Item.objects.get(pk=self.kwargs['pk'])
-            item.rental_status = RentalStatus(id=4)
+            # rent an item
+            item = Item.objects.get(pk=kwargs.get('pk'))
+            item.rental_status = RentalStatus.objects.get(pk=RentalStatus.RENTAL)
             item.save()
+
         return redirect('war:index')
 
     def get_context_data(self, **kwargs):
@@ -30,7 +37,7 @@ class IndexView(TemplateView):
         warehouse = Warehouse.objects.get(pk=Staff.objects.get(pk=1).warehouse_id)  # TODO: ユーザー情報から倉庫を取得
         _con = create_engine('mysql+mysqldb://python:python123@127.0.0.1/pythondb', echo=False).connect()
 
-        # shelf
+        # TODO: 段・列でグループ化してアイテム名をカンマ区切りにする、みたいのがやりたいみたい
         data = pd.read_sql_query(
             '''
             SELECT
@@ -51,6 +58,7 @@ class IndexView(TemplateView):
         context['shelf'] = array[::-1]
         context['available_items'] = available_items
         context['non_available_items'] = non_available_items
+
         return context
 
 
@@ -58,10 +66,10 @@ class ItemDetailView(DetailView):
     model = Item
 
 
-class ItemRegisterView(CreateView):
-    template_name = 'warehouse/register.html'
+class ItemCreateView(CreateView):
+    template_name = 'warehouse/item/create.html'
     model = Item
-    form_class = RegisterForm
+    form_class = ItemCreateForm
 
     def form_valid(self, form):
         form = form.save(commit=False)
@@ -75,14 +83,15 @@ class ItemRegisterView(CreateView):
 
 
 class InvoiceCreateView(CreateView):
-    template_name = 'warehouse/invoice_create.html'
+    template_name = 'warehouse/invoice/create.html'
     model = Invoice
-    form_class = InvoiceForm
+    form_class = InvoiceCreateForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        warehouse = Warehouse.objects.get(pk=Staff.objects.get(pk=1).warehouse_id)  # TODO: ユーザー情報から倉庫を取得
-        context['invoice_items'] = Item.objects.filter(warehouse_id=warehouse.id).filter(rental_status_id=4)
+        staff = Staff.objects.get(pk=1)
+        warehouse = Warehouse.objects.get(pk=staff.warehouse_id)  # TODO: ユーザー情報から倉庫を取得
+        context['invoice_items'] = Item.objects.filter(warehouse_id=warehouse.id).filter(rental_status=RentalStatus.RENTAL)
         return context
 
     def get_success_url(self):
@@ -94,13 +103,15 @@ class InvoiceCreateView(CreateView):
 
 
 class InvoiceListView(ListView):
-    template_name = 'warehouse/invoice_list.html'
+    template_name = 'warehouse/invoice/list.html'
     model = Invoice
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['billing_status'] = BillingStatus.objects.get(pk=self.kwargs['mode'])
+
         return context
 
     def get_queryset(self, **kwargs):
-        return Invoice.objects.filter(billing_status_id=BillingStatus.objects.get(pk=self.kwargs['mode']))
+        billing_status = BillingStatus.objects.get(pk=self.kwargs['mode'])
+        return Invoice.objects.filter(billing_status=billing_status)

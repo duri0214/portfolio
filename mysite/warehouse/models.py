@@ -20,8 +20,6 @@ class Company(models.Model):
     """会社（供給元や供給先）"""
     name = models.TextField(blank=True, null=True)
     address = models.TextField(blank=False, null=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return self.name
@@ -41,12 +39,21 @@ class BillingPerson(models.Model):
 
 class RentalStatus(models.Model):
     """貸し出し等のステータス"""
+    STOCK: int = 1
+    RENTAL: int = 2
     name = models.TextField()
 
 
 class BillingStatus(models.Model):
     """請求中、請求完了、請求無効"""
+    BILLING: int = 1
+    DONE: int = 2
+    INVALID: int = 3
+
     name = models.TextField()
+
+    def __str__(self):
+        return self.name
 
 
 class Staff(models.Model):
