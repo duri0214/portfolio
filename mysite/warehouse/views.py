@@ -75,7 +75,7 @@ class ItemCreateView(CreateView):
         form = form.save(commit=False)
         form.rental_status = RentalStatus(id=1)  # available
         form.save()
-        return redirect('war:register')
+        return redirect('war:item_create')
 
     def form_invalid(self, form):
         messages.add_message(self.request, messages.WARNING, form.errors)
