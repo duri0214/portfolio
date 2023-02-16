@@ -1,8 +1,6 @@
 """ベトナム統計を取り込みます
 https://www.gso.gov.vn/Default_en.aspx?tabid=766
 """
-import datetime
-from sqlalchemy import create_engine
 import pandas as pd
 
 # E08.01.csv: 商品およびサービス(小売)のカテゴリー別売上高（単位: 10億ドン）

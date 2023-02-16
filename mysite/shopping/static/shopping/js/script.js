@@ -3,10 +3,10 @@ let tr_prev;
 function addRowHandler() {
     const table = edit_table.tBodies[0];
     const rows = table.rows;
-    for (i = 0; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
         if (table.rows[i].className == "") {
             table.rows[i].addEventListener('click', e => {
-                tr = e.target.parentNode;
+                const tr = e.target.parentNode;
                 if (tr_edit != undefined && tr_prev == tr) {
                     tr_edit.style.display = "none";
                     tr_edit = undefined;

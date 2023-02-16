@@ -63,7 +63,7 @@
                 <h2>改修予定</h2>
                 <h6>Scheduled to be repaired</h6>
                 <ul>
-                    <li><a href="http://www.fao.org/home/en/">FAOから種類別肉さかな消費量のグラフ</a></li>
+                    <li><a href="https://www.fao.org/home/en/">FAOから種類別肉さかな消費量のグラフ</a></li>
                     <li>東南アジア各地のグラフで切り替えられるように</li>
                     <li>国の成長期に金融が稼げる理由は？</li>
                     <li>セクター別リターン</li>
@@ -132,7 +132,7 @@
         <script>
             data = {{ uptrends|safe }};
             const uptrends = document.getElementById('uptrends_wrapper');
-            let h6, ul, mkt, price_latest, symbol, price_delta, price_delta_sign, img, li, a, p, badge;
+            let h6, ul, mkt, price_latest, symbol, price_delta, price_delta_sign, img, li, a, p;
             for (const industry in data) {
                 h6 = document.createElement('h6');
                 h6.textContent = industry;

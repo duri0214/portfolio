@@ -1,6 +1,6 @@
 """forms.py"""
 from django import forms
-from .models import Products, Staff
+from .models import Products
 
 
 class RegisterFormSingle(forms.ModelForm):
