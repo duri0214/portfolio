@@ -1,12 +1,12 @@
-"""docstring"""
 from django.urls import path
-from .views import ArticleCreateView, likes, index, WatchlistRegister, WatchlistEdit, FinancialResultsListView, \
-    FinancialResultsDetailListView, FinancialResultsCreateView
+
+from vietnam_research.views import ArticleCreateView, index, WatchlistRegister, WatchlistEdit,\
+    FinancialResultsListView, FinancialResultsDetailListView, FinancialResultsCreateView, LikesUpdateView
 
 app_name = 'vnm'
 urlpatterns = [
     path('', index, name='index'),
-    path('likes/<int:user_id>/<int:article_id>/', likes, name='likes'),
+    path('likes/<int:user_id>/<int:article_id>/', LikesUpdateView.as_view(), name='likes'),
     path('article/create/', ArticleCreateView.as_view(), name="article_create"),
     path('watchlist/register/', WatchlistRegister.as_view(), name="watchlist_register"),
     path('watchlist/edit/<int:pk>/', WatchlistEdit.as_view(), name="watchlist_edit"),

@@ -1,6 +1,8 @@
-"""子供のurls.pyがこの処理を呼び出します"""
 import json
+import logging
 from datetime import datetime
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,10 +11,11 @@ from django.views.generic import CreateView, ListView, UpdateView
 from django.urls import reverse_lazy
 from django.http.response import JsonResponse
 from django.db.models import Count, Case, When, IntegerField, Sum
-from .forms import ArticleForm, WatchlistCreateForm, ExchangeForm, FinancialResultsForm
-from .service.market_vietnam import MarketVietnam
-from .models import Watchlist, Likes, Articles, FinancialResultWatch, BasicInformation
-from django.contrib.auth.decorators import login_required
+
+from register.models import User
+from vietnam_research.forms import ArticleForm, WatchlistCreateForm, ExchangeForm, FinancialResultsForm
+from vietnam_research.service.market_vietnam import MarketVietnam
+from vietnam_research.models import Watchlist, Likes, Articles, FinancialResultWatch, BasicInformation
 
 
 def index(request):
@@ -90,17 +93,20 @@ def index(request):
     return render(request, 'vietnam_research/index.html', context)
 
 
-@login_required
-def likes(request, user_id, article_id):
+class LikesUpdateView(LoginRequiredMixin, UpdateView):
     """いいね！ボタンをクリックしたとき"""
-    if request.method == 'POST':
-        print(json.loads(request.body), json.loads(request.body).get('status'))
-        query = Likes.objects.filter(user=user_id, articles_id=article_id)
-        if not query.exists():
-            Likes.objects.create(articles_id=article_id, user_id=user_id)
-        else:
-            query.delete()
-        return JsonResponse({"status": "responded by views.py"})
+    def post(self, request, *args, **kwargs):
+        try:
+            user = User.objects.get(pk=kwargs['user_id'])
+            article = Articles.objects.get(pk=kwargs['article_id'])
+            like = Likes.objects.filter(user=user, articles=article)
+            if not like.exists():
+                Likes.objects.create(user=user, articles=article)
+            else:
+                like.delete()
+            return JsonResponse({"status": "responded by views.py"})
+        except ObjectDoesNotExist:
+            logging.critical('不正なユーザアカウントまたは記事からのアクセスがありました')
 
 
 class ArticleCreateView(LoginRequiredMixin, CreateView):
