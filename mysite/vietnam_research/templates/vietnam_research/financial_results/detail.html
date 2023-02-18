@@ -20,7 +20,7 @@
     <tbody>
         {% for detail in object_list %}
             <tr>
-                <td><a href="{{ detail.note_url }}" target="_blank">{{ detail.date }}</a></td>
+                <td><a href="{{ detail.note_url }}" target="_blank">{{ detail.recorded_date }}</a></td>
                 <td><span class="badge badge-light">{{ detail.quarter }}</span></td>
                 <td><span class="badge {{ detail.eps_ok|yesno:'badge-success, badge-danger' }}">{{ detail.eps_ok|yesno:'OK, NG' }}</span></td>
                 <td><span class="badge {{ detail.sales_ok|yesno:'badge-success, badge-danger' }}">{{ detail.sales_ok|yesno:'OK, NG' }}</span></td>

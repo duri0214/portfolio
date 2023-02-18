@@ -28,8 +28,8 @@
     <tbody>
         {% for financial_result in object_list %}
             <tr>
-                <td><a href="{% url 'vnm:financial_results_detail' financial_result.ticker %}" class="btn btn-secondary btn-sm" role="button">{{ financial_result.ticker }}</a></td>
-                <td>{{ financial_result.ticker__count }}</td>
+                <td><a href="{% url 'vnm:financial_results_detail' financial_result.symbol__code %}" class="btn btn-secondary btn-sm" role="button">{{ financial_result.symbol__code }}</a></td>
+                <td>{{ financial_result.symbol__code__count }}</td>
                 <td>{{ financial_result.eps_ok__sum|add:"0" }}</td>
                 <td>{{ financial_result.sales_ok__sum|add:"0" }}</td>
                 <td>{{ financial_result.guidance_ok__sum|add:"0" }}</td>
