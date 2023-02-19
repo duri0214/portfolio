@@ -27,4 +27,4 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        cd mysite && ls && python manage.py test
+        ls mysite/manage.py && python mysite/manage.py test
