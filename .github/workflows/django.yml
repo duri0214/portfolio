@@ -27,7 +27,7 @@ jobs:
         pip install -r requirements.txt
     - name: Activate
       run: |
-        ls /usr/bin
+        sudo find / -name "*activate"
         source /var/www/html/venv/bin/activate
     - name: Run Tests
       run: |
