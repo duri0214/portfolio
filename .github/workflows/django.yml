@@ -26,7 +26,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Activate
-      run: source /var/www/html/venv/bin/activate
+      run: |
+        ls
+        source /var/www/html/venv/bin/activate
     - name: Run Tests
       run: |
         ls mysite/manage.py && python mysite/manage.py test
