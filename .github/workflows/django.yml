@@ -25,6 +25,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    - name: change directory
+      run: cd mysite
     - name: Run Tests
       run: |
-        python mysite/manage.py test
+        python manage.py test
