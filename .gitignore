@@ -4,7 +4,6 @@ favicon/
 output/
 migrations/
 data/
-__init__.py
 result.log
 db.sqlite3
 /.idea/
