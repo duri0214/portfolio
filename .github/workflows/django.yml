@@ -24,6 +24,7 @@ jobs:
     - name: Install Dependencies and run tests
       run: |
         python3 --version
+        python --version
         python3 -m venv venv
         . venv/bin/activate
         python -m pip install --upgrade pip
