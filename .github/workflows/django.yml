@@ -29,4 +29,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
         cd mysite
+        python manage.py makemigrations register
+        python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
+        python manage.py migrate
         python manage.py test
