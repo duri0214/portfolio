@@ -27,7 +27,7 @@ jobs:
         source venv/bin/activate
         python3 -m pip install --upgrade pip
         python3 -m pip install -r requirements.txt
-        echo secrets.DEBUG: $DEBUG
+        echo "secrets.DEBUG: $DEBUG"
         echo hello world > out.txt && cat out.txt
         cd mysite
         python3 manage.py makemigrations register
