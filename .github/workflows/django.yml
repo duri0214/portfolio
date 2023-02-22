@@ -34,10 +34,10 @@ jobs:
         python3 manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
         python3 manage.py migrate
         python3 manage.py test
-        env:
-          DEBUG: ${{ secrets.DEBUG }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          ENGINE: ${{ secrets.MYSQL_DB_ENGINE }}
-          NAME: ${{ secrets.MYSQL_DB_NAME }}
-          USER: ${{ secrets.MYSQL_DB_USER }}
-          PASSWORD: ${{ secrets.MYSQL_DB_PASSWORD }}
+#        env:
+#          DEBUG: ${{ secrets.DEBUG }}
+#          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+#          ENGINE: ${{ secrets.MYSQL_DB_ENGINE }}
+#          NAME: ${{ secrets.MYSQL_DB_NAME }}
+#          USER: ${{ secrets.MYSQL_DB_USER }}
+#          PASSWORD: ${{ secrets.MYSQL_DB_PASSWORD }}
