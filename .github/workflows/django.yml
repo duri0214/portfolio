@@ -27,7 +27,6 @@ jobs:
         source venv/bin/activate
         python3 -m pip install --upgrade pip
         python3 -m pip install -r requirements.txt
-        echo "test secrets output: ${{ secrets.DB_USER }}"
         cd mysite
         echo "DJANGO_DEBUG_MODE=${{ secrets.DJANGO_DEBUG_MODE }}" > .env
         echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
@@ -36,9 +35,6 @@ jobs:
         echo "DB_USER=${{ secrets.DB_USER }}" >> .env
         echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
         sudo systemctl start mysql
-#        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'CREATE DATABASE portfolio_db DEFAULT CHARACTER SET utf8mb4;'
-#        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'CREATE USER '${{ secrets.DB_USER }}'@'localhost' IDENTIFIED BY '${{ secrets.DB_PASSWORD }}';'
-#        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on portfolio_db.* to '${{ secrets.DB_USER }}'@'localhost';'
         python3 manage.py makemigrations register
         python3 manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
         python3 manage.py migrate
