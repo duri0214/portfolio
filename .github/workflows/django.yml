@@ -36,7 +36,9 @@ jobs:
         echo "DB_USER=${{ secrets.DB_USER }}" >> .env
         echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
         sudo systemctl start mysql
-        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'SELECT version()'
+        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'CREATE DATABASE portfolio_db DEFAULT CHARACTER SET utf8mb4;'
+        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'CREATE USER 'python'@'localhost' IDENTIFIED BY 'python123';'
+        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on portfolio_db.* to 'python'@'localhost';'
         python3 manage.py makemigrations register
         python3 manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
         python3 manage.py migrate
