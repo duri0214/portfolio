@@ -36,9 +36,9 @@ jobs:
         echo "DB_USER=${{ secrets.DB_USER }}" >> .env
         echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
         sudo systemctl start mysql
-        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'CREATE DATABASE portfolio_db DEFAULT CHARACTER SET utf8mb4;'
-        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'CREATE USER '${{ secrets.DB_USER }}'@'localhost' IDENTIFIED BY '${{ secrets.DB_PASSWORD }}';'
-        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on portfolio_db.* to '${{ secrets.DB_USER }}'@'localhost';'
+#        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'CREATE DATABASE portfolio_db DEFAULT CHARACTER SET utf8mb4;'
+#        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'CREATE USER '${{ secrets.DB_USER }}'@'localhost' IDENTIFIED BY '${{ secrets.DB_PASSWORD }}';'
+#        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e 'grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on portfolio_db.* to '${{ secrets.DB_USER }}'@'localhost';'
         python3 manage.py makemigrations register
         python3 manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
         python3 manage.py migrate
