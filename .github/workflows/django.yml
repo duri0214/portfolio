@@ -36,8 +36,7 @@ jobs:
         echo "DB_USER=${{ secrets.DB_USER }}" >> .env
         echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
         sudo systemctl start mysql
-        mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }}
-        status
+        mysql -uroot -h127.0.0.1 -e 'SELECT version()'
         python3 manage.py makemigrations register
         python3 manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
         python3 manage.py migrate
