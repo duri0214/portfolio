@@ -15,20 +15,49 @@ jobs:
       matrix:
         python-version: [3.8]
 
+    services:
+      mysql:
+        # https://hub.docker.com/_/mysql
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: test
+        ports:
+          - 33306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies and run tests
+    - name: Importing MYSQL file
       env:
-        DB_CONNECTION: mysql
-        DB_HOST: 127.0.0.1
-        DB_PORT: 3306
-        DB_USERNAME: root
-        DB_PASSWORD: password
+        SQL: |
+          SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+          START TRANSACTION;
+          SET time_zone = "+00:00";
+          CREATE TABLE `person` (
+            `id` int(11) NOT NULL,
+            `name` varchar(255) NOT NULL,
+            `email` varchar(255) NOT NULL
+          );
+          INSERT INTO `person` (`id`, `name`, `email`)
+          VALUES
+            (111, 'abc', 'abc@email.com'),
+            (222, 'def', 'def@email.com'),
+            (333, 'ghi', 'ghi@email.com'),
+            (444, 'jkl', 'jkl@email.com');
+          ALTER TABLE `person` ADD PRIMARY KEY (`id`);
+          COMMIT;      run: mysql -u root -p password -h localhost --port=3306 test < request_data.sql
+    - name: Install Dependencies and run tests
       run: |
+        mysql --host 127.0.0.1 --port 33306 -uroot -ppassword -e "SHOW DATABASES LIKE 'test';" 2>/dev/null
+        echo "$SQL" > person.sql
+        echo "--- SQL ---"
+        cat person.sql
+        echo "--- --- ---"
         python3 -m venv venv
         source venv/bin/activate
         python3 -m pip install --upgrade pip
@@ -40,7 +69,7 @@ jobs:
         echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
         echo "DB_USER=${{ secrets.DB_USER }}" >> .env
         echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-        sudo systemctl start mysql
+#        sudo systemctl start mysql
         python3 manage.py makemigrations register
         python3 manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
         python3 manage.py migrate
