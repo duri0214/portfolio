@@ -63,8 +63,6 @@ jobs:
         echo "--- --- ---"
         echo "Importing from person.sql file"
         mysql --host 127.0.0.1 --port 33306 -uroot -ppassword portfolio_db < person.sql 2>/dev/null
-#        echo "Checking the imported data"
-#        mysql --host 127.0.0.1 --port 33306 -uroot -ppassword portfolio_db <<< "SELECT id,name,email FROM person;" 2>/dev/null
     - name: Install Dependencies and run tests
       run: |
         python3 -m venv venv
@@ -78,7 +76,6 @@ jobs:
         echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
         echo "DB_USER=${{ secrets.DB_USER }}" >> .env
         echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-#        sudo systemctl start mysql
         python3 manage.py makemigrations register
         python3 manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
         python3 manage.py migrate
