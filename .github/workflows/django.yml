@@ -50,7 +50,8 @@ jobs:
             (333, 'ghi', 'ghi@email.com'),
             (444, 'jkl', 'jkl@email.com');
           ALTER TABLE `person` ADD PRIMARY KEY (`id`);
-          COMMIT;      run: mysql -u root -p password -h localhost --port=3306 test < request_data.sql
+          COMMIT;
+      run: mysql -u root -p password -h localhost --port=3306 test < request_data.sql
     - name: Install Dependencies and run tests
       run: |
         mysql --host 127.0.0.1 --port 33306 -uroot -ppassword -e "SHOW DATABASES LIKE 'test';" 2>/dev/null
