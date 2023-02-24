@@ -66,6 +66,11 @@ jobs:
         echo "Checking the imported data"
         mysql --host 127.0.0.1 --port 3306 -uroot -ppassword test_portfolio <<< "SELECT id,name,email FROM person;" 2>/dev/null
     - name: Install Dependencies and run tests
+      env:
+        DB_ENGINE: django.db.backends.mysql
+        DB_NAME: test_portfolio
+        DB_USER: root
+        DB_PASSWORD: password
       run: |
         python3 -m venv venv
         source venv/bin/activate
