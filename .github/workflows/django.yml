@@ -65,7 +65,7 @@ jobs:
         echo "Importing from person.sql file"
         mysql --host 127.0.0.1 --port 33306 -upython -ppassword test < person.sql 2>/dev/null
         echo "Checking the imported data"
-        mysql --host 127.0.0.1 --port 33306 -upython -ppassword test <<< 'SELECT id,name,email FROM person;' 2>/dev/null
+        mysql --host 127.0.0.1 --port 33306 -upython -ppassword test <<< "SELECT id,name,email FROM person;" 2>/dev/null
     - name: Install Dependencies and run tests
       run: |
         python3 -m venv venv
