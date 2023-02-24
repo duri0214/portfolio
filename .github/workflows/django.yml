@@ -51,14 +51,18 @@ jobs:
             (444, 'jkl', 'jkl@email.com');
           ALTER TABLE `person` ADD PRIMARY KEY (`id`);
           COMMIT;
-      run: mysql -u root -p password -h localhost --port=3306 test < request_data.sql
-    - name: Install Dependencies and run tests
       run: |
         mysql --host 127.0.0.1 --port 33306 -uroot -ppassword -e "SHOW DATABASES LIKE 'test';" 2>/dev/null
         echo "$SQL" > person.sql
         echo "--- SQL ---"
         cat person.sql
         echo "--- --- ---"
+        echo "Importing from person.sql file"
+        mysql --host 127.0.0.1 --port 33306 -uroot -ppassword test < person.sql 2>/dev/null
+        echo "Checking the imported data"
+        mysql --host 127.0.0.1 --port 33306 -uroot -ppassword test <<< 'SELECT id,name,email FROM person;' 2>/dev/null
+    - name: Install Dependencies and run tests
+      run: |
         python3 -m venv venv
         source venv/bin/activate
         python3 -m pip install --upgrade pip
