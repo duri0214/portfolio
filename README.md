@@ -12,17 +12,24 @@
 - OpenCV
 
 ## vietnam_research
-
-vietnam statistics
+- ベトナムの株価を分析する
 
 ## gmarker
-
-google map api
+- google map api を使って、マーカーを操作できる
 
 ## shopping
-
-shopping
+- 在庫を登録し、値段・コメントなどの管理ができる
 
 ## linebot
-
+- あまりできていないが chatbot を作りたかったのかな？（図を参照）
+- TODO: mermaidに書き直してほしい
 ![シーケンス図](https://github.com/duri0214/Portfolio/blob/master/docs/linebot/linebot.png?raw=true "シーケンス図")
+
+## warehouse
+- 倉庫とレンタル業務をイメージしたアプリ
+- 何段目の何列目にあるかも登録できる
+- 請求書をつくることもできる
+
+## taxonomy
+- 興味のある動物の分類を関係図に表示
+- タグ付けをして分析のサポートができる
