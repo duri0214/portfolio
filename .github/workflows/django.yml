@@ -15,69 +15,36 @@ jobs:
       matrix:
         python-version: [3.8]
 
-    services:
-      mysql:
-        # https://hub.docker.com/_/mysql
-        image: mysql:5.7
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: test_portfolio
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Importing MYSQL file
-      env:
-        SQL: |
-          SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-          START TRANSACTION;
-          SET time_zone = "+00:00";
-          CREATE TABLE `person` (
-            `id` int(11) NOT NULL,
-            `name` varchar(255) NOT NULL,
-            `email` varchar(255) NOT NULL
-          );
-          INSERT INTO `person` (`id`, `name`, `email`)
-          VALUES
-            (111, 'abc', 'abc@email.com'),
-            (222, 'def', 'def@email.com'),
-            (333, 'ghi', 'ghi@email.com'),
-            (444, 'jkl', 'jkl@email.com');
-          ALTER TABLE `person` ADD PRIMARY KEY (`id`);
-          COMMIT;
-      run: |
-        mysql --host 127.0.0.1 --port 3306 -uroot -ppassword -e "SHOW DATABASES LIKE 'test_portfolio';" 2>/dev/null
-        echo "$SQL" > person.sql
-        echo "--- SQL ---"
-        cat person.sql
-        echo "--- --- ---"
-        echo "Importing from person.sql file"
-        mysql --host 127.0.0.1 --port 3306 -uroot -ppassword test_portfolio < person.sql 2>/dev/null
-        echo "Checking the imported data"
-        mysql --host 127.0.0.1 --port 3306 -uroot -ppassword test_portfolio <<< "SELECT id,name,email FROM person;" 2>/dev/null
-    - name: Install Dependencies and run tests
+        cache: pip
+
+    - name: Set up and run tests
       env:
         DB_ENGINE: django.db.backends.mysql
-        DB_NAME: test_portfolio
+        DB_NAME: portfolio
         DB_USER: root
-        DB_PASSWORD: password
+        DB_PASSWORD: root
+        DJANGO_SECRET_KEY: VGUkdCFOZwo=
       run: |
+        # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#mysql
+        sudo systemctl start mysql
+        mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE $DB_NAME;"
+        mysql -u$DB_USER -p$DB_PASSWORD -e "SHOW DATABASES;"
+        python3 --version
         python3 -m venv venv
         source venv/bin/activate
-        python3 -m pip install --upgrade pip
-        python3 -m pip install -r requirements.txt
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
         cd mysite
-        python3 manage.py makemigrations register
-        python3 manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
-        python3 manage.py migrate
-        python3 manage.py test
+        python manage.py makemigrations register
+        python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
+        python manage.py migrate
+        DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
+        python manage.py test
