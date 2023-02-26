@@ -21,9 +21,8 @@
 - 在庫を登録し、値段・コメントなどの管理ができる
 
 ## linebot
-- あまりできていないが chatbot を作りたかったのかな？（図を参照）
-- TODO: mermaidに書き直してほしい
-![シーケンス図](https://github.com/duri0214/Portfolio/blob/master/docs/linebot/linebot.png?raw=true "シーケンス図")
+- [仕様書](docs/linebot/specification.md)
+- あまりできていないが chatbot を作りたかったのかな？
 
 ## warehouse
 - 倉庫とレンタル業務をイメージしたアプリ
@@ -31,5 +30,6 @@
 - 請求書をつくることもできる
 
 ## taxonomy
+- [仕様書](docs/taxonomy/specification.md)
 - 興味のある動物の分類を関係図に表示
 - タグ付けをして分析のサポートができる
