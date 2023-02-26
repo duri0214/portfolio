@@ -1,0 +1,9 @@
+[
+  {
+    "model": "taxonomy.kingdom",
+    "fields": {
+      "name":"動物",
+      "name_en":"Animalia"
+    }
+  }
+]

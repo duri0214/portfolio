@@ -1,0 +1,20 @@
+[
+  {
+    "model": "taxonomy.genus",
+    "fields": {
+      "name":"シマミミズ属",
+      "name_en":"Eisenia",
+      "remark": "ミミズ",
+      "family": 1
+    }
+  },
+  {
+    "model": "taxonomy.genus",
+    "fields": {
+      "name":"ヤケイ属",
+      "name_en":"Gallus",
+      "remark": "ニワトリ",
+      "family": 2
+    }
+  }
+]
