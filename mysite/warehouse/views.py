@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView, CreateView, DetailView, ListView
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 from .forms import ItemCreateForm, InvoiceCreateForm
 from .models import Warehouse, Item, RentalStatus, Invoice, Staff, BillingStatus
@@ -35,17 +35,17 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         warehouse = Warehouse.objects.get(pk=Staff.objects.get(pk=1).warehouse_id)  # TODO: ユーザー情報から倉庫を取得
-        _con = create_engine('mysql+mysqldb://python:python123@127.0.0.1/pythondb', echo=False).connect()
+        _con = create_engine('mysql+mysqldb://python:python123@127.0.0.1/portfolio_db', echo=False).connect()
 
         # TODO: 段・列でグループ化してアイテム名をカンマ区切りにする、みたいのがやりたいみたい
-        data = pd.read_sql_query(
+        data = pd.read_sql_query(text(
             '''
             SELECT
                 pos_y, pos_x, GROUP_CONCAT(name) items
-            FROM pythondb.warehouse_item
+            FROM warehouse_item
             WHERE rental_status_id = 1 -- available
             GROUP BY pos_y, pos_x
-            ''', _con)
+            '''), _con)
         array = np.zeros((warehouse.height, warehouse.width), dtype=int)
         for idx, row in data.iterrows():
             # pos_y, pos_x は 1base
