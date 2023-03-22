@@ -1,5 +1,4 @@
 import json
-
 from django.db.models import F
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView
@@ -7,14 +6,24 @@ from django.views.generic import ListView, CreateView, UpdateView
 from taxonomy.models import Kingdom, Breed
 
 
-def exists(key_name: str, elements: list) -> bool:
-    return_value = False
-    for element in elements:
-        if element["name"] == key_name:
-            return_value = True
-            break
+def get_child_node(anchor_node: dict, needle: str) -> dict:
+    """
+    anchor_node の children に needle がいれば、その child_node を返す。いなければ新規dictを入れて、その child_node を返す
 
-    return return_value
+    Returns: dict
+    """
+    # TODO: Nodeクラスに置き換える A と B は返り値の型が違うだけで、処理は一緒なので整理する
+    child_node = None
+    is_exists = not not [child for child in anchor_node['children'] if child['name'] == needle]  # A
+    if len(anchor_node['children']) > 0 and is_exists:
+        for child in anchor_node['children']:  # B
+            if child['name'] == needle:
+                child_node = child
+    else:
+        child_node = {"name": needle, "children": []}
+        anchor_node['children'].append(child_node)
+
+    return child_node
 
 
 class IndexView(ListView):
@@ -50,84 +59,15 @@ class IndexView(ListView):
         """
         context = super(IndexView, self).get_context_data(**kwargs)
 
-        # kingdoms = set(list())
-        # phylums = set(list())
-        # classifications = set(list())
-        # families = set(list())
-        # genusies = set(list())
-        # species = set(list())
-        # breeds = set(list())
-        # for row in self.get_queryset():
-        #     kingdoms.add(row['kingdom_name'])
-        #     phylums.add(row['phylum_name'])
-        #     classifications.add(row['classification_name'])
-        #     families.add(row['family_name'])
-        #     genusies.add(row['genus_name'])
-        #     species.add(row['species_name'])
-        #     breeds.add(row['breed_name'])
-        #
-        # root = {"name": "root", "children": list()}
-        # for i, kingdom in enumerate(kingdoms):
-        #     root["children"] = [
-        #         {"name": kingdom, "children": list()} for kingdom in kingdoms
-        #     ]
-        #     for ii, a_kingdom in enumerate(root["children"]):
-        #         root["children"][i]["children"] = [
-        #             {"name": phylum, "children": list()} for phylum in phylums
-        #         ]
-        #         for j, phylum in enumerate(phylums):
-        #             root["children"][i]["children"][phylum] = [
-        #                 {"name": classification, "children": list()} for classification in classifications
-        #             ]
-        #
-        #             # for k, kingdom_child in enumerate(root_child["children"]):
-        #             #     if not exists(phylum)
-        # print(root)
-        root = {
-          "name": "World",
-          "children": [
-            {
-              "name": "Asia",
-              "population": 4436,
-              "children": [
-                {
-                  "name": "China",
-                  "population": 1420
-                },
-                {
-                  "name": "India",
-                  "population": 1369
-                }
-              ]
-            },
-            {
-              "name": "Africa",
-              "population": 1216
-            },
-            {
-              "name": "Europe",
-              "population": 739
-            },
-            {
-              "name": "North America",
-              "population": 579,
-              "children": [
-                {
-                  "name": "USA",
-                  "population": 329
-                }
-              ]
-            },
-            {
-              "name": "South America",
-              "population": 423
-            },
-            {
-              "name": "Oceania",
-              "population": 38
-            }
-          ]
-        }
+        root = {"name": "root", "children": []}  # TODO: NodeTreeクラスに切り替える
+        for row in self.get_queryset():
+            kingdom = get_child_node(root, row['kingdom_name'])
+            phylum = get_child_node(kingdom, row['phylum_name'])
+            classification = get_child_node(phylum, row['classification_name'])
+            family = get_child_node(classification, row['family_name'])
+            genus = get_child_node(family, row['genus_name'])
+            species = get_child_node(genus, row['species_name'])
+            breed = get_child_node(species, row['breed_name'])
 
         context['data'] = json.dumps(root, ensure_ascii=False)
 
