@@ -1,5 +1,7 @@
 from typing import Self
 
+from taxonomy.domain.breed_entity import BreedEntity
+
 
 class Node:
     """
@@ -11,19 +13,22 @@ class Node:
 
     def __init__(self, name):
         self._name = name
-
-        # TODO: ここを解決しないと...
-        #  1. クラス変数はクラス生成時以降は初期化されないからinstanceを無視してずっと増えてしまう https://coush.jp/280.html
-        #  2. ここで初期化すると loop 2回目以降でずっと初期化される（蓄積できない） test参考
         self._children = list()
 
     @property
     def name(self):
         return self._name
 
-    def _exists(self, needle: Self):
-        node: Node
-        return not not [node for node in self._children if node.name == needle.name]
+    def exists_child(self, needle: str) -> bool:
+        """
+        needle の名前の子Nodeを持っているか
+
+        Args:
+            needle: str
+
+        Returns: bool
+        """
+        return not not self.get_child(needle)
 
     def list(self) -> list:
         return self._children
@@ -35,7 +40,7 @@ class Node:
         Args:
             node: 追加したいNode
         """
-        if not self._exists(node):
+        if not self.exists_child(node.name):
             self._children.append(node)
 
         return self

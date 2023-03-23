@@ -20,6 +20,28 @@ class TestNode(TestCase):
         ]
         self.breed_entities = [BreedEntity(x) for x in self.data]
 
+    def test_name(self):
+        self.assertEqual('abc', Node('abc').name)
+
+    def test_exists_child(self):
+        node = Node('abc')
+        node.add_child(Node('def'))
+        self.assertTrue(node.exists_child('def'))
+
+    def test_get_child(self):
+        node = Node('abc')
+        node_def = Node('def')
+        node.add_child(node_def)
+        self.assertEqual(node_def, node.get_child('def'))
+
+    def test_list(self):
+        node_parent = Node('abc')
+        node_def = Node('def')
+        node_ghi = Node('ghi')
+        node_parent.add_child(node_def)
+        node_parent.add_child(node_ghi)
+        self.assertEqual([node_def, node_ghi], node_parent.list())
+
     def test_add_child_can_added(self):
         kingdom = Node('動物界')
         self.assertEqual(0, len(kingdom.list()))
