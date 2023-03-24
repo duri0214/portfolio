@@ -60,3 +60,31 @@ class Node:
                 break
 
         return return_value
+
+
+class NodeTree:
+    _tree: Node
+
+    def __init__(self, records: list[BreedEntity], name: str = 'root'):
+        self._tree = Node(name)
+        self._breed_entities = records
+
+        for breed_entity in self._breed_entities:
+            self._recurcive_add(self._tree, breed_entity.get_taxonomies())
+
+    def _recurcive_add(self, anchor: Node, taxonomies: list):
+        taxonomy = taxonomies.pop(0)
+        child = anchor.add_child(Node(taxonomy)).get_child(taxonomy)
+        if taxonomies:
+            self._recurcive_add(child, taxonomies)
+
+    def _recurcive_convert(self, anchor: Node):
+        converted = []
+        if len(anchor.list()) > 0:
+            for child in anchor.list():
+                converted.append(self._recurcive_convert(child))
+
+        return {"name": anchor.name, "children": converted}
+
+    def export(self):
+        return self._recurcive_convert(self._tree)

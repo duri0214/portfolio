@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from taxonomy.domain.breed_entity import BreedEntity
-from taxonomy.domain.node import Node
+from taxonomy.domain.node import Node, NodeTree
 
 
 class TestNode(TestCase):
@@ -62,72 +62,74 @@ class TestNode(TestCase):
         kingdom.add_child(Node('脊椎動物門'))
         self.assertEqual(target_node, kingdom.get_child('環形動物門'))
 
-    def test_add_child_hierarchical_add(self):
-        root = Node('root')
-        for breed_entity in self.breed_entities:
-            kingdom = Node(breed_entity.kingdom)
-            root.add_child(kingdom)
-            phylum = Node(breed_entity.phylum)
-            kingdom.add_child(phylum)
-            classification = Node(breed_entity.classification)
-            phylum.add_child(classification)
-            family = Node(breed_entity.family)
-            classification.add_child(family)
-            genus = Node(breed_entity.genus)
-            family.add_child(genus)
-            species = Node(breed_entity.species)
-            genus.add_child(species)
-            breed = Node(breed_entity.breed)
-            species.add_child(breed)
-
-            # TODO: kingdomのinstanceアドレスがループごとに変わっていることを確認してください
-            print(kingdom)
-
-        # root（すべての界を束ねる収束点は1つの界をもつ →動物界）
-        self.assertEqual('root', root.name)
-        self.assertEqual(1, len(root.list()))
-        kingdom = root.get_child('動物界')
-        self.assertEqual('動物界', kingdom.name)
-        # 環形動物門, 脊椎動物門
-        # self.assertEqual(2, len(kingdom.list()))
-
-        # ミミズレコードがあるかを点検
-        phylum = kingdom.get_child('環形動物門')
-        self.assertEqual('環形動物門', phylum.name)
-        self.assertEqual(1, len(phylum.list()))
-        classification = phylum.get_child('貧毛綱')
-        self.assertEqual('貧毛綱', classification.name)
-        self.assertEqual(1, len(classification.list()))
-        family = classification.get_child('ツリミミズ科')
-        self.assertEqual('ツリミミズ科', family.name)
-        self.assertEqual(1, len(family.list()))
-        genus = family.get_child('シマミミズ属')
-        self.assertEqual('シマミミズ属', genus.name)
-        self.assertEqual(1, len(genus.list()))
-        species = genus.get_child('シマミミズ種')
-        self.assertEqual('シマミミズ種', species.name)
-        self.assertEqual(1, len(species.list()))
-        breed = species.get_child('シマミミズ')
-        self.assertEqual('シマミミズ', breed.name)
-        self.assertEqual(0, len(breed.list()))
-
-        # ニワトリレコードがあるかを点検
-        phylum = kingdom.get_child('脊椎動物門')
-        if phylum:
-            self.assertEqual('脊椎動物門', phylum.name)  # TODO: 増えてないぞ？
-            self.assertEqual(1, len(phylum.list()))
-            classification = phylum.get_child('鳥綱')
-            self.assertEqual('鳥綱', classification.name)
-            self.assertEqual(1, len(classification.list()))
-            family = classification.get_child('キジ科')
-            self.assertEqual('キジ科', family.name)
-            self.assertEqual(1, len(family.list()))
-            genus = family.get_child('ヤケイ属')
-            self.assertEqual('ヤケイ属', genus.name)
-            self.assertEqual(1, len(genus.list()))
-            species = genus.get_child('セキショクヤケイ種')
-            self.assertEqual('セキショクヤケイ種', species.name)
-            self.assertEqual(1, len(species.list()))
-            breed = species.get_child('ボリスブラウン')
-            self.assertEqual('ボリスブラウン', breed.name)
-            self.assertEqual(0, len(breed.list()))
+    def test_node_tree(self):
+        tree = NodeTree(self.breed_entities)
+        expected = {
+            "name": "root",
+            "children": [
+                {
+                    "name": "動物界",
+                    "children": [
+                        {
+                            "name": "環形動物門",
+                            "children": [
+                                {
+                                    "name": "貧毛綱",
+                                    "children": [
+                                        {
+                                            "name": "ツリミミズ科",
+                                            "children": [
+                                                {
+                                                    "name": "シマミミズ属",
+                                                    "children": [
+                                                        {
+                                                            "name": "シマミミズ種",
+                                                            "children": [
+                                                                {
+                                                                    "name": "シマミミズ",
+                                                                    "children": []
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "name": "脊椎動物門",
+                            "children": [
+                                {
+                                    "name": "鳥綱",
+                                    "children": [
+                                        {
+                                            "name": "キジ科",
+                                            "children": [
+                                                {
+                                                    "name": "ヤケイ属",
+                                                    "children": [
+                                                        {
+                                                            "name": "セキショクヤケイ種",
+                                                            "children": [
+                                                                {
+                                                                    "name": "ボリスブラウン",
+                                                                    "children": []
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+        self.assertEqual(expected, tree.export())

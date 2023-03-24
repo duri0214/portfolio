@@ -14,10 +14,5 @@ class BreedEntity:
         self.natural_monument: str = record.get('breed_name_kana')
         self.breed_tag: str = record.get('breed_tag')
 
-    def get_hierarchy(self) -> tuple:
-        """
-        linked_list用 のタプルを返す
-
-        Returns: list
-        """
-        return self.kingdom, self.phylum, self.classification, self.family, self.genus, self.species, self.breed
+    def get_taxonomies(self) -> list:
+        return [self.kingdom, self.phylum, self.classification, self.family, self.genus, self.species, self.breed]

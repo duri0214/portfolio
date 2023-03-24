@@ -3,27 +3,9 @@ from django.db.models import F
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView
 
+from taxonomy.domain.breed_entity import BreedEntity
+from taxonomy.domain.node import NodeTree
 from taxonomy.models import Kingdom, Breed
-
-
-def get_child_node(anchor_node: dict, needle: str) -> dict:
-    """
-    anchor_node の children に needle がいれば、その child_node を返す。いなければ新規dictを入れて、その child_node を返す
-
-    Returns: dict
-    """
-    # TODO: Nodeクラスに置き換える A と B は返り値の型が違うだけで、処理は一緒なので整理する
-    child_node = None
-    is_exists = not not [child for child in anchor_node['children'] if child['name'] == needle]  # A
-    if len(anchor_node['children']) > 0 and is_exists:
-        for child in anchor_node['children']:  # B
-            if child['name'] == needle:
-                child_node = child
-    else:
-        child_node = {"name": needle, "children": []}
-        anchor_node['children'].append(child_node)
-
-    return child_node
 
 
 class IndexView(ListView):
@@ -58,18 +40,8 @@ class IndexView(ListView):
         See Also: https://github.com/EE2dev/d3-indented-tree#examples
         """
         context = super(IndexView, self).get_context_data(**kwargs)
-
-        root = {"name": "root", "children": []}  # TODO: NodeTreeクラスに切り替える
-        for row in self.get_queryset():
-            kingdom = get_child_node(root, row['kingdom_name'])
-            phylum = get_child_node(kingdom, row['phylum_name'])
-            classification = get_child_node(phylum, row['classification_name'])
-            family = get_child_node(classification, row['family_name'])
-            genus = get_child_node(family, row['genus_name'])
-            species = get_child_node(genus, row['species_name'])
-            breed = get_child_node(species, row['breed_name'])
-
-        context['data'] = json.dumps(root, ensure_ascii=False)
+        tree = NodeTree([BreedEntity(record) for record in self.get_queryset()])
+        context['data'] = json.dumps(tree.export(), ensure_ascii=False)
 
         return context
 
