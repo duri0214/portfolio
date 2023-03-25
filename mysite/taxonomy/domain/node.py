@@ -78,7 +78,7 @@ class NodeTree:
         if taxonomies:
             self._recurcive_add(child, taxonomies)
 
-    def _recurcive_convert(self, anchor: Node):
+    def _recurcive_convert(self, anchor: Node) -> dict:
         converted = []
         if len(anchor.list()) > 0:
             for child in anchor.list():
@@ -86,5 +86,5 @@ class NodeTree:
 
         return {"name": anchor.name, "children": converted}
 
-    def export(self):
+    def export(self) -> dict:
         return self._recurcive_convert(self._tree)
