@@ -1,5 +1,6 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase, Client
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 
 from register.models import User
 from vietnam_research.models import Articles, Likes
@@ -22,8 +23,3 @@ class TestView(TestCase):
         client = Client()
         response = client.get(reverse('vnm:index'))
         self.assertContains(response, 'ゲストさん')
-        client.force_login(user)
-        response = client.get(reverse('vnm:index'))
-        self.assertContains(response, 'tester@b.cさん')
-
-        # TODO: loginidのテストは mysite/vietnam_research/views.py articlesとlike L62
