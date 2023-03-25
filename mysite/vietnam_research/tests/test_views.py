@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase, Client
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 
 from register.models import User
 from vietnam_research.models import Articles, Likes
