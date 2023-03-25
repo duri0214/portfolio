@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from register.models import User
+from vietnam_research.models import Articles, Likes
 
 
 class TestView(TestCase):
