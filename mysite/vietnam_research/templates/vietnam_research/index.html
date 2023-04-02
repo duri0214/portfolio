@@ -32,11 +32,14 @@
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
                                 <p style="font-size: small">{{ article.note | truncatechars:80 }}</p>
-                                <p class="author text-right text-secondary" style="font-size: xx-small">投稿者: {{ article.user.email | truncatechars:3 }} さん</p>
+                                <p class="author text-right text-secondary" style="font-size: xx-small">投稿者: {{ article.user_name | truncatechars:3 }} さん</p>
                                 <div class="card-body">
-                                    <a role="button" aria-pressed='{{ article.is_like | yesno:"true,false" }}' onclick="likes(event, '{{ user.id }}', '{{ article.id }}')">
-                                    <button type="button" class="btn btn-light">いいね！<span>({{ article.likes_cnt }})</span></button>
-                                    </a>
+                                    <button
+                                        type="button"
+                                        class="like_toggle btn btn-outline-secondary {{ article.liked_by_me|yesno:'active,' }}"
+                                        data-article-id="{{ article.id }}"
+                                        data-liked-by-me="{{ article.liked_by_me }}"
+                                    >いいね！<span>({{ article.likes_cnt }})</span></button>
                                 </div>
                             </li>
                         </ul>
@@ -270,7 +273,40 @@
         </div>
     </div>
 
-    <script>
+    <script lang="js">
+        const likeToggles = document.getElementsByClassName('like_toggle');
+        for (let i = 0; i < likeToggles.length; i++) {
+            likeToggles[i].addEventListener('click', () => {
+                const articleId = likeToggles[i].dataset.articleId
+                const userId = {{ user.id }}
+                if (!userId) {
+                    location.href = myurl.login
+                }
+                const createOrDelete = parseInt(likeToggles[i].dataset.likedByMe) ? 'delete' : 'create'
+                fetch(`${myurl.base}likes/${createOrDelete}/${articleId}/${userId}/`, {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "X-CSRFToken": Cookies.get('csrftoken')
+                    },
+                    body: JSON.stringify({"status": "requested from javascript."})
+                })
+                .then(response => response.json())
+                .then(json => {
+                    likeToggles[i].getElementsByTagName('span')[0].innerHTML = `(${json.likes_cnt})`
+                    likeToggles[i].dataset.likedByMe = json.liked_by_me
+                    likeToggles[i].classList.remove('active')
+                    if (json.liked_by_me) {
+                        likeToggles[i].classList.add('active')
+                    }
+                })
+                .catch((error) => {
+                    console.error('Ooops!! There has been a problem with your fetch operation:', error)
+                })
+            })
+        }
+    </script>
+    <script lang="js">
         const radarChartOptions = {
             w: 290,
             h: 350,

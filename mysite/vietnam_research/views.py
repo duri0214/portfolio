@@ -2,15 +2,13 @@ import json
 import logging
 from datetime import datetime
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, redirect
-from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.http import urlencode
-from django.views.generic import CreateView, ListView, UpdateView
+from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from django.http.response import JsonResponse
-from django.db.models import Count, Case, When, IntegerField, Sum
+from django.http.response import HttpResponse
+from django.db.models import Count, Sum, F
 
 from register.models import User
 from vietnam_research.forms import ArticleForm, WatchlistCreateForm, ExchangeForm, FinancialResultsForm
@@ -62,55 +60,61 @@ def index(request):
         watchlist_form = WatchlistCreateForm()
         watchlist_form.buy_date = datetime.today().strftime("%Y/%m/%d")
 
-    # articlesとlike
-    try:
-        loginid = get_user_model().objects.values('id').get(email=request.user)['id']
-    except get_user_model().DoesNotExist:
-        loginid = None
-    articles = Articles.objects.annotate(likes_cnt=Count('likes'))
-    articles = articles.select_related('user')
-    like_list = Likes.objects.filter(user_id=loginid).values('articles_id')
-    articles = articles.annotate(
-        is_like=Case(
-            When(likes__articles_id__in=like_list, then=1), default=0, output_field=IntegerField()
-        )
-    ).order_by('-created_at')[:3]
+    login_user = User.objects.filter(email=request.user).first()
+    login_id = None
+    if login_user:
+        login_id = login_user.id
 
+    # TODO: articlesは試作のため3投稿のみ
     context = {
         'industry_count': json.dumps(mkt.radar_chart_count()),
         'industry_cap': json.dumps(mkt.radar_chart_cap()),
         'vnindex_timeline': json.dumps(mkt.vnindex_timeline()),
         'vnindex_layers': json.dumps(mkt.vnindex_annual_layers()),
-        'articles': articles,
+        'articles': Articles.with_state(login_id).annotate(user_name=F('user__email')).order_by('-created_at')[:3],
         'basicinfo': BasicInformation.objects.order_by('id').values('item', 'description'),
         'watchlist': mkt.watchlist(),
         'sbi_topics': mkt.sbi_topics(),
         'uptrends': json.dumps(mkt.uptrends()),
         'exchange_form': exchange_form,
-        'exchanged': exchanged,
+        'exchanged': exchanged
     }
 
     return render(request, 'vietnam_research/index.html', context)
 
 
-class LikesUpdateView(LoginRequiredMixin, UpdateView):
-    """いいね！ボタンをクリックしたとき"""
+class LikesCreateView(LoginRequiredMixin, CreateView):
     def post(self, request, *args, **kwargs):
+        return_value = None
         try:
-            user = User.objects.get(pk=kwargs['user_id'])
-            article = Articles.objects.get(pk=kwargs['article_id'])
-            like = Likes.objects.filter(user=user, articles=article)
-            if not like.exists():
-                Likes.objects.create(user=user, articles=article)
-            else:
-                like.delete()
-            return JsonResponse({"status": "responded by views.py"})
-        except ObjectDoesNotExist:
-            logging.critical('不正なユーザアカウントまたは記事からのアクセスがありました')
+            Likes.objects.create(user_id=kwargs['user_id'], articles_id=kwargs['article_id'])
+            article = Articles.with_state(kwargs['user_id']).get(pk=kwargs['article_id'])
+            return_value = json.dumps({'likes_cnt': article.likes_cnt, 'liked_by_me': article.liked_by_me})
+        except User.DoesNotExist:
+            logging.critical('不正なユーザアカウントからのアクセスがありました')
+        except Articles.DoesNotExist:
+            logging.critical('不正な記事へのアクセスがありました')
+
+        return HttpResponse(return_value, status=201)
+
+
+class LikesDeleteView(LoginRequiredMixin, DeleteView):
+    def post(self, request, *args, **kwargs):
+        return_value = None
+        try:
+            Likes.objects.filter(user_id=kwargs['user_id'], articles_id=kwargs['article_id']).delete()
+            article = Articles.with_state(kwargs['user_id']).get(pk=kwargs['article_id'])
+            return_value = json.dumps({'likes_cnt': article.likes_cnt, 'liked_by_me': article.liked_by_me})
+        except User.DoesNotExist:
+            logging.critical('不正なユーザアカウントからのアクセスがありました')
+        except Articles.DoesNotExist:
+            logging.critical('不正な記事へのアクセスがありました')
+
+        return HttpResponse(return_value, status=200)
 
 
 class ArticleCreateView(LoginRequiredMixin, CreateView):
-    """いいね！記事作成画面"""
+    """記事作成画面"""
     model = Articles
     template_name = "vietnam_research/articles/create.html"
     form_class = ArticleForm

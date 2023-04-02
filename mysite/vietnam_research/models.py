@@ -3,7 +3,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.db.models import QuerySet
+from django.db.models import QuerySet, IntegerField, Case, Count, When
 
 
 class Market(models.Model):
@@ -82,7 +82,7 @@ class IndustryQuerySet(models.QuerySet):
 
         return self \
             .filter(recorded_date__year=slipped_date.year, recorded_date__month=slipped_date.month) \
-            .order_by('recorded_date')\
+            .order_by('recorded_date') \
             .latest('recorded_date')
 
 
@@ -192,11 +192,23 @@ class BasicInformation(models.Model):
 
 
 class Articles(models.Model):
-    """記事"""
+    """いいね！機能つきの記事"""
     title = models.CharField(verbose_name='タイトル', max_length=200)
     note = models.TextField(verbose_name='投稿内容')
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     created_at = models.DateTimeField('公開日時', auto_now_add=True)
+
+    @staticmethod
+    def with_state(user_id: int) -> QuerySet:
+        return Articles.objects.annotate(
+                likes_cnt=Count('likes'),
+                liked_by_me=Case(
+                    When(id__in=Likes.objects.filter(user_id=user_id).values('articles_id'),
+                         then=1),
+                    default=0,
+                    output_field=IntegerField()
+                )
+            )
 
 
 class Likes(models.Model):
@@ -204,6 +216,14 @@ class Likes(models.Model):
     articles = models.ForeignKey('Articles', on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['articles_id', 'user_id'],
+                name='articles_user_unique'
+            )
+        ]
 
 
 class Unit(models.Model):
