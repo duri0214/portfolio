@@ -10,6 +10,7 @@ urlpatterns = [
     path('choose/<int:pk>/', IndexView.as_view(), name='index_choose'),
     path('reset/', IndexView.as_view(), name='reset'),
     path('invoice/create/', InvoiceCreateView.as_view(), name='invoice_create'),
-    path('invoice/inquiry/<int:mode>/', InvoiceListView.as_view(), name='invoice_inquiry'),
+    path('invoice/list/', InvoiceListView.as_view(), name='invoice_list'),
+    path('invoice/list/<int:mode>/', InvoiceListView.as_view(), name='invoice_list'),
     path('invoice/detail/<int:pk>/', InvoiceDetailView.as_view(), name='invoice_detail'),
 ]

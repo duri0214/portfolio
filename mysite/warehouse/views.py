@@ -107,10 +107,21 @@ class InvoiceListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['billing_status'] = BillingStatus.objects.get(pk=self.kwargs['mode'])
+        mode = self.kwargs.get('mode')
+        if mode:
+            billing_status = BillingStatus.objects.filter(pk=mode).values('name').first()['name']
+        else:
+            billing_status = 'すべて'
+        context['selected_status'] = billing_status
 
         return context
 
     def get_queryset(self, **kwargs):
-        billing_status = BillingStatus.objects.get(pk=self.kwargs['mode'])
-        return Invoice.objects.filter(billing_status=billing_status)
+        mode = self.kwargs.get('mode')
+        if mode:
+            billing_status = BillingStatus.objects.get(pk=mode)
+            invoice = Invoice.objects.filter(billing_status=billing_status)
+        else:
+            invoice = Invoice.objects.all()
+
+        return invoice
