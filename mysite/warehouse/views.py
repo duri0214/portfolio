@@ -95,12 +95,6 @@ class InvoiceCreateView(CreateView):
         context['invoice_items'] = Item.objects.filter(warehouse_id=warehouse.id, rental_status=RentalStatus.RENTAL)
         return context
 
-    def form_valid(self, form):
-        # TODO: company 以外もバリデーションしてね
-        company = form.cleaned_data.get('company')
-        form.instance.company = company
-        return super().form_valid(form)
-
     def get_success_url(self):
         rental_status = RentalStatus.objects.get(pk=RentalStatus.RENTAL)
         # 貸出中の関連アイテムに請求書を紐づける TODO: どの請求先企業の関連アイテム？の絞りが未対応
