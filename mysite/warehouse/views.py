@@ -88,13 +88,6 @@ class InvoiceCreateView(CreateView):
     model = Invoice
     form_class = InvoiceCreateForm
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        staff = Staff.objects.get(pk=1)
-        warehouse = Warehouse.objects.get(pk=staff.warehouse_id)  # TODO: ユーザー情報から倉庫を取得
-        context['invoice_items'] = Item.objects.filter(warehouse_id=warehouse.id, rental_status=RentalStatus.RENTAL)
-        return context
-
     def get_success_url(self):
         rental_status = RentalStatus.objects.get(pk=RentalStatus.RENTAL)
         # 貸出中の関連アイテムに請求書を紐づける TODO: どの請求先企業の関連アイテム？の絞りが未対応
