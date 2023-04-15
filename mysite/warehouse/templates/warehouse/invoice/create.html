@@ -34,6 +34,15 @@
             </ul>
         {% endif %}
 
+        <form method="POST" action="{% url 'war:invoice_create' %}">
+            {% csrf_token %}
+            <input type="text" id="date-range-picker">
+            <input type="hidden" id="selected-range-start" name="selected_range_start">
+            <input type="hidden" id="selected-range-end" name="selected_range_end">
+            <input type="hidden" id="highlighted-dates" name="highlighted_dates">
+            <button type="submit">Submit</button>
+        </form>
+
         <form method="POST">
             {% csrf_token %}
             {{ form.as_p }}
@@ -44,5 +53,31 @@
             <button type="submit">戻る</button>
         </form>
     </div>
+
+    <script>
+        const rangePicker = flatpickr("#date-range-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            minDate: "2023-04-01",
+            maxDate: "2023-04-30",
+            onChange: function(selectedDates, dateStr, instance) {
+                const selectedRangeStart = document.getElementById("selected-range-start");
+                const selectedRangeEnd = document.getElementById("selected-range-end");
+                selectedRangeStart.value = selectedDates[0] ? selectedDates[0].toISOString().slice(0, 10) : "";
+                selectedRangeEnd.value = selectedDates[1] ? selectedDates[1].toISOString().slice(0, 10) : "";
+            }
+        });
+
+        rangePicker.config.onReady = function(selectedDates, dateStr, instance) {
+            const highlightedDates = ["2023-04-13", "2023-04-21"];
+            const highlightedDatesInput = document.getElementById("highlighted-dates");
+            highlightedDatesInput.value = JSON.stringify(highlightedDates);
+            rangePicker.config.onDayCreate = function(dObj, dStr, fp, dayElem) {
+                if (highlightedDates.includes(dStr)) {
+                    dayElem.classList.add("highlight");
+                }
+            };
+        };
+    </script>
 
 {% endblock %}

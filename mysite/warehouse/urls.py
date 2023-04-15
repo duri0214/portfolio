@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import IndexView, ItemCreateView, ItemDetailView, InvoiceCreateView, InvoiceListView
+from .views import IndexView, ItemCreateView, ItemDetailView, InvoiceCreateView, InvoiceListView, InvoiceDetailView
 
 app_name = 'war'
 urlpatterns = [
@@ -11,4 +11,5 @@ urlpatterns = [
     path('reset/', IndexView.as_view(), name='reset'),
     path('invoice/create/', InvoiceCreateView.as_view(), name='invoice_create'),
     path('invoice/inquiry/<int:mode>/', InvoiceListView.as_view(), name='invoice_inquiry'),
+    path('invoice/detail/<int:pk>/', InvoiceDetailView.as_view(), name='invoice_detail'),
 ]

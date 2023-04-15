@@ -1,0 +1,40 @@
+{% extends 'warehouse/base.html' %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'warehouse/css/invoice/create.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <h2>請求書の詳細</h2>
+
+        <table class="table">
+            <tbody>
+                <tr>
+                    <th>会社名</th>
+                    <td>{{ invoice.company }}</td>
+                </tr>
+                <tr>
+                    <th>請求側担当者</th>
+                    <td>{{ invoice.billing_person }}</td>
+                </tr>
+                <tr>
+                    <th>レンタル開始日</th>
+                    <td>{{ invoice.rental_start_date }}</td>
+                </tr>
+                <tr>
+                    <th>レンタル終了日</th>
+                    <td>{{ invoice.rental_end_date }}</td>
+                </tr>
+                <tr>
+                    <th>担当者</th>
+                    <td>{{ invoice.staff }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+{% endblock %}

@@ -17,3 +17,9 @@ class InvoiceCreateForm(forms.ModelForm):
     class Meta:
         model = Invoice
         fields = ('company', 'billing_person', 'rental_start_date', 'rental_end_date', 'staff')
+
+    def clean_company(self):
+        company = self.cleaned_data['company']
+        if 'クサリク' in company.name:
+            raise forms.ValidationError('「クサリク」を含む取引先は選択できなくなりました（取引停止）')
+        return company
