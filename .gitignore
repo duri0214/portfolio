@@ -1,6 +1,6 @@
 favicon/
 migrations/
-mysite/node_modules/
+node_modules/
 __pycache__/
 *.log
 db.sqlite3
