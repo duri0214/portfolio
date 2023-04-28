@@ -1,7 +1,5 @@
 from django.test import TestCase
 
-from vietnam_research.service.market_nasdaq import MarketNasdaq
-
 
 class TestMarketNasdaq(TestCase):
     def test_calc_fee(self):
