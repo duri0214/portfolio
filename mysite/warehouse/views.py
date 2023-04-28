@@ -1,12 +1,13 @@
 from django.contrib import messages
+from django.db import models
+from django.db.models.functions import Concat
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView, CreateView, DetailView, ListView
-from sqlalchemy import create_engine, text
+from django.db.models.aggregates import Count
 
 from .forms import ItemCreateForm, InvoiceCreateForm
 from .models import Warehouse, Item, RentalStatus, Invoice, Staff, BillingStatus
-import pandas as pd
 import numpy as np
 
 
@@ -35,27 +36,21 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         warehouse = Warehouse.objects.get(pk=Staff.objects.get(pk=1).warehouse_id)  # TODO: ユーザー情報から倉庫を取得
-        _con = create_engine('mysql+mysqldb://python:python123@127.0.0.1/portfolio_db', echo=False).connect()
 
-        # TODO: 段・列でグループ化してアイテム名をカンマ区切りにする、みたいのがやりたいみたい
-        data = pd.read_sql_query(text(
-            '''
-            SELECT
-                pos_y, pos_x, GROUP_CONCAT(name) items
-            FROM warehouse_item
-            WHERE rental_status_id = 1 -- available
-            GROUP BY pos_y, pos_x
-            '''), _con)
-        array = np.zeros((warehouse.height, warehouse.width), dtype=int)
-        for idx, row in data.iterrows():
-            # pos_y, pos_x は 1base
-            array[row['pos_y']-1, row['pos_x']-1] = len(row['items'].split(','))
+        items = Item.objects.filter(rental_status_id=1).values('pos_y', 'pos_x').annotate(
+            num_items=Count('id'),
+            items=Concat('name', 'rental_status', output_field=models.TextField(), separator=',')
+        ).order_by('pos_y', 'pos_x')
 
-        # item list
-        available_items = Item.objects.filter(warehouse_id=warehouse.id).filter(rental_status_id=1)
-        non_available_items = Item.objects.filter(warehouse_id=warehouse.id).filter(rental_status_id__gt=1)
+        # note: 'pos_y', 'pos_x' は 1base だが、処理の都合でいったん0baseにして、テンプレート側で1baseに戻している
+        shelf = np.zeros((warehouse.height, warehouse.width), dtype=int)
+        for row in items:
+            shelf[row['pos_y'] - 1, row['pos_x'] - 1] = row['num_items']
 
-        context['shelf'] = array[::-1]
+        available_items = Item.objects.filter(warehouse_id=warehouse.id, rental_status_id=1)
+        non_available_items = Item.objects.filter(warehouse_id=warehouse.id).exclude(rental_status_id=1)
+
+        context['shelf'] = shelf[::-1]
         context['available_items'] = available_items
         context['non_available_items'] = non_available_items
 
