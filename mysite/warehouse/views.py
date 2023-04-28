@@ -88,6 +88,11 @@ class InvoiceCreateView(CreateView):
     model = Invoice
     form_class = InvoiceCreateForm
 
+    def form_invalid(self, form):
+        context = self.get_context_data(form=form)
+        context['form_errors'] = form.errors
+        return self.render_to_response(context)
+
     def get_success_url(self):
         rental_status = RentalStatus.objects.get(pk=RentalStatus.RENTAL)
         # 貸出中の関連アイテムに請求書を紐づける TODO: どの請求先企業の関連アイテム？の絞りが未対応

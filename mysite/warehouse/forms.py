@@ -12,11 +12,18 @@ class ItemCreateForm(forms.ModelForm):
 class InvoiceCreateForm(forms.ModelForm):
     # TODO: 会社名を選んだら、会社名の請求担当者しか選べない形にしたい
     #  https://blog.narito.ninja/detail/50
-    # billing_person = ModelChoiceField(label="請求側担当者", queryset=BillingPerson.objects.filter(company=99))
 
     class Meta:
         model = Invoice
         fields = ('company', 'billing_person', 'rental_start_date', 'rental_end_date', 'staff')
+        exclude = ['billing_status']
+        widgets = {
+            'company': forms.Select(attrs={'class': 'form-control'}),
+            'billing_person': forms.Select(attrs={'class': 'form-control'}),
+            'rental_start_date': forms.DateInput(attrs={'class': 'form-control'}),
+            'rental_end_date': forms.DateInput(attrs={'class': 'form-control'}),
+            'staff': forms.Select(attrs={'class': 'form-control'}),
+        }
 
     def clean_company(self):
         company = self.cleaned_data['company']
