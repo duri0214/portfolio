@@ -1,4 +1,4 @@
-from typing import Self
+from __future__ import annotations
 
 from taxonomy.domain.breed_entity import BreedEntity
 
@@ -9,14 +9,14 @@ class Node:
     See Also: https://engineeringnote.hateblo.jp/entry/python/algorithm-and-data-structures/multi_list_structure
     """
     _name: str
-    _children: list[Self]
+    _children: list[Node]
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         self._name = name
         self._children = list()
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     def exists_child(self, needle: str) -> bool:
@@ -30,12 +30,13 @@ class Node:
         """
         return not not self.get_child(needle)
 
-    def list(self) -> list:
+    def list(self) -> list[Node]:
         return self._children
 
-    def add_child(self, node: Self) -> Self:
+    def add_child(self, node: 'Node'):
         """
         _children に node がいないことを確認してから追加する
+        TODO: return の戻り型をSelf（3.11+）
 
         Args:
             node: 追加したいNode
@@ -45,9 +46,10 @@ class Node:
 
         return self
 
-    def get_child(self, needle: str) -> Self:
+    def get_child(self, needle: str):
         """
         _children に needle がいるかを判定し、いたらその Node を返す
+        TODO: return の戻り型をSelf（3.11+）
 
         Args:
             needle: 探したい Node._name
