@@ -1,4 +1,4 @@
-## debugging
+## local debugging
 - `pip install -r requirements.txt`
 - `cd .\mysite\`
 - `python manage.py runserver`
@@ -6,16 +6,14 @@
 ## server
 - `ssh henojiya`
 - `systemctl restart apache2`
-
-## permission
-- `chown -R ubuntu:ubuntu /var/www/html`
-
-## path
-- `cd /var/www/html/portfolio`
 - `$ git pull`
+- `python manage.py makemigrations taxonomy`
+- `python manage.py migrate`
+- `chown -R ubuntu:ubuntu /var/www/html`
+- `cd /var/www/html/portfolio`
 
 ## venv
-- `# source /var/www/html/venv311/bin/activate`
+- `# source /var/www/html/venv/bin/activate`
 - `# deactivate`
 
 ## ログをダダ流す
