@@ -11,6 +11,7 @@
 
 ## path
 - `cd /var/www/html/portfolio`
+- `$ git pull`
 
 ## venv
 - `# source /var/www/html/venv311/bin/activate`
