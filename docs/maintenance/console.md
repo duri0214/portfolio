@@ -5,7 +5,7 @@
 
 ## server
 - `ssh henojiya`
-- 
+
 ## permission
 - `chown -R ubuntu:ubuntu /var/www/html`
 
