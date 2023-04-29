@@ -5,6 +5,7 @@
 
 ## server
 - `ssh henojiya`
+- `systemctl restart apache2`
 
 ## permission
 - `chown -R ubuntu:ubuntu /var/www/html`
