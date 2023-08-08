@@ -1,11 +1,13 @@
+import inspect
+import os
 import urllib.request
 import datetime
 
 from django.core.management import BaseCommand
 from bs4 import BeautifulSoup
 
+from vietnam_research.domain.service.logservice import LogService
 from vietnam_research.models import VnIndex
-from vietnam_research.service import log_writter
 
 
 class Command(BaseCommand):
@@ -22,6 +24,9 @@ class Command(BaseCommand):
         soup = BeautifulSoup(urllib.request.urlopen(url).read(), 'lxml')
         transaction_date = datetime.datetime.strptime(soup.find(class_="price-datetime").text.split()[-1], '%Y/%m/%d')
 
+        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        log_service = LogService('./result.log')
+
         today = datetime.date.today()
         if not VnIndex.objects.filter(Y=today.strftime('%Y'), M=today.strftime('%m')).exists():
             VnIndex.objects.create(
@@ -29,6 +34,6 @@ class Command(BaseCommand):
                 M=transaction_date.strftime('%m'),
                 closing_price=soup.find(class_="price").text.replace(',', '')
             )
-            log_writter.batch_is_done(1)
+            log_service.write(f'{caller_file_name} is done.(1)')
         else:
-            log_writter.batch_is_done(0)
+            log_service.write(f'{caller_file_name} is done.(0)')

@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 from glob import glob
@@ -10,8 +11,8 @@ from django.core.management.base import BaseCommand
 from django.db.models import F
 from matplotlib import pyplot as plt
 from mysite.settings import BASE_DIR
+from vietnam_research.domain.service.logservice import LogService
 from vietnam_research.models import Industry, Uptrends, Symbol
-from vietnam_research.service import log_writter
 
 
 def calc_price(price_for_several_days: pd.Series) -> dict:
@@ -129,7 +130,10 @@ class Command(BaseCommand):
                 ))
             logging.info(formatted_text(ticker, slopes, passed, price))
         Uptrends.objects.bulk_create(passed_records)
-        log_writter.batch_is_done(len(tickers))
+
+        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        log_service = LogService('./result.log')
+        log_service.write(f'{caller_file_name} is done.({len(tickers)})')
 
         # TODO: パフォーマンスカイゼンして！原因はsymbolマスタにtickerかぶり（社名変更）があるため。バッチの新規Symbol取り込み部分もなおす
         # TODO: -400日が何月何日なのか表示

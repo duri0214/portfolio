@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import re
@@ -12,8 +13,8 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 
 from mysite.settings import BASE_DIR
+from vietnam_research.domain.service.logservice import LogService
 from vietnam_research.models import Sbi, Symbol
-from vietnam_research.service import log_writter
 
 
 def process_the_text(text_in_pdf: str):
@@ -84,9 +85,12 @@ class Command(BaseCommand):
         tag_tr = soup.find(class_="accTbl01").tbody.find_all("tr")
         sbis = [Sbi(symbol_id=m_symbol.get(code=x.th.p.string).id) for x in tag_tr]
 
+        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        log_service = LogService('./result.log')
+
         # insert
         Sbi.objects.bulk_create(sbis)
-        log_writter.batch_is_done(len(sbis))
+        log_service.write(f'{caller_file_name} is done.({len(sbis)})')
 
         # |Part2
         work_folder = Path(BASE_DIR) / 'vietnam_research/static/vietnam_research/sbi_topics'

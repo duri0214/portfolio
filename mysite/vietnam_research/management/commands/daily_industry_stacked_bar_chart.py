@@ -1,3 +1,4 @@
+import inspect
 import os
 from pathlib import Path
 import numpy as np
@@ -9,8 +10,8 @@ from django.db.models.functions import Concat, ExtractYear, ExtractMonth
 from matplotlib import pyplot as plt
 
 from mysite.settings import STATIC_ROOT, BASE_DIR
+from vietnam_research.domain.service.logservice import LogService
 from vietnam_research.models import Industry
-from vietnam_research.service import log_writter
 
 
 def get_data() -> pd.DataFrame:
@@ -90,4 +91,7 @@ class Command(BaseCommand):
         if not os.path.exists(out_path.parent):
             os.makedirs(out_path.parent)
         plt.savefig(out_path)
-        log_writter.batch_is_done()
+
+        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        log_service = LogService('./result.log')
+        log_service.write(f'{caller_file_name} is done.(0)')

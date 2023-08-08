@@ -1,3 +1,5 @@
+import inspect
+import os
 import re
 import urllib.request
 
@@ -8,8 +10,8 @@ from django.db.models import QuerySet
 from django.utils.datetime_safe import datetime
 from django.utils.timezone import now, localtime
 
+from vietnam_research.domain.service.logservice import LogService
 from vietnam_research.models import Symbol, Industry, Market, IndClass
-from vietnam_research.service import log_writter
 
 
 def retrieve_transaction_date(target_text: str) -> datetime:
@@ -48,6 +50,7 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
     """
     m_ind_class = IndClass.objects.all()
     vietkabu = []
+    log_service = LogService('./result.log')
     for tag_tr in soup.find_all('tr', id=True):
         tag_td_string_type = tag_tr.find_all('td', class_='table_list_center')
         if not tag_td_string_type:
@@ -59,7 +62,7 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
         try:
             ind_class = m_ind_class.get(industry1=industry1, industry2=industry2)
         except ObjectDoesNotExist:
-            log_writter.batch_information(f"{industry1}[{industry2}] が業種マスタに存在しないため {symbol_code} が処理対象外になりました")
+            log_service.write(f"{industry1}[{industry2}] が業種マスタに存在しないため {symbol_code} が処理対象外になりました")
             continue
         vietkabu.append({
             'symbol': symbol_code,
@@ -94,6 +97,9 @@ class Command(BaseCommand):
             {"url": 'https://www.viet-kabu.com/stock/hn.html', "mkt": 'HNX'}
         ]
 
+        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        log_service = LogService('./result.log')
+
         m_market = Market.objects.all()
         for processing in market_list:
             print(processing)
@@ -106,7 +112,7 @@ class Command(BaseCommand):
 
             # bypass if exists transaction date
             if Industry.objects.filter(recorded_date=transaction_date, symbol__market__code=processing['mkt']).exists():
-                log_writter.batch_information(f"{processing['mkt']}の当日データがあったので処理対象外になりました")
+                log_service.write(f"{processing['mkt']}の当日データがあったので処理対象外になりました")
                 continue
 
             # register if the symbols to be processed is new
@@ -118,7 +124,7 @@ class Command(BaseCommand):
                     ind_class=newcomer['industry'],
                     market=m_market.get(code=processing['mkt'])
                 ))
-                log_writter.batch_information(f"{newcomer['symbol']} {newcomer['name']} を追加しました")
+                log_service.write(f"{newcomer['symbol']} {newcomer['name']} を追加しました")
             if len(add_records) > 0:
                 Symbol.objects.bulk_create(add_records)
 
@@ -137,20 +143,20 @@ class Command(BaseCommand):
                     symbol.name = tag_td_string_type[0].a.get('title')
                     update_records.append(symbol)
                 except ObjectDoesNotExist:
-                    log_writter.batch_information(f"{symbol_code}がシンボルマスタに存在しないため処理対象外になりました")
+                    log_service.write(f"{symbol_code}がシンボルマスタに存在しないため処理対象外になりました)")
                     continue
 
                 tag_td_number_type = tag_tr.find_all('td', class_='table_list_right')
                 add_records.append(Industry(
                     recorded_date=transaction_date,
-                    open_price=float(tag_td_number_type[2].text),
-                    high_price=float(tag_td_number_type[3].text),
-                    low_price=float(tag_td_number_type[4].text),
+                    open_price=float(tag_td_number_type[2].text.strip() or '0'),
+                    high_price=float(tag_td_number_type[3].text.strip() or '0'),
+                    low_price=float(tag_td_number_type[4].text.strip() or '0'),
                     closing_price=float(tag_td_number_type[1].text),
                     volume=float(tag_td_number_type[7].text.replace('-', '0').replace(',', '')),
                     trade_price_of_a_day=float(tag_td_number_type[8].text.replace('-', '0').replace(',', '')),
                     marketcap=float(tag_td_number_type[10].text.replace('-', '0').replace(',', '')),
-                    per=float(tag_td_number_type[11].text.replace('-', '0')),
+                    per=float(tag_td_number_type[11].text.replace(',', '').replace('-', '0')),
                     created_at=localtime(now()).strftime('%Y-%m-%d %a %H:%M:%S'),
                     symbol=symbol
                 ))
@@ -158,4 +164,4 @@ class Command(BaseCommand):
                 print([x.symbol.code for x in add_records])
                 Industry.objects.bulk_create(add_records)
                 Symbol.objects.bulk_update(update_records, fields=['name'])
-            log_writter.batch_is_done(len(add_records))
+            log_service.write(f'{caller_file_name} is done.({len(add_records)})')
