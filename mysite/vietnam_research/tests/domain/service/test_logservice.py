@@ -10,8 +10,7 @@ class TestLogService(TestCase):
         """
         テスト実行ごとに `abc` というログを出力し、ログ出力前よりも `abc` のカウントが `1` 多いことを確認する
         """
-        desktop = Path(os.environ['USERPROFILE']) / 'Desktop'
-        log_path = f'{desktop}/abc.log'
+        log_path = f'./abc.log'
 
         log = LogService(log_path)
         if not os.path.isfile(log_path):
