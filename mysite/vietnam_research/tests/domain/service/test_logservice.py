@@ -18,7 +18,7 @@ class TestLogService(TestCase):
 
         with open(log_path) as f:
             stream_in_log1 = f.read()
-        log.write('abc')
+        log.write('abc日本語も大丈夫')
         with open(log_path) as f:
             stream_in_log2 = f.read()
 

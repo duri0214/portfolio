@@ -11,7 +11,7 @@ class LogService:
         """
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-        file_handler = logging.FileHandler(log_file_name)
+        file_handler = logging.FileHandler(log_file_name, encoding='utf-8')
         file_handler.setFormatter(logging.Formatter(self._format))
         self.logger.addHandler(file_handler)
 
