@@ -1,7 +1,6 @@
-import inspect
-import os
 import re
 import urllib.request
+from pathlib import Path
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
@@ -97,7 +96,7 @@ class Command(BaseCommand):
             {"url": 'https://www.viet-kabu.com/stock/hn.html', "mkt": 'HNX'}
         ]
 
-        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        caller_file_name = Path(__file__).stem
         log_service = LogService('./result.log')
 
         m_market = Market.objects.all()

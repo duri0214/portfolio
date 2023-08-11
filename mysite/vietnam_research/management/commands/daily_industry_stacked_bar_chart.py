@@ -1,4 +1,3 @@
-import inspect
 import os
 from pathlib import Path
 import numpy as np
@@ -92,6 +91,6 @@ class Command(BaseCommand):
             os.makedirs(out_path.parent)
         plt.savefig(out_path)
 
-        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        caller_file_name = Path(__file__).stem
         log_service = LogService('./result.log')
         log_service.write(f'{caller_file_name} is done.(0)')

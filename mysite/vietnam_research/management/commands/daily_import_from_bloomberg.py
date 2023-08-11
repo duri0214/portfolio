@@ -1,7 +1,6 @@
-import inspect
-import os
 import urllib.request
 import datetime
+from pathlib import Path
 
 from django.core.management import BaseCommand
 from bs4 import BeautifulSoup
@@ -24,7 +23,7 @@ class Command(BaseCommand):
         soup = BeautifulSoup(urllib.request.urlopen(url).read(), 'lxml')
         transaction_date = datetime.datetime.strptime(soup.find(class_="price-datetime").text.split()[-1], '%Y/%m/%d')
 
-        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        caller_file_name = Path(__file__).stem
         log_service = LogService('./result.log')
 
         today = datetime.date.today()

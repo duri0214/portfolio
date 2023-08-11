@@ -1,4 +1,3 @@
-import inspect
 import logging
 import os
 from glob import glob
@@ -131,7 +130,7 @@ class Command(BaseCommand):
             logging.info(formatted_text(ticker, slopes, passed, price))
         Uptrends.objects.bulk_create(passed_records)
 
-        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        caller_file_name = Path(__file__).stem
         log_service = LogService('./result.log')
         log_service.write(f'{caller_file_name} is done.({len(tickers)})')
 

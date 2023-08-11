@@ -1,4 +1,3 @@
-import inspect
 import logging
 import os
 import re
@@ -85,7 +84,7 @@ class Command(BaseCommand):
         tag_tr = soup.find(class_="accTbl01").tbody.find_all("tr")
         sbis = [Sbi(symbol_id=m_symbol.get(code=x.th.p.string).id) for x in tag_tr]
 
-        caller_file_name = os.path.basename(inspect.stack()[1].filename)
+        caller_file_name = Path(__file__).stem
         log_service = LogService('./result.log')
 
         # insert
