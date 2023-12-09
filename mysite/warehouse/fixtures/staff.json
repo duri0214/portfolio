@@ -3,7 +3,7 @@
     "model": "warehouse.staff",
     "fields": {
       "name":"スタッフ1",
-      "created_at":"2023-02-12 00:00:00",
+      "created_at": "2023-02-12T09:00:00+09:00",
       "warehouse_id":1
     }
   }

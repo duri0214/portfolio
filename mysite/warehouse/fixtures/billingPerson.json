@@ -5,7 +5,7 @@
       "company":1,
       "name":"山田 勇美",
       "email":"yamada_isami@geocities.com",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   },
   {
@@ -14,7 +14,7 @@
       "company":2,
       "name":"落合 時代",
       "email":"otatky@example.jp",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   },
   {
@@ -23,7 +23,7 @@
       "company":3,
       "name":"中野 孝敏",
       "email":"takatosi@ybb.ne.jp",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   },
   {
@@ -32,7 +32,7 @@
       "company":4,
       "name":"大槻 絵美",
       "email":"otk94@dion.ne.jp",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   },
   {
@@ -41,7 +41,7 @@
       "company":5,
       "name":"内海 多佳司",
       "email":"takasi_utumi@excite.com",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   },
   {
@@ -50,7 +50,7 @@
       "company":6,
       "name":"亀井 慶太郎",
       "email":"kamei75@combzmail.jp",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   },
   {
@@ -59,7 +59,7 @@
       "company":7,
       "name":"篠原 直広",
       "email":"naohiro1970@cuib.or.jp",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   },
   {
@@ -68,7 +68,7 @@
       "company":8,
       "name":"山根 幾江",
       "email":"yamane-isoe@yahoo.co.jp",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   },
   {
@@ -77,7 +77,7 @@
       "company":9,
       "name":"吉井 友恵",
       "email":"ysi-tme@yahoo.co.jp",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   },
   {
@@ -86,7 +86,7 @@
       "company":10,
       "name":"増田 利浩",
       "email":"tshrrhst@mesh.ne.jp",
-      "created_at":"2023-02-15"
+      "created_at": "2023-02-15T09:00:00+09:00"
     }
   }
 ]
