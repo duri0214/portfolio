@@ -73,7 +73,6 @@ python manage.py loaddata .\taxonomy\fixtures\breedTags.json
 ## バッチ
 
 ```
-python manage.py daily_import_from_vietkabu
 python manage.py daily_industry_chart_and_uptrends
 python manage.py daily_industry_stacked_bar_chart
 ```
