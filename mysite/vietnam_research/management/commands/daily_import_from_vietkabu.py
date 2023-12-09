@@ -1,12 +1,12 @@
 import re
 import urllib.request
+from datetime import datetime
 from pathlib import Path
 
+from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
-from bs4 import BeautifulSoup
 from django.db.models import QuerySet
-from django.utils.datetime_safe import datetime
 from django.utils.timezone import now, localtime
 
 from vietnam_research.domain.service.logservice import LogService
