@@ -42,8 +42,7 @@ INSTALLED_APPS = [
     'linebot.apps.LinebotConfig',
     'register.apps.RegisterConfig',
     'warehouse.apps.WarehouseConfig',
-    'taxonomy.apps.TaxonomyConfig',
-    'mod_wsgi.server'
+    'taxonomy.apps.TaxonomyConfig'
 ]
 
 MIDDLEWARE = [
