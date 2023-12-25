@@ -1,6 +1,6 @@
 # Portfolio
 
-[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
+![Static Badge](https://img.shields.io/badge/python-3.11-green)
 ![Static Badge](https://img.shields.io/badge/django-4.2.8-green)
 ![Static Badge](https://img.shields.io/badge/mysql-8.0-green)
 
