@@ -2,13 +2,14 @@ import logging
 import os
 from glob import glob
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from PIL import Image
-
 from django.core.management.base import BaseCommand
 from django.db.models import F
 from matplotlib import pyplot as plt
+
 from mysite.settings import BASE_DIR
 from vietnam_research.domain.service.logservice import LogService
 from vietnam_research.models import Industry, Uptrends, Symbol
@@ -121,12 +122,16 @@ class Command(BaseCommand):
                 # e.g. 14 days ago to today
                 closing_price = closing_price[-max(days):].reset_index(drop=True)
                 price = calc_price(closing_price)
-                passed_records.append(Uptrends(
-                    symbol=m_symbol.get(code=ticker),
-                    stocks_price_oldest=price['initial'],
-                    stocks_price_latest=price['latest'],
-                    stocks_price_delta=price['delta']
-                ))
+                try:
+                    passed_records.append(Uptrends(
+                        symbol=m_symbol.get(code=ticker),
+                        stocks_price_oldest=price['initial'],
+                        stocks_price_latest=price['latest'],
+                        stocks_price_delta=price['delta']
+                    ))
+                except Symbol.DoesNotExist:
+                    logging.critical(formatted_text(ticker, slopes, passed, price))
+
             logging.info(formatted_text(ticker, slopes, passed, price))
         Uptrends.objects.bulk_create(passed_records)
 
