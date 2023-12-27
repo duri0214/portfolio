@@ -51,13 +51,21 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
     vietkabu = []
     log_service = LogService('./result.log')
     for tag_tr in soup.find_all('tr', id=True):
+        tag_td_number_type = tag_tr.find_all('td', class_='table_list_right')
+        if not tag_td_number_type:
+            continue
+        if tag_td_number_type[0].text.strip() == '-':
+            continue
         tag_td_string_type = tag_tr.find_all('td', class_='table_list_center')
         if not tag_td_string_type:
             continue
         symbol_code = re.sub("＊", '', tag_td_string_type[0].text.strip())
         company_name = tag_td_string_type[0].a.get('title')
-        industry1 = re.sub(r'\[(.+)]', '', tag_td_string_type[1].img.get('title'))
-        industry2 = re.search(r'(?<=\[).*?(?=])', tag_td_string_type[1].img.get('title')).group()
+        try:
+            industry1 = re.sub(r'\[(.+)]', '', tag_td_string_type[1].img.get('title'))
+            industry2 = re.search(r'(?<=\[).*?(?=])', tag_td_string_type[1].img.get('title')).group()
+        except IndexError:
+            continue
         try:
             ind_class = m_ind_class.get(industry1=industry1, industry2=industry2)
         except ObjectDoesNotExist:
