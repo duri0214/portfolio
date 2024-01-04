@@ -1,0 +1,9 @@
+[
+  {
+    "model": "taxonomy.breedTags",
+    "fields": {
+      "breed": 1,
+      "tag": 1
+    }
+  }
+]

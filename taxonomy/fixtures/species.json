@@ -1,0 +1,20 @@
+[
+  {
+    "model": "taxonomy.species",
+    "fields": {
+      "name": "シマミミズ種",
+      "name_en": "Eisenia fetida",
+      "remark": "コンポスト",
+      "genus": 1
+    }
+  },
+  {
+    "model": "taxonomy.species",
+    "fields": {
+      "name": "セキショクヤケイ種",
+      "name_en": "G. gallus",
+      "remark": "ニワトリ",
+      "genus": 2
+    }
+  }
+]

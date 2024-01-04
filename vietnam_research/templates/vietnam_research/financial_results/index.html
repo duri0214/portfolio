@@ -1,0 +1,42 @@
+{% extends "vietnam_research/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+    <table class="table table-sm">
+
+        <div class="jumbotron">
+            <h1 class="display-4">Let's analyze U.S. stocks!</h1>
+            <p class="lead">it's interesting U.S. stocks</p>
+            <hr class="my-4">
+            <p>You can register note financial_results</p>
+            {% if user.is_superuser %}
+                <a href="{% url 'vnm:financial_results_create' %}" class="btn btn-primary btn-sm" role="button">登録</a>
+            {% else %}
+                <a href="{% url 'vnm:financial_results_create' %}" class="btn btn-secondary btn-sm disabled"
+                   role="button">登録</a>
+            {% endif %}
+        </div>
+
+        <thead>
+        <tr>
+            <td>ticker</td>
+            <td>cnt</td>
+            <td>eps_ok</td>
+            <td>売上_ok</td>
+            <td>ガイダンス_ok</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for financial_result in object_list %}
+            <tr>
+                <td><a href="{% url 'vnm:financial_results_detail' financial_result.symbol__code %}"
+                       class="btn btn-secondary btn-sm" role="button">{{ financial_result.symbol__code }}</a></td>
+                <td>{{ financial_result.symbol__code__count }}</td>
+                <td>{{ financial_result.eps_ok__sum|add:"0" }}</td>
+                <td>{{ financial_result.sales_ok__sum|add:"0" }}</td>
+                <td>{{ financial_result.guidance_ok__sum|add:"0" }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

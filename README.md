@@ -96,7 +96,6 @@ from django.db.models.functions import Concat
 ## サーバを動かす
 
 ```
-cd .\mysite\
 python manage.py runserver
 ```
 

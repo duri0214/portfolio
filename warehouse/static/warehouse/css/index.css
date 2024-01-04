@@ -1,0 +1,7 @@
+body {
+    padding-top: 48px;
+}
+
+.diagonal-stroke {
+    background-image: linear-gradient(to right top, transparent calc(50% - 1px), lightgray 50%, lightgray calc(50% + 1px), transparent calc(50% + 1px))
+}

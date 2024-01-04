@@ -1,0 +1,103 @@
+{% extends 'warehouse/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+    <div class="jumbotron">
+        <h1 class="display-4">Let's issue an invoice.</h1>
+        <p class="lead">The system that forms the basis of work</p>
+        <hr class="my-4">
+        <p>You can issue invoice.</p>
+    </div>
+
+    <div class="container">
+        <h3 class="mt-4">Menu</h3>
+        <ul>
+            <li><a href="{% url 'war:item_create' %}">アイテム登録</a></li>
+            <li><a href="{% url 'war:invoice_create' %}">レンタル手続き</a></li>
+            <li>請求書照会
+                <ul>
+                    <li><a href="{% url 'war:invoice_list' 1 %}">請求中 の請求書</a></li>
+                    <li><a href="{% url 'war:invoice_list' 2 %}">請求完了 の請求書</a></li>
+                    <li><a href="{% url 'war:invoice_list' 3 %}">請求無効 の請求書</a></li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3 class="mt-4">貸出中のアイテム</h3>
+        {% if non_available_items|length > 0 %}
+            {% for item in non_available_items %}
+                <ul>
+                    <li class="text-danger">{{ item.name }}</li>
+                </ul>
+            {% endfor %}
+        {% else %}
+            <ul>
+                <li>貸し出しているアイテムはありません</li>
+            </ul>
+        {% endif %}
+
+        <h3 id="info" class="mt-4">在庫</h3>
+        <h5>貸し出せるアイテムが棚のどこにありますか？</h5>
+        <table class="table table-sm table-bordered">
+            <thead>
+            <tr>
+                <td class="diagonal-stroke"></td>
+                {% for col in shelf|first %}
+                    <td class="text-center table-primary">{{ forloop.counter }}列目</td>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in shelf %}
+                <tr>
+                    <td class="table-primary">{{ forloop.revcounter }}段目</td>
+                    {% for col in row %}
+                        <td class="text-center">{{ col }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h5>貸し出しできるアイテム</h5>
+        <form method="post" action="{% url 'war:reset' %}" class="mb-2">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary">リセット</button>
+        </form>
+        {% if available_items|length > 0 %}
+            <table class="table table-sm table-bordered">
+                <colgroup span="2" class="table-primary"></colgroup>
+                <thead>
+                <tr>
+                    <td>段</td>
+                    <td>列</td>
+                    <td>シリアルナンバー</td>
+                    <td>アイテム名</td>
+                    <td>金額</td>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in available_items %}
+                    <tr>
+                        <td>{{ item.pos_y }}</td>
+                        <td>{{ item.pos_x }}</td>
+                        <td>{{ item.serial_number }}</td>
+                        <td><a href="{% url 'war:item_detail' item.pk %}">{{ item.name }}</a></td>
+                        <td>{{ item.price }}円</td>
+                        <td>
+                            <form method="post" action="{% url 'war:index_choose' item.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-outline-secondary btn-sm">貸出</button>
+                            </form>
+                            <button type="submit" class="btn-outline-secondary btn-sm" disabled>返却</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            貸出できるアイテムがありません
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'warehouse/base.html' %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'warehouse/css/invoice/create.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <h2>請求書の作成</h2>
+        <form method="post">
+            {% csrf_token %}
+            {% if form_errors %}
+                <div class="alert alert-danger">
+                    <ul>
+                        {% for field_name, error_list in form_errors.items %}
+                            {% for error in error_list %}
+                                <li>{{ field_name }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {{ form.media }}
+
+            <div class="form-group row">
+                <label for="{{ form.rental_start_date.id_for_label }}"
+                       class="col-md-3 col-form-label">レンタル期間</label>
+                <div class="col-md-9">
+                    <div class="input-group">
+                        {{ form.rental_start_date }}
+                        <div class="input-group-prepend input-group-append">
+                            <span class="input-group-text">〜</span>
+                        </div>
+                        {{ form.rental_end_date }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label for="{{ form.company.id_for_label }}" class="col-md-3 col-form-label">会社名</label>
+                <div class="col-md-9">
+                    {{ form.company }}
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label for="{{ form.billing_person.id_for_label }}" class="col-md-3 col-form-label">請求担当者</label>
+                <div class="col-md-9">
+                    {{ form.billing_person }}
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label for="{{ form.staff.id_for_label }}" class="col-md-3 col-form-label">スタッフ</label>
+                <div class="col-md-9">
+                    {{ form.staff }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary" id="create-button">作成</button>
+                </div>
+                <div class="col-md-2">
+                    <a class="btn btn-secondary" id="back-button" href="{% url 'war:index' %}">戻る</a>
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock %}

@@ -1,6 +1,5 @@
 ## local debugging
 - `pip install -r requirements.txt`
-- `cd mysite`
 - `python manage.py runserver`
 
 ## server
@@ -11,7 +10,7 @@
 - `python manage.py migrate`
 - `chown -R ubuntu:ubuntu /var/www/html`
 - `cd /var/www/html/portfolio`
-- `python /var/www/html/portfolio/mysite/manage.py collectstatic --noinput`
+- `python /var/www/html/portfolio/manage.py collectstatic --noinput`
 
 ## venv
 - `# source /var/www/html/venv/bin/activate`

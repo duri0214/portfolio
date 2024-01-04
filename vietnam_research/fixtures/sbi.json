@@ -1,0 +1,1814 @@
+[
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 1
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 2
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 4
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 390
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 6
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 392
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 10
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 395
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 396
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 12
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 13
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 14
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 397
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 398
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 399
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 15
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 16
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 19
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 404
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 405
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 20
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 25
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 410
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 26
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 27
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 28
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 31
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 415
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 32
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 33
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 417
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 420
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 422
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 423
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 38
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 40
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 44
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 429
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 46
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 50
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 52
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 54
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 57
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 436
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 437
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 59
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 61
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 62
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 63
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 69
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 446
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 448
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 71
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 74
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 75
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 76
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 452
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 79
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 80
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 81
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 83
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 84
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 85
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 86
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 89
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 90
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 91
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 93
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 94
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 466
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 467
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 97
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 471
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 98
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 100
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 108
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 109
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 110
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 112
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 120
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 121
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 124
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 477
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 125
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 126
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 479
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 131
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 133
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 134
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 136
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 480
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 137
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 138
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 482
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 483
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 140
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 484
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 142
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 143
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 487
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 488
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 491
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 494
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 147
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 497
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 499
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 150
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 152
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 153
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 154
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 156
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 157
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 161
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 503
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 505
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 507
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 172
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 174
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 510
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 175
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 176
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 179
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 180
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 181
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 182
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 515
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 183
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 186
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 523
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 187
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 530
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 188
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 189
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 190
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 535
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 194
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 195
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 196
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 197
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 538
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 198
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 765
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 200
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 540
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 201
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 202
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 553
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 207
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 211
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 560
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 561
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 212
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 565
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 568
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 216
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 217
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 219
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 575
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 576
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 221
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 222
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 578
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 223
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 224
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 225
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 228
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 229
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 230
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 231
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 587
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 233
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 234
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 235
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 594
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 596
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 242
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 243
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 599
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 245
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 608
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 247
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 248
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 612
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 613
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 615
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 249
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 617
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 618
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 619
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 620
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 250
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 255
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 624
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 256
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 258
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 262
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 263
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 266
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 269
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 270
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 634
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 635
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 636
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 639
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 640
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 641
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 643
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 644
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 272
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 274
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 646
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 647
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 648
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 277
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 649
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 651
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 652
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 282
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 284
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 286
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 289
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 290
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 291
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 292
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 293
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 662
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 294
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 295
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 663
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 296
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 664
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 298
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 299
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 304
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 670
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 305
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 308
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 309
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 312
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 313
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 315
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 317
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 676
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 678
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 679
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 323
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 681
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 325
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 326
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 327
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 328
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 329
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 331
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 332
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 686
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 336
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 335
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 337
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 338
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 343
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 697
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 348
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 349
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 350
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 705
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 710
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 352
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 353
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 713
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 715
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 716
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 357
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 723
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 359
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 726
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 360
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 361
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 729
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 363
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 731
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 365
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 733
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 366
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 737
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 367
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 368
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 370
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 371
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 739
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 372
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 740
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 373
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 377
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 381
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 382
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 383
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 384
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 385
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 743
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 386
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 750
+    }
+  },
+  {
+    "model": "vietnam_research.sbi",
+    "fields": {
+      "symbol_id": 751
+    }
+  }
+]

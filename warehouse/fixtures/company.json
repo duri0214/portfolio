@@ -1,0 +1,72 @@
+[
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "クサリク合同会社",
+      "address": "京都府京都市伏見区過書町3-5-6"
+    }
+  },
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "常軒給食センター",
+      "address": "静岡県三島市北沢4-4-2 サンハイツ北沢 13F"
+    }
+  },
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "ブロビ&アイゼンシュタット・コーポレーション",
+      "address": "静岡県静岡市葵区油山4-11-1"
+    }
+  },
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "樽石新薬",
+      "address": "鹿児島県鹿児島市伊敷9-10-9 レジデンス伊敷 1F"
+    }
+  },
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "オフィクレイド重工",
+      "address": "東京都江東区常盤4-6-2 ローレル常盤 808号室"
+    }
+  },
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "ハヤブサ&ギーズ・デザインズ",
+      "address": "東京都目黒区下目黒7-4-2"
+    }
+  },
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "グラノジェルス・アライアンス",
+      "address": "岡山県高梁市川上町仁賀3-9-6"
+    }
+  },
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "ビセンテ香料",
+      "address": "京都府京都市上京区橘町6-14-6"
+    }
+  },
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "房川家",
+      "address": "滋賀県犬上郡甲良町金屋7-4-3 ローレル金屋 3F"
+    }
+  },
+  {
+    "model": "warehouse.company",
+    "fields": {
+      "name": "上鍋",
+      "address": "長野県上水内郡中条村住良木4-13-5"
+    }
+  }
+]

@@ -1,0 +1,114 @@
+{% extends 'shopping/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'shopping/css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    {% if messages %}
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    {% endif %}
+
+    <div class="jumbotron">
+        <h1 class="display-4">Let's buy PIZZA!</h1>
+        <p class="lead">yummy yummy pizza</p>
+        <hr class="my-4">
+        <p>You can buy and manage pizza system.</p>
+        <a class="btn btn-primary btn-lg" href="#maintain" role="button">管理用</a>
+        <a class="btn btn-primary btn-lg" href="{% url 'shp:staff_create' %}" role="button">店員作成</a>
+    </div>
+
+    <div class="container">
+        <h2>｜店員一覧</h2>
+        {% if staffs %}
+            {% for staff in staffs %}
+                <img src="{{ staff.image.url }}" width="100px" alt="missing picture">
+                {{ staff.name }}
+                <a class="small" href="{% url 'shp:staff_detail' staff.pk %}">プロフィール</a>
+            {% endfor %}
+        {% else %}
+            店員がいません
+        {% endif %}
+
+        <h2 class="mt-4">｜商品一覧</h2>
+        <div class="card-group">
+            {% for product in products %}
+                <div class="col">
+                    <div class="card mt-3" style="width: 15rem; height: 20rem">
+                        <img src="{{ product.picture.url }}" class="card-img-top" alt="{{ product.code }}">
+                        <div class="card-body">
+                            <h8 class="card-title">{{ product.name | truncatechars:12 }}</h8>
+                            <p style="font-size: small;" class="card-text">
+                                price: @{{ product.price | intcomma }} 円<br>
+                                {{ product.description | truncatechars:20 }}
+                            </p>
+                            <a href="{% url 'shp:product_detail' product.pk %}"
+                               style="font-size: small;">もっと詳しく</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- previous paginate -->
+        <div class="paginate">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">前へ</a>
+            {% else %}
+                <span>前へ</span>
+            {% endif %}
+            <!-- page -->
+            {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}
+            <!-- next paginate -->
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">次へ</a>
+            {% else %}
+                <span>次へ</span>
+            {% endif %}
+        </div>
+
+        <h2 id="maintain" class="mt-4">｜管理用</h2>
+        <a href="{% url 'shp:product_register_single' %}">単品登録</a>
+        <a href="{% url 'shp:product_register_bulk' %}">CSV登録</a>
+        <table id="edit_table" class="table">
+            <thead>
+            <tr>
+                <th>code</th>
+                <th>name</th>
+                <th>price</th>
+                <th>description</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in editable_list %}
+                <tr>
+                    <td>{{ item.code }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.price | intcomma }}</td>
+                    <td>{{ item.description | truncatechars:20 }}</td>
+                </tr>
+                <tr class="edit_record">
+                    <form action="{% url 'shp:product_edit' 1 %}" method="POST">
+                        {% csrf_token %}
+                        <td colspan="4">
+                            {{ editable_form.code }}
+                            {{ editable_form.name }}
+                            {{ editable_form.price }}
+                            {{ editable_form.description }}
+                            <input type="submit">
+                        </td>
+                    </form>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>addRowHandler();</script>
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'shopping/base.html' %}
+{% load static %}
+
+{% block style %}
+    <link rel="stylesheet" href="{% static 'shopping/css/product/detail.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <p>{{ message }}</p>
+    <form method="GET" class="registration" action="{% url 'shp:index' %}">
+        {% csrf_token %}
+        <button type="submit">戻る</button>
+    </form>
+
+    <!-- 書籍の情報の表示 -->
+    <h1>{{ object.name }}</h1>
+    <p class="lead">{{ object.created_at }} - {{ object.price }}円</p>
+    <p>{{ object.description | linebreaksbr }}<p>
+
+    <!-- 購入ボタン・フォームの作成 -->
+    <!-- {% if user.is_authenticated %} -->
+        <form method="POST">
+            {% csrf_token %}
+            <script
+                    src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                    data-key="{{ public_key }}"
+                    data-amount="{{ object.price }}"
+                    data-name="よろずや"
+                    data-description="{{ object.name }}"
+                    data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
+                    data-locale="ja"
+                    data-currency="jpy"
+                    data-email="{{ user.email }}">
+            </script>
+        </form>
+        <!-- {% endif %} -->
+
+{% endblock %}

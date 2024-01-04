@@ -1,0 +1,20 @@
+[
+  {
+    "model": "taxonomy.family",
+    "fields": {
+      "name": "ツリミミズ科",
+      "name_en": "Lumbricidae",
+      "remark": "大型・陸生",
+      "classification": 1
+    }
+  },
+  {
+    "model": "taxonomy.family",
+    "fields": {
+      "name": "キジ科",
+      "name_en": "Phasianidae",
+      "remark": "ニワトリ",
+      "classification": 2
+    }
+  }
+]
