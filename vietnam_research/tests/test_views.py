@@ -1,5 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
 
 from register.models import User
@@ -7,61 +7,67 @@ from vietnam_research.models import Articles, Likes
 
 
 class TestView(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        tester = User.objects.create_user(email='tester@b.c')
-        tester.set_password('12345')
-        cls.tester = tester
-        cls.article = Articles.objects.create(title='Hello', note='How are you', user=tester)
+    def setUp(self):
+        self.password_plane = '<PASSWORD>'
+        self.user = User.objects.create_user(email='user@example.com')
+        self.user.set_password(self.password_plane)
+        self.user.save()
+        self.article = Articles.objects.create(title='Hello', note='How are you', user=self.user)
 
-    def test_status_code_200(self):
-        client = Client()
-        response = client.get(reverse('vnm:index'))
+    def test_show_index_page(self):
+        """
+        ログインしていない場合、indexページに遷移すると `ゲストさん` が表示される
+        ログインしている場合、indexページに遷移すると `<email>さん`　が表示される
+        ログアウトして、indexページに遷移すると `ゲストさん` が表示される
+        """
+        response = self.client.get(reverse('vnm:index'))
         self.assertEqual(200, response.status_code)
+        self.assertContains(response, 'ゲストさん', html=True)
 
-    def test_login_as_guest(self):
-        client = Client()
-        response = client.get(reverse('vnm:index'))
-        self.assertContains(response, 'ゲストさん')
+        logged_in = self.client.login(email=self.user.email, password=self.password_plane)
+        self.assertTrue(logged_in)
 
-    def test_login_as_logged_user(self):
-        client = Client()
-        client.force_login(self.tester)
-        response = client.get(reverse('vnm:index'))
-        print(response.context)
-        # self.assertTrue('username' in response.context)
-        print(f'response({self.tester.email}): ', response)
-        self.assertContains(response, f'{self.tester.username}さん')
+        response = self.client.get(reverse('vnm:index'))
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, f'{self.user.email}さん', html=True)
 
-    def test_logout(self):
-        client = Client()
-        client.force_login(self.tester)
-        # print(client.)
-        # client.request.u
+        self.client.logout()
+        response = self.client.get(reverse('vnm:index'))
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, 'ゲストさん', html=True)
 
-    def test_post_good(self):
-        client = Client()
+    def test_redirect_to_login_page(self):
+        """
+        ログインしていない場合、保護された記事作成ページに遷移しようとするとログインページにリダイレクトする
+        """
+        response = self.client.get(reverse('vnm:article_create'))
+        self.assertRedirects(response, '/register/login/?next=/article/create/')
+
+    def test_can_navigate_to_article_create_page(self):
+        """
+        ログインしている場合、保護されている記事作成ページに遷移できる
+        """
+        logged_in = self.client.login(email=self.user.email, password=self.password_plane)
+        self.assertTrue(logged_in)
+        response = self.client.get(reverse('vnm:article_create'))
+        self.assertTemplateUsed(response, 'vietnam_research/articles/create.html')
+
+    def test_can_create_likes(self):
+        logged_in = self.client.login(email=self.user.email, password=self.password_plane)
+        self.assertTrue(logged_in)
 
         # create 3 users
-        emails = ['tester1@b.c', 'tester2@b.c', 'tester3@b.c']
-        [User.objects.create_user(email=x).set_password('12345') for x in emails]
+        emails = ['user1@example.com', 'user2@example.com', 'user3@example.com']
+        [User.objects.create_user(email=x).set_password(self.password_plane) for x in emails]
 
-        # already got 'good' from 3 users
+        # already got 'likes' from 3 users
         [Likes.objects.create(articles=self.article, user=User.objects.get(email=x)) for x in emails]
         self.assertEqual(3, Likes.objects.filter(articles=self.article).count())
 
-        # click the 'good' then the count should be 4
-        # response = client.post(reverse('vnm:likes', kwargs={'user_id': 1, 'article_id': 1}), follow=True)
-        response = client.post('/likes/1/1/', {'user_id': 1, 'article_id': 1})
-        print(response.status_code)
-        print('Articles.objects.all().count(): ', Articles.objects.all().count())
-        print('Likes.objects.all().count(): ', f"{Likes.objects.all().count()}(should be 4)")
+        # post 'likes' then the count should be 4
+        response = self.client.post(reverse('vnm:likes_create', kwargs={'user_id': 1, 'article_id': 1}))
+        self.assertEqual(201, response.status_code)
         self.assertEqual(4, Likes.objects.filter(articles=self.article).count())
-        self.assertEqual(200, response.status_code)
-
-        # TODO: postを投げてlikesのレコードが増えるか？なんだけどうまくいってない（loginidの箇所は views.py L67）
-        #  https://stackoverflow.com/questions/75412049/i-want-test-the-post-method-by-django
-        #  https://teratail.com/questions/ud06pwl036vg7j
 
     def test_post_good_invalid_access(self):
         # TODO: errorが出ない?
