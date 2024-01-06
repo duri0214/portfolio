@@ -1,5 +1,6 @@
 """フォーム集積場所"""
 from django import forms
+
 from .models import Articles, Watchlist, FinancialResultWatch
 
 
@@ -27,7 +28,6 @@ class WatchlistCreateForm(forms.ModelForm):
     class Meta:
         model = Watchlist
         fields = ('symbol', 'bought_day', 'stocks_price', 'stocks_count')
-        exclude = ('already_has',)
 
 
 class ArticleForm(forms.ModelForm):

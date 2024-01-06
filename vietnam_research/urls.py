@@ -1,11 +1,11 @@
 from django.urls import path
 
-from vietnam_research.views import ArticleCreateView, index, WatchlistRegister, WatchlistEdit, \
+from vietnam_research.views import ArticleCreateView, IndexView, WatchlistRegister, WatchlistEdit, \
     FinancialResultsListView, FinancialResultsDetailListView, FinancialResultsCreateView, LikesView
 
 app_name = 'vnm'
 urlpatterns = [
-    path('', index, name='index'),
+    path('', IndexView.as_view(), name='index'),
     path('likes/<int:article_id>/<int:user_id>/', LikesView.as_view(), name='likes'),
     path('article/create/', ArticleCreateView.as_view(), name="article_create"),
     path('watchlist/register/', WatchlistRegister.as_view(), name="watchlist_register"),

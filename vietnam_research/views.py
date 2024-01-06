@@ -1,6 +1,5 @@
 import json
 import logging
-from datetime import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Sum, F
@@ -9,7 +8,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils.http import urlencode
 from django.views import View
-from django.views.generic import CreateView, ListView, UpdateView
+from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
 from register.models import User
 from vietnam_research.forms import ArticleForm, WatchlistCreateForm, ExchangeForm, FinancialResultsForm
@@ -17,26 +16,43 @@ from vietnam_research.models import Watchlist, Likes, Articles, FinancialResultW
 from vietnam_research.service.market_vietnam import MarketVietnam
 
 
-def index(request):
-    """いわばhtmlのページ単位の構成物です"""
+class IndexView(TemplateView):
+    template_name = 'vietnam_research/index.html'
 
-    # GETだったら MarketVietnam(), nasdaqが選ばれたらMarketNasdaq()
-    mkt = MarketVietnam()
+    def get(self, request, *args, **kwargs):
+        mkt = MarketVietnam()
+        exchanged = {}
 
-    exchanged = {}
-    if request.method == 'POST':
-        # ウォッチリスト登録処理
-        watchlist_form = WatchlistCreateForm(request.POST)
-        if watchlist_form.is_valid():
-            watchlist = Watchlist()
-            watchlist.symbol = watchlist_form.cleaned_data['buy_symbol']
-            watchlist.already_has = True
-            watchlist.bought_day = watchlist_form.cleaned_data['buy_date']
-            watchlist.stocks_price = watchlist_form.cleaned_data['buy_cost']
-            watchlist.stocks_count = watchlist_form.cleaned_data['buy_stocks']
-            watchlist.bikou = watchlist_form.cleaned_data['buy_bikou']
-            watchlist.save()
-            return redirect('vnm:index')
+        exchange_form = ExchangeForm()
+        params = ['current_balance', 'unit_price', 'quantity', 'price_no_fee', 'fee', 'price_in_fee', 'deduction_price']
+
+        for param in params:
+            if param in request.GET:
+                exchanged[param] = request.GET.get(param)
+
+        login_user = self.request.user
+        login_id = login_user.id if login_user.is_authenticated else None
+
+        # TODO: articlesは試作のため3投稿のみ
+        context = {
+            'industry_count': json.dumps(mkt.radar_chart_count()),
+            'industry_cap': json.dumps(mkt.radar_chart_cap()),
+            'vnindex_timeline': json.dumps(mkt.vnindex_timeline()),
+            'vnindex_layers': json.dumps(mkt.vnindex_annual_layers()),
+            'articles': Articles.with_state(login_id).annotate(user_name=F('user__email')).order_by('-created_at')[:3],
+            'basicinfo': BasicInformation.objects.order_by('id').values('item', 'description'),
+            'watchlist': mkt.watchlist(),
+            'sbi_topics': mkt.sbi_topics(),
+            'uptrends': json.dumps(mkt.uptrends()),
+            'exchange_form': exchange_form,
+            'exchanged': exchanged
+        }
+
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        mkt = MarketVietnam()
+        exchanged = {}
 
         # 為替計算処理
         exchange_form = ExchangeForm(request.POST)
@@ -52,36 +68,7 @@ def index(request):
             response['location'] += '?' + urlencode(exchanged)
             return response
 
-    else:
-        exchange_form = ExchangeForm()
-        params = ['current_balance', 'unit_price', 'quantity', 'price_no_fee', 'fee', 'price_in_fee', 'deduction_price']
-        for param in params:
-            if param in request.GET:
-                exchanged[param] = request.GET.get(param)
-        watchlist_form = WatchlistCreateForm()
-        watchlist_form.buy_date = datetime.today().strftime("%Y/%m/%d")
-
-    login_user = User.objects.filter(email=request.user).first()
-    login_id = None
-    if login_user:
-        login_id = login_user.id
-
-    # TODO: articlesは試作のため3投稿のみ
-    context = {
-        'industry_count': json.dumps(mkt.radar_chart_count()),
-        'industry_cap': json.dumps(mkt.radar_chart_cap()),
-        'vnindex_timeline': json.dumps(mkt.vnindex_timeline()),
-        'vnindex_layers': json.dumps(mkt.vnindex_annual_layers()),
-        'articles': Articles.with_state(login_id).annotate(user_name=F('user__email')).order_by('-created_at')[:3],
-        'basicinfo': BasicInformation.objects.order_by('id').values('item', 'description'),
-        'watchlist': mkt.watchlist(),
-        'sbi_topics': mkt.sbi_topics(),
-        'uptrends': json.dumps(mkt.uptrends()),
-        'exchange_form': exchange_form,
-        'exchanged': exchanged
-    }
-
-    return render(request, 'vietnam_research/index.html', context)
+        return render(request, self.template_name, {'exchanged': exchanged})
 
 
 class LikesView(LoginRequiredMixin, View):
@@ -133,6 +120,7 @@ class WatchlistRegister(CreateView):
 
     def form_valid(self, form):
         form.instance.already_has = 1
+        form.instance.user_id = self.request.user.id
         return super().form_valid(form)
 
 
