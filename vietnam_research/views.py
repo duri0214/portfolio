@@ -8,6 +8,7 @@ from django.http.response import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils.http import urlencode
+from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 
 from register.models import User
@@ -83,8 +84,9 @@ def index(request):
     return render(request, 'vietnam_research/index.html', context)
 
 
-class LikesView(LoginRequiredMixin, CreateView):
-    def post(self, request, *args, **kwargs):
+class LikesView(LoginRequiredMixin, View):
+    @staticmethod
+    def post(request, *args, **kwargs):
         try:
             user = User.objects.get(pk=kwargs['user_id'])
             article = Articles.objects.get(pk=kwargs['article_id'], user=user)
