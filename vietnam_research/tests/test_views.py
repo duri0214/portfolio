@@ -69,17 +69,6 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(4, Likes.objects.filter(articles=self.article).count())
 
-    def test_can_not_create_likes_because_the_user_not_exist(self):
-        logged_in = self.client.login(email=self.user.email, password=self.password_plane)
-        self.assertTrue(logged_in)
-
-        # 存在しないユーザIDを指定してPOSTリクエストを送信
-        response = self.client.post(reverse('vnm:likes', kwargs={'article_id': self.article.pk, 'user_id': 999}))
-
-        # 例外が発生し、エラーとなることを確認
-        self.assertEqual(400, response.status_code)
-        self.assertIn('存在しないユーザアカウントへのリクエストがありました', response.content.decode('utf-8'))
-
     def test_can_not_create_likes_because_the_article_not_exist(self):
         logged_in = self.client.login(email=self.user.email, password=self.password_plane)
         self.assertTrue(logged_in)

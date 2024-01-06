@@ -10,7 +10,6 @@ from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
-from register.models import User
 from vietnam_research.forms import ArticleForm, WatchlistCreateForm, ExchangeForm, FinancialResultsForm
 from vietnam_research.models import Watchlist, Likes, Articles, FinancialResultWatch, BasicInformation
 from vietnam_research.service.market_vietnam import MarketVietnam
@@ -72,10 +71,9 @@ class IndexView(TemplateView):
 
 
 class LikesView(LoginRequiredMixin, View):
-    @staticmethod
-    def post(request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
-            user = User.objects.get(pk=kwargs['user_id'])
+            user = self.request.user
             article = Articles.objects.get(pk=kwargs['article_id'], user=user)
             already_liked = Likes.objects.filter(user=user).exists()
 
@@ -83,15 +81,13 @@ class LikesView(LoginRequiredMixin, View):
                 Likes.objects.filter(user=user, articles=article).delete()
             else:
                 Likes.objects.create(user=user, articles=article)
+
             already_liked = not already_liked
             article_likes_count = Likes.objects.filter(articles=article) \
                 .aggregate(likes_count=Count('id'))['likes_count']
 
             return HttpResponse(json.dumps({'likes_cnt': article_likes_count, 'liked_by_me': already_liked}),
                                 status=200)
-        except User.DoesNotExist:
-            msg = '存在しないユーザアカウントへのリクエストがありました'
-            logging.critical(msg)
         except Articles.DoesNotExist:
             msg = '存在しない記事へのリクエストがありました'
             logging.critical(msg)

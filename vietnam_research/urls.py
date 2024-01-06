@@ -6,7 +6,7 @@ from vietnam_research.views import ArticleCreateView, IndexView, WatchlistRegist
 app_name = 'vnm'
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
-    path('likes/<int:article_id>/<int:user_id>/', LikesView.as_view(), name='likes'),
+    path('likes/<int:article_id>/', LikesView.as_view(), name='likes'),
     path('article/create/', ArticleCreateView.as_view(), name="article_create"),
     path('watchlist/register/', WatchlistRegister.as_view(), name="watchlist_register"),
     path('watchlist/edit/<int:pk>/', WatchlistEdit.as_view(), name="watchlist_edit"),

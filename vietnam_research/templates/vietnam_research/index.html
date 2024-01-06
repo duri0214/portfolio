@@ -302,11 +302,7 @@
         for (let i = 0; i < likeToggles.length; i++) {
             likeToggles[i].addEventListener('click', () => {
                 const articleId = likeToggles[i].dataset.articleId
-                const userId = "{{ user.id }}"
-                if (userId === 'None' || userId === '') {
-                    location.href = myurl.login
-                }
-                fetch(`${myurl.base}likes/${articleId}/${userId}/`, {
+                fetch(`${myurl.base}likes/${articleId}/`, {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
