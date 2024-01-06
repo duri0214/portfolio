@@ -11,7 +11,7 @@ class TestView(TestCase):
         self.user = User.objects.create_user(id=1, email='user@example.com')
         self.user.set_password(self.password_plane)
         self.user.save()
-        self.article = Articles.objects.create(title='Hello', note='How are you', user=self.user)
+        self.article = Articles.objects.create(id=1, title='Hello', note='How are you', user=self.user)
 
     def test_show_index_page(self):
         """
@@ -64,7 +64,8 @@ class TestView(TestCase):
         self.assertEqual(3, Likes.objects.filter(articles=self.article).count())
 
         # post 'likes' then the count should be 4
-        response = self.client.post(reverse('vnm:likes', kwargs={'user_id': 1, 'article_id': 1}))
+        response = self.client.post(
+            reverse('vnm:likes', kwargs={'user_id': self.user.pk, 'article_id': self.article.pk}))
         self.assertEqual(200, response.status_code)
         self.assertEqual(4, Likes.objects.filter(articles=self.article).count())
 
@@ -73,7 +74,7 @@ class TestView(TestCase):
         self.assertTrue(logged_in)
 
         # 存在しないユーザIDを指定してPOSTリクエストを送信
-        response = self.client.post(reverse('vnm:likes', kwargs={'article_id': 1, 'user_id': 999}))
+        response = self.client.post(reverse('vnm:likes', kwargs={'article_id': self.article.pk, 'user_id': 999}))
 
         # 例外が発生し、エラーとなることを確認
         self.assertEqual(400, response.status_code)
@@ -84,7 +85,7 @@ class TestView(TestCase):
         self.assertTrue(logged_in)
 
         # 存在しない記事IDを指定してPOSTリクエストを送信
-        response = self.client.post(reverse('vnm:likes', kwargs={'article_id': 999, 'user_id': 1}))
+        response = self.client.post(reverse('vnm:likes', kwargs={'article_id': 999, 'user_id': self.user.pk}))
 
         # 例外が発生し、エラーとなることを確認
         self.assertEqual(400, response.status_code)
