@@ -302,25 +302,24 @@
         for (let i = 0; i < likeToggles.length; i++) {
             likeToggles[i].addEventListener('click', () => {
                 const articleId = likeToggles[i].dataset.articleId
-                const userId = {{ user.id }}
-                if (!userId) {
+                const userId = "{{ user.id }}"
+                if (userId === 'None' || userId === '') {
                     location.href = myurl.login
                 }
-                const createOrDelete = parseInt(likeToggles[i].dataset.likedByMe) ? 'delete' : 'create'
-                fetch(`${myurl.base}likes/${createOrDelete}/${articleId}/${userId}/`, {
+                fetch(`${myurl.base}likes/${articleId}/${userId}/`, {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
                         "X-CSRFToken": Cookies.get('csrftoken')
                     },
-                    body: JSON.stringify({"status": "requested from javascript."})
+                    body: JSON.stringify({"status": "requested from front with javascript."})
                 })
                     .then(response => response.json())
-                    .then(json => {
-                        likeToggles[i].getElementsByTagName('span')[0].innerHTML = `(${json.likes_cnt})`
-                        likeToggles[i].dataset.likedByMe = json.liked_by_me
+                    .then(data => {
+                        likeToggles[i].getElementsByTagName('span')[0].innerHTML = `(${data.likes_cnt})`
+                        likeToggles[i].dataset.likedByMe = data.liked_by_me
                         likeToggles[i].classList.remove('active')
-                        if (json.liked_by_me) {
+                        if (data.liked_by_me) {
                             likeToggles[i].classList.add('active')
                         }
                     })

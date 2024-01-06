@@ -2,18 +2,18 @@ import json
 import logging
 from datetime import datetime
 
-from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.http import urlencode
-from django.views.generic import CreateView, ListView, UpdateView, DeleteView
-from django.urls import reverse_lazy
-from django.http.response import HttpResponse
 from django.db.models import Count, Sum, F
+from django.http.response import HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
+from django.utils.http import urlencode
+from django.views.generic import CreateView, ListView, UpdateView
 
 from register.models import User
 from vietnam_research.forms import ArticleForm, WatchlistCreateForm, ExchangeForm, FinancialResultsForm
-from vietnam_research.service.market_vietnam import MarketVietnam
 from vietnam_research.models import Watchlist, Likes, Articles, FinancialResultWatch, BasicInformation
+from vietnam_research.service.market_vietnam import MarketVietnam
 
 
 def index(request):
@@ -83,34 +83,31 @@ def index(request):
     return render(request, 'vietnam_research/index.html', context)
 
 
-class LikesCreateView(LoginRequiredMixin, CreateView):
+class LikesView(LoginRequiredMixin, CreateView):
     def post(self, request, *args, **kwargs):
-        return_value = None
         try:
-            Likes.objects.create(user_id=kwargs['user_id'], articles_id=kwargs['article_id'])
-            article = Articles.with_state(kwargs['user_id']).get(pk=kwargs['article_id'])
-            return_value = json.dumps({'likes_cnt': article.likes_cnt, 'liked_by_me': article.liked_by_me})
+            user = User.objects.get(pk=kwargs['user_id'])
+            article = Articles.objects.get(pk=kwargs['article_id'], user=user)
+            already_liked = Likes.objects.filter(user=user).exists()
+
+            if already_liked:
+                Likes.objects.filter(user=user, articles=article).delete()
+            else:
+                Likes.objects.create(user=user, articles=article)
+            already_liked = not already_liked
+            article_likes_count = Likes.objects.filter(articles=article) \
+                .aggregate(likes_count=Count('id'))['likes_count']
+
+            return HttpResponse(json.dumps({'likes_cnt': article_likes_count, 'liked_by_me': already_liked}),
+                                status=200)
         except User.DoesNotExist:
-            logging.critical('不正なユーザアカウントからのアクセスがありました')
+            msg = '存在しないユーザアカウントへのリクエストがありました'
+            logging.critical(msg)
         except Articles.DoesNotExist:
-            logging.critical('不正な記事へのアクセスがありました')
+            msg = '存在しない記事へのリクエストがありました'
+            logging.critical(msg)
 
-        return HttpResponse(return_value, status=201)
-
-
-class LikesDeleteView(LoginRequiredMixin, DeleteView):
-    def post(self, request, *args, **kwargs):
-        return_value = None
-        try:
-            Likes.objects.filter(user_id=kwargs['user_id'], articles_id=kwargs['article_id']).delete()
-            article = Articles.with_state(kwargs['user_id']).get(pk=kwargs['article_id'])
-            return_value = json.dumps({'likes_cnt': article.likes_cnt, 'liked_by_me': article.liked_by_me})
-        except User.DoesNotExist:
-            logging.critical('不正なユーザアカウントからのアクセスがありました')
-        except Articles.DoesNotExist:
-            logging.critical('不正な記事へのアクセスがありました')
-
-        return HttpResponse(return_value, status=200)
+        return HttpResponseBadRequest(msg)
 
 
 class ArticleCreateView(LoginRequiredMixin, CreateView):

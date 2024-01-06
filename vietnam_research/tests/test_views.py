@@ -1,4 +1,3 @@
-from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from django.urls import reverse
 
@@ -9,7 +8,7 @@ from vietnam_research.models import Articles, Likes
 class TestView(TestCase):
     def setUp(self):
         self.password_plane = '<PASSWORD>'
-        self.user = User.objects.create_user(email='user@example.com')
+        self.user = User.objects.create_user(id=1, email='user@example.com')
         self.user.set_password(self.password_plane)
         self.user.save()
         self.article = Articles.objects.create(title='Hello', note='How are you', user=self.user)
@@ -65,13 +64,28 @@ class TestView(TestCase):
         self.assertEqual(3, Likes.objects.filter(articles=self.article).count())
 
         # post 'likes' then the count should be 4
-        response = self.client.post(reverse('vnm:likes_create', kwargs={'user_id': 1, 'article_id': 1}))
-        self.assertEqual(201, response.status_code)
+        response = self.client.post(reverse('vnm:likes', kwargs={'user_id': 1, 'article_id': 1}))
+        self.assertEqual(200, response.status_code)
         self.assertEqual(4, Likes.objects.filter(articles=self.article).count())
 
-    def test_post_good_invalid_access(self):
-        # TODO: errorが出ない?
-        client = Client()
-        with self.assertRaises(ObjectDoesNotExist):
-            client.post(reverse('vnm:likes', kwargs={'user_id': 99, 'article_id': 1}), follow=True)
-            client.post(reverse('vnm:likes', kwargs={'user_id': 1, 'article_id': 99}), follow=True)
+    def test_can_not_create_likes_because_the_user_not_exist(self):
+        logged_in = self.client.login(email=self.user.email, password=self.password_plane)
+        self.assertTrue(logged_in)
+
+        # 存在しないユーザIDを指定してPOSTリクエストを送信
+        response = self.client.post(reverse('vnm:likes', kwargs={'article_id': 1, 'user_id': 999}))
+
+        # 例外が発生し、エラーとなることを確認
+        self.assertEqual(400, response.status_code)
+        self.assertIn('存在しないユーザアカウントへのリクエストがありました', response.content.decode('utf-8'))
+
+    def test_can_not_create_likes_because_the_article_not_exist(self):
+        logged_in = self.client.login(email=self.user.email, password=self.password_plane)
+        self.assertTrue(logged_in)
+
+        # 存在しない記事IDを指定してPOSTリクエストを送信
+        response = self.client.post(reverse('vnm:likes', kwargs={'article_id': 999, 'user_id': 1}))
+
+        # 例外が発生し、エラーとなることを確認
+        self.assertEqual(400, response.status_code)
+        self.assertIn('存在しない記事へのリクエストがありました', response.content.decode('utf-8'))
