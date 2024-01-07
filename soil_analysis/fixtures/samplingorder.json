@@ -1,0 +1,52 @@
+[
+  {
+    "model": "soil_analysis.SamplingOrder",
+    "fields": {
+      "id": 1,
+      "sampling_method": 1,
+      "ordering": 1,
+      "landblock": 7,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.SamplingOrder",
+    "fields": {
+      "id": 2,
+      "sampling_method": 1,
+      "ordering": 2,
+      "landblock": 9,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.SamplingOrder",
+    "fields": {
+      "id": 3,
+      "sampling_method": 1,
+      "ordering": 3,
+      "landblock": 3,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.SamplingOrder",
+    "fields": {
+      "id": 4,
+      "sampling_method": 1,
+      "ordering": 4,
+      "landblock": 5,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.SamplingOrder",
+    "fields": {
+      "id": 5,
+      "sampling_method": 1,
+      "ordering": 5,
+      "landblock": 1,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  }
+]

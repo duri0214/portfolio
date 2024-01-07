@@ -1,0 +1,128 @@
+[
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 1,
+      "name": "アグリの圃場1",
+      "prefecture": "茨城県",
+      "location": "結城郡八千代町",
+      "latlon": "35.658581,139.745433",
+      "area": 100,
+      "cultivation_type": 1,
+      "company": 1,
+      "owner": 3,
+      "created_at": "2022-08-13T00:00:00+09:00",
+      "remark": "備考"
+    }
+  },
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 2,
+      "name": "アグリの圃場2",
+      "prefecture": "茨城県",
+      "location": "結城郡八千代町",
+      "cultivation_type": 2,
+      "company": 1,
+      "owner": 3,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 3,
+      "name": "アグリの圃場3",
+      "prefecture": "茨城県",
+      "location": "結城郡八千代町",
+      "cultivation_type": 2,
+      "company": 1,
+      "owner": 4,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 4,
+      "name": "農業法人2の圃場1",
+      "prefecture": "愛知県",
+      "location": "名古屋市",
+      "latlon": "35.658581,139.745433",
+      "area": 100,
+      "cultivation_type": 1,
+      "company": 2,
+      "owner": 3,
+      "created_at": "2022-08-13T00:00:00+09:00",
+      "remark": "備考"
+    }
+  },
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 5,
+      "name": "農業法人2の圃場2",
+      "prefecture": "愛知県",
+      "location": "名古屋市",
+      "cultivation_type": 2,
+      "company": 2,
+      "owner": 3,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 6,
+      "name": "農業法人2の圃場3",
+      "prefecture": "愛知県",
+      "location": "名古屋市",
+      "cultivation_type": 2,
+      "company": 2,
+      "owner": 4,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 7,
+      "name": "農業法人3の圃場1",
+      "prefecture": "青森県",
+      "location": "六戸町",
+      "latlon": "35.658581,139.745433",
+      "area": 100,
+      "cultivation_type": 1,
+      "company": 3,
+      "owner": 3,
+      "created_at": "2022-08-13T00:00:00+09:00",
+      "remark": "備考"
+    }
+  },
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 8,
+      "name": "農業法人3の圃場2",
+      "prefecture": "青森県",
+      "location": "六戸町",
+      "cultivation_type": 2,
+      "company": 3,
+      "owner": 3,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 9,
+      "name": "農業法人3の圃場3",
+      "prefecture": "青森県",
+      "location": "六戸町",
+      "cultivation_type": 2,
+      "company": 3,
+      "owner": 4,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  }
+]

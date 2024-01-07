@@ -1,0 +1,20 @@
+[
+  {
+    "model": "soil_analysis.SamplingMethod",
+    "fields": {
+      "id": 1,
+      "name": "5点法",
+      "times": 5,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.SamplingMethod",
+    "fields": {
+      "id": 2,
+      "name": "9点法",
+      "times": 9,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  }
+]

@@ -1,0 +1,51 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{% static "soil_analysis/css/routesuggest/ordering.css" %}"/>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+{% endblock %}
+
+{% block additional_head %}
+
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+    <!-- drug & drop -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="{% static 'soil_analysis/js/routesuggest/drag-and-drop-script.js' %}"></script>
+
+{% endblock %}
+
+{% block header %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:routesuggest_upload' %}">KML Upload</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Ordering</li>
+        </ol>
+    </nav>
+{% endblock %}
+{% block content %}
+    <h1>並べ替えしましょう</h1>
+    <p>一番上が始点、一番下が終点。はさまれている地点が最適化されます</p>
+    <ul id="sortable-list">
+        {% for land in object_list %}
+            <li id="{{ land.id }}" class="list-group-item">圃場名: {{ land.name }}, 座標: {{ land.coords }}</li>
+        {% endfor %}
+    </ul>
+    <form id="orderForm" method="POST" action="{% url 'soil:routesuggest_ordering' %}">
+        {% csrf_token %}
+        <input type="hidden" id="orderData" name="order_data">
+        <button class="btn btn-outline-primary mb-3" type="submit">送信</button>
+    </form>
+
+    <script>
+        $(function () {
+            $('.list-group-item').hover(function () {
+                $(this).addClass('active');
+            }, function () {
+                $(this).removeClass('active');
+            });
+        });
+    </script>
+{% endblock %}

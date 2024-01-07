@@ -1,0 +1,24 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+
+{% block header %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:land_list' company.id %}">Land List</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Create</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>圃場の作成</h1>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="">送信</button>
+        </form>
+    </div>
+{% endblock %}
+

@@ -1,0 +1,49 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+{% block header %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:soilhardness_upload' %}">Upload soilhardness</a>
+            </li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:soilhardness_association' %}">Association</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Individual</li>
+        </ol>
+    </nav>
+{% endblock %}
+{% block content %}
+    <h1>データの関連付け</h1>
+    <form method="post" action="{% url 'soil:soilhardness_association_individual' memory_anchor landledger %}"
+          enctype="multipart/form-data">
+        {% csrf_token %}
+        <input class="btn btn-outline-primary mb-3" type="submit" name="button" value="送信">
+        <table class="table table-bordered table-gray table-striped">
+            <thead>
+            <tr>
+                <th>memory</th>
+                <th>datetime</th>
+                <th>count</th>
+                <th class="centered">圃場ブロック</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for measurement in object_list %}
+                <tr>
+                    <td>{{ measurement.setmemory }}</td>
+                    <td>{{ measurement.setdatetime|date:"Y-m-d" }}</td>
+                    <td>{{ measurement.cnt }}</td>
+                    <td>
+                        <select class="form-select" name="landblocks[]" required aria-label="圃場ブロックを選択">
+                            <option selected disabled value="">選択してください</option>
+                            {% for land_block in land_blocks %}
+                                <option value="{{ land_block.pk }}">{{ land_block.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </form>
+{% endblock %}

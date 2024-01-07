@@ -1,0 +1,130 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/landreport/chemical.css' %}">
+{% endblock %}
+{% block header %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:land_list' company.id %}">Land list</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Land report chemical</li>
+        </ol>
+    </nav>
+{% endblock %}
+{% block content %}
+    <div class="row mb-4">
+        <div class="col-sm-6">
+            <img src="data:image/png;base64,{{ charts.chart1 | safe }}" alt="窒素関連">
+        </div>
+        <div class="col-sm-6">
+            <img src="data:image/png;base64,{{ charts.chart2 | safe }}" alt="塩基類関連">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <img src="data:image/png;base64,{{ charts.chart3 | safe }}" alt="リン酸関連">
+        </div>
+        <div class="col-sm-6">
+            <img src="data:image/png;base64,{{ charts.chart4 | safe }}" alt="土壌ポテンシャル関連">
+        </div>
+    </div>
+    <div class="alert alert-primary m-4" role="alert">
+        {{ landreview.first.comment }}
+    </div>
+
+    <div class="container">
+        <table class="table table-sm">
+            <tbody>
+            <tr>
+                <td>圃場</td>
+                <td>{{ landledger.land.name|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>作物</td>
+                <td>{{ landledger.crop.name|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>時期</td>
+                <td>{{ landledger.landperiod.name|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>採土日</td>
+                <td>{{ landledger.sampling_date|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>採土法</td>
+                <td>{{ landledger.sampling_method.name|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>採土者</td>
+                <td>{{ landledger.sampling_staff|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>分析依頼日</td>
+                <td>{{ landledger.analysis_request_date|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>報告日</td>
+                <td>{{ landledger.reporting_date|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>分析機関</td>
+                <td>{{ landledger.analytical_agency.name|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>分析番号</td>
+                <td>{{ landledger.analysis_number|default:"-" }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-group justify-content-center">
+        {% for landscore in landscores %}
+            {% if forloop.first %}
+                <div class="row mb-4">
+            {% endif %}
+        <div class="col-sm-4">
+            <div class="card">
+                <svg class="bd-placeholder-img card-img-top" width="100%" height="180"
+                     xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false"
+                     role="img" aria-label="Placeholder: Image cap"><title>Placeholder</title>
+                    <rect fill="#868e96" width="100%" height="100%"/>
+                    <text fill="#dee2e6" dy=".3em" x="38%" y="50%">Image cap</text>
+                </svg>
+                <div class="card-body">
+                    <h5 class="card-title">{{ landscore.landblock.name }}</h5>
+                    <ul class="card-text">
+                        <li>電気伝導率: {{ landscore.ec }}</li>
+                        <li>アンモニア態窒素: {{ landscore.nh4n }}</li>
+                        <li>硝酸態窒素: {{ landscore.no3n }}</li>
+                        <li>無機態窒素: {{ landscore.total_nitrogen }}</li>
+                        <li>アンモニア態窒素比: {{ landscore.nh4_per_nitrogen }}</li>
+                        <li>水素イオン濃度: {{ landscore.ph }}</li>
+                        <li>交換性石灰: {{ landscore.cao }}</li>
+                        <li>交換性苦土: {{ landscore.mgo }}</li>
+                        <li>交換性加里: {{ landscore.k2o }}</li>
+                        <li>塩基飽和度: {{ landscore.base_saturation }}</li>
+                        <li>交換性石灰/交換性苦土: {{ landscore.cao_per_mgo }}</li>
+                        <li>交換性苦土/交換性加里: {{ landscore.mgo_per_k2o }}</li>
+                        <li>リン酸吸収係数: {{ landscore.phosphorus_absorption }}</li>
+                        <li>可給態リン酸: {{ landscore.p2o5 }}</li>
+                        <li>塩基置換容量: {{ landscore.cec }}</li>
+                        <li>腐植: {{ landscore.humus }}</li>
+                        <li>仮比重: {{ landscore.bulk_density }}</li>
+                        <li>備考: {{ landscore.remark|default:"-" }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% if forloop.counter|divisibleby:"3" and not forloop.last %}
+            </div>
+            <div class="row mb-4">
+        {% endif %}
+        {% if forloop.last %}
+            </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}

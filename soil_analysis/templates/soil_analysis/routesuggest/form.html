@@ -1,0 +1,30 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+{% block header %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">KML Upload</li>
+        </ol>
+    </nav>
+{% endblock %}
+{% block content %}
+    <h1>KMLのアップロード</h1>
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                {% if message.tags and message.tags == 'error' %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <p><a href="https://fm.xarvio.com/jp/ja_jp/login" target="_blank" rel="noopener noreferrer">Xarvio</a>
+        から地点データをKMLでダウンロードしてアップロードしてください</p>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn btn-outline-primary mb-3" type="submit">Upload</button>
+    </form>
+{% endblock %}

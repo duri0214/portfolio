@@ -1,0 +1,56 @@
+[
+  {
+    "model": "soil_analysis.LandPeriod",
+    "fields": {
+      "id": 1,
+      "name": "播種時",
+      "year": 2022,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.LandPeriod",
+    "fields": {
+      "id": 2,
+      "name": "定植時",
+      "year": 2022,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.LandPeriod",
+    "fields": {
+      "id": 3,
+      "name": "収穫時",
+      "year": 2022,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.LandPeriod",
+    "fields": {
+      "id": 4,
+      "name": "播種時",
+      "year": 2023,
+      "created_at": "2023-07-09T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.LandPeriod",
+    "fields": {
+      "id": 5,
+      "name": "定植時",
+      "year": 2023,
+      "created_at": "2023-07-09T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.LandPeriod",
+    "fields": {
+      "id": 6,
+      "name": "収穫時",
+      "year": 2023,
+      "created_at": "2023-07-09T00:00:00+09:00"
+    }
+  }
+]

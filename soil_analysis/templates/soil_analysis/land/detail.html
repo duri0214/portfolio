@@ -1,0 +1,34 @@
+{% extends 'soil_analysis/base.html' %}
+{% load static %}
+
+{% block header %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:land_list' object.company.pk %}">Land list</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Detail</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>{{ object.name }}の詳細</h1>
+        {% if object.image %}
+            <img src="{{ object.image.url }}" alt="Land Image">
+        {% endif %}
+        <ul>
+            <li>都道府県: {{ object.prefecture|default:"-" }}</li>
+            <li>住所: {{ object.location|default:"-" }}</li>
+            <li>緯度経度: {{ object.latlon|default:"-" }}</li>
+            <li>作型: {{ object.cultivation_type|default:"-" }}</li>
+            <li>オーナー: {{ object.owner.username|default:"-" }}</li>
+            <li>備考: {{ object.remark|default:"-" }}</li>
+        </ul>
+        <form method="GET" class="registration" action="{% url 'soil:land_list' object.company.pk %}">
+            {% csrf_token %}
+            <button type="submit">戻る</button>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,87 @@
+[
+  {
+    "model": "soil_analysis.LandLedger",
+    "fields": {
+      "id": 1,
+      "sampling_date": "2022-06-03",
+      "analysis_request_date": "2022-06-13",
+      "reporting_date": "2022-06-20",
+      "analysis_number": 2206064,
+      "created_at": "2022-06-30T15:00:00+09:00",
+      "analytical_agency_id": 4,
+      "crop_id": 1,
+      "land_id": 1,
+      "landperiod_id": 2,
+      "sampling_method_id": 1,
+      "sampling_staff_id": 2
+    }
+  },
+  {
+    "model": "soil_analysis.LandLedger",
+    "fields": {
+      "id": 2,
+      "sampling_date": "2022-09-03",
+      "analysis_request_date": "2022-09-13",
+      "reporting_date": "2022-09-20",
+      "analysis_number": 2206065,
+      "created_at": "2022-09-30T15:00:00+09:00",
+      "analytical_agency_id": 4,
+      "crop_id": 1,
+      "land_id": 1,
+      "landperiod_id": 3,
+      "sampling_method_id": 1,
+      "sampling_staff_id": 2
+    }
+  },
+  {
+    "model": "soil_analysis.LandLedger",
+    "fields": {
+      "id": 3,
+      "sampling_date": "2023-03-03",
+      "analysis_request_date": "2023-03-13",
+      "reporting_date": "2023-03-20",
+      "analysis_number": 2206073,
+      "created_at": "2023-03-30T15:00:00+09:00",
+      "analytical_agency_id": 4,
+      "crop_id": 1,
+      "land_id": 1,
+      "landperiod_id": 4,
+      "sampling_method_id": 1,
+      "sampling_staff_id": 2
+    }
+  },
+  {
+    "model": "soil_analysis.LandLedger",
+    "fields": {
+      "id": 4,
+      "sampling_date": "2023-03-03",
+      "analysis_request_date": "2023-03-13",
+      "reporting_date": "2023-03-20",
+      "analysis_number": 2206074,
+      "created_at": "2023-03-30T15:00:00+09:00",
+      "analytical_agency_id": 4,
+      "crop_id": 2,
+      "land_id": 2,
+      "landperiod_id": 4,
+      "sampling_method_id": 1,
+      "sampling_staff_id": 1
+    }
+  },
+  {
+    "model": "soil_analysis.LandLedger",
+    "fields": {
+      "id": 5,
+      "sampling_date": "2023-06-03",
+      "analysis_request_date": "2023-06-13",
+      "reporting_date": "2023-06-20",
+      "analysis_number": 2206075,
+      "created_at": "2023-06-30T15:00:00+09:00",
+      "analytical_agency_id": 4,
+      "crop_id": 2,
+      "land_id": 2,
+      "landperiod_id": 5,
+      "sampling_method_id": 1,
+      "sampling_staff_id": 1
+    }
+  }
+]

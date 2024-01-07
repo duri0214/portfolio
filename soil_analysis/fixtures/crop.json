@@ -1,0 +1,18 @@
+[
+  {
+    "model": "soil_analysis.crop",
+    "fields": {
+      "id": 1,
+      "name": "レタス",
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.crop",
+    "fields": {
+      "id": 2,
+      "name": "ほうれん草",
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  }
+]

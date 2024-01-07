@@ -1,0 +1,38 @@
+[
+  {
+    "model": "soil_analysis.company",
+    "fields": {
+      "id": 1,
+      "name": "(有)アグリファクトリー",
+      "category": 1,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.company",
+    "fields": {
+      "id": 2,
+      "name": "農業法人2",
+      "category": 1,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.company",
+    "fields": {
+      "id": 3,
+      "name": "農業法人3",
+      "category": 1,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.company",
+    "fields": {
+      "id": 4,
+      "name": "川田研究所",
+      "category": 2,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  }
+]

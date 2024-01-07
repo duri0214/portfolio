@@ -1,0 +1,76 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/land/list.css' %}">
+{% endblock %}
+{% block header %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:company_list' %}">Company list</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Land list</li>
+        </ol>
+    </nav>
+{% endblock %}
+{% block content %}
+    <a class="btn btn-outline-primary mb-3" href="{% url 'soil:land_create' company.id %}"
+       role="button">＋圃場の追加</a>
+    {% for a_land in object_list %}
+        {% if not forloop.counter|divisibleby:"2" %}
+            <div class="row mb-4">
+        {% endif %}
+    <div class="col-sm-6">
+        <div class="card">
+            {% if a_land.image %}
+                <img src="{{ a_land.image.url }}" width="100%" height="180" alt="Land Image">
+            {% else %}
+                <svg class="bd-placeholder-img card-img-top" width="100%" height="180"
+                     xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false"
+                     role="img" aria-label="Placeholder: Image cap"><title>Placeholder</title>
+                    <rect fill="#868e96" width="100%" height="100%"/>
+                    <text fill="#dee2e6" dy=".3em" x="38%" y="50%">Image cap</text>
+                </svg>
+            {% endif %}
+            <div class="card-body">
+                <a href="{% url 'soil:land_detail' a_land.company.pk a_land.pk %}"><h5
+                        class="card-title">{{ a_land.name }}</h5></a>
+                <ul class="card-text">
+                    <li>都道府県: {{ a_land.prefecture|default:"-" }}</li>
+                    <li>住所: {{ a_land.location|default:"-" }}</li>
+                    <li>緯度経度: {% if a_land.latlon %}<a href="https://www.google.co.jp/maps/@{{ a_land.latlon }},17z"
+                                                           target="_blank">{{ a_land.latlon }}</a>{% else %}-{% endif %}
+                    </li>
+                    <li>面積: {{ a_land.area|default:"-" }} ㎡</li>
+                    <li>作型: {{ a_land.cultivation_type|default:"-" }}</li>
+                    <li>オーナー: {{ a_land.owner.username|default:"-" }}</li>
+                    <li>備考: {{ a_land.remark|default:"-" }}</li>
+                </ul>
+
+                <div class="dropdown">
+                    <button class="m-1 btn btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton1"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        -- 化学レポートを選択 --
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="select a report">
+                        {% for landledger in land_ledger_map|get_value:a_land %}
+                            <li><a class="dropdown-item"
+                                   href="{% url 'soil:land_report_chemical' a_land.company.id landledger.pk %}">{{ landledger.sampling_date|date:"Ym" }} {{ landledger.landperiod.name }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="m-1 btn btn-outline-primary dropdown-toggle disabled" type="button"
+                            id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                        -- 物理レポートを選択 --
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if forloop.counter|divisibleby:"2" %}
+        </div>
+    {% endif %}
+    {% endfor %}
+{% endblock %}

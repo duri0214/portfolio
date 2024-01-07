@@ -1,0 +1,85 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{% static "soil_analysis/css/routesuggest/style.css" %}"/>
+{% endblock %}
+{% block additional_head %}
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script type="module" src="{% static "soil_analysis/js/routesuggest/display-route-script.js" %}"></script>
+    {% autoescape off %}
+        <script>let coordsList = {{ coords_list }};</script>
+    {% endautoescape %}
+{% endblock %}
+{% block header %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:routesuggest_upload' %}">KML Upload</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:routesuggest_ordering' %}">Ordering</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Success</li>
+        </ol>
+    </nav>
+{% endblock %}
+{% block content %}
+    <h1>作業指示書</h1>
+    <p>TODO: placeオブジェクトにラップして、マウスオーバー時に圃場の名前を表示する<br>TODO: ピンと圃場名が違うかもしれない<br>TODO:
+        印刷用の余白ゼロのページを作る</p>
+
+    <p>発行日: YYYY-MM-DD</p>
+    <p>依頼者: X XX</p>
+    <p>作業者: Aさん</p>
+    <p>作業日: YYYY-MM-DD</p>
+    <p>シーズン: 施肥前測定</p>
+    <p>作業単価（円/件） 1,000円／件</p>
+
+    <h4 class="mt-4">作業内容</h4>
+    <ul>
+        <li>化学性測定
+            <ul>
+                <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
+            </ul>
+        </li>
+        <li>物理性測定
+            <ul>
+                <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h4 class="mt-4">作業場所</h4>
+    <div class="flex-container">
+        <div id="map" class="flex-item"></div>
+        <ol class="list-group list-group-numbered flex-item">
+            {% for land in land_list %}
+                <li id="{{ land.id }}" class="list-group-item">{{ land.name }}（{{ land.coords }}）</li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <h4 class="mt-4">提出物</h4>
+    <ul>
+        <li>土</li>
+        <li>物理性測定データ</li>
+    </ul>
+
+    <h4 class="mt-4">その他</h4>
+    共通する事項は基本契約で交わしておく
+    <ul>
+        <li>データの取り扱いについて</li>
+        <li>秘密保持について</li>
+        <li>支払い条件について</li>
+        <li>保険（作業中に倒れるとか、怪我するとか）</li>
+    </ul>
+
+    <!--
+      The `defer` attribute causes the callback to execute after the full HTML
+      document has been parsed. For non-blocking uses, avoiding race conditions,
+      and consistent behavior across browsers, consider loading using Promises.
+      See https://developers.google.com/maps/documentation/javascript/load-maps-js-api
+      for more information.
+      -->
+    <script
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAhPDsXtgH9cuZexbk-UktIH97TNVaBbB4&libraries=places&callback=initMap&v=weekly"
+            defer
+    ></script>
+{% endblock %}

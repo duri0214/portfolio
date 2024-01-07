@@ -35,14 +35,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'vietnam_research.apps.VietnamResearchConfig',
-    'gmarker.apps.GmarkerConfig',
-    'shopping.apps.ShoppingConfig',
     'django.contrib.humanize',
-    'linebot.apps.LinebotConfig',
-    'register.apps.RegisterConfig',
-    'warehouse.apps.WarehouseConfig',
-    'taxonomy.apps.TaxonomyConfig'
+    'vietnam_research',
+    'gmarker',
+    'shopping',
+    'linebot',
+    'register',
+    'warehouse',
+    'taxonomy',
+    'soil_analysis'
 ]
 
 MIDDLEWARE = [

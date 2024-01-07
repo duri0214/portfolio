@@ -5,25 +5,37 @@
 ![Static Badge](https://img.shields.io/badge/mysql-8.0-green)
 
 ## TODO
+
 - register
-  - last_name, first_name を編集したい！
-    - https://hodalog.com/how-to-create-user-sign-up-view/
-    - https://zerofromlight.com/blogs/detail/85/
-    - https://blog.narito.ninja/detail/47#_3
-  - ユーザー登録時の処理をserviceに落とし込む(DDD)
+    - last_name, first_name を編集したい！
+        - https://hodalog.com/how-to-create-user-sign-up-view/
+        - https://zerofromlight.com/blogs/detail/85/
+        - https://blog.narito.ninja/detail/47#_3
+    - ユーザー登録時の処理をserviceに落とし込む(DDD)
 - warehouse
-  - カレンダー実装したい gptでやろうとして一回挫折
-    - https://chuna.tech/detail/51/
-  - 倉庫業務のワークフローをgptに聞く
-  - 帳票デザインをgptに聞く
+    - カレンダー実装したい gptでやろうとして一回挫折
+        - https://chuna.tech/detail/51/
+    - 倉庫業務のワークフローをgptに聞く
+    - 帳票デザインをgptに聞く
 - tabindexの研究
 
+## ライブラリをインストールする
+
+```console
+pip install -r requirements.txt
+
+-- ※開発時 現在のライブラリの状態でrequirementsを書き出す
+pip freeze > requirements.txt
+```
+
 ## Migrate
+
+まず register アプリを組み立ててログイン機構をつくってからほかの migrate をする
 
 ```
 python manage.py makemigrations register
 python manage.py migrate
-python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse taxonomy
+python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse taxonomy soil_analysis
 python manage.py migrate
 
 python manage.py createsuperuser
@@ -68,6 +80,21 @@ python manage.py loaddata .\taxonomy\fixtures\naturalMonument.json
 python manage.py loaddata .\taxonomy\fixtures\tag.json
 python manage.py loaddata .\taxonomy\fixtures\breed.json
 python manage.py loaddata .\taxonomy\fixtures\breedTags.json
+
+python manage.py loaddata .\soil_analysis\fixtures\companycategory.json
+python manage.py loaddata .\soil_analysis\fixtures\company.json
+python manage.py loaddata .\soil_analysis\fixtures\user.json
+python manage.py loaddata .\soil_analysis\fixtures\crop.json
+python manage.py loaddata .\soil_analysis\fixtures\landblock.json
+python manage.py loaddata .\soil_analysis\fixtures\landperiod.json
+python manage.py loaddata .\soil_analysis\fixtures\cultivationtype.json
+python manage.py loaddata .\soil_analysis\fixtures\land.json
+python manage.py loaddata .\soil_analysis\fixtures\samplingmethod.json
+python manage.py loaddata .\soil_analysis\fixtures\samplingorder.json
+python manage.py loaddata .\soil_analysis\fixtures\landledger.json
+python manage.py loaddata .\soil_analysis\fixtures\landreview.json
+python manage.py loaddata .\soil_analysis\fixtures\landscorechemical.json
+python manage.py loaddata .\soil_analysis\fixtures\device.json
 ```
 
 ## バッチ
@@ -97,27 +124,34 @@ from django.db.models.functions import Concat
 
 ```
 python manage.py runserver
+python manage.py import_soil_hardness /path/to/folder
 ```
 
 ## vietnam_research
+
 - ベトナムの株価を分析する
 
 ## gmarker
+
 - google map api を使って、マーカーを操作できる
 
 ## shopping
+
 - 在庫を登録し、値段・コメントなどの管理ができる
 
 ## linebot
+
 - [仕様書](docs/linebot/specification.md)
 - あまりできていないが chatbot を作りたかったのかな？
 
 ## warehouse
+
 - 倉庫とレンタル業務をイメージしたアプリ
 - 何段目の何列目にあるかも登録できる
 - 請求書をつくることもできる
 
 ## taxonomy
+
 - [仕様書](docs/taxonomy/specification.md)
 - 興味のある動物の分類を関係図に表示
 - タグ付けをして分析のサポートができる

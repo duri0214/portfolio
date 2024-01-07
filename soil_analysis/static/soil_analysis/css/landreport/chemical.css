@@ -1,0 +1,8 @@
+.card-body {
+    font-size: small;
+}
+
+.card-body > ul {
+    list-style-type: none;
+    padding: 0;
+}
