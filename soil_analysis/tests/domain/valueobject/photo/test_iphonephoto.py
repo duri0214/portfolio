@@ -1,3 +1,4 @@
+import os
 from unittest import TestCase
 
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
@@ -6,8 +7,9 @@ from soil_analysis.domain.valueobject.photo.iphonephoto import IphonePhoto
 
 class TestIphonePhoto(TestCase):
     def setUp(self):
-        self.file_path = r"D:/OneDrive/dev/soil_analysisローカルデータ/サンプルデータ/iphone/IMG_1315_left.jpeg"
-        self.iphone_photo = IphonePhoto(self.file_path)
+        script_directory = os.path.dirname(os.path.abspath(__file__))
+        self.file_path = r"./iphone/IMG_1315_left.jpeg"
+        self.iphone_photo = IphonePhoto(os.path.join(script_directory, self.file_path))
         self.iphone_photo.exif_data = self.iphone_photo._extract_exif_data()
 
     def test_extract_date(self):

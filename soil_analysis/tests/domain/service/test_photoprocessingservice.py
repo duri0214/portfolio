@@ -1,3 +1,4 @@
+import os
 from unittest import TestCase
 
 from soil_analysis.domain.service.photoprocessingservice import PhotoProcessingService
@@ -20,9 +21,10 @@ class TestPhotoProcessingService(TestCase):
                                       '137.6492192,34.7429904 137.6489738,34.7433604')
         self.land_candidates = LandCandidates([self.land1, self.land2, self.land3, self.land4])
 
+        script_directory = os.path.dirname(os.path.abspath(__file__))
         self.photo_paths = [
-            r"D:/OneDrive/dev/soil_analysisローカルデータ/サンプルデータ/android/ススムＢ1_right.jpg",
-            r"D:/OneDrive/dev/soil_analysisローカルデータ/サンプルデータ/android/ススムB2.jpg"
+            os.path.join(script_directory, r"./android/ススムＢ1_right.jpg"),
+            os.path.join(script_directory, r"./android/ススムB2.jpg")
         ]
 
     def test_calculate_distance(self):
@@ -63,9 +65,10 @@ class TestPhotoProcessingService(TestCase):
     def test_process_photos(self):
         service = PhotoProcessingService()
         processed_photos = service.process_photos(self.photo_paths, self.land_candidates)
-        # 期待される処理後の写真のリストと一致するか検証する ススムは 6/18 のグーグルフォトにある
+        # 期待される処理後の写真のリストと一致するか検証する ススムは 2023/6/18 のグーグルフォトにある
+        script_directory = os.path.dirname(os.path.abspath(__file__))
         expected_processed_photos = [
-            "D:/OneDrive/dev/soil_analysisローカルデータ/サンプルデータ/android/ススムＢ1_right.jpg",
-            "D:/OneDrive/dev/soil_analysisローカルデータ/サンプルデータ/android/ススムB2.jpg"
+            os.path.join(script_directory, "./android/ススムＢ1_right.jpg"),
+            os.path.join(script_directory, "./android/ススムB2.jpg")
         ]
         self.assertEqual(expected_processed_photos, processed_photos)

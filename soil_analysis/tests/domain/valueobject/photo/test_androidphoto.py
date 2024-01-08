@@ -1,3 +1,4 @@
+import os
 from unittest import TestCase
 
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
@@ -6,8 +7,9 @@ from soil_analysis.domain.valueobject.photo.androidphoto import AndroidPhoto
 
 class TestAndroidPhoto(TestCase):
     def setUp(self):
-        self.file_path = r"D:/OneDrive/dev/soil_analysisローカルデータ/サンプルデータ/android/JA中_all.jpg"
-        self.android_photo = AndroidPhoto(self.file_path)
+        script_directory = os.path.dirname(os.path.abspath(__file__))
+        self.file_path = r"./android/JA中_all.jpg"
+        self.android_photo = AndroidPhoto(os.path.join(script_directory, self.file_path))
         self.android_photo.exif_data = self.android_photo._extract_exif_data()
 
     def test_extract_date(self):
