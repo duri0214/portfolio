@@ -13,36 +13,37 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.11]
+        python-version: [ 3.11 ]
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: pip
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
 
-    - name: Set up and run tests
-      env:
-        DB_ENGINE: django.db.backends.mysql
-        DB_NAME: portfolio
-        DB_USER: root
-        DB_PASSWORD: root
-      run: |
-        # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#mysql
-        sudo systemctl start mysql
-        mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE $DB_NAME;"
-        mysql -u$DB_USER -p$DB_PASSWORD -e "SHOW DATABASES;"
-        python3 --version
-        python3 -m venv venv
-        source venv/bin/activate
-        python -m pip install --upgrade pip
-        python -m pip install -r requirements.txt
-        python manage.py makemigrations register
-        python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
-        python manage.py migrate
-        export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
-        python manage.py test
+      - name: Set up and run tests
+        env:
+          DB_ENGINE: django.db.backends.mysql
+          DB_NAME: portfolio
+          DB_USER: root
+          DB_PASSWORD: root
+        run: |
+          # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#mysql
+          sudo systemctl start mysql
+          mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE $DB_NAME;"
+          mysql -u$DB_USER -p$DB_PASSWORD -e "SHOW DATABASES;"
+          python3 --version
+          python3 -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python manage.py makemigrations register
+          python manage.py migrate
+          python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
+          python manage.py migrate
+          export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
+          python manage.py test
