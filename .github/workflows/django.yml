@@ -44,6 +44,7 @@ jobs:
           python manage.py migrate
           
           echo "\n1"
+          ls -l
           mysql -u$DB_USER -p$DB_PASSWORD -e "USE $DB_NAME; SHOW TABLES;"
           echo "2\n"
           
