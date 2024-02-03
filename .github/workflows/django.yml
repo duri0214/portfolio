@@ -41,7 +41,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python manage.py makemigrations register
-          python manage.py migrate
+          #          python manage.py migrate
           
           echo "\n1"
           ls -l
