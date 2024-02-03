@@ -43,7 +43,6 @@ jobs:
           python manage.py makemigrations register
           python manage.py migrate
           
-          // debug
           print(1)
           mysql -u$DB_USER -p$DB_PASSWORD -e "USE $DB_NAME; SHOW TABLES;"
           print(2)
