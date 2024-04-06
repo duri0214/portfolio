@@ -32,7 +32,6 @@ jobs:
           DB_USER: root
           DB_PASSWORD: root
         run: |
-          # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#mysql
           sudo systemctl start mysql
           mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE $DB_NAME DEFAULT CHARACTER SET utf8mb4;"
           mysql -u$DB_USER -p$DB_PASSWORD -e "grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on portfolio_db.* to 'python'@'%';"
