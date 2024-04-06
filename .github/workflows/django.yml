@@ -40,6 +40,10 @@ jobs:
           mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "CREATE DATABASE $DB_NAME DEFAULT CHARACTER SET utf8mb4;"
 
       - name: Check Tables and Permissions
+        env:
+          DB_NAME: portfolio_db
+          DB_USER_PYTHON: python
+          DB_PASSWORD_PYTHON: password
         run: |
           echo "Checking DB tables..."
           mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "USE $DB_NAME; SHOW TABLES;"
