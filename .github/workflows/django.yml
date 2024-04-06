@@ -35,19 +35,14 @@ jobs:
           # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#mysql
           sudo systemctl start mysql
           mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE $DB_NAME;"
+          mysql -u$DB_USER -p$DB_PASSWORD -e "grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $DB_NAME.* to '$DB_USER'@'localhost';"
           python3 --version
           python3 -m venv venv
           source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python manage.py makemigrations register
-          #          python manage.py migrate
-          
-          echo "\n1"
-          ls -l
-          mysql -u$DB_USER -p$DB_PASSWORD -e "USE $DB_NAME; SHOW TABLES;"
-          echo "2\n"
-          
+          python manage.py migrate
           python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
           python manage.py migrate
           export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
