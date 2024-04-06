@@ -25,7 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Set up and run tests
+      - name: Set up
         env:
           DB_ENGINE: django.db.backends.mysql
           DB_NAME: portfolio_db
@@ -38,6 +38,16 @@ jobs:
           mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE USER '$DB_USER_PYTHON'@'localhost' IDENTIFIED BY '$DB_PASSWORD_PYTHON';"
           mysql -u$DB_USER -p$DB_PASSWORD -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $DB_NAME.* to '$DB_USER_PYTHON'@'localhost';"
           mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "CREATE DATABASE $DB_NAME DEFAULT CHARACTER SET utf8mb4;"
+
+      - name: Check Tables and Permissions
+        run: |
+          echo "Checking DB tables..."
+          mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "USE $DB_NAME; SHOW TABLES;"
+          echo "Checking user permissions..."
+          mysql -u$DB_USER -p$DB_PASSWORD -e "SHOW GRANTS FOR '$DB_USER_PYTHON'@'localhost';"
+
+      - name: Run tests
+        run: |
           python3 --version
           python3 -m venv venv
           source venv/bin/activate
