@@ -33,6 +33,7 @@ jobs:
           DB_PASSWORD: root
         run: |
           sudo systemctl start mysql
+          mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE USER 'python'@'%' IDENTIFIED BY 'python999';"
           mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE $DB_NAME DEFAULT CHARACTER SET utf8mb4;"
           mysql -u$DB_USER -p$DB_PASSWORD -e "grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on portfolio_db.* to 'python'@'%';"
           python3 --version
