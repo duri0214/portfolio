@@ -94,7 +94,7 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '3306',
         'TEST': {
-            'NAME': 'test1_portfolio_db',
+            'NAME': 'test_portfolio_db',
         },
     }
 }
