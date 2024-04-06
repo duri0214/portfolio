@@ -70,6 +70,8 @@ jobs:
           DB_NAME: portfolio_db
           DB_USER: python
           DB_PASSWORD: password
+          DB_HOST: localhost
+          DB_PORT: 3306
         run: |
           source venv/bin/activate
           python manage.py test
