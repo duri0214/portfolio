@@ -55,7 +55,7 @@ jobs:
       - name: Run tests
         env:
           DB_ENGINE: django.db.backends.mysql
-          DB_NAME: portfolio_db
+          DB_NAME: test_portfolio_db
           DB_USER: python
           DB_PASSWORD: password
         run: |
