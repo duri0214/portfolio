@@ -42,7 +42,9 @@ jobs:
       - name: Check Tables and Permissions
         env:
           DB_NAME: portfolio_db
+          DB_USER: root
           DB_USER_PYTHON: python
+          DB_PASSWORD: root
           DB_PASSWORD_PYTHON: password
         run: |
           echo "Checking DB tables..."
