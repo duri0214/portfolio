@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo systemctl start mysql
           mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE USER '$DB_USER_PYTHON'@'localhost' IDENTIFIED BY '$DB_PASSWORD_PYTHON';"
-          mysql -u$DB_USER -p$DB_PASSWORD -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $DB_NAME.* to '$DB_USER_PYTHON'@'localhost';"
+          mysql -u$DB_USER -p$DB_PASSWORD -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on test_portfolio_db.* to '$DB_USER_PYTHON'@'localhost';"
           mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "CREATE DATABASE $DB_NAME DEFAULT CHARACTER SET utf8mb4;"
 
       - name: Check Tables and Permissions
@@ -55,7 +55,7 @@ jobs:
       - name: Run tests
         env:
           DB_ENGINE: django.db.backends.mysql
-          DB_NAME: test_portfolio_db
+          DB_NAME: portfolio_db
           DB_USER: python
           DB_PASSWORD: password
         run: |
