@@ -65,10 +65,5 @@ jobs:
           mysql -u$DB_USER -p$DB_PASSWORD -e "SHOW GRANTS FOR '$DB_USER_PYTHON'@'localhost';"
 
       - name: Run tests
-        env:
-          DB_ENGINE: django.db.backends.mysql
-          DB_NAME: portfolio_db
-          DB_USER: python
-          DB_PASSWORD: password
         run: |
           python manage.py test
