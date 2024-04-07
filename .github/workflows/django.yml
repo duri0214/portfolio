@@ -68,7 +68,7 @@ jobs:
         run: |
           echo "Checking DB tables..."
           mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "USE $DB_NAME; SHOW TABLES;"
-          mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "USE DB_NAME_TEST; SHOW TABLES;"
+          mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "USE $DB_NAME_TEST; SHOW TABLES;"
           echo "Checking user permissions..."
           mysql -u$DB_USER -p$DB_PASSWORD -e "SHOW GRANTS FOR '$DB_USER_PYTHON'@'localhost';"
 
