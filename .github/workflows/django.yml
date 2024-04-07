@@ -26,26 +26,24 @@ jobs:
 
       - name: Set up
         env:
-          DB_ENGINE: django.db.backends.mysql
-          DB_NAME: portfolio_db
-          DB_NAME_TEST: test_portfolio_db
-          DB_USER: root
-          DB_USER_PYTHON: python
-          DB_PASSWORD: root
-          DB_PASSWORD_PYTHON: python123
+          ENGINE: django.db.backends.mysql
+          NAME: portfolio_db
+          USER: python
+          PASSWORD: python123
+          HOST: localhost
+          PORT: 3306
         run: |
           sudo systemctl start mysql
-          mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE USER '$DB_USER_PYTHON'@'localhost' IDENTIFIED BY '$DB_PASSWORD_PYTHON';"
-          mysql -u$DB_USER -p$DB_PASSWORD -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $DB_NAME.* to '$DB_USER_PYTHON'@'localhost';"
-          mysql -u$DB_USER -p$DB_PASSWORD -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $DB_NAME_TEST.* to '$DB_USER_PYTHON'@'localhost';"
-          mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "CREATE DATABASE $DB_NAME DEFAULT CHARACTER SET utf8mb4;"
+          mysql -uroot -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
+          mysql -uroot -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $NAME.* to '$USER'@'localhost';"
+          mysql -uroot -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on test_$NAME.* to '$USER'@'localhost';"
+          mysql -u$USER -p$PASSWORD -e "CREATE DATABASE $NAME DEFAULT CHARACTER SET utf8mb4;"
           python3 --version
           python3 -m venv venv
           source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python manage.py makemigrations register
-          #          python manage.py migrate
           python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
           python manage.py migrate
           export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
