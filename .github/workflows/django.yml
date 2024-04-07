@@ -8,11 +8,12 @@ on:
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 1
+      max-parallel: 4
       matrix:
-        python-version: [ 3.11 ]
+        python-version: [ 3.8 ]
 
     steps:
       - name: Checkout
@@ -24,20 +25,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Set up
+      - name: Set up and run tests
         env:
-          ENGINE: django.db.backends.mysql
-          NAME: portfolio_db
-          USER: python
-          PASSWORD: python123
-          HOST: localhost
-          PORT: 3306
+          DB_ENGINE: django.db.backends.mysql
+          DB_NAME: portfolio
+          DB_USER: root
+          DB_PASSWORD: root
         run: |
+          # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#mysql
           sudo systemctl start mysql
-          mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
-          mysql -u root -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $NAME.* to '$USER'@'localhost';"
-          mysql -u root -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on test_$NAME.* to '$USER'@'localhost';"
-          mysql -u$USER -p$PASSWORD -e "CREATE DATABASE $NAME DEFAULT CHARACTER SET utf8mb4;"
+          mysql -u$DB_USER -p$DB_PASSWORD -e "CREATE DATABASE $DB_NAME;"
+          mysql -u$DB_USER -p$DB_PASSWORD -e "SHOW DATABASES;"
           python3 --version
           python3 -m venv venv
           source venv/bin/activate
@@ -45,40 +43,6 @@ jobs:
           python -m pip install -r requirements.txt
           python manage.py makemigrations register
           python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
-          
-          # Output the environment variables
-          echo $ENGINE
-          echo $NAME
-          echo $USER
-          echo $PASSWORD
-          echo $HOST
-          echo $PORT
-          
           python manage.py migrate
           export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
-
-      - name: Check Tables and Permissions
-        env:
-          DB_NAME: portfolio_db
-          DB_USER: root
-          DB_USER_PYTHON: python
-          DB_PASSWORD: root
-          DB_PASSWORD_PYTHON: python123
-        run: |
-          echo "Checking DB tables..."
-          mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "USE $DB_NAME; SHOW TABLES;"
-          echo "Checking user permissions..."
-          mysql -u$DB_USER -p$DB_PASSWORD -e "SHOW GRANTS FOR '$DB_USER_PYTHON'@'localhost';"
-
-      - name: Run tests
-        env:
-          ENGINE: django.db.backends.mysql
-          NAME: portfolio_db
-          USER: python
-          PASSWORD: python123
-          HOST: localhost
-          PORT: 3306
-        run: |
-          mysql -u root -proot -e "GRANT ALL on *.* to '$USER';"| mysql -u $USER --password="$PASSWORD" -h $HOST
-          source venv/bin/activate
           python manage.py test
