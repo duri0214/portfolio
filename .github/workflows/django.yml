@@ -80,6 +80,6 @@ jobs:
           HOST: localhost
           PORT: 3306
         run: |
-          mysql -u$DB_USER -p$DB_PASSWORD -e "GRANT ALL on *.* to '$DB_USER';"| mysql -u $DB_USER --password="$DB_PASSWORD" -h $DB_HOST
+          mysql -uroot -proot -e "GRANT ALL on *.* to '$USER';"| mysql -u $USER --password="$PASSWORD" -h $HOST
           source venv/bin/activate
           python manage.py test
