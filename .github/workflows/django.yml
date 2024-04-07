@@ -67,12 +67,12 @@ jobs:
 
       - name: Run tests
         env:
-          DB_ENGINE: django.db.backends.mysql
-          DB_NAME: portfolio_db
-          DB_USER: python
-          DB_PASSWORD: python123
-          DB_HOST: localhost
-          DB_PORT: 3306
+          ENGINE: django.db.backends.mysql
+          NAME: portfolio_db
+          USER: python
+          PASSWORD: python123
+          HOST: localhost
+          PORT: 3306
         run: |
           mysql -u$DB_USER -p$DB_PASSWORD -e "GRANT ALL on *.* to '$DB_USER';"| mysql -u $DB_USER --password="$DB_PASSWORD" -h $DB_HOST
           source venv/bin/activate
