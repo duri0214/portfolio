@@ -34,9 +34,9 @@ jobs:
           PORT: 3306
         run: |
           sudo systemctl start mysql
-          mysql -uroot -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
-          mysql -uroot -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $NAME.* to '$USER'@'localhost';"
-          mysql -uroot -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on test_$NAME.* to '$USER'@'localhost';"
+          mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
+          mysql -u root -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $NAME.* to '$USER'@'localhost';"
+          mysql -u root -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on test_$NAME.* to '$USER'@'localhost';"
           mysql -u$USER -p$PASSWORD -e "CREATE DATABASE $NAME DEFAULT CHARACTER SET utf8mb4;"
           python3 --version
           python3 -m venv venv
@@ -60,7 +60,6 @@ jobs:
       - name: Check Tables and Permissions
         env:
           DB_NAME: portfolio_db
-          DB_NAME_TEST: test_portfolio_db
           DB_USER: root
           DB_USER_PYTHON: python
           DB_PASSWORD: root
@@ -80,6 +79,6 @@ jobs:
           HOST: localhost
           PORT: 3306
         run: |
-          mysql -uroot -proot -e "GRANT ALL on *.* to '$USER';"| mysql -u $USER --password="$PASSWORD" -h $HOST
+          mysql -u root -proot -e "GRANT ALL on *.* to '$USER';"| mysql -u $USER --password="$PASSWORD" -h $HOST
           source venv/bin/activate
           python manage.py test
