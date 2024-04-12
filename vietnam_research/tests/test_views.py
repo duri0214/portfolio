@@ -8,7 +8,9 @@ from vietnam_research.models import Articles, Likes
 class TestView(TestCase):
     def setUp(self):
         self.password_plane = "<PASSWORD>"
-        self.user = User.objects.create_user(id=1, email="user@example.com")
+        self.user = User.objects.create_user(
+            id=1, username="john_doe", email="user@example.com"
+        )
         self.user.set_password(self.password_plane)
         self.user.save()
         self.article = Articles.objects.create(
@@ -26,13 +28,13 @@ class TestView(TestCase):
         self.assertContains(response, "ゲストさん", html=True)
 
         logged_in = self.client.login(
-            email=self.user.email, password=self.password_plane
+            username=self.user.username, password=self.password_plane
         )
         self.assertTrue(logged_in)
 
         response = self.client.get(reverse("vnm:index"))
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, f"{self.user.email}さん", html=True)
+        self.assertContains(response, f"{self.user.username}さん", html=True)
 
         self.client.logout()
         response = self.client.get(reverse("vnm:index"))
@@ -44,14 +46,14 @@ class TestView(TestCase):
         ログインしていない場合、保護された記事作成ページに遷移しようとするとログインページにリダイレクトする
         """
         response = self.client.get(reverse("vnm:article_create"))
-        self.assertRedirects(response, "/login/?next=/article/create/")
+        self.assertRedirects(response, "/accounts/login/?next=/article/create/")
 
     def test_can_navigate_to_article_create_page(self):
         """
         ログインしている場合、保護されている記事作成ページに遷移できる
         """
         logged_in = self.client.login(
-            email=self.user.email, password=self.password_plane
+            username=self.user.username, password=self.password_plane
         )
         self.assertTrue(logged_in)
         response = self.client.get(reverse("vnm:article_create"))
@@ -59,21 +61,23 @@ class TestView(TestCase):
 
     def test_can_create_likes(self):
         logged_in = self.client.login(
-            email=self.user.email, password=self.password_plane
+            username=self.user.username, password=self.password_plane
         )
         self.assertTrue(logged_in)
 
         # create 3 users
-        emails = ["user1@example.com", "user2@example.com", "user3@example.com"]
+        usernames = ["user1", "user2", "user3"]
         [
-            User.objects.create_user(email=x).set_password(self.password_plane)
-            for x in emails
+            User.objects.create_user(username=x).set_password(self.password_plane)
+            for x in usernames
         ]
 
         # already got 'likes' from 3 users
         [
-            Likes.objects.create(articles=self.article, user=User.objects.get(email=x))
-            for x in emails
+            Likes.objects.create(
+                articles=self.article, user=User.objects.get(username=x)
+            )
+            for x in usernames
         ]
         self.assertEqual(3, Likes.objects.filter(articles=self.article).count())
 
@@ -86,7 +90,7 @@ class TestView(TestCase):
 
     def test_can_not_create_likes_because_the_article_not_exist(self):
         logged_in = self.client.login(
-            email=self.user.email, password=self.password_plane
+            username=self.user.username, password=self.password_plane
         )
         self.assertTrue(logged_in)
 
