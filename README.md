@@ -6,12 +6,6 @@
 
 ## TODO
 
-- register
-    - last_name, first_name を編集したい！
-        - https://hodalog.com/how-to-create-user-sign-up-view/
-        - https://zerofromlight.com/blogs/detail/85/
-        - https://blog.narito.ninja/detail/47#_3
-    - ユーザー登録時の処理をserviceに落とし込む(DDD)
 - warehouse
     - カレンダー実装したい gptでやろうとして一回挫折
         - https://chuna.tech/detail/51/
@@ -30,11 +24,7 @@ pip freeze > requirements.txt
 
 ## Migrate
 
-まず register アプリを組み立ててログイン機構をつくってからほかの migrate をする
-
 ```
-python manage.py makemigrations register
-python manage.py migrate
 python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse taxonomy soil_analysis
 python manage.py migrate
 
@@ -55,21 +45,17 @@ python manage.py loaddata .\vietnam_research\fixtures\basicInformation.json
 python manage.py loaddata .\vietnam_research\fixtures\financialResultWatch.json
 python manage.py loaddata .\vietnam_research\fixtures\industry.json
 python manage.py loaddata .\vietnam_research\fixtures\watchlist.json
-
 python manage.py loaddata .\gmarker\fixtures\signageMenuName.json
 python manage.py loaddata .\gmarker\fixtures\storeInformation.json
-
 python manage.py loaddata .\shopping\fixtures\store.json
 python manage.py loaddata .\shopping\fixtures\staff.json
 python manage.py loaddata .\shopping\fixtures\products.json
-
 python manage.py loaddata .\warehouse\fixtures\warehouse.json
 python manage.py loaddata .\warehouse\fixtures\staff.json
 python manage.py loaddata .\warehouse\fixtures\rentalStatus.json
 python manage.py loaddata .\warehouse\fixtures\company.json
 python manage.py loaddata .\warehouse\fixtures\billingPerson.json
 python manage.py loaddata .\warehouse\fixtures\billingStatus.json
-
 python manage.py loaddata .\taxonomy\fixtures\kingdom.json
 python manage.py loaddata .\taxonomy\fixtures\phylum.json
 python manage.py loaddata .\taxonomy\fixtures\classification.json
@@ -80,7 +66,6 @@ python manage.py loaddata .\taxonomy\fixtures\naturalMonument.json
 python manage.py loaddata .\taxonomy\fixtures\tag.json
 python manage.py loaddata .\taxonomy\fixtures\breed.json
 python manage.py loaddata .\taxonomy\fixtures\breedTags.json
-
 python manage.py loaddata .\soil_analysis\fixtures\companycategory.json
 python manage.py loaddata .\soil_analysis\fixtures\company.json
 python manage.py loaddata .\soil_analysis\fixtures\user.json

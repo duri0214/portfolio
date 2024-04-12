@@ -46,7 +46,7 @@
     <link rel="shortcut icon" href="{% static 'vietnam_research/s_v.ico' %}">
 
     <!-- for ajax -->
-    <script>let myurl = {"base": "{% url 'vnm:index' %}", "login": "{% url 'register:login' %}"};</script>
+    <script>let myurl = {"base": "{% url 'vnm:index' %}", "login": "{% url 'login' %}"};</script>
 </head>
 <body>
 <h1></h1>
@@ -65,9 +65,9 @@
                     <li class="nav-link">ゲストさん</li>
                 {% endif %}
                 {% if user.is_authenticated %}
-                    <li class="nav-link"><a href="{% url 'register:logout' %}">LOGOUT</a></li>
+                    <li class="nav-link"><a href="{% url 'logout' %}">LOGOUT</a></li>
                 {% else %}
-                    <li class="nav-link"><a href="{% url 'register:login' %}">LOGIN</a></li>
+                    <li class="nav-link"><a href="{% url 'login' %}">LOGIN</a></li>
                 {% endif %}
                 <select class="select2-1" onChange="location.href=value;">
                     <option></option>
