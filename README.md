@@ -33,6 +33,8 @@ python manage.py createsuperuser
 
 ## fixture
 
+`user` の初期パスワードは `test#1234`
+
 ```
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
 python manage.py loaddata .\vietnam_research\fixtures\market.json
