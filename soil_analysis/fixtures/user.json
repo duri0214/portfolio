@@ -1,9 +1,10 @@
 [
   {
-    "model": "register.user",
+    "model": "auth.user",
     "fields": {
       "id": 1,
-      "password": "pbkdf2_sha256$260000$zQMHsE8QsEMv4RjM8MjCRa$WjtpNnTPwNtidWwtvrCdsiY0lLoj6H0EMqF6wzNbs7w=",
+      "password": "pbkdf2_sha256$600000$A7kOHLGpdUZgEjo30CBFmM$6um5rW6qBMzvPCgIP2YtyDrrrpS9oNBMuHbaZk/K7Js=",
+      "username": "yoshitaka okada",
       "first_name": "yoshitaka",
       "last_name": "okada",
       "email": "okada@example.com",
@@ -11,10 +12,11 @@
     }
   },
   {
-    "model": "register.user",
+    "model": "auth.user",
     "fields": {
       "id": 2,
-      "password": "pbkdf2_sha256$260000$zQMHsE8QsEMv4RjM8MjCRa$WjtpNnTPwNtidWwtvrCdsiY0lLoj6H0EMqF6wzNbs7w=",
+      "password": "pbkdf2_sha256$600000$A7kOHLGpdUZgEjo30CBFmM$6um5rW6qBMzvPCgIP2YtyDrrrpS9oNBMuHbaZk/K7Js=",
+      "username": "yoshiyuki minami",
       "first_name": "yoshiyuki",
       "last_name": "minami",
       "email": "minami@example.com",
@@ -22,20 +24,22 @@
     }
   },
   {
-    "model": "register.user",
+    "model": "auth.user",
     "fields": {
       "id": 3,
-      "password": "pbkdf2_sha256$260000$XfU67uzr4Q0HjEjr23I57V$2y1GrUklxqN53BY4EUL2U/1GCrMF8uqE2I6fVcnvnWw=",
+      "password": "pbkdf2_sha256$600000$A7kOHLGpdUZgEjo30CBFmM$6um5rW6qBMzvPCgIP2YtyDrrrpS9oNBMuHbaZk/K7Js=",
+      "username": "生産者 Ａ",
       "first_name": "生産者",
       "last_name": "Ａ",
       "email": "john@example.com"
     }
   },
   {
-    "model": "register.user",
+    "model": "auth.user",
     "fields": {
       "id": 4,
-      "password": "pbkdf2_sha256$260000$zQMHsE8QsEMv4RjM8MjCRa$WjtpNnTPwNtidWwtvrCdsiY0lLoj6H0EMqF6wzNbs7w=",
+      "password": "pbkdf2_sha256$600000$A7kOHLGpdUZgEjo30CBFmM$6um5rW6qBMzvPCgIP2YtyDrrrpS9oNBMuHbaZk/K7Js=",
+      "username": "生産者 Ｂ",
       "first_name": "生産者",
       "last_name": "Ｂ",
       "email": "jane@example.com"

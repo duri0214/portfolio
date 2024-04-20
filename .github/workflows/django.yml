@@ -43,7 +43,6 @@ jobs:
           source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python manage.py makemigrations register
           python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse
           
           # Output the environment variables
@@ -79,6 +78,7 @@ jobs:
           HOST: localhost
           PORT: 3306
         run: |
-          mysql -u root -proot -e "GRANT ALL on *.* to '$USER';"| mysql -u $USER --password="$PASSWORD" -h $HOST
+          mysql -u root -proot -e "GRANT ALL ON portfolio_db.* TO '$USER'@'localhost';"
+          mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO '$USER'@'localhost';"
           source venv/bin/activate
           python manage.py test
