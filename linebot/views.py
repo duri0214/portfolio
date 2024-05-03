@@ -14,6 +14,7 @@ def callback(request):
     if request.method == "POST":
         request_json = json.loads(request.body.decode("utf-8"))
         events = request_json["events"]
+        print(f"events: {events}")
         line_user_id = events[0]["source"]["userId"]
 
         # webhook connection check at fixed id 'Udea...beef'
