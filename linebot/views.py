@@ -13,10 +13,10 @@ def callback(request):
     """ラインの友達追加時に呼び出され、ラインのIDを登録する"""
     if request.method == "POST":
         request_json = json.loads(request.body.decode("utf-8"))
-        events = request_json["events"][0]
+        events = request_json["events"]
         line_user_id = None
         try:
-            line_user_id = events["source"]["userId"]
+            line_user_id = events[0]["source"]["userId"]
         except IndexError:
             raise IndexError(f"events: {events}")
 
