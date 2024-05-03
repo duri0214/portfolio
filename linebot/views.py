@@ -13,9 +13,13 @@ def callback(request):
     """ラインの友達追加時に呼び出され、ラインのIDを登録する"""
     if request.method == "POST":
         request_json = json.loads(request.body.decode("utf-8"))
-        events = request_json["events"]
-        print(f"events: {events}")
-        line_user_id = events[0]["source"]["userId"]
+        events = request_json["events"][0]
+        line_user_id = None
+        try:
+            line_user_id = events["source"]["userId"]
+        except IndexError:
+            print(f"events: {events}")
+            return HttpResponse("ng", status=400)
 
         # webhook connection check at fixed id 'Udea...beef'
         if line_user_id != "Udeadbeefdeadbeefdeadbeefdeadbeef":
