@@ -14,19 +14,18 @@ def callback(request):
     if request.method == "POST":
         request_json = json.loads(request.body.decode("utf-8"))
         events = request_json["events"]
-        line_user_id = None
-        try:
+
+        # If you run the validation from the `LINE DEVELOPERS` screen, `events` will be returned as `[]`
+        if events:
             line_user_id = events[0]["source"]["userId"]
-        except IndexError:
-            raise IndexError(f"events: {events}")
 
-        # webhook connection check at fixed id 'Udea...beef'
-        if line_user_id != "Udeadbeefdeadbeefdeadbeefdeadbeef":
-            # follow || unblock
-            if events[0]["type"] == "follow":
-                LinePush.objects.create(line_user_id)
-            # block
-            if events[0]["type"] == "unfollow":
-                LinePush.objects.filter(line_user_id).delete()
+            # webhook connection check at fixed id 'Udea...beef'
+            if line_user_id != "Udeadbeefdeadbeefdeadbeefdeadbeef":
+                # follow || unblock
+                if events[0]["type"] == "follow":
+                    LinePush.objects.create(line_user_id)
+                # block
+                if events[0]["type"] == "unfollow":
+                    LinePush.objects.filter(line_user_id).delete()
 
-    return HttpResponse("ok", status=200)
+    return HttpResponse("`callback` returned 200", status=200)
