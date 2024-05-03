@@ -18,8 +18,7 @@ def callback(request):
         try:
             line_user_id = events["source"]["userId"]
         except IndexError:
-            print(f"events: {events}")
-            return HttpResponse("ng", status=400)
+            raise IndexError(f"events: {events}")
 
         # webhook connection check at fixed id 'Udea...beef'
         if line_user_id != "Udeadbeefdeadbeefdeadbeefdeadbeef":
