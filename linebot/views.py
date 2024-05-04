@@ -28,4 +28,4 @@ def callback(request):
                 if events[0]["type"] == "unfollow":
                     LinePush.objects.filter(line_user_id).delete()
 
-    return HttpResponse("`callback` returned 200", status=200)
+    return HttpResponse(status=200)
