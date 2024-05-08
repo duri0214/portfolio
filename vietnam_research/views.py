@@ -43,6 +43,7 @@ class IndexView(TemplateView):
             market_calculation_service.calculate(exchange_form.cleaned_data)
             response = redirect("vnm:index")
             response["location"] += "?" + urlencode(market_calculation_service.data)
+            response["location"] += "#exchange"
             return response
         return render(
             request, self.template_name, {"data": market_calculation_service.data}
