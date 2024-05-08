@@ -238,8 +238,24 @@
             </table>
             <form method="post">
                 {% csrf_token %}
-                {{ exchange_form.as_p }}
-                <button type="submit">計算</button>
+                <div class="form-group">
+                    {{ exchange_form.current_balance.label_tag }}
+                    {{ exchange_form.current_balance }}
+                </div>
+
+                <!-- unit_price と quantity を横に並べます -->
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ exchange_form.unit_price.label_tag }}
+                        {{ exchange_form.unit_price }}
+                    </div>
+                    <div class="form-group col-md-6">
+                        {{ exchange_form.quantity.label_tag }}
+                        {{ exchange_form.quantity }}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">計算</button>
             </form>
             残高(VND): {{ exchanged.current_balance | intcomma }}<br>
             @{{ exchanged.unit_price | intcomma }} * {{ exchanged.quantity | intcomma }}
