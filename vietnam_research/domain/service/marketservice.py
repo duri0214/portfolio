@@ -14,19 +14,16 @@ from vietnam_research.models import Industry, Watchlist, VnIndex, Uptrends
 
 
 class MarketAbstract(ABC):
-    """各マーケットのための基底クラス"""
-
     @abstractmethod
-    def watchlist(self):
+    def watchlist(self, **kwargs):
         pass
 
     @abstractmethod
-    def sbi_topics(self):
+    def sbi_topics(self, **kwargs):
         pass
 
-    @staticmethod
     @abstractmethod
-    def calc_fee(price_without_fees: float):
+    def calc_fee(self, **kwargs):
         pass
 
 
