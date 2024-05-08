@@ -7,7 +7,7 @@ from vietnam_research.models import Articles, BasicInformation
 from vietnam_research.service.market_vietnam import MarketVietnam
 
 
-class MarketService:
+class MarketRetrievalService:
     def __init__(self, request):
         self.request = request
         self.mkt = MarketVietnam()

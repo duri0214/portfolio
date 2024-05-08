@@ -10,7 +10,9 @@ from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
-from vietnam_research.domain.service.marketservice import MarketService
+from vietnam_research.domain.service.marketservice import (
+    MarketRetrievalService,
+)
 from vietnam_research.forms import (
     ArticleForm,
     WatchlistCreateForm,
@@ -30,9 +32,9 @@ class IndexView(TemplateView):
     template_name = "vietnam_research/index.html"
 
     def get(self, request, *args, **kwargs):
-        market_service = MarketService(request)
+        market_retrieval_service = MarketRetrievalService(request)
 
-        return render(request, self.template_name, market_service.to_dict())
+        return render(request, self.template_name, market_retrieval_service.to_dict())
 
     def post(self, request, *args, **kwargs):
         mkt = MarketVietnam()
