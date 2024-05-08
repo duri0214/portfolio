@@ -1,5 +1,5 @@
 import logging
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from pathlib import Path
 
 from django.db.models import QuerySet
@@ -10,21 +10,21 @@ from config.settings import STATIC_ROOT
 from vietnam_research.models import Industry, Watchlist, VnIndex, Uptrends
 
 
-class MarketAbstract(metaclass=ABCMeta):
+class MarketAbstract(ABC):
     """各マーケットのための基底クラス"""
 
     @abstractmethod
-    def watchlist(self) -> QuerySet:
-        raise NotImplementedError()
+    def watchlist(self):
+        pass
 
     @abstractmethod
-    def sbi_topics(self) -> str:
-        raise NotImplementedError()
+    def sbi_topics(self):
+        pass
 
     @staticmethod
     @abstractmethod
-    def calc_fee(price_without_fees: float) -> float:
-        raise NotImplementedError()
+    def calc_fee(price_without_fees: float):
+        pass
 
 
 class MarketNasdaq(MarketAbstract):
