@@ -14,6 +14,9 @@ from vietnam_research.models import Industry, VnIndex, Uptrends
 
 
 class MarketAbstract(ABC):
+    def __init__(self):
+        self.repository = MarketRepository()
+
     @abstractmethod
     def watchlist(self, **kwargs):
         pass
@@ -66,7 +69,7 @@ class VietnamMarketDataProvider(MarketAbstract):
         Returns:
             QuerySet: Watchlistをベースに換算額などの計算を組み合わせたもの
         """
-        return MarketRepository.get_watchlist()
+        return self.repository.get_watchlist()
 
     def vnindex_timeline(self) -> dict:
         """
@@ -75,7 +78,7 @@ class VietnamMarketDataProvider(MarketAbstract):
         Returns:
             dict: VN-Indexのタイムラインデータ
         """
-        return MarketRepository.get_vnindex_timeline()
+        return self.repository.get_vnindex_timeline()
 
     @staticmethod
     def vnindex_annual_layers() -> dict:
@@ -102,7 +105,6 @@ class VietnamMarketDataProvider(MarketAbstract):
                 "data": [record["closing_price"] for record in a_year_records],
             }
             vnindex_layers["datasets"].append(inner)
-        # print('\nvnindex_layers: ', vnindex_layers)
 
         return vnindex_layers
 

@@ -17,11 +17,11 @@ class MarketRepository:
         )
 
     @staticmethod
-    def get_basic_info():
+    def get_basic_info() -> QuerySet:
         return BasicInformation.objects.order_by("id").values("item", "description")
 
     @staticmethod
-    def get_watchlist():
+    def get_watchlist() -> QuerySet:
         """
         ウォッチリストを作成するためのクエリセットを作成します。
 
