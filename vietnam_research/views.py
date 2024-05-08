@@ -12,6 +12,7 @@ from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
 from vietnam_research.domain.service.marketservice import (
     MarketRetrievalService,
+    MarketCalculationService,
 )
 from vietnam_research.forms import (
     ArticleForm,
@@ -25,7 +26,6 @@ from vietnam_research.models import (
     Articles,
     FinancialResultWatch,
 )
-from vietnam_research.service.market_vietnam import MarketVietnam
 
 
 class IndexView(TemplateView):
@@ -37,28 +37,16 @@ class IndexView(TemplateView):
         return render(request, self.template_name, market_retrieval_service.to_dict())
 
     def post(self, request, *args, **kwargs):
-        mkt = MarketVietnam()
-        exchanged = {}
-
-        # 為替計算処理
+        market_calculation_service = MarketCalculationService(request)
         exchange_form = ExchangeForm(request.POST)
         if exchange_form.is_valid():
-            exchanged["current_balance"] = exchange_form.cleaned_data["current_balance"]
-            exchanged["unit_price"] = exchange_form.cleaned_data["unit_price"]
-            exchanged["quantity"] = exchange_form.cleaned_data["quantity"]
-            exchanged["price_no_fee"] = exchanged["unit_price"] * exchanged["quantity"]
-            exchanged["fee"] = mkt.calc_fee(
-                price_without_fees=exchanged["price_no_fee"]
-            )
-            exchanged["price_in_fee"] = exchanged["price_no_fee"] + exchanged["fee"]
-            exchanged["deduction_price"] = (
-                exchanged["current_balance"] - exchanged["price_in_fee"]
-            )
+            market_calculation_service.calculate(exchange_form.cleaned_data)
             response = redirect("vnm:index")
-            response["location"] += "?" + urlencode(exchanged)
+            response["location"] += "?" + urlencode(market_calculation_service.data)
             return response
-
-        return render(request, self.template_name, {"exchanged": exchanged})
+        return render(
+            request, self.template_name, {"data": market_calculation_service.data}
+        )
 
 
 class LikesView(LoginRequiredMixin, View):
