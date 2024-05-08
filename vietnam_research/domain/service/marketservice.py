@@ -1,16 +1,15 @@
 import json
 
-from django.db.models import F
-
+from vietnam_research.domain.repository.marketrepository import MarketRepository
 from vietnam_research.forms import ExchangeForm
-from vietnam_research.models import Articles, BasicInformation
 from vietnam_research.service.market_vietnam import MarketVietnam
 
 
 class MarketRetrievalService:
     def __init__(self, request):
         self.request = request
-        self.mkt = MarketVietnam()
+        self.market_vietnam = MarketVietnam()
+        self.repository = MarketRepository()
 
     def get_exchange_params(self):
         exchange_params = [
@@ -34,19 +33,15 @@ class MarketRetrievalService:
         login_id = login_user.id if login_user.is_authenticated else None
 
         return {
-            "industry_count": json.dumps(self.mkt.radar_chart_count()),
-            "industry_cap": json.dumps(self.mkt.radar_chart_cap()),
-            "vnindex_timeline": json.dumps(self.mkt.vnindex_timeline()),
-            "vnindex_layers": json.dumps(self.mkt.vnindex_annual_layers()),
-            "articles": Articles.with_state(login_id)
-            .annotate(user_name=F("user__email"))
-            .order_by("-created_at")[:3],
-            "basicinfo": BasicInformation.objects.order_by("id").values(
-                "item", "description"
-            ),
-            "watchlist": self.mkt.watchlist(),
-            "sbi_topics": self.mkt.sbi_topics(),
-            "uptrends": json.dumps(self.mkt.uptrends()),
+            "industry_count": json.dumps(self.market_vietnam.radar_chart_count()),
+            "industry_cap": json.dumps(self.market_vietnam.radar_chart_cap()),
+            "vnindex_timeline": json.dumps(self.market_vietnam.vnindex_timeline()),
+            "vnindex_layers": json.dumps(self.market_vietnam.vnindex_annual_layers()),
+            "articles": self.repository.get_articles(login_id),
+            "basicinfo": self.repository.get_basic_info(),
+            "watchlist": self.market_vietnam.watchlist(),
+            "sbi_topics": self.market_vietnam.sbi_topics(),
+            "uptrends": json.dumps(self.market_vietnam.uptrends()),
             "exchange_form": exchange_form,
             "exchanged": self.get_exchange_params(),
         }
