@@ -50,7 +50,7 @@ class MarketRetrievalService:
 class MarketCalculationService:
     def __init__(self, request):
         self.request = request
-        self.mkt = MarketVietnam()
+        self.market_vietnam = MarketVietnam()
         self.data = {}
 
     def calculate(self, cleaned_data):
@@ -58,7 +58,7 @@ class MarketCalculationService:
         self.data["unit_price"] = cleaned_data["unit_price"]
         self.data["quantity"] = cleaned_data["quantity"]
         self.data["price_no_fee"] = self.data["unit_price"] * self.data["quantity"]
-        self.data["fee"] = self.mkt.calc_fee(
+        self.data["fee"] = self.market_vietnam.calc_fee(
             price_without_fees=self.data["price_no_fee"]
         )
         self.data["price_in_fee"] = self.data["price_no_fee"] + self.data["fee"]
