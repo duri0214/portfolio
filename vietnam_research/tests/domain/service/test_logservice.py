@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from unittest import TestCase
 
-from vietnam_research.domain.service.logservice import LogService
+from vietnam_research.domain.service.log import LogService
 
 
 class TestLogService(TestCase):
@@ -10,18 +10,18 @@ class TestLogService(TestCase):
         """
         テスト実行ごとに `abc` というログを出力し、ログ出力前よりも `abc` のカウントが `1` 多いことを確認する
         """
-        log_path = f'./abc.log'
+        log_path = f"./abc.log"
 
         log = LogService(log_path)
         if not os.path.isfile(log_path):
-            log.write('')
+            log.write("")
 
         with open(log_path) as f:
             stream_in_log1 = f.read()
         log.write(Path(__file__).stem)
-        log.write('abc日本語も大丈夫')
+        log.write("abc日本語も大丈夫")
         with open(log_path) as f:
             stream_in_log2 = f.read()
 
-        expected = stream_in_log1.count('abc') + 1
-        self.assertEqual(expected, stream_in_log2.count('abc'))
+        expected = stream_in_log1.count("abc") + 1
+        self.assertEqual(expected, stream_in_log2.count("abc"))

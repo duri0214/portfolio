@@ -10,7 +10,7 @@ from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
-from vietnam_research.domain.service.marketservice import (
+from vietnam_research.domain.service.market import (
     MarketRetrievalService,
     MarketCalculationService,
 )

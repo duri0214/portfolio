@@ -8,7 +8,7 @@ from django.db.models import QuerySet
 from django.db.models.functions import Round
 
 from config.settings import STATIC_ROOT
-from vietnam_research.domain.repository.marketrepository import MarketRepository
+from vietnam_research.domain.repository.market import MarketRepository
 from vietnam_research.forms import ExchangeForm
 from vietnam_research.models import Industry
 
