@@ -116,8 +116,8 @@ class VietnamMarketDataProvider(MarketAbstract):
 
         return fees if fees > MIN_FEE else MIN_FEE
 
-    @staticmethod
     def radar_chart(
+        self,
         rec_type: str,
         months_dating_back: list,
         aggregate_field: str,
@@ -127,8 +127,8 @@ class VietnamMarketDataProvider(MarketAbstract):
         result = []
         for m in months_dating_back:
             try:
-                denominator = MarketRepository.get_denominator_for(m, denominator_field)
-                industry_records = MarketRepository.get_industry_records_for(
+                denominator = self.repository.get_denominator_for(m, denominator_field)
+                industry_records = self.repository.get_industry_records_for(
                     m, aggregate_field, aggregate_alias
                 )
                 industry_records = industry_records.annotate(
@@ -157,8 +157,7 @@ class VietnamMarketDataProvider(MarketAbstract):
 
         return result
 
-    @staticmethod
-    def radar_chart_count() -> list:
+    def radar_chart_count(self) -> list:
         """
         企業数の業種別占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
@@ -176,7 +175,7 @@ class VietnamMarketDataProvider(MarketAbstract):
 
         See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
         """
-        return VietnamMarketDataProvider.radar_chart(
+        return self.radar_chart(
             rec_type="企業数",
             months_dating_back=[-1, -4, -7],
             aggregate_field="id",
@@ -184,8 +183,7 @@ class VietnamMarketDataProvider(MarketAbstract):
             denominator_field="id",
         )
 
-    @staticmethod
-    def radar_chart_cap() -> list:
+    def radar_chart_cap(self) -> list:
         """
         時価総額の業種別占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
@@ -203,7 +201,7 @@ class VietnamMarketDataProvider(MarketAbstract):
 
         See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
         """
-        return VietnamMarketDataProvider.radar_chart(
+        return self.radar_chart(
             rec_type="時価総額",
             months_dating_back=[-1, -4, -7],
             aggregate_field="marketcap",
