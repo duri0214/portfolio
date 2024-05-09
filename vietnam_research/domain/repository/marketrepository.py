@@ -1,4 +1,4 @@
-from django.db.models import Count, F, Value, CharField
+from django.db.models import F, Value, CharField, Sum
 from django.db.models import Max
 from django.db.models.functions import Round, Concat
 from django.db.models.query import QuerySet
@@ -95,7 +95,9 @@ class MarketRepository:
         )
 
     @staticmethod
-    def get_industry_records_for(month: int) -> QuerySet:
+    def get_industry_records_for(
+        month: int, aggregate_field: str, aggregate_alias: str
+    ) -> QuerySet:
         return (
             Industry.objects.filter(
                 recorded_date=Industry.objects.slipped_month_end(
@@ -111,16 +113,16 @@ class MarketRepository:
                 )
             )
             .values("ind_name")
-            .annotate(count=Count("id"))
+            .annotate(**{aggregate_alias: Sum(aggregate_field)})
             .order_by("ind_name")
         )
 
     @staticmethod
-    def get_denominator_for(month: int) -> int:
-        return len(
-            Industry.objects.filter(
-                recorded_date=Industry.objects.slipped_month_end(
-                    month
-                ).formatted_recorded_date()
-            )
+    def get_denominator_for(month: int, denominator_field: str) -> float:
+        end_of_month = Industry.objects.slipped_month_end(
+            month
+        ).formatted_recorded_date()
+        records = Industry.objects.filter(recorded_date=end_of_month).values(
+            denominator_field
         )
+        return sum([record[denominator_field] for record in records])
