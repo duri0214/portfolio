@@ -73,3 +73,22 @@ class MarketRepository:
         }
 
         return vnindex_timeline
+
+    @staticmethod
+    def get_distinct_values(distinct_field: str) -> list:
+        return [
+            record[distinct_field]
+            for record in VnIndex.objects.time_series_closing_price()
+            .values(distinct_field)
+            .distinct()
+            .order_by(distinct_field)
+        ]
+
+    @staticmethod
+    def get_year_records(year: str) -> list:
+        return (
+            VnIndex.objects.time_series_closing_price()
+            .filter(Y=year)
+            .order_by("Y", "M")
+            .values("closing_price")
+        )

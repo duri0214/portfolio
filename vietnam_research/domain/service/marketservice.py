@@ -10,7 +10,7 @@ from django.db.models.functions import Concat, Round
 from config.settings import STATIC_ROOT
 from vietnam_research.domain.repository.marketrepository import MarketRepository
 from vietnam_research.forms import ExchangeForm
-from vietnam_research.models import Industry, VnIndex, Uptrends
+from vietnam_research.models import Industry, Uptrends
 
 
 class MarketAbstract(ABC):
@@ -80,33 +80,22 @@ class VietnamMarketDataProvider(MarketAbstract):
         """
         return self.repository.get_vnindex_timeline()
 
-    @staticmethod
-    def vnindex_annual_layers() -> dict:
-        """
-        vn-indexの１２ヶ月ぶんの終値を１つの折れ線にして、年次でグラフに追加していく
-
-        See Also: https://www.chartjs.org/docs/latest/getting-started/
-        """
-        records = VnIndex.objects.time_series_closing_price()
-        vnindex_layers = {
-            "labels": [
-                record["M"] for record in records.values("M").distinct().order_by("M")
-            ],
-            "datasets": [],
-        }
-        for year in [
-            record["Y"] for record in records.values("Y").distinct().order_by("Y")
-        ]:
-            a_year_records = (
-                records.filter(Y=year).order_by("Y", "M").values("closing_price")
+    def vnindex_annual_layers(self) -> dict:
+        datasets = []
+        for year in self.repository.get_distinct_values("Y"):
+            datasets.append(
+                {
+                    "label": year,
+                    "data": [
+                        record["closing_price"]
+                        for record in self.repository.get_year_records(year)
+                    ],
+                }
             )
-            inner = {
-                "label": year,
-                "data": [record["closing_price"] for record in a_year_records],
-            }
-            vnindex_layers["datasets"].append(inner)
-
-        return vnindex_layers
+        return {
+            "labels": self.repository.get_distinct_values("M"),
+            "datasets": datasets,
+        }
 
     @staticmethod
     def calc_fee(price_without_fees: float) -> float:
