@@ -12,33 +12,36 @@ from vietnam_research.domain.repository.marketrepository import MarketRepository
 from vietnam_research.forms import ExchangeForm
 from vietnam_research.models import Industry, Uptrends
 
+MIN_FEE = 1200000
+FEE_RATE = 0.022
+
 
 class MarketAbstract(ABC):
     def __init__(self):
         self.repository = MarketRepository()
 
     @abstractmethod
-    def watchlist(self, **kwargs):
-        pass
-
-    @abstractmethod
     def sbi_topics(self, **kwargs):
         pass
 
     @abstractmethod
-    def calc_fee(self, **kwargs):
+    def watchlist(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def calculate_transaction_fee(self, **kwargs):
         pass
 
 
 class NasdaqMarketDataProvider(MarketAbstract):
-    def watchlist(self) -> QuerySet:
-        pass
-
     def sbi_topics(self) -> str:
         pass
 
+    def watchlist(self) -> QuerySet:
+        pass
+
     @staticmethod
-    def calc_fee(price_without_fees: float) -> float:
+    def calculate_transaction_fee(price_without_fees: float) -> float:
         pass
 
 
@@ -98,23 +101,20 @@ class VietnamMarketDataProvider(MarketAbstract):
         }
 
     @staticmethod
-    def calc_fee(price_without_fees: float) -> float:
+    def calculate_transaction_fee(price_without_fees: float) -> float:
         """
-        手数料を算出
-
+        手数料を計算します
         Args:
-            price_without_fees: 手数料を加味する前の金額
-
+            price_without_fees: 手数料を加味する前の価格
         Returns:
-            float: 手数料（約定代金の2.2％）を返す（最低手数料を下回る場合は最低手数料 1,200,000VND）
+            float: 手数料 (契約価格の 2.2%) を返す。最低手数料を下回った場合は、最低手数料の1,200,000VND
 
         See Also: https://www.sbisec.co.jp/ETGate/?_ControlID=WPLETmgR001Control&_DataStoreID=DSWPLETmgR001Control&
         burl=search_foreign&cat1=foreign&cat2=vn&dir=vn%2F&file=foreign_vn_01.html
         """
-        fees = price_without_fees * 0.022
-        minimum_fees = 1200000
+        fees = price_without_fees * FEE_RATE
 
-        return fees if fees > minimum_fees else minimum_fees
+        return fees if fees > MIN_FEE else MIN_FEE
 
     @staticmethod
     def radar_chart_count() -> list:
@@ -353,7 +353,7 @@ class MarketCalculationService:
         self.data["unit_price"] = cleaned_data["unit_price"]
         self.data["quantity"] = cleaned_data["quantity"]
         self.data["price_no_fee"] = self.data["unit_price"] * self.data["quantity"]
-        self.data["fee"] = self.market_vietnam.calc_fee(
+        self.data["fee"] = self.market_vietnam.calculate_transaction_fee(
             price_without_fees=self.data["price_no_fee"]
         )
         self.data["price_in_fee"] = self.data["price_no_fee"] + self.data["fee"]
