@@ -3,14 +3,14 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from django.db.models import F, Value, CharField, FloatField
+from django.db.models import F, FloatField
 from django.db.models import QuerySet
-from django.db.models.functions import Concat, Round
+from django.db.models.functions import Round
 
 from config.settings import STATIC_ROOT
 from vietnam_research.domain.repository.marketrepository import MarketRepository
 from vietnam_research.forms import ExchangeForm
-from vietnam_research.models import Industry, Uptrends
+from vietnam_research.models import Industry
 
 MIN_FEE = 1200000
 FEE_RATE = 0.022
@@ -209,53 +209,11 @@ class VietnamMarketDataProvider(MarketAbstract):
             denominator_field="marketcap",
         )
 
-    @staticmethod
-    def uptrends() -> dict:
-        uptrends = (
-            Uptrends.objects.prefetch_related("symbol", "ind_class")
-            .annotate(
-                industry1=F("symbol__ind_class__industry1"),
-                industry_class=F("symbol__ind_class__industry_class"),
-                ind_name=Concat(
-                    F("symbol__ind_class__industry_class"),
-                    Value("|"),
-                    F("symbol__ind_class__industry1"),
-                    output_field=CharField(),
-                ),
-                url_file_name=F("symbol__market__url_file_name"),
-                code=F("symbol__code"),
-            )
-            .order_by(
-                "symbol__ind_class__industry_class",
-                "symbol__ind_class__industry1",
-                "-stocks_price_delta",
-            )
-            .values(
-                "industry1",
-                "ind_name",
-                "code",
-                "url_file_name",
-                "stocks_price_latest",
-                "stocks_price_delta",
-            )
-        )
+    def uptrends(self) -> dict:
+        uptrends = self.repository.get_annotated_uptrends()
 
         result = {}
-        ind_names = (
-            Uptrends.objects.annotate(
-                ind_name=Concat(
-                    F("symbol__ind_class__industry_class"),
-                    Value("|"),
-                    F("symbol__ind_class__industry1"),
-                    output_field=CharField(),
-                )
-            )
-            .distinct()
-            .order_by("ind_name")
-            .values("ind_name")
-        )
-
-        ind_names = [x["ind_name"] for x in list(ind_names)]
+        ind_names = self.repository.get_industry_names()
         for ind_name in ind_names:
             result[ind_name] = [x for x in uptrends if x["ind_name"] == ind_name]
 

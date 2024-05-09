@@ -3,7 +3,7 @@ from django.db.models import Max
 from django.db.models.functions import Round, Concat
 from django.db.models.query import QuerySet
 
-from vietnam_research.models import Articles, BasicInformation, VnIndex
+from vietnam_research.models import Articles, BasicInformation, VnIndex, Uptrends
 from vietnam_research.models import Industry, Watchlist
 
 
@@ -126,3 +126,50 @@ class MarketRepository:
             denominator_field
         )
         return sum([record[denominator_field] for record in records])
+
+    @staticmethod
+    def get_annotated_uptrends():
+        return (
+            Uptrends.objects.prefetch_related("symbol", "ind_class")
+            .annotate(
+                industry1=F("symbol__ind_class__industry1"),
+                industry_class=F("symbol__ind_class__industry_class"),
+                ind_name=Concat(
+                    F("symbol__ind_class__industry_class"),
+                    Value("|"),
+                    F("symbol__ind_class__industry1"),
+                    output_field=CharField(),
+                ),
+                url_file_name=F("symbol__market__url_file_name"),
+                code=F("symbol__code"),
+            )
+            .order_by(
+                "symbol__ind_class__industry_class",
+                "symbol__ind_class__industry1",
+                "-stocks_price_delta",
+            )
+            .values(
+                "industry1",
+                "ind_name",
+                "code",
+                "url_file_name",
+                "stocks_price_latest",
+                "stocks_price_delta",
+            )
+        )
+
+    @staticmethod
+    def get_industry_names():
+        return (
+            Uptrends.objects.annotate(
+                ind_name=Concat(
+                    F("symbol__ind_class__industry_class"),
+                    Value("|"),
+                    F("symbol__ind_class__industry1"),
+                    output_field=CharField(),
+                )
+            )
+            .distinct()
+            .order_by("ind_name")
+            .values_list("ind_name", flat=True)
+        )
