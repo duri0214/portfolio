@@ -10,6 +10,7 @@ from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
+from vietnam_research.domain.repository.like import LikeRepository
 from vietnam_research.domain.service.market import (
     MarketRetrievalService,
     MarketCalculationService,
@@ -22,7 +23,6 @@ from vietnam_research.forms import (
 )
 from vietnam_research.models import (
     Watchlist,
-    Likes,
     Articles,
     FinancialResultWatch,
 )
@@ -51,22 +51,19 @@ class IndexView(TemplateView):
 
 
 class LikesView(LoginRequiredMixin, View):
+    repository_class = LikeRepository
+
     def post(self, request, *args, **kwargs):
         try:
             user = self.request.user
-            article = Articles.objects.get(pk=kwargs["article_id"], user=user)
-            already_liked = Likes.objects.filter(user=user).exists()
-
+            article = self.repository_class.get_article(kwargs["article_id"])
+            already_liked = self.repository_class.like_exists(user, article)
             if already_liked:
-                Likes.objects.filter(user=user, articles=article).delete()
+                self.repository_class.delete_like(user, article)
             else:
-                Likes.objects.create(user=user, articles=article)
-
+                self.repository_class.create_like(user, article)
             already_liked = not already_liked
-            article_likes_count = Likes.objects.filter(articles=article).aggregate(
-                likes_count=Count("id")
-            )["likes_count"]
-
+            article_likes_count = self.repository_class.count_article_likes(article)
             return HttpResponse(
                 json.dumps(
                     {"likes_cnt": article_likes_count, "liked_by_me": already_liked}
@@ -76,7 +73,6 @@ class LikesView(LoginRequiredMixin, View):
         except Articles.DoesNotExist:
             msg = "存在しない記事へのリクエストがありました"
             logging.critical(msg)
-
         return HttpResponseBadRequest(msg)
 
 
