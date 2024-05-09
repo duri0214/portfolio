@@ -86,14 +86,14 @@ class Command(BaseCommand):
 
         m_symbol = Symbol.objects.filter(market__in=[1, 2])
         tag_tr = soup.find(class_="accTbl01").tbody.find_all("tr")
-        sbis = [Sbi(symbol_id=m_symbol.get(code=x.th.p.string).id) for x in tag_tr]
+        sbi_list = [Sbi(symbol_id=m_symbol.get(code=x.th.p.string).id) for x in tag_tr]
 
         caller_file_name = Path(__file__).stem
         log_service = LogService("./result.log")
 
         # insert
-        Sbi.objects.bulk_create(sbis)
-        log_service.write(f"{caller_file_name} is done.({len(sbis)})")
+        Sbi.objects.bulk_create(sbi_list)
+        log_service.write(f"{caller_file_name} is done.({len(sbi_list)})")
 
         # |Part2
         work_folder = (
