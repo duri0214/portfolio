@@ -1,6 +1,7 @@
-from django.db.models import F, Max
-from django.db.models import QuerySet
-from django.db.models.functions import Round
+from django.db.models import Count, F, Value, CharField
+from django.db.models import Max
+from django.db.models.functions import Round, Concat
+from django.db.models.query import QuerySet
 
 from vietnam_research.models import Articles, BasicInformation, VnIndex
 from vietnam_research.models import Industry, Watchlist
@@ -91,4 +92,35 @@ class MarketRepository:
             .filter(Y=year)
             .order_by("Y", "M")
             .values("closing_price")
+        )
+
+    @staticmethod
+    def get_industry_records_for(month: int) -> QuerySet:
+        return (
+            Industry.objects.filter(
+                recorded_date=Industry.objects.slipped_month_end(
+                    month
+                ).formatted_recorded_date()
+            )
+            .annotate(
+                ind_name=Concat(
+                    F("symbol__ind_class__industry_class"),
+                    Value("|"),
+                    F("symbol__ind_class__industry1"),
+                    output_field=CharField(),
+                )
+            )
+            .values("ind_name")
+            .annotate(count=Count("id"))
+            .order_by("ind_name")
+        )
+
+    @staticmethod
+    def get_denominator_for(month: int) -> int:
+        return len(
+            Industry.objects.filter(
+                recorded_date=Industry.objects.slipped_month_end(
+                    month
+                ).formatted_recorded_date()
+            )
         )

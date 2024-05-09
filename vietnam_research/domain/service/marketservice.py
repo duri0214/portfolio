@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 from django.db.models import QuerySet
-from django.db.models import Sum, F, Value, Count, CharField, FloatField
+from django.db.models import Sum, F, Value, CharField, FloatField
 from django.db.models.functions import Concat, Round
 
 from config.settings import STATIC_ROOT
@@ -117,7 +117,7 @@ class VietnamMarketDataProvider(MarketAbstract):
         return fees if fees > MIN_FEE else MIN_FEE
 
     @staticmethod
-    def radar_chart_count() -> list:
+    def radar_chart_count() -> list[dict]:
         """
         企業数の業種別占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
@@ -137,48 +137,34 @@ class VietnamMarketDataProvider(MarketAbstract):
         """
         months_dating_back = [-1, -4, -7]
         result = []
-        for m in months_dating_back:
+
+        for month in months_dating_back:
             try:
-                end_of_month = Industry.objects.slipped_month_end(
-                    m
-                ).formatted_recorded_date()
-            except Industry.DoesNotExist:
-                logging.warning(
-                    f"market_vietnam.py radar_chart_count() の{m}ヶ月は存在しないため、無視されました"
-                )
-                continue
-            denominator = len(Industry.objects.filter(recorded_date=end_of_month))
-            industry_records = (
-                Industry.objects.filter(recorded_date=end_of_month)
-                .annotate(
-                    ind_name=Concat(
-                        F("symbol__ind_class__industry_class"),
-                        Value("|"),
-                        F("symbol__ind_class__industry1"),
-                        output_field=CharField(),
-                    )
-                )
-                .values("ind_name")
-                .annotate(count=Count("id"))
-                .annotate(
+                denominator = MarketRepository.get_denominator_for(month)
+                industry_records = MarketRepository.get_industry_records_for(month)
+                industry_records = industry_records.annotate(
                     cnt_per=Round(
                         F("count") / denominator * 100,
                         precision=2,
                         output_field=FloatField(),
                     )
                 )
-                .order_by("ind_name")
-            )
-            inner = []
-            # print("industry_records(sql): ", industry_records.query)
-            for industry_record in industry_records:
-                inner.append(
-                    {
-                        "axis": industry_record["ind_name"],
-                        "value": industry_record["cnt_per"],
-                    }
+                inner = []
+
+                for industry_record in industry_records:
+                    inner.append(
+                        {
+                            "axis": industry_record["ind_name"],
+                            "value": industry_record["cnt_per"],
+                        }
+                    )
+                result.append({"name": f"企業数 {month}ヶ月前", "axes": inner})
+
+            except Industry.DoesNotExist:
+                logging.warning(
+                    f"market_vietnam.py radar_chart_count() の{month}ヶ月は存在しないため、無視されました"
                 )
-            result.append({"name": f"企業数 {m}ヶ月前", "axes": inner})
+                continue
 
         return result
 
