@@ -14,19 +14,23 @@ WEBHOOK_VERIFICATION_USER_ID = "Udeadbeefdeadbeefdeadbeefdeadbeef"
 class CallbackView(View):
     @staticmethod
     def post(request, *args, **kwargs):
-        """ラインの友達追加時に呼び出され、ラインのIDを登録する"""
+        """
+        ラインの友達追加時に呼び出され、ラインのIDを登録する
+
+        Notes: LINE DEVELOPERSの画面からWebhookの接続をテストした場合
+               実際のイベント（ユーザーのアクションなど）がないため、eventsデータは存在せず、空の配列が返される
+        """
         request_json = json.loads(request.body.decode("utf-8"))
         events = request_json["events"]
 
-        # If you run the validation from the `LINE DEVELOPERS` screen, `events` will be returned as `[]`
         if events:
             line_user_id = events[0]["source"]["userId"]
 
             if line_user_id != WEBHOOK_VERIFICATION_USER_ID:
-                # follow || unblock
+                # botをフォローしたとき
                 if events[0]["type"] == "follow":
                     LinePush.objects.create(line_user_id)
-                # block
+                # botがブロックされた
                 if events[0]["type"] == "unfollow":
                     LinePush.objects.filter(line_user_id).delete()
 
