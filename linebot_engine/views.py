@@ -57,8 +57,13 @@ class CallbackView(View):
 
                 if line_user_id != WEBHOOK_VERIFICATION_USER_ID:
                     # botをフォローしたとき
+                    # TODO: picture_urlをpillowで画像化してMEDIA_ROOTに保存してからpictureフィールドにいれる
                     if event.is_follow():
-                        LinePush.objects.create(line_user_id)
+                        LinePush.objects.create(
+                            user_id=line_user_id,
+                            display_name=profile.display_name,
+                            picture=profile.picture_url,
+                        )
                     # botがブロックされた
                     if event.is_unfollow():
                         LinePush.objects.filter(line_user_id).delete()
