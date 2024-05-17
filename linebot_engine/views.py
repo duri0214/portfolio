@@ -51,8 +51,8 @@ class CallbackView(View):
             if isinstance(event.source, dict) and "userId" in event.source:
                 line_user_id = event.source["userId"]
 
-                line_bot_client = LineBotApi("YOUR_CHANNEL_ACCESS_TOKEN")
-                profile = line_bot_client.get_profile(event.source["userId"])
+                line_bot_api = LineBotApi("YOUR_CHANNEL_ACCESS_TOKEN")
+                profile = line_bot_api.get_profile(event.source["userId"])
                 print(profile.display_name, profile.picture_url)
 
                 if line_user_id != WEBHOOK_VERIFICATION_USER_ID:
