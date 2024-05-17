@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     "vietnam_research",
     "gmarker",
     "shopping",
-    "linebot",
+    "linebot_engine",
     "warehouse",
     "taxonomy",
     "soil_analysis",

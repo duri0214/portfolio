@@ -8,8 +8,10 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from linebot import LineBotApi
 
-from .models import LinePush
+from linebot_engine.domain.valueobject.line import WebhookEvent
+from linebot_engine.models import LinePush
 
 WEBHOOK_VERIFICATION_USER_ID = "Udeadbeefdeadbeefdeadbeefdeadbeef"
 
@@ -43,17 +45,22 @@ class CallbackView(View):
             return HttpResponse(status=403)  # return 'Forbidden'
 
         request_json = json.loads(request.body.decode("utf-8"))
-        events = request_json["events"]
+        events = [WebhookEvent(event) for event in request_json["events"]]
 
-        if events:
-            line_user_id = events[0]["source"]["userId"]
+        for event in events:
+            if isinstance(event.source, dict) and "userId" in event.source:
+                line_user_id = event.source["userId"]
 
-            if line_user_id != WEBHOOK_VERIFICATION_USER_ID:
-                # botをフォローしたとき
-                if events[0]["type"] == "follow":
-                    LinePush.objects.create(line_user_id)
-                # botがブロックされた
-                if events[0]["type"] == "unfollow":
-                    LinePush.objects.filter(line_user_id).delete()
+                line_bot_client = LineBotApi("YOUR_CHANNEL_ACCESS_TOKEN")
+                profile = line_bot_client.get_profile(event.source["userId"])
+                print(profile.display_name, profile.picture_url)
+
+                if line_user_id != WEBHOOK_VERIFICATION_USER_ID:
+                    # botをフォローしたとき
+                    if event.is_follow():
+                        LinePush.objects.create(line_user_id)
+                    # botがブロックされた
+                    if event.is_unfollow():
+                        LinePush.objects.filter(line_user_id).delete()
 
         return HttpResponse(status=200)
