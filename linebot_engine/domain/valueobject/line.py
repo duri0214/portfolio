@@ -1,4 +1,7 @@
 class WebhookEvent:
+    """
+    Notes: https://developers.line.biz/ja/reference/messaging-api/#webhook-event-objects
+    """
     def __init__(self, event: dict):
         self.type = event.get("type")
         self.timestamp = event.get("timestamp")
