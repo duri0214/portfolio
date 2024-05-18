@@ -96,11 +96,13 @@ python manage.py loaddata .\soil_analysis\fixtures\device.json
 
 ## バッチ
 
+daily_industry_chart_and_uptrend は 各期間（14日、7日、3日）を遡り、その期間の株価が上昇傾向（斜度が正）であればpassedがインクリメントされ
+
 ```
 python manage.py daily_import_from_bloomberg
 python manage.py daily_import_from_sbi
 python manage.py daily_import_from_vietkabu
-python manage.py daily_industry_chart_and_uptrends
+python manage.py daily_industry_chart_and_uptrend
 python manage.py daily_industry_stacked_bar_chart
 ```
 
