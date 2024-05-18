@@ -9,7 +9,7 @@ from linebot import LineBotApi
 
 from linebot_engine.domain.service.line_service import LineService
 from linebot_engine.domain.valueobject.line import WebhookEvent
-from linebot_engine.models import LinePush
+from linebot_engine.models import UserProfile
 
 WEBHOOK_VERIFICATION_USER_ID = "Udeadbeefdeadbeefdeadbeefdeadbeef"
 
@@ -43,13 +43,13 @@ class CallbackView(View):
                     # botをフォローしたとき
                     # TODO: picture_urlをpillowで画像化してMEDIA_ROOTに保存してからpictureフィールドにいれる
                     if event.is_follow():
-                        LinePush.objects.create(
+                        UserProfile.objects.create(
                             user_id=line_user_id,
                             display_name=profile.display_name,
                             picture=profile.picture_url,
                         )
                     # botがブロックされたとき
                     if event.is_unfollow():
-                        LinePush.objects.filter(line_user_id).delete()
+                        UserProfile.objects.filter(line_user_id).delete()
 
         return HttpResponse(status=200)
