@@ -32,23 +32,24 @@ class CallbackView(View):
         events = [WebhookEvent(event) for event in request_json["events"]]
 
         for event in events:
-            # TODO: .is_group()のときの処理はTBD
+            # TODO: .is_group() のときの処理はTBD
             if event.source and event.source.is_user():
                 line_user_id = event.source.user_id
 
-                # TODO: picture_urlをpillowで画像化してMEDIA_ROOTに保存してからpictureフィールドにいれる
-                line_bot_api = LineBotApi(os.environ.get("LINE_CHANNEL_ACCESS_TOKEN"))
-                profile = line_bot_api.get_profile(event.source.user_id)
-                print(profile.display_name, profile.picture_url)
-
                 if line_user_id != WEBHOOK_VERIFICATION_USER_ID:
                     # botをフォローしたとき
-                    # TODO: picture_urlをpillowで画像化してMEDIA_ROOTに保存してからpictureフィールドにいれる
+                    line_bot_api = LineBotApi(
+                        os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
+                    )
+                    profile = line_bot_api.get_profile(event.source.user_id)
+                    picture = LineService.get_picture(profile.picture_url)
+                    resized_picture = LineService.picture_resize(picture)
+                    picture_path = LineService.picture_save(resized_picture)
                     if event.is_follow():
                         UserProfile.objects.create(
                             user_id=line_user_id,
                             display_name=profile.display_name,
-                            picture=profile.picture_url,
+                            picture=picture_path,
                         )
                     # botがブロックされたとき
                     if event.is_unfollow():

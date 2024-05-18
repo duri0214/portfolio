@@ -2,8 +2,15 @@ import base64
 import hashlib
 import hmac
 import os
+import secrets
+from io import BytesIO
+from pathlib import Path
 
+import requests
+from PIL import Image
 from django.http import HttpRequest
+
+from config.settings import MEDIA_ROOT
 
 
 class LineService:
@@ -25,3 +32,22 @@ class LineService:
 
         # Compare X-Line-Signature header value and the signature calculated in the code
         return x_line_signature == signature
+
+    @staticmethod
+    def get_picture(url: str) -> Image:
+        response = requests.get(url)
+        response.raise_for_status()
+        return Image.open(BytesIO(response.content))
+
+    @staticmethod
+    def picture_resize(picture: Image) -> Image:
+        return picture.resize((128, 128))
+
+    @staticmethod
+    def picture_save(picture: Image) -> str:
+        folder_path = Path(MEDIA_ROOT) / "images"
+        folder_path.mkdir(parents=True, exist_ok=True)
+        random_filename = secrets.token_hex(5) + ".png"
+        picture_path = str(folder_path / random_filename)
+        picture.save(picture_path)
+        return picture_path
