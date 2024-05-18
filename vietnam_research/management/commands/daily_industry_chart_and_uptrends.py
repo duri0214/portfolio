@@ -49,7 +49,7 @@ class Command(BaseCommand):
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
 
-        plt.rcParams["font.family"] = ["Meiryo", "IPAexGothic"]
+        plt.rcParams["font.family"] = ["IPAexGothic"]
         # make folder if not exists and delete old files and delete table data
         out_folder = (
             BASE_DIR.resolve() / "vietnam_research/static/vietnam_research/chart"

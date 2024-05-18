@@ -45,7 +45,7 @@ class Command(BaseCommand):
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
 
-        plt.rcParams["font.family"] = ["Meiryo", "IPAexGothic"]
+        plt.rcParams["font.family"] = ["IPAexGothic"]
         df = get_data()
         n_rows, n_cols = df.shape
         positions = np.arange(n_rows)
@@ -86,11 +86,15 @@ class Command(BaseCommand):
         if Path.exists(Path(font_path).resolve()):
             # for ubuntu jp font
             plt.legend(
-                loc="upper left", labels=df.columns, prop={"family": ["IPAMincho", "IPAexGothic"]}
+                loc="upper left",
+                labels=df.columns,
+                prop={"family": ["IPAexGothic"]},
             )
         else:
             plt.legend(
-                loc="upper left", labels=df.columns, prop={"family": ["Meiryo", "IPAexGothic"]}
+                loc="upper left",
+                labels=df.columns,
+                prop={"family": ["IPAexGothic"]},
             )
 
         # png save
