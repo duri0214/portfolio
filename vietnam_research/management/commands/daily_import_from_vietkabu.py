@@ -89,7 +89,7 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
     return [x for x in vietkabu if x["symbol"] in newcomer_symbols]
 
 
-def to_float(s):
+def to_float(s: str | None) -> float:
     if s is None:
         return 0.0
     s = s.strip().replace(",", "")
