@@ -37,6 +37,7 @@ python manage.py createsuperuser
 
 - `user` の初期パスワードは `test#1234`
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
+- industry は、フィクスチャ入れたあとにバッチをまわしてください
 
 ```
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
@@ -48,7 +49,6 @@ python manage.py loaddata .\vietnam_research\fixtures\vnIndex.json
 python manage.py loaddata .\vietnam_research\fixtures\articles.json
 python manage.py loaddata .\vietnam_research\fixtures\basicInformation.json
 python manage.py loaddata .\vietnam_research\fixtures\financialResultWatch.json
-python manage.py loaddata .\vietnam_research\fixtures\industry.json
 python manage.py loaddata .\vietnam_research\fixtures\watchlist.json
 python manage.py loaddata .\gmarker\fixtures\signageMenuName.json
 python manage.py loaddata .\gmarker\fixtures\storeInformation.json
