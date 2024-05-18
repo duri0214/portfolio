@@ -31,7 +31,7 @@ class CallbackView(View):
         events = [WebhookEvent(event) for event in request_json["events"]]
 
         for event in events:
-            if event.source and event.source.user_id:
+            if event.source and event.source.is_user():
                 line_user_id = event.source.user_id
 
                 # TODO: picture_urlをpillowで画像化してMEDIA_ROOTに保存してからpictureフィールドにいれる
