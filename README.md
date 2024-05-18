@@ -25,7 +25,7 @@ pip freeze > requirements.txt
 ## Migrate
 
 ```
-python manage.py makemigrations vietnam_research gmarker shopping linebot warehouse taxonomy soil_analysis
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis
 python manage.py migrate
 
 python manage.py createsuperuser
@@ -126,9 +126,9 @@ python manage.py import_soil_hardness /path/to/folder
 
 - 在庫を登録し、値段・コメントなどの管理ができる
 
-## linebot
+## linebot_engine
 
-- [仕様書](docs/linebot/specification.md)
+- [仕様書](docs/linebot_engine/specification.md)
 - あまりできていないが chatbot を作りたかったのかな？
 
 ## warehouse
