@@ -10,6 +10,7 @@ class WebhookEvent:
         Notes: 3人以上でトークを利用することを「グループトーク」という
           ※1対1のトーク中に友だちを誘って会話することを「複数人トーク」というが、現在は、グループトークに機能が統合されているらしい
         """
+
         def __init__(self, source_dict):
             self.type = source_dict.get("type")
             self.group_id = source_dict.get("groupId")
@@ -40,6 +41,7 @@ class WebhookEvent:
             """
             Message.textプロパティにメンションが含まれる場合のみ、Messageクラスに含まれる
             """
+
             class Mentionee:
                 def __init__(self, mentionee):
                     """
@@ -85,6 +87,7 @@ class WebhookEvent:
           一方、ユーザがブロックから解除された場合、isUnblockedの値はtrueとなります。
           これは、ユーザがあなたの公式アカウントのブロックを解除したことを示します
         """
+
         def __init__(self, follow_event):
             self.is_unblocked = follow_event.get("isUnblocked", False)
 
