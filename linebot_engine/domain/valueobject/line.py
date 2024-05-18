@@ -68,6 +68,7 @@ class WebhookEvent:
             text: エンドユーザーがLINE絵文字を送信した場合は、(hello)や(love)のように、LINE絵文字が文字列で含まれます。
               エンドユーザーがメンションした場合は、`@example`のように、送信相手のLINEアカウントの表示名が文字列で含まれます。
               メンションの詳細は、mentionプロパティで確認できます。
+              i.e. `@All @example Good Morning!! (love)`
             quoteToken: メッセージの引用トークン
             emojis: textプロパティに含まれる絵文字の配列
             mention: extプロパティに含まれるメンションの情報
