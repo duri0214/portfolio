@@ -34,20 +34,26 @@ class LineService:
         return x_line_signature == signature
 
     @staticmethod
-    def get_picture(url: str) -> Image:
+    def _get_picture(url: str) -> Image:
         response = requests.get(url)
         response.raise_for_status()
         return Image.open(BytesIO(response.content))
 
     @staticmethod
-    def picture_resize(picture: Image) -> Image:
+    def _resize_picture(picture: Image) -> Image:
         return picture.resize((128, 128))
 
     @staticmethod
-    def picture_save(picture: Image) -> str:
+    def _save_picture(picture: Image) -> str:
         folder_path = Path(MEDIA_ROOT) / "images"
         folder_path.mkdir(parents=True, exist_ok=True)
         random_filename = secrets.token_hex(5) + ".png"
         picture_path = str(folder_path / random_filename)
         picture.save(picture_path)
+        return picture_path
+
+    def picture_save(self, picture_url: str) -> str:
+        picture = self._get_picture(picture_url)
+        resized_picture = self._resize_picture(picture)
+        picture_path = self._save_picture(resized_picture)
         return picture_path

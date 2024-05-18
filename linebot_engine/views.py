@@ -25,7 +25,8 @@ class CallbackView(View):
         Notes: LINE DEVELOPERSの画面からWebhookの接続をテストした場合
           実際のイベント（ユーザーのアクションなど）がないため、eventsデータは存在せず、空の配列が返される
         """
-        if not LineService.is_valid_signature(request):
+        line_service = LineService()
+        if not line_service.is_valid_signature(request):
             return HttpResponse(status=403)  # return 'Forbidden'
 
         request_json = json.loads(request.body.decode("utf-8"))
@@ -38,14 +39,12 @@ class CallbackView(View):
 
                 if line_user_id != WEBHOOK_VERIFICATION_USER_ID:
                     # botをフォローしたとき
-                    line_bot_api = LineBotApi(
-                        os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
-                    )
-                    profile = line_bot_api.get_profile(event.source.user_id)
-                    picture = LineService.get_picture(profile.picture_url)
-                    resized_picture = LineService.picture_resize(picture)
-                    picture_path = LineService.picture_save(resized_picture)
                     if event.is_follow():
+                        line_bot_api = LineBotApi(
+                            os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
+                        )
+                        profile = line_bot_api.get_profile(event.source.user_id)
+                        picture_path = line_service.picture_save(profile.picture_url)
                         UserProfile.objects.create(
                             user_id=line_user_id,
                             display_name=profile.display_name,
