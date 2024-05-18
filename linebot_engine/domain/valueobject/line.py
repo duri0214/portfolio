@@ -65,9 +65,14 @@ class WebhookEvent:
         def __init__(self, message):
             """
             id: メッセージID
-            text: メッセージのテキスト
+            text: エンドユーザーがLINE絵文字を送信した場合は、(hello)や(love)のように、LINE絵文字が文字列で含まれます。
+              エンドユーザーがメンションした場合は、`@example`のように、送信相手のLINEアカウントの表示名が文字列で含まれます。
+              メンションの詳細は、mentionプロパティで確認できます。
             quoteToken: メッセージの引用トークン
             emojis: textプロパティに含まれる絵文字の配列
+            mention: extプロパティに含まれるメンションの情報
+
+            Notes: text に絵文字もメンションも含まれるので、 emojis, mention で文字加工する必要はなさそう
             """
             self.id = message.get("id")
             self.type = message.get("type")

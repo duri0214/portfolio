@@ -31,6 +31,7 @@ class CallbackView(View):
         events = [WebhookEvent(event) for event in request_json["events"]]
 
         for event in events:
+            # TODO: .is_group()のときの処理はTBD
             if event.source and event.source.is_user():
                 line_user_id = event.source.user_id
 
