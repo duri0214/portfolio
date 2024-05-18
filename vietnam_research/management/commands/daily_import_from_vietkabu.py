@@ -89,11 +89,12 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
     return [x for x in vietkabu if x["symbol"] in newcomer_symbols]
 
 
-def to_float(s: str | None) -> float:
-    if s is None:
+def to_float(s):
+    if s is None or not isinstance(s, str) or s.strip() == "":
         return 0.0
+
     s = s.strip().replace(",", "")
-    s = "0" if s in ["-", ""] else s
+    s = "0" if s == "-" else s
     try:
         return float(s)
     except ValueError:
@@ -124,7 +125,6 @@ class Command(BaseCommand):
 
         m_market = Market.objects.all()
         for processing in market_list:
-            print(processing)
             m_symbol = Symbol.objects.filter(market__code=processing["mkt"])
             soup = BeautifulSoup(
                 urllib.request.urlopen(processing["url"]).read(), "lxml"
@@ -199,7 +199,6 @@ class Command(BaseCommand):
                     )
                 )
             if len(add_records) > 0:
-                print([x.symbol.code for x in add_records])
                 Industry.objects.bulk_create(add_records)
                 Symbol.objects.bulk_update(update_records, fields=["name"])
             log_service.write(f"{caller_file_name} is done.({len(add_records)})")

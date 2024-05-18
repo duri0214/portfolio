@@ -86,7 +86,12 @@ class Command(BaseCommand):
 
         m_symbol = Symbol.objects.filter(market__in=[1, 2])
         tag_tr = soup.find(class_="accTbl01").tbody.find_all("tr")
-        sbi_list = [Sbi(symbol_id=m_symbol.get(code=x.th.p.string).id) for x in tag_tr]
+        sbi_list = []
+        for x in tag_tr:
+            try:
+                sbi_list.append(Sbi(symbol_id=m_symbol.get(code=x.th.p.string).id))
+            except m_symbol.DoesNotExist:
+                continue
 
         caller_file_name = Path(__file__).stem
         log_service = LogService("./result.log")

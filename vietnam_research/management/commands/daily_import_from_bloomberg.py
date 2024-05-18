@@ -37,6 +37,6 @@ class Command(BaseCommand):
                 M=transaction_date.strftime("%m"),
                 closing_price=soup.find(class_="price").text.replace(",", ""),
             )
-            log_service.write(f"{caller_file_name} is done.(1)")
+            log_service.write(f"{caller_file_name} is done.({transaction_date})")
         else:
-            log_service.write(f"{caller_file_name} is done.(0)")
+            log_service.write(f"VNIndexの当月データがあったので処理対象外になりました")

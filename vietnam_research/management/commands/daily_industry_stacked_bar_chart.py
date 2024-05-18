@@ -109,4 +109,4 @@ class Command(BaseCommand):
 
         caller_file_name = Path(__file__).stem
         log_service = LogService("./result.log")
-        log_service.write(f"{caller_file_name} is done.(0)")
+        log_service.write(f"{caller_file_name} is done.")
