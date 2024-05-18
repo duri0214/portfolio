@@ -39,11 +39,11 @@ def formatted_text(code: str, slopes: list, passed: int, price: dict) -> str:
 
 
 class Command(BaseCommand):
-    help = "industry uptrends"
+    help = "industry uptrend"
 
     def handle(self, *args, **options):
         """
-        Industryテーブルのuptrends
+        Industryテーブルのuptrend
 
         See Also: https://docs.djangoproject.com/en/4.2/howto/custom-management-commands/
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
