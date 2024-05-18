@@ -22,6 +22,12 @@ pip install -r requirements.txt
 pip freeze > requirements.txt
 ```
 
+## すべてのテーブルをカラにする
+
+```
+python manage.py flush --noinput
+```
+
 ## Migrate
 
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
@@ -38,6 +44,7 @@ python manage.py createsuperuser
 - `user` の初期パスワードは `test#1234`
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
 - industry は、フィクスチャ入れたあとにバッチをまわしてください
+- createsuperuser をやったあとじゃないと失敗するfixtureがあるよ
 
 ```
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
