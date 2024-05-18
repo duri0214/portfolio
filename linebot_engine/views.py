@@ -51,8 +51,9 @@ class CallbackView(View):
             if event.source and event.source.user_id:
                 line_user_id = event.source.user_id
 
-                line_bot_api = LineBotApi("YOUR_CHANNEL_ACCESS_TOKEN")
-                profile = line_bot_api.get_profile(event.source["userId"])
+                # TODO: picture_urlをpillowで画像化してMEDIA_ROOTに保存してからpictureフィールドにいれる
+                line_bot_api = LineBotApi(os.environ.get("LINE_CHANNEL_ACCESS_TOKEN"))
+                profile = line_bot_api.get_profile(event.source.user_id)
                 print(profile.display_name, profile.picture_url)
 
                 if line_user_id != WEBHOOK_VERIFICATION_USER_ID:
@@ -64,7 +65,7 @@ class CallbackView(View):
                             display_name=profile.display_name,
                             picture=profile.picture_url,
                         )
-                    # botがブロックされた
+                    # botがブロックされたとき
                     if event.is_unfollow():
                         LinePush.objects.filter(line_user_id).delete()
 
