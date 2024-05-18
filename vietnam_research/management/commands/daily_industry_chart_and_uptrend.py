@@ -177,7 +177,11 @@ class Command(BaseCommand):
                 # resize png as w250, h200
                 Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
 
-            log_service.write(f"  {formatted_text(ticker, slopes, passed, price)}")
+            add_space = 2 if passed == len(days) else 0
+            spaces = " " * add_space
+            log_service.write(
+                f"{spaces}{formatted_text(ticker, slopes, passed, price)}"
+            )
         Uptrends.objects.bulk_create(passed_records)
 
         caller_file_name = Path(__file__).stem
