@@ -6,6 +6,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from linebot import LineBotApi
+from linebot.models import Message
 
 from linebot_engine.domain.service.line_service import LineService
 from linebot_engine.domain.valueobject.line import WebhookEvent
@@ -52,5 +53,13 @@ class CallbackView(View):
                     # botがブロックされたとき
                     if event.is_unfollow():
                         UserProfile.objects.filter(line_user_id).delete()
+
+                    # replyが発生したとき
+                    if event.is_message():
+                        Message.objects.create(
+                            user_profile=UserProfile.objects.get(user_id=line_user_id),
+                            source_type=event.event_data.type,
+                            message=event.event_data.text,
+                        )
 
         return HttpResponse(status=200)

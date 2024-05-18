@@ -2,7 +2,10 @@ from django.db import models
 
 
 class UserProfile(models.Model):
-    """Lineでのプッシュ先を表す"""
+    """
+    フォローしたときにLINEプラットフォームでやりとりされるユーザ情報を保存する
+    ブロックされたときは削除する
+    """
 
     user_id = models.CharField(max_length=100, unique=True)
     display_name = models.CharField(max_length=100, null=True)
@@ -10,3 +13,9 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user_id
+
+
+class Messages(models.Model):
+    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    source_type = models.CharField(max_length=100)
+    message = models.TextField()
