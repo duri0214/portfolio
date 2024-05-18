@@ -24,6 +24,8 @@ pip freeze > requirements.txt
 
 ## Migrate
 
+- サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
+
 ```
 python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis
 python manage.py migrate
@@ -33,7 +35,8 @@ python manage.py createsuperuser
 
 ## fixture
 
-`user` の初期パスワードは `test#1234`
+- `user` の初期パスワードは `test#1234`
+- サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
 
 ```
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
