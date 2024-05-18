@@ -15,7 +15,7 @@ class Matplotlib(BaseGraphEngine):
         :param y:
         :return:
         """
-        plt.rcParams["font.family"] = "Meiryo"
+        plt.rcParams["font.family"] = ["Meiryo", "IPAexGothic"]
         plt.switch_backend("AGG")  # スクリプトを出力させない
         plt.figure(figsize=(5, 2))  # グラフサイズ
         plt.barh(x, y)  # グラフ作成
