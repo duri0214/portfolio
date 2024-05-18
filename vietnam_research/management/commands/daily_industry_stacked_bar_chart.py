@@ -86,11 +86,11 @@ class Command(BaseCommand):
         if Path.exists(Path(font_path).resolve()):
             # for ubuntu jp font
             plt.legend(
-                loc="upper left", labels=df.columns, prop={"family": "IPAMincho"}
+                loc="upper left", labels=df.columns, prop={"family": ["IPAMincho", "IPAexGothic"]}
             )
         else:
             plt.legend(
-                loc="upper left", labels=df.columns, prop={"family": "IPAexGothic"}
+                loc="upper left", labels=df.columns, prop={"family": ["Meiryo", "IPAexGothic"]}
             )
 
         # png save
