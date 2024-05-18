@@ -48,6 +48,7 @@ class Command(BaseCommand):
         See Also: https://docs.djangoproject.com/en/4.2/howto/custom-management-commands/
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
+        log_service = LogService("./result.log")
 
         plt.rcParams["font.family"] = ["IPAexGothic"]
         # make folder if not exists and delete old files and delete table data
@@ -56,7 +57,9 @@ class Command(BaseCommand):
         )
         if not os.path.exists(out_folder):
             os.makedirs(out_folder)
-        [os.remove(filepath) for filepath in glob(str(Path(out_folder) / "*.png"))]
+        for filepath in glob(str(Path(out_folder) / "*.png")):
+            log_service.write(f"Removing file: {filepath}")
+            os.remove(filepath)
         Uptrends.objects.all().delete()  # TODO: 多分indexがリセットされないのでTRUNCATEにしたい
 
         # all tickers are plotting by matplotlib
@@ -151,10 +154,11 @@ class Command(BaseCommand):
                 # save png as w640, h480
                 out_path = str(Path(out_folder) / f"{ticker}.png")
                 plt.savefig(out_path)
+                log_service.write(f"Saving file: {out_path}")
                 # resize png as w250, h200
                 Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
             if attempts == passed:
-                # e.g. 14 days ago to today
+                # 処理した株価の傾斜（線形回帰による）がdaysすべてにおいて正（つまり上昇傾向）だった場合
                 recent_days_length = max(days)
                 closing_price = closing_price[-recent_days_length:].reset_index(
                     drop=True
@@ -176,7 +180,6 @@ class Command(BaseCommand):
         Uptrends.objects.bulk_create(passed_records)
 
         caller_file_name = Path(__file__).stem
-        log_service = LogService("./result.log")
         log_service.write(f"{caller_file_name} is done.({len(tickers)})")
 
         # TODO: パフォーマンスカイゼンして！原因はsymbolマスタにtickerかぶり（社名変更）があるため。バッチの新規Symbol取り込み部分もなおす
