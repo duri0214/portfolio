@@ -22,7 +22,7 @@ class CallbackView(View):
         ラインの友達追加時に呼び出され、ラインのIDを登録する
 
         Notes: LINE DEVELOPERSの画面からWebhookの接続をテストした場合
-               実際のイベント（ユーザーのアクションなど）がないため、eventsデータは存在せず、空の配列が返される
+          実際のイベント（ユーザーのアクションなど）がないため、eventsデータは存在せず、空の配列が返される
         """
         if not LineService.is_valid_signature(request):
             return HttpResponse(status=403)  # return 'Forbidden'
