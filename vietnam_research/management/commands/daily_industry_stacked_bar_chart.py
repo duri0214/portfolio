@@ -90,7 +90,7 @@ class Command(BaseCommand):
             )
         else:
             plt.legend(
-                loc="upper left", labels=df.columns, prop={"family": "MS Gothic"}
+                loc="upper left", labels=df.columns, prop={"family": "IPAexGothic"}
             )
 
         # png save
