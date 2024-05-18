@@ -90,6 +90,8 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
 
 
 def to_float(s):
+    if s is None:
+        return 0.0
     s = s.strip().replace(",", "")
     s = "0" if s in ["-", ""] else s
     try:
