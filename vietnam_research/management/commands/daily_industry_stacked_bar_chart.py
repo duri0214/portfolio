@@ -45,6 +45,7 @@ class Command(BaseCommand):
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
 
+        plt.rcParams["font.family"] = ["Meiryo", "IPAexGothic"]
         df = get_data()
         n_rows, n_cols = df.shape
         positions = np.arange(n_rows)
