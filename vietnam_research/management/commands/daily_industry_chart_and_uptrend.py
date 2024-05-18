@@ -151,12 +151,6 @@ class Command(BaseCommand):
                 date_back_to = len(closing_price) - day
                 regression_range = range(date_back_to, date_back_to + day)
                 plt.plot(regression_range, (slope * x_range + intercept), "g--")
-                # save png as w640, h480
-                out_path = str(Path(out_folder) / f"{ticker}.png")
-                plt.savefig(out_path)
-                log_service.write(f"Saving file: {out_path}")
-                # resize png as w250, h200
-                Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
             if attempts == passed:
                 # 処理した株価の傾斜（線形回帰による）がdaysすべてにおいて正（つまり上昇傾向）だった場合
                 recent_days_length = max(days)
@@ -175,6 +169,13 @@ class Command(BaseCommand):
                     )
                 except Symbol.DoesNotExist:
                     logging.critical(formatted_text(ticker, slopes, passed, price))
+
+                # save png as w640, h480
+                out_path = str(Path(out_folder) / f"{ticker}.png")
+                plt.savefig(out_path)
+                log_service.write(f"  Saving file: {out_path}")
+                # resize png as w250, h200
+                Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
 
             log_service.write(formatted_text(ticker, slopes, passed, price))
         Uptrends.objects.bulk_create(passed_records)
