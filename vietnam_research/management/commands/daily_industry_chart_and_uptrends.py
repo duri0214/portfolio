@@ -154,7 +154,10 @@ class Command(BaseCommand):
                 Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
             if attempts == passed:
                 # e.g. 14 days ago to today
-                closing_price = closing_price[-max(days) :].reset_index(drop=True)
+                recent_days_length = max(days)
+                closing_price = closing_price[-recent_days_length:].reset_index(
+                    drop=True
+                )
                 price = calc_price(closing_price)
                 try:
                     passed_records.append(
