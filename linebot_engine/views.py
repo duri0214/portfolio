@@ -48,8 +48,8 @@ class CallbackView(View):
         events = [WebhookEvent(event) for event in request_json["events"]]
 
         for event in events:
-            if isinstance(event.source, dict) and "userId" in event.source:
-                line_user_id = event.source["userId"]
+            if event.source and event.source.user_id:
+                line_user_id = event.source.user_id
 
                 line_bot_api = LineBotApi("YOUR_CHANNEL_ACCESS_TOKEN")
                 profile = line_bot_api.get_profile(event.source["userId"])

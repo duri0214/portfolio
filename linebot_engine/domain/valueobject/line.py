@@ -3,10 +3,17 @@ class WebhookEvent:
     Notes: https://developers.line.biz/ja/reference/messaging-api/#webhook-event-objects
     """
 
+    class Source:
+        def __init__(self, source_dict):
+            self.user_id = source_dict.get("userId")
+
     def __init__(self, event: dict):
         self.type = event.get("type")
         self.timestamp = event.get("timestamp")
-        self.source = event.get("source")
+        if isinstance(event.get("source"), dict):
+            self.source = self.Source(event.get("source"))
+        else:
+            self.source = None
         self.reply_token = event.get("replyToken")
         self.mode = event.get("mode")
         self.webhook_event_id = event.get("webhookEventId")
