@@ -46,7 +46,7 @@ class CallbackView(View):
                         profile = line_bot_api.get_profile(event.source.user_id)
                         picture_path = line_service.picture_save(profile.picture_url)
                         UserProfile.objects.create(
-                            user_id=line_user_id,
+                            line_user_id=line_user_id,
                             display_name=profile.display_name,
                             picture=picture_path,
                         )
