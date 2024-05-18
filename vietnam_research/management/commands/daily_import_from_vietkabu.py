@@ -89,6 +89,15 @@ def extract_newcomer(soup: BeautifulSoup, compare_m_symbol: QuerySet) -> list:
     return [x for x in vietkabu if x["symbol"] in newcomer_symbols]
 
 
+def to_float(s):
+    s = s.strip().replace(",", "")
+    s = "0" if s in ["-", ""] else s
+    try:
+        return float(s)
+    except ValueError:
+        return 0.0
+
+
 class Command(BaseCommand):
     help = "industry from viet-kabu"
 
@@ -175,30 +184,14 @@ class Command(BaseCommand):
                 add_records.append(
                     Industry(
                         recorded_date=transaction_date,
-                        open_price=float(tag_td_number_type[2].text.strip() or "0"),
-                        high_price=float(tag_td_number_type[3].text.strip() or "0"),
-                        low_price=float(tag_td_number_type[4].text.strip() or "0"),
-                        closing_price=float(tag_td_number_type[1].text),
-                        volume=float(
-                            tag_td_number_type[7]
-                            .text.replace("-", "0")
-                            .replace(",", "")
-                        ),
-                        trade_price_of_a_day=float(
-                            tag_td_number_type[8]
-                            .text.replace("-", "0")
-                            .replace(",", "")
-                        ),
-                        marketcap=float(
-                            tag_td_number_type[10]
-                            .text.replace("-", "0")
-                            .replace(",", "")
-                        ),
-                        per=float(
-                            tag_td_number_type[11]
-                            .text.replace(",", "")
-                            .replace("-", "0")
-                        ),
+                        open_price=to_float(tag_td_number_type[2].text.strip()),
+                        high_price=to_float(tag_td_number_type[3].text.strip()),
+                        low_price=to_float(tag_td_number_type[4].text.strip()),
+                        closing_price=to_float(tag_td_number_type[1].text),
+                        volume=to_float(tag_td_number_type[7]),
+                        trade_price_of_a_day=to_float(tag_td_number_type[8]),
+                        marketcap=to_float(tag_td_number_type[10]),
+                        per=to_float(tag_td_number_type[11]),
                         created_at=localtime(now()).strftime("%Y-%m-%d %a %H:%M:%S"),
                         symbol=symbol,
                     )
