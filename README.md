@@ -44,6 +44,17 @@ python manage.py createsuperuser
 - `user` の初期パスワードは `test#1234`
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
 - createsuperuser をやったあとじゃないと失敗するfixtureがあるよ
+- バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` の seeder は14日ぶん用意しましょう
+    - seederの日付はだんだん古くなっていくのでメンテしてね
+
+```text
+SELECT x.recorded_date
+FROM portfolio_db.vietnam_research_industry x
+GROUP BY x.recorded_date;
+UPDATE portfolio_db.vietnam_research_industry
+SET recorded_date = '2024-05-02'
+WHERE recorded_date = '2023-01-17';
+```
 
 ```
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
@@ -96,7 +107,8 @@ python manage.py loaddata .\soil_analysis\fixtures\device.json
 
 ## バッチ
 
-daily_industry_chart_and_uptrend は 各期間（14日、7日、3日）を遡り、その期間の株価が上昇傾向（斜度が正）であればpassedがインクリメントされ
+daily_industry_chart_and_uptrend は 各期間（14日、7日、3日）を遡り、 すべての期間の株価が上昇傾向（斜度が正）であれば passed
+がインクリメントされる。つまり時系列データがないと画像は保存されない
 
 ```
 python manage.py daily_import_from_bloomberg
@@ -141,7 +153,13 @@ python manage.py import_soil_hardness /path/to/folder
 ## linebot_engine
 
 - [仕様書](docs/linebot_engine/specification.md)
-- あまりできていないが chatbot を作りたかったのかな？
+- 当時ヘルスチェックを作りたかったらしい
+    - LINE: （朝8時ごろに）元気？
+    - User: 元気です
+    - LINE: 朝ご飯食べた？
+    - User: 食べた
+
+Userが「食べた」と答えた回数を集計して、最近「食べた」と答えなかったらアラート、みたいな
 
 ## warehouse
 
