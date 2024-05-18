@@ -176,11 +176,13 @@ class Command(BaseCommand):
                 except Symbol.DoesNotExist:
                     logging.critical(formatted_text(ticker, slopes, passed, price))
 
-            logging.info(formatted_text(ticker, slopes, passed, price))
+            log_service.write(formatted_text(ticker, slopes, passed, price))
         Uptrends.objects.bulk_create(passed_records)
 
         caller_file_name = Path(__file__).stem
-        log_service.write(f"{caller_file_name} is done.({len(tickers)})")
+        log_service.write(
+            f"{caller_file_name} is done.(Number of tickers processed: {len(tickers)})"
+        )
 
         # TODO: パフォーマンスカイゼンして！原因はsymbolマスタにtickerかぶり（社名変更）があるため。バッチの新規Symbol取り込み部分もなおす
         # TODO: -400日が何月何日なのか表示
