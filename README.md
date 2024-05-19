@@ -152,6 +152,8 @@ python manage.py import_soil_hardness /path/to/folder
 
 ## linebot_engine
 
+https://qiita.com/YoshitakaOkada/items/f51f52a8041439a1dbc9#line
+
 - [仕様書](docs/linebot_engine/specification.md)
 - 当時ヘルスチェックを作りたかったらしい
     - LINE: （朝8時ごろに）元気？
