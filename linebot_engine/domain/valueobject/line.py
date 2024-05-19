@@ -3,7 +3,7 @@ class WebhookEvent:
     Notes: https://developers.line.biz/ja/reference/messaging-api/#webhook-event-objects
     """
 
-    class Source:
+    class _Source:
         """
         type: user or group
 
@@ -22,7 +22,7 @@ class WebhookEvent:
         def is_group(self):
             return self.type == "group"
 
-    class Message:
+    class _Message:
         class Emoji:
             def __init__(self, emoji):
                 """
@@ -37,7 +37,7 @@ class WebhookEvent:
                 self.product_id = emoji.get("productId")
                 self.emoji_id = emoji.get("emojiId")
 
-        class Mention:
+        class _Mention:
             """
             Message.textプロパティにメンションが含まれる場合のみ、Messageクラスに含まれる
             """
@@ -81,12 +81,12 @@ class WebhookEvent:
             self.quote_token = message.get("quoteToken")
             self.emojis = [self.Emoji(e) for e in message.get("emojis", [])]
             self.mention = (
-                self.Mention(message.get("mention", {}))
+                self._Mention(message.get("mention", {}))
                 if "mention" in message
                 else None
             )
 
-    class Follow:
+    class _Follow:
         """
         Notes: 初めて友だち追加されたとき、isUnblockedの値はfalseとなります。
           これは、ユーザがブロックから解除されたのではなく、新たに友だちに追加されたことを示します
@@ -113,16 +113,16 @@ class WebhookEvent:
         self.type = event.get("type")
         self.mode = event.get("mode")
         self.timestamp = event.get("timestamp")
-        self.source = self.Source(event.get("source"))
+        self.source = self._Source(event.get("source"))
         self.webhook_event_id = event.get("webhookEventId")
         self.delivery_context = event.get("deliveryContext")
         self.event_data = self._parse_event_data(event)
 
     def _parse_event_data(self, event):
         if self.is_message():
-            return self.Message(event.get("message", {}))
+            return self._Message(event.get("message", {}))
         elif self.is_follow() or self.is_unfollow():
-            return self.Follow(event.get("follow", {}))
+            return self._Follow(event.get("follow", {}))
         else:
             raise ValueError(f"Unsupported event type: {self.type}")
 
