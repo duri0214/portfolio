@@ -10,7 +10,7 @@ class Edinet(models.Model):
     listing_status = models.CharField("上場区分", max_length=3)
     consolidated_status = models.CharField("連結の有無", max_length=1)
     capital = models.FloatField("資本金")
-    end_fiscal_year = models.CharField("決算日", max_length=5)
+    end_fiscal_year = models.CharField("決算日", max_length=6)
     submitter_name = models.CharField("提出者名", max_length=100)
     submitter_name_en = models.CharField("提出者名（英字）", max_length=100)
     submitter_name_kana = models.CharField("提出者名（ヨミ）", max_length=100)
