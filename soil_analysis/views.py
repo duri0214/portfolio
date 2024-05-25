@@ -141,7 +141,10 @@ class SoilhardnessUploadView(FormView):
 
     def form_valid(self, form):
         # Zipを処理してバッチ実行
-        upload_folder = ZipFileService.handle_uploaded_zip(self.request.FILES["file"])
+        app_name = self.request.resolver_match.app_name
+        upload_folder = ZipFileService.handle_uploaded_zip(
+            self.request.FILES["file"], app_name
+        )
         if os.path.exists(upload_folder):
             call_command("import_soil_hardness", upload_folder)
             shutil.rmtree(upload_folder)
