@@ -1,0 +1,17 @@
+{% extends "securities/base.html" %}
+{% load static %}
+{% block header %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'securities:index' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'securities:edinet_code_upload' %}">Upload
+                EDINETコードリスト</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Upload success</li>
+        </ol>
+    </nav>
+{% endblock %}
+{% block content %}
+    <h1>Upload Successful</h1>
+    <p>アップロードが完了しました！</p>
+{% endblock %}
