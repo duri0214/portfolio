@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="JavaScriptLibraryMappings">
-    <file url="file://$PROJECT_DIR$" libraries="{all, bootstrap, chart.js, d3-path.v1, d3.v4, jquery-3.3.1.slim, js-cookie, popper.js, select2}" />
+    <file url="file://$PROJECT_DIR$" libraries="{all, bootstrap, chart.js, d3-indented-tree, d3-path.v1, d3.v4, jquery-3.3.1.slim, js-cookie, popper.js, select2}" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
 </project>

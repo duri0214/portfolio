@@ -54,13 +54,13 @@
                 {% endif %}
                 <select class="select2-1" onChange="location.href=value;">
                     <option></option>
-                    <option value="{% url 'vnm:index' %}" selected>VIETNAM</option>
+                    <option value="{% url 'vnm:index' %}">VIETNAM</option>
                     <option value="{% url 'mrk:index' %}">GMARKER</option>
                     <option value="{% url 'shp:index' %}">SHOPPING</option>
                     <option value="{% url 'war:index' %}">WAREHOUSE</option>
                     <option value="{% url 'txo:index' %}">TAXONOMY</option>
                     <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
-                    <option value="{% url 'securities:index' %}">SECURITIES REPORT</option>
+                    <option value="{% url 'securities:index' %}" selected>SECURITIES REPORT</option>
                 </select>
             </ul>
             <form class="form-inline my-2 my-lg-0">
