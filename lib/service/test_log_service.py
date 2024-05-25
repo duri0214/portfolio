@@ -1,8 +1,7 @@
-import os
 from pathlib import Path
 from unittest import TestCase
 
-from vietnam_research.domain.service.log import LogService
+from lib.service.log_service import LogService
 
 
 class TestLogService(TestCase):
@@ -10,10 +9,11 @@ class TestLogService(TestCase):
         """
         テスト実行ごとに `abc` というログを出力し、ログ出力前よりも `abc` のカウントが `1` 多いことを確認する
         """
-        log_path = f"./abc.log"
+        base_dir = Path(__file__).resolve().parent
+        log_path = base_dir / "abc.log"
 
-        log = LogService(log_path)
-        if not os.path.isfile(log_path):
+        log = LogService(str(log_path))
+        if not log_path.is_file():
             log.write("")
 
         with open(log_path) as f:
