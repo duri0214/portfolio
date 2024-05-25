@@ -17,4 +17,4 @@ class Edinet(models.Model):
     address = models.CharField("所在地", max_length=255)
     submitter_industry = models.CharField("提出者業種", max_length=25)
     securities_code = models.CharField("証券コード", max_length=5)
-    corporate_number = models.CharField("法人番号", max_length=13)
+    corporate_number = models.CharField("提出者法人番号", max_length=13)
