@@ -5,23 +5,28 @@ from lib.service.log_service import LogService
 
 
 class TestLogService(TestCase):
+    LOG_NAME = "abc.log"
+    TEST_STRING = "abc"
+
+    def setUp(self):
+        self.base_dir = Path(__file__).resolve().parent
+        self.log_path = str(self.base_dir / self.LOG_NAME)
+        self.log = LogService(self.log_path)
+        with open(self.log_path, "a") as f:  # append モード
+            pass  # ファイルを開いただけで何も操作は行なっていません
+        with open(self.log_path) as f:
+            self.initial_log_content = f.read()
+
     def test_write(self):
         """
         テスト実行ごとに `abc` というログを出力し、ログ出力前よりも `abc` のカウントが `1` 多いことを確認する
         """
-        base_dir = Path(__file__).resolve().parent
-        log_path = base_dir / "abc.log"
+        self.log.write(self.TEST_STRING + "日本語も大丈夫")
 
-        log = LogService(str(log_path))
-        if not log_path.is_file():
-            log.write("")
+        with open(self.log_path) as f:
+            final_log_content = f.read()
 
-        with open(log_path) as f:
-            stream_in_log1 = f.read()
-        log.write(Path(__file__).stem)
-        log.write("abc日本語も大丈夫")
-        with open(log_path) as f:
-            stream_in_log2 = f.read()
-
-        expected = stream_in_log1.count("abc") + 1
-        self.assertEqual(expected, stream_in_log2.count("abc"))
+        self.assertEqual(
+            self.initial_log_content.count(self.TEST_STRING) + 1,
+            final_log_content.count(self.TEST_STRING),
+        )
