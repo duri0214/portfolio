@@ -33,7 +33,7 @@ python manage.py flush --noinput
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
 
 ```
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
 python manage.py migrate
 
 python manage.py createsuperuser
