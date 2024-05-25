@@ -13,6 +13,13 @@ from vietnam_research.domain.service.log import LogService
 from vietnam_research.models import Industry
 
 
+def get_font():
+    if os.name == "nt":  # For Windows
+        return "Yu Gothic"
+    else:  # For other OS (here, we assume Ubuntu)
+        return "IPAexGothic"
+
+
 def get_data() -> pd.DataFrame:
     """
     バッチに必要なデータを返します
@@ -45,7 +52,7 @@ class Command(BaseCommand):
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
 
-        plt.rcParams["font.family"] = ["IPAexGothic"]
+        plt.rcParams["font.family"] = get_font()
         df = get_data()
         n_rows, n_cols = df.shape
         positions = np.arange(n_rows)
@@ -88,13 +95,13 @@ class Command(BaseCommand):
             plt.legend(
                 loc="upper left",
                 labels=df.columns,
-                prop={"family": ["IPAexGothic"]},
+                prop={"family": get_font()},
             )
         else:
             plt.legend(
                 loc="upper left",
                 labels=df.columns,
-                prop={"family": ["IPAexGothic"]},
+                prop={"family": get_font()},
             )
 
         # png save
