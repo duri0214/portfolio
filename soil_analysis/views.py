@@ -8,15 +8,32 @@ from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import ListView, CreateView, DetailView, TemplateView, FormView
+from django.views.generic import (
+    ListView,
+    CreateView,
+    DetailView,
+    TemplateView,
+    FormView,
+)
 
+from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.landrepository import LandRepository
 from soil_analysis.domain.service.landcandidateservice import LandCandidateService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
-from soil_analysis.domain.service.zipfileservice import ZipFileService
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
-from soil_analysis.models import Company, Land, LandScoreChemical, LandReview, CompanyCategory, LandLedger, \
-    SoilHardnessMeasurementImportErrors, SoilHardnessMeasurement, LandBlock, SamplingOrder, RouteSuggestImport
+from soil_analysis.models import (
+    Company,
+    Land,
+    LandScoreChemical,
+    LandReview,
+    CompanyCategory,
+    LandLedger,
+    SoilHardnessMeasurementImportErrors,
+    SoilHardnessMeasurement,
+    LandBlock,
+    SamplingOrder,
+    RouteSuggestImport,
+)
 
 
 class Home(TemplateView):
@@ -37,12 +54,12 @@ class CompanyCreateView(CreateView):
     form_class = CompanyCreateForm
 
     def get_success_url(self):
-        return reverse('soil:company_detail', kwargs={'pk': self.object.pk})
+        return reverse("soil:company_detail", kwargs={"pk": self.object.pk})
 
 
 class CompanyDetailView(DetailView):
     model = Company
-    template_name = 'soil_analysis/company/detail.html'
+    template_name = "soil_analysis/company/detail.html"
 
 
 class LandListView(ListView):
@@ -50,16 +67,19 @@ class LandListView(ListView):
     template_name = "soil_analysis/land/list.html"
 
     def get_queryset(self):
-        company = Company(pk=self.kwargs['company_id'])
+        company = Company(pk=self.kwargs["company_id"])
         return super().get_queryset().filter(company=company)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        company = Company(pk=self.kwargs['company_id'])
+        company = Company(pk=self.kwargs["company_id"])
         land_repository = LandRepository(company)
-        land_ledger_map = {land: land_repository.read_landledgers(land) for land in context['object_list']}
-        context['company'] = company
-        context['land_ledger_map'] = land_ledger_map
+        land_ledger_map = {
+            land: land_repository.read_landledgers(land)
+            for land in context["object_list"]
+        }
+        context["company"] = company
+        context["land_ledger_map"] = land_ledger_map
 
         return context
 
@@ -71,24 +91,26 @@ class LandCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        company = Company(pk=self.kwargs['company_id'])
-        context['company'] = company
+        company = Company(pk=self.kwargs["company_id"])
+        context["company"] = company
 
         return context
 
     def form_valid(self, form):
-        form.instance.company_id = self.kwargs['company_id']
+        form.instance.company_id = self.kwargs["company_id"]
 
         return super().form_valid(form)
 
     def get_success_url(self):
-        company = Company(pk=self.kwargs['company_id'])
-        return reverse('soil:land_detail', kwargs={'company_id': company.id, 'pk': self.object.pk})
+        company = Company(pk=self.kwargs["company_id"])
+        return reverse(
+            "soil:land_detail", kwargs={"company_id": company.id, "pk": self.object.pk}
+        )
 
 
 class LandDetailView(DetailView):
     model = Land
-    template_name = 'soil_analysis/land/detail.html'
+    template_name = "soil_analysis/land/detail.html"
 
 
 class LandReportChemicalListView(ListView):
