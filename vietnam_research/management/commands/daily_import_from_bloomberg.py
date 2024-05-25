@@ -5,7 +5,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from django.core.management import BaseCommand
 
-from lib.service.log_service import LogService
+from lib.log_service import LogService
 from vietnam_research.models import VnIndex
 
 

@@ -11,7 +11,7 @@ from django.db.models import F
 from matplotlib import pyplot as plt
 
 from config.settings import BASE_DIR
-from lib.service.log_service import LogService
+from lib.log_service import LogService
 from vietnam_research.models import Industry, Uptrends, Symbol
 
 

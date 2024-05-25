@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest import TestCase
 
-from lib.service.log_service import LogService
+from lib.log_service import LogService
 
 
 class TestLogService(TestCase):
