@@ -9,7 +9,7 @@ from django.core.management import BaseCommand
 from django.db.models import QuerySet
 from django.utils.timezone import now, localtime
 
-from vietnam_research.domain.service.log import LogService
+from lib.service.log_service import LogService
 from vietnam_research.models import Symbol, Industry, Market, IndClass
 
 

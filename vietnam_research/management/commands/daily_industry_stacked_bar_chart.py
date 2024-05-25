@@ -9,7 +9,7 @@ from django.db.models.functions import Concat, ExtractYear, ExtractMonth
 from matplotlib import pyplot as plt
 
 from config.settings import STATIC_ROOT, BASE_DIR
-from vietnam_research.domain.service.log import LogService
+from lib.service.log_service import LogService
 from vietnam_research.models import Industry
 
 

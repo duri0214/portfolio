@@ -12,7 +12,7 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 
 from config.settings import BASE_DIR
-from vietnam_research.domain.service.log import LogService
+from lib.service.log_service import LogService
 from vietnam_research.models import Sbi, Symbol
 
 
