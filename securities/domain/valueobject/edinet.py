@@ -40,9 +40,3 @@ class Company:
             self.age_years_combined,
             self.number_of_employees,
         ]
-
-
-@dataclass
-class EdinetIndustry:
-    edinet_code: str
-    industry_name: str
