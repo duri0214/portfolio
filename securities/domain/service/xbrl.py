@@ -1,3 +1,5 @@
+import os
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -9,27 +11,19 @@ from securities.models import Edinet
 
 
 class XbrlService:
-    def __init__(
-        self,
-        zip_dir: Path,
-    ):
-        xbrl_file_expressions = zip_dir / "XBRL" / "PublicDoc" / "*.xbrl"
-        xbrl_files = self._unzip_files_and_extract_xbrl(
-            zip_dir, str(xbrl_file_expressions)
-        )
+    def __init__(self, zip_dir: Path):
+        xbrl_files = self._unzip_files_and_extract_xbrl(zip_dir)
         self.edinet_industry_list = self._get_edinet_industry_list()
-        self.edinet_company_info_list = self._make_edinet_company_info_list(xbrl_files)
+        self.edinet_company_list = self._make_edinet_company_list(xbrl_files)
 
     @staticmethod
-    def _unzip_files_and_extract_xbrl(
-        zip_directory: Path, xbrl_file_expressions: str
-    ) -> list[str]:
+    def _unzip_files_and_extract_xbrl(zip_directory: Path) -> list[str]:
         """
         指定されたディレクトリ内のzipファイルを解凍し、指定したパターンに一致するXBRLファイルのリストを返します。
+        xbrlファイルは各zipファイルに1つ、存在するようだ
 
         引数:
             zip_directory (str): 解凍するZIPファイルが含まれるディレクトリ。
-            xbrl_file_expressions (str): 抽出後のXBRLファイルとマッチさせるためのファイル表現パターン。
 
         戻り値:
             list[str]: 表現パターンにマッチする抽出したXBRLファイルのリスト。
@@ -41,18 +35,15 @@ class XbrlService:
             ['/path/to/extracted/file1.xbrl', '/path/to/extracted/file2.xbrl']
         """
 
-        def _log_progress(current: str, total: int, zip_files_count: int):
-            print(f"{current} : {total} / {zip_files_count}")
-
         zip_files = list(zip_directory.glob("*.zip"))
-        print("number_of_zip_files：", len(zip_files))
-
+        print("number of zip files: ", len(zip_files))
+        temp_dir = zip_directory / "temp"
         for index, zip_file in enumerate(zip_files, start=1):
-            _log_progress(zip_file.name, index, len(zip_files))
             with zipfile.ZipFile(str(zip_file), "r") as zipf:
-                zipf.extractall(str(zip_directory))
+                zipf.extractall(str(temp_dir))
+        xbrl_files = list(zip_directory.glob("**/XBRL/PublicDoc/*.xbrl"))
+        shutil.rmtree(temp_dir)
 
-        xbrl_files = list(zip_directory.glob(xbrl_file_expressions))
         return [str(path) for path in xbrl_files]
 
     @staticmethod
@@ -71,19 +62,7 @@ class XbrlService:
                 return edinet_industry.industry_name
         return None
 
-    def _make_edinet_company_info_list(self, xbrl_files: list[str]):
-        def _calculate_years(years: str, months: str) -> str:
-            """
-            このヘルパー関数は、現在の「年数」および「月数」を文字列として受け取り、
-            その月数を小数点付きの年数に変換し、それを年数に加えます。そして結果を文字列として返します
-            """
-            if len(months) != 0:
-                years_decimal = round(int(months) / 12, 1)
-                years_final = int(years) + years_decimal
-                years_final = str(years_final)
-                return years_final
-            return years
-
+    def _make_edinet_company_list(self, xbrl_files: list[str]) -> list[Company]:
         target_keys = {
             "EDINETCodeDEI": "edinet_code",
             "FilerNameInJapaneseDEI": "filer_name_jp",
@@ -94,14 +73,16 @@ class XbrlService:
             "AverageAgeMonthsInformationAboutReportingCompanyInformationAboutEmployees": "age_months",
             "NumberOfEmployees": "number_of_employees",
         }
-        edinet_company_info_list = []
+        edinet_company_list = []
         for index, xbrl_file in enumerate(xbrl_files):
-            company_list = []  # 企業情報
             company = Company()
             model_xbrl = ModelManager.initialize(Cntlr.Cntlr()).load(xbrl_file)
-            print(xbrl_file, ":", index + 1, "/", len(xbrl_files))
+            print(f"{Path(xbrl_file).name}")
+            print(f"  model_xbrl.facts: {model_xbrl.facts}")
             for fact in model_xbrl.facts:
+                print(fact)
                 key_to_set = target_keys.get(fact.concept.qname.localName)
+                print(f"  {key_to_set}...")
                 if key_to_set:
                     setattr(company, key_to_set, fact.value)
                     # キーが 'edinet_code' の場合、業種名も取得します
@@ -109,19 +90,19 @@ class XbrlService:
                         company.industry_name = self._get_industry_name(
                             company.edinet_code
                         )
-                    # キーが 'number_of_employees' だが、contextID が CurrentYear でない場合、値を設定すべきではありません
+                    # キーが 'number_of_employees' だが、contextID が CurrentYear でない場合、値を設定しない
                     elif (
                         key_to_set == "number_of_employees"
                         and fact.contextID != "CurrentYearInstant_NonConsolidatedMember"
                     ):
                         setattr(company, "number_of_employees", None)
-            company_list.append(company)
+            edinet_company_list.append(company)
 
-        return edinet_company_info_list
+        return edinet_company_list
 
     def to_csv(self, output_csv_filepath: Path):
         employee_frame = pd.DataFrame(
-            data=self.edinet_company_info_list,
+            data=[x.to_list() for x in self.edinet_company_list],
             columns=[
                 "EDINETCODE",
                 "企業名",
@@ -132,7 +113,7 @@ class XbrlService:
                 "従業員数（人）",
             ],
         )
-        print(employee_frame)
+        print("\n", employee_frame)
         employee_frame.to_csv(str(output_csv_filepath), encoding="cp932")
 
 
@@ -140,8 +121,9 @@ if __name__ == "__main__":
     # edinet_code_dl_info_filepath: ダウンロードしたEDINETコードリストを読み込むための格納フォルダ
     #  https://disclosure2.edinet-fsa.go.jp/weee0010.aspx から EDINETコードリストをダウンロード
     # zip_dir: EDINET APIで取得してきたzipファイルを格納するフォルダ
-    base_folder = Path("C:/Users/yoshi/Downloads/xbrlReport")
-    service = XbrlService(zip_dir=base_folder / "SR")
-    service.to_csv(output_csv_filepath=Path("./xbrl_qiita.csv"))
+    home_dir = os.path.expanduser("~")
+    work_dir = Path(home_dir, "Downloads/xbrlReport")
+    service = XbrlService(zip_dir=work_dir)
+    service.to_csv(output_csv_filepath=work_dir / "output.csv")
 
     print("extract finish")
