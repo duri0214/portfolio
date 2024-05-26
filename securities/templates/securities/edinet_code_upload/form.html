@@ -10,7 +10,10 @@
 {% endblock %}
 {% block content %}
     <h1>EDINETコードリストのアップロード</h1>
-    <p>Edinetcode_yyyymmdd.zip をアップロードしてください</p>
+    <p>EDINETコードリスト（Edinetcode_yyyymmdd.zip） を <a
+            href="https://disclosure2.edinet-fsa.go.jp/weee0010.aspx#TXT_TITLE_CODE"
+            target="_blank">ダウンロード</a>
+        してアップロードしてください</p>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
