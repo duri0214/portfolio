@@ -23,8 +23,7 @@ class Command(BaseCommand):
         filename = "EdinetcodeDlInfo.csv"
         file_path = Path(folder_path) / filename
         if not file_path.exists():
-            self.stderr.write(self.style.ERROR(f"File does not exist: {file_path}"))
-            return
+            raise FileNotFoundError(f"File does not exist: {file_path}")
         Edinet.objects.all().delete()
 
         # Note: 最初の行には `ダウンロード実行日...` のようなメタデータが入っているのでskip
