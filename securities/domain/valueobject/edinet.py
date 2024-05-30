@@ -4,12 +4,12 @@ from dataclasses import dataclass
 
 @dataclass
 class RequestData:
-    SECURITIES_REPORT = 2
+    SECURITIES_REPORT_AND_META_DATA = 2
     start_date: datetime.date
     end_date: datetime.date
 
     def __post_init__(self):
-        self.doc_type = self.SECURITIES_REPORT
+        self.doc_type = self.SECURITIES_REPORT_AND_META_DATA
 
         # Calculate day_list
         period = self.end_date - self.start_date
