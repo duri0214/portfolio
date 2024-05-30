@@ -68,6 +68,8 @@ class ResponseData:
             self.pdf_flag = data.get("pdfFlag")
             self.attach_doc_flag = data.get("attachDocFlag")
             self.english_doc_flag = data.get("englishDocFlag")
+            self.csv_flag = data.get("csvFlag")
+            self.legal_status = data.get("legalStatus")
 
     def __init__(self, data):
         self.metadata = self._Metadata(data.get("metadata"))
