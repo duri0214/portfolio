@@ -50,8 +50,11 @@ class XbrlService:
         denominator = len(securities_report_doc_list)
         for i, doc_id in enumerate(securities_report_doc_list):
             print(doc_id, ": ", i + 1, "/", denominator)
-            url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + doc_id
-            params = {"type": 1}
+            url = f"https://disclosure.edinet-fsa.go.jp/api/v1/documents/{doc_id}"
+            params = {
+                "type": 1,
+                "Subscription-Key": os.environ.get("EDINET_API_KEY"),
+            }
             filename = Path(self.work_dir) / doc_id / ".zip"
             res = requests.get(url, params=params, stream=True)
 
