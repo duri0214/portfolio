@@ -1,13 +1,15 @@
+import datetime
 import os
 import shutil
 import zipfile
 from pathlib import Path
 
 import pandas as pd
+import requests
 from arelle import Cntlr, ModelManager
 
 from securities.domain.repository.edinet.edinet_repository import EdinetRepository
-from securities.domain.valueobject.edinet import Company
+from securities.domain.valueobject.edinet import Company, RequestData, ResponseData
 
 
 class XbrlService:
@@ -15,8 +17,62 @@ class XbrlService:
         self.work_dir = work_dir
         self.repository = EdinetRepository()
 
+    @staticmethod
+    def _make_doc_id_list(req: RequestData) -> list[str]:
+        def _process_results_data(results: list) -> list[str]:
+            """
+            有価証券報告書: ordinanceCode == "010" and formCode =="030000"
+            訂正有価証券報告書: ordinanceCode == "010" and formCode =="030001"
+            """
+            doc_id_list = []
+            for result in results:
+                if result.ordinance_code == "010" and result.form_code == "030000":
+                    doc_id_list.append(result.doc_id)
+            return doc_id_list
+
+        securities_report_doc_list = []
+        for _, day in enumerate(req.day_list):
+            url = "https://api.edinet-fsa.go.jp/api/v2/documents.json"
+            params = {
+                "date": day,
+                "type": req.SECURITIES_REPORT_AND_META_DATA,
+                "Subscription-Key": os.environ.get("EDINET_API_KEY"),
+            }
+            res = requests.get(url, params=params)
+            res.raise_for_status()
+            response_data = ResponseData(res.json())
+            securities_report_doc_list.extend(
+                _process_results_data(response_data.results)
+            )
+        return securities_report_doc_list
+
+    def _download_xbrl_in_zip(self, securities_report_doc_list):
+        denominator = len(securities_report_doc_list)
+        for i, doc_id in enumerate(securities_report_doc_list):
+            print(doc_id, ": ", i + 1, "/", denominator)
+            url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + doc_id
+            params = {"type": 1}
+            filename = Path(self.work_dir) / doc_id / ".zip"
+            res = requests.get(url, params=params, stream=True)
+
+            if res.status_code == 200:
+                with open(filename, "wb") as file:
+                    for chunk in res.iter_content(chunk_size=1024):
+                        file.write(chunk)
+
     def download_xbrl(self):
-        pass
+        # TODO: https://qiita.com/XBRLJapan/items/27e623b8ca871740f352
+        #  GET https://api.edinet-fsa.go.jp/api/v2/documents.json
+        request = RequestData(
+            start_date=datetime.date(2024, 1, 1),
+            end_date=datetime.date(2024, 1, 5),
+        )
+        securities_report_doc_list = self._make_doc_id_list(request.day_list)
+        print("number_of_lists：", len(securities_report_doc_list))
+        print("get_list：", securities_report_doc_list)
+
+        self._download_xbrl_in_zip(securities_report_doc_list)
+        print("download finish")
 
     def _unzip_files_and_extract_xbrl(self) -> list[str]:
         """
