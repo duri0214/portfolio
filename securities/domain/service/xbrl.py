@@ -9,7 +9,7 @@ import pandas as pd
 import requests
 from arelle import Cntlr
 
-from securities.domain.repository.edinet.edinet_repository import EdinetRepository
+from securities.domain.repository.edinet import EdinetRepository
 from securities.domain.valueobject.edinet import Company, RequestData, ResponseData
 
 SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
@@ -81,7 +81,7 @@ class XbrlService:
         """
         request_data = RequestData(
             start_date=datetime.date(2023, 11, 1),
-            end_date=datetime.date(2023, 11, 30),
+            end_date=datetime.date(2023, 11, 9),
         )
         securities_report_doc_list = list(set(self._make_doc_id_list(request_data)))
         logging.info(f"number of lists：{len(securities_report_doc_list)}")

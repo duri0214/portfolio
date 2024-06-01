@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, FormView
 
-from securities.domain.service.upload_service import UploadService
+from securities.domain.service.upload import UploadService
 from securities.forms import UploadForm
 
 
