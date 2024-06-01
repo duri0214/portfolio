@@ -117,10 +117,10 @@ class XbrlService:
             "EDINETCodeDEI": "edinet_code",
             "FilerNameInJapaneseDEI": "filer_name_jp",
             "AverageAnnualSalaryInformationAboutReportingCompanyInformationAboutEmployees": "avg_salary",
-            "AverageLengthOfServiceYearsInformationAboutReportingCompanyInformationAboutEmployees": "service_years",
-            "AverageLengthOfServiceMonthsInformationAboutReportingCompanyInformationAboutEmployees": "service_months",
-            "AverageAgeYearsInformationAboutReportingCompanyInformationAboutEmployees": "age_years",
-            "AverageAgeMonthsInformationAboutReportingCompanyInformationAboutEmployees": "age_months",
+            "AverageLengthOfServiceYearsInformationAboutReportingCompanyInformationAboutEmployees": "avg_tenure_years",
+            "AverageLengthOfServiceMonthsInformationAboutReportingCompanyInformationAboutEmployees": "avg_tenure_months",
+            "AverageAgeYearsInformationAboutReportingCompanyInformationAboutEmployees": "avg_age_years",
+            "AverageAgeMonthsInformationAboutReportingCompanyInformationAboutEmployees": "avg_age_months",
             "NumberOfEmployees": "number_of_employees",
         }
         for fact in facts:

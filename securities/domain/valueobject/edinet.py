@@ -91,27 +91,27 @@ class CountingData:
     filer_name_jp: str | None = None
     industry_name: str | None = None
     avg_salary: str | None = None
-    service_years: str | None = None
-    service_months: str | None = None
-    age_years: str | None = None
-    age_months: str | None = None
+    avg_tenure_months: str | None = None
+    avg_age_years: str | None = None
+    avg_age_months: str | None = None
+    avg_tenure_years: str | None = None
     number_of_employees: str | None = None
 
     @property
-    def service_years_combined(self) -> str | None:
-        if self.service_months:
-            service_years_decimal = round(int(self.service_months) / 12, 1)
-            service_years = int(self.service_years) + service_years_decimal
-            return str(service_years)
-        return self.service_years
+    def avg_tenure_years_combined(self) -> str | None:
+        if self.avg_tenure_months:
+            avg_tenure_decimal = round(int(self.avg_tenure_months) / 12, 1)
+            avg_tenure = int(self.avg_tenure_years) + avg_tenure_decimal
+            return str(avg_tenure)
+        return self.avg_tenure_years
 
     @property
-    def age_years_combined(self) -> str | None:
-        if self.age_months:
-            age_years_decimal = round(int(self.age_months) / 12, 1)
-            age_years = int(self.age_years) + age_years_decimal
+    def avg_age_years_combined(self) -> str | None:
+        if self.avg_age_months:
+            age_years_decimal = round(int(self.avg_age_months) / 12, 1)
+            age_years = int(self.avg_age_years) + age_years_decimal
             return str(age_years)
-        return self.age_years
+        return self.avg_age_years
 
     def to_list(self) -> list[str | None]:
         return [
@@ -119,8 +119,8 @@ class CountingData:
             self.filer_name_jp,
             self.industry_name,
             self.avg_salary,
-            self.service_years_combined,
-            self.age_years_combined,
+            self.avg_tenure_years_combined,
+            self.avg_age_years_combined,
             self.number_of_employees,
         ]
 
@@ -128,7 +128,7 @@ class CountingData:
         return Counting(
             company=company_master[self.edinet_code],
             avg_salary=self.avg_salary,
-            avg_tenure=self.service_years_combined,
-            avg_age=self.age_years_combined,
+            avg_tenure=self.avg_tenure_years_combined,
+            avg_age=self.avg_age_years_combined,
             number_of_employees=self.number_of_employees,
         )
