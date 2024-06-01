@@ -104,7 +104,7 @@ class XbrlService:
         zip_files = list(self.work_dir.glob("*.zip"))
         logging.info(f"number of zip files: {len(zip_files)}")
         temp_dir = self.work_dir / "temp"
-        for index, zip_file in enumerate(zip_files, start=1):
+        for _, zip_file in enumerate(zip_files, start=1):
             with zipfile.ZipFile(str(zip_file), "r") as zipf:
                 zipf.extractall(str(temp_dir))
         xbrl_files = list(self.work_dir.glob("**/XBRL/PublicDoc/*.xbrl"))
@@ -140,7 +140,7 @@ class XbrlService:
 
     def make_edinet_company_data(self) -> list[Company]:
         company_list = []
-        for index, xbrl_path in enumerate(self._unzip_files_and_extract_xbrl()):
+        for _, xbrl_path in enumerate(self._unzip_files_and_extract_xbrl()):
             company = Company()
             model_xbrl = ModelManager.initialize(Cntlr.Cntlr()).load(xbrl_path)
             logging.info(f"{Path(xbrl_path).name}")

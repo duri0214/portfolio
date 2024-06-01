@@ -40,7 +40,7 @@ class Command(BaseCommand):
         )
         # 3行目以降のデータを保存
         edinet_list = []
-        for index, row in df.iterrows():
+        for _, row in df.iterrows():
             edinet_list.append(
                 Edinet(
                     edinet_code=na(row["ＥＤＩＮＥＴコード"]),
