@@ -84,7 +84,7 @@ class ResponseData:
 
 
 @dataclass
-class Company:
+class CountingData:
     edinet_code: str | None = None
     filer_name_jp: str | None = None
     industry_name: str | None = None
