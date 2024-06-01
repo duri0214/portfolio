@@ -10,7 +10,8 @@ import requests
 from arelle import Cntlr
 
 from securities.domain.repository.edinet import EdinetRepository
-from securities.domain.valueobject.edinet import Company, RequestData, ResponseData
+from securities.domain.valueobject.edinet import CountingData, RequestData, ResponseData
+from securities.models import Company, Counting
 
 SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 
@@ -111,45 +112,45 @@ class XbrlService:
 
         return [str(path) for path in xbrl_files]
 
-    def _assign_attributes(self, company: Company, facts):
+    def _assign_attributes(self, counting_data: CountingData, facts):
         target_keys = {
             "EDINETCodeDEI": "edinet_code",
             "FilerNameInJapaneseDEI": "filer_name_jp",
-            "AverageAnnualSalaryInformationAboutReportingCompanyInformationAboutEmployees": "salary_info",
-            "AverageLengthOfServiceYearsInformationAboutReportingCompanyInformationAboutEmployees": "service_years",
-            "AverageLengthOfServiceMonthsInformationAboutReportingCompanyInformationAboutEmployees": "service_months",
-            "AverageAgeYearsInformationAboutReportingCompanyInformationAboutEmployees": "age_years",
-            "AverageAgeMonthsInformationAboutReportingCompanyInformationAboutEmployees": "age_months",
+            "AverageAnnualSalaryInformationAboutReportingCompanyInformationAboutEmployees": "avg_salary",
+            "AverageLengthOfServiceYearsInformationAboutReportingCompanyInformationAboutEmployees": "avg_tenure_years",
+            "AverageLengthOfServiceMonthsInformationAboutReportingCompanyInformationAboutEmployees": "avg_tenure_months",
+            "AverageAgeYearsInformationAboutReportingCompanyInformationAboutEmployees": "avg_age_years",
+            "AverageAgeMonthsInformationAboutReportingCompanyInformationAboutEmployees": "avg_age_months",
             "NumberOfEmployees": "number_of_employees",
         }
         for fact in facts:
             key_to_set = target_keys.get(fact.concept.qname.localName)
             if key_to_set:
-                setattr(company, key_to_set, fact.value)
+                setattr(counting_data, key_to_set, fact.value)
                 if key_to_set == "edinet_code":
-                    company.industry_name = self.repository.get_industry_name(
-                        company.edinet_code
+                    counting_data.industry_name = self.repository.get_industry_name(
+                        counting_data.edinet_code
                     )
                 elif (
                     key_to_set == "number_of_employees"
                     and fact.contextID != "CurrentYearInstant_NonConsolidatedMember"
                 ):
-                    setattr(company, "number_of_employees", None)
-        return company
+                    setattr(counting_data, "number_of_employees", None)
+        return counting_data
 
-    def make_edinet_company_data(self) -> list[Company]:
-        company_list = []
+    def make_counting_data(self) -> list[CountingData]:
+        counting_list = []
         for _, xbrl_path in enumerate(self._unzip_files_and_extract_xbrl()):
-            company = Company()
+            counting_data = CountingData()
             ctrl = Cntlr.Cntlr()
             model_xbrl = ctrl.modelManager.load(xbrl_path)
             logging.info(f"{Path(xbrl_path).name}")
-            company = self._assign_attributes(company, model_xbrl.facts)
-            company_list.append(company)
+            counting_data = self._assign_attributes(counting_data, model_xbrl.facts)
+            counting_list.append(counting_data)
         shutil.rmtree(self.temp_dir)
-        return company_list
+        return counting_list
 
-    def to_csv(self, data: list[Company], output_filename: str):
+    def to_csv(self, data: list[CountingData], output_filename: str):
         employee_frame = pd.DataFrame(
             data=[x.to_list() for x in data],
             columns=[
@@ -171,7 +172,7 @@ if __name__ == "__main__":
     home_dir = os.path.expanduser("~")
     service = XbrlService(work_dir=Path(home_dir, "Downloads/xbrlReport"))
     service.download_xbrl()
-    service.to_csv(
-        data=service.make_edinet_company_data(),
-        output_filename="output.csv",
+    company_mst = {entity.edinet_code: entity for entity in Company.objects.all()}
+    Counting.objects.bulk_create(
+        [x.to_entity(company_mst) for x in service.make_counting_data()]
     )
