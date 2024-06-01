@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import shutil
 import zipfile
@@ -72,8 +73,8 @@ class XbrlService:
             end_date=datetime.date(2023, 11, 30),
         )
         securities_report_doc_list = list(set(self._make_doc_id_list(request_data)))
-        print(f"number of lists：{len(securities_report_doc_list)}")
-        print("securities report doc list：", securities_report_doc_list)
+        logging.info(f"number of lists：{len(securities_report_doc_list)}")
+        logging.info(f"securities report doc list：{securities_report_doc_list}")
 
         self._download_xbrl_in_zip(securities_report_doc_list)
         print("download finish")
