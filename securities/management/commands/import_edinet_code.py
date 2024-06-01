@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 from django.core.management.base import BaseCommand
 
-from securities.models import Edinet
+from securities.models import Company
 
 
 def na(value):
@@ -24,7 +24,7 @@ class Command(BaseCommand):
         file_path = Path(folder_path) / filename
         if not file_path.exists():
             raise FileNotFoundError(f"File does not exist: {file_path}")
-        Edinet.objects.all().delete()
+        Company.objects.all().delete()
 
         # Note: 最初の行には `ダウンロード実行日...` のようなメタデータが入っているのでskip
         df = pd.read_csv(
@@ -42,7 +42,7 @@ class Command(BaseCommand):
         edinet_list = []
         for _, row in df.iterrows():
             edinet_list.append(
-                Edinet(
+                Company(
                     edinet_code=na(row["ＥＤＩＮＥＴコード"]),
                     type_of_submitter=na(row["提出者種別"]),
                     listing_status=na(row["上場区分"]),
@@ -58,7 +58,7 @@ class Command(BaseCommand):
                     corporate_number=na(row["提出者法人番号"]),
                 )
             )
-        Edinet.objects.bulk_create(edinet_list)
+        Company.objects.bulk_create(edinet_list)
 
         self.stdout.write(
             self.style.SUCCESS("Successfully imported all edinet code from CSV")

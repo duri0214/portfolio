@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class Edinet(models.Model):
+class Company(models.Model):
     edinet_code = models.CharField("ＥＤＩＮＥＴコード", max_length=6, null=True)
     type_of_submitter = models.CharField("提出者種別", max_length=30, null=True)
     listing_status = models.CharField("上場区分", max_length=3, null=True)
