@@ -116,7 +116,7 @@ class XbrlService:
         target_keys = {
             "EDINETCodeDEI": "edinet_code",
             "FilerNameInJapaneseDEI": "filer_name_jp",
-            "AverageAnnualSalaryInformationAboutReportingCompanyInformationAboutEmployees": "salary_info",
+            "AverageAnnualSalaryInformationAboutReportingCompanyInformationAboutEmployees": "avg_salary",
             "AverageLengthOfServiceYearsInformationAboutReportingCompanyInformationAboutEmployees": "service_years",
             "AverageLengthOfServiceMonthsInformationAboutReportingCompanyInformationAboutEmployees": "service_months",
             "AverageAgeYearsInformationAboutReportingCompanyInformationAboutEmployees": "age_years",

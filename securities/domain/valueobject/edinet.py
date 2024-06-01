@@ -90,7 +90,7 @@ class CountingData:
     edinet_code: str | None = None
     filer_name_jp: str | None = None
     industry_name: str | None = None
-    salary_info: str | None = None
+    avg_salary: str | None = None
     service_years: str | None = None
     service_months: str | None = None
     age_years: str | None = None
@@ -118,7 +118,7 @@ class CountingData:
             self.edinet_code,
             self.filer_name_jp,
             self.industry_name,
-            self.salary_info,
+            self.avg_salary,
             self.service_years_combined,
             self.age_years_combined,
             self.number_of_employees,
@@ -127,7 +127,7 @@ class CountingData:
     def to_entity(self, company_master: dict[str, Company]) -> Counting:
         return Counting(
             company=company_master[self.edinet_code],
-            avg_salary=self.salary_info,
+            avg_salary=self.avg_salary,
             avg_tenure=self.service_years_combined,
             avg_age=self.age_years_combined,
             number_of_employees=self.number_of_employees,
