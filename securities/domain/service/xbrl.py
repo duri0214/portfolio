@@ -18,7 +18,7 @@ class XbrlService:
         self.repository = EdinetRepository()
 
     @staticmethod
-    def _make_doc_id_list(req: RequestData) -> list[str]:
+    def _make_doc_id_list(request_data: RequestData) -> list[str]:
         def _process_results_data(results: list) -> list[str]:
             """
             有価証券報告書: ordinanceCode == "010" and formCode =="030000"
@@ -31,11 +31,11 @@ class XbrlService:
             return doc_id_list
 
         securities_report_doc_list = []
-        for _, day in enumerate(req.day_list):
+        for _, day in enumerate(request_data.day_list):
             url = "https://api.edinet-fsa.go.jp/api/v2/documents.json"
             params = {
                 "date": day,
-                "type": req.SECURITIES_REPORT_AND_META_DATA,
+                "type": request_data.SECURITIES_REPORT_AND_META_DATA,
                 "Subscription-Key": os.environ.get("EDINET_API_KEY"),
             }
             res = requests.get(url, params=params)
@@ -50,7 +50,7 @@ class XbrlService:
         denominator = len(securities_report_doc_list)
         for i, doc_id in enumerate(securities_report_doc_list):
             print(doc_id, ": ", i + 1, "/", denominator)
-            url = f"https://disclosure.edinet-fsa.go.jp/api/v1/documents/{doc_id}"
+            url = f"https://api.edinet-fsa.go.jp/api/v2/documents/{doc_id}"
             params = {
                 "type": 1,
                 "Subscription-Key": os.environ.get("EDINET_API_KEY"),
@@ -64,15 +64,16 @@ class XbrlService:
                         file.write(chunk)
 
     def download_xbrl(self):
-        # TODO: https://qiita.com/XBRLJapan/items/27e623b8ca871740f352
-        #  GET https://api.edinet-fsa.go.jp/api/v2/documents.json
-        request = RequestData(
-            start_date=datetime.date(2024, 1, 1),
-            end_date=datetime.date(2024, 1, 5),
+        """
+        Notes: 有価証券報告書の提出期限は原則として決算日から3ヵ月以内（3月末決算の企業であれば、同年6月中）
+        """
+        request_data = RequestData(
+            start_date=datetime.date(2023, 11, 1),
+            end_date=datetime.date(2023, 11, 30),
         )
-        securities_report_doc_list = self._make_doc_id_list(request.day_list)
-        print("number_of_lists：", len(securities_report_doc_list))
-        print("get_list：", securities_report_doc_list)
+        securities_report_doc_list = list(set(self._make_doc_id_list(request_data)))
+        print(f"number of lists：{len(securities_report_doc_list)}")
+        print("securities report doc list：", securities_report_doc_list)
 
         self._download_xbrl_in_zip(securities_report_doc_list)
         print("download finish")
