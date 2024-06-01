@@ -144,7 +144,6 @@ class XbrlService:
             ctrl = Cntlr.Cntlr()
             model_xbrl = ctrl.modelManager.load(xbrl_path)
             logging.info(f"{Path(xbrl_path).name}")
-            logging.info(f"  model_xbrl.facts: {model_xbrl.facts}")
             company = self._assign_attributes(company, model_xbrl.facts)
             company_list.append(company)
         shutil.rmtree(self.temp_dir)
