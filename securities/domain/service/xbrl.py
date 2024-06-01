@@ -12,6 +12,8 @@ from arelle import Cntlr, ModelManager
 from securities.domain.repository.edinet.edinet_repository import EdinetRepository
 from securities.domain.valueobject.edinet import Company, RequestData, ResponseData
 
+SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
+
 
 class XbrlService:
     def __init__(self, work_dir: Path):
@@ -48,15 +50,23 @@ class XbrlService:
         return securities_report_doc_list
 
     def _download_xbrl_in_zip(self, securities_report_doc_list):
+        """
+        params.type:
+            1: 提出本文書、監査報告書およびxbrl
+            2: PDF
+            3: 代替書面・添付文書
+            4: 英文ファイル
+            5: CSV
+        """
         denominator = len(securities_report_doc_list)
         for i, doc_id in enumerate(securities_report_doc_list):
-            print(doc_id, ": ", i + 1, "/", denominator)
+            logging.info(f"{doc_id}: {i + 1}/{denominator}")
             url = f"https://api.edinet-fsa.go.jp/api/v2/documents/{doc_id}"
             params = {
-                "type": 1,
+                "type": SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT,
                 "Subscription-Key": os.environ.get("EDINET_API_KEY"),
             }
-            filename = Path(self.work_dir) / doc_id / ".zip"
+            filename = self.work_dir / f"{doc_id}.zip"
             res = requests.get(url, params=params, stream=True)
 
             if res.status_code == 200:
