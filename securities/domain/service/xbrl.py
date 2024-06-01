@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 import requests
-from arelle import Cntlr, ModelManager
+from arelle import Cntlr
 
 from securities.domain.repository.edinet.edinet_repository import EdinetRepository
 from securities.domain.valueobject.edinet import Company, RequestData, ResponseData
@@ -18,6 +18,7 @@ SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 class XbrlService:
     def __init__(self, work_dir: Path):
         self.work_dir = work_dir
+        self.temp_dir = self.work_dir / "temp"
         self.repository = EdinetRepository()
 
     @staticmethod
@@ -103,12 +104,10 @@ class XbrlService:
 
         zip_files = list(self.work_dir.glob("*.zip"))
         logging.info(f"number of zip files: {len(zip_files)}")
-        temp_dir = self.work_dir / "temp"
         for _, zip_file in enumerate(zip_files, start=1):
             with zipfile.ZipFile(str(zip_file), "r") as zipf:
-                zipf.extractall(str(temp_dir))
+                zipf.extractall(str(self.temp_dir))
         xbrl_files = list(self.work_dir.glob("**/XBRL/PublicDoc/*.xbrl"))
-        shutil.rmtree(temp_dir)
 
         return [str(path) for path in xbrl_files]
 
@@ -142,11 +141,13 @@ class XbrlService:
         company_list = []
         for _, xbrl_path in enumerate(self._unzip_files_and_extract_xbrl()):
             company = Company()
-            model_xbrl = ModelManager.initialize(Cntlr.Cntlr()).load(xbrl_path)
+            ctrl = Cntlr.Cntlr()
+            model_xbrl = ctrl.modelManager.load(xbrl_path)
             logging.info(f"{Path(xbrl_path).name}")
             logging.info(f"  model_xbrl.facts: {model_xbrl.facts}")
             company = self._assign_attributes(company, model_xbrl.facts)
             company_list.append(company)
+        shutil.rmtree(self.temp_dir)
         return company_list
 
     def to_csv(self, data: list[Company], output_filename: str):
@@ -162,8 +163,8 @@ class XbrlService:
                 "従業員数（人）",
             ],
         )
-        print("\n", employee_frame)
         employee_frame.to_csv(str(self.work_dir / output_filename), encoding="cp932")
+        logging.info(f"{self.work_dir} に {output_filename} が出力されました")
 
 
 if __name__ == "__main__":
@@ -175,5 +176,3 @@ if __name__ == "__main__":
         data=service.make_edinet_company_data(),
         output_filename="output.csv",
     )
-
-    logging.info("extract finish")
