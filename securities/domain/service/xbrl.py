@@ -87,7 +87,7 @@ class XbrlService:
         logging.info(f"securities report doc list：{securities_report_doc_list}")
 
         self._download_xbrl_in_zip(securities_report_doc_list)
-        print("download finish")
+        logging.info("download finish")
 
     def _unzip_files_and_extract_xbrl(self) -> list[str]:
         """
@@ -102,7 +102,7 @@ class XbrlService:
         """
 
         zip_files = list(self.work_dir.glob("*.zip"))
-        print("number of zip files: ", len(zip_files))
+        logging.info(f"number of zip files: {len(zip_files)}")
         temp_dir = self.work_dir / "temp"
         for index, zip_file in enumerate(zip_files, start=1):
             with zipfile.ZipFile(str(zip_file), "r") as zipf:
@@ -176,4 +176,4 @@ if __name__ == "__main__":
         output_filename="output.csv",
     )
 
-    print("extract finish")
+    logging.info("extract finish")
