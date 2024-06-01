@@ -17,3 +17,6 @@ class Company(models.Model):
     submitter_industry = models.CharField("提出者業種", max_length=25, null=True)
     securities_code = models.CharField("証券コード", max_length=5, null=True)
     corporate_number = models.CharField("提出者法人番号", max_length=13, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
