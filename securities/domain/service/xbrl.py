@@ -137,7 +137,7 @@ class XbrlService:
                     setattr(company, "number_of_employees", None)
         return company
 
-    def make_edinet_company_data(self) -> list[Company]:
+    def make_counting_data(self) -> list[Company]:
         company_list = []
         for _, xbrl_path in enumerate(self._unzip_files_and_extract_xbrl()):
             company = Company()
@@ -172,6 +172,6 @@ if __name__ == "__main__":
     service = XbrlService(work_dir=Path(home_dir, "Downloads/xbrlReport"))
     service.download_xbrl()
     service.to_csv(
-        data=service.make_edinet_company_data(),
+        data=service.make_counting_data(),
         output_filename="output.csv",
     )
