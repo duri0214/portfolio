@@ -143,8 +143,8 @@ class XbrlService:
         for index, xbrl_path in enumerate(self._unzip_files_and_extract_xbrl()):
             company = Company()
             model_xbrl = ModelManager.initialize(Cntlr.Cntlr()).load(xbrl_path)
-            print(f"{Path(xbrl_path).name}")
-            print(f"  model_xbrl.facts: {model_xbrl.facts}")
+            logging.info(f"{Path(xbrl_path).name}")
+            logging.info(f"  model_xbrl.facts: {model_xbrl.facts}")
             company = self._assign_attributes(company, model_xbrl.facts)
             company_list.append(company)
         return company_list
