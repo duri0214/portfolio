@@ -1,6 +1,8 @@
 import datetime
 from dataclasses import dataclass
 
+from securities.models import Counting, Company
+
 
 @dataclass
 class RequestData:
@@ -121,3 +123,12 @@ class CountingData:
             self.age_years_combined,
             self.number_of_employees,
         ]
+
+    def to_entity(self, company_master: dict[str, Company]) -> Counting:
+        return Counting(
+            company=company_master[self.edinet_code],
+            avg_salary=self.salary_info,
+            avg_tenure=self.service_years_combined,
+            avg_age=self.age_years_combined,
+            number_of_employees=self.number_of_employees,
+        )
