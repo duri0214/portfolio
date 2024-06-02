@@ -91,10 +91,10 @@ class CountingData:
     filer_name_jp: str | None = None
     industry_name: str | None = None
     avg_salary: str | None = None
+    avg_tenure_years: str | None = None
     avg_tenure_months: str | None = None
     avg_age_years: str | None = None
     avg_age_months: str | None = None
-    avg_tenure_years: str | None = None
     number_of_employees: str | None = None
 
     @property
