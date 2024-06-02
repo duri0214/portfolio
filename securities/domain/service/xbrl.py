@@ -30,7 +30,7 @@ class XbrlService:
          訂正有価証券報告書: ordinanceCode == "010" and formCode =="030001"
         """
         securities_report_list = []
-        for _, day in enumerate(request_data.day_list):
+        for day in request_data.day_list:
             url = "https://api.edinet-fsa.go.jp/api/v2/documents.json"
             params = {
                 "date": day,
@@ -107,7 +107,7 @@ class XbrlService:
 
         zip_files = list(self.work_dir.glob("*.zip"))
         logging.info(f"number of zip files: {len(zip_files)}")
-        for _, zip_file in enumerate(zip_files, start=1):
+        for zip_file in zip_files:
             with zipfile.ZipFile(str(zip_file), "r") as zipf:
                 zipf.extractall(str(self.temp_dir))
         xbrl_files = list(self.work_dir.glob("**/XBRL/PublicDoc/*.xbrl"))
@@ -142,7 +142,7 @@ class XbrlService:
 
     def make_counting_data(self) -> list[CountingData]:
         counting_list = []
-        for _, xbrl_path in enumerate(self._unzip_files_and_extract_xbrl()):
+        for xbrl_path in self._unzip_files_and_extract_xbrl():
             counting_data = CountingData()
             ctrl = Cntlr.Cntlr()
             model_xbrl = ctrl.modelManager.load(xbrl_path)
