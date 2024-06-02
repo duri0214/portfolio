@@ -24,6 +24,9 @@ class Company(models.Model):
 
 class Counting(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    submit_date = models.DateField()
     avg_salary = models.IntegerField("平均年間給与（円）", null=True)
     avg_tenure = models.FloatField("平均勤続年数（年）", null=True)
     avg_age = models.FloatField("平均年齢（歳）", null=True)
