@@ -11,7 +11,6 @@ from arelle import Cntlr
 
 from securities.domain.repository.edinet import EdinetRepository
 from securities.domain.valueobject.edinet import CountingData, RequestData, ResponseData
-from securities.models import Company, Counting
 
 SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 
@@ -174,8 +173,6 @@ if __name__ == "__main__":
     home_dir = os.path.expanduser("~")
     service = XbrlService(work_dir=Path(home_dir, "Downloads/xbrlReport"))
     doc_attr_dict = service.download_xbrl()
-    company_mst = {entity.edinet_code: entity for entity in Company.objects.all()}
-    Counting.objects.bulk_create(
-        [x.to_entity(doc_attr_dict, company_mst) for x in service.make_counting_data()]
-    )
+    service.repository.delete_existing_records(list(doc_attr_dict.values()))
+    service.repository.bulk_insert(doc_attr_dict, service.make_counting_data())
     logging.info("bulk_create finish")
