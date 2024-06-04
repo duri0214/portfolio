@@ -8,9 +8,11 @@ from pathlib import Path
 import pandas as pd
 import requests
 from arelle import Cntlr
+from django.core.exceptions import ObjectDoesNotExist
 
 from securities.domain.repository.edinet import EdinetRepository
 from securities.domain.valueobject.edinet import CountingData, RequestData, ResponseData
+from securities.models import Company
 
 SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 
@@ -113,13 +115,14 @@ class XbrlService:
 
         return [str(path) for path in xbrl_files]
 
-    def _assign_attributes(self, counting_data: CountingData, facts):
+    @staticmethod
+    def _assign_attributes(counting_data: CountingData, facts):
         target_keys = {
             "EDINETCodeDEI": "edinet_code",
             "FilerNameInJapaneseDEI": "filer_name_jp",
             "AverageAnnualSalaryInformationAboutReportingCompanyInformationAboutEmployees": "avg_salary",
             "AverageLengthOfServiceYearsInformationAboutReportingCompanyInformationAboutEmployees": "avg_tenure_years",
-            "AverageLengthOfServiceMonthsInformationAboutReportingCompanyInformationAboutEmployees": "avg_tenure_months",
+            "AverageLengthOfServiceMonthsInformationAboutReportingCompanyInformationAboutEmployees": "avg_tenure_months",  # noqa E501
             "AverageAgeYearsInformationAboutReportingCompanyInformationAboutEmployees": "avg_age_years",
             "AverageAgeMonthsInformationAboutReportingCompanyInformationAboutEmployees": "avg_age_months",
             "NumberOfEmployees": "number_of_employees",
@@ -128,11 +131,7 @@ class XbrlService:
             key_to_set = target_keys.get(fact.concept.qname.localName)
             if key_to_set:
                 setattr(counting_data, key_to_set, fact.value)
-                if key_to_set == "edinet_code":
-                    counting_data.industry_name = self.repository.get_industry_name(
-                        counting_data.edinet_code
-                    )
-                elif (
+                if (
                     key_to_set == "number_of_employees"
                     and fact.contextID != "CurrentYearInstant_NonConsolidatedMember"
                 ):
@@ -152,8 +151,22 @@ class XbrlService:
         return counting_list
 
     def to_csv(self, data: list[CountingData], output_filename: str):
+        all_companies = Company.objects.all()
+        new_data = []
+        for x in data:
+            try:
+                # If matching Company object is found, insert industry name to list
+                company = all_companies.get(edinet_code=x.edinet_code)
+                data_list = x.to_list()
+                data_list.insert(2, company.submitter_industry)
+            except ObjectDoesNotExist:
+                # If no matching Company object is found, insert None
+                data_list = x.to_list()
+                data_list.insert(2, None)
+            new_data.append(data_list)
+
         employee_frame = pd.DataFrame(
-            data=[x.to_list() for x in data],
+            data=new_data,
             columns=[
                 "EDINETCODE",
                 "企業名",
@@ -164,7 +177,9 @@ class XbrlService:
                 "従業員数（人）",
             ],
         )
-        employee_frame.to_csv(str(self.work_dir / output_filename), encoding="cp932")
+        employee_frame.to_csv(
+            str(self.work_dir / output_filename), encoding="cp932", index=False
+        )
         logging.info(f"{self.work_dir} に {output_filename} が出力されました")
 
 

@@ -89,7 +89,6 @@ class ResponseData:
 class CountingData:
     edinet_code: str | None = None
     filer_name_jp: str | None = None
-    industry_name: str | None = None
     avg_salary: str | None = None
     avg_tenure_years: str | None = None
     avg_tenure_months: str | None = None
@@ -117,7 +116,6 @@ class CountingData:
         return [
             self.edinet_code,
             self.filer_name_jp,
-            self.industry_name,
             self.avg_salary,
             self.avg_tenure_years_combined,
             self.avg_age_years_combined,

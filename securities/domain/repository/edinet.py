@@ -6,14 +6,6 @@ from securities.models import Company, Counting
 
 class EdinetRepository:
     @staticmethod
-    def get_industry_name(edinet_code: str) -> str | None:
-        try:
-            company = Company.objects.get(edinet_code=edinet_code)
-            return company.submitter_industry
-        except Company.DoesNotExist:
-            return None
-
-    @staticmethod
     def delete_existing_records(response_data_list: list[ResponseData]):
         edinet_codes = [data.results[0].edinet_code for data in response_data_list]
         edinet_code_to_company = {
