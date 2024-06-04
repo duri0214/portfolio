@@ -2,7 +2,6 @@ import datetime
 import logging
 import os
 import shutil
-import zipfile
 from pathlib import Path
 
 import pandas as pd
@@ -10,6 +9,7 @@ import requests
 from arelle import Cntlr
 from django.core.exceptions import ObjectDoesNotExist
 
+from lib.zipfileservice import ZipFileService
 from securities.domain.repository.edinet import EdinetRepository
 from securities.domain.valueobject.edinet import CountingData, RequestData, ResponseData
 from securities.models import Company
@@ -99,19 +99,11 @@ class XbrlService:
         指定されたディレクトリ内のzipファイルを解凍し、指定したパターンに一致するXBRLファイルのリストを返します。
         xbrlファイルは各zipファイルに1つ、存在するようだ
 
-        使用例:
-            >> obj = XbrlService()
-            >> result = obj.unzip_files_and_extract_xbrl('/path/to/zip/directory', '*.xbrl')
-            >> print(result)
+        Returns:
             ['/path/to/extracted/file1.xbrl', '/path/to/extracted/file2.xbrl']
         """
-
-        zip_files = list(self.work_dir.glob("*.zip"))
-        logging.info(f"number of zip files: {len(zip_files)}")
-        for zip_file in zip_files:
-            with zipfile.ZipFile(str(zip_file), "r") as zipf:
-                zipf.extractall(str(self.temp_dir))
-        xbrl_files = list(self.work_dir.glob("**/XBRL/PublicDoc/*.xbrl"))
+        ZipFileService.extract_zip_files(self.work_dir, self.temp_dir)
+        xbrl_files = list(self.temp_dir.glob("XBRL/PublicDoc/*.xbrl"))
 
         return [str(path) for path in xbrl_files]
 
