@@ -84,14 +84,10 @@ class XbrlService:
                     for chunk in res.iter_content(chunk_size=1024):
                         file.write(chunk)
 
-    def download_xbrl(self) -> dict[str, ResponseData]:
+    def download_xbrl(self, request_data: RequestData) -> dict[str, ResponseData]:
         """
         Notes: 有価証券報告書の提出期限は原則として決算日から3ヵ月以内（3月末決算の企業であれば、同年6月中）
         """
-        request_data = RequestData(
-            start_date=datetime.date(2023, 11, 1),
-            end_date=datetime.date(2023, 11, 29),
-        )
         securities_report_list = self._extract(request_data)
         self._download_xbrl_in_zip(securities_report_list)
         logging.info("download finish")
@@ -187,7 +183,12 @@ if __name__ == "__main__":
     # 前提条件: EDINETコードリストのアップロード
     home_dir = os.path.expanduser("~")
     service = XbrlService(work_dir=Path(home_dir, "Downloads/xbrlReport"))
-    doc_attr_dict = service.download_xbrl()
+    doc_attr_dict = service.download_xbrl(
+        RequestData(
+            start_date=datetime.date(2023, 11, 1),
+            end_date=datetime.date(2023, 11, 29),
+        )
+    )
     service.repository.delete_existing_records(list(doc_attr_dict.values()))
     service.repository.bulk_insert(doc_attr_dict, service.make_counting_data())
     logging.info("bulk_create finish")
