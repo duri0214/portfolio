@@ -44,11 +44,12 @@ class XbrlService:
             for result in response_data.results:
                 if result.ordinance_code == "010" and result.form_code == "030000":
                     logging.info(
-                        f"{day}, {result.filer_name}, "
+                        f"{day}, "
                         f"edinet_code: {result.edinet_code}, "
                         f"doc_id: {result.doc_id}, "
                         f"期間（自）: {response_data.results[0].period_start}, "
                         f"期間（至）: {response_data.results[0].period_end}, "
+                        f"{result.filer_name}, "
                     )
                     response_data.results = [result]
             if (
