@@ -26,11 +26,11 @@ class XbrlService:
     @staticmethod
     def _extract(request_data: RequestData) -> list[ResponseData]:
         """
-        特定の提出書類をもつ ResponseData を抽出する
+        特定の提出書類をもつ ResponseData を抽出する（重複した doc_id は除外される）
          有価証券報告書: ordinanceCode == "010" and formCode =="030000"
          訂正有価証券報告書: ordinanceCode == "010" and formCode =="030001"
         """
-        securities_report_list = []
+        securities_report_dict = {}
         for day in request_data.day_list:
             url = "https://api.edinet-fsa.go.jp/api/v2/documents.json"
             params = {
@@ -44,11 +44,19 @@ class XbrlService:
             for result in response_data.results:
                 if result.ordinance_code == "010" and result.form_code == "030000":
                     logging.info(
-                        f"{day}, {result.filer_name}, edinet_code: {result.edinet_code}, doc_id: {result.doc_id}"
+                        f"{day}, {result.filer_name}, "
+                        f"edinet_code: {result.edinet_code}, "
+                        f"doc_id: {result.doc_id}, "
+                        f"期間（自）: {response_data.results[0].period_start}, "
+                        f"期間（至）: {response_data.results[0].period_end}, "
                     )
                     response_data.results = [result]
-                    securities_report_list.append(response_data)
-        return securities_report_list
+            if (
+                response_data.results
+                and response_data.results[0].doc_id not in securities_report_dict
+            ):
+                securities_report_dict[response_data.results[0].doc_id] = response_data
+        return list(securities_report_dict.values())
 
     def _download_xbrl_in_zip(self, securities_report_list: list[ResponseData]):
         """
@@ -82,7 +90,7 @@ class XbrlService:
         """
         request_data = RequestData(
             start_date=datetime.date(2023, 11, 1),
-            end_date=datetime.date(2023, 11, 9),
+            end_date=datetime.date(2023, 11, 29),
         )
         securities_report_list = self._extract(request_data)
         self._download_xbrl_in_zip(securities_report_list)
