@@ -24,6 +24,9 @@ class Company(models.Model):
 
 class Counting(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
+    period_start = models.DateField("期間（自）", null=True)
+    period_end = models.DateField("期間（至）", null=True)
+    submit_date = models.DateField("提出日時")
     avg_salary = models.IntegerField("平均年間給与（円）", null=True)
     avg_tenure = models.FloatField("平均勤続年数（年）", null=True)
     avg_age = models.FloatField("平均年齢（歳）", null=True)
@@ -31,3 +34,6 @@ class Counting(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["company", "submit_date"]

@@ -89,12 +89,11 @@ class ResponseData:
 class CountingData:
     edinet_code: str | None = None
     filer_name_jp: str | None = None
-    industry_name: str | None = None
     avg_salary: str | None = None
+    avg_tenure_years: str | None = None
     avg_tenure_months: str | None = None
     avg_age_years: str | None = None
     avg_age_months: str | None = None
-    avg_tenure_years: str | None = None
     number_of_employees: str | None = None
 
     @property
@@ -117,16 +116,24 @@ class CountingData:
         return [
             self.edinet_code,
             self.filer_name_jp,
-            self.industry_name,
             self.avg_salary,
             self.avg_tenure_years_combined,
             self.avg_age_years_combined,
             self.number_of_employees,
         ]
 
-    def to_entity(self, company_master: dict[str, Company]) -> Counting:
+    def to_entity(
+        self, doc_attr_dict: dict[str, ResponseData], company_master: dict[str, Company]
+    ) -> Counting:
+        response_data = doc_attr_dict[self.edinet_code]
+        submit_date = datetime.datetime.strptime(
+            response_data.results[0].submit_date_time, "%Y-%m-%d %H:%M"
+        )
         return Counting(
             company=company_master[self.edinet_code],
+            period_start=response_data.results[0].period_start,
+            period_end=response_data.results[0].period_end,
+            submit_date=submit_date,
             avg_salary=self.avg_salary,
             avg_tenure=self.avg_tenure_years_combined,
             avg_age=self.avg_age_years_combined,
