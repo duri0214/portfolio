@@ -5,7 +5,6 @@ from pathlib import Path
 import pandas as pd
 import seaborn
 from django.db.models import QuerySet
-from japanize_matplotlib import japanize_matplotlib
 from matplotlib import pyplot as plt, ticker
 
 from securities.domain.repository.plot import PlotRepository
@@ -19,7 +18,7 @@ class PlotService:
     COLUMN_AVG_AGE = "avg_age"
 
     def __init__(self, work_dir: Path):
-        japanize_matplotlib.japanize()
+        plt.rcParams["font.family"] = ["IPAexGothic"]
         self.work_dir = work_dir
         if not self.work_dir.exists():
             self.work_dir.mkdir(parents=True, exist_ok=True)
