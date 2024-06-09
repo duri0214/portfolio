@@ -73,12 +73,45 @@ class ResponseData:
             self.withdrawal_status = data.get("withdrawalStatus")
             self.doc_info_edit_status = data.get("docInfoEditStatus")
             self.disclosure_status = data.get("disclosureStatus")
-            self.xbrl_flag = data.get("xbrlFlag")
-            self.pdf_flag = data.get("pdfFlag")
-            self.attach_doc_flag = data.get("attachDocFlag")
-            self.english_doc_flag = data.get("englishDocFlag")
-            self.csv_flag = data.get("csvFlag")
+            self.xbrl_flag: bool = bool(data.get("xbrlFlag"))
+            self.pdf_flag: bool = bool(data.get("pdfFlag"))
+            self.attach_doc_flag: bool = bool(data.get("attachDocFlag"))
+            self.english_doc_flag: bool = bool(data.get("englishDocFlag"))
+            self.csv_flag: bool = bool(data.get("csvFlag"))
             self.legal_status = data.get("legalStatus")
+
+        def __str__(self):
+            return (
+                f"Seq Number: {self.seq_number}, "
+                f"Doc ID: {self.doc_id}, "
+                f"Edinet Code: {self.edinet_code}, "
+                f"Sec Code: {self.sec_code}, "
+                f"JCN: {self.jcn}, "
+                f"Filer Name: {self.filer_name}, "
+                f"Fund Code: {self.fund_code}, "
+                f"Ordinance Code: {self.ordinance_code}, "
+                f"Form Code: {self.form_code}, "
+                f"Doc Type Code: {self.doc_type_code}, "
+                f"Period Start: {self.period_start}, "
+                f"Period End: {self.period_end}, "
+                f"Submit Date Time: {self.submit_date_time}, "
+                f"Doc Description: {self.doc_description}, "
+                f"Issuer Edinet Code: {self.issuer_edinet_code}, "
+                f"Subject Edinet Code: {self.subject_edinet_code}, "
+                f"Subsidiary Edinet Code: {self.subsidiary_edinet_code}, "
+                f"Current Report Reason: {self.current_report_reason}, "
+                f"Parent Doc ID: {self.parent_doc_id}, "
+                f"Ope Date Time: {self.ope_date_time}, "
+                f"Withdrawal Status: {self.withdrawal_status}, "
+                f"Doc Info Edit Status: {self.doc_info_edit_status}, "
+                f"Disclosure Status: {self.disclosure_status}, "
+                f"Xbrl Flag: {self.xbrl_flag}, "
+                f"PDF Flag: {self.pdf_flag}, "
+                f"Attach Doc Flag: {self.attach_doc_flag}, "
+                f"English Doc Flag: {self.english_doc_flag}, "
+                f"CSV Flag: {self.csv_flag}, "
+                f"Legal Status: {self.legal_status}"
+            )
 
     def __init__(self, data):
         self.metadata = self._Metadata(data.get("metadata"))
