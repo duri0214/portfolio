@@ -20,6 +20,8 @@ SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 class XbrlService:
     def __init__(self, work_dir: Path):
         self.work_dir = work_dir
+        if not self.work_dir.exists():
+            self.work_dir.mkdir(parents=True, exist_ok=True)
         self.temp_dir = self.work_dir / "temp"
         self.repository = EdinetRepository()
 
@@ -43,17 +45,11 @@ class XbrlService:
             response_data = ResponseData(res.json())
             for result in response_data.results:
                 if result.ordinance_code == "010" and result.form_code == "030000":
-                    logging.info(
-                        f"{day}, "
-                        f"edinet_code: {result.edinet_code}, "
-                        f"doc_id: {result.doc_id}, "
-                        f"期間（自）: {response_data.results[0].period_start}, "
-                        f"期間（至）: {response_data.results[0].period_end}, "
-                        f"{result.filer_name}, "
-                    )
+                    logging.info(f"{day}, {result}")
                     response_data.results = [result]
             if (
                 response_data.results
+                and response_data.results[0].submit_date_time
                 and response_data.results[0].doc_id not in securities_report_dict
             ):
                 securities_report_dict[response_data.results[0].doc_id] = response_data
@@ -135,17 +131,17 @@ class XbrlService:
                     setattr(counting_data, "number_of_employees", None)
         return counting_data
 
-    def make_counting_data(self) -> list[CountingData]:
-        counting_list = []
+    def make_counting_data(self) -> dict[str, CountingData]:
+        counting_data_dict = {}
         for xbrl_path in self._unzip_files_and_extract_xbrl():
             counting_data = CountingData()
             ctrl = Cntlr.Cntlr()
             model_xbrl = ctrl.modelManager.load(xbrl_path)
             logging.info(f"{Path(xbrl_path).name}")
             counting_data = self._assign_attributes(counting_data, model_xbrl.facts)
-            counting_list.append(counting_data)
+            counting_data_dict[counting_data.edinet_code] = counting_data
         shutil.rmtree(self.temp_dir)
-        return counting_list
+        return counting_data_dict
 
     def to_csv(self, data: list[CountingData], output_filename: str):
         all_companies = Company.objects.all()
@@ -186,8 +182,8 @@ if __name__ == "__main__":
     service = XbrlService(work_dir=Path(home_dir, "Downloads/xbrlReport"))
     doc_attr_dict = service.download_xbrl(
         RequestData(
-            start_date=datetime.date(2023, 11, 1),
-            end_date=datetime.date(2023, 11, 29),
+            start_date=datetime.date(2022, 11, 1),
+            end_date=datetime.date(2023, 10, 31),
         )
     )
     service.repository.delete_existing_records(list(doc_attr_dict.values()))
