@@ -33,7 +33,16 @@ class PlotServiceBase(ABC):
 
     @staticmethod
     def _clean(query: QuerySet) -> pd.DataFrame:
-        raise NotImplementedError
+        return pd.DataFrame(
+            list(
+                query.values(
+                    COLUMN_INDUSTRY,
+                    COLUMN_AVG_SALARY,
+                    COLUMN_AVG_TENURE,
+                    COLUMN_AVG_AGE,
+                )
+            )
+        ).dropna()
 
     @staticmethod
     def _get_labels_sorted_by_averages(
@@ -84,19 +93,6 @@ class BoxenPlotService(PlotServiceBase):
     def __init__(self, work_dir: Path, target_period):
         super().__init__(work_dir, target_period)
 
-    @staticmethod
-    def _clean(query: QuerySet) -> pd.DataFrame:
-        return pd.DataFrame(
-            list(
-                query.values(
-                    COLUMN_AVG_SALARY,
-                    COLUMN_AVG_TENURE,
-                    COLUMN_AVG_AGE,
-                    COLUMN_INDUSTRY,
-                )
-            )
-        ).dropna()
-
     def _plot(
         self,
         target_counting_column: str,
@@ -135,6 +131,14 @@ class BoxenPlotService(PlotServiceBase):
 
     def save(self, title: str):
         plt.savefig(self.work_dir / f"boxen_plot_{title}.png")
+
+
+class BarPlotService(PlotServiceBase):
+    def _plot(self, target_counting_column: str, title: str):
+        pass
+
+    def save(self, title: str):
+        plt.savefig(self.work_dir / f"bar_plot_{title}.png")
 
 
 if __name__ == "__main__":
