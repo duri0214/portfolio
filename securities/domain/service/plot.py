@@ -1,5 +1,6 @@
 import datetime
 import os
+from abc import abstractmethod, ABC
 from pathlib import Path
 
 import pandas as pd
@@ -17,34 +18,27 @@ COLUMN_AVG_AGE = "avg_age"
 COMMON_FONT = ["IPAexGothic"]
 
 
-class BoxenPlotService:
+class PlotServiceBase(ABC):
 
-    def __init__(self, work_dir: Path, target_period: RequestData):
+    def __init__(self, work_dir: Path, target_period):
         plt.rcParams["font.family"] = COMMON_FONT
         self.work_dir = work_dir
         if not self.work_dir.exists():
             self.work_dir.mkdir(parents=True, exist_ok=True)
-        self.repository = PlotRepository()
-        self.clean_data = self._clean(self.repository.get_target_data(target_period))
-        self.categorical_labels_dict = self.get_labels_sorted_by_averages(
+        self._repository = PlotRepository()
+        self.clean_data = self._clean(self._repository.get_target_data(target_period))
+        self.categorical_labels_dict = self._get_labels_sorted_by_averages(
             self.clean_data
         )
 
     @staticmethod
     def _clean(query: QuerySet) -> pd.DataFrame:
-        return pd.DataFrame(
-            list(
-                query.values(
-                    COLUMN_AVG_SALARY,
-                    COLUMN_AVG_TENURE,
-                    COLUMN_AVG_AGE,
-                    COLUMN_INDUSTRY,
-                )
-            )
-        ).dropna()
+        raise NotImplementedError
 
     @staticmethod
-    def get_labels_sorted_by_averages(clean_data: pd.DataFrame) -> dict[str, list[str]]:
+    def _get_labels_sorted_by_averages(
+        clean_data: pd.DataFrame,
+    ) -> dict[str, list[str]]:
         """
         業種別平均でソートしたラベルを 3種類 取得する\n
         Returns: ['不動産業', 'サービス業', '情報・通信業', '水産・農林業', ... ]
@@ -72,7 +66,38 @@ class BoxenPlotService:
             ),
         }
 
-    def plot(
+    def plot_all(self, targets: list[tuple[str, str]]):
+        for target_counting_column, title in targets:
+            self._plot(target_counting_column=target_counting_column, title=title)
+
+    @abstractmethod
+    def _plot(self, target_counting_column: str, title: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def save(self, title: str):
+        raise NotImplementedError
+
+
+class BoxenPlotService(PlotServiceBase):
+
+    def __init__(self, work_dir: Path, target_period):
+        super().__init__(work_dir, target_period)
+
+    @staticmethod
+    def _clean(query: QuerySet) -> pd.DataFrame:
+        return pd.DataFrame(
+            list(
+                query.values(
+                    COLUMN_AVG_SALARY,
+                    COLUMN_AVG_TENURE,
+                    COLUMN_AVG_AGE,
+                    COLUMN_INDUSTRY,
+                )
+            )
+        ).dropna()
+
+    def _plot(
         self,
         target_counting_column: str,
         title: str,
@@ -124,9 +149,13 @@ if __name__ == "__main__":
         work_dir=Path(home_dir, "Downloads/xbrlReport/plot"),
         target_period=period,
     )
-    service.plot(target_counting_column=COLUMN_AVG_SALARY, title="業種別平均年間給与額")
-    service.plot(target_counting_column=COLUMN_AVG_TENURE, title="業種別平均勤続年数")
-    service.plot(target_counting_column=COLUMN_AVG_AGE, title="業種別平均年齢")
+    service.plot_all(
+        [
+            (COLUMN_AVG_SALARY, "業種別平均年間給与額"),
+            (COLUMN_AVG_TENURE, "業種別平均勤続年数"),
+            (COLUMN_AVG_AGE, "業種別平均年齢"),
+        ]
+    )
 
     # visualize_jointplot(df_clean_data)
     # visualize_barplot(df_clean_data)
