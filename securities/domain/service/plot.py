@@ -81,6 +81,16 @@ class PlotServiceBase(ABC):
     def _plot(self, target_counting_column: str, title: str):
         raise NotImplementedError
 
+    @staticmethod
+    def _configure_plot(title: str):
+        # Note: gca() は "get current axes" を意味する
+        ax = plt.gca()
+        ax.spines["right"].set_visible(False)
+        ax.spines["top"].set_visible(False)
+        ax.yaxis.set_ticks_position("left")
+        ax.xaxis.set_ticks_position("bottom")
+        plt.title(title, fontsize=24)
+
     @abstractmethod
     def save(self, title: str):
         raise NotImplementedError
@@ -135,10 +145,7 @@ class BoxenPlotService(PlotServiceBase):
         plt.xlabel(target_counting_column, fontsize=18)
         plt.ylabel(COLUMN_INDUSTRY, fontsize=16)
         plt.title(title, fontsize=24)
-        plt.gca().spines["right"].set_visible(False)
-        plt.gca().spines["top"].set_visible(False)
-        plt.gca().yaxis.set_ticks_position("left")
-        plt.gca().xaxis.set_ticks_position("bottom")
+        self._configure_plot(title)
         self.save(title)
         # plt.show()
 
@@ -194,10 +201,7 @@ class BarPlotService(PlotServiceBase):
         plt.xlabel(COLUMN_COMPANY_NAME, fontsize=12)
         plt.ylabel(COLUMN_AVG_SALARY, fontsize=18)
         plt.title("情報・通信業界:平均年間給与TOP50", fontsize=24)
-        plt.gca().spines["right"].set_visible(False)
-        plt.gca().spines["top"].set_visible(False)
-        plt.gca().yaxis.set_ticks_position("left")
-        plt.gca().xaxis.set_ticks_position("bottom")
+        self._configure_plot(title)
         self.save(title)
         # plt.show()
 
@@ -240,8 +244,4 @@ if __name__ == "__main__":
         ]
     )
 
-# visualize_jointplot(df_clean_data)
-# print("visualize finish")
-
-# service.plot()
-# service.save(filename="xxx.png")
+    print("visualize finish")
