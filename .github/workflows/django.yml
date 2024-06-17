@@ -35,7 +35,6 @@ jobs:
         run: |
           sudo systemctl start mysql
           mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
-          mysql -u root -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $NAME.* to '$USER'@'localhost';"
           mysql -u root -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on test_$NAME.* to '$USER'@'localhost';"
           mysql -u$USER -p$PASSWORD -e "CREATE DATABASE $NAME DEFAULT CHARACTER SET utf8mb4;"
           python3 --version
@@ -43,7 +42,7 @@ jobs:
           source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse
+          python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
           
           # Output the environment variables
           echo $ENGINE
@@ -78,7 +77,6 @@ jobs:
           HOST: localhost
           PORT: 3306
         run: |
-          mysql -u root -proot -e "GRANT ALL ON portfolio_db.* TO '$USER'@'localhost';"
           mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO '$USER'@'localhost';"
           source venv/bin/activate
           python manage.py test
