@@ -88,11 +88,7 @@ DATABASES = {
         "PASSWORD": "python123",
         "HOST": "localhost",
         "PORT": "3306",
-        "TEST": {
-            "NAME": "test_portfolio_db",
-            "USER": "root",
-            "PASSWORD": "root"
-        },
+        "TEST": {"NAME": "test_portfolio_db", "USER": "root", "PASSWORD": "root"},
     }
 }
 
