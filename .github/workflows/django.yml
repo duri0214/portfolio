@@ -27,7 +27,7 @@ jobs:
       - name: Set up
         env:
           ENGINE: django.db.backends.mysql
-          NAME: portfolio_db
+          NAME: test_portfolio_db
           USER: python
           PASSWORD: python123
           HOST: localhost
