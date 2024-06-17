@@ -90,6 +90,8 @@ DATABASES = {
         "PORT": "3306",
         "TEST": {
             "NAME": "test_portfolio_db",
+            "USER": "root",
+            "PASSWORD": "root"
         },
     }
 }
