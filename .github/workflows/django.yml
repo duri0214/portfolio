@@ -58,7 +58,7 @@ jobs:
 
       - name: Check Tables and Permissions
         env:
-          DB_NAME: portfolio_db
+          DB_NAME: test_portfolio_db
           DB_USER: root
           DB_USER_PYTHON: python
           DB_PASSWORD: root
@@ -78,5 +78,7 @@ jobs:
           HOST: localhost
           PORT: 3306
         run: |
+          mysql -u root -proot -e "GRANT ALL ON portfolio_db.* TO '$USER'@'localhost';"
+          mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO '$USER'@'localhost';"
           source venv/bin/activate
           python manage.py test
