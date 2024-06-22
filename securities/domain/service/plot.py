@@ -302,7 +302,7 @@ if __name__ == "__main__":
         categorical_column=COLUMN_COMPANY_NAME,
     )
     service.plot_all(
-        [PlotParams(x=COLUMN_AVG_SALARY, title="情報・通信業界:平均年間給与TOP50")]
+        [PlotParams(x=COLUMN_AVG_SALARY, title="情報・通信業界_平均年間給与TOP50")]
     )
 
     # plot3: カーネル密度推定
