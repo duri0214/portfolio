@@ -19,6 +19,10 @@ class RequestData:
 @dataclass
 class PlotParams:
     """
+    Attributes:
+        x (str): プロットのx軸のラベル
+        title (str | None): グラフタイトルとファイル名に使用される
+
     Notes: 使用するグラフが横軸なので single版(i.e. this) は x という名前になるので縦にするときは注意
     """
 
@@ -28,5 +32,11 @@ class PlotParams:
 
 @dataclass
 class PlotParamsForKDE(PlotParams):
+    """
+    Attributes:
+        y (str): プロットのy軸のラベル
+        color (str): KDEプロットに使用する色
+    """
+
     y: str
     color: str

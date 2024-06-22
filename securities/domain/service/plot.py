@@ -35,8 +35,8 @@ class PlotServiceBase(ABC):
         Args:
             work_dir: 処理対象のフォルダ
             target_period: 期間
-            display_title: グラフタイトルとファイル名に使用される
-            categorical_column: カテゴリカルラベルを作るための集計列
+            display_title: グラフタイトル表示可否
+            categorical_column: カテゴリカルラベルを作るための列
         """
         plt.rcParams["font.family"] = COMMON_FONT
         self.work_dir = work_dir
@@ -183,7 +183,7 @@ class BarPlotService(PlotServiceBase):
         )
 
     def _get_target_data(self, target_period):
-        # TODO: 業種はとりあえず "情報・通信業" で固定している（Qiita準拠にするために）
+        # TODO: 業種はとりあえず db値"情報・通信業" で固定している（Qiita準拠）
         return self._repository.get_period_data_for_specific_industry(
             target_period, "情報・通信業"
         )
@@ -332,5 +332,4 @@ if __name__ == "__main__":
             ),
         ]
     )
-
     print("visualize finish")
