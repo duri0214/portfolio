@@ -97,15 +97,14 @@ class PlotServiceBase(ABC):
     def _plot(self, plot_params: PlotParams | PlotParamsForKDE):
         raise NotImplementedError
 
-    def _configure_plot(self, title: str):
+    @staticmethod
+    def _configure_plot():
         # Note: gca() は "get current axes" を意味する
         ax = plt.gca()
         ax.spines["right"].set_visible(False)
         ax.spines["top"].set_visible(False)
         ax.yaxis.set_ticks_position("left")
         ax.xaxis.set_ticks_position("bottom")
-        if self.display_title:
-            plt.title(title, fontsize=24)
 
     @abstractmethod
     def save(self, title: str):
@@ -162,8 +161,9 @@ class BoxenPlotService(PlotServiceBase):
         ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
         plt.xlabel(plot_params.x, fontsize=18)
         plt.ylabel(self.categorical_column, fontsize=16)
-        plt.title(plot_params.title, fontsize=24)
-        self._configure_plot(plot_params.title)
+        if self.display_title:
+            plt.title(plot_params.title, fontsize=24)
+        self._configure_plot()
         self.save(plot_params.title)
         # plt.show()
 
@@ -224,8 +224,9 @@ class BarPlotService(PlotServiceBase):
         )
         plt.xlabel(self.categorical_column, fontsize=12)
         plt.ylabel(COLUMN_AVG_SALARY, fontsize=18)
-        plt.title("情報・通信業界:平均年間給与TOP50", fontsize=24)
-        self._configure_plot(plot_params.title)
+        if self.display_title:
+            plt.title(plot_params.title, fontsize=24)
+        self._configure_plot()
         self.save(plot_params.title)
         # plt.show()
 
@@ -263,7 +264,9 @@ class KernelDensityEstimationPlotService(PlotServiceBase):
             kind="kde",
             color=plot_params.color,
         )
-        self._configure_plot(plot_params.title)
+        if self.display_title:
+            plt.title(plot_params.title, fontsize=24)
+        self._configure_plot()
         self.save(plot_params.title)
         # plt.show()
 
@@ -273,12 +276,12 @@ class KernelDensityEstimationPlotService(PlotServiceBase):
 
 if __name__ == "__main__":
     home_dir = os.path.expanduser("~")
-
-    # plot1: 箱ひげ図
     period = RequestData(
         start_date=datetime.date(2022, 11, 1),
         end_date=datetime.date(2023, 10, 31),
     )
+
+    # plot1: 箱ひげ図
     service = BoxenPlotService(
         work_dir=Path(home_dir, "Downloads/xbrlReport/plot"),
         target_period=period,
@@ -293,22 +296,16 @@ if __name__ == "__main__":
     )
 
     # plot2: 棒グラフ
-    period = RequestData(
-        start_date=datetime.date(2022, 11, 1),
-        end_date=datetime.date(2023, 10, 31),
-    )
     service = BarPlotService(
         work_dir=Path(home_dir, "Downloads/xbrlReport/plot"),
         target_period=period,
         categorical_column=COLUMN_COMPANY_NAME,
     )
-    service.plot_all([PlotParams(x=COLUMN_AVG_SALARY, title="業種別平均年間給与額")])
+    service.plot_all(
+        [PlotParams(x=COLUMN_AVG_SALARY, title="情報・通信業界:平均年間給与TOP50")]
+    )
 
     # plot3: カーネル密度推定
-    period = RequestData(
-        start_date=datetime.date(2022, 11, 1),
-        end_date=datetime.date(2023, 10, 31),
-    )
     service = KernelDensityEstimationPlotService(
         work_dir=Path(home_dir, "Downloads/xbrlReport/plot"),
         target_period=period,
