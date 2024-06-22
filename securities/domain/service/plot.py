@@ -11,8 +11,8 @@ from matplotlib import pyplot as plt, ticker
 from securities.domain.repository.plot import PlotRepository
 from securities.domain.valueobject.plot import (
     RequestData,
-    TargetCountingColumn,
-    TargetCountingColumnForKDE,
+    PlotParams,
+    PlotParamsForKDE,
 )
 
 COLUMN_COMPANY_NAME = "submitter_name"
@@ -25,12 +25,17 @@ COMMON_FONT = ["IPAexGothic"]
 
 class PlotServiceBase(ABC):
     def __init__(
-        self, work_dir: Path, target_period: RequestData, categorical_column: str = None
+        self,
+        work_dir: Path,
+        target_period: RequestData,
+        display_title: bool,
+        categorical_column: str = None,
     ):
         """
         Args:
             work_dir: 処理対象のフォルダ
             target_period: 期間
+            display_title: グラフタイトルとファイル名に使用される
             categorical_column: カテゴリカルラベルを作るための集計列
         """
         plt.rcParams["font.family"] = COMMON_FONT
@@ -40,9 +45,11 @@ class PlotServiceBase(ABC):
         self._repository = PlotRepository()
         self.categorical_column = categorical_column
         self.clean_data = self._clean(self._get_target_data(target_period))
-        self.categorical_labels_dict = self._get_labels_sorted_by_averages(
-            self.clean_data
-        )
+        self.display_title = display_title
+        if self.categorical_column:
+            self.categorical_labels_dict = self._get_labels_sorted_by_averages(
+                self.clean_data
+            )
 
     @abstractmethod
     def _get_target_data(self, target_period: RequestData) -> QuerySet:
@@ -82,30 +89,23 @@ class PlotServiceBase(ABC):
             ),
         }
 
-    def plot_all(
-        self,
-        targets: list[tuple[TargetCountingColumn | TargetCountingColumnForKDE, str]],
-    ):
-        for target_counting_column, title in targets:
-            self._plot(target_counting_column=target_counting_column, title=title)
+    def plot_all(self, plot_params_list: list[PlotParams | PlotParamsForKDE]):
+        for plot_params in plot_params_list:
+            self._plot(plot_params=plot_params)
 
     @abstractmethod
-    def _plot(
-        self,
-        target_counting_column: TargetCountingColumn | TargetCountingColumnForKDE,
-        title: str,
-    ):
+    def _plot(self, plot_params: PlotParams | PlotParamsForKDE):
         raise NotImplementedError
 
-    @staticmethod
-    def _configure_plot(title: str):
+    def _configure_plot(self, title: str):
         # Note: gca() は "get current axes" を意味する
         ax = plt.gca()
         ax.spines["right"].set_visible(False)
         ax.spines["top"].set_visible(False)
         ax.yaxis.set_ticks_position("left")
         ax.xaxis.set_ticks_position("bottom")
-        plt.title(title, fontsize=24)
+        if self.display_title:
+            plt.title(title, fontsize=24)
 
     @abstractmethod
     def save(self, title: str):
@@ -116,7 +116,12 @@ class BoxenPlotService(PlotServiceBase):
     def __init__(
         self, work_dir: Path, target_period: RequestData, categorical_column: str
     ):
-        super().__init__(work_dir, target_period, categorical_column)
+        super().__init__(
+            work_dir=work_dir,
+            target_period=target_period,
+            display_title=True,
+            categorical_column=categorical_column,
+        )
 
     def _get_target_data(self, target_period):
         return self._repository.get_period_data(target_period)
@@ -133,37 +138,33 @@ class BoxenPlotService(PlotServiceBase):
             )
         ).dropna()
 
-    def _plot(
-        self,
-        target_counting_column: TargetCountingColumn,
-        title: str,
-    ):
+    def _plot(self, plot_params: PlotParams):
         plt.figure(figsize=(15, 10))
         seaborn.stripplot(
-            x=target_counting_column.x,
+            x=plot_params.x,
             y=self.categorical_column,
             orient="h",
             data=self.clean_data,
             size=3,
             edgecolor="auto",
-            order=self.categorical_labels_dict[target_counting_column.x],
+            order=self.categorical_labels_dict[plot_params.x],
         )
         ax = seaborn.boxenplot(
-            x=target_counting_column.x,
+            x=plot_params.x,
             y=self.categorical_column,
             hue=self.categorical_column,  # TODO: hueをつけないことがdeprecatedだが、hueをつけると色合いがおかしくなる
             orient="h",
             data=self.clean_data,
             palette="rainbow",
-            order=self.categorical_labels_dict[target_counting_column.x],
+            order=self.categorical_labels_dict[plot_params.x],
         )
         ax.grid(which="major", color="lightgray", ls=":", alpha=0.5)
         ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
-        plt.xlabel(target_counting_column, fontsize=18)
+        plt.xlabel(plot_params.x, fontsize=18)
         plt.ylabel(self.categorical_column, fontsize=16)
-        plt.title(title, fontsize=24)
-        self._configure_plot(title)
-        self.save(title)
+        plt.title(plot_params.title, fontsize=24)
+        self._configure_plot(plot_params.title)
+        self.save(plot_params.title)
         # plt.show()
 
     def save(self, title: str):
@@ -174,7 +175,12 @@ class BarPlotService(PlotServiceBase):
     def __init__(
         self, work_dir: Path, target_period: RequestData, categorical_column: str
     ):
-        super().__init__(work_dir, target_period, categorical_column)
+        super().__init__(
+            work_dir=work_dir,
+            target_period=target_period,
+            display_title=True,
+            categorical_column=categorical_column,
+        )
 
     def _get_target_data(self, target_period):
         # TODO: 業種はとりあえず "情報・通信業" で固定している（Qiita準拠にするために）
@@ -194,7 +200,7 @@ class BarPlotService(PlotServiceBase):
             )
         ).dropna()
 
-    def _plot(self, target_counting_column: TargetCountingColumn, title: str):
+    def _plot(self, plot_params: PlotParams):
         # COLUMN_AVG_SALARY が最も高い上位50の行
         df_sort_by_salary = self.clean_data.sort_values(COLUMN_AVG_SALARY)[-50:]
         df_info_label_list_sort_by_salary = df_sort_by_salary[
@@ -203,7 +209,7 @@ class BarPlotService(PlotServiceBase):
         plt.figure(figsize=(15, 12))
         ax = seaborn.barplot(
             x=self.categorical_column,
-            y=target_counting_column.x,
+            y=plot_params.x,
             hue=self.categorical_column,  # TODO: hueをつけないことがdeprecatedだが、hueをつけると色合いがおかしくなる
             data=self.clean_data,
             palette="rocket",
@@ -219,12 +225,50 @@ class BarPlotService(PlotServiceBase):
         plt.xlabel(self.categorical_column, fontsize=12)
         plt.ylabel(COLUMN_AVG_SALARY, fontsize=18)
         plt.title("情報・通信業界:平均年間給与TOP50", fontsize=24)
-        self._configure_plot(title)
-        self.save(title)
+        self._configure_plot(plot_params.title)
+        self.save(plot_params.title)
         # plt.show()
 
     def save(self, title: str):
         plt.savefig(self.work_dir / f"bar_plot_{title}.png")
+
+
+class KernelDensityEstimationPlotService(PlotServiceBase):
+    def __init__(self, work_dir: Path, target_period: RequestData):
+        super().__init__(
+            work_dir=work_dir,
+            target_period=target_period,
+            display_title=False,
+        )
+
+    def _get_target_data(self, target_period: RequestData) -> QuerySet:
+        return self._repository.get_period_data(target_period)
+
+    def _clean(self, query: QuerySet) -> pd.DataFrame:
+        return pd.DataFrame(
+            list(
+                query.values(
+                    COLUMN_AVG_SALARY,
+                    COLUMN_AVG_TENURE,
+                    COLUMN_AVG_AGE,
+                )
+            )
+        ).dropna()
+
+    def _plot(self, plot_params: PlotParamsForKDE):
+        seaborn.jointplot(
+            x=plot_params.x,
+            y=plot_params.y,
+            data=self.clean_data,
+            kind="kde",
+            color=plot_params.color,
+        )
+        self._configure_plot(plot_params.title)
+        self.save(plot_params.title)
+        # plt.show()
+
+    def save(self, title: str):
+        plt.savefig(self.work_dir / f"kernel_density_estimation_plot_{title}.png")
 
 
 if __name__ == "__main__":
@@ -242,9 +286,9 @@ if __name__ == "__main__":
     )
     service.plot_all(
         [
-            (TargetCountingColumn(x=COLUMN_AVG_SALARY), "業種別平均年間給与額"),
-            (TargetCountingColumn(x=COLUMN_AVG_TENURE), "業種別平均勤続年数"),
-            (TargetCountingColumn(x=COLUMN_AVG_AGE), "業種別平均年齢"),
+            PlotParams(x=COLUMN_AVG_SALARY, title="業種別平均年間給与額"),
+            PlotParams(x=COLUMN_AVG_TENURE, title="業種別平均勤続年数"),
+            PlotParams(x=COLUMN_AVG_AGE, title="業種別平均年齢"),
         ]
     )
 
@@ -258,9 +302,37 @@ if __name__ == "__main__":
         target_period=period,
         categorical_column=COLUMN_COMPANY_NAME,
     )
+    service.plot_all([PlotParams(x=COLUMN_AVG_SALARY, title="業種別平均年間給与額")])
+
+    # plot3: カーネル密度推定
+    period = RequestData(
+        start_date=datetime.date(2022, 11, 1),
+        end_date=datetime.date(2023, 10, 31),
+    )
+    service = KernelDensityEstimationPlotService(
+        work_dir=Path(home_dir, "Downloads/xbrlReport/plot"),
+        target_period=period,
+    )
     service.plot_all(
         [
-            (TargetCountingColumn(x=COLUMN_AVG_SALARY), "業種別平均年間給与額"),
+            PlotParamsForKDE(
+                x=COLUMN_AVG_TENURE,
+                y=COLUMN_AVG_SALARY,
+                color="#d9f2f8",
+                title="平均勤続年数x平均年間給与",
+            ),
+            PlotParamsForKDE(
+                x=COLUMN_AVG_AGE,
+                y=COLUMN_AVG_SALARY,
+                color="#fac8be",
+                title="平均年齢x平均年間給与",
+            ),
+            PlotParamsForKDE(
+                x=COLUMN_AVG_AGE,
+                y=COLUMN_AVG_TENURE,
+                color="#008000",
+                title="平均年齢x平均勤続年数",
+            ),
         ]
     )
 

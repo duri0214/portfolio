@@ -17,15 +17,16 @@ class RequestData:
 
 
 @dataclass
-class TargetCountingColumn:
+class PlotParams:
     """
-    Notes: 使用するグラフが横軸なので single版 は x という名前になるので縦にするときは注意
+    Notes: 使用するグラフが横軸なので single版(i.e. this) は x という名前になるので縦にするときは注意
     """
 
     x: str
+    title: str | None
 
 
 @dataclass
-class TargetCountingColumnForKDE(TargetCountingColumn):
+class PlotParamsForKDE(PlotParams):
     y: str
     color: str
