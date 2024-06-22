@@ -14,3 +14,18 @@ class RequestData:
             raise ValueError("end_date is in the future")
         if self.start_date > self.end_date:
             raise ValueError("start_date is later than end_date")
+
+
+@dataclass
+class TargetCountingColumn:
+    """
+    Notes: 使用するグラフが横軸なので single版 は x という名前になるので縦にするときは注意
+    """
+
+    x: str
+
+
+@dataclass
+class TargetCountingColumnForKDE(TargetCountingColumn):
+    y: str
+    color: str

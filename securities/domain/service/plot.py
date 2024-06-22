@@ -9,7 +9,11 @@ from django.db.models import QuerySet
 from matplotlib import pyplot as plt, ticker
 
 from securities.domain.repository.plot import PlotRepository
-from securities.domain.valueobject.plot import RequestData
+from securities.domain.valueobject.plot import (
+    RequestData,
+    TargetCountingColumn,
+    TargetCountingColumnForKDE,
+)
 
 COLUMN_COMPANY_NAME = "submitter_name"
 COLUMN_INDUSTRY = "submitter_industry"
@@ -21,15 +25,21 @@ COMMON_FONT = ["IPAexGothic"]
 
 class PlotServiceBase(ABC):
     def __init__(
-        self, work_dir: Path, target_period: RequestData, grouping_column: str
+        self, work_dir: Path, target_period: RequestData, categorical_column: str = None
     ):
+        """
+        Args:
+            work_dir: 処理対象のフォルダ
+            target_period: 期間
+            categorical_column: カテゴリカルラベルを作るための集計列
+        """
         plt.rcParams["font.family"] = COMMON_FONT
         self.work_dir = work_dir
         if not self.work_dir.exists():
             self.work_dir.mkdir(parents=True, exist_ok=True)
         self._repository = PlotRepository()
+        self.categorical_column = categorical_column
         self.clean_data = self._clean(self._get_target_data(target_period))
-        self.grouping_column = grouping_column
         self.categorical_labels_dict = self._get_labels_sorted_by_averages(
             self.clean_data
         )
@@ -38,9 +48,8 @@ class PlotServiceBase(ABC):
     def _get_target_data(self, target_period: RequestData) -> QuerySet:
         raise NotImplementedError
 
-    @staticmethod
     @abstractmethod
-    def _clean(query: QuerySet) -> pd.DataFrame:
+    def _clean(self, query: QuerySet) -> pd.DataFrame:
         raise NotImplementedError
 
     def _get_labels_sorted_by_averages(
@@ -55,11 +64,11 @@ class PlotServiceBase(ABC):
             _data: pd.DataFrame, sort_on: str
         ) -> list[str]:
             sorted_df = (
-                _data.groupby([self.grouping_column], as_index=False)
+                _data.groupby([self.categorical_column], as_index=False)
                 .mean()
                 .sort_values(sort_on)
             )
-            return sorted_df[self.grouping_column].tolist()
+            return sorted_df[self.categorical_column].tolist()
 
         return {
             COLUMN_AVG_SALARY: _sort_labels_by_column_average(
@@ -73,12 +82,19 @@ class PlotServiceBase(ABC):
             ),
         }
 
-    def plot_all(self, targets: list[tuple[str, str]]):
+    def plot_all(
+        self,
+        targets: list[tuple[TargetCountingColumn | TargetCountingColumnForKDE, str]],
+    ):
         for target_counting_column, title in targets:
             self._plot(target_counting_column=target_counting_column, title=title)
 
     @abstractmethod
-    def _plot(self, target_counting_column: str, title: str):
+    def _plot(
+        self,
+        target_counting_column: TargetCountingColumn | TargetCountingColumnForKDE,
+        title: str,
+    ):
         raise NotImplementedError
 
     @staticmethod
@@ -97,18 +113,19 @@ class PlotServiceBase(ABC):
 
 
 class BoxenPlotService(PlotServiceBase):
-    def __init__(self, work_dir: Path, target_period):
-        super().__init__(work_dir, target_period, COLUMN_INDUSTRY)
+    def __init__(
+        self, work_dir: Path, target_period: RequestData, categorical_column: str
+    ):
+        super().__init__(work_dir, target_period, categorical_column)
 
     def _get_target_data(self, target_period):
         return self._repository.get_period_data(target_period)
 
-    @staticmethod
-    def _clean(query: QuerySet) -> pd.DataFrame:
+    def _clean(self, query: QuerySet) -> pd.DataFrame:
         return pd.DataFrame(
             list(
                 query.values(
-                    COLUMN_INDUSTRY,
+                    self.categorical_column,
                     COLUMN_AVG_SALARY,
                     COLUMN_AVG_TENURE,
                     COLUMN_AVG_AGE,
@@ -118,32 +135,32 @@ class BoxenPlotService(PlotServiceBase):
 
     def _plot(
         self,
-        target_counting_column: str,
+        target_counting_column: TargetCountingColumn,
         title: str,
     ):
         plt.figure(figsize=(15, 10))
         seaborn.stripplot(
-            x=target_counting_column,
-            y=COLUMN_INDUSTRY,
+            x=target_counting_column.x,
+            y=self.categorical_column,
             orient="h",
             data=self.clean_data,
             size=3,
             edgecolor="auto",
-            order=self.categorical_labels_dict[target_counting_column],
+            order=self.categorical_labels_dict[target_counting_column.x],
         )
         ax = seaborn.boxenplot(
-            x=target_counting_column,
-            y=COLUMN_INDUSTRY,
-            hue=COLUMN_INDUSTRY,  # TODO: hueをつけないことがdeprecatedだが、hueをつけると色合いがおかしくなる
+            x=target_counting_column.x,
+            y=self.categorical_column,
+            hue=self.categorical_column,  # TODO: hueをつけないことがdeprecatedだが、hueをつけると色合いがおかしくなる
             orient="h",
             data=self.clean_data,
             palette="rainbow",
-            order=self.categorical_labels_dict[target_counting_column],
+            order=self.categorical_labels_dict[target_counting_column.x],
         )
         ax.grid(which="major", color="lightgray", ls=":", alpha=0.5)
         ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
         plt.xlabel(target_counting_column, fontsize=18)
-        plt.ylabel(COLUMN_INDUSTRY, fontsize=16)
+        plt.ylabel(self.categorical_column, fontsize=16)
         plt.title(title, fontsize=24)
         self._configure_plot(title)
         self.save(title)
@@ -154,8 +171,10 @@ class BoxenPlotService(PlotServiceBase):
 
 
 class BarPlotService(PlotServiceBase):
-    def __init__(self, work_dir: Path, target_period):
-        super().__init__(work_dir, target_period, COLUMN_COMPANY_NAME)
+    def __init__(
+        self, work_dir: Path, target_period: RequestData, categorical_column: str
+    ):
+        super().__init__(work_dir, target_period, categorical_column)
 
     def _get_target_data(self, target_period):
         # TODO: 業種はとりあえず "情報・通信業" で固定している（Qiita準拠にするために）
@@ -163,12 +182,11 @@ class BarPlotService(PlotServiceBase):
             target_period, "情報・通信業"
         )
 
-    @staticmethod
-    def _clean(query: QuerySet) -> pd.DataFrame:
+    def _clean(self, query: QuerySet) -> pd.DataFrame:
         return pd.DataFrame(
             list(
                 query.values(
-                    COLUMN_COMPANY_NAME,
+                    self.categorical_column,
                     COLUMN_AVG_SALARY,
                     COLUMN_AVG_TENURE,
                     COLUMN_AVG_AGE,
@@ -176,17 +194,17 @@ class BarPlotService(PlotServiceBase):
             )
         ).dropna()
 
-    def _plot(self, target_counting_column: str, title: str):
+    def _plot(self, target_counting_column: TargetCountingColumn, title: str):
         # COLUMN_AVG_SALARY が最も高い上位50の行
         df_sort_by_salary = self.clean_data.sort_values(COLUMN_AVG_SALARY)[-50:]
         df_info_label_list_sort_by_salary = df_sort_by_salary[
-            COLUMN_COMPANY_NAME
+            self.categorical_column
         ].tolist()
         plt.figure(figsize=(15, 12))
         ax = seaborn.barplot(
-            x=COLUMN_COMPANY_NAME,
-            y=COLUMN_AVG_SALARY,
-            hue=COLUMN_COMPANY_NAME,  # TODO: hueをつけないことがdeprecatedだが、hueをつけると色合いがおかしくなる
+            x=self.categorical_column,
+            y=target_counting_column.x,
+            hue=self.categorical_column,  # TODO: hueをつけないことがdeprecatedだが、hueをつけると色合いがおかしくなる
             data=self.clean_data,
             palette="rocket",
             order=df_info_label_list_sort_by_salary,
@@ -198,7 +216,7 @@ class BarPlotService(PlotServiceBase):
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, loc: "{:,}".format(int(x)))
         )
-        plt.xlabel(COLUMN_COMPANY_NAME, fontsize=12)
+        plt.xlabel(self.categorical_column, fontsize=12)
         plt.ylabel(COLUMN_AVG_SALARY, fontsize=18)
         plt.title("情報・通信業界:平均年間給与TOP50", fontsize=24)
         self._configure_plot(title)
@@ -220,12 +238,13 @@ if __name__ == "__main__":
     service = BoxenPlotService(
         work_dir=Path(home_dir, "Downloads/xbrlReport/plot"),
         target_period=period,
+        categorical_column=COLUMN_INDUSTRY,
     )
     service.plot_all(
         [
-            (COLUMN_AVG_SALARY, "業種別平均年間給与額"),
-            (COLUMN_AVG_TENURE, "業種別平均勤続年数"),
-            (COLUMN_AVG_AGE, "業種別平均年齢"),
+            (TargetCountingColumn(x=COLUMN_AVG_SALARY), "業種別平均年間給与額"),
+            (TargetCountingColumn(x=COLUMN_AVG_TENURE), "業種別平均勤続年数"),
+            (TargetCountingColumn(x=COLUMN_AVG_AGE), "業種別平均年齢"),
         ]
     )
 
@@ -237,10 +256,11 @@ if __name__ == "__main__":
     service = BarPlotService(
         work_dir=Path(home_dir, "Downloads/xbrlReport/plot"),
         target_period=period,
+        categorical_column=COLUMN_COMPANY_NAME,
     )
     service.plot_all(
         [
-            (COLUMN_AVG_SALARY, "業種別平均年間給与額"),
+            (TargetCountingColumn(x=COLUMN_AVG_SALARY), "業種別平均年間給与額"),
         ]
     )
 
