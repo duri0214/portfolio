@@ -9,7 +9,7 @@ from django.db.models.functions import Round
 
 from config.settings import STATIC_ROOT
 from vietnam_research.domain.repository.market import MarketRepository
-from vietnam_research.domain.valueobject.radar_chart import Axis, Layer, RadarChart
+from vietnam_research.domain.valueobject.radar_chart import Axis, Layer
 from vietnam_research.forms import ExchangeForm
 from vietnam_research.models import Industry
 
@@ -124,7 +124,7 @@ class VietnamMarketDataProvider(MarketAbstract):
         aggregate_field: str,
         aggregate_alias: str,
         denominator_field: str,
-    ) -> RadarChart:
+    ) -> list[Layer]:
         layers: list[Layer] = []
         for m in months_dating_back:
             try:
@@ -159,9 +159,9 @@ class VietnamMarketDataProvider(MarketAbstract):
                 )
                 continue
 
-        return RadarChart(layers=layers)
+        return layers
 
-    def radar_chart_count(self) -> RadarChart:
+    def radar_chart_count(self) -> list[Layer]:
         """
         企業数の業種別占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
@@ -187,7 +187,7 @@ class VietnamMarketDataProvider(MarketAbstract):
             denominator_field="id",
         )
 
-    def radar_chart_cap(self) -> RadarChart:
+    def radar_chart_cap(self) -> list[Layer]:
         """
         時価総額の業種別占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
@@ -252,8 +252,12 @@ class MarketRetrievalService:
         login_id = login_user.id if login_user.is_authenticated else None
 
         return {
-            "industry_count": json.dumps(self.market_vietnam.radar_chart_count()),
-            "industry_cap": json.dumps(self.market_vietnam.radar_chart_cap()),
+            "industry_count": json.dumps(
+                [x.to_dict() for x in self.market_vietnam.radar_chart_count()]
+            ),
+            "industry_cap": json.dumps(
+                [x.to_dict() for x in self.market_vietnam.radar_chart_cap()]
+            ),
             "vnindex_timeline": json.dumps(self.market_vietnam.vnindex_timeline()),
             "vnindex_layers": json.dumps(self.market_vietnam.vnindex_annual_layers()),
             "articles": self.repository.get_articles(login_id),
