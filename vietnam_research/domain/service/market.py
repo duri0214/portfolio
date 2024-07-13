@@ -253,7 +253,7 @@ class MarketRetrievalService:
             "vnindex_timeline": json.dumps(self.market_vietnam.vnindex_timeline()),
             "vnindex_layers": json.dumps(self.market_vietnam.vnindex_annual_layers()),
             "articles": self.repository.get_articles(login_id),
-            "basicinfo": self.repository.get_basic_info(),
+            "basic_info": self.repository.get_basic_info(),
             "watchlist": self.market_vietnam.watchlist(),
             "sbi_topics": self.market_vietnam.sbi_topics(),
             "uptrend": json.dumps(self.market_vietnam.uptrend()),
