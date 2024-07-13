@@ -8,15 +8,15 @@ body {
     padding-top: 4px;
 }
 
-#uptrends_wrapper li {
+#uptrend_wrapper li {
     display: inline-block;
 }
 
-.uptrends {
+.uptrend {
     position: relative;
 }
 
-.uptrends p {
+.uptrend p {
     position: absolute;
     margin: 0;
     color: white;

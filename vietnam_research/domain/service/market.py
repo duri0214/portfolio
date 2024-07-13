@@ -209,13 +209,13 @@ class VietnamMarketDataProvider(MarketAbstract):
             denominator_field="marketcap",
         )
 
-    def uptrends(self) -> dict:
-        uptrends = self.repository.get_annotated_uptrends()
+    def uptrend(self) -> dict:
+        uptrend = self.repository.get_annotated_uptrend()
 
         result = {}
         ind_names = self.repository.get_industry_names()
         for ind_name in ind_names:
-            result[ind_name] = [x for x in uptrends if x["ind_name"] == ind_name]
+            result[ind_name] = [x for x in uptrend if x["ind_name"] == ind_name]
 
         return result
 
@@ -256,7 +256,7 @@ class MarketRetrievalService:
             "basicinfo": self.repository.get_basic_info(),
             "watchlist": self.market_vietnam.watchlist(),
             "sbi_topics": self.market_vietnam.sbi_topics(),
-            "uptrends": json.dumps(self.market_vietnam.uptrends()),
+            "uptrend": json.dumps(self.market_vietnam.uptrend()),
             "exchange_form": exchange_form,
             "exchanged": self.get_exchange_params(),
         }

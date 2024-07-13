@@ -3,7 +3,7 @@ from django.db.models import Max
 from django.db.models.functions import Round, Concat
 from django.db.models.query import QuerySet
 
-from vietnam_research.models import Articles, BasicInformation, VnIndex, Uptrends
+from vietnam_research.models import Articles, BasicInformation, VnIndex, Uptrend
 from vietnam_research.models import Industry, Watchlist
 
 
@@ -128,9 +128,9 @@ class MarketRepository:
         return sum([record[denominator_field] for record in records])
 
     @staticmethod
-    def get_annotated_uptrends():
+    def get_annotated_uptrend():
         return (
-            Uptrends.objects.prefetch_related("symbol", "ind_class")
+            Uptrend.objects.prefetch_related("symbol", "ind_class")
             .annotate(
                 industry1=F("symbol__ind_class__industry1"),
                 industry_class=F("symbol__ind_class__industry_class"),
@@ -161,7 +161,7 @@ class MarketRepository:
     @staticmethod
     def get_industry_names():
         return (
-            Uptrends.objects.annotate(
+            Uptrend.objects.annotate(
                 ind_name=Concat(
                     F("symbol__ind_class__industry_class"),
                     Value("|"),

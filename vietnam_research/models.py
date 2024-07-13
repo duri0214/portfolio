@@ -167,8 +167,8 @@ class Watchlist(models.Model):
     stocks_count = models.IntegerField(blank=True, null=True, default=0)
 
 
-class Uptrends(models.Model):
-    """日次バッチでUptrends（傾き計算考慮）を出します"""
+class Uptrend(models.Model):
+    """日次バッチでUptrend（傾き計算考慮）を出します"""
 
     stocks_price_oldest = models.FloatField()
     stocks_price_latest = models.FloatField()

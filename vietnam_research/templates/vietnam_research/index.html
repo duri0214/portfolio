@@ -140,11 +140,11 @@
         <div id="uptrend" class="mt-5">
             <h2>業種別直近上昇銘柄<span style="font-size: small">14日/7日/3日の傾きを出して（緑の点線）、すべてが0超の傾きを持っている銘柄 ※SBI証券取り扱い銘柄のみ</span>
             </h2>
-            <div id="uptrends_wrapper"></div>
+            <div id="uptrend_wrapper"></div>
         </div>
         <script>
-            data = {{ uptrends|safe }};
-            const uptrends = document.getElementById('uptrends_wrapper');
+            data = {{ uptrend|safe }};
+            const uptrend = document.getElementById('uptrend_wrapper');
             let h6, ul, mkt, price_latest, symbol, price_delta, price_delta_sign, img, li, a, p;
             for (const industry in data) {
                 h6 = document.createElement('h6');
@@ -167,14 +167,14 @@
                     p.className = 'badge badge-secondary';
                     p.textContent = `${symbol}: ${price_latest}（${price_delta_sign}${price_delta}）`;
                     li = document.createElement("li");
-                    li.className = 'uptrends';
+                    li.className = 'uptrend';
                     a.appendChild(img);
                     li.appendChild(a);
                     li.appendChild(p);
                     ul.appendChild(li);
                 }
-                uptrends.appendChild(h6);
-                uptrends.appendChild(ul);
+                uptrend.appendChild(h6);
+                uptrend.appendChild(ul);
             }
         </script>
 

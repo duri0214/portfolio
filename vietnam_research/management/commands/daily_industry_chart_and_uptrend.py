@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 
 from config.settings import BASE_DIR
 from lib.log_service import LogService
-from vietnam_research.models import Industry, Uptrends, Symbol
+from vietnam_research.models import Industry, Uptrend, Symbol
 
 
 def calc_price(price_for_several_days: pd.Series) -> dict:
@@ -60,7 +60,7 @@ class Command(BaseCommand):
         for filepath in glob(str(Path(out_folder) / "*.png")):
             log_service.write(f"Removing file: {filepath}")
             os.remove(filepath)
-        Uptrends.objects.all().delete()  # TODO: 多分indexがリセットされないのでTRUNCATEにしたい
+        Uptrend.objects.all().delete()  # TODO: 多分indexがリセットされないのでTRUNCATEにしたい
 
         # all tickers are plotting by matplotlib
         industry_records = (
@@ -160,7 +160,7 @@ class Command(BaseCommand):
                 price = calc_price(closing_price)
                 try:
                     passed_records.append(
-                        Uptrends(
+                        Uptrend(
                             symbol=m_symbol.get(code=ticker),
                             stocks_price_oldest=price["initial"],
                             stocks_price_latest=price["latest"],
@@ -182,7 +182,7 @@ class Command(BaseCommand):
             log_service.write(
                 f"{spaces}{formatted_text(ticker, slopes, passed, price)}"
             )
-        Uptrends.objects.bulk_create(passed_records)
+        Uptrend.objects.bulk_create(passed_records)
 
         caller_file_name = Path(__file__).stem
         log_service.write(
