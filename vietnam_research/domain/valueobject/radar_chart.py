@@ -17,11 +17,3 @@ class Layer:
 
     def to_dict(self) -> dict:
         return {"name": self.name, "axes": [axis.to_dict() for axis in self.axes]}
-
-
-@dataclass
-class RadarChart:
-    layers: list[Layer]
-
-    def to_dict(self) -> dict:
-        return {"layers": [layer.to_dict() for layer in self.layers]}
