@@ -315,30 +315,36 @@
 
     <script lang="js">
         const likeToggles = document.getElementsByClassName('like_toggle');
-        for (let i = 0; i < likeToggles.length; i++) {
-            likeToggles[i].addEventListener('click', () => {
-                const articleId = likeToggles[i].dataset.articleId
-                fetch(`${myurl.base}likes/${articleId}/`, {
-                    method: 'POST',
-                    headers: {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "X-CSRFToken": Cookies.get('csrftoken')
-                    },
-                    body: JSON.stringify({"status": "requested from front with javascript."})
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        likeToggles[i].getElementsByTagName('span')[0].innerHTML = `(${data.likes_cnt})`
-                        likeToggles[i].dataset.likedByMe = data.liked_by_me
-                        likeToggles[i].classList.remove('active')
-                        if (data.liked_by_me) {
-                            likeToggles[i].classList.add('active')
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('Ooops!! There has been a problem with your fetch operation:', error)
-                    })
+
+        function sendLikeRequest(event) {
+            const likeToggle = event.target;
+            const articleId = likeToggle.dataset.articleId;
+
+            fetch(`${myurl.base}likes/${articleId}/`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "X-CSRFToken": Cookies.get('csrftoken')
+                },
+                body: JSON.stringify({"status": "requested from front with javascript."})
             })
+                .then(response => response.json())
+                .then(data => {
+                    const spanItem = likeToggle.getElementsByTagName('span')[0];
+                    spanItem.innerHTML = `(${data.likes_cnt})`;
+                    likeToggle.dataset.likedByMe = data.liked_by_me;
+                    likeToggle.classList.remove('active');
+                    if (data.liked_by_me) {
+                        likeToggle.classList.add('active');
+                    }
+                })
+                .catch((error) => {
+                    console.error('Oops!! There has been a problem with your fetch operation:', error);
+                });
+        }
+
+        for (let i = 0; i < likeToggles.length; i++) {
+            likeToggles[i].addEventListener('click', sendLikeRequest)
         }
     </script>
     <script lang="js">
