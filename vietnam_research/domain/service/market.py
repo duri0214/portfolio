@@ -9,7 +9,8 @@ from django.db.models.functions import Round
 
 from config.settings import STATIC_ROOT
 from vietnam_research.domain.repository.market import MarketRepository
-from vietnam_research.domain.valueobject.radar_chart import Axis, Layer
+from vietnam_research.domain.valueobject.line_chart import LineChartLayer
+from vietnam_research.domain.valueobject.radar_chart import Axis, RadarChartLayer
 from vietnam_research.forms import ExchangeForm
 from vietnam_research.models import Industry
 
@@ -81,20 +82,28 @@ class VietnamMarketDataProvider(MarketAbstract):
 
         Returns:
             dict: VN-Indexのタイムラインデータ
+        See Also: https://www.chartjs.org/docs/latest/getting-started/
         """
-        return self.repository.get_vnindex_timeline()
+        records = self.repository.get_vnindex_timeline()
+        return {
+            "labels": [record["Y"] + record["M"] for record in records],
+            "datasets": [
+                LineChartLayer(
+                    label="VN-Index",
+                    data=[record["closing_price"] for record in records],
+                ).to_dict()
+            ],
+        }
 
     def vnindex_annual_layers(self) -> dict:
         datasets = []
         for year in self.repository.get_distinct_values("Y"):
+            records = self.repository.get_vnindex_at_year(year)
             datasets.append(
-                {
-                    "label": year,
-                    "data": [
-                        record["closing_price"]
-                        for record in self.repository.get_year_records(year)
-                    ],
-                }
+                LineChartLayer(
+                    label=year,
+                    data=[record["closing_price"] for record in records],
+                ).to_dict()
             )
         return {
             "labels": self.repository.get_distinct_values("M"),
@@ -124,8 +133,8 @@ class VietnamMarketDataProvider(MarketAbstract):
         aggregate_field: str,
         aggregate_alias: str,
         denominator_field: str,
-    ) -> list[Layer]:
-        layers: list[Layer] = []
+    ) -> list[RadarChartLayer]:
+        layers: list[RadarChartLayer] = []
         for m in months_dating_back:
             try:
                 denominator = self.repository.get_denominator_for(m, denominator_field)
@@ -141,7 +150,7 @@ class VietnamMarketDataProvider(MarketAbstract):
                 )
 
                 layers.append(
-                    Layer(
+                    RadarChartLayer(
                         name=f"{rec_type} {m}ヶ月前",
                         axes=[
                             Axis(
@@ -161,21 +170,10 @@ class VietnamMarketDataProvider(MarketAbstract):
 
         return layers
 
-    def radar_chart_count(self) -> list[Layer]:
+    def radar_chart_count(self) -> list[RadarChartLayer]:
         """
         企業数の業種別占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
-        [
-            {
-                "name": "企業数 0ヶ月前",
-                "axes": [
-                    {"axis": "1|農林水産業", "value": 0.04},
-                    {"axis": "2|建設業", "value": 0.11},
-                    ...
-                 ]
-            },
-            ...
-        ]
 
         See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
         """
@@ -187,21 +185,10 @@ class VietnamMarketDataProvider(MarketAbstract):
             denominator_field="id",
         )
 
-    def radar_chart_cap(self) -> list[Layer]:
+    def radar_chart_cap(self) -> list[RadarChartLayer]:
         """
         時価総額の業種別占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
-        [
-            {
-                "name": "時価総額 -1ヶ月前",
-                "axes": [
-                    {"axis": "1|農林水産業", "value": 0},
-                    {"axis": "2|建設業", "value": 0},
-                    ...
-                ]
-            },
-            ...
-        ]
 
         See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
         """
