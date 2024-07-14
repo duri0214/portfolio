@@ -11,7 +11,7 @@ class Axis:
 
 
 @dataclass
-class Layer:
+class RadarChartLayer:
     name: str
     axes: list[Axis]
 
