@@ -9,7 +9,8 @@ from django.db.models.functions import Round
 
 from config.settings import STATIC_ROOT
 from vietnam_research.domain.repository.market import MarketRepository
-from vietnam_research.domain.valueobject.radar_chart import Axis, Layer
+from vietnam_research.domain.valueobject.line_chart import LineChartLayer
+from vietnam_research.domain.valueobject.radar_chart import Axis, RadarChartLayer
 from vietnam_research.forms import ExchangeForm
 from vietnam_research.models import Industry
 
@@ -82,19 +83,33 @@ class VietnamMarketDataProvider(MarketAbstract):
         Returns:
             dict: VN-Indexのタイムラインデータ
         """
-        return self.repository.get_vnindex_timeline()
+        # TODO: Layerをひとつ返せばいいのでは？
+        """
+        vn-indexのシンプルなYM時系列データセットを作成します
+
+        See Also: https://www.chartjs.org/docs/latest/getting-started/
+        """
+        records = self.repository.get_vnindex_timeline()
+        return {
+            "labels": [record["Y"] + record["M"] for record in records],
+            "datasets": [
+                LineChartLayer(
+                    label="VN-Index",
+                    data=[record["closing_price"] for record in records],
+                ).to_dict()
+            ],
+        }
 
     def vnindex_annual_layers(self) -> dict:
+        # TODO: Layerを複数返せばいいのでは？
         datasets = []
         for year in self.repository.get_distinct_values("Y"):
+            records = self.repository.get_vnindex_at_year(year)
             datasets.append(
-                {
-                    "label": year,
-                    "data": [
-                        record["closing_price"]
-                        for record in self.repository.get_year_records(year)
-                    ],
-                }
+                LineChartLayer(
+                    label=year,
+                    data=[record["closing_price"] for record in records],
+                ).to_dict()
             )
         return {
             "labels": self.repository.get_distinct_values("M"),
@@ -124,8 +139,8 @@ class VietnamMarketDataProvider(MarketAbstract):
         aggregate_field: str,
         aggregate_alias: str,
         denominator_field: str,
-    ) -> list[Layer]:
-        layers: list[Layer] = []
+    ) -> list[RadarChartLayer]:
+        layers: list[RadarChartLayer] = []
         for m in months_dating_back:
             try:
                 denominator = self.repository.get_denominator_for(m, denominator_field)
@@ -141,7 +156,7 @@ class VietnamMarketDataProvider(MarketAbstract):
                 )
 
                 layers.append(
-                    Layer(
+                    RadarChartLayer(
                         name=f"{rec_type} {m}ヶ月前",
                         axes=[
                             Axis(
@@ -161,7 +176,7 @@ class VietnamMarketDataProvider(MarketAbstract):
 
         return layers
 
-    def radar_chart_count(self) -> list[Layer]:
+    def radar_chart_count(self) -> list[RadarChartLayer]:
         """
         企業数の業種別占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
@@ -187,7 +202,7 @@ class VietnamMarketDataProvider(MarketAbstract):
             denominator_field="id",
         )
 
-    def radar_chart_cap(self) -> list[Layer]:
+    def radar_chart_cap(self) -> list[RadarChartLayer]:
         """
         時価総額の業種別占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
