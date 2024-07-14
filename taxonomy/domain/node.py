@@ -8,6 +8,7 @@ class Node:
     See Also: https://www.pythonforbeginners.com/lists/linked-list-in-python
     See Also: https://engineeringnote.hateblo.jp/entry/python/algorithm-and-data-structures/multi_list_structure
     """
+
     _name: str
     _children: list[Node]
 
@@ -33,7 +34,7 @@ class Node:
     def list(self) -> list[Node]:
         return self._children
 
-    def add_child(self, node: 'Node'):
+    def add_child(self, node: "Node"):
         """
         _children に node がいないことを確認してから追加する
         TODO: return の戻り型をSelf（3.11+）
@@ -67,7 +68,7 @@ class Node:
 class NodeTree:
     _tree: Node
 
-    def __init__(self, records: list[BreedEntity], name: str = 'root'):
+    def __init__(self, records: list[BreedEntity], name: str = "root"):
         self._tree = Node(name)
         self._breed_entities = records
 
