@@ -82,11 +82,6 @@ class VietnamMarketDataProvider(MarketAbstract):
 
         Returns:
             dict: VN-Indexのタイムラインデータ
-        """
-        # TODO: Layerをひとつ返せばいいのでは？
-        """
-        vn-indexのシンプルなYM時系列データセットを作成します
-
         See Also: https://www.chartjs.org/docs/latest/getting-started/
         """
         records = self.repository.get_vnindex_timeline()
@@ -101,7 +96,6 @@ class VietnamMarketDataProvider(MarketAbstract):
         }
 
     def vnindex_annual_layers(self) -> dict:
-        # TODO: Layerを複数返せばいいのでは？
         datasets = []
         for year in self.repository.get_distinct_values("Y"):
             records = self.repository.get_vnindex_at_year(year)
@@ -180,17 +174,6 @@ class VietnamMarketDataProvider(MarketAbstract):
         """
         企業数の業種別占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
-        [
-            {
-                "name": "企業数 0ヶ月前",
-                "axes": [
-                    {"axis": "1|農林水産業", "value": 0.04},
-                    {"axis": "2|建設業", "value": 0.11},
-                    ...
-                 ]
-            },
-            ...
-        ]
 
         See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
         """
@@ -206,17 +189,6 @@ class VietnamMarketDataProvider(MarketAbstract):
         """
         時価総額の業種別占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190\n
         時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
-        [
-            {
-                "name": "時価総額 -1ヶ月前",
-                "axes": [
-                    {"axis": "1|農林水産業", "value": 0},
-                    {"axis": "2|建設業", "value": 0},
-                    ...
-                ]
-            },
-            ...
-        ]
 
         See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
         """
