@@ -52,30 +52,6 @@ class MarketRepository:
         )
 
     @staticmethod
-    def get_vnindex_timeline() -> dict:
-        """
-        vn-indexのシンプルなYM時系列データセットを作成します
-
-        See Also: https://www.chartjs.org/docs/latest/getting-started/
-        """
-        records = VnIndex.objects.time_series_closing_price()
-        vnindex_timeline = {
-            "labels": [
-                record["Y"] + record["M"] for record in records.order_by("Y", "M")
-            ],
-            "datasets": [
-                {
-                    "label": "VN-Index",
-                    "data": [
-                        record["closing_price"] for record in records.order_by("Y", "M")
-                    ],
-                }
-            ],
-        }
-
-        return vnindex_timeline
-
-    @staticmethod
     def get_distinct_values(distinct_field: str) -> list:
         return [
             record[distinct_field]
@@ -86,7 +62,11 @@ class MarketRepository:
         ]
 
     @staticmethod
-    def get_year_records(year: str) -> list:
+    def get_vnindex_timeline() -> QuerySet:
+        return VnIndex.objects.time_series_closing_price().order_by("Y", "M")
+
+    @staticmethod
+    def get_vnindex_at_year(year: str) -> list:
         return (
             VnIndex.objects.time_series_closing_price()
             .filter(Y=year)
