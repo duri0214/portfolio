@@ -39,16 +39,20 @@
         <div class="card-group">
             {% for product in products %}
                 <div class="col">
-                    <div class="card mt-3" style="width: 15rem; height: 20rem">
+                    <div class="card m-3" style="width: 15rem">
                         <img src="{{ product.picture.url }}" class="card-img-top" alt="{{ product.code }}">
                         <div class="card-body">
-                            <h8 class="card-title">{{ product.name | truncatechars:12 }}</h8>
+                            <h6 class="card-title">{{ product.name | truncatechars:12 }}</h6>
                             <p style="font-size: small;" class="card-text">
                                 price: @{{ product.price | intcomma }} 円<br>
                                 {{ product.description | truncatechars:20 }}
                             </p>
                             <a href="{% url 'shp:product_detail' product.pk %}"
                                style="font-size: small;">もっと詳しく</a>
+                            <a href="{% url 'shp:product_edit' product.pk %}"
+                               class="btn btn-primary">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -75,40 +79,6 @@
         <h2 id="maintain" class="mt-4">｜管理用</h2>
         <a href="{% url 'shp:product_register_single' %}">単品登録</a>
         <a href="{% url 'shp:product_register_bulk' %}">CSV登録</a>
-        <table id="edit_table" class="table">
-            <thead>
-            <tr>
-                <th>code</th>
-                <th>name</th>
-                <th>price</th>
-                <th>description</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for item in editable_list %}
-                <tr>
-                    <td>{{ item.code }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.price | intcomma }}</td>
-                    <td>{{ item.description | truncatechars:20 }}</td>
-                </tr>
-                <tr class="edit_record">
-                    <form action="{% url 'shp:product_edit' 1 %}" method="POST">
-                        {% csrf_token %}
-                        <td colspan="4">
-                            {{ editable_form.code }}
-                            {{ editable_form.name }}
-                            {{ editable_form.price }}
-                            {{ editable_form.description }}
-                            <input type="submit">
-                        </td>
-                    </form>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
     </div>
-
-    <script>addRowHandler();</script>
 
 {% endblock %}
