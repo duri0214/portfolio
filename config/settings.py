@@ -87,7 +87,7 @@ DATABASES = {
         "USER": "python",
         "PASSWORD": os.environ.get("PASSWORD"),
         "HOST": "localhost",
-        "PORT": 3306,
+        "PORT": "3306",
         "TEST": {
             "NAME": "test_portfolio_db",
         },
