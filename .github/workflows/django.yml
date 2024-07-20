@@ -37,7 +37,6 @@ jobs:
           mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
           mysql -u root -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $NAME.* to '$USER'@'localhost';"
           
-          python3 --version
           python3 -m venv venv
           source venv/bin/activate
           python -m pip install --upgrade pip
