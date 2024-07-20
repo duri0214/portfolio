@@ -37,6 +37,7 @@ jobs:
           mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
           mysql -u root -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $NAME.* to '$USER'@'localhost';"
           mysql -u root -proot -e "CREATE DATABASE $NAME DEFAULT CHARACTER SET utf8mb4;"
+          mysql -u root -proot -e "CREATE USER SHOW GRANTS FOR '$USER'@'localhost';"
           python3 --version
           python3 -m venv venv
           source venv/bin/activate
