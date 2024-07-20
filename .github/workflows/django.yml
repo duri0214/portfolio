@@ -28,7 +28,7 @@ jobs:
         env:
           ENGINE: django.db.backends.mysql
           NAME: test_portfolio_db
-          USER: python
+          USER: ${{ secrets.USER }}
           PASSWORD: ${{ secrets.PASSWORD }}
           HOST: localhost
           PORT: 3306
