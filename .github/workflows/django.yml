@@ -29,11 +29,10 @@ jobs:
           TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
           USER: ${{ secrets.USER }}
           PASSWORD: ${{ secrets.PASSWORD }}
-          HOST: ${{ secrets.HOST }}
         run: |
           sudo systemctl start mysql
-          mysql -u root -proot -e "CREATE USER '$USER'@'$HOST' IDENTIFIED BY '$PASSWORD';"
-          mysql -u root -proot -e "GRANT ALL ON $TEST_DB_NAME.* TO '$USER'@'$HOST';"
+          mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
+          mysql -u root -proot -e "GRANT ALL ON $TEST_DB_NAME.* TO '$USER'@'localhost';"
           
           python -m pip install setuptools
           python -m pip install -r requirements.txt
