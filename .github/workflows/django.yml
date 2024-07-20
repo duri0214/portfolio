@@ -25,11 +25,9 @@ jobs:
           cache: pip
 
       - name: Set up
-        env:
-          PASSWORD: ${{ secrets.PASSWORD }}
         run: |
           sudo systemctl start mysql
-          mysql -u root -proot -e "CREATE USER 'python'@'localhost' IDENTIFIED BY '$PASSWORD';"
+          mysql -u root -proot -e "CREATE USER 'python'@'localhost';"
           mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO 'python'@'localhost';"
           
           python -m pip install setuptools
