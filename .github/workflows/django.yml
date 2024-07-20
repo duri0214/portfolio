@@ -56,7 +56,6 @@ jobs:
           echo $HOST
           echo $PORT
           
-          python manage.py migrate
           export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
 
       - name: Check Tables and Permissions
