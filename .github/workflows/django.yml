@@ -34,7 +34,7 @@ jobs:
           PORT: 3306
         run: |
           sudo systemctl start mysql
-          mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO '$USER'@'localhost';"
+          mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO 'root'@'localhost';"
           
           python -m pip install --upgrade pip
           python -m pip install setuptools
