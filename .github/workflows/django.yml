@@ -57,19 +57,6 @@ jobs:
           
           export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
 
-      - name: Check Tables and Permissions
-        env:
-          DB_NAME: test_portfolio_db
-          DB_USER: root
-          DB_USER_PYTHON: python
-          DB_PASSWORD: root
-          DB_PASSWORD_PYTHON: python123
-        run: |
-          echo "Checking DB tables..."
-          mysql -u$DB_USER_PYTHON -p$DB_PASSWORD_PYTHON -e "USE $DB_NAME; SHOW TABLES;"
-          echo "Checking user permissions..."
-          mysql -u$DB_USER -p$DB_PASSWORD -e "SHOW GRANTS FOR '$DB_USER_PYTHON'@'localhost';"
-
       - name: Run tests
         env:
           ENGINE: django.db.backends.mysql
