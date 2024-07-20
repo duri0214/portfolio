@@ -26,45 +26,17 @@ jobs:
 
       - name: Set up
         env:
-          ENGINE: django.db.backends.mysql
-          NAME: test_portfolio_db
-          USER: python
-          PASSWORD: python123
-          HOST: localhost
-          PORT: 3306
+          PASSWORD: ${{ secrets.PASSWORD }}
         run: |
           sudo systemctl start mysql
-          mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
-          mysql -u root -proot -e "GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on $NAME.* to '$USER'@'localhost';"
-          mysql -u root -proot -e "SHOW GRANTS FOR '$USER'@'localhost';"
-          mysql -u root -proot -e "SHOW DATABASES;"
+          mysql -u root -proot -e "CREATE USER 'python'@'localhost' IDENTIFIED BY '$PASSWORD';"
+          mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO 'python'@'localhost';"
           
-          python3 --version
-          python3 -m venv venv
-          source venv/bin/activate
-          python -m pip install --upgrade pip
           python -m pip install setuptools
           python -m pip install -r requirements.txt
           python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
-          
-          # Output the environment variables
-          echo $ENGINE
-          echo $NAME
-          echo $USER
-          echo $PASSWORD
-          echo $HOST
-          echo $PORT
 
       - name: Run tests
-        env:
-          ENGINE: django.db.backends.mysql
-          NAME: test_portfolio_db
-          USER: python
-          PASSWORD: python123
-          HOST: localhost
-          PORT: 3306
         run: |
           export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
-          mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO '$USER'@'localhost';"
-          source venv/bin/activate
           python manage.py test
