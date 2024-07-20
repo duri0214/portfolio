@@ -46,14 +46,7 @@ jobs:
           python -m pip install setuptools
           python -m pip install -r requirements.txt
           python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
-          
-          # Output the environment variables
-          echo $ENGINE
-          echo $NAME
-          echo $USER
-          echo $PASSWORD
-          echo $HOST
-          echo $PORT
+
 
       - name: Run tests
         env:
