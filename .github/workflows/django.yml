@@ -37,7 +37,6 @@ jobs:
           mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
           mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO '$USER'@'localhost';"
           
-          python -m pip install --upgrade pip
           python -m pip install setuptools
           python -m pip install -r requirements.txt
           python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
