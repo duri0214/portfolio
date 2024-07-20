@@ -26,7 +26,7 @@ jobs:
 
       - name: Set up
         env:
-          PASSWORD: ${{ secrets.PASSWORD }}
+          PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           sudo systemctl start mysql
           mysql -u root -proot -e "CREATE USER 'python'@'localhost' IDENTIFIED BY '$PASSWORD';"
