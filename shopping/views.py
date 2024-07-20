@@ -8,14 +8,14 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import (
-    TemplateView,
     DetailView,
     CreateView,
     FormView,
     UpdateView,
+    ListView,
 )
 
-from .forms import ProductEditForm, RegisterFormSingle, RegisterFormBulk
+from .forms import RegisterFormSingle, RegisterFormBulk
 from .models import Products, BuyingHistory, Staff
 
 # stripe api key
@@ -83,36 +83,15 @@ class UploadBulk(FormView):
         return redirect("shp:index")
 
 
-class Index(TemplateView):
-    """IndexView"""
-
+class Index(ListView):
+    model = Products
     template_name = "shopping/index.html"
-
-    # model = Products
-    # paginate_by = 5 # TODO paging
+    paginate_by = 5
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["products"] = Products.objects.all()
-        context["editable_list"] = Products.objects.order_by("id")[:5]
-        context["editable_form"] = ProductEditForm()
         context["staffs"] = Staff.objects.all()
         return context
-
-    @staticmethod
-    def post(request, **kwargs):
-        """
-        商品データを編集する
-        """
-        form = ProductEditForm(request.POST)
-        if form.is_valid():
-            product = Products.objects.get(code=form.cleaned_data["code"])
-            product.code = form.cleaned_data["code"]
-            product.name = form.cleaned_data["name"]
-            product.price = form.cleaned_data["price"]
-            product.description = form.cleaned_data["description"]
-            product.save()
-        return redirect("shp:index")
 
 
 class ProductDetail(DetailView):

@@ -37,7 +37,7 @@
 
         <h2 class="mt-4">｜商品一覧</h2>
         <div class="card-group">
-            {% for product in products %}
+            {% for product in page_obj %}
                 <div class="col">
                     <div class="card m-3" style="width: 15rem">
                         <img src="{{ product.picture.url }}" class="card-img-top" alt="{{ product.code }}">
@@ -59,21 +59,16 @@
             {% endfor %}
         </div>
 
-        <!-- previous paginate -->
-        <div class="paginate">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}">前へ</a>
-            {% else %}
-                <span>前へ</span>
-            {% endif %}
-            <!-- page -->
-            {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}
-            <!-- next paginate -->
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}">次へ</a>
-            {% else %}
-                <span>次へ</span>
-            {% endif %}
+        <div class="pagination">
+            <a class="btn {% if page_obj.has_previous %}btn-primary{% else %}btn-secondary{% endif %} {% if not page_obj.has_previous %}disabled{% endif %}"
+               href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% endif %}">
+                前へ
+            </a>
+            <span>{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+            <a class="btn {% if page_obj.has_next %}btn-primary{% else %}btn-secondary{% endif %} {% if not page_obj.has_next %}disabled{% endif %}"
+               href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% endif %}">
+                次へ
+            </a>
         </div>
 
         <h2 id="maintain" class="mt-4">｜管理用</h2>
