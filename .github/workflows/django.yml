@@ -26,6 +26,7 @@ jobs:
 
       - name: Set up
         env:
+          ENGINE: ${{secrets.DB_ENGINE}}
           TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
           USER: ${{ secrets.USER }}
           PASSWORD: ${{ secrets.PASSWORD }}
