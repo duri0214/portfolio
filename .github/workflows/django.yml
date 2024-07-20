@@ -30,7 +30,6 @@ jobs:
           USER: ${{ secrets.USER }}
           PASSWORD: ${{ secrets.PASSWORD }}
           HOST: ${{ secrets.HOST }}
-          PORT: 3306
         run: |
           sudo systemctl start mysql
           mysql -u root -proot -e "CREATE USER '$USER'@'$HOST' IDENTIFIED BY '$PASSWORD';"
