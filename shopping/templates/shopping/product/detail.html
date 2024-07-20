@@ -6,15 +6,11 @@
 {% endblock %}
 
 {% block content %}
-
     <p>{{ message }}</p>
-    <form method="GET" class="registration" action="{% url 'shp:index' %}">
-        {% csrf_token %}
-        <button type="submit">戻る</button>
-    </form>
 
-    <!-- 書籍の情報の表示 -->
+    <!-- ピザ情報の表示 -->
     <h1>{{ object.name }}</h1>
+    <img src="{{ object.picture.url }}" alt="missing picture">
     <p class="lead">{{ object.created_at }} - {{ object.price }}円</p>
     <p>{{ object.description | linebreaksbr }}<p>
 
@@ -35,5 +31,6 @@
             </script>
         </form>
         <!-- {% endif %} -->
+    <a href="{% url 'shp:index' %}">もどる</a>
 
 {% endblock %}
