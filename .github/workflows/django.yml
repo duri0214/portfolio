@@ -54,8 +54,6 @@ jobs:
           echo $PASSWORD
           echo $HOST
           echo $PORT
-          
-          export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
 
       - name: Run tests
         env:
@@ -66,6 +64,7 @@ jobs:
           HOST: localhost
           PORT: 3306
         run: |
+          export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
           mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO '$USER'@'localhost';"
           source venv/bin/activate
           python manage.py test
