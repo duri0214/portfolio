@@ -26,16 +26,15 @@ jobs:
 
       - name: Set up
         env:
-          ENGINE: django.db.backends.mysql
           TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
           USER: ${{ secrets.USER }}
           PASSWORD: ${{ secrets.PASSWORD }}
-          HOST: localhost
+          HOST: ${{ secrets.HOST }}
           PORT: 3306
         run: |
           sudo systemctl start mysql
-          mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
-          mysql -u root -proot -e "GRANT ALL ON $TEST_DB_NAME.* TO '$USER'@'localhost';"
+          mysql -u root -proot -e "CREATE USER '$USER'@'$HOST' IDENTIFIED BY '$PASSWORD';"
+          mysql -u root -proot -e "GRANT ALL ON $TEST_DB_NAME.* TO '$USER'@'$HOST';"
           
           python -m pip install setuptools
           python -m pip install -r requirements.txt
