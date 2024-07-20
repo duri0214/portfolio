@@ -27,7 +27,7 @@ jobs:
       - name: Set up
         env:
           ENGINE: django.db.backends.mysql
-          NAME: test_portfolio_db
+          TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
           USER: ${{ secrets.USER }}
           PASSWORD: ${{ secrets.PASSWORD }}
           HOST: localhost
@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo systemctl start mysql
           mysql -u root -proot -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY '$PASSWORD';"
-          mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO '$USER'@'localhost';"
+          mysql -u root -proot -e "GRANT ALL ON $TEST_DB_NAME.* TO '$USER'@'localhost';"
           
           python -m pip install setuptools
           python -m pip install -r requirements.txt
