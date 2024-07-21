@@ -36,12 +36,16 @@ python manage.py createsuperuser
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
 - createsuperuser をやったあとじゃないと失敗するfixtureがあるよ
 - バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` の seeder は14日ぶん用意しましょう
-    - seederの日付はだんだん古くなっていくのでメンテしてね
+    - seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
 
-```text
+```sql
+-- 何月のデータがあるの？の確認
 SELECT x.recorded_date
 FROM portfolio_db.vietnam_research_industry x
-GROUP BY x.recorded_date;
+GROUP BY x.recorded_date
+ORDER BY x.recorded_date;
+
+-- ある日付を別の日付に編集する
 UPDATE portfolio_db.vietnam_research_industry
 SET recorded_date = '2024-05-02'
 WHERE recorded_date = '2023-01-17';
