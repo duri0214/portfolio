@@ -119,9 +119,11 @@ python manage.py import_soil_hardness /path/to/folder
 ## よくつかうメンテナンスコマンド
 
 ```commandline
+cd /var/www/html/portfolio
 source /var/www/html/venv/bin/activate
 systemctl restart apache2
 chown -R ubuntu:ubuntu /var/www/html
+python manage.py collectstatic
 ```
 
 ## vietnam_research
