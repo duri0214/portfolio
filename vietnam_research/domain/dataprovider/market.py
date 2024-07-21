@@ -168,36 +168,6 @@ class VietnamMarketDataProvider(MarketAbstract):
 
         return layers
 
-    def radar_chart_count(self) -> list[RadarChartLayer]:
-        """
-        企業数の業種別占有率 e.g. 農林水産業 31count ÷ 全部 750count = 0.041333\n
-        時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
-
-        See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
-        """
-        return self.radar_chart(
-            rec_type="企業数",
-            months_dating_back=[-1, -4, -7],
-            aggregate_field="id",
-            aggregate_alias="count",
-            denominator_field="id",
-        )
-
-    def radar_chart_cap(self) -> list[RadarChartLayer]:
-        """
-        時価総額の業種別占有率 e.g. 農林水産業 2479.07cap ÷ 全部 174707.13cap = 0.014190\n
-        時期の異なる3つのレーダーチャートを重ねて表示します（前月、4ヶ月前、7ヶ月前）\n
-
-        See Also: https://qiita.com/YoshitakaOkada/items/c42483625d6d1622fbc7
-        """
-        return self.radar_chart(
-            rec_type="時価総額",
-            months_dating_back=[-1, -4, -7],
-            aggregate_field="marketcap",
-            aggregate_alias="marketcap_sum",
-            denominator_field="marketcap",
-        )
-
     def uptrend(self) -> dict:
         uptrend = self.repository.get_annotated_uptrend()
 

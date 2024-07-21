@@ -30,10 +30,28 @@ class MarketRetrievalService:
 
         return {
             "industry_count": json.dumps(
-                [x.to_dict() for x in vietnam_market_data_provider.radar_chart_count()]
+                [
+                    x.to_dict()
+                    for x in vietnam_market_data_provider.radar_chart(
+                        rec_type="企業数",
+                        months_dating_back=[-1, -4, -7],
+                        aggregate_field="id",
+                        aggregate_alias="count",
+                        denominator_field="id",
+                    )
+                ]
             ),
             "industry_cap": json.dumps(
-                [x.to_dict() for x in vietnam_market_data_provider.radar_chart_cap()]
+                [
+                    x.to_dict()
+                    for x in vietnam_market_data_provider.radar_chart(
+                        rec_type="時価総額",
+                        months_dating_back=[-1, -4, -7],
+                        aggregate_field="marketcap",
+                        aggregate_alias="marketcap_sum",
+                        denominator_field="marketcap",
+                    )
+                ]
             ),
             "vnindex_timeline": json.dumps(
                 vietnam_market_data_provider.vnindex_timeline()
