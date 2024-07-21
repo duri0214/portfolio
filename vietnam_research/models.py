@@ -276,3 +276,13 @@ class FinancialResultWatch(models.Model):
     sales_unit = models.ForeignKey(
         Unit, on_delete=models.CASCADE, related_name="r_sales_unit"
     )
+
+
+class FaoFoodBalanceRankers(models.Model):
+    year = models.PositiveIntegerField()
+    rank = models.PositiveIntegerField()
+    name = models.CharField(max_length=255)
+    item = models.CharField(max_length=255)
+    element = models.CharField(max_length=255)
+    unit = models.CharField(max_length=255)
+    value = models.FloatField()
