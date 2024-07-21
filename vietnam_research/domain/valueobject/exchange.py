@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from vietnam_research.domain.service.market import VietnamMarketDataProvider
+from vietnam_research.domain.dataprovider.market import VietnamMarketDataProvider
 
 
 @dataclass
