@@ -8,15 +8,17 @@
         <hr class="my-4">
         <p>You can calculate the exchange</p>
         <ul>
-            <li><a class="btn btn-secondary btn-sm" href="#sbi_topics" role="button">SBI TOPICS</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#macro_analysis_by_industry"
+            <li><a class="btn btn-secondary btn-sm" href="#fao-stat-food-balance-trend" role="button">FAO STAT
+                food balance trend</a></li>
+            <li><a class="btn btn-secondary btn-sm" href="#sbi-topics" role="button">SBI TOPICS</a></li>
+            <li><a class="btn btn-secondary btn-sm" href="#macro-analysis-by-industry"
                    role="button">業種別マクロ分析</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#trading_value_by_industry" role="button">業種別売買代金</a>
+            <li><a class="btn btn-secondary btn-sm" href="#trading-value-by-industry" role="button">業種別売買代金</a>
             </li>
             <li><a class="btn btn-secondary btn-sm" href="#uptrend" role="button">移動平均線上昇トレンド銘柄</a></li>
             <li><a class="btn btn-secondary btn-sm" href="#exchange" role="button">為替計算</a></li>
             <li><a class="btn btn-secondary btn-sm" href="#watchlist" role="button">ウォッチリスト</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#what_is_per" role="button">What is PER?</a></li>
+            <li><a class="btn btn-secondary btn-sm" href="#what-is-per" role="button">What is PER?</a></li>
             <li><a href="{% url 'vnm:financial_results' %}" class="btn btn-secondary btn-sm"
                    role="button">決算ウォッチング</a></li>
         </ul>
@@ -90,13 +92,13 @@
             </div>
         </div>
     </div>
-    <div id="fao_data" class="jumbotron">
+    <div id="fao-stat-food-balance-trend" class="jumbotron">
         <h2 class="display-4">FAOSTAT FoodBalanceRanker Trend</h2>
         <p><a href="https://www.fao.org/faostat/en/#data/FBS/visualize" target="_blank">Food Balances (2010-)</a>
             から水産物供給量の推移 を使って推移グラフを作る</p>
         <ul>
-            <li class="d-block">Item: Fish, Seafood</li>
-            <li class="d-block">Element: Food supply quantity (kg/capita/yr)</li>
+            <li class="d-block"><b>Item:</b> Fish, Seafood</li>
+            <li class="d-block"><b>Element:</b> Food supply quantity (kg/capita/yr)</li>
         </ul>
         <table class="table table-striped table-bordered">
             <thead>
@@ -118,13 +120,13 @@
         </table>
     </div>
 
-    <div id="sbi_topics" class="jumbotron">
+    <div id="sbi-topics" class="jumbotron">
         <h2 class="display-4">SBI TOPICS</h2>
         {{ sbi_topics|safe }}
     </div>
 
     <div class="container">
-        <div id="macro_analysis_by_industry" class="mt-5">
+        <div id="macro-analysis-by-industry" class="mt-5">
             <h2>業種別マクロ分析</h2>
             <p>これで3年分ぐらいを重ねてみたい</p>
             <p>足元の鉱業の不調は、かつてベトナムの主力輸出品であった原油の生産量が原油価格低迷に伴い減少したことが主因と見られる。
@@ -144,7 +146,7 @@
             </div>
         </div>
 
-        <div id="trading_value_by_industry" class="mt-5">
+        <div id="trading-value-by-industry" class="mt-5">
             <h2>業種別売買代金</h2>
             <h6>trading price by industry</h6>
             <p>10億ドン[÷1,000,000,000]</p>
@@ -336,7 +338,7 @@
             {% endfor %}
         </div>
 
-        <div id="what_is_per" class="mt-5">
+        <div id="what-is-per" class="mt-5">
             <h2>PERとは</h2>
             <img src="{% static 'vietnam_research/images/PER.png' %}" alt="PER">
         </div>
