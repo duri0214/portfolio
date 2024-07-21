@@ -1,5 +1,6 @@
 import json
 import logging
+from dataclasses import asdict
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Sum
@@ -13,8 +14,8 @@ from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 from vietnam_research.domain.repository.like import LikeRepository
 from vietnam_research.domain.service.market import (
     MarketRetrievalService,
-    MarketCalculationService,
 )
+from vietnam_research.domain.valueobject.exchange import ExchangeProcess
 from vietnam_research.forms import (
     ArticleForm,
     WatchlistCreateForm,
@@ -36,18 +37,19 @@ class IndexView(TemplateView):
 
         return render(request, self.template_name, market_retrieval_service.to_dict())
 
-    def post(self, request, *args, **kwargs):
-        market_calculation_service = MarketCalculationService(request)
+    @staticmethod
+    def post(request, *args, **kwargs):
         exchange_form = ExchangeForm(request.POST)
         if exchange_form.is_valid():
-            market_calculation_service.calculate(exchange_form.cleaned_data)
-            response = redirect("vnm:index")
-            response["location"] += "?" + urlencode(market_calculation_service.data)
-            response["location"] += "#exchange"
-            return response
-        return render(
-            request, self.template_name, {"data": market_calculation_service.data}
-        )
+            exchange_process = ExchangeProcess(
+                exchange_form.cleaned_data["current_balance"],
+                exchange_form.cleaned_data["unit_price"],
+                exchange_form.cleaned_data["quantity"],
+            )
+            base_location = redirect("vnm:index")["location"]
+            query_string = urlencode(asdict(exchange_process))
+            response_location = f"{base_location}?{query_string}#exchange"
+            return redirect(response_location)
 
 
 class LikesView(LoginRequiredMixin, View):
