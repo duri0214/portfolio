@@ -40,9 +40,11 @@ class IndexView(TemplateView):
         df = pd.DataFrame(
             list(FaoFoodBalanceRankers.objects.filter(rank__lte=10).values())
         )
-        pivot_df = df.pivot(index="rank", columns="year", values="name")
-        pivot_dict = pivot_df.reset_index().to_dict("records")
-        context["fao_rank_trend"] = pivot_dict
+        if not df.empty:
+            pivot_df = df.pivot(index="rank", columns="year", values="name")
+            context["fao_rank_trend"] = pivot_df.reset_index().to_dict("records")
+        else:
+            context["fao_rank_trend"] = []
 
         return render(request, self.template_name, context)
 
