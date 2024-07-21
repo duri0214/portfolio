@@ -257,10 +257,10 @@
 
                 <button type="submit" class="btn btn-primary">計算</button>
             </form>
-            残高(VND): {{ exchanged.current_balance | intcomma }}<br>
-            @{{ exchanged.unit_price | intcomma }} * {{ exchanged.quantity | intcomma }}
+            残高: {{ exchanged.current_balance | intcomma }}VND<br>
+            価格: @{{ exchanged.unit_price | intcomma }}VND * {{ exchanged.quantity | intcomma }}株
             = {{ exchanged.price_no_fee | intcomma }}VND<br>
-            手数料(VND): {{ exchanged.fee | intcomma }}<br>
+            手数料: {{ exchanged.fee | intcomma }}VND<br>
             差引残高: {{ exchanged.deduction_price | intcomma }} VND（<a
                 href="https://www.google.com/search?q={{ exchanged.deduction_price | intcomma }}vnd" target="_blank">日本円に変換する
             <i class="fas fa-external-link-alt"></i></a>）
