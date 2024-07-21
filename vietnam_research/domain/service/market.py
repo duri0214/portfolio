@@ -255,23 +255,3 @@ class MarketRetrievalService:
             "exchange_form": exchange_form,
             "exchanged": self.get_exchange_params(),
         }
-
-
-class MarketCalculationService:
-    def __init__(self, request):
-        self.request = request
-        self.market_vietnam = VietnamMarketDataProvider()
-        self.data = {}
-
-    def calculate(self, cleaned_data):
-        self.data["current_balance"] = cleaned_data["current_balance"]
-        self.data["unit_price"] = cleaned_data["unit_price"]
-        self.data["quantity"] = cleaned_data["quantity"]
-        self.data["price_no_fee"] = self.data["unit_price"] * self.data["quantity"]
-        self.data["fee"] = self.market_vietnam.calculate_transaction_fee(
-            price_without_fees=self.data["price_no_fee"]
-        )
-        self.data["price_in_fee"] = self.data["price_no_fee"] + self.data["fee"]
-        self.data["deduction_price"] = (
-            self.data["current_balance"] - self.data["price_in_fee"]
-        )
