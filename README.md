@@ -137,8 +137,6 @@ python manage.py import_soil_hardness /path/to/folder
     - `python manage.py daily_industry_chart_and_uptrend` のバッチをまわす
     - `python manage.py daily_industry_stacked_bar_chart` のバッチをまわす
 - FAOから水産物供給量の推移グラフ
-    - [food balances](https://www.fao.org/faostat/en/#data/FBS/visualize) のページから excel
-      をダウンロードする<img src="docs/vietnam_research/food_balances.png" alt="missing_picture">
     - `python manage.py fao_food_balance_chart` のバッチをまわす
 
 ## gmarker
