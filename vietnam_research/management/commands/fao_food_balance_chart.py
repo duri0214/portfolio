@@ -54,10 +54,18 @@ class Command(BaseCommand):
                         )
                     )
 
-        # bulk-insert
-        log_service = LogService("./result.log")
-        FaoFoodBalanceRankers.objects.bulk_create(fao_food_balance_rankers)
-        caller_file_name = Path(__file__).stem
-        log_service.write(
-            f"{caller_file_name} is done.({len(fao_food_balance_rankers)})"
-        )
+                # bulk-insert
+                chunk_size = 10000
+                for i in range(0, len(fao_food_balance_rankers), chunk_size):
+                    print(
+                        f"Processing chunk {i//chunk_size + 1}/{len(fao_food_balance_rankers) // chunk_size}"
+                    )
+                    FaoFoodBalanceRankers.objects.bulk_create(
+                        fao_food_balance_rankers[i : i + chunk_size]
+                    )
+
+                caller_file_name = Path(__file__).stem
+                log_service = LogService("./result.log")
+                log_service.write(
+                    f"{caller_file_name} is done.({len(fao_food_balance_rankers)})"
+                )
