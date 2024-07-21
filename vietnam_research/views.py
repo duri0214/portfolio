@@ -41,10 +41,10 @@ class IndexView(TemplateView):
         exchange_form = ExchangeForm(request.POST)
         if exchange_form.is_valid():
             market_calculation_service.calculate(exchange_form.cleaned_data)
-            response = redirect("vnm:index")
-            response["location"] += "?" + urlencode(market_calculation_service.data)
-            response["location"] += "#exchange"
-            return response
+            base_location = redirect("vnm:index")["location"]
+            query_string = urlencode(market_calculation_service.data)
+            response_location = f"{base_location}?{query_string}#exchange"
+            return redirect(response_location)
         return render(
             request, self.template_name, {"data": market_calculation_service.data}
         )
