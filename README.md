@@ -4,15 +4,6 @@
 ![Static Badge](https://img.shields.io/badge/django-4.2.8-green)
 ![Static Badge](https://img.shields.io/badge/mysql-8.0-green)
 
-## TODO
-
-- warehouse
-    - カレンダー実装したい gptでやろうとして一回挫折
-        - https://chuna.tech/detail/51/
-    - 倉庫業務のワークフローをgptに聞く
-    - 帳票デザインをgptに聞く
-- tabindexの研究
-
 ## ライブラリをインストールする
 
 ```console
