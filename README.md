@@ -105,19 +105,6 @@ python manage.py loaddata .\soil_analysis\fixtures\landscorechemical.json
 python manage.py loaddata .\soil_analysis\fixtures\device.json
 ```
 
-## バッチ
-
-daily_industry_chart_and_uptrend は 各期間（14日、7日、3日）を遡り、 すべての期間の株価が上昇傾向（斜度が正）であれば passed
-がインクリメントされる。つまり時系列データがないと画像は保存されない
-
-```
-python manage.py daily_import_from_bloomberg
-python manage.py daily_import_from_sbi
-python manage.py daily_import_from_vietkabu
-python manage.py daily_industry_chart_and_uptrend
-python manage.py daily_industry_stacked_bar_chart
-```
-
 ## インタラクティブシェル
 
 [Mr. Data Converter](https://shancarter.github.io/mr-data-converter/)
@@ -140,7 +127,17 @@ python manage.py import_soil_hardness /path/to/folder
 
 ## vietnam_research
 
+`daily_industry_chart_and_uptrend` は 各期間（14日、7日、3日）を遡り、 すべての期間の株価が上昇傾向（斜度が正）であれば passed
+がインクリメントされる。つまり時系列データがないと画像は保存されない
+
 - ベトナムの株価を分析する
+    - `python manage.py daily_import_from_bloomberg` のバッチをまわす
+    - `python manage.py daily_import_from_sbi` のバッチをまわす
+    - `python manage.py daily_import_from_vietkabu` のバッチをまわす
+    - `python manage.py daily_industry_chart_and_uptrend` のバッチをまわす
+    - `python manage.py daily_industry_stacked_bar_chart` のバッチをまわす
+- FAOから水産物供給量の推移グラフ
+    - `python manage.py fao_food_balance_chart` のバッチをまわす
 
 ## gmarker
 

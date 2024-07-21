@@ -71,7 +71,6 @@
                 <h2>改修予定</h2>
                 <h6>Scheduled to be repaired</h6>
                 <ul>
-                    <li><a href="https://www.fao.org/home/en/">FAOから種類別肉さかな消費量のグラフ</a></li>
                     <li>東南アジア各地のグラフで切り替えられるように</li>
                     <li>国の成長期に金融が稼げる理由は？</li>
                     <li>セクター別リターン</li>
@@ -80,13 +79,43 @@
                     <li>50万円で大口株主になれる先リスト</li>
                     <li>センチメント分析</li>
                     <li>ニュース・有報から上方修正先を抽出</li>
+                    <li>スクレイピング: 上場日</li>
                     <li>
                         <del>この予算（＋手数料）であと何株買えるの？の計算式をフォームで</del>
                     </li>
-                    <li>スクレイピング: 上場日</li>
+                    <li>
+                        <del>FAOから水産物供給量の推移グラフ</del>
+                    </li>
                 </ul>
             </div>
         </div>
+    </div>
+    <div id="fao_data" class="jumbotron">
+        <h2 class="display-4">FAOSTAT FoodBalanceRanker Trend</h2>
+        <p><a href="https://www.fao.org/faostat/en/#data/FBS/visualize" target="_blank">Food Balances (2010-)</a>
+            から水産物供給量の推移 を使って推移グラフを作る</p>
+        <ul>
+            <li class="d-block">Item: Fish, Seafood</li>
+            <li class="d-block">Element: Food supply quantity (kg/capita/yr)</li>
+        </ul>
+        <table class="table table-striped table-bordered">
+            <thead>
+            <tr>
+                {% for header in fao_rank_trend.0.keys %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in fao_rank_trend %}
+                <tr>
+                    {% for column, value in row.items %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 
     <div id="sbi_topics" class="jumbotron">

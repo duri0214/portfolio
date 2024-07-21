@@ -2,6 +2,7 @@ import json
 import logging
 from dataclasses import asdict
 
+import pandas as pd
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Sum
 from django.http.response import HttpResponse, HttpResponseBadRequest
@@ -26,6 +27,7 @@ from vietnam_research.models import (
     Watchlist,
     Articles,
     FinancialResultWatch,
+    FaoFoodBalanceRankers,
 )
 
 
@@ -34,8 +36,17 @@ class IndexView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         market_retrieval_service = MarketRetrievalService(request)
+        context = market_retrieval_service.to_dict()
+        df = pd.DataFrame(
+            list(FaoFoodBalanceRankers.objects.filter(rank__lte=10).values())
+        )
+        if not df.empty:
+            pivot_df = df.pivot(index="rank", columns="year", values="name")
+            context["fao_rank_trend"] = pivot_df.reset_index().to_dict("records")
+        else:
+            context["fao_rank_trend"] = []
 
-        return render(request, self.template_name, market_retrieval_service.to_dict())
+        return render(request, self.template_name, context)
 
     @staticmethod
     def post(request, *args, **kwargs):
