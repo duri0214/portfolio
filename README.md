@@ -125,6 +125,14 @@ python manage.py runserver
 python manage.py import_soil_hardness /path/to/folder
 ```
 
+## よくつかうメンテナンスコマンド
+
+```commandline
+source /var/www/html/venv/bin/activate
+systemctl restart apache2
+chown -R ubuntu:ubuntu /var/www/html
+```
+
 ## vietnam_research
 
 `daily_industry_chart_and_uptrend` は 各期間（14日、7日、3日）を遡り、 すべての期間の株価が上昇傾向（斜度が正）であれば passed
