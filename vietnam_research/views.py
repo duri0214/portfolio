@@ -38,7 +38,13 @@ class IndexView(TemplateView):
         market_retrieval_service = MarketRetrievalService(request)
         context = market_retrieval_service.to_dict()
         df = pd.DataFrame(
-            list(FaoFoodBalanceRankers.objects.filter(rank__lte=10).values())
+            list(
+                FaoFoodBalanceRankers.objects.filter(
+                    item="Fish, Seafood",
+                    element="Food supply quantity (kg/capita/yr)",
+                    rank__lte=10,
+                ).values()
+            )
         )
         if not df.empty:
             pivot_df = df.pivot(index="rank", columns="year", values="name")

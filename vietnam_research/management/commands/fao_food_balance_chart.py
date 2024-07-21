@@ -25,33 +25,34 @@ class Command(BaseCommand):
             with z.open("FoodBalanceSheets_E_Asia_NOFLAG.csv") as f:
                 df = pd.read_csv(f, encoding="latin1").fillna(0)
 
-        # 水産物の供給量を抽出
-        df_filtered = df[
-            (df["Item"] == "Fish, Seafood")
-            & (df["Element"] == "Food supply quantity (kg/capita/yr)")
-        ]
-
         # 'Y2022' to 2022
         end_year_string = df.columns[-1]
         end_year = int(re.findall(r"\d+", end_year_string)[0])
 
         # ranking
         fao_food_balance_rankers: list[FaoFoodBalanceRankers] = []
-        for year in range(2010, end_year + 1):
-            year_column = f"Y{year}"
-            df_sorted = df_filtered.sort_values(year_column, ascending=False)
-            for i, (_, row) in enumerate(df_sorted.iterrows()):
-                fao_food_balance_rankers.append(
-                    FaoFoodBalanceRankers(
-                        year=year,
-                        rank=i + 1,
-                        name=row["Area"],
-                        item=row["Item"],
-                        element=row["Element"],
-                        unit=row["Unit"],
-                        value=row[year_column],
+        items = df["Item"].unique()
+        for item in items:
+            print(f"Processing item: {item}")
+            df_filtered = df[
+                (df["Item"] == item)
+                & (df["Element"] == "Food supply quantity (kg/capita/yr)")
+            ]
+            for year in range(2010, end_year + 1):
+                year_column = f"Y{year}"
+                df_sorted = df_filtered.sort_values(year_column, ascending=False)
+                for i, (_, row) in enumerate(df_sorted.iterrows()):
+                    fao_food_balance_rankers.append(
+                        FaoFoodBalanceRankers(
+                            year=year,
+                            rank=i + 1,
+                            name=row["Area"],
+                            item=row["Item"],
+                            element=row["Element"],
+                            unit=row["Unit"],
+                            value=row[year_column],
+                        )
                     )
-                )
 
         # bulk-insert
         log_service = LogService("./result.log")
