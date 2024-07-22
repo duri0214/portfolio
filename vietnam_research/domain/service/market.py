@@ -62,7 +62,6 @@ class MarketRetrievalService:
             "articles": self.repository.get_articles(login_id),
             "basic_info": self.repository.get_basic_info(),
             "watchlist": vietnam_market_data_provider.watchlist(),
-            "sbi_topics": vietnam_market_data_provider.sbi_topics(),
             "uptrend": json.dumps(vietnam_market_data_provider.uptrend()),
             "exchange_form": exchange_form,
             "exchanged": self.get_exchange_params(),
