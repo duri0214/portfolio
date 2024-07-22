@@ -33,7 +33,7 @@ python manage.py createsuperuser
 ## fixture
 
 - `user` の初期パスワードは `test#1234`
-- サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
+- サーバで実行するときはバッククォートを `/` に置換する
 - createsuperuser をやったあとじゃないと失敗するfixtureがあるよ
 - バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` の seeder は14日ぶん用意しましょう
     - seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
