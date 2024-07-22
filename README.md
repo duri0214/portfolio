@@ -124,6 +124,7 @@ python manage.py import_soil_hardness /path/to/folder
 
 ```commandline
 cd /var/www/html/portfolio
+git pull
 source /var/www/html/venv/bin/activate
 systemctl restart apache2
 chown -R ubuntu:ubuntu /var/www/html

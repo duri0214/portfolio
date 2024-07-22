@@ -2148,7 +2148,7 @@
     "fields": {
       "Y": 2022,
       "M": "12",
-      "closing_price": 1015.66
+      "closing_price": 1007.09
     }
   },
   {
@@ -2164,7 +2164,143 @@
     "fields": {
       "Y": 2023,
       "M": "02",
-      "closing_price": 1089.29
+      "closing_price": 1024.68
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "03",
+      "closing_price": 1064.64
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "04",
+      "closing_price": 1049.12
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "05",
+      "closing_price": 1075.17
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "06",
+      "closing_price": 1120.18
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "07",
+      "closing_price": 1222.90
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "08",
+      "closing_price": 1224.05
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "09",
+      "closing_price": 1154.15
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "10",
+      "closing_price": 1028.19
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "11",
+      "closing_price": 1094.13
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2023,
+      "M": "12",
+      "closing_price": 1129.93
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2024,
+      "M": "01",
+      "closing_price": 1164.31
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2024,
+      "M": "02",
+      "closing_price": 1252.73
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2024,
+      "M": "03",
+      "closing_price": 1284.09
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2024,
+      "M": "04",
+      "closing_price": 1209.52
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2024,
+      "M": "05",
+      "closing_price": 1261.72
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2024,
+      "M": "06",
+      "closing_price": 1245.32
+    }
+  },
+  {
+    "model": "vietnam_research.vnIndex",
+    "fields": {
+      "Y": 2024,
+      "M": "07",
+      "closing_price": 1254.64
     }
   }
 ]

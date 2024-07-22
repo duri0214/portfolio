@@ -15,6 +15,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """
         bloombergからvn-indexを取り込みます。<div id="last_last"> の <tr> を取得する。
+        過去計数は `https://jp.investing.com/indices/vn-historical-data` からseederにまとめる
 
         See Also: https://docs.djangoproject.com/en/4.2/howto/custom-management-commands/
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
