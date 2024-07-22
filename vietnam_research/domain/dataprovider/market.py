@@ -1,12 +1,10 @@
 import logging
 from abc import ABC, abstractmethod
-from pathlib import Path
 
 from django.db.models import F, FloatField
 from django.db.models import QuerySet
 from django.db.models.functions import Round
 
-from config.settings import STATIC_ROOT
 from vietnam_research.domain.repository.market import MarketRepository
 from vietnam_research.domain.valueobject.line_chart import LineChartLayer
 from vietnam_research.domain.valueobject.radar_chart import RadarChartLayer, Axis
@@ -21,10 +19,6 @@ class MarketAbstract(ABC):
         self.repository = MarketRepository()
 
     @abstractmethod
-    def sbi_topics(self, **kwargs):
-        pass
-
-    @abstractmethod
     def watchlist(self, **kwargs):
         pass
 
@@ -34,9 +28,6 @@ class MarketAbstract(ABC):
 
 
 class NasdaqMarketDataProvider(MarketAbstract):
-    def sbi_topics(self) -> str:
-        pass
-
     def watchlist(self) -> QuerySet:
         pass
 
@@ -46,24 +37,6 @@ class NasdaqMarketDataProvider(MarketAbstract):
 
 
 class VietnamMarketDataProvider(MarketAbstract):
-    def sbi_topics(self, filename: str = "market_report_fo_em_topic.txt"):
-        """
-        バッチ（daily_sbi_topics.py download_pdf）で取り込んで決まった場所においたtxtを読み込んで返す\n
-        バッチは viet/static/viet/sbi_topics に出力して、ここでの読み出しは static/viet/sbi_topics から読むので注意
-
-        Returns:
-            str: 新興国ウィークリーレポート
-
-        See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/market_report_fo_em_topic.pdf
-        """
-        filepath = STATIC_ROOT / Path("vietnam_research/sbi_topics", filename)
-        try:
-            with open(filepath, encoding="utf8") as f:
-                sbi_topics = f.read()
-        except FileNotFoundError:
-            sbi_topics = None
-
-        return sbi_topics
 
     def watchlist(self) -> QuerySet:
         """
