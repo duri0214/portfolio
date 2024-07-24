@@ -1,6 +1,9 @@
 import json
 from dataclasses import fields
 
+import feedparser
+import requests
+
 from vietnam_research.domain.repository.market import MarketRepository
 from vietnam_research.domain.valueobject.exchange import (
     ExchangeProcess,
@@ -21,6 +24,13 @@ class MarketRetrievalService:
             for param in exchange_params
             if param in self.request.GET
         }
+
+    @staticmethod
+    def get_rss_feed() -> feedparser.util.FeedParserDict:
+        url = "https://www.viet-kabu.com/rss/latest.rdf"
+        response = requests.get(url)
+        response.raise_for_status()
+        return feedparser.parse(response.content)
 
     def to_dict(self):
         exchange_form = ExchangeForm()
@@ -65,4 +75,5 @@ class MarketRetrievalService:
             "uptrend": json.dumps(vietnam_market_data_provider.uptrend()),
             "exchange_form": exchange_form,
             "exchanged": self.get_exchange_params(),
+            "rss": vietnam_market_data_provider.rss(self.get_rss_feed()),
         }
