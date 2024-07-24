@@ -2,9 +2,7 @@ import json
 import logging
 from dataclasses import asdict
 
-import feedparser
 import pandas as pd
-import requests
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Sum
 from django.http.response import HttpResponse, HttpResponseBadRequest
@@ -33,13 +31,6 @@ from vietnam_research.models import (
 )
 
 
-def fetch_rss_feed(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    feed = feedparser.parse(response.content)
-    return feed
-
-
 class IndexView(TemplateView):
     template_name = "vietnam_research/index.html"
 
@@ -64,11 +55,6 @@ class IndexView(TemplateView):
             context["fao_rank_trend"] = pivot_df.reset_index().to_dict("records")
         else:
             context["fao_rank_trend"] = []
-
-        # Vied-kab feed TODO: fetch_rss_feedとともにサービスクラスに移行
-        url = "https://www.viet-kabu.com/rss/latest.rdf"
-        feed = fetch_rss_feed(url)
-        context["feed"] = feed
 
         return render(request, self.template_name, context)
 
