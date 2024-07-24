@@ -1,5 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime
 
 from django.db.models import F, FloatField
 from django.db.models import QuerySet
@@ -14,6 +16,20 @@ MIN_FEE = 1200000
 FEE_RATE = 0.022
 
 
+@dataclass
+class RssEntry:
+    title: str
+    summary: str
+    link: str
+    updated: datetime
+
+
+@dataclass
+class Rss:
+    entries: list[RssEntry]
+    updated: datetime
+
+
 class MarketAbstract(ABC):
     def __init__(self):
         self.repository = MarketRepository()
@@ -26,8 +42,23 @@ class MarketAbstract(ABC):
     def calculate_transaction_fee(self, **kwargs):
         pass
 
+    @abstractmethod
+    def rss(self, json_data: dict) -> Rss:
+        """
+        Create a Rss instance from json object.
+        Args:
+            json_data: json dictionary.
+        Returns:
+            Instance of `Rss` dataclass.
+        """
+        pass
+
 
 class NasdaqMarketDataProvider(MarketAbstract):
+
+    def rss(self, json_data: dict) -> Rss:
+        pass
+
     def watchlist(self) -> QuerySet:
         pass
 
@@ -37,6 +68,21 @@ class NasdaqMarketDataProvider(MarketAbstract):
 
 
 class VietnamMarketDataProvider(MarketAbstract):
+
+    def rss(self, json_data: dict) -> Rss:
+        entries = [
+            RssEntry(
+                title=item["title"],
+                summary=item["summary"],
+                link=item["link"],
+                updated=datetime.strptime(item["updated"], "%Y-%m-%dT%H:%M:%S%z"),
+            )
+            for item in json_data["entries"]
+        ]
+        updated = datetime.strptime(
+            json_data["feed"]["updated"], "%Y/%m/%d %H:%M:%S %z"
+        )
+        return Rss(entries, updated)
 
     def watchlist(self) -> QuerySet:
         """
