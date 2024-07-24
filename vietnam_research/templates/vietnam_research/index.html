@@ -10,7 +10,7 @@
         <ul>
             <li><a class="btn btn-secondary btn-sm" href="#fao-stat-food-balance-trend" role="button">FAO STAT
                 food balance trend</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#sbi-topics" role="button">SBI TOPICS</a></li>
+            <li><a class="btn btn-secondary btn-sm" href="#vietkabu-topics" role="button">SBI TOPICS</a></li>
             <li><a class="btn btn-secondary btn-sm" href="#macro-analysis-by-industry"
                    role="button">業種別マクロ分析</a></li>
             <li><a class="btn btn-secondary btn-sm" href="#trading-value-by-industry" role="button">業種別売買代金</a>
@@ -120,12 +120,17 @@
         </table>
     </div>
 
-    <div id="sbi-topics" class="jumbotron">
-        <h2 class="display-4">SBI TOPICS</h2>
-        {{ sbi_topics|safe }}
-    </div>
-
     <div class="container">
+        <div id="vietkabu-topics" class="mt-5">
+            <h2 class="display-4">VIET-KABU TOPICS</h2>
+            更新日時: {{ rss.updated }}
+            <ul>
+                {% for entry in rss.entries %}
+                    <li><a href="{{ entry.link }}">{{ entry.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+
         <div id="macro-analysis-by-industry" class="mt-5">
             <h2>業種別マクロ分析</h2>
             <p>これで3年分ぐらいを重ねてみたい</p>

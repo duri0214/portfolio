@@ -1,12 +1,12 @@
 import logging
 from abc import ABC, abstractmethod
-from pathlib import Path
+from dataclasses import dataclass
+from datetime import datetime
 
 from django.db.models import F, FloatField
 from django.db.models import QuerySet
 from django.db.models.functions import Round
 
-from config.settings import STATIC_ROOT
 from vietnam_research.domain.repository.market import MarketRepository
 from vietnam_research.domain.valueobject.line_chart import LineChartLayer
 from vietnam_research.domain.valueobject.radar_chart import RadarChartLayer, Axis
@@ -16,13 +16,23 @@ MIN_FEE = 1200000
 FEE_RATE = 0.022
 
 
+@dataclass
+class RssEntry:
+    title: str
+    summary: str
+    link: str
+    updated: datetime
+
+
+@dataclass
+class Rss:
+    entries: list[RssEntry]
+    updated: datetime
+
+
 class MarketAbstract(ABC):
     def __init__(self):
         self.repository = MarketRepository()
-
-    @abstractmethod
-    def sbi_topics(self, **kwargs):
-        pass
 
     @abstractmethod
     def watchlist(self, **kwargs):
@@ -32,9 +42,21 @@ class MarketAbstract(ABC):
     def calculate_transaction_fee(self, **kwargs):
         pass
 
+    @abstractmethod
+    def rss(self, json_data: dict) -> Rss:
+        """
+        Create a Rss instance from json object.
+        Args:
+            json_data: json dictionary.
+        Returns:
+            Instance of `Rss` dataclass.
+        """
+        pass
+
 
 class NasdaqMarketDataProvider(MarketAbstract):
-    def sbi_topics(self) -> str:
+
+    def rss(self, json_data: dict) -> Rss:
         pass
 
     def watchlist(self) -> QuerySet:
@@ -46,24 +68,21 @@ class NasdaqMarketDataProvider(MarketAbstract):
 
 
 class VietnamMarketDataProvider(MarketAbstract):
-    def sbi_topics(self, filename: str = "market_report_fo_em_topic.txt"):
-        """
-        バッチ（daily_sbi_topics.py download_pdf）で取り込んで決まった場所においたtxtを読み込んで返す\n
-        バッチは viet/static/viet/sbi_topics に出力して、ここでの読み出しは static/viet/sbi_topics から読むので注意
 
-        Returns:
-            str: 新興国ウィークリーレポート
-
-        See Also: https://search.sbisec.co.jp/v2/popwin/info/stock/market_report_fo_em_topic.pdf
-        """
-        filepath = STATIC_ROOT / Path("vietnam_research/sbi_topics", filename)
-        try:
-            with open(filepath, encoding="utf8") as f:
-                sbi_topics = f.read()
-        except FileNotFoundError:
-            sbi_topics = None
-
-        return sbi_topics
+    def rss(self, json_data: dict) -> Rss:
+        entries = [
+            RssEntry(
+                title=item["title"],
+                summary=item["summary"],
+                link=item["link"],
+                updated=datetime.strptime(item["updated"], "%Y-%m-%dT%H:%M:%S%z"),
+            )
+            for item in json_data["entries"]
+        ]
+        updated = datetime.strptime(
+            json_data["feed"]["updated"], "%Y/%m/%d %H:%M:%S %z"
+        )
+        return Rss(entries, updated)
 
     def watchlist(self) -> QuerySet:
         """

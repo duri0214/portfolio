@@ -36,7 +36,11 @@ class IndexView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         market_retrieval_service = MarketRetrievalService(request)
-        context = market_retrieval_service.to_dict()
+        context = (
+            market_retrieval_service.to_dict()
+        )  # TODO: market_contextという変数で受けて、fao_contextと ** でマージする
+
+        # FAO-data: サービスクラスに移行
         df = pd.DataFrame(
             list(
                 FaoFoodBalanceRankers.objects.filter(
