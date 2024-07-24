@@ -123,9 +123,9 @@
     <div class="container">
         <div id="vietkabu-topics" class="mt-5">
             <h2 class="display-4">VIET-KABU TOPICS</h2>
-            {{ feed.feed.updated }}
+            更新日時: {{ rss.updated }}
             <ul>
-                {% for entry in feed.entries %}
+                {% for entry in rss.entries %}
                     <li><a href="{{ entry.link }}">{{ entry.title }}</a></li>
                 {% endfor %}
             </ul>
