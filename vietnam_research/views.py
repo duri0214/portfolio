@@ -2,7 +2,6 @@ import json
 import logging
 from dataclasses import asdict
 
-import pandas as pd
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Sum
 from django.http.response import HttpResponse, HttpResponseBadRequest
@@ -13,6 +12,7 @@ from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
 from vietnam_research.domain.repository.like import LikeRepository
+from vietnam_research.domain.service.fao import FaoRetrievalService
 from vietnam_research.domain.service.market import (
     MarketRetrievalService,
 )
@@ -27,7 +27,6 @@ from vietnam_research.models import (
     Watchlist,
     Articles,
     FinancialResultWatch,
-    FaoFoodBalanceRankers,
 )
 
 
@@ -36,25 +35,15 @@ class IndexView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         market_retrieval_service = MarketRetrievalService(request)
-        context = (
-            market_retrieval_service.to_dict()
-        )  # TODO: market_contextという変数で受けて、fao_contextと ** でマージする
-
-        # FAO-data: サービスクラスに移行
-        df = pd.DataFrame(
-            list(
-                FaoFoodBalanceRankers.objects.filter(
-                    item="Fish, Seafood",
-                    element="Food supply quantity (kg/capita/yr)",
-                    rank__lte=10,
-                ).values()
-            )
-        )
-        if not df.empty:
-            pivot_df = df.pivot(index="rank", columns="year", values="name")
-            context["fao_rank_trend"] = pivot_df.reset_index().to_dict("records")
-        else:
-            context["fao_rank_trend"] = []
+        fao_retrieval_service = FaoRetrievalService()
+        context = {
+            **market_retrieval_service.to_dict(),
+            **fao_retrieval_service.to_dict(
+                item="Fish, Seafood",
+                element="Food supply quantity (kg/capita/yr)",
+                rank_limit=10,
+            ),
+        }
 
         return render(request, self.template_name, context)
 

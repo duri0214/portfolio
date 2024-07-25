@@ -33,3 +33,8 @@ body {
     list-style-type: none;
     padding-top: 4px;
 }
+
+.text-red-bold {
+    color: red;
+    font-weight: bold;
+}

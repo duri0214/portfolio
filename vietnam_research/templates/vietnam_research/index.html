@@ -112,7 +112,11 @@
             {% for row in fao_rank_trend %}
                 <tr>
                     {% for column, value in row.items %}
-                        <td>{{ value }}</td>
+                        {% if value == "Viet Nam" %}
+                            <td class="text-red-bold">{{ value }}</td>
+                        {% else %}
+                            <td>{{ value }}</td>
+                        {% endif %}
                     {% endfor %}
                 </tr>
             {% endfor %}
