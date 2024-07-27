@@ -3,7 +3,7 @@
     "model": "auth.user",
     "fields": {
       "id": 1,
-      "password": "pbkdf2_sha256$600000$A7kOHLGpdUZgEjo30CBFmM$6um5rW6qBMzvPCgIP2YtyDrrrpS9oNBMuHbaZk/K7Js=",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
       "username": "yoshitaka okada",
       "first_name": "yoshitaka",
       "last_name": "okada",
@@ -15,7 +15,7 @@
     "model": "auth.user",
     "fields": {
       "id": 2,
-      "password": "pbkdf2_sha256$600000$A7kOHLGpdUZgEjo30CBFmM$6um5rW6qBMzvPCgIP2YtyDrrrpS9oNBMuHbaZk/K7Js=",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
       "username": "yoshiyuki minami",
       "first_name": "yoshiyuki",
       "last_name": "minami",
@@ -27,7 +27,7 @@
     "model": "auth.user",
     "fields": {
       "id": 3,
-      "password": "pbkdf2_sha256$600000$A7kOHLGpdUZgEjo30CBFmM$6um5rW6qBMzvPCgIP2YtyDrrrpS9oNBMuHbaZk/K7Js=",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
       "username": "生産者 Ａ",
       "first_name": "生産者",
       "last_name": "Ａ",
@@ -38,7 +38,7 @@
     "model": "auth.user",
     "fields": {
       "id": 4,
-      "password": "pbkdf2_sha256$600000$A7kOHLGpdUZgEjo30CBFmM$6um5rW6qBMzvPCgIP2YtyDrrrpS9oNBMuHbaZk/K7Js=",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
       "username": "生産者 Ｂ",
       "first_name": "生産者",
       "last_name": "Ｂ",

@@ -32,7 +32,8 @@ python manage.py createsuperuser
 
 ## fixture
 
-- `user` の初期パスワードは `test#1234`
+- `auth_user` の seeder は `soil_analysis/fixtures/user.json` にある
+- `auth_user` の初期パスワードは `test#1234`
 - サーバで実行するときはバッククォートを `/` に置換する
 - createsuperuser をやったあとじゃないと失敗するfixtureがあるよ
 - バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` の seeder は14日ぶん用意しましょう
