@@ -15,9 +15,9 @@
     <p>{{ object.description | linebreaksbr }}<p>
 
     <!-- 購入ボタン・フォームの作成 -->
-    <!-- {% if user.is_authenticated %} -->
-        <form method="POST">
-            {% csrf_token %}
+    <form method="POST">
+        {% csrf_token %}
+        {% if user.is_authenticated %}
             <script
                     src="https://checkout.stripe.com/checkout.js" class="stripe-button"
                     data-key="{{ public_key }}"
@@ -29,8 +29,9 @@
                     data-currency="jpy"
                     data-email="{{ user.email }}">
             </script>
-        </form>
-        <!-- {% endif %} -->
+        {% else %}
+            <button type="button" disabled class="btn btn-secondary"><span>ログインして購入</span></button>
+        {% endif %}
+    </form>
     <a href="{% url 'shp:index' %}">もどる</a>
-
 {% endblock %}
