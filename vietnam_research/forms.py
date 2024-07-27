@@ -9,16 +9,19 @@ class ExchangeForm(forms.Form):
     current_balance = forms.IntegerField(
         label="現在の残高(VND)",
         required=True,
+        widget=forms.NumberInput(attrs={"tabindex": "1"}),
     )
 
     unit_price = forms.IntegerField(
         label="購入単価 (VND)",
         required=True,
+        widget=forms.NumberInput(attrs={"tabindex": "2"}),
     )
 
     quantity = forms.IntegerField(
         label="購入口数",
         required=True,
+        widget=forms.NumberInput(attrs={"tabindex": "3"}),
     )
 
 
@@ -28,6 +31,12 @@ class WatchlistCreateForm(forms.ModelForm):
     class Meta:
         model = Watchlist
         fields = ("symbol", "bought_day", "stocks_price", "stocks_count")
+        widgets = {
+            "symbol": forms.TextInput(attrs={"tabindex": "1"}),
+            "bought_day": forms.DateInput(attrs={"tabindex": "2"}),
+            "stocks_price": forms.NumberInput(attrs={"tabindex": "3"}),
+            "stocks_count": forms.NumberInput(attrs={"tabindex": "4"}),
+        }
 
 
 class ArticleForm(forms.ModelForm):
@@ -36,6 +45,10 @@ class ArticleForm(forms.ModelForm):
     class Meta:
         model = Articles
         fields = ("title", "note")
+        widgets = {
+            "title": forms.TextInput(attrs={"tabindex": "1"}),
+            "note": forms.Textarea(attrs={"tabindex": "2"}),
+        }
 
 
 class FinancialResultsForm(forms.ModelForm):
@@ -59,3 +72,19 @@ class FinancialResultsForm(forms.ModelForm):
             "y_over_y_growth_rate",
             "note_url",
         )
+        widgets = {
+            "recorded_date": forms.DateInput(attrs={"tabindex": "1"}),
+            "symbol": forms.TextInput(attrs={"tabindex": "2"}),
+            "quarter": forms.NumberInput(attrs={"tabindex": "3"}),
+            "eps_ok": forms.CheckboxInput(attrs={"tabindex": "4"}),
+            "sales_ok": forms.CheckboxInput(attrs={"tabindex": "5"}),
+            "guidance_ok": forms.CheckboxInput(attrs={"tabindex": "6"}),
+            "eps_unit": forms.TextInput(attrs={"tabindex": "7"}),
+            "eps_estimate": forms.NumberInput(attrs={"tabindex": "8"}),
+            "eps_actual": forms.NumberInput(attrs={"tabindex": "9"}),
+            "sales_unit": forms.NumberInput(attrs={"tabindex": "10"}),
+            "sales_estimate": forms.NumberInput(attrs={"tabindex": "11"}),
+            "sales_actual": forms.NumberInput(attrs={"tabindex": "12"}),
+            "y_over_y_growth_rate": forms.NumberInput(attrs={"tabindex": "13"}),
+            "note_url": forms.URLInput(attrs={"tabindex": "14"}),
+        }

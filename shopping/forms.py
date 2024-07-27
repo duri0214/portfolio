@@ -13,6 +13,19 @@ class RegisterFormSingle(forms.ModelForm):
 
         model = Products
         fields = ("code", "name", "price", "picture", "description")
+        widgets = {
+            "code": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
+            "name": forms.TextInput(attrs={"tabindex": "2", "class": "form-control"}),
+            "price": forms.NumberInput(
+                attrs={"tabindex": "3", "class": "form-control"}
+            ),
+            "picture": forms.FileInput(
+                attrs={"tabindex": "4", "class": "form-control"}
+            ),
+            "description": forms.TextInput(
+                attrs={"tabindex": "5", "class": "form-control"}
+            ),
+        }
 
 
 class RegisterFormBulk(forms.Form):
