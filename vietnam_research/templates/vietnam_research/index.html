@@ -310,7 +310,7 @@
             <h2>ウォッチリスト</h2>
         </div>
         <ul class="watchlist">
-            {% if user.is_superuser %}
+            {% if user.is_superuser or user.is_staff %}
                 <li><a href="{% url 'vnm:watchlist_register' %}" class="btn btn-primary btn-sm" role="button">登録</a>
                 </li>
             {% else %}
