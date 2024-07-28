@@ -24,16 +24,15 @@ class Project:
     name: str
 
 
+@dataclass(frozen=True)
 class Issue:
-    def __init__(self, key: str, name: str, description: str):
-        if not self._validate_issue_id(key):
-            raise ValueError("Invalid issue id format!")
-        self.key = key
-        self.name = name
-        self.description = description
+    key: str
+    name: str
+    description: str
 
-    def __str__(self):
-        return f"Issue Key: {self.key}, Issue Name: {self.name}, Issue Description: {self.description}"
+    def __post_init__(self):
+        if not self._validate_issue_id(self.key):
+            raise ValueError("Invalid issue id format!")
 
     @staticmethod
     def _validate_issue_id(issue_id: str):
