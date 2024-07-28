@@ -13,14 +13,14 @@ JIRA_SERVER = "https://henojiya.atlassian.net"
 
 def get_all_projects(mail: EmailAddress) -> list[Project]:
     jira_token = os.environ.get("JIRA_TOKEN")
-    jira_instance = JIRA(JIRA_SERVER, basic_auth=(mail.value, jira_token))
+    jira_instance = JIRA(JIRA_SERVER, basic_auth=(mail.email, jira_token))
 
     return [Project(x.key, x.name) for x in jira_instance.projects()]
 
 
 def get_all_issues(mail: EmailAddress) -> list[Issue]:
     jira_token = os.environ.get("JIRA_TOKEN")
-    jira_instance = JIRA(JIRA_SERVER, basic_auth=(mail.value, jira_token))
+    jira_instance = JIRA(JIRA_SERVER, basic_auth=(mail.email, jira_token))
 
     temp = jira_instance.search_issues("project=HEN", maxResults=False)
     return [Issue(x.key, x.fields.summary, x.fields.description) for x in temp]
@@ -29,7 +29,7 @@ def get_all_issues(mail: EmailAddress) -> list[Issue]:
 # TODO: チケットを作成する機能を作る
 def retrieve_specific_issue(issue_key: str, mail: EmailAddress) -> Issue:
     jira_token = os.environ.get("JIRA_TOKEN")
-    jira_instance = JIRA(JIRA_SERVER, basic_auth=(mail.value, jira_token))
+    jira_instance = JIRA(JIRA_SERVER, basic_auth=(mail.email, jira_token))
 
     try:
         temp = jira_instance.issue(issue_key)
