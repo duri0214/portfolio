@@ -57,12 +57,18 @@ def parse_xml(
 class Command(BaseCommand):
     help = "Fetch Vietnam Statistics data"
 
-    def handle(self, *args, **options):
+    # def add_arguments(self, parser):
+    #     parser.add_argument(
+    #         "date",
+    #         type=str,
+    #         help="Date in format yyyy-mm to process",
+    #         nargs="?",
+    #         default="",
+    #     )
+
+    def handle(self, **options):
         """
         https://www.gso.gov.vn/
-        Args:
-            *args:
-            **options:
         """
         # VietnamStatistics.objects.all().delete()
 
@@ -105,4 +111,43 @@ class Command(BaseCommand):
             self.style.SUCCESS("Successfully fetched and stored Vietnam CPI data.")
         )
 
-        url = "https://vietnamtourism.gov.vn/en/statistic/international?year=2024&period=t5"
+        # data3: ベトナムを訪れる外国人観光客
+        # date_str = options.get("date")
+        # if date_str:
+        #     try:
+        #         date_obj = parse(date_str + "-01")  # appending day part for parsing
+        #         year, month = date_obj.year, date_obj.month
+        #     except ValueError:
+        #         self.stdout.write(
+        #             self.style.ERROR("Invalid date format. It should be yyyy-mm")
+        #         )
+        #         return
+        # else:
+        #     now = datetime.now() - timedelta(days=30)
+        #     year, month = now.year, now.month
+        #
+        # url = f"https://vietnamtourism.gov.vn/en/statistic/international?year={year}&period=t{month}"
+        # print(f"{url=}")
+        # response = requests.get(url)
+        # response.raise_for_status()
+        #
+        # print(f"{response.text=}")
+        # soup = BeautifulSoup(response.text, "html.parser")
+        # contents = soup.find("div", class_="statistic-content")
+        # if not contents:
+        #     self.stdout.write(self.style.ERROR("Cannot find the contents"))
+        #     return
+        #
+        # summary = contents.find(
+        #     "p", class_="statistic-summary", style="font-weight:bold;"
+        # )
+        # if summary:
+        #     self.stdout.write(self.style.SUCCESS(f"{summary.get_text()}"))
+        #
+        # table_data = contents.find("div", class_="responsive-table")
+        # if table_data:
+        #     total_row = table_data.find("tr", class_="total-row")
+        #     if total_row:
+        #         tds = total_row.find_all("td")
+        #         y_on_y = tds[4].text if len(tds) > 4 else None
+        #         self.stdout.write(self.style.SUCCESS(f"Year on Year: {y_on_y}"))
