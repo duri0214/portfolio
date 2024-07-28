@@ -17,18 +17,11 @@ class EmailAddress:
             return True
         return False
 
-    @property
-    def value(self):
-        return self.email
 
-
+@dataclass(frozen=True)
 class Project:
-    def __init__(self, key: str, name: str):
-        self.key = key
-        self.name = name
-
-    def __str__(self):
-        return f"Project Key: {self.key}, Project Name: {self.name}"
+    key: str
+    name: str
 
 
 class Issue:
