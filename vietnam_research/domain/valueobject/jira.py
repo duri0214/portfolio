@@ -1,11 +1,14 @@
 import re
+from dataclasses import dataclass
 
 
+@dataclass(frozen=True)
 class EmailAddress:
-    def __init__(self, email: str):
-        if not self._validate_email(email):
+    email: str
+
+    def __post_init__(self):
+        if not self._validate_email(self.email):
             raise ValueError("Invalid email format!")
-        self._email = email
 
     @staticmethod
     def _validate_email(email: str):
@@ -16,7 +19,7 @@ class EmailAddress:
 
     @property
     def value(self):
-        return self._email
+        return self.email
 
 
 class Project:
