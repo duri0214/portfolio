@@ -286,3 +286,9 @@ class FaoFoodBalanceRankers(models.Model):
     element = models.CharField(max_length=255)
     unit = models.CharField(max_length=255)
     value = models.FloatField()
+
+
+class VietnamStatistics(models.Model):
+    element = models.CharField(max_length=255)
+    period = models.DateField()
+    value = models.FloatField()

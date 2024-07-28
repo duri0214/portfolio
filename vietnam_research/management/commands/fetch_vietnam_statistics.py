@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import requests
 from django.core.management.base import BaseCommand
 
+from vietnam_research.models import VietnamStatistics
+
 
 @dataclass
 class Obs:
@@ -70,7 +72,7 @@ class Command(BaseCommand):
         """
         https://www.gso.gov.vn/
         """
-        # VietnamStatistics.objects.all().delete()
+        VietnamStatistics.objects.all().delete()
 
         # data1: 鉱工業生産指数
         url = "https://nsdp.gso.gov.vn/GSO-chung/SDMXFiles/GSO/IIPVNM.xml"
@@ -83,11 +85,11 @@ class Command(BaseCommand):
             element_name, xml_data, data_domain, ref_area, indicator
         )
 
-        for obs in industrial_production_index:
-            print(obs)
-            # Obs.objects.create(
-            #     period_str=obs.period_str, value=obs.value, period=obs.period
-            # )
+        entities = [
+            VietnamStatistics(element=obs.element, period=obs.period, value=obs.value)
+            for obs in industrial_production_index
+        ]
+        VietnamStatistics.objects.bulk_create(entities)
 
         self.stdout.write(
             self.style.SUCCESS("Successfully fetched and stored Vietnam IIP data.")
@@ -104,8 +106,11 @@ class Command(BaseCommand):
             element_name, xml_data, data_domain, ref_area, indicator
         )
 
-        for obs in consumer_price_index:
-            print(obs)
+        entities = [
+            VietnamStatistics(element=obs.element, period=obs.period, value=obs.value)
+            for obs in consumer_price_index
+        ]
+        VietnamStatistics.objects.bulk_create(entities)
 
         self.stdout.write(
             self.style.SUCCESS("Successfully fetched and stored Vietnam CPI data.")
