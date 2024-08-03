@@ -45,6 +45,8 @@
     <orderEntry type="library" name="chart.js" level="application" />
     <orderEntry type="library" name="d3.v4" level="application" />
     <orderEntry type="library" name="jquery-3.7.1" level="application" />
+    <orderEntry type="library" name="d3.v6" level="application" />
+    <orderEntry type="library" name="d3-indented-tree" level="application" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="keepMatchingSpecifier" value="false" />
