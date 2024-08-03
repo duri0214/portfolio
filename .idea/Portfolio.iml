@@ -32,10 +32,19 @@
     <orderEntry type="library" name="d3-indented-tree" level="application" />
     <orderEntry type="library" name="bootstrap" level="application" />
     <orderEntry type="library" name="select2" level="application" />
-    <orderEntry type="library" name="jquery-3.3.1.slim" level="application" />
     <orderEntry type="library" name="js-cookie" level="application" />
     <orderEntry type="library" name="checkout" level="application" />
     <orderEntry type="library" name="d3-path.v1" level="application" />
+    <orderEntry type="library" name="popper.js" level="application" />
+    <orderEntry type="library" name="bootstrap" level="application" />
+    <orderEntry type="library" name="jqueryui" level="application" />
+    <orderEntry type="library" name="select2" level="application" />
+    <orderEntry type="library" name="all" level="application" />
+    <orderEntry type="library" name="js-cookie" level="application" />
+    <orderEntry type="library" name="d3-path.v1" level="application" />
+    <orderEntry type="library" name="chart.js" level="application" />
+    <orderEntry type="library" name="d3.v4" level="application" />
+    <orderEntry type="library" name="jquery-3.7.1" level="application" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="keepMatchingSpecifier" value="false" />
