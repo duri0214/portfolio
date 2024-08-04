@@ -8,18 +8,11 @@ class EdinetRepository:
         return ReportDocument.objects.get(doc_id=doc_id)
 
     @staticmethod
-    def delete_existing_records(report_doc_list: list[ReportDocument]):
-        edinet_codes = [report_doc.edinet_code for report_doc in report_doc_list]
-        edinet_code_to_company = {
-            company.edinet_code: company
-            for company in Company.objects.filter(edinet_code__in=edinet_codes)
-        }
-        for report_doc in report_doc_list:
-            edinet_code = report_doc.edinet_code
-            company = edinet_code_to_company[edinet_code]
-            Counting.objects.filter(
-                company=company, submit_date=report_doc.submit_date_time
-            ).delete()
+    def delete_existing_records(report_doc: ReportDocument):
+        company = Company.objects.get(edinet_code=report_doc.edinet_code)
+        Counting.objects.filter(
+            company=company, submit_date=report_doc.submit_date_time
+        ).delete()
 
     @staticmethod
     def bulk_insert(
