@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -5,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.timezone import now
+from django.views import View
 from django.views.generic import TemplateView, FormView, ListView
 
 from config import settings
@@ -52,12 +54,32 @@ class IndexView(ListView):
         end_date_str = request.POST.get("end_date")
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-        home_dir = settings.MEDIA_ROOT  # TODO: XbrlServiceのinitからwork_dirを削除して
-        service = XbrlService(work_dir=Path(home_dir, "xbrlReport"))
+        service = XbrlService()
         report_document_list = service.fetch_report_doc_list(
             RequestData(start_date=start_date, end_date=end_date)
         )
         ReportDocument.objects.bulk_create(report_document_list)
+        return redirect("securities:index")
+
+
+class DownloadView(View):
+    @staticmethod
+    def get(request, **kwargs):
+        service = XbrlService()
+
+        work_dir = Path(settings.MEDIA_ROOT) / "securities"
+        if not work_dir.exists():
+            work_dir.mkdir(parents=True, exist_ok=True)
+        temp_dir = work_dir / "temp"
+        if not temp_dir.exists():
+            temp_dir.mkdir(parents=True, exist_ok=True)
+
+        report_doc = service.download_xbrl(doc_id=kwargs["doc_id"], work_dir=work_dir)
+        service.repository.delete_existing_records(report_doc)
+        counting_data = service.make_counting_data(work_dir=work_dir, temp_dir=temp_dir)
+        service.repository.insert(report_doc=report_doc, counting_data=counting_data)
+        logging.info(f"{report_doc.doc_id} の計数データ作成完了")
+
         return redirect("securities:index")
 
 
