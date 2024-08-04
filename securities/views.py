@@ -1,10 +1,18 @@
+from datetime import datetime
+from pathlib import Path
+
 from dateutil.relativedelta import relativedelta
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.timezone import now
 from django.views.generic import TemplateView, FormView
 
+from config import settings
 from securities.domain.service.upload import UploadService
+from securities.domain.service.xbrl import XbrlService
+from securities.domain.valueobject.edinet import RequestData
 from securities.forms import UploadForm
+from securities.models import ReportDocument
 
 
 class IndexView(TemplateView):
@@ -20,10 +28,19 @@ class IndexView(TemplateView):
 
     @staticmethod
     def post(request, **kwargs):
-        start_date = request.POST.get("start_date")
-        end_date = request.POST.get("end_date")
-        print(f"開始日: {start_date}, 終了日: {end_date}")
-        pass
+        ReportDocument.objects.all().delete()
+
+        start_date_str = request.POST.get("start_date")
+        end_date_str = request.POST.get("end_date")
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        home_dir = settings.MEDIA_ROOT  # TODO: XbrlServiceのinitからwork_dirを削除して
+        service = XbrlService(work_dir=Path(home_dir, "xbrlReport"))
+        report_document_list = service.fetch_securities_report(
+            RequestData(start_date=start_date, end_date=end_date)
+        )
+        ReportDocument.objects.bulk_create(report_document_list)
+        return redirect("securities:index")
 
 
 class EdinetCodeUploadView(FormView):
