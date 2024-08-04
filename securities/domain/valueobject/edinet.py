@@ -1,8 +1,6 @@
 import datetime
 from dataclasses import dataclass
 
-from securities.models import Counting, Company, ReportDocument
-
 
 @dataclass
 class RequestData:
@@ -55,30 +53,3 @@ class CountingData:
             age_years = int(self.avg_age_years) + age_years_decimal
             return str(age_years)
         return self.avg_age_years
-
-    def to_list(self) -> list[str | None]:
-        return [
-            self.edinet_code,
-            self.filer_name_jp,
-            self.avg_salary,
-            self.avg_tenure_years_combined,
-            self.avg_age_years_combined,
-            self.number_of_employees,
-        ]
-
-    def to_entity(
-        self,
-        doc_attr_dict: dict[str, ReportDocument],
-        company_master: dict[str, Company],
-    ) -> Counting:
-        report_doc = doc_attr_dict[self.edinet_code]
-        return Counting(
-            company=company_master[self.edinet_code],
-            period_start=report_doc.period_start,
-            period_end=report_doc.period_end,
-            submit_date=report_doc.submit_date_time,
-            avg_salary=self.avg_salary,
-            avg_tenure=self.avg_tenure_years_combined,
-            avg_age=self.avg_age_years_combined,
-            number_of_employees=self.number_of_employees,
-        )
