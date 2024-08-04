@@ -96,59 +96,28 @@ class XbrlService:
                 logging.info(f"{day}, {report_doc}")
         return report_doc_list
 
-    def _download_xbrl_in_zip(self, report_doc_list: list[ReportDocument]):
-        """
-        params.type:
-            1: 提出本文書、監査報告書およびxbrl
-            2: PDF
-            3: 代替書面・添付文書
-            4: 英文ファイル
-            5: CSV
-        """
-        denominator = len(report_doc_list)
-        for i, report_doc in enumerate(report_doc_list):
-            doc_id = report_doc.doc_id
-            logging.info(f"{doc_id}: {i + 1}/{denominator}")
-            url = f"https://api.edinet-fsa.go.jp/api/v2/documents/{doc_id}"
-            params = {
-                "type": SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT,
-                "Subscription-Key": os.environ.get("EDINET_API_KEY"),
-            }
-            filename = self.work_dir / f"{doc_id}.zip"
-            res = requests.get(url, params=params, stream=True)
-
-            if res.status_code == 200:
-                with open(filename, "wb") as file:
-                    for chunk in res.iter_content(chunk_size=1024):
-                        file.write(chunk)
-
-    def download_xbrl(self, request_data: RequestData) -> dict[str, ReportDocument]:
+    def download_xbrl(self, doc_id: str, work_dir: Path) -> ReportDocument:
         """
         Notes: 有価証券報告書の提出期限は原則として決算日から3ヵ月以内（3月末決算の企業であれば、同年6月中）
         """
-        # TODO: modelから report_doc_list を引いて置き換える感じになると思う
-        report_doc_list = self.fetch_report_doc_list(request_data)
-        self._download_xbrl_in_zip(report_doc_list)
-        logging.info("download finish")
+        report_doc = self.repository.find_by_doc_id(doc_id)
 
-        securities_report_dict = {}
-        for report_doc in report_doc_list:
-            securities_report_dict[report_doc.edinet_code] = report_doc
+        logging.info(f"{report_doc.doc_id} をダウンロード中...")
+        url = f"https://api.edinet-fsa.go.jp/api/v2/documents/{report_doc.doc_id}"
+        params = {
+            "type": SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT,
+            "Subscription-Key": os.environ.get("EDINET_API_KEY"),
+        }
+        filename = work_dir / f"{report_doc.doc_id}.zip"
+        res = requests.get(url, params=params, stream=True)
+        res.raise_for_status()
 
-        return securities_report_dict
+        with open(filename, "wb") as file:
+            for chunk in res.iter_content(chunk_size=1024):
+                file.write(chunk)
+        logging.info(f"{report_doc.doc_id} をダウンロード完了")
 
-    def _unzip_files_and_extract_xbrl(self) -> list[str]:
-        """
-        指定されたディレクトリ内のzipファイルを解凍し、指定したパターンに一致するXBRLファイルのリストを返します。
-        xbrlファイルは各zipファイルに1つ、存在するようだ
-
-        Returns:
-            ['/path/to/extracted/file1.xbrl', '/path/to/extracted/file2.xbrl']
-        """
-        ZipFileService.extract_zip_files(self.work_dir, self.temp_dir)
-        xbrl_files = list(self.temp_dir.glob("XBRL/PublicDoc/*.xbrl"))
-
-        return [str(path) for path in xbrl_files]
+        return report_doc
 
     @staticmethod
     def _assign_attributes(counting_data: CountingData, facts):
