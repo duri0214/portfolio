@@ -2,17 +2,19 @@ import datetime
 import logging
 import os
 import shutil
+from datetime import datetime, date
 from pathlib import Path
 
 import pandas as pd
 import requests
 from arelle import Cntlr
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 
 from lib.zipfileservice import ZipFileService
 from securities.domain.repository.edinet import EdinetRepository
-from securities.domain.valueobject.edinet import CountingData, RequestData, ResponseData
-from securities.models import Company
+from securities.domain.valueobject.edinet import CountingData, RequestData
+from securities.models import Company, ReportDocument
 
 SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 
@@ -26,13 +28,15 @@ class XbrlService:
         self.repository = EdinetRepository()
 
     @staticmethod
-    def _extract(request_data: RequestData) -> list[ResponseData]:
+    def fetch_securities_report(request_data: RequestData) -> list[ReportDocument]:
         """
-        特定の提出書類をもつ ResponseData を抽出する（重複した doc_id は除外される）
-         有価証券報告書: ordinanceCode == "010" and formCode =="030000"
-         訂正有価証券報告書: ordinanceCode == "010" and formCode =="030001"
+        Args:
+            request_data: APIへのリクエスト条件
+
+        Returns:
+            list[ReportDocument]: A list of ReportDocument objects.
         """
-        securities_report_dict = {}
+        report_doc_list: list[ReportDocument] = []
         for day in request_data.day_list:
             url = "https://api.edinet-fsa.go.jp/api/v2/documents.json"
             params = {
@@ -42,20 +46,63 @@ class XbrlService:
             }
             res = requests.get(url, params=params)
             res.raise_for_status()
-            response_data = ResponseData(res.json())
-            for result in response_data.results:
-                if result.ordinance_code == "010" and result.form_code == "030000":
-                    logging.info(f"{day}, {result}")
-                    response_data.results = [result]
-            if (
-                response_data.results
-                and response_data.results[0].submit_date_time
-                and response_data.results[0].doc_id not in securities_report_dict
-            ):
-                securities_report_dict[response_data.results[0].doc_id] = response_data
-        return list(securities_report_dict.values())
 
-    def _download_xbrl_in_zip(self, securities_report_list: list[ResponseData]):
+            for item in res.json().get("results", []):
+                submit_date_string = item.get("submitDateTime")
+                if submit_date_string is None:
+                    continue
+                ordinance_code = item.get("ordinanceCode")
+                form_code = item.get("formCode")
+                if not (ordinance_code == "010" and form_code == "030000"):
+                    continue
+                submit_date_time = timezone.make_aware(
+                    datetime.strptime(submit_date_string, "%Y-%m-%d %H:%M")
+                )
+                ope_date_time_string = item.get("opeDateTime")
+                ope_date_time = (
+                    timezone.make_aware(
+                        datetime.strptime(ope_date_time_string, "%Y-%m-%d %H:%M")
+                    )
+                    if ope_date_time_string
+                    else None
+                )
+
+                report_doc = ReportDocument(
+                    seq_number=item.get("seqNumber"),
+                    doc_id=item.get("docID"),
+                    edinet_code=item.get("edinetCode"),
+                    sec_code=item.get("secCode"),
+                    jcn=item.get("JCN"),
+                    filer_name=item.get("filerName"),
+                    fund_code=item.get("fundCode"),
+                    ordinance_code=ordinance_code,
+                    form_code=form_code,
+                    doc_type_code=item.get("docTypeCode"),
+                    period_start=item.get("periodStart"),
+                    period_end=item.get("periodEnd"),
+                    submit_date_time=submit_date_time,
+                    doc_description=item.get("docDescription"),
+                    issuer_edinet_code=item.get("issuerEdinetCode"),
+                    subject_edinet_code=item.get("subjectEdinetCode"),
+                    subsidiary_edinet_code=item.get("subsidiaryEdinetCode"),
+                    current_report_reason=item.get("currentReportReason"),
+                    parent_doc_id=item.get("parentDocID"),
+                    ope_date_time=ope_date_time,
+                    withdrawal_status=item.get("withdrawalStatus"),
+                    doc_info_edit_status=item.get("docInfoEditStatus"),
+                    disclosure_status=item.get("disclosureStatus"),
+                    xbrl_flag=bool(item.get("xbrlFlag")),
+                    pdf_flag=bool(item.get("pdfFlag")),
+                    attach_doc_flag=bool(item.get("attachDocFlag")),
+                    english_doc_flag=bool(item.get("englishDocFlag")),
+                    csv_flag=bool(item.get("csvFlag")),
+                    legal_status=item.get("legalStatus"),
+                )
+                report_doc_list.append(report_doc)
+                logging.info(f"{day}, {report_doc}")
+        return report_doc_list
+
+    def _download_xbrl_in_zip(self, report_doc_list: list[ReportDocument]):
         """
         params.type:
             1: 提出本文書、監査報告書およびxbrl
@@ -64,9 +111,9 @@ class XbrlService:
             4: 英文ファイル
             5: CSV
         """
-        denominator = len(securities_report_list)
-        for i, securities_report in enumerate(securities_report_list):
-            doc_id = securities_report.results[0].doc_id
+        denominator = len(report_doc_list)
+        for i, report_doc in enumerate(report_doc_list):
+            doc_id = report_doc.doc_id
             logging.info(f"{doc_id}: {i + 1}/{denominator}")
             url = f"https://api.edinet-fsa.go.jp/api/v2/documents/{doc_id}"
             params = {
