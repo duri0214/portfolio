@@ -128,17 +128,18 @@ class XbrlService:
                     for chunk in res.iter_content(chunk_size=1024):
                         file.write(chunk)
 
-    def download_xbrl(self, request_data: RequestData) -> dict[str, ResponseData]:
+    def download_xbrl(self, request_data: RequestData) -> dict[str, ReportDocument]:
         """
         Notes: 有価証券報告書の提出期限は原則として決算日から3ヵ月以内（3月末決算の企業であれば、同年6月中）
         """
-        securities_report_list = self._extract(request_data)
-        self._download_xbrl_in_zip(securities_report_list)
+        # TODO: modelから report_doc_list を引いて置き換える感じになると思う
+        report_doc_list = self.fetch_securities_report(request_data)
+        self._download_xbrl_in_zip(report_doc_list)
         logging.info("download finish")
 
         securities_report_dict = {}
-        for x in securities_report_list:
-            securities_report_dict[x.results[0].edinet_code] = x
+        for report_doc in report_doc_list:
+            securities_report_dict[report_doc.edinet_code] = report_doc
 
         return securities_report_dict
 
