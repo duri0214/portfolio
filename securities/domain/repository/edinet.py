@@ -1,10 +1,12 @@
-import logging
-
 from securities.domain.valueobject.edinet import CountingData
 from securities.models import Company, Counting, ReportDocument
 
 
 class EdinetRepository:
+    @staticmethod
+    def find_by_doc_id(doc_id: str) -> ReportDocument:
+        return ReportDocument.objects.get(doc_id=doc_id)
+
     @staticmethod
     def delete_existing_records(report_doc_list: list[ReportDocument]):
         edinet_codes = [report_doc.edinet_code for report_doc in report_doc_list]
