@@ -152,20 +152,5 @@ class XbrlService:
         counting_data = self._assign_attributes(
             counting_data=CountingData(), facts=model_xbrl.facts
         )
-        logging.info(f"{self.work_dir} に {output_filename} が出力されました")
-
-
-# TODO: 削除する（理由: 書類一覧APIと書類取得APIがくっついてるから）
-if __name__ == "__main__":
-    # 前提条件: EDINETコードリストのアップロード
-    home_dir = os.path.expanduser("~")
-    service = XbrlService(work_dir=Path(home_dir, "Downloads/xbrlReport"))
-    doc_attr_dict = service.download_xbrl(
-        RequestData(
-            start_date=date(2022, 11, 1),
-            end_date=date(2023, 10, 31),
-        )
-    )
-    service.repository.delete_existing_records(list(doc_attr_dict.values()))
-    service.repository.bulk_insert(doc_attr_dict, service.make_counting_data())
-    logging.info("bulk_create finish")
+        shutil.rmtree(work_dir)
+        return counting_data
