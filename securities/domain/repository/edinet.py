@@ -1,8 +1,7 @@
 import logging
-from datetime import datetime
 
-from securities.domain.valueobject.edinet import ResponseData, CountingData
-from securities.models import Company, Counting
+from securities.domain.valueobject.edinet import CountingData
+from securities.models import Company, Counting, ReportDocument
 
 
 class EdinetRepository:
@@ -22,9 +21,10 @@ class EdinetRepository:
 
     @staticmethod
     def bulk_insert(
-        doc_attr_dict: dict[str, ResponseData],
+        doc_attr_dict: dict[str, ReportDocument],
         counting_data_dict: dict[str, CountingData],
     ):
+        # TODO: dict[str, ReportDocument] から list[ReportDocument] に変更したほうがよさそう
         # Delete the CountingData instances whose 'edinet_code' is not in 'doc_attr_dict'
         for edinet_code in list(counting_data_dict.keys()):
             if edinet_code not in doc_attr_dict:
@@ -33,7 +33,7 @@ class EdinetRepository:
                     f"{edinet_code} の CountingData が doc_attr_dict に見つからなかったので CountingData から削除しました"
                 )
 
-        edinet_codes = [data.results[0].edinet_code for data in doc_attr_dict.values()]
+        edinet_codes = [report_doc.edinet_code for report_doc in doc_attr_dict.values()]
         edinet_code_to_company = {
             company.edinet_code: company
             for company in Company.objects.filter(edinet_code__in=edinet_codes)
