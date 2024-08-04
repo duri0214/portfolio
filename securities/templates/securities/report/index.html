@@ -10,7 +10,6 @@
     </div>
 
     <div class="container">
-        <p>hello world</p>
         <a class="btn btn-outline-primary mb-3" href="{% url 'securities:edinet_code_upload' %}"
            role="button">EDINETコードリスト取り込み</a>
 
@@ -36,5 +35,65 @@
             </div>
             <button type="submit" class="btn btn-primary">送信</button>
         </form>
+        <div class="container mt-5 pt-5">
+            <table class="table table-striped">
+                <thead class="bg-primary text-white">
+                <tr>
+                    <th scope="col">Doc ID</th>
+                    <th scope="col">EDINET Code</th>
+                    <th scope="col">Sec Code</th>
+                    <th scope="col">JCN</th>
+                    <th scope="col">Filer Name</th>
+                    <th scope="col">Period Start</th>
+                    <th scope="col">Period End</th>
+                    <th scope="col">Submit Date Time</th>
+                    <th scope="col">Doc Description</th>
+                    <th scope="col">XBRL Flag</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for report_document in object_list %}
+                    <tr>
+                        <td>{{ report_document.doc_id }}</td>
+                        <td>{{ report_document.edinet_code }}</td>
+                        <td>{{ report_document.sec_code }}</td>
+                        <td>{{ report_document.jcn }}</td>
+                        <td>{{ report_document.filer_name }}</td>
+                        <td>{{ report_document.period_start }}</td>
+                        <td>{{ report_document.period_end }}</td>
+                        <td>{{ report_document.submit_date_time }}</td>
+                        <td>{{ report_document.doc_description }}</td>
+                        <td>{{ report_document.xbrl_flag }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="10">No documents available.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
+                    <li class="page-item"><a class="page-link"
+                                             href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">First</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><a class="page-link" href="#">{{ page_obj.number }}</a></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">Last</a></li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
 {% endblock %}

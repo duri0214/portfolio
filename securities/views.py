@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.timezone import now
-from django.views.generic import TemplateView, FormView
+from django.views.generic import TemplateView, FormView, ListView
 
 from config import settings
 from securities.domain.service.upload import UploadService
@@ -15,8 +15,26 @@ from securities.forms import UploadForm
 from securities.models import ReportDocument
 
 
-class IndexView(TemplateView):
+class IndexView(ListView):
     template_name = "securities/report/index.html"
+    model = ReportDocument
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.values(
+            "doc_id",
+            "edinet_code",
+            "sec_code",
+            "jcn",
+            "filer_name",
+            "period_start",
+            "period_end",
+            "submit_date_time",
+            "doc_description",
+            "xbrl_flag",
+        ).order_by("doc_id")
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
