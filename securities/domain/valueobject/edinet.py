@@ -1,8 +1,6 @@
 import datetime
 from dataclasses import dataclass
 
-from securities.models import Counting, Company
-
 
 @dataclass
 class RequestData:
@@ -27,95 +25,6 @@ class RequestData:
             day = self.start_date + datetime.timedelta(days=d)
             self.day_list.append(day)
         self.day_list.append(self.end_date)
-
-
-class ResponseData:
-    class _Metadata:
-        class _Parameter:
-            def __init__(self, data: dict) -> None:
-                self.date = data.get("date")
-                self.type = data.get("type")
-
-        class _ResultSet:
-            def __init__(self, data: dict) -> None:
-                self.count = data.get("count")
-
-        def __init__(self, data: dict) -> None:
-            self.title = data.get("title")
-            self.parameter = self._Parameter(data.get("parameter"))
-            self.result_set = self._ResultSet(data.get("resultset"))
-            self.process_date_time = data.get("processDateTime")
-            self.status = data.get("status")
-            self.message = data.get("message")
-
-    class _Result:
-        def __init__(self, data):
-            self.seq_number = data.get("seqNumber")
-            self.doc_id = data.get("docID")
-            self.edinet_code = data.get("edinetCode")
-            self.sec_code = data.get("secCode")
-            self.jcn = data.get("JCN")
-            self.filer_name = data.get("filerName")
-            self.fund_code = data.get("fundCode")
-            self.ordinance_code = data.get("ordinanceCode")
-            self.form_code = data.get("formCode")
-            self.doc_type_code = data.get("docTypeCode")
-            self.period_start = data.get("periodStart")
-            self.period_end = data.get("periodEnd")
-            self.submit_date_time = data.get("submitDateTime")
-            self.doc_description = data.get("docDescription")
-            self.issuer_edinet_code = data.get("issuerEdinetCode")
-            self.subject_edinet_code = data.get("subjectEdinetCode")
-            self.subsidiary_edinet_code = data.get("subsidiaryEdinetCode")
-            self.current_report_reason = data.get("currentReportReason")
-            self.parent_doc_id = data.get("parentDocID")
-            self.ope_date_time = data.get("opeDateTime")
-            self.withdrawal_status = data.get("withdrawalStatus")
-            self.doc_info_edit_status = data.get("docInfoEditStatus")
-            self.disclosure_status = data.get("disclosureStatus")
-            self.xbrl_flag: bool = bool(data.get("xbrlFlag"))
-            self.pdf_flag: bool = bool(data.get("pdfFlag"))
-            self.attach_doc_flag: bool = bool(data.get("attachDocFlag"))
-            self.english_doc_flag: bool = bool(data.get("englishDocFlag"))
-            self.csv_flag: bool = bool(data.get("csvFlag"))
-            self.legal_status = data.get("legalStatus")
-
-        def __str__(self):
-            return (
-                f"Seq Number: {self.seq_number}, "
-                f"Doc ID: {self.doc_id}, "
-                f"Edinet Code: {self.edinet_code}, "
-                f"Sec Code: {self.sec_code}, "
-                f"JCN: {self.jcn}, "
-                f"Filer Name: {self.filer_name}, "
-                f"Fund Code: {self.fund_code}, "
-                f"Ordinance Code: {self.ordinance_code}, "
-                f"Form Code: {self.form_code}, "
-                f"Doc Type Code: {self.doc_type_code}, "
-                f"Period Start: {self.period_start}, "
-                f"Period End: {self.period_end}, "
-                f"Submit Date Time: {self.submit_date_time}, "
-                f"Doc Description: {self.doc_description}, "
-                f"Issuer Edinet Code: {self.issuer_edinet_code}, "
-                f"Subject Edinet Code: {self.subject_edinet_code}, "
-                f"Subsidiary Edinet Code: {self.subsidiary_edinet_code}, "
-                f"Current Report Reason: {self.current_report_reason}, "
-                f"Parent Doc ID: {self.parent_doc_id}, "
-                f"Ope Date Time: {self.ope_date_time}, "
-                f"Withdrawal Status: {self.withdrawal_status}, "
-                f"Doc Info Edit Status: {self.doc_info_edit_status}, "
-                f"Disclosure Status: {self.disclosure_status}, "
-                f"Xbrl Flag: {self.xbrl_flag}, "
-                f"PDF Flag: {self.pdf_flag}, "
-                f"Attach Doc Flag: {self.attach_doc_flag}, "
-                f"English Doc Flag: {self.english_doc_flag}, "
-                f"CSV Flag: {self.csv_flag}, "
-                f"Legal Status: {self.legal_status}"
-            )
-
-    def __init__(self, data):
-        self.metadata = self._Metadata(data.get("metadata"))
-        self.results = [self._Result(item) for item in data.get("results", [])]
 
 
 @dataclass
@@ -144,31 +53,3 @@ class CountingData:
             age_years = int(self.avg_age_years) + age_years_decimal
             return str(age_years)
         return self.avg_age_years
-
-    def to_list(self) -> list[str | None]:
-        return [
-            self.edinet_code,
-            self.filer_name_jp,
-            self.avg_salary,
-            self.avg_tenure_years_combined,
-            self.avg_age_years_combined,
-            self.number_of_employees,
-        ]
-
-    def to_entity(
-        self, doc_attr_dict: dict[str, ResponseData], company_master: dict[str, Company]
-    ) -> Counting:
-        response_data = doc_attr_dict[self.edinet_code]
-        submit_date = datetime.datetime.strptime(
-            response_data.results[0].submit_date_time, "%Y-%m-%d %H:%M"
-        )
-        return Counting(
-            company=company_master[self.edinet_code],
-            period_start=response_data.results[0].period_start,
-            period_end=response_data.results[0].period_end,
-            submit_date=submit_date,
-            avg_salary=self.avg_salary,
-            avg_tenure=self.avg_tenure_years_combined,
-            avg_age=self.avg_age_years_combined,
-            number_of_employees=self.number_of_employees,
-        )
