@@ -36,7 +36,7 @@ class IndexView(TemplateView):
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
         home_dir = settings.MEDIA_ROOT  # TODO: XbrlServiceのinitからwork_dirを削除して
         service = XbrlService(work_dir=Path(home_dir, "xbrlReport"))
-        report_document_list = service.fetch_securities_report(
+        report_document_list = service.fetch_report_doc_list(
             RequestData(start_date=start_date, end_date=end_date)
         )
         ReportDocument.objects.bulk_create(report_document_list)
