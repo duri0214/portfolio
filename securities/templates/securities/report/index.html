@@ -54,7 +54,11 @@
                 <tbody>
                 {% for report_document in object_list %}
                     <tr>
-                        <td>{{ report_document.doc_id }}</td>
+                        <td>
+                            <a href="{% url 'securities:download' doc_id=report_document.doc_id %}">
+                                {{ report_document.doc_id }}
+                            </a>
+                        </td>
                         <td>{{ report_document.edinet_code }}</td>
                         <td>{{ report_document.sec_code }}</td>
                         <td>{{ report_document.jcn }}</td>
