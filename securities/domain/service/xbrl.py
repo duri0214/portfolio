@@ -2,19 +2,17 @@ import datetime
 import logging
 import os
 import shutil
-from datetime import datetime, date
+from datetime import datetime
 from pathlib import Path
 
-import pandas as pd
 import requests
 from arelle import Cntlr
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
 from lib.zipfileservice import ZipFileService
 from securities.domain.repository.edinet import EdinetRepository
 from securities.domain.valueobject.edinet import CountingData, RequestData
-from securities.models import Company, ReportDocument
+from securities.models import ReportDocument
 
 SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 
