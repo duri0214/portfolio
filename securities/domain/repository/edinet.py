@@ -27,17 +27,3 @@ class EdinetRepository:
             number_of_employees=counting_data.number_of_employees,
             company=company,
         )
-
-        edinet_codes = [report_doc.edinet_code for report_doc in doc_attr_dict.values()]
-        edinet_code_to_company = {
-            company.edinet_code: company
-            for company in Company.objects.filter(edinet_code__in=edinet_codes)
-        }
-        insert_objects = [
-            x.to_entity(
-                doc_attr_dict,
-                edinet_code_to_company,
-            )
-            for x in counting_data_dict.values()
-        ]
-        Counting.objects.bulk_create(insert_objects)
