@@ -1,7 +1,7 @@
 import datetime
 from dataclasses import dataclass
 
-from securities.models import Counting, Company
+from securities.models import Counting, Company, ReportDocument
 
 
 @dataclass
@@ -67,17 +67,16 @@ class CountingData:
         ]
 
     def to_entity(
-        self, doc_attr_dict: dict[str, ResponseData], company_master: dict[str, Company]
+        self,
+        doc_attr_dict: dict[str, ReportDocument],
+        company_master: dict[str, Company],
     ) -> Counting:
-        response_data = doc_attr_dict[self.edinet_code]
-        submit_date = datetime.datetime.strptime(
-            response_data.results[0].submit_date_time, "%Y-%m-%d %H:%M"
-        )
+        report_doc = doc_attr_dict[self.edinet_code]
         return Counting(
             company=company_master[self.edinet_code],
-            period_start=response_data.results[0].period_start,
-            period_end=response_data.results[0].period_end,
-            submit_date=submit_date,
+            period_start=report_doc.period_start,
+            period_end=report_doc.period_end,
+            submit_date=report_doc.submit_date_time,
             avg_salary=self.avg_salary,
             avg_tenure=self.avg_tenure_years_combined,
             avg_age=self.avg_age_years_combined,
