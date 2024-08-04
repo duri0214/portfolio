@@ -18,11 +18,7 @@ SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 
 
 class XbrlService:
-    def __init__(self, work_dir: Path):
-        self.work_dir = work_dir
-        if not self.work_dir.exists():
-            self.work_dir.mkdir(parents=True, exist_ok=True)
-        self.temp_dir = self.work_dir / "temp"
+    def __init__(self):
         self.repository = EdinetRepository()
 
     @staticmethod
