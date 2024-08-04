@@ -7,19 +7,18 @@ from securities.models import Company, Counting
 
 class EdinetRepository:
     @staticmethod
-    def delete_existing_records(response_data_list: list[ResponseData]):
-        edinet_codes = [data.results[0].edinet_code for data in response_data_list]
+    def delete_existing_records(report_doc_list: list[ReportDocument]):
+        edinet_codes = [report_doc.edinet_code for report_doc in report_doc_list]
         edinet_code_to_company = {
             company.edinet_code: company
             for company in Company.objects.filter(edinet_code__in=edinet_codes)
         }
-        for data in response_data_list:
-            edinet_code = data.results[0].edinet_code
-            submit_date = datetime.strptime(
-                data.results[0].submit_date_time, "%Y-%m-%d %H:%M"
-            )
+        for report_doc in report_doc_list:
+            edinet_code = report_doc.edinet_code
             company = edinet_code_to_company[edinet_code]
-            Counting.objects.filter(company=company, submit_date=submit_date).delete()
+            Counting.objects.filter(
+                company=company, submit_date=report_doc.submit_date_time
+            ).delete()
 
     @staticmethod
     def bulk_insert(
