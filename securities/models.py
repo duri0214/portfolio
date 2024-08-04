@@ -10,7 +10,7 @@ class ReportDocument(models.Model):
         doc_id (models.CharField): The document's management number.
         edinet_code (models.CharField): The submitter EDINET code.
         sec_code (models.CharField): The submitter security code (nullable).
-        jcn (models.CharField): The submitter corporate number.
+        jcn (models.CharField): The submitter corporate number (nullable).
         filer_name (models.CharField): The name of the submitter.
         fund_code (models.CharField): The fund code associated with the document (nullable).
         ordinance_code (models.CharField): The ordinance code of the document.
@@ -45,7 +45,7 @@ class ReportDocument(models.Model):
     sec_code = models.CharField(
         verbose_name="提出者証券コード", max_length=5, null=True
     )
-    jcn = models.CharField(verbose_name="提出者法人番号", max_length=13)
+    jcn = models.CharField(verbose_name="提出者法人番号", max_length=13, null=True)
     filer_name = models.CharField(verbose_name="提出者名", max_length=128)
     fund_code = models.CharField(verbose_name="ファンドコード", max_length=6, null=True)
     ordinance_code = models.CharField(verbose_name="府令コード", max_length=3)
