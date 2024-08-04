@@ -15,18 +15,18 @@ class EdinetRepository:
         ).delete()
 
     @staticmethod
-    def bulk_insert(
-        doc_attr_dict: dict[str, ReportDocument],
-        counting_data_dict: dict[str, CountingData],
-    ):
-        # TODO: dict[str, ReportDocument] から list[ReportDocument] に変更したほうがよさそう
-        # Delete the CountingData instances whose 'edinet_code' is not in 'doc_attr_dict'
-        for edinet_code in list(counting_data_dict.keys()):
-            if edinet_code not in doc_attr_dict:
-                del counting_data_dict[edinet_code]
-                logging.warning(
-                    f"{edinet_code} の CountingData が doc_attr_dict に見つからなかったので CountingData から削除しました"
-                )
+    def insert(report_doc: ReportDocument, counting_data: CountingData):
+        company = Company.objects.get(edinet_code=counting_data.edinet_code)
+        Counting.objects.create(
+            period_start=report_doc.period_start,
+            period_end=report_doc.period_end,
+            submit_date=report_doc.submit_date_time,
+            avg_salary=counting_data.avg_salary,
+            avg_tenure=counting_data.avg_tenure_years_combined,
+            avg_age=counting_data.avg_age_years_combined,
+            number_of_employees=counting_data.number_of_employees,
+            company=company,
+        )
 
         edinet_codes = [report_doc.edinet_code for report_doc in doc_attr_dict.values()]
         edinet_code_to_company = {
