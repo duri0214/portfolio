@@ -142,47 +142,15 @@ class XbrlService:
                     setattr(counting_data, "number_of_employees", None)
         return counting_data
 
-    def make_counting_data(self) -> dict[str, CountingData]:
-        counting_data_dict = {}
-        for xbrl_path in self._unzip_files_and_extract_xbrl():
-            counting_data = CountingData()
-            ctrl = Cntlr.Cntlr()
-            model_xbrl = ctrl.modelManager.load(xbrl_path)
-            logging.info(f"{Path(xbrl_path).name}")
-            counting_data = self._assign_attributes(counting_data, model_xbrl.facts)
-            counting_data_dict[counting_data.edinet_code] = counting_data
-        shutil.rmtree(self.temp_dir)
-        return counting_data_dict
+    def make_counting_data(self, work_dir: Path, temp_dir: Path) -> CountingData:
+        ZipFileService.extract_zip_files(work_dir, temp_dir)
+        xbrl_path = str(next(temp_dir.glob("XBRL/PublicDoc/*.xbrl")))
 
-    def to_csv(self, data: list[CountingData], output_filename: str):
-        all_companies = Company.objects.all()
-        new_data = []
-        for x in data:
-            try:
-                # If matching Company object is found, insert industry name to list
-                company = all_companies.get(edinet_code=x.edinet_code)
-                data_list = x.to_list()
-                data_list.insert(2, company.submitter_industry)
-            except ObjectDoesNotExist:
-                # If no matching Company object is found, insert None
-                data_list = x.to_list()
-                data_list.insert(2, None)
-            new_data.append(data_list)
-
-        employee_frame = pd.DataFrame(
-            data=new_data,
-            columns=[
-                "EDINETCODE",
-                "企業名",
-                "業種",
-                "平均年間給与（円）",
-                "平均勤続年数（年）",
-                "平均年齢（歳）",
-                "従業員数（人）",
-            ],
-        )
-        employee_frame.to_csv(
-            str(self.work_dir / output_filename), encoding="cp932", index=False
+        ctrl = Cntlr.Cntlr()
+        model_xbrl = ctrl.modelManager.load(xbrl_path)
+        logging.info(f"  xbrl: {Path(xbrl_path).name}")
+        counting_data = self._assign_attributes(
+            counting_data=CountingData(), facts=model_xbrl.facts
         )
         logging.info(f"{self.work_dir} に {output_filename} が出力されました")
 
