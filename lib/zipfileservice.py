@@ -39,12 +39,19 @@ class ZipFileService:
         """
         source_dir_path = Path(source_dir)
         target_dir_path = Path(target_dir)
-        target_dir_path.mkdir(parents=True, exist_ok=True)
+
+        # Check if the source directory exists
+        if not source_dir_path.exists():
+            raise FileNotFoundError(f"The source directory {source_dir} does not exist")
+
+        # Check if the target directory exists
+        if not target_dir_path.exists():
+            raise FileNotFoundError(f"The target directory {target_dir} does not exist")
 
         zip_files = source_dir_path.glob("*.zip")
         for zip_file in zip_files:
-            with zipfile.ZipFile(str(zip_file), "r") as zipf:
-                zipf.extractall(str(target_dir_path))
+            with zipfile.ZipFile(str(zip_file), "r") as zip_f:
+                zip_f.extractall(str(target_dir_path))
 
     @staticmethod
     def _convert_to_cp932(folder_name: str) -> str:
