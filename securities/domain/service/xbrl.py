@@ -28,7 +28,7 @@ class XbrlService:
         self.repository = EdinetRepository()
 
     @staticmethod
-    def fetch_securities_report(request_data: RequestData) -> list[ReportDocument]:
+    def fetch_report_doc_list(request_data: RequestData) -> list[ReportDocument]:
         """
         Args:
             request_data: APIへのリクエスト条件
@@ -133,7 +133,7 @@ class XbrlService:
         Notes: 有価証券報告書の提出期限は原則として決算日から3ヵ月以内（3月末決算の企業であれば、同年6月中）
         """
         # TODO: modelから report_doc_list を引いて置き換える感じになると思う
-        report_doc_list = self.fetch_securities_report(request_data)
+        report_doc_list = self.fetch_report_doc_list(request_data)
         self._download_xbrl_in_zip(report_doc_list)
         logging.info("download finish")
 
