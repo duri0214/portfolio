@@ -39,10 +39,10 @@ python manage.py createsuperuser
 - バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` の seeder は14日ぶん用意しましょう
     - seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
 
-```sql
+```text
 -- 何月のデータがあるの？の確認
 SELECT x.recorded_date
-FROM portfolio_db.vietnam_research_industry x
+FROM vietnam_research_industry x
 GROUP BY x.recorded_date
 ORDER BY x.recorded_date;
 
@@ -123,13 +123,25 @@ python manage.py import_soil_hardness /path/to/folder
 
 ## よくつかうメンテナンスコマンド
 
+`-R` は recursive
+`ubuntu:www-data` は ubuntuユーザ:apacheグループの所有者にする
+
 ```commandline
 cd /var/www/html/portfolio
 git pull
 source /var/www/html/venv/bin/activate
 systemctl restart apache2
-chown -R ubuntu:ubuntu /var/www/html
+chown -R ubuntu:www-data /var/www/html
 python manage.py collectstatic
+```
+
+主に securities がzipを保存するために必要な設定
+exists メソッドは file or directory
+が存在するか確認するがこれには該当のファイルまたはディレクトリへのアクセス権限（実行権限 (x) ）が必要
+
+```commandline
+chmod -R 774 /var/www/html/portfolio/media
+chmod 774 /var/www
 ```
 
 ## vietnam_research
