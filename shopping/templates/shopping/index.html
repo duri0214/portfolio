@@ -59,17 +59,28 @@
             {% endfor %}
         </div>
 
-        <div class="pagination">
-            <a class="btn {% if page_obj.has_previous %}btn-primary{% else %}btn-secondary{% endif %} {% if not page_obj.has_previous %}disabled{% endif %}"
-               href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% endif %}">
-                前へ
-            </a>
-            <span>{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
-            <a class="btn {% if page_obj.has_next %}btn-primary{% else %}btn-secondary{% endif %} {% if not page_obj.has_next %}disabled{% endif %}"
-               href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% endif %}">
-                次へ
-            </a>
-        </div>
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
+                    <li class="page-item"><a class="page-link"
+                                             href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">First</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><a class="page-link" href="#">{{ page_obj.number }}</a></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">Last</a></li>
+                {% endif %}
+            </ul>
+        </nav>
 
         <h2 id="maintain" class="mt-4">｜管理用</h2>
         <a href="{% url 'shp:product_register_single' %}">単品登録</a>
