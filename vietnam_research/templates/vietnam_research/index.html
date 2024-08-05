@@ -130,7 +130,7 @@
             更新日時: {{ rss.updated }}
             <ul>
                 {% for entry in rss.entries %}
-                    <li><a href="{{ entry.link }}">{{ entry.title }}</a></li>
+                    <li><a href="{{ entry.link }}" target="_blank">{{ entry.title }}</a></li>
                 {% endfor %}
             </ul>
         </div>
