@@ -80,25 +80,12 @@ class ReportDocument(models.Model):
     english_doc_flag = models.BooleanField(verbose_name="英文ファイル有無フラグ")
     csv_flag = models.BooleanField(verbose_name="CSV有無フラグ")
     legal_status = models.BooleanField(verbose_name="縦覧区分")
+    download_reserved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.doc_id} - {self.edinet_code}"
-
-
-class DownloadQueue(models.Model):
-    """
-    Class representing a download queue.
-
-
-    Attributes:
-        doc_id (CharField): The document ID or number.
-        created_at (DateTimeField): The datetime when the download queue is created.
-
-    """
-    doc_id = models.CharField(verbose_name="書類管理番号", max_length=8, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Company(models.Model):

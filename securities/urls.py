@@ -4,13 +4,13 @@ from securities.views import (
     IndexView,
     EdinetCodeUploadView,
     EdinetCodeUploadSuccessView,
-    DownloadView,
+    DownloadReserveView,
 )
 
 app_name = "securities"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
-    path("download/<str:doc_id>/", DownloadView.as_view(), name="download"),
+    path("download_reserve/", DownloadReserveView.as_view(), name="download_reserve"),
     path(
         "edinet_code_upload/upload",
         EdinetCodeUploadView.as_view(),
