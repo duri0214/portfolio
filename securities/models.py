@@ -87,6 +87,20 @@ class ReportDocument(models.Model):
         return f"{self.doc_id} - {self.edinet_code}"
 
 
+class DownloadQueue(models.Model):
+    """
+    Class representing a download queue.
+
+
+    Attributes:
+        doc_id (CharField): The document ID or number.
+        created_at (DateTimeField): The datetime when the download queue is created.
+
+    """
+    doc_id = models.CharField(verbose_name="書類管理番号", max_length=8, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class Company(models.Model):
     """
     提出書類一覧APIで返ってくる顔ぶれから書類を取得してできあがる、企業マスタ
