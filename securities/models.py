@@ -35,6 +35,7 @@ class ReportDocument(models.Model):
         english_doc_flag (models.BooleanField): A flag indicating whether the document has an English file.
         csv_flag (models.BooleanField): A flag indicating whether the document has a CSV file.
         legal_status (models.BooleanField): A flag indicating whether the document is vertical reading.
+        download_reserved (models.BooleanField): ダウンロード予約済みかどうか
         created_at (models.DateTimeField): The date and time when the document was created.
         updated_at (models.DateTimeField): The date and time when the document was last updated.
     """
