@@ -57,32 +57,6 @@ class IndexView(ListView):
         return redirect("securities:index")
 
 
-# class DownloadView(View):
-#     """
-#     リンクをクリックしたときにダウンロードする処理をまとめた
-#     TODO: cronバッチに移管して削除予定
-#     """
-#
-#     @staticmethod
-#     def get(request, **kwargs):
-#         service = XbrlService()
-#
-#         work_dir = Path(settings.MEDIA_ROOT) / "securities"
-#         if not work_dir.exists():
-#             work_dir.mkdir(parents=True, exist_ok=True)
-#         temp_dir = work_dir / "temp"
-#         if not temp_dir.exists():
-#             temp_dir.mkdir(parents=True, exist_ok=True)
-#
-#         report_doc = service.download_xbrl(doc_id=kwargs["doc_id"], work_dir=work_dir)
-#         service.repository.delete_existing_records(report_doc)
-#         counting_data = service.make_counting_data(work_dir=work_dir, temp_dir=temp_dir)
-#         service.repository.insert(report_doc=report_doc, counting_data=counting_data)
-#         logging.info(f"{report_doc.doc_id} の計数データ作成完了")
-#
-#         return redirect("securities:index")
-
-
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class DownloadReserveView(View):
     @staticmethod
