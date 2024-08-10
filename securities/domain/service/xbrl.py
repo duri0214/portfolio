@@ -96,13 +96,12 @@ class XbrlService:
                 logging.info(f"{day}, {report_doc}")
         return report_doc_list
 
-    def download_xbrl(self, doc_id: str, work_dir: Path) -> ReportDocument:
+    @staticmethod
+    def download_xbrl(report_doc: ReportDocument, work_dir: Path) -> None:
         """
         Notes: 有価証券報告書の提出期限は原則として決算日から3ヵ月以内（3月末決算の企業であれば、同年6月中）
         """
-        report_doc = self.repository.find_by_doc_id(doc_id)
-
-        logging.info(f"{report_doc.doc_id} をダウンロード中...")
+        logging.info(f"{report_doc.doc_id} をダウンロード...")
         url = f"https://api.edinet-fsa.go.jp/api/v2/documents/{report_doc.doc_id}"
         params = {
             "type": SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT,
@@ -116,8 +115,6 @@ class XbrlService:
             for chunk in res.iter_content(chunk_size=1024):
                 file.write(chunk)
         logging.info(f"{report_doc.doc_id} をダウンロード完了")
-
-        return report_doc
 
     @staticmethod
     def _assign_attributes(counting_data: CountingData, facts):
@@ -142,7 +139,11 @@ class XbrlService:
                     setattr(counting_data, "number_of_employees", None)
         return counting_data
 
-    def make_counting_data(self, work_dir: Path, temp_dir: Path) -> CountingData:
+    def make_counting_data(self, work_dir: Path) -> CountingData:
+        temp_dir = Path(work_dir) / "temp"
+        if not temp_dir.exists():
+            temp_dir.mkdir(parents=True, exist_ok=True)
+
         ZipFileService.extract_zip_files(work_dir, temp_dir)
         xbrl_path = str(next(temp_dir.glob("XBRL/PublicDoc/*.xbrl")))
 
@@ -152,5 +153,6 @@ class XbrlService:
         counting_data = self._assign_attributes(
             counting_data=CountingData(), facts=model_xbrl.facts
         )
-        shutil.rmtree(work_dir)
+        shutil.rmtree(temp_dir)
+
         return counting_data
