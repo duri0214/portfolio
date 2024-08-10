@@ -63,8 +63,9 @@
                 <tbody>
                 {% for report_document in object_list %}
                     <tr>
-                        {# TODO: reservedだったらチェックボックスを disabled にする #}
-                        <td><input type="checkbox" value="{{ report_document.id }}" class="report-checkbox"></td>
+                        <td>{% if request.GET.reserved != 'yes' %}
+                            <input type="checkbox" value="{{ report_document.id }}" class="report-checkbox">{% endif %}
+                        </td>
                         <td>{{ report_document.doc_id }}</td>
                         <td>{{ report_document.edinet_code }}</td>
                         <td>{{ report_document.sec_code }}</td>
