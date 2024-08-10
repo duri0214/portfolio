@@ -1,29 +1,17 @@
-from securities.domain.valueobject.edinet import CountingData
+from django.db.models import Q
+
 from securities.models import Company, Counting, ReportDocument
 
 
 class EdinetRepository:
     @staticmethod
-    def find_by_doc_id(doc_id: str) -> ReportDocument:
-        return ReportDocument.objects.get(doc_id=doc_id)
+    def delete_existing_records(report_doc_list: list[ReportDocument]) -> None:
+        delete_conditions = Q()
 
-    @staticmethod
-    def delete_existing_records(report_doc: ReportDocument):
-        company = Company.objects.get(edinet_code=report_doc.edinet_code)
-        Counting.objects.filter(
-            company=company, submit_date=report_doc.submit_date_time
-        ).delete()
+        for report_doc in report_doc_list:
+            company = Company.objects.get(edinet_code=report_doc.edinet_code)
+            delete_conditions |= Q(
+                company=company, submit_date=report_doc.submit_date_time
+            )
 
-    @staticmethod
-    def insert(report_doc: ReportDocument, counting_data: CountingData):
-        company = Company.objects.get(edinet_code=counting_data.edinet_code)
-        Counting.objects.create(
-            period_start=report_doc.period_start,
-            period_end=report_doc.period_end,
-            submit_date=report_doc.submit_date_time,
-            avg_salary=counting_data.avg_salary,
-            avg_tenure=counting_data.avg_tenure_years_combined,
-            avg_age=counting_data.avg_age_years_combined,
-            number_of_employees=counting_data.number_of_employees,
-            company=company,
-        )
+        Counting.objects.filter(delete_conditions).delete()

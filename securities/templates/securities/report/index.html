@@ -36,9 +36,18 @@
             <button type="submit" class="btn btn-primary">指定した期間の書類一覧を取得</button>
         </form>
         <div class="container mt-5 pt-5">
+            <button id="submit-for-reserve" class="btn btn-outline-primary">ダウンロード予約する</button>
+            <a class="btn btn-outline-info{% if request.GET.reserved == 'yes' %} active{% endif %}"
+               href="
+
+
+                       {% url 'securities:index' %}{% if request.GET.reserved != 'yes' %}?reserved=yes{% else %}{% endif %}">
+                ダウンロード予約済みリスト
+            </a>
             <table class="table table-striped table-bordered">
                 <thead class="bg-primary text-white">
                 <tr>
+                    <th scope="col"></th>
                     <th scope="col">Doc ID</th>
                     <th scope="col">EDINET Code</th>
                     <th scope="col">Sec Code</th>
@@ -54,11 +63,10 @@
                 <tbody>
                 {% for report_document in object_list %}
                     <tr>
-                        <td>
-                            <a href="{% url 'securities:download' doc_id=report_document.doc_id %}">
-                                {{ report_document.doc_id }}
-                            </a>
+                        <td>{% if request.GET.reserved != 'yes' %}
+                            <input type="checkbox" value="{{ report_document.id }}" class="report-checkbox">{% endif %}
                         </td>
+                        <td>{{ report_document.doc_id }}</td>
                         <td>{{ report_document.edinet_code }}</td>
                         <td>{{ report_document.sec_code }}</td>
                         <td>{{ report_document.jcn }}</td>
@@ -100,4 +108,25 @@
             </ul>
         </nav>
     </div>
+    <script>
+        document.querySelector('#submit-for-reserve').addEventListener('click', function () {
+            const ids = Array.from(document.querySelectorAll('.report-checkbox:checked')).map(box => box.value);
+
+            fetch('{% url 'securities:download_reserve' %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify(ids)
+            }).then(function (response) {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Network response was not ok');
+            }).then(function (json) {
+                console.log(json);
+            });
+        });
+    </script>
 {% endblock %}

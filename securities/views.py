@@ -1,15 +1,17 @@
-import logging
+import json
 from datetime import datetime
-from pathlib import Path
 
 from dateutil.relativedelta import relativedelta
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.views import View
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView, FormView, ListView
 
-from config import settings
 from securities.domain.service.upload import UploadService
 from securities.domain.service.xbrl import XbrlService
 from securities.domain.valueobject.edinet import RequestData
@@ -24,18 +26,11 @@ class IndexView(ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.values(
-            "doc_id",
-            "edinet_code",
-            "sec_code",
-            "jcn",
-            "filer_name",
-            "period_start",
-            "period_end",
-            "submit_date_time",
-            "doc_description",
-            "xbrl_flag",
-        ).order_by("doc_id")
+        if self.request.GET.get("reserved") == "yes":
+            queryset = queryset.filter(download_reserved=True)
+        else:
+            queryset = queryset.filter(download_reserved=False)
+        queryset = queryset.order_by("doc_id")
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -62,25 +57,22 @@ class IndexView(ListView):
         return redirect("securities:index")
 
 
-class DownloadView(View):
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class DownloadReserveView(View):
     @staticmethod
-    def get(request, **kwargs):
-        service = XbrlService()
-
-        work_dir = Path(settings.MEDIA_ROOT) / "securities"
-        if not work_dir.exists():
-            work_dir.mkdir(parents=True, exist_ok=True)
-        temp_dir = work_dir / "temp"
-        if not temp_dir.exists():
-            temp_dir.mkdir(parents=True, exist_ok=True)
-
-        report_doc = service.download_xbrl(doc_id=kwargs["doc_id"], work_dir=work_dir)
-        service.repository.delete_existing_records(report_doc)
-        counting_data = service.make_counting_data(work_dir=work_dir, temp_dir=temp_dir)
-        service.repository.insert(report_doc=report_doc, counting_data=counting_data)
-        logging.info(f"{report_doc.doc_id} の計数データ作成完了")
-
-        return redirect("securities:index")
+    def post(request):
+        ids = json.loads(request.body)
+        for identifier in ids:
+            try:
+                doc = ReportDocument.objects.get(pk=identifier)
+                doc.download_reserved = True
+                doc.save()
+            except ObjectDoesNotExist:
+                return JsonResponse(
+                    {"error": f"No ReportDocument exists with ID {identifier}"},
+                    status=400,
+                )
+        return JsonResponse({"status": "success"})
 
 
 class EdinetCodeUploadView(FormView):
