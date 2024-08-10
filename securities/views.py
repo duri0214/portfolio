@@ -60,7 +60,7 @@ class IndexView(ListView):
 # class DownloadView(View):
 #     """
 #     リンクをクリックしたときにダウンロードする処理をまとめた
-#     TODO: 削除予定
+#     TODO: cronバッチに移管して削除予定
 #     """
 #
 #     @staticmethod
