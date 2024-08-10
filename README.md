@@ -196,4 +196,4 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 ## securities report
 
 - edinet data を zip でダウンロードする
-    - `python manage.py download_edinet_data` のバッチをまわす
+    - `python manage.py daily_download_edinet.py` のバッチをまわす
