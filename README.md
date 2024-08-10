@@ -190,3 +190,10 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 - [仕様書](docs/taxonomy/specification.md)
 - 興味のある動物の分類を関係図に表示
 - タグ付けをして分析のサポートができる
+
+## soil analysis
+
+## securities report
+
+- edinet data を zip でダウンロードする
+    - `python manage.py download_edinet_data` のバッチをまわす
