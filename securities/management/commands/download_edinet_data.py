@@ -1,39 +1,54 @@
+import logging
+import os
+import shutil
+from pathlib import Path
+
 from django.core.management.base import BaseCommand
 
-from securities.models import ReportDocument
+from config import settings
+from securities.domain.service.xbrl import XbrlService
+from securities.models import ReportDocument, Company, Counting
 
 
 class Command(BaseCommand):
     help = "Download edinet data"
 
     def handle(self, *args, **options):
-        # 処理対象
-        report_documents = ReportDocument.objects.filter(download_reserved=True)[:20]
+        report_doc_list = ReportDocument.objects.filter(download_reserved=True)[:20]
 
-        # edinet_list = []
-        # for _, row in df.iterrows():
-        #     edinet_list.append(
-        #         Company(
-        #             edinet_code=na(row["ＥＤＩＮＥＴコード"]),
-        #             type_of_submitter=na(row["提出者種別"]),
-        #             listing_status=na(row["上場区分"]),
-        #             consolidated_status=na(row["連結の有無"]),
-        #             capital=(int(row["資本金"]) if pd.notna(row["資本金"]) else None),
-        #             end_fiscal_year=na(row["決算日"]),
-        #             submitter_name=na(row["提出者名"]),
-        #             submitter_name_en=na(row["提出者名（英字）"]),
-        #             submitter_name_kana=na(row["提出者名（ヨミ）"]),
-        #             address=na(row["所在地"]),
-        #             submitter_industry=na(row["提出者業種"]),
-        #             securities_code=na(row["証券コード"]),
-        #             corporate_number=na(row["提出者法人番号"]),
-        #         )
-        #     )
-        # Company.objects.bulk_create(edinet_list)
+        work_dir = Path(settings.MEDIA_ROOT) / "securities"
+        if not work_dir.exists():
+            work_dir.mkdir(parents=True, exist_ok=True)
 
-        # 処理対象のフラグを落とす
+        companies = Company.objects.all()
+        company_mst = {c.edinet_code: c for c in companies}
+
+        service = XbrlService()
+        service.repository.delete_existing_records(report_doc_list)
+
+        counting_list: list[Counting] = []
+        for report_doc in report_doc_list:
+            service.download_xbrl(report_doc=report_doc, work_dir=work_dir)
+            counting_data = service.make_counting_data(work_dir=work_dir)
+            counting = Counting(
+                period_start=report_doc.period_start,
+                period_end=report_doc.period_end,
+                submit_date=report_doc.submit_date_time,
+                avg_salary=counting_data.avg_salary,
+                avg_tenure=counting_data.avg_tenure_years,
+                avg_age=counting_data.avg_age_years_combined,
+                number_of_employees=counting_data.number_of_employees,
+                company=company_mst[report_doc.edinet_code],
+            )
+            counting_list.append(counting)
+            os.remove(work_dir / f"{report_doc.doc_id}.zip")
+
+        Counting.objects.bulk_create(counting_list)
+        logging.info(f"計数データ作成完了: {len(report_doc_list)}")
+        shutil.rmtree(work_dir)
+
         ReportDocument.objects.filter(
-            id__in=[report_document.id for report_document in report_documents]
+            id__in=[report_document.id for report_document in report_doc_list]
         ).update(download_reserved=False)
 
         self.stdout.write(self.style.SUCCESS("Successfully download edinet data"))
