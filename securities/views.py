@@ -26,20 +26,7 @@ class IndexView(ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.values(
-            "id",
-            "doc_id",
-            "edinet_code",
-            "sec_code",
-            "jcn",
-            "filer_name",
-            "period_start",
-            "period_end",
-            "submit_date_time",
-            "doc_description",
-            "xbrl_flag",
-            "download_reserved",
-        ).order_by("doc_id")
+        queryset = queryset.order_by("doc_id")
         return queryset
 
     def get_context_data(self, **kwargs):
