@@ -26,6 +26,10 @@ class IndexView(ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        if self.request.GET.get("reserved") == "yes":
+            queryset = queryset.filter(download_reserved=True)
+        else:
+            queryset = queryset.filter(download_reserved=False)
         queryset = queryset.order_by("doc_id")
         return queryset
 
