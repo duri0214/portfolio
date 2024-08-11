@@ -51,7 +51,7 @@
                 <th scope="col">Doc ID</th>
                 <th scope="col">EDINET Code</th>
                 <th scope="col">Sec Code</th>
-                <th scope="col">JCN</th>
+                <th scope="col">Corp Number</th>
                 <th scope="col">Filer Name</th>
                 <th scope="col">Period Start</th>
                 <th scope="col">Period End</th>
@@ -67,10 +67,10 @@
                         <input type="checkbox" value="{{ report_document.id }}" class="report-checkbox">{% endif %}
                     </td>
                     <td>{{ report_document.doc_id }}</td>
-                    <td>{{ report_document.edinet_code }}</td>
-                    <td>{{ report_document.sec_code }}</td>
-                    <td>{{ report_document.jcn }}</td>
-                    <td>{{ report_document.filer_name }}</td>
+                    <td>{{ report_document.company.edinet_code }}</td>
+                    <td>{{ report_document.company.securities_code }}</td>
+                    <td>{{ report_document.company.corporate_number }}</td>
+                    <td>{{ report_document.company.submitter_name }}</td>
                     <td>{{ report_document.period_start }}</td>
                     <td>{{ report_document.period_end }}</td>
                     <td>{{ report_document.submit_date_time }}</td>
