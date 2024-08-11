@@ -62,6 +62,9 @@ class XbrlService:
                     if ope_date_time_string
                     else None
                 )
+                edinet_code = item.get("edinetCode")
+                if edinet_code not in self.companies:
+                    continue
 
                 report_doc = ReportDocument(
                     seq_number=item.get("seqNumber"),
