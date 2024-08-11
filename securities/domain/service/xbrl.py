@@ -24,8 +24,7 @@ class XbrlService:
             company.edinet_code: company for company in Company.objects.all()
         }
 
-    @staticmethod
-    def fetch_report_doc_list(request_data: RequestData) -> list[ReportDocument]:
+    def fetch_report_doc_list(self, request_data: RequestData) -> list[ReportDocument]:
         """
         Args:
             request_data: APIへのリクエスト条件
