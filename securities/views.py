@@ -36,7 +36,7 @@ class IndexView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         current_time = now()
-        context["start_date"] = current_time - relativedelta(years=1)  # 1 year ago
+        context["start_date"] = current_time - relativedelta(months=2)  # 2 month ago
         context["end_date"] = current_time - relativedelta(days=1)  # yesterday
 
         return context
