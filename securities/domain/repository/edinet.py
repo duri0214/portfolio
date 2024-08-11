@@ -9,7 +9,7 @@ class EdinetRepository:
         delete_conditions = Q()
 
         for report_doc in report_doc_list:
-            company = Company.objects.get(edinet_code=report_doc.edinet_code)
+            company = Company.objects.get(edinet_code=report_doc.company.edinet_code)
             delete_conditions |= Q(
                 company=company, submit_date=report_doc.submit_date_time
             )
