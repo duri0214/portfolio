@@ -12,7 +12,7 @@ from django.utils import timezone
 from lib.zipfileservice import ZipFileService
 from securities.domain.repository.edinet import EdinetRepository
 from securities.domain.valueobject.edinet import CountingData, RequestData
-from securities.models import ReportDocument
+from securities.models import ReportDocument, Company
 
 SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 
@@ -20,6 +20,9 @@ SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 class XbrlService:
     def __init__(self):
         self.repository = EdinetRepository()
+        self.companies = {
+            company.edinet_code: company for company in Company.objects.all()
+        }
 
     @staticmethod
     def fetch_report_doc_list(request_data: RequestData) -> list[ReportDocument]:
