@@ -28,11 +28,6 @@ class Command(BaseCommand):
 
         counting_list: list[Counting] = []
         for report_doc in report_doc_list:
-            try:
-                company = company_mst[report_doc.edinet_code]
-            except KeyError:
-                continue
-
             service.download_xbrl(report_doc=report_doc, work_dir=work_dir)
             counting_data = service.make_counting_data(work_dir=work_dir)
             counting = Counting(
@@ -43,13 +38,13 @@ class Command(BaseCommand):
                 avg_tenure=counting_data.avg_tenure_years,
                 avg_age=counting_data.avg_age_years_combined,
                 number_of_employees=counting_data.number_of_employees,
-                company=company,
+                company=company_mst[report_doc.company.edinet_code],
             )
             counting_list.append(counting)
             os.remove(work_dir / f"{report_doc.doc_id}.zip")
 
         Counting.objects.bulk_create(counting_list)
-        logging.info(f"計数データ作成完了: {len(counting_list)}")
+        logging.info(f"計数データ作成完了: {len(report_doc_list)}")
         shutil.rmtree(work_dir)
 
         ReportDocument.objects.filter(
