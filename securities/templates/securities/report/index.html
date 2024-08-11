@@ -124,6 +124,9 @@
                 }
                 throw new Error('Network response was not ok');
             }).then(function (json) {
+                if (json.status === "success") {
+                    location.reload();
+                }
                 console.log(json);
             });
         });
