@@ -16,7 +16,7 @@ from securities.domain.service.upload import UploadService
 from securities.domain.service.xbrl import XbrlService
 from securities.domain.valueobject.edinet import RequestData
 from securities.forms import UploadForm
-from securities.models import ReportDocument
+from securities.models import ReportDocument, Company
 
 
 class IndexView(ListView):
@@ -43,6 +43,9 @@ class IndexView(ListView):
 
     @staticmethod
     def post(request, **kwargs):
+        if not Company.objects.exists():
+            return redirect("securities:index")
+
         ReportDocument.objects.all().delete()
 
         start_date_str = request.POST.get("start_date")
