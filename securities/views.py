@@ -16,7 +16,7 @@ from securities.domain.service.upload import UploadService
 from securities.domain.service.xbrl import XbrlService
 from securities.domain.valueobject.edinet import RequestData
 from securities.forms import UploadForm
-from securities.models import ReportDocument
+from securities.models import ReportDocument, Company
 
 
 class IndexView(ListView):
@@ -36,13 +36,16 @@ class IndexView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         current_time = now()
-        context["start_date"] = current_time - relativedelta(years=1)  # 1 year ago
+        context["start_date"] = current_time - relativedelta(months=2)  # 2 month ago
         context["end_date"] = current_time - relativedelta(days=1)  # yesterday
 
         return context
 
     @staticmethod
     def post(request, **kwargs):
+        if not Company.objects.exists():
+            return redirect("securities:index")
+
         ReportDocument.objects.all().delete()
 
         start_date_str = request.POST.get("start_date")

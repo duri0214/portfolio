@@ -131,6 +131,7 @@ cd /var/www/html/portfolio
 git pull
 source /var/www/html/venv/bin/activate
 systemctl restart apache2
+sudo -s
 chown -R ubuntu:www-data /var/www/html
 python manage.py collectstatic
 ```
@@ -196,4 +197,4 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 ## securities report
 
 - edinet data を zip でダウンロードする
-    - `python manage.py daily_download_edinet.py` のバッチをまわす
+    - `python manage.py daily_download_edinet` のバッチをまわす

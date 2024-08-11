@@ -12,7 +12,7 @@ from django.utils import timezone
 from lib.zipfileservice import ZipFileService
 from securities.domain.repository.edinet import EdinetRepository
 from securities.domain.valueobject.edinet import CountingData, RequestData
-from securities.models import ReportDocument
+from securities.models import ReportDocument, Company
 
 SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 
@@ -20,9 +20,11 @@ SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT = 1
 class XbrlService:
     def __init__(self):
         self.repository = EdinetRepository()
+        self.companies = {
+            company.edinet_code: company for company in Company.objects.all()
+        }
 
-    @staticmethod
-    def fetch_report_doc_list(request_data: RequestData) -> list[ReportDocument]:
+    def fetch_report_doc_list(self, request_data: RequestData) -> list[ReportDocument]:
         """
         Args:
             request_data: APIへのリクエスト条件
@@ -60,37 +62,29 @@ class XbrlService:
                     if ope_date_time_string
                     else None
                 )
+                edinet_code = item.get("edinetCode")
+                if edinet_code not in self.companies:
+                    continue
 
                 report_doc = ReportDocument(
                     seq_number=item.get("seqNumber"),
                     doc_id=item.get("docID"),
-                    edinet_code=item.get("edinetCode"),
-                    sec_code=item.get("secCode"),
-                    jcn=item.get("JCN"),
-                    filer_name=item.get("filerName"),
-                    fund_code=item.get("fundCode"),
                     ordinance_code=ordinance_code,
                     form_code=form_code,
-                    doc_type_code=item.get("docTypeCode"),
                     period_start=item.get("periodStart"),
                     period_end=item.get("periodEnd"),
                     submit_date_time=submit_date_time,
                     doc_description=item.get("docDescription"),
-                    issuer_edinet_code=item.get("issuerEdinetCode"),
-                    subject_edinet_code=item.get("subjectEdinetCode"),
-                    subsidiary_edinet_code=item.get("subsidiaryEdinetCode"),
-                    current_report_reason=item.get("currentReportReason"),
-                    parent_doc_id=item.get("parentDocID"),
                     ope_date_time=ope_date_time,
                     withdrawal_status=item.get("withdrawalStatus"),
                     doc_info_edit_status=item.get("docInfoEditStatus"),
                     disclosure_status=item.get("disclosureStatus"),
                     xbrl_flag=bool(item.get("xbrlFlag")),
                     pdf_flag=bool(item.get("pdfFlag")),
-                    attach_doc_flag=bool(item.get("attachDocFlag")),
                     english_doc_flag=bool(item.get("englishDocFlag")),
                     csv_flag=bool(item.get("csvFlag")),
                     legal_status=item.get("legalStatus"),
+                    company=self.companies[edinet_code],
                 )
                 report_doc_list.append(report_doc)
                 logging.info(f"{day}, {report_doc}")
@@ -148,7 +142,11 @@ class XbrlService:
         xbrl_path = str(next(temp_dir.glob("XBRL/PublicDoc/*.xbrl")))
 
         ctrl = Cntlr.Cntlr()
+
+        # TODO: VPSここでつっかえてるな...（質問中）
         model_xbrl = ctrl.modelManager.load(xbrl_path)
+        # TODO: ここまでこれていない
+
         logging.info(f"  xbrl: {Path(xbrl_path).name}")
         counting_data = self._assign_attributes(
             counting_data=CountingData(), facts=model_xbrl.facts

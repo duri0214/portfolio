@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 avg_tenure=counting_data.avg_tenure_years,
                 avg_age=counting_data.avg_age_years_combined,
                 number_of_employees=counting_data.number_of_employees,
-                company=company_mst[report_doc.edinet_code],
+                company=company_mst[report_doc.company.edinet_code],
             )
             counting_list.append(counting)
             os.remove(work_dir / f"{report_doc.doc_id}.zip")
