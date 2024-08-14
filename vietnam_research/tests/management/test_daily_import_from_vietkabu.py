@@ -1,8 +1,12 @@
+from datetime import datetime
+
 from bs4 import BeautifulSoup
 from django.test import TestCase
-from django.utils.datetime_safe import datetime
 
-from vietnam_research.management.commands.daily_import_from_vietkabu import retrieve_transaction_date, extract_newcomer
+from vietnam_research.management.commands.daily_import_from_vietkabu import (
+    retrieve_transaction_date,
+    extract_newcomer,
+)
 from vietnam_research.models import Symbol, IndClass, Market
 
 
@@ -10,16 +14,21 @@ class Test(TestCase):
     @classmethod
     def setUpTestData(cls):
         Symbol.objects.create(
-            code='AAA',
-            name='アンファット・バイオプラスチック',
-            ind_class=IndClass.objects.create(industry1='製造業', industry2='プラスチック製品', industry_class=1),
-            market=Market.objects.create(code='HOSE', name='ホーチミン証券取引所'))
+            code="AAA",
+            name="アンファット・バイオプラスチック",
+            ind_class=IndClass.objects.create(
+                industry1="製造業", industry2="プラスチック製品", industry_class=1
+            ),
+            market=Market.objects.create(code="HOSE", name="ホーチミン証券取引所"),
+        )
 
     def test_retrieve_market_date(self):
-        self.assertEqual(retrieve_transaction_date('ホーチミン証取株価（2019/08/16 VNT）'),
-                         datetime(2019, 8, 16, 17, 0, 0))
+        self.assertEqual(
+            retrieve_transaction_date("ホーチミン証取株価（2019/08/16 VNT）"),
+            datetime(2019, 8, 16, 17, 0, 0),
+        )
 
-        res = retrieve_transaction_date('ホーチミン証取株価（2019/08/16 VNT）')
+        res = retrieve_transaction_date("ホーチミン証取株価（2019/08/16 VNT）")
         self.assertEqual(res.year, 2019)
         self.assertEqual(res.month, 8)
         self.assertEqual(res.day, 16)
@@ -29,7 +38,10 @@ class Test(TestCase):
 
     def test_retrieve_market_date_invalid_value(self):
         with self.assertRaises(ValueError):
-            self.assertEqual(retrieve_transaction_date('カッコのない文字'), datetime(2019, 8, 16, 17, 0))
+            self.assertEqual(
+                retrieve_transaction_date("カッコのない文字"),
+                datetime(2019, 8, 16, 17, 0),
+            )
 
     def test_extract_newcomer(self):
         """
@@ -84,11 +96,17 @@ class Test(TestCase):
                 </td>
             </tr>
         """
-        soup = BeautifulSoup(source, 'lxml')
-        m_symbol = Symbol.objects.filter(market__code='HOSE')
-        m_ind_class = IndClass.objects.get(industry1='製造業', industry2='プラスチック製品')
+        soup = BeautifulSoup(source, "lxml")
+        m_symbol = Symbol.objects.filter(market__code="HOSE")
+        m_ind_class = IndClass.objects.get(
+            industry1="製造業", industry2="プラスチック製品"
+        )
         expected = [
-            {'symbol': 'AAA999', 'name': 'アンファット・バイオプラスチック', 'industry': m_ind_class}
+            {
+                "symbol": "AAA999",
+                "name": "アンファット・バイオプラスチック",
+                "industry": m_ind_class,
+            }
         ]
         self.assertEqual(extract_newcomer(soup, m_symbol), expected)
 
@@ -130,6 +148,6 @@ class Test(TestCase):
                 </td>
             </tr>
         """
-        soup = BeautifulSoup(source, 'lxml')
-        m_symbol = Symbol.objects.filter(market__code='HOSE')
+        soup = BeautifulSoup(source, "lxml")
+        m_symbol = Symbol.objects.filter(market__code="HOSE")
         self.assertEqual(len(extract_newcomer(soup, m_symbol)), 0)
