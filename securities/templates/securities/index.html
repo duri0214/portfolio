@@ -1,12 +1,21 @@
 {% extends "securities/base.html" %}
 {% load static %}
 {% load humanize %}
+{% block additional_header %}
+    <link rel="stylesheet" href="{% static 'securities/css/index.css' %}">
+{% endblock %}
 {% block content %}
     <div class="jumbotron">
         <h1 class="display-4">Let's analyze Securities Report!</h1>
         <p class="lead">it's interesting Securities Report</p>
         <hr class="my-4">
         <p>You can read the Securities Report</p>
+        <ul>
+            <li>
+                <a class="btn btn-secondary btn-sm" href="{% url 'securities:counting' %}"
+                   role="button">Countingテーブル</a>
+            </li>
+        </ul>
     </div>
 
     <div class="container">

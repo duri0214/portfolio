@@ -1,0 +1,5 @@
+.jumbotron li {
+    display: inline-block;
+    list-style-type: none;
+    padding-top: 4px;
+}
