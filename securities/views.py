@@ -16,7 +16,7 @@ from securities.domain.service.upload import UploadService
 from securities.domain.service.xbrl import XbrlService
 from securities.domain.valueobject.edinet import RequestData
 from securities.forms import UploadForm
-from securities.models import ReportDocument, Company
+from securities.models import ReportDocument, Company, Counting
 
 
 class IndexView(ListView):
@@ -58,6 +58,13 @@ class IndexView(ListView):
         )
         ReportDocument.objects.bulk_create(report_document_list)
         return redirect("securities:index")
+
+
+class CountingView(ListView):
+    template_name = "securities/table_view/counting.html"
+    model = Counting
+    paginate_by = 10
+    ordering = ["id"]
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
