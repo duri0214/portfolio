@@ -20,7 +20,7 @@ from securities.models import ReportDocument, Company
 
 
 class IndexView(ListView):
-    template_name = "securities/report/index.html"
+    template_name = "securities/index.html"
     model = ReportDocument
     paginate_by = 10
 
