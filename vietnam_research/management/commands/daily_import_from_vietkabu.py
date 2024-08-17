@@ -12,24 +12,25 @@ from vietnam_research.domain.valueobject.vietkabu import Company, Counting
 from vietnam_research.models import Symbol, Industry, Market, IndClass
 
 
-def retrieve_transaction_date(target_text: str) -> datetime:
+def convert_to_datetime(target_text: str) -> datetime:
     """
-    vietkabuの登録日をdatetimeに変換する\n
-    webページ側が仕様変更で17:00が更新時間になったうえに時刻が取れなくなったため、17:00固定とする
+    viet-kabu.com の更新時刻をdatetimeに変換する\n
+    webページ側が仕様変更により更新時刻が取れなくなったことがあるため、17:00 固定とする
+      昔: ホーチミン証取株価（2019/08/16 15:00VNT）
+      ？: ホーチミン証取株価（????/08/16 VNT）
+      今: ホーチミン証取株価（2024/08/16 15:00VNT）
 
     Args:
-        target_text: ホーチミン証取株価（2019/08/16 VNT）
+        target_text: `XXXX証取株価（YYYY/MM/DD VNT）`
 
     Returns: 2019-08-16 17:00:00
     """
-    extracted = re.search("(?<=（).*?(?=VNT）)", target_text)
+    extracted = re.search(r"(?<=（)\d{4}/\d{2}/\d{2}(?=VNT）)", target_text)
     if not extracted:
-        raise ValueError(
-            "想定されたテキストが入力されませんでした（カッコのないテキスト）"
-        )
+        raise ValueError("`XXXX証取株価（YYYY/MM/DD VNT）`形式が入力されませんでした")
 
-    # TODO: f"{extracted.group()[:16]}", "%Y/%m/%d %H:%M"
-    return datetime.strptime(f"{extracted.group()[:10]} 17:00:00", "%Y/%m/%d %H:%M:%S")
+    date_str = f"{extracted.group()} 17:00:00"
+    return datetime.strptime(date_str, "%Y/%m/%d %H:%M:%S")
 
 
 class Command(BaseCommand):
@@ -64,9 +65,7 @@ class Command(BaseCommand):
 
             # 市場情報の更新日: 2019-08-16 17:00:00
             tag_th_string_type = soup.find("th", class_="table_list_left")
-            transaction_date = retrieve_transaction_date(
-                tag_th_string_type.text.strip()
-            )
+            transaction_date = convert_to_datetime(tag_th_string_type.text.strip())
 
             # 当日データがあったら処理しない
             if Industry.objects.filter(
