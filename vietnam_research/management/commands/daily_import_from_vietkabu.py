@@ -25,7 +25,7 @@ def convert_to_datetime(target_text: str) -> datetime:
 
     Returns: 2019-08-16 17:00:00
     """
-    extracted = re.search(r"(?<=（)\d{4}/\d{2}/\d{2}(?=VNT）)", target_text)
+    extracted = re.search("(?<=（).*?(?=VNT）)", target_text)
     if not extracted:
         raise ValueError("`XXXX証取株価（YYYY/MM/DD VNT）`形式が入力されませんでした")
 
