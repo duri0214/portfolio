@@ -60,7 +60,7 @@ class Command(BaseCommand):
         for filepath in glob(str(Path(out_folder) / "*.png")):
             log_service.write(f"Removing file: {filepath}")
             os.remove(filepath)
-        Uptrend.objects.all().delete()  # TODO: 多分indexがリセットされないのでTRUNCATEにしたい
+        Uptrend.objects.all().delete()
 
         # all tickers are plotting by matplotlib
         industry_records = (
