@@ -12,14 +12,14 @@ class Company:
 @dataclass(frozen=True)
 class Counting:
     """
-    TdNumber は、tdテキストの数値を表すクラスです
-     Attributes:
-         _raw_text (str): 数値の初期化に使用される生のテキスト
-         value (float): The value of the number.
+    計数を表すクラスです
+    Attributes:
+        _raw_text (str): constructor
+        value (float): The value of the number.
 
-     Methods:
-         __post_init__(_raw_text: str): 生のテキストを float 値に変換します
-         _to_float(s: str) -> float: 指定された文字列を浮動小数点数に変換します
+    Methods:
+        __post_init__(_raw_text: str): 生のテキストを float 値に変換します
+        _to_float(s: str) -> float: 指定された文字列を浮動小数点数に変換します
     """
 
     _raw_text: InitVar[str]
