@@ -292,3 +292,12 @@ class VietnamStatistics(models.Model):
     element = models.CharField(max_length=255)
     period = models.DateField()
     value = models.FloatField()
+
+
+class ExchangeRate(models.Model):
+    base_cur_code = models.CharField(max_length=3)
+    dest_cur_code = models.CharField(max_length=3)
+    rate = models.FloatField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
