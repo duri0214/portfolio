@@ -20,18 +20,50 @@ class ExchangeService:
         return base_cur_to_usd.rate / dest_cur_to_usd.rate
 
     @staticmethod
-    def calc_purchase_units(budget: Currency, a_unit_price: Currency):
-        # JPY-USDの最新のレートを取得: 1ドルが100円のとき、0.01
-        print(
-            f"{budget.code=} - {a_unit_price.code=}",
+    def calc_purchase_units(budget: Currency, a_unit_price: Currency) -> float:
+        """
+        予算でいくつ変えるのかを計算します
+
+        予算: 100000円
+        rate: 110円/1ドル
+        単価: 124.58 USD（NVIDIA）
+
+        予算をUSDに換算: 100000JPY / rate 110USD = 909.09USD
+        909.09USDが予算なのでNVIDIAの価格、124.58 USDで割ります
+
+        Args:
+            budget: The amount of budget in the currency specified by its code.
+            a_unit_price: The unit price of the item in the currency specified by its code.
+        """
+        # Get exchange rates
+        rate_budget = (
+            1
+            if budget.code == "USD"
+            else ExchangeService.get_exchange_rate(base_cur=budget.code, dest_cur="USD")
         )
+        rate_unit_price = (
+            1
+            if a_unit_price.code == "USD"
+            else ExchangeService.get_exchange_rate(
+                base_cur=a_unit_price.code, dest_cur="USD"
+            )
+        )
+
+        # Convert budget and unit price to USD
+        budget_usd = budget.amount / rate_budget
+        unit_price_usd = a_unit_price.amount / rate_unit_price
+
         rate = ExchangeService.get_exchange_rate(
             base_cur=budget.code, dest_cur=a_unit_price.code
         )
-        print(f"為替レート (1{budget.code} = {rate} {a_unit_price.code}): {rate}")
+        print(f"為替レート {budget.code}/{a_unit_price.code}: {rate}")
 
-        # 予算をドルに換算し、それを単価で割って口数を求める
-        budget_usd = budget.amount * rate
-        num_stocks = budget_usd / a_unit_price.amount
+        # Calculate the number of units
+        num_units = budget_usd / unit_price_usd
+        formatted_num_units = round(num_units, 2)
 
-        print(f"予算（{budget.amount}円）で購入できる口数は約 {num_stocks} 口です。")
+        formatted_budget = f"{budget.amount}{budget.code}"
+        message = f"{formatted_num_units} units = {formatted_budget}→{round(budget_usd, 2)} USD / @{unit_price_usd} USD"
+        print(message)
+
+        return formatted_num_units
