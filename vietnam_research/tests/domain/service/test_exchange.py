@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
 from vietnam_research.domain.service.exchange import ExchangeService
@@ -7,31 +8,40 @@ from vietnam_research.models import ExchangeRate
 
 class TestExchangeService(TestCase):
     def setUp(self):
-        self.base_cur = "USD"
-        self.dest_cur = "JPY"
-        self.rate_base = 1.0
-        self.rate_dest = 110.0
-
         ExchangeRate.objects.create(
-            base_cur_code=self.base_cur, dest_cur_code="USD", rate=self.rate_base
+            base_cur_code="USD",
+            dest_cur_code="JPY",
+            rate=110.0,
         )
         ExchangeRate.objects.create(
-            base_cur_code=self.dest_cur, dest_cur_code="USD", rate=self.rate_dest
+            base_cur_code="JPY",
+            dest_cur_code="USD",
+            rate=1 / 110.0,
         )
 
-    def test_get_exchange_rate(self):
-        rate = ExchangeService.get_exchange_rate(self.base_cur, self.dest_cur)
-        self.assertEqual(rate, self.rate_base / self.rate_dest)
+    def test_get_rate(self):
+        actual = ExchangeService.get_rate("USD", "JPY")
+        expected = 110.0
+        self.assertEqual(expected, actual)
 
-    def test_get_exchange_rate_not_exist(self):
-        with self.assertRaises(ValueError):
-            ExchangeService.get_exchange_rate("EUR", "JPY")
+    def test_get_rate_not_exist(self):
+        with self.assertRaises(ObjectDoesNotExist):
+            ExchangeService.get_rate("EUR", "JPY")
 
     def test_calc_purchase_units(self):
+        """
+        予算: 100000円
+        rate: 0.00909
+        単価: 124.58 USD (NVIDIA)
+
+        Notes: JPYからUSDへ換算するには、JPY額をJPY/USDのレートで乗じます
+        """
         budget = Currency(code="JPY", amount=100000)
-        a_unit_price = Currency(code="USD", amount=124.58)
+        unit_price = Currency(code="USD", amount=124.58)
 
-        result = ExchangeService.calc_purchase_units(budget, a_unit_price)
-        expected = round((100000 / 110) / 124.58, 2)
+        actual = ExchangeService().calc_purchase_units(
+            budget=budget, unit_price=unit_price
+        )
+        expected = 7.3  # 100000 * 0.00909 / @124.58
 
-        self.assertAlmostEqual(expected, result)
+        self.assertAlmostEqual(expected, actual)
