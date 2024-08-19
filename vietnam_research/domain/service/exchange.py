@@ -3,67 +3,41 @@ from vietnam_research.models import ExchangeRate
 
 
 class ExchangeService:
-    @classmethod
-    def get_exchange_rate(cls, base_cur: str, dest_cur: str) -> float:
-        # Step1: 通貨ペア（例: JPY/VND）のレートを出すために、USDに換算
-        try:
-            base_cur_to_usd = ExchangeRate.objects.get(
-                base_cur_code=base_cur, dest_cur_code="USD"
-            )
-            dest_cur_to_usd = ExchangeRate.objects.get(
-                base_cur_code=dest_cur, dest_cur_code="USD"
-            )
-        except ExchangeRate.DoesNotExist:
-            raise ValueError(f"レートが見つかりません： {base_cur} or {dest_cur}/USD")
-
-        # USD同士で書式どおり（例: JPY/VND）に割るとレートが出る
-        return base_cur_to_usd.rate / dest_cur_to_usd.rate
-
     @staticmethod
-    def calc_purchase_units(budget: Currency, a_unit_price: Currency) -> float:
+    def get_rate(base_cur: str, dest_cur: str) -> float:
         """
-        予算でいくつ変えるのかを計算します
+        Args:
+            base_cur (str): The 自分方 通貨コード
+            dest_cur (str): The 相手方 通貨コード
 
-        予算: 100000円
-        rate: 110円/1ドル
-        単価: 124.58 USD（NVIDIA）
+        Returns:
+            float: 通貨ペアの為替レート（baseとdestが同じ場合は 1）
+        """
+        if base_cur == dest_cur:
+            return 1
+        else:
+            return ExchangeRate.objects.get(
+                base_cur_code=base_cur, dest_cur_code=dest_cur
+            ).rate
 
-        予算をUSDに換算: 100000JPY / rate 110USD = 909.09USD
-        909.09USDが予算なのでNVIDIAの価格、124.58 USDで割ります
+    def calc_purchase_units(self, budget: Currency, unit_price: Currency) -> float:
+        """
+        予算でいくつ買えるのかを計算します
+        budgetを相手側（＝unit_price）通貨に変換してから処理します
+
+        Notes: JPYからUSDへ換算するには、JPY額をJPY/USDのレートで乗じます
 
         Args:
-            budget: The amount of budget in the currency specified by its code.
-            a_unit_price: The unit price of the item in the currency specified by its code.
+            budget: 予算
+            unit_price: 単価
         """
         # Get exchange rates
-        rate_budget = (
-            1
-            if budget.code == "USD"
-            else ExchangeService.get_exchange_rate(base_cur=budget.code, dest_cur="USD")
-        )
-        rate_unit_price = (
-            1
-            if a_unit_price.code == "USD"
-            else ExchangeService.get_exchange_rate(
-                base_cur=a_unit_price.code, dest_cur="USD"
-            )
-        )
+        rate = self.get_rate(base_cur=budget.code, dest_cur=unit_price.code)
 
-        # Convert budget and unit price to USD
-        budget_usd = budget.amount / rate_budget
-        unit_price_usd = a_unit_price.amount / rate_unit_price
-
-        rate = ExchangeService.get_exchange_rate(
-            base_cur=budget.code, dest_cur=a_unit_price.code
-        )
-        print(f"為替レート {budget.code}/{a_unit_price.code}: {rate}")
+        # Convert budget to unit price currency
+        budget_in_dest_cur = budget.amount * rate
 
         # Calculate the number of units
-        num_units = budget_usd / unit_price_usd
-        formatted_num_units = round(num_units, 2)
+        num_units = budget_in_dest_cur / unit_price.amount
 
-        formatted_budget = f"{budget.amount}{budget.code}"
-        message = f"{formatted_num_units} units = {formatted_budget}→{round(budget_usd, 2)} USD / @{unit_price_usd} USD"
-        print(message)
-
-        return formatted_num_units
+        return round(num_units, 2)
