@@ -18,12 +18,6 @@ class ExchangeForm(forms.Form):
         widget=forms.NumberInput(attrs={"tabindex": "2", "step": "0.01"}),
     )
 
-    quantity = forms.IntegerField(
-        label="購入口数",
-        required=True,
-        widget=forms.NumberInput(attrs={"tabindex": "3"}),
-    )
-
 
 class WatchlistCreateForm(forms.ModelForm):
     """ウォッチリスト登録時の入力フォームです"""
