@@ -12,10 +12,10 @@ class ExchangeForm(forms.Form):
         widget=forms.NumberInput(attrs={"tabindex": "1"}),
     )
 
-    unit_price = forms.IntegerField(
-        label="購入単価 (VND)",
+    unit_price = forms.FloatField(
+        label="単価",
         required=True,
-        widget=forms.NumberInput(attrs={"tabindex": "2"}),
+        widget=forms.NumberInput(attrs={"tabindex": "2", "step": "0.01"}),
     )
 
     quantity = forms.IntegerField(
