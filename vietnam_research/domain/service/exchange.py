@@ -7,6 +7,41 @@ from vietnam_research.domain.valueobject.exchange import Currency
 from vietnam_research.models import ExchangeRate
 
 
+@dataclass
+class ExchangeProcess:
+    """
+    VNMにおいて ((単価 * 口数) + 手数料) を算出する過程
+
+    Attributes:
+    - budget_jpy (float): 予算（円）
+    - unit_price (float): ある株の単価
+    - rate (float): 為替レート
+    - price_no_fee (float): 単価 * 口数
+    - fee (float): 手数料
+    - price_in_fee (float): (単価 * 口数) + 手数料
+    """
+
+    budget_jpy: float
+    unit_price: float
+    rate: float = field(init=False)
+    purchasable_units: float = field(init=False)
+    price_no_fee: float = field(init=False)
+    fee: float = field(init=False)
+    price_in_fee: float = field(init=False)
+
+    def __post_init__(self):
+        self.rate = ExchangeService.get_rate(base_cur="JPY", dest_cur="VND")
+        self.purchasable_units = ExchangeService().calc_purchase_units(
+            budget=Currency(code="JPY", amount=self.budget_jpy),
+            unit_price=Currency(code="VND", amount=self.unit_price),
+        )
+        self.price_no_fee = self.unit_price * self.purchasable_units
+        self.fee = VietnamMarketDataProvider.calculate_transaction_fee(
+            price_without_fees=self.price_no_fee
+        )
+        self.price_in_fee = self.price_no_fee + self.fee
+
+
 class ExchangeService:
     @staticmethod
     def get_rate(base_cur: str, dest_cur: str) -> float:
