@@ -34,6 +34,8 @@ class Command(BaseCommand):
             "https://www.bloomberg.co.jp/quote/USDJPY:CUR",
             "https://www.bloomberg.co.jp/quote/VNINDEX:IND",
         ]
+
+        ExchangeRate.objects.all().delete()
         for url in urls:
             quote_identifier = url.split("/")[-1]
             currency_pair = quote_identifier.split(":")[0]
