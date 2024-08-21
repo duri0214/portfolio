@@ -1,22 +1,21 @@
 import json
 import logging
-from dataclasses import asdict
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Sum
 from django.http.response import HttpResponse, HttpResponseBadRequest
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
 from vietnam_research.domain.repository.like import LikeRepository
+from vietnam_research.domain.repository.market import MarketRepository
+from vietnam_research.domain.service.exchange import ExchangeProcess
 from vietnam_research.domain.service.fao import FaoRetrievalService
 from vietnam_research.domain.service.market import (
     MarketRetrievalService,
 )
-from vietnam_research.domain.valueobject.exchange import ExchangeProcess
 from vietnam_research.forms import (
     ArticleForm,
     WatchlistCreateForm,
@@ -33,33 +32,46 @@ from vietnam_research.models import (
 class IndexView(TemplateView):
     template_name = "vietnam_research/index.html"
 
-    def get(self, request, *args, **kwargs):
-        market_retrieval_service = MarketRetrievalService(request)
+    def get_context_data(self, **kwargs):
+        # POSTされたフォームの値を取得
+        budget = self.request.session.get("budget")
+        unit_price = self.request.session.get("unit_price")
+
+        # user情報を取得
+        login_user = self.request.user
+        login_id = login_user.id if login_user.is_authenticated else None
+
+        # contextを用意
+        context = super().get_context_data(**kwargs)
+        market_retrieval_service = MarketRetrievalService()
         fao_retrieval_service = FaoRetrievalService()
-        context = {
-            **market_retrieval_service.to_dict(),
-            **fao_retrieval_service.to_dict(
-                item="Fish, Seafood",
-                element="Food supply quantity (kg/capita/yr)",
-                rank_limit=10,
-            ),
-        }
+        context.update(
+            {
+                "articles": MarketRepository.get_articles(login_id),
+                "exchanged": ExchangeProcess(budget_jpy=budget, unit_price=unit_price),
+                **market_retrieval_service.to_dict(),
+                **fao_retrieval_service.to_dict(
+                    item="Fish, Seafood",
+                    element="Food supply quantity (kg/capita/yr)",
+                    rank_limit=10,
+                ),
+            }
+        )
 
-        return render(request, self.template_name, context)
+        return context
 
-    @staticmethod
-    def post(request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         exchange_form = ExchangeForm(request.POST)
         if exchange_form.is_valid():
-            exchange_process = ExchangeProcess(
-                exchange_form.cleaned_data["current_balance"],
-                exchange_form.cleaned_data["unit_price"],
-                exchange_form.cleaned_data["quantity"],
+            request.session["budget"] = exchange_form.cleaned_data["budget"]
+            request.session["unit_price"] = exchange_form.cleaned_data["unit_price"]
+
+            return redirect("vnm:index")
+        else:
+            # フォームが有効でない場合は、フォーム検証エラーを含むページをレンダリング
+            return self.render_to_response(
+                self.get_context_data(exchange_form=exchange_form)
             )
-            base_location = redirect("vnm:index")["location"]
-            query_string = urlencode(asdict(exchange_process))
-            response_location = f"{base_location}?{query_string}#exchange"
-            return redirect(response_location)
 
 
 class LikesView(LoginRequiredMixin, View):
