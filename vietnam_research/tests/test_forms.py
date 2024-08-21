@@ -11,10 +11,19 @@ class FormTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         Symbol.objects.create(
-            code='AAA',
-            name='アンファット・バイオプラスチック',
-            ind_class=IndClass.objects.create(industry1='農林水産業', industry2='天然ゴム', industry_class=1),
-            market=Market.objects.create(code='HOSE', name='ホーチミン証券取引所'))
+            code="AAA",
+            name="アンファット・バイオプラスチック",
+            ind_class=IndClass.objects.create(
+                industry1="農林水産業", industry2="天然ゴム", industry_class=1
+            ),
+            market=Market.objects.create(code="HOSE", name="ホーチミン証券取引所"),
+        )
+
+        ExchangeRate.objects.create(
+            base_cur_code="JPY",
+            dest_cur_code="VND",
+            rate=170.55,
+        )
 
     def test_watchlist_form_valid(self):
         """test No.1: 正常な入力を行えばエラーにならない"""
