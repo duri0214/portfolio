@@ -22,8 +22,9 @@ class ExchangeProcess:
     """
 
     budget_jpy: float
-    unit_price: float
     rate: float = field(init=False)
+    budget_in_target_currency: float = field(init=False)
+    unit_price: float
     purchasable_units: float = field(init=False)
     price_no_fee: float = field(init=False)
     fee: float = field(init=False)
@@ -31,7 +32,8 @@ class ExchangeProcess:
 
     def __post_init__(self):
         self.rate = ExchangeService.get_rate(base_cur="JPY", dest_cur="VND")
-        self.purchasable_units = ExchangeService().calc_purchase_units(
+        self.budget_in_target_currency = self.budget_jpy * self.rate
+        self.purchasable_units = ExchangeService.calc_purchase_units(
             budget=Currency(code="JPY", amount=self.budget_jpy),
             unit_price=Currency(code="VND", amount=self.unit_price),
         )
