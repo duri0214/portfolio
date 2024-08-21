@@ -76,10 +76,10 @@ class Command(BaseCommand):
                 else:
                     rate = float(soup_price.text.replace(",", ""))
 
-                ExchangeRate.objects.update_or_create(
+                ExchangeRate.objects.create(
                     base_cur_code=base_cur,
                     dest_cur_code=dest_cur,
-                    defaults={"rate": rate},
+                    rate=rate,
                 )
             elif index_or_currency == "IND":
                 transaction_date = datetime.datetime.strptime(
