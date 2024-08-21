@@ -78,7 +78,8 @@ class ExchangeService:
                 )
         return rate
 
-    def calc_purchase_units(self, budget: Currency, unit_price: Currency) -> float:
+    @staticmethod
+    def calc_purchase_units(budget: Currency, unit_price: Currency) -> float:
         """
         予算でいくつ買えるのかを計算します
         budgetを相手側（＝unit_price）通貨に変換してから処理します
