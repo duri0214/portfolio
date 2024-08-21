@@ -25,8 +25,10 @@ class FormTests(TestCase):
 
     def test_watchlist_form_valid(self):
         """test No.1: 正常な入力を行えばエラーにならない"""
-        symbol = Symbol.objects.get(code='AAA')
-        params = dict(symbol=symbol, bought_day=now(), stocks_price=1000, stocks_count=500)
+        symbol = Symbol.objects.get(code="AAA")
+        params = dict(
+            symbol=symbol, bought_day=now(), stocks_price=1000, stocks_count=500
+        )
         form = WatchlistCreateForm(params, instance=Industry())
         self.assertTrue(form.is_valid())
 
