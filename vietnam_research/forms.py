@@ -6,8 +6,8 @@ from .models import Articles, Watchlist, FinancialResultWatch
 class ExchangeForm(forms.Form):
     """為替計算用の入力フォームです"""
 
-    current_balance = forms.IntegerField(
-        label="現在の残高(VND)",
+    budget = forms.IntegerField(
+        label="予算（円）",
         required=True,
         widget=forms.NumberInput(attrs={"tabindex": "1"}),
     )
