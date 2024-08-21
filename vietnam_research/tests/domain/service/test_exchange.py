@@ -15,11 +15,6 @@ class TestExchangeService(TestCase):
         )
         ExchangeRate.objects.create(
             base_cur_code="JPY",
-            dest_cur_code="USD",
-            rate=1 / 110.0,
-        )
-        ExchangeRate.objects.create(
-            base_cur_code="JPY",
             dest_cur_code="VND",
             rate=170.55,
         )
@@ -28,6 +23,11 @@ class TestExchangeService(TestCase):
         actual = ExchangeService.get_rate("USD", "JPY")
         expected = 110.0
         self.assertEqual(expected, actual)
+
+    def test_get_rate_inverted(self):
+        actual = ExchangeService.get_rate("VND", "JPY")
+        expected = 1 / 170.55
+        self.assertAlmostEqual(expected, actual)
 
     def test_get_rate_not_exist(self):
         with self.assertRaises(ObjectDoesNotExist):

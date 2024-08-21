@@ -1,3 +1,8 @@
+from dataclasses import field, dataclass
+
+from django.core.exceptions import ObjectDoesNotExist
+
+from vietnam_research.domain.dataprovider.market import VietnamMarketDataProvider
 from vietnam_research.domain.valueobject.exchange import Currency
 from vietnam_research.models import ExchangeRate
 
@@ -15,10 +20,26 @@ class ExchangeService:
         """
         if base_cur == dest_cur:
             return 1
-        else:
-            return ExchangeRate.objects.get(
+        try:
+            # dbからレートを取得
+            rate = ExchangeRate.objects.get(
                 base_cur_code=base_cur, dest_cur_code=dest_cur
             ).rate
+        except ObjectDoesNotExist:
+            try:
+                # ひっくり返してレートを取得し、その逆数を返す
+                rate = (
+                    1
+                    / ExchangeRate.objects.get(
+                        base_cur_code=dest_cur, dest_cur_code=base_cur
+                    ).rate
+                )
+            except ObjectDoesNotExist:
+                # 両方が見つからない場合は例外
+                raise ObjectDoesNotExist(
+                    f"No exchange rate found for currency pair {base_cur}-{dest_cur}"
+                )
+        return rate
 
     def calc_purchase_units(self, budget: Currency, unit_price: Currency) -> float:
         """
