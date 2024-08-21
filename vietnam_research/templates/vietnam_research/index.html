@@ -244,13 +244,11 @@
             </table>
             <form method="post">
                 {% csrf_token %}
-                <div class="form-group">
-                    {{ exchange_form.current_balance.label_tag }}
-                    {{ exchange_form.current_balance }}
-                </div>
-
-                <!-- unit_price と quantity を横に並べます -->
                 <div class="form-row">
+                    <div class="form-group">
+                        {{ exchange_form.budget.label_tag }}
+                        {{ exchange_form.budget }}
+                    </div>
                     <div class="form-group col-md-6">
                         {{ exchange_form.unit_price.label_tag }}
                         {{ exchange_form.unit_price }}
@@ -259,13 +257,13 @@
 
                 <button type="submit" class="btn btn-primary">計算</button>
             </form>
-            残高: {{ exchanged.current_balance | intcomma }}VND<br>
-            価格: @{{ exchanged.unit_price | intcomma }}VND * {{ exchanged.quantity | intcomma }}株
-            = {{ exchanged.price_no_fee | intcomma }}VND<br>
+            予算: {{ exchanged.budget_jpy | intcomma }}円<br>
+            レート: {{ exchanged.rate }} JPY/VND<br>
+            単価: @{{ exchanged.unit_price | intcomma }}VND<br>
+            購入可能口数: {{ exchanged.purchasable_units }}口<br>
+            金額（手数料なし）: {{ exchanged.price_no_fee | intcomma }}VND<br>
             手数料: {{ exchanged.fee | intcomma }}VND<br>
-            差引残高: {{ exchanged.deduction_price | intcomma }} VND（<a
-                href="https://www.google.com/search?q={{ exchanged.deduction_price | intcomma }}vnd" target="_blank">日本円に変換する
-            <i class="fas fa-external-link-alt"></i></a>）
+            金額（手数料あり）: {{ exchanged.price_in_fee | intcomma }} VND
         </div>
 
         <div id="watchlist" class="mt-5">
