@@ -3,6 +3,7 @@ import urllib.request
 
 import requests
 from bs4 import BeautifulSoup
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 from requests import HTTPError
 
@@ -62,9 +63,13 @@ class Command(BaseCommand):
                 soup_price = soup.find(class_="price")
                 if not soup_price:
                     try:
-                        rate = ExchangeService.get_exchange_rate(base_cur, dest_cur)
-                    except ValueError as e:
-                        log_service.write(str(e))
+                        # 指定された通貨ペアの逆のレートがExchangeRateモデルに存在する場合
+                        rate = ExchangeService.get_rate(base_cur, dest_cur)
+                    except ObjectDoesNotExist as e:
+                        # 指定された通貨ペア（またはその逆）のレートがExchangeRateモデルに存在しない場合
+                        log_service.write(
+                            f"Rate for {base_cur} to {dest_cur} does not exist: {e}"
+                        )
                         continue
                 else:
                     rate = float(soup_price.text.replace(",", ""))
