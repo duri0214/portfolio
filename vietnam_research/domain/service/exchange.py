@@ -91,7 +91,7 @@ class ExchangeService:
             unit_price: 単価
         """
         # Get exchange rates
-        rate = self.get_rate(base_cur=budget.code, dest_cur=unit_price.code)
+        rate = ExchangeService.get_rate(base_cur=budget.code, dest_cur=unit_price.code)
 
         # Convert budget to unit price currency
         budget_in_dest_cur = budget.amount * rate
