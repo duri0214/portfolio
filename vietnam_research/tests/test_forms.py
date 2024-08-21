@@ -1,15 +1,13 @@
+from django.test import TestCase
 from django.urls import reverse
 from django.utils.timezone import now
 
 from vietnam_research.forms import WatchlistCreateForm
-from django.test import TestCase
-
-from vietnam_research.models import Symbol, IndClass, Market, Industry
+from vietnam_research.models import Symbol, IndClass, Market, Industry, ExchangeRate
 
 
 class FormTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         Symbol.objects.create(
             code="AAA",
             name="アンファット・バイオプラスチック",
