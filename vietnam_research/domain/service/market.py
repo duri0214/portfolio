@@ -1,29 +1,16 @@
 import json
-from dataclasses import fields
 
 import feedparser
 import requests
 
+from vietnam_research.domain.dataprovider.market import VietnamMarketDataProvider
 from vietnam_research.domain.repository.market import MarketRepository
-from vietnam_research.domain.valueobject.exchange import (
-    ExchangeProcess,
-    VietnamMarketDataProvider,
-)
 from vietnam_research.forms import ExchangeForm
 
 
 class MarketRetrievalService:
-    def __init__(self, request):
-        self.request = request
+    def __init__(self):
         self.repository = MarketRepository()
-
-    def get_exchange_params(self):
-        exchange_params = [f.name for f in fields(ExchangeProcess)]
-        return {
-            param: self.request.GET.get(param)
-            for param in exchange_params
-            if param in self.request.GET
-        }
 
     @staticmethod
     def get_rss_feed() -> feedparser.util.FeedParserDict:
@@ -34,8 +21,6 @@ class MarketRetrievalService:
 
     def to_dict(self):
         exchange_form = ExchangeForm()
-        login_user = self.request.user
-        login_id = login_user.id if login_user.is_authenticated else None
         vietnam_market_data_provider = VietnamMarketDataProvider()
 
         return {
@@ -69,11 +54,9 @@ class MarketRetrievalService:
             "vnindex_layers": json.dumps(
                 vietnam_market_data_provider.vnindex_annual_layers()
             ),
-            "articles": self.repository.get_articles(login_id),
             "basic_info": self.repository.get_basic_info(),
             "watchlist": vietnam_market_data_provider.watchlist(),
             "uptrend": json.dumps(vietnam_market_data_provider.uptrend()),
             "exchange_form": exchange_form,
-            "exchanged": self.get_exchange_params(),
             "rss": vietnam_market_data_provider.rss(self.get_rss_feed()),
         }
