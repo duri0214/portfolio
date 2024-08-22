@@ -44,3 +44,17 @@ class Currency:
 
     code: str
     amount: float
+
+
+@dataclass(frozen=True)
+class UrlScale:
+    """
+    URL and scale
+
+    Attributes:
+        url (str): scraping URL
+        scale (int): the scale e.g. x100
+    """
+
+    url: str
+    scale: int
