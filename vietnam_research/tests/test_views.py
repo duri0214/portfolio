@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from vietnam_research.models import Articles, Likes
+from vietnam_research.models import Articles, Likes, ExchangeRate
 
 
 class TestView(TestCase):
@@ -15,6 +15,12 @@ class TestView(TestCase):
         self.user.save()
         self.article = Articles.objects.create(
             id=1, title="Hello", note="How are you", user=self.user
+        )
+
+        ExchangeRate.objects.create(
+            base_cur_code="JPY",
+            dest_cur_code="VND",
+            rate=170.55,
         )
 
     def test_show_index_page(self):
