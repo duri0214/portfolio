@@ -23,16 +23,28 @@ class TestView(TestCase):
             rate=170.55,
         )
 
-    def test_show_index_page(self):
+        # セッションデータに予算と単価を設定
+        session = self.client.session
+        session["budget"] = 10000  # Or some sensible default
+        session["unit_price"] = 5000  # Or some sensible default
+        session.save()
+
+    def test_show_index_page_without_budget_and_unit_price(self):
         """
-        ログインしていない場合、indexページに遷移すると `ゲストさん` が表示される
-        ログインしている場合、indexページに遷移すると `<email>さん`　が表示される
-        ログアウトして、indexページに遷移すると `ゲストさん` が表示される
+        セッションに予算と単価が設定されていない場合でも、indexページが正常に表示される
         """
+        # セッションから予算と単価を削除
+        session = self.client.session
+        del session["budget"]
+        del session["unit_price"]
+        session.save()
+
+        # ログインしていない場合
         response = self.client.get(reverse("vnm:index"))
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "ゲストさん", html=True)
 
+        # ログインしている場合
         logged_in = self.client.login(
             username=self.user.username, password=self.password_plane
         )
@@ -42,6 +54,7 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, f"{self.user.username}さん", html=True)
 
+        # ログアウト後
         self.client.logout()
         response = self.client.get(reverse("vnm:index"))
         self.assertEqual(200, response.status_code)
