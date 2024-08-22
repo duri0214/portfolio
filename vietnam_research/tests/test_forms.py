@@ -43,10 +43,7 @@ class FormTests(TestCase):
 
     @patch.object(ExchangeService, "get_rate")
     def test_exchange_calc(self, mock_get_rate):
-        """
-        test No.3: 予算100,000円, 単価100,000VNDのときに購入可能口数は171.06口
-        為替レートによってエラーが出る可能性がある
-        """
+        """test No.3: 予算100,000円, 単価100,000VNDのときに購入可能口数は171.06口"""
         mock_get_rate.return_value = 171.05713308244952
         response = self.client.post(
             reverse("vnm:index"), {"budget": 100000, "unit_price": 100000}, follow=True
