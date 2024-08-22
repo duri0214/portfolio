@@ -57,6 +57,10 @@ class ExchangeService:
         budget_in_dest_cur = budget.amount * rate
 
         # Calculate the number of units
-        num_units = budget_in_dest_cur / unit_price.amount
+        try:
+            num_units = budget_in_dest_cur / unit_price.amount
+        except ZeroDivisionError:
+            # If unit_price.amount is 0, return 0
+            return 0
 
         return round(num_units, 2)
