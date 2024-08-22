@@ -1,7 +1,10 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.timezone import now
 
+from vietnam_research.domain.service.exchange import ExchangeService
 from vietnam_research.forms import WatchlistCreateForm
 from vietnam_research.models import Symbol, IndClass, Market, Industry, ExchangeRate
 
@@ -38,11 +41,14 @@ class FormTests(TestCase):
         form = WatchlistCreateForm(params, instance=Industry())
         self.assertFalse(form.is_valid())
 
-    def test_exchange_calc(self):
-        """test No.3: 残高4,029,139VND, 単価50,000, 口数200のときに足りない額は7,290,861"""
-        response = self.client.post(reverse('vnm:index'), {
-            'current_balance': 4029139,
-            'unit_price': 50000,
-            'quantity': 200
-        }, follow=True)
-        self.assertContains(response, '差引残高: -7,170,861 VND')
+    @patch.object(ExchangeService, "get_rate")
+    def test_exchange_calc(self, mock_get_rate):
+        """
+        test No.3: 予算100,000円, 単価100,000VNDのときに購入可能口数は171.06口
+        為替レートによってエラーが出る可能性がある
+        """
+        mock_get_rate.return_value = 171.05713308244952
+        response = self.client.post(
+            reverse("vnm:index"), {"budget": 100000, "unit_price": 100000}, follow=True
+        )
+        self.assertContains(response, "171.06")
