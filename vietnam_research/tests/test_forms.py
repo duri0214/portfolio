@@ -25,6 +25,7 @@ class FormTests(TestCase):
             dest_cur_code="VND",
             rate=170.55,
         )
+        print(f"{ExchangeRate.objects.count()=}")  # TODO: 後で消す
 
     def test_watchlist_form_valid(self):
         """test No.1: 正常な入力を行えばエラーにならない"""
@@ -45,6 +46,7 @@ class FormTests(TestCase):
     def test_exchange_calc(self, mock_get_rate):
         """test No.3: 予算100,000円, 単価100,000VNDのときに購入可能口数は171.06口"""
         mock_get_rate.return_value = 171.05713308244952
+        print(f"{ExchangeRate.objects.count()=}")  # TODO: 後で消す
         response = self.client.post(
             reverse("vnm:index"), {"budget": 100000, "unit_price": 100000}, follow=True
         )
