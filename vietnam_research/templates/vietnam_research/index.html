@@ -225,48 +225,14 @@
             <table>
                 <tbody>
                 <tr>
-                    <th>取引種類</th>
-                    <td>インターネット、またはお客様からの電話による現物取引</td>
-                </tr>
-                <tr>
-                    <th>価格</th>
-                    <td>指値のみ（当日注文のみ）</td>
-                </tr>
-                <tr>
                     <th>取引単位</th>
                     <td>ホーチミン証券取引所（HOSE）：10 株単位<br>
                         ハノイ証券取引所（HNX）:100 株単位<br>
-                        売買単位は当社ウェブサイトにてご確認ください。<br>
-                        1 注文の上限数量： ホーチミン証券取引所 1,999 単位<br>
-                        ハノイ証券取引所 199 単位
-                    </td>
-                </tr>
-                <tr>
-                    <th>呼値</th>
-                    <td>ホーチミン証券取引所（HOSE)銘柄<br>
-                        1 万ドン未満 10 ドン刻み<br>
-                        1 万ドン以上 5 万ドン未満 50 ドン刻み<br>
-                        5 万ドン以上 100 ドン刻み<br>
-                        ハノイ証券取引所（HNX）銘柄<br>
-                        100 ドン刻み<br>
-                        各銘柄の呼値は当社ウェブサイトをご覧ください
                     </td>
                 </tr>
                 <tr>
                     <th>決済方法</th>
                     <td>ベトナムドンによる｢外貨決済｣のみ ※前金制</td>
-                </tr>
-                <tr>
-                    <th>制限値幅</th>
-                    <td>ホーチミン証券取引所（HOSE）：前営業日終値±7%<br>
-                        ハノイ証券取引所（HNX）：前営業日取引平均価格±10%
-                    </td>
-                </tr>
-                <tr>
-                    <th>注文受付時間・約定日･受渡日</th>
-                    <td>
-                        インターネットによる注文受付時間は、月曜日～金曜日の場合、00：00-10：00（当日注文）、19：30-24：00（翌立会日注文）です。（いずれも日本時間）土曜日・日曜日は一部の時間を除き、翌立会日に発注する予約注文を受付しております。
-                    </td>
                 </tr>
                 <tr>
                     <th>最低手数料</th>
@@ -278,32 +244,26 @@
             </table>
             <form method="post">
                 {% csrf_token %}
-                <div class="form-group">
-                    {{ exchange_form.current_balance.label_tag }}
-                    {{ exchange_form.current_balance }}
-                </div>
-
-                <!-- unit_price と quantity を横に並べます -->
                 <div class="form-row">
+                    <div class="form-group">
+                        {{ exchange_form.budget.label_tag }}
+                        {{ exchange_form.budget }}
+                    </div>
                     <div class="form-group col-md-6">
                         {{ exchange_form.unit_price.label_tag }}
                         {{ exchange_form.unit_price }}
-                    </div>
-                    <div class="form-group col-md-6">
-                        {{ exchange_form.quantity.label_tag }}
-                        {{ exchange_form.quantity }}
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary">計算</button>
             </form>
-            残高: {{ exchanged.current_balance | intcomma }}VND<br>
-            価格: @{{ exchanged.unit_price | intcomma }}VND * {{ exchanged.quantity | intcomma }}株
-            = {{ exchanged.price_no_fee | intcomma }}VND<br>
+            予算: {{ exchanged.budget_jpy | intcomma }}円（{{ exchanged.budget_in_target_currency | intcomma }}VND）<br>
+            レート: {{ exchanged.rate }} JPY/VND<br>
+            単価: @{{ exchanged.unit_price | intcomma }}VND<br>
+            購入可能口数: {{ exchanged.purchasable_units }}口<br>
+            金額（手数料なし）: {{ exchanged.price_no_fee | intcomma }}VND<br>
             手数料: {{ exchanged.fee | intcomma }}VND<br>
-            差引残高: {{ exchanged.deduction_price | intcomma }} VND（<a
-                href="https://www.google.com/search?q={{ exchanged.deduction_price | intcomma }}vnd" target="_blank">日本円に変換する
-            <i class="fas fa-external-link-alt"></i></a>）
+            金額（手数料あり）: {{ exchanged.price_in_fee | intcomma }} VND
         </div>
 
         <div id="watchlist" class="mt-5">

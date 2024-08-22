@@ -6,22 +6,16 @@ from .models import Articles, Watchlist, FinancialResultWatch
 class ExchangeForm(forms.Form):
     """為替計算用の入力フォームです"""
 
-    current_balance = forms.IntegerField(
-        label="現在の残高(VND)",
+    budget = forms.IntegerField(
+        label="予算（円）",
         required=True,
         widget=forms.NumberInput(attrs={"tabindex": "1"}),
     )
 
-    unit_price = forms.IntegerField(
-        label="購入単価 (VND)",
+    unit_price = forms.FloatField(
+        label="単価",
         required=True,
-        widget=forms.NumberInput(attrs={"tabindex": "2"}),
-    )
-
-    quantity = forms.IntegerField(
-        label="購入口数",
-        required=True,
-        widget=forms.NumberInput(attrs={"tabindex": "3"}),
+        widget=forms.NumberInput(attrs={"tabindex": "2", "step": "0.01"}),
     )
 
 
