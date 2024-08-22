@@ -36,8 +36,8 @@ class IndexView(TemplateView):
 
     def get_context_data(self, **kwargs):
         # POSTされたフォームの値を取得
-        budget = self.request.session.get("budget")
-        unit_price = self.request.session.get("unit_price")
+        budget = self.request.session.get("budget", 0)
+        unit_price = self.request.session.get("unit_price", 0)
 
         # user情報を取得
         login_user = self.request.user
