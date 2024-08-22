@@ -9,13 +9,15 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
+from vietnam_research.domain.dataprovider.market import VietnamMarketDataProvider
 from vietnam_research.domain.repository.like import LikeRepository
 from vietnam_research.domain.repository.market import MarketRepository
-from vietnam_research.domain.service.exchange import ExchangeProcess
+from vietnam_research.domain.service.exchange import ExchangeService
 from vietnam_research.domain.service.fao import FaoRetrievalService
 from vietnam_research.domain.service.market import (
     MarketRetrievalService,
 )
+from vietnam_research.domain.valueobject.exchange import Currency, ExchangeProcess
 from vietnam_research.forms import (
     ArticleForm,
     WatchlistCreateForm,
@@ -43,12 +45,27 @@ class IndexView(TemplateView):
 
         # contextを用意
         context = super().get_context_data(**kwargs)
+        exchange_service = ExchangeService()
+        rate = exchange_service.get_rate(base_cur="JPY", dest_cur="VND")
+        purchasable_units = exchange_service.calc_purchase_units(
+            budget=Currency(code="JPY", amount=budget),
+            unit_price=Currency(code="VND", amount=unit_price),
+        )
+        fee = VietnamMarketDataProvider.calculate_transaction_fee(
+            price_without_fees=unit_price * purchasable_units
+        )
         market_retrieval_service = MarketRetrievalService()
         fao_retrieval_service = FaoRetrievalService()
         context.update(
             {
                 "articles": MarketRepository.get_articles(login_id),
-                "exchanged": ExchangeProcess(budget_jpy=budget, unit_price=unit_price),
+                "exchanged": ExchangeProcess(
+                    budget_jpy=budget,
+                    unit_price=unit_price,
+                    rate=rate,
+                    purchasable_units=purchasable_units,
+                    fee=fee,
+                ),
                 **market_retrieval_service.to_dict(),
                 **fao_retrieval_service.to_dict(
                     item="Fish, Seafood",
