@@ -46,7 +46,9 @@ class IndexView(TemplateView):
         # contextを用意
         context = super().get_context_data(**kwargs)
         exchange_service = ExchangeService()
-        rate = exchange_service.get_rate(base_cur="JPY", dest_cur="VND")
+        rate = exchange_service.get_rate(
+            base_cur="JPY", dest_cur="VND"
+        )  # TODO: 例外処理
         purchasable_units = exchange_service.calc_purchase_units(
             budget=Currency(code="JPY", amount=budget),
             unit_price=Currency(code="VND", amount=unit_price),
