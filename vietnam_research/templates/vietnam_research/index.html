@@ -257,7 +257,7 @@
 
                 <button type="submit" class="btn btn-primary">計算</button>
             </form>
-            予算: {{ exchanged.budget_jpy | intcomma }}円<br>
+            予算: {{ exchanged.budget_jpy | intcomma }}円（{{ exchanged.budget_in_target_currency | intcomma }}VND）<br>
             レート: {{ exchanged.rate }} JPY/VND<br>
             単価: @{{ exchanged.unit_price | intcomma }}VND<br>
             購入可能口数: {{ exchanged.purchasable_units }}口<br>
