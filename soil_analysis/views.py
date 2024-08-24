@@ -130,7 +130,7 @@ class LandReportChemicalListView(ListView):
         context["land_scores"] = LandScoreChemical.objects.filter(
             land_ledger=land_ledger
         )
-        context["landreview"] = LandReview.objects.filter(land_ledger=land_ledger)
+        context["land_review"] = LandReview.objects.filter(land_ledger=land_ledger)
 
         return context
 
