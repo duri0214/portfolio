@@ -55,7 +55,7 @@
                     <ul class="dropdown-menu" aria-labelledby="select a report">
                         {% for land_ledger in land_ledger_map|get_value:a_land %}
                             <li><a class="dropdown-item"
-                                   href="{% url 'soil:land_report_chemical' a_land.company.id land_ledger.pk %}">{{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.landperiod.name }}</a>
+                                   href="{% url 'soil:land_report_chemical' a_land.company.id land_ledger.pk %}">{{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.land_period.name }}</a>
                             </li>
                         {% endfor %}
                     </ul>

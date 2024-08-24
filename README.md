@@ -90,7 +90,7 @@ python manage.py loaddata .\soil_analysis\fixtures\company.json
 python manage.py loaddata .\soil_analysis\fixtures\user.json
 python manage.py loaddata .\soil_analysis\fixtures\crop.json
 python manage.py loaddata .\soil_analysis\fixtures\land_block.json
-python manage.py loaddata .\soil_analysis\fixtures\landperiod.json
+python manage.py loaddata .\soil_analysis\fixtures\land_period.json
 python manage.py loaddata .\soil_analysis\fixtures\cultivationtype.json
 python manage.py loaddata .\soil_analysis\fixtures\land.json
 python manage.py loaddata .\soil_analysis\fixtures\samplingmethod.json

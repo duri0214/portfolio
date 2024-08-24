@@ -152,14 +152,14 @@ class LandLedger(models.Model):
     analytical_agency = models.ForeignKey(Company, on_delete=models.CASCADE)
     crop = models.ForeignKey(Crop, on_delete=models.CASCADE)
     land = models.ForeignKey(Land, on_delete=models.CASCADE)
-    landperiod = models.ForeignKey(LandPeriod, on_delete=models.CASCADE)
+    land_period = models.ForeignKey(LandPeriod, on_delete=models.CASCADE)
     sampling_method = models.ForeignKey(SamplingMethod, on_delete=models.CASCADE)
     sampling_staff = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["land", "landperiod"], name="land_landperiod_unique"
+                fields=["land", "land_period"], name="land_period_unique"
             ),
         ]
 

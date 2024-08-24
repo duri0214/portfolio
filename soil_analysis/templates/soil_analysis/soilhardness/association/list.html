@@ -19,7 +19,7 @@
                 <select class="form-select" name="land_ledger" required aria-label="帳簿を選択">
                     <option selected disabled value="">帳簿を選択</option>
                     {% for land_ledger in land_ledgers %}
-                        <option value="{{ land_ledger.pk }}">{{ land_ledger.land.company.name }} {{ land_ledger.land.name }} {{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.landperiod.name }}</option>
+                        <option value="{{ land_ledger.pk }}">{{ land_ledger.land.company.name }} {{ land_ledger.land.name }} {{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.land_period.name }}</option>
                     {% endfor %}
                     {# TODO: urlを帳簿の新規作成のページへ #}
                     <option value="{{ land_ledger.pk }}"><a class="dropdown-item"
