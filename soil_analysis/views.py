@@ -136,9 +136,9 @@ class LandReportChemicalListView(ListView):
 
 
 class SoilhardnessUploadView(FormView):
-    template_name = "soil_analysis/soilhardness/form.html"
+    template_name = "soil_analysis/hardness/form.html"
     form_class = UploadForm
-    success_url = reverse_lazy("soil:soilhardness_success")
+    success_url = reverse_lazy("soil:hardness_success")
 
     def form_valid(self, form):
         # Zipを処理してバッチ実行
@@ -154,7 +154,7 @@ class SoilhardnessUploadView(FormView):
 
 
 class SoilhardnessSuccessView(TemplateView):
-    template_name = "soil_analysis/soilhardness/success.html"
+    template_name = "soil_analysis/hardness/success.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -164,7 +164,7 @@ class SoilhardnessSuccessView(TemplateView):
 
 class SoilhardnessAssociationView(ListView):
     model = SoilHardnessMeasurement
-    template_name = "soil_analysis/soilhardness/association/list.html"
+    template_name = "soil_analysis/hardness/association/list.html"
 
     def get_queryset(self, **kwargs):
         return (
@@ -191,7 +191,7 @@ class SoilhardnessAssociationView(ListView):
         if "btn_individual" in request.POST:
             return HttpResponseRedirect(
                 reverse(
-                    "soil:soilhardness_association_individual",
+                    "soil:hardness_association_individual",
                     kwargs={
                         "memory_anchor": int(request.POST.get("btn_individual")),
                         "land_ledger": form_land_ledger,
@@ -211,34 +211,33 @@ class SoilhardnessAssociationView(ListView):
                 sampling_method=land_ledger.sampling_method
             ).order_by("ordering")
             for memory_anchor in form_checkboxes:
-                soilhardness_measurements = SoilHardnessMeasurement.objects.filter(
+                hardness_measurements = SoilHardnessMeasurement.objects.filter(
                     set_memory__range=(
                         memory_anchor,
                         memory_anchor + (total_sampling_times - 1),
                     )
                 ).order_by("pk")
-                for i, soilhardness_measurement in enumerate(soilhardness_measurements):
-                    soilhardness_measurement.land_block = land_block_orders[
+                for i, hardness_measurement in enumerate(hardness_measurements):
+                    hardness_measurement.land_block = land_block_orders[
                         needle
                     ].land_block
-                    soilhardness_measurement.land_ledger = land_ledger
+                    hardness_measurement.land_ledger = land_ledger
                     forward_the_needle = (
                         i > 0
-                        and i % (soilhardness_measurement.setdepth * sampling_times)
-                        == 0
+                        and i % (hardness_measurement.setdepth * sampling_times) == 0
                     )
                     if forward_the_needle:
                         needle += 1
                 SoilHardnessMeasurement.objects.bulk_update(
-                    soilhardness_measurements, fields=["land_block", "land_ledger"]
+                    hardness_measurements, fields=["land_block", "land_ledger"]
                 )
 
-        return HttpResponseRedirect(reverse("soil:soilhardness_association_success"))
+        return HttpResponseRedirect(reverse("soil:hardness_association_success"))
 
 
 class SoilhardnessAssociationIndividualView(ListView):
     model = SoilHardnessMeasurement
-    template_name = "soil_analysis/soilhardness/association/individual/list.html"
+    template_name = "soil_analysis/hardness/association/individual/list.html"
 
     def get_queryset(self, **kwargs):
         form_memory_anchor = self.kwargs.get("memory_anchor")
@@ -278,29 +277,27 @@ class SoilhardnessAssociationIndividualView(ListView):
         form_land_blocks = request.POST.getlist("land-blocks[]")
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
         total_sampling_times = 5 * land_ledger.sampling_method.times
-        soilhardness_measurements = SoilHardnessMeasurement.objects.filter(
+        hardness_measurements = SoilHardnessMeasurement.objects.filter(
             set_memory__range=(
                 form_memory_anchor,
                 form_memory_anchor + (total_sampling_times - 1),
             )
         ).order_by("pk")
-        for i, soilhardness_measurement in enumerate(soilhardness_measurements):
+        for i, hardness_measurement in enumerate(hardness_measurements):
             needle = i // 60
-            soilhardness_measurement.land_block_id = form_land_blocks[needle]
-            soilhardness_measurement.land_ledger = land_ledger
+            hardness_measurement.land_block_id = form_land_blocks[needle]
+            hardness_measurement.land_ledger = land_ledger
         SoilHardnessMeasurement.objects.bulk_update(
-            soilhardness_measurements, fields=["land_block", "land_ledger"]
+            hardness_measurements, fields=["land_block", "land_ledger"]
         )
         if SoilHardnessMeasurement.objects.filter(land_block__isnull=True).count() == 0:
-            return HttpResponseRedirect(
-                reverse("soil:soilhardness_association_success")
-            )
+            return HttpResponseRedirect(reverse("soil:hardness_association_success"))
 
-        return HttpResponseRedirect(reverse("soil:soilhardness_association"))
+        return HttpResponseRedirect(reverse("soil:hardness_association"))
 
 
 class SoilhardnessAssociationSuccessView(TemplateView):
-    template_name = "soil_analysis/soilhardness/association/success.html"
+    template_name = "soil_analysis/hardness/association/success.html"
 
 
 class RouteSuggestUploadView(FormView):

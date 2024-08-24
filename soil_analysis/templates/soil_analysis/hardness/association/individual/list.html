@@ -4,9 +4,9 @@
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:soilhardness_upload' %}">Upload soilhardness</a>
+            <li class="breadcrumb-item"><a href="{% url 'soil:hardness_upload' %}">Upload hardness</a>
             </li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:soilhardness_association' %}">Association</a>
+            <li class="breadcrumb-item"><a href="{% url 'soil:hardness_association' %}">Association</a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">Individual</li>
         </ol>
@@ -14,7 +14,7 @@
 {% endblock %}
 {% block content %}
     <h1>データの関連付け</h1>
-    <form method="post" action="{% url 'soil:soilhardness_association_individual' memory_anchor land_ledger %}"
+    <form method="post" action="{% url 'soil:hardness_association_individual' memory_anchor land_ledger %}"
           enctype="multipart/form-data">
         {% csrf_token %}
         <input class="btn btn-outline-primary mb-3" type="submit" name="button" value="送信">
