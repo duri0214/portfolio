@@ -97,7 +97,7 @@ python manage.py loaddata .\soil_analysis\fixtures\samplingmethod.json
 python manage.py loaddata .\soil_analysis\fixtures\samplingorder.json
 python manage.py loaddata .\soil_analysis\fixtures\land_ledger.json
 python manage.py loaddata .\soil_analysis\fixtures\landreview.json
-python manage.py loaddata .\soil_analysis\fixtures\landscorechemical.json
+python manage.py loaddata .\soil_analysis\fixtures\land_score_chemical.json
 python manage.py loaddata .\soil_analysis\fixtures\device.json
 ```
 

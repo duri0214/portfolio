@@ -81,7 +81,7 @@
     </div>
 
     <div class="card-group justify-content-center">
-        {% for landscore in landscores %}
+        {% for land_score in land_scores %}
             {% if forloop.first %}
                 <div class="row mb-4">
             {% endif %}
@@ -94,26 +94,26 @@
                     <text fill="#dee2e6" dy=".3em" x="38%" y="50%">Image cap</text>
                 </svg>
                 <div class="card-body">
-                    <h5 class="card-title">{{ landscore.land_block.name }}</h5>
+                    <h5 class="card-title">{{ land_score.land_block.name }}</h5>
                     <ul class="card-text">
-                        <li>電気伝導率: {{ landscore.ec }}</li>
-                        <li>アンモニア態窒素: {{ landscore.nh4n }}</li>
-                        <li>硝酸態窒素: {{ landscore.no3n }}</li>
-                        <li>無機態窒素: {{ landscore.total_nitrogen }}</li>
-                        <li>アンモニア態窒素比: {{ landscore.nh4_per_nitrogen }}</li>
-                        <li>水素イオン濃度: {{ landscore.ph }}</li>
-                        <li>交換性石灰: {{ landscore.cao }}</li>
-                        <li>交換性苦土: {{ landscore.mgo }}</li>
-                        <li>交換性加里: {{ landscore.k2o }}</li>
-                        <li>塩基飽和度: {{ landscore.base_saturation }}</li>
-                        <li>交換性石灰/交換性苦土: {{ landscore.cao_per_mgo }}</li>
-                        <li>交換性苦土/交換性加里: {{ landscore.mgo_per_k2o }}</li>
-                        <li>リン酸吸収係数: {{ landscore.phosphorus_absorption }}</li>
-                        <li>可給態リン酸: {{ landscore.p2o5 }}</li>
-                        <li>塩基置換容量: {{ landscore.cec }}</li>
-                        <li>腐植: {{ landscore.humus }}</li>
-                        <li>仮比重: {{ landscore.bulk_density }}</li>
-                        <li>備考: {{ landscore.remark|default:"-" }}</li>
+                        <li>電気伝導率: {{ land_score.ec }}</li>
+                        <li>アンモニア態窒素: {{ land_score.nh4n }}</li>
+                        <li>硝酸態窒素: {{ land_score.no3n }}</li>
+                        <li>無機態窒素: {{ land_score.total_nitrogen }}</li>
+                        <li>アンモニア態窒素比: {{ land_score.nh4_per_nitrogen }}</li>
+                        <li>水素イオン濃度: {{ land_score.ph }}</li>
+                        <li>交換性石灰: {{ land_score.cao }}</li>
+                        <li>交換性苦土: {{ land_score.mgo }}</li>
+                        <li>交換性加里: {{ land_score.k2o }}</li>
+                        <li>塩基飽和度: {{ land_score.base_saturation }}</li>
+                        <li>交換性石灰/交換性苦土: {{ land_score.cao_per_mgo }}</li>
+                        <li>交換性苦土/交換性加里: {{ land_score.mgo_per_k2o }}</li>
+                        <li>リン酸吸収係数: {{ land_score.phosphorus_absorption }}</li>
+                        <li>可給態リン酸: {{ land_score.p2o5 }}</li>
+                        <li>塩基置換容量: {{ land_score.cec }}</li>
+                        <li>腐植: {{ land_score.humus }}</li>
+                        <li>仮比重: {{ land_score.bulk_density }}</li>
+                        <li>備考: {{ land_score.remark|default:"-" }}</li>
                     </ul>
                 </div>
             </div>

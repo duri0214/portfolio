@@ -127,7 +127,7 @@ class LandReportChemicalListView(ListView):
         context["charts"] = ReportLayout1(land_ledger).publish()
         context["company"] = Company(self.kwargs["company_id"])
         context["land_ledger"] = land_ledger
-        context["landscores"] = LandScoreChemical.objects.filter(
+        context["land_scores"] = LandScoreChemical.objects.filter(
             land_ledger=land_ledger
         )
         context["landreview"] = LandReview.objects.filter(land_ledger=land_ledger)
