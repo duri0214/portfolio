@@ -8,8 +8,6 @@ class CompanyCategory(models.Model):
     name 名称 e.g. 農業法人
     """
 
-    AGRI_COMPANY = 1
-
     name = models.CharField(max_length=256)
     remark = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)

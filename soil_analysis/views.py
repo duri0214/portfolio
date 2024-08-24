@@ -26,7 +26,6 @@ from soil_analysis.models import (
     Land,
     LandScoreChemical,
     LandReview,
-    CompanyCategory,
     LandLedger,
     SoilHardnessMeasurementImportErrors,
     SoilHardnessMeasurement,
@@ -45,7 +44,7 @@ class CompanyListView(ListView):
     template_name = "soil_analysis/company/list.html"
 
     def get_queryset(self):
-        return super().get_queryset().filter(category=CompanyCategory.AGRI_COMPANY)
+        return super().get_queryset().filter(category__name="農業法人")
 
 
 class CompanyCreateView(CreateView):
