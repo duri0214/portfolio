@@ -7,6 +7,7 @@ class CompanyCategory(models.Model):
     顧客カテゴリマスタ
     name 名称 e.g. 農業法人
     """
+
     AGRI_COMPANY = 1
 
     name = models.CharField(max_length=256)
@@ -23,8 +24,9 @@ class Company(models.Model):
     顧客マスタ
     name 名称 e.g. (有)アグリファクトリー
     """
+
     name = models.CharField(max_length=256)
-    image = models.ImageField(upload_to='company/', null=True, blank=True)
+    image = models.ImageField(upload_to="company/", null=True, blank=True)
     remark = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
@@ -36,6 +38,7 @@ class Crop(models.Model):
     作物マスタ
     name    作物名 e.g. キャベツ、レタスなど
     """
+
     name = models.CharField(max_length=256)
     remark = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -47,6 +50,7 @@ class LandBlock(models.Model):
     圃場ブロックマスタ
     name        エリア名    e.g. A1
     """
+
     name = models.CharField(max_length=256)
     remark = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -54,10 +58,7 @@ class LandBlock(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["name"],
-                name="name_unique"
-            ),
+            models.UniqueConstraint(fields=["name"], name="name_unique"),
         ]
 
 
@@ -67,6 +68,7 @@ class LandPeriod(models.Model):
     year    西暦年      e.g. 2022
     name    時期の名前   e.g. 定植時
     """
+
     year = models.IntegerField()
     name = models.CharField(max_length=256)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -74,10 +76,7 @@ class LandPeriod(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["year", "name"],
-                name="year_name_unique"
-            ),
+            models.UniqueConstraint(fields=["year", "name"], name="year_name_unique"),
         ]
 
 
@@ -86,6 +85,7 @@ class CultivationType(models.Model):
     作型マスタ
     name    作型の名前   e.g. 路地、ビニールハウス
     """
+
     name = models.CharField(max_length=256)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
@@ -108,12 +108,13 @@ class Land(models.Model):
     owner       オーナー    e.g. Ａ生産者
     cultivation_type 作型  e.g. 露地、ビニールハウス
     """
+
     name = models.CharField(max_length=256)
     prefecture = models.CharField(max_length=256)
     location = models.CharField(max_length=256)
     latlon = models.CharField(null=True, blank=True, max_length=256)
     area = models.FloatField(null=True, blank=True)
-    image = models.ImageField(upload_to='land/', null=True, blank=True)
+    image = models.ImageField(upload_to="land/", null=True, blank=True)
     remark = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
@@ -128,6 +129,7 @@ class SamplingMethod(models.Model):
     本当は採土法1つに対して型（R型など）を複数登録する `SamplingMethodType` のようなものが OneToMany であるとよいが
     実質5点法の `R` で取りつづけると思うので仕様としては省略
     """
+
     name = models.CharField(max_length=256)
     times = models.IntegerField()
     remark = models.TextField(null=True)
@@ -140,6 +142,7 @@ class LandLedger(models.Model):
     採土した日についてまとめる台帳
     採土日, 採土法, 採土者, 分析依頼日, 報告日, 分析機関, 分析番号
     """
+
     sampling_date = models.DateField()
     analysis_request_date = models.DateField(null=True)
     reporting_date = models.DateField(null=True)
@@ -156,8 +159,7 @@ class LandLedger(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["land", "landperiod"],
-                name="land_landperiod_unique"
+                fields=["land", "landperiod"], name="land_landperiod_unique"
             ),
         ]
 
@@ -168,6 +170,7 @@ class SamplingOrder(models.Model):
     本当は採土法1つに対して型（R型など）を複数登録する `SamplingMethodType` のようなものが OneToMany であるとよいが
     実質5点法の `R` で取りつづけると思うので仕様としては省略
     """
+
     ordering = models.IntegerField()
     remark = models.TextField(null=True)
     landblock = models.ForeignKey(LandBlock, on_delete=models.CASCADE)
@@ -198,6 +201,7 @@ class LandScoreChemical(models.Model):
     humus                   腐植
     bulk_density            仮比重
     """
+
     ec = models.FloatField(null=True)
     nh4n = models.FloatField(null=True)
     no3n = models.FloatField(null=True)
@@ -227,6 +231,7 @@ class LandReview(models.Model):
     顧客が持つ圃場にperiod単位で評価コメントをつける
     remarkはあくまで定型的につけたもの（commentが主体）
     """
+
     comment = models.TextField()
     remark = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -235,10 +240,7 @@ class LandReview(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["landledger"],
-                name="landledger_unique"
-            ),
+            models.UniqueConstraint(fields=["landledger"], name="landledger_unique"),
         ]
 
 
@@ -246,6 +248,7 @@ class Device(models.Model):
     """
     土壌硬度計マスタ
     """
+
     name = models.CharField(max_length=256)
     remark = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -256,6 +259,7 @@ class SoilHardnessMeasurement(models.Model):
     """
     土壌硬度測定 生データ
     """
+
     setmemory = models.IntegerField()
     setdatetime = models.DateTimeField()
     setdepth = models.IntegerField()
@@ -263,7 +267,7 @@ class SoilHardnessMeasurement(models.Model):
     setcone = models.IntegerField()
     depth = models.IntegerField()
     pressure = models.IntegerField()
-    csvfolder = models.CharField(max_length=256)
+    folder = models.CharField(max_length=256)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
     setdevice = models.ForeignKey(Device, on_delete=models.CASCADE)
@@ -274,7 +278,7 @@ class SoilHardnessMeasurement(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["setdevice", "setmemory", "setdatetime", "depth"],
-                name="setdevice_setmemory_setdatetime_depth_unique"
+                name="setdevice_setmemory_setdatetime_depth_unique",
             ),
         ]
 
@@ -283,8 +287,9 @@ class SoilHardnessMeasurementImportErrors(models.Model):
     """
     土壌硬度測定 生データ 取り込みエラーリスト
     """
-    csvfile = models.CharField(max_length=256)
-    csvfolder = models.CharField(max_length=256)
+
+    file = models.CharField(max_length=256)
+    folder = models.CharField(max_length=256)
     message = models.TextField()
     remark = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -295,6 +300,7 @@ class RouteSuggestImport(models.Model):
     """
     KMLの圃場座標リストをいったん保存するテーブル
     """
+
     name = models.CharField(max_length=256)
     coords = models.CharField(max_length=256)
     ordering = models.IntegerField(null=True)

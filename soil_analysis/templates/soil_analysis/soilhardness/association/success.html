@@ -26,8 +26,8 @@
             <tbody>
             {% for error in import_errors %}
                 <tr>
-                    <td>{{ error.csvfile }}</td>
-                    <td>{{ error.csvfolder }}</td>
+                    <td>{{ error.file }}</td>
+                    <td>{{ error.folder }}</td>
                     <td>{{ error.message }}</td>
                     <td>{{ error.created_at }}</td>
                 </tr>
