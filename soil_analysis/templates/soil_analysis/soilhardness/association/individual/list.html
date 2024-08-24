@@ -34,7 +34,7 @@
                     <td>{{ measurement.setdatetime|date:"Y-m-d" }}</td>
                     <td>{{ measurement.cnt }}</td>
                     <td>
-                        <select class="form-select" name="landblocks[]" required aria-label="圃場ブロックを選択">
+                        <select class="form-select" name="land-blocks[]" required aria-label="圃場ブロックを選択">
                             <option selected disabled value="">選択してください</option>
                             {% for land_block in land_blocks %}
                                 <option value="{{ land_block.pk }}">{{ land_block.name }}</option>

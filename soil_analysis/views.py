@@ -169,7 +169,7 @@ class SoilhardnessAssociationView(ListView):
         return (
             super()
             .get_queryset()
-            .filter(landblock__isnull=True)
+            .filter(land_block__isnull=True)
             .values("setmemory", "setdatetime")
             .annotate(cnt=Count("pk"))
             .order_by("setmemory")
@@ -206,7 +206,7 @@ class SoilhardnessAssociationView(ListView):
             sampling_times = landledger.sampling_method.times
             total_sampling_times = 5 * sampling_times
             needle = 0
-            landblock_orders = SamplingOrder.objects.filter(
+            land_block_orders = SamplingOrder.objects.filter(
                 sampling_method=landledger.sampling_method
             ).order_by("ordering")
             for memory_anchor in form_checkboxes:
@@ -217,9 +217,9 @@ class SoilhardnessAssociationView(ListView):
                     )
                 ).order_by("pk")
                 for i, soilhardness_measurement in enumerate(soilhardness_measurements):
-                    soilhardness_measurement.landblock = landblock_orders[
+                    soilhardness_measurement.land_block = land_block_orders[
                         needle
-                    ].landblock
+                    ].land_block
                     soilhardness_measurement.landledger = landledger
                     forward_the_needle = (
                         i > 0
@@ -229,7 +229,7 @@ class SoilhardnessAssociationView(ListView):
                     if forward_the_needle:
                         needle += 1
                 SoilHardnessMeasurement.objects.bulk_update(
-                    soilhardness_measurements, fields=["landblock", "landledger"]
+                    soilhardness_measurements, fields=["land_block", "landledger"]
                 )
 
         return HttpResponseRedirect(reverse("soil:soilhardness_association_success"))
@@ -274,7 +274,7 @@ class SoilhardnessAssociationIndividualView(ListView):
         """
         form_memory_anchor = self.kwargs.get("memory_anchor")
         form_landledger = self.kwargs.get("landledger")
-        form_landblocks = request.POST.getlist("landblocks[]")
+        form_land_blocks = request.POST.getlist("land-blocks[]")
         landledger = LandLedger.objects.filter(pk=form_landledger).first()
         total_sampling_times = 5 * landledger.sampling_method.times
         soilhardness_measurements = SoilHardnessMeasurement.objects.filter(
@@ -285,12 +285,12 @@ class SoilhardnessAssociationIndividualView(ListView):
         ).order_by("pk")
         for i, soilhardness_measurement in enumerate(soilhardness_measurements):
             needle = i // 60
-            soilhardness_measurement.landblock_id = form_landblocks[needle]
+            soilhardness_measurement.land_block_id = form_land_blocks[needle]
             soilhardness_measurement.landledger = landledger
         SoilHardnessMeasurement.objects.bulk_update(
-            soilhardness_measurements, fields=["landblock", "landledger"]
+            soilhardness_measurements, fields=["land_block", "landledger"]
         )
-        if SoilHardnessMeasurement.objects.filter(landblock__isnull=True).count() == 0:
+        if SoilHardnessMeasurement.objects.filter(land_block__isnull=True).count() == 0:
             return HttpResponseRedirect(
                 reverse("soil:soilhardness_association_success")
             )
