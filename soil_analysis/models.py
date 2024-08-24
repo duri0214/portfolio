@@ -260,25 +260,25 @@ class SoilHardnessMeasurement(models.Model):
     土壌硬度測定 生データ
     """
 
-    setmemory = models.IntegerField()
-    setdatetime = models.DateTimeField()
-    setdepth = models.IntegerField()
-    setspring = models.IntegerField()
-    setcone = models.IntegerField()
+    set_memory = models.IntegerField()
+    set_datetime = models.DateTimeField()
+    set_depth = models.IntegerField()
+    set_spring = models.IntegerField()
+    set_cone = models.IntegerField()
     depth = models.IntegerField()
     pressure = models.IntegerField()
     folder = models.CharField(max_length=256)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
-    setdevice = models.ForeignKey(Device, on_delete=models.CASCADE)
+    set_device = models.ForeignKey(Device, on_delete=models.CASCADE)
     land_block = models.ForeignKey(LandBlock, null=True, on_delete=models.CASCADE)
     land_ledger = models.ForeignKey(LandLedger, null=True, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["setdevice", "setmemory", "setdatetime", "depth"],
-                name="setdevice_setmemory_setdatetime_depth_unique",
+                fields=["set_device", "set_memory", "set_datetime", "depth"],
+                name="device_memory_datetime_depth_unique",
             ),
         ]
 

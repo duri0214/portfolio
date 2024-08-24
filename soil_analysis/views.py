@@ -172,9 +172,9 @@ class SoilhardnessAssociationView(ListView):
             super()
             .get_queryset()
             .filter(land_block__isnull=True)
-            .values("setmemory", "setdatetime")
+            .values("set_memory", "set_datetime")
             .annotate(cnt=Count("pk"))
-            .order_by("setmemory")
+            .order_by("set_memory")
         )
 
     def get_context_data(self, **kwargs):
@@ -213,7 +213,7 @@ class SoilhardnessAssociationView(ListView):
             ).order_by("ordering")
             for memory_anchor in form_checkboxes:
                 soilhardness_measurements = SoilHardnessMeasurement.objects.filter(
-                    setmemory__range=(
+                    set_memory__range=(
                         memory_anchor,
                         memory_anchor + (total_sampling_times - 1),
                     )
@@ -250,14 +250,14 @@ class SoilhardnessAssociationIndividualView(ListView):
             super()
             .get_queryset()
             .filter(
-                setmemory__range=(
+                set_memory__range=(
                     form_memory_anchor,
                     form_memory_anchor + (total_sampling_times - 1),
                 )
             )
-            .values("setmemory", "setdatetime")
+            .values("set_memory", "set_datetime")
             .annotate(cnt=Count("pk"))
-            .order_by("setmemory")
+            .order_by("set_memory")
         )
 
     def get_context_data(self, **kwargs):
@@ -280,7 +280,7 @@ class SoilhardnessAssociationIndividualView(ListView):
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
         total_sampling_times = 5 * land_ledger.sampling_method.times
         soilhardness_measurements = SoilHardnessMeasurement.objects.filter(
-            setmemory__range=(
+            set_memory__range=(
                 form_memory_anchor,
                 form_memory_anchor + (total_sampling_times - 1),
             )

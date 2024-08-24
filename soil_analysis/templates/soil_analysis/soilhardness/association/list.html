@@ -41,20 +41,20 @@
             <tbody>
             {% for measurement in object_list %}
                 <tr>
-                    <td>{{ measurement.setmemory }}</td>
-                    <td>{{ measurement.setdatetime|date:"Y-m-d" }}</td>
+                    <td>{{ measurement.set_memory }}</td>
+                    <td>{{ measurement.set_datetime|date:"Y-m-d" }}</td>
                     <td>{{ measurement.cnt }}</td>
                     {% if forloop.counter0|divisibleby:25 %}
                         <td rowspan="5">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="form_checkboxes[]"
-                                       value="{{ measurement.setmemory }}" id="form_checkbox">
+                                       value="{{ measurement.set_memory }}" id="form_checkbox">
                                 <label class="form-check-label" for="form_checkbox">
                                     圃場をRパターンで登録
                                 </label>
                             </div>
                             <button class="btn btn-outline-secondary mb-3" type="submit" name="btn_individual"
-                                    value="{{ measurement.setmemory }}">圃場をRパターン以外で登録
+                                    value="{{ measurement.set_memory }}">圃場をRパターン以外で登録
                             </button>
                         </td>
                     {% endif %}

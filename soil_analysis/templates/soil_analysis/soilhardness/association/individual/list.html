@@ -30,8 +30,8 @@
             <tbody>
             {% for measurement in object_list %}
                 <tr>
-                    <td>{{ measurement.setmemory }}</td>
-                    <td>{{ measurement.setdatetime|date:"Y-m-d" }}</td>
+                    <td>{{ measurement.set_memory }}</td>
+                    <td>{{ measurement.set_datetime|date:"Y-m-d" }}</td>
                     <td>{{ measurement.cnt }}</td>
                     <td>
                         <select class="form-select" name="land-blocks[]" required aria-label="圃場ブロックを選択">

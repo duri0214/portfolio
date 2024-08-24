@@ -89,26 +89,26 @@ class Command(BaseCommand):
                     reader = csv.reader(f)
 
                     # 1行目～10行目 から属性情報を取得
-                    setdevice = m_device[extract_setdevice(next(reader))]
-                    setmemory = extract_numeric_value(next(reader))
+                    set_device = m_device[extract_setdevice(next(reader))]
+                    set_memory = extract_numeric_value(next(reader))
                     next(reader)  # skip Latitude
                     next(reader)  # skip Longitude
-                    setdepth = extract_numeric_value(next(reader))
-                    setdatetime = extract_setdatetime(next(reader))
-                    setspring = extract_numeric_value(next(reader))
-                    setcone = extract_numeric_value(next(reader))
+                    set_depth = extract_numeric_value(next(reader))
+                    set_datetime = extract_setdatetime(next(reader))
+                    set_spring = extract_numeric_value(next(reader))
+                    set_cone = extract_numeric_value(next(reader))
                     next(reader)  # skip blank line
                     next(reader)  # skip header line
 
                     # 11行目以降のデータを保存
                     for row in reader:
                         SoilHardnessMeasurement.objects.create(
-                            setdevice=setdevice,
-                            setmemory=setmemory,
-                            setdatetime=setdatetime,
-                            setdepth=setdepth,
-                            setspring=setspring,
-                            setcone=setcone,
+                            set_device=set_device,
+                            set_memory=set_memory,
+                            set_datetime=set_datetime,
+                            set_depth=set_depth,
+                            set_spring=set_spring,
+                            set_cone=set_cone,
                             depth=int(row[0]),
                             pressure=int(row[1]),
                             folder=parent_folder,
