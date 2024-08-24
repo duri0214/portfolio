@@ -301,9 +301,9 @@ class HardnessAssociationSuccessView(TemplateView):
 
 
 class RouteSuggestUploadView(FormView):
-    template_name = "soil_analysis/routesuggest/form.html"
+    template_name = "soil_analysis/route_suggest/form.html"
     form_class = UploadForm
-    success_url = reverse_lazy("soil:routesuggest_ordering")
+    success_url = reverse_lazy("soil:route_suggest_ordering")
 
     def form_valid(self, form):
         """
@@ -344,7 +344,7 @@ class RouteSuggestUploadView(FormView):
 
 class RouteSuggestOrderingView(ListView):
     model = RouteSuggestImport
-    template_name = "soil_analysis/routesuggest/ordering.html"
+    template_name = "soil_analysis/route_suggest/ordering.html"
 
     def post(self, request, *args, **kwargs):
         order_data = self.request.POST.get("order_data")
@@ -358,7 +358,7 @@ class RouteSuggestOrderingView(ListView):
                     route_suggest.save()
 
             messages.success(request, "Data updated successfully")
-            return redirect(reverse_lazy("soil:routesuggest_success"))
+            return redirect(reverse_lazy("soil:route_suggest_success"))
 
         except RouteSuggestImport.DoesNotExist:
             messages.error(request, "Invalid order data provided.")
@@ -366,7 +366,7 @@ class RouteSuggestOrderingView(ListView):
 
 
 class RouteSuggestSuccessView(TemplateView):
-    template_name = "soil_analysis/routesuggest/success.html"
+    template_name = "soil_analysis/route_suggest/success.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

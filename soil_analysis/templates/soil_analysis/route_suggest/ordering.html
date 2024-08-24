@@ -1,7 +1,7 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 {% block css %}
-    <link rel="stylesheet" type="text/css" href="{% static "soil_analysis/css/routesuggest/ordering.css" %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static "soil_analysis/css/route_suggest/ordering.css" %}"/>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 {% endblock %}
 
@@ -12,7 +12,7 @@
     <!-- drug & drop -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <script src="{% static 'soil_analysis/js/routesuggest/drag-and-drop-script.js' %}"></script>
+    <script src="{% static 'soil_analysis/js/route_suggest/drag-and-drop-script.js' %}"></script>
 
 {% endblock %}
 
@@ -20,7 +20,7 @@
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:routesuggest_upload' %}">KML Upload</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:route_suggest_upload' %}">KML Upload</a></li>
             <li class="breadcrumb-item active" aria-current="page">Ordering</li>
         </ol>
     </nav>
@@ -33,7 +33,7 @@
             <li id="{{ land.id }}" class="list-group-item">圃場名: {{ land.name }}, 座標: {{ land.coords }}</li>
         {% endfor %}
     </ul>
-    <form id="orderForm" method="POST" action="{% url 'soil:routesuggest_ordering' %}">
+    <form id="orderForm" method="POST" action="{% url 'soil:route_suggest_ordering' %}">
         {% csrf_token %}
         <input type="hidden" id="orderData" name="order_data">
         <button class="btn btn-outline-primary mb-3" type="submit">送信</button>

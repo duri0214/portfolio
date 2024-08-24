@@ -60,18 +60,18 @@ urlpatterns = [
         name="hardness_association_success",
     ),
     path(
-        "routesuggest/upload",
+        "route_suggest/upload",
         views.RouteSuggestUploadView.as_view(),
-        name="routesuggest_upload",
+        name="route_suggest_upload",
     ),
     path(
-        "routesuggest/ordering",
+        "route_suggest/ordering",
         views.RouteSuggestOrderingView.as_view(),
-        name="routesuggest_ordering",
+        name="route_suggest_ordering",
     ),
     path(
-        "routesuggest/success",
+        "route_suggest/success",
         views.RouteSuggestSuccessView.as_view(),
-        name="routesuggest_success",
+        name="route_suggest_success",
     ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
