@@ -21,8 +21,8 @@
       "humus": 7,
       "bulk_density": 4,
       "created_at": "2022-08-21T15:00:00+09:00",
-      "landblock_id": 1,
-      "landledger_id": 1
+      "land_block_id": 1,
+      "land_ledger_id": 1
     }
   },
   {
@@ -47,8 +47,8 @@
       "humus": 3,
       "bulk_density": 16,
       "created_at": "2022-08-23T15:00:00+09:00",
-      "landblock_id": 3,
-      "landledger_id": 1
+      "land_block_id": 3,
+      "land_ledger_id": 1
     }
   },
   {
@@ -73,8 +73,8 @@
       "humus": 16,
       "bulk_density": 19,
       "created_at": "2022-08-25T15:00:00+09:00",
-      "landblock_id": 5,
-      "landledger_id": 1
+      "land_block_id": 5,
+      "land_ledger_id": 1
     }
   },
   {
@@ -99,8 +99,8 @@
       "humus": 2,
       "bulk_density": 17,
       "created_at": "2022-08-27T15:00:00+09:00",
-      "landblock_id": 7,
-      "landledger_id": 1
+      "land_block_id": 7,
+      "land_ledger_id": 1
     }
   },
   {
@@ -125,8 +125,8 @@
       "humus": 4,
       "bulk_density": 15,
       "created_at": "2022-08-29T15:00:00+09:00",
-      "landblock_id": 9,
-      "landledger_id": 1
+      "land_block_id": 9,
+      "land_ledger_id": 1
     }
   },
   {
@@ -151,8 +151,8 @@
       "humus": 16,
       "bulk_density": 18,
       "created_at": "2022-08-12T15:00:00+09:00",
-      "landblock_id": 1,
-      "landledger_id": 2
+      "land_block_id": 1,
+      "land_ledger_id": 2
     }
   },
   {
@@ -177,8 +177,8 @@
       "humus": 11,
       "bulk_density": 4,
       "created_at": "2022-08-14T15:00:00+09:00",
-      "landblock_id": 3,
-      "landledger_id": 2
+      "land_block_id": 3,
+      "land_ledger_id": 2
     }
   },
   {
@@ -203,8 +203,8 @@
       "humus": 4,
       "bulk_density": 10,
       "created_at": "2022-08-16T15:00:00+09:00",
-      "landblock_id": 5,
-      "landledger_id": 2
+      "land_block_id": 5,
+      "land_ledger_id": 2
     }
   },
   {
@@ -229,8 +229,8 @@
       "humus": 7,
       "bulk_density": 17,
       "created_at": "2022-08-18T15:00:00+09:00",
-      "landblock_id": 7,
-      "landledger_id": 2
+      "land_block_id": 7,
+      "land_ledger_id": 2
     }
   },
   {
@@ -255,8 +255,8 @@
       "humus": 7,
       "bulk_density": 7,
       "created_at": "2022-08-20T15:00:00+09:00",
-      "landblock_id": 9,
-      "landledger_id": 2
+      "land_block_id": 9,
+      "land_ledger_id": 2
     }
   },
   {
@@ -281,8 +281,8 @@
       "humus": 10,
       "bulk_density": 1,
       "created_at": "2022-08-21T15:00:00+09:00",
-      "landblock_id": 1,
-      "landledger_id": 3
+      "land_block_id": 1,
+      "land_ledger_id": 3
     }
   },
   {
@@ -307,8 +307,8 @@
       "humus": 20,
       "bulk_density": 1,
       "created_at": "2022-08-23T15:00:00+09:00",
-      "landblock_id": 3,
-      "landledger_id": 3
+      "land_block_id": 3,
+      "land_ledger_id": 3
     }
   },
   {
@@ -333,8 +333,8 @@
       "humus": 20,
       "bulk_density": 3,
       "created_at": "2022-08-25T15:00:00+09:00",
-      "landblock_id": 5,
-      "landledger_id": 3
+      "land_block_id": 5,
+      "land_ledger_id": 3
     }
   },
   {
@@ -359,8 +359,8 @@
       "humus": 20,
       "bulk_density": 19,
       "created_at": "2022-08-27T15:00:00+09:00",
-      "landblock_id": 7,
-      "landledger_id": 3
+      "land_block_id": 7,
+      "land_ledger_id": 3
     }
   },
   {
@@ -385,8 +385,8 @@
       "humus": 6,
       "bulk_density": 4,
       "created_at": "2022-08-29T15:00:00+09:00",
-      "landblock_id": 9,
-      "landledger_id": 3
+      "land_block_id": 9,
+      "land_ledger_id": 3
     }
   },
   {
@@ -411,8 +411,8 @@
       "humus": 8,
       "bulk_density": 6,
       "created_at": "2022-08-12T15:00:00+09:00",
-      "landblock_id": 1,
-      "landledger_id": 4
+      "land_block_id": 1,
+      "land_ledger_id": 4
     }
   },
   {
@@ -437,8 +437,8 @@
       "humus": 11,
       "bulk_density": 17,
       "created_at": "2022-08-14T15:00:00+09:00",
-      "landblock_id": 3,
-      "landledger_id": 4
+      "land_block_id": 3,
+      "land_ledger_id": 4
     }
   },
   {
@@ -463,8 +463,8 @@
       "humus": 15,
       "bulk_density": 5,
       "created_at": "2022-08-16T15:00:00+09:00",
-      "landblock_id": 5,
-      "landledger_id": 4
+      "land_block_id": 5,
+      "land_ledger_id": 4
     }
   },
   {
@@ -489,8 +489,8 @@
       "humus": 16,
       "bulk_density": 3,
       "created_at": "2022-08-18T15:00:00+09:00",
-      "landblock_id": 7,
-      "landledger_id": 4
+      "land_block_id": 7,
+      "land_ledger_id": 4
     }
   },
   {
@@ -515,8 +515,8 @@
       "humus": 1,
       "bulk_density": 17,
       "created_at": "2022-08-20T15:00:00+09:00",
-      "landblock_id": 9,
-      "landledger_id": 4
+      "land_block_id": 9,
+      "land_ledger_id": 4
     }
   },
   {
@@ -541,8 +541,8 @@
       "humus": 18,
       "bulk_density": 17,
       "created_at": "2022-08-21T15:00:00+09:00",
-      "landblock_id": 1,
-      "landledger_id": 5
+      "land_block_id": 1,
+      "land_ledger_id": 5
     }
   },
   {
@@ -567,8 +567,8 @@
       "humus": 17,
       "bulk_density": 5,
       "created_at": "2022-08-23T15:00:00+09:00",
-      "landblock_id": 3,
-      "landledger_id": 5
+      "land_block_id": 3,
+      "land_ledger_id": 5
     }
   },
   {
@@ -593,8 +593,8 @@
       "humus": 16,
       "bulk_density": 1,
       "created_at": "2022-08-25T15:00:00+09:00",
-      "landblock_id": 5,
-      "landledger_id": 5
+      "land_block_id": 5,
+      "land_ledger_id": 5
     }
   },
   {
@@ -619,8 +619,8 @@
       "humus": 2,
       "bulk_density": 12,
       "created_at": "2022-08-27T15:00:00+09:00",
-      "landblock_id": 7,
-      "landledger_id": 5
+      "land_block_id": 7,
+      "land_ledger_id": 5
     }
   },
   {
@@ -645,8 +645,8 @@
       "humus": 1,
       "bulk_density": 19,
       "created_at": "2022-08-29T15:00:00+09:00",
-      "landblock_id": 9,
-      "landledger_id": 5
+      "land_block_id": 9,
+      "land_ledger_id": 5
     }
   }
 ]

@@ -5,7 +5,7 @@
       "id": 1,
       "sampling_method": 1,
       "ordering": 1,
-      "landblock": 7,
+      "land_block": 7,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -15,7 +15,7 @@
       "id": 2,
       "sampling_method": 1,
       "ordering": 2,
-      "landblock": 9,
+      "land_block": 9,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -25,7 +25,7 @@
       "id": 3,
       "sampling_method": 1,
       "ordering": 3,
-      "landblock": 3,
+      "land_block": 3,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -35,7 +35,7 @@
       "id": 4,
       "sampling_method": 1,
       "ordering": 4,
-      "landblock": 5,
+      "land_block": 5,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -45,7 +45,7 @@
       "id": 5,
       "sampling_method": 1,
       "ordering": 5,
-      "landblock": 1,
+      "land_block": 1,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   }

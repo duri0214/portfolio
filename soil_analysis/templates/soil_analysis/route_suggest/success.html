@@ -1,11 +1,11 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 {% block css %}
-    <link rel="stylesheet" type="text/css" href="{% static "soil_analysis/css/routesuggest/style.css" %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static "soil_analysis/css/route_suggest/style.css" %}"/>
 {% endblock %}
 {% block additional_head %}
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <script type="module" src="{% static "soil_analysis/js/routesuggest/display-route-script.js" %}"></script>
+    <script type="module" src="{% static "soil_analysis/js/route_suggest/display-route-script.js" %}"></script>
     {% autoescape off %}
         <script>let coordsList = {{ coords_list }};</script>
     {% endautoescape %}
@@ -14,8 +14,8 @@
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:routesuggest_upload' %}">KML Upload</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:routesuggest_ordering' %}">Ordering</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:route_suggest_upload' %}">KML Upload</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:route_suggest_ordering' %}">Ordering</a></li>
             <li class="breadcrumb-item active" aria-current="page">Success</li>
         </ol>
     </nav>

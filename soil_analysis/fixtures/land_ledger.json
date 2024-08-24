@@ -11,7 +11,7 @@
       "analytical_agency_id": 4,
       "crop_id": 1,
       "land_id": 1,
-      "landperiod_id": 2,
+      "land_period_id": 2,
       "sampling_method_id": 1,
       "sampling_staff_id": 2
     }
@@ -28,7 +28,7 @@
       "analytical_agency_id": 4,
       "crop_id": 1,
       "land_id": 1,
-      "landperiod_id": 3,
+      "land_period_id": 3,
       "sampling_method_id": 1,
       "sampling_staff_id": 2
     }
@@ -45,7 +45,7 @@
       "analytical_agency_id": 4,
       "crop_id": 1,
       "land_id": 1,
-      "landperiod_id": 4,
+      "land_period_id": 4,
       "sampling_method_id": 1,
       "sampling_staff_id": 2
     }
@@ -62,7 +62,7 @@
       "analytical_agency_id": 4,
       "crop_id": 2,
       "land_id": 2,
-      "landperiod_id": 4,
+      "land_period_id": 4,
       "sampling_method_id": 1,
       "sampling_staff_id": 1
     }
@@ -79,7 +79,7 @@
       "analytical_agency_id": 4,
       "crop_id": 2,
       "land_id": 2,
-      "landperiod_id": 5,
+      "land_period_id": 5,
       "sampling_method_id": 1,
       "sampling_staff_id": 1
     }

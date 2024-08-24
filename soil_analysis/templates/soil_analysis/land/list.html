@@ -53,9 +53,9 @@
                         -- 化学レポートを選択 --
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="select a report">
-                        {% for landledger in land_ledger_map|get_value:a_land %}
+                        {% for land_ledger in land_ledger_map|get_value:a_land %}
                             <li><a class="dropdown-item"
-                                   href="{% url 'soil:land_report_chemical' a_land.company.id landledger.pk %}">{{ landledger.sampling_date|date:"Ym" }} {{ landledger.landperiod.name }}</a>
+                                   href="{% url 'soil:land_report_chemical' a_land.company.id land_ledger.pk %}">{{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.land_period.name }}</a>
                             </li>
                         {% endfor %}
                     </ul>
