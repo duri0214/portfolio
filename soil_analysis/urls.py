@@ -36,22 +36,22 @@ urlpatterns = [
     ),
     path(
         "hardness/upload",
-        views.SoilhardnessUploadView.as_view(),
+        views.HardnessUploadView.as_view(),
         name="hardness_upload",
     ),
     path(
         "hardness/success",
-        views.SoilhardnessSuccessView.as_view(),
+        views.HardnessSuccessView.as_view(),
         name="hardness_success",
     ),
     path(
         "hardness/association",
-        views.SoilhardnessAssociationView.as_view(),
+        views.HardnessAssociationView.as_view(),
         name="hardness_association",
     ),
     path(
         "hardness/association/individual/<int:memory_anchor>/<int:land_ledger>",
-        views.SoilhardnessAssociationIndividualView.as_view(),
+        views.HardnessAssociationIndividualView.as_view(),
         name="hardness_association_individual",
     ),
     path(

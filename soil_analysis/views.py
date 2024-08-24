@@ -135,7 +135,7 @@ class LandReportChemicalListView(ListView):
         return context
 
 
-class SoilhardnessUploadView(FormView):
+class HardnessUploadView(FormView):
     template_name = "soil_analysis/hardness/form.html"
     form_class = UploadForm
     success_url = reverse_lazy("soil:hardness_success")
@@ -153,7 +153,7 @@ class SoilhardnessUploadView(FormView):
         return super().form_valid(form)
 
 
-class SoilhardnessSuccessView(TemplateView):
+class HardnessSuccessView(TemplateView):
     template_name = "soil_analysis/hardness/success.html"
 
     def get_context_data(self, **kwargs):
@@ -162,7 +162,7 @@ class SoilhardnessSuccessView(TemplateView):
         return context
 
 
-class SoilhardnessAssociationView(ListView):
+class HardnessAssociationView(ListView):
     model = SoilHardnessMeasurement
     template_name = "soil_analysis/hardness/association/list.html"
 
@@ -235,7 +235,7 @@ class SoilhardnessAssociationView(ListView):
         return HttpResponseRedirect(reverse("soil:hardness_association_success"))
 
 
-class SoilhardnessAssociationIndividualView(ListView):
+class HardnessAssociationIndividualView(ListView):
     model = SoilHardnessMeasurement
     template_name = "soil_analysis/hardness/association/individual/list.html"
 
