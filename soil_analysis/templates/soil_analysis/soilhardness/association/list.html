@@ -16,14 +16,14 @@
         {% csrf_token %}
         <div class="row">
             <div class="dropdown col-6">
-                <select class="form-select" name="landledger" required aria-label="帳簿を選択">
+                <select class="form-select" name="land_ledger" required aria-label="帳簿を選択">
                     <option selected disabled value="">帳簿を選択</option>
-                    {% for landledger in landledgers %}
-                        <option value="{{ landledger.pk }}">{{ landledger.land.company.name }} {{ landledger.land.name }} {{ landledger.sampling_date|date:"Ym" }} {{ landledger.landperiod.name }}</option>
+                    {% for land_ledger in land_ledgers %}
+                        <option value="{{ land_ledger.pk }}">{{ land_ledger.land.company.name }} {{ land_ledger.land.name }} {{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.landperiod.name }}</option>
                     {% endfor %}
                     {# TODO: urlを帳簿の新規作成のページへ #}
-                    <option value="{{ landledger.pk }}"><a class="dropdown-item"
-                                                           href="https://www.google.com">新規作成（未実装）</a></option>
+                    <option value="{{ land_ledger.pk }}"><a class="dropdown-item"
+                                                            href="https://www.google.com">新規作成（未実装）</a></option>
                 </select>
             </div>
             <input class="btn btn-outline-primary mb-3 col-2" type="submit" name="button" value="送信">
@@ -62,11 +62,11 @@
             {% endfor %}
             </tbody>
         </table>
-        <input type="hidden" name="form_landledger" id="selected_landledger" value="">
+        <input type="hidden" name="form_land_ledger" id="selected_land_ledger" value="">
     </form>
     <script>
         const dropdown = document.querySelector('.dropdown select');
-        const hiddenInput = document.getElementById('selected_landledger');
+        const hiddenInput = document.getElementById('selected_land_ledger');
         dropdown.addEventListener('change', (event) => {
             hiddenInput.value = event.target.value;
         });

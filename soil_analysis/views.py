@@ -75,7 +75,7 @@ class LandListView(ListView):
         company = Company(pk=self.kwargs["company_id"])
         land_repository = LandRepository(company)
         land_ledger_map = {
-            land: land_repository.read_landledgers(land)
+            land: land_repository.read_land_ledgers(land)
             for land in context["object_list"]
         }
         context["company"] = company
@@ -118,18 +118,20 @@ class LandReportChemicalListView(ListView):
     template_name = "soil_analysis/landreport/chemical.html"
 
     def get_queryset(self):
-        landledger = LandLedger(self.kwargs["landledger_id"])
-        return super().get_queryset().filter(landledger=landledger)
+        land_ledger = LandLedger(self.kwargs["land_ledger_id"])
+        return super().get_queryset().filter(land_ledger=land_ledger)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        landledger = LandLedger.objects.get(id=self.kwargs["landledger_id"])
+        land_ledger = LandLedger.objects.get(id=self.kwargs["land_ledger_id"])
 
-        context["charts"] = ReportLayout1(landledger).publish()
+        context["charts"] = ReportLayout1(land_ledger).publish()
         context["company"] = Company(self.kwargs["company_id"])
-        context["landledger"] = landledger
-        context["landscores"] = LandScoreChemical.objects.filter(landledger=landledger)
-        context["landreview"] = LandReview.objects.filter(landledger=landledger)
+        context["land_ledger"] = land_ledger
+        context["landscores"] = LandScoreChemical.objects.filter(
+            land_ledger=land_ledger
+        )
+        context["landreview"] = LandReview.objects.filter(land_ledger=land_ledger)
 
         return context
 
@@ -177,7 +179,7 @@ class SoilhardnessAssociationView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["landledgers"] = LandLedger.objects.all().order_by("pk")
+        context["land_ledgers"] = LandLedger.objects.all().order_by("pk")
         return context
 
     @staticmethod
@@ -186,14 +188,14 @@ class SoilhardnessAssociationView(ListView):
         R型 で登録するときは、圃場の1ブロックが5点計測なので、採土法（5点法、9点法）の回数を乗ずると、1圃場での採取回数になる
         R型以外のときはIndividualViewへ飛ぶ
         """
-        form_landledger = int(request.POST.get("landledger")[0])
+        form_land_ledger = int(request.POST.get("land_ledger")[0])
         if "btn_individual" in request.POST:
             return HttpResponseRedirect(
                 reverse(
                     "soil:soilhardness_association_individual",
                     kwargs={
                         "memory_anchor": int(request.POST.get("btn_individual")),
-                        "landledger": form_landledger,
+                        "land_ledger": form_land_ledger,
                     },
                 )
             )
@@ -202,12 +204,12 @@ class SoilhardnessAssociationView(ListView):
             int(checkbox) for checkbox in request.POST.getlist("form_checkboxes[]")
         ]
         if form_checkboxes:
-            landledger = LandLedger.objects.filter(pk=form_landledger).first()
-            sampling_times = landledger.sampling_method.times
+            land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
+            sampling_times = land_ledger.sampling_method.times
             total_sampling_times = 5 * sampling_times
             needle = 0
             land_block_orders = SamplingOrder.objects.filter(
-                sampling_method=landledger.sampling_method
+                sampling_method=land_ledger.sampling_method
             ).order_by("ordering")
             for memory_anchor in form_checkboxes:
                 soilhardness_measurements = SoilHardnessMeasurement.objects.filter(
@@ -220,7 +222,7 @@ class SoilhardnessAssociationView(ListView):
                     soilhardness_measurement.land_block = land_block_orders[
                         needle
                     ].land_block
-                    soilhardness_measurement.landledger = landledger
+                    soilhardness_measurement.land_ledger = land_ledger
                     forward_the_needle = (
                         i > 0
                         and i % (soilhardness_measurement.setdepth * sampling_times)
@@ -229,7 +231,7 @@ class SoilhardnessAssociationView(ListView):
                     if forward_the_needle:
                         needle += 1
                 SoilHardnessMeasurement.objects.bulk_update(
-                    soilhardness_measurements, fields=["land_block", "landledger"]
+                    soilhardness_measurements, fields=["land_block", "land_ledger"]
                 )
 
         return HttpResponseRedirect(reverse("soil:soilhardness_association_success"))
@@ -241,9 +243,9 @@ class SoilhardnessAssociationIndividualView(ListView):
 
     def get_queryset(self, **kwargs):
         form_memory_anchor = self.kwargs.get("memory_anchor")
-        form_landledger = self.kwargs.get("landledger")
-        landledger = LandLedger.objects.filter(pk=form_landledger).first()
-        total_sampling_times = 5 * landledger.sampling_method.times
+        form_land_ledger = self.kwargs.get("land_ledger")
+        land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
+        total_sampling_times = 5 * land_ledger.sampling_method.times
         return (
             super()
             .get_queryset()
@@ -260,10 +262,10 @@ class SoilhardnessAssociationIndividualView(ListView):
 
     def get_context_data(self, **kwargs):
         form_memory_anchor = self.kwargs.get("memory_anchor")
-        form_landledger = self.kwargs.get("landledger")
+        form_land_ledger = self.kwargs.get("land_ledger")
         context = super().get_context_data(**kwargs)
         context["memory_anchor"] = form_memory_anchor
-        context["landledger"] = form_landledger
+        context["land_ledger"] = form_land_ledger
         context["land_blocks"] = LandBlock.objects.order_by("pk").all()
         return context
 
@@ -273,10 +275,10 @@ class SoilhardnessAssociationIndividualView(ListView):
         フォームから25レコードの情報がくるのでそれぞれを更新する
         """
         form_memory_anchor = self.kwargs.get("memory_anchor")
-        form_landledger = self.kwargs.get("landledger")
+        form_land_ledger = self.kwargs.get("land_ledger")
         form_land_blocks = request.POST.getlist("land-blocks[]")
-        landledger = LandLedger.objects.filter(pk=form_landledger).first()
-        total_sampling_times = 5 * landledger.sampling_method.times
+        land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
+        total_sampling_times = 5 * land_ledger.sampling_method.times
         soilhardness_measurements = SoilHardnessMeasurement.objects.filter(
             setmemory__range=(
                 form_memory_anchor,
@@ -286,9 +288,9 @@ class SoilhardnessAssociationIndividualView(ListView):
         for i, soilhardness_measurement in enumerate(soilhardness_measurements):
             needle = i // 60
             soilhardness_measurement.land_block_id = form_land_blocks[needle]
-            soilhardness_measurement.landledger = landledger
+            soilhardness_measurement.land_ledger = land_ledger
         SoilHardnessMeasurement.objects.bulk_update(
-            soilhardness_measurements, fields=["land_block", "landledger"]
+            soilhardness_measurements, fields=["land_block", "land_ledger"]
         )
         if SoilHardnessMeasurement.objects.filter(land_block__isnull=True).count() == 0:
             return HttpResponseRedirect(

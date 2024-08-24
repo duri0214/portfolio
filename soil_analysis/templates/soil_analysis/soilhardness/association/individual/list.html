@@ -14,7 +14,7 @@
 {% endblock %}
 {% block content %}
     <h1>データの関連付け</h1>
-    <form method="post" action="{% url 'soil:soilhardness_association_individual' memory_anchor landledger %}"
+    <form method="post" action="{% url 'soil:soilhardness_association_individual' memory_anchor land_ledger %}"
           enctype="multipart/form-data">
         {% csrf_token %}
         <input class="btn btn-outline-primary mb-3" type="submit" name="button" value="送信">

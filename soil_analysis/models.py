@@ -223,7 +223,7 @@ class LandScoreChemical(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
     land_block = models.ForeignKey(LandBlock, on_delete=models.CASCADE)
-    landledger = models.ForeignKey(LandLedger, on_delete=models.CASCADE)
+    land_ledger = models.ForeignKey(LandLedger, on_delete=models.CASCADE)
 
 
 class LandReview(models.Model):
@@ -236,11 +236,11 @@ class LandReview(models.Model):
     remark = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
-    landledger = models.ForeignKey(LandLedger, on_delete=models.CASCADE)
+    land_ledger = models.ForeignKey(LandLedger, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["landledger"], name="landledger_unique"),
+            models.UniqueConstraint(fields=["land_ledger"], name="land_ledger_unique"),
         ]
 
 
@@ -272,7 +272,7 @@ class SoilHardnessMeasurement(models.Model):
     updated_at = models.DateTimeField(null=True)
     setdevice = models.ForeignKey(Device, on_delete=models.CASCADE)
     land_block = models.ForeignKey(LandBlock, null=True, on_delete=models.CASCADE)
-    landledger = models.ForeignKey(LandLedger, null=True, on_delete=models.CASCADE)
+    land_ledger = models.ForeignKey(LandLedger, null=True, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
