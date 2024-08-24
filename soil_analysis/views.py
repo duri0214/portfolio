@@ -114,7 +114,7 @@ class LandDetailView(DetailView):
 
 class LandReportChemicalListView(ListView):
     model = LandScoreChemical
-    template_name = "soil_analysis/landreport/chemical.html"
+    template_name = "soil_analysis/land_report/chemical.html"
 
     def get_queryset(self):
         land_ledger = LandLedger(self.kwargs["land_ledger_id"])
