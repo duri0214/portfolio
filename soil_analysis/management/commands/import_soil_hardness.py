@@ -14,22 +14,22 @@ from soil_analysis.models import (
 )
 
 
-def extract_setdevice(line: list) -> str:
-    valuename = line[1].strip()
-    if valuename != "Digital Cone Penetrometer":
-        raise ValueError(f"unexpected data row: {valuename}")
+def extract_device(line: list) -> str:
+    value = line[1].strip()
+    if value != "Digital Cone Penetrometer":
+        raise ValueError(f"unexpected data row: {value}")
 
     value = line[0].strip()
     if not value.startswith("DIK-"):
-        raise ValueError(f"unexpected devicename: {value}")
+        raise ValueError(f"unexpected device name: {value}")
 
     return value
 
 
-def extract_setdatetime(line: list) -> datetime:
-    valuename = line[0].strip()
-    if valuename != "Date and Time":
-        raise ValueError(f"unexpected data row: {valuename}")
+def extract_datetime(line: list) -> datetime:
+    value = line[0].strip()
+    if value != "Date and Time":
+        raise ValueError(f"unexpected data row: {value}")
 
     value = line[1].strip()
     try:
@@ -43,12 +43,12 @@ def extract_setdatetime(line: list) -> datetime:
 
 
 def extract_numeric_value(line: list) -> int:
-    valuename = line[0].strip()
+    value = line[0].strip()
     if not any(
-        valuename.startswith(prefix)
+        value.startswith(prefix)
         for prefix in ("Memory No.", "Set Depth", "Spring", "Cone")
     ):
-        raise ValueError(f"unexpected data row: {valuename}")
+        raise ValueError(f"unexpected data row: {value}")
 
     value = line[1].strip()
     try:
@@ -89,12 +89,12 @@ class Command(BaseCommand):
                     reader = csv.reader(f)
 
                     # 1行目～10行目 から属性情報を取得
-                    set_device = m_device[extract_setdevice(next(reader))]
+                    set_device = m_device[extract_device(next(reader))]
                     set_memory = extract_numeric_value(next(reader))
                     next(reader)  # skip Latitude
                     next(reader)  # skip Longitude
                     set_depth = extract_numeric_value(next(reader))
-                    set_datetime = extract_setdatetime(next(reader))
+                    set_datetime = extract_datetime(next(reader))
                     set_spring = extract_numeric_value(next(reader))
                     set_cone = extract_numeric_value(next(reader))
                     next(reader)  # skip blank line
