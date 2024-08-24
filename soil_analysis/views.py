@@ -323,7 +323,7 @@ class RouteSuggestUploadView(FormView):
         if len(land_candidates) > 10:
             messages.error(
                 self.request,
-                "GooglemapAPIのレート上昇制約により 10 地点までしか計算できません",
+                "GoogleMapAPIのレート上昇制約により 10 地点までしか計算できません",
             )
             return redirect(self.request.META.get("HTTP_REFERER"))
 
