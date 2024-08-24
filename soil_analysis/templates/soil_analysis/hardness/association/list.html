@@ -21,9 +21,7 @@
                     {% for land_ledger in land_ledgers %}
                         <option value="{{ land_ledger.pk }}">{{ land_ledger.land.company.name }} {{ land_ledger.land.name }} {{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.land_period.name }}</option>
                     {% endfor %}
-                    {# TODO: urlを帳簿の新規作成のページへ #}
-                    <option value="{{ land_ledger.pk }}"><a class="dropdown-item"
-                                                            href="https://www.google.com">新規作成（未実装）</a></option>
+                    <option value="{{ land_ledger.pk }}">新規作成（未実装）</option>
                 </select>
             </div>
             <input class="btn btn-outline-primary mb-3 col-2" type="submit" name="button" value="送信">
