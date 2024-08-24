@@ -56,7 +56,7 @@ urlpatterns = [
     ),
     path(
         "hardness/association/success",
-        views.SoilhardnessAssociationSuccessView.as_view(),
+        views.HardnessAssociationSuccessView.as_view(),
         name="hardness_association_success",
     ),
     path(

@@ -296,7 +296,7 @@ class HardnessAssociationIndividualView(ListView):
         return HttpResponseRedirect(reverse("soil:hardness_association"))
 
 
-class SoilhardnessAssociationSuccessView(TemplateView):
+class HardnessAssociationSuccessView(TemplateView):
     template_name = "soil_analysis/hardness/association/success.html"
 
 
