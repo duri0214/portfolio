@@ -9,6 +9,7 @@ from soil_analysis.models import (
     JmaRegion,
     JmaPrefecture,
     JmaCity,
+    JmaAmedas,
 )
 
 
@@ -139,55 +140,23 @@ class Command(BaseCommand):
             ]
         )
 
-        # Part2: from forecast_area.json TODO: amedas
-        # url = "https://www.jma.go.jp/bosai/forecast/const/forecast_area.json"
-        # try:
-        #     # URLからデータを取得します
-        #     response = requests.get(url)
-        #     response.raise_for_status()
-        # except requests.exceptions.RequestException as e:
-        #     print(
-        #         f"データの取得でエラーが発生しました。URL: {url} エラー詳細: {e}",
-        #         file=sys.stderr,
-        #     )
-        #     sys.exit(1)
-        #
-        # try:
-        #     raw_data = response.json()  # response.text から JSON データを直接取得します
-        # except ValueError:
-        #     print("JSONデコードエラー", file=sys.stderr)
-        #     sys.exit(1)
-        #
-        # forecast_areas = []
-        # for key, value in raw_data.items():
-        #     for item in value:
-        #         for amedas in item["amedas"]:
-        #             forecast_areas.append(
-        #                 {
-        #                     "id": amedas,
-        #                     "class10_code": item["class10"],
-        #                     "class20_code": item["class20"],
-        #                 }
-        #             )
-        #
-        # df_amedas = pd.DataFrame(forecast_areas).set_index("id")
-        # df_amedas = df_amedas.merge(df_cities, left_on="class20_code", right_index=True)
-        # df_amedas.drop(
-        #     ["class10_code", "class20_code", "jmaAreas2Id", "name"],
-        #     axis=1,
-        #     inplace=True,
-        # )
-        # dict_amedas = df_amedas.reset_index().to_dict("records")
-        # JmaAmedas.objects.all().delete()
-        # JmaAmedas.objects.bulk_create(
-        #     [
-        #         JmaAmedas(
-        #             id=item["id"],
-        #             jma_area3_id=item["jmaAreas3Id"],
-        #         )
-        #         for item in dict_amedas
-        #     ]
-        # )
+        # Part2: from forecast_area.json
+        url = "https://www.jma.go.jp/bosai/forecast/const/forecast_area.json"
+        raw_data = get_data_from_url(url)
+
+        JmaAmedas.objects.all().delete()
+        jma_amedas_list = []
+        for prefecture_code, entries in raw_data.items():
+            for entry in entries:
+                region_code = entry["class10"]
+                for amedas_code in entry["amedas"]:
+                    jma_amedas_list.append(
+                        JmaAmedas(
+                            code=amedas_code,
+                            jma_region=jma_region_cache.get(region_code),
+                        )
+                    )
+        JmaAmedas.objects.bulk_create(jma_amedas_list)
 
         self.stdout.write(
             self.style.SUCCESS("jma const master data import has been completed.")
