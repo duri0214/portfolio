@@ -1,3 +1,6 @@
+import csv
+import re
+
 from django.core.management.base import BaseCommand
 
 from soil_analysis.domain.valueobject.weather.weather import WeatherCodeRaw
@@ -22,13 +25,16 @@ class Command(BaseCommand):
         JmaWeather.objects.all().delete()
 
         # Remove empty entries (ケツカンマを無視する)
-        entries = [entry for entry in data.strip("{}").split(",") if entry]
+        entries = re.split(r",(?=\d+:)", data.strip("{}"))
 
         weather_code_list = []
         for entry in entries:
             key, values = entry.split(":")
-            key = key.strip()
-            values = eval(values.strip())
+
+            # Remove the brackets from the values and split by comma safely
+            values = values.strip("[]")
+            values = next(csv.reader([values]))
+
             weather_code_raw = WeatherCodeRaw(key, *values)
             weather_code_list.append(weather_code_raw)
 
