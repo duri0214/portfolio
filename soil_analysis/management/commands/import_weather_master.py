@@ -115,7 +115,7 @@ class Command(BaseCommand):
             for jma_city_group in jma_city_group_list
         }
 
-        # Create and save JmaCity with parents as per 'class15s'/'jma_city_group_cache': 2820100 姫路市
+        # Create and save JmaCity with parents via JmaCityGroup: 2820100 姫路市
         JmaCity.objects.all().delete()
         jma_city_list = [
             JmaConst(
