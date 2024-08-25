@@ -24,7 +24,7 @@ class Command(BaseCommand):
 
         JmaWeather.objects.all().delete()
 
-        # Remove empty entries (ケツカンマを無視する)
+        # Use a regular expression to split by outer commas
         entries = re.split(r",(?=\d+:)", data.strip("{}"))
 
         weather_code_list = []
