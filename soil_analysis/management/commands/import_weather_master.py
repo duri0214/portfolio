@@ -1,17 +1,14 @@
-import csv
-import re
 import sys
 
 import requests
 from django.core.management.base import BaseCommand
 
-from soil_analysis.domain.valueobject.weather.weather import JmaConst, WeatherCodeRaw
+from soil_analysis.domain.valueobject.weather.weather import JmaConst
 from soil_analysis.models import (
     JmaArea,
     JmaRegion,
     JmaPrefecture,
     JmaCity,
-    JmaWeatherCode,
 )
 
 
@@ -31,54 +28,15 @@ def get_data_from_url(url: str):
 
 
 class Command(BaseCommand):
-    help = "Import jma weather code master from data."
+    help = "Import jma const master from data."
 
     def handle(self, *args, **options):
         """
-        Handles the import of JmaWeatherCode objects from a formatted data string.
-
-        See Also: `view-source:https://www.jma.go.jp/bosai/forecast/`
-
         Args:
             *args: Additional positional arguments (unused).
             **options: Additional keyword arguments (unused).
         """
-        # Part1: JmaWeatherCode
-        data = '{100:["100.svg","500.svg","100","\u6674","CLEAR"],}'
-
-        # Use a regular expression to split by outer commas
-        entries = re.split(r",(?=\d+:)", data.strip("{}"))
-
-        weather_code_list = []
-        for entry in entries:
-            key, values = entry.split(":")
-
-            # Remove the brackets from the values and split by comma safely
-            values = values.strip("[]")
-            values = next(csv.reader([values]))
-
-            weather_code_raw = WeatherCodeRaw(key, *values)
-            weather_code_list.append(weather_code_raw)
-
-        jma_weather_code_list = [
-            JmaWeatherCode(
-                code=x.code,
-                image=x.image_day,
-                summary_code=x.summary_code,
-                name=x.name,
-                name_en=x.name_en,
-            )
-            for x in weather_code_list
-        ]
-        JmaWeatherCode.objects.bulk_create(jma_weather_code_list)
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                "Successfully imported all jma weather code master from data."
-            )
-        )
-
-        # Part2: from const
+        # Part1: from const
         url = "https://www.jma.go.jp/bosai/common/const/area.json"
         raw_data = get_data_from_url(url)
 
@@ -181,7 +139,7 @@ class Command(BaseCommand):
             ]
         )
 
-        # Part3: from forecast_area.json TODO: amedas
+        # Part2: from forecast_area.json TODO: amedas
         # url = "https://www.jma.go.jp/bosai/forecast/const/forecast_area.json"
         # try:
         #     # URLからデータを取得します
@@ -232,5 +190,5 @@ class Command(BaseCommand):
         # )
 
         self.stdout.write(
-            self.style.SUCCESS("The master data update has been completed.")
+            self.style.SUCCESS("jma const master data import has been completed.")
         )
