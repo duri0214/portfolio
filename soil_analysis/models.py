@@ -307,14 +307,29 @@ class RouteSuggestImport(models.Model):
 
 
 class JmaArea(models.Model):
-    """地方区分。生データでは center という名前で取り扱われている"""
+    """
+    an area in the JMA
+    生データでは center という名前で取り扱われている
+
+    Attributes:
+        code (str): エリアコード
+        name (str): エリア名
+    """
 
     code = models.CharField(unique=True, max_length=6)
     name = models.CharField(max_length=100)
 
 
 class JmaPrefecture(models.Model):
-    """都道府県。生データでは office という名前で取り扱われている"""
+    """
+    a prefecture in the JMA
+    生データでは office という名前で取り扱われている
+
+    Attributes:
+        code (CharField): 都道府県コード
+        jma_area (ForeignKey): FK to JmaArea
+        name (CharField): 都道府県名
+    """
 
     code = models.CharField(unique=True, max_length=6)
     jma_area = models.ForeignKey(JmaArea, on_delete=models.CASCADE)
@@ -322,7 +337,15 @@ class JmaPrefecture(models.Model):
 
 
 class JmaRegion(models.Model):
-    """リージョン。生データでは class10 という名前で取り扱われている"""
+    """
+    a region in the JMA
+    生データでは class10 という名前で取り扱われている
+
+    Attributes:
+        code (str): リージョンコード
+        jma_prefecture (JmaPrefecture): FK to JmaPrefecture
+        name (str): リージョン名
+    """
 
     code = models.CharField(unique=True, max_length=6)
     jma_prefecture = models.ForeignKey(JmaPrefecture, on_delete=models.CASCADE)
@@ -330,7 +353,15 @@ class JmaRegion(models.Model):
 
 
 class JmaCity(models.Model):
-    """市区町村。生データでは class20 という名前で取り扱われている"""
+    """
+    a city in the JMA
+    生データでは class20 という名前で取り扱われている
+
+    Attributes:
+        code (str): 市区町村コード
+        jma_region (JmaRegion): FK to JMA region
+        name (str): 市区町村名
+    """
 
     code = models.CharField(unique=True, max_length=7)
     jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
@@ -338,7 +369,13 @@ class JmaCity(models.Model):
 
 
 class JmaAmedas(models.Model):
-    """気象観測所。生データでは amedas という名前で取り扱われている"""
+    """
+    a AMeDas in the JMA
+
+    Attributes:
+        code (str): アメダス観測所コード
+        jma_region (JmaRegion): FK to JMA region
+    """
 
     code = models.CharField(unique=True, max_length=5)
     jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
