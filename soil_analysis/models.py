@@ -304,3 +304,96 @@ class RouteSuggestImport(models.Model):
     ordering = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
+
+
+class JmaArea(models.Model):
+    """地方区分。生データでは center という名前で取り扱われている"""
+
+    code = models.CharField(unique=True, max_length=6)
+    name = models.CharField(max_length=100)
+
+
+class JmaPrefecture(models.Model):
+    """都道府県。生データでは office という名前で取り扱われている"""
+
+    code = models.CharField(unique=True, max_length=6)
+    jma_area = models.ForeignKey(JmaArea, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+
+
+class JmaRegion(models.Model):
+    """リージョン。生データでは class10 という名前で取り扱われている"""
+
+    code = models.CharField(unique=True, max_length=6)
+    jma_prefecture = models.ForeignKey(JmaPrefecture, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+
+
+class JmaCity(models.Model):
+    """市区町村。生データでは class20 という名前で取り扱われている"""
+
+    code = models.CharField(unique=True, max_length=7)
+    jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+
+
+class JmaAmedas(models.Model):
+    """気象観測所。生データでは amedas という名前で取り扱われている"""
+
+    code = models.CharField(unique=True, max_length=5)
+    jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
+
+
+class JmaWeatherCode(models.Model):
+    """
+    天気コードマスタ
+
+    Attributes:
+        code (CharField): "123"
+        summary_code (CharField): "100"
+        image (FileField): "100.svg"
+        name (CharField): "晴"
+        name_en (CharField): "CLEAR, FREQUENT SNOW FLURRIES LATER"
+    """
+
+    code = models.CharField(unique=True, max_length=3)
+    summary_code = models.CharField(max_length=3)
+    image = models.CharField(max_length=7)
+    name = models.CharField(max_length=20)
+    name_en = models.CharField(max_length=100)
+
+
+class JmaWeather(models.Model):
+    """
+    日々の天気（1時間ごとにバッチで取得）
+
+    See Also: https://www.jma.go.jp/bosai/forecast/#area_type=class20s&area_code=2820100
+
+    Attributes:
+        jma_region (ForeignKey[JmaRegion]): The JMA region associated with the weather data.
+        weather_code (CharField): 天気コード
+        temperature_min (FloatField): 最低気温
+        temperature_max (FloatField): 最高気温
+        wind_speed_max (FloatField): 最大風速
+    """
+
+    jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
+    weather_code = models.CharField(max_length=3)
+    temperature_min = models.FloatField()
+    temperature_max = models.FloatField()
+    wind_speed_max = models.FloatField()
+
+
+class JmaWarning(models.Model):
+    """
+    Model representing a JMA warning.
+
+    See Also: https://www.jma.go.jp/bosai/warning/#area_type=class20s&area_code=2810000&lang=ja
+
+    Attributes:
+        jma_region (ForeignKey): The JMA region associated with the warning.
+        warnings (CharField): The description of the warning.
+    """
+
+    jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
+    warnings = models.CharField(max_length=100)
