@@ -101,7 +101,7 @@ class Command(BaseCommand):
         )
         jma_region_cache = {obj.code: obj for obj in JmaRegion.objects.all()}
 
-        # Create and save JmaCityGroup
+        # Create JmaCityGroup
         jma_city_group_list = [
             JmaConst(
                 code=code,
