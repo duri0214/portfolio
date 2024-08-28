@@ -22,7 +22,8 @@ class JmaConst:
 
 @dataclass
 class Region:
-    """A class representing a region.
+    """
+    A class representing a region.
 
     Attributes:
         code (str): The code of the region.
@@ -44,7 +45,6 @@ class Weather:
         weather_summary (str): The summary of the weather.
         wind_summary (str): The summary of the weather.
         wave_summary (str): The summary of the weather.
-
     """
 
     code: str
@@ -56,6 +56,13 @@ class Weather:
 
 @dataclass
 class WeatherSummary:
+    """
+    A class representing a summary of weather conditions for a specific region.
+
+    Attributes:
+        region (Region): The region for which the weather summary is provided.
+        weather_list (list[Weather]): A list of weather objects representing the weather conditions.
+    """
     region: Region
     weather_list: list[Weather]
 
