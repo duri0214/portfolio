@@ -63,24 +63,9 @@ class WeatherSummary:
         region (Region): The region for which the weather summary is provided.
         weather_list (list[Weather]): A list of weather objects representing the weather conditions.
     """
+
     region: Region
     weather_list: list[Weather]
-
-
-@dataclass
-class RegionWeather:
-    """
-    weather information for a specific region.
-
-    Attributes:
-      region_code (str): The code of the region.
-      region_name (str): The name of the region.
-      weather_code (str): The code representing the weather in the region.
-    """
-
-    region_code: str  # TODO: region_code, region_name を Regionというvoにする
-    region_name: str
-    weather_code: str
 
 
 @dataclass
