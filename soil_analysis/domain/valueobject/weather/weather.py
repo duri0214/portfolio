@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 
+PROBABILITY_LAND = 0
 
 
 # マスタデータ
