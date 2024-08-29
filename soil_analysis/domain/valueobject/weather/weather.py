@@ -68,7 +68,6 @@ class SummaryData:
     気象情報: [0]のサマリー情報
 
     Attributes:
-        region (Region): The region for which the weather summary is provided.
         code (str): "300"
         time_defined (datetime): "2024-08-29T17:00:00+09:00"
         weather_summary (str): "雨　所により　雷を伴い　非常に　激しく　降る"
@@ -76,7 +75,6 @@ class SummaryData:
         wave_summary (str): "１．５メートル　ただし　淡路島南部　では　３メートル　うねり　を伴う"
     """
 
-    region: Region
     code: str
     time_defined: datetime
     weather_summary: str
