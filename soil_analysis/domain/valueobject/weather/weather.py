@@ -63,37 +63,25 @@ class Region:
 
 
 @dataclass
-class Weather:
+class SummaryData:
     """
-    A class representing weather information.
+    気象情報: [0]のサマリー情報
 
     Attributes:
-        code (str): The code representing the weather.
-        time_defined (datetime): The timestamp when the weather information was defined.
-        weather_summary (str): The summary of the weather.
-        wind_summary (str): The summary of the weather.
-        wave_summary (str): The summary of the weather.
+        region (Region): The region for which the weather summary is provided.
+        code (str): "300"
+        time_defined (datetime): "2024-08-29T17:00:00+09:00"
+        weather_summary (str): "雨　所により　雷を伴い　非常に　激しく　降る"
+        wind_summary (str): "東の風　やや強く　海上　では　東の風　強く"
+        wave_summary (str): "１．５メートル　ただし　淡路島南部　では　３メートル　うねり　を伴う"
     """
 
+    region: Region
     code: str
     time_defined: datetime
     weather_summary: str
     wind_summary: str
     wave_summary: str
-
-
-@dataclass
-class WeatherSummary:
-    """
-    A class representing a summary of weather conditions for a specific region.
-
-    Attributes:
-        region (Region): The region for which the weather summary is provided.
-        weather_list (list[Weather]): A list of weather objects representing the weather conditions.
-    """
-
-    region: Region
-    weather_list: list[Weather]
 
 
 @dataclass
@@ -107,7 +95,6 @@ class AmedasRawData:
         code (str): The code identifying the Amedas weather station.
         name (str): The name of the Amedas weather station.
         temps (list[float]): The list of temperature 複数の日付の気温が混在している
-
     """
 
     code: str
