@@ -68,15 +68,15 @@ class SummaryData:
     気象情報: [0]のサマリー情報
 
     Attributes:
-        code (str): "300"
         time_defined (datetime): "2024-08-29T17:00:00+09:00"
+        code (str): "300"
         weather_summary (str): "雨　所により　雷を伴い　非常に　激しく　降る"
         wind_summary (str): "東の風　やや強く　海上　では　東の風　強く"
         wave_summary (str): "１．５メートル　ただし　淡路島南部　では　３メートル　うねり　を伴う"
     """
 
-    code: str
     time_defined: datetime
+    code: str
     weather_summary: str
     wind_summary: str
     wave_summary: str
