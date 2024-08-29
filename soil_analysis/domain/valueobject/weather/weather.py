@@ -2,8 +2,23 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 
+
+# マスタデータ
 @dataclass
 class WeatherCodeRaw:
+    """
+    気象庁の定数マスタ（天気コード）
+    # TODO: クラス名を考えて（JmaConstWeatherRaw?）
+
+    Attributes:
+        code (str): The code of the weather.
+        image_day (str): The image path for day weather.
+        image_night (str): The image path for night weather.
+        summary_code (str): The summary code for the weather.
+        name (str): The name of the weather.
+        name_en (str): The English name of the weather.
+    """
+
     code: str
     image_day: str
     image_night: str
@@ -14,12 +29,24 @@ class WeatherCodeRaw:
 
 @dataclass
 class JmaConst:
+    """
+    気象庁の定数マスタ（area, prefecture, region, city_group, city）
+    # TODO: クラス名を考えて（JmaConstRaw? segment?）
+
+    Attributes:
+        code (str): The code of the constant.
+        name (str): The name of the constant.
+        children (list[str]): The list of children constants' codes.
+        parent (str): The code of the parent constant.
+    """
+
     code: str
     name: str
     children: list[str]
     parent: str
 
 
+# 予報データ
 @dataclass
 class Region:
     """
