@@ -48,15 +48,15 @@ def update_prefecture_ids(jma_prefecture_ids: list[str]) -> list[str]:
     return jma_prefecture_ids
 
 
-def get_data_and_indexes(url: str, type_needle: int, desired_date: date):
+def get_data_and_indexes(url: str, desired_date: date):
     response = requests.get(url)
     response.raise_for_status()
 
     data = response.json()
-    data_time_series = data[THREE_DAYS]["timeSeries"][type_needle]
+    data_time_series = data[THREE_DAYS]["timeSeries"]
     indexes = [
         i
-        for i, date_str in enumerate(data_time_series["timeDefines"])
+        for i, date_str in enumerate(data_time_series[TYPE_OVERVIEW]["timeDefines"])
         if datetime.fromisoformat(date_str).date() == desired_date
     ]
 

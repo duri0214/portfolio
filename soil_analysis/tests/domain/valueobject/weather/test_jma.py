@@ -77,7 +77,6 @@ class TestFetchWeatherForecast(TestCase):
 
 class TestGetDataAndIndexes(TestCase):
     THREE_DAYS = 0
-    TYPE_OVERVIEW = 0
 
     @mock.patch("requests.get")
     def test_get_data_and_indexes(self, mock_requests_get):
@@ -109,11 +108,11 @@ class TestGetDataAndIndexes(TestCase):
 
         url = "http://test.url"  # This url doesn't matter as we mock the requests.get
         data_time_series, indexes = get_data_and_indexes(
-            url=url, type_needle=self.TYPE_OVERVIEW, desired_date=target_date
+            url=url, desired_date=target_date
         )
 
         self.assertEqual(
-            mock_response_data[self.THREE_DAYS]["timeSeries"][self.TYPE_OVERVIEW],
+            mock_response_data[self.THREE_DAYS]["timeSeries"],
             data_time_series,
         )
         self.assertEqual(indexes, [1])
