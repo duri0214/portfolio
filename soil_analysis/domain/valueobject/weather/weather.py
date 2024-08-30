@@ -285,3 +285,25 @@ class RegionTemperature:
 
     def __str__(self):
         return f"Avg Min: {self.avg_min_temps}℃, Avg Max: {self.avg_max_temps}℃"
+
+
+class WeatherForecast:
+    """
+    気象情報: 何日ぶんかの天気情報を持った天気予報
+
+    Args:
+        region (Region): The region for which the weather forecast is generated.
+        weather_data (list[WeatherData]): A list of WeatherData objects representing the forecast data.
+
+    Attributes:
+        region (Region): The region for which the weather forecast is generated.
+        weather_data (list[WeatherData]): A list of WeatherData objects representing the forecast data.
+    """
+
+    def __init__(
+        self,
+        region: Region,
+        weather_data: list[WeatherData],
+    ):
+        self.region = region
+        self.weather_data = weather_data
