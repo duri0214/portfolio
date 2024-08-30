@@ -76,14 +76,15 @@ class TestFetchWeatherForecast(TestCase):
 
 
 class TestGetDataAndIndexes(TestCase):
+    THREE_DAYS = 0
     TYPE_OVERVIEW = 0
 
     @mock.patch("requests.get")
     def test_get_data_and_indexes(self, mock_requests_get):
         # Preparing mock data
         target_date = datetime.strptime("2024-08-31", "%Y-%m-%d").date()
-        mock_response_data = {
-            0: {  # This corresponds to the THREE_DAYS constant
+        mock_response_data = [
+            {  # This corresponds to the THREE_DAYS constant
                 "timeSeries": [
                     {
                         "timeDefines": [
@@ -93,9 +94,12 @@ class TestGetDataAndIndexes(TestCase):
                         ],
                         "areas": [{"area": {"name": "南部", "code": "280010"}}],
                     },
+                    "dummy POPS",
+                    "dummy TEMP",
                 ]
-            }
-        }
+            },
+            "dummy a week forecast",
+        ]
 
         # Mocking requests.get to return the prepared data
         mock_response = mock.MagicMock()
@@ -104,9 +108,12 @@ class TestGetDataAndIndexes(TestCase):
         mock_requests_get.return_value = mock_response
 
         url = "http://test.url"  # This url doesn't matter as we mock the requests.get
-        data, indexes = get_data_and_indexes(
+        data_time_series, indexes = get_data_and_indexes(
             url=url, type_needle=self.TYPE_OVERVIEW, desired_date=target_date
         )
 
-        self.assertEqual(mock_response_data, data)
+        self.assertEqual(
+            mock_response_data[self.THREE_DAYS]["timeSeries"][self.TYPE_OVERVIEW],
+            data_time_series,
+        )
         self.assertEqual(indexes, [1])

@@ -52,14 +52,14 @@ def get_data_and_indexes(url: str, type_needle: int, desired_date: date):
     response.raise_for_status()
 
     data = response.json()
-    data_time_series = data[THREE_DAYS]["timeSeries"]
+    data_time_series = data[THREE_DAYS]["timeSeries"][type_needle]
     indexes = [
         i
-        for i, date_str in enumerate(data_time_series[type_needle]["timeDefines"])
+        for i, date_str in enumerate(data_time_series["timeDefines"])
         if datetime.fromisoformat(date_str).date() == desired_date
     ]
 
-    return data, indexes
+    return data_time_series, indexes
 
 
 class Command(BaseCommand):
