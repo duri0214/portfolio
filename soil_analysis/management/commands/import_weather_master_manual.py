@@ -3,7 +3,7 @@ import re
 
 from django.core.management.base import BaseCommand
 
-from soil_analysis.domain.valueobject.weather.weather import WeatherCodeRaw
+from soil_analysis.domain.valueobject.weather.jma import WeatherCodeRaw
 from soil_analysis.models import (
     JmaWeatherCode,
 )

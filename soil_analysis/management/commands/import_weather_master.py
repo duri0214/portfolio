@@ -3,7 +3,7 @@ import sys
 import requests
 from django.core.management.base import BaseCommand
 
-from soil_analysis.domain.valueobject.weather.weather import JmaConst
+from soil_analysis.domain.valueobject.weather.jma import JmaConst
 from soil_analysis.models import (
     JmaArea,
     JmaRegion,

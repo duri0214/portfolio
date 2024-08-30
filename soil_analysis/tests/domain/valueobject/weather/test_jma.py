@@ -2,7 +2,7 @@ from datetime import date
 
 from django.test import TestCase
 
-from soil_analysis.domain.valueobject.weather.weather import XXXTemperatureData
+from soil_analysis.domain.valueobject.weather.jma import XXXTemperatureData
 from soil_analysis.management.commands import fetch_weather_forecast
 
 

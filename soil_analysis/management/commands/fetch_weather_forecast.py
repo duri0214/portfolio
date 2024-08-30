@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import requests
 from django.core.management import BaseCommand
 
-from soil_analysis.domain.valueobject.weather.weather import (
+from soil_analysis.domain.valueobject.weather.jma import (
     Region,
     WeatherForecast,
     WeatherData,
