@@ -78,47 +78,25 @@ class Command(BaseCommand):
 
         JmaWeather.objects.all().delete()
         for prefecture_id in jma_prefecture_ids:
-            # 風速 TODO: 先に風速を処理して3日分のwind[]を作ってしまおう
-            response = requests.get(
-                f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
+            # 風速 TODO: 先に風速を処理して3日分の wind_data[] を作ってしまおう
+            url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
+            time_series_wind_data, indexes = get_data_and_indexes(
+                url=url, type_needle=TYPE_WIND, desired_date=tomorrow
             )
-            try:
-                response.raise_for_status()
-            except requests.HTTPError as err:
-                print(f"Error: {err}")
-                continue
-            probabilities = response.json()
-            probabilities_time_series = probabilities[THREE_DAYS]["timeSeries"]
-            # TODO: 位置出しはクラスのなかにしまい込めないか？最大風速は１日分４要素なので [1, 2, 3, 4]
-            tomorrow_indexes = [
-                i
-                for i, date_str in enumerate(
-                    probabilities_time_series[TYPE_WIND]["timeDefines"]
-                )
-                if datetime.fromisoformat(date_str).date() == tomorrow
-            ]
 
-            # 風速
-            print(LAND)  # LANDが消えないように
-            # TODO: 消す（明日の風速を辞書にセット）
-            # for region_data in probabilities[0]["timeSeries"][1]["areas"]:
-            #     time_cells = region_data["properties"][MAX_SPEED]["timeCells"]
-            #
-            #     # 明日の風速値だけを抽出
-            #     wind_values = [
-            # int(time_cell["locals"][LAND]["value"])
-            #         for i, time_cell in enumerate(time_cells)
-            #         if i in tomorrow_indexes
-            #     ]
-            #     avg_wind_speed = round(sum(wind_values) / len(wind_values), 1)
-            #     print(f"{region_data["code"]} の最大風速（日中平均）は {avg_wind_speed}")
-            #
-            # forecasts_by_region = {
-            #     "wind_speed": RegionWindSpeed(
-            #         region_code="300", data={}, target_indexes=[1, 2, 3, 4]
-            #     )
-            # }
-            #
+            # TODO: 最大風速は１日分４要素なので [1, 2, 3, 4]
+            # 風速の値の取り出し（tomorrow の4値のみ）
+            for region_data in time_series_wind_data["areas"]:
+                time_cells_wind_data = region_data["properties"][MAX_WIND_SPEED]["timeCells"]
+                wind_data = WindData(
+                    values=MeanCalculable([
+                        int(time_cell["locals"][LAND]["value"])
+                        for i, time_cell in enumerate(time_cells_wind_data)
+                        if i in indexes
+                    ]),
+                    unit="メートル毎秒", # TODO: 9以下のケースの単位は考えて
+                )
+                print(f"{region_data["code"]} の最大風速（日中平均）は {wind_data.values.mean}")
 
             # 天気・波・降水確率・気温（日付ごとに）
             response = requests.get(
