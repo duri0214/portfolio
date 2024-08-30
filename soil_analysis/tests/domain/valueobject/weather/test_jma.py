@@ -1,9 +1,13 @@
-from datetime import date
+from datetime import date, datetime
+from unittest import mock
 
 from django.test import TestCase
 
 from soil_analysis.domain.valueobject.weather.jma import XXXTemperatureData
 from soil_analysis.management.commands import fetch_weather_forecast
+from soil_analysis.management.commands.fetch_weather_forecast import (
+    get_data_and_indexes,
+)
 
 
 class TestGetIndexFromTimeDefines(TestCase):
@@ -69,3 +73,40 @@ class TestFetchWeatherForecast(TestCase):
         result = self.func(jma_prefecture_ids)
 
         self.assertListEqual(result, [])
+
+
+class TestGetDataAndIndexes(TestCase):
+    TYPE_OVERVIEW = 0
+
+    @mock.patch("requests.get")
+    def test_get_data_and_indexes(self, mock_requests_get):
+        # Preparing mock data
+        target_date = datetime.strptime("2024-08-31", "%Y-%m-%d").date()
+        mock_response_data = {
+            0: {  # This corresponds to the THREE_DAYS constant
+                "timeSeries": [
+                    {
+                        "timeDefines": [
+                            "2024-08-30T17:00:00+09:00",
+                            "2024-08-31T00:00:00+09:00",
+                            "2024-09-01T00:00:00+09:00",
+                        ],
+                        "areas": [{"area": {"name": "南部", "code": "280010"}}],
+                    },
+                ]
+            }
+        }
+
+        # Mocking requests.get to return the prepared data
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = mock_response_data
+        mock_requests_get.return_value = mock_response
+
+        url = "http://test.url"  # This url doesn't matter as we mock the requests.get
+        data, indexes = get_data_and_indexes(
+            url=url, type_needle=self.TYPE_OVERVIEW, desired_date=target_date
+        )
+
+        self.assertEqual(mock_response_data, data)
+        self.assertEqual(indexes, [1])

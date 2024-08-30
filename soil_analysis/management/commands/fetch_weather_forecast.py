@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import requests
 from django.core.management import BaseCommand
@@ -47,20 +47,16 @@ def update_prefecture_ids(jma_prefecture_ids: list[str]) -> list[str]:
     return jma_prefecture_ids
 
 
-def get_data_and_indexes(url, tomorrow, index=0):
+def get_data_and_indexes(url: str, type_needle: int, desired_date: date):
     response = requests.get(url)
-    try:
-        response.raise_for_status()
-    except requests.HTTPError as err:
-        print(f"Error: {err}")
-        return None, None
+    response.raise_for_status()
 
     data = response.json()
     data_time_series = data[THREE_DAYS]["timeSeries"]
     indexes = [
         i
-        for i, date_str in enumerate(data_time_series[index]["timeDefines"])
-        if datetime.fromisoformat(date_str).date() == tomorrow
+        for i, date_str in enumerate(data_time_series[type_needle]["timeDefines"])
+        if datetime.fromisoformat(date_str).date() == desired_date
     ]
 
     return data, indexes
