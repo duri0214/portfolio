@@ -11,6 +11,7 @@ from soil_analysis.domain.valueobject.weather.jma import (
     RainData,
     TemperatureData,
     WindData,
+    MeanCalculable,
 )
 from soil_analysis.models import JmaWeather, JmaAmedas
 
