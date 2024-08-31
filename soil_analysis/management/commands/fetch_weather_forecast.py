@@ -8,6 +8,7 @@ from soil_analysis.domain.valueobject.weather.jma import (
     WindData,
     MeanCalculable,
     Region,
+    SummaryText,
 )
 from soil_analysis.models import JmaWeather
 
@@ -130,6 +131,10 @@ class Command(BaseCommand):
                 ],
                 desired_date=tomorrow,
             )
+            if len(indexes) != 1:
+                print(f"    要素数は必ず1になります{len(indexes)}")
+                continue
+            index = indexes.pop()
             for region_data in time_series_overview_data[TYPE_OVERVIEW]["areas"]:
                 # Create Region instance
                 region = Region(
@@ -138,45 +143,38 @@ class Command(BaseCommand):
                 )
                 forecasts_by_region[tomorrow].setdefault(region.code, {})
 
-                time_cells_weather_code = region_data["weatherCodes"]
-                summary_data = "summary_data"  # TODO:
-                forecasts_by_region[tomorrow][region.code].setdefault("summary", {})
-                forecasts_by_region[tomorrow][region.code][
-                    "summary_data"
-                ] = summary_data
-                print(f"    {region.code} の {summary_data}")
+                # weather_code
+                forecasts_by_region[tomorrow][region.code]["weather_code"] = (
+                    region_data["weatherCodes"][index]
+                )
 
-                # Create list of Weather instances
-            #     weather_data_list: list[WeatherData] = []
-            #     for (
-            #         time_define,
-            #         weather_code,
-            #         weather_text,
-            #         wind_text,
-            #         wave_text,
-            #     ) in zip(
-            #         time_defines,
-            #         region_data["weatherCodes"],
-            #         region_data["weathers"],
-            #         region_data["winds"],
-            #         region_data["waves"],
-            #     ):
-            #         rain_data = forecasts_time_series[TYPE_RAIN]
-            #         temperature_data = forecasts_time_series[TYPE_TEMPERATURE]
-            #         weather_data = WeatherData(
-            #             time_defined=datetime.fromisoformat(time_define),
-            #             code=weather_code,
-            #             summary_text=SummaryText(
-            #                 weather=weather_text, wind=wind_text, wave=wave_text
-            #             ),
-            #             rain_data=RainData(),
-            #             temperature_data=TemperatureData(),
-            #             wind_data=WindData(),
-            #         )
-            #         weather_data_list.append(weather_data)
-            #
-            #     # ここまでOK
-            #
+                # summary_text を3種
+                summary_text = SummaryText(
+                    weather=(
+                        region_data["weathers"][index]
+                        if "weathers" in region_data
+                        and index < len(region_data["weathers"])
+                        else "なし"
+                    ),
+                    wind=(
+                        region_data["winds"][index]
+                        if "winds" in region_data and index < len(region_data["winds"])
+                        else "なし"
+                    ),
+                    wave=(
+                        region_data["waves"][index]
+                        if "waves" in region_data and index < len(region_data["waves"])
+                        else "なし"
+                    ),
+                )
+                forecasts_by_region[tomorrow][region.code][
+                    "summary_text"
+                ] = summary_text
+                print(
+                    f"    {region.code} の｜{summary_text.weather[:4]}｜{summary_text.wind[:4]}｜{summary_text.wave[:4]}｜"
+                )
+                # ここまでOK
+
             #     # その地域にあるアメダスid
             #     amedas_ids = [
             #         amedas.id
