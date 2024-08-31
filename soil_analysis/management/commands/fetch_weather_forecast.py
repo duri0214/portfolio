@@ -9,6 +9,7 @@ from soil_analysis.domain.valueobject.weather.jma import (
     MeanCalculable,
     Region,
     SummaryText,
+    RainData,
 )
 from soil_analysis.models import JmaWeather, JmaRegion, JmaPrefecture
 
@@ -171,10 +172,30 @@ class Command(BaseCommand):
                 )
                 # ここまでOK
 
-            # # 降水確率（いまは tomorrow のみ）
-            # for region_data in time_series_overview_data[TYPE_RAIN]["areas"]:
-            #     continue
-            #
+            # 降水確率（いまは tomorrow のみ）
+            print("  降水確率:")
+            # 値の取り出し（TODO: いまは tomorrow の1値のみ。のちほど数日分を取れるようにする）
+            indexes = get_indexes(
+                data_time_defines=time_series_data[TYPE_RAIN]["timeDefines"],
+                desired_date=tomorrow,
+            )
+            for region_data in time_series_data[TYPE_RAIN]["areas"]:
+                region = Region(
+                    code=region_data["area"]["code"],
+                    name=region_data["area"]["name"],
+                )
+                forecasts_by_region[tomorrow].setdefault(region.code, {})
+                rain_data = RainData(
+                    values=MeanCalculable(
+                        [
+                            int(time_cell)
+                            for i, time_cell in enumerate(region_data["pops"])
+                            if i in indexes
+                        ]
+                    )
+                )
+                forecasts_by_region[tomorrow][region.code]["rain_data"] = rain_data
+                print(f"    {region.code} の {rain_data.values.mean} {rain_data.unit}")
 
             # TODO: repositoryがよさそう {'280010': ['63518', '63576', '63571', '63383'], '280020': ['63051']}
             # TODO: 014100 のときに 014030 が足りない, 460100 のときに 460040 が足りない
