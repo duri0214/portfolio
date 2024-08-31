@@ -56,7 +56,9 @@ class MeanCalculable:
 
     def __init__(self, float_list: list[float]) -> None:
         self.raw: list[float] = float_list
-        self.mean: float = sum(float_list) / len(float_list) if float_list else 0
+        self.mean: float = (
+            round(sum(float_list) / len(float_list), 1) if float_list else 0
+        )
 
 
 @dataclass(frozen=True)
