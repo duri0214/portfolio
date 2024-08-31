@@ -10,6 +10,7 @@ from soil_analysis.domain.valueobject.weather.jma import (
     Region,
     SummaryText,
     RainData,
+    TemperatureData,
 )
 from soil_analysis.models import JmaWeather, JmaRegion, JmaPrefecture
 
@@ -208,11 +209,38 @@ class Command(BaseCommand):
                 amedas_code_in_region[region.code] = [
                     amedas.code for amedas in region.jmaamedas_set.all()
                 ]
-            print(f"  その地域にあるアメダスcode: {amedas_code_in_region}")
 
-            # 気温（いまは tomorrow のみ）
-            # for region_data in time_series_data[TYPE_TEMPERATURE]["areas"]:
-            #     continue
+            # 気温（いまは tomorrow のみ） ※気温にはregionの概念がありません
+            print("  気温:")
+            # 値の取り出し（TODO: いまは tomorrow の1値のみ。のちほど数日分を取れるようにする）
+            # TODO: 014100 のときに 014030 が足りない, 460100 のときに 460040 が足りない
+            for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
+                region = Region(
+                    code=region_data["area"]["code"],
+                    name=region_data["area"]["name"],
+                )
+                forecasts_by_region[tomorrow].setdefault(region.code, {})
+
+                amedas_min_temps: list[float] = []
+                amedas_max_temps: list[float] = []
+                for amedas_data in time_series_data[TYPE_TEMPERATURE]["areas"]:
+                    amedas_code = amedas_data["area"]["code"]
+                    if amedas_code not in amedas_code_in_region.get(region.code):
+                        # マスタにない「はぐれamedasコード」でした TODO: ログ出す？
+                        continue
+                    amedas_min_temps.append(float(amedas_data["temps"][0]))
+                    amedas_max_temps.append(float(amedas_data["temps"][1]))
+                forecasts_by_region[tomorrow].setdefault(region.code, {})
+                temperature_data = TemperatureData(
+                    min_values=MeanCalculable(amedas_min_temps),
+                    max_values=MeanCalculable(amedas_max_temps),
+                )
+                forecasts_by_region[tomorrow][region.code][
+                    "temperature_data"
+                ] = temperature_data
+                msg1 = f"    {region.code} の最低気温 {temperature_data.min_values.mean} {temperature_data.unit}"
+                msg2 = f"最高気温 {temperature_data.max_values.mean} {temperature_data.unit}"
+                print(f"{msg1} / {msg2}")
 
             # 天気・風・波・降水確率・気温 をガッチャンコ
             weather_forecast_list: list[WeatherForecast] = []
