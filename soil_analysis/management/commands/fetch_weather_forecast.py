@@ -135,7 +135,6 @@ class Command(BaseCommand):
                 continue
             index = indexes.pop()
             for region_data in time_series_overview_data[TYPE_OVERVIEW]["areas"]:
-                # Create Region instance
                 region = Region(
                     code=region_data["area"]["code"],
                     name=region_data["area"]["name"],
