@@ -7,6 +7,7 @@ from soil_analysis.domain.valueobject.weather.jma import (
     WeatherForecast,
     WindData,
     MeanCalculable,
+    Region,
 )
 from soil_analysis.models import JmaWeather
 
@@ -117,17 +118,26 @@ class Command(BaseCommand):
                         print(f"  {region} の {weather_date} の {wind_data}")
 
             # 天気コード・天気サマリ・風サマリ・波サマリ（いまは tomorrow のみ）
-            # url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
-            # time_series_overview_data, indexes = get_data_and_indexes(
-            #     url=url, desired_date=tomorrow
-            # )
-            # time_defines = time_series_overview_data[TYPE_OVERVIEW]["timeDefines"]
-            # for region_data in time_series_overview_data[TYPE_OVERVIEW]["areas"]:
-            #     # Create Region instance
-            #     region = Region(
-            #         code=region_data["area"]["code"],
-            #         name=region_data["area"]["name"],
-            #     )
+            url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
+            time_series_overview_data = get_data(url)
+
+            # 値の取り出し（TODO: いまは tomorrow の1値のみ。のちほど数日分を取れるようにする）
+            indexes = get_indexes(
+                data_time_defines=time_series_overview_data[TYPE_OVERVIEW][
+                    "timeDefines"
+                ],
+                desired_date=tomorrow,
+            )
+            for region_data in time_series_overview_data[TYPE_OVERVIEW]["areas"]:
+                # Create Region instance
+                region = Region(
+                    code=region_data["area"]["code"],
+                    name=region_data["area"]["name"],
+                )
+                print(
+                    f"{region.code}, {[x for i, x in enumerate( time_series_overview_data[TYPE_OVERVIEW]['timeDefines']) if  i in indexes]}"
+                )
+
             #     # Create list of Weather instances
             #     weather_data_list: list[WeatherData] = []
             #     for (
