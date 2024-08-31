@@ -72,8 +72,11 @@ class Command(BaseCommand):
     help = "get weather forecast"
 
     def handle(self, *args, **options):
+        forecasts_by_region = {}
+
         today = datetime.now().date()
         tomorrow = today + timedelta(days=1)
+        forecasts_by_region.setdefault(tomorrow, {})
 
         # TODO: 例えば建物の jma_prefecture_ids をdbから取得（重複を削って）
         jma_prefecture_ids = ["280000", "050000", "130000", "014030", "460040"]
@@ -84,8 +87,10 @@ class Command(BaseCommand):
 
         JmaWeather.objects.all().delete()
         for prefecture_id in jma_prefecture_ids:
+            print(f"{prefecture_id=} の {tomorrow}")
+
             # 風速
-            print(f"{prefecture_id=}")
+            print("  風速:")
             url = f"https://www.jma.go.jp/bosai/probability/data/probability/{prefecture_id}.json"
             time_series_wind_data = get_data(url)
 
@@ -95,8 +100,8 @@ class Command(BaseCommand):
                 desired_date=tomorrow,
             )
             for region_data in time_series_wind_data[TYPE_WIND]["areas"]:
-                forecasts_by_region = {}
                 region_code = region_data["code"]
+                forecasts_by_region[tomorrow].setdefault(region_code, {})
                 time_cells_wind_data = region_data["properties"][WIND_SPEED][
                     "timeCells"
                 ]
@@ -109,15 +114,12 @@ class Command(BaseCommand):
                         ]
                     )
                 )
-                forecasts_by_region.setdefault(region_code, {}).setdefault(
-                    "wind_speed", {}
-                )[tomorrow] = wind_data
-
-                for region, forecast_data in forecasts_by_region.items():
-                    for weather_date, wind_data in forecast_data["wind_speed"].items():
-                        print(f"  {region} の {weather_date} の {wind_data}")
+                forecasts_by_region[tomorrow][region_code].setdefault("wind_speed", {})
+                forecasts_by_region[tomorrow][region_code]["wind_speed"] = wind_data
+                print(f"    {region_code} の {wind_data}")
 
             # 天気コード・天気サマリ・風サマリ・波サマリ（いまは tomorrow のみ）
+            print("  天気サマリ:")
             url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
             time_series_overview_data = get_data(url)
 
@@ -134,11 +136,17 @@ class Command(BaseCommand):
                     code=region_data["area"]["code"],
                     name=region_data["area"]["name"],
                 )
-                print(
-                    f"{region.code}, {[x for i, x in enumerate( time_series_overview_data[TYPE_OVERVIEW]['timeDefines']) if  i in indexes]}"
-                )
+                forecasts_by_region[tomorrow].setdefault(region.code, {})
 
-            #     # Create list of Weather instances
+                time_cells_weather_code = region_data["weatherCodes"]
+                summary_data = "summary_data"  # TODO:
+                forecasts_by_region[tomorrow][region.code].setdefault("summary", {})
+                forecasts_by_region[tomorrow][region.code][
+                    "summary_data"
+                ] = summary_data
+                print(f"    {region.code} の {summary_data}")
+
+                # Create list of Weather instances
             #     weather_data_list: list[WeatherData] = []
             #     for (
             #         time_define,
