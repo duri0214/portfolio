@@ -115,7 +115,6 @@ class Command(BaseCommand):
                         ]
                     )
                 )
-                forecasts_by_region[tomorrow][region_code].setdefault("wind_speed", {})
                 forecasts_by_region[tomorrow][region_code]["wind_speed"] = wind_data
                 print(f"    {region_code} の {wind_data}")
 
