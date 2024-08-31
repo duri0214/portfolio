@@ -80,12 +80,11 @@ class TestGetDataAndIndexes(TestCase):
     THREE_DAYS = 0
     TYPE_OVERVIEW = 0
 
-    @mock.patch("requests.get")
-    def test_get_data(self, mock_requests_get):
-        # Preparing mock data
-        target_date = datetime.strptime("2024-08-31", "%Y-%m-%d").date()
-        mock_response_data = [
-            {  # This corresponds to the THREE_DAYS constant
+    def setUp(self):
+        self.target_date = datetime.strptime("2024-08-31", "%Y-%m-%d").date()
+        self.mock_response_data = [
+            {
+                # This corresponds to the THREE_DAYS constant
                 "timeSeries": [
                     {
                         "timeDefines": [
@@ -101,24 +100,29 @@ class TestGetDataAndIndexes(TestCase):
             },
             "dummy a week forecast",
         ]
+        self.mock_response = mock.MagicMock()
+        self.mock_response.status_code = 200
+        self.mock_response.json.return_value = self.mock_response_data
 
+    @mock.patch("requests.get")
+    def test_get_data(self, mock_requests_get):
         # Mocking requests.get to return the prepared data
-        mock_response = mock.MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = mock_response_data
-        mock_requests_get.return_value = mock_response
+        mock_requests_get.return_value = self.mock_response
 
         url = "http://test.url"  # This url doesn't matter as we mock the requests.get
         data_time_series = get_data(url)
-        indexes = get_indexes(
-            data_time_defines=mock_response_data[self.THREE_DAYS]["timeSeries"][
-                self.TYPE_OVERVIEW
-            ]["timeDefines"],
-            desired_date=target_date,
-        )
 
         self.assertEqual(
-            mock_response_data[self.THREE_DAYS]["timeSeries"],
+            self.mock_response_data[TestGetDataAndIndexes.THREE_DAYS]["timeSeries"],
             data_time_series,
         )
+
+    def test_get_indexes(self):
+        indexes = get_indexes(
+            data_time_defines=self.mock_response_data[TestGetDataAndIndexes.THREE_DAYS][
+                "timeSeries"
+            ][TestGetDataAndIndexes.TYPE_OVERVIEW]["timeDefines"],
+            desired_date=self.target_date,
+        )
+
         self.assertEqual(indexes, [1])
