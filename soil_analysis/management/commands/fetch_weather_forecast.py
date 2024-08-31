@@ -48,19 +48,28 @@ def update_prefecture_ids(jma_prefecture_ids: list[str]) -> list[str]:
     return jma_prefecture_ids
 
 
-def get_data_and_indexes(url: str, desired_date: date):
+def get_data(url: str):
     response = requests.get(url)
     response.raise_for_status()
-
     data = response.json()
-    data_time_series = data[THREE_DAYS]["timeSeries"]
-    indexes = [
+    return data[THREE_DAYS]["timeSeries"]
+
+
+def get_indexes(data_time_defines, desired_date: date) -> list[int]:
+    """
+    get_indexes する箇所が複数あるので独立さした
+
+    Args:
+        data_time_defines: ["2024-08-31", "2024-09-01", "2024-09-01"]
+        desired_date: "2024-09-01"
+
+    Returns: [1, 2]
+    """
+    return [
         i
-        for i, date_str in enumerate(data_time_series[TYPE_OVERVIEW]["timeDefines"])
+        for i, date_str in enumerate(data_time_defines)
         if datetime.fromisoformat(date_str).date() == desired_date
     ]
-
-    return data_time_series, indexes
 
 
 class Command(BaseCommand):
