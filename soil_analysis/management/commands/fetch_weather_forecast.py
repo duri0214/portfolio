@@ -10,7 +10,7 @@ from soil_analysis.domain.valueobject.weather.jma import (
     Region,
     SummaryText,
 )
-from soil_analysis.models import JmaWeather
+from soil_analysis.models import JmaWeather, JmaRegion, JmaPrefecture
 
 THREE_DAYS = 0
 
@@ -173,21 +173,30 @@ class Command(BaseCommand):
                 )
                 # ここまでOK
 
-            #     # その地域にあるアメダスid
-            #     amedas_ids = [
-            #         amedas.id
-            #         for amedas in JmaAmedas.objects.filter(jma_area3_id=region.code)
-            #     ]
-            #
             # # 降水確率（いまは tomorrow のみ）
             # for region_data in time_series_overview_data[TYPE_RAIN]["areas"]:
             #     continue
             #
-            # # 気温（いまは tomorrow のみ）
+
+            # TODO: repositoryがよさそう {'280010': ['63518', '63576', '63571', '63383'], '280020': ['63051']}
+            # TODO: 014100 のときに 014030 が足りない, 460100 のときに 460040 が足りない
+            # その地域にあるアメダスcode
+            amedas_code_in_region = {}
+            jma_prefecture = JmaPrefecture.objects.get(code=prefecture_id)
+            jma_regions = JmaRegion.objects.filter(
+                jma_prefecture=jma_prefecture
+            ).prefetch_related("jmaamedas_set")
+            for region in jma_regions:
+                amedas_code_in_region[region.code] = [
+                    amedas.code for amedas in region.jmaamedas_set.all()
+                ]
+            print(f"  その地域にあるアメダスcode: {amedas_code_in_region}")
+
+            # 気温（いまは tomorrow のみ）
             # for region_data in time_series_overview_data[TYPE_TEMPERATURE]["areas"]:
             #     continue
 
-            # # 天気・風・波・降水確率・気温 をガッチャンコ
+            # 天気・風・波・降水確率・気温 をガッチャンコ
             weather_forecast_list: list[WeatherForecast] = []
             # for region_code, forecast in forecasts_by_region.items():
             #     region_forecast_results = RegionForecastResults(
