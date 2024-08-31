@@ -17,7 +17,7 @@ TYPE_RAIN = 1
 TYPE_TEMPERATURE = 2
 TYPE_WIND = 1
 
-MAX_WIND_SPEED = 3
+WIND_SPEED = 3
 LAND = 0
 
 
@@ -83,81 +83,31 @@ class Command(BaseCommand):
 
         JmaWeather.objects.all().delete()
         for prefecture_id in jma_prefecture_ids:
-            # 風速 TODO: 先に風速を処理して3日分の wind_data[] を作ってしまおう
-            url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
-            time_series_wind_data, indexes = get_data_and_indexes(
-                url=url, type_needle=TYPE_WIND, desired_date=tomorrow
-            )
+            # 風速
+            print(f"{prefecture_id=}")
+            url = f"https://www.jma.go.jp/bosai/probability/data/probability/{prefecture_id}.json"
+            time_series_wind_data = get_data(url)
 
-            # TODO: 最大風速は１日分４要素なので [1, 2, 3, 4]
-            # 風速の値の取り出し（tomorrow の4値のみ）
-            for region_data in time_series_wind_data["areas"]:
-                time_cells_wind_data = region_data["properties"][MAX_WIND_SPEED]["timeCells"]
+            # 値の取り出し（TODO: いまは tomorrow の3値のみ。のちほど数日分を取れるようにする）
+            indexes = get_indexes(
+                data_time_defines=time_series_wind_data[TYPE_WIND]["timeDefines"],
+                desired_date=tomorrow,
+            )
+            for region_data in time_series_wind_data[TYPE_WIND]["areas"]:
+                time_cells_wind_data = region_data["properties"][WIND_SPEED][
+                    "timeCells"
+                ]
                 wind_data = WindData(
-                    values=MeanCalculable([
-                        int(time_cell["locals"][LAND]["value"])
-                        for i, time_cell in enumerate(time_cells_wind_data)
-                        if i in indexes
-                    ]),
-                    unit="メートル毎秒", # TODO: 9以下のケースの単位は考えて
-                )
-                print(f"{region_data["code"]} の最大風速（日中平均）は {wind_data.values.mean}")
-
-            # 天気・波・降水確率・気温（日付ごとに）
-            response = requests.get(
-                f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
-            )
-            try:
-                response.raise_for_status()
-            except requests.HTTPError as err:
-                print(f"Error: {err}")
-                continue
-            forecasts = response.json()
-            forecasts_time_series = forecasts[THREE_DAYS]["timeSeries"]
-            # TODO: 位置出しはクラスのなかにしまい込めないか？
-            tomorrow_index = None
-            for i, date_str in enumerate(
-                forecasts_time_series[TYPE_OVERVIEW]["timeDefines"]
-            ):
-                if datetime.fromisoformat(date_str).date() == tomorrow:
-                    tomorrow_index = i
-                    break
-
-            overview = forecasts_time_series[TYPE_OVERVIEW]
-            for region_data in overview["areas"]:
-                # Create Region instance
-                region = Region(
-                    code=region_data["area"]["code"],
-                    name=region_data["area"]["name"],
-                )
-                # Create list of Weather instances
-                weather_data_list: list[WeatherData] = []
-                for (
-                    time_define,
-                    weather_code,
-                    weather_text,
-                    wind_text,
-                    wave_text,
-                ) in zip(
-                    overview["timeDefines"],
-                    region_data["weatherCodes"],
-                    region_data["weathers"],
-                    region_data["winds"],
-                    region_data["waves"],
-                ):
-                    rain_data = forecasts_time_series[TYPE_RAIN]
-                    temperature_data = forecasts_time_series[TYPE_TEMPERATURE]
-                    weather_data = WeatherData(
-                        time_defined=datetime.fromisoformat(time_define),
-                        code=weather_code,
-                        summary_text=SummaryText(
-                            weather=weather_text, wind=wind_text, wave=wave_text
-                        ),
-                        rain_data=RainData(),
-                        temperature_data=TemperatureData(),
-                        wind_data=WindData(),
+                    values=MeanCalculable(
+                        [
+                            int(time_cell["locals"][LAND]["value"])
+                            for i, time_cell in enumerate(time_cells_wind_data)
+                            if i in indexes
+                        ]
                     )
-                    weather_data_list.append(weather_data)
+                )
+                message = f"  {region_data['code']} の最大風速（時間帯平均）は {wind_data.values.mean} {wind_data.unit}"
+                print(message)
 
             # 天気コード・天気サマリ・風サマリ・波サマリ（いまは tomorrow のみ）
             # url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
