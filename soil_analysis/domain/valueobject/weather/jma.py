@@ -135,6 +135,9 @@ class WindData:
         self.values = values
         self.unit = "以下" if self.values.mean <= 9 else "メートル毎秒"
 
+    def __str__(self):
+        return f"最大風速（時間帯平均）は {self.values.mean} {self.unit}"
+
 
 @dataclass(frozen=True)
 class WeatherData:

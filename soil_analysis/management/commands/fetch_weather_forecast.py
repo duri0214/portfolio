@@ -94,6 +94,8 @@ class Command(BaseCommand):
                 desired_date=tomorrow,
             )
             for region_data in time_series_wind_data[TYPE_WIND]["areas"]:
+                forecasts_by_region = {}
+                region_code = region_data["code"]
                 time_cells_wind_data = region_data["properties"][WIND_SPEED][
                     "timeCells"
                 ]
@@ -106,8 +108,13 @@ class Command(BaseCommand):
                         ]
                     )
                 )
-                message = f"  {region_data['code']} の最大風速（時間帯平均）は {wind_data.values.mean} {wind_data.unit}"
-                print(message)
+                forecasts_by_region.setdefault(region_code, {}).setdefault(
+                    "wind_speed", {}
+                )[tomorrow] = wind_data
+
+                for region, forecast_data in forecasts_by_region.items():
+                    for weather_date, wind_data in forecast_data["wind_speed"].items():
+                        print(f"  {region} の {weather_date} の {wind_data}")
 
             # 天気コード・天気サマリ・風サマリ・波サマリ（いまは tomorrow のみ）
             # url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
