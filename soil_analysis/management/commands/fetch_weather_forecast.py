@@ -95,14 +95,14 @@ class Command(BaseCommand):
             # 風速
             print("  風速:")
             url = f"https://www.jma.go.jp/bosai/probability/data/probability/{prefecture_id}.json"
-            time_series_wind_data = get_data(url)
+            time_series_data = get_data(url)
 
             # 値の取り出し（TODO: いまは tomorrow の3値のみ。のちほど数日分を取れるようにする）
             indexes = get_indexes(
-                data_time_defines=time_series_wind_data[TYPE_WIND]["timeDefines"],
+                data_time_defines=time_series_data[TYPE_WIND]["timeDefines"],
                 desired_date=tomorrow,
             )
-            for region_data in time_series_wind_data[TYPE_WIND]["areas"]:
+            for region_data in time_series_data[TYPE_WIND]["areas"]:
                 region_code = region_data["code"]
                 forecasts_by_region[tomorrow].setdefault(region_code, {})
                 time_cells_wind_data = region_data["properties"][WIND_SPEED][
