@@ -6,7 +6,8 @@ from django.test import TestCase
 from soil_analysis.domain.valueobject.weather.jma import XXXTemperatureData
 from soil_analysis.management.commands import fetch_weather_forecast
 from soil_analysis.management.commands.fetch_weather_forecast import (
-    get_data_and_indexes,
+    get_data,
+    get_indexes,
 )
 
 
@@ -77,9 +78,10 @@ class TestFetchWeatherForecast(TestCase):
 
 class TestGetDataAndIndexes(TestCase):
     THREE_DAYS = 0
+    TYPE_OVERVIEW = 0
 
     @mock.patch("requests.get")
-    def test_get_data_and_indexes(self, mock_requests_get):
+    def test_get_data(self, mock_requests_get):
         # Preparing mock data
         target_date = datetime.strptime("2024-08-31", "%Y-%m-%d").date()
         mock_response_data = [
@@ -107,8 +109,12 @@ class TestGetDataAndIndexes(TestCase):
         mock_requests_get.return_value = mock_response
 
         url = "http://test.url"  # This url doesn't matter as we mock the requests.get
-        data_time_series, indexes = get_data_and_indexes(
-            url=url, desired_date=target_date
+        data_time_series = get_data(url)
+        indexes = get_indexes(
+            data_time_defines=mock_response_data[self.THREE_DAYS]["timeSeries"][
+                self.TYPE_OVERVIEW
+            ]["timeDefines"],
+            desired_date=target_date,
         )
 
         self.assertEqual(
