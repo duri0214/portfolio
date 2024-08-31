@@ -115,7 +115,7 @@ class Command(BaseCommand):
                         ]
                     )
                 )
-                forecasts_by_region[tomorrow][region_code]["wind_speed"] = wind_data
+                forecasts_by_region[tomorrow][region_code]["wind_data"] = wind_data
                 print(f"    {region_code} の {wind_data}")
 
             # 天気コード・天気サマリ・風サマリ・波サマリ（いまは tomorrow のみ）
