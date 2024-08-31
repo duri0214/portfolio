@@ -121,20 +121,18 @@ class Command(BaseCommand):
             # 天気コード・天気サマリ・風サマリ・波サマリ（いまは tomorrow のみ）
             print("  天気サマリ:")
             url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
-            time_series_overview_data = get_data(url)
+            time_series_data = get_data(url)
 
             # 値の取り出し（TODO: いまは tomorrow の1値のみ。のちほど数日分を取れるようにする）
             indexes = get_indexes(
-                data_time_defines=time_series_overview_data[TYPE_OVERVIEW][
-                    "timeDefines"
-                ],
+                data_time_defines=time_series_data[TYPE_OVERVIEW]["timeDefines"],
                 desired_date=tomorrow,
             )
             if len(indexes) != 1:
                 print(f"    要素数は必ず1になります{len(indexes)}")
                 continue
             index = indexes.pop()
-            for region_data in time_series_overview_data[TYPE_OVERVIEW]["areas"]:
+            for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
                 region = Region(
                     code=region_data["area"]["code"],
                     name=region_data["area"]["name"],
@@ -192,7 +190,7 @@ class Command(BaseCommand):
             print(f"  その地域にあるアメダスcode: {amedas_code_in_region}")
 
             # 気温（いまは tomorrow のみ）
-            # for region_data in time_series_overview_data[TYPE_TEMPERATURE]["areas"]:
+            # for region_data in time_series_data[TYPE_TEMPERATURE]["areas"]:
             #     continue
 
             # 天気・風・波・降水確率・気温 をガッチャンコ
