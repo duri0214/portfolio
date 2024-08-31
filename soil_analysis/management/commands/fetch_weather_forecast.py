@@ -182,9 +182,8 @@ class Command(BaseCommand):
             # TODO: 014100 のときに 014030 が足りない, 460100 のときに 460040 が足りない
             # その地域にあるアメダスcode
             amedas_code_in_region = {}
-            jma_prefecture = JmaPrefecture.objects.get(code=prefecture_id)
             jma_regions = JmaRegion.objects.filter(
-                jma_prefecture=jma_prefecture
+                jma_prefecture=JmaPrefecture.objects.get(code=prefecture_id)
             ).prefetch_related("jmaamedas_set")
             for region in jma_regions:
                 amedas_code_in_region[region.code] = [
