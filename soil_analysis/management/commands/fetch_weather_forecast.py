@@ -226,7 +226,6 @@ class Command(BaseCommand):
                 for amedas_data in time_series_data[TYPE_TEMPERATURE]["areas"]:
                     amedas_code = amedas_data["area"]["code"]
                     if amedas_code not in amedas_code_in_region.get(region.code):
-                        # マスタにない「はぐれamedasコード」でした TODO: ログ出す？
                         continue
                     amedas_min_temps.append(float(amedas_data["temps"][0]))
                     amedas_max_temps.append(float(amedas_data["temps"][1]))
