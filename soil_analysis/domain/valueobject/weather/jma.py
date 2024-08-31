@@ -55,7 +55,7 @@ class MeanCalculable:
     """
 
     def __init__(self, float_list: list[float]) -> None:
-        self.values: list[float] = float_list
+        self.raw: list[float] = float_list
         self.mean: float = sum(float_list) / len(float_list) if float_list else 0
 
 
@@ -119,7 +119,6 @@ class TemperatureData:
     unit: str = "℃"
 
 
-@dataclass(frozen=True)
 class WindData:
     """
     気象情報: 最大風速
@@ -127,10 +126,14 @@ class WindData:
     Attributes:
         values (MeanCalculable): 生値とその平均値（時間帯平均）
         unit (str): "以下" or "メートル毎秒"
+
+    Notes: 風速値が9のばあい、その object に condition というキーが現れて "以下" という値が入るが
+     表現を間引いて、平均値が9以下だったら "以下" にすることにした
     """
 
-    values: MeanCalculable
-    unit: str
+    def __init__(self, values: MeanCalculable):
+        self.values = values
+        self.unit = "以下" if self.values.mean <= 9 else "メートル毎秒"
 
 
 @dataclass(frozen=True)
