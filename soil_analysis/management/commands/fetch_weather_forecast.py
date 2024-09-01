@@ -233,6 +233,10 @@ class Command(BaseCommand):
                     )
 
                 print("  気温:")
+                indexes = get_indexes(
+                    data_time_defines=time_series_data[TYPE_TEMPERATURE]["timeDefines"],
+                    desired_date=target_date,
+                )
                 for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
                     region = Region(
                         code=region_data["area"]["code"],
@@ -242,13 +246,20 @@ class Command(BaseCommand):
 
                     amedas_min_temps: list[float] = []
                     amedas_max_temps: list[float] = []
-                    for amedas_data in time_series_data[TYPE_TEMPERATURE]["areas"]:
-                        amedas_code = amedas_data["area"]["code"]
-                        if amedas_code not in amedas_code_in_region.get(region.code):
-                            continue
-                        amedas_min_temps.append(float(amedas_data["temps"][0]))
-                        amedas_max_temps.append(float(amedas_data["temps"][1]))
-                    forecasts_by_region.setdefault(region.code, {})
+                    if indexes:
+                        min_index, max_index = indexes
+                        for amedas_data in time_series_data[TYPE_TEMPERATURE]["areas"]:
+                            amedas_code = amedas_data["area"]["code"]
+                            if amedas_code not in amedas_code_in_region.get(
+                                region.code
+                            ):
+                                continue
+                            amedas_min_temps.append(
+                                float(amedas_data["temps"][min_index])
+                            )
+                            amedas_max_temps.append(
+                                float(amedas_data["temps"][max_index])
+                            )
                     temperature_data = TemperatureData(
                         min_values=MeanCalculable(amedas_min_temps),
                         max_values=MeanCalculable(amedas_max_temps),
