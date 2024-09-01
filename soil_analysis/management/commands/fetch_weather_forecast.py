@@ -282,11 +282,7 @@ class Command(BaseCommand):
                             weather_text=summary_text.weather,
                             wind_text=summary_text.wind,
                             wave_text=summary_text.wave,
-                            avg_rain_probability=(
-                                None
-                                if rain_data.values.mean == 0
-                                else rain_data.values.mean
-                            ),
+                            avg_rain_probability=rain_data.values.mean,
                             avg_min_temperature=(
                                 None
                                 if temperature_data.min_values.mean == 0
