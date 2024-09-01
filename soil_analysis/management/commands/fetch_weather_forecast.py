@@ -25,9 +25,7 @@ WIND_SPEED = 3
 LAND = 0
 
 
-def update_prefecture_ids(
-    prefecture_ids: list[str],
-) -> tuple[list[str], dict]:
+def update_prefecture_ids(prefecture_ids: list[str]) -> tuple[list[str], dict]:
     """
     気象庁特別ルール
     "014030" があって "014100" がないときに "014030" → "014100" に置換 / 十勝地方 → 釧路・根室地方
