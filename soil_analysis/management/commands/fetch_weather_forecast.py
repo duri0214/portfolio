@@ -12,7 +12,7 @@ from soil_analysis.domain.valueobject.weather.jma import (
     RainData,
     TemperatureData,
 )
-from soil_analysis.models import JmaWeather, JmaRegion, JmaPrefecture
+from soil_analysis.models import JmaWeather, JmaRegion, JmaPrefecture, JmaAmedas
 
 THREE_DAYS = 0
 
@@ -91,7 +91,9 @@ class Command(BaseCommand):
 
         # TODO: 例えば建物の jma_prefecture_ids をdbから取得（重複を削って）
         jma_prefecture_ids = ["280000", "050000", "130000", "014030", "460040"]
-        jma_prefecture_ids = update_prefecture_ids(jma_prefecture_ids)
+        jma_prefecture_ids, special_add_region_ids = update_prefecture_ids(
+            jma_prefecture_ids
+        )
 
         if not jma_prefecture_ids:
             raise Exception("facility is empty")
@@ -207,7 +209,6 @@ class Command(BaseCommand):
                 print(f"    {region.code} の {rain_data.values.mean} {rain_data.unit}")
 
             # TODO: repositoryがよさそう {'280010': ['63518', '63576', '63571', '63383'], '280020': ['63051']}
-            # TODO: 014100 のときに 014030 が足りない, 460100 のときに 460040 が足りない
             # その地域にあるアメダスcode
             amedas_code_in_region = {}
             jma_regions = JmaRegion.objects.filter(
@@ -217,11 +218,20 @@ class Command(BaseCommand):
                 amedas_code_in_region[region.code] = [
                     amedas.code for amedas in region.jmaamedas_set.all()
                 ]
+            if prefecture_id in special_add_region_ids:
+                region = JmaRegion.objects.get(
+                    code=special_add_region_ids[prefecture_id]
+                )
+                special_add_region_code = special_add_region_ids[prefecture_id]
+                amedas_code_in_region[special_add_region_code] = list(
+                    JmaAmedas.objects.filter(jma_region=region).values_list(
+                        "code", flat=True
+                    )
+                )
 
             # 気温（いまは tomorrow のみ） ※気温にはregionの概念がありません
             print("  気温:")
             # 値の取り出し（TODO: いまは tomorrow の1値のみ。のちほど数日分を取れるようにする）
-            # TODO: 014100 のときに 014030 が足りない, 460100 のときに 460040 が足りない
             for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
                 region = Region(
                     code=region_data["area"]["code"],
