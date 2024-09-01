@@ -407,17 +407,22 @@ class JmaWeather(models.Model):
     See Also: https://www.jma.go.jp/bosai/forecast/#area_type=class20s&area_code=2820100
 
     Attributes:
-        jma_region (JmaRegion): The region for which the weather data is recorded.
-        reporting_date (DateField): The date on which the weather data is reported.
-        weather_code (CharField): 天気コード
-        avg_min_temperature (FloatField): 最低気温
-        avg_max_temperature (FloatField): 最高気温
-        avg_max_wind_speed (FloatField): 最大風速
+        jma_region (JmaRegion): A ForeignKey field representing the region for which the weather data is recorded.
+        reporting_date (DateField): A DateField representing the date on which the weather data is reported.
+        jma_weather_code (JmaWeatherCode): A ForeignKey field representing the weather code for the recorded data.
+        weather_text (CharField): A CharField representing the text description of the weather.
+        wind_text (CharField): A CharField representing the text description of the wind conditions.
+        wave_text (CharField): A CharField representing the text description of the wave conditions.
+        avg_rain_probability (FloatField, optional): 降水確率
+        avg_min_temperature (FloatField, optional): 最低気温
+        avg_max_temperature (FloatField, optional): 最高気温
+        avg_max_wind_speed (FloatField, optional): 最大風速
+
     """
 
     jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
     reporting_date = models.DateField()
-    weather_code = models.CharField(max_length=3)
+    jma_weather_code = models.ForeignKey(JmaWeatherCode, on_delete=models.CASCADE)
     weather_text = models.CharField(max_length=255)
     wind_text = models.CharField(max_length=255)
     wave_text = models.CharField(max_length=255)
