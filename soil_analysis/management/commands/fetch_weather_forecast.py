@@ -282,20 +282,24 @@ class Command(BaseCommand):
                             weather_text=summary_text.weather,
                             wind_text=summary_text.wind,
                             wave_text=summary_text.wave,
-                            avg_rain_probability=rain_data.values.mean,
+                            avg_rain_probability=(
+                                None
+                                if len(rain_data.values.raw) == 0
+                                else rain_data.values.mean
+                            ),
                             avg_min_temperature=(
                                 None
-                                if temperature_data.min_values.mean == 0
+                                if len(temperature_data.min_values.raw) == 0
                                 else temperature_data.min_values.mean
                             ),
                             avg_max_temperature=(
                                 None
-                                if temperature_data.max_values.mean == 0
+                                if len(temperature_data.max_values.raw) == 0
                                 else temperature_data.max_values.mean
                             ),
                             avg_max_wind_speed=(
                                 None
-                                if wind_data.values.mean == 0
+                                if len(wind_data.values.raw) == 0
                                 else wind_data.values.mean
                             ),
                         )

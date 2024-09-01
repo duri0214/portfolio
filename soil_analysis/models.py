@@ -421,7 +421,7 @@ class JmaWeather(models.Model):
     weather_text = models.CharField(max_length=255)
     wind_text = models.CharField(max_length=255)
     wave_text = models.CharField(max_length=255)
-    avg_rain_probability = models.FloatField()
+    avg_rain_probability = models.FloatField(null=True)
     avg_min_temperature = models.FloatField(null=True)
     avg_max_temperature = models.FloatField(null=True)
     avg_max_wind_speed = models.FloatField(null=True)
