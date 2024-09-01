@@ -194,6 +194,10 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 
 ## soil analysis
 
+- `python manage.py import_weather_master` のバッチをまわす
+- `python manage.py import_weather_master_manual` のバッチをまわす（天気コードの取り込み）
+- `python manage.py fetch_weather_forecast` のバッチをまわす
+
 ## securities report
 
 - edinet data を zip でダウンロードする
