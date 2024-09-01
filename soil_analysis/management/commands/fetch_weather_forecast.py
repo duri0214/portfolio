@@ -11,7 +11,13 @@ from soil_analysis.domain.valueobject.weather.jma import (
     RainData,
     TemperatureData,
 )
-from soil_analysis.models import JmaWeather, JmaRegion, JmaPrefecture, JmaAmedas
+from soil_analysis.models import (
+    JmaWeather,
+    JmaRegion,
+    JmaPrefecture,
+    JmaAmedas,
+    JmaWeatherCode,
+)
 
 THREE_DAYS = 0
 
@@ -93,7 +99,8 @@ class Command(BaseCommand):
         if not jma_prefecture_ids:
             raise Exception("facility is empty")
 
-        region_master = {region.code: region for region in JmaRegion.objects.all()}
+        region_master = {x.code: x for x in JmaRegion.objects.all()}
+        weather_code_master = {x.code: x for x in JmaWeatherCode.objects.all()}
 
         # 日付のリストだけ取得
         url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{jma_prefecture_ids[0]}.json"
@@ -289,7 +296,7 @@ class Command(BaseCommand):
                         JmaWeather(
                             jma_region=region_master.get(region.code),
                             reporting_date=target_date,
-                            weather_code=weather_code,
+                            jma_weather_code=weather_code_master.get(weather_code),
                             weather_text=summary_text.weather,
                             wind_text=summary_text.wind,
                             wave_text=summary_text.wave,
