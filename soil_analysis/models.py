@@ -407,18 +407,24 @@ class JmaWeather(models.Model):
     See Also: https://www.jma.go.jp/bosai/forecast/#area_type=class20s&area_code=2820100
 
     Attributes:
-        jma_region (ForeignKey[JmaRegion]): The JMA region associated with the weather data.
+        jma_region (JmaRegion): The region for which the weather data is recorded.
+        reporting_date (DateField): The date on which the weather data is reported.
         weather_code (CharField): 天気コード
-        temperature_min (FloatField): 最低気温
-        temperature_max (FloatField): 最高気温
-        wind_speed_max (FloatField): 最大風速
+        avg_min_temperature (FloatField): 最低気温
+        avg_max_temperature (FloatField): 最高気温
+        avg_max_wind_speed (FloatField): 最大風速
     """
 
     jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
+    reporting_date = models.DateField()
     weather_code = models.CharField(max_length=3)
-    temperature_min = models.FloatField()
-    temperature_max = models.FloatField()
-    wind_speed_max = models.FloatField()
+    weather_text = models.CharField(max_length=255)
+    wind_text = models.CharField(max_length=255)
+    wave_text = models.CharField(max_length=255)
+    avg_rain_probability = models.FloatField()
+    avg_min_temperature = models.FloatField()
+    avg_max_temperature = models.FloatField()
+    avg_max_wind_speed = models.FloatField()
 
 
 class JmaWarning(models.Model):
