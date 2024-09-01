@@ -25,7 +25,7 @@ WIND_SPEED = 3
 LAND = 0
 
 
-def update_prefecture_ids(jma_prefecture_ids: list[str]) -> list[str]:
+def update_prefecture_ids(jma_prefecture_ids: list[str]) -> tuple[list[str], list[str]]:
     """
     気象庁特別ルール
     "014030" があって "014100" がないときに "014030" → "014100" に置換 / 十勝地方 → 釧路・根室地方
@@ -38,13 +38,15 @@ def update_prefecture_ids(jma_prefecture_ids: list[str]) -> list[str]:
         list[str]: The updated list of JMA prefecture IDs.
     """
     pairs_to_check = [("014030", "014100"), ("460040", "460100")]
+    region_id_for_jma_amedas = []
 
     for invalid_id, proxy_id in pairs_to_check:
         if invalid_id in jma_prefecture_ids:
             if proxy_id not in jma_prefecture_ids:
                 jma_prefecture_ids.append(proxy_id)
             jma_prefecture_ids.remove(invalid_id)
-    return jma_prefecture_ids
+            region_id_for_jma_amedas.append(invalid_id)
+    return jma_prefecture_ids, region_id_for_jma_amedas
 
 
 def get_data(url: str):
