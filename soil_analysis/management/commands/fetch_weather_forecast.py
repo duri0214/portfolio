@@ -25,28 +25,36 @@ WIND_SPEED = 3
 LAND = 0
 
 
-def update_prefecture_ids(jma_prefecture_ids: list[str]) -> tuple[list[str], list[str]]:
+def update_prefecture_ids(
+    prefecture_ids: list[str],
+) -> tuple[list[str], dict]:
     """
     気象庁特別ルール
     "014030" があって "014100" がないときに "014030" → "014100" に置換 / 十勝地方 → 釧路・根室地方
     "460040" があって "460100" がないときに "460040" → "460100" に置換 / 奄美地方 → 鹿児島県（奄美地方除く）
 
     Args:
-        jma_prefecture_ids (list[str]): The list of JMA prefecture IDs.
+        prefecture_ids (list[str]): The list of JMA prefecture ids to be updated.
 
     Returns:
-        list[str]: The updated list of JMA prefecture IDs.
+        tuple[list[str], dict]: JMA prefecture ids and special add region ids.
+
+    Example:
+        prefecture_ids = ["014030", "460040"]
+        updated_ids, special_add_region_ids = update_prefecture_ids(prefecture_ids)
+        print(updated_ids)  # Output: ["014100", "460100"]
+        print(special_add_region_ids)  # Output: {"014100": "014030", "460100": "460040"}
     """
     pairs_to_check = [("014030", "014100"), ("460040", "460100")]
-    region_id_for_jma_amedas = []
+    special_add_region_ids = {}
 
     for invalid_id, proxy_id in pairs_to_check:
-        if invalid_id in jma_prefecture_ids:
-            if proxy_id not in jma_prefecture_ids:
-                jma_prefecture_ids.append(proxy_id)
-            jma_prefecture_ids.remove(invalid_id)
-            region_id_for_jma_amedas.append(invalid_id)
-    return jma_prefecture_ids, region_id_for_jma_amedas
+        if invalid_id in prefecture_ids:
+            if proxy_id not in prefecture_ids:
+                prefecture_ids.append(proxy_id)
+            prefecture_ids.remove(invalid_id)
+            special_add_region_ids[proxy_id] = invalid_id
+    return prefecture_ids, special_add_region_ids
 
 
 def get_data(url: str):

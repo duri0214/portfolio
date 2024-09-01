@@ -44,26 +44,28 @@ class TestFetchWeatherForecast(TestCase):
         self.func = fetch_weather_forecast.update_prefecture_ids
 
     def test_update_prefecture_ids_with_invalid_id(self):
-        jma_prefecture_ids = ["014030", "032010", "082050", "460040"]
-        updated_prefecture_ids, special_add_region_ids = self.func(jma_prefecture_ids)
+        prefecture_ids = ["014030", "032010", "082050", "460040"]
+        updated_prefecture_ids, special_add_region_ids = self.func(prefecture_ids)
 
         self.assertListEqual(
             updated_prefecture_ids, ["032010", "082050", "014100", "460100"]
         )
-        self.assertListEqual(special_add_region_ids, ["014030", "460040"])
+        self.assertEqual(
+            special_add_region_ids, {"014100": "014030", "460100": "460040"}
+        )
 
     def test_update_prefecture_ids_without_invalid_id(self):
-        jma_prefecture_ids = ["014100", "032010", "082050", "460100"]
-        updated_prefecture_ids, special_add_region_ids = self.func(jma_prefecture_ids)
+        prefecture_ids = ["014100", "032010", "082050", "460100"]
+        updated_prefecture_ids, special_add_region_ids = self.func(prefecture_ids)
 
         self.assertListEqual(
             updated_prefecture_ids, ["014100", "032010", "082050", "460100"]
         )
-        self.assertListEqual(special_add_region_ids, [])
+        self.assertEqual(special_add_region_ids, {})
 
     def test_update_prefecture_ids_with_proxy_id(self):
         #  [("014030", "014100"), ("460040", "460100")]
-        jma_prefecture_ids = [
+        prefecture_ids = [
             "014030",
             "032010",
             "082050",
@@ -71,19 +73,21 @@ class TestFetchWeatherForecast(TestCase):
             "014100",
             "460100",
         ]
-        updated_prefecture_ids, special_add_region_ids = self.func(jma_prefecture_ids)
+        updated_prefecture_ids, special_add_region_ids = self.func(prefecture_ids)
 
         self.assertListEqual(
             updated_prefecture_ids, ["032010", "082050", "014100", "460100"]
         )
-        self.assertListEqual(special_add_region_ids, ["014030", "460040"])
+        self.assertEqual(
+            special_add_region_ids, {"014100": "014030", "460100": "460040"}
+        )
 
     def test_update_prefecture_ids_with_empty_list(self):
-        jma_prefecture_ids = []
-        updated_prefecture_ids, special_add_region_ids = self.func(jma_prefecture_ids)
+        prefecture_ids = []
+        updated_prefecture_ids, special_add_region_ids = self.func(prefecture_ids)
 
         self.assertListEqual(updated_prefecture_ids, [])
-        self.assertListEqual(special_add_region_ids, [])
+        self.assertEqual(special_add_region_ids, {})
 
 
 class TestGetDataAndIndexes(TestCase):
