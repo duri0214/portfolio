@@ -84,9 +84,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         jma_weather_list: list[JmaWeather] = []
 
-        today = datetime.now().date()
-        tomorrow = today + timedelta(days=1)  # TODO: 日付のloopはここにくる
-
         # TODO: 例えば建物の jma_prefecture_ids をdbから取得（重複を削って）
         jma_prefecture_ids = ["280000", "050000", "130000", "014030", "460040"]
         jma_prefecture_ids, special_add_region_ids = update_prefecture_ids(
@@ -98,189 +95,215 @@ class Command(BaseCommand):
 
         region_master = {region.code: region for region in JmaRegion.objects.all()}
 
+        # 日付のリストだけ取得
+        url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{jma_prefecture_ids[0]}.json"
+        time_series_data = get_data(url)
+        target_date_list = [
+            datetime.fromisoformat(date_str).date()
+            for date_str in time_series_data[TYPE_OVERVIEW]["timeDefines"]
+        ]
+
         JmaWeather.objects.all().delete()
-        for prefecture_id in jma_prefecture_ids:
-            forecasts_by_region = {}
-            print(f"{tomorrow} の {prefecture_id=}")
+        for target_date in target_date_list:
+            for prefecture_id in jma_prefecture_ids:
+                print(f"{target_date} の {prefecture_id=}")
+                forecasts_by_region = {}
 
-            # 風速
-            print("  風速:")
-            url = f"https://www.jma.go.jp/bosai/probability/data/probability/{prefecture_id}.json"
-            time_series_data = get_data(url)
+                print("  風速:")
+                url = f"https://www.jma.go.jp/bosai/probability/data/probability/{prefecture_id}.json"
+                time_series_data = get_data(url)
 
-            # 値の取り出し（TODO: いまは tomorrow の3値のみ。のちほど数日分を取れるようにする）
-            indexes = get_indexes(
-                data_time_defines=time_series_data[TYPE_WIND]["timeDefines"],
-                desired_date=tomorrow,
-            )
-            for region_data in time_series_data[TYPE_WIND]["areas"]:
-                region_code = region_data["code"]
-                forecasts_by_region.setdefault(region_code, {})
-                time_cells_wind_data = region_data["properties"][WIND_SPEED][
-                    "timeCells"
-                ]
-                wind_data = WindData(
-                    values=MeanCalculable(
-                        [
-                            int(time_cell["locals"][LAND]["value"])
-                            for i, time_cell in enumerate(time_cells_wind_data)
-                            if i in indexes
-                        ]
+                indexes = get_indexes(
+                    data_time_defines=time_series_data[TYPE_WIND]["timeDefines"],
+                    desired_date=target_date,
+                )
+                for region_data in time_series_data[TYPE_WIND]["areas"]:
+                    region_code = region_data["code"]
+                    forecasts_by_region.setdefault(region_code, {})
+                    time_cells_wind_data = region_data["properties"][WIND_SPEED][
+                        "timeCells"
+                    ]
+                    wind_data = WindData(
+                        values=MeanCalculable(
+                            [
+                                int(time_cell["locals"][LAND]["value"])
+                                for i, time_cell in enumerate(time_cells_wind_data)
+                                if i in indexes
+                            ]
+                        )
                     )
-                )
-                forecasts_by_region[region_code]["wind_data"] = wind_data
-                print(f"    {region_code} の {wind_data}")
+                    forecasts_by_region[region_code]["wind_data"] = wind_data
+                    print(f"    {region_code} の {wind_data}")
 
-            # 天気コード・天気サマリ・風サマリ・波サマリ（いまは tomorrow のみ）
-            print("  天気サマリ:")
-            url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
-            time_series_data = get_data(url)
+                print("  天気サマリ:")
+                url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{prefecture_id}.json"
+                time_series_data = get_data(url)
 
-            # 値の取り出し（TODO: いまは tomorrow の1値のみ。のちほど数日分を取れるようにする）
-            indexes = get_indexes(
-                data_time_defines=time_series_data[TYPE_OVERVIEW]["timeDefines"],
-                desired_date=tomorrow,
-            )
-            if len(indexes) != 1:
-                print(f"    要素数は必ず1になります{len(indexes)}")
-                continue
-            index = indexes.pop()
-            for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
-                region = Region(
-                    code=region_data["area"]["code"],
-                    name=region_data["area"]["name"],
+                indexes = get_indexes(
+                    data_time_defines=time_series_data[TYPE_OVERVIEW]["timeDefines"],
+                    desired_date=target_date,
                 )
-                forecasts_by_region.setdefault(region.code, {})
-
-                # weather_code
-                forecasts_by_region[region.code]["weather_code"] = region_data[
-                    "weatherCodes"
-                ][index]
-
-                # summary_text を3種
-                summary_text = SummaryText(
-                    weather=(
-                        region_data["weathers"][index]
-                        if "weathers" in region_data
-                        and index < len(region_data["weathers"])
-                        else "なし"
-                    ),
-                    wind=(
-                        region_data["winds"][index]
-                        if "winds" in region_data and index < len(region_data["winds"])
-                        else "なし"
-                    ),
-                    wave=(
-                        region_data["waves"][index]
-                        if "waves" in region_data and index < len(region_data["waves"])
-                        else "なし"
-                    ),
-                )
-                forecasts_by_region[region.code]["summary_text"] = summary_text
-                print(
-                    f"    {region.code} は ｜{region_data['weatherCodes'][index]}｜{summary_text.weather[:4]}｜{summary_text.wind[:4]}｜{summary_text.wave[:4]}｜"
-                )
-
-            # 降水確率（いまは tomorrow のみ）
-            print("  降水確率:")
-            # 値の取り出し（TODO: いまは tomorrow の1値のみ。のちほど数日分を取れるようにする）
-            indexes = get_indexes(
-                data_time_defines=time_series_data[TYPE_RAIN]["timeDefines"],
-                desired_date=tomorrow,
-            )
-            for region_data in time_series_data[TYPE_RAIN]["areas"]:
-                region = Region(
-                    code=region_data["area"]["code"],
-                    name=region_data["area"]["name"],
-                )
-                forecasts_by_region.setdefault(region.code, {})
-                rain_data = RainData(
-                    values=MeanCalculable(
-                        [
-                            int(time_cell)
-                            for i, time_cell in enumerate(region_data["pops"])
-                            if i in indexes
-                        ]
+                if len(indexes) != 1:
+                    print(f"    要素数は必ず1になります{len(indexes)}")
+                    continue
+                index = indexes.pop()
+                for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
+                    region = Region(
+                        code=region_data["area"]["code"],
+                        name=region_data["area"]["name"],
                     )
-                )
-                forecasts_by_region[region.code]["rain_data"] = rain_data
-                print(f"    {region.code} の {rain_data.values.mean} {rain_data.unit}")
+                    forecasts_by_region.setdefault(region.code, {})
 
-            # TODO: repositoryがよさそう {'280010': ['63518', '63576', '63571', '63383'], '280020': ['63051']}
-            # その地域にあるアメダスcode
-            amedas_code_in_region = {}
-            jma_regions = JmaRegion.objects.filter(
-                jma_prefecture=JmaPrefecture.objects.get(code=prefecture_id)
-            ).prefetch_related("jmaamedas_set")
-            for region in jma_regions:
-                amedas_code_in_region[region.code] = [
-                    amedas.code for amedas in region.jmaamedas_set.all()
-                ]
-            if prefecture_id in special_add_region_ids:
-                region = JmaRegion.objects.get(
-                    code=special_add_region_ids[prefecture_id]
-                )
-                special_add_region_code = special_add_region_ids[prefecture_id]
-                amedas_code_in_region[special_add_region_code] = list(
-                    JmaAmedas.objects.filter(jma_region=region).values_list(
-                        "code", flat=True
+                    # weather_code
+                    forecasts_by_region[region.code]["weather_code"] = region_data[
+                        "weatherCodes"
+                    ][index]
+
+                    # summary_text を3種
+                    summary_text = SummaryText(
+                        weather=(
+                            region_data["weathers"][index]
+                            if "weathers" in region_data
+                            and index < len(region_data["weathers"])
+                            else "なし"
+                        ),
+                        wind=(
+                            region_data["winds"][index]
+                            if "winds" in region_data
+                            and index < len(region_data["winds"])
+                            else "なし"
+                        ),
+                        wave=(
+                            region_data["waves"][index]
+                            if "waves" in region_data
+                            and index < len(region_data["waves"])
+                            else "なし"
+                        ),
                     )
-                )
-
-            # 気温（いまは tomorrow のみ） ※気温にはregionの概念がありません
-            print("  気温:")
-            # 値の取り出し（TODO: いまは tomorrow の1値のみ。のちほど数日分を取れるようにする）
-            for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
-                region = Region(
-                    code=region_data["area"]["code"],
-                    name=region_data["area"]["name"],
-                )
-                forecasts_by_region.setdefault(region.code, {})
-
-                amedas_min_temps: list[float] = []
-                amedas_max_temps: list[float] = []
-                for amedas_data in time_series_data[TYPE_TEMPERATURE]["areas"]:
-                    amedas_code = amedas_data["area"]["code"]
-                    if amedas_code not in amedas_code_in_region.get(region.code):
-                        continue
-                    amedas_min_temps.append(float(amedas_data["temps"][0]))
-                    amedas_max_temps.append(float(amedas_data["temps"][1]))
-                forecasts_by_region.setdefault(region.code, {})
-                temperature_data = TemperatureData(
-                    min_values=MeanCalculable(amedas_min_temps),
-                    max_values=MeanCalculable(amedas_max_temps),
-                )
-                forecasts_by_region[region.code]["temperature_data"] = temperature_data
-                msg1 = f"    {region.code} の最低気温 {temperature_data.min_values.mean} {temperature_data.unit}"
-                msg2 = f"最高気温 {temperature_data.max_values.mean} {temperature_data.unit}"
-                print(f"{msg1} / {msg2}")
-
-            # 天気・風・波・降水確率・気温 を1日分としてガッチャンコ
-            for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
-                region = Region(
-                    code=region_data["area"]["code"],
-                    name=region_data["area"]["name"],
-                )
-
-                weather_code = forecasts_by_region[region.code]["weather_code"]
-                summary_text = forecasts_by_region[region.code]["summary_text"]
-                rain_data = forecasts_by_region[region.code]["rain_data"]
-                temperature_data = forecasts_by_region[region.code]["temperature_data"]
-                wind_data = forecasts_by_region[region.code]["wind_data"]
-                jma_weather_list.append(
-                    JmaWeather(
-                        jma_region=region_master.get(region.code),
-                        reporting_date=tomorrow,
-                        weather_code=weather_code,
-                        weather_text=summary_text.weather,
-                        wind_text=summary_text.wind,
-                        wave_text=summary_text.wave,
-                        avg_rain_probability=rain_data.values.mean,
-                        avg_min_temperature=temperature_data.min_values.mean,
-                        avg_max_temperature=temperature_data.max_values.mean,
-                        avg_max_wind_speed=wind_data.values.mean,
+                    forecasts_by_region[region.code]["summary_text"] = summary_text
+                    summary_text_merge = f"{summary_text.weather[:4]}｜{summary_text.wind[:4]}｜{summary_text.wave[:4]}｜"
+                    print(
+                        f"    {region.code} は ｜{region_data['weatherCodes'][index]}｜{summary_text_merge}"
                     )
+
+                print("  降水確率:")
+                indexes = get_indexes(
+                    data_time_defines=time_series_data[TYPE_RAIN]["timeDefines"],
+                    desired_date=target_date,
                 )
+                for region_data in time_series_data[TYPE_RAIN]["areas"]:
+                    region = Region(
+                        code=region_data["area"]["code"],
+                        name=region_data["area"]["name"],
+                    )
+                    forecasts_by_region.setdefault(region.code, {})
+                    rain_data = RainData(
+                        values=MeanCalculable(
+                            [
+                                int(time_cell)
+                                for i, time_cell in enumerate(region_data["pops"])
+                                if i in indexes
+                            ]
+                        )
+                    )
+                    forecasts_by_region[region.code]["rain_data"] = rain_data
+                    print(
+                        f"    {region.code} の {rain_data.values.mean} {rain_data.unit}"
+                    )
+
+                # TODO: repositoryがよさそう {'280010': ['63518', '63576', '63571', '63383'], '280020': ['63051']}
+                # その地域にあるアメダスcode
+                amedas_code_in_region = {}
+                jma_regions = JmaRegion.objects.filter(
+                    jma_prefecture=JmaPrefecture.objects.get(code=prefecture_id)
+                ).prefetch_related("jmaamedas_set")
+                for region in jma_regions:
+                    amedas_code_in_region[region.code] = [
+                        amedas.code for amedas in region.jmaamedas_set.all()
+                    ]
+                if prefecture_id in special_add_region_ids:
+                    region = JmaRegion.objects.get(
+                        code=special_add_region_ids[prefecture_id]
+                    )
+                    special_add_region_code = special_add_region_ids[prefecture_id]
+                    amedas_code_in_region[special_add_region_code] = list(
+                        JmaAmedas.objects.filter(jma_region=region).values_list(
+                            "code", flat=True
+                        )
+                    )
+
+                print("  気温:")
+                for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
+                    region = Region(
+                        code=region_data["area"]["code"],
+                        name=region_data["area"]["name"],
+                    )
+                    forecasts_by_region.setdefault(region.code, {})
+
+                    amedas_min_temps: list[float] = []
+                    amedas_max_temps: list[float] = []
+                    for amedas_data in time_series_data[TYPE_TEMPERATURE]["areas"]:
+                        amedas_code = amedas_data["area"]["code"]
+                        if amedas_code not in amedas_code_in_region.get(region.code):
+                            continue
+                        amedas_min_temps.append(float(amedas_data["temps"][0]))
+                        amedas_max_temps.append(float(amedas_data["temps"][1]))
+                    forecasts_by_region.setdefault(region.code, {})
+                    temperature_data = TemperatureData(
+                        min_values=MeanCalculable(amedas_min_temps),
+                        max_values=MeanCalculable(amedas_max_temps),
+                    )
+                    forecasts_by_region[region.code][
+                        "temperature_data"
+                    ] = temperature_data
+                    msg1 = f"    {region.code} の最低気温 {temperature_data.min_values.mean} {temperature_data.unit}"
+                    msg2 = f"最高気温 {temperature_data.max_values.mean} {temperature_data.unit}"
+                    print(f"{msg1} / {msg2}")
+
+                # 天気・風・波・降水確率・気温 を1日分としてガッチャンコ
+                for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
+                    region = Region(
+                        code=region_data["area"]["code"],
+                        name=region_data["area"]["name"],
+                    )
+
+                    weather_code = forecasts_by_region[region.code]["weather_code"]
+                    summary_text = forecasts_by_region[region.code]["summary_text"]
+                    rain_data = forecasts_by_region[region.code]["rain_data"]
+                    temperature_data = forecasts_by_region[region.code][
+                        "temperature_data"
+                    ]
+                    wind_data = forecasts_by_region[region.code]["wind_data"]
+                    jma_weather_list.append(
+                        JmaWeather(
+                            jma_region=region_master.get(region.code),
+                            reporting_date=target_date,
+                            weather_code=weather_code,
+                            weather_text=summary_text.weather,
+                            wind_text=summary_text.wind,
+                            wave_text=summary_text.wave,
+                            avg_rain_probability=(
+                                None
+                                if rain_data.values.mean == 0
+                                else rain_data.values.mean
+                            ),
+                            avg_min_temperature=(
+                                None
+                                if temperature_data.min_values.mean == 0
+                                else temperature_data.min_values.mean
+                            ),
+                            avg_max_temperature=(
+                                None
+                                if temperature_data.max_values.mean == 0
+                                else temperature_data.max_values.mean
+                            ),
+                            avg_max_wind_speed=(
+                                None
+                                if wind_data.values.mean == 0
+                                else wind_data.values.mean
+                            ),
+                        )
+                    )
         JmaWeather.objects.bulk_create(jma_weather_list)
 
         self.stdout.write(
