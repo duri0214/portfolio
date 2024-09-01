@@ -136,3 +136,17 @@ class WindData:
 
     def __str__(self):
         return f"最大風速（時間帯平均）は {self.values.mean} {self.unit}"
+
+
+@dataclass(frozen=True)
+class WarningData:
+    """
+    A class representing warning data.
+
+    Attributes:
+        code (str): 14
+        status (str): 継続
+    """
+
+    code: str
+    status: str
