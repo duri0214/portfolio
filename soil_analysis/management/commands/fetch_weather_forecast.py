@@ -3,6 +3,7 @@ from datetime import datetime, date
 import requests
 from django.core.management import BaseCommand
 
+from soil_analysis.domain.repository.weather.jma import JmaRepository
 from soil_analysis.domain.valueobject.weather.jma import (
     WindData,
     MeanCalculable,
@@ -14,8 +15,6 @@ from soil_analysis.domain.valueobject.weather.jma import (
 from soil_analysis.models import (
     JmaWeather,
     JmaRegion,
-    JmaPrefecture,
-    JmaAmedas,
     JmaWeatherCode,
 )
 
@@ -218,28 +217,10 @@ class Command(BaseCommand):
                         f"    {region.code} の {rain_data.values.mean} {rain_data.unit}"
                     )
 
-                # TODO: repositoryがよさそう {'280010': ['63518', '63576', '63571', '63383'], '280020': ['63051']}
-                # その地域にあるアメダスcode
-                amedas_code_in_region = {}
-                jma_regions = JmaRegion.objects.filter(
-                    jma_prefecture=JmaPrefecture.objects.get(code=prefecture_id)
-                ).prefetch_related("jmaamedas_set")
-                for region in jma_regions:
-                    amedas_code_in_region[region.code] = [
-                        amedas.code for amedas in region.jmaamedas_set.all()
-                    ]
-                if prefecture_id in special_add_region_ids:
-                    region = JmaRegion.objects.get(
-                        code=special_add_region_ids[prefecture_id]
-                    )
-                    special_add_region_code = special_add_region_ids[prefecture_id]
-                    amedas_code_in_region[special_add_region_code] = list(
-                        JmaAmedas.objects.filter(jma_region=region).values_list(
-                            "code", flat=True
-                        )
-                    )
-
                 print("  気温:")
+                amedas_code_in_region = JmaRepository.get_amedas_code_list(
+                    prefecture_id, special_add_region_ids
+                )
                 indexes = get_indexes(
                     data_time_defines=time_series_data[TYPE_TEMPERATURE]["timeDefines"],
                     desired_date=target_date,
