@@ -3,10 +3,9 @@ from dataclasses import dataclass
 
 # マスタデータ
 @dataclass
-class WeatherCodeRaw:
+class JmaConstWeatherCode:
     """
     気象庁の定数マスタ（天気コード）
-    # TODO: クラス名を考えて（JmaConstWeatherRaw?）
 
     Attributes:
         code (str): The code of the weather.
@@ -26,10 +25,9 @@ class WeatherCodeRaw:
 
 
 @dataclass
-class JmaConst:
+class JmaConstGeographicArea:
     """
     気象庁の定数マスタ（area, prefecture, region, city_group, city）
-    # TODO: クラス名を考えて（JmaConstRaw? segment?）
 
     Attributes:
         code (str): The code of the constant.

@@ -3,7 +3,7 @@ import re
 
 from django.core.management.base import BaseCommand
 
-from soil_analysis.domain.valueobject.weather.jma import WeatherCodeRaw
+from soil_analysis.domain.valueobject.weather.jma import JmaConstWeatherCode
 from soil_analysis.models import (
     JmaWeatherCode,
 )
@@ -34,7 +34,7 @@ class Command(BaseCommand):
             values = values.strip("[]")
             values = next(csv.reader([values]))
 
-            weather_code_raw = WeatherCodeRaw(key, *values)
+            weather_code_raw = JmaConstWeatherCode(key, *values)
             weather_code_list.append(weather_code_raw)
 
         jma_weather_code_list = [

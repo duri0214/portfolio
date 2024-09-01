@@ -3,7 +3,7 @@ import sys
 import requests
 from django.core.management.base import BaseCommand
 
-from soil_analysis.domain.valueobject.weather.jma import JmaConst
+from soil_analysis.domain.valueobject.weather.jma import JmaConstGeographicArea
 from soil_analysis.models import (
     JmaArea,
     JmaRegion,
@@ -44,7 +44,7 @@ class Command(BaseCommand):
         # Create and save JmaArea: 010600 近畿地方
         JmaArea.objects.all().delete()
         jma_area_list = [
-            JmaConst(
+            JmaConstGeographicArea(
                 code=code,
                 name=data["name"],
                 children=data.get("children", []),
@@ -60,7 +60,7 @@ class Command(BaseCommand):
         # Create and save JmaPrefecture: 280000 兵庫県
         JmaPrefecture.objects.all().delete()
         jma_prefecture_list = [
-            JmaConst(
+            JmaConstGeographicArea(
                 code=code,
                 name=data["name"],
                 children=data.get("children", []),
@@ -81,7 +81,7 @@ class Command(BaseCommand):
         # Create and save JmaRegion: 280010 南部
         JmaRegion.objects.all().delete()
         jma_region_list = [
-            JmaConst(
+            JmaConstGeographicArea(
                 code=code,
                 name=data["name"],
                 children=data.get("children", []),
@@ -103,7 +103,7 @@ class Command(BaseCommand):
 
         # Create JmaCityGroup
         jma_city_group_list = [
-            JmaConst(
+            JmaConstGeographicArea(
                 code=code,
                 name=data["name"],
                 children=data.get("children", []),
@@ -119,7 +119,7 @@ class Command(BaseCommand):
         # Create and save JmaCity with parents via JmaCityGroup: 2820100 姫路市
         JmaCity.objects.all().delete()
         jma_city_list = [
-            JmaConst(
+            JmaConstGeographicArea(
                 code=code,
                 name=data["name"],
                 children=data.get("children", []),
