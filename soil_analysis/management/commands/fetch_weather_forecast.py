@@ -4,7 +4,6 @@ import requests
 from django.core.management import BaseCommand
 
 from soil_analysis.domain.valueobject.weather.jma import (
-    WeatherForecast,
     WindData,
     MeanCalculable,
     Region,
