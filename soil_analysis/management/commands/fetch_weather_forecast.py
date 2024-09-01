@@ -82,11 +82,10 @@ class Command(BaseCommand):
     help = "get weather forecast"
 
     def handle(self, *args, **options):
-        forecasts_by_region = {}
+        jma_weather_list: list[JmaWeather] = []
 
         today = datetime.now().date()
-        tomorrow = today + timedelta(days=1)
-        forecasts_by_region.setdefault(tomorrow, {})
+        tomorrow = today + timedelta(days=1)  # TODO: 日付のloopはここにくる
 
         # TODO: 例えば建物の jma_prefecture_ids をdbから取得（重複を削って）
         jma_prefecture_ids = ["280000", "050000", "130000", "014030", "460040"]
@@ -97,9 +96,12 @@ class Command(BaseCommand):
         if not jma_prefecture_ids:
             raise Exception("facility is empty")
 
+        region_master = {region.code: region for region in JmaRegion.objects.all()}
+
         JmaWeather.objects.all().delete()
         for prefecture_id in jma_prefecture_ids:
-            print(f"{prefecture_id=} の {tomorrow}")
+            forecasts_by_region = {}
+            print(f"{tomorrow} の {prefecture_id=}")
 
             # 風速
             print("  風速:")
@@ -113,7 +115,7 @@ class Command(BaseCommand):
             )
             for region_data in time_series_data[TYPE_WIND]["areas"]:
                 region_code = region_data["code"]
-                forecasts_by_region[tomorrow].setdefault(region_code, {})
+                forecasts_by_region.setdefault(region_code, {})
                 time_cells_wind_data = region_data["properties"][WIND_SPEED][
                     "timeCells"
                 ]
@@ -126,7 +128,7 @@ class Command(BaseCommand):
                         ]
                     )
                 )
-                forecasts_by_region[tomorrow][region_code]["wind_data"] = wind_data
+                forecasts_by_region[region_code]["wind_data"] = wind_data
                 print(f"    {region_code} の {wind_data}")
 
             # 天気コード・天気サマリ・風サマリ・波サマリ（いまは tomorrow のみ）
@@ -148,12 +150,12 @@ class Command(BaseCommand):
                     code=region_data["area"]["code"],
                     name=region_data["area"]["name"],
                 )
-                forecasts_by_region[tomorrow].setdefault(region.code, {})
+                forecasts_by_region.setdefault(region.code, {})
 
                 # weather_code
-                forecasts_by_region[tomorrow][region.code]["weather_code"] = (
-                    region_data["weatherCodes"][index]
-                )
+                forecasts_by_region[region.code]["weather_code"] = region_data[
+                    "weatherCodes"
+                ][index]
 
                 # summary_text を3種
                 summary_text = SummaryText(
@@ -174,13 +176,10 @@ class Command(BaseCommand):
                         else "なし"
                     ),
                 )
-                forecasts_by_region[tomorrow][region.code][
-                    "summary_text"
-                ] = summary_text
+                forecasts_by_region[region.code]["summary_text"] = summary_text
                 print(
-                    f"    {region.code} の｜{summary_text.weather[:4]}｜{summary_text.wind[:4]}｜{summary_text.wave[:4]}｜"
+                    f"    {region.code} は ｜{region_data['weatherCodes'][index]}｜{summary_text.weather[:4]}｜{summary_text.wind[:4]}｜{summary_text.wave[:4]}｜"
                 )
-                # ここまでOK
 
             # 降水確率（いまは tomorrow のみ）
             print("  降水確率:")
@@ -194,7 +193,7 @@ class Command(BaseCommand):
                     code=region_data["area"]["code"],
                     name=region_data["area"]["name"],
                 )
-                forecasts_by_region[tomorrow].setdefault(region.code, {})
+                forecasts_by_region.setdefault(region.code, {})
                 rain_data = RainData(
                     values=MeanCalculable(
                         [
@@ -204,7 +203,7 @@ class Command(BaseCommand):
                         ]
                     )
                 )
-                forecasts_by_region[tomorrow][region.code]["rain_data"] = rain_data
+                forecasts_by_region[region.code]["rain_data"] = rain_data
                 print(f"    {region.code} の {rain_data.values.mean} {rain_data.unit}")
 
             # TODO: repositoryがよさそう {'280010': ['63518', '63576', '63571', '63383'], '280020': ['63051']}
@@ -236,7 +235,7 @@ class Command(BaseCommand):
                     code=region_data["area"]["code"],
                     name=region_data["area"]["name"],
                 )
-                forecasts_by_region[tomorrow].setdefault(region.code, {})
+                forecasts_by_region.setdefault(region.code, {})
 
                 amedas_min_temps: list[float] = []
                 amedas_max_temps: list[float] = []
@@ -246,42 +245,43 @@ class Command(BaseCommand):
                         continue
                     amedas_min_temps.append(float(amedas_data["temps"][0]))
                     amedas_max_temps.append(float(amedas_data["temps"][1]))
-                forecasts_by_region[tomorrow].setdefault(region.code, {})
+                forecasts_by_region.setdefault(region.code, {})
                 temperature_data = TemperatureData(
                     min_values=MeanCalculable(amedas_min_temps),
                     max_values=MeanCalculable(amedas_max_temps),
                 )
-                forecasts_by_region[tomorrow][region.code][
-                    "temperature_data"
-                ] = temperature_data
+                forecasts_by_region[region.code]["temperature_data"] = temperature_data
                 msg1 = f"    {region.code} の最低気温 {temperature_data.min_values.mean} {temperature_data.unit}"
                 msg2 = f"最高気温 {temperature_data.max_values.mean} {temperature_data.unit}"
                 print(f"{msg1} / {msg2}")
 
-            # 天気・風・波・降水確率・気温 をガッチャンコ
-            weather_forecast_list: list[WeatherForecast] = []
-            # for region_code, forecast in forecasts_by_region.items():
-            #     region_forecast_results = RegionForecastResults(
-            #         forecast["weather"],
-            #         forecast["temperature"],
-            #         forecast["wind_speed"],
-            #     )
-            #     print(region_forecast_results)
-            #     weather_forecast_list.append(region_forecast_results)
+            # 天気・風・波・降水確率・気温 を1日分としてガッチャンコ
+            for region_data in time_series_data[TYPE_OVERVIEW]["areas"]:
+                region = Region(
+                    code=region_data["area"]["code"],
+                    name=region_data["area"]["name"],
+                )
 
-            # db登録
-            # JmaWeather.objects.bulk_create(
-            #     [
-            #         JmaWeather(
-            #             jma_areas3_id=item.region_weather.region_code,
-            #             weather_code=item.region_weather.weather_code,
-            #             temperature_min=item.region_temperature.avg_min_temps,
-            #             temperature_max=item.region_temperature.avg_max_temps,
-            #             wind_speed=item.region_wind_speed.avg_wind_speed,
-            #         )
-            #         for item in weather_forecast_list
-            #     ]
-            # )
+                weather_code = forecasts_by_region[region.code]["weather_code"]
+                summary_text = forecasts_by_region[region.code]["summary_text"]
+                rain_data = forecasts_by_region[region.code]["rain_data"]
+                temperature_data = forecasts_by_region[region.code]["temperature_data"]
+                wind_data = forecasts_by_region[region.code]["wind_data"]
+                jma_weather_list.append(
+                    JmaWeather(
+                        jma_region=region_master.get(region.code),
+                        reporting_date=tomorrow,
+                        weather_code=weather_code,
+                        weather_text=summary_text.weather,
+                        wind_text=summary_text.wind,
+                        wave_text=summary_text.wave,
+                        avg_rain_probability=rain_data.values.mean,
+                        avg_min_temperature=temperature_data.min_values.mean,
+                        avg_max_temperature=temperature_data.max_values.mean,
+                        avg_max_wind_speed=wind_data.values.mean,
+                    )
+                )
+        JmaWeather.objects.bulk_create(jma_weather_list)
 
         self.stdout.write(
             self.style.SUCCESS("weather forecast data retrieve has been completed.")
