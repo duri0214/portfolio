@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, date
 
 import requests
 from django.core.management import BaseCommand
