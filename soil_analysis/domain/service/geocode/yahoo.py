@@ -26,7 +26,6 @@ class ReverseGeocoderService:
 
         request_url = "https://map.yahooapis.jp/geoapi/V1/reverseGeoCoder"
         response = requests.get(request_url, params=params)
-        print(f"{response.url=}")
         response.raise_for_status()
 
         return response.text
@@ -75,41 +74,48 @@ class ReverseGeocoderService:
         address_full = feature_element.find("ns:Property/ns:Address", ns).text
 
         address_elements = feature_element.findall("ns:Property/ns:AddressElement", ns)
-        prefecture = None
-        city = None
-        detail = None
-        for element in address_elements:
-            level = element.find("ns:Level", ns).text
-            if level == "prefecture":
-                prefecture = YDF.Feature.Prefecture(
-                    name=element.find("ns:Name", ns).text,
-                    kana=element.find("ns:Kana", ns).text,
-                    code=(
-                        element.find("ns:Code", ns).text
-                        if element.find("ns:Code", ns) is not None
-                        else None
-                    ),
-                )
-            elif level == "city":
-                city = YDF.Feature.City(
-                    name=element.find("ns:Name", ns).text,
-                    kana=element.find("ns:Kana", ns).text,
-                    code=(
-                        element.find("ns:Code", ns).text
-                        if element.find("ns:Code", ns) is not None
-                        else None
-                    ),
-                )
-            else:
-                detail = YDF.Feature.Detail(
-                    name=element.find("ns:Name", ns).text,
-                    kana=element.find("ns:Kana", ns).text,
-                    code=(
-                        element.find("ns:Code", ns).text
-                        if element.find("ns:Code", ns) is not None
-                        else None
-                    ),
-                )
+        first, second, *remaining = address_elements
+        prefecture = YDF.Feature.Prefecture(
+            name=first.find("ns:Name", ns).text,
+            kana=first.find("ns:Kana", ns).text,
+            code=(
+                first.find("ns:Code", ns).text
+                if first.find("ns:Code", ns) is not None
+                else None
+            ),
+        )
+        city = YDF.Feature.City(
+            name=second.find("ns:Name", ns).text,
+            kana=second.find("ns:Kana", ns).text,
+            code=(
+                second.find("ns:Code", ns).text
+                if second.find("ns:Code", ns) is not None
+                else None
+            ),
+        )
+        detail_elements = [
+            {
+                "name": element.find("ns:Name", ns).text,
+                "kana": element.find("ns:Kana", ns).text,
+                "code": (
+                    element.find("ns:Code", ns).text
+                    if element.find("ns:Code", ns)
+                    else None
+                ),
+            }
+            for element in remaining
+        ]
+        detail = YDF.Feature.Detail(
+            name=", ".join(
+                [elem["name"] for elem in detail_elements if elem["name"] is not None]
+            ),
+            kana=", ".join(
+                [elem["kana"] for elem in detail_elements if elem["kana"] is not None]
+            ),
+            code=", ".join(
+                [elem["code"] for elem in detail_elements if elem["code"] is not None]
+            ),
+        )
 
         feature = YDF.Feature(
             geometry=geometry,
