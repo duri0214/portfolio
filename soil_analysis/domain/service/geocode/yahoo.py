@@ -9,7 +9,13 @@ from soil_analysis.domain.valueobject.geocoder import YDF
 
 class ReverseGeocoderService:
     @staticmethod
-    def fetch_xml(coords: GoogleMapCoords) -> str:
+    def get_ydf_from_coords(coords: GoogleMapCoords) -> YDF:
+        xml_str = ReverseGeocoderService._fetch_xml(coords)
+        ydf = ReverseGeocoderService._xml_to_ydf(xml_str)
+        return ydf
+
+    @staticmethod
+    def _fetch_xml(coords: GoogleMapCoords) -> str:
         params = {
             "lat": coords.latitude,
             "lon": coords.longitude,
@@ -26,7 +32,7 @@ class ReverseGeocoderService:
         return response.text
 
     @staticmethod
-    def xml_to_ydf(xml_str: str) -> YDF:
+    def _xml_to_ydf(xml_str: str) -> YDF:
         """
         Converts an XML string to a YDF (Yahoo Data Format) object.
 
