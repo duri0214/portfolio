@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List, Optional
 
 
 @dataclass
@@ -16,8 +15,7 @@ class YDF:
 
     @dataclass
     class ResultInfo:
-        """
-        Class to store information about a result.
+        """Class to store information about a result.
 
         Attributes:
             count (int): The count of results.
@@ -37,20 +35,30 @@ class YDF:
 
     @dataclass
     class Feature:
-        """
-        A class representing a feature.
+        """class Feature:
+
+        This class represents a feature with various attributes.
+
+        Args:
+            geometry (Feature.Geometry): The geometry of the feature.
+            country (Feature.Country): The country where the feature is located.
+            address_full (str): The full address of the feature.
+            prefecture (Optional[Feature.Prefecture]): The prefecture of the feature, if available.
+            city (Optional[Feature.City]): The city of the feature, if available.
+            detail (Optional[Feature.Detail]): The detail of the feature, if available.
 
         Attributes:
             geometry (Feature.Geometry): The geometry of the feature.
-            country (Feature.Country): The country of the feature.
-            address (str): The address of the feature.
-            address_elements (List[Feature.AddressElement]): The list of address elements of the feature.
+            country (Feature.Country): The country where the feature is located.
+            address_full (str): The full address of the feature.
+            prefecture (Optional[Feature.Prefecture]): The prefecture of the feature, if available.
+            city (Optional[Feature.City]): The city of the feature, if available.
+            detail (Optional[Feature.Detail]): The detail of the feature, if available.
         """
 
         @dataclass
         class Geometry:
-            """
-            Represents a geometric shape.
+            """a geometric shape
 
             Args:
                 type (str): The type of the geometric shape.
@@ -66,7 +74,7 @@ class YDF:
 
         @dataclass
         class Country:
-            """A class representing a country.
+            """a country
 
             Attributes:
                 code (str): The country code.
@@ -78,7 +86,7 @@ class YDF:
 
         @dataclass
         class AddressElement:
-            """Represents an element of an address.
+            """Represents an element of an address
 
             Attributes:
                 name (str): The name of the address element.
@@ -90,12 +98,35 @@ class YDF:
             name: str
             kana: str
             level: str
-            code: Optional[str]
+            code: str = None
+
+        @dataclass
+        class Prefecture(AddressElement):
+            """a prefecture"""
+
+            def __init__(self, name: str, kana: str, code: str = None):
+                super().__init__(name=name, kana=kana, level="prefecture", code=code)
+
+        @dataclass
+        class City(AddressElement):
+            """a city"""
+
+            def __init__(self, name: str, kana: str, code: str = None):
+                super().__init__(name=name, kana=kana, level="city", code=code)
+
+        @dataclass
+        class Detail(AddressElement):
+            """address detail"""
+
+            def __init__(self, name: str, kana: str, code: str = None):
+                super().__init__(name=name, kana=kana, level="detail", code=code)
 
         geometry: Geometry
         country: Country
-        address: str
-        address_elements: List[AddressElement]
+        address_full: str
+        prefecture: Prefecture
+        city: City
+        detail: Detail
 
     result_info: ResultInfo
     feature: Feature

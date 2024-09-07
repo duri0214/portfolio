@@ -93,9 +93,9 @@ class TestGetYdfFromCoords(TestCase):
         assert ydf.feature.country.code == "JP"
         assert ydf.feature.country.name == "日本"
 
-        assert ydf.feature.address == "東京都港区赤坂９丁目７－１"
+        assert ydf.feature.address_full == "東京都港区赤坂９丁目７－１"
 
-        assert ydf.feature.address_elements[0].name == "東京都"
-        assert ydf.feature.address_elements[0].kana == "とうきょうと"
-        assert ydf.feature.address_elements[0].level == "prefecture"
-        assert ydf.feature.address_elements[0].code == "13"
+        assert ydf.feature.prefecture.name == "東京都"
+        assert ydf.feature.prefecture.kana == "とうきょうと"
+        assert ydf.feature.prefecture.level == "prefecture"
+        assert ydf.feature.prefecture.code == "13"

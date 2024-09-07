@@ -74,28 +74,51 @@ class ReverseGeocoderService:
 
         address = feature_element.find("ns:Property/ns:Address", ns).text
 
-        address_elements_elements = feature_element.findall(
-            "ns:Property/ns:AddressElement", ns
-        )
-        address_elements = [
-            YDF.Feature.AddressElement(
-                name=element.find("ns:Name", ns).text,
-                kana=element.find("ns:Kana", ns).text,
-                level=element.find("ns:Level", ns).text,
-                code=(
-                    element.find("ns:Code", ns).text
-                    if element.find("ns:Code", ns) is not None
-                    else None
-                ),
-            )
-            for element in address_elements_elements
-        ]
+        address_elements = feature_element.findall("ns:Property/ns:AddressElement", ns)
+        prefecture = None
+        city = None
+        detail = None
+        for element in address_elements:
+            level = element.find("ns:Level", ns).text
+            if level == "prefecture":
+                prefecture = YDF.Feature.Prefecture(
+                    name=element.find("ns:Name", ns).text,
+                    kana=element.find("ns:Kana", ns).text,
+                    code=(
+                        element.find("ns:Code", ns).text
+                        if element.find("ns:Code", ns) is not None
+                        else None
+                    ),
+                )
+            elif level == "city":
+                city = YDF.Feature.City(
+                    name=element.find("ns:Name", ns).text,
+                    kana=element.find("ns:Kana", ns).text,
+                    code=(
+                        element.find("ns:Code", ns).text
+                        if element.find("ns:Code", ns) is not None
+                        else None
+                    ),
+                )
+            else:  # Assume everything else is a Detail
+                detail = YDF.Feature.Detail(
+                    name=element.find("ns:Name", ns).text,
+                    kana=element.find("ns:Kana", ns).text,
+                    code=(
+                        element.find("ns:Code", ns).text
+                        if element.find("ns:Code", ns) is not None
+                        else None
+                    ),
+                )
 
+        # Then while creating the YDF.Feature instance, we pass these directly
         feature = YDF.Feature(
             geometry=geometry,
             country=country,
-            address=address,
-            address_elements=address_elements,
+            address_full=address,  # renamed from 'address'
+            prefecture=prefecture,
+            city=city,
+            detail=detail,
         )
 
         return YDF(result_info=result_info, feature=feature)
