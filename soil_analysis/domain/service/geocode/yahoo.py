@@ -72,7 +72,7 @@ class ReverseGeocoderService:
             coordinates=geometry_element.find("ns:Coordinates", ns).text,
         )
 
-        address = feature_element.find("ns:Property/ns:Address", ns).text
+        address_full = feature_element.find("ns:Property/ns:Address", ns).text
 
         address_elements = feature_element.findall("ns:Property/ns:AddressElement", ns)
         prefecture = None
@@ -100,7 +100,7 @@ class ReverseGeocoderService:
                         else None
                     ),
                 )
-            else:  # Assume everything else is a Detail
+            else:
                 detail = YDF.Feature.Detail(
                     name=element.find("ns:Name", ns).text,
                     kana=element.find("ns:Kana", ns).text,
@@ -111,11 +111,10 @@ class ReverseGeocoderService:
                     ),
                 )
 
-        # Then while creating the YDF.Feature instance, we pass these directly
         feature = YDF.Feature(
             geometry=geometry,
             country=country,
-            address_full=address,  # renamed from 'address'
+            address_full=address_full,
             prefecture=prefecture,
             city=city,
             detail=detail,
