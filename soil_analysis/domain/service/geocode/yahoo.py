@@ -106,13 +106,13 @@ class ReverseGeocoderService:
             for element in remaining
         ]
         detail = YDF.Feature.Detail(
-            name=", ".join(
+            name="".join(
                 [elem["name"] for elem in detail_elements if elem["name"] is not None]
             ),
-            kana=", ".join(
+            kana="".join(
                 [elem["kana"] for elem in detail_elements if elem["kana"] is not None]
             ),
-            code=", ".join(
+            code="".join(
                 [elem["code"] for elem in detail_elements if elem["code"] is not None]
             ),
         )

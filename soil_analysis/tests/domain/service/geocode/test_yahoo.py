@@ -99,3 +99,12 @@ class TestGetYdfFromCoords(TestCase):
         assert ydf.feature.prefecture.kana == "とうきょうと"
         assert ydf.feature.prefecture.level == "prefecture"
         assert ydf.feature.prefecture.code == "13"
+
+        assert ydf.feature.city.name == "港区"
+        assert ydf.feature.city.kana == "みなとく"
+        assert ydf.feature.city.level == "city"
+        assert ydf.feature.city.code == "13103"
+
+        assert ydf.feature.detail.name == "赤坂９丁目７"
+        assert ydf.feature.detail.kana == "あかさか９ちょうめ７"
+        assert ydf.feature.detail.level == "detail"
