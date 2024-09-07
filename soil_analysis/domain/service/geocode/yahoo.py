@@ -4,7 +4,7 @@ import xml.etree.ElementTree as et
 import requests
 
 from soil_analysis.domain.valueobject.coords.googlemapcoords import GoogleMapCoords
-from soil_analysis.domain.valueobject.geocoder import YDF
+from soil_analysis.domain.valueobject.geocode.yahoo import YDF
 
 
 class ReverseGeocoderService:
