@@ -19,8 +19,8 @@
             <img src="{{ object.image.url }}" alt="Land Image">
         {% endif %}
         <ul>
-            <li>都道府県: {{ object.prefecture|default:"-" }}</li>
-            <li>住所: {{ object.location|default:"-" }}</li>
+            <li>都道府県: {{ object.jma_prefecture.name|default:"-" }}</li>
+            <li>市区町村: {{ object.jma_city.name|default:"-" }}</li>
             <li>緯度経度: {{ object.latlon|default:"-" }}</li>
             <li>作型: {{ object.cultivation_type|default:"-" }}</li>
             <li>オーナー: {{ object.owner.username|default:"-" }}</li>
