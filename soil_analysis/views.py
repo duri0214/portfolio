@@ -18,8 +18,10 @@ from django.views.generic import (
 
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.landrepository import LandRepository
+from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.landcandidateservice import LandCandidateService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
+from soil_analysis.domain.valueobject.coords.googlemapcoords import GoogleMapCoords
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (
     Company,
@@ -32,6 +34,7 @@ from soil_analysis.models import (
     LandBlock,
     SamplingOrder,
     RouteSuggestImport,
+    JmaCity,
 )
 
 
@@ -97,6 +100,26 @@ class LandCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.company_id = self.kwargs["company_id"]
+
+        lat_str, lon_str = form.instance.latlon.split(",")
+        lat = float(lat_str.strip())
+        lon = float(lon_str.strip())
+        form.instance.latlon = f"{lat},{lon}"
+
+        coords = GoogleMapCoords(latitude=lat, longitude=lon)
+        ydf = ReverseGeocoderService.get_ydf_from_coords(coords)
+
+        try:
+            jma_city = ReverseGeocoderService.get_jma_city(ydf)
+        except JmaCity.DoesNotExist:
+            messages.error(
+                self.request,
+                f"{ydf.feature.prefecture.name} {ydf.feature.city.name} が見つかりませんでした",
+            )
+            return super().form_invalid(form)
+
+        form.instance.jma_city = jma_city
+        form.instance.jma_prefecture = jma_city.jma_region.jma_prefecture
 
         return super().form_valid(form)
 
