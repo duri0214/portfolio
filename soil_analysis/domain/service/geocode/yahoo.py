@@ -5,14 +5,32 @@ import requests
 
 from soil_analysis.domain.valueobject.coords.googlemapcoords import GoogleMapCoords
 from soil_analysis.domain.valueobject.geocode.yahoo import YDF
+from soil_analysis.models import JmaCity
 
 
 class ReverseGeocoderService:
     @staticmethod
     def get_ydf_from_coords(coords: GoogleMapCoords) -> YDF:
+        """
+        Args:
+            coords: The GoogleMapCoords
+        Returns:
+            An instance of the YDF obtained from the GoogleMapCoords
+        """
         xml_str = ReverseGeocoderService._fetch_xml(coords)
-        ydf = ReverseGeocoderService._xml_to_ydf(xml_str)
-        return ydf
+        return ReverseGeocoderService._xml_to_ydf(xml_str)
+
+    @staticmethod
+    def get_jma_city(ydf: YDF) -> JmaCity:
+        """
+        Args:
+            ydf: The YDF
+        Returns:
+            JmaCity: The JmaCity object via city name in the YDF object
+        """
+        return JmaCity.objects.select_related("jma_region__jma_prefecture").get(
+            name=ydf.feature.city.name
+        )
 
     @staticmethod
     def _fetch_xml(coords: GoogleMapCoords) -> str:
