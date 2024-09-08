@@ -38,8 +38,6 @@ class LandCreateForm(forms.ModelForm):
         model = Land
         fields = (
             "name",
-            "prefecture",
-            "location",
             "latlon",
             "area",
             "image",
@@ -49,20 +47,6 @@ class LandCreateForm(forms.ModelForm):
         )
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control", "tabindex": "1"}),
-            "prefecture": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "tabindex": "2",
-                    "placeholder": "例: 東京都",
-                }
-            ),
-            "location": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "tabindex": "3",
-                    "placeholder": "例: 港区芝公園４丁目２−８",
-                }
-            ),
             "latlon": forms.TextInput(
                 attrs={
                     "class": "form-control",
@@ -88,8 +72,6 @@ class LandCreateForm(forms.ModelForm):
         }
         labels = {
             "name": "圃場名",
-            "prefecture": "都道府県",
-            "location": "住所",
             "latlon": "緯度・経度",
             "area": "圃場面積（㎡）",
             "image": "画像",
