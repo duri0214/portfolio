@@ -87,6 +87,11 @@ class LandCreateForm(forms.ModelForm):
                 "「あの圃場」を含む圃場名は登録できなくなりました（あいまい）"
             )
 
+        if Land.objects.filter(name=name).exists():
+            raise forms.ValidationError(
+                "この名前の圃場は既に存在します。別の名前を選択してください"
+            )
+
         return name
 
 
