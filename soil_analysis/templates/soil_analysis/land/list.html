@@ -36,8 +36,8 @@
                 <a href="{% url 'soil:land_detail' a_land.company.pk a_land.pk %}"><h5
                         class="card-title">{{ a_land.name }}</h5></a>
                 <ul class="card-text">
-                    <li>都道府県: {{ a_land.prefecture|default:"-" }}</li>
-                    <li>住所: {{ a_land.location|default:"-" }}</li>
+                    <li>都道府県: {{ a_land.jma_prefecture.name|default:"-" }}</li>
+                    <li>市区町村: {{ a_land.jma_city.name|default:"-" }}</li>
                     <li>緯度経度: {% if a_land.latlon %}<a href="https://www.google.co.jp/maps/@{{ a_land.latlon }},17z"
                                                            target="_blank">{{ a_land.latlon }}</a>{% else %}-{% endif %}
                     </li>
