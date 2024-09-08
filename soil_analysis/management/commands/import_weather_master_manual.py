@@ -1,3 +1,7 @@
+import os
+import shutil
+
+import requests
 from django.core.management.base import BaseCommand
 
 from soil_analysis.domain.valueobject.weather.jma import JmaConstWeatherCode
@@ -768,6 +772,24 @@ class Command(BaseCommand):
                 "SNOW AND THUNDER",
             ],
         }
+
+        # Download svg
+        url_base = "https://www.jma.go.jp/bosai/forecast/img/"
+        download_dir = os.path.expanduser("~/Downloads/images/")
+        os.makedirs(download_dir, exist_ok=True)
+        for code in data.keys():
+            svg_name = f"{code}.svg"
+            url = f"{url_base}{svg_name}"
+
+            response = requests.get(url, stream=True)
+
+            if response.status_code == 200:
+                with open(os.path.join(download_dir, svg_name), "wb") as f:
+                    response.raw.decode_content = True
+                    shutil.copyfileobj(response.raw, f)
+                print(f"Downloaded {url}")
+            else:
+                print(f"Error downloading {url}")
 
         # Clear
         JmaWeatherCode.objects.all().delete()
