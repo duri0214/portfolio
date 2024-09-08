@@ -71,13 +71,13 @@ class LandCreateForm(forms.ModelForm):
             "owner": forms.Select(attrs={"class": "form-control", "tabindex": "9"}),
         }
         labels = {
-            "name": "圃場名",
-            "latlon": "緯度・経度",
+            "name": "圃場名*",
+            "latlon": "緯度・経度*",
             "area": "圃場面積（㎡）",
             "image": "画像",
             "remark": "備考",
-            "cultivation_type": "栽培タイプ",
-            "owner": "所有者",
+            "cultivation_type": "栽培タイプ*",
+            "owner": "所有者*",
         }
 
     def clean_name(self):
