@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 
@@ -5,9 +6,10 @@ from django.contrib import messages
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import call_command
 from django.db.models import Count
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import (
     ListView,
     CreateView,
@@ -127,6 +129,38 @@ class LandCreateView(CreateView):
         company = Company(pk=self.kwargs["company_id"])
         return reverse(
             "soil:land_detail", kwargs={"company_id": company.id, "pk": self.object.pk}
+        )
+
+
+class GetLocationInfoView(View):
+    """
+    フォームで latlon 入力が終了した際に非同期で情報を取得
+    """
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        data = json.loads(request.body.decode("utf-8"))
+        lat_str, lon_str = data.get("latlon").split(",")
+        lat = float(lat_str.strip())
+        lon = float(lon_str.strip())
+
+        coords = GoogleMapCoords(latitude=lat, longitude=lon)
+        ydf = ReverseGeocoderService.get_ydf_from_coords(coords)
+
+        try:
+            jma_city = ReverseGeocoderService.get_jma_city(ydf)
+        except JmaCity.DoesNotExist:
+            return JsonResponse(
+                {
+                    "error": f"{ydf.feature.prefecture.name} {ydf.feature.city.name} が見つかりませんでした"
+                }
+            )
+
+        return JsonResponse(
+            {
+                "jma_city": jma_city.name,
+                "jma_prefecture": jma_city.jma_region.jma_prefecture.name,
+            }
         )
 
 

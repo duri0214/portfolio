@@ -27,5 +27,28 @@
             <button type="submit" class="btn btn-outline-primary mb-3">送信</button>
         </form>
     </div>
+    <script>
+        {# latlon のフォームが focus out(blur) したときに発火 #}
+        document.getElementById("id_latlon").addEventListener("blur", function () {
+            fetch("{% url 'soil:land_location_info' %}", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': Cookies.get('csrftoken')
+                },
+                body: JSON.stringify({latlon: this.value})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        // TODO: ドロップダウンにして自動的にセレクト（うまくいかなかったら未選択にする）
+                        document.getElementById("id_jma_city").value = data.jma_city;
+                        document.getElementById("id_jma_prefecture").value = data.jma_prefecture;
+                    }
+                });
+        });
+    </script>
 {% endblock %}
 

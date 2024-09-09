@@ -39,6 +39,8 @@ class LandCreateForm(forms.ModelForm):
         fields = (
             "name",
             "latlon",
+            "jma_prefecture",
+            "jma_city",
             "area",
             "image",
             "remark",
@@ -50,8 +52,22 @@ class LandCreateForm(forms.ModelForm):
             "latlon": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "tabindex": "4",
+                    "tabindex": "2",
                     "placeholder": "例: 35.658581,139.745433",
+                }
+            ),
+            "jma_prefecture": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "tabindex": "3",
+                    "placeholder": "例: 兵庫県",
+                }
+            ),
+            "jma_city": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "tabindex": "4",
+                    "placeholder": "例: 姫路市",
                 }
             ),
             "area": forms.TextInput(
@@ -73,6 +89,8 @@ class LandCreateForm(forms.ModelForm):
         labels = {
             "name": "圃場名*",
             "latlon": "緯度・経度*",
+            "jma_prefecture": "都道府県*",
+            "jma_city": "市区町村*",
             "area": "圃場面積（㎡）",
             "image": "画像",
             "remark": "備考",

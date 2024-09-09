@@ -25,6 +25,11 @@ urlpatterns = [
         name="land_create",
     ),
     path(
+        "api/land/location/info",
+        views.GetLocationInfoView.as_view(),
+        name="land_location_info",
+    ),
+    path(
         "company/<int:company_id>/land/<int:pk>/detail",
         views.LandDetailView.as_view(),
         name="land_detail",
