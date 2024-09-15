@@ -104,9 +104,6 @@ class LandCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.company_id = self.kwargs["company_id"]
-        # TODO: フォームエラー「正しく選択してください。選択したものは候補にありません。」が出てしまう
-        #   のでここにくるまでの間にエラーハンドリングしてノーエラーで通過するようにする
-        #   現時点ではlatlonで特定できなかったらドロップダウンで手入力させるマニュアル対応中
         return super().form_valid(form)
 
     def get_success_url(self):
