@@ -29,12 +29,33 @@
     </div>
     <script>
         function clearDropdown(selectElement) {
-            selectElement.innerHTML = ''
             const defaultOption = document.createElement('option')
             defaultOption.value = ""
             defaultOption.text = "選択してください"
             defaultOption.selected = true
             selectElement.appendChild(defaultOption)
+        }
+
+        function setDropdownList(optionsData, selectElement) {
+            optionsData.map(item => {
+                const option = document.createElement('option')
+                option.value = item.id
+                option.text = item.name
+                selectElement.appendChild(option)
+            })
+        }
+
+        /**
+         * 都道府省のデータをフェッチし、それに応じて都道府県ドロップダウンオプションを設定します。
+         */
+        async function fetchPrefectures() {
+            const prefectureSelect = document.getElementById("id_jma_prefecture")
+            prefectureSelect.innerHTML = ''
+            clearDropdown(prefectureSelect)
+
+            const response = await fetch('{% url 'soil:prefectures' %}')
+            const data = await response.json()
+            setDropdownList(data.prefectures, prefectureSelect)
         }
 
         /**
@@ -45,21 +66,31 @@
          */
         async function fetchCities(prefectureId) {
             const citySelect = document.getElementById("id_jma_city")
+            citySelect.innerHTML = ''
             clearDropdown(citySelect)
 
             if (prefectureId) {
-                const response = await fetch(`/soil_analysis/prefecture/${prefectureId}/cities`, {
-                    method: "GET",
-                })
+                const response = await fetch(`/soil_analysis/prefecture/${prefectureId}/cities`)
                 const data = await response.json()
-
-                data.cities.map(city => {
-                    const cityOption = document.createElement('option')
-                    cityOption.value = city.id
-                    cityOption.text = city.name
-                    citySelect.appendChild(cityOption)
-                })
+                setDropdownList(data.cities, citySelect)
             }
+        }
+
+        /**
+         * 土地の緯度経度に基づいてその位置情報を取得します
+         *
+         * @param {string} latlon - 緯度経度のペア。
+         */
+        async function fetchLandLocationInfo(latlon) {
+            const response = await fetch("{% url 'soil:land_location_info' %}", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': Cookies.get('csrftoken')
+                },
+                body: JSON.stringify({latlon})
+            })
+            return response.json()
         }
 
         document.getElementById("id_latlon").addEventListener("change", async function () {
@@ -68,33 +99,14 @@
             const citySelect = document.getElementById("id_jma_city")
 
             if (latlon) {
-                const response = await fetch("{% url 'soil:land_location_info' %}", {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': Cookies.get('csrftoken')
-                    },
-                    body: JSON.stringify({latlon})
-                })
-                const data = await response.json()
-
-                if (data.error) {
-                    alert(data.error)
+                const landLocationInfo = await fetchLandLocationInfo(latlon)
+                if (landLocationInfo.error) {
+                    alert(landLocationInfo.error)
                 } else {
-                    const prefecturesResponse = await fetch('{% url 'soil:prefectures' %}')
-                    const prefecturesData = await prefecturesResponse.json()
-                    prefectureSelect.innerHTML = ''
-
-                    prefecturesData.prefectures.map(pref => {
-                        const prefOption = document.createElement('option')
-                        prefOption.value = pref.id
-                        prefOption.text = pref.name
-                        prefectureSelect.appendChild(prefOption)
-                    })
-
-                    prefectureSelect.value = data.jma_prefecture_id
-                    await fetchCities(data.jma_prefecture_id)
-                    citySelect.value = data.jma_city_id
+                    await fetchPrefectures()
+                    prefectureSelect.value = landLocationInfo.jma_prefecture_id
+                    await fetchCities(landLocationInfo.jma_prefecture_id)
+                    citySelect.value = landLocationInfo.jma_city_id
                 }
             } else {
                 await fetchCities(undefined)
@@ -102,7 +114,8 @@
         })
 
         document.getElementById("id_jma_prefecture").addEventListener("change", function () {
-            fetchCities(this.value)
+            const prefectureId = this.value
+            fetchCities(prefectureId)
         })
     </script>
 {% endblock %}
