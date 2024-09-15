@@ -92,6 +92,7 @@ class LandCreateForm(forms.ModelForm):
                 attrs={"class": "form-control", "tabindex": "8"}
             ),
             "owner": forms.Select(attrs={"class": "form-control", "tabindex": "9"}),
+            "company": forms.HiddenInput(),
         }
         labels = {
             "name": "圃場名*",
@@ -106,13 +107,14 @@ class LandCreateForm(forms.ModelForm):
         }
 
     def clean_name(self):
-        name = self.cleaned_data["name"]
-        if "あの圃場" in name:
+        name = self.cleaned_data.get("name")
+        company_id = self.data.get("company-id")
+        if "あの" in name:
             raise forms.ValidationError(
-                "「あの圃場」を含む圃場名は登録できなくなりました（あいまい）"
+                "「あの」を含む圃場名は登録できなくなりました（あいまい）"
             )
 
-        if Land.objects.filter(name=name).exists():
+        if Land.objects.filter(name=name, company_id=company_id).exists():
             raise forms.ValidationError(
                 "この名前の圃場は既に存在します。別の名前を選択してください"
             )
