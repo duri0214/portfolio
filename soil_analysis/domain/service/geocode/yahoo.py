@@ -49,10 +49,7 @@ class ReverseGeocoderService:
 
         return (
             JmaCity.objects.select_related("jma_region__jma_prefecture")
-            .filter(
-                jma_region__jma_prefecture__name__contains=ydf.feature.prefecture.name,
-                name__contains=city_name,
-            )
+            .filter(name__contains=city_name)
             .first()
         )
 
