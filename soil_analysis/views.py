@@ -97,9 +97,7 @@ class LandCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        company = Company(pk=self.kwargs["company_id"])
-        context["company"] = company
-
+        context["company"] = Company(pk=self.kwargs["company_id"])
         return context
 
     def form_valid(self, form):
