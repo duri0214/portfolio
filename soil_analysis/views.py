@@ -116,8 +116,7 @@ class LandCreateView(CreateView):
         )
 
 
-# TODO: Getを削除
-class GetLocationInfoView(View):
+class LocationInfoView(View):
     """
     圃場新規作成時のフォームで latlon 入力が終了した際に非同期で情報を取得
     """
