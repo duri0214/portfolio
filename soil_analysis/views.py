@@ -78,7 +78,7 @@ class LandListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        company = Company(pk=self.kwargs["company_id"])
+        company = Company.objects.get(pk=self.kwargs["company_id"])
         land_repository = LandRepository(company)
         land_ledger_map = {
             land: land_repository.read_land_ledgers(land)

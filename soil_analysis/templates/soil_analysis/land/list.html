@@ -14,7 +14,8 @@
     </nav>
 {% endblock %}
 {% block content %}
-    <a class="btn btn-outline-primary mb-3" href="{% url 'soil:land_create' company.id %}"
+    <h2 class="mb-4">{{ company.name }}</h2>
+    <a class="btn btn-outline-primary" href="{% url 'soil:land_create' company.id %}"
        role="button">＋圃場の追加</a>
     <img width="50" src="{% static 'soil_analysis/images/weather/svg/100.svg' %}" alt="Weather Image">
     {% for a_land in object_list %}
