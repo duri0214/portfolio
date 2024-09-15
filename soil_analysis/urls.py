@@ -30,6 +30,11 @@ urlpatterns = [
         name="land_location_info",
     ),
     path(
+        "prefecture/<int:prefecture_id>/cities",
+        views.PrefectureCitiesView.as_view(),
+        name="prefecture_cities",
+    ),
+    path(
         "company/<int:company_id>/land/<int:pk>/detail",
         views.LandDetailView.as_view(),
         name="land_detail",

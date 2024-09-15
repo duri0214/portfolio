@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ClearableFileInput
 
-from .models import Company, Land
+from .models import Company, Land, JmaPrefecture, JmaCity
 
 
 class CompanyCreateForm(forms.ModelForm):
@@ -34,6 +34,13 @@ class CompanyCreateForm(forms.ModelForm):
 
 
 class LandCreateForm(forms.ModelForm):
+    jma_prefecture = forms.ModelChoiceField(
+        queryset=JmaPrefecture.objects.all(), empty_label="選択してください"
+    )
+    jma_city = forms.ModelChoiceField(
+        queryset=JmaCity.objects.all(), empty_label="選択してください"
+    )
+
     class Meta:
         model = Land
         fields = (
@@ -56,14 +63,14 @@ class LandCreateForm(forms.ModelForm):
                     "placeholder": "例: 35.658581,139.745433",
                 }
             ),
-            "jma_prefecture": forms.TextInput(
+            "jma_prefecture": forms.Select(
                 attrs={
                     "class": "form-control",
                     "tabindex": "3",
                     "placeholder": "例: 兵庫県",
                 }
             ),
-            "jma_city": forms.TextInput(
+            "jma_city": forms.Select(
                 attrs={
                     "class": "form-control",
                     "tabindex": "4",

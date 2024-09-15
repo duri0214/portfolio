@@ -41,14 +41,43 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        alert(data.error);
+                        alert(data.error)
                     } else {
                         // TODO: ドロップダウンにして自動的にセレクト（うまくいかなかったら未選択にする）
                         document.getElementById("id_jma_city").value = data.jma_city;
                         document.getElementById("id_jma_prefecture").value = data.jma_prefecture;
                     }
-                });
-        });
+                })
+        })
+
+        document.getElementById("id_jma_prefecture").addEventListener("change", function () {
+            const prefectureId = this.value
+            fetch(`/soil_analysis/prefecture/${prefectureId}/cities`, {
+                method: "GET",
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // 市区町村選択のオプションをクリア
+                    const citySelect = document.getElementById("id_jma_city")
+                    citySelect.innerHTML = ''
+
+                    // '選択してください' を選択肢として追加
+                    const defaultOption = document.createElement('option')
+                    defaultOption.value = ""
+                    defaultOption.text = "選択してください"
+                    defaultOption.selected = true
+                    citySelect.appendChild(defaultOption)
+
+                    // 取得した各市区町村を選択肢として追加
+                    const cities = data.cities
+                    cities.forEach(function (city) {
+                        const cityOption = document.createElement('option')
+                        cityOption.value = city.id
+                        cityOption.text = city.name
+                        citySelect.appendChild(cityOption)
+                    })
+                })
+        })
     </script>
 {% endblock %}
 

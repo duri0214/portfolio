@@ -37,6 +37,7 @@ from soil_analysis.models import (
     SamplingOrder,
     RouteSuggestImport,
     JmaCity,
+    JmaRegion,
 )
 
 
@@ -102,27 +103,9 @@ class LandCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.company_id = self.kwargs["company_id"]
-
-        lat_str, lon_str = form.instance.latlon.split(",")
-        lat = float(lat_str.strip())
-        lon = float(lon_str.strip())
-        form.instance.latlon = f"{lat},{lon}"
-
-        coords = GoogleMapCoords(latitude=lat, longitude=lon)
-        ydf = ReverseGeocoderService.get_ydf_from_coords(coords)
-
-        try:
-            jma_city = ReverseGeocoderService.get_jma_city(ydf)
-        except JmaCity.DoesNotExist:
-            messages.error(
-                self.request,
-                f"{ydf.feature.prefecture.name} {ydf.feature.city.name} が見つかりませんでした",
-            )
-            return super().form_invalid(form)
-
-        form.instance.jma_city = jma_city
-        form.instance.jma_prefecture = jma_city.jma_region.jma_prefecture
-
+        # TODO: フォームエラー「正しく選択してください。選択したものは候補にありません。」が出てしまう
+        #   のでここにくるまでの間にエラーハンドリングしてノーエラーで通過するようにする
+        #   現時点ではlatlonで特定できなかったらドロップダウンで手入力させるマニュアル対応中
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -162,6 +145,20 @@ class GetLocationInfoView(View):
                 "jma_prefecture": jma_city.jma_region.jma_prefecture.name,
             }
         )
+
+
+class PrefectureCitiesView(View):
+    """
+    圃場新規作成時のフォームで prefecture がonChangeした際に非同期で、該当するcityを取得
+    """
+
+    @staticmethod
+    def get(request, prefecture_id):
+        regions = JmaRegion.objects.filter(jma_prefecture__id=prefecture_id)
+        cities = JmaCity.objects.filter(jma_region__in=regions)
+
+        data = {"cities": list(cities.values("id", "name"))}
+        return JsonResponse(data)
 
 
 class LandDetailView(DetailView):

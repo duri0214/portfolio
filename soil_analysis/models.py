@@ -31,6 +31,9 @@ class JmaPrefecture(models.Model):
     jma_area = models.ForeignKey(JmaArea, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.name
+
 
 class JmaRegion(models.Model):
     """
@@ -62,6 +65,9 @@ class JmaCity(models.Model):
     code = models.CharField(unique=True, max_length=7)
     jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 
 
 class JmaAmedas(models.Model):
