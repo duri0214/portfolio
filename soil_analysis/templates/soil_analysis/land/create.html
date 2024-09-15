@@ -28,10 +28,47 @@
         </form>
     </div>
     <script>
-        document.getElementById("id_latlon").addEventListener("change", function () {
+        function clearDropdown(selectElement) {
+            selectElement.innerHTML = ''
+            const defaultOption = document.createElement('option')
+            defaultOption.value = ""
+            defaultOption.text = "選択してください"
+            defaultOption.selected = true
+            selectElement.appendChild(defaultOption)
+        }
+
+        /**
+         * 指定された都道府県 ID に基づいて都市データを取得し、それに応じて都市ドロップダウン オプションを設定します
+         * 都道府県 ID が指定されていない場合、都市のドロップダウンはクリアされます
+         *
+         * @param {string} prefectureId - The ID of the prefecture.
+         */
+        async function fetchCities(prefectureId) {
+            const citySelect = document.getElementById("id_jma_city")
+            clearDropdown(citySelect)
+
+            if (prefectureId) {
+                const response = await fetch(`/soil_analysis/prefecture/${prefectureId}/cities`, {
+                    method: "GET",
+                })
+                const data = await response.json()
+
+                data.cities.map(city => {
+                    const cityOption = document.createElement('option')
+                    cityOption.value = city.id
+                    cityOption.text = city.name
+                    citySelect.appendChild(cityOption)
+                })
+            }
+        }
+
+        document.getElementById("id_latlon").addEventListener("change", async function () {
             const latlon = this.value
+            const prefectureSelect = document.getElementById("id_jma_prefecture")
+            const citySelect = document.getElementById("id_jma_city")
+
             if (latlon) {
-                fetch("{% url 'soil:land_location_info' %}", {
+                const response = await fetch("{% url 'soil:land_location_info' %}", {
                     method: "POST",
                     headers: {
                         'Content-Type': 'application/json',
@@ -39,59 +76,33 @@
                     },
                     body: JSON.stringify({latlon})
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            alert(data.error)
-                        } else {
-                            // TODO: ドロップダウンにして自動的にセレクト（うまくいかなかったら未選択にする）
-                            document.getElementById("id_jma_city").value = data.jma_city_id
-                            document.getElementById("id_jma_prefecture").value = data.jma_prefecture_id
-                        }
-                    })
-            } else {
-                // 市区町村選択のオプションをクリア
-                const prefectureSelect = document.getElementById("id_jma_prefecture")
-                const citySelect = document.getElementById("id_jma_city")
-                citySelect.innerHTML = ''
+                const data = await response.json()
 
-                // '選択してください' を選択肢として追加
-                const defaultOption = document.createElement('option')
-                defaultOption.value = ""
-                defaultOption.text = "選択してください"
-                defaultOption.selected = true
-                prefectureSelect.appendChild(defaultOption)
-                citySelect.appendChild(defaultOption)
+                if (data.error) {
+                    alert(data.error)
+                } else {
+                    const prefecturesResponse = await fetch('{% url 'soil:prefectures' %}')
+                    const prefecturesData = await prefecturesResponse.json()
+                    prefectureSelect.innerHTML = ''
+
+                    prefecturesData.prefectures.map(pref => {
+                        const prefOption = document.createElement('option')
+                        prefOption.value = pref.id
+                        prefOption.text = pref.name
+                        prefectureSelect.appendChild(prefOption)
+                    })
+
+                    prefectureSelect.value = data.jma_prefecture_id
+                    await fetchCities(data.jma_prefecture_id)
+                    citySelect.value = data.jma_city_id
+                }
+            } else {
+                await fetchCities(undefined)
             }
         })
 
         document.getElementById("id_jma_prefecture").addEventListener("change", function () {
-            const prefectureId = this.value
-            fetch(`/soil_analysis/prefecture/${prefectureId}/cities`, {
-                method: "GET",
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // 市区町村選択のオプションをクリア
-                    const citySelect = document.getElementById("id_jma_city")
-                    citySelect.innerHTML = ''
-
-                    // '選択してください' を選択肢として追加
-                    const defaultOption = document.createElement('option')
-                    defaultOption.value = ""
-                    defaultOption.text = "選択してください"
-                    defaultOption.selected = true
-                    citySelect.appendChild(defaultOption)
-
-                    // 取得した各市区町村を選択肢として追加
-                    const cities = data.cities
-                    cities.forEach(function (city) {
-                        const cityOption = document.createElement('option')
-                        cityOption.value = city.id
-                        cityOption.text = city.name
-                        citySelect.appendChild(cityOption)
-                    })
-                })
+            fetchCities(this.value)
         })
     </script>
 {% endblock %}

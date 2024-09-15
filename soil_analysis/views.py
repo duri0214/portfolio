@@ -38,6 +38,7 @@ from soil_analysis.models import (
     RouteSuggestImport,
     JmaCity,
     JmaRegion,
+    JmaPrefecture,
 )
 
 
@@ -115,6 +116,7 @@ class LandCreateView(CreateView):
         )
 
 
+# TODO: Getを削除
 class GetLocationInfoView(View):
     """
     圃場新規作成時のフォームで latlon 入力が終了した際に非同期で情報を取得
@@ -145,6 +147,15 @@ class GetLocationInfoView(View):
                 "jma_prefecture_id": jma_city.jma_region.jma_prefecture.id,
             }
         )
+
+
+class PrefecturesView(View):
+
+    @staticmethod
+    def get(request):
+        prefectures = JmaPrefecture.objects.all()
+        data = {"prefectures": list(prefectures.values("id", "name"))}
+        return JsonResponse(data)
 
 
 class PrefectureCitiesView(View):

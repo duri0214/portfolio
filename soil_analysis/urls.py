@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.urls import path
 
 from . import views
+from .views import PrefecturesView
 
 app_name = "soil"
 urlpatterns = [
@@ -24,6 +25,7 @@ urlpatterns = [
         views.LandCreateView.as_view(),
         name="land_create",
     ),
+    path("prefectures/", PrefecturesView.as_view(), name="prefectures"),
     path(
         "api/land/location/info",
         views.GetLocationInfoView.as_view(),
