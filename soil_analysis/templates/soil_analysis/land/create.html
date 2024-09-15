@@ -28,8 +28,7 @@
         </form>
     </div>
     <script>
-        {# latlon のフォームが focus out(blur) したときに発火 #}
-        document.getElementById("id_latlon").addEventListener("blur", function () {
+        document.getElementById("id_latlon").addEventListener("change", function () {
             fetch("{% url 'soil:land_location_info' %}", {
                 method: "POST",
                 headers: {
