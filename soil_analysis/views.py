@@ -117,7 +117,7 @@ class LandCreateView(CreateView):
 
 class GetLocationInfoView(View):
     """
-    フォームで latlon 入力が終了した際に非同期で情報を取得
+    圃場新規作成時のフォームで latlon 入力が終了した際に非同期で情報を取得
     """
 
     @staticmethod
@@ -141,8 +141,8 @@ class GetLocationInfoView(View):
 
         return JsonResponse(
             {
-                "jma_city": jma_city.name,
-                "jma_prefecture": jma_city.jma_region.jma_prefecture.name,
+                "jma_city_id": jma_city.id,
+                "jma_prefecture_id": jma_city.jma_region.jma_prefecture.id,
             }
         )
 

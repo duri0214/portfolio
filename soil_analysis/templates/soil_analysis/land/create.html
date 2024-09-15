@@ -44,8 +44,8 @@
                         alert(data.error)
                     } else {
                         // TODO: ドロップダウンにして自動的にセレクト（うまくいかなかったら未選択にする）
-                        document.getElementById("id_jma_city").value = data.jma_city;
-                        document.getElementById("id_jma_prefecture").value = data.jma_prefecture;
+                        document.getElementById("id_jma_city").value = data.jma_city_id
+                        document.getElementById("id_jma_prefecture").value = data.jma_prefecture_id
                     }
                 })
         })
