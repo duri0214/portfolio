@@ -8,13 +8,12 @@
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:company_list' %}">Company list</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'soil:company_list' %}">{{ company.name }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">Land list</li>
         </ol>
     </nav>
 {% endblock %}
 {% block content %}
-    <h2 class="mb-4">{{ company.name }}</h2>
     <a class="btn btn-outline-primary" href="{% url 'soil:land_create' company.id %}"
        role="button">＋圃場の追加</a>
     <img width="50" src="{% static 'soil_analysis/images/weather/svg/100.svg' %}" alt="Weather Image">
