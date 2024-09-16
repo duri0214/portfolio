@@ -23,13 +23,13 @@
         {% endif %}
     <div class="col-sm-6">
         <div class="card">
-            {% if a_land.image %}
-                <img src="{{ a_land.image.url }}" width="100%" height="180" alt="Land Image">
-            {% else %}
-                <div style="background-color: #868e96; width: 100%; height: 180px; display: flex; justify-content: center; align-items: center;">
-                    <p style="color: #fff;">Now Printing</p>
-                </div>
-            {% endif %}
+            <div class="image-placeholder">
+                {% if a_land.image %}
+                    <img src="{{ a_land.image.url }}" alt="Land Image">
+                {% else %}
+                    <p>Now Printing</p>
+                {% endif %}
+            </div>
             <div class="card-body">
                 <a href="{% url 'soil:land_detail' a_land.company.pk a_land.pk %}"><h5
                         class="card-title">{{ a_land.name }}</h5></a>
