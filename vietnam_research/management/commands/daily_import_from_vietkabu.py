@@ -25,11 +25,12 @@ def convert_to_datetime(target_text: str) -> datetime:
 
     Returns: 2019-08-16 17:00:00
     """
-    extracted = re.search("(?<=（).*?(?=VNT）)", target_text)
+    extracted = re.search(r"\d{4}/\d{2}/\d{2} \d{2}:\d{2}", target_text)
+    print(f"{extracted=}")
     if not extracted:
-        raise ValueError("`XXXX証取株価（YYYY/MM/DD VNT）`形式が入力されませんでした")
+        raise ValueError("`YYYY/MM/DD HH:MM`形式が入力されませんでした")
 
-    date_str = f"{extracted.group()} 17:00:00"
+    date_str = f"{extracted.group()}:00"
     return datetime.strptime(date_str, "%Y/%m/%d %H:%M:%S")
 
 
@@ -65,7 +66,8 @@ class Command(BaseCommand):
 
             # 市場情報の更新日: 2019-08-16 17:00:00
             tag_th_string_type = soup.find("th", class_="table_list_left")
-            transaction_date = convert_to_datetime(tag_th_string_type.text.strip())
+            tag_b = tag_th_string_type.find("b")
+            transaction_date = convert_to_datetime(tag_b.text.strip())
 
             # 当日データがあったら処理しない
             if Industry.objects.filter(
