@@ -63,6 +63,7 @@ class LandCreateForm(forms.ModelForm):
                     "placeholder": "例: 35.658581,139.745433",
                 }
             ),
+            # TODO: なぜか bootstrap が反映されない（react化で解決したほうがよさそう）
             "jma_prefecture": forms.Select(
                 attrs={
                     "class": "form-control",
@@ -70,6 +71,7 @@ class LandCreateForm(forms.ModelForm):
                     "placeholder": "例: 兵庫県",
                 }
             ),
+            # TODO: なぜか bootstrap が反映されない（react化で解決したほうがよさそう）
             "jma_city": forms.Select(
                 attrs={
                     "class": "form-control",
