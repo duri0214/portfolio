@@ -102,6 +102,8 @@ class LandCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.company_id = self.kwargs["company_id"]
+        lat, lon = form.instance.latlon.split(", ")
+        form.instance.latlon = ",".join([lat, lon])
         return super().form_valid(form)
 
     def get_success_url(self):
