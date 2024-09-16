@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 
@@ -5,9 +6,10 @@ from django.contrib import messages
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import call_command
 from django.db.models import Count
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import (
     ListView,
     CreateView,
@@ -18,8 +20,10 @@ from django.views.generic import (
 
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.landrepository import LandRepository
+from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.landcandidateservice import LandCandidateService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
+from soil_analysis.domain.valueobject.coords.googlemapcoords import GoogleMapCoords
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (
     Company,
@@ -32,6 +36,9 @@ from soil_analysis.models import (
     LandBlock,
     SamplingOrder,
     RouteSuggestImport,
+    JmaCity,
+    JmaRegion,
+    JmaPrefecture,
 )
 
 
@@ -71,7 +78,7 @@ class LandListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        company = Company(pk=self.kwargs["company_id"])
+        company = Company.objects.get(pk=self.kwargs["company_id"])
         land_repository = LandRepository(company)
         land_ledger_map = {
             land: land_repository.read_land_ledgers(land)
@@ -90,14 +97,11 @@ class LandCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        company = Company(pk=self.kwargs["company_id"])
-        context["company"] = company
-
+        context["company"] = Company(pk=self.kwargs["company_id"])
         return context
 
     def form_valid(self, form):
         form.instance.company_id = self.kwargs["company_id"]
-
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -105,6 +109,61 @@ class LandCreateView(CreateView):
         return reverse(
             "soil:land_detail", kwargs={"company_id": company.id, "pk": self.object.pk}
         )
+
+
+class LocationInfoView(View):
+    """
+    圃場新規作成時のフォームで latlon 入力が終了した際に非同期で情報を取得
+    """
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        data = json.loads(request.body.decode("utf-8"))
+        lat_str, lon_str = data.get("latlon").split(",")
+        lat = float(lat_str.strip())
+        lon = float(lon_str.strip())
+
+        coords = GoogleMapCoords(latitude=lat, longitude=lon)
+        ydf = ReverseGeocoderService.get_ydf_from_coords(coords)
+
+        try:
+            jma_city = ReverseGeocoderService.get_jma_city(ydf)
+        except JmaCity.DoesNotExist:
+            return JsonResponse(
+                {
+                    "error": f"{ydf.feature.prefecture.name} {ydf.feature.city.name} が見つかりませんでした"
+                }
+            )
+
+        return JsonResponse(
+            {
+                "jma_city_id": jma_city.id,
+                "jma_prefecture_id": jma_city.jma_region.jma_prefecture.id,
+            }
+        )
+
+
+class PrefecturesView(View):
+
+    @staticmethod
+    def get(request):
+        prefectures = JmaPrefecture.objects.all()
+        data = {"prefectures": list(prefectures.values("id", "name"))}
+        return JsonResponse(data)
+
+
+class PrefectureCitiesView(View):
+    """
+    圃場新規作成時のフォームで prefecture がonChangeした際に非同期で、該当するcityを取得
+    """
+
+    @staticmethod
+    def get(request, prefecture_id):
+        regions = JmaRegion.objects.filter(jma_prefecture__id=prefecture_id)
+        cities = JmaCity.objects.filter(jma_region__in=regions)
+
+        data = {"cities": list(cities.values("id", "name"))}
+        return JsonResponse(data)
 
 
 class LandDetailView(DetailView):

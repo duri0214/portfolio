@@ -92,6 +92,7 @@ python manage.py loaddata .\soil_analysis\fixtures\crop.json
 python manage.py loaddata .\soil_analysis\fixtures\land_block.json
 python manage.py loaddata .\soil_analysis\fixtures\land_period.json
 python manage.py loaddata .\soil_analysis\fixtures\cultivationtype.json
+# ここで soil analysis のバッチをまわす
 python manage.py loaddata .\soil_analysis\fixtures\land.json
 python manage.py loaddata .\soil_analysis\fixtures\samplingmethod.json
 python manage.py loaddata .\soil_analysis\fixtures\samplingorder.json

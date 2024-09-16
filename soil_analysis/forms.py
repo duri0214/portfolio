@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ClearableFileInput
 
-from .models import Company, Land
+from .models import Company, Land, JmaPrefecture, JmaCity
 
 
 class CompanyCreateForm(forms.ModelForm):
@@ -34,13 +34,20 @@ class CompanyCreateForm(forms.ModelForm):
 
 
 class LandCreateForm(forms.ModelForm):
+    jma_prefecture = forms.ModelChoiceField(
+        queryset=JmaPrefecture.objects.all(), empty_label="選択してください"
+    )
+    jma_city = forms.ModelChoiceField(
+        queryset=JmaCity.objects.all(), empty_label="選択してください"
+    )
+
     class Meta:
         model = Land
         fields = (
             "name",
-            "prefecture",
-            "location",
             "latlon",
+            "jma_prefecture",
+            "jma_city",
             "area",
             "image",
             "remark",
@@ -49,25 +56,27 @@ class LandCreateForm(forms.ModelForm):
         )
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control", "tabindex": "1"}),
-            "prefecture": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "tabindex": "2",
-                    "placeholder": "例: 東京都",
-                }
-            ),
-            "location": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "tabindex": "3",
-                    "placeholder": "例: 港区芝公園４丁目２−８",
-                }
-            ),
             "latlon": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "tabindex": "4",
+                    "tabindex": "2",
                     "placeholder": "例: 35.658581,139.745433",
+                }
+            ),
+            # TODO: なぜか bootstrap が反映されない（react化で解決したほうがよさそう）
+            "jma_prefecture": forms.Select(
+                attrs={
+                    "class": "form-control",
+                    "tabindex": "3",
+                    "placeholder": "例: 兵庫県",
+                }
+            ),
+            # TODO: なぜか bootstrap が反映されない（react化で解決したほうがよさそう）
+            "jma_city": forms.Select(
+                attrs={
+                    "class": "form-control",
+                    "tabindex": "4",
+                    "placeholder": "例: 姫路市",
                 }
             ),
             "area": forms.TextInput(
@@ -85,24 +94,31 @@ class LandCreateForm(forms.ModelForm):
                 attrs={"class": "form-control", "tabindex": "8"}
             ),
             "owner": forms.Select(attrs={"class": "form-control", "tabindex": "9"}),
+            "company": forms.HiddenInput(),
         }
         labels = {
-            "name": "圃場名",
-            "prefecture": "都道府県",
-            "location": "住所",
-            "latlon": "緯度・経度",
+            "name": "圃場名*",
+            "latlon": "緯度・経度*",
+            "jma_prefecture": "都道府県*",
+            "jma_city": "市区町村*",
             "area": "圃場面積（㎡）",
             "image": "画像",
             "remark": "備考",
-            "cultivation_type": "栽培タイプ",
-            "owner": "所有者",
+            "cultivation_type": "栽培タイプ*",
+            "owner": "所有者*",
         }
 
     def clean_name(self):
-        name = self.cleaned_data["name"]
-        if "あの圃場" in name:
+        name = self.cleaned_data.get("name")
+        company_id = self.data.get("company-id")
+        if "あの" in name:
             raise forms.ValidationError(
-                "「あの圃場」を含む圃場名は登録できなくなりました（あいまい）"
+                "「あの」を含む圃場名は登録できなくなりました（あいまい）"
+            )
+
+        if Land.objects.filter(name=name, company_id=company_id).exists():
+            raise forms.ValidationError(
+                "この名前の圃場は既に存在します。別の名前を選択してください"
             )
 
         return name
