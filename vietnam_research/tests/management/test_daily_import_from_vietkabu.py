@@ -22,11 +22,11 @@ class Test(TestCase):
 
     def test_convert_to_datetime(self):
         self.assertEqual(
-            convert_to_datetime("ホーチミン証取株価（2019/08/16 VNT）"),
+            convert_to_datetime("ホーチミン証取株価（2019/08/16 17:00VNT）"),
             datetime(2019, 8, 16, 17, 0, 0),
         )
 
-        res = convert_to_datetime("ホーチミン証取株価（2019/08/16 VNT）")
+        res = convert_to_datetime("ホーチミン証取株価（2019/08/16 17:00VNT）")
         self.assertEqual(res.year, 2019)
         self.assertEqual(res.month, 8)
         self.assertEqual(res.day, 16)
