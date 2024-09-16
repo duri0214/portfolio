@@ -1,6 +1,8 @@
 {% extends 'soil_analysis/base.html' %}
 {% load static %}
-
+{% block css %}
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/land/detail.css' %}">
+{% endblock %}
 {% block header %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -16,7 +18,7 @@
     <div class="container">
         <h1>{{ object.name }}の詳細</h1>
         {% if object.image %}
-            <img src="{{ object.image.url }}" alt="Land Image">
+            <img class="land-image" src="{{ object.image.url }}" alt="Land Image">
         {% endif %}
         <ul>
             <li>都道府県: {{ object.jma_prefecture.name|default:"-" }}</li>
