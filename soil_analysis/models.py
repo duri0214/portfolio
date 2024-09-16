@@ -244,7 +244,7 @@ class Land(models.Model):
     圃場マスタ
     name        圃場名
     jma_prefecture  都道府県    e.g. 茨城県
-    jma_city    住所       e.g. 結城郡八千代町
+    jma_city    市区町村       e.g. 八千代町
     latlon      緯度経度    e.g. 36.164677272061,139.86772928159
     area        面積       e.g. 100㎡
     image       写真
