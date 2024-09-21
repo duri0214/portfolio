@@ -5,7 +5,7 @@ import shutil
 from django.contrib import messages
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import call_command
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -39,6 +39,7 @@ from soil_analysis.models import (
     JmaCity,
     JmaRegion,
     JmaPrefecture,
+    JmaWeather,
 )
 
 
@@ -74,7 +75,17 @@ class LandListView(ListView):
 
     def get_queryset(self):
         company = Company(pk=self.kwargs["company_id"])
-        return super().get_queryset().filter(company=company)
+        weather_prefetch = Prefetch(
+            "jma_city__jma_region__jmaweather_set",
+            queryset=JmaWeather.objects.all(),
+            to_attr="weathers",
+        )
+        return (
+            super()
+            .get_queryset()
+            .filter(company=company)
+            .prefetch_related(weather_prefetch)
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
