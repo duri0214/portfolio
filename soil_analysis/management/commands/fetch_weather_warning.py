@@ -2,7 +2,7 @@ import requests
 from django.core.management import BaseCommand
 
 from soil_analysis.domain.valueobject.weather.jma import WarningData
-from soil_analysis.models import JmaWarning, JmaRegion
+from soil_analysis.models import JmaWarning, JmaRegion, Land
 
 LATEST_WARNING = 0
 M_TARGET_WARNINGS = {
@@ -49,8 +49,9 @@ class Command(BaseCommand):
     help = "get weather warning"
 
     def handle(self, *args, **options):
-        # TODO: facilityテーブルから prefecture_ids を取得
-        jma_prefecture_ids = ["280000", "050000", "130000", "014030", "460040"]
+        jma_prefecture_ids = Land.objects.values_list(
+            "jma_city__jma_region__jma_prefecture__code", flat=True
+        ).distinct()
 
         if not jma_prefecture_ids:
             raise Exception("facility is empty")
