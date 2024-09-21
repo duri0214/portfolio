@@ -24,3 +24,16 @@
     list-style-type: none;
     padding: 0;
 }
+
+.weather-list {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.weather-item {
+    margin: 10px;
+}
+
+.weather-item p {
+    text-align: center;
+}

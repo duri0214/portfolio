@@ -16,7 +16,7 @@
 {% block content %}
     <a class="btn btn-outline-primary mb-3" href="{% url 'soil:land_create' company.id %}"
        role="button">＋圃場の追加</a>
-    <img width="50" src="{% static 'soil_analysis/images/weather/svg/100.svg' %}" alt="Weather Image">
+
     {% for a_land in object_list %}
         {% if not forloop.counter|divisibleby:"2" %}
             <div class="row mb-4">
@@ -33,12 +33,20 @@
             <div class="card-body">
                 <a href="{% url 'soil:land_detail' a_land.company.pk a_land.pk %}"><h5
                         class="card-title">{{ a_land.name }}</h5></a>
-                <ul class="card-text">
+                <div class="weather-list">
                     {% for weather in a_land.jma_city.jma_region.weathers %}
-                        <p>{{ weather.reporting_date }}: {{ weather.jma_weather_code.code }}</p>
+                        {% with 'soil_analysis/images/weather/svg/'|add:weather.jma_weather_code.summary_code|add:'.svg' as weather_svg_path %}
+                            <div class="weather-item">
+                                <img width="50" src="{% static weather_svg_path %}" alt="Weather Image">
+                                <p>{{ weather.reporting_date|date:"m/d" }}</p>
+                            </div>
+                        {% endwith %}
                     {% empty %}
                         <p>（該当天気なし）</p>
                     {% endfor %}
+                </div>
+
+                <ul class="card-text">
                     <li>都道府県: {{ a_land.jma_city.jma_region.jma_prefecture.name|default:"-" }}</li>
                     <li>市区町村: {{ a_land.jma_city.name|default:"-" }}</li>
                     <li>緯度経度: {% if a_land.latlon %}<a href="https://www.google.co.jp/maps/@{{ a_land.latlon }},17z"
