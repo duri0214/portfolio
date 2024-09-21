@@ -1,3 +1,21 @@
+.image-placeholder {
+    width: 100%;
+    height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #868e96;
+}
+
+.image-placeholder img {
+    max-height: 100%;
+    max-width: 100%;
+}
+
+.image-placeholder p {
+    color: #fff;
+}
+
 .card-body {
     font-size: small;
 }
@@ -5,4 +23,17 @@
 .card-body > ul {
     list-style-type: none;
     padding: 0;
+}
+
+.weather-list {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.weather-item {
+    margin: 10px;
+}
+
+.weather-item p {
+    text-align: center;
 }

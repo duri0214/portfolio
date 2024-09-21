@@ -16,6 +16,7 @@ from soil_analysis.models import (
     JmaWeather,
     JmaRegion,
     JmaWeatherCode,
+    Land,
 )
 
 THREE_DAYS = 0
@@ -89,8 +90,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         jma_weather_list: list[JmaWeather] = []
 
-        # TODO: 例えば建物の jma_prefecture_ids をdbから取得（重複を削って）
-        jma_prefecture_ids = ["280000", "050000", "130000", "014030", "460040"]
+        jma_prefecture_ids = Land.objects.values_list(
+            "jma_city__jma_region__jma_prefecture__code", flat=True
+        ).distinct()
         jma_prefecture_ids, special_add_region_ids = update_prefecture_ids(
             jma_prefecture_ids
         )
