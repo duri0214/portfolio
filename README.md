@@ -92,8 +92,9 @@ python manage.py loaddata .\soil_analysis\fixtures\crop.json
 python manage.py loaddata .\soil_analysis\fixtures\land_block.json
 python manage.py loaddata .\soil_analysis\fixtures\land_period.json
 python manage.py loaddata .\soil_analysis\fixtures\cultivationtype.json
-# ここで soil analysis のバッチをまわす
+# ここで soil analysis の master data バッチをまわす
 python manage.py loaddata .\soil_analysis\fixtures\land.json
+# ここ以降で soil analysis の weather data バッチをまわす
 python manage.py loaddata .\soil_analysis\fixtures\samplingmethod.json
 python manage.py loaddata .\soil_analysis\fixtures\samplingorder.json
 python manage.py loaddata .\soil_analysis\fixtures\land_ledger.json
@@ -132,9 +133,9 @@ cd /var/www/html/portfolio
 git pull
 source /var/www/html/venv/bin/activate
 systemctl restart apache2
+python manage.py collectstatic
 sudo -s
 chown -R ubuntu:www-data /var/www/html
-python manage.py collectstatic
 ```
 
 主に securities がzipを保存するために必要な設定
@@ -195,8 +196,13 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 
 ## soil analysis
 
+### master data
+
 - `python manage.py import_weather_master` のバッチをまわす
 - `python manage.py import_weather_master_manual` のバッチをまわす（天気コードの取り込み）
+
+### weather data
+
 - `python manage.py fetch_weather_forecast` のバッチをまわす
 - `python manage.py fetch_weather_warning` のバッチをまわす
 
