@@ -17,21 +17,17 @@
     <!-- 購入ボタン・フォームの作成 -->
     <form method="POST">
         {% csrf_token %}
-        {% if user.is_authenticated %}
-            <script
-                    src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                    data-key="{{ public_key }}"
-                    data-amount="{{ object.price }}"
-                    data-name="よろずや"
-                    data-description="{{ object.name }}"
-                    data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
-                    data-locale="ja"
-                    data-currency="jpy"
-                    data-email="{{ user.email }}">
-            </script>
-        {% else %}
-            <button type="button" disabled class="btn btn-secondary"><span>ログインして購入</span></button>
-        {% endif %}
+        <script
+                src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                data-key="{{ public_key }}"
+                data-amount="{{ object.price }}"
+                data-name="よろずや"
+                data-description="{{ object.name }}"
+                data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
+                data-locale="ja"
+                data-currency="jpy"
+                data-email="{{ user.email }}">
+        </script>
     </form>
     <a href="{% url 'shp:index' %}">もどる</a>
 {% endblock %}
