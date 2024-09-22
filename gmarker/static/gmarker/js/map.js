@@ -54,7 +54,7 @@ function markerEvent(i) {
 
             if (json.shops[i]['place_id'] != null) {
                 // get a shop detail
-                fetch(myurl.base + 'search/detail/' + json.shops[i]['place_id'], {
+                fetch(myUrl.base + 'search/detail/' + json.shops[i]['place_id'], {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
@@ -115,7 +115,7 @@ function do_pattern2(button) {
         // blue: 登録対象のピン
         const confirm = window.confirm("登録しますか？");
         if (confirm) {
-            fetch(myurl.base + 'search/2', {
+            fetch(myUrl.base + 'search/2', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json; charset=utf-8",
@@ -127,7 +127,7 @@ function do_pattern2(button) {
                 .then(json => {
                     alert(json.status + ': 登録が完了しました。');
                     keep_markers = [];
-                    location.href = myurl.base + 'result/2';
+                    location.href = myUrl.base + 'result/2';
                     button.style.border = 'solid 2px';
                     button.style.color = '#67c5ff';
                 })
