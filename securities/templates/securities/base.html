@@ -40,16 +40,18 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-                <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
-                    <option value="{% url 'vnm:index' %}">VIETNAM</option>
-                    <option value="{% url 'mrk:index' %}">GMARKER</option>
-                    <option value="{% url 'shp:index' %}">SHOPPING</option>
-                    <option value="{% url 'war:index' %}">WAREHOUSE</option>
-                    <option value="{% url 'txo:index' %}">TAXONOMY</option>
-                    <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
-                    <option value="{% url 'securities:index' %}" selected>SECURITIES REPORT</option>
-                    <option value="{% url 'hsp:index' %}">HOSPITAL</option>
-                </select>
+                <li class="nav-item">
+                    <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
+                        <option value="{% url 'vnm:index' %}">VIETNAM</option>
+                        <option value="{% url 'mrk:index' %}">GMARKER</option>
+                        <option value="{% url 'shp:index' %}">SHOPPING</option>
+                        <option value="{% url 'war:index' %}">WAREHOUSE</option>
+                        <option value="{% url 'txo:index' %}">TAXONOMY</option>
+                        <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
+                        <option value="{% url 'securities:index' %}" selected>SECURITIES REPORT</option>
+                        <option value="{% url 'hsp:index' %}">HOSPITAL</option>
+                    </select>
+                </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
                 <input class="form-control mr-sm-2" type="search" placeholder="alt + / で検索" aria-label="Search"
