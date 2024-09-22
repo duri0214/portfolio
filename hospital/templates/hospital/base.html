@@ -18,22 +18,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
-    <title>warehouse</title>
+    <title>病院事務VBAのWeb版</title>
 
     <!-- bootstrap and css -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
           integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'warehouse/css/index.css' %}">
-    <!-- favicon -->
-    <link rel="icon" href="{% static 'warehouse/s_w.ico' %}">
+    <link rel="stylesheet" href="{% static 'hospital/css/index.css' %}">
 
+    <!-- font -->
+    <link href="https://fonts.googleapis.com/css?family=Sawarabi+Gothic" rel="stylesheet">
     <!-- fontawesome -->
     <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
 
-    <!-- for ajax -->
-    <script>let myurl = {"base": "{% url 'war:index' %}"};</script>
+    <!-- favicon -->
+    <link rel="shortcut icon" href="{% static 'hospital/c_h.ico' %}">
 </head>
-
 <body>
 <h1></h1>
 <header>
@@ -60,15 +59,16 @@
                     <option value="{% url 'vnm:index' %}">VIETNAM</option>
                     <option value="{% url 'mrk:index' %}">GMARKER</option>
                     <option value="{% url 'shp:index' %}">SHOPPING</option>
-                    <option value="{% url 'war:index' %}" selected>WAREHOUSE</option>
+                    <option value="{% url 'war:index' %}">WAREHOUSE</option>
                     <option value="{% url 'txo:index' %}">TAXONOMY</option>
                     <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
                     <option value="{% url 'securities:index' %}">SECURITIES REPORT</option>
-                    <option value="{% url 'hsp:index' %}">HOSPITAL</option>
+                    <option value="{% url 'hsp:index' %}" selected>HOSPITAL</option>
                 </select>
             </ul>
             <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                <input class="form-control mr-sm-2" type="search" placeholder="alt + / で検索" aria-label="Search"
+                       accesskey="/">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
         </div>
@@ -104,6 +104,6 @@
         });
     });
 </script>
-<link rel="stylesheet" href="{% static 'vietnam_research/css/index_select2.css' %}">
+<link rel="stylesheet" href="{% static 'hospital/css/index_select2.css' %}">
 </body>
 </html>
