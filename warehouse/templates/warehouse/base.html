@@ -29,9 +29,6 @@
 
     <!-- fontawesome -->
     <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
-
-    <!-- for ajax -->
-    <script>let myurl = {"base": "{% url 'war:index' %}"};</script>
 </head>
 
 <body>
@@ -45,26 +42,18 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-                {% if user.is_authenticated %}
-                    <li class="nav-link">{{ user.username }}さん</li>
-                {% else %}
-                    <li class="nav-link">ゲストさん</li>
-                {% endif %}
-                {% if user.is_authenticated %}
-                    <li class="nav-link"><a href="{% url 'logout' %}">LOGOUT</a></li>
-                {% else %}
-                    <li class="nav-link"><a href="{% url 'login' %}">LOGIN</a></li>
-                {% endif %}
-                <select class="select2-1" onChange="location.href=value;">
-                    <option></option>
-                    <option value="{% url 'vnm:index' %}">VIETNAM</option>
-                    <option value="{% url 'mrk:index' %}">GMARKER</option>
-                    <option value="{% url 'shp:index' %}">SHOPPING</option>
-                    <option value="{% url 'war:index' %}" selected>WAREHOUSE</option>
-                    <option value="{% url 'txo:index' %}">TAXONOMY</option>
-                    <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
-                    <option value="{% url 'securities:index' %}">SECURITIES REPORT</option>
-                </select>
+                <li class="nav-item">
+                    <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
+                        <option value="{% url 'vnm:index' %}">VIETNAM</option>
+                        <option value="{% url 'mrk:index' %}">GMARKER</option>
+                        <option value="{% url 'shp:index' %}">SHOPPING</option>
+                        <option value="{% url 'war:index' %}" selected>WAREHOUSE</option>
+                        <option value="{% url 'txo:index' %}">TAXONOMY</option>
+                        <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
+                        <option value="{% url 'securities:index' %}">SECURITIES REPORT</option>
+                        <option value="{% url 'hsp:index' %}">HOSPITAL</option>
+                    </select>
+                </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
                 <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
@@ -91,18 +80,5 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
         integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
         crossorigin="anonymous"></script>
-
-<!-- for select2 -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    $(function () {
-        $('.select2-1').select2({
-            // コントロールのプレースホルダを指定します。
-            placeholder: 'Please Select',
-        });
-    });
-</script>
-<link rel="stylesheet" href="{% static 'vietnam_research/css/index_select2.css' %}">
 </body>
 </html>

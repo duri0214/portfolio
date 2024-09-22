@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "taxonomy",
     "soil_analysis",
     "securities",
+    "hospital",
 ]
 
 MIDDLEWARE = [

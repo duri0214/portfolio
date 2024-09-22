@@ -320,7 +320,7 @@
             const likeToggle = event.target;
             const articleId = likeToggle.dataset.articleId;
 
-            fetch(`${myurl.base}likes/${articleId}/`, {
+            fetch(`${myUrl.base}likes/${articleId}/`, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json; charset=utf-8",
