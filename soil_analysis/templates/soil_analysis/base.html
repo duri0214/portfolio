@@ -48,8 +48,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-                <select class="select2-1" onChange="location.href=value;">
-                    <option></option>
+                <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
                     <option value="{% url 'vnm:index' %}">VIETNAM</option>
                     <option value="{% url 'mrk:index' %}">GMARKER</option>
                     <option value="{% url 'shp:index' %}">SHOPPING</option>
