@@ -65,7 +65,12 @@
                     <li class="nav-link">ゲストさん</li>
                 {% endif %}
                 {% if user.is_authenticated %}
-                    <li class="nav-link"><a href="{% url 'logout' %}">LOGOUT</a></li>
+                    <li class="nav-link">
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger">LOGOUT</button>
+                        </form>
+                    </li>
                 {% else %}
                     <li class="nav-link"><a href="{% url 'login' %}">LOGIN</a></li>
                 {% endif %}
