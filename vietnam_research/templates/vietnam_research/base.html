@@ -59,26 +59,8 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-                {% if user.is_authenticated %}
-                    <li class="nav-item mr-3">
-                        <span class="nav-link">{{ user.username }}さん</span>
-                    </li>
-                    <li class="nav-item mr-3">
-                        <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger">LOGOUT</button>
-                        </form>
-                    </li>
-                {% else %}
-                    <li class="nav-item mr-3">
-                        <span class="nav-link">ゲストさん</span>
-                    </li>
-                    <li class="nav-item mr-3">
-                        <a href="{% url 'login' %}" class="btn btn-outline-primary">LOGIN</a>
-                    </li>
-                {% endif %}
-                <li class="nav-item">
-                    <select class="custom-select" onChange="location.href=value;">
+                <li class="nav-item mr-3">
+                    <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
                         <option value="{% url 'vnm:index' %}" selected>VIETNAM</option>
                         <option value="{% url 'mrk:index' %}">GMARKER</option>
                         <option value="{% url 'shp:index' %}">SHOPPING</option>
@@ -89,6 +71,24 @@
                         <option value="{% url 'hsp:index' %}">HOSPITAL</option>
                     </select>
                 </li>
+                {% if user.is_authenticated %}
+                    <li class="nav-item small mr-3">
+                        <span class="nav-link">{{ user.username }}さん</span>
+                    </li>
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger">LOGOUT</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-item small mr-3">
+                        <span class="nav-link">ゲストさん</span>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'login' %}" class="btn btn-outline-primary">LOGIN</a>
+                    </li>
+                {% endif %}
             </ul>
             <form class="form-inline my-2 my-lg-0">
                 <input class="form-control mr-sm-2" type="search" placeholder="alt + / で検索" aria-label="Search"
