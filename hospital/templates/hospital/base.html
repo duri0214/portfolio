@@ -44,16 +44,6 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-                {% if user.is_authenticated %}
-                    <li class="nav-link">{{ user.username }}さん</li>
-                {% else %}
-                    <li class="nav-link">ゲストさん</li>
-                {% endif %}
-                {% if user.is_authenticated %}
-                    <li class="nav-link"><a href="{% url 'logout' %}">LOGOUT</a></li>
-                {% else %}
-                    <li class="nav-link"><a href="{% url 'login' %}">LOGIN</a></li>
-                {% endif %}
                 <select class="select2-1" onChange="location.href=value;">
                     <option></option>
                     <option value="{% url 'vnm:index' %}">VIETNAM</option>
