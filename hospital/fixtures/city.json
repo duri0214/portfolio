@@ -1,0 +1,365 @@
+[
+  {
+    "model": "hospital.city",
+    "pk": 1,
+    "fields": {
+      "name": "堺市"
+    }
+  },
+  {
+    "model": "hospital.city",
+    "pk": 2,
+    "fields": {
+      "name": "大阪市"
+    }
+  },
+  {
+    "model": "hospital.city",
+    "pk": 3,
+    "fields": {
+      "name": "大阪府"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 1,
+    "fields": {
+      "name": "堺区",
+      "city": 1,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 2,
+    "fields": {
+      "name": "中区",
+      "city": 1,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 3,
+    "fields": {
+      "name": "東区",
+      "city": 1,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 4,
+    "fields": {
+      "name": "西区",
+      "city": 1,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 5,
+    "fields": {
+      "name": "南区",
+      "city": 1,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 6,
+    "fields": {
+      "name": "北区",
+      "city": 1,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 7,
+    "fields": {
+      "name": "美原区",
+      "city": 1,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 8,
+    "fields": {
+      "name": "阿倍野区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 9,
+    "fields": {
+      "name": "平野区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 10,
+    "fields": {
+      "name": "住吉区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 11,
+    "fields": {
+      "name": "住之江区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 12,
+    "fields": {
+      "name": "東住吉区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 13,
+    "fields": {
+      "name": "生野区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 14,
+    "fields": {
+      "name": "城東区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 15,
+    "fields": {
+      "name": "東成区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 16,
+    "fields": {
+      "name": "旭区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 17,
+    "fields": {
+      "name": "鶴見区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 18,
+    "fields": {
+      "name": "中央区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 19,
+    "fields": {
+      "name": "西成区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 20,
+    "fields": {
+      "name": "西区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 21,
+    "fields": {
+      "name": "天王寺区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 22,
+    "fields": {
+      "name": "浪速区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 23,
+    "fields": {
+      "name": "都島区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 24,
+    "fields": {
+      "name": "福島区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 25,
+    "fields": {
+      "name": "北区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 26,
+    "fields": {
+      "name": "東淀川区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 27,
+    "fields": {
+      "name": "西淀川区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 28,
+    "fields": {
+      "name": "港区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 29,
+    "fields": {
+      "name": "大正区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 30,
+    "fields": {
+      "name": "此花区",
+      "city": 2,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 31,
+    "fields": {
+      "name": "高石市",
+      "city": 3,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 32,
+    "fields": {
+      "name": "松原市",
+      "city": 3,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 33,
+    "fields": {
+      "name": "富田林市",
+      "city": 3,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 34,
+    "fields": {
+      "name": "大阪狭山市",
+      "city": 3,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 35,
+    "fields": {
+      "name": "岸和田市",
+      "city": 3,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 36,
+    "fields": {
+      "name": "和泉市",
+      "city": 3,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 37,
+    "fields": {
+      "name": "河内長野市",
+      "city": 3,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.citysector",
+    "pk": 37,
+    "fields": {
+      "name": "羽曳野市",
+      "city": 3,
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  }
+]
