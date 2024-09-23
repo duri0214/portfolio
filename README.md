@@ -1,7 +1,7 @@
 # Portfolio
 
-![Static Badge](https://img.shields.io/badge/python-3.11-green)
-![Static Badge](https://img.shields.io/badge/django-4.2.8-green)
+![Static Badge](https://img.shields.io/badge/python-3.12-green)
+![Static Badge](https://img.shields.io/badge/django-5.1-green)
 ![Static Badge](https://img.shields.io/badge/mysql-8.0-green)
 
 ## ライブラリをインストールする
@@ -24,7 +24,7 @@ python manage.py flush --noinput
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
 
 ```
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities hospital
 python manage.py migrate
 
 python manage.py createsuperuser
@@ -53,6 +53,8 @@ WHERE recorded_date = '2023-01-17';
 ```
 
 ```
+python manage.py loaddata .\vietnam_research\fixtures\group.json
+python manage.py loaddata .\vietnam_research\fixtures\user.json
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
 python manage.py loaddata .\vietnam_research\fixtures\market.json
 python manage.py loaddata .\vietnam_research\fixtures\symbol.json
@@ -87,8 +89,6 @@ python manage.py loaddata .\taxonomy\fixtures\breed.json
 python manage.py loaddata .\taxonomy\fixtures\breedTags.json
 python manage.py loaddata .\soil_analysis\fixtures\companycategory.json
 python manage.py loaddata .\soil_analysis\fixtures\company.json
-python manage.py loaddata .\soil_analysis\fixtures\group.json
-python manage.py loaddata .\soil_analysis\fixtures\user.json
 python manage.py loaddata .\soil_analysis\fixtures\crop.json
 python manage.py loaddata .\soil_analysis\fixtures\land_block.json
 python manage.py loaddata .\soil_analysis\fixtures\land_period.json
