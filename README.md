@@ -107,19 +107,6 @@ python manage.py loaddata .\hospital\fixtures\city.json
 python manage.py loaddata .\hospital\fixtures\election.json
 ```
 
-## インタラクティブシェル
-
-[Mr. Data Converter](https://shancarter.github.io/mr-data-converter/)
-
-```
-python manage.py shell
-
-from vietnam_research.models import Industry, IndClass, WatchList
-from django.db.models import Sum, F, Case, When, Value
-from django.db.models.functions import Concat
-  :
-```
-
 ## サーバを動かす
 
 ```
