@@ -101,6 +101,10 @@ python manage.py loaddata .\soil_analysis\fixtures\land_ledger.json
 python manage.py loaddata .\soil_analysis\fixtures\land_review.json
 python manage.py loaddata .\soil_analysis\fixtures\land_score_chemical.json
 python manage.py loaddata .\soil_analysis\fixtures\device.json
+python manage.py loaddata .\hospital\fixtures\ward.json
+python manage.py loaddata .\hospital\fixtures\city.json
+python manage.py loaddata .\hospital\fixtures\group.json
+python manage.py loaddata .\hospital\fixtures\user.json
 ```
 
 ## インタラクティブシェル
