@@ -1,0 +1,196 @@
+[
+  {
+    "model": "hospital.wardtype",
+    "pk": 1,
+    "fields": {
+      "name": "精神"
+    }
+  },
+  {
+    "model": "hospital.wardtype",
+    "pk": 2,
+    "fields": {
+      "name": "一般"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 1,
+    "fields": {
+      "abbreviation": "A3",
+      "ward_type": 1,
+      "name": "A館3階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 2,
+    "fields": {
+      "abbreviation": "A4",
+      "ward_type": 1,
+      "name": "A館4階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 3,
+    "fields": {
+      "abbreviation": "A5",
+      "ward_type": 1,
+      "name": "A館5階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 4,
+    "fields": {
+      "abbreviation": "A6",
+      "ward_type": 1,
+      "name": "A館6階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 5,
+    "fields": {
+      "abbreviation": "A7",
+      "ward_type": 1,
+      "name": "A館7階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 6,
+    "fields": {
+      "abbreviation": "A8",
+      "ward_type": 1,
+      "name": "A館8階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 7,
+    "fields": {
+      "abbreviation": "B2",
+      "ward_type": 1,
+      "name": "B館2階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 8,
+    "fields": {
+      "abbreviation": "B3",
+      "ward_type": 1,
+      "name": "B館3階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 9,
+    "fields": {
+      "abbreviation": "B4",
+      "ward_type": 1,
+      "name": "B館4階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 10,
+    "fields": {
+      "abbreviation": "B5",
+      "ward_type": 1,
+      "name": "B館5階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 11,
+    "fields": {
+      "abbreviation": "B6",
+      "ward_type": 1,
+      "name": "B館6階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 12,
+    "fields": {
+      "abbreviation": "C1",
+      "ward_type": 1,
+      "name": "C館1階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 13,
+    "fields": {
+      "abbreviation": "西",
+      "ward_type": 1,
+      "name": "西館",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 14,
+    "fields": {
+      "abbreviation": "東3",
+      "ward_type": 2,
+      "name": "東館3階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 15,
+    "fields": {
+      "abbreviation": "東4",
+      "ward_type": 2,
+      "name": "東館4階",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 16,
+    "fields": {
+      "abbreviation": "リハ",
+      "ward_type": 2,
+      "name": "リハビリテーション病棟",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 17,
+    "fields": {
+      "abbreviation": "包括",
+      "ward_type": 2,
+      "name": "地域包括ケア病棟",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "hospital.ward",
+    "pk": 18,
+    "fields": {
+      "abbreviation": "緩和",
+      "ward_type": 2,
+      "name": "緩和ケア病棟",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  }
+]
