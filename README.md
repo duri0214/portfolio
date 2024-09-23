@@ -139,6 +139,7 @@ systemctl restart apache2
 python manage.py collectstatic
 sudo -s
 chown -R ubuntu:www-data /var/www/html
+python manage.py clearsessions
 ```
 
 主に securities がzipを保存するために必要な設定
