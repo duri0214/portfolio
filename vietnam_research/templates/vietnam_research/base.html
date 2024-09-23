@@ -73,7 +73,8 @@
                 </li>
                 {% if user.is_authenticated %}
                     <li class="nav-item small mr-3">
-                        <span class="nav-link">{{ user.username }}さん</span>
+
+                        <span class="nav-link"><i class="fas fa-user"></i> {{ user.username }}さん</span>
                     </li>
                     <li class="nav-item">
                         <form method="post" action="{% url 'logout' %}">
@@ -82,9 +83,6 @@
                         </form>
                     </li>
                 {% else %}
-                    <li class="nav-item small mr-3">
-                        <span class="nav-link">ゲストさん</span>
-                    </li>
                     <li class="nav-item">
                         <a href="{% url 'login' %}" class="btn btn-outline-primary">LOGIN</a>
                     </li>
