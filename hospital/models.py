@@ -26,3 +26,10 @@ class CitySector(models.Model):
     city = models.ForeignKey(City, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
+
+
+class Election(models.Model):
+    name = models.CharField(verbose_name="選挙名", max_length=255, unique=True)
+    execution_date = models.DateField(verbose_name="執行日")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
