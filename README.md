@@ -87,6 +87,7 @@ python manage.py loaddata .\taxonomy\fixtures\breed.json
 python manage.py loaddata .\taxonomy\fixtures\breedTags.json
 python manage.py loaddata .\soil_analysis\fixtures\companycategory.json
 python manage.py loaddata .\soil_analysis\fixtures\company.json
+python manage.py loaddata .\soil_analysis\fixtures\group.json
 python manage.py loaddata .\soil_analysis\fixtures\user.json
 python manage.py loaddata .\soil_analysis\fixtures\crop.json
 python manage.py loaddata .\soil_analysis\fixtures\land_block.json
@@ -103,8 +104,6 @@ python manage.py loaddata .\soil_analysis\fixtures\land_score_chemical.json
 python manage.py loaddata .\soil_analysis\fixtures\device.json
 python manage.py loaddata .\hospital\fixtures\ward.json
 python manage.py loaddata .\hospital\fixtures\city.json
-python manage.py loaddata .\hospital\fixtures\group.json
-python manage.py loaddata .\hospital\fixtures\user.json
 ```
 
 ## インタラクティブシェル
