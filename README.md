@@ -127,6 +127,7 @@ systemctl restart apache2
 python manage.py collectstatic
 sudo -s
 chown -R ubuntu:www-data /var/www/html
+vi /var/log/apache2/error.log
 python manage.py clearsessions
 ```
 
