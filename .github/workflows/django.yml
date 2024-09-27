@@ -27,7 +27,6 @@ jobs:
         run: |
           sudo systemctl start mysql
           mysql -u root -proot -e "CREATE USER 'python'@'localhost';"
-          mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO 'python'@'localhost';"
           
           python -m pip install setuptools
           python -m pip install -r requirements.txt
