@@ -1,0 +1,11 @@
+[
+  {
+    "model": "hospital.election",
+    "pk": 1,
+    "fields": {
+      "name": "大阪府議会・堺市議会議員選挙",
+      "execution_date": "2015-04-12",
+      "created_at": "2024-09-23T10:00:00Z"
+    }
+  }
+]

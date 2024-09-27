@@ -1,7 +1,7 @@
 # Portfolio
 
-![Static Badge](https://img.shields.io/badge/python-3.11-green)
-![Static Badge](https://img.shields.io/badge/django-4.2.8-green)
+![Static Badge](https://img.shields.io/badge/python-3.12-green)
+![Static Badge](https://img.shields.io/badge/django-5.1-green)
 ![Static Badge](https://img.shields.io/badge/mysql-8.0-green)
 
 ## ライブラリをインストールする
@@ -24,7 +24,7 @@ python manage.py flush --noinput
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
 
 ```
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities hospital
 python manage.py migrate
 
 python manage.py createsuperuser
@@ -53,6 +53,8 @@ WHERE recorded_date = '2023-01-17';
 ```
 
 ```
+python manage.py loaddata .\vietnam_research\fixtures\group.json
+python manage.py loaddata .\vietnam_research\fixtures\user.json
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
 python manage.py loaddata .\vietnam_research\fixtures\market.json
 python manage.py loaddata .\vietnam_research\fixtures\symbol.json
@@ -87,7 +89,6 @@ python manage.py loaddata .\taxonomy\fixtures\breed.json
 python manage.py loaddata .\taxonomy\fixtures\breedTags.json
 python manage.py loaddata .\soil_analysis\fixtures\companycategory.json
 python manage.py loaddata .\soil_analysis\fixtures\company.json
-python manage.py loaddata .\soil_analysis\fixtures\user.json
 python manage.py loaddata .\soil_analysis\fixtures\crop.json
 python manage.py loaddata .\soil_analysis\fixtures\land_block.json
 python manage.py loaddata .\soil_analysis\fixtures\land_period.json
@@ -101,19 +102,9 @@ python manage.py loaddata .\soil_analysis\fixtures\land_ledger.json
 python manage.py loaddata .\soil_analysis\fixtures\land_review.json
 python manage.py loaddata .\soil_analysis\fixtures\land_score_chemical.json
 python manage.py loaddata .\soil_analysis\fixtures\device.json
-```
-
-## インタラクティブシェル
-
-[Mr. Data Converter](https://shancarter.github.io/mr-data-converter/)
-
-```
-python manage.py shell
-
-from vietnam_research.models import Industry, IndClass, WatchList
-from django.db.models import Sum, F, Case, When, Value
-from django.db.models.functions import Concat
-  :
+python manage.py loaddata .\hospital\fixtures\ward.json
+python manage.py loaddata .\hospital\fixtures\city.json
+python manage.py loaddata .\hospital\fixtures\election.json
 ```
 
 ## サーバを動かす
@@ -136,6 +127,8 @@ systemctl restart apache2
 python manage.py collectstatic
 sudo -s
 chown -R ubuntu:www-data /var/www/html
+vi /var/log/apache2/error.log
+python manage.py clearsessions
 ```
 
 主に securities がzipを保存するために必要な設定
@@ -212,3 +205,23 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
     - `python manage.py daily_download_edinet` のバッチをまわす
 
 ## hospital
+
+```mermaid
+sequenceDiagram
+    participant 患者
+    participant 病院
+    participant 選管
+    病院 ->> 患者: 不在者投票の日程を決めて周知と貼り出し
+    患者 ->> 病院: 投票日前に病棟から投票用紙等の請求依頼
+    病院 ->> 病院: 住所チェック
+    病院 ->> 病院: 病棟名、投票区名、取込日、選挙人住所、選挙人氏名、選挙人生年月日を請求者名簿に入力
+    病院 ->> 選管: 請求者名簿の提出
+    選管 ->> 病院: 各市区選管から投票用紙を受け取る
+    病院 ->> 患者: 投票用紙を病棟ごとに仕分けし、交付
+    病院 ->> 病院: 請求の方法、代理請求依頼日、請求月日、受領日を事務処理簿に入力
+    患者 ->> 病院: （※アプリ業務の対象外）投票
+    病院 ->> 病院: 投票日、投票場所、立会人、代理投票申請有無を事務処理簿に入力
+    病院 ->> 選管: 送致用封筒で送致
+    病院 ->> 病院: 投票人数×727円を経費として請求書作成
+    病院 ->> 選管: 不在者投票事務処理簿、経費請求書の提出
+```

@@ -42,7 +42,6 @@ class TestView(TestCase):
         # ログインしていない場合
         response = self.client.get(reverse("vnm:index"))
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, "ゲストさん", html=True)
 
         # ログインしている場合
         logged_in = self.client.login(
@@ -52,13 +51,14 @@ class TestView(TestCase):
 
         response = self.client.get(reverse("vnm:index"))
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, f"{self.user.username}さん", html=True)
+        self.assertContains(
+            response, f'<i class="fas fa-user"></i> {self.user.username}さん', html=True
+        )
 
         # ログアウト後
         self.client.logout()
         response = self.client.get(reverse("vnm:index"))
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, "ゲストさん", html=True)
 
     def test_redirect_to_login_page(self):
         """

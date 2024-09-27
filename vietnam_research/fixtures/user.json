@@ -1,0 +1,263 @@
+[
+  {
+    "model": "auth.user",
+    "fields": {
+      "id": 1,
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "username": "yoshitaka okada",
+      "first_name": "yoshitaka",
+      "last_name": "okada",
+      "email": "okada@example.com",
+      "is_staff": 1
+    }
+  },
+  {
+    "model": "auth.user",
+    "fields": {
+      "id": 2,
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "username": "yoshiyuki minami",
+      "first_name": "yoshiyuki",
+      "last_name": "minami",
+      "email": "minami@example.com",
+      "is_staff": 1
+    }
+  },
+  {
+    "model": "auth.user",
+    "fields": {
+      "id": 3,
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "username": "生産者 Ａ",
+      "first_name": "生産者",
+      "last_name": "Ａ",
+      "email": "john@example.com"
+    }
+  },
+  {
+    "model": "auth.user",
+    "fields": {
+      "id": 4,
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "username": "生産者 Ｂ",
+      "first_name": "生産者",
+      "last_name": "Ｂ",
+      "email": "jane@example.com"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 5,
+    "fields": {
+      "username": "A看護師",
+      "first_name": "A",
+      "last_name": "看護師",
+      "email": "kangoshiA@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        1
+      ],
+      "is_staff": 1
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 6,
+    "fields": {
+      "username": "B看護師",
+      "first_name": "B",
+      "last_name": "看護師",
+      "email": "kangoshiB@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        1
+      ],
+      "is_staff": 1
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 7,
+    "fields": {
+      "username": "C看護師",
+      "first_name": "C",
+      "last_name": "看護師",
+      "email": "kangoshiC@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        1
+      ],
+      "is_staff": 1
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 8,
+    "fields": {
+      "username": "D看護師",
+      "first_name": "D",
+      "last_name": "看護師",
+      "email": "kangoshiD@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        1
+      ],
+      "is_staff": 1
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 9,
+    "fields": {
+      "username": "E看護師",
+      "first_name": "E",
+      "last_name": "看護師",
+      "email": "kangoshiE@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        1
+      ],
+      "is_staff": 1
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 10,
+    "fields": {
+      "username": "A患者",
+      "first_name": "A",
+      "last_name": "患者",
+      "email": "kanjaA@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 11,
+    "fields": {
+      "username": "B患者",
+      "first_name": "B",
+      "last_name": "患者",
+      "email": "kanjaB@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 12,
+    "fields": {
+      "username": "C患者",
+      "first_name": "C",
+      "last_name": "患者",
+      "email": "kanjaC@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 13,
+    "fields": {
+      "username": "D患者",
+      "first_name": "D",
+      "last_name": "患者",
+      "email": "kanjaD@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 14,
+    "fields": {
+      "username": "E患者",
+      "first_name": "E",
+      "last_name": "患者",
+      "email": "kanjaE@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 15,
+    "fields": {
+      "username": "F患者",
+      "first_name": "F",
+      "last_name": "患者",
+      "email": "kanjaF@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 16,
+    "fields": {
+      "username": "G患者",
+      "first_name": "G",
+      "last_name": "患者",
+      "email": "kanjaG@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 17,
+    "fields": {
+      "username": "H患者",
+      "first_name": "H",
+      "last_name": "患者",
+      "email": "kanjaH@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 18,
+    "fields": {
+      "username": "I患者",
+      "first_name": "I",
+      "last_name": "患者",
+      "email": "kanjaI@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 19,
+    "fields": {
+      "username": "J患者",
+      "first_name": "J",
+      "last_name": "患者",
+      "email": "kanjaJ@example.com",
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "groups": [
+        2
+      ]
+    }
+  }
+]

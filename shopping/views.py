@@ -88,6 +88,9 @@ class Index(ListView):
     template_name = "shopping/index.html"
     paginate_by = 5
 
+    def get_queryset(self):
+        return Products.objects.order_by("id")
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["staffs"] = Staff.objects.all()
