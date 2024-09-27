@@ -36,12 +36,12 @@ jobs:
           python -m pip install -r requirements.txt
           python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
           python manage.py migrate
-          
-          # Check if the 'auth_user' table exists after migration
-          echo "Checking for 'auth_user' table in the test database"
-          mysql -u root -proot -e "SHOW TABLES IN test_portfolio_db;"
 
       - name: Run tests
         run: |
           export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
           python manage.py test
+
+          # After tests, check if auth_user table exists
+          echo "Checking for 'auth_user' table in the test database"
+          mysql -u root -proot -e "SHOW TABLES IN test_portfolio_db;"
