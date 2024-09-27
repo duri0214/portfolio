@@ -27,6 +27,7 @@ jobs:
       - name: Set up
         run: |
           sudo systemctl start mysql
+          mysql -u root -proot -e "CREATE DATABASE portfolio_db;"
           mysql -u root -proot -e "CREATE USER 'python'@'localhost';"
           mysql -u root -proot -e "GRANT ALL ON portfolio_db.* TO 'python'@'localhost';"
           mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO 'python'@'localhost';"
