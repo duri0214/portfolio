@@ -33,6 +33,7 @@ jobs:
           python -m pip install setuptools
           python -m pip install -r requirements.txt
           python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
+          python manage.py migrate
 
       - name: Run tests
         run: |
