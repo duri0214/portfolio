@@ -22,20 +22,15 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
 
       - name: Set up
         run: |
           sudo systemctl start mysql
-          mysql -u root -proot -e "CREATE DATABASE portfolio_db;"
           mysql -u root -proot -e "CREATE USER 'python'@'localhost';"
-          mysql -u root -proot -e "GRANT ALL ON portfolio_db.* TO 'python'@'localhost';"
           mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO 'python'@'localhost';"
           
           python -m pip install setuptools
           python -m pip install -r requirements.txt
-          python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
-          python manage.py migrate
 
       - name: Run tests
         run: |
