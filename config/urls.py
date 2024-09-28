@@ -20,7 +20,8 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path("", include("vietnam_research.urls")),
+    path("", include("home.urls")),
+    path("vietnam_research/", include("vietnam_research.urls")),
     path("gmarker/", include("gmarker.urls")),
     path("shopping/", include("shopping.urls")),
     path("linebot_engine/", include("linebot_engine.urls")),

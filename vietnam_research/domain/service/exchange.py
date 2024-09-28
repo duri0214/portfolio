@@ -32,9 +32,9 @@ class ExchangeService:
                     ).rate
                 )
             except ObjectDoesNotExist:
-                # 両方が見つからない場合は例外
+                hint_message = "`python manage.py daily_import_from_bloomberg` のバッチをまわしわすれていませんか？"
                 raise ObjectDoesNotExist(
-                    f"No exchange rate found for currency pair {base_cur}-{dest_cur}"
+                    f"No exchange rate found for currency pair {base_cur}-{dest_cur}。{hint_message}"
                 )
         return rate
 
