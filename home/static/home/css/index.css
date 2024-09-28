@@ -54,10 +54,6 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, .13);
 }
 
-.post-list-card .post-list a:hover {
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-}
-
 .post-list-card .post-list .eye-catch img {
     width: 100%;
 }
