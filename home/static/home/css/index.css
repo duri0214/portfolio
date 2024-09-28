@@ -68,6 +68,7 @@ body {
 
 .post-list-card .post-list .eye-catch img {
     width: 100%;
+    height: 200px;
 }
 
 .post-list-card .post-list a:hover .eye-catch img {
