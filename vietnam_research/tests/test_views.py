@@ -65,7 +65,9 @@ class TestView(TestCase):
         ログインしていない場合、保護された記事作成ページに遷移しようとするとログインページにリダイレクトする
         """
         response = self.client.get(reverse("vnm:article_create"))
-        self.assertRedirects(response, "/accounts/login/?next=/article/create/")
+        self.assertRedirects(
+            response, "/accounts/login/?next=/vietnam_research/article/create/"
+        )
 
     def test_can_navigate_to_article_create_page(self):
         """
