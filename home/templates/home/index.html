@@ -31,11 +31,7 @@
                         {% endif %}
                         <section class="entry-content">
                             <h2 class="entry-title">{{ post.title }}</h2>
-                            <p class="byline">
-                                <span class="date gf updated">{{ post.created_at|date:"Y.m.d" }}</span>
-                                <span class="writer name author"><span class="fn">{{ post.author }}</span></span>
-                            </p>
-                            <div class="description">{{ post.summary }}</div>
+                            <div class="description">{{ post.summary|truncatechars:130 }}</div>
                         </section>
                     </a>
                 </article>
