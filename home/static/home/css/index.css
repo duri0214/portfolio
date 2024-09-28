@@ -63,11 +63,7 @@ body {
 }
 
 .post-list-card .post-list .eye-catch {
-    max-height: 215px;
     margin: -.6em -.6em .5em;
-    text-align: center;
-    overflow: hidden;
-    position: relative;
 }
 
 .post-list-card .post-list .description {
