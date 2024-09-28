@@ -24,14 +24,14 @@
                                 <span class="cat-name">{{ post.category.name }}</span>
                             </figure>
                         {% else %}
-                            <figure class="eye-catch no-image">
+                            <figure class="eye-catch">
                                 <img src="{% static 'home/images/no-image.png' %}" alt="No image available">
                                 <span class="cat-name">{{ post.category.name }}</span>
                             </figure>
                         {% endif %}
-                        <section class="entry-content cf">
-                            <h1 class="h2 entry-title">{{ post.title }}</h1>
-                            <p class="byline entry-meta vcard">
+                        <section class="entry-content">
+                            <h2 class="entry-title">{{ post.title }}</h2>
+                            <p class="byline">
                                 <span class="date gf updated">{{ post.created_at|date:"Y.m.d" }}</span>
                                 <span class="writer name author"><span class="fn">{{ post.author }}</span></span>
                             </p>
@@ -44,7 +44,7 @@
                     <header class="article-header">
                         <h1>まだ投稿がありません！</h1>
                     </header>
-                    <section class="entry-content">
+                    <section>
                         <p>表示する記事がまだありません。</p>
                     </section>
                 </article>
