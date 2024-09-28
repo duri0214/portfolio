@@ -1,0 +1,20 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+    <div class="container">
+        <article id="post-{{ post.id }}" class="post-class" role="article">
+            <header class="article-header entry-header">
+                <h1 class="entry-title page-title" itemprop="headline">{{ post.title }}</h1>
+                {% if post.image %}
+                    <figure class="eye-catch">
+                        <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                    </figure>
+                {% endif %}
+            </header>
+            <section class="entry-content cf">
+                {{ post.content }}
+            </section>
+        </article>
+    </div>
+{% endblock %}
