@@ -14,9 +14,9 @@
     </div>
 
     <div class="container">
-        <div class="post-list-card cf">
+        <div class="post-list-card">
             {% for post in posts %}
-                <article class="post-list cf animated fadeIn" role="article">
+                <article class="post-list" role="article">
                     <a href="{% url 'home:post_detail' pk=post.pk %}" rel="bookmark" title="{{ post.title }}">
                         {% if post.image %}
                             <figure class="eye-catch">
@@ -38,6 +38,15 @@
                             <div class="description">{{ post.summary }}</div>
                         </section>
                     </a>
+                </article>
+            {% empty %}
+                <article id="post-not-found" class="hentry cf">
+                    <header class="article-header">
+                        <h1>まだ投稿がありません！</h1>
+                    </header>
+                    <section class="entry-content">
+                        <p>表示する記事がまだありません。</p>
+                    </section>
                 </article>
             {% endfor %}
         </div>
