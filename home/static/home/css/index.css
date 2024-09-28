@@ -49,14 +49,10 @@ body {
 .post-list-card .post-list a {
     display: block;
     padding: .6em;
-    text-decoration: none;
     color: #333;
-    background: #fff;
     height: 100%;
     box-shadow: 0 2px 5px rgba(0, 0, 0, .13);
-    overflow: hidden;
     position: relative;
-    max-width: 300px;
 }
 
 
