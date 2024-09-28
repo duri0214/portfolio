@@ -9,6 +9,7 @@
         <article id="post-{{ post.id }}" class="post-class" role="article">
             <header class="article-header entry-header">
                 <h1 class="entry-title page-title" itemprop="headline">{{ post.title }}</h1>
+                {# TODO: superuserのみ #}
                 <a href="{% url 'home:post_update' pk=post.id %}" class="btn btn-primary">この記事を更新する</a>
                 <a href="{% url 'home:index' %}" class="btn btn-secondary">一覧に戻る</a>
                 {% if post.image %}
