@@ -52,6 +52,7 @@ body {
     color: #333;
     height: 100%;
     box-shadow: 0 2px 5px rgba(0, 0, 0, .13);
+    text-decoration: none;
 }
 
 .post-list-card .post-list .eye-catch img {
