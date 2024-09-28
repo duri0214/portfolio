@@ -14,4 +14,4 @@ class IndexView(TemplateView):
 
 class PostDetailView(DetailView):
     model = Post
-    template_name = "home/post/detail.html"
+    template_name = "home/posts/detail.html"
