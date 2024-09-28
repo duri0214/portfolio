@@ -1,0 +1,9 @@
+body {
+    padding-top: 48px;
+}
+
+.eye-catch img {
+    display: block;
+    width: 60%;
+    margin: 0 auto;
+}
