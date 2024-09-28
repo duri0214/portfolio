@@ -1,10 +1,13 @@
 {% extends "home/base.html" %}
 {% load static %}
 {% load humanize %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'home/css/index.css' %}">
+{% endblock %}
 {% block content %}
     <div class="jumbotron">
-        <h1 class="display-4">Let's work at the Portfolio Guidance!</h1>
-        <p class="lead">the Portfolio Guidance</p>
+        <h1 class="display-4">the Portfolio Guidance!</h1>
+        <p class="lead">Introducing my portfolio</p>
         <hr class="my-4">
         <p>You can do it</p>
         <ul>
@@ -14,7 +17,37 @@
     </div>
 
     <div class="container">
-        <p>これはサンプルです</p>
+        <div class="post-list-card">
+            {% for post in posts %}
+                <article class="post-list" role="article">
+                    <a href="{% url 'home:post_detail' pk=post.pk %}" rel="bookmark" title="{{ post.title }}">
+                        {% if post.image %}
+                            <figure class="eye-catch">
+                                <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                                <span class="cat-name">{{ post.category.name }}</span>
+                            </figure>
+                        {% else %}
+                            <figure class="eye-catch">
+                                <img src="{% static 'home/images/no-image.png' %}" alt="No image available">
+                                <span class="cat-name">{{ post.category.name }}</span>
+                            </figure>
+                        {% endif %}
+                        <section class="entry-content">
+                            <h2 class="entry-title">{{ post.title }}</h2>
+                            <div class="description">{{ post.summary|truncatechars:130 }}</div>
+                        </section>
+                    </a>
+                </article>
+            {% empty %}
+                <article id="post-not-found" class="hentry cf">
+                    <header class="article-header">
+                        <h1>まだ投稿がありません！</h1>
+                    </header>
+                    <section>
+                        <p>表示する記事がまだありません。</p>
+                    </section>
+                </article>
+            {% endfor %}
+        </div>
     </div>
-
 {% endblock %}

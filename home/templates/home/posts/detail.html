@@ -1,0 +1,25 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'home/css/post/detail.css' %}">
+{% endblock %}
+{% block content %}
+    <div class="container">
+        <article id="post-{{ post.id }}" class="post-class" role="article">
+            <header class="article-header entry-header">
+                <h1 class="entry-title page-title" itemprop="headline">{{ post.title }}</h1>
+                {% if post.image %}
+                    <figure class="eye-catch">
+                        <a href="{{ post.image.url }}" target="_blank">
+                            <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                        </a>
+                    </figure>
+                {% endif %}
+            </header>
+            <section class="entry-content cf">
+                {{ content_html|safe }}
+            </section>
+        </article>
+    </div>
+{% endblock %}
