@@ -1,6 +1,9 @@
 {% extends "home/base.html" %}
 {% load static %}
 {% load humanize %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'home/css/index.css' %}">
+{% endblock %}
 {% block content %}
     <div class="jumbotron">
         <h1 class="display-4">the Portfolio Guidance!</h1>
