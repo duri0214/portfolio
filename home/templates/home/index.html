@@ -14,7 +14,32 @@
     </div>
 
     <div class="container">
-        <p>これはサンプルです</p>
+        <div class="post-list-card cf">
+            {% for post in posts %}
+                <article class="post-list cf animated fadeIn" role="article">
+                    <a href="{% url 'post_detail' pk=post.pk %}" rel="bookmark" title="{{ post.title }}">
+                        {% if post.image %}
+                            <figure class="eye-catch">
+                                <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                                <span class="cat-name">{{ post.category.name }}</span>
+                            </figure>
+                        {% else %}
+                            <figure class="eye-catch no-image">
+                                <img src="{% static 'home/images/no-image.png' %}" alt="No image available">
+                                <span class="cat-name">{{ post.category.name }}</span>
+                            </figure>
+                        {% endif %}
+                        <section class="entry-content cf">
+                            <h1 class="h2 entry-title">{{ post.title }}</h1>
+                            <p class="byline entry-meta vcard">
+                                <span class="date gf updated">{{ post.created_at|date:"Y.m.d" }}</span>
+                                <span class="writer name author"><span class="fn">{{ post.author }}</span></span>
+                            </p>
+                            <div class="description">{{ post.summary }}</div>
+                        </section>
+                    </a>
+                </article>
+            {% endfor %}
+        </div>
     </div>
-
 {% endblock %}
