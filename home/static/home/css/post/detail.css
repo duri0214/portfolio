@@ -5,5 +5,6 @@ body {
 .eye-catch img {
     display: block;
     width: 60%;
-    margin: 0 auto;
+    margin: 30px auto;
+    border: 1px solid #000;
 }
