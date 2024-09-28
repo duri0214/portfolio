@@ -9,8 +9,9 @@
         <article id="post-{{ post.id }}" role="article">
             <header>
                 <h1 itemprop="headline">{{ post.title }}</h1>
-                {# TODO: superuserのみ #}
-                <a href="{% url 'home:post_update' pk=post.id %}" class="btn btn-primary">この記事を更新する</a>
+                {% if user.is_authenticated and user.is_superuser %}
+                    <a href="{% url 'home:post_update' pk=post.id %}" class="btn btn-primary">この記事を更新する</a>
+                {% endif %}
                 <a href="{% url 'home:index' %}" class="btn btn-secondary">一覧に戻る</a>
                 {% if post.image %}
                     <figure class="eye-catch">

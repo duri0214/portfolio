@@ -1,5 +1,5 @@
-from django.urls import reverse_lazy
-from django.views.generic import TemplateView, DetailView, UpdateView
+from django.urls import reverse_lazy, reverse
+from django.views.generic import TemplateView, DetailView, UpdateView, CreateView
 from markdown import Markdown
 from mdx_gfm import GithubFlavoredMarkdownExtension
 
@@ -17,7 +17,7 @@ class IndexView(TemplateView):
 
 class PostDetailView(DetailView):
     model = Post
-    template_name = "home/posts/detail.html"
+    template_name = "home/post/detail.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -30,8 +30,21 @@ class PostDetailView(DetailView):
 
 class PostUpdateView(UpdateView):
     model = Post
-    template_name = "home/posts/update.html"
+    template_name = "home/post/update.html"
     fields = ["title", "image", "category", "summary", "content"]
 
     def get_success_url(self):
         return reverse_lazy("home:post_detail", kwargs={"pk": self.object.pk})
+
+
+class PostCreateView(CreateView):
+    model = Post
+    template_name = "home/post/create.html"
+    fields = ["title", "image", "category", "summary", "content"]
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("home:post_detail", args=[str(self.object.id)])
