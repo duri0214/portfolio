@@ -18,16 +18,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
-    <title>有価証券報告書ビューア</title>
+    <title>ポートフォリオ・ガイダンス</title>
 
     <!-- bootstrap and css -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
           integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'securities/css/base.css' %}">
-    {% block additional_header %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'home/css/index.css' %}">
+
+    <!-- font -->
+    <link href="https://fonts.googleapis.com/css?family=Sawarabi+Gothic" rel="stylesheet">
+    <!-- fontawesome -->
+    <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
 
     <!-- favicon -->
-    <link rel="shortcut icon" href="{% static 'securities/s_s.ico' %}">
+    <link rel="shortcut icon" href="{% static 'home/c_h.ico' %}">
 </head>
 <body>
 <h1></h1>
@@ -42,14 +46,14 @@
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                     <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
-                        <option value="{% url 'home:index' %}">HOME</option>
+                        <option value="{% url 'home:index' %}" selected>HOME</option>
                         <option value="{% url 'vnm:index' %}">VIETNAM</option>
                         <option value="{% url 'mrk:index' %}">GMARKER</option>
                         <option value="{% url 'shp:index' %}">SHOPPING</option>
                         <option value="{% url 'war:index' %}">WAREHOUSE</option>
                         <option value="{% url 'txo:index' %}">TAXONOMY</option>
                         <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
-                        <option value="{% url 'securities:index' %}" selected>SECURITIES REPORT</option>
+                        <option value="{% url 'securities:index' %}">SECURITIES REPORT</option>
                         <option value="{% url 'hsp:index' %}">HOSPITAL</option>
                     </select>
                 </li>
@@ -80,20 +84,5 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
         integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
         crossorigin="anonymous"></script>
-
-<!-- jQuery UI CSS for DatePicker -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.css"/>
-<!-- jQuery UI for DatePicker -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-<script>
-    $(function () {
-        $("#start_date").datepicker({
-            dateFormat: "yy-mm-dd"
-        });
-        $("#end_date").datepicker({
-            dateFormat: "yy-mm-dd"
-        });
-    });
-</script>
 </body>
 </html>

@@ -41,7 +41,7 @@
 <h1></h1>
 <header>
     <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Henojiya</a>
+        <a class="navbar-brand" href="{% url 'home:index' %}">Henojiya</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -50,6 +50,7 @@
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                     <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
+                        <option value="{% url 'home:index' %}">HOME</option>
                         <option value="{% url 'vnm:index' %}">VIETNAM</option>
                         <option value="{% url 'mrk:index' %}">GMARKER</option>
                         <option value="{% url 'shp:index' %}">SHOPPING</option>
