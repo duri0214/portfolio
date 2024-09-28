@@ -17,7 +17,7 @@
         <div class="post-list-card cf">
             {% for post in posts %}
                 <article class="post-list cf animated fadeIn" role="article">
-                    <a href="{% url 'post_detail' pk=post.pk %}" rel="bookmark" title="{{ post.title }}">
+                    <a href="{% url 'home:post_detail' pk=post.pk %}" rel="bookmark" title="{{ post.title }}">
                         {% if post.image %}
                             <figure class="eye-catch">
                                 <img src="{{ post.image.url }}" alt="{{ post.title }}">
