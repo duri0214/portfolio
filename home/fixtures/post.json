@@ -82,10 +82,10 @@
     "model": "home.post",
     "pk": 4,
     "fields": {
-      "title": "Iot鳥瞰図に関する記事",
+      "title": "土壌センサーの発展型を考える",
       "category": 4,
-      "summary": "",
-      "content": "",
+      "summary": "2015年当時、上記Qiita記事で土壌センサーを動かす工作をしたが、そこからなにか発展型ができないかを模索した（結果的に構想のみ）",
+      "content": "Qiitaへのリンク\n\n- [Arduino Leonardo LCD's HelloWorld！](https://qiita.com/YoshitakaOkada/items/9ec64c8eb57a0c48c179)\n- [SDカードを取り付ける](https://qiita.com/YoshitakaOkada/items/cb1c22a514220e1a1b39)\n- [土壌センサーのジョイント](https://qiita.com/YoshitakaOkada/items/95f9803f47e710b4dded)\n- [リレーを介した、ポンプとの直結](https://qiita.com/YoshitakaOkada/items/0c6c0f51fa281c9ddd2f)\n- [FlashAirをWebサーバーとしてセットアップする](https://qiita.com/YoshitakaOkada/items/57d10592fb9b02d41f2e)\n- [ドローンによるニホンジカ生息状況調査等の推進について](https://www.kantei.go.jp/jp/singi/kogatamujinki/anzenkakuho_dai5/siryou1.pdf)\n\n### 動作確認\nお！濡らしたティッシュで値が100ぐらいズレる。成功だ。\n![1.jpg](https://qiita-image-store.s3.amazonaws.com/0/94562/5e449430-28d8-1621-59b0-4340840f1cd8.jpeg)",
       "is_featured": true,
       "created_at": "2024-09-28T10:00:00Z"
     }
@@ -94,7 +94,7 @@
     "model": "home.post",
     "pk": 5,
     "fields": {
-      "title": "タイムカードの集計処理を効率化した時の話",
+      "title": "タイムカード集計処理を効率化した話",
       "category": 5,
       "summary": "2017年、地方移住したてのころにタイムカードの集計処理を効率化したときの話。できあがったツールは本当にシンプルなものだったが、旅館を手伝いながら作ろうとすると時間を捻出することが本当に難しい。ほんの少しの改善だったが効率化の実感は得られた",
       "content": "Qiitaへのリンク\n\n- [タイムカードの集計処理を効率化した時の話](https://qiita.com/YoshitakaOkada/items/736d6bc2845f81cd59eb)\n\n## 集計ツールをつくるまえ\nまぁExcelだよね。使い方は単純。タイムカードで勤務時間を出して（Aさんの場合 33h）単価と掛け合わせて基本給を算出（26,400円）。８時間以上（または深夜時間）だった時間を「目で見て」出して（Aさんの場合 2h）、単価と掛け合わせて時間外手当を算出。さらに出勤回数と出勤手当単価と掛け合わせて通勤手当を算出。全部目検ですよ\n![当初.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/f258e225-872c-1ac3-fde4-73f1e0e329de.png)\n\n## ツールを作れないか考えた\nそもそもこのタイムカードはPCに接続してCSVを出してくれる（当然旅館の事務方さんはそんなことを知らない）。ということはCSVで集計しちゃえばいいよね。\n\nhttps://timepack.amano.co.jp/\n![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/f62e3ffc-6a80-9e8c-d990-8eefcc5192b7.png)\n\n### オペ\nhttps://timepack.amano.co.jp/products/software.html\n\n#### ナビ画面\n> TimeP@CKシリーズは「サッと勤怠 with」という専用ソフトが それぞれのパッケージの中に同梱されています。「サッと勤怠 with」のナビ画面は、矢印の順に従って直感的にわかるよう構成されています。\n\n![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/2e69a759-3c9c-c1f2-b08e-59b53248452a.png)\n\n#### データ取り込み\n> データは月に1回でも、毎日でもお客様の使い方に合わせて取り込むことができます。何回取り込んでもデータが消えることはありませんので安心です。\n\n![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/51f99b92-60eb-96b4-2825-1928bf6787a2.png)\n\n#### データチェック（日単位）\n> タイムカードを見ながら作業している感覚で、直行・直帰や打ち忘れ、打ち間違いを日単位で全従業員のデータを修正することができます。打ち忘れ欄は一目でわかるよう赤表示されるので、修正時刻を直接入力するだけ。修正データは青文字に変わるので、修正した箇所もひと目で確認できます。その日誰が出勤しているかを確認したい時や打ち忘れをこまめにチェックしたい場合などに有効です。打ち忘れた人だけを抽出することもできます。\n\n![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/e7a08842-80b5-6b7c-00c2-6a3a20ea9e0a.png)\n\n#### データチェック（月単位）\n> タイムカードのイメージで編集・確認することもできます。個人単位で1か月分のデータを確認できます。有給休暇、出張などは不在理由として登録出来ます。会社オリジナルの休日も作成できます。また、「打ち忘れ」「時間外届あり」などのメモ書きはコメント欄を使うと便利です。手入力はもちろん、よく使うコメントはコメントメモボックスに最大20個まで登録しておくこともできます。\n\n![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/eb48b9e9-96ad-3f6e-aff1-200f3474ed12.png)\n\n#### 集計作業\n> データチェックから画面を切り替えるだけで集計があっという間に終了します。正社員・パート・アルバイトなど、事前に登録した勤務（最大99パターン）に合わせて正確に集計できます。時間計算の単位（「1分単位」、「15分単位」など）も、従業員一人一人の勤務時間に合わせて設定できます。また、週単位の集計、データ出力も可能です。日毎の集計結果、月毎の集計結果の修正はもちろん、法令改正にも対応しています。\n\n![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/773c9082-642e-286b-7935-0a4281b141cf.png)",
