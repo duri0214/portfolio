@@ -32,7 +32,7 @@ class PostDetailView(DetailView):
 class PostUpdateView(UpdateView):
     model = Post
     template_name = "home/post/update.html"
-    fields = ["title", "image", "category", "summary", "content"]
+    fields = ["title", "image", "category", "summary", "content", "is_featured"]
 
     def get_success_url(self):
         return reverse_lazy("home:post_detail", kwargs={"pk": self.object.pk})
@@ -41,7 +41,7 @@ class PostUpdateView(UpdateView):
 class PostCreateView(CreateView):
     model = Post
     template_name = "home/post/create.html"
-    fields = ["title", "image", "category", "summary", "content"]
+    fields = ["title", "image", "category", "summary", "content", "is_featured"]
 
     def form_valid(self, form):
         form.instance.author = self.request.user

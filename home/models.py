@@ -18,11 +18,17 @@ class Category(models.Model):
 
 
 class Post(models.Model):
-    title = models.CharField(max_length=200)
-    image = models.ImageField(upload_to=get_random_filename, blank=True, null=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    summary = models.TextField(blank=True)
-    content = models.TextField()
-    is_featured = models.BooleanField(default=False)
+    title = models.CharField(verbose_name="記事タイトル", max_length=200)
+    image = models.ImageField(
+        verbose_name="画像", upload_to=get_random_filename, blank=True, null=True
+    )
+    category = models.ForeignKey(
+        Category, verbose_name="記事カテゴリー", on_delete=models.CASCADE
+    )
+    summary = models.TextField(verbose_name="記事概要")
+    content = models.TextField(verbose_name="記事内容")
+    is_featured = models.BooleanField(
+        verbose_name="ピックアップ記事として選択", default=False
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
