@@ -11,8 +11,15 @@
         <hr class="my-4">
         <p>Pick up!</p>
         <ul>
-            <li><a class="btn btn-secondary btn-sm" href="#" role="button">XXXX</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#" role="button">YYYY</a></li>
+            {% for post in featured_posts %}
+                <li>
+                    <a class="btn btn-secondary btn-sm" href="{% url 'home:post_detail' pk=post.pk %}"
+                       role="button">{{ post.title }}
+                    </a>
+                </li>
+            {% empty %}
+                <li><p>おすすめはまだありません。</p></li>
+            {% endfor %}
         </ul>
         {% if user.is_authenticated and user.is_superuser %}
             <a href="{% url 'home:post_create' %}" class="btn btn-primary">記事を新規作成する</a>
