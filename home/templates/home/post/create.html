@@ -8,9 +8,60 @@
 {% block content %}
     <div class="container">
         <h2>新規作成</h2>
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
             {% csrf_token %}
-            {{ form.as_p }}
+            <div class="mb-3">
+                <label for="id_title" class="form-label">記事タイトル</label>
+                <input type="text" class="form-control {% if form.title.errors %}is-invalid{% endif %}" id="id_title"
+                       name="title" value="{{ form.title.value|default:'' }}" required>
+                <div class="invalid-feedback">
+                    {{ form.title.errors|join:", " }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                {# label and file input for image field #}
+                <label for="id_image" class="form-label">画像</label>
+                <input type="file" class="form-control {% if form.image.errors %}is-invalid{% endif %}" id="id_image"
+                       name="image">
+                <div class="invalid-feedback">
+                    {{ form.image.errors|join:", " }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                {# assuming that categories are rendered as a select box #}
+                <label for="id_category" class="form-label">記事カテゴリー</label>
+                {{ form.category }}
+                <div class="invalid-feedback">
+                    {{ form.category.errors|join:", " }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="id_summary" class="form-label">記事概要</label>
+                <textarea class="form-control {% if form.summary.errors %}is-invalid{% endif %}" id="id_summary"
+                          name="summary" required>{{ form.summary.value|default:'' }}</textarea>
+                <div class="invalid-feedback">
+                    {{ form.summary.errors|join:", " }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="id_content" class="form-label">記事内容</label>
+                <textarea class="form-control {% if form.content.errors %}is-invalid{% endif %}" id="id_content"
+                          name="content" rows="20" required>{{ form.content.value|default:'' }}</textarea>
+                <div class="invalid-feedback">
+                    {{ form.content.errors|join:", " }}
+                </div>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input {% if form.is_featured.errors %}is-invalid{% endif %}"
+                       id="id_is_featured" name="is_featured" {% if form.is_featured.value %}checked{% endif %}>
+                <label class="form-check-label" for="id_is_featured">ピックアップ記事として選択</label>
+            </div>
+
             <button type="submit" class="btn btn-primary">Create</button>
         </form>
     </div>
