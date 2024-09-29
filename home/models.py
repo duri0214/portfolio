@@ -23,5 +23,6 @@ class Post(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     summary = models.TextField(blank=True)
     content = models.TextField()
+    is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
