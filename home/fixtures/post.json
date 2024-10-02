@@ -97,7 +97,7 @@
     "fields": {
       "title": "地図にピンをさすツール",
       "category": 4,
-      "summary": "2015年当時、ラーメン屋とか洋食などのワードでGoogleMapにまとめてピンを打ち、さらに任意のピンだけに絞れるようなものを作れたら便利そうだなとおもったことからトライ。外部APIを初めて使ったツールとなった。",
+      "summary": "2015年当時、ラーメン屋とか洋食などのワードでGoogleMapにまとめてピンを打ち、さらに任意のピンだけに絞れるようなものを作れたら便利そうだなとおもったことからトライ。外部APIを初めて使ったツールとなった",
       "content": "Qiitaへのリンク\n\n- [スクレイピングした検索語リストでGoogleMapから検索できたら地図をマーキングして周辺地図を保存してレーティングとクチコミを取得して表示するメモ2020](https://qiita.com/YoshitakaOkada/items/df9518520b39a5f140c9)\n\n作ったWebアプリへのリンク\n\n- [GMarker](https://www.henojiya.net/gmarker/)\n\n#### テーマ\n１．Webアプリの動きを一通りつくる\n２．スクレイピングする\n３．外部APIと接続する\n\n\n#### できあがったもの\n- カテゴリー「ラーメン屋」などで検索してピンを刺す（任意の住所リストを使ったものはサンプルが固定されてしまうため）\n- カテゴリーで出てきたn個のピンから任意に選択して一時保存。一時保存したピンだけを表示\n- dbに手で登録したピンを表示\n\nおまけで以下のデータも取得してみた\n\n- レーティングを取得する\n- 口コミを取得する\n\n![image](https://qiita-image-store.s3.amazonaws.com/0/94562/2057bdf2-17e8-53b9-8ba8-2c795c3fa212.png)",
       "is_featured": false,
       "created_at": "2024-09-28T10:00:00Z"
@@ -109,7 +109,7 @@
     "fields": {
       "title": "SHOPPING",
       "category": 5,
-      "summary": "SHOPPINGについてまとめる",
+      "summary": "2022年当時、ECサイトってやっぱり作れるようになっておいたほうがいいなと思ってトライしたもの。店員管理、商品管理、CSV登録機能、写真アップロード機能、カード決済など基本的なＥＣサイトの機能を実装した",
       "content": "作ったWebアプリへのリンク\n\n- [SHOPPING](https://www.henojiya.net/shopping/)",
       "is_featured": true,
       "created_at": "2024-09-28T10:00:00Z"
