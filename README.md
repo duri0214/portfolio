@@ -124,12 +124,12 @@ python manage.py import_soil_hardness /path/to/folder
 cd /var/www/html/portfolio
 git pull
 source /var/www/html/venv/bin/activate
-systemctl restart apache2
 python manage.py collectstatic
 sudo -s
 chown -R ubuntu:www-data /var/www/html
 vi /var/log/apache2/error.log
 python manage.py clearsessions
+systemctl restart apache2
 ```
 
 主に securities がzipを保存するために必要な設定
