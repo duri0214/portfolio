@@ -1,12 +1,56 @@
 {% extends "home/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'home/css/post/update.css' %}">
+{% endblock %}
 
 {% block content %}
     <div class="container">
-        <h2>Update Post</h2>
+        <h2>記事更新</h2>
         <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">Update</button>
+            <div class="mb-3">
+                <label for="title" class="form-label">{{ form.title.label }}</label>
+                <input type="text"
+                       class="form-control {% if form.title.errors %}is-invalid{% endif %}" id="title"
+                       name="title" value="{{ form.title.value|default_if_none:'' }}">
+            </div>
+            <div class="mb-3">
+                <label for="image" class="form-label">{{ form.image.label }}</label>
+                <input type="file"
+                       class="form-control {% if form.image.errors %}is-invalid{% endif %}" id="image"
+                       name="image" value="{{ form.image.value|default_if_none:'' }}">
+            </div>
+            <div class="mb-3">
+                <label for="category" class="form-label">{{ form.category.label }}</label>
+                <select class="form-control {% if form.category.errors %}is-invalid{% endif %}"
+                        id="category"
+                        name="category">
+                    {% for option in form.category.field.choices %}
+                        <option value="{{ option.0 }}"
+                                {% if form.category.value == option.0 %}selected{% endif %}>{{ option.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="summary" class="form-label">{{ form.summary.label }}</label>
+                <textarea class="form-control {% if form.summary.errors %}is-invalid{% endif %}"
+                          id="summary"
+                          name="summary">{{ form.summary.value|default_if_none:'' }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label for="content" class="form-label">{{ form.content.label }}</label>
+                <textarea class="form-control {% if form.content.errors %}is-invalid{% endif %}"
+                          id="content"
+                          name="content" rows="20">{{ form.content.value|default_if_none:'' }}</textarea>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input {% if form.is_featured.errors %}is-invalid{% endif %}"
+                       id="is_featured" name="is_featured" {% if form.is_featured.value %}checked{% endif %}>
+                <label class="form-check-label" for="is_featured">{{ form.is_featured.label }}</label>
+            </div>
+            <button type="submit" class="btn btn-primary">記事を更新する</button>
         </form>
     </div>
 {% endblock %}
