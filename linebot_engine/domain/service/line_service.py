@@ -69,9 +69,9 @@ class LineService:
             profile = line_bot_api.get_profile(event.source.user_id)
             picture_path = self._get_and_save_picture(profile.picture_url)
             with open(picture_path, "rb") as f:
-                Message.objects.create(
-                    user_profile=UserProfile.objects.get(line_user_id=line_user_id),
-                    source_type=event.event_data.type,
+                UserProfile.objects.create(
+                    line_user_id=line_user_id,
+                    display_name=profile.display_name,
                     picture=File(f),
                 )
 
