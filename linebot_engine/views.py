@@ -51,7 +51,7 @@ class CallbackView(View):
                         )
                     # botがブロックされたとき
                     if event.is_unfollow():
-                        UserProfile.objects.filter(line_user_id).delete()
+                        UserProfile.objects.filter(line_user_id=line_user_id).delete()
 
                     # replyが発生したとき
                     if event.is_message():
