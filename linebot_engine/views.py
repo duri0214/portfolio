@@ -16,14 +16,14 @@ class CallbackView(View):
     @staticmethod
     def post(request, *args, **kwargs):
         """
-        ラインの友達追加時に呼び出され、ラインのIDを登録する
+        LINEからのWebhook通知を処理する
 
-        Notes: LINE DEVELOPERS（ビジネスアカウントログイン）の画面からWebhookの接続をテストした場合
-          実際のイベント（ユーザーのアクションなど）がないため、eventsデータは存在せず、空の配列が返される
+        Notes: LINE DEVELOPERS（ビジネスアカウントログイン）の画面からWebhookの接続をテストした場合、
+          実際のイベント（ユーザーのアクションなど）がないため、空の配列が返される
         """
         line_service = LineService()
         if not line_service.is_valid_signature(request):
-            return HttpResponse(status=403)  # return 'Forbidden'
+            return HttpResponse(status=403)
 
         request_json = json.loads(request.body.decode("utf-8"))
         events = [WebhookEvent(event) for event in request_json["events"]]
