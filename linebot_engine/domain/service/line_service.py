@@ -98,6 +98,9 @@ class LineService:
                     / "linebot_engine/images"
                     / picture_file.name
                 )
+                line_bot_api.reply_message(
+                    event.reply_token, TextSendMessage(text=full_picture_url)
+                )
 
                 image_send_message = ImageSendMessage(
                     original_content_url=full_picture_url,
