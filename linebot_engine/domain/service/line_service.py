@@ -3,7 +3,6 @@ import hashlib
 import hmac
 import os
 import secrets
-from pathlib import Path
 
 import requests
 from django.core.files.base import ContentFile
@@ -92,11 +91,8 @@ class LineService:
                     picture=picture_file,
                 )
 
-                full_picture_url = str(
-                    Path(SITE_URL)
-                    / MEDIA_URL
-                    / "linebot_engine/images"
-                    / picture_file.name
+                full_picture_url = (
+                    f"{SITE_URL}{MEDIA_URL}/linebot_engine/images/{picture_file.name}"
                 )
                 line_bot_api.reply_message(
                     event.reply_token, TextSendMessage(text=full_picture_url)
