@@ -56,7 +56,9 @@ class CallbackView(View):
                     # replyが発生したとき
                     if event.is_message():
                         Message.objects.create(
-                            user_profile=UserProfile.objects.get(user_id=line_user_id),
+                            user_profile=UserProfile.objects.get(
+                                line_user_id=line_user_id
+                            ),
                             source_type=event.event_data.type,
                             message=event.event_data.text,
                         )
