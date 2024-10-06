@@ -6,13 +6,12 @@ import secrets
 from pathlib import Path
 
 import requests
-from django.core.files import File
 from django.core.files.base import ContentFile
 from django.http import HttpRequest
 from linebot.api import LineBotApi
 from linebot.models import TextSendMessage, ImageSendMessage
 
-from config.settings import MEDIA_ROOT, SITE_URL, MEDIA_URL
+from config.settings import SITE_URL, MEDIA_URL
 from linebot_engine.domain.valueobject.line import WebhookEvent
 from linebot_engine.models import UserProfile, Message
 
@@ -84,34 +83,29 @@ class LineService:
 
             elif event.event_data.type == "image":
                 message_content = line_bot_api.get_message_content(event.event_data.id)
+                picture_file = self._get_and_save_picture(message_content.content)
+                picture_file.name = f"{secrets.token_hex(10)}.png"
 
-                random_filename = secrets.token_hex(10) + ".png"
-                picture_path = MEDIA_ROOT / "linebot_engine/images" / random_filename
-                picture_path.parent.mkdir(parents=True, exist_ok=True)
-
-                with open(picture_path, "wb") as fd:
-                    for chunk in message_content.iter_content():
-                        fd.write(chunk)
-
-                with open(picture_path, "rb") as f:
-                    Message.objects.create(
-                        user_profile=UserProfile.objects.get(line_user_id=line_user_id),
-                        source_type=event.event_data.type,
-                        picture=File(f),
-                    )
+                Message.objects.create(
+                    user_profile=UserProfile.objects.get(line_user_id=line_user_id),
+                    source_type=event.event_data.type,
+                    picture=picture_file,
+                )
 
                 full_picture_url = str(
                     Path(SITE_URL)
                     / MEDIA_URL
                     / "linebot_engine/images"
-                    / random_filename
+                    / picture_file.name
                 )
 
                 image_send_message = ImageSendMessage(
                     original_content_url=full_picture_url,
                     preview_image_url=full_picture_url,
                 )
-                text_message = TextSendMessage(text="imageが記録されました")
+                text_message = TextSendMessage(
+                    text="imageが記録されました。ほらこれでしょ？"
+                )
                 line_bot_api.reply_message(
                     event.reply_token, [image_send_message, text_message]
                 )
