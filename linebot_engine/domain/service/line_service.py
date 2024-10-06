@@ -13,6 +13,7 @@ from linebot.api import LineBotApi
 from linebot.models import TextSendMessage, ImageSendMessage
 
 from config.settings import MEDIA_ROOT, SITE_URL, MEDIA_URL
+from linebot_engine.domain.valueobject.line import WebhookEvent
 from linebot_engine.models import UserProfile, Message
 
 
@@ -60,7 +61,7 @@ class LineService:
         picture_path = self._save_picture(resized_picture)
         return picture_path
 
-    def handle_event(self, event, line_user_id):
+    def handle_event(self, event: WebhookEvent, line_user_id: str):
         """
         follow, unfollow and message という種類の異なるイベントを処理します
 
