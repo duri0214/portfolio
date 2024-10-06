@@ -3,14 +3,16 @@ import hashlib
 import hmac
 import os
 import secrets
-from io import BytesIO
-from pathlib import Path
 
 import requests
-from PIL import Image
+from django.core.files.base import ContentFile
 from django.http import HttpRequest
+from linebot.api import LineBotApi
+from linebot.models import TextSendMessage, ImageSendMessage
 
-from config.settings import MEDIA_ROOT
+from config.settings import SITE_URL, MEDIA_URL
+from linebot_engine.domain.valueobject.line import WebhookEvent
+from linebot_engine.models import UserProfile, Message
 
 
 class LineService:
@@ -34,26 +36,77 @@ class LineService:
         return x_line_signature == signature
 
     @staticmethod
-    def _get_picture(url: str) -> Image:
+    def _get_picture_content(url: str) -> ContentFile:
         response = requests.get(url)
         response.raise_for_status()
-        return Image.open(BytesIO(response.content))
+        return ContentFile(response.content)
 
-    @staticmethod
-    def _resize_picture(picture: Image) -> Image:
-        return picture.resize((128, 128))
+    def handle_event(self, event: WebhookEvent, line_user_id: str):
+        """
+        follow, unfollow and message という種類の異なるイベントを処理します
 
-    @staticmethod
-    def _save_picture(picture: Image) -> str:
-        folder_path = Path(MEDIA_ROOT) / "linebot_engine/images"
-        folder_path.mkdir(parents=True, exist_ok=True)
-        random_filename = secrets.token_hex(5) + ".png"
-        picture_path = str(folder_path / random_filename)
-        picture.save(picture_path)
-        return picture_path
+        is_follow(): プロフィール画像を保存し、ユーザープロフィールを作成します
+        is_unfollow(): ユーザープロフィールを削除します
+        is_message():
+            text: メッセージの記録を作成します
+            image: 画像のコンテンツを取得し、`self.picture_save()` で保存します
 
-    def picture_save(self, picture_url: str) -> str:
-        picture = self._get_picture(picture_url)
-        resized_picture = self._resize_picture(picture)
-        picture_path = self._save_picture(resized_picture)
-        return picture_path
+        Args:
+            event: イベントの情報を含むLineのイベントオブジェクト
+            line_user_id: イベントに関連付けられたLineのユーザーID
+        """
+        line_bot_api = LineBotApi(os.environ.get("LINE_CHANNEL_ACCESS_TOKEN"))
+
+        if event.is_follow():
+            profile = line_bot_api.get_profile(event.source.user_id)
+            picture_file = self._get_picture_content(profile.picture_url)
+            picture_file.name = f"{secrets.token_hex(10)}.png"
+            UserProfile.objects.create(
+                line_user_id=line_user_id,
+                display_name=profile.display_name,
+                picture=picture_file,
+            )
+
+        elif event.is_unfollow():
+            UserProfile.objects.filter(line_user_id=line_user_id).delete()
+
+        elif event.is_message():
+            if event.event_data.type == "text":
+                Message.objects.create(
+                    user_profile=UserProfile.objects.get(line_user_id=line_user_id),
+                    source_type=event.event_data.type,
+                    message=event.event_data.text,
+                )
+                text_message = TextSendMessage(text="textが記録されました")
+                line_bot_api.reply_message(event.reply_token, text_message)
+
+            elif event.event_data.type == "image":
+                message_content = line_bot_api.get_message_content(event.event_data.id)
+                picture_file = ContentFile(message_content.content)
+                picture_file.name = f"{secrets.token_hex(10)}.png"
+
+                Message.objects.create(
+                    user_profile=UserProfile.objects.get(line_user_id=line_user_id),
+                    source_type=event.event_data.type,
+                    picture=picture_file,
+                )
+
+                full_picture_url = (
+                    f"{SITE_URL}{MEDIA_URL}/linebot_engine/images/{picture_file.name}"
+                )
+
+                image_send_message = ImageSendMessage(
+                    original_content_url=full_picture_url,
+                    preview_image_url=full_picture_url,
+                )
+                text_message = TextSendMessage(
+                    text="imageが記録されました。ほらこれでしょ？"
+                )
+                line_bot_api.reply_message(
+                    event.reply_token, [image_send_message, text_message]
+                )
+
+        else:
+            line_bot_api.reply_message(
+                event.reply_token, TextSendMessage(text="Unsupported event type")
+            )
