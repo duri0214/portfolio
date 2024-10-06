@@ -4,7 +4,6 @@ import hmac
 import os
 import secrets
 from io import BytesIO
-from pathlib import Path
 
 import requests
 from PIL import Image
@@ -48,10 +47,9 @@ class LineService:
 
     @staticmethod
     def _save_picture(picture: Image) -> str:
-        folder_path = Path(MEDIA_ROOT) / "linebot_engine/images"
-        folder_path.mkdir(parents=True, exist_ok=True)
-        random_filename = secrets.token_hex(5) + ".png"
-        picture_path = str(folder_path / random_filename)
+        random_filename = secrets.token_hex(10) + ".png"
+        picture_path = MEDIA_ROOT / "linebot_engine/images" / random_filename
+        picture_path.parent.mkdir(parents=True, exist_ok=True)
         picture.save(picture_path)
         return picture_path
 
@@ -103,10 +101,9 @@ class LineService:
             elif event.event_data.type == "image":
                 message_content = line_bot_api.get_message_content(event.event_data.id)
 
-                folder_path = Path(MEDIA_ROOT) / "linebot_engine/images"
-                folder_path.mkdir(parents=True, exist_ok=True)
                 random_filename = secrets.token_hex(10) + ".png"
-                picture_path = str(folder_path / random_filename)
+                picture_path = MEDIA_ROOT / "linebot_engine/images" / random_filename
+                picture_path.parent.mkdir(parents=True, exist_ok=True)
 
                 with open(picture_path, "wb") as fd:
                     for chunk in message_content.iter_content():
