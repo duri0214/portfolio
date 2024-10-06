@@ -83,7 +83,7 @@ class LineService:
 
             elif event.event_data.type == "image":
                 message_content = line_bot_api.get_message_content(event.event_data.id)
-                picture_file = self._get_and_save_picture(message_content.content)
+                picture_file = ContentFile(message_content.content)
                 picture_file.name = f"{secrets.token_hex(10)}.png"
 
                 Message.objects.create(
