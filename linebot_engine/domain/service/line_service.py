@@ -45,7 +45,7 @@ class LineService:
 
     @staticmethod
     def _save_picture(picture: Image) -> str:
-        folder_path = Path(MEDIA_ROOT) / "images"
+        folder_path = Path(MEDIA_ROOT) / "linebot_engine/images"
         folder_path.mkdir(parents=True, exist_ok=True)
         random_filename = secrets.token_hex(5) + ".png"
         picture_path = str(folder_path / random_filename)
