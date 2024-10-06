@@ -6,11 +6,10 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from linebot import LineBotApi
-from linebot.models import Message
 
 from linebot_engine.domain.service.line_service import LineService
 from linebot_engine.domain.valueobject.line import WebhookEvent
-from linebot_engine.models import UserProfile
+from linebot_engine.models import UserProfile, Message
 
 WEBHOOK_VERIFICATION_USER_ID = "Udeadbeefdeadbeefdeadbeefdeadbeef"
 
@@ -22,7 +21,7 @@ class CallbackView(View):
         """
         ラインの友達追加時に呼び出され、ラインのIDを登録する
 
-        Notes: LINE DEVELOPERSの画面からWebhookの接続をテストした場合
+        Notes: LINE DEVELOPERS（ビジネスアカウントログイン）の画面からWebhookの接続をテストした場合
           実際のイベント（ユーザーのアクションなど）がないため、eventsデータは存在せず、空の配列が返される
         """
         line_service = LineService()

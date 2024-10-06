@@ -15,7 +15,7 @@ class UserProfile(models.Model):
         return self.line_user_id
 
 
-class Messages(models.Model):
+class Message(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     source_type = models.CharField(max_length=100)
     message = models.TextField()
