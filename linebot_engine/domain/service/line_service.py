@@ -37,7 +37,7 @@ class LineService:
         return x_line_signature == signature
 
     @staticmethod
-    def _get_and_save_picture(url: str) -> ContentFile:
+    def _get_picture_content(url: str) -> ContentFile:
         response = requests.get(url)
         response.raise_for_status()
         return ContentFile(response.content)
@@ -60,7 +60,7 @@ class LineService:
 
         if event.is_follow():
             profile = line_bot_api.get_profile(event.source.user_id)
-            picture_file = self._get_and_save_picture(profile.picture_url)
+            picture_file = self._get_picture_content(profile.picture_url)
             picture_file.name = f"{secrets.token_hex(10)}.png"
             UserProfile.objects.create(
                 line_user_id=line_user_id,
