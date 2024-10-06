@@ -4,14 +4,15 @@ import hmac
 import os
 import secrets
 from io import BytesIO
+from pathlib import Path
 
 import requests
 from PIL import Image
 from django.http import HttpRequest
 from linebot.api import LineBotApi
-from linebot.models import TextSendMessage
+from linebot.models import TextSendMessage, ImageSendMessage
 
-from config.settings import MEDIA_ROOT
+from config.settings import MEDIA_ROOT, SITE_URL, MEDIA_URL
 from linebot_engine.models import UserProfile, Message
 
 
@@ -108,12 +109,27 @@ class LineService:
                 with open(picture_path, "wb") as fd:
                     for chunk in message_content.iter_content():
                         fd.write(chunk)
-                resized_picture_path = self.picture_save(picture_path)
 
                 Message.objects.create(
                     user_profile=UserProfile.objects.get(line_user_id=line_user_id),
                     source_type=event.event_data.type,
-                    picture=resized_picture_path,
+                    picture=str(picture_path),
+                )
+
+                full_picture_url = str(
+                    Path(SITE_URL)
+                    / MEDIA_URL
+                    / "linebot_engine/images"
+                    / random_filename
+                )
+
+                image_send_message = ImageSendMessage(
+                    original_content_url=full_picture_url,
+                    preview_image_url=full_picture_url,
+                )
+                text_message = TextSendMessage(text="処理が完了しました")
+                line_bot_api.reply_message(
+                    event.reply_token, [image_send_message, text_message]
                 )
 
         else:
