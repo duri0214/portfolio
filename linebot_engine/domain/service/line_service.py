@@ -3,11 +3,10 @@ import hashlib
 import hmac
 import os
 import secrets
-from io import BytesIO
 from pathlib import Path
 
 import requests
-from PIL import Image
+from django.core.files import File
 from django.http import HttpRequest
 from linebot.api import LineBotApi
 from linebot.models import TextSendMessage, ImageSendMessage
@@ -38,28 +37,16 @@ class LineService:
         return x_line_signature == signature
 
     @staticmethod
-    def _get_picture(url: str) -> Image:
+    def _get_and_save_picture(url: str) -> str:
         response = requests.get(url)
         response.raise_for_status()
-        return Image.open(BytesIO(response.content))
-
-    @staticmethod
-    def _resize_picture(picture: Image) -> Image:
-        return picture.resize((128, 128))
-
-    @staticmethod
-    def _save_picture(picture: Image) -> str:
+        image_data = response.content
         random_filename = secrets.token_hex(10) + ".png"
         picture_path = MEDIA_ROOT / "linebot_engine/images" / random_filename
         picture_path.parent.mkdir(parents=True, exist_ok=True)
-        picture.save(picture_path)
-        return picture_path
-
-    def picture_save(self, picture_url: str) -> str:
-        picture = self._get_picture(picture_url)
-        resized_picture = self._resize_picture(picture)
-        picture_path = self._save_picture(resized_picture)
-        return picture_path
+        with open(picture_path, "wb") as fd:
+            fd.write(image_data)
+        return str(picture_path)
 
     def handle_event(self, event: WebhookEvent, line_user_id: str):
         """
@@ -80,12 +67,13 @@ class LineService:
         # Botをフォローした時
         if event.is_follow():
             profile = line_bot_api.get_profile(event.source.user_id)
-            picture_path = self.picture_save(profile.picture_url)
-            UserProfile.objects.create(
-                line_user_id=line_user_id,
-                display_name=profile.display_name,
-                picture=picture_path,
-            )
+            picture_path = self._get_and_save_picture(profile.picture_url)
+            with open(picture_path, "rb") as f:
+                Message.objects.create(
+                    user_profile=UserProfile.objects.get(line_user_id=line_user_id),
+                    source_type=event.event_data.type,
+                    picture=File(f),
+                )
 
         # Botがブロックされたとき
         elif event.is_unfollow():
@@ -111,11 +99,12 @@ class LineService:
                     for chunk in message_content.iter_content():
                         fd.write(chunk)
 
-                Message.objects.create(
-                    user_profile=UserProfile.objects.get(line_user_id=line_user_id),
-                    source_type=event.event_data.type,
-                    picture=str(picture_path),
-                )
+                with open(picture_path, "rb") as f:
+                    Message.objects.create(
+                        user_profile=UserProfile.objects.get(line_user_id=line_user_id),
+                        source_type=event.event_data.type,
+                        picture=File(f),
+                    )
 
                 full_picture_url = str(
                     Path(SITE_URL)
