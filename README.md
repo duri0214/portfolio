@@ -106,6 +106,7 @@ python manage.py loaddata .\soil_analysis\fixtures\device.json
 python manage.py loaddata .\hospital\fixtures\ward.json
 python manage.py loaddata .\hospital\fixtures\city.json
 python manage.py loaddata .\hospital\fixtures\election.json
+python manage.py loaddata .\hospital\fixtures\userattribute.json
 ```
 
 ## サーバを動かす
@@ -209,6 +210,8 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 
 ## hospital
 
+### 処理概要
+
 ```mermaid
 sequenceDiagram
     participant 患者
@@ -228,3 +231,13 @@ sequenceDiagram
     病院 ->> 病院: 投票人数×727円を経費として請求書作成
     病院 ->> 選管: 不在者投票事務処理簿、経費請求書の提出
 ```
+
+### 初期構成
+
+これがあれば動く
+転記TOOLS
+│ └ 転記TOOLS_選挙事務用.xlsm - メインのExcelファイル
+│
+└─テンプレート - 出力用
+├─ 不在者投票事務処理簿(原本).xlsx - 不在者投票に関する事務処理簿のテンプレート
+└─ 請求者名簿.xlsx - 請求者のリストテンプレート
