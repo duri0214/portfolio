@@ -129,8 +129,7 @@ class ElectionLedger(models.Model):
     )
     applied_for_proxy_voting = models.BooleanField(
         verbose_name="代理投票申請の有無",
-        null=True,
-        blank=True,
+        default=False,
     )
     delivery_date = models.DateField(
         verbose_name="投票用紙送付日", null=True, blank=True
