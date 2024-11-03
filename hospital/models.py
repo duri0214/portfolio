@@ -64,9 +64,9 @@ class ElectionLedger(models.Model):
     """
     選挙事務用の請求者名簿と事務処理簿の入力項目をガッチャンコした、事務処理台帳
 
-    Note: 以下のようにするとCHOISEで登録された "代理・直接" などの name を追うことができます
-    >>> user = User.objects.get(id=1)
-    >>> print(user.get_billing_method_display())
+    Note: モデルフィールドに choices を設定すると、自動的に _get_FOO_display() メソッドが生成され、登録された "代理・直接" などの名称を追うことができます
+    >>> ledger = ElectionLedger.objects.get(id=1)
+    >>> print(ledger.get_billing_method_display())
 
     Attributes:
         - election (ForeignKey): 選挙名を表す `Election` モデルへの外部キー
