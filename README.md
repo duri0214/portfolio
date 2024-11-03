@@ -106,6 +106,8 @@ python manage.py loaddata .\soil_analysis\fixtures\device.json
 python manage.py loaddata .\hospital\fixtures\ward.json
 python manage.py loaddata .\hospital\fixtures\city.json
 python manage.py loaddata .\hospital\fixtures\election.json
+python manage.py loaddata .\hospital\fixtures\userattribute.json
+python manage.py loaddata .\hospital\fixtures\voteplace.json
 ```
 
 ## サーバを動かす
@@ -208,6 +210,8 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
     - `python manage.py daily_download_edinet` のバッチをまわす
 
 ## hospital
+
+### 処理概要
 
 ```mermaid
 sequenceDiagram

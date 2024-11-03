@@ -21,7 +21,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 1,
     "fields": {
       "name": "堺区",
@@ -30,7 +30,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 2,
     "fields": {
       "name": "中区",
@@ -39,7 +39,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 3,
     "fields": {
       "name": "東区",
@@ -48,7 +48,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 4,
     "fields": {
       "name": "西区",
@@ -57,7 +57,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 5,
     "fields": {
       "name": "南区",
@@ -66,7 +66,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 6,
     "fields": {
       "name": "北区",
@@ -75,7 +75,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 7,
     "fields": {
       "name": "美原区",
@@ -84,7 +84,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 8,
     "fields": {
       "name": "阿倍野区",
@@ -93,7 +93,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 9,
     "fields": {
       "name": "平野区",
@@ -102,7 +102,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 10,
     "fields": {
       "name": "住吉区",
@@ -111,7 +111,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 11,
     "fields": {
       "name": "住之江区",
@@ -120,7 +120,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 12,
     "fields": {
       "name": "東住吉区",
@@ -129,7 +129,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 13,
     "fields": {
       "name": "生野区",
@@ -138,7 +138,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 14,
     "fields": {
       "name": "城東区",
@@ -147,7 +147,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 15,
     "fields": {
       "name": "東成区",
@@ -156,7 +156,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 16,
     "fields": {
       "name": "旭区",
@@ -165,7 +165,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 17,
     "fields": {
       "name": "鶴見区",
@@ -174,7 +174,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 18,
     "fields": {
       "name": "中央区",
@@ -183,7 +183,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 19,
     "fields": {
       "name": "西成区",
@@ -192,7 +192,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 20,
     "fields": {
       "name": "西区",
@@ -201,7 +201,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 21,
     "fields": {
       "name": "天王寺区",
@@ -210,7 +210,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 22,
     "fields": {
       "name": "浪速区",
@@ -219,7 +219,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 23,
     "fields": {
       "name": "都島区",
@@ -228,7 +228,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 24,
     "fields": {
       "name": "福島区",
@@ -237,7 +237,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 25,
     "fields": {
       "name": "北区",
@@ -246,7 +246,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 26,
     "fields": {
       "name": "東淀川区",
@@ -255,7 +255,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 27,
     "fields": {
       "name": "西淀川区",
@@ -264,7 +264,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 28,
     "fields": {
       "name": "港区",
@@ -273,7 +273,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 29,
     "fields": {
       "name": "大正区",
@@ -282,7 +282,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 30,
     "fields": {
       "name": "此花区",
@@ -291,7 +291,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 31,
     "fields": {
       "name": "高石市",
@@ -300,7 +300,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 32,
     "fields": {
       "name": "松原市",
@@ -309,7 +309,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 33,
     "fields": {
       "name": "富田林市",
@@ -318,7 +318,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 34,
     "fields": {
       "name": "大阪狭山市",
@@ -327,7 +327,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 35,
     "fields": {
       "name": "岸和田市",
@@ -336,7 +336,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 36,
     "fields": {
       "name": "和泉市",
@@ -345,7 +345,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 37,
     "fields": {
       "name": "河内長野市",
@@ -354,7 +354,7 @@
     }
   },
   {
-    "model": "hospital.citysector",
+    "model": "hospital.CitySector",
     "pk": 37,
     "fields": {
       "name": "羽曳野市",

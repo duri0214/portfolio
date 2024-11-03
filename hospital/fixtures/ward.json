@@ -1,13 +1,13 @@
 [
   {
-    "model": "hospital.wardtype",
+    "model": "hospital.WardType",
     "pk": 1,
     "fields": {
       "name": "精神"
     }
   },
   {
-    "model": "hospital.wardtype",
+    "model": "hospital.WardType",
     "pk": 2,
     "fields": {
       "name": "一般"
