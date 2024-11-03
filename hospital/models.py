@@ -36,10 +36,6 @@ class Election(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
 
-class VoteStatus(models.Model):
-    name = models.CharField(max_length=255)
-
-
 class VotePlace(models.Model):
     name = models.CharField(max_length=255)
 
@@ -79,7 +75,6 @@ class ElectionLedger(models.Model):
         - proxy_billing_date (DateField): 代理請求日
         - ballot_received_date (DateField): 投票用紙受領日
         - vote_date (DateField): 投票日
-        - vote_status (ForeignKey): 投票ステータスを表す `VoteStatus` モデルへの外部キー
         - vote_place (ForeignKey): 投票場所を表す `VotePlace` モデルへの外部キー
         - voter_witness (ForeignKey): 投票者証人を表す `User` モデルへの外部キー
         - whether_to_apply_for_proxy_voting (CharField): 代理投票申請の有無
@@ -117,9 +112,6 @@ class ElectionLedger(models.Model):
         verbose_name="投票用紙受領日", null=True, blank=True
     )
     vote_date = models.DateField(verbose_name="投票日", null=True, blank=True)
-    vote_status = models.ForeignKey(
-        VoteStatus, on_delete=models.CASCADE, null=True, blank=True
-    )
     vote_place = models.ForeignKey(
         VotePlace,
         verbose_name="投票場所",
