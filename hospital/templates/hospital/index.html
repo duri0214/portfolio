@@ -14,7 +14,74 @@
     </div>
 
     <div class="container">
-        <p>これはサンプルです</p>
+        <a href="{% url 'hsp:election_ledger_create' %}" class="btn btn-outline-primary"
+           role="button">新規投票記録を追加</a>
+        <table class="table table-striped table-bordered">
+            <thead class="bg-primary text-white">
+            <tr>
+                <th scope="col">選挙名</th>
+                <th scope="col">選挙人氏名</th>
+                <th scope="col">病棟</th>
+                <th scope="col">投票区</th>
+                <th scope="col">備考</th>
+                <th scope="col">投票用紙請求の方法</th>
+                <th scope="col">代理請求の依頼を受けた日</th>
+                <th scope="col">代理請求日</th>
+                <th scope="col">投票用紙受領日</th>
+                <th scope="col">投票日</th>
+                <th scope="col">投票場所</th>
+                <th scope="col">投票立会人</th>
+                <th scope="col">代理投票申請の有無</th>
+                <th scope="col">投票用紙送付日</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for ledger in electionledger_list %}
+                <tr>
+                    <td>{{ ledger.election }}</td>
+                    <td>{{ ledger.voter }}</td>
+                    <td>{{ ledger.vote_ward }}</td>
+                    <td>{{ ledger.vote_city_sector }}</td>
+                    <td>{{ ledger.remark|default:"-" }}</td>
+                    <td>{{ ledger.get_billing_method_display }}</td>
+                    <td>{{ ledger.proxy_billing_request_date|default:"-" }}</td>
+                    <td>{{ ledger.proxy_billing_date|default:"-" }}</td>
+                    <td>{{ ledger.ballot_received_date|default:"-" }}</td>
+                    <td>{{ ledger.vote_date|default:"-" }}</td>
+                    <td>{{ ledger.vote_place|default:"-" }}</td>
+                    <td>{{ ledger.vote_observer|default:"-" }}</td>
+                    <td>{{ ledger.applied_for_proxy_voting|yesno:"有,無" }}</td>
+                    <td>{{ ledger.delivery_date|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="14">No ledger available.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
+                    <li class="page-item"><a class="page-link"
+                                             href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">First</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><a class="page-link" href="#">{{ page_obj.number }}</a></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">Last</a></li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
 
 {% endblock %}

@@ -5,6 +5,9 @@ from django.db import models
 class WardType(models.Model):
     name = models.CharField(verbose_name="病棟種", max_length=100, unique=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Ward(models.Model):
     abbreviation = models.CharField(verbose_name="略称", unique=True, max_length=10)
@@ -17,9 +20,15 @@ class Ward(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 
 class City(models.Model):
     name = models.CharField(verbose_name="エリア", max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
 
 
 class CitySector(models.Model):
@@ -28,12 +37,18 @@ class CitySector(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Election(models.Model):
     name = models.CharField(verbose_name="選挙名", max_length=255, unique=True)
     execution_date = models.DateField(verbose_name="執行日")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 
 class VotePlace(models.Model):
@@ -83,7 +98,9 @@ class ElectionLedger(models.Model):
         - updated_at (DateTimeField): 更新日時
     """
 
-    election = models.ForeignKey(Election, on_delete=models.CASCADE)
+    election = models.ForeignKey(
+        Election, verbose_name="選挙名", on_delete=models.CASCADE
+    )
     voter = models.ForeignKey(
         User,
         verbose_name="選挙人氏名",
@@ -94,10 +111,11 @@ class ElectionLedger(models.Model):
     vote_city_sector = models.ForeignKey(
         CitySector, verbose_name="投票区", on_delete=models.CASCADE
     )
-    remark = models.CharField(max_length=255, null=True, blank=True)
-    billing_method = models.CharField(
+    remark = models.CharField(
+        verbose_name="備考", max_length=255, null=True, blank=True
+    )
+    billing_method = models.IntegerField(
         verbose_name="投票用紙請求の方法",
-        max_length=5,
         choices=BILLING_METHOD_CHOICES,
         null=True,
         blank=True,
@@ -119,7 +137,7 @@ class ElectionLedger(models.Model):
         null=True,
         blank=True,
     )
-    voter_witness = models.ForeignKey(
+    vote_observer = models.ForeignKey(
         User,
         verbose_name="投票立会人",
         on_delete=models.CASCADE,
