@@ -1,0 +1,23 @@
+[
+  {
+    "model": "hospital.VotePlace",
+    "pk": 1,
+    "fields": {
+      "name": "総務"
+    }
+  },
+  {
+    "model": "hospital.VotePlace",
+    "pk": 2,
+    "fields": {
+      "name": "食堂"
+    }
+  },
+  {
+    "model": "hospital.VotePlace",
+    "pk": 3,
+    "fields": {
+      "name": "院内ローソン"
+    }
+  }
+]
