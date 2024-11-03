@@ -74,7 +74,7 @@ class ElectionLedger(models.Model):
         - proxy_billing_request_date (DateField): 代理請求の依頼を受けた日
         - proxy_billing_date (DateField): 代理請求日
         - ballot_received_date (DateField): 投票用紙受領日
-        - vote_date (DateField): 投票日
+        - vote_date (DateField): 投票日（投票済みかを判断できる）
         - vote_place (ForeignKey): 投票場所を表す `VotePlace` モデルへの外部キー
         - voter_witness (ForeignKey): 投票者証人を表す `User` モデルへの外部キー
         - whether_to_apply_for_proxy_voting (CharField): 代理投票申請の有無
