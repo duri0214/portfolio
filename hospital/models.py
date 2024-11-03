@@ -53,34 +53,34 @@ BILLING_METHOD_CHOICES = [
     (1, "代理・直接"),
     (2, "代理・郵便"),
 ]
-PROXY_VOTING_CHOICES = [(1, "無"), (2, "有")]
 
 
 class ElectionLedger(models.Model):
     """
-    選挙事務用の請求者名簿と事務処理簿の入力項目をガッチャンコした、事務処理台帳
+    選挙事務用の請求者名簿と事務処理簿の入力項目をまとめた、事務処理台帳
 
-    Note: モデルフィールドに choices を設定すると、自動的に _get_FOO_display() メソッドが生成され、登録された "代理・直接" などの名称を追うことができます
+    Note: モデルフィールドで choices 属性が設定されている場合、_get_FOO_display() メソッドが自動生成される。
+            これにより、レコード内部値に代替する表示名（"代理・直接" など）を取得することができます。
     >>> ledger = ElectionLedger.objects.get(id=1)
     >>> print(ledger.get_billing_method_display())
 
     Attributes:
-        - election (ForeignKey): 選挙名を表す `Election` モデルへの外部キー
-        - voter (ForeignKey): 投票者を表す `User` モデルへの外部キー
-        - vote_ward (ForeignKey): 投票病棟を表す `Ward` モデルへの外部キー
-        - vote_city_sector (ForeignKey): 投票都市区を表す `CitySector` モデルへの外部キー
+        - election (ForeignKey): 選挙名
+        - voter (ForeignKey): 投票者氏名
+        - vote_ward (ForeignKey): 病棟名
+        - vote_city_sector (ForeignKey): 投票区名
         - remark (CharField): 備考
-        - billing_method (CharField): 投票用紙請求の方法
-        - proxy_billing_request_date (DateField): 代理請求の依頼を受けた日
+        - billing_method (CharField): 投票用紙の請求方法
+        - proxy_billing_request_date (DateField): 代理請求依頼日
         - proxy_billing_date (DateField): 代理請求日
         - ballot_received_date (DateField): 投票用紙受領日
-        - vote_date (DateField): 投票日（投票済みかを判断できる）
-        - vote_place (ForeignKey): 投票場所を表す `VotePlace` モデルへの外部キー
-        - voter_witness (ForeignKey): 投票者証人を表す `User` モデルへの外部キー
-        - whether_to_apply_for_proxy_voting (CharField): 代理投票申請の有無
+        - vote_date (DateField): 投票日（投票済みか否かを判断できる）
+        - vote_place (ForeignKey): 投票場所
+        - voter_witness (ForeignKey): 投票立会人
+        - applied_for_proxy_voting (BooleanField): 代理投票申請の有無
         - delivery_date (DateField): 投票用紙送付日
-        - created_at (DateTimeField): 取込日
-        - updated_at (DateTimeField): The date and time when the ledger entry was last updated.
+        - created_at (DateTimeField): 取込日時
+        - updated_at (DateTimeField): 更新日時
     """
 
     election = models.ForeignKey(Election, on_delete=models.CASCADE)
@@ -127,10 +127,8 @@ class ElectionLedger(models.Model):
         null=True,
         blank=True,
     )
-    whether_to_apply_for_proxy_voting = models.CharField(
+    applied_for_proxy_voting = models.BooleanField(
         verbose_name="代理投票申請の有無",
-        max_length=1,
-        choices=PROXY_VOTING_CHOICES,
         null=True,
         blank=True,
     )
