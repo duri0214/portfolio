@@ -14,6 +14,19 @@
     </div>
 
     <div class="container">
+        <div class="form-group">
+            <form method="get">
+                <select name="election" class="form-control" onchange="this.form.submit()">
+                    <option value="">-- 選挙を選択 --</option>
+                    {% for election in elections %}
+                        <option value="{{ election.id }}"
+                                {% if request.GET.election == election.id|stringformat:"s" %}selected{% endif %}>
+                            {{ election.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
         <a href="{% url 'hsp:election_ledger_create' %}" class="btn btn-outline-primary"
            role="button">新規投票記録を追加</a>
         <table class="table table-striped table-bordered">

@@ -8,7 +8,7 @@ from django.views.generic import (
 )
 
 from hospital.forms import ElectionLedgerCreateForm, ElectionLedgerUpdateForm
-from hospital.models import ElectionLedger
+from hospital.models import ElectionLedger, Election
 
 
 class IndexView(ListView):
@@ -16,6 +16,17 @@ class IndexView(ListView):
     template_name = "hospital/index.html"
     paginate_by = 5
     ordering = ["-created_at"]
+
+    def get_queryset(self):
+        election = self.request.GET.get("election")
+        if election:
+            return ElectionLedger.objects.filter(election=election)
+        return ElectionLedger.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["elections"] = Election.objects.all()
+        return context
 
 
 class ElectionLedgerCreateView(CreateView):
