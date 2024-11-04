@@ -1,0 +1,12 @@
+{% extends 'hospital/base.html' %}
+
+{% block content %}
+    <div class="container">
+        <h2>更新</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-outline-primary">更新</button>
+        </form>
+    </div>
+{% endblock %}

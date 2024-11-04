@@ -125,3 +125,7 @@ class ElectionLedgerCreateForm(forms.ModelForm):
     class Meta:
         model = ElectionLedger
         fields = "__all__"
+
+
+class ElectionLedgerUpdateForm(ElectionLedgerCreateForm):
+    pass
