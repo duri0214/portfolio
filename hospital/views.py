@@ -15,6 +15,7 @@ class IndexView(ListView):
     model = ElectionLedger
     template_name = "hospital/index.html"
     paginate_by = 5
+    ordering = ["-created_at"]
 
 
 class ElectionLedgerCreateView(CreateView):
