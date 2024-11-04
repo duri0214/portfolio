@@ -27,7 +27,7 @@ urlpatterns = [
         name="election_ledger_delete",
     ),
     path(
-        "<int:pk>/detail/",
+        "election_ledger/<int:pk>/detail/",
         ElectionLedgerDetailView.as_view(),
         name="election_ledger_detail",
     ),
