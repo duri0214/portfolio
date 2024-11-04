@@ -1,7 +1,7 @@
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 
-from hospital.forms import ElectionLedgerCreateForm
+from hospital.forms import ElectionLedgerCreateForm, ElectionLedgerUpdateForm
 from hospital.models import ElectionLedger
 
 
@@ -14,4 +14,17 @@ class IndexView(ListView):
 class ElectionLedgerCreateView(CreateView):
     form_class = ElectionLedgerCreateForm
     template_name = "hospital/election_ledger/create.html"
+    success_url = reverse_lazy("hsp:index")
+
+
+class ElectionLedgerUpdateView(UpdateView):
+    model = ElectionLedger
+    form_class = ElectionLedgerUpdateForm
+    template_name = "hospital/election_ledger/update.html"
+    success_url = reverse_lazy("hsp:index")
+
+
+class ElectionLedgerDeleteView(DeleteView):
+    model = ElectionLedger
+    template_name = "hospital/election_ledger/delete.html"
     success_url = reverse_lazy("hsp:index")

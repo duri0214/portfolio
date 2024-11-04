@@ -33,6 +33,7 @@
                 <th scope="col">投票立会人</th>
                 <th scope="col">代理投票申請の有無</th>
                 <th scope="col">投票用紙送付日</th>
+                <th scope="col">操作</th>
             </tr>
             </thead>
             <tbody>
@@ -52,6 +53,12 @@
                     <td>{{ ledger.vote_observer|default:"-" }}</td>
                     <td>{{ ledger.applied_for_proxy_voting|yesno:"有,無" }}</td>
                     <td>{{ ledger.delivery_date|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'hsp:election_ledger_update' ledger.id %}"
+                           class="btn btn-outline-primary">更新</a>
+                        <a href="{% url 'hsp:election_ledger_delete' ledger.id %}"
+                           class="btn btn-outline-danger">削除</a>
+                    </td>
                 </tr>
             {% empty %}
                 <tr>

@@ -154,3 +154,6 @@ class ElectionLedger(models.Model):
     )
     created_at = models.DateTimeField(verbose_name="取込日", auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    def __str__(self):
+        return f"{self.election.name}, {self.voter}（病棟: {self.vote_ward.name}）"
