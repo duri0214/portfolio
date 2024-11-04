@@ -1,0 +1,64 @@
+{% extends "hospital/base.html" %}
+{% load humanize %}
+
+{% block content %}
+    <div class="container">
+
+        <h2 class="my-2">投票記録詳細</h2>
+
+        <dl class="row">
+            <dt class="col-sm-3">選挙名</dt>
+            <dd class="col-sm-9">{{ object.election }}</dd>
+
+            <dt class="col-sm-3">選挙人氏名</dt>
+            <dd class="col-sm-9">{{ object.voter }}</dd>
+
+            <dt class="col-sm-3">病棟</dt>
+            <dd class="col-sm-9">{{ object.vote_ward }}</dd>
+
+            <dt class="col-sm-3">投票区</dt>
+            <dd class="col-sm-9">{{ object.vote_city_sector }}</dd>
+
+            <dt class="col-sm-3">備考</dt>
+            <dd class="col-sm-9">{{ object.remark|default:"-" }}</dd>
+
+            <dt class="col-sm-3">取込日</dt>
+            <dd class="col-sm-9">{{ object.created_at|date:"Y-m-d" }}</dd>
+
+            <dt class="col-sm-3">投票用紙請求の方法</dt>
+            <dd class="col-sm-9">{{ object.get_billing_method_display }}</dd>
+
+            <dt class="col-sm-3">代理請求の依頼を受けた日</dt>
+            <dd class="col-sm-9">{{ object.proxy_billing_request_date|date:"Y-m-d"|default:"-" }}</dd>
+
+            <dt class="col-sm-3">代理請求日</dt>
+            <dd class="col-sm-9">{{ object.proxy_billing_date|date:"Y-m-d"|default:"-" }}</dd>
+
+            <dt class="col-sm-3">投票用紙受領日</dt>
+            <dd class="col-sm-9">{{ object.ballot_received_date|date:"Y-m-d"|default:"-" }}</dd>
+
+            <dt class="col-sm-3">投票日</dt>
+            <dd class="col-sm-9">{{ object.vote_date|date:"Y-m-d"|default:"-" }}</dd>
+
+            <dt class="col-sm-3">投票場所</dt>
+            <dd class="col-sm-9">{{ object.vote_place|default:"-" }}</dd>
+
+            <dt class="col-sm-3">投票立会人</dt>
+            <dd class="col-sm-9">{{ object.vote_observer|default:"-" }}</dd>
+
+            <dt class="col-sm-3">代理投票申請の有無</dt>
+            <dd class="col-sm-9">{{ object.applied_for_proxy_voting|yesno:"有,無" }}</dd>
+
+            <dt class="col-sm-3">投票用紙送付日</dt>
+            <dd class="col-sm-9">{{ object.delivery_date|date:"Y-m-d"|default:"-" }}</dd>
+
+            <dt class="col-sm-3">更新日</dt>
+            <dd class="col-sm-9">{{ object.updated_at|date:"Y-m-d H:i"|default:"-" }}</dd>
+        </dl>
+
+        <a href="{% url 'hsp:election_ledger_update' object.id %}" class="btn btn-outline-primary mx-1">更新</a>
+        <a href="{% url 'hsp:election_ledger_delete' object.id %}" class="btn btn-outline-danger mx-1">削除</a>
+        <a href="{% url 'hsp:index' %}" role="button" class="btn btn-outline-secondary mx-1">戻る</a>
+
+    </div>
+{% endblock content %}
