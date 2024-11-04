@@ -20,8 +20,10 @@ class IndexView(ListView):
     def get_queryset(self):
         election = self.request.GET.get("election")
         if election:
-            return ElectionLedger.objects.filter(election=election)
-        return ElectionLedger.objects.all()
+            return ElectionLedger.objects.filter(election=election).order_by(
+                "-created_at"
+            )
+        return ElectionLedger.objects.all().order_by("-created_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
