@@ -1,5 +1,11 @@
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, ListView, UpdateView, DeleteView
+from django.views.generic import (
+    CreateView,
+    ListView,
+    UpdateView,
+    DeleteView,
+    DetailView,
+)
 
 from hospital.forms import ElectionLedgerCreateForm, ElectionLedgerUpdateForm
 from hospital.models import ElectionLedger
@@ -28,3 +34,8 @@ class ElectionLedgerDeleteView(DeleteView):
     model = ElectionLedger
     template_name = "hospital/election_ledger/delete.html"
     success_url = reverse_lazy("hsp:index")
+
+
+class ElectionLedgerDetailView(DetailView):
+    model = ElectionLedger
+    template_name = "hospital/election_ledger/detail.html"

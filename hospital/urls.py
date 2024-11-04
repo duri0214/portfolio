@@ -5,6 +5,7 @@ from hospital.views import (
     ElectionLedgerCreateView,
     ElectionLedgerUpdateView,
     ElectionLedgerDeleteView,
+    ElectionLedgerDetailView,
 )
 
 app_name = "hsp"
@@ -24,5 +25,10 @@ urlpatterns = [
         "election_ledger/delete/<int:pk>/",
         ElectionLedgerDeleteView.as_view(),
         name="election_ledger_delete",
+    ),
+    path(
+        "<int:pk>/detail/",
+        ElectionLedgerDetailView.as_view(),
+        name="election_ledger_detail",
     ),
 ]
