@@ -26,8 +26,10 @@ class IndexView(ListView):
         return ElectionLedger.objects.all().order_by("-created_at")
 
     def get_context_data(self, **kwargs):
+        election = self.request.GET.get("election")
         context = super().get_context_data(**kwargs)
         context["elections"] = Election.objects.all()
+        context["canExport"] = True if election else False
         return context
 
 
