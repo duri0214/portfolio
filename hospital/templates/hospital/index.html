@@ -9,12 +9,14 @@
         <p>You can do hospital administration too.</p>
         <ul>
             <li>
-                <a class="btn btn-secondary btn-sm" href="#" role="button" {% if not canExport %}disabled{% endif %}>
+                <a class="btn btn-secondary btn-sm" href="#" role="button"
+                   style="{% if not canExport %}opacity:0.65; cursor:not-allowed;{% endif %}">
                     請求者名簿
                 </a>
             </li>
             <li>
-                <a class="btn btn-secondary btn-sm" href="#" role="button" {% if not canExport %}disabled{% endif %}>
+                <a class="btn btn-secondary btn-sm" href="#" role="button"
+                   style="{% if not canExport %}opacity:0.65; cursor:not-allowed;{% endif %}">
                     不在者投票事務処理簿
                 </a>
             </li>
