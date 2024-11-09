@@ -8,15 +8,23 @@
         <hr class="my-4">
         <p>You can do hospital administration too.</p>
         <ul>
-            <li><a class="btn btn-secondary btn-sm" href="#" role="button">XXXX</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#" role="button">YYYY</a></li>
+            <li>
+                <a class="btn btn-secondary btn-sm" href="#" role="button" {% if not canExport %}disabled{% endif %}>
+                    請求者名簿
+                </a>
+            </li>
+            <li>
+                <a class="btn btn-secondary btn-sm" href="#" role="button" {% if not canExport %}disabled{% endif %}>
+                    不在者投票事務処理簿
+                </a>
+            </li>
         </ul>
     </div>
 
     <div class="container">
         <div class="form-group">
             <form method="get">
-                <select name="election" class="form-control" onchange="this.form.submit()">
+                <select name="election" class="form-control" onchange="onElectionChangeHandler(this)">
                     <option value="">-- 選挙を選択 --</option>
                     {% for election in elections %}
                         <option value="{{ election.id }}"
@@ -89,4 +97,16 @@
         </nav>
     </div>
 
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        function onElectionChangeHandler(selectElement) {
+            if (selectElement.value === '') {
+                location.href = location.pathname;
+            } else {
+                selectElement.form.submit();
+            }
+        }
+    </script>
 {% endblock %}
