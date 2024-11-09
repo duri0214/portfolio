@@ -6,6 +6,7 @@ from hospital.views import (
     ElectionLedgerUpdateView,
     ElectionLedgerDeleteView,
     ElectionLedgerDetailView,
+    ExportBillingListView,
 )
 
 app_name = "hsp"
@@ -30,5 +31,10 @@ urlpatterns = [
         "election_ledger/<int:pk>/detail/",
         ElectionLedgerDetailView.as_view(),
         name="election_ledger_detail",
+    ),
+    path(
+        "export/billing-list/",
+        ExportBillingListView.as_view(),
+        name="export_billing_list",
     ),
 ]

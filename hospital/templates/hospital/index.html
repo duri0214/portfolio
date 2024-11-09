@@ -9,7 +9,9 @@
         <p>You can do hospital administration too.</p>
         <ul>
             <li>
-                <a class="btn btn-secondary btn-sm" href="#" role="button"
+                <a class="btn btn-secondary btn-sm"
+                   href="{% url 'hsp:export_billing_list' %}?election={{ request.GET.election }}"
+                   role="button"
                    style="{% if not canExport %}opacity:0.65; cursor:not-allowed;{% endif %}">
                     請求者名簿
                 </a>
