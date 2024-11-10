@@ -5,7 +5,7 @@ from pathlib import Path
 from django.http import HttpResponse
 from openpyxl import Workbook
 
-from hospital.domain.valueobject.export_report import DataRow
+from hospital.domain.valueobject.export_report import BillingListRow
 from hospital.models import ElectionLedger
 
 
@@ -25,15 +25,15 @@ class ExportBillingService:
         ledgers = ElectionLedger.objects.filter(election_id=election_id)
 
         wb = Workbook()
-        ws = wb.active
-        ws.append([field.name for field in ElectionLedger._meta.fields])
+        sh = wb.active
+        sh.append(BillingListRow.get_field_names())
 
         filename = self.create_unique_filename()
 
         for ledger in ledgers:
-            data_row = DataRow(fields=ledger._meta.fields, instance=ledger)
-            ws.append(data_row.to_list())
-        wb.save(filename=filename)
+            row = BillingListRow(ledger=ledger)
+            sh.append(row.to_list())
+        wb.save(filename)
 
         try:
             excel_data = self.get_excel_data(filename)

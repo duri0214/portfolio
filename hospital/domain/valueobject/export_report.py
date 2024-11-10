@@ -1,25 +1,47 @@
 from dataclasses import dataclass
-from datetime import datetime
 
-from django.db import models
+from hospital.models import ElectionLedger
+
+
+def convert_to_japanese_era(year, month, day):
+    if year > 2019 or (year == 2019 and month >= 5 and day >= 1):
+        era_year = year - 2018
+        era_name = "令和"
+    elif year > 1989 or (year == 1989 and month >= 1 and day >= 8):
+        era_year = year - 1988
+        era_name = "平成"
+    else:
+        era_year = year - 1925
+        era_name = "昭和"
+
+    return era_name, era_year
 
 
 @dataclass
-class DataRow:
-    fields: list[models.Field]
-    instance: models.Model
+class BillingListRow:
+    ledger: ElectionLedger
 
-    def to_list(self):
-        # TODO: 具体的に請求者名簿の型、不在者投票事務処理簿の型にしよう
-        row = []
-        for field in self.fields:
-            if isinstance(field, models.ForeignKey):
-                value = getattr(self.instance, f"{field.name}_id")
-                if isinstance(value, datetime):
-                    value = value.replace(tzinfo=None)
-            else:
-                value = getattr(self.instance, field.name)
-                if isinstance(value, datetime):
-                    value = value.replace(tzinfo=None)
-            row.append(value)
-        return row
+    @property
+    def address(self) -> str:
+        return self.ledger.voter.userattribute.address
+
+    @property
+    def voter_name(self) -> str:
+        return self.ledger.voter.username
+
+    @property
+    def date_of_birth(self) -> str:
+        dob = self.ledger.voter.userattribute.date_of_birth
+        era_name, era_year = convert_to_japanese_era(dob.year, dob.month, dob.day)
+        return f"{era_name} {era_year}.{dob.month:02d}.{dob.day:02d}"
+
+    @property
+    def ward_name(self) -> str:
+        return self.ledger.vote_ward.name
+
+    @staticmethod
+    def get_field_names() -> list[str]:
+        return ["選挙人住所", "選挙人氏名", "生年月日", "病棟"]
+
+    def to_list(self) -> list:
+        return [self.address, self.voter_name, self.date_of_birth, self.ward_name]
