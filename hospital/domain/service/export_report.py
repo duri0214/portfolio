@@ -1,5 +1,6 @@
 import os
 import uuid
+from abc import ABC, abstractmethod
 from itertools import islice, groupby
 from pathlib import Path
 from urllib.parse import quote
@@ -11,7 +12,7 @@ from hospital.domain.valueobject.export_report import BillingListRow
 from hospital.models import ElectionLedger
 
 
-class ExportBillingService:
+class AbstractExport(ABC):
     def __init__(self, temp_folder: Path):
         self.temp_folder = temp_folder
         os.makedirs(self.temp_folder, exist_ok=True)
@@ -23,6 +24,12 @@ class ExportBillingService:
         with open(self.temp_folder / filename, "rb") as f:
             return f.read()
 
+    @abstractmethod
+    def export(self, *args, **kwargs):
+        pass
+
+
+class ExportBillingService(AbstractExport):
     def export(self, election_id) -> HttpResponse:
         ledgers = (
             ElectionLedger.objects.filter(election_id=election_id)
