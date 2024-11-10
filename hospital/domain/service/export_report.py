@@ -6,7 +6,6 @@ from urllib.parse import quote
 
 from django.http import HttpResponse
 from openpyxl.reader.excel import load_workbook
-from openpyxl.worksheet.copier import WorksheetCopy
 
 from hospital.domain.valueobject.export_report import BillingListRow
 from hospital.models import ElectionLedger
@@ -35,40 +34,31 @@ class ExportBillingService:
         wb = load_workbook(filepath)
         filename = self.create_unique_filename()
 
-        for ward_name, group in groupby(ledgers, key=lambda x: x.vote_ward.name):
-            sh_template = wb["ひな形"]
+        chunk_size = 15
+        start_row = 5
 
+        sheet_counter = 1
+        for ward_name, group in groupby(ledgers, key=lambda x: x.vote_ward.name):
             ledgers_iter = iter(group)
-            chunk_size = 15
             while True:
                 chunk = list(islice(ledgers_iter, chunk_size))
                 if not chunk:
                     break
 
-                if "data" in wb.sheetnames:
-                    del wb["data"]
-                sh_data = wb.create_sheet("data")
-                sh_data.append(BillingListRow.get_field_names())
+                new_worksheet = wb.copy_worksheet(wb["ひな形"])
+                new_worksheet.title = ward_name if sheet_counter == 1 else f"{ward_name} ({sheet_counter})"
+                sheet_counter += 1
 
-                for ledger in chunk:
+                for i, ledger in enumerate(chunk, start=0):
                     row = BillingListRow(ledger)
-                    sh_data.append(row.to_list())
-
-                sequence_number = str(wb.sheetnames.count(ward_name))
-                new_worksheet = wb.copy_worksheet(sh_template)
-                new_worksheet.title = ward_name + sequence_number
-
-                # value copy
-                copier = WorksheetCopy(sh_template, new_worksheet)
-                copier.copy_worksheet()
-
+                    new_worksheet.cell(row=start_row + i, column=1, value=row.address)  # A列
+                    new_worksheet.cell(row=start_row + i, column=2, value=row.voter_name)  # B列
+                    new_worksheet.cell(row=start_row + i, column=3, value=row.date_of_birth)  # C列
         del wb["ひな形"]
-        del wb["data"]
         wb.save(filename)
 
         try:
             excel_data = self.get_excel_data(filename)
-
             response = HttpResponse(
                 excel_data,
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -77,4 +67,5 @@ class ExportBillingService:
             response["Content-Disposition"] = header_content
         finally:
             os.remove(self.temp_folder / filename)
+
         return response
