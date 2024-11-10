@@ -1,9 +1,12 @@
 import os
 import uuid
+from itertools import islice, groupby
 from pathlib import Path
+from urllib.parse import quote
 
 from django.http import HttpResponse
-from openpyxl import Workbook
+from openpyxl.reader.excel import load_workbook
+from openpyxl.worksheet.copier import WorksheetCopy
 
 from hospital.domain.valueobject.export_report import BillingListRow
 from hospital.models import ElectionLedger
@@ -22,17 +25,45 @@ class ExportBillingService:
             return f.read()
 
     def export(self, election_id) -> HttpResponse:
-        ledgers = ElectionLedger.objects.filter(election_id=election_id)
+        ledgers = (
+            ElectionLedger.objects.filter(election_id=election_id)
+            .select_related("vote_ward")
+            .order_by("vote_ward__name")
+        )
 
-        wb = Workbook()
-        sh = wb.active
-        sh.append(BillingListRow.get_field_names())
-
+        filepath = os.path.abspath("hospital/domain/service/xlsx/billing_list.xlsx")
+        wb = load_workbook(filepath)
         filename = self.create_unique_filename()
 
-        for ledger in ledgers:
-            row = BillingListRow(ledger=ledger)
-            sh.append(row.to_list())
+        for ward_name, group in groupby(ledgers, key=lambda x: x.vote_ward.name):
+            sh_template = wb["ひな形"]
+
+            ledgers_iter = iter(group)
+            chunk_size = 15
+            while True:
+                chunk = list(islice(ledgers_iter, chunk_size))
+                if not chunk:
+                    break
+
+                if "data" in wb.sheetnames:
+                    del wb["data"]
+                sh_data = wb.create_sheet("data")
+                sh_data.append(BillingListRow.get_field_names())
+
+                for ledger in chunk:
+                    row = BillingListRow(ledger)
+                    sh_data.append(row.to_list())
+
+                sequence_number = str(wb.sheetnames.count(ward_name))
+                new_worksheet = wb.copy_worksheet(sh_template)
+                new_worksheet.title = ward_name + sequence_number
+
+                # value copy
+                copier = WorksheetCopy(sh_template, new_worksheet)
+                copier.copy_worksheet()
+
+        del wb["ひな形"]
+        del wb["data"]
         wb.save(filename)
 
         try:
@@ -42,7 +73,8 @@ class ExportBillingService:
                 excel_data,
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
-            response["Content-Disposition"] = "attachment; filename=ElectionLedger.xlsx"
+            header_content = f"attachment; filename*=UTF-8''{quote("請求者名簿.xlsx")}"
+            response["Content-Disposition"] = header_content
         finally:
             os.remove(self.temp_folder / filename)
         return response
