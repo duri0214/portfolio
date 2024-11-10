@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from datetime import date
 
 from hospital.models import ElectionLedger
 
 
-def convert_to_japanese_era(year, month, day):
+def convert_to_japanese_era(birth_date: date) -> str:
+    year, month, day = birth_date.year, birth_date.month, birth_date.day
     if year > 2019 or (year == 2019 and month >= 5 and day >= 1):
         era_year = year - 2018
         era_name = "令和"
@@ -14,7 +16,7 @@ def convert_to_japanese_era(year, month, day):
         era_year = year - 1925
         era_name = "昭和"
 
-    return era_name, era_year
+    return f"{era_name} {era_year}.{month:02d}.{day:02d}"
 
 
 @dataclass
@@ -31,9 +33,7 @@ class BillingListRow:
 
     @property
     def date_of_birth(self) -> str:
-        dob = self.ledger.voter.userattribute.date_of_birth
-        era_name, era_year = convert_to_japanese_era(dob.year, dob.month, dob.day)
-        return f"{era_name} {era_year}.{dob.month:02d}.{dob.day:02d}"
+        return convert_to_japanese_era(self.ledger.voter.userattribute.date_of_birth)
 
     @property
     def ward_name(self) -> str:
