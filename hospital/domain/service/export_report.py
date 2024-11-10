@@ -44,8 +44,8 @@ class ExportBillingService(AbstractExport):
         chunk_size = 15
         start_row = 5
 
-        sheet_counter = 1
         for ward_name, group in groupby(ledgers, key=lambda x: x.vote_ward.name):
+            sheet_counter = 1
             ledgers_iter = iter(group)
             while True:
                 chunk = list(islice(ledgers_iter, chunk_size))
