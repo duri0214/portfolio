@@ -129,10 +129,10 @@ git fetch --prune origin
 git reset --hard origin/master
 source /var/www/html/venv/bin/activate
 python manage.py collectstatic
+python manage.py clearsessions
+vi /var/log/apache2/error.log
 sudo -s
 chown -R ubuntu:www-data /var/www/html
-vi /var/log/apache2/error.log
-python manage.py clearsessions
 systemctl restart apache2
 ```
 
