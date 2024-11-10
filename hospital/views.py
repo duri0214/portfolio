@@ -67,6 +67,5 @@ class ExportBillingListView(View):
         election_id = request.GET.get("election", None)
         if not election_id:
             return HttpResponse("Election ID not provided", status=400)
-
         service = ExportBillingService(temp_folder=MEDIA_ROOT / "hospital/temp")
         return service.export(election_id)
