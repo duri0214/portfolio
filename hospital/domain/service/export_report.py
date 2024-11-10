@@ -8,6 +8,7 @@ from urllib.parse import quote
 from django.http import HttpResponse
 from openpyxl.reader.excel import load_workbook
 
+from config.settings import BASE_DIR
 from hospital.domain.valueobject.export_report import BillingListRow
 from hospital.models import ElectionLedger
 
@@ -37,8 +38,7 @@ class ExportBillingService(AbstractExport):
             .order_by("vote_ward__name")
         )
 
-        filepath = os.path.abspath("hospital/domain/service/xlsx/billing_list.xlsx")
-        wb = load_workbook(filepath)
+        wb = load_workbook(BASE_DIR / "hospital/domain/service/xlsx/billing_list.xlsx")
         filename = self.create_unique_filename()
 
         chunk_size = 15
