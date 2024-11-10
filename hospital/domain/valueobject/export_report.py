@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date
 
@@ -19,8 +20,19 @@ def convert_to_japanese_era(birth_date: date) -> str:
     return f"{era_name} {era_year}.{month:02d}.{day:02d}"
 
 
+class AbstractRow(ABC):
+    @staticmethod
+    @abstractmethod
+    def get_field_names() -> list[str]:
+        pass
+
+    @abstractmethod
+    def to_list(self) -> list[str]:
+        pass
+
+
 @dataclass
-class BillingListRow:
+class BillingListRow(AbstractRow):
     ledger: ElectionLedger
 
     @property
