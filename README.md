@@ -124,7 +124,7 @@ python manage.py import_soil_hardness /path/to/folder
 
 ```commandline
 cd /var/www/html/portfolio
-git pull
+git pull origin master
 git fetch --prune origin
 git reset --hard origin/master
 source /var/www/html/venv/bin/activate
