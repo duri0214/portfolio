@@ -1,4 +1,6 @@
+from django.http import HttpResponse
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import (
     CreateView,
     ListView,
@@ -7,6 +9,8 @@ from django.views.generic import (
     DetailView,
 )
 
+from config.settings import MEDIA_ROOT
+from hospital.domain.service.export_report import ExportBillingService
 from hospital.forms import ElectionLedgerCreateForm, ElectionLedgerUpdateForm
 from hospital.models import ElectionLedger, Election
 
@@ -26,8 +30,10 @@ class IndexView(ListView):
         return ElectionLedger.objects.all().order_by("-created_at")
 
     def get_context_data(self, **kwargs):
+        election = self.request.GET.get("election")
         context = super().get_context_data(**kwargs)
         context["elections"] = Election.objects.all()
+        context["canExport"] = True if election else False
         return context
 
 
@@ -53,3 +59,13 @@ class ElectionLedgerDeleteView(DeleteView):
 class ElectionLedgerDetailView(DetailView):
     model = ElectionLedger
     template_name = "hospital/election_ledger/detail.html"
+
+
+class ExportBillingListView(View):
+    @staticmethod
+    def get(request, *args, **kwargs):
+        election_id = request.GET.get("election", None)
+        if not election_id:
+            return HttpResponse("Election ID not provided", status=400)
+        service = ExportBillingService(temp_folder=MEDIA_ROOT / "hospital/temp")
+        return service.export(election_id)
