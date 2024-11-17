@@ -3,10 +3,7 @@ from unittest import TestCase
 
 from soil_analysis.domain.service.photoprocessingservice import PhotoProcessingService
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
-from soil_analysis.domain.valueobject.coords.capturelocationcoords import (
-    CaptureLocationCoords,
-)
-from soil_analysis.domain.valueobject.coords.landcoords import LandCoords
+from soil_analysis.domain.valueobject.coords import CaptureLocationCoords, LandCoords
 from soil_analysis.domain.valueobject.land import Land
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 
@@ -44,7 +41,9 @@ class TestPhotoProcessingService(TestCase):
         ]
 
     def test_calculate_distance(self):
-        coords1 = CaptureLocationCoords(137.6492809, 34.743865)  # ススムA3撮影座標
+        coords1 = CaptureLocationCoords(
+            longitude=137.6492809, latitude=34.743865
+        )  # ススムA3撮影座標
         coords2 = LandCoords(
             "137.6487935,34.744671"
         )  # ススムA3撮影座標から100mの場所（Landで代用）
@@ -54,21 +53,21 @@ class TestPhotoProcessingService(TestCase):
 
     def test_find_nearest_land_a1(self):
         # 撮影位置は ススムA1 正面
-        photo_coords = CaptureLocation(137.64905, 34.74424)
+        photo_coords = CaptureLocation(longitude=137.64905, latitude=34.74424)
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_coords, self.land_candidates)
         self.assertEqual(self.land1, nearest_land)
 
     def test_find_nearest_land_a2(self):
         # 撮影位置は ススムA2 正面
-        photo_coords = CaptureLocation(137.64921, 34.744)
+        photo_coords = CaptureLocation(longitude=137.64921, latitude=34.744)
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_coords, self.land_candidates)
         self.assertEqual(self.land2, nearest_land)
 
     def test_find_nearest_land_a3(self):
         # 撮影位置は ススムA3 正面
-        photo_coords = CaptureLocation(137.64938, 34.74374)
+        photo_coords = CaptureLocation(longitude=137.64938, latitude=34.74374)
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_coords, self.land_candidates)
         self.assertEqual(self.land3, nearest_land)

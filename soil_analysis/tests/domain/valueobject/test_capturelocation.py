@@ -18,13 +18,33 @@ class TestCaptureLocation(TestCase):
         self.capture_point_azimuth = 190
 
     def test_origin_coords(self):
-        capture_location = CaptureLocation(self.capture_point_lng, self.capture_point_lat, self.capture_point_azimuth)
-        self.assertAlmostEqual(self.capture_point_lng, capture_location.origin.get_coords()[0], delta=0.0003)
-        self.assertAlmostEqual(self.capture_point_lat, capture_location.origin.get_coords()[1], delta=0.0003)
+        capture_location = CaptureLocation(
+            longitude=self.capture_point_lng,
+            latitude=self.capture_point_lat,
+            azimuth=self.capture_point_azimuth,
+        )
+        self.assertAlmostEqual(
+            self.capture_point_lng,
+            capture_location.origin.get_coords()[0],
+            delta=0.0003,
+        )
+        self.assertAlmostEqual(
+            self.capture_point_lat,
+            capture_location.origin.get_coords()[1],
+            delta=0.0003,
+        )
 
     def test_corrected_coords(self):
-        capture_location = CaptureLocation(self.capture_point_lng, self.capture_point_lat, self.capture_point_azimuth)
-        print(f'gmap検証用_撮影位置: 34.743865,137.6492809')
-        print(f'gmap検証用_10m先の位置: {capture_location.corrected.to_googlemapcoords().get_coords()}')
-        self.assertAlmostEqual(137.6492, capture_location.corrected.get_coords()[0], delta=0.0003)
-        self.assertAlmostEqual(34.74378, capture_location.corrected.get_coords()[1], delta=0.0003)
+        capture_location = CaptureLocation(
+            self.capture_point_lng, self.capture_point_lat, self.capture_point_azimuth
+        )
+        print(f"gmap検証用_撮影位置: 34.743865,137.6492809")
+        print(
+            f"gmap検証用_10m先の位置: {capture_location.corrected.to_googlemap().get_coords()}"
+        )
+        self.assertAlmostEqual(
+            137.6492, capture_location.corrected.get_coords()[1], delta=0.0003
+        )
+        self.assertAlmostEqual(
+            34.74378, capture_location.corrected.get_coords()[0], delta=0.0003
+        )
