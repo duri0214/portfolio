@@ -9,20 +9,20 @@ class BaseCoords(ABC):
     @abstractmethod
     def to_tuple(self) -> tuple[float, float]:
         """
-        座標をタプル形式で取得します。緯度経度の順に配置されます。
+        座標をタプル形式で取得します。具体的な順序はサブクラスによります。
 
         Returns:
-            tuple[float, float]: (Latitude, Longitude)
+            tuple[float, float]: 座標を表すタプル
         """
         pass
 
     @abstractmethod
     def to_str(self) -> str:
         """
-        座標を文字列形式で取得します。緯度経度はコンマで区切られます。
+        座標を文字列形式で取得します。具体的な順序はサブクラスによります。
 
         Returns:
-            str: "Latitude, Longitude"
+            str: 座標を表す文字列
         """
         pass
 
