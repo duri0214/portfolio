@@ -66,7 +66,7 @@ class PhotoProcessingService:
         :return: 距離（単位に応じた値）
         """
         return haversine(
-            coords1.to_googlemap().get_coords(),
-            coords2.to_googlemap().get_coords(),
+            coords1.to_googlemap().to_tuple(),
+            coords2.to_googlemap().to_tuple(),
             unit=unit,
         )

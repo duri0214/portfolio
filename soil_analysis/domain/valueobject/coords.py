@@ -24,44 +24,28 @@ class BaseCoords(ABC):
         self.longitude = longitude
 
     @abstractmethod
-    def get_coords(self, to_str: bool = False) -> tuple[float, float] | str:
-        """
-        座標（緯度と経度）を取得します。結果の形式は、引数 `to_str` により制御されます。
+    def to_tuple(self) -> tuple[float, float]:
+        pass
 
-        引数 `to_str` が False の場合、このメソッドは緯度と経度を包含するタプルを返します。
-        True の場合、緯度と経度を文字列形式で返します。緯度と経度はカンマで区切られます。
-
-        パラメータ:
-        to_str (bool, optional): 結果を文字列として返すかどうか。デフォルトは False。
-
-        戻り値:
-        tuple[float, float] | str: 緯度と経度を含むタプルまたは緯度と経度をカンマで区切った文字列。
-
-        Raises:
-        NotImplementedError: このメソッドは、すべての派生クラスで実装する必要があります。
-        """
+    @abstractmethod
+    def to_str(self) -> str:
         pass
 
 
 class GoogleMapCoords(BaseCoords):
-    def get_coords(self, to_str: bool = False) -> tuple[float, float] | str:
-        """
-        TODO: to_strとto_tupleにMethodに割ったほうがいい
-        :return: latitude, longitude
-        """
-        coordinates_tuple = self.latitude, self.longitude
-        coordinates_str = f"{coordinates_tuple[0]}, {coordinates_tuple[1]}"
-        return coordinates_tuple if to_str is False else coordinates_str
+    def to_tuple(self) -> tuple[float, float]:
+        return self.latitude, self.longitude
+
+    def to_str(self) -> str:
+        return f"{self.latitude}, {self.longitude}"
 
 
 class CaptureLocationCoords(BaseCoords):
-    def get_coords(self, to_str: bool = False) -> tuple[float, float] | str:
-        """
-        :return: longitude, latitude
-        """
-        coordinates_tuple = self.longitude, self.latitude
-        coordinates_str = f"{coordinates_tuple[0]}, {coordinates_tuple[1]}"
-        return coordinates_tuple if to_str is False else coordinates_str
+    def to_tuple(self) -> tuple[float, float]:
+        return self.longitude, self.latitude
+
+    def to_str(self) -> str:
+        return f"{self.longitude}, {self.latitude}"
 
     def to_googlemap(self) -> GoogleMapCoords:
         return GoogleMapCoords(self.latitude, self.longitude)
@@ -85,10 +69,11 @@ class LandCoords(BaseCoords):
         self.longitude = round(self.longitude_sum / self.num_points, 7)
         self.latitude = round(self.latitude_sum / self.num_points, 7)
 
-    def get_coords(self, to_str: bool = False) -> tuple[float, float] or str:
-        coordinates_tuple = self.longitude, self.latitude
-        coordinates_str = f"{coordinates_tuple[0]}, {coordinates_tuple[1]}"
-        return coordinates_tuple if to_str is False else coordinates_str
+    def to_tuple(self) -> tuple[float, float]:
+        return self.longitude, self.latitude
+
+    def to_str(self) -> str:
+        return f"{self.longitude}, {self.latitude}"
 
     def to_googlemap(self) -> GoogleMapCoords:
         return GoogleMapCoords(self.latitude, self.longitude)

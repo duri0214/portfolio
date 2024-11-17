@@ -29,7 +29,7 @@ class CaptureLocation:
         :param distance: 移動距離（単位: キロメートル）
         :return: 移動後の座標を表す Coords オブジェクト
         """
-        origin_longitude, origin_latitude = self._coords_origin.get_coords()
+        origin_longitude, origin_latitude = self._coords_origin.to_tuple()
 
         # 角度をラジアンに変換
         azimuth_rad = math.radians(azimuth)

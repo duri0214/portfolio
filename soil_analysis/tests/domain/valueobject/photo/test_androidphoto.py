@@ -9,7 +9,9 @@ class TestAndroidPhoto(TestCase):
     def setUp(self):
         script_directory = os.path.dirname(os.path.abspath(__file__))
         self.file_path = r"./android/JA中_all.jpg"
-        self.android_photo = AndroidPhoto(os.path.join(script_directory, self.file_path))
+        self.android_photo = AndroidPhoto(
+            os.path.join(script_directory, self.file_path)
+        )
         self.android_photo.exif_data = self.android_photo._extract_exif_data()
 
     def test_extract_date(self):
@@ -27,10 +29,16 @@ class TestAndroidPhoto(TestCase):
         # 正常な値のテスト
         expected_location = CaptureLocation(137.8266552, 34.6942567)  # xarvio based
         actual_location = self.android_photo._extract_location()
-        self.assertAlmostEqual(expected_location.corrected.get_coords()[0], actual_location.corrected.get_coords()[0],
-                               delta=0.001)
-        self.assertAlmostEqual(expected_location.corrected.get_coords()[1], actual_location.corrected.get_coords()[1],
-                               delta=0.001)
+        self.assertAlmostEqual(
+            expected_location.corrected.to_tuple()[0],
+            actual_location.corrected.to_tuple()[0],
+            delta=0.001,
+        )
+        self.assertAlmostEqual(
+            expected_location.corrected.to_tuple()[1],
+            actual_location.corrected.to_tuple()[1],
+            delta=0.001,
+        )
 
         # GPS GPSLongitude が None の場合のテスト
         self.android_photo.exif_data["GPS GPSLongitude"] = None
