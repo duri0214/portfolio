@@ -32,7 +32,7 @@ class GoogleMapCoords(BaseCoords):
     Google Map 用の座標変換クラス。BaseCoordsを継承します。
 
     メソッド:
-    to_tuple: 座標をタプル形式で取得します。戻り値は (緯度,経度) 法です。
+    to_tuple: 座標をタプル形式で取得します。戻り値は (緯度,経度) 形式です。
     to_str : 座標を文字列形式で取得します。戻り値は "緯度, 経度" 形式です。
     """
 
