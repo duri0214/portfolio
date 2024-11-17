@@ -1,6 +1,6 @@
 import math
 
-from soil_analysis.domain.valueobject.coords.capturelocationcoords import CaptureLocationCoords
+from soil_analysis.domain.valueobject.coords import CaptureLocationCoords
 
 
 class CaptureLocation:
@@ -11,7 +11,10 @@ class CaptureLocation:
     """
 
     def __init__(self, longitude: float, latitude: float, azimuth: float = None):
-        self._coords_origin = CaptureLocationCoords(longitude, latitude)
+        self._coords_origin = CaptureLocationCoords(
+            longitude=longitude,
+            latitude=latitude,
+        )
 
         if azimuth:
             self._coords = self._move(azimuth)
@@ -26,7 +29,7 @@ class CaptureLocation:
         :param distance: 移動距離（単位: キロメートル）
         :return: 移動後の座標を表す Coords オブジェクト
         """
-        origin_longitude, origin_latitude = self._coords_origin.get_coords()
+        origin_longitude, origin_latitude = self._coords_origin.to_tuple()
 
         # 角度をラジアンに変換
         azimuth_rad = math.radians(azimuth)
@@ -38,7 +41,9 @@ class CaptureLocation:
         # 目的地までの変位の緯度変化を計算
         delta_latitude = distance / radius * math.cos(azimuth_rad)
         # 目的地までの変位の経度変化を計算
-        delta_longitude = distance / (radius * math.sin(latitude_rad)) * math.sin(azimuth_rad)
+        delta_longitude = (
+            distance / (radius * math.sin(latitude_rad)) * math.sin(azimuth_rad)
+        )
 
         # 目的地の緯度を計算
         destination_latitude = origin_latitude + math.degrees(delta_latitude)

@@ -1,4 +1,4 @@
-from soil_analysis.domain.valueobject.coords.landcoords import LandCoords
+from soil_analysis.domain.valueobject.coords import LandCoords
 
 
 class Land:
