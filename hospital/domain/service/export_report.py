@@ -17,8 +17,10 @@ from hospital.models import ElectionLedger
 
 
 class AbstractExport(ABC):
-    def __init__(self, temp_folder: Path):
+    def __init__(self, temp_folder: Path, chunk_size: int, start_row: int):
         self.temp_folder = temp_folder
+        self.chunk_size = chunk_size
+        self.start_row = start_row
         os.makedirs(self.temp_folder, exist_ok=True)
 
     def create_unique_filename(self):
@@ -34,6 +36,9 @@ class AbstractExport(ABC):
 
 
 class ExportBillingService(AbstractExport):
+    def __init__(self, temp_folder: Path):
+        super().__init__(temp_folder, chunk_size=15, start_row=5)
+
     def export(self, election_id) -> HttpResponse:
         ledgers = (
             ElectionLedger.objects.filter(election_id=election_id)
@@ -44,26 +49,34 @@ class ExportBillingService(AbstractExport):
         wb = load_workbook(BASE_DIR / "hospital/domain/service/xlsx/billing_list.xlsx")
         filename = self.create_unique_filename()
 
-        chunk_size = 15
-        start_row = 5
-
         for ward_name, group in groupby(ledgers, key=lambda x: x.vote_ward.name):
             sheet_counter = 1
             ledgers_iter = iter(group)
             while True:
-                chunk = list(islice(ledgers_iter, chunk_size))
+                chunk = list(islice(ledgers_iter, self.chunk_size))
                 if not chunk:
                     break
 
                 new_worksheet = wb.copy_worksheet(wb["ひな形"])
-                new_worksheet.title = ward_name if sheet_counter == 1 else f"{ward_name} ({sheet_counter})"
+                new_worksheet.title = (
+                    ward_name
+                    if sheet_counter == 1
+                    else f"{ward_name} ({sheet_counter})"
+                )
                 sheet_counter += 1
 
                 for i, ledger in enumerate(chunk, start=0):
                     row = BillingListRow(ledger)
-                    new_worksheet.cell(row=start_row + i, column=1, value=row.address)  # A列
-                    new_worksheet.cell(row=start_row + i, column=2, value=row.voter_name)  # B列
-                    new_worksheet.cell(row=start_row + i, column=3, value=row.date_of_birth)  # C列
+                    current_row_index = self.start_row + i
+                    new_worksheet.cell(
+                        row=current_row_index, column=1, value=row.address
+                    )  # A列
+                    new_worksheet.cell(
+                        row=current_row_index, column=2, value=row.voter_name
+                    )  # B列
+                    new_worksheet.cell(
+                        row=current_row_index, column=3, value=row.date_of_birth
+                    )  # C列
         del wb["ひな形"]
         wb.save(filename)
 
