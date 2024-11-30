@@ -99,7 +99,6 @@ class VotingManagementService(AbstractExport):
         super().__init__(temp_folder, chunk_size=11, start_row=13)
 
     def export(self, election_id) -> HttpResponse:
-        # TODO: 元帳ではなく投票管理に関連するデータを取得します（出力済みのものは印刷しない、モードつける？）
         ledgers = (
             ElectionLedger.objects.filter(election_id=election_id)
             .select_related("vote_ward")
