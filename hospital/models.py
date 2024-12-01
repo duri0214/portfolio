@@ -74,7 +74,7 @@ class ElectionLedger(models.Model):
     """
     選挙事務用の請求者名簿と事務処理簿の入力項目をまとめた、事務処理台帳
 
-    Note: モデルフィールドで choices 属性が設定されている場合、_get_FOO_display() メソッドが自動生成される。
+    Note: モデルフィールドで choices 属性が設定されている場合、get_FOO_display() メソッドが自動生成される。
             これにより、レコード内部値に代替する表示名（"代理・直接" など）を取得することができます。
     >>> ledger = ElectionLedger.objects.get(id=1)
     >>> print(ledger.get_billing_method_display())

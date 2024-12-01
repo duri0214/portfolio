@@ -11,13 +11,17 @@
             <li>
                 <a class="btn btn-secondary btn-sm"
                    href="{% url 'hsp:export_billing_list' %}?election={{ request.GET.election }}"
+                   onclick="onExport(event, {{ canExport|yesno:'true,false' }})"
                    role="button"
                    style="{% if not canExport %}opacity:0.65; cursor:not-allowed;{% endif %}">
                     請求者名簿
                 </a>
             </li>
             <li>
-                <a class="btn btn-secondary btn-sm" href="#" role="button"
+                <a class="btn btn-secondary btn-sm"
+                   href="{% url 'hsp:export_voting_management_list' %}?election={{ request.GET.election }}"
+                   onclick="onExport(event, {{ canExport|yesno:'true,false' }})"
+                   role="button"
                    style="{% if not canExport %}opacity:0.65; cursor:not-allowed;{% endif %}">
                     不在者投票事務処理簿
                 </a>
@@ -106,10 +110,20 @@
 {% block extra_js %}
     <script>
         function onElectionChangeHandler(selectElement) {
-            if (selectElement.value === '') {
+            if (selectElement.value === "") {
+                // 選択が選択解除されている場合は、クエリ文字列なしで同じページにリダイレクトします
                 location.href = location.pathname;
             } else {
-                selectElement.form.submit();
+                // 選択した選挙 ID をクエリパラメータとして URL を更新します
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('election', selectElement.value);
+                window.location.search = urlParams.toString();
+            }
+        }
+
+        function onExport(event, canExport) {
+            if (!canExport) {
+                event.preventDefault();
             }
         }
     </script>

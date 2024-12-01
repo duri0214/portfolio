@@ -10,7 +10,10 @@ from django.views.generic import (
 )
 
 from config.settings import MEDIA_ROOT
-from hospital.domain.service.export_report import ExportBillingService
+from hospital.domain.service.export_report import (
+    ExportBillingService,
+    VotingManagementService,
+)
 from hospital.forms import ElectionLedgerCreateForm, ElectionLedgerUpdateForm
 from hospital.models import ElectionLedger, Election
 
@@ -68,4 +71,14 @@ class ExportBillingListView(View):
         if not election_id:
             return HttpResponse("Election ID not provided", status=400)
         service = ExportBillingService(temp_folder=MEDIA_ROOT / "hospital/temp")
+        return service.export(election_id)
+
+
+class ExportVotingManagementListView(View):
+    @staticmethod
+    def get(request, *args, **kwargs):
+        election_id = request.GET.get("election", None)
+        if not election_id:
+            return HttpResponse("Election ID not provided", status=400)
+        service = VotingManagementService(temp_folder=MEDIA_ROOT / "hospital/temp")
         return service.export(election_id)
