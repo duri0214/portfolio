@@ -11,6 +11,7 @@
             <li>
                 <a class="btn btn-secondary btn-sm"
                    href="{% url 'hsp:export_billing_list' %}?election={{ request.GET.election }}"
+                   onclick="onExport(event, {{ canExport|yesno:'true,false' }})"
                    role="button"
                    style="{% if not canExport %}opacity:0.65; cursor:not-allowed;{% endif %}">
                     請求者名簿
@@ -19,6 +20,7 @@
             <li>
                 <a class="btn btn-secondary btn-sm"
                    href="{% url 'hsp:export_voting_management_list' %}?election={{ request.GET.election }}"
+                   onclick="onExport(event, {{ canExport|yesno:'true,false' }})"
                    role="button"
                    style="{% if not canExport %}opacity:0.65; cursor:not-allowed;{% endif %}">
                     不在者投票事務処理簿
@@ -116,6 +118,12 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 urlParams.set('election', selectElement.value);
                 window.location.search = urlParams.toString();
+            }
+        }
+
+        function onExport(event, canExport) {
+            if (!canExport) {
+                event.preventDefault();
             }
         }
     </script>
