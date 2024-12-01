@@ -2,12 +2,14 @@
 {% load static %}
 
 {% block content %}
-    <h1>単品登録</h1>
-    <form action="{% url 'shp:product_register_single' %}" method="post" class="registration"
-          enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">送信</button>
-    </form>
-    <a href="{% url 'shp:index' %}">もどる</a>
+    <div class="container">
+        <h1>単品登録</h1>
+        <form action="{% url 'shp:product_register_single' %}" method="post" class="registration"
+              enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn btn-outline-primary mx-1" type="submit">送信</button>
+            <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary mx-1">戻る</a>
+        </form>
+    </div>
 {% endblock %}
