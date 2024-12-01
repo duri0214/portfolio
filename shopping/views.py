@@ -33,7 +33,7 @@ class UploadSingle(CreateView):
     """UploadSingleView"""
 
     model = Products
-    template_name = "shopping/product/register_single.html"
+    template_name = "shopping/product/create_single.html"
     form_class = RegisterFormSingle
     success_url = reverse_lazy("shp:index")
 
@@ -63,7 +63,7 @@ class UploadSingle(CreateView):
 class UploadBulk(FormView):
     """UploadBulkView"""
 
-    template_name = "shopping/product/register_bulk.html"
+    template_name = "shopping/product/create_bulk.html"
     form_class = RegisterFormBulk
     success_url = reverse_lazy("shp:index")
 
