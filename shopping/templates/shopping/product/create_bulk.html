@@ -42,7 +42,7 @@
             </tr>
             </tbody>
         </table>
-        <form action="{% url 'shp:product_register_bulk' %}" method="POST" class="registration"
+        <form action="{% url 'shp:product_create_bulk' %}" method="POST" class="registration"
               enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}

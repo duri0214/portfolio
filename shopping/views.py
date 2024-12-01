@@ -29,9 +29,7 @@ from .models import Products, BuyingHistory, Staff
 stripe.api_key = os.environ.get("SHOPPING")
 
 
-class UploadSingle(CreateView):
-    """UploadSingleView"""
-
+class CreateSingle(CreateView):
     model = Products
     template_name = "shopping/product/create_single.html"
     form_class = RegisterFormSingle
@@ -60,9 +58,7 @@ class UploadSingle(CreateView):
         return redirect("shp:index")
 
 
-class UploadBulk(FormView):
-    """UploadBulkView"""
-
+class CreateBulk(FormView):
     template_name = "shopping/product/create_bulk.html"
     form_class = RegisterFormBulk
     success_url = reverse_lazy("shp:index")

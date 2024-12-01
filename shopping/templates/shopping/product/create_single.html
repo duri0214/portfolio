@@ -4,7 +4,7 @@
 {% block content %}
     <div class="container">
         <h1>単品登録</h1>
-        <form action="{% url 'shp:product_register_single' %}" method="post" class="registration"
+        <form action="{% url 'shp:product_create_single' %}" method="post" class="registration"
               enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}
