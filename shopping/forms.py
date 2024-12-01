@@ -1,16 +1,10 @@
-"""forms.py"""
-
 from django import forms
 
-from .models import Products
+from shopping.models import Products, Staff
 
 
 class RegisterFormSingle(forms.ModelForm):
-    """SingleRegistrationForm"""
-
     class Meta:
-        """Meta"""
-
         model = Products
         fields = ("code", "name", "price", "picture", "description")
         widgets = {
@@ -42,11 +36,7 @@ class RegisterFormBulk(forms.Form):
 
 
 class ProductEditForm(forms.ModelForm):
-    """ProductEditForm"""
-
     class Meta:
-        """Meta"""
-
         model = Products
         fields = ("code", "name", "price", "description")
         widgets = {
@@ -57,5 +47,65 @@ class ProductEditForm(forms.ModelForm):
             ),
             "description": forms.Textarea(
                 attrs={"tabindex": "4", "class": "form-control", "rows": "5"}
+            ),
+        }
+
+
+class StaffCreateForm(forms.ModelForm):
+    class Meta:
+        model = Staff
+        fields = ("name", "description", "image", "store", "user")
+        widgets = {
+            "name": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
+            "description": forms.Textarea(
+                attrs={"tabindex": "2", "class": "form-control", "rows": "5"}
+            ),
+            "image": forms.ClearableFileInput(attrs={"tabindex": "3"}),
+            "store": forms.Select(attrs={"tabindex": "4", "class": "form-control"}),
+            "user": forms.Select(attrs={"tabindex": "5", "class": "form-control"}),
+        }
+
+
+class StaffEditForm(forms.ModelForm):
+    class Meta:
+        model = Staff
+        fields = ("name", "description", "image", "store")
+        widgets = {
+            "name": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
+            "description": forms.Textarea(
+                attrs={"tabindex": "2", "class": "form-control", "rows": "5"}
+            ),
+            "image": forms.ClearableFileInput(attrs={"tabindex": "3"}),
+            "store": forms.Select(attrs={"tabindex": "4", "class": "form-control"}),
+        }
+
+
+class StaffDetailForm(forms.ModelForm):
+    class Meta:
+        model = Staff
+        fields = ("name", "description", "image", "store")
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "readonly": "readonly",
+                    "class": "form-control-plaintext",
+                    "id": "staticName",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "readonly": "readonly",
+                    "class": "form-control-plaintext",
+                    "id": "staticDescription",
+                    "rows": "5",
+                }
+            ),
+            "image": forms.ClearableFileInput(attrs={"readonly": "readonly"}),
+            "store": forms.Select(
+                attrs={
+                    "readonly": "readonly",
+                    "class": "form-control-plaintext",
+                    "id": "staticStore",
+                }
             ),
         }

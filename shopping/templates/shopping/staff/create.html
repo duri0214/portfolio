@@ -2,13 +2,14 @@
 {% load static %}
 
 {% block content %}
-    <h1>店員作成</h1>
-
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Create">
-    </form>
-    <a href="{% url 'shp:index' %}">もどる</a>
+    <div class="container">
+        <h1>店員作成</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn btn-outline-primary mx-1" type="submit">送信</button>
+            <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary mx-1">戻る</a>
+        </form>
+    </div>
 
 {% endblock %}
