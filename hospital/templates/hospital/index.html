@@ -108,10 +108,14 @@
 {% block extra_js %}
     <script>
         function onElectionChangeHandler(selectElement) {
-            if (selectElement.value === '') {
+            if (selectElement.value === "") {
+                // 選択が選択解除されている場合は、クエリ文字列なしで同じページにリダイレクトします
                 location.href = location.pathname;
             } else {
-                selectElement.form.submit();
+                // 選択した選挙 ID をクエリパラメータとして URL を更新します
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('election', selectElement.value);
+                window.location.search = urlParams.toString();
             }
         }
     </script>
