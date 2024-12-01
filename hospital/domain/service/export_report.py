@@ -45,6 +45,8 @@ class ExportBillingService(AbstractExport):
             .select_related("vote_ward")
             .order_by("vote_ward__name")
         )
+        if not ledgers:
+            raise ValueError("No ledgers to process. Exiting.")
 
         wb = load_workbook(BASE_DIR / "hospital/domain/service/xlsx/billing_list.xlsx")
         filename = self.create_unique_filename()
@@ -104,6 +106,8 @@ class VotingManagementService(AbstractExport):
             .select_related("vote_ward")
             .order_by("vote_ward__name")
         )
+        if not ledgers:
+            raise ValueError("No ledgers to process. Exiting.")
 
         wb = load_workbook(
             BASE_DIR / "hospital/domain/service/xlsx/voting_management_list.xlsx"
