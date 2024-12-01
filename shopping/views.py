@@ -15,7 +15,7 @@ from django.views.generic import (
     ListView,
 )
 
-from .forms import RegisterFormSingle, RegisterFormBulk
+from .forms import RegisterFormSingle, RegisterFormBulk, ProductEditForm
 from .models import Products, BuyingHistory, Staff
 
 # stripe api key
@@ -138,9 +138,9 @@ class ProductDetail(DetailView):
 
 class ProductEdit(UpdateView):
     template_name = "shopping/product/edit.html"
+    form_class = ProductEditForm
     success_url = reverse_lazy("shp:index")
     model = Products
-    fields = ("code", "name", "price", "description")
 
 
 class StaffDetail(DetailView):

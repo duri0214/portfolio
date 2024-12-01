@@ -39,3 +39,23 @@ class RegisterFormBulk(forms.Form):
         if not file.name.endswith(".csv"):
             raise forms.ValidationError("拡張子はcsvのみです")
         return file
+
+
+class ProductEditForm(forms.ModelForm):
+    """ProductEditForm"""
+
+    class Meta:
+        """Meta"""
+
+        model = Products
+        fields = ("code", "name", "price", "description")
+        widgets = {
+            "code": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
+            "name": forms.TextInput(attrs={"tabindex": "2", "class": "form-control"}),
+            "price": forms.NumberInput(
+                attrs={"tabindex": "3", "class": "form-control"}
+            ),
+            "description": forms.Textarea(
+                attrs={"tabindex": "4", "class": "form-control", "rows": "5"}
+            ),
+        }
