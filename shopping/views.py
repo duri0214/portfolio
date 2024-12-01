@@ -15,19 +15,24 @@ from django.views.generic import (
     ListView,
 )
 
-from .forms import RegisterFormSingle, RegisterFormBulk
+from .forms import (
+    ProductCreateFormSingle,
+    ProductCreateFormBulk,
+    ProductEditForm,
+    StaffEditForm,
+    StaffDetailForm,
+    StaffCreateForm,
+)
 from .models import Products, BuyingHistory, Staff
 
 # stripe api key
 stripe.api_key = os.environ.get("SHOPPING")
 
 
-class UploadSingle(CreateView):
-    """UploadSingleView"""
-
+class CreateSingle(CreateView):
     model = Products
-    template_name = "shopping/product/register_single.html"
-    form_class = RegisterFormSingle
+    template_name = "shopping/product/create_single.html"
+    form_class = ProductCreateFormSingle
     success_url = reverse_lazy("shp:index")
 
     def form_valid(self, form):
@@ -53,11 +58,9 @@ class UploadSingle(CreateView):
         return redirect("shp:index")
 
 
-class UploadBulk(FormView):
-    """UploadBulkView"""
-
-    template_name = "shopping/product/register_bulk.html"
-    form_class = RegisterFormBulk
+class CreateBulk(FormView):
+    template_name = "shopping/product/create_bulk.html"
+    form_class = ProductCreateFormBulk
     success_url = reverse_lazy("shp:index")
 
     def form_valid(self, form):
@@ -138,27 +141,26 @@ class ProductDetail(DetailView):
 
 class ProductEdit(UpdateView):
     template_name = "shopping/product/edit.html"
+    form_class = ProductEditForm
     success_url = reverse_lazy("shp:index")
     model = Products
-    fields = ("code", "name", "price", "description")
 
 
 class StaffDetail(DetailView):
-    """DetailView"""
-
     template_name = "shopping/staff/detail.html"
+    form_class = StaffDetailForm
     model = Staff
 
 
 class StaffEdit(UpdateView):
     template_name = "shopping/staff/edit.html"
+    form_class = StaffEditForm
     success_url = reverse_lazy("shp:index")
     model = Staff
-    fields = ("name", "description", "image", "store")
 
 
 class StaffCreate(CreateView):
     template_name = "shopping/staff/create.html"
+    form_class = StaffCreateForm
     success_url = reverse_lazy("shp:index")
     model = Staff
-    fields = ("name", "description", "image", "store", "user")

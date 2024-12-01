@@ -6,28 +6,30 @@
 {% endblock %}
 
 {% block content %}
-    <p>{{ message }}</p>
+    <div class="container">
+        <p>{{ message }}</p>
 
-    <!-- ピザ情報の表示 -->
-    <h1>{{ object.name }}</h1>
-    <img src="{{ object.picture.url }}" alt="missing picture">
-    <p class="lead">{{ object.created_at }} - {{ object.price }}円</p>
-    <p>{{ object.description | linebreaksbr }}<p>
+        <!-- ピザ情報の表示 -->
+        <h1>{{ object.name }}</h1>
+        <img src="{{ object.picture.url }}" alt="missing picture">
+        <p class="lead">{{ object.created_at }} - {{ object.price }}円</p>
+        <p>{{ object.description | linebreaksbr }}<p>
 
-    <!-- 購入ボタン・フォームの作成 -->
-    <form method="POST">
-        {% csrf_token %}
-        <script
-                src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                data-key="{{ public_key }}"
-                data-amount="{{ object.price }}"
-                data-name="よろずや"
-                data-description="{{ object.name }}"
-                data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
-                data-locale="ja"
-                data-currency="jpy"
-                data-email="{{ user.email }}">
-        </script>
-    </form>
-    <a href="{% url 'shp:index' %}">もどる</a>
+        <!-- 購入ボタン・フォームの作成 -->
+        <form method="POST">
+            {% csrf_token %}
+            <script
+                    src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                    data-key="{{ public_key }}"
+                    data-amount="{{ object.price }}"
+                    data-name="よろずや"
+                    data-description="{{ object.name }}"
+                    data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
+                    data-locale="ja"
+                    data-currency="jpy"
+                    data-email="{{ user.email }}">
+            </script>
+            <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary mx-1">戻る</a>
+        </form>
+    </div>
 {% endblock %}
