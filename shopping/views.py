@@ -16,8 +16,8 @@ from django.views.generic import (
 )
 
 from .forms import (
-    RegisterFormSingle,
-    RegisterFormBulk,
+    ProductCreateFormSingle,
+    ProductCreateFormBulk,
     ProductEditForm,
     StaffEditForm,
     StaffDetailForm,
@@ -32,7 +32,7 @@ stripe.api_key = os.environ.get("SHOPPING")
 class CreateSingle(CreateView):
     model = Products
     template_name = "shopping/product/create_single.html"
-    form_class = RegisterFormSingle
+    form_class = ProductCreateFormSingle
     success_url = reverse_lazy("shp:index")
 
     def form_valid(self, form):
@@ -60,7 +60,7 @@ class CreateSingle(CreateView):
 
 class CreateBulk(FormView):
     template_name = "shopping/product/create_bulk.html"
-    form_class = RegisterFormBulk
+    form_class = ProductCreateFormBulk
     success_url = reverse_lazy("shp:index")
 
     def form_valid(self, form):

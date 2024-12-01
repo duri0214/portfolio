@@ -3,7 +3,7 @@ from django import forms
 from shopping.models import Products, Staff
 
 
-class RegisterFormSingle(forms.ModelForm):
+class ProductCreateFormSingle(forms.ModelForm):
     class Meta:
         model = Products
         fields = ("code", "name", "price", "picture", "description")
@@ -22,7 +22,7 @@ class RegisterFormSingle(forms.ModelForm):
         }
 
 
-class RegisterFormBulk(forms.Form):
+class ProductCreateFormBulk(forms.Form):
     """formのname 属性が 'file' になる"""
 
     file = forms.FileField(required=True, label="")
@@ -66,20 +66,6 @@ class StaffCreateForm(forms.ModelForm):
         }
 
 
-class StaffEditForm(forms.ModelForm):
-    class Meta:
-        model = Staff
-        fields = ("name", "description", "image", "store")
-        widgets = {
-            "name": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
-            "description": forms.Textarea(
-                attrs={"tabindex": "2", "class": "form-control", "rows": "5"}
-            ),
-            "image": forms.ClearableFileInput(attrs={"tabindex": "3"}),
-            "store": forms.Select(attrs={"tabindex": "4", "class": "form-control"}),
-        }
-
-
 class StaffDetailForm(forms.ModelForm):
     class Meta:
         model = Staff
@@ -108,4 +94,18 @@ class StaffDetailForm(forms.ModelForm):
                     "id": "staticStore",
                 }
             ),
+        }
+
+
+class StaffEditForm(forms.ModelForm):
+    class Meta:
+        model = Staff
+        fields = ("name", "description", "image", "store")
+        widgets = {
+            "name": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
+            "description": forms.Textarea(
+                attrs={"tabindex": "2", "class": "form-control", "rows": "5"}
+            ),
+            "image": forms.ClearableFileInput(attrs={"tabindex": "3"}),
+            "store": forms.Select(attrs={"tabindex": "4", "class": "form-control"}),
         }
