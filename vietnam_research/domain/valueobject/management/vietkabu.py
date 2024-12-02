@@ -8,37 +8,29 @@ from bs4 import Tag
 @dataclass
 class TransactionDate:
     """
-    ウェブページから日付情報を抽出し、標準のdatetime形式に変換します。
+    ウェブページから日付情報を抽出し、標準のdatetime形式に変換する。
 
     Attributes:
-        th_tag: BeautifulSoupで抽出されたHTMLのthタグ。
-        transaction_date: thタグから抽出され、変換された日付情報を持つdatetimeオブジェクト。
+        th_tag: BeautifulSoupで抽出したHTMLのthタグ。
     """
 
     th_tag: Tag
-    transaction_date: datetime = None
 
-    def __post_init__(self):
-        tag_b = self.th_tag.find("b")
-        self.transaction_date = self.convert_to_datetime(tag_b.text.strip())
-
-    @staticmethod
-    def convert_to_datetime(target_text: str) -> datetime:
+    def to_date(self) -> datetime:
         """
-        文字列形式の日付('YYYY/MM/DD HH:MM')をdatetimeオブジェクトに変換します。
-
-        Args:
-            target_text: 文字列形式の日付。
+        BeautifulSoupで抽出したHTMLのthタグから文字列形式の日付('YYYY/MM/DD HH:MM')
+        を抽出し、それをdatetimeオブジェクトに変換する。
 
         Returns:
             対応するdatetimeオブジェクト。
 
         Raises:
-            ValueError: target_textが'YYYY/MM/DD HH:MM'形式でない場合に発生します。
+            ValueError: thタグから抽出した日付文字列が 'YYYY/MM/DD HH:MM' 形式でない場合に発生。
         """
-        extracted = re.search(r"\d{4}/\d{2}/\d{2} \d{2}:\d{2}", target_text)
+        raw_text = self.th_tag.find("b").text.strip()
+        extracted = re.search(r"\d{4}/\d{2}/\d{2} \d{2}:\d{2}", raw_text)
         if not extracted:
-            raise ValueError("`YYYY/MM/DD HH:MM`形式が入力されませんでした")
+            raise ValueError("`YYYY/MM/DD HH:MM`形式が入力されていない")
 
         date_str = f"{extracted.group()}:00"
         return datetime.strptime(date_str, "%Y/%m/%d %H:%M:%S")

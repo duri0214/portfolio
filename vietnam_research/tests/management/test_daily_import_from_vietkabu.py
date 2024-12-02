@@ -1,9 +1,10 @@
 from datetime import datetime
 
+from bs4 import BeautifulSoup
 from django.test import TestCase
 
 from vietnam_research.management.commands.daily_import_from_vietkabu import (
-    convert_to_datetime,
+    TransactionDate,
 )
 from vietnam_research.models import Symbol, IndClass, Market
 
@@ -20,23 +21,38 @@ class Test(TestCase):
             market=Market.objects.create(code="HOSE", name="ホーチミン証券取引所"),
         )
 
-    def test_convert_to_datetime(self):
+    def setUp(self):
+        valid_html = (
+            '<th colspan="20" class="table_list_left" bgcolor="#DDDDDD" '
+            'style="text-align:left"><strong>&nbsp;ホーチミン証取株価</strong> '
+            '(<b>2019/08/16 17:00VNT</b>)<span style="font-weight:normal;font-size:80%">'
+            "※情報は毎日17時(ベトナム時間)に更新されます。</span><br>"
+            '<span style="font-weight:normal"><span style="font-size:80%">'
+            '※リアルタイム株価ボードはこちらからご覧ください。<br><a href="https://vntrade.fnsyrus.com/chung-khoan/danh-muc" '
+            'target="_blank">https://vntrade.fnsyrus.com/chung-khoan/danh-muc</a></span></span></th>'
+        )
+        self.valid_th_tag = BeautifulSoup(valid_html, "html.parser").th
+
+        invalid_html = (
+            '<th colspan="20" class="table_list_left" bgcolor="#DDDDDD" '
+            'style="text-align:left"><strong>&nbsp;ホーチミン証取株価</strong> '
+            '(<b>カッコのない文字</b>)<span style="font-weight:normal;font-size:80%">'
+            "※情報は毎日17時(ベトナム時間)に更新されます。</span><br>"
+            '<span style="font-weight:normal"><span style="font-size:80%">'
+            '※リアルタイム株価ボードはこちらからご覧ください。<br><a href="https://vntrade.fnsyrus.com/chung-khoan/danh-muc" '
+            'target="_blank">https://vntrade.fnsyrus.com/chung-khoan/danh-muc</a></span></span></th>'
+        )
+        self.invalid_th_tag = BeautifulSoup(invalid_html, "html.parser").th
+
+    def test_to_date(self):
         self.assertEqual(
-            convert_to_datetime("ホーチミン証取株価（2019/08/16 17:00VNT）"),
+            TransactionDate(self.valid_th_tag).to_date(),
             datetime(2019, 8, 16, 17, 0, 0),
         )
 
-        res = convert_to_datetime("ホーチミン証取株価（2019/08/16 17:00VNT）")
-        self.assertEqual(res.year, 2019)
-        self.assertEqual(res.month, 8)
-        self.assertEqual(res.day, 16)
-        self.assertEqual(res.hour, 17)
-        self.assertEqual(res.minute, 0)
-        self.assertEqual(res.second, 0)
-
-    def test_convert_to_datetime_invalid_value(self):
+    def test_to_date_invalid_value(self):
         with self.assertRaises(ValueError):
             self.assertEqual(
-                convert_to_datetime("カッコのない文字"),
+                TransactionDate(self.invalid_th_tag).to_date(),
                 datetime(2019, 8, 16, 17, 0),
             )

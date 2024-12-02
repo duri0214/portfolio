@@ -45,7 +45,7 @@ class Command(BaseCommand):
             # 市場情報の更新日: 2019-08-16 17:00:00
             transaction_date = TransactionDate(
                 th_tag=soup.find("th", class_="table_list_left")
-            ).transaction_date
+            ).to_date()
 
             # 当日データがあったら処理しない
             if Industry.objects.filter(
