@@ -7,8 +7,11 @@ from django.core.management import BaseCommand
 from django.utils.timezone import now, localtime
 
 from lib.log_service import LogService
-from vietnam_research.domain.valueobject.management.vietkabu import TransactionDate
-from vietnam_research.domain.valueobject.vietkabu import Company, Counting
+from vietnam_research.domain.valueobject.vietkabu import (
+    Company,
+    Counting,
+    TransactionDate,
+)
 from vietnam_research.models import Symbol, Industry, Market, IndClass
 
 
