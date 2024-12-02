@@ -1,6 +1,5 @@
 import re
 import urllib.request
-from datetime import datetime
 
 from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist
@@ -8,30 +7,9 @@ from django.core.management import BaseCommand
 from django.utils.timezone import now, localtime
 
 from lib.log_service import LogService
+from vietnam_research.domain.valueobject.management.vietkabu import TransactionDate
 from vietnam_research.domain.valueobject.vietkabu import Company, Counting
 from vietnam_research.models import Symbol, Industry, Market, IndClass
-
-
-def convert_to_datetime(target_text: str) -> datetime:
-    """
-    viet-kabu.com の更新時刻をdatetimeに変換する\n
-    webページ側が仕様変更により更新時刻が取れなくなったことがあるため、17:00 固定とする
-      昔: ホーチミン証取株価（2019/08/16 15:00VNT）
-      ？: ホーチミン証取株価（????/08/16 VNT）
-      今: ホーチミン証取株価（2024/08/16 15:00VNT）
-
-    Args:
-        target_text: `XXXX証取株価（YYYY/MM/DD VNT）`
-
-    Returns: 2019-08-16 17:00:00
-    """
-    extracted = re.search(r"\d{4}/\d{2}/\d{2} \d{2}:\d{2}", target_text)
-    print(f"{extracted=}")
-    if not extracted:
-        raise ValueError("`YYYY/MM/DD HH:MM`形式が入力されませんでした")
-
-    date_str = f"{extracted.group()}:00"
-    return datetime.strptime(date_str, "%Y/%m/%d %H:%M:%S")
 
 
 class Command(BaseCommand):
@@ -65,9 +43,9 @@ class Command(BaseCommand):
             )
 
             # 市場情報の更新日: 2019-08-16 17:00:00
-            tag_th_string_type = soup.find("th", class_="table_list_left")
-            tag_b = tag_th_string_type.find("b")
-            transaction_date = convert_to_datetime(tag_b.text.strip())
+            transaction_date = TransactionDate(
+                th_tag=soup.find("th", class_="table_list_left")
+            ).transaction_date
 
             # 当日データがあったら処理しない
             if Industry.objects.filter(
