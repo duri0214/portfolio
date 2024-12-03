@@ -57,78 +57,56 @@ class Command(BaseCommand):
                 log_service.write(message)
                 continue
 
+            market_data_rows = [
+                MarketDataRow(tag_tr) for tag_tr in soup.find_all("tr", id=True)
+            ]
+
             processed_count = 0
             denominator = 0
-            for tag_tr in soup.find_all("tr", id=True):
-                # Part1: Symbol table
-                tag_tds_center = tag_tr.find_all("td", class_="table_list_center")
-                try:
-                    company = Company(
-                        code=re.sub("＊", "", tag_tds_center[0].text.strip()),
-                        name=tag_tds_center[0].a.get("title"),
-                        industry1=re.sub(
-                            r"\[(.+)]", "", tag_tds_center[1].img.get("title")
-                        ),
-                        industry2=re.search(
-                            r"(?<=\[).*?(?=])", tag_tds_center[1].img.get("title")
-                        ).group(),
-                    )
-                except IndexError:
-                    continue
-
+            for market_data_row in market_data_rows:
+                # STEP1: 業種マスタを引いて
                 try:
                     ind_class = m_ind_class.get(
-                        industry1=company.industry1, industry2=company.industry2
+                        industry1=market_data_row.industry1,
+                        industry2=market_data_row.industry2,
                     )
                 except ObjectDoesNotExist:
-                    # このタイミングでinsertできないのは industry_class が決められないからです
-                    ind_name_str = f"{company.industry1}[{company.industry2}]"
-                    message = f"{ind_name_str} が業種マスタに存在しないため {company.code} が処理対象外になりました"
+                    # 新規業種が出てきたタイミングで登録できないのは m_symbol.industry_class を人間が決める必要があるからです
+                    message = f"{market_data_row.industry_title} が業種マスタに存在しないため {market_data_row.code} が処理対象外になりました"
                     log_service.write(message)
                     continue
 
-                if not m_symbol_list.filter(code=company.code).exists():
+                # STEP2: Symbol table に存在チェック
+                if not m_symbol_list.filter(code=market_data_row.code).exists():
+                    # 新規の顔ぶれが出たら登録
                     symbol = Symbol.objects.create(
-                        code=company.code,  # AAA
-                        name=company.name,  # アンファット・バイオプラスチック
+                        code=market_data_row.code,  # AAA
+                        name=market_data_row.name,  # アンファット・バイオプラスチック
                         ind_class=ind_class,
                         market=m_market.get(code=market.code),
                     )
-                    message = f"{company.code} {company.name} を追加しました"
+                    message = (
+                        f"{market_data_row.code} {market_data_row.name} を追加しました"
+                    )
                     log_service.write(message)
                 else:
-                    symbol = m_symbol_list.get(code=company.code)
-                    if symbol.name != company.name:
-                        symbol.name = company.name
+                    # 既存先でも会社名が変わっていることがある
+                    symbol = m_symbol_list.get(code=market_data_row.code)
+                    if symbol.name != market_data_row.name:
+                        symbol.name = market_data_row.name
                         symbol.save(update_fields=["name"])
                 denominator += 1
 
-                # Part2: Industry table
-                tag_tds_right: list[Counting] = []
-                for td in tag_tr.find_all("td", class_="table_list_right"):
-                    try:
-                        x = Counting(td.text.strip())
-                        tag_tds_right.append(x)
-                    except ValueError:
-                        continue
-
-                # tag_tds_right は通常13要素だが `-` があるとその分要素が減る
-                if not tag_tds_right or len(tag_tds_right) < 13:
-                    continue
-
-                Industry.objects.create(
-                    recorded_date=transaction_date,
-                    open_price=tag_tds_right[2].value,
-                    high_price=tag_tds_right[3].value,
-                    low_price=tag_tds_right[4].value,
-                    closing_price=tag_tds_right[1].value,
-                    volume=tag_tds_right[7].value,
-                    trade_price_of_a_day=tag_tds_right[8].value,
-                    marketcap=tag_tds_right[10].value,
-                    per=tag_tds_right[11].value,
-                    created_at=localtime(now()).strftime("%Y-%m-%d %a %H:%M:%S"),
-                    symbol=symbol,
+                # STEP3: Industry table（計数）
+                market_data_dict = asdict(market_data_row)
+                market_data_dict.update(
+                    {
+                        "recorded_date": transaction_date,
+                        "created_at": localtime(now()).strftime("%Y-%m-%d %a %H:%M:%S"),
+                        "symbol": symbol,
+                    }
                 )
+                Industry.objects.create(**market_data_dict)
                 processed_count += 1
 
             message = f"{market.code}の処理が完了しました。全{denominator}件中{processed_count}件が処理されました。"
