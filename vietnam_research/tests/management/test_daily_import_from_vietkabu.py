@@ -3,10 +3,26 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from django.test import TestCase
 
+from vietnam_research.domain.valueobject.vietkabu import Counting
 from vietnam_research.management.commands.daily_import_from_vietkabu import (
     TransactionDate,
 )
 from vietnam_research.models import Symbol, IndClass, Market
+
+
+class TestCounting(TestCase):
+
+    def test_valid_value(self):
+        c = Counting("1,000%")
+        self.assertEqual(c.value, 1000.0)
+
+    def test_empty_string(self):
+        c = Counting("")
+        self.assertEqual(c.value, 0.0)
+
+    def test_invalid_value(self):
+        with self.assertRaises(ValueError):
+            c = Counting("-")
 
 
 class Test(TestCase):
