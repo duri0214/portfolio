@@ -6,14 +6,6 @@ from bs4 import Tag
 
 
 @dataclass
-class Company:
-    code: str
-    name: str = None
-    industry1: str = None
-    industry2: str = None
-
-
-@dataclass
 class Counting:
     """
     計数を表すクラスです
@@ -86,18 +78,13 @@ class MarketDataRow:
     def __init__(self, tr: Tag):
         super().__init__()
         tag_tds_center = tr.find_all("td", class_="table_list_center")
-        company = Company(
-            code=re.sub("＊", "", tag_tds_center[0].text.strip()),
-            name=tag_tds_center[0].a.get("title"),
-            industry1=re.sub(r"\[(.+)]", "", tag_tds_center[1].img.get("title")),
-            industry2=re.search(
-                r"(?<=\[).*?(?=])", tag_tds_center[1].img.get("title")
-            ).group(),
-        )
-        self.code = company.code
-        self.name = company.name
-        self.industry1 = company.industry1
-        self.industry2 = company.industry2
+        self.code = re.sub("＊", "", tag_tds_center[0].text.strip())
+        self.name = tag_tds_center[0].a.get("title")
+        self.industry_title = tag_tds_center[1].img.get("title")
+        self.industry1 = re.sub(r"\[(.+)]", "", self.industry_title)
+        self.industry2 = re.search(
+            r"(?<=\[).*?(?=])", tag_tds_center[1].img.get("title")
+        ).group()
 
         tag_tds_right = [
             Counting(td.text.strip())

@@ -115,6 +115,7 @@ class TestMarketDataRow(TestCase):
         # These values are checked using the html snippet above.
         self.assertEqual(row.code, "APG")
         self.assertEqual(row.name, "APG証券")
+        self.assertEqual(row.industry_title, "金融業[証券業]")
         self.assertEqual(row.industry1, "金融業")
         self.assertEqual(row.industry2, "証券業")
         self.assertEqual(row.open_price, 8.88)
