@@ -25,7 +25,7 @@ class TestCounting(TestCase):
             c = Counting("-")
 
 
-class Test(TestCase):
+class TestTransactionDate(TestCase):
     @classmethod
     def setUpTestData(cls):
         Symbol.objects.create(
