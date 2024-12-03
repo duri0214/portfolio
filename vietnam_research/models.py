@@ -101,7 +101,6 @@ class Industry(models.Model):
     recorded_date: 計上日\n
     closing_price: 終値（千ドン）\n
     volume: 出来高（株）\n
-    trade_price_of_a_day: 売買代金（千ドン）\n
     marketcap: 時価総額（億円）\n
 
     See Also: https://www.viet-kabu.com/stock/hcm.html
@@ -114,7 +113,6 @@ class Industry(models.Model):
     low_price = models.FloatField()
     closing_price = models.FloatField()
     volume = models.FloatField()
-    trade_price_of_a_day = models.FloatField()
     marketcap = models.FloatField()
     per = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
