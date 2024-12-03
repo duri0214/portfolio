@@ -1,5 +1,5 @@
-import re
 import urllib.request
+from dataclasses import asdict
 
 from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist
@@ -8,9 +8,8 @@ from django.utils.timezone import now, localtime
 
 from lib.log_service import LogService
 from vietnam_research.domain.valueobject.vietkabu import (
-    Company,
-    Counting,
     TransactionDate,
+    MarketDataRow,
 )
 from vietnam_research.models import Symbol, Industry, Market, IndClass
 
@@ -45,7 +44,7 @@ class Command(BaseCommand):
                 "lxml",
             )
 
-            # 市場情報の更新日: 2019-08-16 17:00:00
+            # 市場情報の更新日
             transaction_date = TransactionDate(
                 th_tag=soup.find("th", class_="table_list_left")
             ).to_date()
