@@ -30,13 +30,13 @@ def get_data() -> pd.DataFrame:
     industry_records = (
         Industry.objects.values("recorded_date", "symbol__ind_class__industry1")
         .annotate(industry1=F("symbol__ind_class__industry1"))
-        .annotate(trade_price_of_a_day=Sum("trade_price_of_a_day") / 1000000)
+        .annotate(marketcap=Sum("marketcap"))
         .order_by("recorded_date", "industry1")
-        .values("recorded_date", "industry1", "trade_price_of_a_day")
+        .values("recorded_date", "industry1", "marketcap")
     )
 
     return pd.json_normalize(industry_records).pivot(
-        index="recorded_date", columns="industry1", values="trade_price_of_a_day"
+        index="recorded_date", columns="industry1", values="marketcap"
     )
 
 
