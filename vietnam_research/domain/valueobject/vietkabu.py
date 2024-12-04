@@ -10,22 +10,28 @@ class Counting:
     """
     計数を表すクラスです
 
-    Attributes:
-        raw_value (str): constructor
-        value (float): The value of the number.
+    属性:
+        raw_value (str): 整形前の数値
+        value (float | None): 整形後の数値。
+
+    注意点: tds[7] は前日比で 1.1% のように `%` が混ざり込んでいる。数値として扱うために、("%", "")に置換を行います。
+
+    また `raw_value` が ""（空文字）の場合、`value` は 0.0 とします。
+    `raw_value` が "-" の場合、`value` は None とします。
+    それ以外の場合は、`raw_value`をfloat型に変換して`value`に設定します。
 
     Notes: tds[7] は前日比で 1.1% のように `%` が混ざり込んでいる。あくまで数字として扱うので置換をかける
     """
 
     raw_value: str
-    value: float = field(init=False)
+    value: float | None = field(init=False)
 
     def __init__(self, raw_value: str):
         self.raw_value = raw_value.replace(",", "").replace("%", "")
         if self.raw_value == "":
             self.value = 0.0
         elif self.raw_value == "-":
-            raise ValueError("Invalid value: '-'")
+            self.value = None
         else:
             self.value = float(self.raw_value)
 

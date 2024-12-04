@@ -21,8 +21,8 @@ class TestCounting(TestCase):
         self.assertEqual(c.value, 0.0)
 
     def test_invalid_value(self):
-        with self.assertRaises(ValueError):
-            c = Counting("-")
+        c = Counting("-")
+        self.assertEqual(c.value, None)
 
 
 class TestTransactionDate(TestCase):
