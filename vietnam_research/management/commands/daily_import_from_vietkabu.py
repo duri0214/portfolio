@@ -1,5 +1,4 @@
 import urllib.request
-from dataclasses import asdict
 
 from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist
@@ -57,9 +56,10 @@ class Command(BaseCommand):
                 log_service.write(message)
                 continue
 
-            market_data_rows = [
-                MarketDataRow(tag_tr) for tag_tr in soup.find_all("tr", id=True)
+            tag_trs = [
+                tr for tr in soup.find_all("tr", id=True) if tr.get("id") != "trdemo"
             ]
+            market_data_rows = [MarketDataRow(tag_tr) for tag_tr in tag_trs]
 
             processed_count = 0
             denominator = 0
@@ -98,15 +98,18 @@ class Command(BaseCommand):
                 denominator += 1
 
                 # STEP3: Industry table（計数）
-                market_data_dict = asdict(market_data_row)
-                market_data_dict.update(
-                    {
-                        "recorded_date": transaction_date,
-                        "created_at": localtime(now()).strftime("%Y-%m-%d %a %H:%M:%S"),
-                        "symbol": symbol,
-                    }
+                Industry.objects.create(
+                    recorded_date=transaction_date,
+                    created_at=localtime(now()).strftime("%Y-%m-%d %a %H:%M:%S"),
+                    symbol=symbol,
+                    open_price=market_data_row.open_price,
+                    high_price=market_data_row.high_price,
+                    low_price=market_data_row.low_price,
+                    closing_price=market_data_row.closing_price,
+                    volume=market_data_row.volume,
+                    marketcap=market_data_row.marketcap,
+                    per=market_data_row.per,
                 )
-                Industry.objects.create(**market_data_dict)
                 processed_count += 1
 
             message = f"{market.code}の処理が完了しました。全{denominator}件中{processed_count}件が処理されました。"
