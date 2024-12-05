@@ -7,12 +7,12 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 from django.core.management.base import BaseCommand
-from django.db.models import F
 from matplotlib import pyplot as plt
 
 from config.settings import BASE_DIR
 from lib.log_service import LogService
-from vietnam_research.models import Industry, Uptrend, Symbol
+from vietnam_research.domain.repository.vietkabu import IndustryRepository
+from vietnam_research.models import Uptrend, Symbol, Market
 
 
 def calc_price(price_for_several_days: pd.Series) -> dict:
@@ -62,38 +62,10 @@ class Command(BaseCommand):
             os.remove(filepath)
         Uptrend.objects.all().delete()
 
-        # all tickers are plotting by matplotlib
-        industry_records = (
-            Industry.objects.filter(symbol__market__in=[1, 2])
-            .filter(symbol__sbi__isnull=False)
-            .distinct()
-            .values("symbol__code")
-        )
-        tickers = [x["symbol__code"] for x in industry_records]
-
-        # only stocks handled by SBI Securities
-        industry_records = (
-            Industry.objects.filter(symbol__market__in=[1, 2])
-            .filter(symbol__sbi__isnull=False)
-            .annotate(
-                market_code=F("symbol__market__code"),
-                symbol_code=F("symbol__code"),
-            )
-            .order_by(
-                "symbol__ind_class__industry1",
-                "symbol__ind_class__industry2",
-                "symbol",
-                "recorded_date",
-            )
-            .values(
-                "symbol__ind_class__industry1",
-                "symbol__ind_class__industry2",
-                "market_code",
-                "symbol_code",
-                "recorded_date",
-                "closing_price",
-            )
-        )
+        # sbi tickers are plotting by matplotlib
+        markets = Market.objects.filter(id__in=[1, 2])
+        tickers = IndustryRepository.get_industry_tickers(markets)
+        industry_records = IndustryRepository.get_symbol_details(markets)
 
         m_symbol = Symbol.objects.filter(market__in=[1, 2]).prefetch_related(
             "market", "ind_class"
