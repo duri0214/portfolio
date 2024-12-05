@@ -67,7 +67,7 @@ class Command(BaseCommand):
         tickers = IndustryRepository.get_industry_tickers(markets)
         industry_records = IndustryRepository.get_symbol_details(markets)
 
-        m_symbol = Symbol.objects.filter(market__in=[1, 2]).prefetch_related(
+        m_symbol = Symbol.objects.filter(market__in=markets).prefetch_related(
             "market", "ind_class"
         )
 
