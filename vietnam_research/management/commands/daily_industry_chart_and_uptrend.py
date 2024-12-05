@@ -102,19 +102,17 @@ class Command(BaseCommand):
             slopes = []
             attempts = passed = 0
             price = {}
-            for day in days:
+            for attempts, day in enumerate(days, start=1):
                 if len(closing_price) < day:
                     continue
                 slope, regression_range, regression_values = (
                     industry_graph_vo.plot_regression_slope(day)
                 )
                 slopes.append(slope)
-                attempts += 1
 
-                # the line slope is positive?
+                # 傾きが正の場合は 'passed' を増やし、傾きのラインを緑の点線でプロットする
                 if slope > 0:
                     passed += 1
-                # plot the slope line with green dotted lines
                 plt.plot(regression_range, regression_values, "g--")
             if attempts == passed:
                 # 処理した株価の傾斜（線形回帰による）がdaysすべてにおいて正（つまり上昇傾向）だった場合
