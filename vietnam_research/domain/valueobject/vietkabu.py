@@ -1,7 +1,10 @@
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 
+import numpy as np
+import pandas as pd
 from bs4 import Tag
 
 
@@ -103,3 +106,63 @@ class MarketDataRow:
         self.volume = tag_tds_right[7].value
         self.marketcap = tag_tds_right[9].value
         self.per = tag_tds_right[10].value
+
+
+class IndustryGraphVO:
+    """
+    業界のグラフの生成に関連したデータとメソッドを保持するクラス
+    """
+
+    def __init__(self, ticker: str, closing_price: pd.Series):
+        """
+        IndustryGraphVOオブジェクトを初期化する。
+
+        Args:
+            ticker (str): 株のティッカーシンボル
+            closing_price (pd.Series): 終値のデータ
+        """
+        self.ticker = ticker
+        self.closing_price = closing_price
+
+    def plot_values(self) -> tuple[range, pd.Series]:
+        """
+        描画するための値を返す。
+
+        Returns:
+            tuple[Range, pd.Series]: 描画のためのx軸の範囲と終値のデータ。
+        """
+        x_range = range(len(self.closing_price))
+        return x_range, self.closing_price
+
+    def plot_sma(self, periods: list[int]) -> Iterable[pd.Series]:
+        """
+        指定された期間の平均値を描画する。
+
+        Args:
+            periods (list[int]): 平均を計算する期間のリスト。
+
+        Yields:
+            pd.Series: ローリング平均のシリーズ。
+        """
+        for period in periods:
+            yield self.closing_price.rolling(period).mean()
+
+    def plot_regression_slope(self, day: int):
+        """
+        指定された日数の回帰直線の勾配（傾斜）を描画する。
+
+        Args:
+            day (int): 回帰直線を計算する日数。
+
+        Yields:
+            tuple[float, range, np.ndarray]: 勾配、回帰直線の範囲、回帰直線の値のリスト
+        """
+        closing_price_in_period = self.closing_price[-day:].astype(float)
+        x_range = range(len(closing_price_in_period))
+        specific_array = np.array([x_range, np.ones(len(x_range))]).T
+        slope, intercept = np.linalg.lstsq(
+            specific_array, closing_price_in_period, rcond=-1
+        )[0]
+        date_back_to = len(self.closing_price) - day
+        regression_range = range(date_back_to, date_back_to + day)
+        return slope, regression_range, (slope * x_range + intercept)

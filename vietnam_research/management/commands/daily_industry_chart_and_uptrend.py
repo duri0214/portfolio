@@ -3,7 +3,6 @@ import os
 from glob import glob
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from PIL import Image
 from django.core.management.base import BaseCommand
@@ -12,6 +11,7 @@ from matplotlib import pyplot as plt
 from config.settings import BASE_DIR
 from lib.log_service import LogService
 from vietnam_research.domain.repository.vietkabu import IndustryRepository
+from vietnam_research.domain.valueobject.vietkabu import IndustryGraphVO
 from vietnam_research.models import Uptrend, Symbol, Market
 
 
@@ -81,20 +81,20 @@ class Command(BaseCommand):
             ]
             closing_price = pd.Series(closing_price, name="closing_price")
             plt.clf()
-            x_range = range(len(closing_price))
+
+            # closing_price を使って、赤色の点としてプロット
+            industry_graph_vo = IndustryGraphVO(ticker, closing_price)
+            x_range, closing_price = industry_graph_vo.plot_values()
             plt.plot(x_range, closing_price, "ro")
-            plt.plot(
-                x_range,
-                closing_price.rolling(20).mean(),
-                "r-",
-                label="20 Simple Moving Average",
-            )
-            plt.plot(
-                x_range,
-                closing_price.rolling(40).mean(),
-                "g-",
-                label="40 Simple Moving Average",
-            )
+
+            # 20日と40日の移動平均を計算・プロット
+            for sma, color, label in zip(
+                industry_graph_vo.plot_sma([20, 40]),
+                ["r-", "g-"],
+                ["20 Simple Moving Average", "40 Simple Moving Average"],
+            ):
+                plt.plot(x_range, sma, color, label=label)
+
             plt.legend(loc="upper left")
             plt.ylabel("closing_price")
             plt.grid()
@@ -105,24 +105,17 @@ class Command(BaseCommand):
             for day in days:
                 if len(closing_price) < day:
                     continue
-                attempts += 1
-                # e.g. 3 days ago to today, 7 days ago to today, 14 days ago to today
-                closing_price_in_period = closing_price[-day:].astype(float)
-                x_range = range(len(closing_price_in_period))
-                # specific array for linear regression in numpy
-                specific_array = np.array([x_range, np.ones(len(x_range))]).T
-                # calculate the line slope
-                slope, intercept = np.linalg.lstsq(
-                    specific_array, closing_price_in_period, rcond=-1
-                )[0]
+                slope, regression_range, regression_values = (
+                    industry_graph_vo.plot_regression_slope(day)
+                )
                 slopes.append(slope)
+                attempts += 1
+
                 # the line slope is positive?
                 if slope > 0:
                     passed += 1
                 # plot the slope line with green dotted lines
-                date_back_to = len(closing_price) - day
-                regression_range = range(date_back_to, date_back_to + day)
-                plt.plot(regression_range, (slope * x_range + intercept), "g--")
+                plt.plot(regression_range, regression_values, "g--")
             if attempts == passed:
                 # 処理した株価の傾斜（線形回帰による）がdaysすべてにおいて正（つまり上昇傾向）だった場合
                 recent_days_length = max(days)
