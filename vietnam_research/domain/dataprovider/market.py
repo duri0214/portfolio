@@ -127,6 +127,44 @@ class VietnamMarketDataProvider(MarketAbstract):
             "datasets": datasets,
         }
 
+    def iip_timeline(self) -> dict:
+        """
+        鉱工業生産指数のシンプルなYM時系列データセットを作成します。
+
+        Returns:
+            dict: IIPのタイムラインデータです。
+        参照先: https://www.chartjs.org/docs/latest/getting-started/
+        """
+        records = self.repository.get_iip_timeline()
+        return {
+            "labels": [record.period.strftime("%Y%m") for record in records],
+            "datasets": [
+                LineChartLayer(
+                    label="鉱工業生産指数",
+                    data=[record.value for record in records],
+                ).to_dict()
+            ],
+        }
+
+    def cpi_timeline(self) -> dict:
+        """
+        消費者物価指数のシンプルなYM時系列データセットを作成します。
+
+        Returns:
+            dict: CPIのタイムラインデータです。
+        参照先: https://www.chartjs.org/docs/latest/getting-started/
+        """
+        records = self.repository.get_cpi_timeline()
+        return {
+            "labels": [record.period.strftime("%Y%m") for record in records],
+            "datasets": [
+                LineChartLayer(
+                    label="消費者物価指数",
+                    data=[record.value for record in records],
+                ).to_dict()
+            ],
+        }
+
     @staticmethod
     def calculate_transaction_fee(price_without_fees: float) -> float:
         """

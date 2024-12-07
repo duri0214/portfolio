@@ -54,6 +54,8 @@ class MarketRetrievalService:
             "vnindex_layers": json.dumps(
                 vietnam_market_data_provider.vnindex_annual_layers()
             ),
+            "iip_timeline": json.dumps(vietnam_market_data_provider.iip_timeline()),
+            "cpi_timeline": json.dumps(vietnam_market_data_provider.cpi_timeline()),
             "basic_info": self.repository.get_basic_info(),
             "watchlist": vietnam_market_data_provider.watchlist(),
             "uptrend": json.dumps(vietnam_market_data_provider.uptrend()),
