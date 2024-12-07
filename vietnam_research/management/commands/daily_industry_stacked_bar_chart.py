@@ -8,7 +8,7 @@ from django.db.models import Sum, F, Min, Value, CharField
 from django.db.models.functions import Concat, ExtractYear, ExtractMonth
 from matplotlib import pyplot as plt
 
-from config.settings import STATIC_ROOT, BASE_DIR
+from config.settings import BASE_DIR
 from lib.log_service import LogService
 from vietnam_research.models import Industry
 
@@ -106,10 +106,6 @@ class Command(BaseCommand):
 
         # png save
         file_name = "daily_industry_stacked_bar_chart.png"
-        out_path = STATIC_ROOT.resolve() / "vietnam_research/chart" / file_name
-        if not os.path.exists(out_path.parent):
-            os.makedirs(out_path.parent)
-        plt.savefig(out_path)
         out_path = (
             BASE_DIR.resolve()
             / "vietnam_research/static/vietnam_research/chart"
