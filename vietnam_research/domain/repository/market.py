@@ -3,7 +3,13 @@ from django.db.models import Max
 from django.db.models.functions import Round, Concat
 from django.db.models.query import QuerySet
 
-from vietnam_research.models import Articles, BasicInformation, VnIndex, Uptrend
+from vietnam_research.models import (
+    Articles,
+    BasicInformation,
+    VnIndex,
+    Uptrend,
+    VietnamStatistics,
+)
 from vietnam_research.models import Industry, Watchlist
 
 
@@ -73,6 +79,18 @@ class MarketRepository:
             .order_by("Y", "M")
             .values("closing_price")
         )
+
+    @staticmethod
+    def get_iip_timeline() -> QuerySet:
+        return VietnamStatistics.objects.filter(
+            element="industrial production index"
+        ).order_by("period")
+
+    @staticmethod
+    def get_cpi_timeline() -> QuerySet:
+        return VietnamStatistics.objects.filter(
+            element="consumer price index"
+        ).order_by("period")
 
     @staticmethod
     def get_industry_records_for(
