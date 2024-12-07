@@ -3,16 +3,16 @@ import os
 from glob import glob
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from PIL import Image
 from django.core.management.base import BaseCommand
-from django.db.models import F
 from matplotlib import pyplot as plt
 
 from config.settings import BASE_DIR
 from lib.log_service import LogService
-from vietnam_research.models import Industry, Uptrend, Symbol
+from vietnam_research.domain.repository.vietkabu import IndustryRepository
+from vietnam_research.domain.valueobject.vietkabu import IndustryGraphVO
+from vietnam_research.models import Uptrend, Symbol, Market, Watchlist
 
 
 def calc_price(price_for_several_days: pd.Series) -> dict:
@@ -62,41 +62,16 @@ class Command(BaseCommand):
             os.remove(filepath)
         Uptrend.objects.all().delete()
 
-        # all tickers are plotting by matplotlib
-        industry_records = (
-            Industry.objects.filter(symbol__market__in=[1, 2])
-            .filter(symbol__sbi__isnull=False)
-            .distinct()
-            .values("symbol__code")
-        )
-        tickers = [x["symbol__code"] for x in industry_records]
+        # sbi tickers are plotting by matplotlib
+        markets = Market.objects.filter(id__in=[1, 2])
+        tickers = IndustryRepository.get_industry_tickers(markets)
+        industry_records = IndustryRepository.get_symbol_details(markets)
 
-        # only stocks handled by SBI Securities
-        industry_records = (
-            Industry.objects.filter(symbol__market__in=[1, 2])
-            .filter(symbol__sbi__isnull=False)
-            .annotate(
-                market_code=F("symbol__market__code"),
-                symbol_code=F("symbol__code"),
-            )
-            .order_by(
-                "symbol__ind_class__industry1",
-                "symbol__ind_class__industry2",
-                "symbol",
-                "recorded_date",
-            )
-            .values(
-                "symbol__ind_class__industry1",
-                "symbol__ind_class__industry2",
-                "market_code",
-                "symbol_code",
-                "recorded_date",
-                "closing_price",
-            )
-        )
-
-        m_symbol = Symbol.objects.filter(market__in=[1, 2]).prefetch_related(
+        m_symbol = Symbol.objects.filter(market__in=markets).prefetch_related(
             "market", "ind_class"
+        )
+        watchlist_symbols = Watchlist.objects.all().values_list(
+            "symbol__code", flat=True
         )
 
         days = [14, 7, 3]
@@ -109,20 +84,20 @@ class Command(BaseCommand):
             ]
             closing_price = pd.Series(closing_price, name="closing_price")
             plt.clf()
-            x_range = range(len(closing_price))
+
+            # closing_price を使って、赤色の点としてプロット
+            industry_graph_vo = IndustryGraphVO(ticker, closing_price)
+            x_range, closing_price = industry_graph_vo.plot_values()
             plt.plot(x_range, closing_price, "ro")
-            plt.plot(
-                x_range,
-                closing_price.rolling(20).mean(),
-                "r-",
-                label="20 Simple Moving Average",
-            )
-            plt.plot(
-                x_range,
-                closing_price.rolling(40).mean(),
-                "g-",
-                label="40 Simple Moving Average",
-            )
+
+            # 20日と40日の移動平均を計算・プロット
+            for sma, color, label in zip(
+                industry_graph_vo.plot_sma([20, 40]),
+                ["r-", "g-"],
+                ["20 Simple Moving Average", "40 Simple Moving Average"],
+            ):
+                plt.plot(x_range, sma, color, label=label)
+
             plt.legend(loc="upper left")
             plt.ylabel("closing_price")
             plt.grid()
@@ -130,28 +105,19 @@ class Command(BaseCommand):
             slopes = []
             attempts = passed = 0
             price = {}
-            for day in days:
+            for attempts, day in enumerate(days, start=1):
                 if len(closing_price) < day:
                     continue
-                attempts += 1
-                # e.g. 3 days ago to today, 7 days ago to today, 14 days ago to today
-                closing_price_in_period = closing_price[-day:].astype(float)
-                x_range = range(len(closing_price_in_period))
-                # specific array for linear regression in numpy
-                specific_array = np.array([x_range, np.ones(len(x_range))]).T
-                # calculate the line slope
-                slope, intercept = np.linalg.lstsq(
-                    specific_array, closing_price_in_period, rcond=-1
-                )[0]
+                slope, regression_range, regression_values = (
+                    industry_graph_vo.plot_regression_slope(day)
+                )
                 slopes.append(slope)
-                # the line slope is positive?
+
+                # 傾きが正の場合は 'passed' を増やし、傾きのラインを緑の点線でプロットする
                 if slope > 0:
                     passed += 1
-                # plot the slope line with green dotted lines
-                date_back_to = len(closing_price) - day
-                regression_range = range(date_back_to, date_back_to + day)
-                plt.plot(regression_range, (slope * x_range + intercept), "g--")
-            if attempts == passed:
+                plt.plot(regression_range, regression_values, "g--")
+            if attempts == passed or ticker in watchlist_symbols:
                 # 処理した株価の傾斜（線形回帰による）がdaysすべてにおいて正（つまり上昇傾向）だった場合
                 recent_days_length = max(days)
                 closing_price = closing_price[-recent_days_length:].reset_index(
@@ -188,6 +154,3 @@ class Command(BaseCommand):
         log_service.write(
             f"{caller_file_name} is done.(Number of tickers processed: {len(tickers)})"
         )
-
-        # TODO: パフォーマンスカイゼンして！原因はsymbolマスタにtickerかぶり（社名変更）があるため。バッチの新規Symbol取り込み部分もなおす
-        # TODO: -400日が何月何日なのか表示

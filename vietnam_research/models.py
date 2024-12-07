@@ -101,7 +101,6 @@ class Industry(models.Model):
     recorded_date: 計上日\n
     closing_price: 終値（千ドン）\n
     volume: 出来高（株）\n
-    trade_price_of_a_day: 売買代金（千ドン）\n
     marketcap: 時価総額（億円）\n
 
     See Also: https://www.viet-kabu.com/stock/hcm.html
@@ -109,14 +108,13 @@ class Industry(models.Model):
 
     recorded_date = models.DateField()
     symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
-    open_price = models.FloatField()
-    high_price = models.FloatField()
-    low_price = models.FloatField()
-    closing_price = models.FloatField()
-    volume = models.FloatField()
-    trade_price_of_a_day = models.FloatField()
-    marketcap = models.FloatField()
-    per = models.FloatField()
+    open_price = models.FloatField(null=True)
+    high_price = models.FloatField(null=True)
+    low_price = models.FloatField(null=True)
+    closing_price = models.FloatField(null=True)
+    volume = models.FloatField(null=True)
+    marketcap = models.FloatField(null=True)
+    per = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     objects = IndustryQuerySet.as_manager()
