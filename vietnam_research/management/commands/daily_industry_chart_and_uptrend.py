@@ -12,7 +12,7 @@ from config.settings import BASE_DIR
 from lib.log_service import LogService
 from vietnam_research.domain.repository.vietkabu import IndustryRepository
 from vietnam_research.domain.valueobject.vietkabu import IndustryGraphVO
-from vietnam_research.models import Uptrend, Symbol, Market
+from vietnam_research.models import Uptrend, Symbol, Market, Watchlist
 
 
 def calc_price(price_for_several_days: pd.Series) -> dict:
@@ -70,6 +70,9 @@ class Command(BaseCommand):
         m_symbol = Symbol.objects.filter(market__in=markets).prefetch_related(
             "market", "ind_class"
         )
+        watchlist_symbols = Watchlist.objects.all().values_list(
+            "symbol__code", flat=True
+        )
 
         days = [14, 7, 3]
         passed_records = []
@@ -114,7 +117,7 @@ class Command(BaseCommand):
                 if slope > 0:
                     passed += 1
                 plt.plot(regression_range, regression_values, "g--")
-            if attempts == passed:
+            if attempts == passed or ticker in watchlist_symbols:
                 # 処理した株価の傾斜（線形回帰による）がdaysすべてにおいて正（つまり上昇傾向）だった場合
                 recent_days_length = max(days)
                 closing_price = closing_price[-recent_days_length:].reset_index(
@@ -151,6 +154,3 @@ class Command(BaseCommand):
         log_service.write(
             f"{caller_file_name} is done.(Number of tickers processed: {len(tickers)})"
         )
-
-        # TODO: パフォーマンスカイゼンして！原因はsymbolマスタにtickerかぶり（社名変更）があるため。バッチの新規Symbol取り込み部分もなおす
-        # TODO: -400日が何月何日なのか表示
