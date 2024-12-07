@@ -99,6 +99,8 @@ class Command(BaseCommand):
                 plt.plot(x_range, sma, color, label=label)
 
             plt.legend(loc="upper left")
+            reversed_labels = [str(i) for i in reversed(x_range)]
+            plt.xticks(ticks=x_range, labels=reversed_labels)
             plt.ylabel("closing_price")
             plt.grid()
 
