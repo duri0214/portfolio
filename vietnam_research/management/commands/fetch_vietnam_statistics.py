@@ -70,7 +70,25 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         """
-        https://www.gso.gov.vn/
+        このコマンドは、ベトナムの鉱工業生産指数と消費者物価指数のデータを取得、保存します。
+        これらのデータはベトナムの統計局のウェブサイト `https://www.gso.gov.vn/` から提供されています。
+
+        handleメソッドは以下のタスクを実行します：
+
+        1. VietnamStatisticsモデルのすべてのレコードを削除。
+        2. 各URLから以下のデータを取得：
+            - "https://nsdp.gso.gov.vn/GSO-chung/SDMXFiles/GSO/IIPVNM.xml"（工業生産指数）
+            - "https://nsdp.gso.gov.vn/GSO-chung/SDMXFiles/GSO/CPIVNM.xml"（消費者物価指数）
+        3. 取得データを解析し、VietnamStatisticsモデルに新たなレコードを作成。
+        4. データの取得と保存が成功した場合、成功メッセージを表示。
+
+        鉱工業生産指数は、一定期間内の鉱業および製造業の生産量を測る指標。
+        この指数が増加すると、製造業の生産量が増加し、その結果、物資の流通や貿易が盛んになる可能性があります。
+
+        一方、消費者物価指数は、一般的な物価水準の変動を測定。インフレまたはデフレを示す可能性があり、
+        これらの状況はそれぞれ、物価上昇または下落を意味します。
+
+        これらの指数を分析し、ベトナム経済のパフォーマンスとトレンドを把握します。
         """
         VietnamStatistics.objects.all().delete()
 
