@@ -124,6 +124,7 @@ python manage.py import_soil_hardness /path/to/folder
 
 ```commandline
 cd /var/www/html/portfolio
+git branch --show-current
 git fetch --prune origin
 git reset --hard origin/master
 git pull origin master
