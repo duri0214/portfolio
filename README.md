@@ -159,7 +159,7 @@ chmod 774 /var/www
 - FAOから水産物供給量の推移グラフ
     - `python manage.py monthly_fao_food_balance_chart` のバッチをまわす
 - ベトナムの統計局から経済指標を取得
-    - `python manage.py monthly_fetch_vietnam_statistics` のバッチをまわす
+    - `python manage.py monthly_vietnam_statistics` のバッチをまわす
 
 ## gmarker
 
