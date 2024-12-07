@@ -59,19 +59,10 @@ def parse_xml(
 class Command(BaseCommand):
     help = "Fetch Vietnam Statistics data"
 
-    # def add_arguments(self, parser):
-    #     parser.add_argument(
-    #         "date",
-    #         type=str,
-    #         help="Date in format yyyy-mm to process",
-    #         nargs="?",
-    #         default="",
-    #     )
-
     def handle(self, **options):
         """
         このコマンドは、ベトナムの鉱工業生産指数と消費者物価指数のデータを取得、保存します。
-        これらのデータはベトナムの統計局のウェブサイト `https://www.gso.gov.vn/` から提供されています。
+        これらのデータはベトナム統計局のウェブサイト `https://www.gso.gov.vn/` から提供されています。
 
         handleメソッドは以下のタスクを実行します：
 
@@ -84,9 +75,11 @@ class Command(BaseCommand):
 
         鉱工業生産指数は、一定期間内の鉱業および製造業の生産量を測る指標。
         この指数が増加すると、製造業の生産量が増加し、その結果、物資の流通や貿易が盛んになる可能性があります。
+        ベトナム統計局のウェブサイトの「ベトナム国概要データページ」の鉱工業生産指数 - SDMXデータ をクリック
 
         一方、消費者物価指数は、一般的な物価水準の変動を測定。インフレまたはデフレを示す可能性があり、
         これらの状況はそれぞれ、物価上昇または下落を意味します。
+        ベトナム統計局のウェブサイトの「ベトナム国概要データページ」の消費者物価指数 - SDMXデータ をクリック
 
         これらの指数を分析し、ベトナム経済のパフォーマンスとトレンドを把握します。
         """
@@ -133,44 +126,3 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS("Successfully fetched and stored Vietnam CPI data.")
         )
-
-        # data3: ベトナムを訪れる外国人観光客
-        # date_str = options.get("date")
-        # if date_str:
-        #     try:
-        #         date_obj = parse(date_str + "-01")  # appending day part for parsing
-        #         year, month = date_obj.year, date_obj.month
-        #     except ValueError:
-        #         self.stdout.write(
-        #             self.style.ERROR("Invalid date format. It should be yyyy-mm")
-        #         )
-        #         return
-        # else:
-        #     now = datetime.now() - timedelta(days=30)
-        #     year, month = now.year, now.month
-        #
-        # url = f"https://vietnamtourism.gov.vn/en/statistic/international?year={year}&period=t{month}"
-        # print(f"{url=}")
-        # response = requests.get(url)
-        # response.raise_for_status()
-        #
-        # print(f"{response.text=}")
-        # soup = BeautifulSoup(response.text, "html.parser")
-        # contents = soup.find("div", class_="statistic-content")
-        # if not contents:
-        #     self.stdout.write(self.style.ERROR("Cannot find the contents"))
-        #     return
-        #
-        # summary = contents.find(
-        #     "p", class_="statistic-summary", style="font-weight:bold;"
-        # )
-        # if summary:
-        #     self.stdout.write(self.style.SUCCESS(f"{summary.get_text()}"))
-        #
-        # table_data = contents.find("div", class_="responsive-table")
-        # if table_data:
-        #     total_row = table_data.find("tr", class_="total-row")
-        #     if total_row:
-        #         tds = total_row.find_all("td")
-        #         y_on_y = tds[4].text if len(tds) > 4 else None
-        #         self.stdout.write(self.style.SUCCESS(f"Year on Year: {y_on_y}"))
