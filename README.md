@@ -19,6 +19,13 @@ pip freeze > requirements.txt
 python manage.py flush --noinput
 ```
 
+## Clean up
+
+```
+python manage.py monthly_cleanup_linebot_engine
+python manage.py monthly_cleanup_home
+```
+
 ## Migrate
 
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
