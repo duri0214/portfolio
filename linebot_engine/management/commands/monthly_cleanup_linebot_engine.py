@@ -20,7 +20,9 @@ class Command(BaseCommand):
             query = model.objects.all()
             for record in query:
                 if record.picture:
-                    used_files.append(os.path.join(settings.MEDIA_ROOT, record.picture))
+                    used_files.append(
+                        os.path.join(settings.MEDIA_ROOT, record.picture.name)
+                    )
 
         for filepath in Path(search_dir).rglob("*"):
             if str(filepath) not in used_files:
