@@ -22,6 +22,7 @@ python manage.py flush --noinput
 ## Migrate
 
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
+- サーバで実行するときは makemigrations は基本的に必要ない（migrationファイルがgithubで焼き付けてあるから）
 
 ```
 python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities hospital home
