@@ -44,6 +44,15 @@
                         <p>（該当天気なし）</p>
                     {% endfor %}
                 </div>
+                <div class="warning-list">
+                    {% for warning in a_land.jma_city.jma_region.warnings %}
+                        <div class="warning-item">
+                            <span class="label">{{ warning.warnings }}</span>
+                        </div>
+                    {% empty %}
+                        <p>（該当警報なし）</p>
+                    {% endfor %}
+                </div>
 
                 <ul class="card-text">
                     <li>都道府県: {{ a_land.jma_city.jma_region.jma_prefecture.name|default:"-" }}</li>
