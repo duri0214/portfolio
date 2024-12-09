@@ -40,6 +40,7 @@ from soil_analysis.models import (
     JmaRegion,
     JmaPrefecture,
     JmaWeather,
+    JmaWarning,
 )
 
 
@@ -80,11 +81,16 @@ class LandListView(ListView):
             queryset=JmaWeather.objects.all(),
             to_attr="weathers",
         )
+        warning_prefetch = Prefetch(
+            "jma_city__jma_region__jmawarning_set",
+            queryset=JmaWarning.objects.all(),
+            to_attr="warnings",
+        )
         return (
             super()
             .get_queryset()
             .filter(company=company)
-            .prefetch_related(weather_prefetch)
+            .prefetch_related(weather_prefetch, warning_prefetch)
         )
 
     def get_context_data(self, **kwargs):

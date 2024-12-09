@@ -92,7 +92,7 @@ class Command(BaseCommand):
                         warnings=",".join(warnings),
                     )
                 )
-            JmaWarning.objects.bulk_create(jma_warning_list)
+        JmaWarning.objects.bulk_create(jma_warning_list)
 
         self.stdout.write(
             self.style.SUCCESS("weather warning data retrieve has been completed.")
