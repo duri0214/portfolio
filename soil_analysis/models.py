@@ -133,6 +133,9 @@ class JmaWeather(models.Model):
     avg_max_temperature = models.FloatField(null=True)
     avg_max_wind_speed = models.FloatField(null=True)
 
+    class Meta:
+        unique_together = (("jma_region", "reporting_date"),)
+
 
 class JmaWarning(models.Model):
     """
@@ -147,6 +150,9 @@ class JmaWarning(models.Model):
 
     jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
     warnings = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ("jma_region",)
 
 
 class CompanyCategory(models.Model):
