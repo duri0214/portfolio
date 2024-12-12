@@ -71,8 +71,9 @@ class OpenAIGptService(LLMService):
         self.config = config
 
     def post(self, chat_history: list[Message]) -> ChatCompletion:
+        cut_down_history = cut_down_chat_history(chat_history, self.config)
         return OpenAI(api_key=self.config.api_key).chat.completions.create(
             model=self.config.model,
-            messages=[x.to_dict() for x in chat_history],
+            messages=[x.to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
         )
