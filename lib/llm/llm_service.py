@@ -61,7 +61,7 @@ def cut_down_chat_history(
 
 class LLMService(ABC):
     @abstractmethod
-    def post(self, **kwargs):
+    def retrieve_answer(self, **kwargs):
         pass
 
 
@@ -70,7 +70,7 @@ class OpenAIGptService(LLMService):
         super().__init__()
         self.config = config
 
-    def post(self, chat_history: list[Message]) -> ChatCompletion:
+    def retrieve_answer(self, chat_history: list[Message]) -> ChatCompletion:
         cut_down_history = cut_down_chat_history(chat_history, self.config)
         return OpenAI(api_key=self.config.api_key).chat.completions.create(
             model=self.config.model,
