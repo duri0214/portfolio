@@ -283,13 +283,13 @@ class OpenAITextToSpeechChatService(ChatService):
         self.save(response, message)
 
     def save(self, response, message: MessageDTO) -> None:
-        folder_path = Path(MEDIA_ROOT) / "audios"
+        folder_path = Path(MEDIA_ROOT) / "llm_chat/audios"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         random_filename = secrets.token_hex(5) + ".mp3"
         full_path = folder_path / random_filename
-        message.file_path = "/media/audios/" + random_filename
-        response.write_to_file(full_path)
+        message.file_path = "llm_chat/audios/" + random_filename
+        response.write_to_file(str(full_path))
         message.to_entity().save()
 
 
