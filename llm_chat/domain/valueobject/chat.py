@@ -8,34 +8,19 @@ from openai.types.chat import (
 from llm_chat.models import ChatLogsWithLine
 
 
-class MyChatCompletionMessage:
-    def __init__(
-        self,
-        user: User,
-        role: str,
-        invisible: bool,
-        pk: int = None,
-        content: str = None,
-        file_path: str = None,
-    ):
-        self.id = pk
-        self.user = user
-        self.role = role
-        self.content = content
-        self.file_path = file_path
-        self.invisible = invisible
+@dataclass
+class MessageDTO:
+    user: User
+    role: RoleType
+    content: str
+    invisible: bool
+    file_path: str = None
 
-    def to_origin(self):
-        if self.role == "system":
-            temp = ChatCompletionSystemMessageParam(role="system", content=self.content)
-        elif self.role == "assistant":
-            temp = ChatCompletionAssistantMessageParam(
-                role="assistant", content=self.content
-            )
-        else:
-            temp = ChatCompletionUserMessageParam(role="user", content=self.content)
-
-        return temp
+    def to_request(self) -> Message:
+        """
+        このDTOをGPT APIへのリクエストとして適切なMessageオブジェクトに変換します。
+        """
+        return Message(role=self.role, content=self.content)
 
     def to_entity(self) -> ChatLogsWithLine:
         return ChatLogsWithLine(
