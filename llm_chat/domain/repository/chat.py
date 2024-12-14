@@ -7,10 +7,6 @@ class ChatLogRepository:
         pass
 
     @staticmethod
-    def find_chatlog_by_id(pk: int) -> list[ChatLogs]:
-        return ChatLogs.objects.get(pk=pk)
-
-    @staticmethod
     def find_chatlog_by_user_id(user_id: int) -> list[ChatLogs]:
         return ChatLogs.objects.filter(user_id=user_id)
 
