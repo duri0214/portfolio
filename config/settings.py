@@ -18,10 +18,11 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# read at .env
-load_dotenv(BASE_DIR / ".env")
-DEBUG = os.environ.get("DJANGO_DEBUG_MODE")  # read DEBUG at .env
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")  # read SECRET_KEY at .env
+# .env ファイルを読み込む
+load_dotenv()
+
+DEBUG = os.getenv("DJANGO_DEBUG_MODE")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     "securities",
     "hospital",
     "home",
+    "llm_chat",
 ]
 
 MIDDLEWARE = [
