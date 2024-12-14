@@ -1,0 +1,46 @@
+{% extends 'llm_chat/base.html' %}
+{% load static %}
+{% load split_ext %}
+
+{% block content %}
+    <div class="container">
+        <div class="jumbotron">
+            <h1 class="display-4">LINE QA with ChatGPT4 and Dall-e-3</h1>
+            <p class="lead">The system that forms the basis of work</p>
+            <hr class="my-4">
+            <p>You can talk with ChatGPT4 and Dall-e-3 using LINE.</p>
+        </div>
+
+        {% for chat_log in chat_logs %}
+            {% if not chat_log.invisible %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ chat_log.role }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">file: {{ chat_log.file_path }}</h6>
+                        <p class="card-text">{{ chat_log.content }}</p>
+                        {% if chat_log.file_path|split_ext == "jpg" %}
+                            <img src="{{ chat_log.file_path }}" class="img-fluid" alt="Responsive image">
+                        {% elif chat_log.file_path|split_ext == "mp3" %}
+                            <audio controls>
+                                <source src="{{ chat_log.file_path }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        {% endif %}
+                        <div>
+                            <a href="#" class="card-link">Card link</a>
+                            <a href="#" class="card-link">Another link</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+        <form action="{% url 'llm:index' %}" method="POST">
+            {{ form }}
+            {% csrf_token %}
+            <input class="mt-3" type="submit" value="送信">
+        </form>
+    </div>
+    <script type="text/javascript">
+        window.scrollTo(0, document.body.scrollHeight);
+    </script>
+{% endblock %}

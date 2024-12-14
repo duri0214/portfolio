@@ -32,7 +32,7 @@ python manage.py monthly_cleanup_home
 - サーバで実行するときは makemigrations は基本的に必要ない（migrationファイルがgithubで焼き付けてあるから）
 
 ```
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities hospital home
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities hospital home llm_chat
 python manage.py migrate
 
 python manage.py createsuperuser

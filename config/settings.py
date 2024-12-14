@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "securities",
     "hospital",
     "home",
+    "llm_chat",
 ]
 
 MIDDLEWARE = [
