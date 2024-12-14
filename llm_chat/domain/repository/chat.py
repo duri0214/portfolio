@@ -24,13 +24,8 @@ class ChatLogRepository:
 
     @staticmethod
     def insert(message: MessageDTO):
-        ChatLogs.objects.create(
-            user=message.user,
-            role=message.role.value,
-            content=message.content,
-            file_path=message.file_path,
-            invisible=message.invisible,
-        )
+        chatlog = message.to_entity()
+        chatlog.save()
 
     @staticmethod
     def bulk_insert(message_list: list[MessageDTO]):
