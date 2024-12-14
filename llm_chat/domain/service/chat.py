@@ -252,14 +252,14 @@ class OpenAIDalleChatService(ChatService):
             raise Exception(e)
 
     def save(self, picture: Image, message: MessageDTO) -> None:
-        folder_path = Path(MEDIA_ROOT) / "images"
+        folder_path = Path(MEDIA_ROOT) / "llm_chat/images"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         random_filename = secrets.token_hex(5) + ".jpg"
         full_path = folder_path / random_filename
-        message.file_path = "/media/images/" + random_filename
-        picture.save(full_path)
-        self.chatlog_repository.insert(message)
+        message.file_path = "llm_chat/images/" + random_filename
+        picture.save(str(full_path))
+        message.to_entity().save()
 
     @staticmethod
     def resize(picture: Image) -> Image:
