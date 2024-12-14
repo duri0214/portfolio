@@ -22,23 +22,6 @@ from llm_chat.domain.repository.chat import (
 from llm_chat.domain.valueobject.chat import MessageDTO, Gender
 
 
-def get_stored_chat_history(
-    user_id: int, chatlog_repository: ChatLogRepository
-) -> list[MessageDTO]:
-    chatlog_list = chatlog_repository.find_chatlog_by_user_id(user_id)
-    history = [
-        MessageDTO(
-            user=chatlog.user,
-            role=RoleType[chatlog.role.upper()],
-            content=chatlog.content,
-            invisible=False,
-            file_path=chatlog.file_path,
-        )
-        for chatlog in chatlog_list
-    ]
-    return history
-
-
 def get_prompt(gender: Gender) -> str:
     return f"""
         あなたはなぞなぞコーナーの担当者です。
@@ -106,10 +89,16 @@ class GeminiService(LLMService):
         if message.content is None:
             raise Exception("content is None")
 
-        chat_history = get_stored_chat_history(
-            user_id=message.user.pk,
-            chatlog_repository=self.chatlog_repository,
-        )
+        chat_history = [
+            MessageDTO(
+                user=chatlog.user,
+                role=RoleType[chatlog.role.upper()],
+                content=chatlog.content,
+                invisible=False,
+                file_path=chatlog.file_path,
+            )
+            for chatlog in self.chatlog_repository.find_chat_history(message.user)
+        ]
         chat_history.append(
             self.save(
                 MessageDTO(
@@ -164,10 +153,16 @@ class OpenAIGptService(LLMService):
         if message.content is None:
             raise Exception("content is None")
 
-        chat_history = get_stored_chat_history(
-            user_id=message.user.pk,
-            chatlog_repository=self.chatlog_repository,
-        )
+        chat_history = [
+            MessageDTO(
+                user=chatlog.user,
+                role=RoleType[chatlog.role.upper()],
+                content=chatlog.content,
+                invisible=False,
+                file_path=chatlog.file_path,
+            )
+            for chatlog in self.chatlog_repository.find_chat_history(message.user)
+        ]
         if not chat_history:
             chat_history = create_initial_prompt(user=message.user, gender=gender)
             self.save(chat_history)
