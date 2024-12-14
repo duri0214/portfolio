@@ -1,4 +1,4 @@
-from llm_chat.domain.valueobject.chat import MyChatCompletionMessage
+from llm_chat.domain.valueobject.chat import MessageDTO
 from llm_chat.models import ChatLogsWithLine
 
 
@@ -15,30 +15,33 @@ class ChatLogRepository:
         return ChatLogsWithLine.objects.filter(user_id=user_id)
 
     @staticmethod
-    def insert(my_chat_completion_message: MyChatCompletionMessage):
+    def insert(message: MessageDTO):
         ChatLogsWithLine.objects.create(
-            user=my_chat_completion_message.user,
-            role=my_chat_completion_message.role,
-            content=my_chat_completion_message.content,
-            file_path=my_chat_completion_message.file_path,
-            invisible=my_chat_completion_message.invisible,
+            user=message.user,
+            role=message.role.value,
+            content=message.content,
+            file_path=message.file_path,
+            invisible=message.invisible,
         )
 
     @staticmethod
-    def bulk_insert(my_chat_completion_message_list: list[MyChatCompletionMessage]):
-        ChatLogsWithLine.objects.bulk_create(
-            [x.to_entity() for x in my_chat_completion_message_list]
-        )
+    def bulk_insert(message_list: list[MessageDTO]):
+        ChatLogsWithLine.objects.bulk_create([x.to_entity() for x in message_list])
 
     @staticmethod
-    def upsert(my_chat_completion_message: MyChatCompletionMessage):
-        ChatLogsWithLine.objects.update_or_create(
-            id=my_chat_completion_message.id,
-            defaults={
-                "user": my_chat_completion_message.user,
-                "role": my_chat_completion_message.role,
-                "content": my_chat_completion_message.content,
-                "file_path": my_chat_completion_message.file_path,
-                "invisible": my_chat_completion_message.invisible,
-            },
+    def update_file_path(message: MessageDTO):
+        """
+        指定されたメッセージDTO（ユーザー、役割、コンテンツ）に基づいて
+        該当のChatLogsWithLineレコードのfile_pathフィールドを更新します。
+        このメソッドは、テキストから生成された画像（Dalle）や音声ファイル（Text2Speech）などの
+        ファイルパスを更新するために利用されます。
+
+        Args:
+            message (MessageDTO): 更新するfile_path情報を含むメッセージDTO
+
+        """
+        ChatLogsWithLine.objects.filter(
+            user=message.user, role=message.role, content=message.content
+        ).update(
+            file_path=message.file_path,
         )
