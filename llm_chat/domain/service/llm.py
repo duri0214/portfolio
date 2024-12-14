@@ -7,15 +7,17 @@ from pathlib import Path
 import requests.exceptions
 from PIL import Image
 from django.contrib.auth.models import User
-from google import generativeai
-from google.generativeai.types import GenerateContentResponse
-from openai import OpenAI
-from openai.types.chat import (
-    ChatCompletion,
-)
 
 from config.settings import MEDIA_ROOT
+from lib.llm.llm_service import (
+    OpenAILlmCompletionService,
+    OpenAILlmDalleService,
+    OpenAILlmTextToSpeech,
+    OpenAILlmSpeechToText,
+    GeminiLlmCompletionService,
+)
 from lib.llm.valueobject.chat import RoleType
+from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.repository.chat import (
     ChatLogRepository,
 )
@@ -64,7 +66,7 @@ def create_initial_prompt(user: User, gender: Gender) -> list[MessageDTO]:
     return history
 
 
-class LLMService(ABC):
+class ChatService(ABC):
     def __init__(self):
         self.chatlog_repository = ChatLogRepository()
 
@@ -81,9 +83,15 @@ class LLMService(ABC):
         pass
 
 
-class GeminiService(LLMService):
+class GeminiChatService(ChatService):
     def __init__(self):
         super().__init__()
+        self.config = GeminiConfig(
+            api_key=os.getenv("GEMINI_API_KEY"),
+            temperature=0.5,
+            max_tokens=4000,
+            model="gemini-1.5-flash",
+        )
 
     def generate(self, message: MessageDTO, gender: Gender) -> list[MessageDTO]:
         if message.content is None:
@@ -99,26 +107,25 @@ class GeminiService(LLMService):
             )
             for chatlog in self.chatlog_repository.find_chat_history(message.user)
         ]
-        chat_history.append(
-            self.save(
-                MessageDTO(
-                    user=message.user,
-                    role=message.role,
-                    content=message.content,
-                    invisible=False,
-                )
-            )
+        latest_user_message = MessageDTO(
+            user=message.user,
+            role=message.role,
+            content=message.content,
+            invisible=False,
         )
-        # TODO: Gemini用のMyChatCompletionMessageに詰め込みたい
-        #  https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=python&hl=ja
-        response = self.post_to_gpt(chat_history)
+        self.save(latest_user_message)
+        chat_history.append(latest_user_message)
+
+        response = GeminiLlmCompletionService(self.config).retrieve_answer(chat_history)
+
         latest_assistant = MessageDTO(
             user=message.user,
             role=RoleType.ASSISTANT,
             content=response.text,
             invisible=False,
         )
-        chat_history.append(self.save(latest_assistant))
+        self.save(latest_assistant)
+        chat_history.append(latest_assistant)
         return chat_history
 
     def post_to_gpt(self, chat_history: list[MessageDTO]) -> GenerateContentResponse:
@@ -143,11 +150,15 @@ class GeminiService(LLMService):
 
         return messages
 
-
-class OpenAIGptService(LLMService):
+class OpenAIChatService(ChatService):
     def __init__(self):
         super().__init__()
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.config = OpenAIGptConfig(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            temperature=0.5,
+            max_tokens=4000,
+            model="gpt-4o-mini",
+        )
 
     def generate(self, message: MessageDTO, gender: Gender) -> list[MessageDTO]:
         if message.content is None:
@@ -171,46 +182,45 @@ class OpenAIGptService(LLMService):
         # 会話が始まっているならユーザの入力したチャットをinsertしてからChatGPTに全投げする
         # つまり、3以上あれば会話が始まっているだろうとみなせる
         if len(chat_history) > 2:
-            chat_history.append(
-                self.save(
-                    MessageDTO(
-                        user=message.user,
-                        role=message.role,
-                        content=message.content,
-                        invisible=False,
-                    )
-                )
+            latest_user_message = MessageDTO(
+                user=message.user,
+                role=message.role,
+                content=message.content,
+                invisible=False,
             )
-        response = self.post_to_gpt(chat_history)
+            self.save(latest_user_message)
+            chat_history.append(latest_user_message)
 
-        latest_assistant = MessageDTO(
+        answer = OpenAILlmCompletionService(self.config).retrieve_answer(chat_history)
+        latest_assistant_message = MessageDTO(
             user=message.user,
             role=RoleType.ASSISTANT,
-            content=response.choices[0].message.content,
+            content=answer.choices[0].message.content,
             invisible=False,
         )
-        chat_history.append(self.save(latest_assistant))
+        self.save(latest_assistant_message)
+        chat_history.append(latest_assistant_message)
 
-        if "本日はなぞなぞにご参加いただき" in latest_assistant.content:
-            chat_history.append(
-                self.save(
-                    MessageDTO(
-                        user=latest_assistant.user,
-                        role=RoleType.USER,
-                        content="評価結果をjsonで出力してください",
-                        invisible=True,
-                    )
-                )
+        if "本日はなぞなぞにご参加いただき" in latest_assistant_message.content:
+            latest_user_message = MessageDTO(
+                user=message.user,
+                role=RoleType.USER,
+                content="評価結果をjsonで出力してください",
+                invisible=True,
             )
-            response = self.post_to_gpt(chat_history)
-
+            self.save(latest_user_message)
+            chat_history.append(latest_user_message)
+            answer = OpenAILlmCompletionService(self.config).retrieve_answer(
+                chat_history
+            )
             latest_assistant = MessageDTO(
                 user=message.user,
                 role=RoleType.ASSISTANT,
-                content=response.choices[0].message.content,
+                content=answer.choices[0].message.content,
                 invisible=True,
             )
-            chat_history.append(self.save(latest_assistant))
+            self.save(latest_assistant)
+            chat_history.append(latest_assistant)
 
         return chat_history
 
@@ -235,11 +245,15 @@ class OpenAIGptService(LLMService):
 
         return messages
 
-
-class OpenAIDalleService(LLMService):
+class OpenAIDalleChatService(ChatService):
     def __init__(self):
         super().__init__()
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.config = OpenAIGptConfig(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            temperature=0.5,
+            max_tokens=4000,
+            model="dall-e-3",
+        )
 
     def generate(self, message: MessageDTO):
         """
@@ -248,8 +262,9 @@ class OpenAIDalleService(LLMService):
         """
         if message.content is None:
             raise Exception("content is None")
-        response = self.post_to_gpt(message.content)
-        image_url = response.data[0].url
+
+        answer = OpenAILlmDalleService(self.config).retrieve_answer(message)
+        image_url = answer.data[0].url
         try:
             response = requests.get(image_url)
             response.raise_for_status()
@@ -286,15 +301,20 @@ class OpenAIDalleService(LLMService):
         return picture.resize((128, 128))
 
 
-class OpenAITextToSpeechService(LLMService):
+class OpenAITextToSpeechChatService(ChatService):
     def __init__(self):
         super().__init__()
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.config = OpenAIGptConfig(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            temperature=0.5,
+            max_tokens=4000,
+            model="tts-1",
+        )
 
     def generate(self, message: MessageDTO):
         if message.content is None:
             raise Exception("content is None")
-        response = self.post_to_gpt(message.content)
+        response = OpenAILlmTextToSpeech(self.config).retrieve_answer(message)
         self.save(response, message)
 
     def post_to_gpt(self, text: str):
@@ -316,18 +336,22 @@ class OpenAITextToSpeechService(LLMService):
 
         return message
 
-
-class OpenAISpeechToTextService(LLMService):
+class OpenAISpeechToTextChatService(ChatService):
     def __init__(self):
         super().__init__()
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.config = OpenAIGptConfig(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            temperature=0.5,
+            max_tokens=4000,
+            model="whisper-1",
+        )
 
     def generate(self, message: MessageDTO):
         if message.file_path is None:
             raise Exception("file_path is None")
         full_path = Path(MEDIA_ROOT) / message.file_path
         if full_path.exists():
-            response = self.post_to_gpt(str(full_path))
+            response = OpenAILlmSpeechToText(self.config).retrieve_answer(message)
             message.content = response.text
             print(f"\n音声ファイルは「{response.text}」とテキスト化されました\n")
             self.save(message)
