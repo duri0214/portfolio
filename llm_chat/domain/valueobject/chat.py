@@ -4,7 +4,7 @@ from enum import Enum
 from django.contrib.auth.models import User
 
 from lib.llm.valueobject.chat import RoleType, Message
-from llm_chat.models import ChatLogsWithLine
+from llm_chat.models import ChatLogs
 
 
 @dataclass
@@ -21,11 +21,11 @@ class MessageDTO:
         """
         return Message(role=self.role, content=self.content)
 
-    def to_entity(self) -> ChatLogsWithLine:
+    def to_entity(self) -> ChatLogs:
         """
         このDTOをデータベース格納用のChatLogsWithLineエンティティに変換します。
         """
-        return ChatLogsWithLine(
+        return ChatLogs(
             user=self.user,
             role=self.role.value,
             content=self.content,

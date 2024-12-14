@@ -4,7 +4,7 @@ from django.db import models
 from lib.llm.valueobject.chat import RoleType
 
 
-class ChatLogsWithLine(models.Model):
+class ChatLogs(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     role = models.CharField(
         max_length=9,

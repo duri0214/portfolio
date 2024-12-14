@@ -12,7 +12,7 @@ from llm_chat.domain.usecase.llm import (
     OpenAISpeechToTextUseCase,
 )
 from llm_chat.forms import UserTextForm
-from llm_chat.models import ChatLogsWithLine
+from llm_chat.models import ChatLogs
 
 # .env ファイルを読み込む
 load_dotenv()
@@ -26,9 +26,9 @@ class IndexView(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
-        context["chat_logs"] = ChatLogsWithLine.objects.filter(
-            user=login_user
-        ).order_by("created_at")
+        context["chat_logs"] = ChatLogs.objects.filter(user=login_user).order_by(
+            "created_at"
+        )
 
         return context
 

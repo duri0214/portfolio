@@ -1,5 +1,5 @@
 from llm_chat.domain.valueobject.chat import MessageDTO
-from llm_chat.models import ChatLogsWithLine
+from llm_chat.models import ChatLogs
 
 
 class ChatLogRepository:
@@ -7,16 +7,16 @@ class ChatLogRepository:
         pass
 
     @staticmethod
-    def find_chatlog_by_id(pk: int) -> list[ChatLogsWithLine]:
-        return ChatLogsWithLine.objects.get(pk=pk)
+    def find_chatlog_by_id(pk: int) -> list[ChatLogs]:
+        return ChatLogs.objects.get(pk=pk)
 
     @staticmethod
-    def find_chatlog_by_user_id(user_id: int) -> list[ChatLogsWithLine]:
-        return ChatLogsWithLine.objects.filter(user_id=user_id)
+    def find_chatlog_by_user_id(user_id: int) -> list[ChatLogs]:
+        return ChatLogs.objects.filter(user_id=user_id)
 
     @staticmethod
     def insert(message: MessageDTO):
-        ChatLogsWithLine.objects.create(
+        ChatLogs.objects.create(
             user=message.user,
             role=message.role.value,
             content=message.content,
@@ -26,7 +26,7 @@ class ChatLogRepository:
 
     @staticmethod
     def bulk_insert(message_list: list[MessageDTO]):
-        ChatLogsWithLine.objects.bulk_create([x.to_entity() for x in message_list])
+        ChatLogs.objects.bulk_create([x.to_entity() for x in message_list])
 
     @staticmethod
     def update_file_path(message: MessageDTO):
@@ -40,7 +40,7 @@ class ChatLogRepository:
             message (MessageDTO): 更新するfile_path情報を含むメッセージDTO
 
         """
-        ChatLogsWithLine.objects.filter(
+        ChatLogs.objects.filter(
             user=message.user, role=message.role, content=message.content
         ).update(
             file_path=message.file_path,

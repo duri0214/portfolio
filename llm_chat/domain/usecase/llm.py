@@ -15,7 +15,7 @@ from llm_chat.domain.service.llm import (
     OpenAISpeechToTextService,
 )
 from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
-from llm_chat.models import ChatLogsWithLine
+from llm_chat.models import ChatLogs
 
 
 class UseCase(ABC):
@@ -155,7 +155,7 @@ class OpenAISpeechToTextUseCase(UseCase):
         """
         if content is not None:
             raise ValueError("content must be None for OpenAISpeechToTextUseCase")
-        record = ChatLogsWithLine.objects.filter(
+        record = ChatLogs.objects.filter(
             Q(user=user)
             & Q(role="user")
             & Q(file_path__endswith=".mp3")
