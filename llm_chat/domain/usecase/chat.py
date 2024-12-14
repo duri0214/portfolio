@@ -138,7 +138,6 @@ class OpenAITextToSpeechUseCase(UseCase):
 class OpenAISpeechToTextUseCase(UseCase):
     def execute(self, user: User, content: str | None):
         """
-        TODO: ちょっとファイルが見つけられないバグがある issue7
         OpenAISpeechToTextServiceを利用し、ユーザーの最新の音声ファイルをテキストに変換します。
         contentパラメータは必ずNoneであること。
 

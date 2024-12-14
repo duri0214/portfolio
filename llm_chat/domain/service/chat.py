@@ -308,6 +308,7 @@ class OpenAISpeechToTextChatService(ChatService):
     def generate(self, message: MessageDTO):
         if message.file_path is None:
             raise Exception("file_path is None")
+        # TODO: ちょっとファイルが見つけられないバグがある issue7
         full_path = Path(MEDIA_ROOT) / message.file_path
         if full_path.exists():
             response = OpenAILlmSpeechToText(self.config).retrieve_answer(message)
