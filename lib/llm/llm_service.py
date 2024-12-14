@@ -92,3 +92,44 @@ class OpenAILlmCompletionService(LlmService):
             messages=[x.to_request().to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
         )
+
+
+class OpenAILlmDalleService(LlmService):
+    def __init__(self, config: OpenAIGptConfig):
+        super().__init__()
+        self.config = config
+
+    def retrieve_answer(self, message: MessageDTO) -> ImagesResponse:
+        return OpenAI(api_key=self.config.api_key).images.generate(
+            model=self.config.model,
+            prompt=message.content,
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
+
+
+class OpenAILlmTextToSpeech(LlmService):
+    def __init__(self, config: OpenAIGptConfig):
+        super().__init__()
+        self.config = config
+
+    def retrieve_answer(self, message: MessageDTO):
+        return OpenAI(api_key=self.config.api_key).audio.speech.create(
+            model=self.config.model,
+            voice="alloy",
+            input=message.content,
+            response_format="mp3",
+        )
+
+
+class OpenAILlmSpeechToText(LlmService):
+    def __init__(self, config: OpenAIGptConfig):
+        super().__init__()
+        self.config = config
+
+    def retrieve_answer(self, message: MessageDTO):
+        audio = open(message.file_path, "rb")
+        return OpenAI(api_key=self.config.api_key).audio.transcriptions.create(
+            model=self.config.model, file=audio
+        )
