@@ -128,7 +128,7 @@ class GeminiChatService(ChatService):
         if isinstance(messages, list):
             self.chatlog_repository.bulk_insert(messages)
         elif isinstance(messages, MessageDTO):
-            self.chatlog_repository.insert(messages)
+            messages.to_entity().save()
         else:
             raise ValueError(
                 f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
@@ -212,7 +212,7 @@ class OpenAIChatService(ChatService):
         if isinstance(messages, list):
             self.chatlog_repository.bulk_insert(messages)
         elif isinstance(messages, MessageDTO):
-            self.chatlog_repository.insert(messages)
+            messages.to_entity().save()
         else:
             raise ValueError(
                 f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
@@ -290,7 +290,7 @@ class OpenAITextToSpeechChatService(ChatService):
         full_path = folder_path / random_filename
         message.file_path = "/media/audios/" + random_filename
         response.write_to_file(full_path)
-        self.chatlog_repository.insert(message)
+        message.to_entity().save()
 
 
 class OpenAISpeechToTextChatService(ChatService):
@@ -317,4 +317,4 @@ class OpenAISpeechToTextChatService(ChatService):
             print(f"音声ファイル {message.file_path} は存在しません")
 
     def save(self, message: MessageDTO) -> None:
-        self.chatlog_repository.update_file_path(message)
+        message.to_entity().save()
