@@ -23,11 +23,6 @@ class ChatLogRepository:
         ).last()
 
     @staticmethod
-    def insert(message: MessageDTO):
-        chatlog = message.to_entity()
-        chatlog.save()
-
-    @staticmethod
     def bulk_insert(message_list: list[MessageDTO]):
         ChatLogs.objects.bulk_create([x.to_entity() for x in message_list])
 
