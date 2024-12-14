@@ -288,13 +288,11 @@ class OpenAITextToSpeechChatService(ChatService):
         folder_path = Path(MEDIA_ROOT) / "audios"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
-        # This generates a random string of 10 characters
         random_filename = secrets.token_hex(5) + ".mp3"
-        relative_path_str = "/media/audios/" + random_filename
         full_path = folder_path / random_filename
-        message.file_path = relative_path_str
+        message.file_path = "/media/audios/" + random_filename
         response.write_to_file(full_path)
-        self.chatlog_repository.update_file_path(message)
+        self.chatlog_repository.insert(message)
 
 
 class OpenAISpeechToTextChatService(ChatService):
