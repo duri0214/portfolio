@@ -33,22 +33,16 @@ class MessageDTO:
             invisible=self.invisible,
         )
 
-    def __str__(self):
-        return (
-            f"user_id: {self.user.pk}, "
-            f"role: {self.role}, "
-            f"content: {self.content}, "
-            f"invisible: {self.invisible}, "
-            f"file_path: {self.file_path}"
-        )
+
+class GenderType(Enum):
+    MAN = "man"
+    WOMAN = "woman"
 
 
+@dataclass
 class Gender:
-    def __init__(self, gender):
-        if gender not in {"man", "woman"}:
-            raise ValueError("Invalid gender")
-        self.gender = gender
+    gender: GenderType
 
     @property
     def name(self) -> str:
-        return "男性" if self.gender == "man" else "女性"
+        return "男性" if self.gender == GenderType.MAN else "女性"
