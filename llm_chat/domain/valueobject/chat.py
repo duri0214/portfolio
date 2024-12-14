@@ -1,10 +1,9 @@
-from django.contrib.auth.models import User
-from openai.types.chat import (
-    ChatCompletionSystemMessageParam,
-    ChatCompletionAssistantMessageParam,
-    ChatCompletionUserMessageParam,
-)
+from dataclasses import dataclass
+from enum import Enum
 
+from django.contrib.auth.models import User
+
+from lib.llm.valueobject.chat import RoleType, Message
 from llm_chat.models import ChatLogsWithLine
 
 
@@ -23,12 +22,15 @@ class MessageDTO:
         return Message(role=self.role, content=self.content)
 
     def to_entity(self) -> ChatLogsWithLine:
+        """
+        このDTOをデータベース格納用のChatLogsWithLineエンティティに変換します。
+        """
         return ChatLogsWithLine(
             user=self.user,
-            role=self.role,
+            role=self.role.value,
             content=self.content,
-            invisible=self.invisible,
             file_path=self.file_path,
+            invisible=self.invisible,
         )
 
     def __str__(self):
