@@ -1,20 +1,44 @@
 from unittest import TestCase
 
-from lib.llm.valueobject.chat import Message, RoleType
+from django.contrib.auth.models import User
+
+from lib.llm.llm_service import count_tokens, cut_down_chat_history
+from lib.llm.valueobject.chat import RoleType
 from lib.llm.valueobject.config import (
     OpenAIGptConfig,
     validate_temperature,
 )
-from llm_service import count_tokens, cut_down_chat_history
+from llm_chat.domain.valueobject.chat import MessageDTO
 
 
 class TestLlmService(TestCase):
-
     def setUp(self):
+        test_user, created = User.objects.get_or_create(
+            username="test-user",
+            defaults={"email": "test@example.com", "password": "test-password"},
+        )
+        if created:
+            test_user.set_password("test-password")
+
         self.chat_history = [
-            Message(content="Hello", role=RoleType.USER),
-            Message(content=", ", role=RoleType.ASSISTANT),
-            Message(content="world!", role=RoleType.USER),
+            MessageDTO(
+                content="Hello",
+                role=RoleType.USER,
+                invisible=False,
+                user=test_user,
+            ),
+            MessageDTO(
+                content=", ",
+                role=RoleType.ASSISTANT,
+                invisible=False,
+                user=test_user,
+            ),
+            MessageDTO(
+                content="world!",
+                role=RoleType.USER,
+                invisible=False,
+                user=test_user,
+            ),
         ]
 
     def test_count_tokens(self):
