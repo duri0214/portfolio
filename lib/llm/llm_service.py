@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import tiktoken
+from google import generativeai
 from openai import OpenAI
 from openai.types import ImagesResponse
 from openai.types.chat import ChatCompletion
@@ -62,6 +63,21 @@ class LlmService(ABC):
     @abstractmethod
     def retrieve_answer(self, **kwargs):
         pass
+
+
+class GeminiLlmCompletionService(LlmService):
+    def __init__(self, config: GeminiConfig):
+        super().__init__()
+        self.config = config
+
+    def retrieve_answer(self, chat_history: list[MessageDTO]):
+        # TODO: [-1]しか処理してないから、そのうち Gemini用のMessageDTO にしたいね
+        #  https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=python&hl=ja
+        cut_down_history = cut_down_chat_history(chat_history, self.config)
+        generativeai.configure(api_key=self.config.api_key)
+        return generativeai.GenerativeModel(self.config.model).generate_content(
+            cut_down_history[-1].content
+        )
 
 
 class OpenAILlmCompletionService(LlmService):
