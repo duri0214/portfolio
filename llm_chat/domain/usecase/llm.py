@@ -3,10 +3,10 @@ from pathlib import Path
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
 
 from config import settings
 from lib.llm.valueobject.chat import RoleType
+from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.llm import (
     GeminiService,
     OpenAIGptService,
@@ -15,7 +15,6 @@ from llm_chat.domain.service.llm import (
     OpenAISpeechToTextService,
 )
 from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
-from llm_chat.models import ChatLogs
 
 
 class UseCase(ABC):
@@ -155,12 +154,7 @@ class OpenAISpeechToTextUseCase(UseCase):
         """
         if content is not None:
             raise ValueError("content must be None for OpenAISpeechToTextUseCase")
-        record = ChatLogs.objects.filter(
-            Q(user=user)
-            & Q(role="user")
-            & Q(file_path__endswith=".mp3")
-            & Q(invisible=False)
-        ).last()
+        record = ChatLogRepository.find_last_audio_log(user)
 
         if record is None:
             raise ObjectDoesNotExist("No audio file registered for the user")
