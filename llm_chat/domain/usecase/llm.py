@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 
 from config import settings
+from lib.llm.valueobject.chat import RoleType
 from llm_chat.domain.service.llm import (
     GeminiService,
     OpenAIGptService,
@@ -13,7 +14,7 @@ from llm_chat.domain.service.llm import (
     OpenAITextToSpeechService,
     OpenAISpeechToTextService,
 )
-from llm_chat.domain.valueobject.chat import MyChatCompletionMessage
+from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
 from llm_chat.models import ChatLogsWithLine
 
 
@@ -42,13 +43,13 @@ class GeminiUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for GeminiUseCase")
         llm_service = GeminiService()
-        my_chat_completion_message = MyChatCompletionMessage(
+        message = MessageDTO(
             user=user,
-            role="user",
+            role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return llm_service.generate(my_chat_completion_message, gender="man")
+        return llm_service.generate(message, gender=Gender(GenderType.MAN))
 
 
 class OpenAIGptUseCase(UseCase):
@@ -70,13 +71,13 @@ class OpenAIGptUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIGptUseCase")
         llm_service = OpenAIGptService()
-        my_chat_completion_message = MyChatCompletionMessage(
+        message = MessageDTO(
             user=user,
-            role="user",
+            role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return llm_service.generate(my_chat_completion_message, gender="man")
+        return llm_service.generate(message, gender=Gender(GenderType.MAN))
 
 
 class OpenAIDalleUseCase(UseCase):
@@ -98,13 +99,13 @@ class OpenAIDalleUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIDalleUseCase")
         llm_service = OpenAIDalleService()
-        my_chat_completion_message = MyChatCompletionMessage(
+        message = MessageDTO(
             user=user,
-            role="user",
+            role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return llm_service.generate(my_chat_completion_message)
+        return llm_service.generate(message)
 
 
 class OpenAITextToSpeechUseCase(UseCase):
@@ -126,13 +127,13 @@ class OpenAITextToSpeechUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAITextToSpeechUseCase")
         llm_service = OpenAITextToSpeechService()
-        my_chat_completion_message = MyChatCompletionMessage(
+        message = MessageDTO(
             user=user,
-            role="user",
+            role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return llm_service.generate(my_chat_completion_message)
+        return llm_service.generate(message)
 
 
 class OpenAISpeechToTextUseCase(UseCase):
@@ -165,8 +166,7 @@ class OpenAISpeechToTextUseCase(UseCase):
             raise ObjectDoesNotExist("No audio file registered for the user")
 
         llm_service = OpenAISpeechToTextService()
-        my_chat_completion_message = MyChatCompletionMessage(
-            pk=record.pk,
+        message = MessageDTO(
             user=record.user,
             role=record.role,
             content=record.content,
@@ -174,4 +174,4 @@ class OpenAISpeechToTextUseCase(UseCase):
             invisible=record.invisible,
         )
 
-        return llm_service.generate(my_chat_completion_message)
+        return llm_service.generate(message)
