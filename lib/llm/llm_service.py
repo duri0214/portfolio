@@ -2,12 +2,11 @@ from abc import ABC, abstractmethod
 
 import tiktoken
 from openai import OpenAI
-from openai.types.chat import (
-    ChatCompletion,
-)
+from openai.types import ImagesResponse
+from openai.types.chat import ChatCompletion
 
-from lib.llm.valueobject.chat import Message
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
+from llm_chat.domain.valueobject.chat import MessageDTO
 
 
 def count_tokens(text: str) -> int:
@@ -34,8 +33,8 @@ def count_tokens(text: str) -> int:
 
 
 def cut_down_chat_history(
-    chat_history: list[Message], config: OpenAIGptConfig | GeminiConfig
-) -> list[Message]:
+    chat_history: list[MessageDTO], config: OpenAIGptConfig | GeminiConfig
+) -> list[MessageDTO]:
     """
     チャット履歴のメッセージリストを削減し、トークンの総数が config で指定した max_tokens を超えないようにします。
 
@@ -59,21 +58,21 @@ def cut_down_chat_history(
     return chat_history
 
 
-class LLMService(ABC):
+class LlmService(ABC):
     @abstractmethod
     def retrieve_answer(self, **kwargs):
         pass
 
 
-class OpenAIGptService(LLMService):
+class OpenAILlmCompletionService(LlmService):
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()
         self.config = config
 
-    def retrieve_answer(self, chat_history: list[Message]) -> ChatCompletion:
+    def retrieve_answer(self, chat_history: list[MessageDTO]) -> ChatCompletion:
         cut_down_history = cut_down_chat_history(chat_history, self.config)
         return OpenAI(api_key=self.config.api_key).chat.completions.create(
             model=self.config.model,
-            messages=[x.to_dict() for x in cut_down_history],
+            messages=[x.to_request().to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
         )
