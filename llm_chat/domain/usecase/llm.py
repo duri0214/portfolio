@@ -8,11 +8,11 @@ from config import settings
 from lib.llm.valueobject.chat import RoleType
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.llm import (
-    GeminiService,
-    OpenAIGptService,
-    OpenAIDalleService,
-    OpenAITextToSpeechService,
-    OpenAISpeechToTextService,
+    GeminiChatService,
+    OpenAIChatService,
+    OpenAIDalleChatService,
+    OpenAITextToSpeechChatService,
+    OpenAISpeechToTextChatService,
 )
 from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
 
@@ -41,7 +41,7 @@ class GeminiUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for GeminiUseCase")
-        llm_service = GeminiService()
+        llm_service = GeminiChatService()
         message = MessageDTO(
             user=user,
             role=RoleType.USER,
@@ -69,7 +69,7 @@ class OpenAIGptUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for OpenAIGptUseCase")
-        llm_service = OpenAIGptService()
+        llm_service = OpenAIChatService()
         message = MessageDTO(
             user=user,
             role=RoleType.USER,
@@ -97,7 +97,7 @@ class OpenAIDalleUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for OpenAIDalleUseCase")
-        llm_service = OpenAIDalleService()
+        llm_service = OpenAIDalleChatService()
         message = MessageDTO(
             user=user,
             role=RoleType.USER,
@@ -125,7 +125,7 @@ class OpenAITextToSpeechUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for OpenAITextToSpeechUseCase")
-        llm_service = OpenAITextToSpeechService()
+        llm_service = OpenAITextToSpeechChatService()
         message = MessageDTO(
             user=user,
             role=RoleType.USER,
@@ -159,7 +159,7 @@ class OpenAISpeechToTextUseCase(UseCase):
         if record is None:
             raise ObjectDoesNotExist("No audio file registered for the user")
 
-        llm_service = OpenAISpeechToTextService()
+        llm_service = OpenAISpeechToTextChatService()
         message = MessageDTO(
             user=record.user,
             role=record.role,
