@@ -11,7 +11,7 @@
             <p>You can talk with ChatGPT4 and Dall-e-3 using LINE.</p>
         </div>
 
-        {% for chat_log in chat_logs %}
+        {% for chat_log in chat_history %}
             {% if not chat_log.invisible %}
                 <div class="card mb-3">
                     <div class="card-body">
