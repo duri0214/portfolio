@@ -99,7 +99,6 @@ class GeminiChatService(ChatService):
                 role=RoleType[chatlog.role.upper()],
                 content=chatlog.content,
                 invisible=False,
-                file_path=chatlog.file_path,
             )
             for chatlog in self.chatlog_repository.find_chat_history(message.user)
         ]
@@ -156,7 +155,6 @@ class OpenAIChatService(ChatService):
                 role=RoleType[chatlog.role.upper()],
                 content=chatlog.content,
                 invisible=False,
-                file_path=chatlog.file_path,
             )
             for chatlog in self.chatlog_repository.find_chat_history(message.user)
         ]
