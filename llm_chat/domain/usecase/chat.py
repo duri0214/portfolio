@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from config import settings
 from lib.llm.valueobject.chat import RoleType
 from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.service.llm import (
+from llm_chat.domain.service.chat import (
     GeminiChatService,
     OpenAIChatService,
     OpenAIDalleChatService,

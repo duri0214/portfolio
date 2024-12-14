@@ -4,7 +4,7 @@ from django.views.generic import FormView
 from dotenv import load_dotenv
 
 from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.usecase.llm import (
+from llm_chat.domain.usecase.chat import (
     UseCase,
     GeminiUseCase,
     OpenAIGptUseCase,
