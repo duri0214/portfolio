@@ -75,11 +75,7 @@ class ChatService(ABC):
         pass
 
     @abstractmethod
-    def post_to_gpt(self, **kwargs):
-        pass
-
-    @abstractmethod
-    def save(self, **kwargs):
+    def save(self, **kwargs) -> None:
         pass
 
 
@@ -128,16 +124,7 @@ class GeminiChatService(ChatService):
         chat_history.append(latest_assistant)
         return chat_history
 
-    def post_to_gpt(self, chat_history: list[MessageDTO]) -> GenerateContentResponse:
-        generativeai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        model = generativeai.GenerativeModel("gemini-1.5-flash")
-        # TODO: 「会話」にしたいね
-        response = model.generate_content(chat_history[-1].content)
-        return response
-
-    def save(
-        self, messages: MessageDTO | list[MessageDTO]
-    ) -> MessageDTO | list[MessageDTO]:
+    def save(self, messages: MessageDTO | list[MessageDTO]) -> None:
         # TODO: listだけ受け取って、呼び出しのときに[]でいれさせればシンプルになるじゃん raiseもいらん
         if isinstance(messages, list):
             self.chatlog_repository.bulk_insert(messages)
@@ -148,7 +135,6 @@ class GeminiChatService(ChatService):
                 f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
             )
 
-        return messages
 
 class OpenAIChatService(ChatService):
     def __init__(self):
@@ -224,16 +210,7 @@ class OpenAIChatService(ChatService):
 
         return chat_history
 
-    def post_to_gpt(self, chat_history: list[MessageDTO]) -> ChatCompletion:
-        return self.client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[x.to_request().to_dict() for x in chat_history],
-            temperature=0.5,
-        )
-
-    def save(
-        self, messages: MessageDTO | list[MessageDTO]
-    ) -> MessageDTO | list[MessageDTO]:
+    def save(self, messages: MessageDTO | list[MessageDTO]) -> None:
         if isinstance(messages, list):
             self.chatlog_repository.bulk_insert(messages)
         elif isinstance(messages, MessageDTO):
@@ -243,7 +220,6 @@ class OpenAIChatService(ChatService):
                 f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
             )
 
-        return messages
 
 class OpenAIDalleChatService(ChatService):
     def __init__(self):
@@ -277,12 +253,7 @@ class OpenAIDalleChatService(ChatService):
         except Exception as e:
             raise Exception(e)
 
-    def post_to_gpt(self, prompt: str):
-        return self.client.images.generate(
-            model="dall-e-3", prompt=prompt, size="1024x1024", quality="standard", n=1
-        )
-
-    def save(self, picture: Image, message: MessageDTO) -> MessageDTO:
+    def save(self, picture: Image, message: MessageDTO) -> None:
         folder_path = Path(MEDIA_ROOT) / "images"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
@@ -293,8 +264,6 @@ class OpenAIDalleChatService(ChatService):
         message.file_path = relative_path_str
         picture.save(full_path)
         self.chatlog_repository.update_file_path(message)
-
-        return message
 
     @staticmethod
     def resize(picture: Image) -> Image:
@@ -317,12 +286,7 @@ class OpenAITextToSpeechChatService(ChatService):
         response = OpenAILlmTextToSpeech(self.config).retrieve_answer(message)
         self.save(response, message)
 
-    def post_to_gpt(self, text: str):
-        return self.client.audio.speech.create(
-            model="tts-1", voice="alloy", input=text, response_format="mp3"
-        )
-
-    def save(self, response, message: MessageDTO):
+    def save(self, response, message: MessageDTO) -> None:
         folder_path = Path(MEDIA_ROOT) / "audios"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
@@ -334,7 +298,6 @@ class OpenAITextToSpeechChatService(ChatService):
         response.write_to_file(full_path)
         self.chatlog_repository.update_file_path(message)
 
-        return message
 
 class OpenAISpeechToTextChatService(ChatService):
     def __init__(self):
@@ -358,9 +321,5 @@ class OpenAISpeechToTextChatService(ChatService):
         else:
             print(f"音声ファイル {message.file_path} は存在しません")
 
-    def post_to_gpt(self, path_to_audio: str):
-        audio = open(path_to_audio, "rb")
-        return self.client.audio.transcriptions.create(model="whisper-1", file=audio)
-
-    def save(self, message: MessageDTO):
+    def save(self, message: MessageDTO) -> None:
         self.chatlog_repository.update_file_path(message)
