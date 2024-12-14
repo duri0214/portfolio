@@ -15,21 +15,21 @@ from openai.types.chat import (
 )
 
 from config.settings import MEDIA_ROOT
+from lib.llm.valueobject.chat import RoleType
 from llm_chat.domain.repository.chat import (
     ChatLogRepository,
 )
-from llm_chat.domain.valueobject.chat import MyChatCompletionMessage, Gender
+from llm_chat.domain.valueobject.chat import MessageDTO, Gender
 
 
 def get_stored_chat_history(
     user_id: int, chatlog_repository: ChatLogRepository
-) -> list[MyChatCompletionMessage]:
+) -> list[MessageDTO]:
     chatlog_list = chatlog_repository.find_chatlog_by_user_id(user_id)
     history = [
-        MyChatCompletionMessage(
-            pk=chatlog.pk,
+        MessageDTO(
             user=chatlog.user,
-            role=chatlog.role,
+            role=RoleType[chatlog.role.upper()],
             content=chatlog.content,
             invisible=False,
             file_path=chatlog.file_path,
@@ -63,17 +63,17 @@ def get_prompt(gender: Gender) -> str:
     """
 
 
-def create_initial_prompt(user: User, gender: Gender) -> list[MyChatCompletionMessage]:
+def create_initial_prompt(user: User, gender: Gender) -> list[MessageDTO]:
     history = [
-        MyChatCompletionMessage(
+        MessageDTO(
             user=user,
-            role="system",
+            role=RoleType.SYSTEM,
             content=get_prompt(gender),
             invisible=True,
         ),
-        MyChatCompletionMessage(
+        MessageDTO(
             user=user,
-            role="user",
+            role=RoleType.USER,
             content="なぞなぞスタート",
             invisible=False,
         ),
@@ -102,22 +102,20 @@ class GeminiService(LLMService):
     def __init__(self):
         super().__init__()
 
-    def generate(
-        self, my_chat_completion_message: MyChatCompletionMessage, gender: str
-    ) -> list[MyChatCompletionMessage]:
-        if my_chat_completion_message.content is None:
+    def generate(self, message: MessageDTO, gender: Gender) -> list[MessageDTO]:
+        if message.content is None:
             raise Exception("content is None")
 
         chat_history = get_stored_chat_history(
-            user_id=my_chat_completion_message.user.pk,
+            user_id=message.user.pk,
             chatlog_repository=self.chatlog_repository,
         )
         chat_history.append(
             self.save(
-                MyChatCompletionMessage(
-                    user=my_chat_completion_message.user,
-                    role=my_chat_completion_message.role,
-                    content=my_chat_completion_message.content,
+                MessageDTO(
+                    user=message.user,
+                    role=message.role,
+                    content=message.content,
                     invisible=False,
                 )
             )
@@ -125,18 +123,16 @@ class GeminiService(LLMService):
         # TODO: Gemini用のMyChatCompletionMessageに詰め込みたい
         #  https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=python&hl=ja
         response = self.post_to_gpt(chat_history)
-        latest_assistant = MyChatCompletionMessage(
-            user=my_chat_completion_message.user,
-            role="assistant",
+        latest_assistant = MessageDTO(
+            user=message.user,
+            role=RoleType.ASSISTANT,
             content=response.text,
             invisible=False,
         )
         chat_history.append(self.save(latest_assistant))
         return chat_history
 
-    def post_to_gpt(
-        self, chat_history: list[MyChatCompletionMessage]
-    ) -> GenerateContentResponse:
+    def post_to_gpt(self, chat_history: list[MessageDTO]) -> GenerateContentResponse:
         generativeai.configure(api_key=os.getenv("GEMINI_API_KEY"))
         model = generativeai.GenerativeModel("gemini-1.5-flash")
         # TODO: 「会話」にしたいね
@@ -144,11 +140,12 @@ class GeminiService(LLMService):
         return response
 
     def save(
-        self, messages: MyChatCompletionMessage | list[MyChatCompletionMessage]
-    ) -> MyChatCompletionMessage | list[MyChatCompletionMessage]:
+        self, messages: MessageDTO | list[MessageDTO]
+    ) -> MessageDTO | list[MessageDTO]:
+        # TODO: listだけ受け取って、呼び出しのときに[]でいれさせればシンプルになるじゃん raiseもいらん
         if isinstance(messages, list):
             self.chatlog_repository.bulk_insert(messages)
-        elif isinstance(messages, MyChatCompletionMessage):
+        elif isinstance(messages, MessageDTO):
             self.chatlog_repository.insert(messages)
         else:
             raise ValueError(
@@ -163,20 +160,16 @@ class OpenAIGptService(LLMService):
         super().__init__()
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def generate(
-        self, my_chat_completion_message: MyChatCompletionMessage, gender: str
-    ) -> list[MyChatCompletionMessage]:
-        if my_chat_completion_message.content is None:
+    def generate(self, message: MessageDTO, gender: Gender) -> list[MessageDTO]:
+        if message.content is None:
             raise Exception("content is None")
 
         chat_history = get_stored_chat_history(
-            user_id=my_chat_completion_message.user.pk,
+            user_id=message.user.pk,
             chatlog_repository=self.chatlog_repository,
         )
         if not chat_history:
-            chat_history = create_initial_prompt(
-                user=my_chat_completion_message.user, gender=Gender(gender)
-            )
+            chat_history = create_initial_prompt(user=message.user, gender=gender)
             self.save(chat_history)
 
         # 初回はユーザのボタン押下などのトリガーで「プロンプト」と「なぞなぞスタート」の2行がinsertされる
@@ -185,19 +178,19 @@ class OpenAIGptService(LLMService):
         if len(chat_history) > 2:
             chat_history.append(
                 self.save(
-                    MyChatCompletionMessage(
-                        user=my_chat_completion_message.user,
-                        role=my_chat_completion_message.role,
-                        content=my_chat_completion_message.content,
+                    MessageDTO(
+                        user=message.user,
+                        role=message.role,
+                        content=message.content,
                         invisible=False,
                     )
                 )
             )
         response = self.post_to_gpt(chat_history)
 
-        latest_assistant = MyChatCompletionMessage(
-            user=my_chat_completion_message.user,
-            role=response.choices[0].message.role,
+        latest_assistant = MessageDTO(
+            user=message.user,
+            role=RoleType.ASSISTANT,
             content=response.choices[0].message.content,
             invisible=False,
         )
@@ -206,9 +199,9 @@ class OpenAIGptService(LLMService):
         if "本日はなぞなぞにご参加いただき" in latest_assistant.content:
             chat_history.append(
                 self.save(
-                    MyChatCompletionMessage(
+                    MessageDTO(
                         user=latest_assistant.user,
-                        role="user",
+                        role=RoleType.USER,
                         content="評価結果をjsonで出力してください",
                         invisible=True,
                     )
@@ -216,9 +209,9 @@ class OpenAIGptService(LLMService):
             )
             response = self.post_to_gpt(chat_history)
 
-            latest_assistant = MyChatCompletionMessage(
-                user=my_chat_completion_message.user,
-                role=response.choices[0].message.role,
+            latest_assistant = MessageDTO(
+                user=message.user,
+                role=RoleType.ASSISTANT,
                 content=response.choices[0].message.content,
                 invisible=True,
             )
@@ -226,21 +219,19 @@ class OpenAIGptService(LLMService):
 
         return chat_history
 
-    def post_to_gpt(
-        self, chat_history: list[MyChatCompletionMessage]
-    ) -> ChatCompletion:
+    def post_to_gpt(self, chat_history: list[MessageDTO]) -> ChatCompletion:
         return self.client.chat.completions.create(
             model="gpt-4-turbo",
-            messages=[x.to_origin() for x in chat_history],
+            messages=[x.to_request().to_dict() for x in chat_history],
             temperature=0.5,
         )
 
     def save(
-        self, messages: MyChatCompletionMessage | list[MyChatCompletionMessage]
-    ) -> MyChatCompletionMessage | list[MyChatCompletionMessage]:
+        self, messages: MessageDTO | list[MessageDTO]
+    ) -> MessageDTO | list[MessageDTO]:
         if isinstance(messages, list):
             self.chatlog_repository.bulk_insert(messages)
-        elif isinstance(messages, MyChatCompletionMessage):
+        elif isinstance(messages, MessageDTO):
             self.chatlog_repository.insert(messages)
         else:
             raise ValueError(
@@ -255,23 +246,20 @@ class OpenAIDalleService(LLMService):
         super().__init__()
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def generate(self, my_chat_completion_message: MyChatCompletionMessage):
+    def generate(self, message: MessageDTO):
         """
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
         dall-e-3: 1024x1024, 1792x1024, 1024x1792 のいずれかしか生成できない
         """
-        if my_chat_completion_message.content is None:
+        if message.content is None:
             raise Exception("content is None")
-        response = self.post_to_gpt(my_chat_completion_message.content)
+        response = self.post_to_gpt(message.content)
         image_url = response.data[0].url
         try:
             response = requests.get(image_url)
             response.raise_for_status()
             resized_picture = self.resize(picture=Image.open(BytesIO(response.content)))
-            my_chat_completion_message = self.save(
-                resized_picture,
-                my_chat_completion_message,
-            )
+            self.save(resized_picture, message)
         except requests.exceptions.HTTPError as http_error:
             raise Exception(http_error)
         except requests.exceptions.ConnectionError as connection_error:
@@ -279,16 +267,12 @@ class OpenAIDalleService(LLMService):
         except Exception as e:
             raise Exception(e)
 
-        return my_chat_completion_message
-
     def post_to_gpt(self, prompt: str):
         return self.client.images.generate(
             model="dall-e-3", prompt=prompt, size="1024x1024", quality="standard", n=1
         )
 
-    def save(
-        self, picture: Image, my_chat_completion_message: MyChatCompletionMessage
-    ) -> MyChatCompletionMessage:
+    def save(self, picture: Image, message: MessageDTO) -> MessageDTO:
         folder_path = Path(MEDIA_ROOT) / "images"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
@@ -296,11 +280,11 @@ class OpenAIDalleService(LLMService):
         random_filename = secrets.token_hex(5) + ".jpg"
         relative_path_str = "/media/images/" + random_filename
         full_path = folder_path / random_filename
-        my_chat_completion_message.file_path = relative_path_str
+        message.file_path = relative_path_str
         picture.save(full_path)
-        self.chatlog_repository.upsert(my_chat_completion_message)
+        self.chatlog_repository.update_file_path(message)
 
-        return my_chat_completion_message
+        return message
 
     @staticmethod
     def resize(picture: Image) -> Image:
@@ -312,18 +296,18 @@ class OpenAITextToSpeechService(LLMService):
         super().__init__()
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def generate(self, my_chat_completion_message: MyChatCompletionMessage):
-        if my_chat_completion_message.content is None:
+    def generate(self, message: MessageDTO):
+        if message.content is None:
             raise Exception("content is None")
-        response = self.post_to_gpt(my_chat_completion_message.content)
-        self.save(response, my_chat_completion_message)
+        response = self.post_to_gpt(message.content)
+        self.save(response, message)
 
     def post_to_gpt(self, text: str):
         return self.client.audio.speech.create(
             model="tts-1", voice="alloy", input=text, response_format="mp3"
         )
 
-    def save(self, response, my_chat_completion_message: MyChatCompletionMessage):
+    def save(self, response, message: MessageDTO):
         folder_path = Path(MEDIA_ROOT) / "audios"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
@@ -331,11 +315,11 @@ class OpenAITextToSpeechService(LLMService):
         random_filename = secrets.token_hex(5) + ".mp3"
         relative_path_str = "/media/audios/" + random_filename
         full_path = folder_path / random_filename
-        my_chat_completion_message.file_path = relative_path_str
+        message.file_path = relative_path_str
         response.write_to_file(full_path)
-        self.chatlog_repository.upsert(my_chat_completion_message)
+        self.chatlog_repository.update_file_path(message)
 
-        return my_chat_completion_message
+        return message
 
 
 class OpenAISpeechToTextService(LLMService):
@@ -343,21 +327,21 @@ class OpenAISpeechToTextService(LLMService):
         super().__init__()
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def generate(self, my_chat_completion_message: MyChatCompletionMessage):
-        if my_chat_completion_message.file_path is None:
+    def generate(self, message: MessageDTO):
+        if message.file_path is None:
             raise Exception("file_path is None")
-        full_path = Path(MEDIA_ROOT) / my_chat_completion_message.file_path
+        full_path = Path(MEDIA_ROOT) / message.file_path
         if full_path.exists():
             response = self.post_to_gpt(str(full_path))
-            my_chat_completion_message.content = response.text
+            message.content = response.text
             print(f"\n音声ファイルは「{response.text}」とテキスト化されました\n")
-            self.save(my_chat_completion_message)
+            self.save(message)
         else:
-            print(f"音声ファイル {my_chat_completion_message.file_path} は存在しません")
+            print(f"音声ファイル {message.file_path} は存在しません")
 
     def post_to_gpt(self, path_to_audio: str):
         audio = open(path_to_audio, "rb")
         return self.client.audio.transcriptions.create(model="whisper-1", file=audio)
 
-    def save(self, my_chat_completion_message: MyChatCompletionMessage):
-        self.chatlog_repository.upsert(my_chat_completion_message)
+    def save(self, message: MessageDTO):
+        self.chatlog_repository.update_file_path(message)
