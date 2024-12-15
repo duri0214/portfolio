@@ -11,6 +11,7 @@ from llm_chat.domain.service.chat import (
     OpenAIDalleChatService,
     OpenAITextToSpeechChatService,
     OpenAISpeechToTextChatService,
+    OpenAIRagChatService,
 )
 from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
 
@@ -39,14 +40,14 @@ class GeminiUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for GeminiUseCase")
-        llm_service = GeminiChatService()
+        chat_service = GeminiChatService()
         message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return llm_service.generate(message, gender=Gender(GenderType.MAN))
+        return chat_service.generate(message, gender=Gender(GenderType.MAN))
 
 
 class OpenAIGptUseCase(UseCase):
@@ -67,14 +68,14 @@ class OpenAIGptUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for OpenAIGptUseCase")
-        llm_service = OpenAIChatService()
+        chat_service = OpenAIChatService()
         message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return llm_service.generate(message, gender=Gender(GenderType.MAN))
+        return chat_service.generate(message, gender=Gender(GenderType.MAN))
 
 
 class OpenAIDalleUseCase(UseCase):
@@ -95,14 +96,14 @@ class OpenAIDalleUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for OpenAIDalleUseCase")
-        llm_service = OpenAIDalleChatService()
+        chat_service = OpenAIDalleChatService()
         message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return llm_service.generate(message)
+        return chat_service.generate(message)
 
 
 class OpenAITextToSpeechUseCase(UseCase):
@@ -123,14 +124,14 @@ class OpenAITextToSpeechUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for OpenAITextToSpeechUseCase")
-        llm_service = OpenAITextToSpeechChatService()
+        chat_service = OpenAITextToSpeechChatService()
         message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return llm_service.generate(message)
+        return chat_service.generate(message)
 
 
 class OpenAISpeechToTextUseCase(UseCase):
@@ -156,7 +157,7 @@ class OpenAISpeechToTextUseCase(UseCase):
         if record is None:
             raise ObjectDoesNotExist("No audio file registered for the user")
 
-        llm_service = OpenAISpeechToTextChatService()
+        chat_service = OpenAISpeechToTextChatService()
         message = MessageDTO(
             user=record.user,
             role=RoleType(record.role),
@@ -165,4 +166,32 @@ class OpenAISpeechToTextUseCase(UseCase):
             invisible=record.invisible,
         )
 
-        return llm_service.generate(message)
+        return chat_service.generate(message)
+
+
+class OpenAIRagUseCase(UseCase):
+    def execute(self, user: User, content: str | None):
+        """
+        RagServiceを利用し、Pdfをソースに。
+        contentパラメータは必ずNoneであること。
+
+        Args:
+            user (User): DjangoのUserモデルのインスタンス
+            content (str | None): この引数は現在利用されていません。
+
+        Raises:
+            ValueError: contentがNoneでない場合
+
+        Returns:
+            音声をテキストに変換した結果
+        """
+        if content is None:
+            raise ValueError("content cannot be None for OpenAIRagUseCase")
+        chat_service = OpenAIRagChatService()
+        message = MessageDTO(
+            user=user,
+            role=RoleType.USER,
+            content=content,
+            invisible=False,
+        )
+        return chat_service.generate(message)

@@ -68,3 +68,13 @@ class PdfDataloader(Dataloader):
         for i, doc in enumerate(self.pages):
             doc.page_content = doc.page_content.replace("\n", " ")
             doc.metadata = {"source": f"{filename} {i + 1}ページ"}
+
+
+class RetrievalQAWithSourcesChainAnswer:
+    def __init__(
+        self, question: str, answer: str, sources: str, source_documents: list[Document]
+    ):
+        self.question = question
+        self.answer = answer
+        self.sources = sources
+        self.source_documents = source_documents

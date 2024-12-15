@@ -11,6 +11,7 @@ from llm_chat.domain.usecase.chat import (
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
     OpenAISpeechToTextUseCase,
+    OpenAIRagUseCase,
 )
 from llm_chat.forms import UserTextForm
 
@@ -56,6 +57,9 @@ class IndexView(FormView):
             # Questionは何を入れてもいい（処理されない）
             use_case = OpenAISpeechToTextUseCase()
             content = None
+        elif use_case_type == "OpenAIRag":
+            use_case = OpenAIRagUseCase()
+            content = form_data["question"]
 
         use_case.execute(user=login_user, content=content)
 
