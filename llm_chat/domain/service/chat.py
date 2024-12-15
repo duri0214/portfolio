@@ -8,16 +8,18 @@ import requests.exceptions
 from PIL import Image
 from django.contrib.auth.models import User
 
-from config.settings import MEDIA_ROOT
+from config.settings import MEDIA_ROOT, BASE_DIR
 from lib.llm.llm_service import (
     OpenAILlmCompletionService,
     OpenAILlmDalleService,
     OpenAILlmTextToSpeech,
     OpenAILlmSpeechToText,
     GeminiLlmCompletionService,
+    OpenAILlmRagService,
 )
 from lib.llm.valueobject.chat import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
+from lib.llm.valueobject.rag import PdfDataloader, RetrievalQAWithSourcesChainAnswer
 from llm_chat.domain.repository.chat import (
     ChatLogRepository,
 )
@@ -300,6 +302,37 @@ class OpenAISpeechToTextChatService(ChatService):
             self.save(message)
         else:
             print(f"音声ファイル {message.file_path} は存在しません")
+
+    def save(self, message: MessageDTO) -> None:
+        message.to_entity().save()
+
+
+class OpenAIRagChatService(ChatService):
+    def __init__(self):
+        super().__init__()
+        self.config = OpenAIGptConfig(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            temperature=0.5,
+            max_tokens=4000,
+            model="gpt-4o-mini",
+        )
+
+    def generate(self, message: MessageDTO):
+        # Step1: User の質問を保存
+        self.save(message)
+
+        # Step2: langchainからの回答を保存
+        file_path = (
+            Path(BASE_DIR)
+            / "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
+        )
+        answer_dict = OpenAILlmRagService(
+            config=self.config,
+            dataloader=PdfDataloader(str(file_path)),
+        ).retrieve_answer(message)
+        message.role = RoleType.ASSISTANT
+        message.content = RetrievalQAWithSourcesChainAnswer(**answer_dict).answer
+        self.save(message)
 
     def save(self, message: MessageDTO) -> None:
         message.to_entity().save()

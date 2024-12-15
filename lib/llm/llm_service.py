@@ -3,12 +3,20 @@ from abc import ABC, abstractmethod
 
 import tiktoken
 from google import generativeai
+from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
+from langchain.prompts import (
+    ChatPromptTemplate,
+)
+from langchain_chroma import Chroma
+from langchain_openai import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
 from openai import OpenAI
 from openai.types import ImagesResponse
 from openai.types.chat import ChatCompletion
 
 from config.settings import MEDIA_ROOT
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
+from lib.llm.valueobject.rag import PdfDataloader
 from llm_chat.domain.valueobject.chat import MessageDTO
 
 
@@ -136,3 +144,61 @@ class OpenAILlmSpeechToText(LlmService):
         return OpenAI(api_key=self.config.api_key).audio.transcriptions.create(
             model=self.config.model, file=audio
         )
+
+
+class OpenAILlmRagService(LlmService):
+    def __init__(
+        self, config: OpenAIGptConfig, dataloader: PdfDataloader, n_results: int = 3
+    ):
+        """
+        See Also: https://python.langchain.com/docs/how_to/qa_sources/
+        """
+        super().__init__()
+        self.config = config
+        self.dataloader = dataloader
+        self.n_results = n_results
+        self.system_template = """
+            以下の資料の注意点を念頭に置いて回答してください
+            ・ユーザの質問に対して、できる限り根拠を示してください
+            ・箇条書きで簡潔に回答してください。
+            ---下記は資料の内容です---
+            {summaries}
+
+            Answer in Japanese:
+        """
+        messages = [
+            ("system", self.system_template),
+            ("human", "{question}"),
+        ]
+        self.prompt_template = ChatPromptTemplate.from_messages(messages)
+
+    @staticmethod
+    def _create_vectorstore(dataloader: PdfDataloader) -> Chroma:
+        """
+        Note: OpenAIEmbeddings runs on "text-embedding-ada-002"
+        """
+        embeddings = OpenAIEmbeddings()
+
+        return Chroma.from_documents(
+            documents=dataloader.data,
+            embedding=embeddings,
+            persist_directory=".",
+        )
+
+    def retrieve_answer(self, message: MessageDTO) -> dict:
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+        docsearch = Chroma.from_texts(
+            texts=[x.page_content for x in self.dataloader.data],
+            embedding=embeddings,
+            metadatas=[x.metadata for x in self.dataloader.data],
+        )
+        chain = RetrievalQAWithSourcesChain.from_chain_type(
+            llm=ChatOpenAI(temperature=0, model_name=self.config.model),
+            chain_type="stuff",
+            reduce_k_below_max_tokens=True,
+            return_source_documents=True,
+            retriever=docsearch.as_retriever(),
+            chain_type_kwargs={"prompt": self.prompt_template},
+        )
+
+        return chain.invoke({"question": message.content})
