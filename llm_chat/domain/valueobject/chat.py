@@ -25,13 +25,16 @@ class MessageDTO:
         """
         このDTOをデータベース格納用のChatLogsWithLineエンティティに変換します。
         """
-        return ChatLogs(
+        chatlog = ChatLogs(
             user=self.user,
             role=self.role.value,
             content=self.content,
-            file_path=self.file_path,
             invisible=self.invisible,
         )
+        if self.file_path:
+            chatlog.file.name = self.file_path
+
+        return chatlog
 
 
 class GenderType(Enum):

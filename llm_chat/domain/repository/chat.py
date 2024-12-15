@@ -18,19 +18,9 @@ class ChatLogRepository:
         return ChatLogs.objects.filter(
             Q(user=user)
             & Q(role="user")
-            & Q(file_path__endswith=".mp3")
+            & Q(file__endswith=".mp3")
             & Q(invisible=False)
         ).last()
-
-    @staticmethod
-    def insert(message: MessageDTO):
-        ChatLogs.objects.create(
-            user=message.user,
-            role=message.role.value,
-            content=message.content,
-            file_path=message.file_path,
-            invisible=message.invisible,
-        )
 
     @staticmethod
     def bulk_insert(message_list: list[MessageDTO]):

@@ -99,7 +99,6 @@ class GeminiChatService(ChatService):
                 role=RoleType[chatlog.role.upper()],
                 content=chatlog.content,
                 invisible=False,
-                file_path=chatlog.file_path,
             )
             for chatlog in self.chatlog_repository.find_chat_history(message.user)
         ]
@@ -129,7 +128,7 @@ class GeminiChatService(ChatService):
         if isinstance(messages, list):
             self.chatlog_repository.bulk_insert(messages)
         elif isinstance(messages, MessageDTO):
-            self.chatlog_repository.insert(messages)
+            messages.to_entity().save()
         else:
             raise ValueError(
                 f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
@@ -156,7 +155,6 @@ class OpenAIChatService(ChatService):
                 role=RoleType[chatlog.role.upper()],
                 content=chatlog.content,
                 invisible=False,
-                file_path=chatlog.file_path,
             )
             for chatlog in self.chatlog_repository.find_chat_history(message.user)
         ]
@@ -214,7 +212,7 @@ class OpenAIChatService(ChatService):
         if isinstance(messages, list):
             self.chatlog_repository.bulk_insert(messages)
         elif isinstance(messages, MessageDTO):
-            self.chatlog_repository.insert(messages)
+            messages.to_entity().save()
         else:
             raise ValueError(
                 f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
@@ -254,14 +252,14 @@ class OpenAIDalleChatService(ChatService):
             raise Exception(e)
 
     def save(self, picture: Image, message: MessageDTO) -> None:
-        folder_path = Path(MEDIA_ROOT) / "images"
+        folder_path = Path(MEDIA_ROOT) / "llm_chat/images"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         random_filename = secrets.token_hex(5) + ".jpg"
         full_path = folder_path / random_filename
-        message.file_path = "/media/images/" + random_filename
-        picture.save(full_path)
-        self.chatlog_repository.insert(message)
+        message.file_path = "llm_chat/images/" + random_filename
+        picture.save(str(full_path))
+        message.to_entity().save()
 
     @staticmethod
     def resize(picture: Image) -> Image:
@@ -285,14 +283,14 @@ class OpenAITextToSpeechChatService(ChatService):
         self.save(response, message)
 
     def save(self, response, message: MessageDTO) -> None:
-        folder_path = Path(MEDIA_ROOT) / "audios"
+        folder_path = Path(MEDIA_ROOT) / "llm_chat/audios"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         random_filename = secrets.token_hex(5) + ".mp3"
         full_path = folder_path / random_filename
-        message.file_path = "/media/audios/" + random_filename
-        response.write_to_file(full_path)
-        self.chatlog_repository.insert(message)
+        message.file_path = "llm_chat/audios/" + random_filename
+        response.write_to_file(str(full_path))
+        message.to_entity().save()
 
 
 class OpenAISpeechToTextChatService(ChatService):
@@ -308,15 +306,15 @@ class OpenAISpeechToTextChatService(ChatService):
     def generate(self, message: MessageDTO):
         if message.file_path is None:
             raise Exception("file_path is None")
-        # TODO: ちょっとファイルが見つけられないバグがある issue149
         full_path = Path(MEDIA_ROOT) / message.file_path
         if full_path.exists():
             response = OpenAILlmSpeechToText(self.config).retrieve_answer(message)
-            message.content = response.text
-            print(f"\n音声ファイルは「{response.text}」とテキスト化されました\n")
+            message.content = f"音声ファイルは「{response.text}」とテキスト化されました"
+            # TODO: 本当は音声ファイルをアップロードして処理したいのを、既存instanceで代用しているので、file_pathはNoneにする issue155
+            message.file_path = None
             self.save(message)
         else:
             print(f"音声ファイル {message.file_path} は存在しません")
 
     def save(self, message: MessageDTO) -> None:
-        self.chatlog_repository.update_file_path(message)
+        message.to_entity().save()

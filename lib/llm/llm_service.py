@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 
 import tiktoken
@@ -6,6 +7,7 @@ from openai import OpenAI
 from openai.types import ImagesResponse
 from openai.types.chat import ChatCompletion
 
+from config.settings import MEDIA_ROOT
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.valueobject.chat import MessageDTO
 
@@ -129,7 +131,8 @@ class OpenAILlmSpeechToText(LlmService):
         self.config = config
 
     def retrieve_answer(self, message: MessageDTO):
-        audio = open(message.file_path, "rb")
+        file_path = os.path.join(MEDIA_ROOT, message.file_path)
+        audio = open(file_path, "rb")
         return OpenAI(api_key=self.config.api_key).audio.transcriptions.create(
             model=self.config.model, file=audio
         )
