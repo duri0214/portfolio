@@ -5,11 +5,9 @@ from matplotlib.patches import Rectangle
 from rasterio.windows import Window
 
 from lib.geo.valueobject.coords import (
-    MetaData,
     GoogleMapCoords,
-    RectangleCoords,
-    Point,
 )
+from lib.geo.valueobject.tiff import MetaData, RectangleCoords, Point
 
 
 class GeoService:
