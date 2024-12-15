@@ -201,4 +201,4 @@ class OpenAILlmRagService(LlmService):
             chain_type_kwargs={"prompt": self.prompt_template},
         )
 
-        return chain({"question": message.content})
+        return chain.invoke({"question": message.content})
