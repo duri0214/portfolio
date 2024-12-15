@@ -108,7 +108,7 @@ class GeminiChatService(ChatService):
             content=message.content,
             invisible=False,
         )
-        self.save(latest_user_message)
+        self.save([latest_user_message])
         chat_history.append(latest_user_message)
 
         response = GeminiLlmCompletionService(self.config).retrieve_answer(chat_history)
@@ -119,20 +119,12 @@ class GeminiChatService(ChatService):
             content=response.text,
             invisible=False,
         )
-        self.save(latest_assistant)
+        self.save([latest_assistant])
         chat_history.append(latest_assistant)
         return chat_history
 
-    def save(self, messages: MessageDTO | list[MessageDTO]) -> None:
-        # TODO: listだけ受け取って、呼び出しのときに[]でいれさせればシンプルになるじゃん raiseもいらん
-        if isinstance(messages, list):
-            self.chatlog_repository.bulk_insert(messages)
-        elif isinstance(messages, MessageDTO):
-            messages.to_entity().save()
-        else:
-            raise ValueError(
-                f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
-            )
+    def save(self, messages: list[MessageDTO]) -> None:
+        self.chatlog_repository.bulk_insert(messages)
 
 
 class OpenAIChatService(ChatService):
@@ -172,7 +164,7 @@ class OpenAIChatService(ChatService):
                 content=message.content,
                 invisible=False,
             )
-            self.save(latest_user_message)
+            self.save([latest_user_message])
             chat_history.append(latest_user_message)
 
         answer = OpenAILlmCompletionService(self.config).retrieve_answer(chat_history)
@@ -182,7 +174,7 @@ class OpenAIChatService(ChatService):
             content=answer.choices[0].message.content,
             invisible=False,
         )
-        self.save(latest_assistant_message)
+        self.save([latest_assistant_message])
         chat_history.append(latest_assistant_message)
 
         if "本日はなぞなぞにご参加いただき" in latest_assistant_message.content:
@@ -192,7 +184,7 @@ class OpenAIChatService(ChatService):
                 content="評価結果をjsonで出力してください",
                 invisible=True,
             )
-            self.save(latest_user_message)
+            self.save([latest_user_message])
             chat_history.append(latest_user_message)
             answer = OpenAILlmCompletionService(self.config).retrieve_answer(
                 chat_history
@@ -203,20 +195,13 @@ class OpenAIChatService(ChatService):
                 content=answer.choices[0].message.content,
                 invisible=True,
             )
-            self.save(latest_assistant)
+            self.save([latest_assistant])
             chat_history.append(latest_assistant)
 
         return chat_history
 
-    def save(self, messages: MessageDTO | list[MessageDTO]) -> None:
-        if isinstance(messages, list):
-            self.chatlog_repository.bulk_insert(messages)
-        elif isinstance(messages, MessageDTO):
-            messages.to_entity().save()
-        else:
-            raise ValueError(
-                f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
-            )
+    def save(self, messages: list[MessageDTO]) -> None:
+        self.chatlog_repository.bulk_insert(messages)
 
 
 class OpenAIDalleChatService(ChatService):

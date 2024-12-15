@@ -1,6 +1,7 @@
 {% extends 'llm_chat/base.html' %}
 {% load static %}
 {% load split_ext %}
+{% load basename %}
 
 {% block content %}
     <div class="container">
@@ -16,7 +17,10 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <h5 class="card-title">{{ chat_log.role }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">file: {{ chat_log.file_path }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            file: {% if chat_log.file.name %} {{ chat_log.file.url | basename }} {% else %} No
+                            File {% endif %}
+                        </h6>
                         <p class="card-text">{{ chat_log.content }}</p>
                         {% if chat_log.file.name|split_ext == "jpg" %}
                             <img src="{{ chat_log.file.url }}" class="img-fluid" alt="Responsive image">
