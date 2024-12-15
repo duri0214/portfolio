@@ -23,7 +23,7 @@ class MessageDTO:
 
     def to_entity(self) -> ChatLogs:
         """
-        このDTOをデータベース格納用のChatLogsWithLineエンティティに変換します。
+        このDTOをデータベース格納用のChatLogsエンティティに変換します。
         """
         chatlog = ChatLogs(
             user=self.user,
