@@ -1,6 +1,6 @@
 import math
 
-from soil_analysis.domain.valueobject.coords import CaptureLocationCoords
+from lib.geo.valueobject.coords import CaptureLocationCoords
 
 
 class CaptureLocation:
