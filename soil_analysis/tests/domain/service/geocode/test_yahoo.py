@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
+from lib.geo.valueobject.coords import GoogleMapCoords
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
-from soil_analysis.domain.valueobject.coords import GoogleMapCoords
 
 
 class TestGetYdfFromCoords(TestCase):

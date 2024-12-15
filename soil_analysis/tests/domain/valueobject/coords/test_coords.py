@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from soil_analysis.domain.valueobject.coords import (
+from lib.geo.valueobject.coords import (
     GoogleMapCoords,
     CaptureLocationCoords,
     LandCoords,

@@ -1,4 +1,3 @@
-from abc import abstractmethod, ABC
 from dataclasses import dataclass
 
 from affine import Affine
@@ -32,51 +31,6 @@ class MetaData:
     count: int
     crs: CRS | None
     transform: Affine
-
-
-# TODO: soil_analysisのBaseCoordsとダブってるから lib のほうに統合しましょう
-
-
-class BaseCoords(ABC):
-    def __init__(self, latitude: float, longitude: float):
-        self.latitude = latitude
-        self.longitude = longitude
-
-    @abstractmethod
-    def to_tuple(self) -> tuple[float, float]:
-        """
-        座標をタプル形式で取得します。具体的な順序はサブクラスによります。
-
-        Returns:
-            tuple[float, float]: 座標を表すタプル
-        """
-        pass
-
-    @abstractmethod
-    def to_str(self) -> str:
-        """
-        座標を文字列形式で取得します。具体的な順序はサブクラスによります。
-
-        Returns:
-            str: 座標を表す文字列
-        """
-        pass
-
-
-class GoogleMapCoords(BaseCoords):
-    """
-    Google Map 用の座標変換クラス。BaseCoordsを継承します。
-
-    メソッド:
-    to_tuple: 座標をタプル形式で取得します。戻り値は (緯度,経度) 形式です。
-    to_str : 座標を文字列形式で取得します。戻り値は "緯度, 経度" 形式です。
-    """
-
-    def to_tuple(self) -> tuple[float, float]:
-        return self.latitude, self.longitude
-
-    def to_str(self) -> str:
-        return f"{self.latitude}, {self.longitude}"
 
 
 @dataclass
