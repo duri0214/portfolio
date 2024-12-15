@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 
-from config import settings
 from lib.llm.valueobject.chat import RoleType
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
@@ -161,9 +159,9 @@ class OpenAISpeechToTextUseCase(UseCase):
         llm_service = OpenAISpeechToTextChatService()
         message = MessageDTO(
             user=record.user,
-            role=record.role,
+            role=RoleType(record.role),
             content=record.content,
-            file_path=str(Path(settings.MEDIA_ROOT) / record.file_path),
+            file_path=record.file.name,
             invisible=record.invisible,
         )
 

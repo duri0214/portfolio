@@ -306,12 +306,12 @@ class OpenAISpeechToTextChatService(ChatService):
     def generate(self, message: MessageDTO):
         if message.file_path is None:
             raise Exception("file_path is None")
-        # TODO: ちょっとファイルが見つけられないバグがある issue149
         full_path = Path(MEDIA_ROOT) / message.file_path
         if full_path.exists():
             response = OpenAILlmSpeechToText(self.config).retrieve_answer(message)
-            message.content = response.text
-            print(f"\n音声ファイルは「{response.text}」とテキスト化されました\n")
+            message.content = f"音声ファイルは「{response.text}」とテキスト化されました"
+            # TODO: 本当は音声ファイルをアップロードして処理したいのを、既存instanceで代用しているので、file_pathはNoneにする issue155
+            message.file_path = None
             self.save(message)
         else:
             print(f"音声ファイル {message.file_path} は存在しません")

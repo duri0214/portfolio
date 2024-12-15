@@ -18,7 +18,7 @@ class ChatLogRepository:
         return ChatLogs.objects.filter(
             Q(user=user)
             & Q(role="user")
-            & Q(file_path__endswith=".mp3")
+            & Q(file__endswith=".mp3")
             & Q(invisible=False)
         ).last()
 
