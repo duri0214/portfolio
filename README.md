@@ -40,6 +40,10 @@ python manage.py createsuperuser
 
 ## fixture
 
+```
+python manage.py convert_csv_to_fixture
+```
+
 - `auth_user` の seeder は `soil_analysis/fixtures/user.json` にある
 - `auth_user` の初期パスワードは `test#1234`
 - サーバで実行するときはバッククォートを `/` に置換する
