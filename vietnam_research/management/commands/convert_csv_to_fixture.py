@@ -10,8 +10,8 @@ class Command(BaseCommand):
     CSV ファイルを Django フィクスチャ JSON 形式に変換します。
 
     このコマンドは、このスクリプトが配置されているディレクトリ内のすべての CSV ファイルを処理します。
-    そしてそれらを Django 用の JSON フィクスチャ ファイルに変換します。 CSV ファイル名によって決まります。
-    JSON の「model」フィールド。ファイル名のアンダースコアはドットに置き換えられます。
+    そしてそれらを Django 用の JSON フィクスチャ ファイルに変換します。JSON の「model」フィールドは
+    CSV ファイル名によって決まります。ファイル名のアンダースコアはドットに置き換えられます。
 
     Example:
         Given a file `hospital_city.csv` with the content:
@@ -52,8 +52,8 @@ class Command(BaseCommand):
             ]
 
     Usage:
-        Place the CSV files in the same directory as this script and run the command.
-        Each CSV file will be converted to a corresponding JSON file.
+        CSV ファイルをこのスクリプトと同じディレクトリに配置し、コマンドを実行します。
+        各 CSV ファイルは、対応する JSON ファイルに変換されます。
     """
 
     help = "Convert CSV files to Django fixture JSON format"
