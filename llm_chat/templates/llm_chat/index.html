@@ -4,14 +4,13 @@
 {% load basename %}
 
 {% block content %}
+    <div class="jumbotron">
+        <h1 class="display-4">QA with LLM</h1>
+        <p class="lead">The system that forms the basis of work</p>
+        <hr class="my-4">
+        <p>You can talk with Gemini, ChatGPT4, Dall-e-3, TextToSpeech, SpeechToText and RAG</p>
+    </div>
     <div class="container">
-        <div class="jumbotron">
-            <h1 class="display-4">QA with LLM</h1>
-            <p class="lead">The system that forms the basis of work</p>
-            <hr class="my-4">
-            <p>You can talk with Gemini, ChatGPT4, Dall-e-3, TextToSpeech and SpeechToText</p>
-        </div>
-
         {% for chat_log in chat_history %}
             {% if not chat_log.invisible %}
                 <div class="card mb-3">
@@ -41,7 +40,11 @@
         <form action="{% url 'llm:index' %}" method="POST">
             {{ form }}
             {% csrf_token %}
-            <input class="mt-3" type="submit" value="送信">
+            {% if is_superuser %}
+                <input class="mt-3" type="submit" value="送信">
+            {% else %}
+                <input class="mt-3" type="submit" value="送信" disabled>
+            {% endif %}
         </form>
     </div>
     <script type="text/javascript">
