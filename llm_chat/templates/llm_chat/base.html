@@ -2,34 +2,83 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-43097095-9"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+        gtag('config', 'UA-43097095-9');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
     <title>ChatGPT-playground</title>
 
-    <!-- bootstrap and css -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    {% block extra_css %}{% endblock %}
+    {% block extra_head %}{% endblock %}
 
-    <!-- font -->
-    <link href="https://fonts.googleapis.com/css?family=Sawarabi+Gothic" rel="stylesheet">
+    <!-- bootstrap and css -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+          integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'llm_chat/css/base.css' %}">
+
     <!-- fontawesome -->
     <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
 
     <!-- favicon -->
     <link rel="shortcut icon" href="{% static 'llm_chat/c_g.ico' %}">
-
 </head>
 <body>
-<!-- nav -->
 <h1></h1>
+<header>
+    <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{% url 'home:index' %}">Henojiya</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
+                        <option value="{% url 'home:index' %}">HOME</option>
+                        <option value="{% url 'vnm:index' %}">VIETNAM</option>
+                        <option value="{% url 'mrk:index' %}">GMARKER</option>
+                        <option value="{% url 'shp:index' %}">SHOPPING</option>
+                        <option value="{% url 'war:index' %}">WAREHOUSE</option>
+                        <option value="{% url 'txo:index' %}">TAXONOMY</option>
+                        <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
+                        <option value="{% url 'securities:index' %}">SECURITIES REPORT</option>
+                        <option value="{% url 'hsp:index' %}">HOSPITAL</option>
+                        <option value="{% url 'llm:index' %}" selected>LLM_CHAT</option>
+                    </select>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2" type="search" placeholder="alt + / で検索" aria-label="Search"
+                       accesskey="/">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+        </div>
+    </nav>
+
+    {% block header %}{% endblock %}
+</header>
 
 <div id="main">
     {% block content %}{% endblock %}
 </div>
-
 <footer>
     <p>© 2019 henojiya. / <a href="https://github.com/duri0214" target="_blank">github portfolio</a></p>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
 </body>
 </html>
