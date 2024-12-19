@@ -31,6 +31,8 @@ class IndexView(FormView):
             login_user
         ).order_by("created_at")
 
+        context["is_superuser"] = self.request.user.is_superuser
+
         return context
 
     def form_valid(self, form):
