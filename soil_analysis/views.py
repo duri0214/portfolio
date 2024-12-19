@@ -407,9 +407,7 @@ class RouteSuggestUploadView(FormView):
 
         entities = []
         for land_candidate in land_candidates:
-            coordinates_str = land_candidate.center.to_googlemapcoords().get_coords(
-                to_str=True
-            )
+            coordinates_str = land_candidate.center.to_googlemap().to_str()
             entity = RouteSuggestImport.objects.create(
                 name=land_candidate.name, coords=coordinates_str
             )

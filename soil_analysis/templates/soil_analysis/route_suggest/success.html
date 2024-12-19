@@ -1,16 +1,16 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
-{% block css %}
+{% block extra_css %}
     <link rel="stylesheet" type="text/css" href="{% static "soil_analysis/css/route_suggest/style.css" %}"/>
 {% endblock %}
-{% block additional_head %}
+{% block extra_head %}
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
     <script type="module" src="{% static "soil_analysis/js/route_suggest/display-route-script.js" %}"></script>
     {% autoescape off %}
         <script>let coordsList = {{ coords_list }};</script>
     {% endautoescape %}
 {% endblock %}
-{% block header %}
+{% block extra_header %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>

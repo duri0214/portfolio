@@ -1,9 +1,9 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
-{% block css %}
+{% block extra_css %}
     <link rel="stylesheet" href="{% static 'soil_analysis/css/landreport/chemical.css' %}">
 {% endblock %}
-{% block header %}
+{% block extra_header %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>

@@ -1,6 +1,7 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
-{% block header %}
+
+{% block extra_header %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -10,7 +11,7 @@
 {% endblock %}
 {% block content %}
     <a class="btn btn-outline-primary mb-3" href="{% url 'soil:company_create' %}"
-       role="button">＋会社の追加</a>
+       role="button">＋農業法人の追加</a>
     {% for a_company in object_list %}
         {% if not forloop.counter|divisibleby:"2" %}
             <div class="row mb-4">
