@@ -12,7 +12,7 @@
         <p>You can read the Securities Report</p>
         <ul>
             <li>
-                <a class="btn btn-secondary btn-sm" href="{% url 'securities:counting' %}"
+                <a class="btn btn-secondary btn-sm" href="{% url 'sec:counting' %}"
                    role="button">Countingテーブル</a>
             </li>
         </ul>
@@ -20,11 +20,11 @@
 
     <div class="container">
         <h2>1. 会社マスタを作成</h2>
-        <a class="btn btn-outline-primary mb-3" href="{% url 'securities:edinet_code_upload' %}"
+        <a class="btn btn-outline-primary mb-3" href="{% url 'sec:edinet_code_upload' %}"
            role="button">EDINETコードリスト取り込み</a>
 
         <h2 class="mt-5">2. 書類一覧を取得</h2>
-        <form method="post" action="{% url 'securities:index' %}">
+        <form method="post" action="{% url 'sec:index' %}">
             {% csrf_token %}
             <div class="form-row">
                 <div class="form-group col-md-6">
@@ -50,7 +50,7 @@
         <h2 class="mt-5">3. 有報をダウンロード予約する</h2>
         <button id="submit-for-reserve" class="btn btn-outline-primary">ダウンロード予約する</button>
         <a class="btn btn-outline-info{% if request.GET.reserved == 'yes' %} active{% endif %}"
-           href="{% url 'securities:index' %}{% if request.GET.reserved != 'yes' %}?reserved=yes{% endif %}">
+           href="{% url 'sec:index' %}{% if request.GET.reserved != 'yes' %}?reserved=yes{% endif %}">
             ダウンロード予約済みリスト
         </a>
         <table class="table table-striped table-bordered">
@@ -120,7 +120,7 @@
         document.querySelector('#submit-for-reserve').addEventListener('click', function () {
             const ids = Array.from(document.querySelectorAll('.report-checkbox:checked')).map(box => box.value);
 
-            fetch('{% url 'securities:download_reserve' %}', {
+            fetch('{% url 'sec:download_reserve' %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

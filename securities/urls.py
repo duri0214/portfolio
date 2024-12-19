@@ -8,7 +8,7 @@ from securities.views import (
     CountingView,
 )
 
-app_name = "securities"
+app_name = "sec"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
     path("download_reserve/", DownloadReserveView.as_view(), name="download_reserve"),

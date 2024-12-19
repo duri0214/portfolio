@@ -44,7 +44,7 @@ class IndexView(ListView):
     @staticmethod
     def post(request, **kwargs):
         if not Company.objects.exists():
-            return redirect("securities:index")
+            return redirect("sec:index")
 
         ReportDocument.objects.all().delete()
 
@@ -57,7 +57,7 @@ class IndexView(ListView):
             RequestData(start_date=start_date, end_date=end_date)
         )
         ReportDocument.objects.bulk_create(report_document_list)
-        return redirect("securities:index")
+        return redirect("sec:index")
 
 
 class CountingView(ListView):
@@ -88,7 +88,7 @@ class DownloadReserveView(View):
 class EdinetCodeUploadView(FormView):
     template_name = "securities/edinet_code_upload/form.html"
     form_class = UploadForm
-    success_url = reverse_lazy("securities:edinet_code_upload_success")
+    success_url = reverse_lazy("sec:edinet_code_upload_success")
 
     def form_valid(self, form):
         service = UploadService(self.request)

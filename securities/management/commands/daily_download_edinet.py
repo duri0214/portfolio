@@ -16,7 +16,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         report_doc_list = ReportDocument.objects.filter(download_reserved=True)[:20]
 
-        work_dir = Path(settings.MEDIA_ROOT) / "securities"
+        work_dir = Path(settings.MEDIA_ROOT) / "sec"
         if not work_dir.exists():
             work_dir.mkdir(parents=True, exist_ok=True)
 
