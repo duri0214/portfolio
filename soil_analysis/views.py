@@ -457,5 +457,6 @@ class RouteSuggestSuccessView(TemplateView):
         context["company_list"] = company_list
         context["land_list"] = land_list
         context["coords_list"] = list(land["coords"] for land in land_list)
+        context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
 
         return context
