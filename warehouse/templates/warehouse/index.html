@@ -29,9 +29,10 @@
             <ul class="nav nav-tabs" role="tablist">
                 {% for warehouse in warehouses %}
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link {% if forloop.first %}active{% endif %}"
-                           id="warehouse-{{ warehouse.pk }}-tab" data-toggle="tab" href="#warehouse-{{ warehouse.pk }}"
-                           role="tab">Warehouse {{ warehouse.name }}</a>
+                        <a class="nav-link {% if warehouse.instance.pk == current_warehouse_id %}active{% endif %}"
+                           id="warehouse-{{ warehouse.instance.pk }}-tab" data-toggle="tab"
+                           href="#warehouse-{{ warehouse.instance.id }}"
+                           role="tab">{{ warehouse.instance.name }}</a>
                     </li>
                 {% endfor %}
             </ul>
@@ -39,9 +40,9 @@
             <div class="tab-content">
                 {% for warehouse in warehouses %}
                     <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
-                         id="warehouse-{{ warehouse.pk }}" role="tabpanel">
+                         id="warehouse-{{ warehouse.instance.pk }}" role="tabpanel">
 
-                        <h3 class="mt-4">{{ warehouse.name }}貸出中のアイテム</h3>
+                        <h3 class="mt-4">{{ warehouse.instance.name }} の貸出中のアイテム</h3>
                         {% if warehouse.non_available_items|length > 0 %}
                             {% for item in warehouse.non_available_items %}
                                 <ul>

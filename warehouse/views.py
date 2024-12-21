@@ -44,7 +44,7 @@ class IndexView(TemplateView):
 
             warehouse_vos.append(
                 Warehouse(
-                    warehouse=warehouse,
+                    instance=warehouse,
                     shelves=[Shelf(rows=shelf_rows)],  # TODO: いまは要素1しかない
                     available_items=available_items,
                     non_available_items=non_available_items,
