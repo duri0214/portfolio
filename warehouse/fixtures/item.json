@@ -1,0 +1,66 @@
+[
+  {
+    "model": "warehouse.item",
+    "pk": 1,
+    "fields": {
+      "serial_number": "IRM0000001",
+      "name": "アイテム１",
+      "price": "1000",
+      "pos_x": "3",
+      "pos_y": "2",
+      "pos_z": "1",
+      "created_at": "2024-12-21T11:06:26.237566+09:00",
+      "rental_status_id": "1",
+      "staff_id": "1",
+      "warehouse_id": "1"
+    }
+  },
+  {
+    "model": "warehouse.item",
+    "pk": 2,
+    "fields": {
+      "serial_number": "IRM0000004",
+      "name": "アイテム４",
+      "price": "2000",
+      "pos_x": "2",
+      "pos_y": "2",
+      "pos_z": "1",
+      "created_at": "2024-12-21T11:06:26.239567+09:00",
+      "rental_status_id": "1",
+      "staff_id": "1",
+      "warehouse_id": "1"
+    }
+  },
+  {
+    "model": "warehouse.item",
+    "pk": 3,
+    "fields": {
+      "serial_number": "IRM0000002",
+      "name": "アイテム２",
+      "price": "1200",
+      "pos_x": "3",
+      "pos_y": "2",
+      "pos_z": "1",
+      "created_at": "2024-12-21T11:06:26.239567+09:00",
+      "rental_status_id": "1",
+      "staff_id": "1",
+      "warehouse_id": "2"
+    }
+  },
+  {
+    "model": "warehouse.item",
+    "pk": 4,
+    "fields": {
+      "serial_number": "IRM0000003",
+      "name": "アイテム３",
+      "price": "1150",
+      "pos_x": "3",
+      "pos_y": "2",
+      "pos_z": "1",
+      "created_at": "2024-12-21T11:06:26.239567+09:00",
+      "rental_status_id": "1",
+      "staff_id": "1",
+      "warehouse_id": "2"
+    }
+  }
+]
