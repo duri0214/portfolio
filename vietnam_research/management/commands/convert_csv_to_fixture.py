@@ -48,13 +48,19 @@ class Command(BaseCommand):
                     fields_dict = dict(row)
                     fields_dict.pop(
                         "id", None
-                    )  # remove 'id' from fields as it is used as 'pk'
+                    )  # remove 'id' from fields as 'id' is used as 'pk'
+                    fields_dict.pop(
+                        "created_at", None
+                    )  # remove 'created_at' from fields
+                    fields_dict.pop(
+                        "updated_at", None
+                    )  # remove 'updated_at' from fields
                     fields_dict["created_at"] = make_aware(
                         datetime.now()
                     ).isoformat()  # set 'created_at' as the current timestamp
                     output.append({"model": model_name, "pk": i, "fields": fields_dict})
 
-            json_file = f"{csv_file.replace('.csv', '.json')}"
+            json_file = f"{csv_file.split('_')[1].replace('.csv', '.json')}"
             json_path = os.path.join(script_dir, json_file)
             with open(json_path, "w", encoding="utf-8") as outfile:
                 json.dump(output, outfile, ensure_ascii=False, indent=2)
