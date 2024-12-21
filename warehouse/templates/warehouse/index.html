@@ -24,41 +24,63 @@
             </li>
         </ul>
 
-        <h3 class="mt-4">貸出中のアイテム</h3>
-        {% if non_available_items|length > 0 %}
-            {% for item in non_available_items %}
-                <ul>
-                    <li class="text-danger">{{ item.name }}</li>
-                </ul>
-            {% endfor %}
-        {% else %}
-            <ul>
-                <li>貸し出しているアイテムはありません</li>
-            </ul>
-        {% endif %}
-
-        <h3 id="info" class="mt-4">在庫</h3>
-        <h5>貸し出せるアイテムが棚のどこにありますか？</h5>
-        <table class="table table-sm table-bordered">
-            <thead>
-            <tr>
-                <td class="diagonal-stroke"></td>
-                {% for col in shelf|first %}
-                    <td class="text-center table-primary">{{ forloop.counter }}列目</td>
+        <!-- Start Tabs -->
+        <div class="mt-4">
+            <ul class="nav nav-tabs" role="tablist">
+                {% for warehouse in warehouses %}
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link {% if forloop.first %}active{% endif %}"
+                           id="warehouse-{{ warehouse.pk }}-tab" data-toggle="tab" href="#warehouse-{{ warehouse.pk }}"
+                           role="tab">Warehouse {{ warehouse.name }}</a>
+                    </li>
                 {% endfor %}
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in shelf %}
-                <tr>
-                    <td class="table-primary">{{ forloop.revcounter }}段目</td>
-                    {% for col in row %}
-                        <td class="text-center">{{ col }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+            </ul>
+
+            <div class="tab-content">
+                {% for warehouse in warehouses %}
+                    <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                         id="warehouse-{{ warehouse.pk }}" role="tabpanel">
+
+                        <h3 class="mt-4">{{ warehouse.name }}貸出中のアイテム</h3>
+                        {% if warehouse.non_available_items|length > 0 %}
+                            {% for item in warehouse.non_available_items %}
+                                <ul>
+                                    <li class="text-danger">{{ item.name }}</li>
+                                </ul>
+                            {% endfor %}
+                        {% else %}
+                            <ul>
+                                <li>貸し出しているアイテムはありません</li>
+                            </ul>
+                        {% endif %}
+
+                        <h3 id="info" class="mt-4">在庫</h3>
+                        <h5>貸し出せるアイテムが棚のどこにありますか？</h5>
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                            <tr>
+                                <td class="diagonal-stroke"></td>
+                                {% for cell in warehouse.shelves.0.rows.0.cells %}
+                                    <td class="text-center table-primary">{{ forloop.counter }}列目</td>
+                                {% endfor %}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in warehouse.shelves.0.rows %}
+                                <tr>
+                                    <td class="table-primary">{{ forloop.revcounter }}段目</td>
+                                    {% for cell in row.cells %}
+                                        <td class="text-center">{{ cell.item_count }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- End Tabs -->
 
         <h5>貸し出しできるアイテム</h5>
         <form method="post" action="{% url 'war:reset' %}" class="mb-2">
