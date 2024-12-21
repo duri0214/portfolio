@@ -47,13 +47,13 @@ class Warehouse:
     倉庫を表現するデータクラス。
 
     属性:
-        warehouse: 倉庫モデルのインスタンス。
+        instance: 倉庫モデルのインスタンス。
         shelves: この倉庫に含まれる棚のリスト。各棚は`Shelf`インスタンスで表される。
         available_items: この倉庫に現在在庫があるアイテムのクエリセット。
         non_available_items: この倉庫に現在在庫がないアイテムのクエリセット。
     """
 
-    warehouse: Warehouse
+    instance: Warehouse
     shelves: list[Shelf]
     available_items: QuerySet
     non_available_items: QuerySet
