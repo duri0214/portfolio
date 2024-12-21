@@ -38,94 +38,105 @@
             </ul>
 
             <div class="tab-content">
-                {% for warehouse in warehouses %}
-                    <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
-                         id="warehouse-{{ warehouse.instance.pk }}" role="tabpanel">
+                {% if warehouses %}
+                    {% for warehouse in warehouses %}
+                        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                             id="warehouse-{{ warehouse.instance.pk }}" role="tabpanel">
 
-                        <h3 class="mt-4">{{ warehouse.instance.name }} の貸出中のアイテム</h3>
-                        {% if warehouse.non_available_items|length > 0 %}
-                            {% for item in warehouse.non_available_items %}
-                                <ul>
-                                    <li class="text-danger">{{ item.name }}</li>
-                                </ul>
-                            {% endfor %}
-                        {% else %}
-                            <ul>
-                                <li>貸し出しているアイテムはありません</li>
-                            </ul>
-                        {% endif %}
-
-                        <h3 id="info" class="mt-4">在庫</h3>
-                        <h5>貸し出せるアイテムが棚のどこにありますか？</h5>
-                        <table class="table table-sm table-bordered">
-                            <thead>
-                            <tr>
-                                <td class="diagonal-stroke"></td>
-                                {% for cell in warehouse.shelves.0.rows.0.cells %}
-                                    <td class="text-center table-primary">{{ forloop.counter }}列目</td>
+                            <h3 class="mt-4">{{ warehouse.instance.name }} の貸出中のアイテム</h3>
+                            {% if warehouse.non_available_items|length > 0 %}
+                                {% for item in warehouse.non_available_items %}
+                                    <ul>
+                                        <li class="text-danger">{{ item.name }}</li>
+                                    </ul>
                                 {% endfor %}
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% for row in warehouse.shelves.0.rows %}
-                                <tr>
-                                    <td class="table-primary">{{ forloop.revcounter }}段目</td>
-                                    {% for cell in row.cells %}
-                                        <td class="text-center">{{ cell.item_count }}</td>
-                                    {% endfor %}
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
+                            {% else %}
+                                <div class="alert alert-warning" role="alert">
+                                    貸し出しているアイテムはありません。
+                                </div>
+                            {% endif %}
 
-                        <h5>貸し出しできるアイテム</h5>
-                        <form method="post" action="{% url 'war:reset_items' warehouse.instance.pk %}" class="mb-2">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-secondary">リセット</button>
-                        </form>
-                        {% if warehouse.available_items|length > 0 %}
+                            <h3 id="info" class="mt-4">在庫</h3>
+                            <h5>貸し出せるアイテムが棚のどこにありますか？</h5>
                             <table class="table table-sm table-bordered">
-                                <colgroup span="2" class="table-primary"></colgroup>
                                 <thead>
                                 <tr>
-                                    <td>段</td>
-                                    <td>列</td>
-                                    <td>シリアルナンバー</td>
-                                    <td>アイテム名</td>
-                                    <td>金額</td>
+                                    <td class="diagonal-stroke"></td>
+                                    {# TODO: 現時点では倉庫に紐づく棚は1要素 shelves.0 が前提になっています #}
+                                    {% for cell in warehouse.shelves.0.rows.0.cells %}
+                                        <td class="text-center table-primary">{{ forloop.counter }}列目</td>
+                                    {% endfor %}
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for item in warehouse.available_items %}
+                                {# TODO: 現時点では倉庫に紐づく棚は1要素 shelves.0 が前提になっています #}
+                                {% for row in warehouse.shelves.0.rows %}
                                     <tr>
-                                        <td>{{ item.pos_y }}</td>
-                                        <td>{{ item.pos_x }}</td>
-                                        <td>{{ item.serial_number }}</td>
-                                        <td><a href="{% url 'war:item_detail' item.pk %}">{{ item.name }}</a></td>
-                                        <td>{{ item.price }}円</td>
-                                        <td>
-                                            <div class="d-flex justify-content-start">
-                                                <form method="post"
-                                                      action="{% url 'war:rent_item' item.id %}">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn-outline-primary btn-sm">貸出
-                                                    </button>
-                                                </form>
-                                                <button type="submit" class="ml-2 btn-outline-danger btn-sm" disabled>
-                                                    返却
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <td class="table-primary">{{ forloop.revcounter }}段目</td>
+                                        {% for cell in row.cells %}
+                                            <td class="text-center">{{ cell.item_count }}</td>
+                                        {% endfor %}
                                     </tr>
                                 {% endfor %}
                                 </tbody>
                             </table>
-                        {% else %}
-                            貸出できるアイテムがありません
-                        {% endif %}
+
+                            <h5>貸し出しできるアイテム</h5>
+                            <form method="post" action="{% url 'war:reset_items' warehouse.instance.pk %}" class="mb-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-secondary">リセット</button>
+                            </form>
+                            {% if warehouse.available_items|length > 0 %}
+                                <table class="table table-sm table-bordered">
+                                    <colgroup span="2" class="table-primary"></colgroup>
+                                    <thead>
+                                    <tr>
+                                        <td>段</td>
+                                        <td>列</td>
+                                        <td>シリアルナンバー</td>
+                                        <td>アイテム名</td>
+                                        <td>金額</td>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for item in warehouse.available_items %}
+                                        <tr>
+                                            <td>{{ item.pos_y }}</td>
+                                            <td>{{ item.pos_x }}</td>
+                                            <td>{{ item.serial_number }}</td>
+                                            <td><a href="{% url 'war:item_detail' item.pk %}">{{ item.name }}</a></td>
+                                            <td>{{ item.price }}円</td>
+                                            <td>
+                                                <div class="d-flex justify-content-start">
+                                                    <form method="post"
+                                                          action="{% url 'war:rent_item' item.id %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn-outline-primary btn-sm">貸出
+                                                        </button>
+                                                    </form>
+                                                    <button type="submit" class="ml-2 btn-outline-danger btn-sm"
+                                                            disabled>
+                                                        返却
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="alert alert-warning" role="alert">
+                                    貸出できるアイテムがありません。
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
                     </div>
-                {% endfor %}
-            </div>
+                {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        倉庫はありません。
+                    </div>
+                {% endif %}
         </div>
         <!-- End Tabs -->
     </div>

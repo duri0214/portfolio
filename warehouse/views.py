@@ -30,8 +30,11 @@ class IndexView(TemplateView):
                 shelf_rows.append(shelf_row)
 
             for item_position_count in item_position_counts:
-                # TODO: 0 based になっちゃってるのなおしたいなぁ
-                # Update the corresponding ShelfCell with the accumulated item count.
+                """
+                Notes: データベースのポジション値は1から始まりますが、Pythonのリストのインデックスは0から始まります。
+                  そのため、データベースのポジション値から1を引くことで、リストの0ベースにしています。
+                  これらのポジションをテンプレートでユーザーに表示する際は、1を再度足して1ベースのインデックスに戻します
+                """
                 shelf_rows[item_position_count["pos_y"] - 1].cells[
                     item_position_count["pos_x"] - 1
                 ].item_count += item_position_count["num_items"]
@@ -54,10 +57,7 @@ class IndexView(TemplateView):
 
         context["warehouses"] = warehouse_vos
         context["current_warehouse_id"] = self.request.GET.get("warehouse_id") or (
-            # TODO: else Noneのときどうなる？
-            warehouse_vos[0].instance.pk
-            if warehouse_vos
-            else None
+            warehouse_vos[0].instance.pk if warehouse_vos else None
         )
 
         return context
