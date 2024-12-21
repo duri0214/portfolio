@@ -1,0 +1,10 @@
+[
+  {
+    "model": "warehouse.warehousestaff",
+    "fields": {
+      "warehouse": 1,
+      "staff": 1,
+      "assigned_at": "2023-02-12T10:00:00+09:00"
+    }
+  }
+]

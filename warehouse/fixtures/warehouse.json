@@ -1,6 +1,7 @@
 [
   {
     "model": "warehouse.warehouse",
+    "pk": 1,
     "fields": {
       "code": "iruma",
       "name": "入間倉庫",
