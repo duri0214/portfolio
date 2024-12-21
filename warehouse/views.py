@@ -12,25 +12,6 @@ from warehouse.models import Item, RentalStatus, Invoice, Staff, BillingStatus
 class IndexView(TemplateView):
     template_name = "warehouse/index.html"
 
-    @staticmethod
-    def post(request, *args, **kwargs):
-        if request.path == "/warehouse/reset/":
-            # reset all rentals
-            update_records = []
-            items = Item.objects.filter(rental_status_id=RentalStatus.RENTAL)
-            for item in items:
-                item.rental_status_id = RentalStatus.STOCK
-                update_records.append(item)
-            if len(update_records) > 0:
-                Item.objects.bulk_update(update_records, ["rental_status_id"])
-        else:
-            # rent an item
-            item = Item.objects.get(pk=kwargs.get("pk"))
-            item.rental_status = RentalStatus.objects.get(pk=RentalStatus.RENTAL)
-            item.save()
-
-        return redirect("war:index")
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         staff = Staff.objects.get(pk=1)
@@ -71,8 +52,47 @@ class IndexView(TemplateView):
             )
 
         context["warehouses"] = warehouse_vos
+        context["current_warehouse_id"] = self.request.GET.get("warehouse_id") or (
+            # TODO: else Noneのときどうなる？
+            warehouse_vos[0].instance.pk
+            if warehouse_vos
+            else None
+        )
 
         return context
+
+
+class RentItemView(TemplateView):
+    template_name = "warehouse/index.html"
+
+    @staticmethod
+    def post(request, item_id):
+        all_rental_statuses = RentalStatus.objects.in_bulk()
+
+        # rent an item
+        item = Item.objects.get(pk=item_id)
+        item.rental_status = all_rental_statuses[RentalStatus.RENTAL]
+        item.save()
+
+        return redirect(reverse("war:index") + "#warehouse-" + str(item.warehouse_id))
+
+
+class ResetRentalsView(TemplateView):
+    template_name = "warehouse/index.html"
+
+    @staticmethod
+    def post(request, warehouse_id):
+        all_rental_statuses = RentalStatus.objects.in_bulk()
+        rental_status_stock = all_rental_statuses[RentalStatus.STOCK]
+        rental_status_rental = all_rental_statuses[RentalStatus.RENTAL]
+
+        # reset all rentals
+        items = Item.objects.filter(
+            warehouse_id=warehouse_id, rental_status=rental_status_rental
+        )
+        items.update(rental_status=rental_status_stock)
+
+        return redirect(reverse("war:index") + "#warehouse-" + str(warehouse_id))
 
 
 class ItemDetailView(DetailView):

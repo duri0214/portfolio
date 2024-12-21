@@ -78,7 +78,7 @@
                         </table>
 
                         <h5>貸し出しできるアイテム</h5>
-                        <form method="post" action="{% url 'war:reset' %}" class="mb-2">
+                        <form method="post" action="{% url 'war:reset_items' warehouse.instance.pk %}" class="mb-2">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-outline-secondary">リセット</button>
                         </form>
@@ -104,7 +104,8 @@
                                         <td>{{ item.price }}円</td>
                                         <td>
                                             <div class="d-flex justify-content-start">
-                                                <form method="post" action="{% url 'war:index_choose' item.id %}">
+                                                <form method="post"
+                                                      action="{% url 'war:rent_item' item.id %}">
                                                     {% csrf_token %}
                                                     <button type="submit" class="btn-outline-primary btn-sm">貸出
                                                     </button>
