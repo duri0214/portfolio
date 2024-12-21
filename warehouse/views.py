@@ -133,8 +133,10 @@ class InvoiceCreateView(CreateView):
 
     def get_success_url(self):
         rental_status = RentalStatus.objects.get(pk=RentalStatus.RENTAL)
-        # 貸出中の関連アイテムに請求書を紐づける TODO: どの請求先企業の関連アイテム？の絞りが未対応
-        Item.objects.filter(rental_status=rental_status).update(invoice=self.object.id)
+        Item.objects.filter(
+            rental_status=rental_status,
+            invoice__isnull=True,
+        ).update(invoice=self.object.id)
         return reverse("war:invoice_detail", kwargs={"pk": self.object.pk})
 
 
@@ -142,6 +144,11 @@ class InvoiceDetailView(DetailView):
     template_name = "warehouse/invoice/detail.html"
     model = Invoice
     context_object_name = "invoice"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["items"] = Item.objects.filter(invoice=self.object)
+        return context
 
 
 class InvoiceListView(ListView):

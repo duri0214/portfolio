@@ -9,6 +9,7 @@
 
     <div class="container">
         <h2>請求書の作成</h2>
+        <p>借りるアイテムを、新規請求書にまとめます</p>
         <form method="post">
             {% csrf_token %}
             {% if form_errors %}
@@ -59,13 +60,9 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary" id="create-button">作成</button>
-                </div>
-                <div class="col-md-2">
-                    <a class="btn btn-secondary" id="back-button" href="{% url 'war:index' %}">戻る</a>
-                </div>
+            <div class="d-flex justify-content-between">
+                <a class="btn btn-outline-secondary" href="{% url 'war:index' %}">戻る</a>
+                <button type="submit" class="btn btn-outline-primary">送信</button>
             </div>
         </form>
     </div>
