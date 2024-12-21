@@ -75,7 +75,9 @@ class RentItemView(TemplateView):
         item.rental_status = all_rental_statuses[RentalStatus.RENTAL]
         item.save()
 
-        return redirect(reverse("war:index") + "#warehouse-" + str(item.warehouse_id))
+        return redirect(
+            reverse("war:index") + "?warehouse_id=" + str(item.warehouse_id)
+        )
 
 
 class ResetRentalsView(TemplateView):
@@ -93,7 +95,7 @@ class ResetRentalsView(TemplateView):
         )
         items.update(rental_status=rental_status_stock)
 
-        return redirect(reverse("war:index") + "#warehouse-" + str(warehouse_id))
+        return redirect(reverse("war:index") + "?warehouse_id=" + str(warehouse_id))
 
 
 class ItemDetailView(DetailView):
