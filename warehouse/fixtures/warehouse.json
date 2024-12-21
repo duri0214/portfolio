@@ -1,14 +1,28 @@
 [
   {
     "model": "warehouse.warehouse",
+    "pk": 1,
     "fields": {
       "code": "iruma",
       "name": "入間倉庫",
       "address": "埼玉県狭山市稲荷山２丁目３",
-      "width": 3,
-      "height": 3,
-      "depth": 3,
-      "created_at": "2023-02-12T09:00:00+09:00"
+      "width": "3",
+      "height": "3",
+      "depth": "3",
+      "created_at": "2024-12-21T11:12:58.195434+09:00"
+    }
+  },
+  {
+    "model": "warehouse.warehouse",
+    "pk": 2,
+    "fields": {
+      "code": "iruma2",
+      "name": "入間倉庫2",
+      "address": "埼玉県狭山市稲荷山２丁目３ー１",
+      "width": "3",
+      "height": "3",
+      "depth": "3",
+      "created_at": "2024-12-21T11:12:58.196506+09:00"
     }
   }
 ]
