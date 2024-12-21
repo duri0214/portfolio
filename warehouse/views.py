@@ -30,10 +30,11 @@ class IndexView(TemplateView):
                 shelf_rows.append(shelf_row)
 
             for item_position_count in item_position_counts:
-                # Update the corresponding ShelfCell with the correct item count.
+                # TODO: 0 based になっちゃってるのなおしたいなぁ
+                # Update the corresponding ShelfCell with the accumulated item count.
                 shelf_rows[item_position_count["pos_y"] - 1].cells[
                     item_position_count["pos_x"] - 1
-                ].item_count = item_position_count["num_items"]
+                ].item_count += item_position_count["num_items"]
 
             available_items = Item.objects.filter(
                 warehouse_id=warehouse.id, rental_status_id=RentalStatus.STOCK
