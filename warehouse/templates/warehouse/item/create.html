@@ -11,11 +11,10 @@
         <form action="{% url 'war:item_create' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit">送信</button>
-        </form>
-        <form method="GET" class="registration" action="{% url 'war:index' %}">
-            {% csrf_token %}
-            <button type="submit">戻る</button>
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'war:index' %}" class="btn btn-outline-secondary">戻る</a>
+                <button type="submit" class="btn btn-outline-primary">送信</button>
+            </div>
         </form>
     </div>
 {% endblock %}
