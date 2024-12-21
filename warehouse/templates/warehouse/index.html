@@ -62,14 +62,14 @@
                                 <thead class="bg-primary text-white">
                                 <tr>
                                     <td></td>
-                                    {# TODO: 現時点では倉庫に紐づく棚は1要素 shelves.0 が前提になっています #}
+                                    {# 現時点では倉庫に紐づく棚は1要素 shelves.0 が前提になっています issue180 #}
                                     {% for cell in warehouse.shelves.0.rows.0.cells %}
                                         <td class="text-center">{{ forloop.counter }}列目</td>
                                     {% endfor %}
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {# TODO: 現時点では倉庫に紐づく棚は1要素 shelves.0 が前提になっています #}
+                                {# 現時点では倉庫に紐づく棚は1要素 shelves.0 が前提になっています issue180 #}
                                 {% for row in warehouse.shelves.0.rows %}
                                     <tr>
                                         <td>{{ forloop.revcounter }}段目</td>
