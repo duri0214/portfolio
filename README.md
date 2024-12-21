@@ -90,6 +90,7 @@ python manage.py loaddata .\warehouse\fixtures\rentalStatus.json
 python manage.py loaddata .\warehouse\fixtures\company.json
 python manage.py loaddata .\warehouse\fixtures\billingPerson.json
 python manage.py loaddata .\warehouse\fixtures\billingStatus.json
+python manage.py loaddata .\warehouse\fixtures\warehousestaff.json
 python manage.py loaddata .\taxonomy\fixtures\kingdom.json
 python manage.py loaddata .\taxonomy\fixtures\phylum.json
 python manage.py loaddata .\taxonomy\fixtures\classification.json
