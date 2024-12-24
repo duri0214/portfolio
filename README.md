@@ -79,8 +79,8 @@ python manage.py loaddata .\vietnam_research\fixtures\basicInformation.json
 python manage.py loaddata .\vietnam_research\fixtures\financialResultWatch.json
 python manage.py loaddata .\vietnam_research\fixtures\watchlist.json
 # ここで vietnam_research の バッチをひととおりまわす（具体的には1発industryバッチを回して新顔をマスタに取り入れる）
-python manage.py loaddata .\gmarker\fixtures\signageMenuName.json
-python manage.py loaddata .\gmarker\fixtures\storeInformation.json
+python manage.py loaddata .\gmarker\fixtures\categorySearchMaster.json
+python manage.py loaddata .\gmarker\fixtures\nearbyPlace.json
 python manage.py loaddata .\shopping\fixtures\store.json
 python manage.py loaddata .\shopping\fixtures\staff.json
 python manage.py loaddata .\shopping\fixtures\products.json
