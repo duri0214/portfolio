@@ -115,41 +115,6 @@ def search_detail(request, place_id):
     )
 
 
-def near_by_search(api_key, place, centerlatlng, types, radius):
-    """
-    dependency
-    ----------
-    Places API
-
-    parameters
-    ----------
-    place: 東京都
-
-    return
-    --------
-    a place\n
-    place_id, rating\n
-    e.g. CmRaThPn0sTB1aE-Afx0_..., 4
-
-    Args:
-        api_key:
-    """
-    url = (
-        "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
-        "location={}&radius={}&type={}&keyword={}&"
-        "key={}"
-    )
-    url = url.format(centerlatlng, radius, types, urllib.parse.quote(place), api_key)
-    # print("near_by_search:", url)
-    res = urllib.request.urlopen(url)
-    ret_value = None
-    if res.code == 200:
-        res_json = json.loads(res.read())
-        if res_json.get("results"):
-            ret_value = res_json["results"]
-    return ret_value
-
-
 def get_details(api_key, place_id):
     """
     dependency
