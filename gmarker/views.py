@@ -52,11 +52,7 @@ def index(request, search_code="9"):
             )
             handle_search_code(NearbyPlace.CATEGORY_SEARCH, search_word, shops)
         elif search_code[:1] == "2":
-            # delete if record exists
-            query = StoreInformation.objects.filter(category=2)
-            if query.count() > 0:
-                query.delete()
-            # insert as category 2
+            # ピン選択モード
             shops = json.loads(request.body).get("shops")
             handle_search_code(NearbyPlace.PIN_SELECT, "selected by you.", shops)
             return JsonResponse({"status": "OK"})
