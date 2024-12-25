@@ -40,10 +40,10 @@ def index(request, search_code="9"):
             latitude, longitude = map(float, map_center.location.split(","))
             types = "restaurant"
             radius = 1500
-            shops = near_by_search(
-                os.getenv("GOOGLE_MAPS_API_KEY"),
+            service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
+            shops = service.nearby_search(
                 search_word,
-                centerlatlng,
+                GoogleMapCoords(latitude, longitude),
                 types,
                 radius,
             )
