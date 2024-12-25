@@ -6,9 +6,8 @@ from .views import SearchDetailView
 app_name = "mrk"
 urlpatterns = [
     path("", views.index, name="index"),
-    path("search/<str:search_code>", views.index, name="index_search"),
+    path("search/<str:search_code>", views.index, name="nearby_search"),
     path(
         "search/detail/<str:place_id>", SearchDetailView.as_view(), name="detail_search"
     ),
-    path("result/<str:search_code>", views.index, name="index_result"),
 ]

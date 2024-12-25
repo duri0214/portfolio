@@ -10,15 +10,15 @@
     </div>
 
     <h5>カテゴリーサーチ</h5>
-    <form class="ml-4" action="{% url 'mrk:index_search' '1A' %}" method="POST">
+    <form class="ml-4" action="{% url 'mrk:nearby_search' '1A' %}" method="POST">
         {% csrf_token %}
         <input type="submit" class="btn-flat-border" value="1A: ラーメン"/> My拠点を中心に半径1500mのラーメン屋のピンが表示される
     </form>
-    <form class="ml-4" action="{% url 'mrk:index_search' '1B' %}" method="POST">
+    <form class="ml-4" action="{% url 'mrk:nearby_search' '1B' %}" method="POST">
         {% csrf_token %}
         <input type="submit" class="btn-flat-border" value="1B: 洋食"/> My拠点を中心に半径1500mの洋食屋のピンが表示される
     </form>
-    <form class="ml-4" action="{% url 'mrk:index_search' '1C' %}" method="POST">
+    <form class="ml-4" action="{% url 'mrk:nearby_search' '1C' %}" method="POST">
         {% csrf_token %}
         <input type="submit" class="btn-flat-border" value="1C: 和食"/> My拠点を中心に半径1500mの和食屋のピンが表示される
     </form>
