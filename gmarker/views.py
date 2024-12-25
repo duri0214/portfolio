@@ -59,27 +59,30 @@ def index(request, search_code="9"):
 
     else:
         # select category
-        temp = StoreInformation.objects.filter(category=search_code)
+        temp = NearbyPlace.objects.filter(category=search_code)
         shops = []
         for i, row in enumerate(temp):
             shops.append(
                 {
                     "geometry": {
                         "location": {
-                            "lat": row.shop_latlng.split(",")[0],
-                            "lng": row.shop_latlng.split(",")[1],
+                            "lat": row.location.split(",")[0],
+                            "lng": row.location.split(",")[1],
                         }
                     },
                     "radius": 1500,
-                    "shop_name": row.shop_name,
+                    "shop_name": row.name,
                     "place_id": row.place_id,
                 }
             )
 
         # packing
-        mypos = StoreInformation.objects.get(category=9).shop_latlng
+        map_center = NearbyPlace.objects.get(category=NearbyPlace.DEFAULT_LOCATION)
         unit = {
-            "center": {"lat": mypos.split(",")[0], "lng": mypos.split(",")[1]},
+            "center": {
+                "lat": map_center.location.split(",")[0],
+                "lng": map_center.location.split(",")[1],
+            },
             "shops": shops,
         }
 
