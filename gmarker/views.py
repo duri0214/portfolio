@@ -27,11 +27,41 @@ def handle_search_code(category: int, search_word: str, places: list[PlaceVO]):
             new_places.append(store)
         NearbyPlaceRepository.bulk_create(new_places)
 
-def index(request, search_code="9"):
-    """search_code9は自拠点"""
 
-    print(f"{search_code=}")
-    if request.method == "POST":
+class IndexView(TemplateView):
+    template_name = "gmarker/index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search_code = self.kwargs.get("search_code", "9")
+        print(f"{search_code=}")
+        temp = NearbyPlace.objects.filter(category=search_code)
+        shops = []
+        for i, row in enumerate(temp):
+            shops.append(
+                {
+                    "geometry": {
+                        "location": {
+                            "lat": row.location.split(",")[0],
+                            "lng": row.location.split(",")[1],
+                        }
+                    },
+                    "radius": 1500,
+                    "shop_name": row.name,
+                    "place_id": row.place_id,
+                }
+            )
+        map_center = NearbyPlace.objects.get(category=NearbyPlace.DEFAULT_LOCATION)
+        unit = {
+            "center": {
+                "lat": map_center.location.split(",")[0],
+                "lng": map_center.location.split(",")[1],
+            },
+            "shops": shops,
+        }
+        context["unit"] = json.dumps(unit, ensure_ascii=False)
+        context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
+        return context
         if search_code[:1] == "1":
             # カテゴリーサーチモード
             search_word = CategorySearchMaster.objects.get(code=search_code).name
@@ -56,43 +86,6 @@ def index(request, search_code="9"):
 
         # redirect 1 or 3
         return redirect("/gmarker/result/" + search_code[:1])
-
-    else:
-        # select category
-        temp = NearbyPlace.objects.filter(category=search_code)
-        shops = []
-        for i, row in enumerate(temp):
-            shops.append(
-                {
-                    "geometry": {
-                        "location": {
-                            "lat": row.location.split(",")[0],
-                            "lng": row.location.split(",")[1],
-                        }
-                    },
-                    "radius": 1500,
-                    "shop_name": row.name,
-                    "place_id": row.place_id,
-                }
-            )
-
-        # packing
-        map_center = NearbyPlace.objects.get(category=NearbyPlace.DEFAULT_LOCATION)
-        unit = {
-            "center": {
-                "lat": map_center.location.split(",")[0],
-                "lng": map_center.location.split(",")[1],
-            },
-            "shops": shops,
-        }
-
-        context = {
-            "unit": json.dumps(unit, ensure_ascii=False),
-            "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY"),
-        }
-
-        # render
-        return render(request, "gmarker/index.html", context)
 
 
 class SearchDetailView(View):
