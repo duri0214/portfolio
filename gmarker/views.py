@@ -1,20 +1,37 @@
 import json
 import os
-import urllib.parse
-import urllib.request
 
 from django.http.response import JsonResponse
 from django.shortcuts import render, redirect
+from django.views.generic import View
 
-from .models import StoreInformation, SignageMenuName
+from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
+from gmarker.domain.service.googlemaps import GoogleMapsService
+from gmarker.domain.valueobject.googlemaps import PlaceVO
+from gmarker.models import NearbyPlace, CategorySearchMaster
+from lib.geo.valueobject.coords import GoogleMapCoords
 
+
+def handle_search_code(category: int, search_word: str, places: list[PlaceVO]):
+    NearbyPlaceRepository.delete_by_category(category)
+    if places:
+        new_places = []
+        for place in places:
+            store = NearbyPlace(
+                category=category,
+                search_word=search_word,
+                place_id=place.place_id,
+                name=place.name,
+                location=place.location.to_str(),
+            )
+            new_places.append(store)
+        NearbyPlaceRepository.bulk_create(new_places)
 
 def index(request, search_code="9"):
     """search_code9は自拠点"""
 
     print("search_code: ", search_code)
     if request.method == "POST":
-        temp = []
         if search_code[:1] == "1":
             # delete if record exists
             query = StoreInformation.objects.filter(category=1)
@@ -33,20 +50,7 @@ def index(request, search_code="9"):
                 types,
                 radius,
             )
-            # insert as category 1
-            if shops:
-                for shop in shops:
-                    # print(shop["place_id"])
-                    store = StoreInformation()
-                    store.category = 1
-                    store.searchword = search_word
-                    store.place_id = shop["place_id"]
-                    store.shop_name = shop["name"]
-                    store.shop_latlng = ",".join(
-                        map(str, shop["geometry"]["location"].values())
-                    )
-                    temp.append(store)
-                StoreInformation.objects.bulk_create(temp)
+            handle_search_code(NearbyPlace.CATEGORY_SEARCH, search_word, shops)
         elif search_code[:1] == "2":
             # delete if record exists
             query = StoreInformation.objects.filter(category=2)
@@ -54,20 +58,7 @@ def index(request, search_code="9"):
                 query.delete()
             # insert as category 2
             shops = json.loads(request.body).get("shops")
-            if shops:
-                for shop in shops:
-                    # print(shop["place_id"])
-                    store = StoreInformation()
-                    store.category = 2
-                    store.searchword = "selected by you."
-                    store.place_id = shop["place_id"]
-                    store.shop_name = shop["shop_name"]
-                    store.shop_latlng = ",".join(
-                        map(str, shop["geometry"]["location"].values())
-                    )
-                    temp.append(store)
-                StoreInformation.objects.bulk_create(temp)
-            # response json
+            handle_search_code(NearbyPlace.PIN_SELECT, "selected by you.", shops)
             return JsonResponse({"status": "OK"})
 
         # redirect 1 or 3
