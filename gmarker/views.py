@@ -87,8 +87,6 @@ class IndexView(TemplateView):
             shops = json.loads(request.body).get("shops")
             handle_search_code(NearbyPlace.PIN_SELECT, "selected by you.", shops)
             return JsonResponse({"status": "OK"})
-
-        # redirect 1 or 3
         return redirect("/gmarker/result/" + search_code[:1])
 
 
