@@ -30,7 +30,7 @@
         1回押すと管理者選択モード、marker[0+]選択後に2回目を押すと選択したピンが表示される
     </form>
     <h5 class="mt-4">マニュアルサーチ</h5>
-    <form class="ml-4" action="{% url 'mrk:index_search' '3' %}" method="POST">
+    <form class="ml-4" action="{% url 'mrk:nearby_search' '3' %}" method="POST">
         {% csrf_token %}
         <input type="submit" class="btn-flat-border" value="3"/> 手でdb登録したピンが表示される（カテゴリー3で登録する）
     </form>
