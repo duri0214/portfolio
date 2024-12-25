@@ -115,36 +115,4 @@ def search_detail(request, place_id):
     )
 
 
-def get_details(api_key, place_id):
-    """
-    dependency
-    ----------
-    Places API
-    parameters
-    ----------
-    place_id: ChIJN1t_tDeuEmsRUsoyG83frY4
-    return
-    ------
-    e.g. https://maps.google.com/?cid=10281119596374313554
-
-    Args:
-        api_key:
-    """
-    ret_value = "#"
-    if place_id:
-        fields = (
-            "address_component,adr_address,formatted_address,geometry,icon,name,"
-            "permanently_closed,photo,place_id,plus_code,type,url,utc_offset,vicinity,"
-            "formatted_phone_number,international_phone_number,opening_hours,"
-            "website,price_level,rating,review,user_ratings_total"
-        )
-        url = (
-            "https://maps.googleapis.com/maps/api/place/details/json?"
-            "place_id={}&fields={}&key={}".format(place_id, fields, api_key)
-        )
-        # print('url:', url)
-        res = urllib.request.urlopen(url)
-        if res.code == 200:
-            res_json = json.loads(res.read())
-            ret_value = res_json["result"]
-    return ret_value
+        return JsonResponse({"detail": store_details})

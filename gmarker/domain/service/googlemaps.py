@@ -79,3 +79,54 @@ class GoogleMapsService:
         except Exception as e:
             print(f"An error occurred: {e}")
             return []
+
+    def get_place_details(self, place_vo: PlaceVO) -> PlaceVO | None:
+        fields = [
+            "geometry",
+            "name",
+            "photo",
+            "place_id",
+            "rating",
+            "review",
+            "url",
+        ]
+        fields_str = ",".join(fields)
+        url = (
+            f"https://maps.googleapis.com/maps/api/place/details/json?"
+            f"place_id={place_vo.place_id}&fields={fields_str}&key={self.api_key}"
+        )
+
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+
+            result = response.json()["result"]
+
+            # Update the PlaceVO object with new data
+            place_vo.name = result.get("name")
+            place_photos = []
+            for photo in result.get("photos", []):
+                place_photos.append(
+                    PlacePhoto(
+                        height=photo["height"],
+                        width=photo["width"],
+                        html_attributions=photo["html_attributions"],
+                        photo_reference=photo["photo_reference"],
+                    )
+                )
+            place_vo.photos = place_photos
+            place_vo.location = GoogleMapCoords(
+                latitude=result["geometry"]["location"]["lat"],
+                longitude=result["geometry"]["location"]["lng"],
+            )
+
+            # Update the detail value here when available TODO: reviewsの取得
+            # place_vo.detail = PlaceDetailVO(...)
+
+            return place_vo
+        except requests.HTTPError as e:
+            print(f"An HTTP error occurred: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        return None
