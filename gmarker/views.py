@@ -30,7 +30,7 @@ def handle_search_code(category: int, search_word: str, places: list[PlaceVO]):
 def index(request, search_code="9"):
     """search_code9は自拠点"""
 
-    print("search_code: ", search_code)
+    print(f"{search_code=}")
     if request.method == "POST":
         if search_code[:1] == "1":
             # カテゴリーサーチモード
