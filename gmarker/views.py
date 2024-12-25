@@ -33,14 +33,11 @@ def index(request, search_code="9"):
     print("search_code: ", search_code)
     if request.method == "POST":
         if search_code[:1] == "1":
-            # delete if record exists
-            query = StoreInformation.objects.filter(category=1)
-            if query.count() > 0:
-                query.delete()
-            # api search
-            search_word = SignageMenuName.objects.get(menu_code=search_code).menu_name
-            print("search at:", search_word)
-            centerlatlng = StoreInformation.objects.get(category=9).shop_latlng
+            # カテゴリーサーチモード
+            search_word = CategorySearchMaster.objects.get(code=search_code).name
+            print(f"{search_word=}")
+            map_center = NearbyPlace.objects.get(category=NearbyPlace.DEFAULT_LOCATION)
+            latitude, longitude = map(float, map_center.location.split(","))
             types = "restaurant"
             radius = 1500
             shops = near_by_search(
