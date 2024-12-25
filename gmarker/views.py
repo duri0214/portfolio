@@ -3,6 +3,7 @@ import os
 
 from django.http.response import JsonResponse
 from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.views.generic import View, TemplateView
 
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
@@ -87,7 +88,9 @@ class IndexView(TemplateView):
             shops = json.loads(request.body).get("shops")
             handle_search_code(NearbyPlace.PIN_SELECT, "selected by you.", shops)
             return JsonResponse({"status": "OK"})
-        return redirect("/gmarker/result/" + search_code[:1])
+        return redirect(
+            reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code[:1]})
+        )
 
 
 class SearchDetailView(View):
