@@ -2,8 +2,8 @@ import json
 import os
 
 from django.http.response import JsonResponse
-from django.shortcuts import render, redirect
-from django.views.generic import View
+from django.shortcuts import redirect
+from django.views.generic import View, TemplateView
 
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
@@ -62,6 +62,10 @@ class IndexView(TemplateView):
         context["unit"] = json.dumps(unit, ensure_ascii=False)
         context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
         return context
+
+    def post(self, request, *args, **kwargs):
+        search_code = self.kwargs.get("search_code", "9")
+        print(f"{search_code=}")
         if search_code[:1] == "1":
             # カテゴリーサーチモード
             search_word = CategorySearchMaster.objects.get(code=search_code).name
