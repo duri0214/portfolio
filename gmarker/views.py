@@ -81,6 +81,7 @@ class IndexView(TemplateView):
                 GoogleMapCoords(latitude, longitude),
                 types,
                 radius,
+                fields=["name", "formatted_address", "rating"],
             )
             handle_search_code(NearbyPlace.CATEGORY_SEARCH, search_word, shops)
         elif search_code[:1] == "2":
