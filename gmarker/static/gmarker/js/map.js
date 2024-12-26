@@ -50,7 +50,7 @@ function markerEvent(i) {
                 content: json.shops[i]['shop_name']
             });
             infowindow.open(map, markers[i]);
-            shopinfomation.innerHTML = '名前: ' + json.shops[i]['shop_name'];
+            placeInformation.innerHTML = '名前: ' + json.shops[i]['shop_name'];
 
             if (json.shops[i]['place_id'] != null) {
                 // get a shop detail
@@ -75,10 +75,10 @@ function markerEvent(i) {
                         txt += '種類: ' + (json.detail.types).join(', ') + '<br>';
                         txt += 'website: ' + json.detail.website + '<br><br>';
                         txt += 'レビュー(先頭1名): <br>' + json.detail.reviews[0].author_name + '(' + json.detail.reviews[0].rating + ')' + ': ' + json.detail.reviews[0].text + '<br>'
-                        shopinfomation.innerHTML = txt;
+                        placeInformation.innerHTML = txt;
                     })
                     .catch(error => {
-                        shopinfomation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
+                        placeInformation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
                     })
             }
         } else {
@@ -94,13 +94,13 @@ function markerEvent(i) {
             });
             infowindow.open(map, markers[i]);
         }
-        shopinfomation.innerHTML = '名前: ' + json.shops[i]['shop_name'];
+        placeInformation.innerHTML = '名前: ' + json.shops[i]['shop_name'];
     });
     markers[i].addListener('mouseout', function () {
         if (typeof infowindow != 'undefined') {
             infowindow.close();
         }
-        shopinfomation.innerHTML = "";
+        placeInformation.innerHTML = "";
     });
 }
 
@@ -132,7 +132,7 @@ function do_pattern2(button) {
                     button.style.color = '#67c5ff';
                 })
                 .catch(error => {
-                    shopinfomation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
+                    placeInformation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
                 })
         }
     }
