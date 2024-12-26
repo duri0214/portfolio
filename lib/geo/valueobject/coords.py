@@ -40,7 +40,7 @@ class GoogleMapCoords(BaseCoords):
         return self.latitude, self.longitude
 
     def to_str(self) -> str:
-        return f"{self.latitude}, {self.longitude}"
+        return f"{self.latitude},{self.longitude}"
 
 
 class CaptureLocationCoords(BaseCoords):
