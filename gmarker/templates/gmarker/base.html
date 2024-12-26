@@ -39,7 +39,7 @@
     <script>let myUrl = {"base": "{% url 'mrk:index' %}"};</script>
 </head>
 
-<body onload="mapinit('{{ unit }}')">
+<body onload="window.myMap = new CustomMap('map_canvas1', '{{ unit }}')">
 <h1></h1>
 <header>
     <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">

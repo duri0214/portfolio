@@ -1,107 +1,82 @@
-let map;
-const markers = [];
-let infowindow;
-let json;
-let is_editing = false;
-let keep_markers = [];
-
-function mapinit(_json) {
-
-    const options = {
-        zoom: 14,
-        mapTypeId: google.maps.MapTypeId.ROADMAP, // 既定: いつもの地図タイプ
-        mapTypeControl: false, // 左上「地図／航空写真」切り替えボタン off
-        keyboardShortcuts: false, // キーボードコントロール off
-        streetViewControl: false, // ストリートビュー off
-        fullscreenControl: false, // フルスクリーン off
-        scrollwheel: false // マウスホイールスクロール off
-    };
-    // create canvas
-    json = JSON.parse(_json);
-    map = new google.maps.Map(document.getElementById("map_canvas1"), options);
-    map.setCenter(new google.maps.LatLng(json["center"]["lat"], json["center"]["lng"]));
-    createMarkers(json);
-}
-
-// get_category が使います
-function createMarkers(json) {
-    let latlng;
-    if (typeof json != 'undefined' && json.shops.length > 0) {
-        for (let i = 0; i < json.shops.length; i++) {
-            latlng = new google.maps.LatLng(json.shops[i].geometry.location.lat, json.shops[i].geometry.location.lng);
-            markers[i] = new google.maps.Marker({
-                position: latlng,
-                map: map,
-                animation: google.maps.Animation.DROP
-            });
-            markerEvent(i);
-        }
+class CustomMap {
+    constructor(mapId, shopsInfo) {
+        this.map = null;
+        this.initialize(mapId, shopsInfo);
     }
-}
 
-// createMarkers が使います
-function markerEvent(i) {
-    markers[i].addListener('click', function () {
-        if (!is_editing) {
-            if (typeof infowindow != 'undefined') {
-                infowindow.close();
-            }
-            infowindow = new google.maps.InfoWindow({
-                content: json.shops[i]['shop_name']
+    async initialize(mapId, shopsInfo) {
+        const options = {
+            zoom: 14,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            mapTypeControl: false,
+            keyboardShortcuts: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            scrollwheel: false
+        };
+
+        const data = JSON.parse(shopsInfo);
+        this.map = new google.maps.Map(document.getElementById(mapId), options);
+        this.map.setCenter(new google.maps.LatLng(data.center.lat, data.center.lng));
+        this.createMarkers(data.shops);
+    }
+
+    createMarkers(shops) {
+        shops.forEach(shop => {
+            const latlng = new google.maps.LatLng(shop.geometry.location.lat, shop.geometry.location.lng);
+            const marker = new google.maps.Marker({
+                position: latlng,
+                map: this.map,
+                animation: google.maps.Animation.DROP,
+                title: shop.shop_name // マウスオーバー時のツールチップとして店名を表示
             });
-            infowindow.open(map, markers[i]);
-            placeInformation.innerHTML = '名前: ' + json.shops[i]['shop_name'];
 
-            if (json.shops[i]['place_id'] != null) {
-                // get a shop detail
-                fetch(myUrl.base + 'search/detail/' + json.shops[i]['place_id'], {
+            marker.addListener('click', () => this.showShopDetails(marker, shop));
+        });
+    }
+
+    async showShopDetails(marker, shop) {
+        let infoWindow = new google.maps.InfoWindow();
+        infoWindow.setContent(shop.shop_name);
+        infoWindow.open(this.map, marker);
+
+        if (shop.place_id) {
+            try {
+                const response = await fetch(myUrl.base + 'search/detail/' + shop.place_id, {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
                         "X-CSRFToken": Cookies.get('csrftoken')
-                    },
-                    body: JSON.stringify({"shops": keep_markers})
-                })
-                    .then(response => response.json())
-                    .then(json => {
-                        let txt = '';
-                        txt += '名前: ' + json.detail.name + '<br>';
-                        txt += '住所: ' + json.detail.formatted_address.slice(0, 10) + '...<br>';
-                        txt += '電話番号: ' + json.detail.formatted_phone_number + '<br>';
-                        txt += '開店時間[Sun]: ' + json.detail.opening_hours.periods[0].open.time + '-';
-                        txt += json.detail.opening_hours.periods[0].close.time + '<br>';
-                        txt += '料金レベル: ' + json.detail.price_level + '<br>';
-                        txt += '評価: ' + json.detail.rating + '<br>';
-                        txt += '種類: ' + (json.detail.types).join(', ') + '<br>';
-                        txt += 'website: ' + json.detail.website + '<br><br>';
-                        txt += 'レビュー(先頭1名): <br>' + json.detail.reviews[0].author_name + '(' + json.detail.reviews[0].rating + ')' + ': ' + json.detail.reviews[0].text + '<br>'
-                        placeInformation.innerHTML = txt;
-                    })
-                    .catch(error => {
-                        placeInformation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
-                    })
+                    }
+                });
+                const data = await response.json();
+                let content = '';
+                if (data.detail) { // data.detail が存在しない場合のエラーを回避
+                    content += `名前: ${data.detail.name}<br>`;
+                    content += `住所: ${data.detail.formatted_address.slice(0, 10)}...<br>`;
+                    content += `電話番号: ${data.detail.formatted_phone_number}<br>`;
+                    if (data.detail.opening_hours && data.detail.opening_hours.periods && data.detail.opening_hours.periods[0]) { // opening_hoursなどが存在しない場合のエラーを回避
+                        content += `開店時間[Sun]: ${data.detail.opening_hours.periods[0].open.time}-${data.detail.opening_hours.periods[0].close.time}<br>`;
+                    }
+                    content += `料金レベル: ${data.detail.price_level}<br>`;
+                    content += `評価: ${data.detail.rating}<br>`;
+                    content += `種類: ${(data.detail.types || []).join(', ')}<br>`; // typesが存在しない場合のエラーを回避
+                    content += `website: ${data.detail.website}<br><br>`;
+                    if (data.detail.reviews && data.detail.reviews[0]) { // reviewsが存在しない場合のエラーを回避
+                        content += `レビュー(先頭1名): <br>${data.detail.reviews[0].author_name}(${data.detail.reviews[0].rating}): ${data.detail.reviews[0].text}<br>`;
+                    }
+                } else {
+                    content = "詳細情報を取得できませんでした。";
+                }
+                placeInformation.innerHTML = content;
+                infoWindow.setContent(content); // 情報ウィンドウの内容を更新
+            } catch (error) {
+                console.error("Error:", error);
+                placeInformation.innerHTML = "エラーが発生しました。";
+                infoWindow.setContent("エラーが発生しました。");
             }
-        } else {
-            keep_markers.push(json.shops[i])
-            markers[i].setMap(null);
-            console.log('ok! this is it! keeeep!')
         }
-    });
-    markers[i].addListener('mouseover', function () {
-        if (is_editing) {
-            infowindow = new google.maps.InfoWindow({
-                content: json.shops[i]['shop_name']
-            });
-            infowindow.open(map, markers[i]);
-        }
-        placeInformation.innerHTML = '名前: ' + json.shops[i]['shop_name'];
-    });
-    markers[i].addListener('mouseout', function () {
-        if (typeof infowindow != 'undefined') {
-            infowindow.close();
-        }
-        placeInformation.innerHTML = "";
-    });
+    }
 }
 
 function do_pattern2(button) {
@@ -132,7 +107,7 @@ function do_pattern2(button) {
                     button.style.color = '#67c5ff';
                 })
                 .catch(error => {
-                    placeInformation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
+                    shopinfomation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
                 })
         }
     }
