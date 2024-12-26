@@ -13,7 +13,14 @@ class PlacePhoto:
 
 @dataclass
 class PlaceDetail:
-    pass
+    formatted_address: str | None
+    formatted_phone_number: str | None
+    opening_hours: dict | None
+    price_level: int | None
+    rating: float | None
+    reviews: list | None
+    types: list[str] | None
+    website: str | None
 
 
 @dataclass
