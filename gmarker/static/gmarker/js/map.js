@@ -134,6 +134,7 @@ class CustomMap {
                 title: shop.shop_name // マウスオーバー時のツールチップ
             });
 
+            // TODO: クリックするとどんどんレイヤー張って上に重なるからシングルトンにして
             marker.addListener('click', () => this.showShopDetails(marker, shop));
         });
     }
