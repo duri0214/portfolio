@@ -1,4 +1,67 @@
 /**
+ * 店舗詳細情報のVO（Value Object）。
+ */
+class ShopDetail {
+    /**
+     * @param {Object} data APIから取得した店舗詳細データ。
+     */
+    constructor(data) {
+        this.name = data.name || "情報なし";
+        this.address = (data.formatted_address || "").slice(0, 10) + "...";
+        this.phoneNumber = data.formatted_phone_number || "情報なし";
+        this.openingHours = this.formatOpeningHours(data.opening_hours);
+        this.priceLevel = data.price_level || "情報なし";
+        this.rating = data.rating || "情報なし";
+        this.types = (data.types || []).join(', ') || "情報なし";
+        this.website = data.website || "情報なし";
+        this.review = this.formatReview(data.reviews);
+    }
+
+    /**
+     * 開店時間をフォーマットする。
+     * @param {Object} openingHours 開店時間データ。
+     * @returns {string} フォーマットされた開店時間文字列。
+     */
+    formatOpeningHours(openingHours) {
+        if (openingHours && openingHours.periods && openingHours.periods[0]) {
+            return `${openingHours.periods[0].open.time}-${openingHours.periods[0].close.time}`;
+        }
+        return "情報なし";
+    }
+
+    /**
+     * レビューをフォーマットする。
+     * @param {Array<Object>} reviews レビューデータ配列。
+     * @returns {string} フォーマットされたレビュー文字列。
+     */
+    formatReview(reviews) {
+        if (reviews && reviews[0]) {
+            return `${reviews[0].author_name}(${reviews[0].rating}): ${reviews[0].text}`;
+        }
+        return "情報なし";
+    }
+
+
+    /**
+     * HTML文字列を生成する。
+     * @returns {string} HTML文字列。
+     */
+    toHtml() {
+        return `
+            名前: ${this.name}<br>
+            住所: ${this.address}<br>
+            電話番号: ${this.phoneNumber}<br>
+            開店時間[Sun]: ${this.openingHours}<br>
+            料金レベル: ${this.priceLevel}<br>
+            評価: ${this.rating}<br>
+            種類: ${this.types}<br>
+            website: ${this.website}<br><br>
+            レビュー(先頭1名):<br> ${this.review}<br>
+        `;
+    }
+}
+
+/**
  * Google Maps上にマーカーを表示し、クリックで詳細情報を表示するクラス。
  */
 class CustomMap {
@@ -95,27 +158,18 @@ class CustomMap {
                         "X-CSRFToken": Cookies.get('csrftoken')
                     }
                 });
-                const data = await response.json();
-                let content = '';
-                if (data.detail) {
-                    content += `名前: ${data.detail.name}<br>`;
-                    content += `住所: ${data.detail.formatted_address.slice(0, 10)}...<br>`;
-                    content += `電話番号: ${data.detail.formatted_phone_number}<br>`;
-                    if (data.detail.opening_hours && data.detail.opening_hours.periods && data.detail.opening_hours.periods[0]) {
-                        content += `開店時間[Sun]: ${data.detail.opening_hours.periods[0].open.time}-${data.detail.opening_hours.periods[0].close.time}<br>`;
-                    }
-                    content += `料金レベル: ${data.detail.price_level}<br>`;
-                    content += `評価: ${data.detail.rating}<br>`;
-                    content += `種類: ${(data.detail.types || []).join(', ')}<br>`;
-                    content += `website: ${data.detail.website}<br><br>`;
-                    if (data.detail.reviews && data.detail.reviews[0]) {
-                        content += `レビュー(先頭1名): <br>${data.detail.reviews[0].author_name}(${data.detail.reviews[0].rating}): ${data.detail.reviews[0].text}<br>`;
-                    }
-                } else {
-                    content = "詳細情報を取得できませんでした。";
+                if (!response.ok) {
+                    const errorJson = await response.json();
+                    throw new Error(`${response.status} ${response.statusText}: ${errorJson.message}`);
                 }
-                placeInformation.innerHTML = content;
-                infoWindow.setContent(content);
+                const data = await response.json();
+
+                // VOを作成
+                const shopDetail = new ShopDetail(data.detail || {});
+                console.log("shopDetail: ", shopDetail)
+
+                placeInformation.innerHTML = shopDetail.toHtml();
+                infoWindow.setContent(shopDetail.toHtml());
             } catch (error) {
                 console.error("Error:", error);
                 placeInformation.innerHTML = "エラーが発生しました。";
