@@ -125,37 +125,61 @@ class CustomMap {
     }
 }
 
-function do_pattern2(button) {
-    console.log('is_editing: ', is_editing)
-    if (!is_editing) {
-        // red: 選択中
+/**
+ * ピンを選択して登録するモードの処理を行う関数。
+ * @param {HTMLButtonElement} button クリックされたボタン要素。
+ */
+async function toggleEditMode(button) {
+    /**
+     * 現在編集モードかどうかを示すフラグ。static変数として定義することで、関数呼び出しを超えて状態を保持
+     * @type {boolean}
+     */
+    toggleEditMode.isEditing = toggleEditMode.isEditing === undefined ? false : !toggleEditMode.isEditing;
+
+    if (!toggleEditMode.isEditing) {
+        // 選択モード開始時のスタイル変更
         button.style.border = 'solid 2px #ff0000';
         button.style.color = '#ff0000';
         alert('管理者選択モード');
     } else {
-        // blue: 登録対象のピン
-        const confirm = window.confirm("登録しますか？");
-        if (confirm) {
-            fetch(myUrl.base + 'search/2', {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "X-CSRFToken": Cookies.get('csrftoken')
-                },
-                body: JSON.stringify({"shops": keep_markers})
-            })
-                .then(response => response.json())
-                .then(json => {
-                    alert(json.status + ': 登録が完了しました。');
-                    keep_markers = [];
-                    location.href = myUrl.base + 'result/2';
-                    button.style.border = 'solid 2px';
-                    button.style.color = '#67c5ff';
-                })
-                .catch(error => {
-                    shopinfomation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
-                })
+        // 登録確認ダイアログを表示
+        const confirmed = window.confirm("登録しますか？");
+        if (confirmed) {
+            try {
+                // 登録処理を実行
+                const response = await fetch(myUrl.base + 'search/2', {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "X-CSRFToken": Cookies.get('csrftoken')
+                    },
+                    body: JSON.stringify({"shops": keep_markers})
+                });
+
+                if (!response.ok) {
+                    // HTTPエラーの場合、エラーをthrow
+                    const errorJson = await response.json(); //サーバーからエラーメッセージが返ってきている場合
+                    throw new Error(`${response.status} ${response.statusText}: ${errorJson.message}`);
+                }
+                const json = await response.json();
+
+                alert(json.status + ': 登録が完了しました。');
+                keep_markers = [];
+                location.href = myUrl.base + 'result/2';
+
+                // 登録完了後のスタイル変更
+                button.style.border = 'solid 2px';
+                button.style.color = '#67c5ff';
+
+            } catch (error) {
+                console.error("登録エラー:", error);
+                shopinfomation.innerHTML = `Status: ${error.message}`; // エラーメッセージを表示
+            }
+        } else {
+            // キャンセルされた場合は編集モードを戻す
+            toggleEditMode.isEditing = !toggleEditMode.isEditing;
+            button.style.border = 'solid 2px'; // 元のスタイルに戻す
+            button.style.color = '#67c5ff';
         }
     }
-    is_editing = !is_editing;
 }
