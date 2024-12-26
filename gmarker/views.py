@@ -101,6 +101,9 @@ class SearchDetailView(View):
         #  placeマスタを作って、マスタにあったらAPIアクセスせずに表示したい
         place_id = kwargs["place_id"]
         service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
-        store_details = service.get_place_details(place_id)
+        store_details = service.get_place_details(
+            place_id,
+            fields=["name", "formatted_address", "rating"],
+        )
 
         return JsonResponse({"detail": store_details})
