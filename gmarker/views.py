@@ -64,31 +64,32 @@ class IndexView(TemplateView):
         context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
         return context
 
-    def post(self, request, *args, **kwargs):
-        search_code = self.kwargs.get("search_code", "9")
+    @staticmethod
+    def post(request, search_code: str):
         print(f"{search_code=}")
-        if search_code[:1] == "1":
+        if search_code == "1":
             # カテゴリーサーチモード
             map_center = NearbyPlace.objects.get(category=NearbyPlace.DEFAULT_LOCATION)
             latitude, longitude = map(float, map_center.location.split(","))
-            types = "restaurant"
-            radius = 1500
+            search_types = ["restaurant"]
             service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
             shops = service.nearby_search(
-                search_word,
                 GoogleMapCoords(latitude, longitude),
-                types,
-                radius,
+                search_types,
+                1500,
                 fields=["name", "formatted_address", "rating"],
             )
-            handle_search_code(NearbyPlace.CATEGORY_SEARCH, search_word, shops)
-        elif search_code[:1] == "2":
+            print(f"{shops=}")
+            handle_search_code(
+                NearbyPlace.CATEGORY_SEARCH, ",".join(search_types), shops
+            )
+        elif search_code == "2":
             # ピン選択モード
             shops = json.loads(request.body).get("shops")
-            handle_search_code(NearbyPlace.PIN_SELECT, "selected by you.", shops)
+            handle_search_code(NearbyPlace.PIN_SELECT, "PIN_SELECT", shops)
             return JsonResponse({"status": "OK"})
         return redirect(
-            reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code[:1]})
+            reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code})
         )
 
 
