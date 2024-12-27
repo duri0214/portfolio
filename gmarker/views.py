@@ -9,7 +9,7 @@ from django.views.generic import View, TemplateView
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
 from gmarker.domain.valueobject.googlemaps import PlaceVO
-from gmarker.models import NearbyPlace, CategorySearchMaster
+from gmarker.models import NearbyPlace
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
@@ -69,8 +69,6 @@ class IndexView(TemplateView):
         print(f"{search_code=}")
         if search_code[:1] == "1":
             # カテゴリーサーチモード
-            search_word = CategorySearchMaster.objects.get(code=search_code).name
-            print(f"{search_word=}")
             map_center = NearbyPlace.objects.get(category=NearbyPlace.DEFAULT_LOCATION)
             latitude, longitude = map(float, map_center.location.split(","))
             types = "restaurant"

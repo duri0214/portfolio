@@ -35,23 +35,3 @@ class NearbyPlace(models.Model):
     location = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
-
-
-class CategorySearchMaster(models.Model):
-    """
-    CategorySearchMaster is a model that serves as a Master table for category search.
-
-    Fields:
-        code (CharField): The unique code associated with each category.
-        name (CharField): The name of the category associated with each unique code.
-
-    Sample data:
-        "1A", "ラーメン"
-        "1B", "洋食"
-        "1C", "和食"
-
-    This model is used to fetch the category name using the code.
-    """
-
-    code = models.CharField(primary_key=True, max_length=2)
-    name = models.CharField(max_length=100)
