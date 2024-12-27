@@ -48,15 +48,14 @@ class GoogleMapsService:
                     "radius": radius,
                 }
             },
-            "keyword": keyword,
-            "includedTypes": [types],  # typesはリストで渡す
-            "languageCode": "ja",  # 日本語で取得
-            "fields": fields,
+            "includedTypes": search_types,
+            "languageCode": "ja",
         }
 
         headers = {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": self.api_key,
+            "X-Goog-FieldMask": ",".join(fields),
         }
 
         try:
