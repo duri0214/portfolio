@@ -12,7 +12,7 @@ class GoogleMapsService:
     def nearby_search(
         self,
         center: GoogleMapCoords,
-        types: str,
+        search_types: list[str],
         radius: int,
         fields: list[str],
     ) -> list[PlaceVO]:
@@ -21,7 +21,7 @@ class GoogleMapsService:
 
         Args:
             center: 検索中心の座標。
-            types: 検索する場所のタイプ。
+            search_types: 検索する場所のタイプ。
             radius: 検索半径（メートル）。
             fields: 取得するフィールドのリスト。
 
