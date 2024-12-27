@@ -86,7 +86,6 @@ class GoogleMapsService:
 
                 places.append(
                     PlaceVO(
-                        search_word=keyword,
                         place_id=place_data.get("id"),
                         name=place_data.get("displayName", {}).get("text"),
                         location=latlng,
