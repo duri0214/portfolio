@@ -11,7 +11,6 @@ class GoogleMapsService:
 
     def nearby_search(
         self,
-        keyword: str,
         center: GoogleMapCoords,
         types: str,
         radius: int,
@@ -21,7 +20,6 @@ class GoogleMapsService:
         Google Maps Places APIのNearby Search (New)を使用して施設を検索します。
 
         Args:
-            keyword: 検索キーワード。
             center: 検索中心の座標。
             types: 検索する場所のタイプ。
             radius: 検索半径（メートル）。

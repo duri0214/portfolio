@@ -29,7 +29,6 @@ class PlaceVO:
     このデータクラスは、Google Places APIから取得した場所の詳細情報を表します。
 
     プロパティ:
-        search_word: 場所の検索ワード
         place_id: 場所のGoogle Places IDを表す文字列
         name: 場所の名前を表す文字列です。
         location: 場所の座標
@@ -38,7 +37,6 @@ class PlaceVO:
         is_status_ok: APIからのレスポンスにエラーがなかった場合にTrue
     """
 
-    search_word: str
     place_id: str
     name: str
     location: GoogleMapCoords
