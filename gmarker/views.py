@@ -73,11 +73,18 @@ class IndexView(TemplateView):
             latitude, longitude = map(float, map_center.location.split(","))
             search_types = ["restaurant"]
             service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
+            fields = [
+                "places.id",
+                "places.location",
+                "places.displayName.text",
+                "places.formattedAddress",
+                "places.photos",
+            ]
             shops = service.nearby_search(
-                GoogleMapCoords(latitude, longitude),
-                search_types,
-                1500,
-                fields=["name", "formatted_address", "rating"],
+                center=GoogleMapCoords(latitude, longitude),
+                search_types=search_types,
+                radius=1500,
+                fields=fields,
             )
             print(f"{shops=}")
             handle_search_code(

@@ -26,19 +26,20 @@ class PlaceDetail:
 @dataclass
 class PlaceVO:
     """
-    このデータクラスは、Google Places APIから取得した場所の詳細情報を表します。
+    このデータクラスは、Google Places APIから取得する場所の詳細情報を表します。
 
     プロパティ:
-        place_id: 場所のGoogle Places IDを表す文字列
-        name: 場所の名前を表す文字列です。
-        location: 場所の座標
-        photos: 場所の写真のリスト
-        reviews: 場所のレビューを表す文字列のリスト
-        is_status_ok: APIからのレスポンスにエラーがなかった場合にTrue
+        place_id: 場所のGoogle Places IDを表現する文字列。
+        location: 場所の座標を表現するGoogleMapCoordsのインスタンス。
+        name: 場所の名前を表現する文字列。
+        address: 場所の住所を表現する文字列。
+        photos: 場所の写真を格納するPlacePhotoのインスタンスのリスト。
+        detail: 場所の詳細情報を表現するPlaceDetailのインスタンス（将来的にレビュー情報が含まれる可能性あり）。
     """
 
-    place_id: str
-    name: str
-    location: GoogleMapCoords
-    photos: list[PlacePhoto]
-    detail: PlaceDetail | None
+    place_id: str | None
+    location: GoogleMapCoords | None
+    name: str | None
+    address: str | None
+    photos: list[PlacePhoto] | None
+    detail: PlaceDetail | None  # TODO: reviewが入るといいな
