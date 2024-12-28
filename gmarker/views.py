@@ -18,6 +18,7 @@ def handle_search_code(category: int, search_types: str, places: list[PlaceVO]):
     if places:
         new_places = []
         for place in places:
+            # TODO: modelである必要はあるか？repositoryに移管できるか？
             store = NearbyPlace(
                 category=category,
                 search_types=search_types,
@@ -36,7 +37,7 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         search_code = self.kwargs.get("search_code", "9")
         print(f"{search_code=}")
-        temp = NearbyPlace.objects.filter(category=search_code)
+        temp = NearbyPlace.objects.filter(category=search_code)  # TODO: repositoryへ
         shops = []
         for i, row in enumerate(temp):
             shops.append(
@@ -52,7 +53,9 @@ class IndexView(TemplateView):
                     "place_id": row.place_id,
                 }
             )
-        map_center = NearbyPlace.objects.get(category=NearbyPlace.DEFAULT_LOCATION)
+        map_center = NearbyPlace.objects.get(
+            category=NearbyPlace.DEFAULT_LOCATION
+        )  # TODO: repositoryへ
         # TODO: この値構成、整理できないか？
         unit = {
             "center": {
@@ -70,7 +73,9 @@ class IndexView(TemplateView):
         print(f"{search_code=}")
         if search_code == "1":
             # カテゴリーサーチモード
-            map_center = NearbyPlace.objects.get(category=NearbyPlace.DEFAULT_LOCATION)
+            map_center = NearbyPlace.objects.get(
+                category=NearbyPlace.DEFAULT_LOCATION
+            )  # TODO: repositoryへ（repositoryが定数を持つ）
             latitude, longitude = map(float, map_center.location.split(","))
             search_types = ["restaurant"]
             service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
@@ -88,13 +93,16 @@ class IndexView(TemplateView):
                 radius=1500,
                 fields=fields,
             )
+            # TODO: repositoryへ（repositoryが定数を持つ）
             handle_search_code(
                 NearbyPlace.CATEGORY_SEARCH, ",".join(search_types), shops
             )
         elif search_code == "2":
             # ピン選択モード
             shops = json.loads(request.body).get("shops")
-            handle_search_code(NearbyPlace.PIN_SELECT, "PIN_SELECT", shops)
+            handle_search_code(
+                NearbyPlace.PIN_SELECT, "PIN_SELECT", shops
+            )  # TODO: repositoryへ（repositoryが定数を持つ）
             return JsonResponse({"status": "OK"})
         return redirect(
             reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code})
