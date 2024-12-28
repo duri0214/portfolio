@@ -29,7 +29,7 @@ class NearbyPlace(models.Model):
             (DEFAULT_LOCATION, "Default Location"),
         ]
     )
-    search_word = models.CharField(null=True, blank=True, max_length=100)
+    search_types = models.CharField(null=True, blank=True, max_length=100)
     place_id = models.CharField(null=True, blank=True, max_length=200)
     name = models.CharField(max_length=200)
     location = models.CharField(max_length=100)

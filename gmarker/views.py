@@ -13,14 +13,14 @@ from gmarker.models import NearbyPlace
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
-def handle_search_code(category: int, search_word: str, places: list[PlaceVO]):
+def handle_search_code(category: int, search_types: str, places: list[PlaceVO]):
     NearbyPlaceRepository.delete_by_category(category)
     if places:
         new_places = []
         for place in places:
             store = NearbyPlace(
                 category=category,
-                search_word=search_word,
+                search_types=search_types,
                 place_id=place.place_id,
                 name=place.name,
                 location=place.location.to_str(),
@@ -53,6 +53,7 @@ class IndexView(TemplateView):
                 }
             )
         map_center = NearbyPlace.objects.get(category=NearbyPlace.DEFAULT_LOCATION)
+        # TODO: この値構成、整理できないか？
         unit = {
             "center": {
                 "lat": map_center.location.split(",")[0],
@@ -80,6 +81,7 @@ class IndexView(TemplateView):
                 "places.formattedAddress",
                 "places.photos",
             ]
+            # TODO: shopじゃなくてplaceだよね
             shops = service.nearby_search(
                 center=GoogleMapCoords(latitude, longitude),
                 search_types=search_types,
