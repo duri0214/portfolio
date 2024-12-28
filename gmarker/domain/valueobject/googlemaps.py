@@ -5,10 +5,11 @@ from lib.geo.valueobject.coords import GoogleMapCoords
 
 @dataclass
 class PlacePhoto:
-    height: int
-    width: int
-    html_attributions: list[str]
-    photo_reference: str
+    width: int | None
+    height: int | None
+    author_name: str | None
+    author_url: str | None
+    author_photo_uri: str | None
 
 
 @dataclass

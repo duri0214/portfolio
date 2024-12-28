@@ -75,20 +75,23 @@ class GoogleMapsService:
 
                 photos = []
                 for photo in place_data.get("photos", []):
+                    author_attributions = photo.get("authorAttributions", [])[0]
                     photos.append(
                         PlacePhoto(
-                            height=photo.get("height"),
-                            width=photo.get("width"),
-                            html_attributions=photo.get("html_attributions", []),
-                            photo_reference=photo.get("photo_reference"),
+                            width=photo.get("widthPx"),
+                            height=photo.get("heightPx"),
+                            author_name=author_attributions.get("displayName"),
+                            author_url=author_attributions.get("uri"),
+                            author_photo_uri=author_attributions.get("photoUri"),
                         )
                     )
 
                 places.append(
                     PlaceVO(
                         place_id=place_data.get("id"),
-                        name=place_data.get("displayName", {}).get("text"),
                         location=latlng,
+                        name=place_data.get("displayName", {}).get("text"),
+                        address=place_data.get("formattedAddress"),
                         photos=photos,
                         detail=None,
                     )
@@ -149,17 +152,6 @@ class GoogleMapsService:
                     types=result.get("types"),
                     website=result.get("website"),
                 )
-                place_photos = []
-                for photo in result.get("photos", []):
-                    place_photos.append(
-                        PlacePhoto(
-                            height=photo.get("height"),
-                            width=photo.get("width"),
-                            html_attributions=photo.get("html_attributions"),
-                            photo_reference=photo.get("photo_reference"),
-                        )
-                    )
-                place_vo.photos = place_photos
 
                 location_data = result.get("geometry", {}).get("location")
                 if location_data:
