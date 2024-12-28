@@ -86,7 +86,6 @@ class IndexView(TemplateView):
                 radius=1500,
                 fields=fields,
             )
-            print(f"{shops=}")
             handle_search_code(
                 NearbyPlace.CATEGORY_SEARCH, ",".join(search_types), shops
             )
