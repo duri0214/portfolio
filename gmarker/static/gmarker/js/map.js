@@ -180,6 +180,9 @@ class CustomMap {
     }
 }
 
+const EDIT_MODE_COLOR = '#ff0000';
+const DEFAULT_MODE_COLOR = '#67c5ff';
+
 /**
  * ピンを選択して登録するモードの処理を行う関数。
  * @param {HTMLButtonElement} button クリックされたボタン要素。
@@ -193,8 +196,8 @@ async function toggleEditMode(button) {
 
     if (!toggleEditMode.isEditing) {
         // 選択モード開始時のスタイル変更
-        button.style.border = 'solid 2px #ff0000';
-        button.style.color = '#ff0000';
+        button.style.border = `solid 2px ${EDIT_MODE_COLOR}`;
+        button.style.color = EDIT_MODE_COLOR;
         alert('管理者選択モード');
     } else {
         // 登録確認ダイアログを表示
@@ -224,7 +227,7 @@ async function toggleEditMode(button) {
 
                 // 登録完了後のスタイル変更
                 button.style.border = 'solid 2px';
-                button.style.color = '#67c5ff';
+                button.style.color = DEFAULT_MODE_COLOR;
 
             } catch (error) {
                 console.error("登録エラー:", error);
@@ -234,7 +237,7 @@ async function toggleEditMode(button) {
             // キャンセルされた場合は編集モードを戻す
             toggleEditMode.isEditing = !toggleEditMode.isEditing;
             button.style.border = 'solid 2px'; // 元のスタイルに戻す
-            button.style.color = '#67c5ff';
+            button.style.color = DEFAULT_MODE_COLOR;
         }
     }
 }
