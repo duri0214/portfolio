@@ -32,6 +32,12 @@
             type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap('{{ unit|escapejs }}');
+        });
+    </script>
+
     <!-- jsonファイルを読み込んだりする js -->
     <script src="{% static 'gmarker/js/map.js' %}"></script>
 
@@ -39,7 +45,7 @@
     <script>let myUrl = {"base": "{% url 'mrk:index' %}"};</script>
 </head>
 
-<body onload="window.myMap = new CustomMap('map_canvas1', '{{ unit }}')">
+<body>
 <h1></h1>
 <header>
     <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
