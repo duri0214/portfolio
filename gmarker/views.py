@@ -71,13 +71,17 @@ class IndexView(TemplateView):
                 fields=fields,
             )
             NearbyPlaceRepository.handle_search_code(
-                NearbyPlaceRepository.CATEGORY_SEARCH, ",".join(search_types), shops
+                category=NearbyPlaceRepository.CATEGORY_SEARCH,
+                search_types=",".join(search_types),
+                places=shops,
             )
         elif search_code == "2":
             # ピン選択モード
             shops = json.loads(request.body).get("shops")
             NearbyPlaceRepository.handle_search_code(
-                NearbyPlaceRepository.PIN_SELECT, "PIN_SELECT", shops
+                category=NearbyPlaceRepository.PIN_SELECT,
+                search_types="PIN_SELECT",
+                places=shops,
             )
             return JsonResponse({"status": "OK"})
         return redirect(
