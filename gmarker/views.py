@@ -53,9 +53,7 @@ class IndexView(TemplateView):
                     "place_id": place.place_id,
                 }
             )
-        map_center = NearbyPlace.objects.get(
-            category=NearbyPlace.DEFAULT_LOCATION
-        )  # TODO: repositoryへ
+        map_center = NearbyPlaceRepository.get_default_location()
         # TODO: この値構成、整理できないか？
         unit = {
             "center": {
@@ -73,9 +71,7 @@ class IndexView(TemplateView):
         print(f"{search_code=}")
         if search_code == "1":
             # カテゴリーサーチモード
-            map_center = NearbyPlace.objects.get(
-                category=NearbyPlace.DEFAULT_LOCATION
-            )  # TODO: repositoryへ（repositoryが定数を持つ）
+            map_center = NearbyPlaceRepository.get_default_location()
             latitude, longitude = map(float, map_center.location.split(","))
             search_types = ["restaurant"]
             service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
