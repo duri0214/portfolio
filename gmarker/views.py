@@ -37,20 +37,20 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         search_code = self.kwargs.get("search_code", "9")
         print(f"{search_code=}")
-        temp = NearbyPlace.objects.filter(category=search_code)  # TODO: repositoryへ
+        places = NearbyPlaceRepository.get_places_by_category(search_code)
         shops = []
-        for i, row in enumerate(temp):
+        for place in places:
             shops.append(
                 {
                     "geometry": {
                         "location": {
-                            "lat": row.location.split(",")[0],
-                            "lng": row.location.split(",")[1],
+                            "lat": place.location.split(",")[0],
+                            "lng": place.location.split(",")[1],
                         }
                     },
                     "radius": 1500,
-                    "shop_name": row.name,
-                    "place_id": row.place_id,
+                    "shop_name": place.name,
+                    "place_id": place.place_id,
                 }
             )
         map_center = NearbyPlace.objects.get(
