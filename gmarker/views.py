@@ -8,26 +8,7 @@ from django.views.generic import View, TemplateView
 
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
-from gmarker.domain.valueobject.googlemaps import PlaceVO
-from gmarker.models import NearbyPlace
 from lib.geo.valueobject.coords import GoogleMapCoords
-
-
-def handle_search_code(category: int, search_types: str, places: list[PlaceVO]):
-    NearbyPlaceRepository.delete_by_category(category)
-    if places:
-        new_places = []
-        for place in places:
-            # TODO: modelである必要はあるか？repositoryに移管できるか？
-            store = NearbyPlace(
-                category=category,
-                search_types=search_types,
-                place_id=place.place_id,
-                name=place.name,
-                location=place.location.to_str(),
-            )
-            new_places.append(store)
-        NearbyPlaceRepository.bulk_create(new_places)
 
 
 class IndexView(TemplateView):
@@ -89,16 +70,15 @@ class IndexView(TemplateView):
                 radius=1500,
                 fields=fields,
             )
-            # TODO: repositoryへ（repositoryが定数を持つ）
-            handle_search_code(
-                NearbyPlace.CATEGORY_SEARCH, ",".join(search_types), shops
+            NearbyPlaceRepository.handle_search_code(
+                NearbyPlaceRepository.CATEGORY_SEARCH, ",".join(search_types), shops
             )
         elif search_code == "2":
             # ピン選択モード
             shops = json.loads(request.body).get("shops")
-            handle_search_code(
-                NearbyPlace.PIN_SELECT, "PIN_SELECT", shops
-            )  # TODO: repositoryへ（repositoryが定数を持つ）
+            NearbyPlaceRepository.handle_search_code(
+                NearbyPlaceRepository.PIN_SELECT, "PIN_SELECT", shops
+            )
             return JsonResponse({"status": "OK"})
         return redirect(
             reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code})

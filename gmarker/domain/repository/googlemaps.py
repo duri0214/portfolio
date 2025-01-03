@@ -1,5 +1,6 @@
 from django.db.models import QuerySet
 
+from gmarker.domain.valueobject.googlemaps import PlaceVO
 from gmarker.models import NearbyPlace
 
 
@@ -38,3 +39,19 @@ class NearbyPlaceRepository:
     @classmethod
     def get_default_location(cls) -> NearbyPlace:
         return NearbyPlace.objects.get(category=cls.DEFAULT_LOCATION)
+
+    @staticmethod
+    def handle_search_code(category: int, search_types: str, places: list[PlaceVO]):
+        NearbyPlaceRepository.delete_by_category(category)
+        if places:
+            new_places = []
+            for place in places:
+                store = NearbyPlace(
+                    category=category,
+                    search_types=search_types,
+                    place_id=place.place_id,
+                    name=place.name,
+                    location=place.location.to_str(),
+                )
+                new_places.append(store)
+            NearbyPlaceRepository.bulk_create(new_places)

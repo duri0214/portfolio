@@ -7,10 +7,6 @@ class NearbyPlace(models.Model):
     ユーザーが画面から登録するのは "Category"と"Pin Select"です。 "Database Insert"は主にメンテナンスのときに使います。
     """
 
-    CATEGORY_SEARCH = 1  # TODO: すでにrepositoryへ移してある
-    PIN_SELECT = 2  # TODO: すでにrepositoryへ移してある
-    DATABASE_INSERT = 3  # TODO: すでにrepositoryへ移してある
-
     category = (
         models.IntegerField()
     )  # TODO: 現在時点では自位置の9の特定に必要だがバラしてフィールドにしたら？
