@@ -1,6 +1,6 @@
 import requests
 
-from gmarker.domain.valueobject.googlemaps import PlacePhoto, PlaceVO, PlaceDetail
+from gmarker.domain.valueobject.googlemaps import PlacePhoto, PlaceVO
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
@@ -93,7 +93,8 @@ class GoogleMapsService:
                         name=place_data.get("displayName", {}).get("text"),
                         address=place_data.get("formattedAddress"),
                         photos=photos,
-                        detail=None,
+                        rating=place_data.get("rating"),
+                        reviews=place_data.get("reviews"),
                     )
                 )
             return places
@@ -141,24 +142,29 @@ class GoogleMapsService:
             response = requests.get(url, params=params, headers=headers)
             response.raise_for_status()
             result = response.json().get("result")
-            if result:
-                place_vo.detail = PlaceDetail(
-                    formatted_address=result.get("formatted_address"),
-                    formatted_phone_number=result.get("formatted_phone_number"),
-                    opening_hours=result.get("opening_hours"),
-                    price_level=result.get("price_level"),
-                    rating=result.get("rating"),
-                    reviews=result.get("reviews"),
-                    types=result.get("types"),
-                    website=result.get("website"),
-                )
 
-                location_data = result.get("geometry", {}).get("location")
-                if location_data:
-                    place_vo.location = GoogleMapCoords(
-                        latitude=location_data.get("lat"),
-                        longitude=location_data.get("lng"),
-                    )
+            if not result:
+                print(f"No result found for place_id: {place_id}")
+                return None
+
+            location_data = result.get("geometry", {}).get("location")
+            location = (
+                GoogleMapCoords(
+                    latitude=location_data.get("lat"),
+                    longitude=location_data.get("lng"),
+                )
+                if location_data
+                else None
+            )
+
+            place_vo = PlaceVO(
+                place_id=place_id,
+                location=location,
+                name=result.get("name"),
+                photos=result.get("photos", []),
+                rating=result.get("rating"),
+                reviews=result.get("reviews", []),
+            )
             return place_vo
         except requests.HTTPError as e:
             print(f"An HTTP error occurred: {e}")
