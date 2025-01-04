@@ -71,12 +71,6 @@ function showInfoWindow(marker, content) {
     infowindow.open(map, marker);
 }
 
-function closeInfoWindow() {
-    if (infowindow) {
-        infowindow.close();
-        infowindow = null;
-    }
-}
 
 async function showShopInformation(markerData) {
     const placeInformation = document.getElementById('placeInformation');
