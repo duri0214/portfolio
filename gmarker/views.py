@@ -69,7 +69,6 @@ class IndexView(TemplateView):
                     "places.location",
                     "places.displayName.text",
                     "places.rating",
-                    "places.reviews",
                 ],
             )
             NearbyPlaceRepository.handle_search_code(
