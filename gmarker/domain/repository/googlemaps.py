@@ -46,12 +46,14 @@ class NearbyPlaceRepository:
         if places:
             new_places = []
             for place in places:
-                store = NearbyPlace(
-                    category=category,
-                    search_types=search_types,
-                    place_id=place.place_id,
-                    name=place.name,
-                    location=place.location.to_str(),
+                new_places.append(
+                    NearbyPlace(
+                        category=category,
+                        search_types=search_types,
+                        place_id=place.place_id,
+                        name=place.name,
+                        location=place.location.to_str(),
+                        rating=place.rating,
+                    )
                 )
-                new_places.append(store)
             NearbyPlaceRepository.bulk_create(new_places)
