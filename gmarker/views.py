@@ -16,7 +16,6 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search_code = self.kwargs.get("search_code", 9)
-        print(f"{search_code=}")
         places = NearbyPlaceRepository.get_places_by_category(search_code)
 
         # map_data を直接作成
