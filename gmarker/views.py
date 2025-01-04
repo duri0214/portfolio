@@ -8,7 +8,6 @@ from django.views.generic import View, TemplateView
 
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
-from gmarker.domain.valueobject.googlemaps import PlaceVO
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
@@ -65,8 +64,7 @@ class IndexView(TemplateView):
             latitude, longitude = map(float, map_center.location.split(","))
             search_types = ["restaurant"]
             service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
-            # TODO: shopじゃなくてplaceだよね
-            shops = service.nearby_search(
+            places = service.nearby_search(
                 center=GoogleMapCoords(latitude, longitude),
                 search_types=search_types,
                 radius=1500,
@@ -80,35 +78,8 @@ class IndexView(TemplateView):
             NearbyPlaceRepository.handle_search_code(
                 category=NearbyPlaceRepository.CATEGORY_SEARCH,
                 search_types=",".join(search_types),
-                places=shops,
+                places=places,
             )
-        elif search_code == NearbyPlaceRepository.PIN_SELECT:
-            # ピン選択モード
-            selected_place_list = []
-            for place in json.loads(request.body).get("places"):
-                geometry_data = place["geometry"]
-                location_data = geometry_data["location"]
-                selected_place_list.append(
-                    PlaceVO(
-                        place_id=place["place_id"],
-                        location=GoogleMapCoords(
-                            latitude=location_data["lat"],
-                            longitude=location_data["lng"],
-                        ),
-                        name=place["shop_name"],
-                        photos=[],
-                        rating=0,  # TODO: jsのajax経由でもらってください
-                        reviews=[],
-                    )
-                )
-
-            print(f"{selected_place_list=}")
-            NearbyPlaceRepository.handle_search_code(
-                category=NearbyPlaceRepository.PIN_SELECT,
-                search_types="PIN_SELECT",
-                places=selected_place_list,
-            )
-            return JsonResponse({"status": "OK"})
         return redirect(
             reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code})
         )
