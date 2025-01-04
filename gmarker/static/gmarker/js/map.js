@@ -70,13 +70,8 @@ function initMap(jsonString) {
 
     createMarkersFromData(jsonData.shops);
 
-    // ローカルストレージからisEditingの状態を復元
     const storedIsEditing = localStorage.getItem('isEditing');
-    if (storedIsEditing) {
-        isEditing = JSON.parse(storedIsEditing);
-    }
-
-    // 編集モードに応じてイベントリスナーを設定
+    isEditing = storedIsEditing ? JSON.parse(storedIsEditing) : false;
     updateMarkerListeners();
 }
 
