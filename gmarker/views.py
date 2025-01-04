@@ -16,7 +16,7 @@ class IndexView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        search_code = self.kwargs.get("search_code", "9")
+        search_code = self.kwargs.get("search_code", 9)
         print(f"{search_code=}")
         places = NearbyPlaceRepository.get_places_by_category(search_code)
         shops = []
@@ -48,9 +48,9 @@ class IndexView(TemplateView):
         return context
 
     @staticmethod
-    def post(request, search_code: str):
+    def post(request, search_code: int):
         print(f"{search_code=}")
-        if search_code == "1":
+        if search_code == NearbyPlaceRepository.CATEGORY_SEARCH:
             # カテゴリーサーチモード
             map_center = NearbyPlaceRepository.get_default_location()
             latitude, longitude = map(float, map_center.location.split(","))
@@ -74,7 +74,7 @@ class IndexView(TemplateView):
                 search_types=",".join(search_types),
                 places=shops,
             )
-        elif search_code == "2":
+        elif search_code == NearbyPlaceRepository.PIN_SELECT:
             # ピン選択モード
             shops = json.loads(request.body).get("shops")
             NearbyPlaceRepository.handle_search_code(

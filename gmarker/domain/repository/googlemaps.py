@@ -33,7 +33,7 @@ class NearbyPlaceRepository:
         NearbyPlace.objects.bulk_create(objects)
 
     @staticmethod
-    def get_places_by_category(category: str) -> QuerySet[NearbyPlace]:
+    def get_places_by_category(category: int) -> QuerySet[NearbyPlace]:
         return NearbyPlace.objects.filter(category=category)
 
     @classmethod
