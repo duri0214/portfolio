@@ -79,9 +79,7 @@ class GoogleMapsService:
                         location=latlng,
                         name=place_data.get("displayName", {}).get("text"),
                         rating=place_data.get("rating"),
-                        reviews=[
-                            x.get("text").get("text") for x in place_data.get("reviews")
-                        ],
+                        reviews=[],
                     )
                 )
             return places
