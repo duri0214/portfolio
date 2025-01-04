@@ -108,10 +108,9 @@ class IndexView(TemplateView):
 
 class SearchDetailView(View):
     @staticmethod
-    def get(request, *args, **kwargs):
+    def get(request, place_id: str):
         # TODO: PinをホバーするたびにAPIアクセスしていると思うので
         #  placeマスタを作って、マスタにあったらAPIアクセスせずに表示したい
-        place_id = kwargs["place_id"]
         service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
         store_details = service.get_place_details(
             place_id,
