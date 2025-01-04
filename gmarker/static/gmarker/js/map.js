@@ -50,7 +50,7 @@ let markers = [];
 let infowindow;
 let jsonData;
 let isEditing = false;
-let selectedMarkers = [];
+let selectedMarkers = []; // MarkerDataオブジェクトを格納
 
 function initMap(jsonString) {
     jsonData = JSON.parse(jsonString);
@@ -63,7 +63,7 @@ function initMap(jsonString) {
         keyboardShortcuts: false,
         streetViewControl: false,
         fullscreenControl: false,
-        scrollwheel: true // マウスホイールスクロールは有効に
+        scrollwheel: true
     };
 
     map = new google.maps.Map(document.getElementById("map_canvas1"), options);
