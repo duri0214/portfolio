@@ -1,5 +1,5 @@
 let markers = [];
-let infowindow;
+let infoWindow;
 
 class MarkerData {
     constructor(data) {
@@ -7,6 +7,16 @@ class MarkerData {
         this.lng = data.location.lng;
         this.title = data.name || "マーカー";
         this.placeId = data.place_id;
+    }
+
+    toHtml() {
+        return `
+          <div>
+            <p>Place ID: ${this.placeId}</p>
+            <p>タイトル: ${this.title}</p>
+            <p>緯度lat,経度lng: ${this.lat},${this.lng}</p>
+          </div>
+        `;
     }
 }
 
@@ -55,8 +65,7 @@ function createMarkersFromData(places, Marker, map) {
         });
 
         marker.addListener('click', () => {
-            showInfoWindow(marker, markerData.title);
-            showShopInformation(markerData);
+            showInfoWindow(marker, markerData.toHtml());
         });
 
         return {marker, data: markerData};
@@ -64,29 +73,9 @@ function createMarkersFromData(places, Marker, map) {
 }
 
 function showInfoWindow(marker, content) {
-    if (infowindow) {
-        infowindow.close();
+    if (infoWindow) {
+        infoWindow.close();
     }
-    infowindow = new google.maps.InfoWindow({content});
-    infowindow.open(map, marker);
-}
-
-
-async function showShopInformation(markerData) {
-    const placeInformation = document.getElementById('placeInformation');
-    if (!placeInformation) return;
-    placeInformation.innerHTML = '名前: ' + markerData.title;
-    if (markerData.placeId) {
-        try {
-            const response = await fetch(myUrl.base + 'search/detail/' + markerData.placeId);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const json = await response.json();
-            placeInformation.innerHTML += '<br>詳細情報: ' + JSON.stringify(json);
-        } catch (error) {
-            console.error("詳細情報の取得エラー:", error);
-            placeInformation.innerHTML += '<br>詳細情報の取得に失敗しました。';
-        }
-    }
+    infoWindow = new google.maps.InfoWindow({content});
+    infoWindow.open(map, marker);
 }
