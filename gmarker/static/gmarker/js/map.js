@@ -1,3 +1,30 @@
+/**
+ * マーカーに紐付けるデータのインターフェース
+ * @class MarkerData
+ */
+class MarkerData {
+    /**
+     * MarkerDataオブジェクトを生成する
+     * @constructor
+     * @param {Object} data - マーカーの元データ
+     * @param {Object} data.geometry - ジオメトリ情報
+     * @param {Object} data.geometry.location - 位置情報
+     * @param {string|number} data.geometry.location.lat - 緯度
+     * @param {string|number} data.geometry.location.lng - 経度
+     * @param {string} [data.shop_name] - 店舗名 (オプション)
+     * @param {string} [data.place_id] - Place ID (オプション)
+     * @param {number} [data.radius] - 半径 (オプション)
+     * @param {string} [data.name] - 名称 (shop_nameがない場合に使用)
+     */
+    constructor(data) {
+        this.lat = data.geometry.location.lat;
+        this.lng = data.geometry.location.lng;
+        this.title = data.shop_name || data.name || "マーカー";
+        this.placeId = data.place_id;
+        this.radius = data.radius;
+    }
+}
+
 class CustomMap {
     constructor(mapCanvasId, jsonData) {
         this.map = new google.maps.Map(document.getElementById(mapCanvasId), {
@@ -15,18 +42,6 @@ class CustomMap {
                 title: shop.shop_name
             });
         });
-    }
-}
-
-// マーカー情報を持つVO
-class MarkerData {
-    constructor(shop) {
-        this.lat = shop.geometry.location.lat;
-        this.lng = shop.geometry.location.lng;
-        this.shopName = shop.shop_name;
-        this.placeId = shop.place_id;
-        // 他に必要なプロパティを追加
-        this.shop = shop; // shopオブジェクト全体を保持
     }
 }
 
