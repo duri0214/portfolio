@@ -18,10 +18,6 @@ class IndexView(TemplateView):
         search_code = self.kwargs.get("search_code", 9)
         places = NearbyPlaceRepository.get_places_by_category(search_code)
 
-        # map_data を直接作成
-        map_center = NearbyPlaceRepository.get_default_location()
-
-        center_lat, center_lng = map(float, map_center.location.split(","))
         place_data = []
         for place in places:
             try:
@@ -41,6 +37,9 @@ class IndexView(TemplateView):
                     f"Invalid location format: {place.location} for place {place.name}"
                 )
                 continue
+
+        map_center = NearbyPlaceRepository.get_default_location()
+        center_lat, center_lng = map(float, map_center.location.split(","))
         map_data = {
             "center": {
                 "lat": center_lat,
