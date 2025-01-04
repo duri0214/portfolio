@@ -56,9 +56,7 @@ class IndexView(TemplateView):
 
     @staticmethod
     def post(request, search_code: int):
-        print(f"{search_code=}")
         if search_code == NearbyPlaceRepository.CATEGORY_SEARCH:
-            # カテゴリーサーチモード
             map_center = NearbyPlaceRepository.get_default_location()
             latitude, longitude = map(float, map_center.location.split(","))
             search_types = ["restaurant"]
