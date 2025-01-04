@@ -65,7 +65,6 @@ class IndexView(TemplateView):
                     "places.id",
                     "places.location",
                     "places.displayName.text",
-                    "places.formattedAddress",
                     "places.photos",
                 ],
             )
@@ -97,7 +96,14 @@ class SearchDetailView(View):
         service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
         store_details = service.get_place_details(
             place_id,
-            fields=["name", "formatted_address", "rating"],
+            fields=[
+                "places.id",
+                "places.location",
+                "places.displayName.text",
+                "places.photos",
+                "places.rating",
+                "places.reviews",
+            ],
         )
 
         return JsonResponse({"detail": store_details})
