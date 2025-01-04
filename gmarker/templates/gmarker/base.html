@@ -27,22 +27,23 @@
     <!-- favicon -->
     <link rel="icon" href="{% static 'gmarker/c_g.ico' %}">
 
-    <!-- googlemap api -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=Function.prototype"
-            type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            initMap('{{ unit|escapejs }}');
-        });
-    </script>
-
-    <!-- jsonファイルを読み込んだりする js -->
-    <script src="{% static 'gmarker/js/map.js' %}"></script>
-
     <!-- for ajax -->
     <script>let myUrl = {"base": "{% url 'mrk:index' %}"};</script>
+
+    <!-- googlemap api -->
+    <script src="{% static 'gmarker/js/map.js' %}" defer></script>
+    <script>
+        let map;
+        window.myMapInit = () => {
+            document.addEventListener('DOMContentLoaded', () => {
+                const mapData = JSON.parse('{{ map_data|escapejs }}');
+                map = initMap(mapData);
+            });
+        };
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=myMapInit&libraries=places&v=weekly"
+            async defer onerror="console.error('Google Maps API failed to load.');"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
 </head>
 
 <body>

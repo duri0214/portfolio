@@ -20,31 +20,39 @@ class IndexView(TemplateView):
         search_code = self.kwargs.get("search_code", 9)
         print(f"{search_code=}")
         places = NearbyPlaceRepository.get_places_by_category(search_code)
-        shops = []
-        for place in places:
-            shops.append(
-                {
-                    "geometry": {
-                        "location": {
-                            "lat": place.location.split(",")[0],
-                            "lng": place.location.split(",")[1],
-                        }
-                    },
-                    "radius": 1500,
-                    "shop_name": place.name,
-                    "place_id": place.place_id,
-                }
-            )
+
+        # map_data を直接作成
         map_center = NearbyPlaceRepository.get_default_location()
-        # TODO: この値構成、整理できないか？
-        unit = {
+
+        center_lat, center_lng = map(float, map_center.location.split(","))
+        place_data = []
+        for place in places:
+            try:
+                lat, lng = map(float, place.location.split(","))
+                place_data.append(
+                    {
+                        "location": {
+                            "lat": lat,
+                            "lng": lng,
+                        },
+                        "name": place.name,
+                        "place_id": place.place_id,
+                    }
+                )
+            except ValueError:
+                print(
+                    f"Invalid location format: {place.location} for place {place.name}"
+                )
+                continue
+        map_data = {
             "center": {
-                "lat": map_center.location.split(",")[0],
-                "lng": map_center.location.split(",")[1],
+                "lat": center_lat,
+                "lng": center_lng,
             },
-            "shops": shops,
+            "places": place_data,
         }
-        context["unit"] = json.dumps(unit, ensure_ascii=False)
+
+        context["map_data"] = json.dumps(map_data, ensure_ascii=False)
         context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
         return context
 
