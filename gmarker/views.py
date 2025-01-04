@@ -8,6 +8,7 @@ from django.views.generic import View, TemplateView
 
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
+from gmarker.domain.valueobject.googlemaps import PlaceVO
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
@@ -75,11 +76,29 @@ class IndexView(TemplateView):
             )
         elif search_code == NearbyPlaceRepository.PIN_SELECT:
             # ピン選択モード
-            shops = json.loads(request.body).get("shops")
+            selected_place_list = []
+            for place in json.loads(request.body).get("places"):
+                geometry_data = place["geometry"]
+                location_data = geometry_data["location"]
+                selected_place_list.append(
+                    PlaceVO(
+                        place_id=place["place_id"],
+                        location=GoogleMapCoords(
+                            latitude=location_data["lat"],
+                            longitude=location_data["lng"],
+                        ),
+                        name=place["shop_name"],
+                        photos=[],
+                        rating=0,  # TODO: jsのajax経由でもらってください
+                        reviews=[],
+                    )
+                )
+
+            print(f"{selected_place_list=}")
             NearbyPlaceRepository.handle_search_code(
                 category=NearbyPlaceRepository.PIN_SELECT,
                 search_types="PIN_SELECT",
-                places=shops,
+                places=selected_place_list,
             )
             return JsonResponse({"status": "OK"})
         return redirect(
