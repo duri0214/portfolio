@@ -156,7 +156,6 @@ function toggleEditMode(button) {
         button.style.color = '#67c5ff';
         const confirm = window.confirm("登録しますか？");
         if (confirm && selectedMarkers.length > 0) {
-            console.log("selectedMarkers: ", selectedMarkers)
             fetch(myUrl.base + 'search/2', {
                 method: 'POST',
                 headers: {
