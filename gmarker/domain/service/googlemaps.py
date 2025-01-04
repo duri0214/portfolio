@@ -79,7 +79,9 @@ class GoogleMapsService:
                         location=latlng,
                         name=place_data.get("displayName", {}).get("text"),
                         rating=place_data.get("rating"),
-                        reviews=place_data.get("reviews"),
+                        reviews=[
+                            x.get("text").get("text") for x in place_data.get("reviews")
+                        ],
                     )
                 )
             return places
@@ -93,67 +95,3 @@ class GoogleMapsService:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
             return []
-
-    def get_place_details(self, place_id: str, fields: list[str]) -> PlaceVO | None:
-        """
-        Place Details APIを使用して場所の詳細情報を取得し、PlaceVOオブジェクトを返します。
-
-        Args:
-            place_id (str): 取得する場所のプレイスID。必須。
-            fields (list[str]): 取得するフィールドのリスト。必須。
-                指定可能なフィールドについては、Google Maps Platformのドキュメントを参照してください。
-                https://developers.google.com/maps/documentation/places/web-service/place-details?hl=ja
-
-        Returns:
-            PlaceVO | None: 取得された場所の詳細情報を持つPlaceVOオブジェクト。
-                APIリクエストの失敗などの場合はNoneを返します。
-
-        Raises:
-            ValueError: fieldsリストが空の場合に発生します。
-
-        Exceptions:
-            requests.HTTPError: HTTPエラーが発生した場合にログ出力します。
-            KeyError: JSONレスポンスに予期しないキーが含まれていた場合にログ出力します。
-            Exception: その他の予期しないエラーが発生した場合にログ出力します。
-        """
-        if not fields:
-            raise ValueError("fieldsパラメータは必須です")
-
-        url = f"{self.base_url}/{place_id}"
-        params = {"fields": ",".join(fields), "key": self.api_key}
-
-        try:
-            response = requests.get(url, params)
-            response.raise_for_status()
-            result = response.json().get("result")
-
-            if not result:
-                print(f"No result found for place_id: {place_id}")
-                return None
-
-            location_data = result.get("geometry", {}).get("location")
-            location = (
-                GoogleMapCoords(
-                    latitude=location_data.get("lat"),
-                    longitude=location_data.get("lng"),
-                )
-                if location_data
-                else None
-            )
-
-            place_vo = PlaceVO(
-                place_id=place_id,
-                location=location,
-                name=result.get("name"),
-                photos=result.get("photos", []),
-                rating=result.get("rating"),
-                reviews=result.get("reviews", []),
-            )
-            return place_vo
-        except requests.HTTPError as e:
-            print(f"HTTP error occurred for place_id {place_id}: {e}")
-        except KeyError as e:
-            print(f"KeyError occurred for place_id {place_id}: {e}")
-        except Exception as e:
-            print(f"An unexpected error occurred for place_id {place_id}: {e}")
-        return None

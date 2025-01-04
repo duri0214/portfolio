@@ -1,10 +1,9 @@
 import json
 import os
 
-from django.http.response import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views.generic import View, TemplateView
+from django.views.generic import TemplateView
 
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
@@ -84,24 +83,3 @@ class IndexView(TemplateView):
         return redirect(
             reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code})
         )
-
-
-class SearchDetailView(View):
-    @staticmethod
-    def get(request, place_id: str):
-        # TODO: PinをホバーするたびにAPIアクセスしていると思うので
-        #  placeマスタを作って、マスタにあったらAPIアクセスせずに表示したい
-        service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
-        store_details = service.get_place_details(
-            place_id,
-            fields=[
-                "places.id",
-                "places.location",
-                "places.displayName.text",
-                "places.photos",
-                "places.rating",
-                "places.reviews",
-            ],
-        )
-
-        return JsonResponse({"detail": store_details})
