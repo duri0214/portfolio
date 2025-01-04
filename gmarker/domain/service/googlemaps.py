@@ -91,7 +91,6 @@ class GoogleMapsService:
                         place_id=place_data.get("id"),
                         location=latlng,
                         name=place_data.get("displayName", {}).get("text"),
-                        address=place_data.get("formattedAddress"),
                         photos=photos,
                         rating=place_data.get("rating"),
                         reviews=place_data.get("reviews"),
