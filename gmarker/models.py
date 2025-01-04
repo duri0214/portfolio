@@ -14,5 +14,6 @@ class NearbyPlace(models.Model):
     place_id = models.CharField(null=True, blank=True, max_length=200)
     name = models.CharField(max_length=200)
     location = models.CharField(max_length=100)
+    rating = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
