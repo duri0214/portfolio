@@ -2,7 +2,7 @@ class CustomMap {
     constructor(mapCanvasId, jsonData) {
         this.map = new google.maps.Map(document.getElementById(mapCanvasId), {
             zoom: 14,
-            center: new google.maps.LatLng(parseFloat(jsonData.center.lat), parseFloat(jsonData.center.lng)) // parseFloatで文字列を数値に変換
+            center: new google.maps.LatLng(jsonData.center.lat, jsonData.center.lng)
         });
         this.addMarkers(jsonData.shops);
     }
@@ -10,7 +10,7 @@ class CustomMap {
     addMarkers(shops) {
         shops.forEach(shop => {
             new google.maps.Marker({
-                position: new google.maps.LatLng(parseFloat(shop.geometry.location.lat), parseFloat(shop.geometry.location.lng)), // parseFloatで文字列を数値に変換
+                position: new google.maps.LatLng(shop.geometry.location.lat, shop.geometry.location.lng),
                 map: this.map,
                 title: shop.shop_name
             });
