@@ -1,6 +1,6 @@
 import requests
 
-from gmarker.domain.valueobject.googlemaps import PlacePhoto, PlaceVO
+from gmarker.domain.valueobject.googlemaps import PlaceVO
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
@@ -73,25 +73,11 @@ class GoogleMapsService:
                         longitude=latlng.get("longitude"),
                     )
 
-                photos = []
-                for photo in place_data.get("photos", []):
-                    author_attributions = photo.get("authorAttributions", [])[0]
-                    photos.append(
-                        PlacePhoto(
-                            width=photo.get("widthPx"),
-                            height=photo.get("heightPx"),
-                            author_name=author_attributions.get("displayName"),
-                            author_url=author_attributions.get("uri"),
-                            author_photo_uri=author_attributions.get("photoUri"),
-                        )
-                    )
-
                 places.append(
                     PlaceVO(
                         place_id=place_data.get("id"),
                         location=latlng,
                         name=place_data.get("displayName", {}).get("text"),
-                        photos=photos,
                         rating=place_data.get("rating"),
                         reviews=place_data.get("reviews"),
                     )
