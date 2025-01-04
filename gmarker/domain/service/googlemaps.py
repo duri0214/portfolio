@@ -134,14 +134,10 @@ class GoogleMapsService:
             raise ValueError("fieldsパラメータは必須です")
 
         url = f"{self.base_url}/{place_id}"
-
         params = {"fields": ",".join(fields), "key": self.api_key}
-        headers = {
-            "X-Goog-Api-Key": self.api_key,
-        }
 
         try:
-            response = requests.get(url, params=params, headers=headers)
+            response = requests.get(url, params)
             response.raise_for_status()
             result = response.json().get("result")
 
@@ -169,9 +165,9 @@ class GoogleMapsService:
             )
             return place_vo
         except requests.HTTPError as e:
-            print(f"An HTTP error occurred: {e}")
+            print(f"HTTP error occurred for place_id {place_id}: {e}")
         except KeyError as e:
-            print(f"KeyError occurred: {e}")
+            print(f"KeyError occurred for place_id {place_id}: {e}")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"An unexpected error occurred for place_id {place_id}: {e}")
         return None
