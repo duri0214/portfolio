@@ -12,9 +12,8 @@ class MarkerData {
     toHtml() {
         return `
           <div>
-            <p>Place ID: ${this.placeId}</p>
-            <p>タイトル: ${this.title}</p>
-            <p>緯度lat,経度lng: ${this.lat},${this.lng}</p>
+            <p>${this.title}</p>
+            <p>Place ID: ${this.placeId}<br>lat,lng: ${this.lat},${this.lng}</p>
           </div>
         `;
     }
