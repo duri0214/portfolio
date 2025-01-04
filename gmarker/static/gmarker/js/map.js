@@ -98,7 +98,7 @@ function updateMarkerListeners() {
                         url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png" // 例: 緑のアイコン
                     });
                 }
-                console.log('選択されたマーカー:', selectedMarkers);
+                console.log('選択されたマーカー:', JSON.stringify(selectedMarkers));
             });
             marker.addListener('mouseover', () => {
                 showInfoWindow(marker, data.shopName);
