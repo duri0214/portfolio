@@ -30,6 +30,7 @@ class IndexView(TemplateView):
                         },
                         "name": place.name,
                         "place_id": place.place_id,
+                        "rating": place.rating,
                     }
                 )
             except ValueError:

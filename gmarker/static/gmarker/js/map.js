@@ -7,13 +7,14 @@ class MarkerData {
         this.lng = data.location.lng;
         this.title = data.name || "マーカー";
         this.placeId = data.place_id;
+        this.rating = data.rating;
     }
 
     toHtml() {
         return `
           <div>
             <p>${this.title}</p>
-            <p>Place ID: ${this.placeId}<br>lat,lng: ${this.lat},${this.lng}</p>
+            <p>Place ID: ${this.placeId}<br>lat,lng: ${this.lat},${this.lng}<br>rating: ${this.rating}</p>
           </div>
         `;
     }
