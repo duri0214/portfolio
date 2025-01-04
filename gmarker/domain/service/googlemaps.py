@@ -108,27 +108,30 @@ class GoogleMapsService:
             print(f"An unexpected error occurred: {e}")
             return []
 
-    def get_place_details(self, place_vo: PlaceVO, fields: list[str]) -> PlaceVO | None:
+    def get_place_details(self, place_id: str, fields: list[str]) -> PlaceVO | None:
         """
-        Place Details APIを使用して場所の詳細情報を取得し、PlaceVOを更新します。
+        Place Details APIを使用して場所の詳細情報を取得し、PlaceVOオブジェクトを返します。
 
         Args:
-            place_vo: 更新するPlaceVOオブジェクト。
-            fields: 取得するフィールドのリスト。
+            place_id (str): 取得する場所のプレイスID。必須。
+            fields (list[str]): 取得するフィールドのリスト。必須。
+                指定可能なフィールドについては、Google Maps Platformのドキュメントを参照してください。
+                https://developers.google.com/maps/documentation/places/web-service/place-details?hl=ja
 
         Returns:
-            更新されたPlaceVOオブジェクト。エラー時はNone。
+            PlaceVO | None: 取得された場所の詳細情報を持つPlaceVOオブジェクト。
+                APIリクエストの失敗などの場合はNoneを返します。
 
         Raises:
-            ValueError: fieldsが空の場合。
+            ValueError: fieldsリストが空の場合に発生します。
+
+        Exceptions:
+            requests.HTTPError: HTTPエラーが発生した場合にログ出力します。
+            KeyError: JSONレスポンスに予期しないキーが含まれていた場合にログ出力します。
+            Exception: その他の予期しないエラーが発生した場合にログ出力します。
         """
         if not fields:
             raise ValueError("fieldsパラメータは必須です")
-
-        place_id = place_vo.place_id
-        if not place_id:
-            print("place_idがありません")
-            return None
 
         url = f"{self.base_url}/{place_id}"
 
