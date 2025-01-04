@@ -11,7 +11,6 @@ class MarkerData {
 }
 
 function initMap(jsonData) {
-    console.log("initMap called", jsonData);
     try {
         if (!jsonData) {
             console.error("jsonData is not defined.");
@@ -32,7 +31,6 @@ function initMap(jsonData) {
         };
 
         map = new Map(document.getElementById("map_canvas1"), options);
-        console.log(jsonData.places);
         createMarkersFromData(jsonData.places, Marker, map);
 
     } catch (e) {
