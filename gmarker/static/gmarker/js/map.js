@@ -1,4 +1,3 @@
-let markers = [];
 let infoWindow;
 
 class MarkerData {
@@ -55,7 +54,7 @@ function createMarkersFromData(places, Marker, map) {
         return;
     }
 
-    markers = places.map(place => {
+    places.map(place => {
         const markerData = new MarkerData(place);
         const marker = new Marker({
             position: new google.maps.LatLng(markerData.lat, markerData.lng),
