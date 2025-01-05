@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 
 class Review(models.Model):
@@ -15,10 +16,6 @@ class Review(models.Model):
         null=True, blank=True
     )  # ベクトル（Chromaで生成されたもの）
 
-    class Meta:
-        db_table = "reviews"  # テーブル名をわかりやすく設定
-        ordering = ["-review_date"]  # デフォルトの並び順をレビュー日付の降順に設定
-
     def __str__(self):
         return f"{self.location_name} - {self.rating} stars"
 
@@ -27,12 +24,11 @@ class ConversationHistory(models.Model):
     content = models.TextField()  # 会話の内容
     timestamp = models.DateTimeField(auto_now_add=True)  # 会話が行われた日時
 
-    class Meta:
-        db_table = "conversation_history"
-        ordering = ["-timestamp"]  # 新しい会話が先に表示される
-
     def __str__(self):
         return f"Conversation at {self.timestamp}"
+
+    def get_absolute_url(self):
+        return reverse("agt:conversation_detail", kwargs={"pk": self.pk})
 
 
 class Entity(models.Model):
@@ -43,9 +39,6 @@ class Entity(models.Model):
     vector = models.BinaryField(
         null=True, blank=True
     )  # ベクトル（Chromaで生成されたもの）
-
-    class Meta:
-        db_table = "entities"
 
     def __str__(self):
         return self.name
@@ -58,10 +51,6 @@ class Message(models.Model):
     )  # 関連する会話
     message_content = models.TextField()  # 発言内容
     timestamp = models.DateTimeField(auto_now_add=True)  # 発言日時
-
-    class Meta:
-        db_table = "messages"
-        ordering = ["timestamp"]  # 古いメッセージが先に表示される
 
     def __str__(self):
         return f"Message from {self.entity.name} at {self.timestamp}"
