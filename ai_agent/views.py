@@ -41,13 +41,24 @@ class SendMessageView(FormView):
             message_content=user_input,
         )
 
+        # ConversationHistory の content を更新
+        if conversation.content:
+            conversation.content += f"\nUser: {user_input}"
+        else:
+            conversation.content = f"User: {user_input}"
+
         # シンプルなAI応答
+        agent_response = f"Echo: {user_input}"
         agent_entity, _ = Entity.objects.get_or_create(name="Agent")
         Message.objects.create(
             entity=agent_entity,
             conversation=conversation,
-            message_content=f"Echo: {user_input}",
+            message_content=agent_response,
         )
+
+        # ConversationHistory の content に AI 応答を追加
+        conversation.content += f"\nAgent: {agent_response}"
+        conversation.save()
 
         return super().form_valid(form)
 
