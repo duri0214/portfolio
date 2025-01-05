@@ -248,3 +248,10 @@ sequenceDiagram
     病院 ->> 病院: 投票人数×727円を経費として請求書作成
     病院 ->> 選管: 不在者投票事務処理簿、経費請求書の提出
 ```
+
+## ai_agent
+
+```commandline
+python manage.py runserver
+celery -A config worker --loglevel=info
+```
