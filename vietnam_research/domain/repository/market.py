@@ -120,9 +120,9 @@ class MarketRepository:
         end_of_month = Industry.objects.slipped_month_end(
             month
         ).formatted_recorded_date()
-        records = Industry.objects.filter(recorded_date=end_of_month).values(
-            denominator_field
-        )
+        records = Industry.objects.filter(
+            recorded_date=end_of_month, **{denominator_field + "__isnull": False}
+        ).values(denominator_field)
         return sum([record[denominator_field] for record in records])
 
     @staticmethod
