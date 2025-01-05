@@ -1,185 +1,81 @@
 import json
 import os
-import urllib.parse
-import urllib.request
 
-from django.http.response import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.views.generic import TemplateView
 
-from .models import StoreInformation, SignageMenuName
+from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
+from gmarker.domain.service.googlemaps import GoogleMapsService
+from lib.geo.valueobject.coords import GoogleMapCoords
 
 
-def index(request, search_code="9"):
-    """search_code9は自拠点"""
+class IndexView(TemplateView):
+    template_name = "gmarker/index.html"
 
-    print("search_code: ", search_code)
-    if request.method == "POST":
-        temp = []
-        if search_code[:1] == "1":
-            # delete if record exists
-            query = StoreInformation.objects.filter(category=1)
-            if query.count() > 0:
-                query.delete()
-            # api search
-            search_word = SignageMenuName.objects.get(menu_code=search_code).menu_name
-            print("search at:", search_word)
-            centerlatlng = StoreInformation.objects.get(category=9).shop_latlng
-            types = "restaurant"
-            radius = 1500
-            shops = near_by_search(
-                os.getenv("GOOGLE_MAPS_API_KEY"),
-                search_word,
-                centerlatlng,
-                types,
-                radius,
-            )
-            # insert as category 1
-            if shops:
-                for shop in shops:
-                    # print(shop["place_id"])
-                    store = StoreInformation()
-                    store.category = 1
-                    store.searchword = search_word
-                    store.place_id = shop["place_id"]
-                    store.shop_name = shop["name"]
-                    store.shop_latlng = ",".join(
-                        map(str, shop["geometry"]["location"].values())
-                    )
-                    temp.append(store)
-                StoreInformation.objects.bulk_create(temp)
-        elif search_code[:1] == "2":
-            # delete if record exists
-            query = StoreInformation.objects.filter(category=2)
-            if query.count() > 0:
-                query.delete()
-            # insert as category 2
-            shops = json.loads(request.body).get("shops")
-            if shops:
-                for shop in shops:
-                    # print(shop["place_id"])
-                    store = StoreInformation()
-                    store.category = 2
-                    store.searchword = "selected by you."
-                    store.place_id = shop["place_id"]
-                    store.shop_name = shop["shop_name"]
-                    store.shop_latlng = ",".join(
-                        map(str, shop["geometry"]["location"].values())
-                    )
-                    temp.append(store)
-                StoreInformation.objects.bulk_create(temp)
-            # response json
-            return JsonResponse({"status": "OK"})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search_code = self.kwargs.get("search_code", 9)
+        places = NearbyPlaceRepository.find_by_category(search_code)
 
-        # redirect 1 or 3
-        return redirect("/gmarker/result/" + search_code[:1])
-
-    else:
-        # select category
-        temp = StoreInformation.objects.filter(category=search_code)
-        shops = []
-        for i, row in enumerate(temp):
-            shops.append(
-                {
-                    "geometry": {
+        place_data = []
+        for place in places:
+            try:
+                lat, lng = map(float, place.location.split(","))
+                place_data.append(
+                    {
                         "location": {
-                            "lat": row.shop_latlng.split(",")[0],
-                            "lng": row.shop_latlng.split(",")[1],
-                        }
-                    },
-                    "radius": 1500,
-                    "shop_name": row.shop_name,
-                    "place_id": row.place_id,
-                }
+                            "lat": lat,
+                            "lng": lng,
+                        },
+                        "name": place.name,
+                        "place_id": place.place_id,
+                        "rating": place.rating,
+                    }
+                )
+            except ValueError:
+                print(
+                    f"Invalid location format: {place.location} for place {place.name}"
+                )
+                continue
+
+        map_center = NearbyPlaceRepository.get_default_location()
+        center_lat, center_lng = map(float, map_center.location.split(","))
+        map_data = {
+            "center": {
+                "lat": center_lat,
+                "lng": center_lng,
+            },
+            "places": place_data,
+        }
+
+        context["map_data"] = json.dumps(map_data, ensure_ascii=False)
+        context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
+        return context
+
+    @staticmethod
+    def post(request, search_code: int):
+        if search_code == NearbyPlaceRepository.CATEGORY_SEARCH:
+            map_center = NearbyPlaceRepository.get_default_location()
+            center_lat, center_lng = map(float, map_center.location.split(","))
+            search_types = ["restaurant"]
+            service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
+            places = service.nearby_search(
+                center=GoogleMapCoords(center_lat, center_lng),
+                search_types=search_types,
+                radius=1500,
+                fields=[
+                    "places.id",
+                    "places.location",
+                    "places.displayName.text",
+                    "places.rating",
+                ],
             )
-
-        # packing
-        mypos = StoreInformation.objects.get(category=9).shop_latlng
-        unit = {
-            "center": {"lat": mypos.split(",")[0], "lng": mypos.split(",")[1]},
-            "shops": shops,
-        }
-
-        context = {
-            "unit": json.dumps(unit, ensure_ascii=False),
-            "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY"),
-        }
-
-        # render
-        return render(request, "gmarker/index.html", context)
-
-
-def search_detail(request, place_id):
-    """ajaxから利用されます"""
-    return JsonResponse(
-        {"detail": get_details(os.environ.get("GOOGLE_MAPS_API_KEY"), place_id)}
-    )
-
-
-def near_by_search(api_key, place, centerlatlng, types, radius):
-    """
-    dependency
-    ----------
-    Places API
-
-    parameters
-    ----------
-    place: 東京都
-
-    return
-    --------
-    a place\n
-    place_id, rating\n
-    e.g. CmRaThPn0sTB1aE-Afx0_..., 4
-
-    Args:
-        api_key:
-    """
-    url = (
-        "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
-        "location={}&radius={}&type={}&keyword={}&"
-        "key={}"
-    )
-    url = url.format(centerlatlng, radius, types, urllib.parse.quote(place), api_key)
-    # print("near_by_search:", url)
-    res = urllib.request.urlopen(url)
-    ret_value = None
-    if res.code == 200:
-        res_json = json.loads(res.read())
-        if res_json.get("results"):
-            ret_value = res_json["results"]
-    return ret_value
-
-
-def get_details(api_key, place_id):
-    """
-    dependency
-    ----------
-    Places API
-    parameters
-    ----------
-    place_id: ChIJN1t_tDeuEmsRUsoyG83frY4
-    return
-    ------
-    e.g. https://maps.google.com/?cid=10281119596374313554
-
-    Args:
-        api_key:
-    """
-    ret_value = "#"
-    if place_id:
-        fields = (
-            "address_component,adr_address,formatted_address,geometry,icon,name,"
-            "permanently_closed,photo,place_id,plus_code,type,url,utc_offset,vicinity,"
-            "formatted_phone_number,international_phone_number,opening_hours,"
-            "website,price_level,rating,review,user_ratings_total"
+            NearbyPlaceRepository.handle_search_code(
+                category=NearbyPlaceRepository.CATEGORY_SEARCH,
+                search_types=",".join(search_types),
+                places=places,
+            )
+        return redirect(
+            reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code})
         )
-        url = (
-            "https://maps.googleapis.com/maps/api/place/details/json?"
-            "place_id={}&fields={}&key={}".format(place_id, fields, api_key)
-        )
-        # print('url:', url)
-        res = urllib.request.urlopen(url)
-        if res.code == 200:
-            res_json = json.loads(res.read())
-            ret_value = res_json["result"]
-    return ret_value

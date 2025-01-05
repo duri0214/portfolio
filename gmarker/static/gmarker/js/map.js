@@ -1,140 +1,80 @@
-let map;
-const markers = [];
-let infowindow;
-let json;
-let is_editing = false;
-let keep_markers = [];
+let infoWindow;
 
-function mapinit(_json) {
+class MarkerData {
+    constructor(data) {
+        this.lat = data.location.lat;
+        this.lng = data.location.lng;
+        this.title = data.name || "マーカー";
+        this.placeId = data.place_id;
+        this.rating = data.rating;
+    }
 
-    const options = {
-        zoom: 14,
-        mapTypeId: google.maps.MapTypeId.ROADMAP, // 既定: いつもの地図タイプ
-        mapTypeControl: false, // 左上「地図／航空写真」切り替えボタン off
-        keyboardShortcuts: false, // キーボードコントロール off
-        streetViewControl: false, // ストリートビュー off
-        fullscreenControl: false, // フルスクリーン off
-        scrollwheel: false // マウスホイールスクロール off
-    };
-    // create canvas
-    json = JSON.parse(_json);
-    map = new google.maps.Map(document.getElementById("map_canvas1"), options);
-    map.setCenter(new google.maps.LatLng(json["center"]["lat"], json["center"]["lng"]));
-    createMarkers(json);
-}
-
-// get_category が使います
-function createMarkers(json) {
-    let latlng;
-    if (typeof json != 'undefined' && json.shops.length > 0) {
-        for (let i = 0; i < json.shops.length; i++) {
-            latlng = new google.maps.LatLng(json.shops[i].geometry.location.lat, json.shops[i].geometry.location.lng);
-            markers[i] = new google.maps.Marker({
-                position: latlng,
-                map: map,
-                animation: google.maps.Animation.DROP
-            });
-            markerEvent(i);
-        }
+    toHtml() {
+        return `
+          <div>
+            <p>${this.title}</p>
+            <p>Place ID: ${this.placeId}<br>lat,lng: ${this.lat},${this.lng}<br>rating: ${this.rating}</p>
+          </div>
+        `;
     }
 }
 
-// createMarkers が使います
-function markerEvent(i) {
-    markers[i].addListener('click', function () {
-        if (!is_editing) {
-            if (typeof infowindow != 'undefined') {
-                infowindow.close();
-            }
-            infowindow = new google.maps.InfoWindow({
-                content: json.shops[i]['shop_name']
-            });
-            infowindow.open(map, markers[i]);
-            shopinfomation.innerHTML = '名前: ' + json.shops[i]['shop_name'];
+function initMap(jsonData) {
+    try {
+        if (!jsonData) {
+            console.error("jsonData is not defined.");
+            return;
+        }
 
-            if (json.shops[i]['place_id'] != null) {
-                // get a shop detail
-                fetch(myUrl.base + 'search/detail/' + json.shops[i]['place_id'], {
-                    method: 'POST',
-                    headers: {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "X-CSRFToken": Cookies.get('csrftoken')
-                    },
-                    body: JSON.stringify({"shops": keep_markers})
-                })
-                    .then(response => response.json())
-                    .then(json => {
-                        let txt = '';
-                        txt += '名前: ' + json.detail.name + '<br>';
-                        txt += '住所: ' + json.detail.formatted_address.slice(0, 10) + '...<br>';
-                        txt += '電話番号: ' + json.detail.formatted_phone_number + '<br>';
-                        txt += '開店時間[Sun]: ' + json.detail.opening_hours.periods[0].open.time + '-';
-                        txt += json.detail.opening_hours.periods[0].close.time + '<br>';
-                        txt += '料金レベル: ' + json.detail.price_level + '<br>';
-                        txt += '評価: ' + json.detail.rating + '<br>';
-                        txt += '種類: ' + (json.detail.types).join(', ') + '<br>';
-                        txt += 'website: ' + json.detail.website + '<br><br>';
-                        txt += 'レビュー(先頭1名): <br>' + json.detail.reviews[0].author_name + '(' + json.detail.reviews[0].rating + ')' + ': ' + json.detail.reviews[0].text + '<br>'
-                        shopinfomation.innerHTML = txt;
-                    })
-                    .catch(error => {
-                        shopinfomation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
-                    })
-            }
-        } else {
-            keep_markers.push(json.shops[i])
-            markers[i].setMap(null);
-            console.log('ok! this is it! keeeep!')
-        }
-    });
-    markers[i].addListener('mouseover', function () {
-        if (is_editing) {
-            infowindow = new google.maps.InfoWindow({
-                content: json.shops[i]['shop_name']
-            });
-            infowindow.open(map, markers[i]);
-        }
-        shopinfomation.innerHTML = '名前: ' + json.shops[i]['shop_name'];
-    });
-    markers[i].addListener('mouseout', function () {
-        if (typeof infowindow != 'undefined') {
-            infowindow.close();
-        }
-        shopinfomation.innerHTML = "";
+        const {Map, Marker} = google.maps;
+
+        const options = {
+            zoom: 14,
+            center: new google.maps.LatLng(jsonData.center.lat, jsonData.center.lng),
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            mapTypeControl: false,
+            keyboardShortcuts: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            scrollwheel: true
+        };
+
+        map = new Map(document.getElementById("map_canvas1"), options);
+        createMarkersFromData(jsonData.places, Marker, map);
+
+    } catch (e) {
+        console.error("Google Maps API の初期化エラー:", e);
+        alert("地図の読み込みに失敗しました。インターネット接続を確認してください。");
+    }
+}
+
+function createMarkersFromData(places, Marker, map) {
+    if (!map || !places || !Marker) {
+        console.error("Missing map, places, or Marker");
+        return;
+    }
+
+    places.map(place => {
+        const markerData = new MarkerData(place);
+        const marker = new Marker({
+            position: new google.maps.LatLng(markerData.lat, markerData.lng),
+            map: map,
+            animation: google.maps.Animation.DROP,
+            title: markerData.title
+        });
+
+        marker.addListener('click', () => {
+            showInfoWindow(marker, markerData.toHtml());
+        });
+
+        return {marker, data: markerData};
     });
 }
 
-function do_pattern2(button) {
-    console.log('is_editing: ', is_editing)
-    if (!is_editing) {
-        // red: 選択中
-        button.style.border = 'solid 2px #ff0000';
-        button.style.color = '#ff0000';
-        alert('管理者選択モード');
-    } else {
-        // blue: 登録対象のピン
-        const confirm = window.confirm("登録しますか？");
-        if (confirm) {
-            fetch(myUrl.base + 'search/2', {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "X-CSRFToken": Cookies.get('csrftoken')
-                },
-                body: JSON.stringify({"shops": keep_markers})
-            })
-                .then(response => response.json())
-                .then(json => {
-                    alert(json.status + ': 登録が完了しました。');
-                    keep_markers = [];
-                    location.href = myUrl.base + 'result/2';
-                    button.style.border = 'solid 2px';
-                    button.style.color = '#67c5ff';
-                })
-                .catch(error => {
-                    shopinfomation.innerHTML = "Status: " + error.status + "\nError: " + error.message;
-                })
-        }
+function showInfoWindow(marker, content) {
+    if (infoWindow) {
+        infoWindow.close();
     }
-    is_editing = !is_editing;
+    infoWindow = new google.maps.InfoWindow({content});
+    infoWindow.open(map, marker);
 }

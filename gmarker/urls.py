@@ -1,11 +1,9 @@
-"""urls.py"""
 from django.urls import path
-from . import views
 
-app_name = 'mrk'
+from gmarker.views import IndexView
+
+app_name = "mrk"
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('search/<str:search_code>', views.index, name='index_search'),
-    path('search/detail/<str:place_id>', views.search_detail, name='detail_search'),
-    path('result/<str:search_code>', views.index, name='index_result'),
+    path("", IndexView.as_view(), name="index"),
+    path("search/<int:search_code>", IndexView.as_view(), name="nearby_search"),
 ]
