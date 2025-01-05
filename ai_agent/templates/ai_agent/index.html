@@ -21,33 +21,10 @@
         </ul>
     </div>
     <div class="container">
-        <p>ABC</p>
-        <table class="table">
-            <thead>
-            <tr>
-                <th scope="col">Header 1</th>
-                <th scope="col">Header 2</th>
-                <th scope="col">Header 3</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>Data 1</td>
-                <td>Data 2</td>
-                <td>Data 3</td>
-            </tr>
-            <tr>
-                <td>Data 4</td>
-                <td>Data 5</td>
-                <td>Data 6</td>
-            </tr>
-            <tr>
-                <td>Data 7</td>
-                <td>Data 8</td>
-                <td>Data 9</td>
-            </tr>
-            </tbody>
-        </table>
+        <p>AI Agent Interaction</p>
+        <a class="btn btn-primary btn-sm" href="{% url 'agt:start_conversation' %}" role="button">
+            Start Conversation
+        </a>
     </div>
 
 {% endblock %}
