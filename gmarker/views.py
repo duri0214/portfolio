@@ -16,7 +16,7 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search_code = self.kwargs.get("search_code", 9)
-        places = NearbyPlaceRepository.get_places_by_category(search_code)
+        places = NearbyPlaceRepository.find_by_category(search_code)
 
         place_data = []
         for place in places:
