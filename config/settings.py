@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "hospital",
     "home",
     "llm_chat",
+    "ai_agent",
 ]
 
 MIDDLEWARE = [
