@@ -2,7 +2,7 @@ from django.db import models
 from django.urls import reverse
 
 
-class Review(models.Model):
+class GooglemapsReview(models.Model):
     location_name = models.CharField(max_length=255)  # 店舗や場所の名前
     review_text = models.TextField()  # レビュー内容
     rating = models.FloatField()  # 評価 (1-5)
