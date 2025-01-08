@@ -2,7 +2,7 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView, FormView
 
 from ai_agent.forms import SendMessageForm
-from .models import Message, Entity
+from ai_agent.models import Message, Entity
 
 
 class IndexView(TemplateView):
