@@ -4,9 +4,9 @@
 {% block content %}
     <div class="jumbotron">
         <h1 class="display-4">Hello, AI Agent!</h1>
-        <p class="lead">it's interesting AI Agent</p>
+        <p class="lead">It's an interesting AI Agent!</p>
         <hr class="my-4">
-        <p>You can do play Ai agent.</p>
+        <p>Interact with the AI Agent below.</p>
         <ul>
             <li>
                 <a class="btn btn-secondary btn-sm" href="#" role="button">
@@ -21,10 +21,16 @@
         </ul>
     </div>
     <div class="container">
-        <p>AI Agent Interaction</p>
-        <a class="btn btn-primary btn-sm" href="{% url 'agt:start_conversation' %}" role="button">
-            Start Conversation
-        </a>
+        <h2>Conversation</h2>
+        <div id="conversation-history">
+            {% for message in messages %}
+                <p><strong>{{ message.entity.name }}</strong>: {{ message.message_content }}</p>
+            {% endfor %}
+        </div>
+        <form method="POST" action="{% url 'agt:send_message' %}">
+            {% csrf_token %}
+            <input type="text" name="user_input" class="form-control" placeholder="Type your message">
+            <button type="submit" class="btn btn-primary mt-2">Send</button>
+        </form>
     </div>
-
 {% endblock %}
