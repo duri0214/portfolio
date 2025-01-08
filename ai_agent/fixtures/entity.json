@@ -1,0 +1,31 @@
+[
+  {
+    "model": "ai_agent.entity",
+    "pk": 1,
+    "fields": {
+      "name": "User"
+    }
+  },
+  {
+    "model": "ai_agent.entity",
+    "pk": 2,
+    "fields": {
+      "name": "Agent-A"
+    }
+  },
+  {
+    "model": "ai_agent.entity",
+    "pk": 3,
+    "fields": {
+      "name": "Agent-B"
+    }
+  },
+  {
+    "model": "ai_agent.entity",
+    "pk": 4,
+    "fields": {
+      "name": "Agent-C",
+      "forbidden_keywords": "暴力,万引き"
+    }
+  }
+]

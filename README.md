@@ -254,4 +254,6 @@ sequenceDiagram
 ```commandline
 python manage.py runserver
 celery -A config worker --loglevel=info
+
+python manage.py loaddata .\ai_agent\fixtures\entity.json
 ```
