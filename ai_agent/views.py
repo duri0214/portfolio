@@ -1,4 +1,4 @@
-from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.views.generic import FormView
 
 from ai_agent.forms import SendMessageForm
@@ -8,10 +8,13 @@ from ai_agent.models import Message, Entity
 class IndexView(FormView):
     template_name = "ai_agent/index.html"
     form_class = SendMessageForm
+    success_url = reverse_lazy("agt:index")
 
     def get_context_data(self, **kwargs):
         messages = Message.objects.select_related("entity").order_by("created_at")
-        return {"messages": messages}
+        context = super().get_context_data(**kwargs)
+        context["messages"] = messages
+        return context
 
     def form_valid(self, form):
         entity = Entity.objects.get(name="User")
@@ -20,4 +23,4 @@ class IndexView(FormView):
             message_content=form.cleaned_data["user_input"],
         )
 
-        return redirect("agt:index")
+        return super().form_valid(form)
