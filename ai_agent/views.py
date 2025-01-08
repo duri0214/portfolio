@@ -9,7 +9,6 @@ class IndexView(TemplateView):
     template_name = "ai_agent/index.html"
 
     def get_context_data(self, **kwargs):
-        # 最新のメッセージを取得
         messages = Message.objects.select_related("entity").order_by("created_at")
         return {"messages": messages}
 
@@ -25,5 +24,4 @@ class SendMessageView(FormView):
             message_content=form.cleaned_data["user_input"],
         )
 
-        # 成功したらインデックスページにリダイレクト
         return redirect("agt:index")
