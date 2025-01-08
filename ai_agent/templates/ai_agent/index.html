@@ -27,9 +27,9 @@
                 <p><strong>{{ message.entity.name }}</strong>: {{ message.message_content }}</p>
             {% endfor %}
         </div>
-        <form method="POST" action="{% url 'agt:send_message' %}">
+        <form method="POST" action="{% url 'agt:index' %}">
             {% csrf_token %}
-            <input type="text" name="user_input" class="form-control" placeholder="Type your message">
+            {{ form.as_p }}
             <button type="submit" class="btn btn-primary mt-2">Send</button>
         </form>
     </div>

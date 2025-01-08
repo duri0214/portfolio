@@ -1,21 +1,17 @@
 from django.shortcuts import redirect
-from django.views.generic import TemplateView, FormView
+from django.views.generic import FormView
 
 from ai_agent.forms import SendMessageForm
 from ai_agent.models import Message, Entity
 
 
-class IndexView(TemplateView):
+class IndexView(FormView):
     template_name = "ai_agent/index.html"
+    form_class = SendMessageForm
 
     def get_context_data(self, **kwargs):
         messages = Message.objects.select_related("entity").order_by("created_at")
         return {"messages": messages}
-
-
-class SendMessageView(FormView):
-    template_name = "ai_agent/index.html"
-    form_class = SendMessageForm
 
     def form_valid(self, form):
         entity = Entity.objects.get(name="User")
