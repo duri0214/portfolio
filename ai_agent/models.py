@@ -42,9 +42,30 @@ class Entity(models.Model):
     name = models.CharField(max_length=100)
     forbidden_keywords = models.TextField(blank=True, null=True)
     vector = models.BinaryField(null=True, blank=True)
+    speed = models.IntegerField(default=10)
 
     def __str__(self):
         return self.name
+
+    def think(self, input_text):
+        """
+        Simulate the entity's thought process to determine if it can respond.
+
+        Args:
+            input_text (str): The input text for the entity to consider.
+
+        Returns:
+            bool: True if the entity can respond, False otherwise.
+        """
+        # Example: Check if the input text contains forbidden keywords
+        # TODO: serviceを呼んでそれぞれのエンティティにthinkさせる
+        if self.forbidden_keywords:
+            forbidden_list = self.forbidden_keywords.split(",")
+            if any(keyword in input_text for keyword in forbidden_list):
+                return False
+
+        # Placeholder for more complex RAG logic or external checks
+        return True
 
 
 class Message(models.Model):
