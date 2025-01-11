@@ -10,11 +10,24 @@ class ConversationServiceTest(TestCase):
         """
         Set up entities and initialize timeline for testing.
         """
-        self.entity1 = Entity.objects.create(name="Entity1", speed=100)  # 高速
-        self.entity2 = Entity.objects.create(name="Entity2", speed=10)  # 低速
+        # Entity1: 高速で Google Maps レビューに基づくタイプ
+        self.entity1 = Entity.objects.create(
+            name="Entity1",
+            speed=100,  # 高速
+            thinking_type="google_maps_based",
+        )
+        # Entity2: 低速で NG ワードに基づくタイプ
+        self.entity2 = Entity.objects.create(
+            name="Entity2",
+            speed=10,  # 低速
+            thinking_type="ng_word_based",
+        )
 
         # 初期化時にタイムラインを設定
         ConversationService.initialize_timeline()
+
+        # テスト用の入力テキスト
+        self.test_input_text = "sample input text"
 
     def test_timeline_initialization(self):
         """
@@ -33,20 +46,20 @@ class ConversationServiceTest(TestCase):
         Test action order based on entity speed.
         """
         # 最初に行動するのは高速な Entity1 のはず
-        next_entity = ConversationService.get_next_entity()
+        next_entity = ConversationService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity1)
 
         # Entity1 が次回行動予定を早く更新するため、2回目も Entity1 が選ばれる
-        next_entity = ConversationService.get_next_entity()
+        next_entity = ConversationService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity1)
 
         # 速度の差が 10 倍であるため、Entity1 が 8 回行動した後に Entity2 のターンが来る
         for _ in range(9):
-            next_entity = ConversationService.get_next_entity()
+            next_entity = ConversationService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity2)
 
         # Entity2 が行動した次には再び高速な Entity1 の順番となる
-        next_entity = ConversationService.get_next_entity()
+        next_entity = ConversationService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity1)
 
     def test_create_message_updates_timeline(self):
@@ -63,7 +76,7 @@ class ConversationServiceTest(TestCase):
         self.assertEqual(timeline.next_turn, 1 / self.entity1.speed)
 
         # get_next_entity を1回実行すると next_turn が更新される
-        ConversationService.get_next_entity()
+        ConversationService.get_next_entity(self.test_input_text)
         timeline.refresh_from_db()  # タイムラインを再取得
         self.assertEqual(
             timeline.next_turn, 1 / self.entity1.speed + 1 / self.entity1.speed
