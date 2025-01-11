@@ -1,7 +1,5 @@
-from datetime import datetime
-
+from ai_agent.domain.repository.conversation import ConversationRepository
 from ai_agent.domain.valueobject.conversation import EntityVO
-from ai_agent.models import Message, Entity, ActionTimeline
 
 
 class ConversationService:
@@ -10,11 +8,11 @@ class ConversationService:
         """
         Initialize the timeline by assigning first turn values based on entity speed.
         """
-        entities = Entity.objects.all()
+        entities = ConversationRepository.get_all_entities()
         for entity in entities:
-            # 初期の next_turn をエンティティの速度に基づいて設定
-            ActionTimeline.objects.update_or_create(
-                entity=entity, defaults={"next_turn": 1 / entity.speed}
+            ConversationRepository.update_or_create_action_timeline(
+                entity=entity,
+                defaults={"next_turn": 1 / entity.speed},
             )
 
     @staticmethod
@@ -25,17 +23,16 @@ class ConversationService:
         Returns:
             Entity: The next entity that should act.
         """
-        # 次に行動するエンティティを取得
-        timelines = ActionTimeline.objects.order_by("next_turn")
+        timelines = ConversationRepository.get_timelines_ordered_by_next_turn()
         if not timelines.exists():
             raise ValueError("No entities available in the timeline.")
 
-        # 次に行動するエンティティを取得
         next_action = timelines.first()
 
-        # タイムライン更新: 次回行動予定ターンを計算
-        next_action.next_turn += 1 / next_action.entity.speed
-        next_action.save()
+        # タイムラインを更新
+        ConversationRepository.update_next_turn(
+            action_timeline=next_action, increment=1 / next_action.entity.speed
+        )
 
         return next_action.entity
 
@@ -51,14 +48,7 @@ class ConversationService:
         Returns:
             Message: The created message instance.
         """
-        # メッセージを作成
-        message = Message.objects.create(
-            entity=entity,
-            message_content=content,
-            created_at=datetime.now(),
-        )
-
-        return message
+        return ConversationRepository.create_message(entity=entity, content=content)
 
     @staticmethod
     def simulate_next_actions(max_steps=10) -> list[EntityVO]:
@@ -71,16 +61,14 @@ class ConversationService:
         Returns:
             List[EntityVO]: A list of EntityVO objects containing the entity's name and the turn when they act.
         """
-        timelines = list(ActionTimeline.objects.all().order_by("next_turn"))
+        timelines = list(ConversationRepository.get_timelines_ordered_by_next_turn())
         if not timelines:
             raise ValueError("No entities available in the timeline.")
 
         simulation = []
         for _ in range(max_steps):
-            # 次に行動するエンティティを選択
             next_action = min(timelines, key=lambda t: t.next_turn)
 
-            # EntityVO を生成して追加
             simulation.append(
                 EntityVO(name=next_action.entity.name, next_turn=next_action.next_turn)
             )
