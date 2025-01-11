@@ -47,3 +47,23 @@ class ConversationServiceTest(TestCase):
         # Entity2 が行動した次には再び高速な Entity1 の順番となる
         next_entity = ConversationService.get_next_entity()
         self.assertEqual(next_entity, self.entity1)
+
+    def test_create_message_updates_timeline(self):
+        """
+        Test if creating a message updates the timeline properly for the entity.
+        """
+        # Entity1 でメッセージを作成
+        ConversationService.create_message(self.entity1, "Test Message")
+
+        # タイムラインを確認
+        timeline = ActionTimeline.objects.get(entity=self.entity1)
+
+        # タイムライン初期化時の next_turn を確認
+        self.assertEqual(timeline.next_turn, 1 / self.entity1.speed)
+
+        # get_next_entity を1回実行すると next_turn が更新される
+        ConversationService.get_next_entity()
+        timeline.refresh_from_db()  # タイムラインを再取得
+        self.assertEqual(
+            timeline.next_turn, 1 / self.entity1.speed + 1 / self.entity1.speed
+        )
