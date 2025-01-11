@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from ai_agent.domain.valueobject.conversation import EntityVO
 from ai_agent.models import Message, Entity, ActionTimeline
 
 
@@ -60,7 +61,7 @@ class ConversationService:
         return message
 
     @staticmethod
-    def simulate_next_actions(max_steps=10):
+    def simulate_next_actions(max_steps=10) -> list[EntityVO]:
         """
         Simulates the next sequence of entity actions up to 'max_steps'.
 
@@ -68,7 +69,7 @@ class ConversationService:
             max_steps (int): How many actions to simulate.
 
         Returns:
-            List[Tuple[str, float]]: A list of tuples containing the entity's name and the turn when they act.
+            List[EntityVO]: A list of EntityVO objects containing the entity's name and the turn when they act.
         """
         timelines = list(ActionTimeline.objects.all().order_by("next_turn"))
         if not timelines:
@@ -78,7 +79,11 @@ class ConversationService:
         for _ in range(max_steps):
             # 次に行動するエンティティを選択
             next_action = min(timelines, key=lambda t: t.next_turn)
-            simulation.append((next_action.entity.name, next_action.next_turn))
+
+            # EntityVO を生成して追加
+            simulation.append(
+                EntityVO(name=next_action.entity.name, next_turn=next_action.next_turn)
+            )
 
             # 仮で次回行動予定を計算
             next_action.next_turn += 1 / next_action.entity.speed

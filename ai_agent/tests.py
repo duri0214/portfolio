@@ -1,6 +1,7 @@
 from django.test import TestCase
 
 from ai_agent.domain.service.conversation import ConversationService
+from ai_agent.domain.valueobject.conversation import EntityVO
 from ai_agent.models import Entity, ActionTimeline
 
 
@@ -76,21 +77,19 @@ class ConversationServiceTest(TestCase):
 
         # シミュレーション結果の期待値
         expected_simulation = [
-            ("Entity1", 1 / 100),
-            ("Entity1", 2 / 100),
-            ("Entity1", 3 / 100),
-            ("Entity1", 4 / 100),
-            ("Entity1", 5 / 100),
-            ("Entity1", 6 / 100),
-            ("Entity1", 7 / 100),
-            ("Entity1", 8 / 100),
-            ("Entity1", 9 / 100),
-            ("Entity1", 10 / 100),
-            ("Entity2", 1 / 10),
+            EntityVO(name="Entity1", next_turn=0.01),
+            EntityVO(name="Entity1", next_turn=0.02),
+            EntityVO(name="Entity1", next_turn=0.03),
+            EntityVO(name="Entity1", next_turn=0.04),
+            EntityVO(name="Entity1", next_turn=0.05),
+            EntityVO(name="Entity1", next_turn=0.06),
+            EntityVO(name="Entity1", next_turn=0.07),
+            EntityVO(name="Entity1", next_turn=0.08),
+            EntityVO(name="Entity1", next_turn=0.09),
+            EntityVO(name="Entity1", next_turn=0.10),
+            EntityVO(name="Entity2", next_turn=0.10),
         ]
-        # 個々の値を比較（小数点以下誤差許容）
-        for (actual_entity, actual_time), (expected_entity, expected_time) in zip(
-            simulation, expected_simulation
-        ):
-            self.assertEqual(actual_entity, expected_entity)
-            self.assertAlmostEqual(actual_time, expected_time, places=2)
+        # リスト全体を比較
+        for actual, expected in zip(simulation, expected_simulation):
+            self.assertEqual(actual.name, expected.name)
+            self.assertAlmostEqual(actual.next_turn, expected.next_turn, places=2)
