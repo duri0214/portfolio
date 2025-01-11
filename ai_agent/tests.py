@@ -76,17 +76,17 @@ class ConversationServiceTest(TestCase):
 
         # シミュレーション結果の期待値
         expected_simulation = [
-            ("Entity1", round(1 / 100, 2)),
-            ("Entity1", round(2 / 100, 2)),
-            ("Entity1", round(3 / 100, 2)),
-            ("Entity1", round(4 / 100, 2)),
-            ("Entity1", round(5 / 100, 2)),
-            ("Entity1", round(6 / 100, 2)),
-            ("Entity1", round(7 / 100, 2)),
-            ("Entity1", round(8 / 100, 2)),
-            ("Entity1", round(9 / 100, 2)),
-            ("Entity1", round(10 / 100, 2)),
-            ("Entity2", round(1 / 10, 2)),
+            ("Entity1", 1 / 100),
+            ("Entity1", 2 / 100),
+            ("Entity1", 3 / 100),
+            ("Entity1", 4 / 100),
+            ("Entity1", 5 / 100),
+            ("Entity1", 6 / 100),
+            ("Entity1", 7 / 100),
+            ("Entity1", 8 / 100),
+            ("Entity1", 9 / 100),
+            ("Entity1", 10 / 100),
+            ("Entity2", 1 / 10),
         ]
         # 個々の値を比較（小数点以下誤差許容）
         for (actual_entity, actual_time), (expected_entity, expected_time) in zip(
