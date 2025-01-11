@@ -67,3 +67,30 @@ class ConversationServiceTest(TestCase):
         self.assertEqual(
             timeline.next_turn, 1 / self.entity1.speed + 1 / self.entity1.speed
         )
+
+    def test_simulate_next_actions(self):
+        """
+        Test if the simulate_next_actions function correctly predicts the next actions.
+        """
+        simulation = ConversationService.simulate_next_actions(max_steps=11)
+
+        # シミュレーション結果の期待値
+        expected_simulation = [
+            ("Entity1", round(1 / 100, 2)),
+            ("Entity1", round(2 / 100, 2)),
+            ("Entity1", round(3 / 100, 2)),
+            ("Entity1", round(4 / 100, 2)),
+            ("Entity1", round(5 / 100, 2)),
+            ("Entity1", round(6 / 100, 2)),
+            ("Entity1", round(7 / 100, 2)),
+            ("Entity1", round(8 / 100, 2)),
+            ("Entity1", round(9 / 100, 2)),
+            ("Entity1", round(10 / 100, 2)),
+            ("Entity2", round(1 / 10, 2)),
+        ]
+        # 個々の値を比較（小数点以下誤差許容）
+        for (actual_entity, actual_time), (expected_entity, expected_time) in zip(
+            simulation, expected_simulation
+        ):
+            self.assertEqual(actual_entity, expected_entity)
+            self.assertAlmostEqual(actual_time, expected_time, places=2)
