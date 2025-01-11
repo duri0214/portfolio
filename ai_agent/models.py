@@ -86,3 +86,15 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.entity.name} at {self.created_at}"
+
+
+class ActionTimeline(models.Model):
+    """
+    Tracks the next turn for each entity based on their speed.
+    """
+
+    entity = models.OneToOneField(Entity, on_delete=models.CASCADE)
+    next_turn = models.FloatField(default=0)  # 次の行動予定ターン
+
+    def __str__(self):
+        return f"{self.entity.name} - Next Turn: {self.next_turn}"
