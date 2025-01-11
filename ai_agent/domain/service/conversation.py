@@ -8,6 +8,15 @@ from ai_agent.models import Entity
 
 class ConversationService:
     @staticmethod
+    def calculate_next_turn_increment(speed: float) -> float:
+        """
+        Calculate the increment for next_turn based on entity speed.
+        This ensures consistency in how the increment is derived, and makes future
+        adjustments easier.
+        """
+        return 1 / speed
+
+    @staticmethod
     def initialize_timeline():
         """
         Initialize the timeline by assigning first turn values based on entity speed.
@@ -16,7 +25,11 @@ class ConversationService:
         for entity in entities:
             ConversationRepository.update_or_create_action_timeline(
                 entity=entity,
-                defaults={"next_turn": 1 / entity.speed},
+                defaults={
+                    "next_turn": ConversationService.calculate_next_turn_increment(
+                        entity.speed
+                    )
+                },
             )
 
     @staticmethod
@@ -50,31 +63,21 @@ class ConversationService:
             next_action = min(candidates, key=lambda t: t.next_turn)
             ConversationRepository.update_next_turn(
                 action_timeline=next_action,
-                increment=1 / next_action.entity.speed,
+                increment=ConversationService.calculate_next_turn_increment(
+                    next_action.entity.speed
+                ),
             )
             return next_action.entity
 
-        # このターンでは発言可能なエンティティがいない(candidatesが空)場合、すべてのエンティティの next_turn を更新して次のターンへ進む
+        # このターンでは発言可能なエンティティがいない場合、すべてのエンティティの next_turn を更新して次のターンへ進む
         for timeline in timelines:
             ConversationRepository.update_next_turn(
                 action_timeline=timeline,
-                increment=1 / timeline.entity.speed,
+                increment=ConversationService.calculate_next_turn_increment(
+                    timeline.entity.speed
+                ),
             )
         raise ValueError("No entities are available to act in this turn.")
-
-    @staticmethod
-    def create_message(entity, content):
-        """
-        Create a new message for the given entity.
-
-        Args:
-            entity (Entity): The entity creating the message.
-            content (str): The content of the message.
-
-        Returns:
-            Message: The created message instance.
-        """
-        return ConversationRepository.create_message(entity=entity, content=content)
 
     @staticmethod
     def simulate_next_actions(max_steps=10) -> list[EntityVO]:

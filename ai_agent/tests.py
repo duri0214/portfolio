@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from ai_agent.domain.repository.conversation import ConversationRepository
 from ai_agent.domain.service.conversation import ConversationService
 from ai_agent.domain.valueobject.conversation import EntityVO
 from ai_agent.models import Entity, ActionTimeline
@@ -67,7 +68,7 @@ class ConversationServiceTest(TestCase):
         Test if creating a message updates the timeline properly for the entity.
         """
         # Entity1 でメッセージを作成
-        ConversationService.create_message(self.entity1, "Test Message")
+        ConversationRepository.create_message(self.entity1, "Test Message")
 
         # タイムラインを確認
         timeline = ActionTimeline.objects.get(entity=self.entity1)
