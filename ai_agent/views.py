@@ -19,7 +19,7 @@ class IndexView(FormView):
         context = super().get_context_data(**kwargs)
 
         # メッセージ履歴
-        context["messages"] = Message.objects.select_related("entity").order_by(
+        context["chat_messages"] = Message.objects.select_related("entity").order_by(
             "created_at"
         )
 
@@ -94,7 +94,8 @@ class NextTurnView(View):
         if not next_action:
             # 未完了のアクションがない場合フラッシュメッセージ設定
             messages.info(
-                request, "No more actions left to process. Timeline has been reset."
+                request,
+                "処理すべきアクションはもうありません。タイムラインがリセットされました。",
             )
 
             # リセット処理を直接呼び出し
@@ -110,14 +111,21 @@ class NextTurnView(View):
             # input_text = request.POST.get("input_text")  # TODO: ユーザー入力を処理する場合のメモ
 
             # 次のエンティティとその処理を取得
-            next_entity = next_action.entity
+            next_entity = ConversationService.get_next_entity(input_text="")
 
             # 仮の応答を生成
             response = f"{next_entity.name} が行動しました: 仮の応答テキスト"
 
             # メッセージを作成
             ConversationRepository.create_message(next_entity, response)
-        except ValueError as e:
-            print(f"Error: {e}")
+
+            # フラッシュメッセージを設定
+            messages.success(request, f"{next_entity.name} のターンが進行しました。")
+        except ValueError:
+            # 行動可能なエンティティがない場合、一旦リセット
+            messages.info(
+                request, "No more actions left to process. Timeline has been reset."
+            )
+            ResetTimelineView.reset_timeline()
 
         return redirect("agt:index")

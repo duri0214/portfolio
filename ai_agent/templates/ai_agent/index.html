@@ -23,17 +23,23 @@
         </ul>
     </div>
     <div class="container">
-        <!-- タイムライン表示 -->
         <section id="content-section" class="d-flex flex-column">
-            <!-- コンテンツエリア -->
             <div class="d-flex flex-grow-1">
                 <!-- タイムラインディスプレイ (左側コンテンツ) -->
                 <div class="timeline-display flex-grow-1">
                     <div class="container mt-4">
                         <h2>AI Agent Simulation</h2>
-                        {% for message in messages %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                                     role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% for chat_message in chat_messages %}
                             <div class="alert alert-info" role="alert">
-                                {{ message.message_content }}
+                                {{ chat_message.message_content }}
                             </div>
                         {% empty %}
                             <div class="alert alert-warning" role="alert">
