@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 from django.views.generic import View
 from django.views.generic.edit import FormView
 
+from ai_agent.domain.repository.conversation import ConversationRepository
 from ai_agent.domain.service.conversation import ConversationService
 from ai_agent.forms import SendMessageForm
 from ai_agent.models import Message, Entity
@@ -45,7 +46,7 @@ class NextTurnView(View):
             response = f"{next_entity.name} が回答します: 仮の応答テキスト"
 
             # メッセージを作成
-            ConversationService.create_message(next_entity, response)
+            ConversationRepository.create_message(next_entity, response)
         except ValueError as e:
             # エンティティが存在しない場合や応答できるエンティティがない場合
             print(f"Error: {e}")
