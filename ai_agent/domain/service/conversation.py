@@ -96,15 +96,15 @@ class ConversationService:
             raise ValueError("No entities available in the timeline.")
 
         simulation = []
-        for _ in range(max_steps):
+        for i in range(1, max_steps + 1):
             # 次の行動を決定 (next_turn が最小のタイムラインを選ぶ)
             next_action = min(timelines, key=lambda t: t.next_turn)
 
             # ActionHistory レコードを作成
             ActionHistory.objects.create(
                 entity=next_action.entity,
-                acted_at_turn=int(next_action.next_turn),
-                done=False,  # 行動前なので未完了
+                acted_at_turn=i,
+                done=False,
             )
 
             # シミュレーションの結果を保存
@@ -112,8 +112,10 @@ class ConversationService:
                 EntityVO(name=next_action.entity.name, next_turn=next_action.next_turn)
             )
 
-            # 次の行動予定を仮で計算
-            next_action.next_turn += 1 / next_action.entity.speed
+            # 次の行動予定を仮で更新
+            next_action.next_turn += ConversationService.calculate_next_turn_increment(
+                next_action.entity.speed
+            )
 
         return simulation
 
