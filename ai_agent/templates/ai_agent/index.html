@@ -21,53 +21,67 @@
         </ul>
     </div>
     <div class="container">
-        <h2>AI Agent Simulation</h2>
-        {% for message in messages %}
-            <div class="alert alert-info" role="alert">
-                {{ message.message_content }}
-            </div>
-        {% empty %}
-            <div class="alert alert-warning" role="alert">
-                メッセージ履歴がありません。
-            </div>
-        {% endfor %}
-        <div class="timeline-controls">
-            <form method="POST" action="{% url 'agt:reset_timeline' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">リセット</button>
-            </form>
-            <form method="POST" action="{% url 'agt:next_turn' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-primary">1単位時間進める</button>
-            </form>
-        </div>
         <!-- タイムライン表示 -->
-        <div class="timeline-display mt-4">
-            <h4>現在のターン</h4>
-            <p>
-                {% with latest_completed_turn|default:0 as current_turn %}
-                    現在のターン: {{ current_turn }}
-                {% endwith %}
-            </p>
+        <section id="content-section" class="d-flex flex-column">
+            <!-- コンテンツエリア -->
+            <div class="d-flex flex-grow-1">
+                <!-- タイムラインディスプレイ (左側コンテンツ) -->
+                <div class="timeline-display flex-grow-1">
+                    <div class="container mt-4">
+                        <h2>AI Agent Simulation</h2>
+                        {% for message in messages %}
+                            <div class="alert alert-info" role="alert">
+                                {{ message.message_content }}
+                            </div>
+                        {% empty %}
+                            <div class="alert alert-warning" role="alert">
+                                メッセージ履歴がありません。
+                            </div>
+                        {% endfor %}
 
-            <h4>予定される順番</h4>
-            <ul>
-                {% for future_action in future_actions %}
-                    <li>{{ future_action.entity.name }} (次の行動予定: {{ future_action.acted_at_turn }})</li>
-                {% empty %}
-                    <p>予定されているターンはありません。</p>
-                {% endfor %}
-            </ul>
+                        <!-- ボタン操作 -->
+                        <div class="timeline-controls">
+                            <form method="POST" action="{% url 'agt:reset_timeline' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">リセット</button>
+                            </form>
+                            <form method="POST" action="{% url 'agt:next_turn' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">1単位時間進める</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
-            <h4>終了したターンのログ</h4>
-            <ul>
-                {% for completed_action in completed_actions %}
-                    <li>{{ completed_action.entity.name }} (完了済み: {{ completed_action.acted_at_turn }})</li>
-                {% empty %}
-                    <p>完了したターンはありません。</p>
-                {% endfor %}
-            </ul>
-        </div>
+                <!-- タイムライン情報 (右側サイドバー) -->
+                <div class="timeline-info p-3 bg-light border">
+                    <h4>現在のターン</h4>
+                    <p>
+                        {% with latest_completed_turn|default:0 as current_turn %}
+                            現在のターン: {{ current_turn }}
+                        {% endwith %}
+                    </p>
+
+                    <h4>予定される順番</h4>
+                    <ul>
+                        {% for future_action in future_actions %}
+                            <li>{{ future_action.entity.name }} (次の行動予定: {{ future_action.acted_at_turn }})</li>
+                        {% empty %}
+                            <p>予定されているターンはありません。</p>
+                        {% endfor %}
+                    </ul>
+
+                    <h4>終了したターンのログ</h4>
+                    <ul>
+                        {% for completed_action in completed_actions %}
+                            <li>{{ completed_action.entity.name }} (完了済み: {{ completed_action.acted_at_turn }})</li>
+                        {% empty %}
+                            <p>完了したターンはありません。</p>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </section>
         <form method="POST" action="{% url 'agt:index' %}">
             {% csrf_token %}
             {{ form.as_p }}
