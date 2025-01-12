@@ -128,9 +128,9 @@ class ConversationServiceTest(TestCase):
         next_entity = ConversationService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity2)
 
-        # Entity2 が次に selected された場合、通常通りタイムラインが更新される
+        # Entity2 が選ばれた後、next_turn が次のターン（0.2）になることを確認する
         timeline_entity2 = ActionTimeline.objects.get(entity=self.entity2)
-        self.assertGreater(timeline_entity2.next_turn, 0)
+        self.assertEqual(timeline_entity2.next_turn, 0.2)
 
         # モックが期待通り呼び出されたことを確認
         mock_think.assert_any_call(self.entity1, self.test_input_text)
