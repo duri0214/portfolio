@@ -40,6 +40,11 @@
                                 メッセージ履歴がありません。
                             </div>
                         {% endfor %}
+                        <form method="POST" action="{% url 'agt:index' %}">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <button type="submit" class="btn btn-primary mt-2">Send</button>
+                        </form>
                     </div>
                 </div>
 
@@ -72,10 +77,5 @@
                 </div>
             </div>
         </section>
-        <form method="POST" action="{% url 'agt:index' %}">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary mt-2">Send</button>
-        </form>
     </div>
 {% endblock %}
