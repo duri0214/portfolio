@@ -108,9 +108,8 @@ class NextTurnView(View):
         next_action.save()
 
         try:
-            # input_text = request.POST.get("input_text")  # TODO: ユーザー入力を処理する場合のメモ
-
             # 次のエンティティとその処理を取得
+            # input_text = request.POST.get("input_text")  # TODO: ユーザー入力を処理する場合のメモ
             next_entity = ConversationService.get_next_entity(input_text="")
 
             # 仮の応答を生成
