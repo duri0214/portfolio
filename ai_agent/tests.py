@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 
 from ai_agent.domain.repository.conversation import ConversationRepository
@@ -107,3 +109,29 @@ class ConversationServiceTest(TestCase):
         for actual, expected in zip(simulation, expected_simulation):
             self.assertEqual(actual.name, expected.name)
             self.assertAlmostEqual(actual.next_turn, expected.next_turn, places=2)
+
+    @patch("ai_agent.domain.service.conversation.ConversationService.think")
+    def test_can_act_false_skips_entity(self, mock_think):
+        """
+        Test if an entity is skipped when can_act is False.
+        """
+
+        # think をモック化して、Entity1 が always False を返すように設定
+        def mock_think_side_effect(entity, input_text):
+            if entity == self.entity1:
+                return False  # Entity1 をパスさせる
+            return True  # 他のエンティティは True を返す
+
+        mock_think.side_effect = mock_think_side_effect
+
+        # Entity1 は skip され、Entity2 が選ばれるはず
+        next_entity = ConversationService.get_next_entity(self.test_input_text)
+        self.assertEqual(next_entity, self.entity2)
+
+        # Entity2 が次に selected された場合、通常通りタイムラインが更新される
+        timeline_entity2 = ActionTimeline.objects.get(entity=self.entity2)
+        self.assertGreater(timeline_entity2.next_turn, 0)
+
+        # モックが期待通り呼び出されたことを確認
+        mock_think.assert_any_call(self.entity1, self.test_input_text)
+        mock_think.assert_any_call(self.entity2, self.test_input_text)
