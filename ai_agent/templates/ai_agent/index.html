@@ -9,14 +9,16 @@
         <p>Interact with the AI Agent below.</p>
         <ul>
             <li>
-                <a class="btn btn-secondary btn-sm" href="#" role="button">
-                    ダミーボタン1
-                </a>
+                <form method="POST" action="{% url 'agt:reset_timeline' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">リセット</button>
+                </form>
             </li>
             <li>
-                <a class="btn btn-secondary btn-sm" href="#" role="button">
-                    ダミーボタン2
-                </a>
+                <form method="POST" action="{% url 'agt:next_turn' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">1単位時間進める</button>
+                </form>
             </li>
         </ul>
     </div>
@@ -38,18 +40,6 @@
                                 メッセージ履歴がありません。
                             </div>
                         {% endfor %}
-
-                        <!-- ボタン操作 -->
-                        <div class="timeline-controls">
-                            <form method="POST" action="{% url 'agt:reset_timeline' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger">リセット</button>
-                            </form>
-                            <form method="POST" action="{% url 'agt:next_turn' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-primary">1単位時間進める</button>
-                            </form>
-                        </div>
                     </div>
                 </div>
 
