@@ -104,7 +104,7 @@ class ActionTimeline(models.Model):
 
 class ActionHistory(models.Model):
     entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
-    acted_at_turn = models.FloatField()
+    acted_at_turn = models.IntegerField()
     done = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
