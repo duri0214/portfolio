@@ -62,7 +62,7 @@
                         {% for future_action in future_actions %}
                             <li>{{ future_action.entity.name }} (次の行動予定: {{ future_action.acted_at_turn }})</li>
                         {% empty %}
-                            <p>予定されているターンはありません。</p>
+                            <p>（なし）</p>
                         {% endfor %}
                     </ul>
 
@@ -71,7 +71,7 @@
                         {% for completed_action in completed_actions %}
                             <li>{{ completed_action.entity.name }} (完了済み: {{ completed_action.acted_at_turn }})</li>
                         {% empty %}
-                            <p>完了したターンはありません。</p>
+                            <p>（なし）</p>
                         {% endfor %}
                     </ul>
                 </div>
