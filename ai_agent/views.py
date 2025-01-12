@@ -106,9 +106,9 @@ class NextTurnView(View):
         next_action.done = True
         next_action.save()
 
-        # `next_action` のエンティティに基づいて次の動作を処理
-        # input_text = request.POST.get("input_text", "")  # TODO: ユーザー入力を処理する場合のメモ
         try:
+            # input_text = request.POST.get("input_text")  # TODO: ユーザー入力を処理する場合のメモ
+
             # 次のエンティティとその処理を取得
             next_entity = next_action.entity
 
