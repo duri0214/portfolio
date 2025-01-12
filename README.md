@@ -121,6 +121,8 @@ python manage.py loaddata .\hospital\fixtures\city.json
 python manage.py loaddata .\hospital\fixtures\election.json
 python manage.py loaddata .\hospital\fixtures\userattribute.json
 python manage.py loaddata .\hospital\fixtures\voteplace.json
+python manage.py loaddata .\ai_agent\fixtures\entity.json
+
 ```
 
 ## サーバを動かす
