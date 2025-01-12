@@ -3,7 +3,7 @@ from ai_agent.domain.service.googlemaps_review import GoogleMapsReviewService
 from ai_agent.domain.service.ng_word import NGWordService
 from ai_agent.domain.service.rag import RagService
 from ai_agent.domain.valueobject.conversation import EntityVO
-from ai_agent.models import Entity
+from ai_agent.models import Entity, ActionHistory
 
 
 class ConversationService:
@@ -82,7 +82,8 @@ class ConversationService:
     @staticmethod
     def simulate_next_actions(max_steps=10) -> list[EntityVO]:
         """
-        Simulates the next sequence of entity actions up to 'max_steps'.
+        Simulates the next sequence of entity actions up to 'max_steps'
+        and creates ActionHistory records for each action.
 
         Args:
             max_steps (int): How many actions to simulate.
@@ -96,13 +97,22 @@ class ConversationService:
 
         simulation = []
         for _ in range(max_steps):
+            # 次の行動を決定 (next_turn が最小のタイムラインを選ぶ)
             next_action = min(timelines, key=lambda t: t.next_turn)
 
+            # ActionHistory レコードを作成
+            ActionHistory.objects.create(
+                entity=next_action.entity,
+                acted_at_turn=int(next_action.next_turn),
+                done=False,  # 行動前なので未完了
+            )
+
+            # シミュレーションの結果を保存
             simulation.append(
                 EntityVO(name=next_action.entity.name, next_turn=next_action.next_turn)
             )
 
-            # 仮で次回行動予定を計算
+            # 次の行動予定を仮で計算
             next_action.next_turn += 1 / next_action.entity.speed
 
         return simulation
