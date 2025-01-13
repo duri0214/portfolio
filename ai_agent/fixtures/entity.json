@@ -1,0 +1,35 @@
+[
+  {
+    "model": "ai_agent.entity",
+    "pk": 1,
+    "fields": {
+      "name": "User",
+      "thinking_type": "google_maps_based"
+    }
+  },
+  {
+    "model": "ai_agent.entity",
+    "pk": 2,
+    "fields": {
+      "name": "Agent-A",
+      "thinking_type": "google_maps_based"
+    }
+  },
+  {
+    "model": "ai_agent.entity",
+    "pk": 3,
+    "fields": {
+      "name": "Agent-B",
+      "thinking_type": "rag_based"
+    }
+  },
+  {
+    "model": "ai_agent.entity",
+    "pk": 4,
+    "fields": {
+      "name": "Agent-C",
+      "thinking_type": "ng_word_based",
+      "forbidden_keywords": "暴力,万引き"
+    }
+  }
+]

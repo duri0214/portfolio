@@ -1,0 +1,87 @@
+{% extends "ai_agent/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="jumbotron">
+        <h1 class="display-4">Hello, AI Agent!</h1>
+        <p class="lead">It's an interesting AI Agent!</p>
+        <hr class="my-4">
+        <p>Interact with the AI Agent below.</p>
+        <ul>
+            <li>
+                <form method="POST" action="{% url 'agt:reset_timeline' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">リセット</button>
+                </form>
+            </li>
+            <li>
+                <form method="POST" action="{% url 'agt:next_turn' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">1単位時間進める</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+    <div class="container">
+        <section id="content-section" class="d-flex flex-column">
+            <div class="d-flex flex-grow-1">
+                <!-- タイムラインディスプレイ (左側コンテンツ) -->
+                <div class="timeline-display flex-grow-1">
+                    <div class="container mt-4">
+                        <h2>AI Agent Simulation</h2>
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                                     role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% for chat_message in chat_messages %}
+                            <div class="alert alert-info" role="alert">
+                                {{ chat_message.message_content }}
+                            </div>
+                        {% empty %}
+                            <div class="alert alert-warning" role="alert">
+                                メッセージ履歴がありません。
+                            </div>
+                        {% endfor %}
+                        <form method="POST" action="{% url 'agt:index' %}">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <button type="submit" class="btn btn-primary mt-2">Send</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- タイムライン情報 (右側サイドバー) -->
+                <div class="timeline-info p-3 bg-light border">
+                    <h4>現在のターン</h4>
+                    <p>
+                        {% with latest_completed_turn|default:0 as current_turn %}
+                            現在のターン: {{ current_turn }}
+                        {% endwith %}
+                    </p>
+
+                    <h4>予定される順番</h4>
+                    <ul>
+                        {% for future_action in future_actions %}
+                            <li>{{ future_action.entity.name }} (次の行動予定: {{ future_action.acted_at_turn }})</li>
+                        {% empty %}
+                            <p>（なし）</p>
+                        {% endfor %}
+                    </ul>
+
+                    <h4>終了したターンのログ</h4>
+                    <ul>
+                        {% for completed_action in completed_actions %}
+                            <li>{{ completed_action.entity.name }} (完了済み: {{ completed_action.acted_at_turn }})</li>
+                        {% empty %}
+                            <p>（なし）</p>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+{% endblock %}

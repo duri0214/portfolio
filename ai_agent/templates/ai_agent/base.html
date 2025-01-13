@@ -18,22 +18,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
-    <title>病院事務VBAのWeb版</title>
+    <title>ai_agent</title>
 
     <!-- bootstrap and css -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
           integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'hospital/css/index.css' %}">
-    {% block extra_css %}{% endblock %}
-
-    <!-- font -->
-    <link href="https://fonts.googleapis.com/css?family=Sawarabi+Gothic" rel="stylesheet">
-    <!-- fontawesome -->
-    <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
-
+    <link rel="stylesheet" href="{% static 'ai_agent/css/index.css' %}">
     <!-- favicon -->
-    <link rel="shortcut icon" href="{% static 'hospital/c_h.ico' %}">
+    <link rel="icon" href="{% static 'ai_agent/c_a.ico' %}">
+
+    <!-- for ajax -->
+    <script>let myUrl = {"base": "{% url 'agt:index' %}"};</script>
 </head>
+
 <body>
 <h1></h1>
 <header>
@@ -55,15 +52,14 @@
                         <option value="{% url 'txo:index' %}">TAXONOMY</option>
                         <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
                         <option value="{% url 'sec:index' %}">SECURITIES REPORT</option>
-                        <option value="{% url 'hsp:index' %}" selected>HOSPITAL</option>
+                        <option value="{% url 'hsp:index' %}">HOSPITAL</option>
                         <option value="{% url 'llm:index' %}">LLM_CHAT</option>
-                        <option value="{% url 'agt:index' %}">AI_AGENT</option>
+                        <option value="{% url 'agt:index' %}" selected>AI_AGENT</option>
                     </select>
                 </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="search" placeholder="alt + / で検索" aria-label="Search"
-                       accesskey="/">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
         </div>
@@ -87,7 +83,5 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
         integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
         crossorigin="anonymous"></script>
-
-{% block extra_js %}{% endblock %}
 </body>
 </html>
