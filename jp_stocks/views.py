@@ -13,7 +13,6 @@ class IndexView(TemplateView):
 class OrderBookListView(ListView):
     model = Order
     template_name = "jp_stocks/order_book/index.html"
-    success_url = reverse_lazy("jpn:order_book")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -31,7 +30,7 @@ class CreateOrderView(CreateView):
     model = Order
     fields = ["side", "price", "quantity"]
     template_name = "jp_stocks/order_book/create.html"
-    success_url = reverse_lazy("jpn:index")
+    success_url = reverse_lazy("jpn:order_book")
 
     def form_valid(self, form):
         order = form.save(commit=False)
