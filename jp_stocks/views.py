@@ -1,3 +1,5 @@
+from itertools import zip_longest
+
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView, ListView
 
@@ -11,6 +13,7 @@ class IndexView(TemplateView):
 class OrderBookListView(ListView):
     model = Order
     template_name = "jp_stocks/order_book/index.html"
+    success_url = reverse_lazy("jpn:order_book")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -18,8 +21,9 @@ class OrderBookListView(ListView):
         sell_orders = Order.objects.filter(side="sell", status="open").order_by("price")
         buy_orders = Order.objects.filter(side="buy", status="open").order_by("-price")
 
-        context["sell_orders"] = sell_orders
-        context["buy_orders"] = buy_orders
+        # 売り注文と買い注文をペアにしたデータ
+        combined_orders = zip_longest(sell_orders, buy_orders, fillvalue=None)
+        context["combined_orders"] = combined_orders
         return context
 
 
