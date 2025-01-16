@@ -48,8 +48,7 @@ class CreateOrderView(CreateView):
 
     def form_valid(self, form):
         order = form.save(commit=False)
-        order.user = self.request.user  # ログインユーザーの取得
-        self.match_order(order)  # マッチングロジックの呼び出し
+        self.match_order(order)
         return super().form_valid(form)
 
     @staticmethod
