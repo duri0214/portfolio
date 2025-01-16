@@ -1,9 +1,8 @@
-from itertools import zip_longest
-
-from django.db.models import Sum
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView, ListView
 
+from jp_stocks.domain.repository.order import OrderRepository
+from jp_stocks.domain.service.order import OrderBookService
 from jp_stocks.models import Order
 
 
@@ -17,26 +16,8 @@ class OrderBookListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        # 売り注文を気配値ごとに集計 (SUM)
-        sell_orders = (
-            Order.objects.filter(side="sell", status="open")
-            .values("price")  # group by price
-            .annotate(total_quantity=Sum("quantity"))  # priceごとの数量を合計
-            .order_by("price")
-        )
-
-        # 買い注文を気配値ごとに集計 (SUM)
-        buy_orders = (
-            Order.objects.filter(side="buy", status="open")
-            .values("price")  # group by price
-            .annotate(total_quantity=Sum("quantity"))  # priceごとの数量を合計
-            .order_by("-price")
-        )
-
-        # 売り注文と買い注文をペアにしたデータ
-        combined_orders = zip_longest(sell_orders, buy_orders, fillvalue=None)
-        context["combined_orders"] = combined_orders
+        order_book_service = OrderBookService(repository=OrderRepository())
+        context["combined_orders"] = order_book_service.get_order_book()
         return context
 
 
