@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "home",
     "llm_chat",
     "ai_agent",
+    "jp_stocks",
 ]
 
 MIDDLEWARE = [

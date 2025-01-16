@@ -32,6 +32,7 @@ urlpatterns = [
     path("hospital/", include("hospital.urls")),
     path("llm_chat/", include("llm_chat.urls")),
     path("ai_agent/", include("ai_agent.urls")),
+    path("jp_stocks/", include("jp_stocks.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
