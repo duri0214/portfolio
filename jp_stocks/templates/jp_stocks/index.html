@@ -1,0 +1,20 @@
+{% extends "jp_stocks/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="jumbotron">
+        <h1 class="display-4">Hello, Japanese stocks!</h1>
+        <p class="lead">It's an interesting Japanese Stocks!</p>
+        <hr class="my-4">
+        <p>Analyze Japanese stocks.</p>
+    </div>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">日本株「板」シミュレーション</h1>
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center">
+                <a href="{% url 'jpn:create_order' %}" class="btn btn-primary btn-lg mb-3">注文を作成</a><br>
+                <a href="{% url 'jpn:order_book' %}" class="btn btn-secondary btn-lg">板情報を見る</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

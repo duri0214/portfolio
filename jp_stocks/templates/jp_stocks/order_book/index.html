@@ -1,0 +1,36 @@
+{% extends "jp_stocks/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Order Book</h1>
+        <table class="table table-bordered text-center">
+            <thead class="table-dark">
+            <tr>
+                <th scope="col">売気配株数</th>
+                <th scope="col">気配値</th>
+                <th scope="col">買気配株数</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>--</td>
+                <td>成行</td>
+                <td>--</td>
+            </tr>
+            <!-- 売り注文と買い注文をループでペア表示 -->
+            {% for sell, buy in combined_orders %}
+                <tr>
+                    <td>{% if sell %}{{ sell.total_quantity }}{% else %}--{% endif %}</td>
+                    <td>{% if sell %}{{ sell.price }}{% else %}--{% endif %}</td>
+                    <td>{% if buy %}{{ buy.total_quantity }}{% else %}--{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="text-center mt-4">
+            <a href="{% url 'jpn:index' %}" class="btn btn-secondary">戻る</a>
+            <a href="{% url 'jpn:create_order' %}" class="btn btn-primary">注文を作成</a>
+        </div>
+    </div>
+{% endblock %}
