@@ -21,9 +21,9 @@
             <!-- 売り注文と買い注文をループでペア表示 -->
             {% for sell, buy in combined_orders %}
                 <tr>
-                    <td>{% if sell %}{{ sell.remaining_quantity }}{% else %}--{% endif %}</td>
+                    <td>{% if sell %}{{ sell.total_quantity }}{% else %}--{% endif %}</td>
                     <td>{% if sell %}{{ sell.price }}{% else %}--{% endif %}</td>
-                    <td>{% if buy %}{{ buy.remaining_quantity }}{% else %}--{% endif %}</td>
+                    <td>{% if buy %}{{ buy.total_quantity }}{% else %}--{% endif %}</td>
                 </tr>
             {% endfor %}
             </tbody>
