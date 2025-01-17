@@ -4,8 +4,19 @@ from dataclasses import dataclass
 @dataclass
 class OrderSummary:
     """
-    単一の気配値に対応する注文情報を表すValue Object。
+    注文のサマリーを保持する値オブジェクト。
     """
 
     price: float
     total_quantity: int
+    status: str
+
+
+@dataclass
+class OrderPair:
+    """
+    売り注文と買い注文のペアリングを表す値オブジェクト。
+    """
+
+    sell_order: OrderSummary | None
+    buy_order: OrderSummary | None

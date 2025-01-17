@@ -19,11 +19,34 @@
                 <td>--</td>
             </tr>
             <!-- 売り注文と買い注文をループでペア表示 -->
-            {% for sell, buy in combined_orders %}
+            {% for order_pair in combined_orders %}
                 <tr>
-                    <td>{% if sell %}{{ sell.total_quantity }}{% else %}--{% endif %}</td>
-                    <td>{% if sell %}{{ sell.price }}{% else %}--{% endif %}</td>
-                    <td>{% if buy %}{{ buy.total_quantity }}{% else %}--{% endif %}</td>
+                    <!-- 売気配株数 -->
+                    <td>
+                        {% if order_pair.sell_order %}
+                            {{ order_pair.sell_order.total_quantity }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <!-- 気配値 -->
+                    <td>
+                        {% if order_pair.sell_order %}
+                            {{ order_pair.sell_order.price }}
+                        {% elif order_pair.buy_order %}
+                            {{ order_pair.buy_order.price }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <!-- 買気配株数 -->
+                    <td>
+                        {% if order_pair.buy_order %}
+                            {{ order_pair.buy_order.total_quantity }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

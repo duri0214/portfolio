@@ -21,7 +21,7 @@ class Order(models.Model):
     ]
 
     side = models.CharField(max_length=4, choices=SIDE_CHOICES)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField()
     fulfilled_quantity = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=10, default="open")
