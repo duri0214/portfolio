@@ -119,36 +119,3 @@ class OrderBookService:
             return 0, buy_quantity - sell_quantity
         else:
             return 0, 0  # 完全相殺
-
-
-class OrderMatchingService:
-    """
-    注文のマッチングを管理するサービスクラス。
-    """
-
-    @staticmethod
-    def match_and_save_order(new_order):
-        """
-        新しい注文をマッチングし、保存する。
-        対象の反対方向の注文を処理する。
-        """
-        # 反対方向の注文を取得
-        opposite_orders = OrderRepository.get_opposite_orders(
-            side=new_order.side,
-            price=new_order.price,
-        )
-
-        # ロジック確認用: 対象となる注文をログ出力
-        print(
-            f"[SERVICE] Found {len(opposite_orders)} orders to match with: {new_order}."
-        )
-
-        # シンプルなマッチング処理 (詳細なマッチングロジックはここに実装)
-        for order in opposite_orders:
-            # TODO: 実際の数量計算や取引ロジックをここに記述
-            print(
-                f"[MATCHED] New order {new_order} matches with existing order {order}."
-            )
-
-        # 新しい注文を保存
-        OrderRepository.save_order(new_order)
