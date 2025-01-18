@@ -1,126 +1,96 @@
-from unittest.mock import MagicMock
-
 from django.test import TestCase
 
-from jp_stocks.domain.repository.order import OrderRepository
 from jp_stocks.domain.service.order import OrderBookService
-from jp_stocks.domain.valueobject.order import OrderSummary
+from jp_stocks.domain.valueobject.order import OrderPair
 from jp_stocks.models import Order
 
 
-class OrderRepositoryTest(TestCase):
+class OrderBookServiceTest(TestCase):
     def setUp(self):
         """
-        売り注文と買い注文のテストデータを準備。
+        テスト実行時にデータベースのOrderテーブルを初期化。
         """
-        # 既存のデータを削除してリセット
         Order.objects.all().delete()
 
-        # 売り注文データ
-        Order.objects.create(
-            side="sell", price=100, quantity=300, fulfilled_quantity=200, status="open"
-        )  # 残量100 (有効)
-        Order.objects.create(
-            side="sell", price=101, quantity=100, fulfilled_quantity=0, status="open"
-        )  # 残量100 (有効)
-        Order.objects.create(
-            side="sell", price=103, quantity=50, fulfilled_quantity=0, status="open"
-        )  # 残量50 (有効)
-        Order.objects.create(
-            side="sell",
-            price=104,
-            quantity=100,
-            fulfilled_quantity=100,
-            status="fulfilled",
-        )  # 満たされた注文（無効）
-
-        # 買い注文データ
-        Order.objects.create(
-            side="buy", price=102, quantity=150, fulfilled_quantity=0, status="open"
-        )  # 残量150 (有効)
-        Order.objects.create(
-            side="buy", price=101, quantity=150, fulfilled_quantity=50, status="open"
-        )  # 残量100 (有効)
-        Order.objects.create(
-            side="buy",
-            price=99,
-            quantity=200,
-            fulfilled_quantity=200,
-            status="fulfilled",
-        )  # 満たされた注文（無効）
-
-    def test_get_sell_orders(self):
+    def test_complete_cancellation(self):
         """
-        売り注文が正しく集計され、「安い順」にソートされることを確認。
+        同価格で売り注文と買い注文が完全に相殺される場合をテスト
         """
-        sell_orders = OrderRepository.get_sell_orders()
+        # データを作成
+        Order.objects.create(side="sell", price=100, quantity=50)
+        Order.objects.create(side="buy", price=100, quantity=50)
 
-        # 売り注文の数が正しいことを確認
-        self.assertEqual(len(sell_orders), 3)  # 残量がある3件のみ
+        # サービスを実行
+        result = OrderBookService.calculate_order_book()
 
-        # price=100 の注文
-        self.assertEqual(sell_orders[0].price, 100)
-        self.assertEqual(sell_orders[0].total_quantity, 100)
+        # 期待結果
+        expected_result = [OrderPair(price=100, sell_quantity=0, buy_quantity=0)]
+        self.assertEqual(result, expected_result)
 
-        # price=101 の注文
-        self.assertEqual(sell_orders[1].price, 101)
-        self.assertEqual(sell_orders[1].total_quantity, 100)
-
-        # price=103 の注文
-        self.assertEqual(sell_orders[2].price, 103)
-        self.assertEqual(sell_orders[2].total_quantity, 50)
-
-    def test_get_buy_orders(self):
+    def test_partial_cancellation_sell_remains(self):
         """
-        買い注文が正しく集計され、「高い順」にソートされることを確認。
+        部分的な相殺で売り注文が残る場合をテスト
         """
-        buy_orders = OrderRepository.get_buy_orders()
+        # データを作成
+        Order.objects.create(side="sell", price=100, quantity=60)
+        Order.objects.create(side="buy", price=100, quantity=40)
 
-        # 買い注文の数が正しいことを確認
-        self.assertEqual(len(buy_orders), 2)  # 残量がある2件のみ
+        # サービスを実行
+        result = OrderBookService.calculate_order_book()
 
-        # price=102 の注文
-        self.assertEqual(buy_orders[0].price, 102)
-        self.assertEqual(buy_orders[0].total_quantity, 150)
+        # 期待結果
+        expected_result = [OrderPair(price=100, sell_quantity=20, buy_quantity=0)]
+        self.assertEqual(result, expected_result)
 
-        # price=101 の注文
-        self.assertEqual(buy_orders[1].price, 101)
-        self.assertEqual(buy_orders[1].total_quantity, 100)
-
-    def test_no_fulfilled_orders_in_results(self):
+    def test_partial_cancellation_buy_remains(self):
         """
-        完全に満たされた注文（fulfilled）は結果に含まれないことを確認。
+        部分的な相殺で買い注文が残る場合をテスト
         """
-        sell_orders = OrderRepository.get_sell_orders()
-        buy_orders = OrderRepository.get_buy_orders()
+        # データを作成
+        Order.objects.create(side="sell", price=100, quantity=30)
+        Order.objects.create(side="buy", price=100, quantity=50)
 
-        # fulfilled の注文が含まれないことを確認
-        for order in sell_orders + buy_orders:
-            with self.subTest(order=order):
-                self.assertNotEqual(order.total_quantity, 0)  # 残量が0でない
-                self.assertNotEqual(order.status, "fulfilled")  # fulfilledでない
+        # サービスを実行
+        result = OrderBookService.calculate_order_book()
 
+        # 期待結果
+        expected_result = [OrderPair(price=100, sell_quantity=0, buy_quantity=20)]
+        self.assertEqual(result, expected_result)
 
-class OrderBookServiceTest(TestCase):
-    def test_get_order_book(self):
-        mock_repository = MagicMock()
-        mock_repository.get_sell_orders.return_value = [
-            OrderSummary(price=100, total_quantity=50, status="open")
+    def test_no_match(self):
+        """
+        売りと買いの価格帯が異なり、全くマッチしない場合をテスト
+        """
+        # データを作成
+        Order.objects.create(side="sell", price=101, quantity=50)
+        Order.objects.create(side="buy", price=100, quantity=30)
+
+        # サービスを実行
+        result = OrderBookService.calculate_order_book()
+
+        # 期待結果
+        expected_result = [
+            OrderPair(price=100, sell_quantity=0, buy_quantity=30),
+            OrderPair(price=101, sell_quantity=50, buy_quantity=0),
         ]
-        mock_repository.get_buy_orders.return_value = [
-            OrderSummary(price=200, total_quantity=30, status="open")
+        self.assertEqual(result, expected_result)
+
+    def test_multiple_orders(self):
+        """
+        複数の売り注文と買い注文があり、一部が相殺される場合をテスト
+        """
+        # データを作成
+        Order.objects.create(side="sell", price=100, quantity=50)
+        Order.objects.create(side="sell", price=105, quantity=20)
+        Order.objects.create(side="buy", price=100, quantity=40)
+        Order.objects.create(side="buy", price=105, quantity=10)
+
+        # サービスを実行
+        result = OrderBookService.calculate_order_book()
+
+        # 期待結果
+        expected_result = [
+            OrderPair(price=100, sell_quantity=10, buy_quantity=0),
+            OrderPair(price=105, sell_quantity=10, buy_quantity=0),
         ]
-
-        service = OrderBookService(repository=mock_repository)
-        combined_orders = service.get_order_book()
-
-        # OrderPair のプロパティを使って確認
-        self.assertEqual(len(combined_orders), 1)
-
-        # 売り注文の確認
-        self.assertEqual(combined_orders[0].sell_order.price, 100)
-        self.assertEqual(combined_orders[0].sell_order.total_quantity, 50)
-
-        # 買い注文の確認
-        self.assertEqual(combined_orders[0].buy_order.price, 200)
-        self.assertEqual(combined_orders[0].buy_order.total_quantity, 30)
+        self.assertEqual(result, expected_result)

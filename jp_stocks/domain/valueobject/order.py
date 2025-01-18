@@ -14,9 +14,6 @@ class OrderSummary:
 
 @dataclass
 class OrderPair:
-    """
-    売り注文と買い注文のペアリングを表す値オブジェクト。
-    """
-
-    sell_order: OrderSummary | None
-    buy_order: OrderSummary | None
+    price: int
+    sell_quantity: int = 0
+    buy_quantity: int = 0
