@@ -29,7 +29,7 @@ class OrderRepository:
             Order.objects.filter(side="buy")
             .values("price")
             .annotate(total_quantity=Sum("quantity"))
-            .order_by("-price")
+            .order_by("price")
         )
 
     @staticmethod

@@ -26,8 +26,8 @@ class OrderBookService:
 
             if sell_price == buy_price:
                 # 売りと買いの価格が一致する場合
-                sell_quantity = sell_order["total_quantity"]
-                buy_quantity = buy_order["total_quantity"]
+                sell_quantity: int = sell_order["total_quantity"]
+                buy_quantity: int = buy_order["total_quantity"]
 
                 if sell_quantity > buy_quantity:  # 売りが多い場合
                     result_list.append(
