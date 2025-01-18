@@ -1,6 +1,7 @@
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView, ListView
 
+from jp_stocks.domain.repository.order import OrderRepository
 from jp_stocks.domain.service.order import OrderBookService
 from jp_stocks.models import Order
 
@@ -15,6 +16,7 @@ class OrderBookListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["source_orders"] = OrderRepository.get_all_orders()
         context["combined_orders"] = OrderBookService.calculate_order_book()
         return context
 
