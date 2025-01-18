@@ -23,29 +23,15 @@
                 <tr>
                     <!-- 売気配株数 -->
                     <td>
-                        {% if order_pair.sell_order %}
-                            {{ order_pair.sell_order.total_quantity }}
-                        {% else %}
-                            --
-                        {% endif %}
+                        {{ order_pair.sell_quantity|default:"--" }}
                     </td>
                     <!-- 気配値 -->
                     <td>
-                        {% if order_pair.sell_order %}
-                            {{ order_pair.sell_order.price }}
-                        {% elif order_pair.buy_order %}
-                            {{ order_pair.buy_order.price }}
-                        {% else %}
-                            --
-                        {% endif %}
+                        {{ order_pair.price }}
                     </td>
                     <!-- 買気配株数 -->
                     <td>
-                        {% if order_pair.buy_order %}
-                            {{ order_pair.buy_order.total_quantity }}
-                        {% else %}
-                            --
-                        {% endif %}
+                        {{ order_pair.buy_quantity|default:"--" }}
                     </td>
                 </tr>
             {% endfor %}
