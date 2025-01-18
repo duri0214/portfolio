@@ -8,17 +8,25 @@
         <!-- フォーム -->
         <form method="post" action="{% url 'jpn:create_order' %}" class="border p-4 rounded shadow">
             {% csrf_token %}
-            <div class="mb-3">
-                <label for="side" class="form-label">売買区分:</label>
-                <select id="side" name="side" class="form-select">
-                    <option value="buy">買い (Buy)</option>
-                    <option value="sell">売り (Sell)</option>
-                </select>
+
+            <!-- 売買区分 -->
+            <div class="mb-4">
+                <label class="form-label d-block mb-3">売買区分:</label>
+                <div class="btn-group" role="group" aria-label="Buy or Sell">
+                    <!-- 買い -->
+                    <input type="radio" class="btn-check" name="side" id="side-buy" value="buy" autocomplete="off"
+                           checked>
+                    <label class="btn btn-outline-success" for="side-buy">買い (Buy)</label>
+
+                    <!-- 売り -->
+                    <input type="radio" class="btn-check" name="side" id="side-sell" value="sell" autocomplete="off">
+                    <label class="btn btn-outline-danger" for="side-sell">売り (Sell)</label>
+                </div>
             </div>
 
             <div class="mb-3">
                 <label for="price" class="form-label">価格:</label>
-                <input type="number" step="0.01" id="price" name="price" class="form-control" placeholder="例: 100.50">
+                <input type="number" step="0.01" id="price" name="price" class="form-control" placeholder="例: 100">
             </div>
 
             <div class="mb-3">
