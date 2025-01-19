@@ -1,0 +1,14 @@
+[
+  {
+    "model": "rental_shop.rentalStatus",
+    "fields": {
+      "name": "在庫"
+    }
+  },
+  {
+    "model": "rental_shop.rentalStatus",
+    "fields": {
+      "name": "貸出中"
+    }
+  }
+]

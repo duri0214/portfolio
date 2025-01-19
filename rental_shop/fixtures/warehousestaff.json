@@ -1,0 +1,20 @@
+[
+  {
+    "model": "rental_shop.warehousestaff",
+    "pk": 1,
+    "fields": {
+      "warehouse": 1,
+      "staff": 1,
+      "assigned_at": "2023-02-12T10:00:00+09:00"
+    }
+  },
+  {
+    "model": "rental_shop.warehousestaff",
+    "pk": 2,
+    "fields": {
+      "warehouse": 2,
+      "staff": 1,
+      "assigned_at": "2023-02-12T10:00:00+09:00"
+    }
+  }
+]

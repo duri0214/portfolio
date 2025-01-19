@@ -18,32 +18,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
-    <title>gmarker</title>
+    <title>warehouse</title>
+
+    {% block extra_css %}{% endblock %}
 
     <!-- bootstrap and css -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
           integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'gmarker/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'rental_shop/css/index.css' %}">
     <!-- favicon -->
-    <link rel="icon" href="{% static 'gmarker/c_g.ico' %}">
+    <link rel="icon" href="{% static 'rental_shop/c_r.ico' %}">
 
-    <!-- for ajax -->
-    <script>let myUrl = {"base": "{% url 'mrk:index' %}"};</script>
-
-    <!-- googlemap api -->
-    <script src="{% static 'gmarker/js/map.js' %}" defer></script>
-    <script>
-        let map;
-        window.myMapInit = () => {
-            document.addEventListener('DOMContentLoaded', () => {
-                const mapData = JSON.parse('{{ map_data|escapejs }}');
-                map = initMap(mapData);
-            });
-        };
-    </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=myMapInit&libraries=places&v=weekly"
-            async defer onerror="console.error('Google Maps API failed to load.');"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
+    <!-- fontawesome -->
+    <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
 </head>
 
 <body>
@@ -61,9 +48,9 @@
                     <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
                         <option value="{% url 'home:index' %}">HOME</option>
                         <option value="{% url 'vnm:index' %}">VIETNAM</option>
-                        <option value="{% url 'mrk:index' %}" selected>GMARKER</option>
+                        <option value="{% url 'mrk:index' %}">GMARKER</option>
                         <option value="{% url 'shp:index' %}">SHOPPING</option>
-                        <option value="{% url 'ren:index' %}">RENTAL_SHOP</option>
+                        <option value="{% url 'ren:index' %}" selected>RENTAL_SHOP</option>
                         <option value="{% url 'txo:index' %}">TAXONOMY</option>
                         <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
                         <option value="{% url 'sec:index' %}">SECURITIES REPORT</option>

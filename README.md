@@ -32,7 +32,7 @@ python manage.py monthly_cleanup_home
 - サーバで実行するときは makemigrations は基本的に必要ない（migrationファイルがgithubで焼き付けてあるから）
 
 ```
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities hospital home llm_chat ai_agent jp_stocks
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital home llm_chat ai_agent jp_stocks
 python manage.py migrate
 
 python manage.py createsuperuser
@@ -84,14 +84,14 @@ python manage.py loaddata .\gmarker\fixtures\nearbyPlace.json
 python manage.py loaddata .\shopping\fixtures\store.json
 python manage.py loaddata .\shopping\fixtures\staff.json
 python manage.py loaddata .\shopping\fixtures\products.json
-python manage.py loaddata .\warehouse\fixtures\warehouse.json
-python manage.py loaddata .\warehouse\fixtures\staff.json
-python manage.py loaddata .\warehouse\fixtures\rentalStatus.json
-python manage.py loaddata .\warehouse\fixtures\company.json
-python manage.py loaddata .\warehouse\fixtures\billingPerson.json
-python manage.py loaddata .\warehouse\fixtures\billingStatus.json
-python manage.py loaddata .\warehouse\fixtures\warehousestaff.json
-python manage.py loaddata .\warehouse\fixtures\item.json
+python manage.py loaddata .\rental_shop\fixtures\warehouse.json
+python manage.py loaddata .\rental_shop\fixtures\staff.json
+python manage.py loaddata .\rental_shop\fixtures\rentalStatus.json
+python manage.py loaddata .\rental_shop\fixtures\company.json
+python manage.py loaddata .\rental_shop\fixtures\billingPerson.json
+python manage.py loaddata .\rental_shop\fixtures\billingStatus.json
+python manage.py loaddata .\rental_shop\fixtures\warehousestaff.json
+python manage.py loaddata .\rental_shop\fixtures\item.json
 python manage.py loaddata .\taxonomy\fixtures\kingdom.json
 python manage.py loaddata .\taxonomy\fixtures\phylum.json
 python manage.py loaddata .\taxonomy\fixtures\classification.json

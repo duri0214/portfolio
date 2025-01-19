@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "gmarker",
     "shopping",
     "linebot_engine",
-    "warehouse",
+    "rental_shop",
     "taxonomy",
     "soil_analysis",
     "securities",

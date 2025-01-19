@@ -25,7 +25,7 @@ urlpatterns = [
     path("gmarker/", include("gmarker.urls")),
     path("shopping/", include("shopping.urls")),
     path("linebot_engine/", include("linebot_engine.urls")),
-    path("warehouse/", include("warehouse.urls")),
+    path("rental_shop/", include("rental_shop.urls")),
     path("taxonomy/", include("taxonomy.urls")),
     path("soil_analysis/", include("soil_analysis.urls")),
     path("securities/", include("securities.urls")),
