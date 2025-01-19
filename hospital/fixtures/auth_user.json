@@ -2,48 +2,6 @@
   {
     "model": "auth.user",
     "fields": {
-      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "yoshitaka okada",
-      "first_name": "yoshitaka",
-      "last_name": "okada",
-      "email": "okada@example.com",
-      "is_staff": 1
-    }
-  },
-  {
-    "model": "auth.user",
-    "fields": {
-      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "yoshiyuki minami",
-      "first_name": "yoshiyuki",
-      "last_name": "minami",
-      "email": "minami@example.com",
-      "is_staff": 1
-    }
-  },
-  {
-    "model": "auth.user",
-    "fields": {
-      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "生産者 Ａ",
-      "first_name": "生産者",
-      "last_name": "Ａ",
-      "email": "john@example.com"
-    }
-  },
-  {
-    "model": "auth.user",
-    "fields": {
-      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "生産者 Ｂ",
-      "first_name": "生産者",
-      "last_name": "Ｂ",
-      "email": "jane@example.com"
-    }
-  },
-  {
-    "model": "auth.user",
-    "fields": {
       "username": "A看護師",
       "first_name": "A",
       "last_name": "看護師",
