@@ -11,7 +11,7 @@ from .views import (
     ResetRentalsView,
 )
 
-app_name = "war"
+app_name = "ren"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
     path("create/", ItemCreateView.as_view(), name="item_create"),

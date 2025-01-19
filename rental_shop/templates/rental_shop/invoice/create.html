@@ -1,8 +1,8 @@
-{% extends 'warehouse/base.html' %}
+{% extends 'rental_shop/base.html' %}
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'warehouse/css/invoice/create.css' %}">
+    <link rel="stylesheet" href="{% static 'rental_shop/css/invoice/create.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -61,7 +61,7 @@
             </div>
 
             <div class="d-flex justify-content-between">
-                <a class="btn btn-outline-secondary" href="{% url 'war:index' %}">戻る</a>
+                <a class="btn btn-outline-secondary" href="{% url 'ren:index' %}">戻る</a>
                 <button type="submit" class="btn btn-outline-primary">送信</button>
             </div>
         </form>

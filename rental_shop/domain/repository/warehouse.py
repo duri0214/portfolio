@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Count, QuerySet
 from django.db.models.functions import Concat
 
-from warehouse.models import Item
+from rental_shop.models import Item
 
 
 def get_item_position_counts(warehouse_id: int) -> QuerySet:

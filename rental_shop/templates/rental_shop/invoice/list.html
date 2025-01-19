@@ -1,8 +1,8 @@
-{% extends 'warehouse/base.html' %}
+{% extends 'rental_shop/base.html' %}
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'warehouse/css/invoice/list.css' %}">
+    <link rel="stylesheet" href="{% static 'rental_shop/css/invoice/list.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -24,7 +24,7 @@
                 {% for invoice in object_list %}
                     <tr>
                         <td>{{ invoice.id }}</td>
-                        <td><a href="{% url 'war:invoice_detail' invoice.id %}">{{ invoice.company.name }}</a></td>
+                        <td><a href="{% url 'ren:invoice_detail' invoice.id %}">{{ invoice.company.name }}</a></td>
                         <td>{{ invoice.billing_person.name }}</td>
                         <td>{{ invoice.staff.name }}</td>
                     </tr>
@@ -38,7 +38,7 @@
         {% endif %}
 
         <div class="mt-4">
-            <a href="{% url 'war:index' %}" class="btn btn-secondary">戻る</a>
+            <a href="{% url 'ren:index' %}" class="btn btn-secondary">戻る</a>
         </div>
     </div>
 

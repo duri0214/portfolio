@@ -1,18 +1,18 @@
-{% extends 'warehouse/base.html' %}
+{% extends 'rental_shop/base.html' %}
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'warehouse/css/item/create.css' %}">
+    <link rel="stylesheet" href="{% static 'rental_shop/css/item/create.css' %}">
 {% endblock %}
 
 {% block content %}
     <div class="container">
         <h2>アイテム新規登録</h2>
-        <form action="{% url 'war:item_create' %}" method="post" enctype="multipart/form-data">
+        <form action="{% url 'ren:item_create' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}
             <div class="d-flex justify-content-between">
-                <a href="{% url 'war:index' %}" class="btn btn-outline-secondary">戻る</a>
+                <a href="{% url 'ren:index' %}" class="btn btn-outline-secondary">戻る</a>
                 <button type="submit" class="btn btn-outline-primary">送信</button>
             </div>
         </form>

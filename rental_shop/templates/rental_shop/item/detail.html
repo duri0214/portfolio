@@ -1,8 +1,8 @@
-{% extends 'warehouse/base.html' %}
+{% extends 'rental_shop/base.html' %}
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'warehouse/css/item/detail.css' %}">
+    <link rel="stylesheet" href="{% static 'rental_shop/css/item/detail.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -12,7 +12,7 @@
             <li>名称: {{ object.name }}</li>
             <li>金額: {{ object.price }}円</li>
         </ul>
-        <form method="GET" class="registration" action="{% url 'war:index' %}">
+        <form method="GET" class="registration" action="{% url 'ren:index' %}">
             {% csrf_token %}
             <button type="submit">戻る</button>
         </form>

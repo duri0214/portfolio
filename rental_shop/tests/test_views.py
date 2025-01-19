@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from warehouse.models import Warehouse, Staff
+from rental_shop.models import Warehouse, Staff
 
 
 class TestView(TestCase):
@@ -23,5 +23,5 @@ class TestView(TestCase):
         )
 
     def test_get_top_page_200(self):
-        response = self.client.get(reverse("war:index"))
+        response = self.client.get(reverse("ren:index"))
         self.assertEqual(200, response.status_code)

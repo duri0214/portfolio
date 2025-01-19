@@ -1,4 +1,4 @@
-{% extends 'warehouse/base.html' %}
+{% extends 'rental_shop/base.html' %}
 {% load static %}
 {% load humanize %}
 
@@ -13,13 +13,13 @@
     <div class="container">
         <h3 class="mt-4">Menu</h3>
         <ul>
-            <li><a href="{% url 'war:item_create' %}">アイテム登録</a></li>
-            <li><a href="{% url 'war:invoice_create' %}">レンタル手続き</a></li>
+            <li><a href="{% url 'ren:item_create' %}">アイテム登録</a></li>
+            <li><a href="{% url 'ren:invoice_create' %}">レンタル手続き</a></li>
             <li>請求書照会
                 <ul>
-                    <li><a href="{% url 'war:invoice_list' 1 %}">請求中 の請求書</a></li>
-                    <li><a href="{% url 'war:invoice_list' 2 %}">請求完了 の請求書</a></li>
-                    <li><a href="{% url 'war:invoice_list' 3 %}">請求無効 の請求書</a></li>
+                    <li><a href="{% url 'ren:invoice_list' 1 %}">請求中 の請求書</a></li>
+                    <li><a href="{% url 'ren:invoice_list' 2 %}">請求完了 の請求書</a></li>
+                    <li><a href="{% url 'ren:invoice_list' 3 %}">請求無効 の請求書</a></li>
                 </ul>
             </li>
         </ul>
@@ -82,7 +82,7 @@
                             </table>
 
                             <h5>貸し出しできるアイテム</h5>
-                            <form method="post" action="{% url 'war:reset_items' warehouse.instance.pk %}" class="mb-2">
+                            <form method="post" action="{% url 'ren:reset_items' warehouse.instance.pk %}" class="mb-2">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-outline-secondary">リセット</button>
                             </form>
@@ -104,12 +104,12 @@
                                             <td class="text-center">{{ item.pos_y }}</td>
                                             <td class="text-center">{{ item.pos_x }}</td>
                                             <td>{{ item.serial_number }}</td>
-                                            <td><a href="{% url 'war:item_detail' item.pk %}">{{ item.name }}</a></td>
+                                            <td><a href="{% url 'ren:item_detail' item.pk %}">{{ item.name }}</a></td>
                                             <td class="text-right">{{ item.price }}円</td>
                                             <td>
                                                 <div class="d-flex justify-content-center">
                                                     <form method="post"
-                                                          action="{% url 'war:rent_item' item.id %}">
+                                                          action="{% url 'ren:rent_item' item.id %}">
                                                         {% csrf_token %}
                                                         <button type="submit" class="btn-outline-primary btn-sm class=
                                                                 text-center">貸出

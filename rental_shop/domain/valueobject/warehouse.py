@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from django.db.models import QuerySet
 
-from warehouse.models import Warehouse
+from rental_shop.models import Warehouse
 
 
 @dataclass
