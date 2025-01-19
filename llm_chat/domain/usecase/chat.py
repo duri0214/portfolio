@@ -135,7 +135,23 @@ class OpenAITextToSpeechUseCase(UseCase):
 
 
 class OpenAISpeechToTextUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def __init__(self, file_path: str):
+        """
+        初期化で音声ファイルのパスを渡すことで、後続処理で利用できるようにします。
+
+        Args:
+            file_path (str): 音声ファイルのパス
+        """
+        if not file_path:
+            raise ValueError("音声ファイルのパスが指定されていません")
+        self.full_path = Path(MEDIA_ROOT) / file_path
+        if not self.full_path.exists():
+            raise FileNotFoundError(
+                f"指定された音声ファイル {self.full_path} は存在しません"
+            )
+        # DB 登録など外部に渡すのは相対パス
+        self.file_path = file_path
+
     def execute(self, user: User, content: str):
         """
         OpenAISpeechToTextServiceを利用し、ユーザーの最新の音声ファイルをテキストに変換します。
