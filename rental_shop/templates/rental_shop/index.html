@@ -44,6 +44,7 @@
                              id="warehouse-{{ warehouse.instance.pk }}" role="tabpanel">
 
                             <h3 class="mt-4">{{ warehouse.instance.name }} の貸出中のアイテム</h3>
+                            {# TODO: 請求発行していない、「カートなかのもの」まで含まれてしまう issue200 #}
                             {% if warehouse.non_available_items|length > 0 %}
                                 {% for item in warehouse.non_available_items %}
                                     <ul>

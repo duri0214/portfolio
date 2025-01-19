@@ -47,6 +47,7 @@ class IndexView(TemplateView):
             available_items = Item.objects.filter(
                 warehouse_id=warehouse.id, rental_status_id=RentalStatus.STOCK
             )
+            # TODO: 請求発行していない、「カートなかのもの」まで含まれてしまう issue200
             non_available_items = Item.objects.filter(
                 warehouse_id=warehouse.id
             ).exclude(rental_status_id=RentalStatus.STOCK)
