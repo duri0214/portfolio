@@ -39,7 +39,7 @@ class IndexView(FormView):
         form_data = form.cleaned_data
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
-        use_case_type = "OpenAIGpt"  # TODO: ドロップダウンでモードを決める？
+        use_case_type = form_data["use_case_type"]
         use_case: UseCase | None = None
         content: str | None = form_data["question"]
         if use_case_type == "Gemini":
