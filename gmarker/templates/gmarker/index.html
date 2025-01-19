@@ -2,15 +2,29 @@
 {% load static %}
 
 {% block content %}
-
     <div class="jumbotron">
-        <h1 class="display-4">Hello, googlemap!</h1>
-        <div id="map_canvas1" style="width: 1000px; height: 500px"></div>
+        <h1 class="display-4">Let's analyze Google Map Information!</h1>
+        <p class="lead">it's interesting Google map</p>
+        <hr class="my-4">
+        <p>You can set center position</p>
+        <ul>
+            <li><a class="btn btn-secondary btn-sm" href="{% url 'mrk:coordinate_create' %}"
+                   role="button">中心座標の編集</a></li>
+        </ul>
     </div>
 
-    <h5>カテゴリーサーチ</h5>
-    <form class="ml-4" action="{% url 'mrk:nearby_search' 1 %}" method="POST">
-        {% csrf_token %}
-        <input type="submit" class="btn-flat-border" value="レストラン"/> My拠点を中心に半径1500mのレストランのピンが表示される
-    </form>
+    <div class="container mt-4">
+        <h4 class="card-title">Map Canvas</h4>
+        <div id="map_canvas1" class="card p-3 shadow-sm" style="width: 100%; height: 500px"></div>
+        <div class="mt-4">
+            <h4>Category Search</h4>
+            <form class="ml-4" action="{% url 'mrk:nearby_search' 1 %}" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="submit" class="btn btn-outline-primary" value="レストラン"/>
+                    <span class="ml-2">My拠点を中心に半径1500mのレストランのピンが表示される</span>
+                </div>
+            </form>
+        </div>
+    </div>
 {% endblock %}
