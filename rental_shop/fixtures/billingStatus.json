@@ -1,20 +1,20 @@
 [
   {
-    "model": "warehouse.billingStatus",
+    "model": "rental_shop.billingStatus",
     "fields": {
       "id": 1,
       "name": "請求中"
     }
   },
   {
-    "model": "warehouse.billingStatus",
+    "model": "rental_shop.billingStatus",
     "fields": {
       "id": 2,
       "name": "請求完了"
     }
   },
   {
-    "model": "warehouse.billingStatus",
+    "model": "rental_shop.billingStatus",
     "fields": {
       "id": 3,
       "name": "請求無効"

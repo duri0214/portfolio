@@ -1,6 +1,6 @@
 [
   {
-    "model": "warehouse.warehousestaff",
+    "model": "rental_shop.warehousestaff",
     "pk": 1,
     "fields": {
       "warehouse": 1,
@@ -9,7 +9,7 @@
     }
   },
   {
-    "model": "warehouse.warehousestaff",
+    "model": "rental_shop.warehousestaff",
     "pk": 2,
     "fields": {
       "warehouse": 2,

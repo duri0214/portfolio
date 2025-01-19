@@ -1,6 +1,6 @@
 [
   {
-    "model": "warehouse.warehouse",
+    "model": "rental_shop.warehouse",
     "pk": 1,
     "fields": {
       "code": "iruma",
@@ -13,7 +13,7 @@
     }
   },
   {
-    "model": "warehouse.warehouse",
+    "model": "rental_shop.warehouse",
     "pk": 2,
     "fields": {
       "code": "iruma2",

@@ -1,6 +1,6 @@
 [
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 1,
       "name": "山田 勇美",
@@ -9,7 +9,7 @@
     }
   },
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 2,
       "name": "落合 時代",
@@ -18,7 +18,7 @@
     }
   },
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 3,
       "name": "中野 孝敏",
@@ -27,7 +27,7 @@
     }
   },
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 4,
       "name": "大槻 絵美",
@@ -36,7 +36,7 @@
     }
   },
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 5,
       "name": "内海 多佳司",
@@ -45,7 +45,7 @@
     }
   },
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 6,
       "name": "亀井 慶太郎",
@@ -54,7 +54,7 @@
     }
   },
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 7,
       "name": "篠原 直広",
@@ -63,7 +63,7 @@
     }
   },
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 8,
       "name": "山根 幾江",
@@ -72,7 +72,7 @@
     }
   },
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 9,
       "name": "吉井 友恵",
@@ -81,7 +81,7 @@
     }
   },
   {
-    "model": "warehouse.billingPerson",
+    "model": "rental_shop.billingPerson",
     "fields": {
       "company": 10,
       "name": "増田 利浩",

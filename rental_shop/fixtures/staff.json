@@ -1,6 +1,6 @@
 [
   {
-    "model": "warehouse.staff",
+    "model": "rental_shop.staff",
     "pk": 1,
     "fields": {
       "name": "スタッフ1",
