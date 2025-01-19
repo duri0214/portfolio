@@ -90,7 +90,7 @@ python manage.py loaddata .\rental_shop\fixtures\rentalStatus.json
 python manage.py loaddata .\rental_shop\fixtures\company.json
 python manage.py loaddata .\rental_shop\fixtures\billingPerson.json
 python manage.py loaddata .\rental_shop\fixtures\billingStatus.json
-python manage.py loaddata .\rental_shop\fixtures\rentalshopstaff.json
+python manage.py loaddata .\rental_shop\fixtures\warehousestaff.json
 python manage.py loaddata .\rental_shop\fixtures\item.json
 python manage.py loaddata .\taxonomy\fixtures\kingdom.json
 python manage.py loaddata .\taxonomy\fixtures\phylum.json
