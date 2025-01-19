@@ -43,11 +43,13 @@
             {{ form.use_case_type.label }} {{ form.use_case_type }}
             <br>
             {% csrf_token %}
-            {% if is_superuser %}
-                <input class="btn btn-primary" type="submit" value="送信">
-            {% else %}
-                <input class="btn btn-outline-secondary" type="submit" value="送信" disabled>
-            {% endif %}
+            <div class="d-flex justify-content-end mt-3">
+                {% if is_superuser %}
+                    <input class="btn btn-primary" type="submit" value="送信">
+                {% else %}
+                    <input class="btn btn-outline-secondary" type="submit" value="送信" disabled>
+                {% endif %}
+            </div>
         </form>
     </div>
     <script type="text/javascript">
