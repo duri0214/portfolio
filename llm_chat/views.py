@@ -41,7 +41,7 @@ class IndexView(FormView):
 
         use_case_type = form_data["use_case_type"]
         use_case: UseCase | None = None
-        content: str | None = form_data["question"]
+        content: str = form_data["question"]
         if use_case_type == "Gemini":
             use_case = GeminiUseCase()
             content = form_data["question"]
@@ -57,8 +57,9 @@ class IndexView(FormView):
             content = form_data["question"]
         elif use_case_type == "OpenAISpeechToText":
             # Questionは何を入れてもいい（処理されない）
-            use_case = OpenAISpeechToTextUseCase()
-            content = None
+            audio_file = form_data.get("audio_file")
+            use_case = OpenAISpeechToTextUseCase(audio_file)
+            content = "N/A"
         elif use_case_type == "OpenAIRag":
             use_case = OpenAIRagUseCase()
             content = form_data["question"]

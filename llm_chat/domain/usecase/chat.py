@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.uploadedfile import UploadedFile
 
+from config.settings import MEDIA_ROOT
 from lib.llm.valueobject.chat import RoleType
-from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
     GeminiChatService,
     OpenAIChatService,
@@ -135,35 +136,61 @@ class OpenAITextToSpeechUseCase(UseCase):
 
 
 class OpenAISpeechToTextUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def __init__(self, audio_file: UploadedFile):
+        """
+        初期化で音声ファイルを受け取り、保存処理を行い、後続処理で利用できるようにします。
+
+        Args:
+            audio_file (UploadedFile): Django のアップロードファイルオブジェクト
+
+        Raises:
+            ValueError: ファイルが指定されていない、または型が正しくない場合
+            FileNotFoundError: 保存したファイルが確認できない場合
+        """
+        # ファイルを保存する（前準備）
+        relative_path = f"llm_chat/audios/{audio_file.name}"
+        save_path = Path(MEDIA_ROOT) / relative_path
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # ファイルの保存処理
+        with open(save_path, "wb") as f:
+            for chunk in audio_file.chunks():
+                f.write(chunk)
+
+        # 保存後にフルパスと相対パスを設定
+        self.full_path = save_path
+        if not self.full_path.exists():
+            raise FileNotFoundError(
+                f"指定された音声ファイル {self.full_path} は存在しません"
+            )
+
+        self.file_path = relative_path
+
+    def execute(self, user: User, content: str):
         """
         OpenAISpeechToTextServiceを利用し、ユーザーの最新の音声ファイルをテキストに変換します。
-        contentパラメータは必ずNoneであること。
+        contentパラメータは必ず 'N/A' であること。
 
         Args:
             user (User): DjangoのUserモデルのインスタンス
-            content (str | None): この引数は現在利用されていません。
+            content (str): この引数は必ず 'N/A' に固定
 
         Raises:
-            ValueError: contentがNoneでない場合
+            ValueError: contentが 'N/A' でない場合
 
         Returns:
             音声をテキストに変換した結果
         """
-        if content is not None:
-            raise ValueError("content must be None for OpenAISpeechToTextUseCase")
-        record = ChatLogRepository.find_last_audio_log(user)
-
-        if record is None:
-            raise ObjectDoesNotExist("No audio file registered for the user")
+        if content != "N/A":
+            raise ValueError("content must be 'N/A' for OpenAISpeechToTextUseCase")
 
         chat_service = OpenAISpeechToTextChatService()
         message = MessageDTO(
-            user=record.user,
-            role=RoleType(record.role),
-            content=record.content,
-            file_path=record.file.name,
-            invisible=record.invisible,
+            user=user,
+            role=RoleType.ASSISTANT,
+            content=content,
+            file_path=self.file_path,
+            invisible=False,
         )
 
         return chat_service.generate(message)

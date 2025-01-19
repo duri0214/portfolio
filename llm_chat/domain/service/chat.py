@@ -297,8 +297,6 @@ class OpenAISpeechToTextChatService(ChatService):
         if full_path.exists():
             response = OpenAILlmSpeechToText(self.config).retrieve_answer(message)
             message.content = f"音声ファイルは「{response.text}」とテキスト化されました"
-            # TODO: 本当は音声ファイルをアップロードして処理したいのを、既存instanceで代用しているので、file_pathはNoneにする issue155
-            message.file_path = None
             self.save(message)
         else:
             print(f"音声ファイル {message.file_path} は存在しません")

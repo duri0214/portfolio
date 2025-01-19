@@ -37,10 +37,15 @@
                 </div>
             {% endif %}
         {% endfor %}
-        <form action="{% url 'llm:index' %}" method="POST">
+        <form action="{% url 'llm:index' %}" method="POST" enctype="multipart/form-data">
             {{ form.question.label }} {{ form.question }}
             <br>
             {{ form.use_case_type.label }} {{ form.use_case_type }}
+            <br>
+            <div id="audio-file-container" style="display: none;">
+                <label for="audio_file">{{ form.audio_file.label }}</label>
+                {{ form.audio_file }}
+            </div>
             <br>
             {% csrf_token %}
             <div class="d-flex justify-content-end mt-3">
@@ -53,6 +58,29 @@
         </form>
     </div>
     <script type="text/javascript">
+        // ページロード時にスクロールを一番下まで移動する
         window.scrollTo(0, document.body.scrollHeight);
+
+        // ドロップダウン選択肢の監視と音声ファイルフォームの表示／非表示
+        document.addEventListener("DOMContentLoaded", function () {
+            const useCaseType = document.querySelector('select[name="use_case_type"]');
+            const audioFileContainer = document.getElementById("audio-file-container");
+
+            // ドロップダウン変更時のイベント処理
+            useCaseType.addEventListener("change", function () {
+                if (useCaseType.value === "OpenAISpeechToText") {
+                    audioFileContainer.style.display = "block"; // フォームを表示
+                } else {
+                    audioFileContainer.style.display = "none"; // フォームを非表示
+                }
+            });
+
+            // ページロード時にも選択状態に応じてフィールドを表示／非表示
+            if (useCaseType.value === "OpenAISpeechToText") {
+                audioFileContainer.style.display = "block";
+            } else {
+                audioFileContainer.style.display = "none";
+            }
+        });
     </script>
 {% endblock %}
