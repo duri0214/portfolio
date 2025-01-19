@@ -37,8 +37,11 @@ class NearbyPlaceRepository:
         NearbyPlace.objects.bulk_create(objects)
 
     @classmethod
-    def get_default_location(cls) -> NearbyPlace:
-        return NearbyPlace.objects.get(category=cls.DEFAULT_LOCATION)
+    def get_default_location(cls) -> NearbyPlace | None:
+        try:
+            return NearbyPlace.objects.get(category=cls.DEFAULT_LOCATION)
+        except NearbyPlace.DoesNotExist:
+            return None
 
     @staticmethod
     def handle_search_code(category: int, search_types: str, places: list[PlaceVO]):
