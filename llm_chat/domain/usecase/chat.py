@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
 
+from config.settings import MEDIA_ROOT
 from lib.llm.valueobject.chat import RoleType
-from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
     GeminiChatService,
     OpenAIChatService,
@@ -152,10 +152,6 @@ class OpenAISpeechToTextUseCase(UseCase):
         """
         if content is not None:
             raise ValueError("content must be None for OpenAISpeechToTextUseCase")
-        record = ChatLogRepository.find_last_audio_log(user)
-
-        if record is None:
-            raise ObjectDoesNotExist("No audio file registered for the user")
 
         chat_service = OpenAISpeechToTextChatService()
         message = MessageDTO(
