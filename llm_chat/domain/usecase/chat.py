@@ -136,22 +136,23 @@ class OpenAITextToSpeechUseCase(UseCase):
 
 class OpenAISpeechToTextUseCase(UseCase):
     def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str):
         """
         OpenAISpeechToTextServiceを利用し、ユーザーの最新の音声ファイルをテキストに変換します。
-        contentパラメータは必ずNoneであること。
+        contentパラメータは必ず 'N/A' であること。
 
         Args:
             user (User): DjangoのUserモデルのインスタンス
-            content (str | None): この引数は現在利用されていません。
+            content (str): この引数は必ず 'N/A' に固定
 
         Raises:
-            ValueError: contentがNoneでない場合
+            ValueError: contentが 'N/A' でない場合
 
         Returns:
             音声をテキストに変換した結果
         """
-        if content is not None:
-            raise ValueError("content must be None for OpenAISpeechToTextUseCase")
+        if content != "N/A":
+            raise ValueError("content must be 'N/A' for OpenAISpeechToTextUseCase")
 
         chat_service = OpenAISpeechToTextChatService()
         message = MessageDTO(
