@@ -172,11 +172,11 @@ class OpenAISpeechToTextUseCase(UseCase):
 
         chat_service = OpenAISpeechToTextChatService()
         message = MessageDTO(
-            user=record.user,
-            role=RoleType(record.role),
-            content=record.content,
-            file_path=record.file.name,
-            invisible=record.invisible,
+            user=user,
+            role=RoleType.ASSISTANT,
+            content=content,
+            file_path=self.file_path,
+            invisible=False,
         )
 
         return chat_service.generate(message)
