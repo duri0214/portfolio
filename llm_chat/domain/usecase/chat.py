@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import UploadedFile
 
 from config.settings import MEDIA_ROOT
 from lib.llm.valueobject.chat import RoleType
@@ -135,22 +136,35 @@ class OpenAITextToSpeechUseCase(UseCase):
 
 
 class OpenAISpeechToTextUseCase(UseCase):
-    def __init__(self, file_path: str):
+    def __init__(self, audio_file: UploadedFile):
         """
-        初期化で音声ファイルのパスを渡すことで、後続処理で利用できるようにします。
+        初期化で音声ファイルを受け取り、保存処理を行い、後続処理で利用できるようにします。
 
         Args:
-            file_path (str): 音声ファイルのパス
+            audio_file (UploadedFile): Django のアップロードファイルオブジェクト
+
+        Raises:
+            ValueError: ファイルが指定されていない、または型が正しくない場合
+            FileNotFoundError: 保存したファイルが確認できない場合
         """
-        if not file_path:
-            raise ValueError("音声ファイルのパスが指定されていません")
-        self.full_path = Path(MEDIA_ROOT) / file_path
+        # ファイルを保存する（前準備）
+        relative_path = f"llm_chat/audios/{audio_file.name}"
+        save_path = Path(MEDIA_ROOT) / relative_path
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # ファイルの保存処理
+        with open(save_path, "wb") as f:
+            for chunk in audio_file.chunks():
+                f.write(chunk)
+
+        # 保存後にフルパスと相対パスを設定
+        self.full_path = save_path
         if not self.full_path.exists():
             raise FileNotFoundError(
                 f"指定された音声ファイル {self.full_path} は存在しません"
             )
-        # DB 登録など外部に渡すのは相対パス
-        self.file_path = file_path
+
+        self.file_path = relative_path
 
     def execute(self, user: User, content: str):
         """

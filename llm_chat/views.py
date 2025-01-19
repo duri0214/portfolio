@@ -1,11 +1,8 @@
-from pathlib import Path
-
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.views.generic import FormView
 from dotenv import load_dotenv
 
-from config.settings import MEDIA_ROOT
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.usecase.chat import (
     UseCase,
@@ -59,19 +56,9 @@ class IndexView(FormView):
             use_case = OpenAITextToSpeechUseCase()
             content = form_data["question"]
         elif use_case_type == "OpenAISpeechToText":
-            # TODO: UseCaseのなかに整理したい
-            audio_file = form_data.get("audio_file")
-            if not audio_file:
-                raise ValueError("音声ファイルが指定されていません")
-            relative_path = f"llm_chat/audios/{audio_file.name}"
-            save_path = Path(MEDIA_ROOT) / relative_path
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(save_path, "wb") as f:
-                for chunk in audio_file.chunks():
-                    f.write(chunk)
-
             # Questionは何を入れてもいい（処理されない）
-            use_case = OpenAISpeechToTextUseCase(relative_path)
+            audio_file = form_data.get("audio_file")
+            use_case = OpenAISpeechToTextUseCase(audio_file)
             content = "N/A"
         elif use_case_type == "OpenAIRag":
             use_case = OpenAIRagUseCase()
