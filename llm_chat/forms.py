@@ -20,6 +20,14 @@ class UserTextForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-control"}),
     )
 
+    audio_file = forms.FileField(
+        label="Upload Audio File",
+        required=False,  # `OpenAISpeechToText` のみで必要
+        widget=forms.ClearableFileInput(
+            attrs={"class": "form-control", "accept": "audio/*"}
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         for field in self.base_fields.values():
             field.widget.attrs["class"] = "form-control"
