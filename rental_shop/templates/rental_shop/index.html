@@ -29,7 +29,7 @@
             <ul class="nav nav-tabs" role="tablist">
                 {% for warehouse in warehouses %}
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link {% if warehouse.instance.pk == current_warehouse_id %}active{% endif %}"
+                        <a class="nav-link {% if warehouse.instance.pk == current_warehouse.pk %}active{% endif %}"
                            id="warehouse-{{ warehouse.instance.pk }}-tab" data-toggle="tab"
                            href="#warehouse-{{ warehouse.instance.id }}"
                            role="tab">{{ warehouse.instance.name }}</a>

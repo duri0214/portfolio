@@ -63,8 +63,8 @@ class IndexView(TemplateView):
             )
 
         context["warehouses"] = warehouse_vos
-        context["current_warehouse_id"] = self.request.GET.get("warehouse_id") or (
-            warehouse_vos[0].instance.pk if warehouse_vos else None
+        context["current_warehouse"] = self.request.GET.get("warehouse_id") or (
+            warehouse_vos[0].instance if warehouse_vos else None
         )
 
         return context
