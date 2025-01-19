@@ -44,10 +44,11 @@ python manage.py createsuperuser
 python manage.py convert_csv_to_fixture
 ```
 
-- `auth_user` の seeder は `soil_analysis/fixtures/user.json` にある
+- createsuperuser を実行してください
+    - createsuperuser をやって1のidを作らないと失敗するfixtureがあるよ(vietnam_research)
+- `auth_user` の seeder は `(各アプリ)/fixtures/auth_user.json` にある
 - `auth_user` の初期パスワードは `test#1234`
 - サーバで実行するときはバッククォートを `/` に置換する
-- createsuperuser をやったあとじゃないと失敗するfixtureがあるよ
 - バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` の seeder は14日ぶん用意しましょう
     - seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
 
@@ -65,9 +66,9 @@ WHERE recorded_date = '2023-01-17';
 ```
 
 ```
+python manage.py createsuperuser
 python manage.py loaddata .\home\fixtures\post.json
 python manage.py loaddata .\vietnam_research\fixtures\group.json
-python manage.py loaddata .\vietnam_research\fixtures\user.json
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
 python manage.py loaddata .\vietnam_research\fixtures\market.json
 python manage.py loaddata .\vietnam_research\fixtures\symbol.json
@@ -101,6 +102,7 @@ python manage.py loaddata .\taxonomy\fixtures\naturalMonument.json
 python manage.py loaddata .\taxonomy\fixtures\tag.json
 python manage.py loaddata .\taxonomy\fixtures\breed.json
 python manage.py loaddata .\taxonomy\fixtures\breedTags.json
+python manage.py loaddata .\soil_analysis\fixtures\user.json
 python manage.py loaddata .\soil_analysis\fixtures\companycategory.json
 python manage.py loaddata .\soil_analysis\fixtures\company.json
 python manage.py loaddata .\soil_analysis\fixtures\crop.json
@@ -116,6 +118,7 @@ python manage.py loaddata .\soil_analysis\fixtures\land_ledger.json
 python manage.py loaddata .\soil_analysis\fixtures\land_review.json
 python manage.py loaddata .\soil_analysis\fixtures\land_score_chemical.json
 python manage.py loaddata .\soil_analysis\fixtures\device.json
+python manage.py loaddata .\hospital\fixtures\user.json
 python manage.py loaddata .\hospital\fixtures\ward.json
 python manage.py loaddata .\hospital\fixtures\city.json
 python manage.py loaddata .\hospital\fixtures\election.json
@@ -260,10 +263,10 @@ sequenceDiagram
 - **モデル概要**  
   本システムでは `Order` モデルを利用して取引注文（売買注文）を管理します。  
   各注文は以下の属性を持ちます：
-    - `side`：取引区分（"buy" または "sell"）
-    - `price`：注文価格
-    - `quantity`：注文数量
-    - `created_at`：注文作成日時
+    - `side`：取引区分（buy または sell）
+        - `price`：注文価格
+        - `quantity`：注文数量
+        - `created_at`：注文作成日時
 
 - **「板情報」の計算**  
   現在の「板情報」は動的に計算され、以下のようにして求められます：
