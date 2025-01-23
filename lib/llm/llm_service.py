@@ -219,24 +219,7 @@ class OpenAIBatchCompletionService(LlmService):
         )
 
     def retrieve_answer(self, chunks: list[MessageChunk]) -> Batch:
-        """
-        チャット履歴をOpenAIバッチAPIで処理して結果を取得するメソッド。
-
-        Args:
-            chunks (list[MessageChunk]): 入力データ。
-
-        Returns:
-            dict: 処理結果。
-        """
-        # 1. JSONLファイルをアップロード
-        uploaded_file_id = self.upload_jsonl_file(chunks)
-
-        # 2. ファイル処理が完了するまでポーリング
-        batch_file = self.poll_file_status(file_id=uploaded_file_id)
-        print(f"{batch_file=}")
-
-        # 3. 最終的なファイルステータスを返す
-        return batch_file
+        pass
 
 
 class OpenAILlmDalleService(LlmService):
