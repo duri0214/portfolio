@@ -1,4 +1,6 @@
-import os
+import json
+import secrets
+import time
 from abc import ABC, abstractmethod
 
 import tiktoken
@@ -11,10 +13,11 @@ from langchain_chroma import Chroma
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from openai import OpenAI
-from openai.types import ImagesResponse
+from openai.types import ImagesResponse, Batch
 from openai.types.chat import ChatCompletion
 
 from config.settings import MEDIA_ROOT
+from lib.llm.valueobject.chat import MessageChunk
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader
 from llm_chat.domain.valueobject.chat import MessageDTO
@@ -102,6 +105,138 @@ class OpenAILlmCompletionService(LlmService):
             messages=[x.to_request().to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
         )
+
+
+class OpenAIBatchCompletionService(LlmService):
+    def __init__(self, config: OpenAIGptConfig):
+        super().__init__()
+        self.config = config
+
+    @staticmethod
+    def export_jsonl_file(chunks: list[MessageChunk]) -> str:
+        """
+        指定された MessageChunk リストを JSONL 形式に変換して、ローカルファイルとして保存します。
+
+        JSONL 形式の各行には、1つのチャンク（MessageChunk）がシリアライズされた
+        JSON エントリが含まれています。
+
+        Args:
+            chunks (list[MessageChunk]): JSONL形式に変換する対象のデータチャンクリスト。
+
+        Returns:
+            str: 作成された JSONL ファイルの絶対パス。
+
+        Raises:
+            RuntimeError: ファイルの作成やデータの書き込み中にエラーが発生した場合。
+
+        Example:
+            >>> chunks1 = [
+            >>>     MessageChunk(...),
+            >>>     MessageChunk(...),
+            >>> ]
+            >>> file_path1 = OpenAIBatchCompletionService.export_jsonl_file(chunks1)
+            >>> print(f"File saved at: {file_path}")
+
+        Note:
+            作成されたファイルは一時的なもので、後続の処理が完了後に削除されることが想定されています。
+        """
+        file_name = f"export_{secrets.token_hex(5)}.jsonl"
+        file_path = os.path.abspath(file_name)
+        try:
+            with open(file_path, "w", encoding="utf-8") as jsonl_file:
+                for chunk in chunks:
+                    json_entry = chunk.to_jsonl_entry()
+                    jsonl_file.write(json.dumps(json_entry) + "\n")
+        except Exception as e:
+            raise RuntimeError(f"Failed to export JSONL file: {str(e)}")
+
+        return file_path
+
+    def upload_jsonl_file(self, chunks: list[MessageChunk]) -> str:
+        """
+        JSONLファイルをOpenAIにアップロードする。
+
+        Args:
+            chunks (list[MessageChunk]): アップロードするデータのチャンク。
+
+        Returns:
+            str: アップロードされたファイルのID。
+        """
+        jsonl_file_path = self.export_jsonl_file(chunks)
+
+        try:
+            with open(jsonl_file_path, "rb") as jsonl_file:
+                uploaded_file = OpenAI(api_key=self.config.api_key).files.create(
+                    file=jsonl_file, purpose="batch"
+                )
+            return uploaded_file.id
+        finally:
+            if os.path.exists(jsonl_file_path):
+                os.remove(jsonl_file_path)
+
+    def poll_file_status(
+            self, file_id: str, poll_interval: int = 5, timeout: int = 30
+    ) -> Batch:
+        """
+        ファイルのステータスをポーリングするためのメソッド。
+
+        Args:
+            file_id (str): アップロードされたファイルのID。
+            poll_interval (int): ポーリング間隔（秒）。
+            timeout (int): 最大待機時間（秒）。
+
+        Returns:
+        FilePollingStatus: ファイルの最終ステータス情報。
+
+        Raises:
+            TimeoutError: タイムアウトの場合。
+        """
+        start_time = time.time()
+
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time >= timeout:
+                break
+
+            # ファイルのステータスをチェック
+            print(1)
+            batch = OpenAI(api_key=self.config.api_key).batches.retrieve(file_id)
+            print(2)
+            print(f"!!!{batch}")
+
+            if batch.get("status") == "processed":  # 処理が完了した場合
+                return batch
+            elif batch.get("status") == "failed":  # 処理が失敗した場合
+                raise RuntimeError(
+                    f"File processing failed for file_id={file_id}: {batch.get("status")}"
+                )
+
+            time.sleep(poll_interval)  # 次のポーリングまで待つ
+
+        # ループから抜ける場合はタイムアウト
+        raise TimeoutError(
+            f"File processing timed out after {timeout} seconds for file_id={file_id}."
+        )
+
+    def retrieve_answer(self, chunks: list[MessageChunk]) -> Batch:
+        """
+        チャット履歴をOpenAIバッチAPIで処理して結果を取得するメソッド。
+
+        Args:
+            chunks (list[MessageChunk]): 入力データ。
+
+        Returns:
+            dict: 処理結果。
+        """
+        # 1. JSONLファイルをアップロード
+        uploaded_file_id = self.upload_jsonl_file(chunks)
+
+        # 2. ファイル処理が完了するまでポーリング
+        batch_file = self.poll_file_status(file_id=uploaded_file_id)
+        print(f"{batch_file=}")
+
+        # 3. 最終的なファイルステータスを返す
+        return batch_file
 
 
 class OpenAILlmDalleService(LlmService):
