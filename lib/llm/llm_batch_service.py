@@ -16,6 +16,11 @@ class OpenAIBatchCompletionService(LlmService):
         super().__init__()
         self.config = config
 
+    @staticmethod
+    def remove_file_if_exists(file_path: str) -> None:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
     def parse_to_message_chunk(self, messages: list[Message]) -> MessageChunk:
         return MessageChunk(
             messages=messages,
@@ -82,8 +87,7 @@ class OpenAIBatchCompletionService(LlmService):
                 )
             return uploaded_file.id
         finally:
-            if os.path.exists(jsonl_file_path):
-                os.remove(jsonl_file_path)
+            self.remove_file_if_exists(jsonl_file_path)
 
     def create_batch(self, uploaded_file_id: str) -> Batch:
         return OpenAI(api_key=self.config.api_key).batches.create(
@@ -119,7 +123,6 @@ class OpenAIBatchCompletionService(LlmService):
                     json_object = json.loads(line.strip())
                     results.append(parse_to_message(json_object))
         finally:
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            self.remove_file_if_exists(file_path)
 
         return results
