@@ -100,6 +100,9 @@ class OpenAIBatchCompletionService(LlmService):
         return OpenAI(api_key=self.config.api_key).batches.retrieve(batch_id)
 
     def retrieve_content(self, file_id: str) -> list[Message]:
+        def fetch_file_content(file_id: str) -> bytes:
+            return OpenAI(api_key=self.config.api_key).files.content(file_id).content
+
         def parse_to_message(json_line: dict) -> Message:
             try:
                 choice = json_line["response"]["body"]["choices"][0]
@@ -110,7 +113,7 @@ class OpenAIBatchCompletionService(LlmService):
             except (KeyError, ValueError) as e:
                 print(f"Error parsing result: {json_line}, error: {e}")
 
-        raw_data = OpenAI(api_key=self.config.api_key).files.content(file_id).content
+        raw_data = fetch_file_content(file_id)
         file_name = f"retrieve_{secrets.token_hex(5)}.jsonl"
         file_path = os.path.abspath(file_name)
         with open(file_path, "wb") as file:
