@@ -114,7 +114,7 @@ class OpenAIBatchCompletionService(LlmService):
                     choice = result["response"]["body"]["choices"][0]
                     messages.append(
                         Message(
-                            role=RoleType(choice["message"]["role"].upper()),
+                            role=RoleType(choice["message"]["role"]),
                             content=choice["message"]["content"],
                         )
                     )
