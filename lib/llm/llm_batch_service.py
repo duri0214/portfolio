@@ -131,3 +131,45 @@ class OpenAIBatchCompletionService(LlmService):
             self.remove_file_if_exists(file_path)
 
         return results
+
+
+if __name__ == "__main__":
+    import time
+
+    # サンプルのMessageChunkデータ
+    service = OpenAIBatchCompletionService(
+        OpenAIGptConfig(
+            api_key="your-api-key",
+            model="gpt-4o",
+            max_tokens=1000,
+            temperature=0.7,
+        )
+    )
+    sample_chunks = [
+        service.parse_to_message_chunk(
+            [
+                Message(role=RoleType.SYSTEM, content="You are a helpful assistant1."),
+                Message(role=RoleType.USER, content="What is your name?"),
+            ]
+        ),
+        service.parse_to_message_chunk(
+            [
+                Message(role=RoleType.SYSTEM, content="You are a helpful assistant2."),
+                Message(role=RoleType.USER, content="What is your name?"),
+            ]
+        ),
+    ]
+
+    file_id_test = service.upload_jsonl_file(sample_chunks)
+    batch_id_test = service.create_batch(file_id_test).id
+
+    while True:
+        result_test = service.retrieve_answer(batch_id_test)
+        print(f"Current status: {result_test.status}")
+        if result_test.status == "completed":
+            print("Batch processing completed!")
+            break
+        time.sleep(5)
+
+    content_test = service.retrieve_content(result_test.output_file_id)
+    print(f"{content_test=}")
