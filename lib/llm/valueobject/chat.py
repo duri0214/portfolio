@@ -10,6 +10,14 @@ class RoleType(Enum):
 
 @dataclass
 class Message:
+    """
+    単一のチャットメッセージを表すデータクラス。
+
+    Attributes:
+        role (RoleType): メッセージを送信した役割（ユーザ、アシスタント、システム）。
+        content (str): メッセージ内容。
+    """
+
     role: RoleType
     content: str
 
