@@ -57,6 +57,52 @@ class TestOpenAIBatchCompletionService(TestCase):
         self.assertEqual(result_chunk.model, "gpt-4o", "モデル名が設定されるべき")
         self.assertEqual(result_chunk.max_tokens, 1000, "max_tokensが設定されるべき")
 
+    @patch("lib.llm.llm_batch_service.OpenAI")
+    @patch("lib.llm.llm_batch_service.OpenAIBatchCompletionService.export_jsonl_file")
+    @patch("builtins.open", new_callable=MagicMock)
+    def test_upload_jsonl_file(
+        self,
+        mock_open,
+        mock_export_jsonl_file,
+        mock_openai,
+    ):
+        """
+        upload_jsonl_fileメソッドをテストする。
+
+        テストの流れ:
+        1. `export_jsonl_file` をモックし、jsonlファイルを作ったことにします。
+        2. `open` をモックして、実際にファイルを操作せずとも、ファイルを開いたことにします。
+        3. `OpenAI` ライブラリの `files.create` メソッドをモックし、アップロードしたことにします。
+
+        確認事項:
+        - upload_jsonl_fileにより返されるファイルIDが "mock-file-id" であること。
+        """
+        # モックされた `export_jsonl_file` の設定
+        mock_export_jsonl_file.return_value = "mock_file.jsonl"
+
+        # モックされた `open` の設定
+        mock_open.return_value.__enter__.return_value = MagicMock()
+
+        # モックされた `OpenAI` の設定
+        mock_openai_instance = mock_openai.return_value
+        mock_file_create_response = MagicMock()
+        mock_file_create_response.id = "mock-file-id"
+        mock_openai_instance.files.create.return_value = mock_file_create_response
+
+        # テスト対象メソッドの実行
+        file_id = self.service.upload_jsonl_file(
+            [
+                MessageChunk(
+                    messages=self.sample_messages,
+                    model=self.mock_config.model,
+                    max_tokens=self.mock_config.max_tokens,
+                )
+            ]
+        )
+
+        # upload_jsonl_fileの結果確認
+        self.assertEqual(file_id, "mock-file-id", "ファイルIDが正しいこと")
+
     @patch("lib.llm.llm_service.OpenAI")  # OpenAIをモック
     @patch("lib.llm.llm_service.os.remove")  # 一時ファイル削除のモック
     @patch("lib.llm.llm_service.open", create=True)  # ファイル操作のモック
@@ -124,49 +170,3 @@ class TestOpenAIBatchCompletionService(TestCase):
         self.assertEqual(
             mock_openai_instance.batches.retrieve.call_count, 3
         )  # retrieve_answerが3回呼ばれる
-
-    @patch("lib.llm.llm_batch_service.OpenAI")
-    @patch("lib.llm.llm_batch_service.OpenAIBatchCompletionService.export_jsonl_file")
-    @patch("builtins.open", new_callable=MagicMock)
-    def test_file_delete_with_upload_jsonl(
-        self,
-        mock_open,
-        mock_export_jsonl_file,
-        mock_openai,
-    ):
-        """
-        upload_jsonl_fileメソッドをテストする。
-
-        テストの流れ:
-        1. `export_jsonl_file` をモックし、jsonlファイルを作ったことにします。
-        2. `open` をモックして、実際にファイルを操作せずとも、ファイルを開いたことにします。
-        3. `OpenAI` ライブラリの `files.create` メソッドをモックし、アップロードしたことにします。
-
-        確認事項:
-        - upload_jsonl_fileにより返されるファイルIDが "mock-file-id" であること。
-        """
-        # モックされた `export_jsonl_file` の設定
-        mock_export_jsonl_file.return_value = "mock_file.jsonl"
-
-        # モックされた `open` の設定
-        mock_open.return_value.__enter__.return_value = MagicMock()
-
-        # モックされた `OpenAI` の設定
-        mock_openai_instance = mock_openai.return_value
-        mock_file_create_response = MagicMock()
-        mock_file_create_response.id = "mock-file-id"
-        mock_openai_instance.files.create.return_value = mock_file_create_response
-
-        # テスト対象メソッドの実行
-        file_id = self.service.upload_jsonl_file(
-            [
-                MessageChunk(
-                    messages=self.sample_messages,
-                    model=self.mock_config.model,
-                    max_tokens=self.mock_config.max_tokens,
-                )
-            ]
-        )
-
-        # upload_jsonl_fileの結果確認
-        self.assertEqual(file_id, "mock-file-id", "ファイルIDが正しいこと")
