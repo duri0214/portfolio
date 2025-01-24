@@ -100,8 +100,10 @@ class OpenAIBatchCompletionService(LlmService):
         return OpenAI(api_key=self.config.api_key).batches.retrieve(batch_id)
 
     def retrieve_content(self, file_id: str) -> list[Message]:
-        def fetch_file_content(file_id: str) -> bytes:
-            return OpenAI(api_key=self.config.api_key).files.content(file_id).content
+        def fetch_file_content(input_file_id: str) -> bytes:
+            return (
+                OpenAI(api_key=self.config.api_key).files.content(input_file_id).content
+            )
 
         def parse_to_message(json_line: dict) -> Message:
             try:
