@@ -46,7 +46,7 @@ class OpenAIBatchCompletionService(LlmService):
             >>>     MessageChunk(...),
             >>> ]
             >>> file_path1 = OpenAIBatchCompletionService.export_jsonl_file(chunks1)
-            >>> print(f"File saved at: {file_path}")
+            >>> print(f"File saved at: {file_path1}")
 
         Note:
             作成されたファイルは一時的なもので、後続の処理が完了後に削除されることが想定されています。
