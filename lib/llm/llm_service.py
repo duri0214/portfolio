@@ -17,7 +17,8 @@ from openai.types import ImagesResponse, Batch
 from openai.types.chat import ChatCompletion
 
 from config.settings import MEDIA_ROOT
-from lib.llm.valueobject.chat import MessageChunk, Message
+from lib.llm.valueobject.chat import Message
+from lib.llm.valueobject.chat_batch import MessageChunk
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader
 from llm_chat.domain.valueobject.chat import MessageDTO
