@@ -95,32 +95,16 @@ class OpenAIBatchCompletionService(LlmService):
     def retrieve_answer(self, batch_id: str) -> Batch:
         return OpenAI(api_key=self.config.api_key).batches.retrieve(batch_id)
 
-    @staticmethod
     def retrieve_content(self, file_id: str) -> list[Message]:
-        def parse_to_messages(results: list[dict]) -> list[Message]:
-            """
-            OpenAIBatchCompletionService.retrieve_content で取得された結果を
-            Message クラスのインスタンスリストに変換する。
-
-            Args:
-                results (list[dict]): OpenAIから取得した結果のリスト。
-
-            Returns:
-                list[Message]: Messageインスタンスのリスト。
-            """
-            messages = []
-            for result in results:
-                try:
-                    choice = result["response"]["body"]["choices"][0]
-                    messages.append(
-                        Message(
-                            role=RoleType(choice["message"]["role"]),
-                            content=choice["message"]["content"],
-                        )
-                    )
-                except (KeyError, ValueError) as e:
-                    print(f"Error parsing result: {result}, error: {e}")
-            return messages
+        def parse_to_message(json_line: dict) -> Message:
+            try:
+                choice = json_line["response"]["body"]["choices"][0]
+                return Message(
+                    role=RoleType(choice["message"]["role"]),
+                    content=choice["message"]["content"],
+                )
+            except (KeyError, ValueError) as e:
+                print(f"Error parsing result: {json_line}, error: {e}")
 
         raw_data = OpenAI(api_key=self.config.api_key).files.content(file_id).content
         file_name = f"retrieve_{secrets.token_hex(5)}.jsonl"
@@ -128,9 +112,9 @@ class OpenAIBatchCompletionService(LlmService):
         with open(file_path, "wb") as file:
             file.write(raw_data)
 
-        results = []
+        results: list[Message] = []
         with open(file_path, "r") as file:
             for line in file:
                 json_object = json.loads(line.strip())
-                results.append(json_object)
-        return parse_to_messages(results)
+                results.append(parse_to_message(json_object))
+        return results
