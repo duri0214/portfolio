@@ -26,6 +26,23 @@ class TestOpenAIBatchCompletionService(TestCase):
         # サービスを初期化
         self.service = OpenAIBatchCompletionService(config=self.mock_config)
 
+    def test_parse_to_message_chunk(self):
+        """parse_to_message_chunkのテスト"""
+        # メソッドの実行
+        result_chunk = self.service.parse_to_message_chunk(self.sample_messages)
+
+        # 結果の確認
+        self.assertIsInstance(
+            result_chunk, MessageChunk, "戻り値がMessageChunkであるべき"
+        )
+        self.assertEqual(
+            result_chunk.messages,
+            self.sample_messages,
+            "結果のメッセージリストが一致するべき",
+        )
+        self.assertEqual(result_chunk.model, "gpt-4o", "モデル名が設定されるべき")
+        self.assertEqual(result_chunk.max_tokens, 1000, "max_tokensが設定されるべき")
+
     @patch("lib.llm.llm_service.OpenAI")  # OpenAIをモック
     @patch("lib.llm.llm_service.os.remove")  # 一時ファイル削除のモック
     @patch("lib.llm.llm_service.open", create=True)  # ファイル操作のモック
@@ -93,23 +110,6 @@ class TestOpenAIBatchCompletionService(TestCase):
         self.assertEqual(
             mock_openai_instance.batches.retrieve.call_count, 3
         )  # retrieve_answerが3回呼ばれる
-
-    def test_parse_to_message_chunk(self):
-        """parse_to_message_chunkのテスト"""
-        # メソッドの実行
-        result_chunk = self.service.parse_to_message_chunk(self.sample_messages)
-
-        # 結果の確認
-        self.assertIsInstance(
-            result_chunk, MessageChunk, "戻り値がMessageChunkであるべき"
-        )
-        self.assertEqual(
-            result_chunk.messages,
-            self.sample_messages,
-            "結果のメッセージリストが一致するべき",
-        )
-        self.assertEqual(result_chunk.model, "gpt-4o", "モデル名が設定されるべき")
-        self.assertEqual(result_chunk.max_tokens, 1000, "max_tokensが設定されるべき")
 
     @patch("os.path.exists", return_value=True)
     @patch("lib.llm.llm_batch_service.os.remove")
