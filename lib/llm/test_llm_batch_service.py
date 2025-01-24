@@ -26,6 +26,20 @@ class TestOpenAIBatchCompletionService(TestCase):
         # サービスを初期化
         self.service = OpenAIBatchCompletionService(config=self.mock_config)
 
+    @patch("os.path.exists", return_value=True)
+    @patch("os.remove")
+    def test_remove_file_if_exists(self, mock_remove, mock_exists):
+        """
+        1. `os.path.exists` をモックして、アップロードした一時ファイルが存在することにします。
+        2. `os.remove` をモックして、削除処理が呼び出されるか検証します。
+        """
+        # テスト対象メソッドの実行
+        self.service.remove_file_if_exists("test_file.jsonl")
+
+        # 結果確認
+        mock_exists.assert_called_once_with("test_file.jsonl")
+        mock_remove.assert_called_once_with("test_file.jsonl")
+
     def test_parse_to_message_chunk(self):
         """parse_to_message_chunkのテスト"""
         # メソッドの実行
@@ -111,8 +125,6 @@ class TestOpenAIBatchCompletionService(TestCase):
             mock_openai_instance.batches.retrieve.call_count, 3
         )  # retrieve_answerが3回呼ばれる
 
-    @patch("os.path.exists", return_value=True)
-    @patch("lib.llm.llm_batch_service.os.remove")
     @patch("lib.llm.llm_batch_service.OpenAI")
     @patch("lib.llm.llm_batch_service.OpenAIBatchCompletionService.export_jsonl_file")
     @patch("builtins.open", new_callable=MagicMock)
@@ -121,23 +133,17 @@ class TestOpenAIBatchCompletionService(TestCase):
         mock_open,
         mock_export_jsonl_file,
         mock_openai,
-        mock_os_exists,
-        mock_os_remove,
     ):
         """
-        upload_jsonl_fileメソッド内で一時的に作成されたJSONLファイルが、アップロード処理完了後に適切に削除されることを確認する。
+        upload_jsonl_fileメソッドをテストする。
 
         テストの流れ:
         1. `export_jsonl_file` をモックし、jsonlファイルを作ったことにします。
         2. `open` をモックして、実際にファイルを操作せずとも、ファイルを開いたことにします。
         3. `OpenAI` ライブラリの `files.create` メソッドをモックし、アップロードしたことにします。
-        4. `os.path.exists` をモックして、アップロードした一時ファイルが存在することにします。
-        5. `os.remove` をモックして、テスト後の削除処理が呼び出されるか検証します。
 
         確認事項:
         - upload_jsonl_fileにより返されるファイルIDが "mock-file-id" であること。
-        - `os.remove` が一時ファイル (`mock_file.jsonl`) に対して1回だけ呼び出されること。
-        - 削除処理が行われるための前提条件 (`os.path.exists`) を満たしていること。
         """
         # モックされた `export_jsonl_file` の設定
         mock_export_jsonl_file.return_value = "mock_file.jsonl"
@@ -164,8 +170,3 @@ class TestOpenAIBatchCompletionService(TestCase):
 
         # upload_jsonl_fileの結果確認
         self.assertEqual(file_id, "mock-file-id", "ファイルIDが正しいこと")
-
-        # os.remove が呼ばれたか
-        mock_os_remove.assert_called_once_with("mock_file.jsonl")
-        # mock_os_removeを効かせるために、ファイルがあるよとモックした object が踏まれたか確認
-        mock_os_exists.assert_called_once_with("mock_file.jsonl")
