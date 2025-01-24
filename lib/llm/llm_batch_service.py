@@ -16,7 +16,7 @@ class OpenAIBatchCompletionService(LlmService):
         super().__init__()
         self.config = config
 
-    def create_message_chunk(self, messages: list[Message]) -> MessageChunk:
+    def parse_to_message_chunk(self, messages: list[Message]) -> MessageChunk:
         return MessageChunk(
             messages=messages,
             model=self.config.model,
