@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from lib.llm.llm_batch_service import OpenAIBatchCompletionService
 from lib.llm.valueobject.chat import RoleType, Message
+from lib.llm.valueobject.chat_batch import MessageChunk
 from lib.llm.valueobject.config import OpenAIGptConfig
 
 
@@ -92,3 +93,20 @@ class TestOpenAIBatchCompletionService(TestCase):
         self.assertEqual(
             mock_openai_instance.batches.retrieve.call_count, 3
         )  # retrieve_answerが3回呼ばれる
+
+    def test_parse_to_message_chunk(self):
+        """parse_to_message_chunkのテスト"""
+        # メソッドの実行
+        result_chunk = self.service.parse_to_message_chunk(self.sample_messages)
+
+        # 結果の確認
+        self.assertIsInstance(
+            result_chunk, MessageChunk, "戻り値がMessageChunkであるべき"
+        )
+        self.assertEqual(
+            result_chunk.messages,
+            self.sample_messages,
+            "結果のメッセージリストが一致するべき",
+        )
+        self.assertEqual(result_chunk.model, "gpt-4o", "モデル名が設定されるべき")
+        self.assertEqual(result_chunk.max_tokens, 1000, "max_tokensが設定されるべき")
