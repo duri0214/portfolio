@@ -113,8 +113,13 @@ class OpenAIBatchCompletionService(LlmService):
             file.write(raw_data)
 
         results: list[Message] = []
-        with open(file_path, "r") as file:
-            for line in file:
-                json_object = json.loads(line.strip())
-                results.append(parse_to_message(json_object))
+        try:
+            with open(file_path, "r") as file:
+                for line in file:
+                    json_object = json.loads(line.strip())
+                    results.append(parse_to_message(json_object))
+        finally:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
         return results
