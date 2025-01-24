@@ -1,3 +1,5 @@
+import json
+import os
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
@@ -46,16 +48,44 @@ class TestOpenAIBatchCompletionService(TestCase):
         result_chunk = self.service.parse_to_message_chunk(self.sample_messages)
 
         # 結果の確認
-        self.assertIsInstance(
-            result_chunk, MessageChunk, "戻り値がMessageChunkであるべき"
-        )
-        self.assertEqual(
-            result_chunk.messages,
-            self.sample_messages,
-            "結果のメッセージリストが一致するべき",
-        )
-        self.assertEqual(result_chunk.model, "gpt-4o", "モデル名が設定されるべき")
-        self.assertEqual(result_chunk.max_tokens, 1000, "max_tokensが設定されるべき")
+        self.assertIsInstance(result_chunk, MessageChunk)
+        self.assertEqual(result_chunk.messages, self.sample_messages)
+        self.assertEqual(result_chunk.model, "gpt-4o")
+        self.assertEqual(result_chunk.max_tokens, 1000)
+
+    def test_export_jsonl_file(self):
+        """
+        export_jsonl_fileが正しい内容のファイルを生成できることを確認するテスト。
+
+        このテストでは、以下の事項を検証します:
+        1. 指定されたMessageChunkリストがJSONL形式で正しくシリアライズされ、
+           各行が1つのJSONオブジェクトとして保存されること。
+        2. ファイルが意図した形式（JSONL）および行数で構成されていること。
+        3. ファイル作成後、データが期待通りの内容であること（role、content の値が一致するか）。
+        """
+        # メソッド実行
+        result_chunk = [self.service.parse_to_message_chunk(self.sample_messages)]
+        file_path = self.service.export_jsonl_file(result_chunk)
+
+        try:
+            # ファイルが作成されたことを確認する
+            self.assertTrue(os.path.exists(file_path))
+
+            # ファイル内容を確認して行数が正しいことを確認する
+            with open(file_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            self.assertEqual(len(lines), len(result_chunk))
+
+            # ファイル内容が意図した形式であること
+            for line in lines:
+                data = json.loads(line.strip())
+                self.assertEqual(data["body"]["messages"][0]["role"], "system")
+                self.assertEqual(
+                    data["body"]["messages"][0]["content"],
+                    "You are a helpful assistant.",
+                )
+        finally:
+            self.service.remove_file_if_exists(file_path)
 
     @patch(
         "lib.llm.llm_batch_service.OpenAIBatchCompletionService.remove_file_if_exists"
