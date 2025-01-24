@@ -57,25 +57,27 @@ class TestOpenAIBatchCompletionService(TestCase):
         self.assertEqual(result_chunk.model, "gpt-4o", "モデル名が設定されるべき")
         self.assertEqual(result_chunk.max_tokens, 1000, "max_tokensが設定されるべき")
 
-    @patch("lib.llm.llm_batch_service.OpenAI")
+    @patch(
+        "lib.llm.llm_batch_service.OpenAIBatchCompletionService.remove_file_if_exists"
+    )
     @patch("lib.llm.llm_batch_service.OpenAIBatchCompletionService.export_jsonl_file")
     @patch("builtins.open", new_callable=MagicMock)
+    @patch("lib.llm.llm_batch_service.OpenAI")
     def test_upload_jsonl_file(
         self,
+        mock_openai,
         mock_open,
         mock_export_jsonl_file,
-        mock_openai,
+        mock_remove_file_if_exists,
     ):
         """
         upload_jsonl_fileメソッドをテストする。
 
-        テストの流れ:
+        このテストでは:
         1. `export_jsonl_file` をモックし、jsonlファイルを作ったことにします。
         2. `open` をモックして、実際にファイルを操作せずとも、ファイルを開いたことにします。
         3. `OpenAI` ライブラリの `files.create` メソッドをモックし、アップロードしたことにします。
-
-        確認事項:
-        - upload_jsonl_fileにより返されるファイルIDが "mock-file-id" であること。
+        4. ファイル削除処理が呼び出されること（`remove_file_if_exists`をテスト済である前提）。
         """
         # モックされた `export_jsonl_file` の設定
         mock_export_jsonl_file.return_value = "mock_file.jsonl"
@@ -85,8 +87,7 @@ class TestOpenAIBatchCompletionService(TestCase):
 
         # モックされた `OpenAI` の設定
         mock_openai_instance = mock_openai.return_value
-        mock_file_create_response = MagicMock()
-        mock_file_create_response.id = "mock-file-id"
+        mock_file_create_response = MagicMock(id="mock-file-id")
         mock_openai_instance.files.create.return_value = mock_file_create_response
 
         # テスト対象メソッドの実行
@@ -100,8 +101,14 @@ class TestOpenAIBatchCompletionService(TestCase):
             ]
         )
 
-        # upload_jsonl_fileの結果確認
+        # export_jsonl_file が1度だけ呼ばれるか確認
+        mock_export_jsonl_file.assert_called_once()
+        # ファイルアップロードが1回のみされるか確認
+        mock_openai_instance.files.create.assert_called_once()
+        # ファイルIDの確認
         self.assertEqual(file_id, "mock-file-id", "ファイルIDが正しいこと")
+        # 削除処理呼び出し が1度だけ呼ばれるか確認
+        mock_remove_file_if_exists.assert_called_once_with("mock_file.jsonl")
 
     @patch("lib.llm.llm_service.OpenAI")  # OpenAIをモック
     @patch("lib.llm.llm_service.os.remove")  # 一時ファイル削除のモック
