@@ -14,6 +14,12 @@
         <img src="{{ object.picture.url }}" alt="missing picture">
         <p class="lead">{{ object.created_at }} - {{ object.price }}円</p>
         <p>{{ object.description | linebreaksbr }}<p>
+        <p>
+            開発やテスト中に使用するカード情報については
+            <a href="https://docs.stripe.com/testing?testing-method=card-numbers#visa" target="_blank"
+               rel="noopener noreferrer">こちら</a>
+            をご確認ください。
+        </p>
 
         <!-- 購入ボタン・フォームの作成 -->
         <form method="POST">

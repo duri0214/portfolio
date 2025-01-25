@@ -58,7 +58,7 @@ class ReverseGeocoderService:
         params = {
             "lat": coords.latitude,
             "lon": coords.longitude,
-            "appid": os.environ.get("YAHOO_CLIENT_ID"),
+            "appid": os.environ.get("YAHOO_DEV_API_KEY"),
             "datum": "wgs",  # 世界測地系（デフォルト）
             "output": "xml",  # XML形式（デフォルト）
         }

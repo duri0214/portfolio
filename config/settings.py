@@ -91,7 +91,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "portfolio_db",
         "USER": "python",
-        "PASSWORD": os.environ.get("PASSWORD"),
+        "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD"),
         "HOST": "localhost",
         "PORT": "3306",
         "TEST": {
@@ -140,7 +140,7 @@ EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND")
 EMAIL_HOST = os.environ.get("EMAIL_HOST")
 EMAIL_PORT = os.environ.get("EMAIL_PORT")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("REGISTER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = True
 
 # Static files (CSS, JavaScript, Images)

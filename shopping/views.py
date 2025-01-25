@@ -26,7 +26,7 @@ from .forms import (
 from .models import Products, BuyingHistory, Staff
 
 # stripe api key
-stripe.api_key = os.environ.get("SHOPPING")
+stripe.api_key = os.environ.get("STRIPE_API_KEY")
 
 
 class CreateSingle(CreateView):
