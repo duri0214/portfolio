@@ -26,7 +26,7 @@ class MessageDTO:
     invisible: bool
     file_path: str = None
 
-    def to_request(self) -> Message:
+    def to_message(self) -> Message:
         """
         このDTOをGPT APIへのリクエストとして適切なMessageオブジェクトに変換します。
         """
