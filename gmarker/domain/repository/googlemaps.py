@@ -28,6 +28,16 @@ class PlaceRepository:
         if place_instances:
             Place.objects.bulk_create(place_instances)
 
+    @staticmethod
+    def fetch_all_places() -> dict[str, Place]:
+        """
+        全ての Place データを取得し、辞書形式で返却します。
+
+        Returns:
+            dict[str, Place]: place_id をキー、Place インスタンスを値とする辞書。
+        """
+        return {place.place_id: place for place in Place.objects.all()}
+
 
 class NearbyPlaceRepository:
     """
