@@ -18,7 +18,6 @@ from config.settings import MEDIA_ROOT
 from lib.llm.valueobject.chat import Message
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader
-from llm_chat.domain.valueobject.chat import MessageDTO
 
 
 def count_tokens(text: str) -> int:
@@ -45,8 +44,8 @@ def count_tokens(text: str) -> int:
 
 
 def cut_down_chat_history(
-    chat_history: list[MessageDTO], config: OpenAIGptConfig | GeminiConfig
-) -> list[MessageDTO]:
+    chat_history: list[Message], config: OpenAIGptConfig | GeminiConfig
+) -> list[Message]:
     """
     チャット履歴のメッセージリストを削減し、トークンの総数が config で指定した max_tokens を超えないようにします。
 
@@ -62,10 +61,11 @@ def cut_down_chat_history(
     """
     token_count = 0
 
-    for i, message in enumerate(list(reversed(chat_history))):
+    for i in range(len(chat_history) - 1, -1, -1):  # 逆順にループ
+        message = chat_history[i]
         token_count += count_tokens(message.content)
         if token_count > config.max_tokens:
-            return chat_history[-i:]
+            return chat_history[i + 1 :]  # 切り捨てた範囲の次から返す
 
     return chat_history
 
@@ -81,8 +81,8 @@ class GeminiLlmCompletionService(LlmService):
         super().__init__()
         self.config = config
 
-    def retrieve_answer(self, chat_history: list[MessageDTO]):
-        # TODO: [-1]しか処理してないから、そのうち Gemini用のMessageDTO にしたいね
+    def retrieve_answer(self, chat_history: list[Message]):
+        # TODO: [-1]しか処理してないから、そのうち Gemini用のMessage にしたいね
         #  https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=python&hl=ja
         cut_down_history = cut_down_chat_history(chat_history, self.config)
         generativeai.configure(api_key=self.config.api_key)
@@ -96,11 +96,11 @@ class OpenAILlmCompletionService(LlmService):
         super().__init__()
         self.config = config
 
-    def retrieve_answer(self, chat_history: list[MessageDTO]) -> ChatCompletion:
+    def retrieve_answer(self, chat_history: list[Message]) -> ChatCompletion:
         cut_down_history = cut_down_chat_history(chat_history, self.config)
         return OpenAI(api_key=self.config.api_key).chat.completions.create(
             model=self.config.model,
-            messages=[x.to_request().to_dict() for x in cut_down_history],
+            messages=[x.to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
         )
 
@@ -110,7 +110,7 @@ class OpenAILlmDalleService(LlmService):
         super().__init__()
         self.config = config
 
-    def retrieve_answer(self, message: MessageDTO) -> ImagesResponse:
+    def retrieve_answer(self, message: Message) -> ImagesResponse:
         return OpenAI(api_key=self.config.api_key).images.generate(
             model=self.config.model,
             prompt=message.content,
@@ -125,7 +125,7 @@ class OpenAILlmTextToSpeech(LlmService):
         super().__init__()
         self.config = config
 
-    def retrieve_answer(self, message: MessageDTO):
+    def retrieve_answer(self, message: Message):
         return OpenAI(api_key=self.config.api_key).audio.speech.create(
             model=self.config.model,
             voice="alloy",
@@ -139,8 +139,8 @@ class OpenAILlmSpeechToText(LlmService):
         super().__init__()
         self.config = config
 
-    def retrieve_answer(self, message: MessageDTO):
-        file_path = os.path.join(MEDIA_ROOT, message.file_path)
+    def retrieve_answer(self, file_path: str):
+        file_path = os.path.join(MEDIA_ROOT, file_path)
         audio = open(file_path, "rb")
         return OpenAI(api_key=self.config.api_key).audio.transcriptions.create(
             model=self.config.model, file=audio
@@ -186,7 +186,7 @@ class OpenAILlmRagService(LlmService):
             persist_directory=".",
         )
 
-    def retrieve_answer(self, message: MessageDTO) -> dict:
+    def retrieve_answer(self, message: Message) -> dict:
         embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
         docsearch = Chroma.from_texts(
             texts=[x.page_content for x in self.dataloader.data],

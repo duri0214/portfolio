@@ -70,7 +70,7 @@ def create_initial_prompt(user: User, gender: Gender) -> list[MessageDTO]:
 
 class ChatService(ABC):
     def __init__(self):
-        self.chatlog_repository = ChatLogRepository()
+        self.repository = ChatLogRepository()
 
     @abstractmethod
     def generate(self, **kwargs):
@@ -97,12 +97,9 @@ class GeminiChatService(ChatService):
 
         chat_history = [
             MessageDTO(
-                user=chatlog.user,
-                role=RoleType[chatlog.role.upper()],
-                content=chatlog.content,
-                invisible=False,
+                user=x.user, role=RoleType(x.role), content=x.content, invisible=False
             )
-            for chatlog in self.chatlog_repository.find_chat_history(message.user)
+            for x in self.repository.find_chat_history(message.user)
         ]
         latest_user_message = MessageDTO(
             user=message.user,
@@ -113,7 +110,9 @@ class GeminiChatService(ChatService):
         self.save([latest_user_message])
         chat_history.append(latest_user_message)
 
-        response = GeminiLlmCompletionService(self.config).retrieve_answer(chat_history)
+        response = GeminiLlmCompletionService(self.config).retrieve_answer(
+            [x.to_message() for x in chat_history]
+        )
 
         latest_assistant = MessageDTO(
             user=message.user,
@@ -126,7 +125,7 @@ class GeminiChatService(ChatService):
         return chat_history
 
     def save(self, messages: list[MessageDTO]) -> None:
-        self.chatlog_repository.bulk_insert(messages)
+        self.repository.bulk_insert(messages)
 
 
 class OpenAIChatService(ChatService):
@@ -145,12 +144,9 @@ class OpenAIChatService(ChatService):
 
         chat_history = [
             MessageDTO(
-                user=chatlog.user,
-                role=RoleType[chatlog.role.upper()],
-                content=chatlog.content,
-                invisible=False,
+                user=x.user, role=RoleType(x.role), content=x.content, invisible=False
             )
-            for chatlog in self.chatlog_repository.find_chat_history(message.user)
+            for x in self.repository.find_chat_history(message.user)
         ]
         if not chat_history:
             chat_history = create_initial_prompt(user=message.user, gender=gender)
@@ -169,7 +165,9 @@ class OpenAIChatService(ChatService):
             self.save([latest_user_message])
             chat_history.append(latest_user_message)
 
-        answer = OpenAILlmCompletionService(self.config).retrieve_answer(chat_history)
+        answer = OpenAILlmCompletionService(self.config).retrieve_answer(
+            [x.to_message() for x in chat_history]
+        )
         latest_assistant_message = MessageDTO(
             user=message.user,
             role=RoleType.ASSISTANT,
@@ -189,7 +187,7 @@ class OpenAIChatService(ChatService):
             self.save([latest_user_message])
             chat_history.append(latest_user_message)
             answer = OpenAILlmCompletionService(self.config).retrieve_answer(
-                chat_history
+                [x.to_message() for x in chat_history]
             )
             latest_assistant = MessageDTO(
                 user=message.user,
@@ -203,7 +201,7 @@ class OpenAIChatService(ChatService):
         return chat_history
 
     def save(self, messages: list[MessageDTO]) -> None:
-        self.chatlog_repository.bulk_insert(messages)
+        self.repository.bulk_insert(messages)
 
 
 class OpenAIDalleChatService(ChatService):
@@ -224,7 +222,9 @@ class OpenAIDalleChatService(ChatService):
         if message.content is None:
             raise Exception("content is None")
 
-        answer = OpenAILlmDalleService(self.config).retrieve_answer(message)
+        answer = OpenAILlmDalleService(self.config).retrieve_answer(
+            message.to_message()
+        )
         image_url = answer.data[0].url
         try:
             response = requests.get(image_url)
@@ -266,7 +266,9 @@ class OpenAITextToSpeechChatService(ChatService):
     def generate(self, message: MessageDTO):
         if message.content is None:
             raise Exception("content is None")
-        response = OpenAILlmTextToSpeech(self.config).retrieve_answer(message)
+        response = OpenAILlmTextToSpeech(self.config).retrieve_answer(
+            message.to_message()
+        )
         self.save(response, message)
 
     def save(self, response, message: MessageDTO) -> None:
@@ -295,7 +297,9 @@ class OpenAISpeechToTextChatService(ChatService):
             raise Exception("file_path is None")
         full_path = Path(MEDIA_ROOT) / message.file_path
         if full_path.exists():
-            response = OpenAILlmSpeechToText(self.config).retrieve_answer(message)
+            response = OpenAILlmSpeechToText(self.config).retrieve_answer(
+                file_path=message.file_path
+            )
             message.content = f"音声ファイルは「{response.text}」とテキスト化されました"
             self.save(message)
         else:
@@ -327,7 +331,7 @@ class OpenAIRagChatService(ChatService):
         answer_dict = OpenAILlmRagService(
             config=self.config,
             dataloader=PdfDataloader(str(file_path)),
-        ).retrieve_answer(message)
+        ).retrieve_answer(message.to_message())
         message.role = RoleType.ASSISTANT
         message.content = RetrievalQAWithSourcesChainAnswer(**answer_dict).answer
         self.save(message)

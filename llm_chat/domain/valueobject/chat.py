@@ -9,13 +9,24 @@ from llm_chat.models import ChatLogs
 
 @dataclass
 class MessageDTO:
+    """
+    GPT APIやデータベース操作に使用されるデータ転送オブジェクト（DTO）。
+
+    Attributes:
+        user (User): メッセージを送信するユーザー。
+        role (RoleType): メッセージを送信した役割（例: ユーザ、アシスタント、システム）。
+        content (str): メッセージの内容。
+        invisible (bool): メッセージがユーザーに非表示であるかどうかを示すフラグ。
+        file_path (str, optional): 添付ファイルのパス。デフォルトは None。
+    """
+
     user: User
     role: RoleType
     content: str
     invisible: bool
     file_path: str = None
 
-    def to_request(self) -> Message:
+    def to_message(self) -> Message:
         """
         このDTOをGPT APIへのリクエストとして適切なMessageオブジェクトに変換します。
         """
