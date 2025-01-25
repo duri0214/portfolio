@@ -38,7 +38,10 @@ class GoogleMapsService:
         if not fields:
             raise ValueError("fieldsパラメータは必須です")
 
-        # PlaceRepositoryから全量キャッシュを取得
+        # 【1】最初のキャッシュ取得
+        # 現在のPlaceテーブルの状態をplace_idをキーにしたキャッシュとして取得。
+        # ・Placeテーブルが空の場合は空のキャッシュ。
+        # ・キャッシュを基にAPIから取得したデータと比較して新規登録すべきPlaceを抽出する際に使用。
         place_cache = PlaceRepository.fetch_all_places()
 
         try:
@@ -60,8 +63,13 @@ class GoogleMapsService:
             data = response.json()
             places_data = data.get("places", [])
 
-            # 新しいPlaceを登録
+            # **新しいPlaceをデータベースに登録（キャッシュに存在しないものだけ）**
             self.extract_new_places_and_register(places_data, place_cache)
+
+            # 【2】キャッシュの再取得
+            # extract_new_places_and_register実行後にキャッシュを最新の状態に更新。
+            # ・新規登録分も含めた完全なPlaceキャッシュを取得する。
+            place_cache = PlaceRepository.fetch_all_places()
 
             place_vo_list: list[PlaceVO] = []
             for place_data in places_data:
@@ -120,31 +128,34 @@ class GoogleMapsService:
         Returns:
             None
         """
-        new_places = []
+        new_place_list = []
 
         for place_data in places_data:
             place_id = place_data.get("id")
             if place_id in place_cache:  # 既存のPlaceはスキップ
                 continue
 
-            # 新しいPlaceVOの作成
+            # 新しいPlaceを登録
             latlng = place_data.get("location")
+            coords = None
             if latlng:
-                latlng = GoogleMapCoords(
+                coords = GoogleMapCoords(
                     latitude=latlng.get("latitude"),
                     longitude=latlng.get("longitude"),
                 )
-
-            new_places.append(
-                PlaceVO(
-                    place=place_cache.get(place_id),
-                    location=latlng,
+            new_place_list.append(
+                Place(
+                    place_id=place_id,
                     name=place_data.get("displayName", {}).get("text"),
+                    location=coords.to_str() if coords else None,
                     rating=place_data.get("rating"),
-                    reviews=[],
                 )
             )
 
-        # 新規PlaceをDBに追加
-        if new_places:
-            PlaceRepository.bulk_create(new_places)
+            # 一括登録処理に渡す
+            if new_place_list:  # リストが空でなければ登録実行
+                PlaceRepository.bulk_create(new_place_list)
+
+                # キャッシュを更新する
+                for place in new_place_list:
+                    place_cache[place.place_id] = place
