@@ -1,8 +1,36 @@
+from collections import defaultdict
+
+from django.db import OperationalError, IntegrityError
 from django.db.models import QuerySet
 
 from gmarker.domain.valueobject.googlemaps import PlaceVO
-from gmarker.models import NearbyPlace
+from gmarker.models import NearbyPlace, Place, PlaceReview
 from lib.geo.valueobject.coords import GoogleMapCoords
+
+
+class PlaceRepository:
+    @staticmethod
+    def fetch_existing_place_ids(place_ids: list[str]) -> set[str]:
+        return set(
+            Place.objects.filter(place_id__in=place_ids).values_list(
+                "place_id", flat=True
+            )
+        )
+
+    @staticmethod
+    def bulk_create(new_place_list: list[Place]):
+        if new_place_list:
+            Place.objects.bulk_create(new_place_list)
+
+    @staticmethod
+    def fetch_all_places() -> dict[str, Place]:
+        """
+        全ての Place データを取得し、辞書形式で返却します。
+
+        Returns:
+            dict[str, Place]: place_id をキー、Place インスタンスを値とする辞書。
+        """
+        return {place.place_id: place for place in Place.objects.all()}
 
 
 class NearbyPlaceRepository:
@@ -22,7 +50,7 @@ class NearbyPlaceRepository:
     DEFAULT_LOCATION = 9
 
     @staticmethod
-    def find_by_category(category: int) -> QuerySet[NearbyPlace]:
+    def find_by_category(category: int) -> QuerySet:
         return NearbyPlace.objects.filter(category=category)
 
     @staticmethod
@@ -34,8 +62,8 @@ class NearbyPlaceRepository:
         return False
 
     @staticmethod
-    def bulk_create(objects: list[NearbyPlace]):
-        NearbyPlace.objects.bulk_create(objects)
+    def bulk_create(new_nearby_place_list: list[NearbyPlace]):
+        NearbyPlace.objects.bulk_create(new_nearby_place_list)
 
     @classmethod
     def get_default_location(cls) -> NearbyPlace | None:
@@ -45,22 +73,40 @@ class NearbyPlaceRepository:
             return None
 
     @staticmethod
-    def handle_search_code(category: int, search_types: str, places: list[PlaceVO]):
+    def handle_search_code(
+        category: int, search_types: str, place_vo_list: list[PlaceVO]
+    ):
+        """
+        検索結果に基づいてNearbyPlaceおよびPlaceを管理するメソッド。
+
+        Args:
+            category (int): カテゴリ
+            search_types (str): 検索タイプ
+            place_vo_list (list[PlaceVO]): 検索結果としての場所データ
+        """
         NearbyPlaceRepository.delete_by_category(category)
-        if places:
-            new_places = []
-            for place in places:
-                new_places.append(
-                    NearbyPlace(
-                        category=category,
-                        search_types=search_types,
-                        place_id=place.place_id,
-                        name=place.name,
-                        location=place.location.to_str(),
-                        rating=place.rating,
-                    )
+        nearby_places = [
+            NearbyPlace(
+                category=category,
+                search_types=search_types,
+                place=Place.objects.get(place_id=place_vo.place.place_id),
+            )
+            for place_vo in place_vo_list
+        ]
+        NearbyPlaceRepository.bulk_create(nearby_places)
+
+        for place_vo in place_vo_list:
+            place_reviews = [
+                PlaceReview(
+                    review_text=review.text,
+                    author=review.author,
+                    publish_time=review.publish_time,
+                    google_maps_uri=review.google_maps_uri,
+                    place=place_vo.place,
                 )
-            NearbyPlaceRepository.bulk_create(new_places)
+                for review in place_vo.reviews
+            ]
+            PlaceReviewRepository.bulk_create(place_reviews)
 
     @staticmethod
     def upsert_default_location(
@@ -86,3 +132,49 @@ class NearbyPlaceRepository:
             },
         )
         return nearby_place
+
+
+class PlaceReviewRepository:
+    @staticmethod
+    def bulk_create(new_place_review_list: list[PlaceReview]):
+        # PlaceReviewのキャッシュを事前に作成
+        existing_reviews = PlaceReview.objects.values(
+            "place_id", "author", "id", "review_text"
+        )
+        existing_reviews_map = {
+            (review["place_id"], review["author"]): review
+            for review in existing_reviews
+        }
+
+        # 重複エラーを格納する辞書 (place名がキーで、authorのリストが値)
+        duplicate_errors = defaultdict(list)
+
+        for review in new_place_review_list:
+            try:
+                # 同じplaceの同じauthorのレビューがあったらupdateにする
+                existing_review = existing_reviews_map.get(
+                    (review.place.place_id, review.author)
+                )
+
+                if existing_review:
+                    PlaceReview.objects.filter(id=existing_review["id"]).update(
+                        review_text=review.review_text
+                    )
+                else:
+                    review.save()
+
+            except IntegrityError as e:
+                if "Duplicate entry" in str(e):
+                    duplicate_errors[review.place.name].append(review.author)
+                else:
+                    print(f"Integrity Error! Review: {review}: {e}")
+
+            except OperationalError as e:
+                print(f"Error occurred while processing review: {review}: {e}")
+
+            except Exception as e:
+                print(f"Unexpected error while processing review: {review}: {e}")
+
+        # 重複エラーをまとめて出力
+        for place, authors in duplicate_errors.items():
+            print(f"Duplicate Error! Place: {place} | Authors: {authors}")

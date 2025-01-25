@@ -17,31 +17,31 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search_code = self.kwargs.get("search_code", 9)
-        places = NearbyPlaceRepository.find_by_category(search_code)
+        nearby_places = NearbyPlaceRepository.find_by_category(search_code)
 
         place_data = []
-        for place in places:
+        for nearby_place in nearby_places:
             try:
-                lat, lng = map(float, place.location.split(","))
+                lat, lng = map(float, nearby_place.place.location.split(","))
                 place_data.append(
                     {
                         "location": {
                             "lat": lat,
                             "lng": lng,
                         },
-                        "name": place.name,
-                        "place_id": place.place_id,
-                        "rating": place.rating,
+                        "name": nearby_place.place.name,
+                        "place_id": nearby_place.place.place_id,
+                        "rating": nearby_place.place.rating,
                     }
                 )
             except ValueError:
                 print(
-                    f"Invalid location format: {place.location} for place {place.name}"
+                    f"Invalid location format: {nearby_place.place.location} for place {nearby_place.place.name}"
                 )
                 continue
 
         map_center = NearbyPlaceRepository.get_default_location()
-        center_lat, center_lng = map(float, map_center.location.split(","))
+        center_lat, center_lng = map(float, map_center.place.location.split(","))
         map_data = {
             "center": {
                 "lat": center_lat,
@@ -58,10 +58,10 @@ class IndexView(TemplateView):
     def post(request, search_code: int):
         if search_code == NearbyPlaceRepository.CATEGORY_SEARCH:
             map_center = NearbyPlaceRepository.get_default_location()
-            center_lat, center_lng = map(float, map_center.location.split(","))
+            center_lat, center_lng = map(float, map_center.place.location.split(","))
             search_types = ["restaurant"]
             service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
-            places = service.nearby_search(
+            place_vo_list = service.nearby_search(
                 center=GoogleMapCoords(center_lat, center_lng),
                 search_types=search_types,
                 radius=1500,
@@ -70,12 +70,13 @@ class IndexView(TemplateView):
                     "places.location",
                     "places.displayName.text",
                     "places.rating",
+                    "places.reviews",
                 ],
             )
             NearbyPlaceRepository.handle_search_code(
                 category=NearbyPlaceRepository.CATEGORY_SEARCH,
                 search_types=",".join(search_types),
-                places=places,
+                place_vo_list=place_vo_list,
             )
         return redirect(
             reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code})
@@ -93,7 +94,7 @@ class CoordinateRegisterView(TemplateView):
         default_location = NearbyPlaceRepository.get_default_location()
         if default_location:
             # locationをカンマで分割し初期値として設定
-            lat, lng = map(float, default_location.location.split(","))
+            lat, lng = map(float, default_location.place.location.split(","))
             initial_data = {"latitude": lat, "longitude": lng}
 
         # フォームを初期値付きで作成
@@ -114,7 +115,7 @@ class CoordinateRegisterView(TemplateView):
             # リポジトリを利用してアップサート処理
             nearby_place = NearbyPlaceRepository.upsert_default_location(coords)
             if nearby_place:
-                print(f"NearbyPlace が登録・更新されました: {nearby_place.location}")
+                print(f"upsert NearbyPlace: {nearby_place.place.location}")
 
             # 正常終了後、リダイレクト
             return redirect(reverse("mrk:index"))

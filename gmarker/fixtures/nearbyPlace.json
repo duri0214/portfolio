@@ -3,8 +3,8 @@
     "model": "gmarker.nearbyPlace",
     "fields": {
       "category": 9,
-      "name": "渋谷駅",
-      "location": "35.6598003,139.7023894",
+      "place": 1,
+      "search_types": null,
       "created_at": "2023-02-12T09:00:00+09:00"
     }
   },
@@ -12,8 +12,8 @@
     "model": "gmarker.nearbyPlace",
     "fields": {
       "category": 3,
-      "name": "忠犬ハチ公像",
-      "location": "35.6590439,139.7005917",
+      "place": 2,
+      "search_types": null,
       "created_at": "2023-02-12T09:00:00+09:00"
     }
   },
@@ -21,8 +21,8 @@
     "model": "gmarker.nearbyPlace",
     "fields": {
       "category": 3,
-      "name": "明治神宮",
-      "location": "35.676236,139.6993411",
+      "place": 3,
+      "search_types": null,
       "created_at": "2023-02-12T09:00:00+09:00"
     }
   }
