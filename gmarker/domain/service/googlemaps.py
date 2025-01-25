@@ -56,6 +56,7 @@ class GoogleMapsService:
                 ),
             )
             response.raise_for_status()
+
             data = response.json()
             places_data = data.get("places", [])
 
