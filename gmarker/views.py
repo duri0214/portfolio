@@ -76,7 +76,7 @@ class IndexView(TemplateView):
             NearbyPlaceRepository.handle_search_code(
                 category=NearbyPlaceRepository.CATEGORY_SEARCH,
                 search_types=",".join(search_types),
-                places=places,
+                place_vo_list=place_vo_list,
             )
         return redirect(
             reverse_lazy("mrk:nearby_search", kwargs={"search_code": search_code})
