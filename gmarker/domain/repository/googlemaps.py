@@ -79,33 +79,40 @@ class NearbyPlaceRepository:
             return None
 
     @staticmethod
-    def handle_search_code(category: int, search_types: str, places: list[PlaceVO]):
+    def handle_search_code(
+        category: int, search_types: str, place_vo_list: list[PlaceVO]
+    ):
         """
         検索結果に基づいてNearbyPlaceおよびPlaceを管理するメソッド。
 
         Args:
             category (int): カテゴリ
             search_types (str): 検索タイプ
-            places (list[PlaceVO]): 検索結果としての場所データ
+            place_vo_list (list[PlaceVO]): 検索結果としての場所データ
         """
         NearbyPlaceRepository.delete_by_category(category)
-        if places:
-            place_ids = [place.place_id for place in places]
-            existing_place_ids = PlaceRepository.fetch_existing_place_ids(place_ids)
-            new_places = [
-                place for place in places if place.place_id not in existing_place_ids
-            ]
-            PlaceRepository.bulk_create(new_places)
+        nearby_places = [
+            NearbyPlace(
+                category=category,
+                search_types=search_types,
+                place=Place.objects.get(place_id=place_vo.place.place_id),
+            )
+            for place_vo in place_vo_list
+        ]
+        NearbyPlaceRepository.bulk_create(nearby_places)
 
-            nearby_places = [
-                NearbyPlace(
-                    category=category,
-                    search_types=search_types,
-                    place=Place.objects.get(place_id=place.place_id),
+        for place_vo in place_vo_list:
+            place_reviews = [
+                PlaceReview(
+                    review_text=review.text,
+                    author=review.author,
+                    publish_time=review.publish_time,
+                    google_maps_uri=review.google_maps_uri,
+                    place=place_vo.place,
                 )
-                for place in places
+                for review in place_vo.reviews
             ]
-            NearbyPlaceRepository.bulk_create(nearby_places)
+            PlaceReviewRepository.bulk_create(place_reviews)
 
     @staticmethod
     def upsert_default_location(
