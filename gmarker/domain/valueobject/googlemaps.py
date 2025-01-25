@@ -5,6 +5,45 @@ from lib.geo.valueobject.coords import GoogleMapCoords
 
 
 @dataclass
+class RequestBody:
+    """
+    Google Maps Places APIでNearby Searchのリクエストボディを表現するVO。
+
+    Attributes:
+        center: 検索の中心座標をGoogleMapCoordsで受け取る。
+        radius: 検索範囲の半径（メートル）。
+        search_types: 検索タイプのリスト。
+        lang: 使用する言語（デフォルトは日本語 "ja"）。
+    """
+
+    center: GoogleMapCoords
+    radius: int
+    search_types: list[str]
+    lang: str = "ja"
+
+    def to_dict(self) -> dict:
+        """
+        VOをAPIリクエストのJSON形式に変換。
+
+        Returns:
+            dict: リクエストボディを表す辞書データ。
+        """
+        return {
+            "locationRestriction": {
+                "circle": {
+                    "center": {
+                        "latitude": self.center.latitude,
+                        "longitude": self.center.longitude,
+                    },
+                    "radius": self.radius,
+                }
+            },
+            "includedTypes": self.search_types,
+            "languageCode": self.lang,
+        }
+
+
+@dataclass
 class ReviewVO:
     """
     このデータクラスは、Google Places APIから取得するレビューの詳細情報を表します。

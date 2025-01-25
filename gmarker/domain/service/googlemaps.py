@@ -1,7 +1,7 @@
 import requests
 
 from gmarker.domain.repository.googlemaps import PlaceRepository
-from gmarker.domain.valueobject.googlemaps import PlaceVO, ReviewVO
+from gmarker.domain.valueobject.googlemaps import PlaceVO, ReviewVO, RequestBody
 from gmarker.models import Place
 from lib.geo.valueobject.coords import GoogleMapCoords
 
@@ -41,22 +41,6 @@ class GoogleMapsService:
         # PlaceRepositoryから全量キャッシュを取得
         place_cache = PlaceRepository.fetch_all_places()
 
-        url = f"{self.base_url}:searchNearby"
-
-        request_body = {
-            "locationRestriction": {
-                "circle": {
-                    "center": {
-                        "latitude": center.latitude,
-                        "longitude": center.longitude,
-                    },
-                    "radius": radius,
-                }
-            },
-            "includedTypes": search_types,
-            "languageCode": "ja",
-        }
-
         headers = {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": self.api_key,
@@ -64,7 +48,15 @@ class GoogleMapsService:
         }
 
         try:
-            response = requests.post(url, headers=headers, json=request_body)
+            response = requests.post(
+                url=f"{self.base_url}:searchNearby",
+                headers=headers,
+                json=RequestBody(
+                    center=center,
+                    radius=radius,
+                    search_types=search_types,
+                ),
+            )
             response.raise_for_status()
             data = response.json()
             places_data = data.get("places", [])
