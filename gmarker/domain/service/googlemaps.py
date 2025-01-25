@@ -41,16 +41,14 @@ class GoogleMapsService:
         # PlaceRepositoryから全量キャッシュを取得
         place_cache = PlaceRepository.fetch_all_places()
 
-        headers = {
-            "Content-Type": "application/json",
-            "X-Goog-Api-Key": self.api_key,
-            "X-Goog-FieldMask": ",".join(fields),
-        }
-
         try:
             response = requests.post(
                 url=f"{self.base_url}:searchNearby",
-                headers=headers,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Goog-Api-Key": self.api_key,
+                    "X-Goog-FieldMask": ",".join(fields),
+                },
                 json=RequestBody(
                     center=center,
                     radius=radius,
