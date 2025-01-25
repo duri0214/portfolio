@@ -152,10 +152,10 @@ class GoogleMapsService:
                 )
             )
 
-            # 一括登録処理に渡す
-            if new_place_list:  # リストが空でなければ登録実行
-                PlaceRepository.bulk_create(new_place_list)
+        # 一括登録処理に渡す
+        if new_place_list:  # リストが空でなければ登録実行
+            PlaceRepository.bulk_create(new_place_list)
 
-                # キャッシュを更新する
-                for place in new_place_list:
-                    place_cache[place.place_id] = place
+            # キャッシュを更新する
+            for place in new_place_list:
+                place_cache[place.place_id] = place
