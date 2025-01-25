@@ -64,6 +64,9 @@ class GoogleMapsService:
             data = response.json()
             places_data = data.get("places", [])
 
+            # 新しいPlaceを登録
+            self.extract_new_places_and_register(places_data, place_cache)
+
             places: list[PlaceVO] = []
             for place_data in places_data:
                 latlng = place_data.get("location")
