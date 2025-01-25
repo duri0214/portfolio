@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+from django.db import OperationalError, IntegrityError
 from django.db.models import QuerySet
 
 from gmarker.domain.valueobject.googlemaps import PlaceVO
@@ -143,4 +146,44 @@ class NearbyPlaceRepository:
 class PlaceReviewRepository:
     @staticmethod
     def bulk_create(new_place_review_list: list[PlaceReview]):
-        PlaceReview.objects.bulk_create(new_place_review_list)
+        # PlaceReviewのキャッシュを事前に作成
+        existing_reviews = PlaceReview.objects.values(
+            "place_id", "author", "id", "review_text"
+        )
+        existing_reviews_map = {
+            (review["place_id"], review["author"]): review
+            for review in existing_reviews
+        }
+
+        # 重複エラーを格納する辞書 (place名がキーで、authorのリストが値)
+        duplicate_errors = defaultdict(list)
+
+        for review in new_place_review_list:
+            try:
+                # 同じplaceの同じauthorのレビューがあったらupdateにする
+                existing_review = existing_reviews_map.get(
+                    (review.place.place_id, review.author)
+                )
+
+                if existing_review:
+                    PlaceReview.objects.filter(id=existing_review["id"]).update(
+                        review_text=review.review_text
+                    )
+                else:
+                    review.save()
+
+            except IntegrityError as e:
+                if "Duplicate entry" in str(e):
+                    duplicate_errors[review.place.name].append(review.author)
+                else:
+                    print(f"Integrity Error! Review: {review}: {e}")
+
+            except OperationalError as e:
+                print(f"Error occurred while processing review: {review}: {e}")
+
+            except Exception as e:
+                print(f"Unexpected error while processing review: {review}: {e}")
+
+        # 重複エラーをまとめて出力
+        for place, authors in duplicate_errors.items():
+            print(f"Duplicate Error! Place: {place} | Authors: {authors}")
