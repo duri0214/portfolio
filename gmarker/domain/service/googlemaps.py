@@ -1,6 +1,8 @@
 import requests
 
-from gmarker.domain.valueobject.googlemaps import PlaceVO
+from gmarker.domain.repository.googlemaps import PlaceRepository
+from gmarker.domain.valueobject.googlemaps import PlaceVO, ReviewVO
+from gmarker.models import Place
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
@@ -111,3 +113,47 @@ class GoogleMapsService:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
             return []
+
+    @staticmethod
+    def extract_new_places_and_register(
+        places_data: list[dict], place_cache: dict[str, Place]
+    ) -> None:
+        """
+        Google Maps APIのレスポンスデータを基に、
+        新しいPlaceVOを抽出し、新規Placeを登録する。
+
+        Args:
+            places_data (list[dict]): Google Maps APIのレスポンス内の施設データリスト。
+            place_cache (dict[str, Place]): 既存のplace_idをキーにしたPlaceインスタンスのキャッシュ。
+
+        Returns:
+            None
+        """
+        new_places = []
+
+        for place_data in places_data:
+            place_id = place_data.get("id")
+            if place_id in place_cache:  # 既存のPlaceはスキップ
+                continue
+
+            # 新しいPlaceVOの作成
+            latlng = place_data.get("location")
+            if latlng:
+                latlng = GoogleMapCoords(
+                    latitude=latlng.get("latitude"),
+                    longitude=latlng.get("longitude"),
+                )
+
+            new_places.append(
+                PlaceVO(
+                    place=place_cache.get(place_id),
+                    location=latlng,
+                    name=place_data.get("displayName", {}).get("text"),
+                    rating=place_data.get("rating"),
+                    reviews=[],
+                )
+            )
+
+        # 新規PlaceをDBに追加
+        if new_places:
+            PlaceRepository.bulk_create(new_places)
