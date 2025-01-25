@@ -18,18 +18,9 @@ class PlaceRepository:
         )
 
     @staticmethod
-    def bulk_create(new_place_vo_list: list[PlaceVO]):
-        place_instances = [
-            Place(
-                place_id=new_place_vo.place.place_id,
-                name=new_place_vo.name,
-                location=new_place_vo.location.to_str(),
-                rating=new_place_vo.rating,
-            )
-            for new_place_vo in new_place_vo_list
-        ]
-        if place_instances:
-            Place.objects.bulk_create(place_instances)
+    def bulk_create(new_place_list: list[Place]):
+        if new_place_list:
+            Place.objects.bulk_create(new_place_list)
 
     @staticmethod
     def fetch_all_places() -> dict[str, Place]:
