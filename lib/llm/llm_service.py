@@ -82,7 +82,7 @@ class GeminiLlmCompletionService(LlmService):
         self.config = config
 
     def retrieve_answer(self, chat_history: list[Message]):
-        # TODO: [-1]しか処理してないから、そのうち Gemini用のMessageDTO にしたいね
+        # TODO: [-1]しか処理してないから、そのうち Gemini用のMessage にしたいね
         #  https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=python&hl=ja
         cut_down_history = cut_down_chat_history(chat_history, self.config)
         generativeai.configure(api_key=self.config.api_key)
