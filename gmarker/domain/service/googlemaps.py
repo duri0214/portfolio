@@ -36,6 +36,9 @@ class GoogleMapsService:
         if not fields:
             raise ValueError("fieldsパラメータは必須です")
 
+        # PlaceRepositoryから全量キャッシュを取得
+        place_cache = PlaceRepository.fetch_all_places()
+
         url = f"{self.base_url}:searchNearby"
 
         request_body = {
