@@ -72,7 +72,7 @@ class GoogleMapsService:
             # 新しいPlaceを登録
             self.extract_new_places_and_register(places_data, place_cache)
 
-            places: list[PlaceVO] = []
+            place_vo_list: list[PlaceVO] = []
             for place_data in places_data:
                 latlng = place_data.get("location")
                 if latlng:
@@ -93,7 +93,7 @@ class GoogleMapsService:
                         )
                     )
 
-                places.append(
+                place_vo_list.append(
                     PlaceVO(
                         place=place_cache.get(place_data.get("id")),
                         location=latlng,
@@ -102,7 +102,7 @@ class GoogleMapsService:
                         reviews=reviews,
                     )
                 )
-            return places
+            return place_vo_list
 
         except requests.HTTPError as e:
             print(f"An HTTP error occurred: {e}")
