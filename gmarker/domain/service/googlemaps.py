@@ -79,6 +79,18 @@ class GoogleMapsService:
                         longitude=latlng.get("longitude"),
                     )
 
+                reviews: list[ReviewVO] = []
+                review_data = place_data.get("reviews", [])
+                for data in review_data:
+                    reviews.append(
+                        ReviewVO(
+                            text=data.get("text", {}).get("text"),
+                            author=data.get("authorAttribution", {}).get("displayName"),
+                            publish_time=data.get("publishTime"),
+                            google_maps_uri=data.get("googleMapsUri"),
+                        )
+                    )
+
                 places.append(
                     PlaceVO(
                         place_id=place_data.get("id"),
