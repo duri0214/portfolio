@@ -47,3 +47,10 @@ class PlaceReview(models.Model):
 
     def __str__(self):
         return f"Review by {self.author} for {self.place.name}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["place", "author"], name="unique_place_author"
+            )
+        ]
