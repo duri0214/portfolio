@@ -22,7 +22,7 @@ class NearbyPlaceRepository:
     DEFAULT_LOCATION = 9
 
     @staticmethod
-    def find_by_category(category: int) -> QuerySet[NearbyPlace]:
+    def find_by_category(category: int) -> QuerySet:
         return NearbyPlace.objects.filter(category=category)
 
     @staticmethod
