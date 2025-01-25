@@ -91,7 +91,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "portfolio_db",
         "USER": "python",
-        "PASSWORD": os.environ.get("PASSWORD"),
+        "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD"),
         "HOST": "localhost",
         "PORT": "3306",
         "TEST": {
