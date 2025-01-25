@@ -82,14 +82,30 @@ class TestLlmService(TestCase):
 
 
 class TestValidateTemperature(TestCase):
+    """
+    validate_temperature関数をテストするためのテストケース。
+
+    - 温度パラメータが有効な値であるかどうかを確認します。
+    """
+
     def test_valid_temperature(self):
-        # Test that valid temperatures do not raise error
+        """
+        有効な温度値が与えられた場合、エラーが発生せず値がそのまま返却されることをテストします。
+
+        テスト範囲:
+            - 温度: 0, 0.5, 1（有効な範囲内）
+        """
         for temp in [0, 0.5, 1]:
             result = validate_temperature(temp)
             self.assertEqual(result, temp)
 
     def test_invalid_temperature(self):
-        # Test that temperatures out of range raise ValueError
+        """
+        無効な温度値が与えられた場合、ValueErrorがスローされることをテストします。
+
+        テスト範囲:
+            - 温度: -1, 1.5（有効範囲外）
+        """
         for temp in [-1, 1.5]:
             with self.assertRaises(ValueError):
                 validate_temperature(temp)
