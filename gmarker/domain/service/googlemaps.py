@@ -93,11 +93,11 @@ class GoogleMapsService:
 
                 places.append(
                     PlaceVO(
-                        place_id=place_data.get("id"),
+                        place=place_cache.get(place_data.get("id")),
                         location=latlng,
                         name=place_data.get("displayName", {}).get("text"),
                         rating=place_data.get("rating"),
-                        reviews=[],
+                        reviews=reviews,
                     )
                 )
             return places
