@@ -68,8 +68,8 @@ class NearbyPlaceRepository:
         return False
 
     @staticmethod
-    def bulk_create(objects: list[NearbyPlace]):
-        NearbyPlace.objects.bulk_create(objects)
+    def bulk_create(new_nearby_place_list: list[NearbyPlace]):
+        NearbyPlace.objects.bulk_create(new_nearby_place_list)
 
     @classmethod
     def get_default_location(cls) -> NearbyPlace | None:
@@ -142,5 +142,5 @@ class NearbyPlaceRepository:
 
 class PlaceReviewRepository:
     @staticmethod
-    def bulk_create(objects: list[PlaceReview]):
-        PlaceReview.objects.bulk_create(objects)
+    def bulk_create(new_place_review_list: list[PlaceReview]):
+        PlaceReview.objects.bulk_create(new_place_review_list)
