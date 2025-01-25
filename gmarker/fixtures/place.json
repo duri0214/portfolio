@@ -2,7 +2,7 @@
   {
     "model": "gmarker.place",
     "fields": {
-      "place_id": "1",
+      "place_id": "ChIJnxAAO1aLGGARJqvi8d4oczM",
       "name": "渋谷駅",
       "location": "35.6598003,139.7023894",
       "rating": null,
@@ -12,7 +12,7 @@
   {
     "model": "gmarker.place",
     "fields": {
-      "place_id": "2",
+      "place_id": "ChIJx1e971eLGGARum8w_tnpFwI",
       "name": "忠犬ハチ公像",
       "location": "35.6590439,139.7005917",
       "rating": null,
@@ -22,7 +22,7 @@
   {
     "model": "gmarker.place",
     "fields": {
-      "place_id": "3",
+      "place_id": "ChIJ5SZMmreMGGARcz8QSTiJyo8",
       "name": "明治神宮",
       "location": "35.676236,139.6993411",
       "rating": null,
