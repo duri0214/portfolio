@@ -1,7 +1,7 @@
 from django.db.models import QuerySet
 
 from gmarker.domain.valueobject.googlemaps import PlaceVO
-from gmarker.models import NearbyPlace, Place
+from gmarker.models import NearbyPlace, Place, PlaceReview
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
@@ -121,3 +121,9 @@ class NearbyPlaceRepository:
             },
         )
         return nearby_place
+
+
+class PlaceReviewRepository:
+    @staticmethod
+    def bulk_create(objects: list[PlaceReview]):
+        PlaceReview.objects.bulk_create(objects)
