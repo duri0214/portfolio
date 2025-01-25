@@ -53,7 +53,7 @@ class GoogleMapsService:
                     center=center,
                     radius=radius,
                     search_types=search_types,
-                ),
+                ).to_dict(),
             )
             response.raise_for_status()
 
