@@ -61,7 +61,7 @@ class IndexView(TemplateView):
             center_lat, center_lng = map(float, map_center.place.location.split(","))
             search_types = ["restaurant"]
             service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
-            places = service.nearby_search(
+            place_vo_list = service.nearby_search(
                 center=GoogleMapCoords(center_lat, center_lng),
                 search_types=search_types,
                 radius=1500,
@@ -70,6 +70,7 @@ class IndexView(TemplateView):
                     "places.location",
                     "places.displayName.text",
                     "places.rating",
+                    "places.reviews",
                 ],
             )
             NearbyPlaceRepository.handle_search_code(
