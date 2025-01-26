@@ -175,5 +175,78 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <!-- カード7 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/no-image.png' %}" alt="ニワトリとミミズの種を分類するツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-primary text-white px-2 py-1">分類学</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">ニワトリとミミズの種を分類する</h5>
+                        <div class="card-text">
+                            2017年に地方に移住して畑作業をするなかで、土壌の生物性に興味をもった。
+                            鶏とミミズの種類を調べ上げて登録すると分類の樹形図ができあがるようなアプリがあったらいいなと思って
+                            2023年当時につくることにした。応用すれば家系図も作れるだろう
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
+                            {# TODO: リンク差し替え #}
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード8 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/no-image.png' %}" alt="金融庁の有価証券報告書を分析するツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-success text-white px-2 py-1">金融</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">金融庁の有価証券報告書を分析する</h5>
+                        <div class="card-text">
+                            2019年当時、金融の業務知識を総動員して "有価証券報告書" をpythonで取得するプログラムを作った
+                            （そのときは単にファイル処理をするもの）。2023年頃にWebアプリ（API版）として移植したついでに、分析する機能をつけた
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
+                            {# TODO: リンク差し替え #}
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード9 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/no-image.png' %}" alt="XXXツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-warning text-white px-2 py-1">CATEGORY</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">TITLE</h5>
+                        <div class="card-text">
+                            SUMMARY
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="#" class="btn btn-primary btn-sm" role="button">
+                            {# TODO: リンク差し替え #}
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
