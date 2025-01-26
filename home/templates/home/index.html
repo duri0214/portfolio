@@ -31,25 +31,21 @@
             <!-- カード1 -->
             <div class="col-md-4">
                 <div class="card mb-4 shadow-sm">
-                    <a href="{% url 'home:post_detail' pk=1 %}" class="text-decoration-none">
-                        <figure class="card-img-top">
-                            {% if post.image %}
-                                <img src="{{ post.image.url }}" alt="{{ post.title }}" class="img-fluid">
-                            {% else %}
-                                <img src="{% static 'home/images/no-image.png' %}" alt="No image available"
-                                     class="img-fluid">
-                            {% endif %}
-                            <figcaption class="cat-name bg-primary text-white px-2 py-1">カテゴリー名</figcaption>
-                        </figure>
-                        <div class="card-body">
-                            <h5 class="card-title">投稿タイトル1</h5>
-                            <p class="card-text">
-                                詳細文や概要を表示します。文字数は最大130文字程度が推奨されます。
-                            </p>
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/hospital.jpg' %}" alt="病院事務ツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-primary text-white px-2 py-1">病院</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">不在者投票事務用の転記ツール</h5>
+                        <div class="card-text">
+                            2015年当時、友人の残業時間を減らすために、転記ツールを作った。
+                            病棟別の不在者投票データを事務処理簿等に自動転記させることで、大きく残業時間を減らした。
+                            成果物は6時間ほどで完成し、このツールは横展開できそうだと病院の注目を集めた。
                         </div>
-                    </a>
+                    </div>
                     <div class="card-footer">
-                        <a href="{% url 'home:post_detail' pk=1 %}" class="btn btn-primary btn-sm" role="button">
+                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
                             詳細を見る
                         </a>
                     </div>
