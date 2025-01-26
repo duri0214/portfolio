@@ -55,25 +55,20 @@
             <!-- カード2 -->
             <div class="col-md-4">
                 <div class="card mb-4 shadow-sm">
-                    <a href="{% url 'home:post_detail' pk=2 %}" class="text-decoration-none">
-                        <figure class="card-img-top">
-                            {% if post.image %}
-                                <img src="{{ post.image.url }}" alt="{{ post.title }}" class="img-fluid">
-                            {% else %}
-                                <img src="{% static 'home/images/no-image.png' %}" alt="No image available"
-                                     class="img-fluid">
-                            {% endif %}
-                            <figcaption class="cat-name bg-success text-white px-2 py-1">カテゴリー名2</figcaption>
-                        </figure>
-                        <div class="card-body">
-                            <h5 class="card-title">投稿タイトル2</h5>
-                            <p class="card-text">
-                                詳細文や概要を表示します。文字数は最大130文字程度が推奨されます。
-                            </p>
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/soil_analysis.jpg' %}" alt="圃場計測のレポートツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-success text-white px-2 py-1">農業</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">圃場計測のレポートツール</h5>
+                        <div class="card-text">
+                            2023年当時、農業の調査をするため、一時的に静岡に移住し土壌分析のIT課題に取り組んだ。普段ITで扱うデータは誰かが集めたもので、
+                            実際にデータを収集するのは地道で大変な作業だと実感。雨の日も風の日も計測した
                         </div>
-                    </a>
+                    </div>
                     <div class="card-footer">
-                        <a href="{% url 'home:post_detail' pk=2 %}" class="btn btn-primary btn-sm" role="button">
+                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
                             詳細を見る
                         </a>
                     </div>
