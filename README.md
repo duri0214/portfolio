@@ -148,7 +148,7 @@ git fetch --prune origin
 git reset --hard origin/master
 git pull origin master
 source /var/www/html/venv/bin/activate
-python manage.py collectstatic
+python manage.py collectstatic --noinput 
 python manage.py clearsessions
 vi /var/log/apache2/error.log
 sudo -s
