@@ -100,5 +100,80 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <!-- カード4 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/no-image.png' %}" alt="GoogleMapにピンをさすツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-primary text-white px-2 py-1">地図</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">GoogleMapにピンをさす</h5>
+                        <div class="card-text">
+                            2015年当時、ラーメン屋とか洋食などのワードでGoogleMapにまとめてピンを打ち、
+                            さらに任意のピンだけに絞れるようなものを作れたら便利そうだなとおもったことからトライ。
+                            外部APIを初めて使ったツールとなった
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
+                            {# TODO: リンク差し替え #}
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード5 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/no-image.png' %}" alt="通販サイトツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-success text-white px-2 py-1">ＥＣ</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">通販サイトの基礎機能</h5>
+                        <div class="card-text">
+                            2022年当時、ECサイトってやっぱり作れるようになっておいたほうがいいなと思ってトライしたもの。
+                            店員管理、商品管理、CSV登録機能、写真アップロード機能、カード決済など基本的なＥＣサイトの機能を実装した
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
+                            {# TODO: リンク差し替え #}
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード6 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/no-image.png' %}" alt="ベトナムの株価ツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-warning text-white px-2 py-1">倉庫</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">倉庫のどこにいくつあるの？</h5>
+                        <div class="card-text">
+                            2016年当時、物流のオープンデータ活用コンテストがあった。
+                            そのころはまだAPIをまともに扱うWeb開発スキルがなくて、話を振ってもらったものの断念した。
+                            2023年ごろWebアプリを作る力もついてきてアプリとして結実させた
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
+                            {# TODO: リンク差し替え #}
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
