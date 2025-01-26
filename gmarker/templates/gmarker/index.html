@@ -28,6 +28,15 @@
                     ホテル
                 </a>
             </li>
+            <li>
+                <a
+                        href="#"
+                        class="btn btn-outline-secondary"
+                        onclick="submitSearchForm(2, 'presets')"
+                >
+                    Presets
+                </a>
+            </li>
         </ul>
         <!-- 非表示のフォーム -->
         <form id="searchForm" action="{% url 'mrk:nearby_search' 1 %}" method="POST" style="display: none;">
