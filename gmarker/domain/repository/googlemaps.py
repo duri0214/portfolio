@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 from django.db import OperationalError, IntegrityError
-from django.db.models import QuerySet
 
 from gmarker.domain.valueobject.googlemaps import PlaceVO
 from gmarker.models import NearbyPlace, Place, PlaceReview
@@ -50,8 +49,40 @@ class NearbyPlaceRepository:
     DEFAULT_LOCATION = 9
 
     @staticmethod
-    def find_by_category(category: int) -> QuerySet:
-        return NearbyPlace.objects.filter(category=category)
+    def find_places_with_reviews_by_category(category: int, review_limit: int = 5):
+        """
+        指定したカテゴリのNearbyPlaceと、それに関連付けられたPlaceReviewを取得。
+
+        Args:
+            category (int): 対象とするNearbyPlaceのカテゴリ
+            review_limit (int): 各Placeあたり取得するレビューの最大数
+
+        Returns:
+            list[dict]: NearbyPlace情報と各Placeのレビュー情報を含むリスト
+        """
+        nearby_places = NearbyPlace.objects.filter(category=category)
+        place_data = []
+
+        for nearby_place in nearby_places:
+            lat, lng = map(float, nearby_place.place.location.split(","))
+            reviews = PlaceReviewRepository.get_reviews_for_place(
+                nearby_place.place, limit=review_limit
+            )
+
+            place_data.append(
+                {
+                    "location": {
+                        "lat": lat,
+                        "lng": lng,
+                    },
+                    "name": nearby_place.place.name,
+                    "place_id": nearby_place.place.place_id,
+                    "rating": nearby_place.place.rating,
+                    "reviews": reviews,
+                }
+            )
+
+        return place_data
 
     @staticmethod
     def delete_by_category(category: int) -> bool:
@@ -135,6 +166,34 @@ class NearbyPlaceRepository:
 
 
 class PlaceReviewRepository:
+    @staticmethod
+    def get_reviews_for_place(place, limit: int = 5):
+        """
+        指定したPlaceに関連付けられたレビューを取得（最新順）。
+
+        Args:
+            place (Place): 対象のPlace
+            limit (int): 最大取得件数
+
+        Returns:
+            list[dict]: レビュー情報を辞書形式で格納したリスト
+        """
+        reviews = PlaceReview.objects.filter(place=place).order_by("-publish_time")[
+            :limit
+        ]
+        return [
+            {
+                "author": review.author,
+                "review_text": review.review_text,
+                "publish_time": (
+                    review.publish_time.strftime("%Y-%m-%d %H:%M:%S")
+                    if review.publish_time
+                    else None
+                ),
+            }
+            for review in reviews
+        ]
+
     @staticmethod
     def bulk_create(new_place_review_list: list[PlaceReview]):
         # PlaceReviewのキャッシュを事前に作成

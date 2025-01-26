@@ -8,7 +8,6 @@ from django.views.generic import TemplateView
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
 from gmarker.forms import CoordinateForm
-from gmarker.models import PlaceReview
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
@@ -18,57 +17,26 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search_code = self.kwargs.get("search_code", 9)
-        nearby_places = NearbyPlaceRepository.find_by_category(search_code)
 
-        # TODO: find_by_categoryに隠蔽しよう
-        place_data = []
-        for nearby_place in nearby_places:
-            try:
-                lat, lng = map(float, nearby_place.place.location.split(","))
-                reviews_query = PlaceReview.objects.filter(place=nearby_place.place)[:5]
-
-                reviews = [
-                    {
-                        "author": review.author,
-                        "review_text": review.review_text,
-                        "publish_time": (
-                            review.publish_time.strftime("%Y-%m-%d %H:%M:%S")
-                            if review.publish_time
-                            else None
-                        ),
-                    }
-                    for review in reviews_query
-                ]
-
-                place_data.append(
-                    {
-                        "location": {
-                            "lat": lat,
-                            "lng": lng,
-                        },
-                        "name": nearby_place.place.name,
-                        "place_id": nearby_place.place.place_id,
-                        "rating": nearby_place.place.rating,
-                        "reviews": reviews,
-                    }
-                )
-            except ValueError:
-                print(
-                    f"Invalid location format: {nearby_place.place.location} for place {nearby_place.place.name}"
-                )
-                continue
+        place_data = NearbyPlaceRepository.find_places_with_reviews_by_category(
+            category=search_code, review_limit=5
+        )
 
         map_center = NearbyPlaceRepository.get_default_location()
         center_lat, center_lng = map(float, map_center.place.location.split(","))
-        map_data = {
-            "center": {
-                "lat": center_lat,
-                "lng": center_lng,
-            },
-            "places": place_data,
-        }
 
-        context["map_data"] = json.dumps(map_data, ensure_ascii=False)
+        # マップデータの設定
+        context["map_data"] = json.dumps(
+            {
+                "center": {
+                    "lat": center_lat,
+                    "lng": center_lng,
+                },
+                "places": place_data,
+            },
+            ensure_ascii=False,
+        )
+
         context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
         context["places"] = place_data
         return context
