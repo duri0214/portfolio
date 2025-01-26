@@ -49,3 +49,7 @@ class PostCreateView(CreateView):
 
     def get_success_url(self):
         return reverse("home:post_detail", args=[str(self.object.id)])
+
+
+class HospitalIndexView(TemplateView):
+    template_name = "home/hospital/index.html"
