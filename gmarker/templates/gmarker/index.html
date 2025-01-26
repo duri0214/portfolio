@@ -27,4 +27,41 @@
             </form>
         </div>
     </div>
+
+    <div class="container mt-4">
+        <h4 class="card-title">レビュー一覧</h4>
+        {% for place in places %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                    <h5>{{ place.name }}</h5>
+                    <p>Place ID: {{ place.place_id }}</p>
+                    <p>Rating: {{ place.rating }}</p>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <thead class="thead-light">
+                        <tr>
+                            <th scope="col">投稿者</th>
+                            <th scope="col">レビュー内容</th>
+                            <th scope="col">投稿日時</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for review in place.reviews %}
+                            <tr>
+                                <td>{{ review.author }}</td>
+                                <td>{{ review.review_text }}</td>
+                                <td>{{ review.publish_time }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">レビューは見つかりませんでした。</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}

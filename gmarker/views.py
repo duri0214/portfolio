@@ -8,6 +8,7 @@ from django.views.generic import TemplateView
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
 from gmarker.forms import CoordinateForm
+from gmarker.models import PlaceReview
 from lib.geo.valueobject.coords import GoogleMapCoords
 
 
@@ -19,10 +20,26 @@ class IndexView(TemplateView):
         search_code = self.kwargs.get("search_code", 9)
         nearby_places = NearbyPlaceRepository.find_by_category(search_code)
 
+        # TODO: find_by_categoryに隠蔽しよう
         place_data = []
         for nearby_place in nearby_places:
             try:
                 lat, lng = map(float, nearby_place.place.location.split(","))
+                reviews_query = PlaceReview.objects.filter(place=nearby_place.place)[:5]
+
+                reviews = [
+                    {
+                        "author": review.author,
+                        "review_text": review.review_text,
+                        "publish_time": (
+                            review.publish_time.strftime("%Y-%m-%d %H:%M:%S")
+                            if review.publish_time
+                            else None
+                        ),
+                    }
+                    for review in reviews_query
+                ]
+
                 place_data.append(
                     {
                         "location": {
@@ -32,6 +49,7 @@ class IndexView(TemplateView):
                         "name": nearby_place.place.name,
                         "place_id": nearby_place.place.place_id,
                         "rating": nearby_place.place.rating,
+                        "reviews": reviews,
                     }
                 )
             except ValueError:
@@ -52,6 +70,7 @@ class IndexView(TemplateView):
 
         context["map_data"] = json.dumps(map_data, ensure_ascii=False)
         context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
+        context["places"] = place_data
         return context
 
     @staticmethod
