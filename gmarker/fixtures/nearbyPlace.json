@@ -11,7 +11,7 @@
   {
     "model": "gmarker.nearbyPlace",
     "fields": {
-      "category": 3,
+      "category": 2,
       "place": 2,
       "search_types": null,
       "created_at": "2023-02-12T09:00:00+09:00"
@@ -20,7 +20,7 @@
   {
     "model": "gmarker.nearbyPlace",
     "fields": {
-      "category": 3,
+      "category": 2,
       "place": 3,
       "search_types": null,
       "created_at": "2023-02-12T09:00:00+09:00"
