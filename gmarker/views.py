@@ -46,7 +46,11 @@ class IndexView(TemplateView):
         if search_code == NearbyPlaceRepository.CATEGORY_SEARCH:
             map_center = NearbyPlaceRepository.get_default_location()
             center_lat, center_lng = map(float, map_center.place.location.split(","))
-            search_types = ["restaurant"]
+            search_types = request.POST.get("search_types", "").split(",")
+
+            if not search_types:
+                return redirect(reverse("mrk:index"))
+
             service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
             place_vo_list = service.nearby_search(
                 center=GoogleMapCoords(center_lat, center_lng),
