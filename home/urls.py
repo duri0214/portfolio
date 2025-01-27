@@ -8,6 +8,7 @@ from home.views import (
     GmarkerIndexView,
     ShoppingIndexView,
     RentalShopIndexView,
+    TaxonomyIndexView,
 )
 
 app_name = "home"
@@ -23,4 +24,5 @@ urlpatterns = [
     path("gmarker/", GmarkerIndexView.as_view(), name="gmarker_index"),
     path("shopping/", ShoppingIndexView.as_view(), name="shopping_index"),
     path("rental_shop/", RentalShopIndexView.as_view(), name="rental_shop_index"),
+    path("taxonomy/", TaxonomyIndexView.as_view(), name="taxonomy_index"),
 ]

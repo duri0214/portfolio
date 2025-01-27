@@ -1,0 +1,62 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">ニワトリとミミズの種を分類する</h1>
+                <p class="text-muted text-center">
+                    2017年に地方に移住して畑作業をするなかで生物性に興味を持ったことがきっかけ</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <div class="text-center">
+                    <img src="{% static 'home/images/no-image.png' %}"
+                         alt="ニワトリとミミズの種を分類する"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    移住して、自然と触れ合った体験から、生物多様性への興味が深まりました。特に、鶏やミミズといった生物が相互依存しながら、農業や土壌環境に与える影響を観察してきました。その中で、これらの生物がどのように分類され、どのように利用されているかを可視化できたら良いと感じ、分類学をテーマにしたアプリケーションを考案しました。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="{% url 'txo:index' %}" target="_blank">作成したWebアプリ『TAXONOMY』</a>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>テーマ</h2>
+                <p>以下のテーマを基に開発を進めました:</p>
+                <ul>
+                    <li>農業に関連する生物の分類に着目</li>
+                    <li>鶏とミミズの役割と種類を把握</li>
+                    <li>分類を樹形図として可視化する</li>
+                </ul>
+                <p>
+                    地域の自然環境に適応する生物を調べることで、農業効率の向上や環境保全に役立つシステムを目指しました。さらに、本プロジェクトから得られる経験を、家系図など他の応用分野に展開する可能性にも挑戦しています。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>できあがったもの</h2>
+                <p>現在の機能として次のようなものが実現されています:</p>
+                <ul>
+                    <li>ニワトリとミミズの樹形図表示 (登録機能は未実装)</li>
+                </ul>
+                <p>
+                    将来的には、より詳細なデータ入力や解析機能を充実させる予定です。また、参考図書を基に研究を継続しています。</p>
+            </section>
+        </article>
+    </div>
+{% endblock %}

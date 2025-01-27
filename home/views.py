@@ -27,3 +27,7 @@ class ShoppingIndexView(TemplateView):
 
 class RentalShopIndexView(TemplateView):
     template_name = "home/rental_shop/index.html"
+
+
+class TaxonomyIndexView(TemplateView):
+    template_name = "home/taxonomy/index.html"
