@@ -15,3 +15,7 @@ class SoilAnalysisIndexView(TemplateView):
 
 class VietnamResearchIndexView(TemplateView):
     template_name = "home/vietnam_research/index.html"
+
+
+class GmarkerIndexView(TemplateView):
+    template_name = "home/gmarker/index.html"

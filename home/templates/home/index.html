@@ -103,7 +103,7 @@
             <div class="col-md-4">
                 <div class="card mb-4 shadow-sm">
                     <figure class="card-img-top">
-                        <img src="{% static 'home/images/no-image.png' %}" alt="GoogleMapにピンをさすツール"
+                        <img src="{% static 'home/images/gmarker.png' %}" alt="GoogleMapにピンをさすツール"
                              class="img-fluid rounded shadow">
                         <figcaption class="cat-name bg-primary text-white px-2 py-1">地図</figcaption>
                     </figure>
@@ -116,8 +116,7 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
-                            {# TODO: リンク差し替え #}
+                        <a href="{% url 'home:gmarker_index' %}" class="btn btn-primary btn-sm" role="button">
                             詳細を見る
                         </a>
                     </div>

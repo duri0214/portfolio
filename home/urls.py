@@ -5,6 +5,7 @@ from home.views import (
     HospitalIndexView,
     SoilAnalysisIndexView,
     VietnamResearchIndexView,
+    GmarkerIndexView,
 )
 
 app_name = "home"
@@ -16,5 +17,10 @@ urlpatterns = [
         "vietnam_reserch/",
         VietnamResearchIndexView.as_view(),
         name="vietnam_research_index",
+    ),
+    path(
+        "gmarker/",
+        GmarkerIndexView.as_view(),
+        name="gmarker_index",
     ),
 ]
