@@ -11,3 +11,7 @@ class HospitalIndexView(TemplateView):
 
 class SoilAnalysisIndexView(TemplateView):
     template_name = "home/soil_analysis/index.html"
+
+
+class VietnamResearchIndexView(TemplateView):
+    template_name = "home/vietnam_research/index.html"

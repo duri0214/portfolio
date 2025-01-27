@@ -79,7 +79,7 @@
             <div class="col-md-4">
                 <div class="card mb-4 shadow-sm">
                     <figure class="card-img-top">
-                        <img src="{% static 'home/images/vietnam.png' %}" alt="ベトナムの株価ツール"
+                        <img src="{% static 'home/images/vietnam_research.png' %}" alt="ベトナムの株価ツール"
                              class="img-fluid rounded shadow">
                         <figcaption class="cat-name bg-warning text-white px-2 py-1">経済</figcaption>
                     </figure>
@@ -91,8 +91,7 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
-                            {# TODO: リンク差し替え #}
+                        <a href="{% url 'home:vietnam_research_index' %}" class="btn btn-primary btn-sm" role="button">
                             詳細を見る
                         </a>
                     </div>

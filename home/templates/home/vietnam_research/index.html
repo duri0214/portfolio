@@ -1,0 +1,103 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">ベトナムの株価を分析する</h1>
+                <p class="text-muted text-center">2019年、チャイナリスクを見据えた投資対象としてのベトナム研究</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <div class="text-center">
+                    <img src="{% static 'home/images/vietnam_research.png' %}"
+                         alt="ベトナムの株価分析"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    2019年当時、チャイナリスクを考慮し、次の投資対象となりうるベトナム市場について調査した研究プロジェクトの一環です。「ベトナム
+                    ホーチミン経済交流ミッション」に参加し、現地の環境やビジネス状況を体感した上で株式市場のプレゼンテーション資料を作成しました。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="https://qiita.com/YoshitakaOkada/items/7b42ee18cc703f622564" target="_blank">ベトナムを分析する（テーマ設定の大切さ）</a>
+                    </li>
+                    <li><a href="https://www.slideshare.net/slideshow/data-research-of-vietnam/182746150#1"
+                           target="_blank">ベトナムリサーチ（slideshare）</a></li>
+                    <li><a href="{% url 'vnm:index' %}" target="_blank">ベトナムリサーチ（Web
+                        アプリ）</a></li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>テーマ</h2>
+                <p>
+                    ベトナム市場に興味を持ったきっかけは、名古屋市主催の「ベトナム
+                    ホーチミン経済交流ミッション」というイベントでした。この交流ミッションを通じて現地企業、工業団地、人材育成機関、政府系機関を視察し、ベトナムの株式市場動向を研究しました。
+                </p>
+                <p>
+                    また、この研究を通じて「テーマ設定の重要性」を再確認しました。データの量は膨大ですが、適切な切り口がないと良質なレポートは生み出せません。ベトナム市場をテーマに据えることで、より深掘りした調査が可能となり、情熱を持ってデータに向き合うことができました。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>ギャラリー</h2>
+                <div id="galleryCarousel" class="carousel slide" data-ride="carousel">
+                    <!-- インジケータ（スライド番号のドット） -->
+                    <ol class="carousel-indicators">
+                        <li data-target="#galleryCarousel" data-slide-to="0" class="active"></li>
+                    </ol>
+
+                    <!-- カルーセルのスライド部分 -->
+                    <div class="carousel-inner rounded shadow">
+                        <!-- 1枚目 -->
+                        <div class="carousel-item active">
+                            <img src="https://qiita-image-store.s3.amazonaws.com/0/94562/e3b70bd3-1dae-7040-a6df-4d9aba81b43a.png"
+                                 class="d-block w-50" alt="ベトナム研究のイメージ">
+                        </div>
+                    </div>
+
+                    <!-- 次/前ボタン -->
+                    <a class="carousel-control-prev" href="#galleryCarousel" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">前へ</span>
+                    </a>
+                    <a class="carousel-control-next" href="#galleryCarousel" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">次へ</span>
+                    </a>
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>提案の背景</h2>
+                <p>
+                    ベトナム市場についての研究は、チャイナリスクを見据えて新興国市場を探していたことがきっかけです。
+                    当時は、Python（Django）のスキル向上やSQL、Webデザイン（HTML / CSS /
+                    JavaScript）の習得を目指していたため、それらを研究に活かす形でデータ収集から分析、アプリケーション開発まで取り組みました。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>成果</h2>
+                <ul>
+                    <li>テーマに基づくデータ分析およびレポート作成</li>
+                    <li>ベトナム市場向けWebアプリの開発</li>
+                    <li>経済ミッションの参加者向けプレゼン資料の作成</li>
+                </ul>
+                <p>
+                    ベトナム市場をテーマにした調査は、新興国株式研究の出発点となり、同時にデータ分析スキルやWeb開発スキルを高めるきっかけにもなりました。</p>
+            </section>
+        </article>
+    </div>
+{% endblock %}
