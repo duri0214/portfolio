@@ -67,7 +67,6 @@ WHERE recorded_date = '2023-01-17';
 
 ```
 python manage.py createsuperuser
-python manage.py loaddata .\home\fixtures\post.json
 python manage.py loaddata .\vietnam_research\fixtures\group.json
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
 python manage.py loaddata .\vietnam_research\fixtures\market.json
