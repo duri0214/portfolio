@@ -9,6 +9,7 @@ from home.views import (
     ShoppingIndexView,
     RentalShopIndexView,
     TaxonomyIndexView,
+    SecuritiesIndexView,
 )
 
 app_name = "home"
@@ -25,4 +26,5 @@ urlpatterns = [
     path("shopping/", ShoppingIndexView.as_view(), name="shopping_index"),
     path("rental_shop/", RentalShopIndexView.as_view(), name="rental_shop_index"),
     path("taxonomy/", TaxonomyIndexView.as_view(), name="taxonomy_index"),
+    path("securities/", SecuritiesIndexView.as_view(), name="securities_index"),
 ]
