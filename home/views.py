@@ -35,3 +35,7 @@ class TaxonomyIndexView(TemplateView):
 
 class SecuritiesIndexView(TemplateView):
     template_name = "home/securities/index.html"
+
+
+class LlmChatIndexView(TemplateView):
+    template_name = "home/llm_chat/index.html"
