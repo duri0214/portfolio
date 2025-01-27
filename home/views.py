@@ -19,3 +19,7 @@ class VietnamResearchIndexView(TemplateView):
 
 class GmarkerIndexView(TemplateView):
     template_name = "home/gmarker/index.html"
+
+
+class ShoppingIndexView(TemplateView):
+    template_name = "home/shopping/index.html"
