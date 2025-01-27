@@ -23,3 +23,7 @@ class GmarkerIndexView(TemplateView):
 
 class ShoppingIndexView(TemplateView):
     template_name = "home/shopping/index.html"
+
+
+class RentalShopIndexView(TemplateView):
+    template_name = "home/rental_shop/index.html"
