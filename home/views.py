@@ -39,3 +39,11 @@ class SecuritiesIndexView(TemplateView):
 
 class LlmChatIndexView(TemplateView):
     template_name = "home/llm_chat/index.html"
+
+
+class AiAgentIndexView(TemplateView):
+    template_name = "home/ai_agent/index.html"
+
+
+class JpStocksIndexView(TemplateView):
+    template_name = "home/jp_stocks/index.html"

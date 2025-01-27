@@ -11,6 +11,8 @@ from home.views import (
     TaxonomyIndexView,
     SecuritiesIndexView,
     LlmChatIndexView,
+    AiAgentIndexView,
+    JpStocksIndexView,
 )
 
 app_name = "home"
@@ -29,4 +31,6 @@ urlpatterns = [
     path("taxonomy/", TaxonomyIndexView.as_view(), name="taxonomy_index"),
     path("securities/", SecuritiesIndexView.as_view(), name="securities_index"),
     path("llm_chat/", LlmChatIndexView.as_view(), name="llm_chat_index"),
+    path("ai_agent/", AiAgentIndexView.as_view(), name="ai_agent_index"),
+    path("jp_stocks/", JpStocksIndexView.as_view(), name="jp_stocks_index"),
 ]
