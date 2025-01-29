@@ -4,8 +4,8 @@
     <div class="container">
         <article class="my-5">
             <header>
-                <h1 class="display-4 text-center">AI_AGENT</h1>
-                <p class="text-muted text-center">XXXX年当時、"YYYY" をpythonで取得するプログラムを作成した</p>
+                <h1 class="display-4 text-center">AI Agent を試作する</h1>
+                <p class="text-muted text-center">2025年、ターンベースのAIエージェントシミュレーションを作成</p>
                 <div class="d-flex justify-content-center my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
                 </div>
@@ -14,7 +14,7 @@
             <section class="py-3">
                 <div class="text-center">
                     <img src="{% static 'home/images/ai_agent.png' %}"
-                         alt="YYYYを分析する"
+                         alt="AIエージェントのシミュレーション"
                          class="img-fluid rounded shadow">
                 </div>
             </section>
@@ -22,26 +22,28 @@
             <section class="py-3">
                 <h2>概要</h2>
                 <p>
-                    概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　
-                    概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　
-                    概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　概要の文章　
+                    AIエージェントのプロトタイプを作成し、ターン制での行動管理を実装しました。各エージェントは、独自の思考ロジックを持ち、
+                    発言の可否を決定します。行動順はエージェントの「speed」に基づき、最も早いエージェントが次に行動します。
+                    この仕組みにより、AIエージェント同士がスムーズに連携しながら会話を進めることができます。
                 </p>
             </section>
 
             <section class="py-3">
                 <h2>リンク</h2>
                 <ul>
-                    <li><a href="#" target="_blank">Qiita記事：「YYYYをpythonで取得してみる」</a></li>
-                    <li><a href="{% url 'sec:index' %}" target="_blank">作成したWebアプリ『ZZZZ』</a></li>
+                    <li><a href="https://qiita.com/YoshitakaOkada/items/05e8f4beb43586c22514" target="_blank">Qiita記事：「AI
+                        Agent を試作する」</a></li>
+                    <li><a href="{% url 'agt:index' %}" target="_blank">作成したWebアプリ『AI_AGENT』</a></li>
                 </ul>
             </section>
 
             <section class="py-3">
                 <h2>テーマ</h2>
                 <p>
-                    テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章
-                    テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章
-                    テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章 テーマの文章
+                    このプロジェクトのテーマは、ターンベースのAIエージェントシステムを通じて、
+                    エージェント同士の連携と思考のシミュレーションを実現することです。ターン制の行動管理、Google
+                    Mapsレビューを活用した
+                    外部情報の統合、そしてNGワードを避けるためのロジックを実装しました。
                 </p>
             </section>
 
@@ -49,12 +51,12 @@
                 <h2>できあがったもの</h2>
                 <p>Webアプリケーションは以下の機能を提供しています:</p>
                 <ul>
-                    <li>ABCの処理</li>
-                    <li>ABCの処理</li>
-                    <li>ABCの処理</li>
+                    <li>ターン制の行動管理: エージェントの「speed」に基づき、次に行動するエージェントを決定</li>
+                    <li>思考ロジック: Google Mapsレビュー、RAG（情報検索）、NGワードチェックによる発言可否の判定</li>
+                    <li>シミュレーション: 最大10回の行動をシミュレートし、行動履歴を記録</li>
                 </ul>
                 <p>
-                    これらの機能を組み合わせることで、AAAを構築。
+                    これらの機能を組み合わせることで、AIエージェント同士が協力しながら、ターン制での会話シミュレーションを実現しました。
                 </p>
             </section>
         </article>
