@@ -20,6 +20,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    path("", include("home.urls")),
     path("home/", include("home.urls")),
     path("vietnam_research/", include("vietnam_research.urls")),
     path("gmarker/", include("gmarker.urls")),
