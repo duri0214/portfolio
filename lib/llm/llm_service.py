@@ -194,7 +194,7 @@ class OpenAILlmRagService(LlmService):
             metadatas=[x.metadata for x in self.dataloader.data],
         )
         chain = RetrievalQAWithSourcesChain.from_chain_type(
-            llm=ChatOpenAI(temperature=0, model_name=self.config.model),
+            llm=ChatOpenAI(temperature=0, model=self.config.model),
             chain_type="stuff",
             reduce_k_below_max_tokens=True,
             return_source_documents=True,
