@@ -1,0 +1,63 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">通販サイトの基礎機能</h1>
+                <p class="text-muted text-center">2022年、ECサイトの基礎機能を学ぶために開発</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <div class="text-center">
+                    <img src="{% static 'home/images/shopping.png' %}"
+                         alt="通販サイトの基礎機能"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    2022年当時、ECサイトを設計・構築できるスキルを培う目的で基礎的なECサイトを開発しました。
+                    店員管理や商品管理、CSV登録機能、写真アップロード機能、カード決済など主要機能を一通り実装し、
+                    ECサイト開発の基礎を学習しました。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="{% url 'shp:index' %}" target="_blank">作成したWebアプリ『SHOPPING』</a>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>テーマ</h2>
+                <p>
+                    本プロジェクトでは以下の内容をテーマに開発しました：
+                </p>
+                <ul>
+                    <li>店員管理</li>
+                    <li>商品管理</li>
+                    <li>CSV登録機能</li>
+                    <li>写真アップロード機能</li>
+                    <li>カード決済</li>
+                    <li>ページング</li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>できあがったもの</h2>
+                <p>
+                    本プロジェクトを通じて、ECサイトの基本機能を実現しました。
+                    このような基礎機能を開発することで、システム開発のスキル向上に繋がりました。
+                </p>
+            </section>
+        </article>
+    </div>
+{% endblock %}

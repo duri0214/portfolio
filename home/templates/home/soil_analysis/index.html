@@ -1,0 +1,93 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">圃場計測のレポートツール</h1>
+                <p class="text-muted text-center">2023年、農業調査のために開発されたツール</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <div class="text-center">
+                    <img src="{% static 'home/images/soil_analysis.png' %}" alt="圃場計測ツール"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    2023年、静岡に滞在して農業土壌分析を目的に開発されたツールです。農業現場での調査から地道なデータ収集までを体験し、その成果をレポートにまとめるための効率化ツールとして作成されました。</p>
+                <p>現場の経験やデータ収集の難しさを活かし、レポート作業を改善しました。</p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="https://qiita.com/YoshitakaOkada/items/5cc23a68991460c7632b" target="_blank">気象庁APIで得られた天気情報をアプリケーションで活用する</a>
+                    </li>
+                    <li><a href="{% url 'soil:home' %}" target="_blank">土壌分析</a></li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>テーマ</h2>
+                <p>
+                    農業に携わる関係者とのつながりをきっかけに、農業現場のデータ収集や土壌分析への興味から、
+                    このツールを開発しました。労力のかかる作業を効率化し、現場の記録をサポートすることを目指しています。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2 class="text-center">ギャラリー</h2>
+                <div id="galleryCarousel" class="carousel slide" data-ride="carousel">
+                    <!-- インジケータ（スライド番号のドット） -->
+                    <ol class="carousel-indicators">
+                        <li data-target="#galleryCarousel" data-slide-to="0" class="active"></li>
+                    </ol>
+
+                    <!-- カルーセルのスライド部分 -->
+                    <div class="carousel-inner rounded shadow">
+                        <!-- 1枚目 -->
+                        <div class="carousel-item active">
+                            <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/7a98e4b4-4218-d4a7-b1a5-e1e63724728b.png"
+                                 class="d-block w-50" alt="ギャラリー画像 1">
+                        </div>
+                    </div>
+
+                    <!-- 次/前ボタン -->
+                    <a class="carousel-control-prev" href="#galleryCarousel" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">前へ</span>
+                    </a>
+                    <a class="carousel-control-next" href="#galleryCarousel" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">次へ</span>
+                    </a>
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>提案の背景</h2>
+                <p>
+                    雨の日も風の日も、農地のデータを収集する体験から、現場の重要性を学びました。このツールは、得られたデータを整理し、効率的にレポートを作成するために作られました。実際の作業体験とデータ管理の知識を組み合わせた成果物です。</p>
+            </section>
+
+            <section class="py-3">
+                <h2>成果</h2>
+                <ul>
+                    <li>農地調査データ管理およびレポート機能</li>
+                    <li>土壌硬度データのアップロード機能</li>
+                    <li>圃場ルートサジェストの試作</li>
+                </ul>
+                <p>
+                    労力を要する圃場作業を効率よく進めるため、ルートサジェスト機能も試作しています。この副産物は、実際に作業を行った経験から得た気付きによって生まれたものです。</p>
+            </section>
+        </article>
+    </div>
+{% endblock %}

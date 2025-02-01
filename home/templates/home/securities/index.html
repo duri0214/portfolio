@@ -1,0 +1,68 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">金融庁の有価証券報告書を分析する</h1>
+                <p class="text-muted text-center">2019年当時、金融の業務知識を総動員して "有価証券報告書"
+                    をpythonで取得するプログラムを作成した</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <div class="text-center">
+                    <img src="{% static 'home/images/securities.png' %}"
+                         alt="金融庁の有価証券報告書を分析する"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    金融の業務知識を活かし、有価証券報告書をpythonを使って取得・分析するプログラムを作成。
+                    2019年にはローカルでのファイル処理ツールを開発し、2023年にはWebアプリケーションとして移植した。
+                    このアプリでは、データ取得の自動化と分析機能を組み合わせて利便性の高いツールを提供している。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="https://qiita.com/YoshitakaOkada/items/877a331a450a8f27f985" target="_blank">Qiita記事：「有価証券報告書をpythonで取得してみる2024
+                        金融庁API版」</a></li>
+                    <li><a href="{% url 'sec:index' %}" target="_blank">作成したWebアプリ『SECURITIES
+                        REPORT』</a></li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>テーマ</h2>
+                <p>
+                    金融関連の業務経験を活かしながらも、業務データを持ち出さずに独自に成果を生み出す方法を模索。
+                    公開されているオープンデータ「有価証券報告書」に着目し、これを効率的に活用するためのツールを開発。
+                    さらに、取得したデータの分析や可視化も可能とし、実務への応用を目指した。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>できあがったもの</h2>
+                <p>Webアプリケーションは以下の機能を提供しています:</p>
+                <ul>
+                    <li>アップロードされたCSVファイルの処理</li>
+                    <li>XBRLのダウンロード機能</li>
+                    <li>ダウンロードしたXBRLファイルの処理とCSV形式への変換</li>
+                    <li>処理可能銘柄の一覧をページング形式で表示</li>
+                    <li>金融庁APIを利用したzipダウンロード用バッチ処理</li>
+                    <li>カレンダー機能</li>
+                </ul>
+                <p>
+                    これらの機能を組み合わせることで、データ収集、処理、そして分析までの一連の作業を効率化したプラットフォームを構築。
+                </p>
+            </section>
+        </article>
+    </div>
+{% endblock %}

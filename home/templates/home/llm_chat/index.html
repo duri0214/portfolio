@@ -1,0 +1,65 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">LLM_CHAT</h1>
+                <p class="text-muted text-center">2024年当時、"チャット履歴管理とLLM連携" をPythonで実装した</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <div class="text-center">
+                    <img src="{% static 'home/images/llm_chat.png' %}"
+                         alt="LLMを活用したチャットシステム"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    LLM_CHATは、ユーザーのチャット履歴を管理し、
+                    OpenAI GPT や Gemini などの大規模言語モデル（LLM）と連携して応答を生成するシステムです。
+                    チャットのやり取りをデータベースに保存し、テキストや音声入力に対応した応答を提供します。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="https://qiita.com/YoshitakaOkada/items/f51f52a8041439a1dbc9" target="_blank">Qiita記事：「LINEからChatGPTと会話し、絵も描く」</a>
+                    </li>
+                    <li><a href="{% url 'llm:index' %}" target="_blank">作成したWebアプリ『LLM_CHAT』</a></li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>テーマ</h2>
+                <p>
+                    ユーザーの入力を記録し、LLMとの連携を通じて対話を最適化する。
+                    チャット履歴を適切に管理し、各種LLM（GPT, Gemini, DALL-E, Text-to-Speech, Speech-to-Text）を活用して、
+                    多様なコミュニケーションを実現することを目的とする。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>できあがったもの</h2>
+                <p>Webアプリケーションは以下の機能を提供しています:</p>
+                <ul>
+                    <li>チャット履歴の管理（テキスト・音声・画像対応）</li>
+                    <li>OpenAI GPT や Gemini を用いた対話生成</li>
+                    <li>DALL-E による画像生成</li>
+                    <li>Text-to-Speech による音声合成</li>
+                    <li>Speech-to-Text による音声認識</li>
+                </ul>
+                <p>
+                    これらの機能を組み合わせることで、ユーザーとの自然な対話を実現。
+                </p>
+            </section>
+        </article>
+    </div>
+{% endblock %}

@@ -32,7 +32,7 @@ python manage.py monthly_cleanup_home
 - サーバで実行するときは makemigrations は基本的に必要ない（migrationファイルがgithubで焼き付けてあるから）
 
 ```
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital home llm_chat ai_agent jp_stocks
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks
 python manage.py migrate
 
 python manage.py createsuperuser
@@ -67,7 +67,6 @@ WHERE recorded_date = '2023-01-17';
 
 ```
 python manage.py createsuperuser
-python manage.py loaddata .\home\fixtures\post.json
 python manage.py loaddata .\vietnam_research\fixtures\group.json
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
 python manage.py loaddata .\vietnam_research\fixtures\market.json
@@ -148,7 +147,7 @@ git fetch --prune origin
 git reset --hard origin/master
 git pull origin master
 source /var/www/html/venv/bin/activate
-python manage.py collectstatic
+python manage.py collectstatic --noinput 
 python manage.py clearsessions
 vi /var/log/apache2/error.log
 sudo -s

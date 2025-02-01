@@ -1,0 +1,117 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">不在者投票事務用の転記ツール</h1>
+                <p class="text-muted text-center">2015年当時、友人の残業時間を減らすために作成されたツール</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <div class="text-center">
+                    <img src="{% static 'home/images/hospital.png' %}" alt="病院事務ツール"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    2015年に病院の事務作業の効率化を目的として作成されたツールです。友人の残業時間を減らすため、病棟別の不在者投票データを事務処理簿等に自動転記する仕組みを構築し、大幅な業務改善を実現しました。</p>
+                <p>成果物は6時間ほどで完成し、病院内でも注目されました。</p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="https://qiita.com/YoshitakaOkada/items/8100db539b0359aa8641" target="_blank">【ExcelVBA】病院事務を改善したときのメモ</a>
+                    </li>
+                    <li><a href="https://qiita.com/YoshitakaOkada/items/6e33c54cb7def867482a" target="_blank">昔つくった病院事務VBAのWeb版をつくろう！</a>
+                    </li>
+                    <li><a href="{% url 'hsp:index' %}" target="_blank">転記TOOL</a></li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>テーマ</h2>
+                <p>
+                    大阪の大病院に勤める女友達に提案した業務改善プロジェクトです。作業内容を効率化し、必要書類への転記作業を自動化することで、エラー削減と業務負担の軽減を目指しました。</p>
+                <div class="blockquote bg-light p-4 border-start border-4 border-primary">
+                    <p class="mb-2"><strong>2015/04/09-16時14分</strong></p>
+                    <p class="mb-2">おつかれさまです。</p>
+                    <p class="mb-2">先日お話ししていた件です。</p>
+                    <p class="mb-2">添付の、"請求者名簿"に入力したデータを、<br>
+                        "事務処理簿"にも自動で反映させたいというものです。</p>
+                    <p class="mb-0">また、備考欄に"退院"または"棄権"の文字列が入力された場合のみ、<br>
+                        その行の書式を、例えばフォントを赤色にしたり、とかをやりたいんです。</p>
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2 class="text-center">ギャラリー</h2>
+                <div id="galleryCarousel" class="carousel slide" data-ride="carousel">
+                    <!-- インジケータ（スライド番号のドット） -->
+                    <ol class="carousel-indicators">
+                        <li data-target="#galleryCarousel" data-slide-to="0" class="active"></li>
+                        <li data-target="#galleryCarousel" data-slide-to="1"></li>
+                        <li data-target="#galleryCarousel" data-slide-to="2"></li>
+                    </ol>
+
+                    <!-- カルーセルのスライド部分 -->
+                    <div class="carousel-inner rounded shadow">
+                        <!-- 1枚目 -->
+                        <div class="carousel-item active">
+                            <img src="https://qiita-image-store.s3.amazonaws.com/0/94562/91a14d14-085d-9242-b9c1-e7f8d24559dc.png"
+                                 class="d-block w-50" alt="ギャラリー画像 1">
+                        </div>
+                        <!-- 2枚目 -->
+                        <div class="carousel-item">
+                            <img src="https://qiita-image-store.s3.amazonaws.com/0/94562/2305a37e-cf21-e786-e2c6-79635218b9f0.png"
+                                 class="d-block w-50" alt="ギャラリー画像 2">
+                        </div>
+                        <!-- 3枚目 -->
+                        <div class="carousel-item">
+                            <img src="https://qiita-image-store.s3.amazonaws.com/0/94562/6c3bce59-7604-457e-3cb5-2f7552dac861.png"
+                                 class="d-block w-50" alt="ギャラリー画像 3">
+                        </div>
+                        <!-- 4枚目 -->
+                        <div class="carousel-item">
+                            <img src="https://qiita-image-store.s3.amazonaws.com/0/94562/071a36f3-bb66-eb0e-b7ae-1fe810bd8ce8.png"
+                                 class="d-block w-50" alt="ギャラリー画像 4">
+                        </div>
+                    </div>
+
+                    <!-- 次/前ボタン -->
+                    <a class="carousel-control-prev" href="#galleryCarousel" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">前へ</span>
+                    </a>
+                    <a class="carousel-control-next" href="#galleryCarousel" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">次へ</span>
+                    </a>
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>提案の背景</h2>
+                <p>
+                    集めたリストを市区別のリストに並び替え、それを行政に提出。その後、投票用紙を収集し、事務処理簿に取りまとめるという複雑で労力を要するプロセスを、効率化するツールです。ヒューマンエラーを防ぎ、作業のスピードアップを可能にしました。</p>
+            </section>
+
+            <section class="py-3">
+                <h2>成果</h2>
+                <ul>
+                    <li>病棟別リストを効率よく処理する仕組みを実現</li>
+                    <li>転記作業を自動化し、作業時間を削減</li>
+                    <li>病院で話題となり、他業務でも応用の可能性が示されました</li>
+                </ul>
+            </section>
+        </article>
+    </div>
+{% endblock %}

@@ -9,55 +9,293 @@
         <h1 class="display-4">the Portfolio Guidance!</h1>
         <p class="lead">Introducing my portfolio</p>
         <hr class="my-4">
-        <p>Pick up!</p>
-        <ul>
-            {% for post in featured_posts %}
-                <li>
-                    <a class="btn btn-secondary btn-sm" href="{% url 'home:post_detail' pk=post.pk %}"
-                       role="button">{{ post.title }}
-                    </a>
-                </li>
-            {% empty %}
-                <li><p>おすすめはまだありません。</p></li>
-            {% endfor %}
-        </ul>
-        {% if user.is_authenticated and user.is_superuser %}
-            <a href="{% url 'home:post_create' %}" class="btn btn-primary">記事を新規作成する</a>
-        {% endif %}
+        <p>You can easily browse through a portfolio list, just like zapping through channels.</p>
     </div>
 
-    <div class="container">
-        <div class="post-list-card">
-            {% for post in posts %}
-                <article class="post-list" role="article">
-                    <a href="{% url 'home:post_detail' pk=post.pk %}" rel="bookmark" title="{{ post.title }}">
-                        {% if post.image %}
-                            <figure class="eye-catch">
-                                <img src="{{ post.image.url }}" alt="{{ post.title }}">
-                                <span class="cat-name">{{ post.category.name }}</span>
-                            </figure>
-                        {% else %}
-                            <figure class="eye-catch">
-                                <img src="{% static 'home/images/no-image.png' %}" alt="No image available">
-                                <span class="cat-name">{{ post.category.name }}</span>
-                            </figure>
-                        {% endif %}
-                        <section class="entry-content">
-                            <h2 class="entry-title">{{ post.title }}</h2>
-                            <div class="description">{{ post.summary|truncatechars:130 }}</div>
-                        </section>
-                    </a>
-                </article>
-            {% empty %}
-                <article id="post-not-found" class="hentry cf">
-                    <header class="article-header">
-                        <h1>まだ投稿がありません！</h1>
-                    </header>
-                    <section>
-                        <p>表示する記事がまだありません。</p>
-                    </section>
-                </article>
-            {% endfor %}
+    <div class="container my-4">
+        <div class="row">
+            <!-- カード1 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/hospital.png' %}" alt="病院事務ツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-primary text-white px-2 py-1">病院</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">不在者投票事務用の転記</h5>
+                        <div class="card-text">
+                            2015年当時、友人の残業時間を減らすために転記ツールを作成。病棟別の不在者投票データを事務処理簿等に自動転記し、
+                            大きく残業時間を削減。成果物は6時間ほどで完成し、横展開できそうだと病院の注目を集めた。
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:hospital_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード2 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/soil_analysis.png' %}" alt="圃場計測のレポートツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-success text-white px-2 py-1">農業</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">圃場計測のレポーティング</h5>
+                        <div class="card-text">
+                            2023年当時、農業の調査をするため、一時的に静岡に移住し土壌分析のIT課題に取り組んだ。普段ITで扱うデータは誰かが集めたもので、
+                            実際にデータを収集するのは地道で大変な作業だと実感。雨の日も風の日も計測した
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:soil_analysis_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード3 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/vietnam_research.png' %}" alt="ベトナムの株価ツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-warning text-white px-2 py-1">経済</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">ベトナムの株価を分析する</h5>
+                        <div class="card-text">
+                            2019年当時、チャイナリスクを見据えてつぎの投資対象となりそうなベトナムについて調査し、
+                            名古屋市主催の「ベトナム ホーチミン 経済交流ミッション」に参加。訪問する直前、プレゼンテーションに作成した
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:vietnam_research_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <!-- カード4 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/gmarker.png' %}" alt="GoogleMapにピンをさすツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-primary text-white px-2 py-1">地図</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">GoogleMapにピンをさす</h5>
+                        <div class="card-text">
+                            2015年当時、ラーメン屋とか洋食などのワードでGoogleMapにまとめてピンを打ち、
+                            さらに任意のピンだけに絞れるようなものを作れたら便利そうだなとおもったことからトライ。
+                            外部APIを初めて使ったツールとなった
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:gmarker_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード5 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/shopping.png' %}" alt="通販サイトツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-success text-white px-2 py-1">ＥＣ</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">通販サイトの基礎機能</h5>
+                        <div class="card-text">
+                            2022年当時、ECサイトってやっぱり作れるようになっておいたほうがいいなと思ってトライしたもの。
+                            店員管理、商品管理、CSV登録機能、写真アップロード機能、カード決済など基本的なＥＣサイトの機能を実装した
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:shopping_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード6 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/rental_shop.png' %}" alt="倉庫ツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-warning text-white px-2 py-1">倉庫</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">倉庫のどこにいくつあるの？</h5>
+                        <div class="card-text">
+                            2016年当時、物流のオープンデータ活用コンテストがあった。
+                            そのころはまだAPIをまともに扱うWeb開発スキルがなくて、話を振ってもらったものの断念した。
+                            2023年ごろWebアプリを作る力もついてきてアプリとして結実させた
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:rental_shop_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <!-- カード7 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/taxonomy.png' %}" alt="ニワトリとミミズの種を分類するツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-primary text-white px-2 py-1">分類学</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">ニワトリとミミズの種を分類</h5>
+                        <div class="card-text">
+                            2017年に地方に移住して畑作業をするなかで、土壌の生物性に興味をもった。
+                            鶏とミミズの種類を調べ上げて登録すると分類の樹形図ができあがるようなアプリがあったらいいなと思って
+                            2023年につくることにした。応用すれば家系図も作れるだろう
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:taxonomy_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード8 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/securities.png' %}"
+                             alt="金融庁の有価証券報告書を分析するツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-success text-white px-2 py-1">金融</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">金融庁の有価証券報告書を分析</h5>
+                        <div class="card-text">
+                            2019年当時、金融の業務知識を総動員して "有価証券報告書" をpythonで取得するプログラムを作った
+                            （そのときは単にファイル処理をするもの）。2023年頃にWebアプリ（API版）として移植したついでに、分析する機能をつけた
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:securities_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード9 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/llm_chat.png' %}" alt="XXXツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-warning text-white px-2 py-1">LLM</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">GPTチャット</h5>
+                        <div class="card-text">
+                            2024年当時、Gemini, ChatGPT4, Dall-e-3, TextToSpeech, SpeechToText and RAG　といった
+                            一通りのLLMを実行する仕組みを作成した。さらにライブラリとして共通化したことによって
+                            どのアプリからでもgptに絡めることができるようになった
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:llm_chat_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <!-- カード10 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/ai_agent.png' %}" alt="XXXツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-primary text-white px-2 py-1">LLM</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">AI-AGENTの試作</h5>
+                        <div class="card-text">
+                            2025年当時、GPTチャットを応用した「AIエージェント」をテーマに試作。Googleマップのレビュー、法的・人口統計データ、禁止トピックのリストを元に会話を管理。
+                            各エージェントがベクトル検索を用いて発言権を得て、並列処理を実現します。
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:ai_agent_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード11 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/jp_stocks.png' %}" alt="XXXツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-success text-white px-2 py-1">経済</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">JP-STOCKS</h5>
+                        <div class="card-text">
+                            SUMMARY
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'home:jp_stocks_index' %}" class="btn btn-primary btn-sm" role="button">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カード12 -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <figure class="card-img-top">
+                        <img src="{% static 'home/images/no-image.png' %}" alt="XXXツール"
+                             class="img-fluid rounded shadow">
+                        <figcaption class="cat-name bg-warning text-white px-2 py-1">CATEGORY</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">TITLE</h5>
+                        <div class="card-text">
+                            SUMMARY
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="#" class="btn btn-primary btn-sm" role="button">
+                            {# TODO: リンク差し替え #}
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}
