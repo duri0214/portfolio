@@ -23,7 +23,6 @@ python manage.py flush --noinput
 
 ```
 python manage.py monthly_cleanup_linebot_engine
-python manage.py monthly_cleanup_home
 ```
 
 ## Migrate
