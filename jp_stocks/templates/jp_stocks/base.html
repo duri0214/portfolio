@@ -44,18 +44,41 @@
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                     <select class="custom-select d-flex align-items-center" onChange="location.href=value;">
-                        <option value="{% url 'home:index' %}">HOME</option>
-                        <option value="{% url 'vnm:index' %}">VIETNAM</option>
-                        <option value="{% url 'mrk:index' %}">GMARKER</option>
-                        <option value="{% url 'shp:index' %}">SHOPPING</option>
-                        <option value="{% url 'ren:index' %}">RENTAL_SHOP</option>
-                        <option value="{% url 'txo:index' %}">TAXONOMY</option>
-                        <option value="{% url 'soil:home' %}">SOIL ANALYSIS</option>
-                        <option value="{% url 'sec:index' %}">SECURITIES REPORT</option>
-                        <option value="{% url 'hsp:index' %}">HOSPITAL</option>
-                        <option value="{% url 'llm:index' %}">LLM_CHAT</option>
-                        <option value="{% url 'agt:index' %}">AI_AGENT</option>
-                        <option value="{% url 'jpn:index' %}" selected>JP_STOCKS</option>
+                        <option value="{% url 'home:index' %}" {% if request.path == '/' %}selected{% endif %}>HOME
+                        </option>
+                        <option value="{% url 'vnm:index' %}"
+                                {% if request.path == '/vietnam_research/' %}selected{% endif %}>VIETNAM
+                        </option>
+                        <option value="{% url 'mrk:index' %}" {% if request.path == '/gmarker/' %}selected{% endif %}>
+                            GMARKER
+                        </option>
+                        <option value="{% url 'shp:index' %}" {% if request.path == '/shopping/' %}selected{% endif %}>
+                            SHOPPING
+                        </option>
+                        <option value="{% url 'ren:index' %}"
+                                {% if request.path == '/rental_shop/' %}selected{% endif %}>RENTAL_SHOP
+                        </option>
+                        <option value="{% url 'txo:index' %}" {% if request.path == '/taxonomy/' %}selected{% endif %}>
+                            TAXONOMY
+                        </option>
+                        <option value="{% url 'soil:home' %}"
+                                {% if request.path == '/soil_analysis/' %}selected{% endif %}>SOIL ANALYSIS
+                        </option>
+                        <option value="{% url 'sec:index' %}"
+                                {% if request.path == '/securities/' %}selected{% endif %}>SECURITIES REPORT
+                        </option>
+                        <option value="{% url 'hsp:index' %}" {% if request.path == '/hospital/' %}selected{% endif %}>
+                            HOSPITAL
+                        </option>
+                        <option value="{% url 'llm:index' %}" {% if request.path == '/llm_chat/' %}selected{% endif %}>
+                            LLM_CHAT
+                        </option>
+                        <option value="{% url 'agt:index' %}" {% if request.path == '/ai_agent/' %}selected{% endif %}>
+                            AI_AGENT
+                        </option>
+                        <option value="{% url 'jpn:index' %}" {% if request.path == '/jp_stocks/' %}selected{% endif %}>
+                            JP_STOCKS
+                        </option>
                     </select>
                 </li>
             </ul>
