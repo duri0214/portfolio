@@ -37,7 +37,7 @@
                 </div>
             {% endif %}
         {% endfor %}
-        <form action="{% url 'llm:index' %}" method="POST" enctype="multipart/form-data">
+        <form>
             {{ form.question.label }} {{ form.question }}
             <br>
             {{ form.use_case_type.label }} {{ form.use_case_type }}
@@ -47,24 +47,59 @@
                 {{ form.audio_file }}
             </div>
             <br>
-            {% csrf_token %}
             <div class="d-flex justify-content-end mt-3">
                 {% if is_superuser %}
-                    <input class="btn btn-primary" type="submit" value="送信">
+                    <input id="sendButton" class="btn btn-primary" type="button" value="送信">
                 {% else %}
-                    <input class="btn btn-outline-secondary" type="submit" value="送信" disabled>
+                    <input id="sendButton" class="btn btn-outline-secondary" type="button" value="送信" disabled>
                 {% endif %}
             </div>
         </form>
+        <div id="output" class="mt-3" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></div>
     </div>
     <script type="text/javascript">
-        // ページロード時にスクロールを一番下まで移動する
-        window.scrollTo(0, document.body.scrollHeight);
-
         // ドロップダウン選択肢の監視と音声ファイルフォームの表示／非表示
         document.addEventListener("DOMContentLoaded", function () {
             const useCaseType = document.querySelector('select[name="use_case_type"]');
             const audioFileContainer = document.getElementById("audio-file-container");
+            const sendButton = document.getElementById("sendButton");
+            const userInput = document.getElementById("id_question");
+            const outputElement = document.getElementById("output");
+
+            // 送信ボタンのクリックイベント設定
+            sendButton.addEventListener("click", function () {
+                const userMessage = userInput.value.trim();
+                if (userMessage === "") {
+                    alert("メッセージを入力してください。");
+                    return;
+                }
+
+                // ストリーミング用POSTリクエストを送信
+                fetch("/llm_chat/stream/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": Cookies.get('csrftoken')
+                    },
+                    body: `user_input=${encodeURIComponent(userMessage)}`
+                }).then(response => {
+                    console.log("POSTリクエスト成功: SSEを開始します");
+
+                    // Server-Sent Events 接続を確立
+                    const eventSource = new EventSource("/llm_chat/stream/");
+
+                    // ストリームデータを受信
+                    eventSource.onmessage = function (event) {
+                        outputElement.innerText += event.data;
+                    };
+
+                    eventSource.onerror = function (event) {
+                        console.error("SSEエラー:", event);
+                        eventSource.close();
+                    };
+                });
+            });
+
 
             // ドロップダウン変更時のイベント処理
             useCaseType.addEventListener("change", function () {
