@@ -98,16 +98,7 @@ class StreamResponseView(View):
 
         chat_history = [Message(role=RoleType.USER, content=user_input)]
 
-        # ストリーミング応答を生成
-        # TODO: OpenAILlmCompletionStreamServiceに持っていく
-        def stream_chunks():
-            try:
-                for chunk in service.retrieve_answer(chat_history):
-                    yield chunk
-            except Exception as e:
-                yield f"error: {str(e)}"
-
-        StreamResponseView.stored_stream = stream_chunks  # 関数をそのまま保持する
+        StreamResponseView.stored_stream = lambda: service.stream_chunks(chat_history)
         return JsonResponse({"message": "Stream initialized"})
 
     @staticmethod
@@ -117,13 +108,12 @@ class StreamResponseView(View):
 
         stream_generator = StreamResponseView.stored_stream()
 
-        # TODO: OpenAILlmCompletionStreamServiceに持っていく
-        def stream_from_generator():
-            for chunk in stream_generator:
-                yield f"data: {chunk}\n\n"  # SSE形式で送信
-
+        # ストリームデータをSSE（Server-Sent Events）形式に変換し、StreamingHttpResponseでラップする
         response = StreamingHttpResponse(
-            stream_from_generator(), content_type="text/event-stream"
+            OpenAILlmCompletionStreamService.stream_from_generator(
+                generator=stream_generator
+            ),
+            content_type="text/event-stream",
         )
         response["Cache-Control"] = "no-cache"
 

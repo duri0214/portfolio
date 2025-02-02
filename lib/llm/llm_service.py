@@ -125,6 +125,70 @@ class OpenAILlmCompletionStreamService(LlmService):
             if chunk.choices[0].delta.content is not None:
                 yield chunk.choices[0].delta.content
 
+    def stream_chunks(self, chat_history: list[Message]) -> Generator[str, None, None]:
+        """
+        チャット履歴に基づくストリーミングレスポンスを取得し、例外を適切に処理しながらデータを生成します。
+
+        Args:
+            chat_history (list[Message]): チャット履歴
+
+        Yields:
+            str: ストリーミングレスポンスの各チャンクデータ。また、例外発生時にはエラーメッセージを返します。
+
+        Note:
+            この関数はジェネレーターとして振る舞い、データの逐次的な処理が可能です。リアルタイムなデータ処理を
+            必要とするアプリケーション（例: Webアプリ、ライブストリーミング用インターフェイス）に適しています。
+
+        See Also:
+            - https://platform.openai.com/docs/api-reference/streaming
+        """
+
+        try:
+            for chunk in self.retrieve_answer(chat_history):
+                yield chunk
+        except Exception as e:
+            yield f"error: {str(e)}"
+
+    @staticmethod
+    def stream_from_generator(generator: Generator[str, None, None]):
+        """
+        サーバー送信イベント形式（Server-Sent Events, SSE）としてジェネレーターからデータをストリームします。
+
+        このメソッドは、`stream_chunks` などで生成されたデータジェネレーターを使用して、SSE形式のレスポンスを生成します。
+        SSE形式では、各データチャンクが `data: ` プレフィックスで送られるため、リアルタイム更新を必要とするWebアプリケーションで
+        使用することができます。
+
+        Args:
+            generator (Generator[str, None, None]): チャンクデータを生成するジェネレーター。
+
+        Yields:
+            str: シャンクデータを含むSSE形式でフォーマットされた文字列。各データは `data: チャンク\n\n` の形式。
+
+        Example:
+            以下のようなレスポンスが生成されます:
+            ```
+            data: こんにちは
+
+            data: 天気は晴れです
+
+            ```
+
+        Server-Sent Events (SSE):
+            SSEは、サーバーがクライアントに対してリアルタイムでデータを送信するためのシンプルなプロトコルです。
+            HTTPでストリーミングレスポンスを実装する際に使用され、クライアントが簡単にデータを受信することが出来ます。
+
+            主な特徴:
+            - クライアントはサーバーとの接続を開き、サーバーはそのチャネルを通じてイベントを送信します。
+            - Webブラウザ（JavaScript）では、`EventSource` APIを使用してデータを受信できます。
+
+        References:
+            - SSEに関する詳細: https://developer.mozilla.org/ja/docs/Web/API/Server-sent_events
+            - OpenAIストリーミングAPI: https://platform.openai.com/docs/api-reference/streaming
+        """
+
+        for chunk in generator:
+            yield f"data: {chunk}\n\n"
+
 
 class OpenAILlmDalleService(LlmService):
     def __init__(self, config: OpenAIGptConfig):
