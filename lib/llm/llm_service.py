@@ -1,5 +1,6 @@
 import os
 from abc import ABC, abstractmethod
+from typing import Generator
 
 import tiktoken
 from google import generativeai
@@ -105,6 +106,26 @@ class OpenAILlmCompletionService(LlmService):
         )
 
 
+class OpenAILlmCompletionStreamService(LlmService):
+    def __init__(self, config: OpenAIGptConfig):
+        super().__init__()
+        self.config = config
+
+    def retrieve_answer(
+        self, chat_history: list[Message]
+    ) -> Generator[str, None, None]:
+        cut_down_history = cut_down_chat_history(chat_history, self.config)
+        stream = OpenAI(api_key=self.config.api_key).chat.completions.create(
+            model=self.config.model,
+            messages=[x.to_dict() for x in cut_down_history],
+            temperature=self.config.temperature,
+            stream=True,
+        )
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+
+
 class OpenAILlmDalleService(LlmService):
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()
@@ -203,3 +224,31 @@ class OpenAILlmRagService(LlmService):
         )
 
         return chain.invoke({"question": message.content})
+
+
+if __name__ == "__main__":
+    from openai import AuthenticationError
+    from lib.llm.valueobject.chat import RoleType
+
+    service = OpenAILlmCompletionStreamService(
+        config=OpenAIGptConfig(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            model="gpt-4o-mini",
+            temperature=0.7,  # 0-1の間で指定
+            max_tokens=500,
+        )
+    )
+
+    try:
+        for stream_chunk in service.retrieve_answer(
+            chat_history=[
+                Message(role=RoleType.USER, content="今日の天気教えて"),
+            ]
+        ):
+            # TODO: djangoのフロントで受け作れるかなー（たぶんページはわけたほうがよさそう）
+            print(stream_chunk, end="")
+    except AuthenticationError:
+        # TODO: エラーが返ってくることが確認できたのでここでidentifyAPIErrorを使う（StreamingかidentifyAPIErrorが返る）
+        print("Authentication failed: Please check your API key and try again.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
