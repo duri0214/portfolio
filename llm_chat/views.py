@@ -1,8 +1,15 @@
+import os
+
 from django.contrib.auth.models import User
+from django.http import StreamingHttpResponse, JsonResponse
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import FormView
 from dotenv import load_dotenv
 
+from lib.llm.llm_service import OpenAILlmCompletionStreamService
+from lib.llm.valueobject.chat import Message, RoleType
+from lib.llm.valueobject.config import OpenAIGptConfig
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.usecase.chat import (
     UseCase,
@@ -36,6 +43,7 @@ class IndexView(FormView):
         return context
 
     def form_valid(self, form):
+        # TODO: StreamResponseView のPOSTに持っていけるはず
         form_data = form.cleaned_data
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
@@ -67,3 +75,56 @@ class IndexView(FormView):
         use_case.execute(user=login_user, content=content)
 
         return super().form_valid(form)
+
+
+class StreamResponseView(View):
+    stored_stream = None
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        user_input = request.POST.get("user_input")
+        if not user_input:
+            return JsonResponse({"error": "No input provided"}, status=400)
+
+        # TODO: use_case_type を使って use-case を呼び出す
+        service = OpenAILlmCompletionStreamService(
+            config=OpenAIGptConfig(
+                api_key=os.getenv("OPENAI_API_KEY"),
+                model="gpt-4o-mini",
+                temperature=0.7,
+                max_tokens=500,
+            )
+        )
+
+        chat_history = [Message(role=RoleType.USER, content=user_input)]
+
+        # ストリーミング応答を生成
+        # TODO: OpenAILlmCompletionStreamServiceに持っていく
+        def stream_chunks():
+            try:
+                for chunk in service.retrieve_answer(chat_history):
+                    yield chunk
+            except Exception as e:
+                yield f"error: {str(e)}"
+
+        StreamResponseView.stored_stream = stream_chunks  # 関数をそのまま保持する
+        return JsonResponse({"message": "Stream initialized"})
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+        if not StreamResponseView.stored_stream:
+            return JsonResponse({"error": "No stream available"}, status=404)
+
+        stream_generator = StreamResponseView.stored_stream()
+
+        # TODO: OpenAILlmCompletionStreamServiceに持っていく
+        def stream_from_generator():
+            for chunk in stream_generator:
+                yield f"data: {chunk}\n\n"  # SSE形式で送信
+
+        response = StreamingHttpResponse(
+            stream_from_generator(), content_type="text/event-stream"
+        )
+        response["Cache-Control"] = "no-cache"
+
+        return response
