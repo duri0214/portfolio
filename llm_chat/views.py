@@ -99,7 +99,7 @@ class StreamResponseView(View):
         chat_history = [Message(role=RoleType.USER, content=user_input)]
 
         StreamResponseView.stored_stream = lambda: service.stream_chunks(chat_history)
-        return JsonResponse({"message": "Stream initialized"})
+        return JsonResponse({"message": "ストリームが正常に初期化されました"})
 
     @staticmethod
     def get(request, *args, **kwargs):

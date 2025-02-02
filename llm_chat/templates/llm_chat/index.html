@@ -83,6 +83,15 @@
                     },
                     body: `user_input=${encodeURIComponent(userMessage)}`
                 }).then(response => {
+                    if (!response.ok) {
+                        console.error("POSTリクエスト失敗:", response.status);
+                        return;
+                    }
+                    return response.json();
+                }).then(data => {
+                    if (data) {
+                        console.log(data);
+                    }
                     console.log("POSTリクエスト成功: SSEを開始します");
 
                     // Server-Sent Events 接続を確立
