@@ -76,18 +76,29 @@ def get_chat_history(
     gender: Gender = None,
 ) -> list[MessageDTO]:
     """
-    共通チャット処理（特別な仕様として、chat_historyが無く、genderの値が入っているとなぞなぞモード用の初期データを仕込む）
+    チャット履歴を取得し必要に応じて初期プロンプトを追加する関数
 
-    :param message: 処理されるメッセージDTO
-    :param repository: チャットのリポジトリ
-    :param gender: 初期プロンプトを必要とする場合の性別（オプション）
-    :return: 完了後のチャット履歴
+    この関数はユーザーの過去のチャット履歴を取得し、必要に応じて初期プロンプトを挿入します。
+    主に次の流れで処理を行います：
+    1. `message.content` が `None` の場合は例外をスローします。
+    2. チャット履歴が存在する場合、それを取得します。
+    3. チャット履歴が空であり、`gender` が指定されている場合は、
+       なぞなぞモード用の初期プロンプトを生成し挿入します。
+    4. 最新のユーザーメッセージを履歴に追加します。
+
+    **特記事項**:
+    初期プロンプト挿入は、なぞなぞモードの特別仕様です。このプロンプトには挨拶や、なぞなぞの開始案内が含まれます。
+
+    :param message: 現在処理対象のユーザーからの入力メッセージ (MessageDTO)
+    :param repository: チャット履歴を取得および保存するためのリポジトリ
+    :param gender: なぞなぞモード用初期プロンプト生成のためのユーザーの性別（オプション）
+    :raises Exception: メッセージが `content is None` の場合に例外をスロー
+    :return: 過去の履歴や最新のユーザーメッセージを含むチャット履歴 (list[MessageDTO])
     """
-    # 1. メッセージのcontentを検証
+
     if message.content is None:
         raise Exception("content is None")
 
-    # 2. 過去のチャット履歴を取得
     chat_history = [
         MessageDTO(
             user=x.user, role=RoleType(x.role), content=x.content, invisible=False
@@ -95,12 +106,10 @@ def get_chat_history(
         for x in repository.find_chat_history(message.user)
     ]
 
-    # 3. 初期プロンプトを含める場合
     if not chat_history and gender is not None:
         chat_history = create_initial_prompt(user=message.user, gender=gender)
         repository.bulk_insert(chat_history)
 
-    # 4. 最新のユーザーメッセージを追加
     latest_user_message = MessageDTO(
         user=message.user,
         role=message.role,
