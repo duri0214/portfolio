@@ -48,7 +48,7 @@ class GeminiUseCase(UseCase):
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message, gender=Gender(GenderType.MAN))
+        return chat_service.generate(message)
 
 
 class OpenAIGptUseCase(UseCase):
