@@ -214,7 +214,7 @@ class OpenAIDalleChatService(ChatService):
             model="dall-e-3",
         )
 
-    def generate(self, message: MessageDTO):
+    def generate(self, message: MessageDTO) -> list[MessageDTO]:
         """
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
         dall-e-3: 1024x1024, 1792x1024, 1024x1792 のいずれかしか生成できない
@@ -231,6 +231,7 @@ class OpenAIDalleChatService(ChatService):
             response.raise_for_status()
             resized_picture = self.resize(picture=Image.open(BytesIO(response.content)))
             self.save(resized_picture, message)
+            return [message]
         except requests.exceptions.HTTPError as http_error:
             raise Exception(http_error)
         except requests.exceptions.ConnectionError as connection_error:
