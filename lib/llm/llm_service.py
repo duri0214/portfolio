@@ -311,31 +311,3 @@ class OpenAILlmRagService(LlmService):
         )
 
         return chain.invoke({"question": message.content})
-
-
-if __name__ == "__main__":
-    from openai import AuthenticationError
-    from lib.llm.valueobject.chat import RoleType
-
-    service = OpenAILlmCompletionStreamingService(
-        config=OpenAIGptConfig(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            model="gpt-4o-mini",
-            temperature=0.7,  # 0-1の間で指定
-            max_tokens=500,
-        )
-    )
-
-    try:
-        for stream_chunk in service.retrieve_answer(
-            chat_history=[
-                Message(role=RoleType.USER, content="今日の天気教えて"),
-            ]
-        ):
-            # TODO: djangoのフロントで受け作れるかなー（たぶんページはわけたほうがよさそう）
-            print(stream_chunk, end="")
-    except AuthenticationError:
-        # TODO: エラーが返ってくることが確認できたのでここでidentifyAPIErrorを使う（StreamingかidentifyAPIErrorが返る）
-        print("Authentication failed: Please check your API key and try again.")
-    except Exception as e_xxx:
-        print(f"An unexpected error occurred: {e_xxx}")
