@@ -3,6 +3,7 @@ import secrets
 from abc import ABC, abstractmethod
 from io import BytesIO
 from pathlib import Path
+from typing import Generator
 
 import requests.exceptions
 from PIL import Image
@@ -11,13 +12,14 @@ from django.contrib.auth.models import User
 from config.settings import MEDIA_ROOT, BASE_DIR
 from lib.llm.llm_service import (
     OpenAILlmCompletionService,
+    OpenAILlmCompletionStreamingService,
     OpenAILlmDalleService,
     OpenAILlmTextToSpeech,
     OpenAILlmSpeechToText,
     GeminiLlmCompletionService,
     OpenAILlmRagService,
 )
-from lib.llm.valueobject.chat import RoleType
+from lib.llm.valueobject.chat import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader, RetrievalQAWithSourcesChainAnswer
 from llm_chat.domain.repository.chat import (
@@ -202,6 +204,43 @@ class OpenAIChatService(ChatService):
 
     def save(self, messages: list[MessageDTO]) -> None:
         self.repository.bulk_insert(messages)
+
+
+class OpenAIChatStreamingService(ChatService):
+    def __init__(self):
+        super().__init__()
+        self.config = OpenAIGptConfig(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            temperature=0.5,
+            max_tokens=4000,
+            model="gpt-4o-mini",
+        )
+
+    def generate(self, message: MessageDTO) -> Generator[StreamResponse, None, None]:
+        if message.content is None:
+            raise Exception("content is None")
+
+        chat_history = [
+            MessageDTO(
+                user=x.user, role=RoleType(x.role), content=x.content, invisible=False
+            )
+            for x in self.repository.find_chat_history(message.user)
+        ]
+        latest_user_message = MessageDTO(
+            user=message.user,
+            role=message.role,
+            content=message.content,
+            invisible=False,
+        )
+        self.save([latest_user_message])
+        chat_history.append(latest_user_message)
+
+        return OpenAILlmCompletionStreamingService(self.config).retrieve_answer(
+            [latest_user_message.to_message()]
+        )
+
+    def save(self, messages: list[MessageDTO]) -> None:
+        pass
 
 
 class OpenAIDalleChatService(ChatService):
