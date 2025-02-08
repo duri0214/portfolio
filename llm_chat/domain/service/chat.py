@@ -236,7 +236,7 @@ class OpenAIChatStreamingService(ChatService):
         )
 
     def save(self, messages: list[MessageDTO]) -> None:
-        pass
+        self.repository.bulk_insert(messages)
 
 
 class OpenAIDalleChatService(ChatService):
