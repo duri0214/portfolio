@@ -106,7 +106,7 @@ class OpenAILlmCompletionService(LlmService):
         )
 
 
-class OpenAILlmCompletionStreamService(LlmService):
+class OpenAILlmCompletionStreamingService(LlmService):
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()
         self.config = config
@@ -171,7 +171,7 @@ class OpenAILlmCompletionStreamService(LlmService):
             yield StreamResponse(content=f"{str(e)}", finish_reason="stop")
 
     @staticmethod
-    def stream_from_generator(
+    def streaming_from_generator(
         generator: Generator[StreamResponse, None, None]
     ) -> Generator[str, None, None]:
         """
@@ -317,7 +317,7 @@ if __name__ == "__main__":
     from openai import AuthenticationError
     from lib.llm.valueobject.chat import RoleType
 
-    service = OpenAILlmCompletionStreamService(
+    service = OpenAILlmCompletionStreamingService(
         config=OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
             model="gpt-4o-mini",
