@@ -105,6 +105,28 @@
                         if (parsedData.finish_reason === "stop") {
                             eventSource.close();
                             console.log("Server-Sent Events の接続を終了しました");
+
+                            // 保存処理のために非同期リクエストを送信
+                            fetch("/llm_chat/stream/result_save/", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "X-CSRFToken": Cookies.get("csrftoken"),
+                                },
+                                body: JSON.stringify({content: outputElement.innerText}),
+                            })
+                                .then((response) => {
+                                    if (!response.ok) {
+                                        throw new Error("データ保存に失敗しました");
+                                    }
+                                    return response.json();
+                                })
+                                .then((data) => {
+                                    console.log("保存成功:", data);
+                                })
+                                .catch((error) => {
+                                    console.error("保存エラー:", error);
+                                });
                         }
 
                         if (parsedData.content != null) {

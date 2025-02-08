@@ -1,3 +1,4 @@
+import json
 import os
 
 from django.contrib.auth.models import User
@@ -116,3 +117,31 @@ class StreamResponseView(View):
         response["Cache-Control"] = "no-cache"
 
         return response
+
+
+class StreamResultSaveView(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        """
+        保存処理を行うPOSTリクエストのエンドポイント
+        """
+        try:
+            body = json.loads(request.body)
+            content = body.get("content")
+
+            if not content:
+                return JsonResponse({"error": "Content is required"}, status=400)
+
+            # 必要に応じてデータベースに保存
+            # ChatLog.objects.create(content=content, timestamp=timestamp)
+
+            # 成功レスポンスを返す
+            return JsonResponse(
+                {"status": "success", "message": "データが保存されました"}
+            )
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        except Exception as e:
+            return JsonResponse(
+                {"error": "Failed to save data", "detail": str(e)}, status=500
+            )
