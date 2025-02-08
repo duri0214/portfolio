@@ -70,6 +70,49 @@ def create_initial_prompt(user: User, gender: Gender) -> list[MessageDTO]:
     return history
 
 
+def get_chat_history(
+    message: MessageDTO,
+    repository: ChatLogRepository,
+    gender: Gender = None,
+) -> list[MessageDTO]:
+    """
+    共通チャット処理（特別な仕様として、chat_historyが無く、genderの値が入っているとなぞなぞモード用の初期データを仕込む）
+
+    :param message: 処理されるメッセージDTO
+    :param repository: チャットのリポジトリ
+    :param gender: 初期プロンプトを必要とする場合の性別（オプション）
+    :return: 完了後のチャット履歴
+    """
+    # 1. メッセージのcontentを検証
+    if message.content is None:
+        raise Exception("content is None")
+
+    # 2. 過去のチャット履歴を取得
+    chat_history = [
+        MessageDTO(
+            user=x.user, role=RoleType(x.role), content=x.content, invisible=False
+        )
+        for x in repository.find_chat_history(message.user)
+    ]
+
+    # 3. 初期プロンプトを含める場合
+    if not chat_history and gender is not None:
+        chat_history = create_initial_prompt(user=message.user, gender=gender)
+        repository.bulk_insert(chat_history)
+
+    # 4. 最新のユーザーメッセージを追加
+    latest_user_message = MessageDTO(
+        user=message.user,
+        role=message.role,
+        content=message.content,
+        invisible=False,
+    )
+    repository.bulk_insert([latest_user_message])
+    chat_history.append(latest_user_message)
+
+    return chat_history
+
+
 class ChatService(ABC):
     def __init__(self):
         self.repository = ChatLogRepository()
