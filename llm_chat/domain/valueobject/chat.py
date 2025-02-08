@@ -47,6 +47,15 @@ class MessageDTO:
 
         return chat_log
 
+    def to_dict(self):
+        return {
+            "user": self.user.username,
+            "role": self.role.name,
+            "content": self.content,
+            "file_path": self.file_path,
+            "invisible": self.invisible,
+        }
+
 
 class GenderType(Enum):
     MAN = "man"
