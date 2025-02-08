@@ -1,13 +1,20 @@
 from django.urls import path
 
-from .views import StreamResponseView, IndexView, StreamResultSaveView, SyncResponseView
+from .views import (
+    StreamingResponseView,
+    IndexView,
+    StreamResultSaveView,
+    SyncResponseView,
+)
 
 app_name = "llm"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
-    path("stream/", StreamResponseView.as_view(), name="stream_response"),
+    path("streaming/", StreamingResponseView.as_view(), name="streaming_response"),
     path("sync/", SyncResponseView.as_view(), name="sync_response"),
     path(
-        "stream/result_save/", StreamResultSaveView.as_view(), name="stream_result_save"
+        "streaming/result_save/",
+        StreamResultSaveView.as_view(),
+        name="streaming_result_save",
     ),
 ]
