@@ -9,6 +9,7 @@ from lib.llm.valueobject.chat import RoleType
 from llm_chat.domain.service.chat import (
     GeminiChatService,
     OpenAIChatService,
+    OpenAIChatStreamingService,
     OpenAIDalleChatService,
     OpenAITextToSpeechChatService,
     OpenAISpeechToTextChatService,
@@ -77,6 +78,34 @@ class OpenAIGptUseCase(UseCase):
             invisible=False,
         )
         return chat_service.generate(message, gender=Gender(GenderType.MAN))
+
+
+class OpenAIGptStreamingUseCase(UseCase):
+    def execute(self, user: User, content: str | None):
+        """
+        OpenAIChatStreamingServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
+        contentパラメータはNoneではないこと。
+
+        Args:
+            user (User): DjangoのUserモデルのインスタンス
+            content (str | None): ユーザーからの入力テキスト
+
+        Raises:
+            ValueError: contentがNoneの場合
+
+        Returns:
+            テキスト生成の結果
+        """
+        if content is None:
+            raise ValueError("content cannot be None for OpenAIGptStreamingUseCase")
+        chat_service = OpenAIChatStreamingService()
+        message = MessageDTO(
+            user=user,
+            role=RoleType.USER,
+            content=content,
+            invisible=False,
+        )
+        return chat_service.generate(message)
 
 
 class OpenAIDalleUseCase(UseCase):
