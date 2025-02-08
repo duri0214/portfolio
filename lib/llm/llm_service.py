@@ -136,19 +136,29 @@ class OpenAILlmCompletionStreamService(LlmService):
             finish_reason = chunk.choices[0].finish_reason
             yield StreamResponse(content=delta_content, finish_reason=finish_reason)
 
-    def stream_chunks(self, chat_history: list[Message]) -> Generator[str, None, None]:
+    def stream_chunks(
+        self, chat_history: list[Message]
+    ) -> Generator[StreamResponse, None, None]:
         """
-        チャット履歴に基づくストリーミングレスポンスを取得し、例外を適切に処理しながらデータを生成します。
+        チャット履歴に基づくストリーミングレスポンスを取得し、正常データおよび例外発生時のエラーメッセージを
+        ストリーミング形式で返します。
 
         Args:
             chat_history (list[Message]): チャット履歴
 
         Yields:
-            str: ストリーミングレスポンスの各チャンクデータ。また、例外発生時にはエラーメッセージを返します。
+            StreamResponse:
+                - ストリーミングレスポンスの通常のデータチャンク（正常時）。
+                - 例外発生時には、エラーメッセージを含むレスポンス（`content` にエラー内容を含む）。
+
+        Exceptions:
+            例外はキャッチされ、ストリーミング形式でエラーメッセージとしてレスポンスに含まれます。
 
         Note:
-            この関数はジェネレーターとして振る舞い、データの逐次的な処理が可能です。リアルタイムなデータ処理を
-            必要とするアプリケーション（例: Webアプリ、ライブストリーミング用インターフェイス）に適しています。
+            - このメソッドはジェネレーターとして実装されており、データを逐次的に処理および提供します。
+            - 例外が発生した場合でも、ストリーミングの処理は中断されず、適切なエラーメッセージが生成されます。
+            - リアルタイムでのデータ処理が求められるユースケース（例: Webアプリケーション、APIクライアント）で
+              使用することを想定しています。
 
         See Also:
             - https://platform.openai.com/docs/api-reference/streaming
@@ -158,7 +168,7 @@ class OpenAILlmCompletionStreamService(LlmService):
             for chunk in self.retrieve_answer(chat_history):
                 yield chunk
         except Exception as e:
-            yield f"error: {str(e)}"
+            yield StreamResponse(content=f"{str(e)}", finish_reason="stop")
 
     @staticmethod
     def stream_from_generator(generator: Generator[str, None, None]):
