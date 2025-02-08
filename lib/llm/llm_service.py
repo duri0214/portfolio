@@ -337,5 +337,5 @@ if __name__ == "__main__":
     except AuthenticationError:
         # TODO: エラーが返ってくることが確認できたのでここでidentifyAPIErrorを使う（StreamingかidentifyAPIErrorが返る）
         print("Authentication failed: Please check your API key and try again.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+    except Exception as e_xxx:
+        print(f"An unexpected error occurred: {e_xxx}")
