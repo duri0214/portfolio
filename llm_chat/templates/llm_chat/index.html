@@ -62,6 +62,7 @@
         // ドロップダウン選択肢の監視と音声ファイルフォームの表示／非表示
         document.addEventListener("DOMContentLoaded", function () {
             const useCaseType = document.querySelector('select[name="use_case_type"]');
+            const audioFileInput = document.querySelector('input[name="audio_file"]');
             const audioFileContainer = document.getElementById("audio-file-container");
             const sendButton = document.getElementById("sendButton");
             const userInput = document.getElementById("id_question");
@@ -70,77 +71,55 @@
             // 送信ボタンのクリックイベント設定
             sendButton.addEventListener("click", function () {
                 const userMessage = userInput.value.trim();
-                if (userMessage === "") {
+                const selectedUseCase = useCaseType.value;
+
+                if (userMessage === "" && selectedUseCase !== "OpenAISpeechToText") {
                     alert("メッセージを入力してください。");
                     return;
                 }
 
-                // ストリーミング用POSTリクエストを送信
-                fetch("/llm_chat/stream/", {
+                const requestData = new FormData();
+                requestData.append("use_case_type", selectedUseCase);
+                requestData.append("user_input", userMessage);
+
+                // ユースケースごとのエンドポイントを指定
+                let endpointUrl = "";
+                if (selectedUseCase === "OpenAIGptStreaming") {
+                    endpointUrl = "/llm_chat/stream/";
+                } else {
+                    endpointUrl = "/llm_chat/sync/";
+                }
+
+                // 音声ファイルがある場合には追加
+                if (selectedUseCase === "OpenAISpeechToText" && audioFileInput.files.length > 0) {
+                    requestData.append("audio_file", audioFileInput.files[0]);
+                }
+
+                // リクエストの送信
+                fetch(endpointUrl, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                        "X-CSRFToken": Cookies.get('csrftoken')
+                        "X-CSRFToken": Cookies.get("csrftoken"),
                     },
-                    body: `user_input=${encodeURIComponent(userMessage)}`
-                }).then(response => {
-                    if (!response.ok) {
-                        console.error("POSTリクエスト失敗:", response.status);
-                        return;
-                    }
-                    return response.json();
-                }).then(data => {
-                    if (data) {
-                        console.log(data);
-                    }
-                    console.log("Server-Sent Events の接続を開始します");
-
-                    // Server-Sent Events 接続を確立
-                    const eventSource = new EventSource("/llm_chat/stream/");
-
-                    // ストリームデータを受信
-                    eventSource.onmessage = function (event) {
-                        const parsedData = JSON.parse(event.data)
-                        // 終了条件が満たされたら接続を閉じる
-                        if (parsedData.finish_reason === "stop") {
-                            eventSource.close();
-                            console.log("Server-Sent Events の接続を終了しました");
-
-                            // 保存処理のために非同期リクエストを送信
-                            fetch("/llm_chat/stream/result_save/", {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "X-CSRFToken": Cookies.get("csrftoken"),
-                                },
-                                body: JSON.stringify({content: outputElement.innerText}),
-                            })
-                                .then((response) => {
-                                    if (!response.ok) {
-                                        throw new Error("データ保存に失敗しました");
-                                    }
-                                    return response.json();
-                                })
-                                .then((data) => {
-                                    console.log("保存成功:", data);
-                                })
-                                .catch((error) => {
-                                    console.error("保存エラー:", error);
-                                });
+                    body: requestData,
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            console.error("リクエスト失敗:", response.status);
+                            return;
                         }
-
-                        if (parsedData.content != null) {
-                            outputElement.innerText += parsedData.content;
+                        return response.json();
+                    })
+                    .then((data) => {
+                        // ストリーミングの場合のみストリームの開始
+                        if (selectedUseCase === "OpenAIGptStreaming") {
+                            startStream(outputElement);
+                        } else {
+                            outputElement.innerText = "リクエストが成功しました: " + JSON.stringify(data);
                         }
-                    };
-
-                    eventSource.onerror = function (event) {
-                        console.error("SSEエラー:", event);
-                        eventSource.close();
-                    };
-                });
+                    })
+                    .catch((error) => console.error("送信エラー:", error));
             });
-
 
             // ドロップダウン変更時のイベント処理
             useCaseType.addEventListener("change", function () {
