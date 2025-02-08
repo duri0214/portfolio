@@ -179,19 +179,6 @@ class OpenAIChatService(ChatService):
     def generate(self, message: MessageDTO, gender: Gender) -> list[MessageDTO]:
         chat_history = get_chat_history(message, self.repository, gender)
 
-        # 初回はユーザのボタン押下などのトリガーで「プロンプト」と「なぞなぞスタート」の2行がinsertされる
-        # 会話が始まっているならユーザの入力したチャットをinsertしてからChatGPTに全投げする
-        # つまり、3以上あれば会話が始まっているだろうとみなせる
-        if len(chat_history) > 2:
-            latest_user_message = MessageDTO(
-                user=message.user,
-                role=message.role,
-                content=message.content,
-                invisible=False,
-            )
-            self.save([latest_user_message])
-            chat_history.append(latest_user_message)
-
         answer = OpenAILlmCompletionService(self.config).retrieve_answer(
             [x.to_message() for x in chat_history]
         )
