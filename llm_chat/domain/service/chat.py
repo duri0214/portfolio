@@ -137,23 +137,7 @@ class GeminiChatService(ChatService):
         )
 
     def generate(self, message: MessageDTO) -> list[MessageDTO]:
-        if message.content is None:
-            raise Exception("content is None")
-
-        chat_history = [
-            MessageDTO(
-                user=x.user, role=RoleType(x.role), content=x.content, invisible=False
-            )
-            for x in self.repository.find_chat_history(message.user)
-        ]
-        latest_user_message = MessageDTO(
-            user=message.user,
-            role=message.role,
-            content=message.content,
-            invisible=False,
-        )
-        self.save([latest_user_message])
-        chat_history.append(latest_user_message)
+        chat_history = get_chat_history(message, self.repository)
 
         response = GeminiLlmCompletionService(self.config).retrieve_answer(
             [x.to_message() for x in chat_history]
@@ -184,18 +168,7 @@ class OpenAIChatService(ChatService):
         )
 
     def generate(self, message: MessageDTO, gender: Gender) -> list[MessageDTO]:
-        if message.content is None:
-            raise Exception("content is None")
-
-        chat_history = [
-            MessageDTO(
-                user=x.user, role=RoleType(x.role), content=x.content, invisible=False
-            )
-            for x in self.repository.find_chat_history(message.user)
-        ]
-        if not chat_history:
-            chat_history = create_initial_prompt(user=message.user, gender=gender)
-            self.save(chat_history)
+        chat_history = get_chat_history(message, self.repository, gender)
 
         # 初回はユーザのボタン押下などのトリガーで「プロンプト」と「なぞなぞスタート」の2行がinsertされる
         # 会話が始まっているならユーザの入力したチャットをinsertしてからChatGPTに全投げする
@@ -260,26 +233,10 @@ class OpenAIChatStreamingService(ChatService):
         )
 
     def generate(self, message: MessageDTO) -> Generator[StreamResponse, None, None]:
-        if message.content is None:
-            raise Exception("content is None")
-
-        chat_history = [
-            MessageDTO(
-                user=x.user, role=RoleType(x.role), content=x.content, invisible=False
-            )
-            for x in self.repository.find_chat_history(message.user)
-        ]
-        latest_user_message = MessageDTO(
-            user=message.user,
-            role=message.role,
-            content=message.content,
-            invisible=False,
-        )
-        self.save([latest_user_message])
-        chat_history.append(latest_user_message)
+        chat_history = get_chat_history(message, self.repository)
 
         return OpenAILlmCompletionStreamingService(self.config).retrieve_answer(
-            [latest_user_message.to_message()]
+            [x.to_message() for x in chat_history]
         )
 
     def save(self, messages: list[MessageDTO]) -> None:
