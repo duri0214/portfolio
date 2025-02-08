@@ -107,6 +107,34 @@ class OpenAIGptStreamingUseCase(UseCase):
         )
         return chat_service.generate(message)
 
+    @staticmethod
+    def save(user: User, content: str) -> None:
+        """
+        ストリーミングの完了後にアシスタントメッセージとしてデータベースに保存するメソッド。
+
+        このメソッドはストリーミング処理終了後に呼び出され、生成されたコンテンツを
+        アシスタント役のメッセージとして加工した上でデータベースに保存します。
+        メッセージにはユーザー情報と生成コンテンツを付加し、
+        OpenAIChatStreamingService の `save` メソッドを使用します。
+
+        Args:
+            user (User): Django の User モデルのインスタンス
+            content (str): ストリーミングで生成されたアシスタントのメッセージコンテンツ
+
+        Returns:
+            None
+        """
+        messages = [
+            MessageDTO(
+                user=user,
+                role=RoleType.ASSISTANT,
+                content=content,
+                invisible=False,
+            )
+        ]
+        service = OpenAIChatStreamingService()
+        service.save(messages)
+
 
 class OpenAIDalleUseCase(UseCase):
     def execute(self, user: User, content: str | None):
