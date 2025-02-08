@@ -92,7 +92,7 @@
                     if (data) {
                         console.log(data);
                     }
-                    console.log("Server-Sent Events の取得を開始します");
+                    console.log("Server-Sent Events の接続を開始します");
 
                     // Server-Sent Events 接続を確立
                     const eventSource = new EventSource("/llm_chat/stream/");
@@ -100,9 +100,15 @@
                     // ストリームデータを受信
                     eventSource.onmessage = function (event) {
                         const parsedData = JSON.parse(event.data)
-                        parsedData.finish_reason === "stop" && eventSource.close();
+                        // 終了条件が満たされたら接続を閉じる
+                        if (parsedData.finish_reason === "stop") {
+                            eventSource.close();
+                            console.log("Server-Sent Events の接続を終了しました");
+                        }
 
-                        outputElement.innerText += parsedData.content;
+                        if (parsedData.content != null) {
+                            outputElement.innerText += parsedData.content;
+                        }
                     };
 
                     eventSource.onerror = function (event) {
