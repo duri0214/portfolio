@@ -322,7 +322,7 @@ class OpenAIRagChatService(ChatService):
             model="gpt-4o-mini",
         )
 
-    def generate(self, message: MessageDTO):
+    def generate(self, message: MessageDTO) -> list[MessageDTO]:
         # Step1: User の質問を保存
         self.save(message)
 
@@ -338,6 +338,7 @@ class OpenAIRagChatService(ChatService):
         message.role = RoleType.ASSISTANT
         message.content = RetrievalQAWithSourcesChainAnswer(**answer_dict).answer
         self.save(message)
+        return [message]
 
     def save(self, message: MessageDTO) -> None:
         message.to_entity().save()
