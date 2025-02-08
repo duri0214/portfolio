@@ -185,7 +185,7 @@ class OpenAILlmCompletionStreamingService(LlmService):
             generator (Generator[StreamResponse, None, None]): チャンクデータを生成するジェネレーター。
 
         Yields:
-            str: シャンクデータを含むSSE形式でフォーマットされた文字列。各データは `data: チャンク\n\n` の形式。
+            str: フォーマットされた文字列。各データは `data: チャンク\n\n` の形式。
 
         Example:
             以下のようなレスポンスが生成されます:
