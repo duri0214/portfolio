@@ -16,7 +16,7 @@ from openai.types import ImagesResponse
 from openai.types.chat import ChatCompletion
 
 from config.settings import MEDIA_ROOT
-from lib.llm.valueobject.chat import Message
+from lib.llm.valueobject.chat import Message, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader
 
@@ -113,7 +113,17 @@ class OpenAILlmCompletionStreamService(LlmService):
 
     def retrieve_answer(
         self, chat_history: list[Message]
-    ) -> Generator[str, None, None]:
+    ) -> Generator[StreamResponse, None, None]:
+        """
+        OpenAIのストリーミングレスポンスを処理し、応答をジェネレーターとして返します。
+
+        Returns:
+            Generator[StreamResponse, None, None]:
+                - `StreamResponse`はジェネレーターが`yield`するオブジェクト。
+                - `None`（2つ目の型）はジェネレーターに対して値を送り込む型がないことを示します。
+                - `None`（3つ目の型）はこのジェネレーターが停止時に明示的な`return`を行わないことを示します。
+        """
+
         cut_down_history = cut_down_chat_history(chat_history, self.config)
         stream = OpenAI(api_key=self.config.api_key).chat.completions.create(
             model=self.config.model,
@@ -122,8 +132,9 @@ class OpenAILlmCompletionStreamService(LlmService):
             stream=True,
         )
         for chunk in stream:
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
+            delta_content = chunk.choices[0].delta.content
+            finish_reason = chunk.choices[0].finish_reason
+            yield StreamResponse(content=delta_content, finish_reason=finish_reason)
 
     def stream_chunks(self, chat_history: list[Message]) -> Generator[str, None, None]:
         """
