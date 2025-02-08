@@ -8,7 +8,7 @@ from django.views import View
 from django.views.generic import FormView
 from dotenv import load_dotenv
 
-from lib.llm.llm_service import OpenAILlmCompletionStreamService
+from lib.llm.llm_service import OpenAILlmCompletionStreamingService
 from lib.llm.valueobject.chat import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
 from llm_chat.domain.repository.chat import ChatLogRepository
@@ -128,7 +128,7 @@ class StreamResponseView(View):
 
         # ストリームデータをSSE（Server-Sent Events）形式に変換し、StreamingHttpResponseでラップする
         response = StreamingHttpResponse(
-            OpenAILlmCompletionStreamService.stream_from_generator(
+            OpenAILlmCompletionStreamingService.streaming_from_generator(
                 generator=StreamResponseView.stored_stream()
             ),
             content_type="text/event-stream",
