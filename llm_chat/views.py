@@ -43,39 +43,58 @@ class IndexView(FormView):
 
         return context
 
-    def form_valid(self, form):
-        # TODO: StreamResponseView のPOSTに持っていけるはず
-        form_data = form.cleaned_data
-        login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
-        use_case_type = form_data["use_case_type"]
-        use_case: UseCase | None = None
-        content: str = form_data["question"]
-        if use_case_type == "Gemini":
-            use_case = GeminiUseCase()
-            content = form_data["question"]
-        elif use_case_type == "OpenAIGpt":
-            # Questionは何を入れてもいい（処理されない）
-            use_case = OpenAIGptUseCase()
-            content = form_data["question"]
-        elif use_case_type == "OpenAIDalle":
-            use_case = OpenAIDalleUseCase()
-            content = form_data["question"]
-        elif use_case_type == "OpenAITextToSpeech":
-            use_case = OpenAITextToSpeechUseCase()
-            content = form_data["question"]
-        elif use_case_type == "OpenAISpeechToText":
-            # Questionは何を入れてもいい（処理されない）
-            audio_file = form_data.get("audio_file")
-            use_case = OpenAISpeechToTextUseCase(audio_file)
-            content = "N/A"
-        elif use_case_type == "OpenAIRag":
-            use_case = OpenAIRagUseCase()
-            content = form_data["question"]
+class SyncResponseView(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        try:
+            use_case_type = request.POST.get("use_case_type")
+            user_input = request.POST.get("user_input")
+            audio_file = request.FILES.get("audio_file")
 
-        use_case.execute(user=login_user, content=content)
+            if not use_case_type:
+                return JsonResponse({"error": "No use case type provided"}, status=400)
 
-        return super().form_valid(form)
+            # 使用するユースケースを切り替え
+            use_case: UseCase | None = None
+            if use_case_type == "Gemini":
+                use_case = GeminiUseCase()
+            elif use_case_type == "OpenAIGpt":
+                use_case = OpenAIGptUseCase()
+            elif use_case_type == "OpenAIDalle":
+                use_case = OpenAIDalleUseCase()
+            elif use_case_type == "OpenAITextToSpeech":
+                use_case = OpenAITextToSpeechUseCase()
+            elif use_case_type == "OpenAISpeechToText":
+                if not audio_file:
+                    return JsonResponse({"error": "Audio file is required"}, status=400)
+                user_input = "N/A"
+                use_case = OpenAISpeechToTextUseCase(audio_file=audio_file)
+            elif use_case_type == "OpenAIRag":
+                use_case = OpenAIRagUseCase()
+
+            if not use_case:
+                return JsonResponse(
+                    {"error": "Invalid use case type provided"}, status=400
+                )
+
+            # ユースケースの実行
+            result = use_case.execute(user=request.user, content=user_input)
+
+            # 成功レスポンスを返す
+            visible_results = [r for r in result if not r.invisible]
+            return JsonResponse(
+                {
+                    "status": "success",
+                    "message": f"{use_case_type} 処理が完了しました",
+                    "result": visible_results[-1].to_dict(),
+                }
+            )
+
+        except Exception as e:
+            return JsonResponse(
+                {"error": "An unexpected error occurred", "detail": str(e)}, status=500
+            )
 
 
 class StreamResponseView(View):
