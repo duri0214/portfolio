@@ -264,13 +264,14 @@ class OpenAITextToSpeechChatService(ChatService):
             model="tts-1",
         )
 
-    def generate(self, message: MessageDTO):
+    def generate(self, message: MessageDTO) -> list[MessageDTO]:
         if message.content is None:
             raise Exception("content is None")
         response = OpenAILlmTextToSpeech(self.config).retrieve_answer(
             message.to_message()
         )
         self.save(response, message)
+        return [message]
 
     def save(self, response, message: MessageDTO) -> None:
         folder_path = Path(MEDIA_ROOT) / "llm_chat/audios"
