@@ -146,8 +146,7 @@ class StreamResultSaveView(View):
             if not content:
                 return JsonResponse({"error": "Content is required"}, status=400)
 
-            # 必要に応じてデータベースに保存
-            # ChatLog.objects.create(content=content, timestamp=timestamp)
+            OpenAIGptStreamingUseCase.save(user=request.user, content=content)
 
             # 成功レスポンスを返す
             return JsonResponse(
