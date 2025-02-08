@@ -85,7 +85,7 @@
                 // ユースケースごとのエンドポイントを指定
                 let endpointUrl = "";
                 if (selectedUseCase === "OpenAIGptStreaming") {
-                    endpointUrl = "/llm_chat/stream/";
+                    endpointUrl = "/llm_chat/streaming/";
                 } else {
                     endpointUrl = "/llm_chat/sync/";
                 }
@@ -113,7 +113,7 @@
                     .then((data) => {
                         // ストリーミングの場合のみストリームの開始
                         if (selectedUseCase === "OpenAIGptStreaming") {
-                            startStream(outputElement);
+                            startStreaming(outputElement);
                         } else {
                             outputElement.innerText = "リクエストが成功しました: " + JSON.stringify(data);
                         }
@@ -135,6 +135,56 @@
                 audioFileContainer.style.display = "block";
             } else {
                 audioFileContainer.style.display = "none";
+            }
+
+            // Server-Sent Events を開始（ストリームデータを受信）
+            function startStreaming(outputElement) {
+                console.log("Server-Sent Events の接続を開始しました");
+                const eventSource = new EventSource("/llm_chat/streaming/");
+
+                eventSource.onmessage = function (event) {
+                    const parsedData = JSON.parse(event.data);
+                    if (parsedData.finish_reason === "stop") {
+                        eventSource.close();
+                        console.log("Server-Sent Events の接続を終了しました");
+
+                        // 保存処理
+                        saveStreamingData(outputElement.innerText);
+                    }
+
+                    if (parsedData.content != null) {
+                        outputElement.innerText += parsedData.content;
+                    }
+                };
+
+                eventSource.onerror = function (event) {
+                    console.error("SSEエラー:", event);
+                    eventSource.close();
+                };
+            }
+
+            // ストリーム結果の保存
+            function saveStreamingData(content) {
+                fetch("/llm_chat/streaming/result_save/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": Cookies.get("csrftoken"),
+                    },
+                    body: JSON.stringify({content: content}),
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error("データ保存に失敗しました");
+                        }
+                        return response.json();
+                    })
+                    .then((data) => {
+                        console.log("保存成功:", data);
+                    })
+                    .catch((error) => {
+                        console.error("保存エラー:", error);
+                    });
             }
         });
     </script>
