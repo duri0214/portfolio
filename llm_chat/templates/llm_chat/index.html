@@ -92,14 +92,17 @@
                     if (data) {
                         console.log(data);
                     }
-                    console.log("POSTリクエスト成功: SSEを開始します");
+                    console.log("Server-Sent Events の取得を開始します");
 
                     // Server-Sent Events 接続を確立
                     const eventSource = new EventSource("/llm_chat/stream/");
 
                     // ストリームデータを受信
                     eventSource.onmessage = function (event) {
-                        outputElement.innerText += event.data;
+                        const parsedData = JSON.parse(event.data)
+                        parsedData.finish_reason === "stop" && eventSource.close();
+
+                        outputElement.innerText += parsedData.content;
                     };
 
                     eventSource.onerror = function (event) {
