@@ -97,39 +97,36 @@ class SyncResponseView(View):
             )
 
 
-class StreamResponseView(View):
+class StreamingResponseView(View):
     stored_stream = None
 
     @staticmethod
     def post(request, *args, **kwargs):
+        use_case_type = request.POST.get("use_case_type")
         user_input = request.POST.get("user_input")
+
+        if use_case_type != "OpenAIGptStreaming":
+            return JsonResponse({"error": "Invalid use case for streaming"}, status=400)
+
         if not user_input:
             return JsonResponse({"error": "No input provided"}, status=400)
 
-        # TODO: use_case_type を使って use-case を呼び出す
-        service = OpenAILlmCompletionStreamService(
-            config=OpenAIGptConfig(
-                api_key=os.getenv("OPENAI_API_KEY"),
-                model="gpt-4o-mini",
-                temperature=0.7,
-                max_tokens=500,
-            )
+        use_case = OpenAIGptStreamingUseCase()
+        StreamingResponseView.stored_stream = use_case.execute(
+            user=request.user, content=user_input
         )
 
-        chat_history = [Message(role=RoleType.USER, content=user_input)]
-
-        StreamResponseView.stored_stream = lambda: service.stream_chunks(chat_history)
         return JsonResponse({"message": "ストリームが正常に初期化されました"})
 
     @staticmethod
     def get(request, *args, **kwargs):
-        if not StreamResponseView.stored_stream:
+        if not StreamingResponseView.stored_stream:
             return JsonResponse({"error": "No stream available"}, status=404)
 
         # ストリームデータをSSE（Server-Sent Events）形式に変換し、StreamingHttpResponseでラップする
         response = StreamingHttpResponse(
             OpenAILlmCompletionStreamingService.streaming_from_generator(
-                generator=StreamResponseView.stored_stream()
+                generator=StreamingResponseView.stored_stream
             ),
             content_type="text/event-stream",
         )
