@@ -171,7 +171,9 @@ class OpenAILlmCompletionStreamService(LlmService):
             yield StreamResponse(content=f"{str(e)}", finish_reason="stop")
 
     @staticmethod
-    def stream_from_generator(generator: Generator[str, None, None]):
+    def stream_from_generator(
+        generator: Generator[StreamResponse, None, None]
+    ) -> Generator[str, None, None]:
         """
         サーバー送信イベント形式（Server-Sent Events, SSE）としてジェネレーターからデータをストリームします。
 
@@ -180,7 +182,7 @@ class OpenAILlmCompletionStreamService(LlmService):
         使用することができます。
 
         Args:
-            generator (Generator[str, None, None]): チャンクデータを生成するジェネレーター。
+            generator (Generator[StreamResponse, None, None]): チャンクデータを生成するジェネレーター。
 
         Yields:
             str: シャンクデータを含むSSE形式でフォーマットされた文字列。各データは `data: チャンク\n\n` の形式。
@@ -208,7 +210,7 @@ class OpenAILlmCompletionStreamService(LlmService):
         """
 
         for chunk in generator:
-            yield f"data: {chunk}\n\n"
+            yield f"data: {chunk.to_json()}\n\n"
 
 
 class OpenAILlmDalleService(LlmService):
