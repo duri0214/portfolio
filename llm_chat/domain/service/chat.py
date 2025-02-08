@@ -91,7 +91,7 @@ class GeminiChatService(ChatService):
             model="gemini-1.5-flash",
         )
 
-    def generate(self, message: MessageDTO, gender: Gender) -> list[MessageDTO]:
+    def generate(self, message: MessageDTO) -> list[MessageDTO]:
         if message.content is None:
             raise Exception("content is None")
 
