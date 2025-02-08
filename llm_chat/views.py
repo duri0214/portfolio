@@ -106,12 +106,10 @@ class StreamResponseView(View):
         if not StreamResponseView.stored_stream:
             return JsonResponse({"error": "No stream available"}, status=404)
 
-        stream_generator = StreamResponseView.stored_stream()
-
         # ストリームデータをSSE（Server-Sent Events）形式に変換し、StreamingHttpResponseでラップする
         response = StreamingHttpResponse(
             OpenAILlmCompletionStreamService.stream_from_generator(
-                generator=stream_generator
+                generator=StreamResponseView.stored_stream()
             ),
             content_type="text/event-stream",
         )
