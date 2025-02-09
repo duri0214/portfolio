@@ -83,7 +83,7 @@
                 requestData.append("user_input", userMessage);
 
                 // ユースケースごとのエンドポイントを指定
-                let endpointUrl = "";
+                let endpointUrl;
                 if (selectedUseCase === "OpenAIGptStreaming") {
                     endpointUrl = "/llm_chat/streaming/";
                 } else {
