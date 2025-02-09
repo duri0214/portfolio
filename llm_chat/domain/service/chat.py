@@ -223,44 +223,40 @@ class OpenAIDalleChatService(ChatService):
             model="dall-e-3",
         )
 
-    def generate(self, message: MessageDTO) -> list[MessageDTO]:
+    def generate(self, user_message: MessageDTO) -> MessageDTO:
         """
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
         dall-e-3: 1024x1024, 1792x1024, 1024x1792 のいずれかしか生成できない
         """
-        if message.content is None:
+        if user_message.content is None:
             raise Exception("content is None")
 
         answer = OpenAILlmDalleService(self.config).retrieve_answer(
-            message.to_message()
+            user_message.to_message()
         )
         image_url = answer.data[0].url
         try:
             response = requests.get(image_url)
             response.raise_for_status()
-            resized_picture = self.resize(picture=Image.open(BytesIO(response.content)))
-            self.save(resized_picture, message)
-            return [message]
+            raw_picture = BytesIO(response.content)
+            resized_picture = Image.open(raw_picture).resize((128, 128))
+
+            # 画像の保存 TODO: self.save_picture
+            folder_path = Path(MEDIA_ROOT) / "llm_chat/images"
+            if not folder_path.exists():
+                folder_path.mkdir(parents=True, exist_ok=True)
+            random_filename = secrets.token_hex(5) + ".jpg"
+            full_path = folder_path / random_filename
+            resized_picture.save(str(full_path))
+
+            user_message.file_path = "llm_chat/images/" + random_filename
+            return user_message
         except requests.exceptions.HTTPError as http_error:
             raise Exception(http_error)
         except requests.exceptions.ConnectionError as connection_error:
             raise Exception(connection_error)
         except Exception as e:
             raise Exception(e)
-
-    def save(self, picture: Image, message: MessageDTO) -> None:
-        folder_path = Path(MEDIA_ROOT) / "llm_chat/images"
-        if not folder_path.exists():
-            folder_path.mkdir(parents=True, exist_ok=True)
-        random_filename = secrets.token_hex(5) + ".jpg"
-        full_path = folder_path / random_filename
-        message.file_path = "llm_chat/images/" + random_filename
-        picture.save(str(full_path))
-        message.to_entity().save()
-
-    @staticmethod
-    def resize(picture: Image) -> Image:
-        return picture.resize((128, 128))
 
 
 class OpenAITextToSpeechChatService(ChatService):
