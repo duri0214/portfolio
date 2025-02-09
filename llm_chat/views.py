@@ -1,4 +1,5 @@
 import json
+from typing import Generator
 
 from django.contrib.auth.models import User
 from django.http import StreamingHttpResponse, JsonResponse
@@ -7,7 +8,7 @@ from django.views import View
 from django.views.generic import FormView
 from dotenv import load_dotenv
 
-from lib.llm.llm_service import OpenAILlmCompletionStreamingService
+from lib.llm.valueobject.chat import StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.usecase.chat import (
     UseCase,
@@ -96,7 +97,7 @@ class SyncResponseView(View):
 
 
 class StreamingResponseView(View):
-    stored_stream = None
+    stored_stream: Generator[StreamResponse, None, None] = None
 
     @staticmethod
     def post(request, *args, **kwargs):
@@ -122,9 +123,10 @@ class StreamingResponseView(View):
             return JsonResponse({"error": "No stream available"}, status=404)
 
         # ストリームデータをSSE（Server-Sent Events）形式に変換し、StreamingHttpResponseでラップする
+        use_case = OpenAIGptStreamingUseCase()
         response = StreamingHttpResponse(
-            OpenAILlmCompletionStreamingService.streaming_from_generator(
-                generator=StreamingResponseView.stored_stream
+            streaming_content=use_case.convert_to_sse(
+                StreamingResponseView.stored_stream
             ),
             content_type="text/event-stream",
         )
