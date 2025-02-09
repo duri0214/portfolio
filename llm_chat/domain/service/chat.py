@@ -240,16 +240,7 @@ class OpenAIDalleChatService(ChatService):
             response.raise_for_status()
             raw_picture = BytesIO(response.content)
             resized_picture = Image.open(raw_picture).resize((128, 128))
-
-            # 画像の保存 TODO: self.save_picture
-            folder_path = Path(MEDIA_ROOT) / "llm_chat/images"
-            if not folder_path.exists():
-                folder_path.mkdir(parents=True, exist_ok=True)
-            random_filename = secrets.token_hex(5) + ".jpg"
-            full_path = folder_path / random_filename
-            resized_picture.save(str(full_path))
-
-            user_message.file_path = "llm_chat/images/" + random_filename
+            user_message.file_path = self.save_picture(resized_picture)
             return user_message
         except requests.exceptions.HTTPError as http_error:
             raise Exception(http_error)
@@ -257,6 +248,25 @@ class OpenAIDalleChatService(ChatService):
             raise Exception(connection_error)
         except Exception as e:
             raise Exception(e)
+
+    @staticmethod
+    def save_picture(resized_picture) -> str:
+        """
+        画像を保存してファイルパスを返すメソッド
+        """
+        # 保存先フォルダとファイル名を準備
+        folder_path = Path(MEDIA_ROOT) / "llm_chat/images"
+        if not folder_path.exists():
+            folder_path.mkdir(parents=True, exist_ok=True)
+
+        random_filename = secrets.token_hex(5) + ".jpg"
+        full_path = folder_path / random_filename
+
+        # 画像を保存
+        resized_picture.save(str(full_path))
+
+        # 相対パスを返す
+        return f"llm_chat/images/{random_filename}"
 
 
 class OpenAITextToSpeechChatService(ChatService):
@@ -275,17 +285,29 @@ class OpenAITextToSpeechChatService(ChatService):
         response = OpenAILlmTextToSpeech(self.config).retrieve_answer(
             user_message.to_message()
         )
+        user_message.file_path = self.save_audio(response)
+        return user_message
 
-        # 音声の保存 TODO: self.save_audio
+    @staticmethod
+    def save_audio(response) -> str:
+        """
+        音声ファイルを保存してファイルパスを返すメソッド
+        :param response: 音声データのレスポンス
+        :return: 保存した音声ファイルの相対パス
+        """
+        # 保存先のフォルダとファイル名を準備
         folder_path = Path(MEDIA_ROOT) / "llm_chat/audios"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
+
         random_filename = secrets.token_hex(5) + ".mp3"
         full_path = folder_path / random_filename
+
+        # 音声データを保存
         response.write_to_file(str(full_path))
 
-        user_message.file_path = "llm_chat/audios/" + random_filename
-        return user_message
+        # 相対パスを返す
+        return f"llm_chat/audios/{random_filename}"
 
 
 class OpenAISpeechToTextChatService(ChatService):
