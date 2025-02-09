@@ -53,9 +53,10 @@ class SyncResponseView(View):
             if not use_case_type:
                 return JsonResponse({"error": "No use case type provided"}, status=400)
 
-            # 使用するユースケースを切り替え
+            # 使用するユースケースを切り替え TODO: Use-caseのFactoryにしたらよさそう
             use_case: UseCase | None = None
             if use_case_type == "Gemini":
+                # TODO: user_inputでそれぞれのUse-caseを初期化したほうがよさそう
                 use_case = GeminiUseCase()
             elif use_case_type == "OpenAIGpt":
                 use_case = OpenAIGptUseCase()
