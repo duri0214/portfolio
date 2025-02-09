@@ -78,15 +78,14 @@ class SyncResponseView(View):
                 )
 
             # ユースケースの実行
-            result = use_case.execute(user=request.user, content=user_input)
+            message = use_case.execute(user=request.user, content=user_input)
 
             # 成功レスポンスを返す
-            visible_results = [r for r in result if not r.invisible]
             return JsonResponse(
                 {
                     "status": "success",
                     "message": f"{use_case_type} 処理が完了しました",
-                    "result": visible_results[-1].to_dict(),
+                    "result": message.to_dict(),
                 }
             )
 
