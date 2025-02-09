@@ -50,22 +50,23 @@ def get_prompt(gender: Gender) -> str:
     """
 
 
-def create_initial_prompt(user: User, gender: Gender) -> list[MessageDTO]:
-    history = [
+def create_initial_prompt(user_message: MessageDTO, gender: Gender) -> list[MessageDTO]:
+    chat_history = [
         MessageDTO(
-            user=user,
+            user=user_message.user,
             role=RoleType.SYSTEM,
             content=get_prompt(gender),
             invisible=True,
         ),
         MessageDTO(
-            user=user,
+            user=user_message.user,
             role=RoleType.USER,
-            content="なぞなぞスタート",
+            content=f"なぞなぞスタート（{user_message.content}）",
             invisible=False,
         ),
     ]
-    return history
+    ChatLogRepository.bulk_insert(chat_history)
+    return chat_history
 
 
 def get_chat_history(
