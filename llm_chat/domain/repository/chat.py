@@ -14,5 +14,11 @@ class ChatLogRepository:
         return ChatLogs.objects.filter(user=user)
 
     @staticmethod
+    def insert(message: MessageDTO):
+        ChatLogs.objects.create(
+            user=message.user, role=message.role.value, content=message.content
+        )
+
+    @staticmethod
     def bulk_insert(message_list: list[MessageDTO]):
         ChatLogs.objects.bulk_create([x.to_entity() for x in message_list])
