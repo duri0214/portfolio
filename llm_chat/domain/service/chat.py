@@ -209,11 +209,8 @@ class OpenAIChatStreamingService(ChatService):
         self.chat_history = get_chat_history(user_message)
 
         return OpenAILlmCompletionStreamingService(self.config).retrieve_answer(
-            [x.to_message() for x in chat_history]
+            [x.to_message() for x in self.chat_history]
         )
-
-    def save(self, messages: list[MessageDTO]) -> None:
-        self.repository.bulk_insert(messages)
 
 
 class OpenAIDalleChatService(ChatService):
