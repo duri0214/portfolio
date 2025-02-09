@@ -31,7 +31,8 @@
                 </div>
             </div>
         {% endfor %}
-        <div id="output" class="mt-3" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></div>
+        <div id="output" class="mt-3"
+             style="display: none; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></div>
         <form>
             {{ form.question.label }} {{ form.question }}
             <br>
@@ -80,8 +81,15 @@
                 let endpointUrl;
                 if (selectedUseCase === "OpenAIGptStreaming") {
                     endpointUrl = "/llm_chat/streaming/";
+
+                    // Streaming の場合は outputElement を表示
+                    outputElement.style.display = "block";
+                    outputElement.innerText = ""; // 初期化しておく
                 } else {
                     endpointUrl = "/llm_chat/sync/";
+
+                    // 同期処理では outputElement を非表示
+                    outputElement.style.display = "none";
                 }
 
                 // 音声ファイルがある場合には追加
