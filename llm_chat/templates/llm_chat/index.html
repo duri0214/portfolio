@@ -1,7 +1,6 @@
 {% extends 'llm_chat/base.html' %}
 {% load static %}
 {% load split_ext %}
-{% load basename %}
 
 {% block content %}
     <div class="jumbotron">
@@ -12,30 +11,25 @@
     </div>
     <div class="container">
         {% for chat_log in chat_history %}
-            {% if not chat_log.invisible %}
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ chat_log.role }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            file: {% if chat_log.file.name %} {{ chat_log.file.url | basename }} {% else %} No
-                            File {% endif %}
-                        </h6>
-                        <p class="card-text">{{ chat_log.content }}</p>
-                        {% if chat_log.file.name|split_ext == "jpg" %}
-                            <img src="{{ chat_log.file.url }}" class="img-fluid" alt="Responsive image">
-                        {% elif chat_log.file.name|split_ext == "mp3" %}
-                            <audio controls>
-                                <source src="{{ chat_log.file.url }}" type="audio/mpeg">
-                                Your browser does not support the audio element.
-                            </audio>
-                        {% endif %}
-                        <div>
-                            <a href="#" class="card-link">Card link</a>
-                            <a href="#" class="card-link">Another link</a>
-                        </div>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ chat_log.role }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted"> file: {{ chat_log.file_name }}</h6>
+                    <p class="card-text">{{ chat_log.content }}</p>
+                    {% if chat_log.file_name|split_ext == "jpg" %}
+                        <img src="{{ chat_log.file_url }}" class="img-fluid" alt="Responsive image">
+                    {% elif chat_log.file_name|split_ext == "mp3" %}
+                        <audio controls>
+                            <source src="{{ chat_log.file_url }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    {% endif %}
+                    <div>
+                        <a href="#" class="card-link">Card link</a>
+                        <a href="#" class="card-link">Another link</a>
                     </div>
                 </div>
-            {% endif %}
+            </div>
         {% endfor %}
         <form>
             {{ form.question.label }} {{ form.question }}
