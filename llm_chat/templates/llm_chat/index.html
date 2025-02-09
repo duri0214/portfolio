@@ -31,8 +31,12 @@
                 </div>
             </div>
         {% endfor %}
-        <div id="output" class="mt-3"
-             style="display: none; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></div>
+        <div id="streaming-card" class="card mb-3" style="display: none;">
+            <div class="card-body">
+                <h5 class="card-title">（ストリーミング中...）</h5>
+                <p id="output" class="card-text"></p>
+            </div>
+        </div>
         <form>
             {{ form.question.label }} {{ form.question }}
             <br>
@@ -61,6 +65,7 @@
             const audioFileContainer = document.getElementById("audio-file-container");
             const sendButton = document.getElementById("sendButton");
             const userInput = document.getElementById("id_question");
+            const streamingCard = document.getElementById("streaming-card");
             const outputElement = document.getElementById("output");
 
             // 送信ボタンのクリックイベント設定
@@ -82,14 +87,14 @@
                 if (selectedUseCase === "OpenAIGptStreaming") {
                     endpointUrl = "/llm_chat/streaming/";
 
-                    // Streaming の場合は outputElement を表示
-                    outputElement.style.display = "block";
+                    // Streaming の場合は streamingCard を表示
+                    streamingCard.style.display = "block";
                     outputElement.innerText = ""; // 初期化しておく
                 } else {
                     endpointUrl = "/llm_chat/sync/";
 
-                    // 同期処理では outputElement を非表示
-                    outputElement.style.display = "none";
+                    // Sync の場合は streamingCard を非表示
+                    streamingCard.style.display = "none";
                 }
 
                 // 音声ファイルがある場合には追加
