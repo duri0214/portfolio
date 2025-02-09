@@ -298,22 +298,20 @@ class OpenAISpeechToTextChatService(ChatService):
             model="whisper-1",
         )
 
-    def generate(self, message: MessageDTO) -> list[MessageDTO]:
-        if message.file_path is None:
+    def generate(self, assistant_message: MessageDTO) -> MessageDTO:
+        if assistant_message.file_path is None:
             raise Exception("file_path is None")
-        full_path = Path(MEDIA_ROOT) / message.file_path
+        full_path = Path(MEDIA_ROOT) / assistant_message.file_path
         if full_path.exists():
             response = OpenAILlmSpeechToText(self.config).retrieve_answer(
-                file_path=message.file_path
+                file_path=assistant_message.file_path
             )
-            message.content = f"音声ファイルは「{response.text}」とテキスト化されました"
-            self.save(message)
-            return [message]
+            assistant_message.content = (
+                f"音声ファイルは「{response.text}」とテキスト化されました"
+            )
+            return assistant_message
 
-        raise Exception(f"音声ファイル {message.file_path} は存在しません")
-
-    def save(self, message: MessageDTO) -> None:
-        message.to_entity().save()
+        raise Exception(f"音声ファイル {assistant_message.file_path} は存在しません")
 
 
 class OpenAIRagChatService(ChatService):

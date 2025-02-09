@@ -223,6 +223,8 @@ class OpenAISpeechToTextUseCase(UseCase):
             ValueError: ファイルが指定されていない、または型が正しくない場合
             FileNotFoundError: 保存したファイルが確認できない場合
         """
+        super().__init__()
+
         # ファイルを保存する（前準備）
         relative_path = f"llm_chat/audios/{audio_file.name}"
         save_path = Path(MEDIA_ROOT) / relative_path
@@ -242,7 +244,7 @@ class OpenAISpeechToTextUseCase(UseCase):
 
         self.file_path = relative_path
 
-    def execute(self, user: User, content: str):
+    def execute(self, user: User, content: str) -> MessageDTO:
         """
         OpenAISpeechToTextServiceを利用し、ユーザーの最新の音声ファイルをテキストに変換します。
         contentパラメータは必ず 'N/A' であること。
@@ -261,7 +263,7 @@ class OpenAISpeechToTextUseCase(UseCase):
             raise ValueError("content must be 'N/A' for OpenAISpeechToTextUseCase")
 
         chat_service = OpenAISpeechToTextChatService()
-        message = MessageDTO(
+        init_assistant_message = MessageDTO(
             user=user,
             role=RoleType.ASSISTANT,
             content=content,
@@ -269,7 +271,9 @@ class OpenAISpeechToTextUseCase(UseCase):
             invisible=False,
         )
 
-        return chat_service.generate(message)
+        assistant_message = chat_service.generate(init_assistant_message)
+        self.repository.insert(assistant_message)
+        return assistant_message
 
 
 class OpenAIRagUseCase(UseCase):
