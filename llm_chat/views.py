@@ -123,9 +123,8 @@ class StreamingResponseView(View):
             return JsonResponse({"error": "No stream available"}, status=404)
 
         # ストリームデータをSSE（Server-Sent Events）形式に変換し、StreamingHttpResponseでラップする
-        use_case = OpenAIGptStreamingUseCase()
         response = StreamingHttpResponse(
-            streaming_content=use_case.convert_to_sse(
+            streaming_content=OpenAIGptStreamingUseCase.convert_to_sse(
                 StreamingResponseView.stored_stream
             ),
             content_type="text/event-stream",
