@@ -1,5 +1,6 @@
 import os
 from abc import ABC, abstractmethod
+from typing import Generator
 
 import tiktoken
 from google import generativeai
@@ -15,7 +16,7 @@ from openai.types import ImagesResponse
 from openai.types.chat import ChatCompletion
 
 from config.settings import MEDIA_ROOT
-from lib.llm.valueobject.chat import Message
+from lib.llm.valueobject.chat import Message, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader
 
@@ -103,6 +104,113 @@ class OpenAILlmCompletionService(LlmService):
             messages=[x.to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
         )
+
+
+class OpenAILlmCompletionStreamingService(LlmService):
+    def __init__(self, config: OpenAIGptConfig):
+        super().__init__()
+        self.config = config
+
+    def retrieve_answer(
+        self, chat_history: list[Message]
+    ) -> Generator[StreamResponse, None, None]:
+        """
+        OpenAIのストリーミングレスポンスを処理し、応答をジェネレーターとして返します。
+
+        Returns:
+            Generator[StreamResponse, None, None]:
+                - `StreamResponse`はジェネレーターが`yield`するオブジェクト。
+                - `None`（2つ目の型）はジェネレーターに対して値を送り込む型がないことを示します。
+                - `None`（3つ目の型）はこのジェネレーターが停止時に明示的な`return`を行わないことを示します。
+        """
+
+        cut_down_history = cut_down_chat_history(chat_history, self.config)
+        stream = OpenAI(api_key=self.config.api_key).chat.completions.create(
+            model=self.config.model,
+            messages=[x.to_dict() for x in cut_down_history],
+            temperature=self.config.temperature,
+            stream=True,
+        )
+        for chunk in stream:
+            delta_content = chunk.choices[0].delta.content
+            finish_reason = chunk.choices[0].finish_reason
+            yield StreamResponse(content=delta_content, finish_reason=finish_reason)
+
+    def stream_chunks(
+        self, chat_history: list[Message]
+    ) -> Generator[StreamResponse, None, None]:
+        """
+        チャット履歴に基づくストリーミングレスポンスを取得し、正常データおよび例外発生時のエラーメッセージを
+        ストリーミング形式で返します。
+
+        Args:
+            chat_history (list[Message]): チャット履歴
+
+        Yields:
+            StreamResponse:
+                - ストリーミングレスポンスの通常のデータチャンク（正常時）。
+                - 例外発生時には、エラーメッセージを含むレスポンス（`content` にエラー内容を含む）。
+
+        Exceptions:
+            例外はキャッチされ、ストリーミング形式でエラーメッセージとしてレスポンスに含まれます。
+
+        Note:
+            - このメソッドはジェネレーターとして実装されており、データを逐次的に処理および提供します。
+            - 例外が発生した場合でも、ストリーミングの処理は中断されず、適切なエラーメッセージが生成されます。
+            - リアルタイムでのデータ処理が求められるユースケース（例: Webアプリケーション、APIクライアント）で
+              使用することを想定しています。
+
+        See Also:
+            - https://platform.openai.com/docs/api-reference/streaming
+        """
+
+        try:
+            for chunk in self.retrieve_answer(chat_history):
+                yield chunk
+        except Exception as e:
+            yield StreamResponse(content=f"{str(e)}", finish_reason="stop")
+
+    @staticmethod
+    def streaming_from_generator(
+        generator: Generator[StreamResponse, None, None]
+    ) -> Generator[str, None, None]:
+        """
+        サーバー送信イベント形式（Server-Sent Events, SSE）としてジェネレーターからデータをストリームします。
+
+        このメソッドは、`stream_chunks` などで生成されたデータジェネレーターを使用して、SSE形式のレスポンスを生成します。
+        SSE形式では、各データチャンクが `data: ` プレフィックスで送られるため、リアルタイム更新を必要とするWebアプリケーションで
+        使用することができます。
+
+        Args:
+            generator (Generator[StreamResponse, None, None]): チャンクデータを生成するジェネレーター。
+
+        Yields:
+            str: フォーマットされた文字列。各データは `data: チャンク\n\n` の形式。
+
+        Example:
+            以下のようなレスポンスが生成されます:
+            ```
+            data: こんにちは
+
+            data: 天気は晴れです
+
+            ```
+
+        Server-Sent Events (SSE):
+            SSEは、サーバーがクライアントに対してリアルタイムでデータを送信するためのシンプルなプロトコルです。
+            HTTPでストリーミングレスポンスを実装する際に使用され、クライアントが簡単にデータを受信することが出来ます。
+
+            主な特徴:
+            - クライアントはサーバーとの接続を開き、サーバーはそのチャネルを通じてイベントを送信します。
+            - Webブラウザ（JavaScript）では、`EventSource` APIを使用してデータを受信できます。
+
+        References:
+            - SSEに関する詳細: https://developer.mozilla.org/ja/docs/Web/API/Server-sent_events
+            - OpenAIストリーミングAPI: https://platform.openai.com/docs/api-reference/streaming
+        """
+
+        for chunk in generator:
+            yield f"data: {chunk.to_json()}\n\n"
 
 
 class OpenAILlmDalleService(LlmService):
@@ -194,7 +302,7 @@ class OpenAILlmRagService(LlmService):
             metadatas=[x.metadata for x in self.dataloader.data],
         )
         chain = RetrievalQAWithSourcesChain.from_chain_type(
-            llm=ChatOpenAI(temperature=0, model_name=self.config.model),
+            llm=ChatOpenAI(temperature=0, model=self.config.model),
             chain_type="stuff",
             reduce_k_below_max_tokens=True,
             return_source_documents=True,

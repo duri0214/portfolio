@@ -6,6 +6,7 @@ class UserTextForm(forms.Form):
 
     USE_CASE_CHOICES = [
         ("OpenAIGpt", "OpenAI GPT"),
+        ("OpenAIGptStreaming", "OpenAI GPT Streaming"),
         ("Gemini", "Gemini"),
         ("OpenAIDalle", "OpenAI Dall-e"),
         ("OpenAITextToSpeech", "OpenAI Text to Speech"),

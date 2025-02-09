@@ -1,14 +1,18 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Generator
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import UploadedFile
 
 from config.settings import MEDIA_ROOT
-from lib.llm.valueobject.chat import RoleType
+from lib.llm.llm_service import OpenAILlmCompletionStreamingService
+from lib.llm.valueobject.chat import RoleType, StreamResponse
+from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
     GeminiChatService,
     OpenAIChatService,
+    OpenAIChatStreamingService,
     OpenAIDalleChatService,
     OpenAITextToSpeechChatService,
     OpenAISpeechToTextChatService,
@@ -18,13 +22,18 @@ from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
 
 
 class UseCase(ABC):
+    def __init__(self):
+        self.repository = ChatLogRepository()
+
     @abstractmethod
-    def execute(self, user: User, content: str | None):
+    def execute(
+        self, user: User, content: str | None
+    ) -> MessageDTO | Generator[StreamResponse, None, None]:
         pass
 
 
 class GeminiUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         GeminiServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
         contentパラメータはNoneではないこと。
@@ -42,17 +51,19 @@ class GeminiUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for GeminiUseCase")
         chat_service = GeminiChatService()
-        message = MessageDTO(
+        user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message, gender=Gender(GenderType.MAN))
+        assistant_message = chat_service.generate(user_message)
+        self.repository.insert(assistant_message)
+        return assistant_message
 
 
 class OpenAIGptUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         OpenAIGptServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
         contentパラメータはNoneではないこと。
@@ -70,17 +81,85 @@ class OpenAIGptUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIGptUseCase")
         chat_service = OpenAIChatService()
-        message = MessageDTO(
+        user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message, gender=Gender(GenderType.MAN))
+        assistant_message = chat_service.generate(user_message, Gender(GenderType.MAN))
+        self.repository.insert(assistant_message)
+
+        # なぞなぞの終端処理
+        if "本日はなぞなぞにご参加いただき" in assistant_message.content:
+            chat_service.evaluate(login_user=user_message.user)
+
+        return assistant_message
+
+
+class OpenAIGptStreamingUseCase(UseCase):
+    def execute(
+        self, user: User, content: str | None
+    ) -> Generator[StreamResponse, None, None]:
+        """
+        OpenAIChatStreamingServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
+        contentパラメータはNoneではないこと。
+
+        Args:
+            user (User): DjangoのUserモデルのインスタンス
+            content (str | None): ユーザーからの入力テキスト
+
+        Raises:
+            ValueError: contentがNoneの場合
+
+        Returns:
+            テキスト生成の結果
+        """
+        if content is None:
+            raise ValueError("content cannot be None for OpenAIGptStreamingUseCase")
+        chat_service = OpenAIChatStreamingService()
+        user_message = MessageDTO(
+            user=user,
+            role=RoleType.USER,
+            content=content,
+            invisible=False,
+        )
+        return chat_service.generate(user_message)
+
+    def save(self, user: User, content: str) -> None:
+        """
+        ストリーミングの完了後にアシスタントメッセージとしてデータベースに保存するメソッド。
+
+        このメソッドはストリーミング処理終了後に呼び出され、生成されたコンテンツを
+        アシスタント役のメッセージとして加工した上でデータベースに保存します。
+        メッセージにはユーザー情報と生成コンテンツを付加し、
+        OpenAIChatStreamingService の `save` メソッドを使用します。
+
+        Args:
+            user (User): Django の User モデルのインスタンス
+            content (str): ストリーミングで生成されたアシスタントのメッセージコンテンツ
+
+        Returns:
+            None
+        """
+        self.repository.insert(
+            MessageDTO(
+                user=user,
+                role=RoleType.ASSISTANT,
+                content=content,
+                invisible=False,
+            )
+        )
+
+    @staticmethod
+    def convert_to_sse(stored_stream: Generator[StreamResponse, None, None]):
+        return OpenAILlmCompletionStreamingService.streaming_from_generator(
+            generator=stored_stream
+        )
 
 
 class OpenAIDalleUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         OpenAIDalleServiceを利用し、ユーザーからの入力テキスト（content）を基に画像を生成します。
         contentパラメータはNoneではないこと。
@@ -98,17 +177,19 @@ class OpenAIDalleUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIDalleUseCase")
         chat_service = OpenAIDalleChatService()
-        message = MessageDTO(
+        user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message)
+        user_message = chat_service.generate(user_message)
+        self.repository.insert(user_message)
+        return user_message
 
 
 class OpenAITextToSpeechUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         OpenAITextToSpeechServiceを利用し、ユーザーからの入力テキスト（content）を基に音声を生成します。
         contentパラメータはNoneではないこと。
@@ -132,7 +213,9 @@ class OpenAITextToSpeechUseCase(UseCase):
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message)
+        user_message = chat_service.generate(message)
+        self.repository.insert(user_message)
+        return user_message
 
 
 class OpenAISpeechToTextUseCase(UseCase):
@@ -147,6 +230,8 @@ class OpenAISpeechToTextUseCase(UseCase):
             ValueError: ファイルが指定されていない、または型が正しくない場合
             FileNotFoundError: 保存したファイルが確認できない場合
         """
+        super().__init__()
+
         # ファイルを保存する（前準備）
         relative_path = f"llm_chat/audios/{audio_file.name}"
         save_path = Path(MEDIA_ROOT) / relative_path
@@ -166,7 +251,7 @@ class OpenAISpeechToTextUseCase(UseCase):
 
         self.file_path = relative_path
 
-    def execute(self, user: User, content: str):
+    def execute(self, user: User, content: str) -> MessageDTO:
         """
         OpenAISpeechToTextServiceを利用し、ユーザーの最新の音声ファイルをテキストに変換します。
         contentパラメータは必ず 'N/A' であること。
@@ -185,7 +270,7 @@ class OpenAISpeechToTextUseCase(UseCase):
             raise ValueError("content must be 'N/A' for OpenAISpeechToTextUseCase")
 
         chat_service = OpenAISpeechToTextChatService()
-        message = MessageDTO(
+        init_assistant_message = MessageDTO(
             user=user,
             role=RoleType.ASSISTANT,
             content=content,
@@ -193,11 +278,13 @@ class OpenAISpeechToTextUseCase(UseCase):
             invisible=False,
         )
 
-        return chat_service.generate(message)
+        assistant_message = chat_service.generate(init_assistant_message)
+        self.repository.insert(assistant_message)
+        return assistant_message
 
 
 class OpenAIRagUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         RagServiceを利用し、Pdfをソースに。
         contentパラメータは必ずNoneであること。
@@ -215,10 +302,13 @@ class OpenAIRagUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIRagUseCase")
         chat_service = OpenAIRagChatService()
-        message = MessageDTO(
+        user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message)
+        user_message = chat_service.generate(user_message)
+        self.repository.insert(user_message)
+
+        return user_message

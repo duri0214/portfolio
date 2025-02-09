@@ -1,13 +1,20 @@
+import json
+from typing import Generator
+
 from django.contrib.auth.models import User
+from django.http import StreamingHttpResponse, JsonResponse
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import FormView
 from dotenv import load_dotenv
 
+from lib.llm.valueobject.chat import StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.usecase.chat import (
     UseCase,
     GeminiUseCase,
     OpenAIGptUseCase,
+    OpenAIGptStreamingUseCase,
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
     OpenAISpeechToTextUseCase,
@@ -26,44 +33,130 @@ class IndexView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        login_user = User.objects.get(pk=1)  # TODO: request.user.id
-        context["chat_history"] = ChatLogRepository.find_chat_history(
-            login_user
-        ).order_by("created_at")
-
+        chat_history = ChatLogRepository.find_visible_chat_history(
+            user=User.objects.get(pk=1)  # TODO: request.user.id
+        )
+        # JSON フォーマットデータをテンプレートに渡す
+        context["chat_history"] = [log.to_display() for log in chat_history]
         context["is_superuser"] = self.request.user.is_superuser
 
         return context
 
-    def form_valid(self, form):
-        form_data = form.cleaned_data
-        login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
-        use_case_type = form_data["use_case_type"]
-        use_case: UseCase | None = None
-        content: str = form_data["question"]
-        if use_case_type == "Gemini":
-            use_case = GeminiUseCase()
-            content = form_data["question"]
-        elif use_case_type == "OpenAIGpt":
-            # Questionは何を入れてもいい（処理されない）
-            use_case = OpenAIGptUseCase()
-            content = form_data["question"]
-        elif use_case_type == "OpenAIDalle":
-            use_case = OpenAIDalleUseCase()
-            content = form_data["question"]
-        elif use_case_type == "OpenAITextToSpeech":
-            use_case = OpenAITextToSpeechUseCase()
-            content = form_data["question"]
-        elif use_case_type == "OpenAISpeechToText":
-            # Questionは何を入れてもいい（処理されない）
-            audio_file = form_data.get("audio_file")
-            use_case = OpenAISpeechToTextUseCase(audio_file)
-            content = "N/A"
-        elif use_case_type == "OpenAIRag":
-            use_case = OpenAIRagUseCase()
-            content = form_data["question"]
+class SyncResponseView(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        try:
+            use_case_type = request.POST.get("use_case_type")
+            user_input = request.POST.get("user_input")
+            audio_file = request.FILES.get("audio_file")
 
-        use_case.execute(user=login_user, content=content)
+            if not use_case_type:
+                return JsonResponse({"error": "No use case type provided"}, status=400)
 
-        return super().form_valid(form)
+            # 使用するユースケースを切り替え TODO: Use-caseのFactoryにしたらよさそう issue229
+            use_case: UseCase | None = None
+            if use_case_type == "Gemini":
+                # TODO: user_inputでそれぞれのUse-caseを初期化したほうがよさそう issue228
+                use_case = GeminiUseCase()
+            elif use_case_type == "OpenAIGpt":
+                use_case = OpenAIGptUseCase()
+            elif use_case_type == "OpenAIDalle":
+                use_case = OpenAIDalleUseCase()
+            elif use_case_type == "OpenAITextToSpeech":
+                use_case = OpenAITextToSpeechUseCase()
+            elif use_case_type == "OpenAISpeechToText":
+                if not audio_file:
+                    return JsonResponse({"error": "Audio file is required"}, status=400)
+                user_input = "N/A"
+                use_case = OpenAISpeechToTextUseCase(audio_file=audio_file)
+            elif use_case_type == "OpenAIRag":
+                use_case = OpenAIRagUseCase()
+
+            if not use_case:
+                return JsonResponse(
+                    {"error": "Invalid use case type provided"}, status=400
+                )
+
+            # ユースケースの実行
+            message = use_case.execute(user=request.user, content=user_input)
+
+            # 成功レスポンスを返す
+            return JsonResponse(
+                {
+                    "status": "success",
+                    "message": f"{use_case_type} 処理が完了しました",
+                    "result": message.to_display(),
+                }
+            )
+
+        except Exception as e:
+            return JsonResponse(
+                {"error": "An unexpected error occurred", "detail": str(e)}, status=500
+            )
+
+
+class StreamingResponseView(View):
+    stored_stream: Generator[StreamResponse, None, None] = None
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        use_case_type = request.POST.get("use_case_type")
+        user_input = request.POST.get("user_input")
+
+        if use_case_type != "OpenAIGptStreaming":
+            return JsonResponse({"error": "Invalid use case for streaming"}, status=400)
+
+        if not user_input:
+            return JsonResponse({"error": "No input provided"}, status=400)
+
+        use_case = OpenAIGptStreamingUseCase()
+        StreamingResponseView.stored_stream = use_case.execute(
+            user=request.user, content=user_input
+        )
+
+        return JsonResponse({"message": "ストリームが正常に初期化されました"})
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+        if not StreamingResponseView.stored_stream:
+            return JsonResponse({"error": "No stream available"}, status=404)
+
+        # ストリームデータをSSE（Server-Sent Events）形式に変換し、StreamingHttpResponseでラップする
+        response = StreamingHttpResponse(
+            streaming_content=OpenAIGptStreamingUseCase.convert_to_sse(
+                StreamingResponseView.stored_stream
+            ),
+            content_type="text/event-stream",
+        )
+        response["Cache-Control"] = "no-cache"
+
+        return response
+
+
+class StreamResultSaveView(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        """
+        保存処理を行うPOSTリクエストのエンドポイント
+        """
+        try:
+            body = json.loads(request.body)
+            content = body.get("content")
+
+            if not content:
+                return JsonResponse({"error": "Content is required"}, status=400)
+
+            use_case = OpenAIGptStreamingUseCase()
+            use_case.save(user=request.user, content=content)
+
+            # 成功レスポンスを返す
+            return JsonResponse(
+                {"status": "success", "message": "データが保存されました"}
+            )
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        except Exception as e:
+            return JsonResponse(
+                {"error": "Failed to save data", "detail": str(e)}, status=500
+            )

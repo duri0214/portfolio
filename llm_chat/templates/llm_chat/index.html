@@ -1,7 +1,6 @@
 {% extends 'llm_chat/base.html' %}
 {% load static %}
 {% load split_ext %}
-{% load basename %}
 
 {% block content %}
     <div class="jumbotron">
@@ -12,32 +11,33 @@
     </div>
     <div class="container">
         {% for chat_log in chat_history %}
-            {% if not chat_log.invisible %}
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ chat_log.role }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            file: {% if chat_log.file.name %} {{ chat_log.file.url | basename }} {% else %} No
-                            File {% endif %}
-                        </h6>
-                        <p class="card-text">{{ chat_log.content }}</p>
-                        {% if chat_log.file.name|split_ext == "jpg" %}
-                            <img src="{{ chat_log.file.url }}" class="img-fluid" alt="Responsive image">
-                        {% elif chat_log.file.name|split_ext == "mp3" %}
-                            <audio controls>
-                                <source src="{{ chat_log.file.url }}" type="audio/mpeg">
-                                Your browser does not support the audio element.
-                            </audio>
-                        {% endif %}
-                        <div>
-                            <a href="#" class="card-link">Card link</a>
-                            <a href="#" class="card-link">Another link</a>
-                        </div>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ chat_log.role }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted"> file: {{ chat_log.file_name }}</h6>
+                    <p class="card-text">{{ chat_log.content }}</p>
+                    {% if chat_log.file_name|split_ext == "jpg" %}
+                        <img src="{{ chat_log.file_url }}" class="img-fluid" alt="Responsive image">
+                    {% elif chat_log.file_name|split_ext == "mp3" %}
+                        <audio controls>
+                            <source src="{{ chat_log.file_url }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    {% endif %}
+                    <div>
+                        <a href="#" class="card-link">Card link</a>
+                        <a href="#" class="card-link">Another link</a>
                     </div>
                 </div>
-            {% endif %}
+            </div>
         {% endfor %}
-        <form action="{% url 'llm:index' %}" method="POST" enctype="multipart/form-data">
+        <div id="streaming-card" class="card mb-3" style="display: none;">
+            <div class="card-body">
+                <h5 class="card-title">（ストリーミング中...）</h5>
+                <p id="output" class="card-text"></p>
+            </div>
+        </div>
+        <form>
             {{ form.question.label }} {{ form.question }}
             <br>
             {{ form.use_case_type.label }} {{ form.use_case_type }}
@@ -47,24 +47,87 @@
                 {{ form.audio_file }}
             </div>
             <br>
-            {% csrf_token %}
             <div class="d-flex justify-content-end mt-3">
                 {% if is_superuser %}
-                    <input class="btn btn-primary" type="submit" value="送信">
+                    <input id="sendButton" class="btn btn-primary" type="button" value="送信">
                 {% else %}
-                    <input class="btn btn-outline-secondary" type="submit" value="送信" disabled>
+                    <input id="sendButton" class="btn btn-outline-secondary" type="button" value="送信" disabled>
                 {% endif %}
             </div>
         </form>
     </div>
     <script type="text/javascript">
-        // ページロード時にスクロールを一番下まで移動する
-        window.scrollTo(0, document.body.scrollHeight);
-
+        // TODO: templateのjsをextra_jsとして外に出す issue227
         // ドロップダウン選択肢の監視と音声ファイルフォームの表示／非表示
         document.addEventListener("DOMContentLoaded", function () {
             const useCaseType = document.querySelector('select[name="use_case_type"]');
+            const audioFileInput = document.querySelector('input[name="audio_file"]');
             const audioFileContainer = document.getElementById("audio-file-container");
+            const sendButton = document.getElementById("sendButton");
+            const userInput = document.getElementById("id_question");
+            const streamingCard = document.getElementById("streaming-card");
+            const outputElement = document.getElementById("output");
+
+            // 送信ボタンのクリックイベント設定
+            sendButton.addEventListener("click", function () {
+                const userMessage = userInput.value.trim();
+                const selectedUseCase = useCaseType.value;
+
+                if (userMessage === "" && selectedUseCase !== "OpenAISpeechToText") {
+                    alert("メッセージを入力してください。");
+                    return;
+                }
+
+                const requestData = new FormData();
+                requestData.append("use_case_type", selectedUseCase);
+                requestData.append("user_input", userMessage);
+
+                // ユースケースごとのエンドポイントを指定
+                let endpointUrl;
+                if (selectedUseCase === "OpenAIGptStreaming") {
+                    endpointUrl = "/llm_chat/streaming/";
+
+                    // Streaming の場合は streamingCard を表示
+                    streamingCard.style.display = "block";
+                    outputElement.innerText = ""; // 初期化しておく
+                } else {
+                    endpointUrl = "/llm_chat/sync/";
+
+                    // Sync の場合は streamingCard を非表示
+                    streamingCard.style.display = "none";
+                }
+
+                // 音声ファイルがある場合には追加
+                if (selectedUseCase === "OpenAISpeechToText" && audioFileInput.files.length > 0) {
+                    requestData.append("audio_file", audioFileInput.files[0]);
+                }
+
+                // リクエストの送信
+                fetch(endpointUrl, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": Cookies.get("csrftoken"),
+                    },
+                    body: requestData,
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            console.error("リクエスト失敗:", response.status);
+                            return;
+                        }
+                        return response.json();
+                    })
+                    .then((data) => {
+                        // ストリーミングの場合のみストリームの開始
+                        if (selectedUseCase === "OpenAIGptStreaming") {
+                            startStreaming(outputElement);
+                        } else {
+                            outputElement.innerText = "リクエストが成功しました: " + JSON.stringify(data);
+                            location.reload();
+                        }
+                    })
+                    .catch((error) => console.error("送信エラー:", error));
+            });
 
             // ドロップダウン変更時のイベント処理
             useCaseType.addEventListener("change", function () {
@@ -80,6 +143,57 @@
                 audioFileContainer.style.display = "block";
             } else {
                 audioFileContainer.style.display = "none";
+            }
+
+            // Server-Sent Events を開始（ストリームデータを受信）
+            function startStreaming(outputElement) {
+                console.log("Server-Sent Events の接続を開始しました");
+                const eventSource = new EventSource("/llm_chat/streaming/");
+
+                eventSource.onmessage = function (event) {
+                    const parsedData = JSON.parse(event.data);
+                    if (parsedData.finish_reason === "stop") {
+                        eventSource.close();
+                        console.log("Server-Sent Events の接続を終了しました");
+
+                        // 保存処理
+                        saveStreamingData(outputElement.innerText);
+                    }
+
+                    if (parsedData.content != null) {
+                        outputElement.innerText += parsedData.content;
+                    }
+                };
+
+                eventSource.onerror = function (event) {
+                    console.error("SSEエラー:", event);
+                    eventSource.close();
+                };
+            }
+
+            // ストリーム結果の保存
+            function saveStreamingData(content) {
+                fetch("/llm_chat/streaming/result_save/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": Cookies.get("csrftoken"),
+                    },
+                    body: JSON.stringify({content: content}),
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error("データ保存に失敗しました");
+                        }
+                        return response.json();
+                    })
+                    .then((data) => {
+                        console.log("保存成功:", data);
+                        location.reload();
+                    })
+                    .catch((error) => {
+                        console.error("保存エラー:", error);
+                    });
             }
         });
     </script>
