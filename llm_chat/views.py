@@ -33,11 +33,11 @@ class IndexView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        login_user = User.objects.get(pk=1)  # TODO: request.user.id
-        context["chat_history"] = ChatLogRepository.find_chat_history(
-            login_user
-        ).order_by("created_at")
-
+        chat_history = ChatLogRepository.find_visible_chat_history(
+            user=User.objects.get(pk=1)  # TODO: request.user.id
+        )
+        # JSON フォーマットデータをテンプレートに渡す
+        context["chat_history"] = [log.to_display() for log in chat_history]
         context["is_superuser"] = self.request.user.is_superuser
 
         return context
@@ -86,7 +86,7 @@ class SyncResponseView(View):
                 {
                     "status": "success",
                     "message": f"{use_case_type} 処理が完了しました",
-                    "result": message.to_dict(),
+                    "result": message.to_display(),
                 }
             )
 

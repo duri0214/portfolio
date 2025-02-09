@@ -17,14 +17,16 @@ class MessageDTO:
         role (RoleType): メッセージを送信した役割（例: ユーザ、アシスタント、システム）。
         content (str): メッセージの内容。
         invisible (bool): メッセージがユーザーに非表示であるかどうかを示すフラグ。
-        file_path (str, optional): 添付ファイルのパス。デフォルトは None。
+        file_path (str, optional): 添付ファイルのURLパス。デフォルトは None。
+        file_name (str, optional): 添付ファイルの名前。デフォルトは None。
     """
 
     user: User
     role: RoleType
     content: str
     invisible: bool
-    file_path: str = None
+    file_path: str | None = None
+    file_name: str | None = None
 
     def to_message(self) -> Message:
         """
@@ -47,13 +49,16 @@ class MessageDTO:
 
         return chat_log
 
-    def to_dict(self):
+    def to_display(self) -> dict:
+        """
+        このDTOを表示用の辞書に変換します。
+        """
         return {
-            "user": self.user.username,
             "role": self.role.name,
             "content": self.content,
-            "file_path": self.file_path,
-            "invisible": self.invisible,
+            "username": self.user.username,
+            "file_url": self.file_path if self.file_path else "-",
+            "file_name": self.file_name if self.file_name else "-",
         }
 
 
