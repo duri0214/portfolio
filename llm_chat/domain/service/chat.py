@@ -70,9 +70,7 @@ def create_initial_prompt(user_message: MessageDTO, gender: Gender) -> list[Mess
 
 
 def get_chat_history(
-    message: MessageDTO,
-    repository: ChatLogRepository,
-    gender: Gender = None,
+    user_message: MessageDTO, gender: Gender = None
 ) -> list[MessageDTO]:
     """
     チャット履歴を取得し必要に応じて初期プロンプトを追加する関数
@@ -88,55 +86,41 @@ def get_chat_history(
     **特記事項**:
     初期プロンプト挿入は、なぞなぞモードの特別仕様です。このプロンプトには挨拶や、なぞなぞの開始案内が含まれます。
 
-    :param message: 現在処理対象のユーザーからの入力メッセージ (MessageDTO)
-    :param repository: チャット履歴を取得および保存するためのリポジトリ
+    :param user_message: 現在処理対象のユーザーからの入力メッセージ (MessageDTO)
     :param gender: なぞなぞモード用初期プロンプト生成のためのユーザーの性別（オプション）
     :raises Exception: メッセージが `content is None` の場合に例外をスロー
     :return: 過去の履歴や最新のユーザーメッセージを含むチャット履歴 (list[MessageDTO])
     """
 
-    if message.content is None:
+    if user_message.content is None:
         raise Exception("content is None")
 
     chat_history = [
         MessageDTO(
             user=x.user, role=RoleType(x.role), content=x.content, invisible=False
         )
-        for x in repository.find_chat_history(message.user)
+        for x in ChatLogRepository.find_chat_history(user_message.user)
     ]
 
     if not chat_history and gender is not None:
-        chat_history = create_initial_prompt(user=message.user, gender=gender)
-        repository.bulk_insert(chat_history)
-
-    latest_user_message = MessageDTO(
-        user=message.user,
-        role=message.role,
-        content=message.content,
-        invisible=False,
-    )
-    repository.bulk_insert([latest_user_message])
-    chat_history.append(latest_user_message)
+        chat_history = create_initial_prompt(user_message=user_message, gender=gender)
+    else:
+        ChatLogRepository.insert(user_message)
+        chat_history.append(user_message)
 
     return chat_history
 
 
 class ChatService(ABC):
-    def __init__(self):
-        self.repository = ChatLogRepository()
-
     @abstractmethod
     def generate(self, **kwargs):
-        pass
-
-    @abstractmethod
-    def save(self, **kwargs) -> None:
         pass
 
 
 class GeminiChatService(ChatService):
     def __init__(self):
         super().__init__()
+        self.chat_history = []
         self.config = GeminiConfig(
             api_key=os.getenv("GEMINI_API_KEY"),
             temperature=0.5,
@@ -144,30 +128,25 @@ class GeminiChatService(ChatService):
             model="gemini-1.5-flash",
         )
 
-    def generate(self, message: MessageDTO) -> list[MessageDTO]:
-        chat_history = get_chat_history(message, self.repository)
+    def generate(self, user_message: MessageDTO) -> MessageDTO:
+        self.chat_history = get_chat_history(user_message)
 
         response = GeminiLlmCompletionService(self.config).retrieve_answer(
-            [x.to_message() for x in chat_history]
+            [x.to_message() for x in self.chat_history]
         )
 
-        latest_assistant = MessageDTO(
-            user=message.user,
+        return MessageDTO(
+            user=user_message.user,
             role=RoleType.ASSISTANT,
             content=response.text,
             invisible=False,
         )
-        self.save([latest_assistant])
-        chat_history.append(latest_assistant)
-        return chat_history
-
-    def save(self, messages: list[MessageDTO]) -> None:
-        self.repository.bulk_insert(messages)
 
 
 class OpenAIChatService(ChatService):
     def __init__(self):
         super().__init__()
+        self.chat_history = []
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
             temperature=0.5,
@@ -175,51 +154,48 @@ class OpenAIChatService(ChatService):
             model="gpt-4o-mini",
         )
 
-    def generate(self, message: MessageDTO, gender: Gender) -> list[MessageDTO]:
-        chat_history = get_chat_history(message, self.repository, gender)
+    def generate(self, user_message: MessageDTO, gender: Gender) -> MessageDTO:
+        self.chat_history = get_chat_history(user_message, gender)
 
-        answer = OpenAILlmCompletionService(self.config).retrieve_answer(
-            [x.to_message() for x in chat_history]
+        response = OpenAILlmCompletionService(self.config).retrieve_answer(
+            [x.to_message() for x in self.chat_history]
         )
-        latest_assistant_message = MessageDTO(
-            user=message.user,
+        assistant_message = MessageDTO(
+            user=user_message.user,
             role=RoleType.ASSISTANT,
-            content=answer.choices[0].message.content,
+            content=response.choices[0].message.content,
             invisible=False,
         )
-        self.save([latest_assistant_message])
-        chat_history.append(latest_assistant_message)
 
-        if "本日はなぞなぞにご参加いただき" in latest_assistant_message.content:
-            latest_user_message = MessageDTO(
-                user=message.user,
-                role=RoleType.USER,
-                content="評価結果をjsonで出力してください",
-                invisible=True,
-            )
-            self.save([latest_user_message])
-            chat_history.append(latest_user_message)
-            answer = OpenAILlmCompletionService(self.config).retrieve_answer(
-                [x.to_message() for x in chat_history]
-            )
-            latest_assistant = MessageDTO(
-                user=message.user,
-                role=RoleType.ASSISTANT,
-                content=answer.choices[0].message.content,
-                invisible=True,
-            )
-            self.save([latest_assistant])
-            chat_history.append(latest_assistant)
+        return assistant_message
 
-        return chat_history
+    def evaluate(self, login_user: User):
+        invisible_user_message = MessageDTO(
+            user=login_user,
+            role=RoleType.USER,
+            content="評価結果をjsonで出力してください。フォーマットは判定結果例に従うこと",
+            invisible=True,
+        )
+        ChatLogRepository.insert(invisible_user_message)
+        self.chat_history.append(invisible_user_message)
 
-    def save(self, messages: list[MessageDTO]) -> None:
-        self.repository.bulk_insert(messages)
+        response = OpenAILlmCompletionService(self.config).retrieve_answer(
+            [x.to_message() for x in self.chat_history]
+        )
+        invisible_assistant_message = MessageDTO(
+            user=login_user,
+            role=RoleType.ASSISTANT,
+            content=response.choices[0].message.content,
+            invisible=True,
+        )
+        ChatLogRepository.insert(invisible_assistant_message)
+        self.chat_history.append(invisible_user_message)
 
 
 class OpenAIChatStreamingService(ChatService):
     def __init__(self):
         super().__init__()
+        self.chat_history = []
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
             temperature=0.5,
@@ -227,8 +203,10 @@ class OpenAIChatStreamingService(ChatService):
             model="gpt-4o-mini",
         )
 
-    def generate(self, message: MessageDTO) -> Generator[StreamResponse, None, None]:
-        chat_history = get_chat_history(message, self.repository)
+    def generate(
+        self, user_message: MessageDTO
+    ) -> Generator[StreamResponse, None, None]:
+        self.chat_history = get_chat_history(user_message)
 
         return OpenAILlmCompletionStreamingService(self.config).retrieve_answer(
             [x.to_message() for x in chat_history]
