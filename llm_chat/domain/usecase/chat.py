@@ -123,10 +123,9 @@ class OpenAIGptStreamingUseCase(UseCase):
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message)
+        return chat_service.generate(user_message)
 
-    @staticmethod
-    def save(user: User, content: str) -> None:
+    def save(self, user: User, content: str) -> None:
         """
         ストリーミングの完了後にアシスタントメッセージとしてデータベースに保存するメソッド。
 
@@ -142,16 +141,14 @@ class OpenAIGptStreamingUseCase(UseCase):
         Returns:
             None
         """
-        messages = [
+        self.repository.insert(
             MessageDTO(
                 user=user,
                 role=RoleType.ASSISTANT,
                 content=content,
                 invisible=False,
             )
-        ]
-        service = OpenAIChatStreamingService()
-        service.save(messages)
+        )
 
 
 class OpenAIDalleUseCase(UseCase):
