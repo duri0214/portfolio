@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from enum import Enum
 
@@ -57,8 +58,10 @@ class MessageDTO:
             "role": self.role.name,
             "content": self.content,
             "username": self.user.username,
-            "file_url": self.file_path if self.file_path else "-",
-            "file_name": self.file_name if self.file_name else "-",
+            "file_url": self.file_path if self.file_path else None,
+            "file_name": (
+                os.path.basename(self.file_name) if self.file_name else "No File"
+            ),
         }
 
 
