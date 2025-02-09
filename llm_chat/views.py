@@ -57,7 +57,7 @@ class SyncResponseView(View):
             # 使用するユースケースを切り替え TODO: Use-caseのFactoryにしたらよさそう
             use_case: UseCase | None = None
             if use_case_type == "Gemini":
-                # TODO: user_inputでそれぞれのUse-caseを初期化したほうがよさそう
+                # TODO: user_inputでそれぞれのUse-caseを初期化したほうがよさそう issue228
                 use_case = GeminiUseCase()
             elif use_case_type == "OpenAIGpt":
                 use_case = OpenAIGptUseCase()
