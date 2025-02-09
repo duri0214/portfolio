@@ -277,7 +277,7 @@ class OpenAISpeechToTextUseCase(UseCase):
 
 
 class OpenAIRagUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         RagServiceを利用し、Pdfをソースに。
         contentパラメータは必ずNoneであること。
@@ -295,10 +295,13 @@ class OpenAIRagUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIRagUseCase")
         chat_service = OpenAIRagChatService()
-        message = MessageDTO(
+        user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message)
+        user_message = chat_service.generate(user_message)
+        self.repository.insert(user_message)
+
+        return user_message

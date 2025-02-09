@@ -324,23 +324,20 @@ class OpenAIRagChatService(ChatService):
             model="gpt-4o-mini",
         )
 
-    def generate(self, message: MessageDTO) -> list[MessageDTO]:
+    def generate(self, user_message: MessageDTO) -> MessageDTO:
         # Step1: User の質問を保存
-        self.save(message)
+        ChatLogRepository.insert(user_message)
 
         # Step2: langchainからの回答を保存
         file_path = (
             Path(BASE_DIR)
             / "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
         )
-        answer_dict = OpenAILlmRagService(
+        response_dict = OpenAILlmRagService(
             config=self.config,
             dataloader=PdfDataloader(str(file_path)),
-        ).retrieve_answer(message.to_message())
-        message.role = RoleType.ASSISTANT
-        message.content = RetrievalQAWithSourcesChainAnswer(**answer_dict).answer
-        self.save(message)
-        return [message]
+        ).retrieve_answer(user_message.to_message())
 
-    def save(self, message: MessageDTO) -> None:
-        message.to_entity().save()
+        user_message.role = RoleType.ASSISTANT
+        user_message.content = RetrievalQAWithSourcesChainAnswer(**response_dict).answer
+        return user_message
