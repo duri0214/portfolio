@@ -269,24 +269,23 @@ class OpenAITextToSpeechChatService(ChatService):
             model="tts-1",
         )
 
-    def generate(self, message: MessageDTO) -> list[MessageDTO]:
-        if message.content is None:
+    def generate(self, user_message: MessageDTO) -> MessageDTO:
+        if user_message.content is None:
             raise Exception("content is None")
         response = OpenAILlmTextToSpeech(self.config).retrieve_answer(
-            message.to_message()
+            user_message.to_message()
         )
-        self.save(response, message)
-        return [message]
 
-    def save(self, response, message: MessageDTO) -> None:
+        # 音声の保存 TODO: self.save_audio
         folder_path = Path(MEDIA_ROOT) / "llm_chat/audios"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         random_filename = secrets.token_hex(5) + ".mp3"
         full_path = folder_path / random_filename
-        message.file_path = "llm_chat/audios/" + random_filename
         response.write_to_file(str(full_path))
-        message.to_entity().save()
+
+        user_message.file_path = "llm_chat/audios/" + random_filename
+        return user_message
 
 
 class OpenAISpeechToTextChatService(ChatService):

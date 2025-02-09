@@ -182,7 +182,7 @@ class OpenAIDalleUseCase(UseCase):
 
 
 class OpenAITextToSpeechUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         OpenAITextToSpeechServiceを利用し、ユーザーからの入力テキスト（content）を基に音声を生成します。
         contentパラメータはNoneではないこと。
@@ -206,7 +206,9 @@ class OpenAITextToSpeechUseCase(UseCase):
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message)
+        user_message = chat_service.generate(message)
+        self.repository.insert(user_message)
+        return user_message
 
 
 class OpenAISpeechToTextUseCase(UseCase):
