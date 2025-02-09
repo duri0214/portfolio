@@ -22,9 +22,7 @@ from lib.llm.llm_service import (
 from lib.llm.valueobject.chat import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader, RetrievalQAWithSourcesChainAnswer
-from llm_chat.domain.repository.chat import (
-    ChatLogRepository,
-)
+from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.valueobject.chat import MessageDTO, Gender
 
 
