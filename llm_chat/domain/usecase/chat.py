@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Generator
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import UploadedFile
 
 from config.settings import MEDIA_ROOT
-from lib.llm.valueobject.chat import RoleType
+from lib.llm.valueobject.chat import RoleType, StreamResponse
+from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
     GeminiChatService,
     OpenAIChatService,
@@ -19,13 +21,18 @@ from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
 
 
 class UseCase(ABC):
+    def __init__(self):
+        self.repository = ChatLogRepository()
+
     @abstractmethod
-    def execute(self, user: User, content: str | None):
+    def execute(
+        self, user: User, content: str | None
+    ) -> MessageDTO | Generator[StreamResponse, None, None]:
         pass
 
 
 class GeminiUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         GeminiServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
         contentパラメータはNoneではないこと。
@@ -43,17 +50,19 @@ class GeminiUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for GeminiUseCase")
         chat_service = GeminiChatService()
-        message = MessageDTO(
+        user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message)
+        assistant_message = chat_service.generate(user_message)
+        self.repository.insert(assistant_message)
+        return assistant_message
 
 
 class OpenAIGptUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         OpenAIGptServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
         contentパラメータはNoneではないこと。
@@ -71,17 +80,26 @@ class OpenAIGptUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIGptUseCase")
         chat_service = OpenAIChatService()
-        message = MessageDTO(
+        user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message, gender=Gender(GenderType.MAN))
+        assistant_message = chat_service.generate(user_message, Gender(GenderType.MAN))
+        self.repository.insert(assistant_message)
+
+        # なぞなぞの終端処理
+        if "本日はなぞなぞにご参加いただき" in assistant_message.content:
+            chat_service.evaluate(login_user=user_message.user)
+
+        return assistant_message
 
 
 class OpenAIGptStreamingUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(
+        self, user: User, content: str | None
+    ) -> Generator[StreamResponse, None, None]:
         """
         OpenAIChatStreamingServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
         contentパラメータはNoneではないこと。
@@ -99,7 +117,7 @@ class OpenAIGptStreamingUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIGptStreamingUseCase")
         chat_service = OpenAIChatStreamingService()
-        message = MessageDTO(
+        user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
