@@ -152,7 +152,7 @@ class OpenAIGptStreamingUseCase(UseCase):
 
 
 class OpenAIDalleUseCase(UseCase):
-    def execute(self, user: User, content: str | None):
+    def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         OpenAIDalleServiceを利用し、ユーザーからの入力テキスト（content）を基に画像を生成します。
         contentパラメータはNoneではないこと。
@@ -170,13 +170,15 @@ class OpenAIDalleUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIDalleUseCase")
         chat_service = OpenAIDalleChatService()
-        message = MessageDTO(
+        user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        return chat_service.generate(message)
+        user_message = chat_service.generate(user_message)
+        self.repository.insert(user_message)
+        return user_message
 
 
 class OpenAITextToSpeechUseCase(UseCase):
