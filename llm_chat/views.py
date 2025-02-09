@@ -146,7 +146,8 @@ class StreamResultSaveView(View):
             if not content:
                 return JsonResponse({"error": "Content is required"}, status=400)
 
-            OpenAIGptStreamingUseCase.save(user=request.user, content=content)
+            use_case = OpenAIGptStreamingUseCase()
+            use_case.save(user=request.user, content=content)
 
             # 成功レスポンスを返す
             return JsonResponse(
