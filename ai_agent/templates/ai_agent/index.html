@@ -2,12 +2,12 @@
 {% load static %}
 
 {% block content %}
-    <div class="jumbotron">
+    <div class="custom-section bg-light p-5 rounded">
         <h1 class="display-4">Hello, AI Agent!</h1>
         <p class="lead">It's an interesting AI Agent!</p>
         <hr class="my-4">
         <p>Interact with the AI Agent below.</p>
-        <ul>
+        <ul class="list-items">
             <li>
                 <form method="POST" action="{% url 'agt:reset_timeline' %}" style="display: inline;">
                     {% csrf_token %}
