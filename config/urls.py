@@ -17,10 +17,13 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.auth.views import LogoutView
 from django.urls import include, path
 
+from vietnam_research.views import CustomLoginView
+
 urlpatterns = [
-                  path("", include("home.urls")),
+    path("", include("home.urls")),
     path("vietnam_research/", include("vietnam_research.urls")),
     path("gmarker/", include("gmarker.urls")),
     path("shopping/", include("shopping.urls")),
@@ -34,5 +37,6 @@ urlpatterns = [
     path("ai_agent/", include("ai_agent.urls")),
     path("jp_stocks/", include("jp_stocks.urls")),
     path("admin/", admin.site.urls),
-    path("accounts/", include("django.contrib.auth.urls")),
+    path("accounts/login/", CustomLoginView.as_view(), name="login"),
+    path("accounts/logout/", LogoutView.as_view(), name="logout"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

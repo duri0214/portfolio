@@ -1,13 +1,21 @@
 import json
 import logging
 
+from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
 from django.db.models import Count, Sum
 from django.http.response import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, ListView, UpdateView, TemplateView
+from django.views.generic import (
+    CreateView,
+    ListView,
+    UpdateView,
+    TemplateView,
+    RedirectView,
+)
 
 from vietnam_research.domain.dataprovider.market import VietnamMarketDataProvider
 from vietnam_research.domain.repository.like import LikeRepository
@@ -23,12 +31,25 @@ from vietnam_research.forms import (
     WatchlistCreateForm,
     ExchangeForm,
     FinancialResultsForm,
+    CustomAuthenticationForm,
 )
 from vietnam_research.models import (
     Watchlist,
     Articles,
     FinancialResultWatch,
 )
+
+
+class CustomLoginView(LoginView):
+    authentication_form = CustomAuthenticationForm
+
+
+class CustomLogoutView(RedirectView):
+    url = reverse_lazy("index")
+
+    def get(self, request, *args, **kwargs):
+        logout(request)
+        return super().get(request, *args, **kwargs)
 
 
 class IndexView(TemplateView):

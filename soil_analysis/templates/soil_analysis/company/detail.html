@@ -1,7 +1,7 @@
 {% extends 'soil_analysis/base.html' %}
 {% load static %}
 
-{% block extra_header %}
+{% block content %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -9,9 +9,6 @@
             <li class="breadcrumb-item active" aria-current="page">Detail</li>
         </ol>
     </nav>
-{% endblock %}
-
-{% block content %}
     <div class="container">
         <h1>会社の詳細</h1>
         {% if object.image %}

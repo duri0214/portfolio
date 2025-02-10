@@ -39,7 +39,7 @@
 </head>
 <body>
 <h1></h1>
-<header id="breadcrumbs">
+<header>
     <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid px-3">
             <a class="navbar-brand" href="{% url 'home:index' %}">Henojiya</a>
@@ -103,11 +103,9 @@
             </div>
         </div>
     </nav>
-
-    {% block extra_header %}{% endblock %}
 </header>
 
-<div id="main" style="margin-top: 53px;"> {# ナビバーの高さ #}
+<div id="main" style="margin-top: 70px;"> {# ナビバーの高さ #}
     {% block content %}{% endblock %}
 </div>
 <footer class="footer">

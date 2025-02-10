@@ -1,14 +1,12 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
-{% block extra_header %}
+{% block content %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
             <li class="breadcrumb-item active" aria-current="page">Upload hardness</li>
         </ol>
     </nav>
-{% endblock %}
-{% block content %}
     <h1>土壌硬度データのアップロード</h1>
     <p>取り込みCSV フォルダをzip化してアップロードしてください</p>
     <form method="post" enctype="multipart/form-data">

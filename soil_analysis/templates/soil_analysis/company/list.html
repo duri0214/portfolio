@@ -1,15 +1,13 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 
-{% block extra_header %}
+{% block content %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
             <li class="breadcrumb-item active" aria-current="page">Company list</li>
         </ol>
     </nav>
-{% endblock %}
-{% block content %}
     <a class="btn btn-outline-primary mb-3" href="{% url 'soil:company_create' %}"
        role="button">＋農業法人の追加</a>
     {% for a_company in object_list %}
