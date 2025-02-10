@@ -2,12 +2,12 @@
 {% load static %}
 {% load humanize %}
 {% block content %}
-    <div class="jumbotron">
+    <div class="custom-section bg-light p-5 rounded">
         <h1 class="display-4">Let's analyze Vietnam!</h1>
         <p class="lead">it's interesting Vietnam</p>
         <hr class="my-4">
         <p>You can calculate the exchange</p>
-        <ul>
+        <ul class="list-items">
             <li><a class="btn btn-secondary btn-sm" href="#fao-stat-food-balance-trend" role="button">FAO STAT
                 food balance trend</a></li>
             <li><a class="btn btn-secondary btn-sm" href="#vietkabu-topics" role="button">vietkabu TOPICS</a></li>
@@ -96,7 +96,7 @@
             </div>
         </div>
     </div>
-    <div id="fao-stat-food-balance-trend" class="jumbotron">
+    <div id="fao-stat-food-balance-trend" class="custom-section bg-light p-5 rounded">
         <h2 class="display-4">FAOSTAT FoodBalanceRanker Trend</h2>
         <p><a href="https://www.fao.org/faostat/en/#data/FBS/visualize" target="_blank">Food Balances (2010-)</a>
             から水産物供給量の推移 を使って推移グラフを作る</p>
@@ -227,7 +227,7 @@
                     a.href = `https://www.viet-kabu.com/${mkt}/${symbol}.html`;
                     a.target = "_blank";
                     p = document.createElement('p');
-                    p.className = 'badge badge-secondary';
+                    p.className = 'badge bg-secondary';
                     p.textContent = `${symbol}: ${price_latest}（${price_delta_sign}${price_delta}）`;
                     li = document.createElement("li");
                     li.className = 'uptrend';
