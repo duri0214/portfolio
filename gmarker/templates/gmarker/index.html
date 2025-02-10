@@ -2,12 +2,12 @@
 {% load static %}
 
 {% block content %}
-    <div class="jumbotron">
+    <div class="custom-section bg-light p-5 rounded">
         <h1 class="display-4">Let's analyze Google Map</h1>
         <p class="lead">it's interesting Google map</p>
         <hr class="my-4">
         <p>My拠点を中心に半径1500mの Category のピンが表示される</p>
-        <ul>
+        <ul class="list-items">
             <li><a class="btn btn-secondary btn-sm" href="{% url 'mrk:coordinate_create' %}"
                    role="button">中心座標の編集</a></li>
             <li>
