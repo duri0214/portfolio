@@ -1,5 +1,5 @@
-body {
-    padding-top: 48px;
+.custom-section {
+    margin-top: 53px; /* Bootstrapデフォルトのナビバーの高さ */
 }
 
 .footer {

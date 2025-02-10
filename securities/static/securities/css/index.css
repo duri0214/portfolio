@@ -1,5 +1,19 @@
-.jumbotron li {
-    display: inline-block;
+.custom-section {
+    margin-top: 53px; /* Bootstrapデフォルトのナビバーの高さ */
+}
+
+.custom-section ul {
+    padding: 0;
+    margin: 0;
     list-style-type: none;
+}
+
+.custom-section ul li {
+    display: inline-block; /* アイテムを横並びにする */
     padding-top: 4px;
+    margin-right: 8px; /* 適切なスペースを追加 */
+}
+
+.custom-section ul li button {
+    margin-right: 4px; /* ボタン同士の間隔調整 */
 }
