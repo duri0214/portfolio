@@ -2,11 +2,8 @@ import os
 
 from jira import JIRA, JIRAError
 
-from vietnam_research.domain.valueobject.jira import (
-    EmailAddress,
-    Project,
-    Issue,
-)
+from lib.jira.valueobject.auth import EmailAddress
+from lib.jira.valueobject.ticket import Project, Issue
 
 JIRA_SERVER = "https://henojiya.atlassian.net"
 
