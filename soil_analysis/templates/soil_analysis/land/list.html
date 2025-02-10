@@ -5,7 +5,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'soil_analysis/css/land/list.css' %}">
 {% endblock %}
-{% block extra_header %}
+{% block content %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -13,8 +13,6 @@
             <li class="breadcrumb-item active" aria-current="page">Land list</li>
         </ol>
     </nav>
-{% endblock %}
-{% block content %}
     <a class="btn btn-outline-primary mb-3" href="{% url 'soil:land_create' company.id %}"
        role="button">＋圃場の追加</a>
     {% for a_land in object_list %}

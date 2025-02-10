@@ -1,6 +1,6 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
-{% block extra_header %}
+{% block content %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -9,8 +9,6 @@
             <li class="breadcrumb-item active" aria-current="page">Association</li>
         </ol>
     </nav>
-{% endblock %}
-{% block content %}
     <h1>データの関連付け</h1>
     <form method="post" action="{% url 'soil:hardness_association' %}" enctype="multipart/form-data">
         {% csrf_token %}

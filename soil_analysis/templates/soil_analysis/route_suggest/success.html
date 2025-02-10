@@ -10,7 +10,7 @@
         <script>let coordsList = {{ coords_list }};</script>
     {% endautoescape %}
 {% endblock %}
-{% block extra_header %}
+{% block content %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -19,8 +19,6 @@
             <li class="breadcrumb-item active" aria-current="page">Success</li>
         </ol>
     </nav>
-{% endblock %}
-{% block content %}
     <h1>作業指示書</h1>
     <p>TODO: placeオブジェクトにラップして、マウスオーバー時に圃場の名前を表示する<br>TODO: ピンと圃場名が違うかもしれない<br>TODO:
         印刷用の余白ゼロのページを作る</p>

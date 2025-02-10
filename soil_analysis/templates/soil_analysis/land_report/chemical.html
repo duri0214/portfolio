@@ -3,7 +3,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'soil_analysis/css/landreport/chemical.css' %}">
 {% endblock %}
-{% block extra_header %}
+{% block content %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -11,8 +11,6 @@
             <li class="breadcrumb-item active" aria-current="page">Land report chemical</li>
         </ol>
     </nav>
-{% endblock %}
-{% block content %}
     <div class="row mb-4">
         <div class="col-sm-6">
             <img src="data:image/png;base64,{{ charts.chart1 | safe }}" alt="窒素関連">

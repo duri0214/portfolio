@@ -17,7 +17,7 @@
 
 {% endblock %}
 
-{% block extra_header %}
+{% block content %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -25,8 +25,6 @@
             <li class="breadcrumb-item active" aria-current="page">Ordering</li>
         </ol>
     </nav>
-{% endblock %}
-{% block content %}
     <h1>並べ替えしましょう</h1>
     <p>一番上が始点、一番下が終点。はさまれている地点が最適化されます</p>
     <ul id="sortable-list">
