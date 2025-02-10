@@ -6,6 +6,7 @@
             <div class="card-body">
                 <h4 class="card-title text-center mb-4">ログイン</h4>
                 <form action="{% url 'login' %}" method="POST">
+                    {% csrf_token %}
                     {{ form.non_field_errors }}
                     {% for field in form %}
                         <div class="form-group">
@@ -15,8 +16,6 @@
                         </div>
                     {% endfor %}
                     <button type="submit" class="btn btn-success btn-lg btn-block mt-3">ログイン</button>
-                    <input type="hidden" name="next" value="{{ next }}">
-                    {% csrf_token %}
                 </form>
             </div>
         </div>
