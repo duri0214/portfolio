@@ -1,5 +1,5 @@
-#main {
-    margin-top: 53px; /* Bootstrapデフォルトのナビバーの高さ */
+#breadcrumbs {
+    margin-top: 75px; /* Bootstrapデフォルトのナビバーの高さ */
 }
 
 .custom-section ul {
