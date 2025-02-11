@@ -83,5 +83,3 @@ if __name__ == "__main__":
         print("process done")
     except requests.exceptions.HTTPError as http_err:
         print(f"[HTTP Error] {http_err}")
-    except Exception as e:
-        print(f"Error: {e}")
