@@ -4,7 +4,12 @@ import requests
 from requests import HTTPError
 from requests.auth import HTTPBasicAuth
 
-from lib.jira.valueobject.ticket import ProjectVO, IssueVO, SubTaskVO
+from lib.jira.valueobject.ticket import (
+    ProjectVO,
+    IssueVO,
+    SubTaskVO,
+    # CreateIssuePayload,
+)
 
 
 class JiraService:
@@ -212,6 +217,33 @@ class JiraService:
 
         return " ".join(description_text)
 
+    # def create_issue(self, payload: CreateIssuePayload):
+    #     """
+    #     JIRAチケットを作成する
+    #
+    #     Args:
+    #         payload (CreateIssuePayload): ペイロードデータを表すValue Object
+    #
+    #     Returns:
+    #         dict: 作成されたチケットの詳細
+    #     """
+    #     url = f"{self.base_url}/rest/api/3/issue"
+    #
+    #     # POSTリクエストを送信
+    #     response = requests.post(
+    #         url,
+    #         data=json.dumps(payload.to_dict()),
+    #         headers=self.headers,
+    #         auth=self.auth,
+    #     )
+    #
+    #     if response.status_code != 201:  # 201は「作成成功」を表す
+    #         raise HTTPError(
+    #             f"Failed to create issue: {response.status_code} {response.text}"
+    #         )
+    #
+    #     return response.json()  # 作成されたチケットのJSONレスポンスを返す
+
 
 if __name__ == "__main__":
     # API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about
@@ -236,3 +268,24 @@ if __name__ == "__main__":
         print("process done")
     except requests.exceptions.HTTPError as http_err:
         print(f"[HTTP Error] {http_err}")
+
+    # # TODO: チケットを作成する機能を作る　https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
+    # payload_xxx = CreateIssuePayload(
+    #     description_text="Order entry fails when selecting supplier.",
+    #     issue_type_id="10000",
+    #     labels=["bugfix"],
+    #     parent_key="HEN",
+    #     priority_id="20000",
+    #     project_id="10000",
+    #     reporter_id="5b10a2844c20165700ede21g",
+    #     summary="Main order flow broken",
+    # )
+    # # チケットを作成
+    # try:
+    #     result = jira_service.create_issue(payload_xxx)
+    #     print("チケットが作成されました:", result)
+    # except HTTPError as e:
+    #     print("エラーが発生しました:", str(e))
+    #
+    # # TODO: チケットを削除する
+    # # TODO: チケットを編集する

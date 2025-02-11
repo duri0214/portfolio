@@ -55,3 +55,81 @@ class IssueVO:
     assignee: str
     status: str
     sub_tasks: list[SubTaskVO]
+
+
+class CreateIssuePayload:
+    def __init__(
+        self,
+        description_text: str,
+        issue_type_id: str,
+        labels: list,
+        parent_key: str,
+        priority_id: str,
+        project_id: str,
+        reporter_id: str,
+        summary: str,
+    ):
+        """
+        チケット作成ペイロードデータのValue Object
+
+        Args:
+            description_text (str): チケットの説明文
+            issue_type_id (str): イシュ―タイプのID
+            labels (list): ラベル一覧
+            parent_key (str): 親チケットのキー
+            priority_id (str): 優先度のID
+            project_id (str): プロジェクトのID
+            reporter_id (str): 報告者のID
+            summary (str): チケットの概要
+        """
+        self.description_text = description_text
+        self.issue_type_id = issue_type_id
+        self.labels = labels
+        self.parent_key = parent_key
+        self.priority_id = priority_id
+        self.project_id = project_id
+        self.reporter_id = reporter_id
+        self.summary = summary
+
+    def to_dict(self) -> dict:
+        """
+        ペイロードをJira API形式の辞書データに変換
+
+        Returns:
+            dict: Jira用のペイロードデータ
+        """
+        return {
+            "fields": {
+                "description": self._format_description(),
+                "issuetype": {"id": self.issue_type_id},
+                "labels": self.labels,
+                "parent": {"key": self.parent_key},
+                "priority": {"id": self.priority_id},
+                "project": {"id": self.project_id},
+                "reporter": {"id": self.reporter_id},
+                "summary": self.summary,
+            }
+        }
+
+    def _format_description(self) -> dict:
+        """
+        descriptionフィールドをJira標準のリッチテキスト形式に変換
+
+        Returns:
+            dict: リッチテキスト形式のdescriptionフィールド
+        """
+        return {
+            "type": "doc",
+            "version": 1,
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": self.description_text,
+                        }
+                    ],
+                }
+            ],
+        }
