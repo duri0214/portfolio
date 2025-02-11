@@ -1,97 +1,149 @@
 import unittest
 from unittest.mock import patch, Mock
 
-from requests.exceptions import HTTPError
-
-from jira_service import JiraService
+from jira_service import JiraService, IssueVO
 
 
-class TestJiraService(unittest.TestCase):
+class TestJiraServiceFetchIssues(unittest.TestCase):
+    """
+    Unit tests for the fetch_issues method of JiraService.
+    """
+
     def setUp(self):
         """
-        Set up common test data for JiraService.
+        Common setup for the tests.
         """
         self.service = JiraService(
             domain="test-domain", email="test@example.com", api_token="test-token"
         )
 
     @patch("requests.get")
-    def test_fetch_all_projects_success(self, mock_get):
+    def test_fetch_issues_with_assignee(self, mock_get):
         """
-        Test fetch_all_projects with a successful response.
+        Test fetch_issues when issues have an assigned assignee.
         """
-        # Mock the API response for each page
-        mock_response_1 = Mock()
-        mock_response_1.json.return_value = {
-            "values": [
-                {"key": "TEST1", "name": "Test Project 1"},
-                {"key": "TEST2", "name": "Test Project 2"},
-            ],
-            "isLast": False,
-            "nextPage": "https://test-domain.atlassian.net/rest/api/3/project/search?page=2",
+        # Mock API response
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "issues": [
+                {
+                    "key": "HEN-1",
+                    "fields": {
+                        "summary": "Test Issue 1",
+                        "description": None,
+                        "assignee": {"displayName": "John Doe"},
+                        "priority": {"name": "High"},
+                        "status": {"name": "To Do"},
+                        "subtasks": [],
+                    },
+                }
+            ]
         }
-        mock_response_1.status_code = 200
-        mock_response_1.raise_for_status = Mock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
 
-        mock_response_2 = Mock()
-        mock_response_2.json.return_value = {
-            "values": [
-                {"key": "TEST3", "name": "Test Project 3"},
-            ],
-            "isLast": True,
-        }
-        mock_response_2.status_code = 200
-        mock_response_2.raise_for_status = Mock()
-
-        # Sequence of responses
-        mock_get.side_effect = [mock_response_1, mock_response_2]
-
-        # Execute the method
-        result = self.service.fetch_all_projects()
+        # Execute
+        issues = self.service.fetch_issues("HEN")
 
         # Assertions
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0].key, "TEST1")
-        self.assertEqual(result[1].name, "Test Project 2")
-        self.assertEqual(result[2].key, "TEST3")
-        mock_get.assert_called()
+        self.assertEqual(len(issues["HEN"]), 1)
+        issue = issues["HEN"][0]
+        self.assertIsInstance(issue, IssueVO)
+        self.assertEqual(issue.assignee, "John Doe")
+        self.assertEqual(issue.name, "Test Issue 1")
+        self.assertEqual(issue.description, "No description")  # Default description
+        self.assertEqual(issue.priority, "High")
+        self.assertEqual(issue.status, "To Do")
 
     @patch("requests.get")
-    def test_fetch_all_projects_auth_error(self, mock_get):
+    def test_fetch_issues_without_assignee(self, mock_get):
         """
-        Test fetch_all_projects handling of 401 Unauthorized.
+        Test fetch_issues when issues do not have an assignee (assignee is None).
         """
-        # Mock a 401 Unauthorized response
+        # Mock API response
         mock_response = Mock()
-        mock_response.raise_for_status.side_effect = HTTPError(
-            "401 Client Error: Unauthorized"
-        )
-        mock_response.status_code = 401
+        mock_response.json.return_value = {
+            "issues": [
+                {
+                    "key": "HEN-2",
+                    "fields": {
+                        "summary": "Test Issue 2",
+                        "description": None,
+                        "assignee": None,  # 'assignee' is explicitly None
+                        "priority": {"name": "Medium"},
+                        "status": {"name": "In Progress"},
+                        "subtasks": [],
+                    },
+                }
+            ]
+        }
+        mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        # Assert that the exception is raised
-        with self.assertRaises(HTTPError) as context:
-            self.service.fetch_all_projects()
+        # Execute
+        issues = self.service.fetch_issues("HEN")
 
-        self.assertIn("401 Client Error", str(context.exception))
-        mock_get.assert_called_once()
+        # Assertions
+        self.assertEqual(len(issues["HEN"]), 1)
+        issue = issues["HEN"][0]
+        self.assertIsInstance(issue, IssueVO)
+        self.assertIsNone(issue.assignee)  # Assignee should be None
+        self.assertEqual(issue.name, "Test Issue 2")
+        self.assertEqual(issue.description, "No description")  # Default description
+        self.assertEqual(issue.priority, "Medium")
+        self.assertEqual(issue.status, "In Progress")
 
     @patch("requests.get")
-    def test_fetch_all_projects_not_found(self, mock_get):
+    def test_fetch_issues_with_multiple_issues(self, mock_get):
         """
-        Test fetch_all_projects handling of 404 Not Found.
+        Test fetch_issues when multiple issues are returned.
         """
-        # Mock a 404 Not Found response
+        # Mock API response
         mock_response = Mock()
-        mock_response.raise_for_status.side_effect = HTTPError(
-            "404 Client Error: Not Found"
-        )
-        mock_response.status_code = 404
+        mock_response.json.return_value = {
+            "issues": [
+                {
+                    "key": "HEN-3",
+                    "fields": {
+                        "summary": "Issue 1",
+                        "assignee": {"displayName": "Jane Smith"},
+                        "priority": {"name": "Low"},
+                        "status": {"name": "In Progress"},
+                        "subtasks": [],
+                    },
+                },
+                {
+                    "key": "HEN-4",
+                    "fields": {
+                        "summary": "Issue 2",
+                        "assignee": None,
+                        "priority": {"name": "High"},
+                        "status": {"name": "To Do"},
+                        "subtasks": [],
+                    },
+                },
+            ]
+        }
+        mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        # Assert that the exception is raised
-        with self.assertRaises(HTTPError) as context:
-            self.service.fetch_all_projects()
+        # Execute
+        issues = self.service.fetch_issues("HEN")
 
-        self.assertIn("404 Client Error", str(context.exception))
-        mock_get.assert_called_once()
+        # Assertions
+        self.assertEqual(len(issues["HEN"]), 2)
+
+        # Issue 1
+        issue1 = issues["HEN"][0]
+        self.assertEqual(issue1.assignee, "Jane Smith")
+        self.assertEqual(issue1.priority, "Low")
+        self.assertEqual(issue1.status, "In Progress")
+
+        # Issue 2
+        issue2 = issues["HEN"][1]
+        self.assertIsNone(issue2.assignee)  # Assignee is None
+        self.assertEqual(issue2.priority, "High")
+        self.assertEqual(issue2.status, "To Do")
