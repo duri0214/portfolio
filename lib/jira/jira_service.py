@@ -1,48 +1,73 @@
 import os
 
-from jira import JIRA, JIRAError
+import requests
+from requests.auth import HTTPBasicAuth
 
-from lib.jira.valueobject.auth import EmailAddress
-from lib.jira.valueobject.ticket import Project, Issue
+from lib.jira.valueobject.ticket import ProjectVO
 
-JIRA_SERVER = "https://henojiya.atlassian.net"
-
-
-def get_all_projects(mail: EmailAddress) -> list[Project]:
-    jira_token = os.environ.get("JIRA_API_KEY")
-    jira_instance = JIRA(JIRA_SERVER, basic_auth=(mail.email, jira_token))
-
-    return [Project(x.key, x.name) for x in jira_instance.projects()]
+YOUR_DOMAIN = "henojiya"
 
 
-def get_all_issues(mail: EmailAddress) -> list[Issue]:
-    jira_token = os.environ.get("JIRA_API_KEY")
-    jira_instance = JIRA(JIRA_SERVER, basic_auth=(mail.email, jira_token))
+def fetch_all_projects(base_url: str, email: str, api_token: str) -> list[ProjectVO]:
+    """
+    Fetch all projects from the JIRA API using `isLast` for termination.
 
-    temp = jira_instance.search_issues("project=HEN", maxResults=False)
-    return [Issue(x.key, x.fields.summary, x.fields.description) for x in temp]
+    Args:
+        base_url (str): The base URL of the JIRA instance.
+        email (str): The email address for authentication.
+        api_token (str): The API token for authentication.
 
+    Returns:
+        List[ProjectVO]: A list of ProjectVOs containing key and name.
+    """
+    url = f"{base_url}/rest/api/3/project/search"
+    auth = HTTPBasicAuth(email, api_token)
+    headers = {"Accept": "application/json"}
 
-# TODO: チケットを作成する機能を作る
-def retrieve_specific_issue(issue_key: str, mail: EmailAddress) -> Issue:
-    jira_token = os.environ.get("JIRA_API_KEY")
-    jira_instance = JIRA(JIRA_SERVER, basic_auth=(mail.email, jira_token))
+    all_projects = []
 
-    try:
-        temp = jira_instance.issue(issue_key)
-        return Issue(temp.key, temp.fields.summary, temp.fields.description)
-    except JIRAError as e:
-        raise ValueError(e.text)
+    while url:
+        response = requests.get(url, headers=headers, auth=auth)
+
+        if response.status_code != 200:
+            raise Exception(
+                f"Failed to fetch projects: {response.status_code} {response.text}"
+            )
+
+        # Parse the response JSON
+        data = response.json()
+
+        # Extract the necessary fields from each project in the 'values'
+        for project in data.get("values", []):
+            all_projects.append(
+                ProjectVO(
+                    key=project.get("key", "invalid key"),
+                    name=project.get("name", "invalid name"),
+                )
+            )
+
+        # 終了判定として `isLast` を使用
+        if data.get("isLast", False):
+            break
+
+        # 次の URL を更新
+        url = data.get("nextPage", None)
+
+    return all_projects
 
 
 if __name__ == "__main__":
-    email = EmailAddress(os.environ.get("EMAIL_HOST_USER"))
-    project_list = get_all_projects(email)
-    for project in project_list:
-        print(project)
+    # API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about
+    # TODO: なんか消してあるissueも表示されるから、削除状態を知りたい
+    # TODO: チケットを作成する機能を作る
 
-    issue_list = get_all_issues(email)
-    print(issue_list)
-
-    retrieve_the_issue = retrieve_specific_issue("HEN-1", email)
-    print(retrieve_the_issue)
+    try:
+        project_list = fetch_all_projects(
+            base_url=f"https://{YOUR_DOMAIN}.atlassian.net",
+            email=os.environ.get("EMAIL_HOST_USER"),
+            api_token=os.environ.get("JIRA_API_KEY"),
+        )
+        print(project_list)
+        print("process done")
+    except Exception as e:
+        print(f"Error: {e}")
