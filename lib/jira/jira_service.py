@@ -100,40 +100,64 @@ class JiraService:
             for issue in data.get("issues", []):
                 issue_key = issue.get("key", "unknown")
                 fields = issue.get("fields", {})
+                issue_key = issue.get("key", "No issue key")
 
-                # Parse description field, handling structured "content" format
-                issue_description = "No description"
-                raw_description = fields.get("description")
-                if isinstance(raw_description, dict) and raw_description.get("content"):
+                # Check if the current issue is a regular issue or a subtask
+                is_subtask = fields.get("issuetype", {}).get("subtask", False)
+                issue_summary = fields.get("summary", "No summary")
+                issue_status = fields.get("status", {}).get("name", "No status")
+                issue_priority = fields.get("priority", {}).get("name", "No priority")
+
+                # Parse assignee
+                assignee = fields.get("assignee", "Unassigned")
+                if assignee:
+                    issue_assignee = assignee.get("displayName")
+
+                # Parse description
+                description = fields.get("description")
+                if description:
                     issue_description = self._parse_content_field(
-                        raw_description.get("content")
+                        description.get("content")
                     )
 
-                # Process sub-tasks
-                sub_tasks = []
-                for sub_task in issue.get("fields", {}).get("sub-tasks", []):
-                    sub_task_key = sub_task.get("outwardIssue", {}).get(
-                        "key", "unknown"
-                    )
-                    sub_task_status = (
-                        sub_task.get("outwardIssue", {})
-                        .get("fields", {})
-                        .get("status", {})
-                        .get("name", "unknown")
-                    )
-                    sub_tasks.append(
-                        SubTaskVO(key=sub_task_key, status=sub_task_status)
+                # If it's not a subtask, process as a regular issue (IssueVO)
+                if not is_subtask:
+                    sub_tasks = []
+                    for sub_task in fields.get("subtasks", []):
+                        sub_task_key = sub_task.get("key", "unknown")
+                        sub_task_status = (
+                            sub_task.get("fields", {})
+                            .get("status", {})
+                            .get("name", "unknown")
+                        )
+                        sub_task_priority = (
+                            sub_task.get("fields", {})
+                            .get("priority", {})
+                            .get("name", "UNKNOWN")
+                        )
+                        sub_tasks.append(
+                            SubTaskVO(
+                                key=sub_task_key,
+                                name="XXXX",
+                                status=sub_task_status,
+                                priority=sub_task_priority,
+                            )
+                        )
+
+                    issue_obj = IssueVO(
+                        key=issue_key,
+                        summary=issue_summary,
+                        description=issue_description,
+                        priority=issue_priority,
+                        assignee=issue_assignee,
+                        status=issue_status,
+                        sub_tasks=sub_tasks,
                     )
 
-                # Create IssueVO
-                issue_obj = IssueVO(
-                    key=issue_key, description=issue_description, sub_tasks=sub_tasks
-                )
-
-                # Add issue to the dictionary under the correct project key
-                if project_key not in issues_by_project:
-                    issues_by_project[project_key] = []
-                issues_by_project[project_key].append(issue_obj)
+                    # Add the issue object to the dictionary under the project key
+                    if project_key not in issues_by_project:
+                        issues_by_project[project_key] = []
+                    issues_by_project[project_key].append(issue_obj)
 
             # Update the URL for the next page if available
             if "nextPage" in data:
@@ -195,12 +219,7 @@ if __name__ == "__main__":
             for project, project_issues in issues.items():
                 print(f"Project: {project}")
                 for issue_xxx in project_issues:
-                    print(f"  Issue Key: {issue_xxx.key}")
-                    print(f"    Description: {issue_xxx.description}")
-                    print(f"    Sub-Tasks:")
-                    for sub_task_xxx in issue_xxx.sub_tasks:
-                        print(f"        Sub-Task Key: {sub_task_xxx.key}")
-                        print(f"        Status: {sub_task_xxx.status}")
+                    print(issue_xxx)
 
         print("process done")
     except requests.exceptions.HTTPError as http_err:
