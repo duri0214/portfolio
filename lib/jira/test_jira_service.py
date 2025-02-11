@@ -196,3 +196,57 @@ class TestJiraServiceFetchIssues(unittest.TestCase):
         # エラーメッセージを確認
         self.assertIn("404 Client Error", str(context.exception))
         mock_get.assert_called_once()
+
+    def test_missing_base_url(self):
+        """
+        base_urlが空の場合にHTTPErrorがスローされ、エラーメッセージに正しい環境変数名が表示されることを確認する。
+        """
+        with self.assertRaises(HTTPError) as context:
+            JiraService(domain=None, email="test@example.com", api_token="test_token")
+        self.assertIn("YOUR_DOMAIN", str(context.exception))
+
+    def test_missing_email(self):
+        """
+        emailが空の場合にHTTPErrorがスローされ、エラーメッセージに正しい環境変数名が表示されることを確認する。
+        """
+        with self.assertRaises(HTTPError) as context:
+            JiraService(domain="test", email=None, api_token="test_token")
+        self.assertIn("EMAIL", str(context.exception))
+
+    def test_missing_api_token(self):
+        """
+        api_tokenが空の場合にHTTPErrorがスローされ、エラーメッセージに正しい環境変数名が表示されることを確認する。
+        """
+        with self.assertRaises(HTTPError) as context:
+            JiraService(
+                domain="test",
+                email="test@example.com",
+                api_token=None,
+            )
+        self.assertIn("API_TOKEN", str(context.exception))
+
+    def test_multiple_missing_env_vars(self):
+        """
+        複数の環境変数が空の場合に、HTTPErrorがスローされ、不足している環境変数名がすべて表示されることを確認する。
+        """
+        with self.assertRaises(HTTPError) as context:
+            JiraService(domain=None, email=None, api_token="test_token")
+        error_message = str(context.exception)
+        self.assertIn("YOUR_DOMAIN", error_message)
+        self.assertIn("EMAIL", error_message)
+
+    def test_all_env_vars_present(self):
+        """
+        すべての引数が正しく設定されている場合、サービスが正常に初期化されることを確認する。
+        """
+        try:
+            service = JiraService(
+                domain="test",
+                email="test@example.com",
+                api_token="test_token",
+            )
+            self.assertIsNotNone(service)
+        except HTTPError:
+            self.fail(
+                "HTTPErrorが発生しました。すべての引数が存在している場合でも失敗しています。"
+            )
