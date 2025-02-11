@@ -79,9 +79,9 @@ class JiraService:
         """
         url = f"{self.base_url}/rest/api/3/search"
         query = {
-            "jql": f"project = {project_key}",
+            "jql": f"project = {project_key} AND issuetype = Task",
             "maxResults": 50,  # Adjust as needed
-            "fields": "key,description,subtasks,status",
+            "fields": "key,issuetype,priority,assignee,status,description,summary,subtasks",
         }
         issues_by_project = {}
 
