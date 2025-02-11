@@ -215,13 +215,6 @@ class JiraService:
 
 if __name__ == "__main__":
     # API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about
-    # TODO: チケットを作成する機能を作る
-    # APIキーが入ってなかったらraise
-    # healthチェックして401ならraise
-    # プロジェクト名が不正なら400
-    # チケットを作成する
-    # チケットを削除する
-    # チケットを編集する
 
     # JIRA configuration: Replace with actual values or environment variables
     YOUR_DOMAIN = os.getenv("JIRA_YOUR_DOMAIN")

@@ -3,7 +3,8 @@ from unittest.mock import patch, Mock
 
 from requests import HTTPError
 
-from jira_service import JiraService, IssueVO
+from lib.jira.jira_service import JiraService
+from lib.jira.valueobject.ticket import IssueVO
 
 
 class TestJiraServiceFetchIssues(unittest.TestCase):
