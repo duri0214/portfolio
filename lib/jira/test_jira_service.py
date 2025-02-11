@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import patch, Mock
 
+from requests import HTTPError
+
 from jira_service import JiraService, IssueVO
 
 
@@ -174,3 +176,23 @@ class TestJiraServiceFetchIssues(unittest.TestCase):
         self.assertEqual(issue2.name, "Issue 2")
         self.assertEqual(issue2.priority, "High")
         self.assertEqual(issue2.status, "To Do")
+
+    @patch("requests.get")
+    def test_fetch_issues_with_invalid_project_key(self, mock_get):
+        """
+        fetch_issuesに無効なプロジェクトキーを渡した場合に正しく例外をスローするかを確認する。
+        """
+        # モックAPIの404エラー設定
+        mock_response = self.create_mock_response({}, status_code=404)
+        mock_response.raise_for_status.side_effect = HTTPError(
+            "404 Client Error: Not Found"
+        )
+        mock_get.return_value = mock_response
+
+        # 実行と例外の検証
+        with self.assertRaises(HTTPError) as context:
+            self.service.fetch_issues("INVALID")  # 存在しないプロジェクトキー
+
+        # エラーメッセージを確認
+        self.assertIn("404 Client Error", str(context.exception))
+        mock_get.assert_called_once()
