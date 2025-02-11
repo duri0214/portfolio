@@ -21,6 +21,7 @@ class JiraService:
             api_token (str): The API token for authentication.
         """
         self.base_url = f"https://{domain}.atlassian.net"
+        # TODO: Basic認証の問題なのか401は出ない。OAuth 2.0化が必要か
         self.auth = HTTPBasicAuth(email, api_token)
         self.headers = {"Accept": "application/json"}
 
