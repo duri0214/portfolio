@@ -1,6 +1,7 @@
 import os
 
 import requests
+from requests import HTTPError
 from requests.auth import HTTPBasicAuth
 
 from lib.jira.valueobject.ticket import ProjectVO, IssueVO, SubTaskVO
@@ -11,7 +12,7 @@ class JiraService:
     Service class for interacting with the JIRA API.
     """
 
-    def __init__(self, domain: str, email: str, api_token: str):
+    def __init__(self, domain: str = None, email: str = None, api_token: str = None):
         """
         Initialize the JiraService with domain, email, and API token.
 
@@ -20,6 +21,18 @@ class JiraService:
             email (str): The email address for authentication.
             api_token (str): The API token for authentication.
         """
+        missing_envs = []
+        if not domain:
+            missing_envs.append("YOUR_DOMAIN")
+        if not email:
+            missing_envs.append("EMAIL")
+        if not api_token:
+            missing_envs.append("API_TOKEN")
+
+        if missing_envs:
+            error_message = f"400 Bad Request: Missing required environment variable(s): {', '.join(missing_envs)}"
+            raise HTTPError(error_message)
+
         self.base_url = f"https://{domain}.atlassian.net"
         # TODO: Basic認証の問題なのか401は出ない。OAuth 2.0化が必要か
         self.auth = HTTPBasicAuth(email, api_token)
