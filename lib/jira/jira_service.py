@@ -163,7 +163,7 @@ class JiraService:
                     # Add the issue object to the dictionary under the project key
                     if project_key not in issues_by_project:
                         issues_by_project[project_key] = []
-                    issues_by_project[project_key].append(issue_obj)
+                    issues_by_project.get(project_key).append(issue_obj)
 
             # Update the URL for the next page if available
             if "nextPage" in data:
