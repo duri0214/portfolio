@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # TODO: チケットを作成する機能を作る
 
     # JIRA configuration: Replace with actual values or environment variables
-    YOUR_DOMAIN = os.getenv("YOUR_DOMAIN", "henojiya")
+    YOUR_DOMAIN = os.getenv("JIRA_YOUR_DOMAIN")
     EMAIL = os.getenv("EMAIL_HOST_USER")
     API_TOKEN = os.getenv("JIRA_API_KEY")
 
