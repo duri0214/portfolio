@@ -201,7 +201,6 @@ class JiraService:
 
 if __name__ == "__main__":
     # API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about
-    # TODO: なんか消してあるissueも表示されるから、削除状態を知りたい
     # TODO: チケットを作成する機能を作る
     # APIキーが入ってなかったらraise
     # healthチェックして401ならraise
