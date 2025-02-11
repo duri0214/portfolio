@@ -98,47 +98,53 @@ class JiraService:
 
             # Extract issues
             for issue in data.get("issues", []):
-                issue_key = issue.get("key", "unknown")
                 fields = issue.get("fields", {})
                 issue_key = issue.get("key", "No issue key")
 
                 # Check if the current issue is a regular issue or a subtask
                 is_subtask = fields.get("issuetype", {}).get("subtask", False)
-                issue_summary = fields.get("summary", "No summary")
+                issue_name = fields.get("summary", "No summary")
                 issue_status = fields.get("status", {}).get("name", "No status")
                 issue_priority = fields.get("priority", {}).get("name", "No priority")
 
-                # Parse assignee
-                assignee = fields.get("assignee", "Unassigned")
-                if assignee:
-                    issue_assignee = assignee.get("displayName")
+                # "assignee" の処理: None なら None, そうでなければ displayName 取得
+                issue_assignee = None
+                if fields.get("assignee"):
+                    issue_assignee = fields.get("assignee").get(
+                        "displayName", "Unassigned"
+                    )
 
-                # Parse description
-                description = fields.get("description")
-                if description:
+                issue_description = "No description"
+
+                # `description` が辞書形式の場合、正しく _parse_content_field を呼ぶ
+                raw_description = fields.get("description")
+                if isinstance(raw_description, dict) and raw_description.get("content"):
                     issue_description = self._parse_content_field(
-                        description.get("content")
+                        raw_description.get("content")
                     )
 
                 # If it's not a subtask, process as a regular issue (IssueVO)
                 if not is_subtask:
                     sub_tasks = []
                     for sub_task in fields.get("subtasks", []):
-                        sub_task_key = sub_task.get("key", "unknown")
+                        sub_task_key = sub_task.get("key", "No sub-task")
+                        sub_task_name = sub_task.get("fields").get(
+                            "summary", "No summary"
+                        )
                         sub_task_status = (
                             sub_task.get("fields", {})
                             .get("status", {})
-                            .get("name", "unknown")
+                            .get("name", "No status")
                         )
                         sub_task_priority = (
                             sub_task.get("fields", {})
                             .get("priority", {})
-                            .get("name", "UNKNOWN")
+                            .get("name", "No priority")
                         )
                         sub_tasks.append(
                             SubTaskVO(
                                 key=sub_task_key,
-                                name="XXXX",
+                                name=sub_task_name,
                                 status=sub_task_status,
                                 priority=sub_task_priority,
                             )
@@ -146,7 +152,7 @@ class JiraService:
 
                     issue_obj = IssueVO(
                         key=issue_key,
-                        summary=issue_summary,
+                        name=issue_name,
                         description=issue_description,
                         priority=issue_priority,
                         assignee=issue_assignee,
