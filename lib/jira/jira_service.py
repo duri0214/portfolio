@@ -222,8 +222,8 @@ if __name__ == "__main__":
             print(pjt)
             issues = jira_service.fetch_issues(project_key=pjt.key)
 
-            for project, project_issues in issues.items():
-                print(f"Project: {project}")
+            for project_xxx, project_issues in issues.items():
+                print(f"Project: {project_xxx}")
                 for issue_xxx in project_issues:
                     print(issue_xxx)
 
