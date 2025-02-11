@@ -5,55 +5,64 @@ from requests.auth import HTTPBasicAuth
 
 from lib.jira.valueobject.ticket import ProjectVO
 
-YOUR_DOMAIN = "henojiya"
 
-
-def fetch_all_projects(base_url: str, email: str, api_token: str) -> list[ProjectVO]:
+class JiraService:
     """
-    Fetch all projects from the JIRA API using `isLast` for termination.
-
-    Args:
-        base_url (str): The base URL of the JIRA instance.
-        email (str): The email address for authentication.
-        api_token (str): The API token for authentication.
-
-    Returns:
-        List[ProjectVO]: A list of ProjectVOs containing key and name.
+    Service class for interacting with the JIRA API.
     """
-    url = f"{base_url}/rest/api/3/project/search"
-    auth = HTTPBasicAuth(email, api_token)
-    headers = {"Accept": "application/json"}
 
-    all_projects = []
+    def __init__(self, domain: str, email: str, api_token: str):
+        """
+        Initialize the JiraService with domain, email, and API token.
 
-    while url:
-        response = requests.get(url, headers=headers, auth=auth)
+        Args:
+            domain (str): The JIRA domain (e.g., "your-domain").
+            email (str): The email address for authentication.
+            api_token (str): The API token for authentication.
+        """
+        self.base_url = f"https://{domain}.atlassian.net"
+        self.auth = HTTPBasicAuth(email, api_token)
+        self.headers = {"Accept": "application/json"}
 
-        if response.status_code != 200:
-            raise Exception(
-                f"Failed to fetch projects: {response.status_code} {response.text}"
-            )
+    def fetch_all_projects(self) -> list[ProjectVO]:
+        """
+        Fetch all projects from the JIRA API using `isLast` for termination.
 
-        # Parse the response JSON
-        data = response.json()
+        Returns:
+            List[ProjectVO]: A list of ProjectVOs containing project key and name.
 
-        # Extract the necessary fields from each project in the 'values'
-        for project in data.get("values", []):
-            all_projects.append(
-                ProjectVO(
-                    key=project.get("key", "invalid key"),
-                    name=project.get("name", "invalid name"),
+        Raises:
+            HTTPError: If the HTTP request returns an error response.
+        """
+        url = f"{self.base_url}/rest/api/3/project/search"
+        all_projects = []
+
+        while url:
+            response = requests.get(url, headers=self.headers, auth=self.auth)
+
+            # Automatically raise an exception for HTTP error responses
+            response.raise_for_status()
+
+            # Parse the response JSON
+            data = response.json()
+
+            # Extract the necessary fields from each project in the 'values'
+            for project in data.get("values", []):
+                all_projects.append(
+                    ProjectVO(
+                        key=project.get("key", "invalid key"),
+                        name=project.get("name", "invalid name"),
+                    )
                 )
-            )
 
-        # 終了判定として `isLast` を使用
-        if data.get("isLast", False):
-            break
+            # Exit the loop if this is the last page
+            if data.get("isLast", False):
+                break
 
-        # 次の URL を更新
-        url = data.get("nextPage", None)
+            # Update the URL for the next page
+            url = data.get("nextPage", None)
 
-    return all_projects
+        return all_projects
 
 
 if __name__ == "__main__":
@@ -61,13 +70,18 @@ if __name__ == "__main__":
     # TODO: なんか消してあるissueも表示されるから、削除状態を知りたい
     # TODO: チケットを作成する機能を作る
 
+    # JIRA configuration: Replace with actual values or environment variables
+    YOUR_DOMAIN = os.getenv("YOUR_DOMAIN", "henojiya")
+    EMAIL = os.getenv("EMAIL_HOST_USER")
+    API_TOKEN = os.getenv("JIRA_API_KEY")
+
+    jira_service = JiraService(domain=YOUR_DOMAIN, email=EMAIL, api_token=API_TOKEN)
+
     try:
-        project_list = fetch_all_projects(
-            base_url=f"https://{YOUR_DOMAIN}.atlassian.net",
-            email=os.environ.get("EMAIL_HOST_USER"),
-            api_token=os.environ.get("JIRA_API_KEY"),
-        )
-        print(project_list)
+        projects = jira_service.fetch_all_projects()
+        print(projects)
         print("process done")
+    except requests.exceptions.HTTPError as http_err:
+        print(f"[HTTP Error] {http_err}")
     except Exception as e:
         print(f"Error: {e}")
