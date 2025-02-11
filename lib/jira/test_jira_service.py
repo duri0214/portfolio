@@ -6,12 +6,14 @@ from jira_service import JiraService, IssueVO
 
 class TestJiraServiceFetchIssues(unittest.TestCase):
     """
-    Unit tests for the fetch_issues method of JiraService.
+    JiraServiceクラスのfetch_issuesメソッドに関する単体テストを行います。
+    - 各テストケースでは、APIのモックレスポンスを利用して、fetch_issuesの期待される動作を検証します。
     """
 
     def setUp(self):
         """
-        Common setup for the tests.
+        各テストの実行前に共通のセットアップ処理を行います。
+        JiraServiceのインスタンスを生成します。
         """
         self.service = JiraService(
             domain="test-domain", email="test@example.com", api_token="test-token"
@@ -20,27 +22,32 @@ class TestJiraServiceFetchIssues(unittest.TestCase):
     @staticmethod
     def create_mock_response(json_data, status_code=200):
         """
-        Helper method to create a mock response object.
+        APIレスポンスをモックとして作成する共通のヘルパーメソッド。
 
         Args:
-            json_data (dict): The JSON data to return in the response.
-            status_code (int): The HTTP status code for the response.
+            json_data (dict): モックレスポンスとして返すJSONデータ
+            status_code (int): HTTPステータスコード（デフォルトは200）
 
         Returns:
-            Mock: A mocked response object.
+            Mock: モック化したレスポンスオブジェクト
         """
         mock_response = Mock()
         mock_response.json.return_value = json_data
         mock_response.status_code = status_code
-        mock_response.raise_for_status = Mock()
+        mock_response.raise_for_status = (
+            Mock()
+        )  # ステータスコードに応じた例外を発生させるモックを設定
         return mock_response
 
     @patch("requests.get")
     def test_fetch_issues_with_assignee(self, mock_get):
         """
-        Test fetch_issues when issues have an assigned assignee.
+        テスト内容:
+            fetch_issuesが、「assignee」が指定されている課題を処理できることを確認する。
+        シナリオ:
+            - APIレスポンスに "assignee" フィールドが存在し、"displayName" を持つ場合をテストする。
+            - "assignee" の情報が正しくIssueVOに設定されていることを検証する。
         """
-        # Use the helper to create a mock response
         mock_get.return_value = self.create_mock_response(
             {
                 "issues": [
@@ -59,25 +66,28 @@ class TestJiraServiceFetchIssues(unittest.TestCase):
             }
         )
 
-        # Execute
+        # 実行
         issues = self.service.fetch_issues("HEN")
 
-        # Assertions
+        # 検証
         self.assertEqual(len(issues["HEN"]), 1)
         issue = issues["HEN"][0]
         self.assertIsInstance(issue, IssueVO)
         self.assertEqual(issue.assignee, "John Doe")
         self.assertEqual(issue.name, "Test Issue 1")
-        self.assertEqual(issue.description, "No description")  # Default description
+        self.assertEqual(issue.description, "No description")  # デフォルトの説明
         self.assertEqual(issue.priority, "High")
         self.assertEqual(issue.status, "To Do")
 
     @patch("requests.get")
     def test_fetch_issues_without_assignee(self, mock_get):
         """
-        Test fetch_issues when issues do not have an assignee (assignee is None).
+        テスト内容:
+            fetch_issuesが、「assignee」が指定されていない（None）の課題を処理できることを確認する。
+        シナリオ:
+            - APIレスポンスに "assignee" フィールドがNoneの場合をテストする。
+            - IssueVOの「assignee」の値がNoneとなっていることを検証する。
         """
-        # Use the helper to create a mock response
         mock_get.return_value = self.create_mock_response(
             {
                 "issues": [
@@ -86,7 +96,7 @@ class TestJiraServiceFetchIssues(unittest.TestCase):
                         "fields": {
                             "summary": "Test Issue 2",
                             "description": None,
-                            "assignee": None,  # 'assignee' is explicitly None
+                            "assignee": None,
                             "priority": {"name": "Medium"},
                             "status": {"name": "In Progress"},
                             "subtasks": [],
@@ -96,25 +106,28 @@ class TestJiraServiceFetchIssues(unittest.TestCase):
             }
         )
 
-        # Execute
+        # 実行
         issues = self.service.fetch_issues("HEN")
 
-        # Assertions
+        # 検証
         self.assertEqual(len(issues["HEN"]), 1)
         issue = issues["HEN"][0]
         self.assertIsInstance(issue, IssueVO)
-        self.assertIsNone(issue.assignee)  # Assignee should be None
+        self.assertIsNone(issue.assignee)  # AssigneeがNoneであることを検証
         self.assertEqual(issue.name, "Test Issue 2")
-        self.assertEqual(issue.description, "No description")  # Default description
+        self.assertEqual(issue.description, "No description")  # デフォルトの説明
         self.assertEqual(issue.priority, "Medium")
         self.assertEqual(issue.status, "In Progress")
 
     @patch("requests.get")
     def test_fetch_issues_with_multiple_issues(self, mock_get):
         """
-        Test fetch_issues when multiple issues are returned.
+        テスト内容:
+            fetch_issuesが、複数の課題を正しく処理できることを確認する。
+        シナリオ:
+            - APIレスポンスに複数の課題が含まれる場合をテストする。
+            - 各課題のフィールド（assignee, priority, statusなど）が正しく設定されていることを検証する。
         """
-        # Use the helper to create a mock response
         mock_get.return_value = self.create_mock_response(
             {
                 "issues": [
@@ -142,20 +155,22 @@ class TestJiraServiceFetchIssues(unittest.TestCase):
             }
         )
 
-        # Execute
+        # 実行
         issues = self.service.fetch_issues("HEN")
 
-        # Assertions
+        # 検証
         self.assertEqual(len(issues["HEN"]), 2)
 
-        # Issue 1
+        # 課題1
         issue1 = issues["HEN"][0]
         self.assertEqual(issue1.assignee, "Jane Smith")
+        self.assertEqual(issue1.name, "Issue 1")
         self.assertEqual(issue1.priority, "Low")
         self.assertEqual(issue1.status, "In Progress")
 
-        # Issue 2
+        # 課題2
         issue2 = issues["HEN"][1]
-        self.assertIsNone(issue2.assignee)  # Assignee is None
+        self.assertIsNone(issue2.assignee)  # AssigneeがNoneであることを検証
+        self.assertEqual(issue2.name, "Issue 2")
         self.assertEqual(issue2.priority, "High")
         self.assertEqual(issue2.status, "To Do")
