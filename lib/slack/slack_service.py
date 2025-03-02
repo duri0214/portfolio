@@ -1,7 +1,13 @@
 import json
 import os
+from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
+
+# .env ファイルを読み込む
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 TODAY = 0
 

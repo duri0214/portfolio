@@ -1,6 +1,8 @@
 import os
+from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
 from requests import HTTPError
 from requests.auth import HTTPBasicAuth
 
@@ -10,6 +12,10 @@ from lib.jira.valueobject.ticket import (
     SubTaskVO,
     # CreateIssuePayload,
 )
+
+# .env ファイルを読み込む
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 
 class JiraService:

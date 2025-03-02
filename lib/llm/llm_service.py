@@ -1,8 +1,10 @@
 import os
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Generator
 
 import tiktoken
+from dotenv import load_dotenv
 from google import generativeai
 from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
 from langchain.prompts import (
@@ -19,6 +21,10 @@ from config.settings import MEDIA_ROOT
 from lib.llm.valueobject.chat import Message, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader
+
+# .env ファイルを読み込む
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 
 def count_tokens(text: str) -> int:
