@@ -158,14 +158,16 @@ class EggProductionRecord(models.Model):
     weather_code = models.IntegerField(
         help_text="天気コード。具体的なコードの詳細はシステムで管理"
     )
-    avg_temperature = models.FloatField(help_text="平均気温 (単位: °C)")
-    humidity = models.IntegerField(help_text="湿度 (単位: %)")
-    pressure = models.FloatField(help_text="気圧 (単位: hPa)")
-    rainfall = models.FloatField(help_text="降水量 (単位: mm)")
+    avg_temperature = models.FloatField(help_text="平均気温 (単位: °C)", null=True)
+    humidity = models.FloatField(help_text="湿度 (単位: %)", null=True)
+    pressure = models.FloatField(help_text="気圧 (単位: hPa)", null=True)
+    rainfall = models.FloatField(help_text="降水量 (単位: mm)", null=True)
     hen_count = models.IntegerField(help_text="メスの個体数 (単位: 羽)")
-    egg_count = models.IntegerField(help_text="産卵数 (単位: 個)")
-    avg_egg_weight = models.FloatField(help_text="卵の平均重量 (単位: g)")
-    feed_weight = models.IntegerField(help_text="消費した飼料の量 (単位: 125g／升)")
+    egg_count = models.IntegerField(help_text="産卵数 (単位: 個)", null=True)
+    avg_egg_weight = models.FloatField(help_text="卵の平均重量 (単位: g)", null=True)
+    feed_weight = models.IntegerField(
+        help_text="消費した飼料の量 (単位: 125g／升)", null=True
+    )
     comment = models.TextField(
         blank=True,
         null=True,
