@@ -101,6 +101,7 @@ python manage.py loaddata .\taxonomy\fixtures\naturalMonument.json
 python manage.py loaddata .\taxonomy\fixtures\tag.json
 python manage.py loaddata .\taxonomy\fixtures\breed.json
 python manage.py loaddata .\taxonomy\fixtures\breedTags.json
+python manage.py loaddata .\taxonomy\fixtures\eggProductionRecord.json
 python manage.py loaddata .\soil_analysis\fixtures\user.json
 python manage.py loaddata .\soil_analysis\fixtures\companycategory.json
 python manage.py loaddata .\soil_analysis\fixtures\company.json
