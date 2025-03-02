@@ -142,3 +142,52 @@ class BreedTags(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["breed", "tag"], name="breed_tag_unique")
         ]
+
+
+class EggProductionRecord(models.Model):
+    """
+    モデル: 鶏の産卵記録
+
+    このモデルは、特定の日における鶏の産卵記録を保持します。
+    主に天気、気象データ、産卵数などの情報を追跡します。
+    """
+
+    recorded_date = models.DateField(
+        help_text="データを記録した日付 (形式: YYYY-MM-DD)"
+    )
+    weather_code = models.IntegerField(
+        help_text="天気コード。具体的なコードの詳細はシステムで管理"
+    )
+    avg_temperature = models.FloatField(help_text="平均気温 (単位: °C)")
+    humidity = models.IntegerField(help_text="湿度 (単位: %)")
+    pressure = models.FloatField(help_text="気圧 (単位: hPa)")
+    rainfall = models.FloatField(help_text="降水量 (単位: mm)")
+    hen_count = models.IntegerField(help_text="メスの個体数 (単位: 羽)")
+    egg_count = models.IntegerField(help_text="産卵数 (単位: 個)")
+    avg_egg_weight = models.FloatField(help_text="卵の平均重量 (単位: g)")
+    feed_weight = models.IntegerField(help_text="消費した飼料の量 (単位: 125g／升)")
+    comment = models.TextField(
+        blank=True,
+        null=True,
+        help_text="自由記述フィールド。産卵に関するコメントや観察記録を記入",
+    )
+
+    def laying_rate(self):
+        """
+        メスの鶏1羽あたりの産卵率を計算します。
+
+        Returns:
+            float: メスの鶏あたりの産卵率 (百分率で表示)
+        """
+        if self.hen_count > 0:
+            return round((self.egg_count / self.hen_count) * 100, 2)
+        return 0.0
+
+    def __str__(self):
+        """
+        インスタンスを文字列として表現します。
+
+        Returns:
+            str: 記録された日付と産卵状況の概要。
+        """
+        return f"{self.recorded_date} ({self.hen_count}羽, {self.egg_count}個, {self.laying_rate()}%)"
