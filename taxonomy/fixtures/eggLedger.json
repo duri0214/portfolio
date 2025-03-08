@@ -1,0 +1,1520 @@
+[
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 1,
+    "fields": {
+      "id": "1",
+      "recorded_date": "2017-06-14",
+      "weather_code_id": 20,
+      "temperature": "19.6",
+      "humidity": "0.33",
+      "pressure": "935.6",
+      "hen_group_id": 1,
+      "egg_count": "2",
+      "avg_egg_weight": "60.5",
+      "feed_weight_id": 1,
+      "comment": "生まない個体が1羽います",
+      "created_at": "2025-03-08T17:22:07.972528+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 2,
+    "fields": {
+      "id": "2",
+      "recorded_date": "2017-06-15",
+      "weather_code_id": 20,
+      "temperature": "20.5",
+      "humidity": "0.19",
+      "pressure": "934.1",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "56.6",
+      "feed_weight_id": 1,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 3,
+    "fields": {
+      "id": "3",
+      "recorded_date": "2017-06-16",
+      "weather_code_id": 20,
+      "temperature": "22.0",
+      "humidity": "0.36",
+      "pressure": "936.1",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "57.8",
+      "feed_weight_id": 1,
+      "comment": "7:30時点で生んでいない。昼過ぎに最後の１つ",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 4,
+    "fields": {
+      "id": "4",
+      "recorded_date": "2017-06-17",
+      "weather_code_id": 20,
+      "temperature": "20.5",
+      "humidity": "0.32",
+      "pressure": "939.3",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "57.8",
+      "feed_weight_id": 2,
+      "comment": "1羽あたり110g/日と判明、飼料半減で様子を見る",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 5,
+    "fields": {
+      "id": "5",
+      "recorded_date": "2017-06-18",
+      "weather_code_id": 10,
+      "temperature": "19.4",
+      "humidity": "0.54",
+      "pressure": "940.5",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "57.8",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 6,
+    "fields": {
+      "id": "6",
+      "recorded_date": "2017-06-19",
+      "weather_code_id": 20,
+      "temperature": "21.5",
+      "humidity": "0.25",
+      "pressure": "939.1",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "57.0",
+      "feed_weight_id": 2,
+      "comment": "70(1)+107(2)+51(1)",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 7,
+    "fields": {
+      "id": "7",
+      "recorded_date": "2017-06-20",
+      "weather_code_id": 20,
+      "temperature": "23.0",
+      "humidity": "0.19",
+      "pressure": "940.0",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "61.3",
+      "feed_weight_id": 2,
+      "comment": "134(2)+50(1)",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 8,
+    "fields": {
+      "id": "8",
+      "recorded_date": "2017-06-21",
+      "weather_code_id": 10,
+      "temperature": "18.0",
+      "humidity": "0.85",
+      "pressure": "932.3",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "63.6",
+      "feed_weight_id": 2,
+      "comment": "191(3)",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 9,
+    "fields": {
+      "id": "9",
+      "recorded_date": "2017-06-22",
+      "weather_code_id": 20,
+      "temperature": "20.5",
+      "humidity": "0.48",
+      "pressure": "938.3",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "61.4",
+      "feed_weight_id": 2,
+      "comment": "125(2)+182(3)",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 10,
+    "fields": {
+      "id": "10",
+      "recorded_date": "2017-06-23",
+      "weather_code_id": 20,
+      "temperature": "22.0",
+      "humidity": "0.34",
+      "pressure": "936.3",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "60.3",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 11,
+    "fields": {
+      "id": "11",
+      "recorded_date": "2017-06-24",
+      "weather_code_id": 20,
+      "temperature": "23.2",
+      "humidity": "0.45",
+      "pressure": "934.0",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "64.3",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 12,
+    "fields": {
+      "id": "12",
+      "recorded_date": "2017-06-25",
+      "weather_code_id": 10,
+      "temperature": "20.9",
+      "humidity": "0.72",
+      "pressure": "931.2",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "63.0",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 13,
+    "fields": {
+      "id": "13",
+      "recorded_date": "2017-06-26",
+      "weather_code_id": 20,
+      "temperature": "21.2",
+      "humidity": "0.49",
+      "pressure": "938.1",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "59.2",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 14,
+    "fields": {
+      "id": "14",
+      "recorded_date": "2017-06-27",
+      "weather_code_id": 20,
+      "temperature": "23.6",
+      "humidity": "0.43",
+      "pressure": "940.3",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "60.4",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 15,
+    "fields": {
+      "id": "15",
+      "recorded_date": "2017-06-28",
+      "weather_code_id": 20,
+      "temperature": "23.4",
+      "humidity": "0.52",
+      "pressure": "943.1",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "60.3",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 16,
+    "fields": {
+      "id": "16",
+      "recorded_date": "2017-06-29",
+      "weather_code_id": 20,
+      "temperature": "25.3",
+      "humidity": "0.49",
+      "pressure": "943.1",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "62.5",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 17,
+    "fields": {
+      "id": "17",
+      "recorded_date": "2017-06-30",
+      "weather_code_id": 10,
+      "temperature": "23.0",
+      "humidity": "0.6",
+      "pressure": "941.5",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "59.5",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 18,
+    "fields": {
+      "id": "18",
+      "recorded_date": "2017-07-01",
+      "weather_code_id": 1,
+      "temperature": "22.0",
+      "humidity": "0.95",
+      "pressure": "940.7",
+      "rainfall": "4.5",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "61.8",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 19,
+    "fields": {
+      "id": "19",
+      "recorded_date": "2017-07-02",
+      "weather_code_id": 10,
+      "temperature": "23.5",
+      "humidity": "0.74",
+      "pressure": "940.9",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "58.2",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 20,
+    "fields": {
+      "id": "20",
+      "recorded_date": "2017-07-03",
+      "weather_code_id": 20,
+      "temperature": "27.5",
+      "humidity": "0.32",
+      "pressure": "937.8",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 21,
+    "fields": {
+      "id": "21",
+      "recorded_date": "2017-07-04",
+      "weather_code_id": 1,
+      "temperature": "24.0",
+      "humidity": "0.92",
+      "pressure": "938.4",
+      "rainfall": "8.5",
+      "hen_group_id": 1,
+      "egg_count": "6",
+      "avg_egg_weight": "60.2",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 22,
+    "fields": {
+      "id": "22",
+      "recorded_date": "2017-07-05",
+      "weather_code_id": 20,
+      "temperature": "24.5",
+      "humidity": "0.54",
+      "pressure": "939.0",
+      "hen_group_id": 1,
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 23,
+    "fields": {
+      "id": "23",
+      "recorded_date": "2017-07-06",
+      "weather_code_id": 20,
+      "temperature": "24.5",
+      "humidity": "0.44",
+      "pressure": "940.6",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "64.2",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 24,
+    "fields": {
+      "id": "24",
+      "recorded_date": "2017-07-07",
+      "weather_code_id": 20,
+      "temperature": "25.5",
+      "humidity": "0.5",
+      "pressure": "940.7",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 25,
+    "fields": {
+      "id": "25",
+      "recorded_date": "2017-07-08",
+      "weather_code_id": 20,
+      "temperature": "26.5",
+      "humidity": "0.49",
+      "pressure": "940.5",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "63.5",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 26,
+    "fields": {
+      "id": "26",
+      "recorded_date": "2017-07-09",
+      "weather_code_id": 20,
+      "temperature": "26.5",
+      "humidity": "0.38",
+      "pressure": "940.3",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "57.6",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 27,
+    "fields": {
+      "id": "27",
+      "recorded_date": "2017-07-10",
+      "weather_code_id": 20,
+      "temperature": "27.0",
+      "humidity": "0.34",
+      "pressure": "940.4",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "62.0",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 28,
+    "fields": {
+      "id": "28",
+      "recorded_date": "2017-07-11",
+      "weather_code_id": 20,
+      "temperature": "27.9",
+      "humidity": "0.41",
+      "pressure": "940.7",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "59.0",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 29,
+    "fields": {
+      "id": "29",
+      "recorded_date": "2017-07-12",
+      "weather_code_id": 20,
+      "temperature": "28.2",
+      "humidity": "0.47",
+      "pressure": "940.1",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "64.2",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 30,
+    "fields": {
+      "id": "30",
+      "recorded_date": "2017-07-13",
+      "weather_code_id": 20,
+      "temperature": "27.5",
+      "humidity": "0.43",
+      "pressure": "939.5",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "61.4",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 31,
+    "fields": {
+      "id": "31",
+      "recorded_date": "2017-07-14",
+      "weather_code_id": 20,
+      "temperature": "25.5",
+      "humidity": "0.52",
+      "pressure": "942.9",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "61.7",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 32,
+    "fields": {
+      "id": "32",
+      "recorded_date": "2017-07-15",
+      "weather_code_id": 20,
+      "temperature": "27.0",
+      "humidity": "0.47",
+      "pressure": "942.7",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "61.0",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 33,
+    "fields": {
+      "id": "33",
+      "recorded_date": "2017-07-16",
+      "weather_code_id": 20,
+      "temperature": "26.0",
+      "humidity": "0.69",
+      "pressure": "942.0",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "58.0",
+      "feed_weight_id": 2,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 34,
+    "fields": {
+      "id": "34",
+      "recorded_date": "2017-07-17",
+      "weather_code_id": 20,
+      "temperature": "26.4",
+      "humidity": "0.5",
+      "pressure": "940.3",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "58.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 35,
+    "fields": {
+      "id": "35",
+      "recorded_date": "2017-07-18",
+      "weather_code_id": 20,
+      "temperature": "26.2",
+      "humidity": "0.39",
+      "pressure": "937.9",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "58.7",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 36,
+    "fields": {
+      "id": "36",
+      "recorded_date": "2017-07-19",
+      "weather_code_id": 20,
+      "temperature": "25.8",
+      "humidity": "0.41",
+      "pressure": "938.1",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "59.6",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 37,
+    "fields": {
+      "id": "37",
+      "recorded_date": "2017-07-20",
+      "weather_code_id": 20,
+      "temperature": "29.0",
+      "humidity": "0.32",
+      "pressure": "940.7",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "57.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 38,
+    "fields": {
+      "id": "38",
+      "recorded_date": "2017-07-21",
+      "weather_code_id": 20,
+      "temperature": "28.7",
+      "humidity": "0.35",
+      "pressure": "941.9",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "62.7",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 39,
+    "fields": {
+      "id": "39",
+      "recorded_date": "2017-07-22",
+      "weather_code_id": 20,
+      "temperature": "29.6",
+      "humidity": "0.53",
+      "pressure": "941.5",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "60.2",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 40,
+    "fields": {
+      "id": "40",
+      "recorded_date": "2017-07-23",
+      "weather_code_id": 10,
+      "temperature": "24.1",
+      "humidity": "0.79",
+      "pressure": "937.9",
+      "rainfall": "0.5",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "59.8",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 41,
+    "fields": {
+      "id": "41",
+      "recorded_date": "2017-07-24",
+      "weather_code_id": 10,
+      "temperature": "27.4",
+      "humidity": "0.54",
+      "pressure": "933.9",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "60.4",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 42,
+    "fields": {
+      "id": "42",
+      "recorded_date": "2017-07-25",
+      "weather_code_id": 10,
+      "temperature": "24.8",
+      "humidity": "0.91",
+      "pressure": "935.1",
+      "rainfall": "0.5",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "60.3",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 43,
+    "fields": {
+      "id": "43",
+      "recorded_date": "2017-07-26",
+      "weather_code_id": 20,
+      "temperature": "25.4",
+      "humidity": "0.65",
+      "pressure": "938.0",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "61.6",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 44,
+    "fields": {
+      "id": "44",
+      "recorded_date": "2017-07-27",
+      "weather_code_id": 20,
+      "temperature": "24.9",
+      "humidity": "0.71",
+      "pressure": "940.3",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "60.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 45,
+    "fields": {
+      "id": "45",
+      "recorded_date": "2017-07-28",
+      "weather_code_id": 10,
+      "temperature": "26.7",
+      "humidity": "0.65",
+      "pressure": "939.3",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "56.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 46,
+    "fields": {
+      "id": "46",
+      "recorded_date": "2017-07-29",
+      "weather_code_id": 10,
+      "temperature": "25.8",
+      "humidity": "0.78",
+      "pressure": "939.4",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "59.8",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 47,
+    "fields": {
+      "id": "47",
+      "recorded_date": "2017-07-30",
+      "weather_code_id": 10,
+      "temperature": "23.6",
+      "humidity": "0.74",
+      "pressure": "939.3",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "58.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 48,
+    "fields": {
+      "id": "48",
+      "recorded_date": "2017-07-31",
+      "weather_code_id": 20,
+      "temperature": "27.4",
+      "humidity": "0.51",
+      "pressure": "938.4",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "60.5",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 49,
+    "fields": {
+      "id": "49",
+      "recorded_date": "2017-08-01",
+      "weather_code_id": 20,
+      "temperature": "25.4",
+      "humidity": "0.64",
+      "pressure": "939.5",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "60.4",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 50,
+    "fields": {
+      "id": "50",
+      "recorded_date": "2017-08-02",
+      "weather_code_id": 20,
+      "temperature": "24.5",
+      "humidity": "0.57",
+      "pressure": "938.0",
+      "hen_group_id": 1,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 51,
+    "fields": {
+      "id": "51",
+      "recorded_date": "2017-08-03",
+      "weather_code_id": 20,
+      "temperature": "25.0",
+      "humidity": "0.65",
+      "pressure": "940.0",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "59.8",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 52,
+    "fields": {
+      "id": "52",
+      "recorded_date": "2017-08-04",
+      "weather_code_id": 20,
+      "temperature": "20.8",
+      "humidity": "0.51",
+      "pressure": "939.7",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "56.4",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 53,
+    "fields": {
+      "id": "53",
+      "recorded_date": "2017-08-05",
+      "weather_code_id": 20,
+      "temperature": "28.9",
+      "humidity": "0.42",
+      "pressure": "937.3",
+      "hen_group_id": 1,
+      "egg_count": "2",
+      "avg_egg_weight": "57.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 54,
+    "fields": {
+      "id": "54",
+      "recorded_date": "2017-08-06",
+      "weather_code_id": 10,
+      "temperature": "28.8",
+      "humidity": "0.55",
+      "pressure": "934.7",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "58.5",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 55,
+    "fields": {
+      "id": "55",
+      "recorded_date": "2017-08-07",
+      "weather_code_id": 10,
+      "temperature": "26.0",
+      "humidity": "0.65",
+      "pressure": "930.4",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "58.3",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 56,
+    "fields": {
+      "id": "56",
+      "recorded_date": "2017-08-08",
+      "weather_code_id": 10,
+      "temperature": "25.3",
+      "humidity": "0.64",
+      "pressure": "923.6",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "59.8",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 57,
+    "fields": {
+      "id": "57",
+      "recorded_date": "2017-08-09",
+      "weather_code_id": 20,
+      "temperature": "27.3",
+      "humidity": "0.54",
+      "pressure": "928.9",
+      "hen_group_id": 1,
+      "avg_egg_weight": "56.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 58,
+    "fields": {
+      "id": "58",
+      "recorded_date": "2017-08-10",
+      "weather_code_id": 10,
+      "temperature": "27.3",
+      "humidity": "0.56",
+      "pressure": "930.9",
+      "hen_group_id": 1,
+      "avg_egg_weight": "60.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 59,
+    "fields": {
+      "id": "59",
+      "recorded_date": "2017-08-11",
+      "weather_code_id": 20,
+      "temperature": "28.7",
+      "humidity": "0.5",
+      "pressure": "933.4",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "61.3",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 60,
+    "fields": {
+      "id": "60",
+      "recorded_date": "2017-08-12",
+      "weather_code_id": 20,
+      "temperature": "26.8",
+      "humidity": "0.58",
+      "pressure": "936.8",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "61.4",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 61,
+    "fields": {
+      "id": "61",
+      "recorded_date": "2017-08-13",
+      "weather_code_id": 20,
+      "temperature": "27.1",
+      "humidity": "0.51",
+      "pressure": "937.9",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "61.6",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 62,
+    "fields": {
+      "id": "62",
+      "recorded_date": "2017-08-14",
+      "weather_code_id": 20,
+      "temperature": "26.4",
+      "humidity": "0.56",
+      "pressure": "937.1",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "61.2",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 63,
+    "fields": {
+      "id": "63",
+      "recorded_date": "2017-08-15",
+      "weather_code_id": 10,
+      "temperature": "23.1",
+      "humidity": "0.85",
+      "pressure": "936.0",
+      "rainfall": "0.5",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "59.7",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 64,
+    "fields": {
+      "id": "64",
+      "recorded_date": "2017-08-16",
+      "weather_code_id": 10,
+      "temperature": "23.3",
+      "humidity": "0.77",
+      "pressure": "937.3",
+      "hen_group_id": 1,
+      "egg_count": "2",
+      "avg_egg_weight": "65.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 65,
+    "fields": {
+      "id": "65",
+      "recorded_date": "2017-08-17",
+      "weather_code_id": 20,
+      "temperature": "25.6",
+      "humidity": "0.59",
+      "pressure": "938.5",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "64.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 66,
+    "fields": {
+      "id": "66",
+      "recorded_date": "2017-08-18",
+      "weather_code_id": 10,
+      "temperature": "25.9",
+      "humidity": "0.62",
+      "pressure": "940.7",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "61.5",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 67,
+    "fields": {
+      "id": "67",
+      "recorded_date": "2017-08-19",
+      "weather_code_id": 20,
+      "temperature": "26.3",
+      "humidity": "0.5",
+      "pressure": "940.4",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "58.8",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 68,
+    "fields": {
+      "id": "68",
+      "recorded_date": "2017-08-20",
+      "weather_code_id": 20,
+      "temperature": "25.3",
+      "humidity": "0.6",
+      "pressure": "942.4",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "60.3",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 69,
+    "fields": {
+      "id": "69",
+      "recorded_date": "2017-08-21",
+      "weather_code_id": 20,
+      "temperature": "26.8",
+      "humidity": "0.45",
+      "pressure": "942.8",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "60.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 70,
+    "fields": {
+      "id": "70",
+      "recorded_date": "2017-08-22",
+      "weather_code_id": 10,
+      "humidity": "0",
+      "hen_group_id": 1,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 71,
+    "fields": {
+      "id": "71",
+      "recorded_date": "2017-08-23",
+      "weather_code_id": 20,
+      "temperature": "25.4",
+      "humidity": "0.58",
+      "pressure": "942.2",
+      "hen_group_id": 1,
+      "egg_count": "7",
+      "avg_egg_weight": "60.7",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 72,
+    "fields": {
+      "id": "72",
+      "recorded_date": "2017-08-24",
+      "weather_code_id": 20,
+      "temperature": "27.5",
+      "humidity": "0.48",
+      "pressure": "938.4",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "59.5",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 73,
+    "fields": {
+      "id": "73",
+      "recorded_date": "2017-08-25",
+      "weather_code_id": 1,
+      "temperature": "27.0",
+      "humidity": "0.9",
+      "pressure": "938.7",
+      "rainfall": "1.5",
+      "hen_group_id": 1,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 74,
+    "fields": {
+      "id": "74",
+      "recorded_date": "2017-08-26",
+      "weather_code_id": 20,
+      "temperature": "25.8",
+      "humidity": "0.49",
+      "pressure": "941.0",
+      "hen_group_id": 1,
+      "egg_count": "2",
+      "avg_egg_weight": "60.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 75,
+    "fields": {
+      "id": "75",
+      "recorded_date": "2017-08-27",
+      "weather_code_id": 20,
+      "temperature": "23.1",
+      "humidity": "0.51",
+      "pressure": "944.7",
+      "hen_group_id": 1,
+      "egg_count": "2",
+      "avg_egg_weight": "60.5",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 76,
+    "fields": {
+      "id": "76",
+      "recorded_date": "2017-08-28",
+      "weather_code_id": 20,
+      "temperature": "25.6",
+      "humidity": "0.43",
+      "pressure": "942.5",
+      "hen_group_id": 1,
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 77,
+    "fields": {
+      "id": "77",
+      "recorded_date": "2017-08-29",
+      "weather_code_id": 20,
+      "temperature": "27.9",
+      "humidity": "0.39",
+      "pressure": "939.5",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "63.3",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 78,
+    "fields": {
+      "id": "78",
+      "recorded_date": "2017-08-30",
+      "weather_code_id": 10,
+      "temperature": "22.8",
+      "humidity": "0.7",
+      "pressure": "938.7",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "63.7",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 79,
+    "fields": {
+      "id": "79",
+      "recorded_date": "2017-08-31",
+      "weather_code_id": 20,
+      "temperature": "23.1",
+      "humidity": "0.4",
+      "pressure": "936.5",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "59.8",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 80,
+    "fields": {
+      "id": "80",
+      "recorded_date": "2017-09-01",
+      "weather_code_id": 20,
+      "temperature": "20.2",
+      "humidity": "0.4",
+      "pressure": "937.2",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "64.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 81,
+    "fields": {
+      "id": "81",
+      "recorded_date": "2017-09-02",
+      "weather_code_id": 20,
+      "temperature": "21.6",
+      "humidity": "0.46",
+      "pressure": "935.9",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "58.8",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 82,
+    "fields": {
+      "id": "82",
+      "recorded_date": "2017-09-03",
+      "weather_code_id": 20,
+      "temperature": "19.3",
+      "humidity": "0.47",
+      "pressure": "941.8",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "57.3",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 83,
+    "fields": {
+      "id": "83",
+      "recorded_date": "2017-09-04",
+      "weather_code_id": 20,
+      "temperature": "20.4",
+      "humidity": "0.47",
+      "pressure": "945.3",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "60.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 84,
+    "fields": {
+      "id": "84",
+      "recorded_date": "2017-09-05",
+      "weather_code_id": 20,
+      "temperature": "22.0",
+      "humidity": "0.42",
+      "pressure": "943.0",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "64.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 85,
+    "fields": {
+      "id": "85",
+      "recorded_date": "2017-09-06",
+      "weather_code_id": 10,
+      "temperature": "21.0",
+      "humidity": "0.72",
+      "pressure": "936.6",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "67.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 86,
+    "fields": {
+      "id": "86",
+      "recorded_date": "2017-09-07",
+      "weather_code_id": 10,
+      "temperature": "22.7",
+      "humidity": "0.72",
+      "pressure": "933.1",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "67.3",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 87,
+    "fields": {
+      "id": "87",
+      "recorded_date": "2017-09-08",
+      "weather_code_id": 20,
+      "temperature": "22.7",
+      "humidity": "0.49",
+      "pressure": "938.2",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "64.3",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 88,
+    "fields": {
+      "id": "88",
+      "recorded_date": "2017-09-09",
+      "weather_code_id": 20,
+      "temperature": "22.5",
+      "humidity": "0.39",
+      "pressure": "942.2",
+      "hen_group_id": 1,
+      "egg_count": "5",
+      "avg_egg_weight": "64.4",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 89,
+    "fields": {
+      "id": "89",
+      "recorded_date": "2017-09-10",
+      "weather_code_id": 20,
+      "temperature": "23.3",
+      "humidity": "0.45",
+      "pressure": "944.4",
+      "hen_group_id": 1,
+      "egg_count": "3",
+      "avg_egg_weight": "62.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 90,
+    "fields": {
+      "id": "90",
+      "recorded_date": "2017-09-11",
+      "weather_code_id": 10,
+      "temperature": "22.2",
+      "humidity": "0.55",
+      "pressure": "942.9",
+      "hen_group_id": 1,
+      "egg_count": "2",
+      "avg_egg_weight": "58.0",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 91,
+    "fields": {
+      "id": "91",
+      "recorded_date": "2017-09-12",
+      "weather_code_id": 20,
+      "temperature": "23.2",
+      "humidity": "0.61",
+      "pressure": "939.0",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "60.5",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 92,
+    "fields": {
+      "id": "92",
+      "recorded_date": "2017-09-13",
+      "weather_code_id": 20,
+      "temperature": "24.0",
+      "humidity": "0.4",
+      "pressure": "943.5",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "65.3",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  },
+  {
+    "model": "taxonomy.eggLedger",
+    "pk": 93,
+    "fields": {
+      "id": "93",
+      "recorded_date": "2017-09-14",
+      "weather_code_id": 20,
+      "temperature": "20.8",
+      "humidity": "0.48",
+      "pressure": "945.1",
+      "hen_group_id": 1,
+      "egg_count": "4",
+      "avg_egg_weight": "58.6",
+      "created_at": "2025-03-08T17:22:07.975527+09:00"
+    }
+  }
+]
