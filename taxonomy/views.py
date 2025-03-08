@@ -1,29 +1,38 @@
 import json
 
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import CreateView, UpdateView, TemplateView
 
 from taxonomy.domain.breed_entity import BreedEntity
 from taxonomy.domain.node import NodeTree
 from taxonomy.domain.repository.breed import BreedRepository
-from taxonomy.models import Kingdom
+from taxonomy.domain.repository.chicken_observations import (
+    ChickenObservationsRepository,
+)
 
 
-class IndexView(ListView):
-    model = Kingdom
+class IndexView(TemplateView):
     template_name = "taxonomy/index.html"
 
-    def get_queryset(self):
-        return BreedRepository.get_breed_hierarchy()
+    def get_context_data(self, **kwargs):
+        """
+        コンテキスト内でBreedRepositoryとChickenObservationsRepositoryのデータを統合
+        """
+        context = super().get_context_data(**kwargs)
 
-    def get_context_data(self, *, object_list=None, **kwargs):
-        """
-        See Also: https://github.com/EE2dev/d3-indented-tree#examples
-        """
-        context = super(IndexView, self).get_context_data(**kwargs)
-        tree = NodeTree([BreedEntity(record) for record in self.get_queryset()])
+        # 1. Breed分類ツリーの取得
+        tree = NodeTree(
+            [BreedEntity(record) for record in BreedRepository.get_breed_hierarchy()]
+        )
         context["data"] = json.dumps(tree.export(), ensure_ascii=False)
 
+        # 2. ChickenObservationsRepositoryからのデータ
+        context["feed_usage"] = ChickenObservationsRepository.get_feed_usage_by_type()
+        context["egg_production"] = (
+            ChickenObservationsRepository.get_egg_production_by_date()
+        )
+
+        # 必要に応じて他のリポジトリからデータを追加
         return context
 
 
