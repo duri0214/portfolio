@@ -158,8 +158,9 @@ class FeedWeight(models.Model):
         unique=True,
         help_text="飼料重量に対応する名前 (例: 通常量, 少量)",
     )
-
     weight = models.IntegerField(unique=True, help_text="飼料の重量 (単位: g)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return f"{self.name} ({self.weight}g)"
@@ -181,6 +182,8 @@ class HenGroup(models.Model):
         help_text="このグループ内のメスの鶏の羽数 (単位: 羽)"
     )
     remark = models.TextField(blank=True, null=True, help_text="備考や補足説明")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return f"{self.name} ({self.hen_count}羽)"
@@ -189,8 +192,6 @@ class HenGroup(models.Model):
 class EggLedger(models.Model):
     """
     モデル: 鶏の産卵台帳 (Egg Ledger)
-
-    天気の気温や湿度、降水量などと産卵情報を記録。
     """
 
     hen_group = models.ForeignKey(
@@ -204,7 +205,7 @@ class EggLedger(models.Model):
     weather_code = models.ForeignKey(
         JmaWeatherCode,
         on_delete=models.PROTECT,
-        to_field="code",
+        to_field="id",
         help_text="天気コード。天気マスタ (JmaWeatherCode)とのリレーション",
     )
     temperature = models.FloatField(help_text="気温 (単位: °C)", null=True)
@@ -216,6 +217,8 @@ class EggLedger(models.Model):
     feed_weight = models.ForeignKey(
         FeedWeight,
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         help_text="飼料の重量マスタ（飼料重量と分類名）とのリレーション",
     )
     comment = models.TextField(
@@ -223,6 +226,8 @@ class EggLedger(models.Model):
         null=True,
         help_text="自由記述フィールド。産卵に関するコメントや観察記録を記入",
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
     def laying_rate(self):
         if self.hen_group and self.hen_group.hen_count > 0:
