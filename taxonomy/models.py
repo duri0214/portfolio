@@ -1,5 +1,7 @@
 from django.db import models
 
+from soil_analysis.models import JmaWeatherCode
+
 
 class Kingdom(models.Model):
     """
@@ -144,29 +146,77 @@ class BreedTags(models.Model):
         ]
 
 
-class EggProductionRecord(models.Model):
+class FeedWeight(models.Model):
     """
-    モデル: 鶏の産卵記録
+    モデル: 飼料重量マスタ
 
-    このモデルは、特定の日における鶏の産卵記録を保持します。
-    主に天気、気象データ、産卵数などの情報を追跡します。
+    飼料重量とその分類名を保持するマスタデータ。
     """
 
+    name = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text="飼料重量に対応する名前 (例: 通常量, 少量)",
+    )
+
+    weight = models.IntegerField(unique=True, help_text="飼料の重量 (単位: g)")
+
+    def __str__(self):
+        return f"{self.name} ({self.weight}g)"
+
+
+class HenGroup(models.Model):
+    """
+    モデル: 鶏のグループマスタ
+
+    鶏の羽数やメモなどをグループ単位で管理できるマスタテーブル。
+    """
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="鶏グループの名前 (例: 農場A, ロット1など)",
+    )
+    hen_count = models.IntegerField(
+        help_text="このグループ内のメスの鶏の羽数 (単位: 羽)"
+    )
+    remark = models.TextField(blank=True, null=True, help_text="備考や補足説明")
+
+    def __str__(self):
+        return f"{self.name} ({self.hen_count}羽)"
+
+
+class EggLedger(models.Model):
+    """
+    モデル: 鶏の産卵台帳 (Egg Ledger)
+
+    天気の気温や湿度、降水量などと産卵情報を記録。
+    """
+
+    hen_group = models.ForeignKey(
+        HenGroup,
+        on_delete=models.PROTECT,
+        help_text="この記録に該当する鶏グループとのリレーション",
+    )
     recorded_date = models.DateField(
         help_text="データを記録した日付 (形式: YYYY-MM-DD)"
     )
-    weather_code = models.IntegerField(
-        help_text="天気コード。具体的なコードの詳細はシステムで管理"
+    weather_code = models.ForeignKey(
+        JmaWeatherCode,
+        on_delete=models.PROTECT,
+        to_field="code",
+        help_text="天気コード。天気マスタ (JmaWeatherCode)とのリレーション",
     )
-    avg_temperature = models.FloatField(help_text="平均気温 (単位: °C)", null=True)
+    temperature = models.FloatField(help_text="気温 (単位: °C)", null=True)
     humidity = models.FloatField(help_text="湿度 (単位: %)", null=True)
     pressure = models.FloatField(help_text="気圧 (単位: hPa)", null=True)
     rainfall = models.FloatField(help_text="降水量 (単位: mm)", null=True)
-    hen_count = models.IntegerField(help_text="メスの個体数 (単位: 羽)")
     egg_count = models.IntegerField(help_text="産卵数 (単位: 個)", null=True)
     avg_egg_weight = models.FloatField(help_text="卵の平均重量 (単位: g)", null=True)
-    feed_weight = models.IntegerField(
-        help_text="消費した飼料の量 (単位: 125g／升)", null=True
+    feed_weight = models.ForeignKey(
+        FeedWeight,
+        on_delete=models.PROTECT,
+        help_text="飼料の重量マスタ（飼料重量と分類名）とのリレーション",
     )
     comment = models.TextField(
         blank=True,
@@ -175,21 +225,12 @@ class EggProductionRecord(models.Model):
     )
 
     def laying_rate(self):
-        """
-        メスの鶏1羽あたりの産卵率を計算します。
-
-        Returns:
-            float: メスの鶏あたりの産卵率 (百分率で表示)
-        """
-        if self.hen_count > 0:
-            return round((self.egg_count / self.hen_count) * 100, 2)
+        if self.hen_group and self.hen_group.hen_count > 0:
+            return round((self.egg_count / self.hen_group.hen_count) * 100, 2)
         return 0.0
 
     def __str__(self):
-        """
-        インスタンスを文字列として表現します。
-
-        Returns:
-            str: 記録された日付と産卵状況の概要。
-        """
-        return f"{self.recorded_date} ({self.hen_count}羽, {self.egg_count}個, {self.laying_rate()}%)"
+        return (
+            f"{self.recorded_date} - {self.hen_group.name}: "
+            f"{self.egg_count}個, {self.laying_rate()}%"
+        )
