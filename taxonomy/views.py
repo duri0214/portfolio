@@ -1,6 +1,7 @@
 import json
 
 from django.urls import reverse_lazy
+from django.utils.safestring import mark_safe
 from django.views.generic import CreateView, UpdateView, TemplateView
 
 from taxonomy.domain.breed_entity import BreedEntity
@@ -26,10 +27,14 @@ class IndexView(TemplateView):
         )
         context["data"] = json.dumps(tree.export(), ensure_ascii=False)
 
-        # 2. ChickenObservationsRepositoryからのデータ
-        context["feed_usage"] = ChickenObservationsRepository.get_feed_usage_by_type()
-        context["egg_production"] = (
-            ChickenObservationsRepository.get_egg_production_by_date()
+        # 2. 餌のデータと卵生産データを取得
+        feed_usage = ChickenObservationsRepository.get_feed_usage_by_type()
+        egg_production = ChickenObservationsRepository.get_egg_production_by_date()
+
+        # JSON形式でテンプレートに渡す
+        context["feed_usage"] = mark_safe(json.dumps(feed_usage, ensure_ascii=False))
+        context["egg_production"] = mark_safe(
+            json.dumps(egg_production, ensure_ascii=False)
         )
 
         # 必要に応じて他のリポジトリからデータを追加

@@ -47,7 +47,90 @@
     </section>
     <section id="chicken-chart" class="container">
         <h3>鶏の観察グラフ</h3>
+        <div id="feed-usage-chart" class="chart-area"></div>
+        <div id="egg-production-chart" class="chart-area"></div>
+        <script>
+            // 餌使用量データの描画
+            const feedUsageData = {{ feed_usage|safe }};
+            const feedUsageSvg = d3.select("#feed-usage-chart")
+                .append("svg")
+                .attr("width", 500)
+                .attr("height", 300);
 
+            const feedMargin = {top: 20, right: 30, bottom: 40, left: 40};
+            const feedWidth = +feedUsageSvg.attr("width") - feedMargin.left - feedMargin.right;
+            const feedHeight = +feedUsageSvg.attr("height") - feedMargin.top - feedMargin.bottom;
+            const feedChart = feedUsageSvg.append("g").attr("transform", `translate(${feedMargin.left},${feedMargin.top})`);
+
+            // X軸とY軸を設定
+            const feedX = d3.scaleBand()
+                .domain(feedUsageData.map(d => d.name))
+                .range([0, feedWidth])
+                .padding(0.1);
+
+            const feedY = d3.scaleLinear()
+                .domain([0, d3.max(feedUsageData, d => d.total_weight)])
+                .nice()
+                .range([feedHeight, 0]);
+
+            // 軸を描画
+            feedChart.append("g")
+                .attr("class", "x-axis")
+                .attr("transform", `translate(0,${feedHeight})`)
+                .call(d3.axisBottom(feedX));
+
+            feedChart.append("g")
+                .attr("class", "y-axis")
+                .call(d3.axisLeft(feedY));
+
+            // 棒グラフを描画
+            feedChart.selectAll(".bar")
+                .data(feedUsageData)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => feedX(d.name))
+                .attr("y", d => feedY(d.total_weight))
+                .attr("width", feedX.bandwidth())
+                .attr("height", d => feedHeight - feedY(d.total_weight))
+                .attr("fill", "steelblue");
+
+            // 卵生産データの描画
+            const eggProductionData = {{ egg_production|safe }};
+            const eggProductionSvg = d3.select("#egg-production-chart")
+                .append("svg")
+                .attr("width", 500)
+                .attr("height", 300);
+
+            const eggChart = eggProductionSvg.append("g").attr("transform", `translate(${feedMargin.left},${feedMargin.top})`);
+
+            const eggX = d3.scaleBand()
+                .domain(eggProductionData.map(d => d.recorded_date))
+                .range([0, feedWidth])
+                .padding(0.1);
+
+            const eggY = d3.scaleLinear()
+                .domain([0, d3.max(eggProductionData, d => d.total_eggs)])
+                .nice()
+                .range([feedHeight, 0]);
+
+            eggChart.append("g")
+                .attr("class", "x-axis")
+                .attr("transform", `translate(0,${feedHeight})`)
+                .call(d3.axisBottom(eggX));
+
+            eggChart.append("g")
+                .attr("class", "y-axis")
+                .call(d3.axisLeft(eggY));
+
+            eggChart.selectAll(".bar")
+                .data(eggProductionData)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => eggX(d.recorded_date))
+                .attr("y", d => eggY(d.total_eggs))
+                .attr("width", eggX.bandwidth())
+                .attr("height", d => feedHeight - eggY(d.total_eggs))
+                .attr("fill", "orange");
+        </script>
     </section>
-
 {% endblock %}
