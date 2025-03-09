@@ -195,9 +195,20 @@ class EggLedger(models.Model):
     updated_at = models.DateTimeField(null=True)
 
     def laying_rate(self):
-        if self.hen_group and self.hen_group.hen_count > 0:
-            return round((self.egg_count / self.hen_group.hen_count) * 100, 2)
-        return 0.0
+        # egg_countやhen_groupがNoneの場合はゼロ埋めする
+        egg_count = self.egg_count or 0
+        hen_count = (
+            self.hen_group.hen_count
+            if self.hen_group and self.hen_group.hen_count
+            else 0
+        )
+
+        # hen_countがゼロの時、ゼロ除算を防ぐ
+        if hen_count == 0:
+            return 0
+
+        # レート計算
+        return round((egg_count / hen_count) * 100, 2)
 
     def __str__(self):
         return (
