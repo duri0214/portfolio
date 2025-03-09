@@ -167,23 +167,11 @@ class FeedWeight(models.Model):
 
 
 class HenGroup(models.Model):
-    """
-    モデル: 鶏のグループマスタ
-
-    鶏の羽数やメモなどをグループ単位で管理できるマスタテーブル。
-    """
-
-    name = models.CharField(
-        max_length=100,
-        unique=True,
-        help_text="鶏グループの名前 (例: 農場A, ロット1など)",
-    )
-    hen_count = models.IntegerField(
-        help_text="このグループ内のメスの鶏の羽数 (単位: 羽)"
-    )
-    remark = models.TextField(blank=True, null=True, help_text="備考や補足説明")
+    name = models.CharField(max_length=100, unique=True)
+    hen_count = models.IntegerField()
+    remark = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.name} ({self.hen_count}羽)"
