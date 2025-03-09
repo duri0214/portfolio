@@ -146,18 +146,14 @@ class BreedTags(models.Model):
         ]
 
 
-class FeedWeight(models.Model):
+class FeedGroup(models.Model):
     """
     モデル: 飼料重量マスタ
 
     飼料重量とその分類名を保持するマスタデータ。
     """
 
-    name = models.CharField(
-        max_length=50,
-        unique=True,
-        help_text="飼料重量に対応する名前 (例: 通常量, 少量)",
-    )
+    name = models.CharField(max_length=50, unique=True)
     weight = models.IntegerField(unique=True, help_text="飼料の重量 (単位: g)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
@@ -171,7 +167,7 @@ class HenGroup(models.Model):
     hen_count = models.IntegerField()
     remark = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return f"{self.name} ({self.hen_count}羽)"
@@ -182,38 +178,21 @@ class EggLedger(models.Model):
     モデル: 鶏の産卵台帳 (Egg Ledger)
     """
 
-    hen_group = models.ForeignKey(
-        HenGroup,
-        on_delete=models.PROTECT,
-        help_text="この記録に該当する鶏グループとのリレーション",
+    recorded_date = models.DateField()
+    egg_count = models.IntegerField(null=True, blank=True)  # 産卵数 (単位: 個)
+    avg_egg_weight = models.FloatField(null=True, blank=True)  # 平均卵重 (単位: g)
+    temperature = models.FloatField(null=True, blank=True)  # 気温 (単位: °C)
+    humidity = models.FloatField(null=True, blank=True)  # 湿度 (単位: %)
+    rainfall = models.FloatField(null=True, blank=True)  # 降水量 (単位: mm)
+    air_pressure = models.FloatField(null=True, blank=True)  # 気圧 (単位: hPa)
+    comment = models.TextField(null=True, blank=True)  # 作業者のコメントなど
+
+    weather_code = models.ForeignKey(JmaWeatherCode, on_delete=models.PROTECT)
+    feed_group = models.ForeignKey(
+        FeedGroup, on_delete=models.CASCADE, null=True, blank=True
     )
-    recorded_date = models.DateField(
-        help_text="データを記録した日付 (形式: YYYY-MM-DD)"
-    )
-    weather_code = models.ForeignKey(
-        JmaWeatherCode,
-        on_delete=models.PROTECT,
-        to_field="id",
-        help_text="天気コード。天気マスタ (JmaWeatherCode)とのリレーション",
-    )
-    temperature = models.FloatField(help_text="気温 (単位: °C)", null=True)
-    humidity = models.FloatField(help_text="湿度 (単位: %)", null=True)
-    pressure = models.FloatField(help_text="気圧 (単位: hPa)", null=True)
-    rainfall = models.FloatField(help_text="降水量 (単位: mm)", null=True)
-    egg_count = models.IntegerField(help_text="産卵数 (単位: 個)", null=True)
-    avg_egg_weight = models.FloatField(help_text="卵の平均重量 (単位: g)", null=True)
-    feed_weight = models.ForeignKey(
-        FeedWeight,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        help_text="飼料の重量マスタ（飼料重量と分類名）とのリレーション",
-    )
-    comment = models.TextField(
-        blank=True,
-        null=True,
-        help_text="自由記述フィールド。産卵に関するコメントや観察記録を記入",
-    )
+    hen_group = models.ForeignKey(HenGroup, on_delete=models.CASCADE)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
 

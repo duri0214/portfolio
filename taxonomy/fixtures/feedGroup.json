@@ -1,6 +1,6 @@
 [
   {
-    "model": "taxonomy.feedWeight",
+    "model": "taxonomy.feedGroup",
     "pk": 1,
     "fields": {
       "id": "1",
@@ -10,7 +10,7 @@
     }
   },
   {
-    "model": "taxonomy.feedWeight",
+    "model": "taxonomy.feedGroup",
     "pk": 2,
     "fields": {
       "id": "2",
