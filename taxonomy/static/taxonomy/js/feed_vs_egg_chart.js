@@ -78,3 +78,26 @@ function renderFeedVsEggChart(feedVsEggData) {
         .style("fill", "orange")
         .text("卵 生産数 (個)");
 }
+
+function initializeFeedVsEggChart() {
+    const chartArea = document.querySelector("#feed-vs-egg-chart #chart-area");
+    if (!chartArea) {
+        console.error("Chart area not found");
+        return;
+    }
+
+    try {
+        const rawData = chartArea.getAttribute("data-feed-data");
+        if (!rawData) {
+            console.error("No feed data provided in data-feed-data attribute.");
+            return;
+        }
+
+        const feedVsEggData = JSON.parse(rawData);
+        renderFeedVsEggChart(feedVsEggData);
+    } catch (error) {
+        console.error("Error parsing or rendering feed vs. egg chart:", error);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", initializeFeedVsEggChart);
