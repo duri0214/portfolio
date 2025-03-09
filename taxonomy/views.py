@@ -27,17 +27,10 @@ class IndexView(TemplateView):
         )
         context["data"] = json.dumps(tree.export(), ensure_ascii=False)
 
-        # 2. 餌のデータと卵生産データを取得
-        feed_usage = ChickenObservationsRepository.get_feed_usage_by_type()
-        egg_production = ChickenObservationsRepository.get_egg_production_by_date()
+        # 2. 餌の投入量と卵生産量データを取得
+        feed_vs_egg = ChickenObservationsRepository.get_feed_vs_egg_production()
+        context["feed_vs_egg"] = mark_safe(json.dumps(feed_vs_egg, ensure_ascii=False))
 
-        # JSON形式でテンプレートに渡す
-        context["feed_usage"] = mark_safe(json.dumps(feed_usage, ensure_ascii=False))
-        context["egg_production"] = mark_safe(
-            json.dumps(egg_production, ensure_ascii=False)
-        )
-
-        # 必要に応じて他のリポジトリからデータを追加
         return context
 
 
