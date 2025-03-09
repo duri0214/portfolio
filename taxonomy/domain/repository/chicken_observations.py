@@ -1,6 +1,6 @@
-from django.db.models import Count, Sum
+from django.db.models import Sum
 
-from taxonomy.models import EggLedger, FeedWeight
+from taxonomy.models import EggLedger
 
 
 class ChickenObservationsRepository:
@@ -31,28 +31,20 @@ class ChickenObservationsRepository:
             result.append(record_dict)
         return result
 
-    # ------ 餌のデータ操作 ------
     @staticmethod
-    def get_feed_usage_by_type():
+    def get_feed_vs_egg_production():
         """
-        餌の種類ごとの総投入量を取得（辞書形式）
+        日付ごとの餌投入量（FeedGroup）と卵生産量（EggLedger）の関係を関連付けたデータを取得。
+        :return: [{'recorded_date': '2023-10-01', 'total_feed': 50, 'total_eggs': 30}, ...]
         """
         queryset = (
-            FeedWeight.objects.values("name")
-            .annotate(total_weight=Sum("weight"))
-            .order_by("-total_weight")
-        )
-        return ChickenObservationsRepository.to_dict(queryset)
-
-    # ------ 卵生産データ操作 ------
-    @staticmethod
-    def get_egg_production_by_date():
-        """
-        日ごとの卵生産数を取得（辞書形式）
-        """
-        queryset = (
-            EggLedger.objects.values("recorded_date")
-            .annotate(total_eggs=Count("id"))
+            EggLedger.objects.values(
+                "recorded_date", "egg_count"
+            )  # 卵生産数をそのまま使用
+            .annotate(
+                # EggLedgerと関連付けられたFeedGroupのweightを合計
+                total_feed=Sum("feed_group__weight")  # 餌投入量だけ集計
+            )
             .order_by("recorded_date")
         )
         return ChickenObservationsRepository.to_dict(
