@@ -34,7 +34,8 @@ class ChickenObservationsRepository:
     @staticmethod
     def get_feed_vs_egg_production():
         """
-        日付ごとの餌投入量（FeedGroup）と卵生産量（EggLedger）の関係を関連付けたデータを取得。
+        日付ごとの餌投入量（FeedGroup）と卵生産量（EggLedger）の関係を関連付けたデータを取得し、
+        None値をゼロ埋めします。
         :return: [{'recorded_date': '2023-10-01', 'total_feed': 50, 'total_eggs': 30}, ...]
         """
         queryset = (
@@ -47,6 +48,25 @@ class ChickenObservationsRepository:
             )
             .order_by("recorded_date")
         )
-        return ChickenObservationsRepository.to_dict(
+
+        # QuerySetを辞書形式に変換し、Noneの値をゼロで埋める
+        raw_data = ChickenObservationsRepository.to_dict(
             queryset, date_fields=["recorded_date"]
         )
+
+        # NaN発生防止のためゼロ埋め処理を追加
+        processed_data = []
+        for entry in raw_data:
+            processed_data.append(
+                {
+                    "recorded_date": entry.get(
+                        "recorded_date", ""
+                    ),  # 日付は空でなくそのまま使用
+                    "total_feed": entry.get("total_feed", 0)
+                    or 0,  # NoneまたはFalseなら0
+                    "total_eggs": entry.get("egg_count", 0)
+                    or 0,  # NoneまたはFalseなら0
+                }
+            )
+
+        return processed_data
