@@ -72,27 +72,30 @@ class ChickenObservationsRepository:
         return processed_data
 
     @staticmethod
-    def get_feed_group_laying_rates():
+    def get_feed_group_laying_rates_table():
         """
-        feed_group別のlaying_rateを日付ごとに計算して返す。
-        データの欠損を防ぐため、None値をゼロ埋めし、日付はISO形式に変換します。
-        :return: [{'recorded_date': '2023-10-01', 'feed_group_id': 1, 'laying_rate': 0.75}, ...]
+        フィードグループ別の産卵率データをテーブル形式で返します。
+        :return: [{"feed_group": 1, "data": [{"date": "2023-10-01", "laying_rate": 0.75}, ...]}, ...]
         """
-        # EggLedgerから全てのデータを取得
+        # EggLedgerから全データを取得し、必要なデータを加工
         queryset = EggLedger.objects.all()
 
-        processed_data = []
+        data_by_group = {}
         for ledger in queryset:
-            laying_rate = ledger.laying_rate()
-            processed_data.append(
+            group_id = ledger.feed_group_id or 0
+            if group_id not in data_by_group:
+                data_by_group[group_id] = []
+            data_by_group[group_id].append(
                 {
-                    "recorded_date": ledger.recorded_date.isoformat(),
-                    "feed_group_id": ledger.feed_group_id or 0,
-                    "laying_rate": laying_rate or 0,
+                    "date": ledger.recorded_date.isoformat(),
+                    "laying_rate": ledger.laying_rate() or 0,
                 }
             )
 
-        # データを日付およびフィードグループIDでソート（任意）
-        processed_data.sort(key=lambda x: (x["recorded_date"], x["feed_group_id"]))
+        # グループごとにデータを整形
+        result = [
+            {"feed_group": group_id, "data": sorted(records, key=lambda x: x["date"])}
+            for group_id, records in data_by_group.items()
+        ]
 
-        return processed_data
+        return result

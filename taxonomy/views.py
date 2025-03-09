@@ -32,9 +32,8 @@ class IndexView(TemplateView):
         context["feed_vs_egg"] = mark_safe(json.dumps(feed_vs_egg, ensure_ascii=False))
 
         # 3. Feed Group 別の laying_rate データを取得
-        laying_rate_data = ChickenObservationsRepository.get_feed_group_laying_rates()
-        context["feed_group_laying_rate"] = mark_safe(
-            json.dumps(laying_rate_data, ensure_ascii=False)
+        context["feed_group_laying_rate"] = (
+            ChickenObservationsRepository.get_feed_group_laying_rates_table()
         )
 
         return context
