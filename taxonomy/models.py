@@ -188,9 +188,7 @@ class EggLedger(models.Model):
     comment = models.TextField(null=True, blank=True)  # 作業者のコメントなど
 
     weather_code = models.ForeignKey(JmaWeatherCode, on_delete=models.PROTECT)
-    feed_group = models.ForeignKey(
-        FeedGroup, on_delete=models.CASCADE, null=True, blank=True
-    )
+    feed_group = models.ForeignKey(FeedGroup, on_delete=models.CASCADE)
     hen_group = models.ForeignKey(HenGroup, on_delete=models.CASCADE)
 
     created_at = models.DateTimeField(auto_now_add=True)
