@@ -4,7 +4,7 @@ function renderFeedVsEggChart(feedVsEggData) {
     const width = 800 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
 
-    const svg = d3.select("#chart-area").append("svg")
+    const svg = d3.select("#feed-vs-egg-chart #chart-area").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
