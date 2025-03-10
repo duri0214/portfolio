@@ -59,13 +59,9 @@ class ChickenObservationsRepository:
         for entry in raw_data:
             processed_data.append(
                 {
-                    "recorded_date": entry.get(
-                        "recorded_date", ""
-                    ),  # 日付は空でなくそのまま使用
-                    "total_feed": entry.get("total_feed", 0)
-                    or 0,  # NoneまたはFalseなら0
-                    "total_eggs": entry.get("egg_count", 0)
-                    or 0,  # NoneまたはFalseなら0
+                    "recorded_date": entry.get("recorded_date"),
+                    "total_feed": entry.get("total_feed", 0),
+                    "total_eggs": entry.get("egg_count", 0),
                 }
             )
 
