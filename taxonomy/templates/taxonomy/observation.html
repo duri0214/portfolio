@@ -1,12 +1,10 @@
 {% extends "taxonomy/base.html" %}
 {% block content %}
     <section class="container">
-        <h3>観察データ</h3>
+        <h3>長野県で鶏を飼っていたころの観察データ</h3>
+        <p>餌を半分にしても生産量は変わらないことがわかる</p>
         <h4>餌の量と卵生産量の推移</h4>
         <div id="feed-vs-egg-chart" data-feed-data='{{ feed_vs_egg }}'></div>
-    </section>
-
-    <section class="container">
         <h4>フィードグループ別の産卵率推移</h4>
         {% for group in feed_group_laying_rate %}
             <h5>フィードグループ: {{ group.feed_group }}</h5>
