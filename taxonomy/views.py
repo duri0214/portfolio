@@ -17,17 +17,20 @@ class IndexView(TemplateView):
 
     def get_context_data(self, **kwargs):
         """
-        コンテキスト内でBreedRepositoryとChickenObservationsRepositoryのデータを統合
+        コンテキストデータを設定。
+        主にBreedRepositoryを使用して分類データを取得し、
+        Breed分類ツリーとしてテンプレートに提供する。
         """
         context = super().get_context_data(**kwargs)
 
-        # 1. Breed分類ツリーの取得
+        # Breed分類ツリーの取得
         tree = NodeTree(
             [BreedEntity(record) for record in BreedRepository.get_breed_hierarchy()]
         )
         context["data"] = json.dumps(tree.export(), ensure_ascii=False)
 
         # 2. 餌の投入量と卵生産量データを取得
+        return context
         feed_vs_egg = ChickenObservationsRepository.get_feed_vs_egg_production()
         context["feed_vs_egg"] = mark_safe(json.dumps(feed_vs_egg, ensure_ascii=False))
 
