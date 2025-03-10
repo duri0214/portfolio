@@ -31,9 +31,9 @@
             <li><a class="btn btn-outline-primary" href="#chicken-chart-section" role="button">鶏の観察グラフ</a></li>
         </ul>
     </div>
-    <section id="chicken-chart-section" class="container">
+    <section class="container">
         <h3>分類グラフ</h3>
-        <div id="chicken-chart">
+        <div id="chicken-classification-chart">
             <div class="text">See one-liners for each transition</div>
             <script>
                 const dataSpec = {
@@ -41,7 +41,7 @@
                     key: "name",
                 };
                 const myChart = d3.indentedTree(dataSpec);
-                d3.select("#chicken-chart").append("div").attr("class", "chart").call(myChart);
+                d3.select("#chicken-classification-chart").append("div").attr("class", "chart").call(myChart);
             </script>
         </div>
     </section>
