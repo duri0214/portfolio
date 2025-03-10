@@ -29,12 +29,23 @@ class IndexView(TemplateView):
         )
         context["data"] = json.dumps(tree.export(), ensure_ascii=False)
 
-        # 2. 餌の投入量と卵生産量データを取得
         return context
+
+
+class ObservationView(TemplateView):
+    template_name = "taxonomy/observation.html"
+
+    def get_context_data(self, **kwargs):
+        """
+        Observationページのコンテキストデータを設定
+        """
+        context = super().get_context_data(**kwargs)
+
+        # 餌の投入量と卵生産量データを取得
         feed_vs_egg = ChickenObservationsRepository.get_feed_vs_egg_production()
         context["feed_vs_egg"] = mark_safe(json.dumps(feed_vs_egg, ensure_ascii=False))
 
-        # 3. Feed Group 別の laying_rate データを取得
+        # Feed Group別の産卵率データを取得
         context["feed_group_laying_rate"] = (
             ChickenObservationsRepository.get_feed_group_laying_rates_table()
         )

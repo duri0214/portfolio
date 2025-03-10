@@ -27,7 +27,9 @@
                    role="button">品種とタグの紐づけ</a></li>
         </ul>
         <ul class="list-items">
-            <li><a class="btn btn-outline-primary" href="#chicken-chart-section" role="button">鶏の観察グラフ</a></li>
+            <li><a class="btn btn-outline-primary" href="{% url 'txo:observation' %}"
+                   role="button">鶏の観察グラフ</a>
+            </li>
         </ul>
     </div>
     <section class="container">
@@ -43,32 +45,5 @@
                 d3.select("#chicken-classification-chart").append("div").attr("class", "chart").call(myChart);
             </script>
         </div>
-    </section>
-    <section class="container">
-        <h3>餌の量と卵生産量の推移</h3>
-        <div id="feed-vs-egg-chart" data-feed-data='{{ feed_vs_egg }}'></div>
-    </section>
-    <section class="container">
-        <h3>フィードグループ別の産卵率推移</h3>
-
-        {% for group in feed_group_laying_rate %}
-            <h5>フィードグループ: {{ group.feed_group }}</h5>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th scope="col">日付</th>
-                    <th scope="col">産卵率</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for item in group.data %}
-                    <tr>
-                        <td>{{ item.date }}</td>
-                        <td>{{ item.laying_rate }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% endfor %}
     </section>
 {% endblock %}
