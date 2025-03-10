@@ -71,27 +71,27 @@ class ChickenObservationsRepository:
     def get_feed_group_laying_rates_table():
         """
         フィードグループ別の産卵率データをテーブル形式で返します。
-        :return: [{"feed_group": 1, "data": [{"date": "2023-10-01", "laying_rate": 0.75}, ...]}, ...]
+        :return: [{"feed_group": "Group Name", "data": [{"date": "2023-10-01", "laying_rate": 0.75}, ...]}, ...]
         """
-        # EggLedgerから全データを取得し、必要なデータを加工
-        queryset = EggLedger.objects.all()
+        queryset = EggLedger.objects.select_related("feed_group").all()
 
         data_by_group = {}
         for ledger in queryset:
-            group_id = ledger.feed_group_id or 0
-            if group_id not in data_by_group:
-                data_by_group[group_id] = []
-            data_by_group[group_id].append(
+            # フィードグループの名前を取得
+            group_name = ledger.feed_group
+            if group_name not in data_by_group:
+                data_by_group[group_name] = []
+            data_by_group[group_name].append(
                 {
                     "date": ledger.recorded_date.isoformat(),
-                    "laying_rate": ledger.laying_rate() or 0,
+                    "laying_rate": ledger.laying_rate(),
                 }
             )
 
         # グループごとにデータを整形
         result = [
-            {"feed_group": group_id, "data": sorted(records, key=lambda x: x["date"])}
-            for group_id, records in data_by_group.items()
+            {"feed_group": group_name, "data": sorted(records, key=lambda x: x["date"])}
+            for group_name, records in data_by_group.items()
         ]
 
         return result
