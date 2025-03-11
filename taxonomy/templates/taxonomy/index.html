@@ -25,20 +25,25 @@
                    role="button">タグ(tag)のメンテナンス</a></li>
             <li><a class="btn btn-secondary btn-sm disabled" href="#"
                    role="button">品種とタグの紐づけ</a></li>
-            <li><a class="btn btn-secondary btn-sm disabled" href="#" role="button">関係図</a></li>
+        </ul>
+        <ul class="list-items">
+            <li><a class="btn btn-outline-primary" href="{% url 'txo:observation' %}"
+                   role="button">鶏の観察グラフ</a>
+            </li>
         </ul>
     </div>
-    <div id="chart-area" class="container">
-        <div class="text">See one-liners for each transition</div>
-
-        <script>
-            const dataSpec = {
-                source: JSON.parse('{{ data|safe }}'),
-                key: "name",
-            };
-            const myChart = d3.indentedTree(dataSpec);
-            d3.select("#chart-area").append("div").attr("class", "chart").call(myChart);
-        </script>
-    </div>
-
+    <section class="container">
+        <h3>分類グラフ</h3>
+        <div id="chicken-classification-chart">
+            <div class="text">See one-liners for each transition</div>
+            <script>
+                const dataSpec = {
+                    source: JSON.parse('{{ data|safe }}'),
+                    key: "name",
+                };
+                const myChart = d3.indentedTree(dataSpec);
+                d3.select("#chicken-classification-chart").append("div").attr("class", "chart").call(myChart);
+            </script>
+        </div>
+    </section>
 {% endblock %}

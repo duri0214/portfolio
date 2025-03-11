@@ -39,6 +39,12 @@ python manage.py createsuperuser
 
 ## fixture
 
+CSV ファイルを Django フィクスチャ JSON 形式に変換します。
+このコマンドは「`convert_csv_to_fixture.py` スクリプトが配置されているディレクトリ内のすべての CSV ファイルを処理」します。
+そしてそれらを Django 用の JSON フィクスチャ ファイルに変換します。JSON の「model」フィールドは
+CSV ファイル名によって決まります。ファイル名のアンダースコアはドットに置き換えられます。
+CSVファイル名は2つのセクションに分ける必要があります。例えば「hospital_cityGroup.csv」のように。
+
 ```
 python manage.py convert_csv_to_fixture
 ```
@@ -101,6 +107,9 @@ python manage.py loaddata .\taxonomy\fixtures\naturalMonument.json
 python manage.py loaddata .\taxonomy\fixtures\tag.json
 python manage.py loaddata .\taxonomy\fixtures\breed.json
 python manage.py loaddata .\taxonomy\fixtures\breedTags.json
+python manage.py loaddata .\taxonomy\fixtures\feedGroup.json
+python manage.py loaddata .\taxonomy\fixtures\henGroup.json
+python manage.py loaddata .\taxonomy\fixtures\eggLedger.json
 python manage.py loaddata .\soil_analysis\fixtures\user.json
 python manage.py loaddata .\soil_analysis\fixtures\companycategory.json
 python manage.py loaddata .\soil_analysis\fixtures\company.json

@@ -1,47 +1,54 @@
 import json
-from django.db.models import F
+
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView
+from django.utils.safestring import mark_safe
+from django.views.generic import CreateView, UpdateView, TemplateView
 
 from taxonomy.domain.breed_entity import BreedEntity
 from taxonomy.domain.node import NodeTree
-from taxonomy.models import Kingdom, Breed
+from taxonomy.domain.repository.breed import BreedRepository
+from taxonomy.domain.repository.chicken_observations import (
+    ChickenObservationsRepository,
+)
 
 
-class IndexView(ListView):
-    model = Kingdom
+class IndexView(TemplateView):
     template_name = "taxonomy/index.html"
 
-    def get_queryset(self):
-        return Breed.objects \
-            .annotate(
-            kingdom_name=F('species__genus__family__classification__phylum__kingdom__name'),
-            phylum_name=F('species__genus__family__classification__phylum__name'),
-            classification_name=F('species__genus__family__classification__name'),
-            family_name=F('species__genus__family__name'),
-            genus_name=F('species__genus__name'),
-            species_name=F('species__name'),
-            breed_name=F('name'),
-            breed_name_kana=F('name_kana'),
-            natural_monument_name=F('natural_monument__name'),
-            breed_tag=F('breedtags__tag__name')
-        ) \
-            .values(
-            'kingdom_name', 'phylum_name', 'classification_name', 'family_name', 'genus_name', 'species_name',
-            'breed_name', 'breed_name_kana', 'natural_monument_name', 'breed_tag'
-        ) \
-            .order_by(
-            'kingdom_name', 'phylum_name', 'classification_name', 'family_name', 'genus_name', 'species_name',
-            'breed_name', 'breed_name_kana', 'natural_monument_name', 'breed_tag'
-        )
+    def get_context_data(self, **kwargs):
+        """
+        コンテキストデータを設定。
+        主にBreedRepositoryを使用して分類データを取得し、
+        Breed分類ツリーとしてテンプレートに提供する。
+        """
+        context = super().get_context_data(**kwargs)
 
-    def get_context_data(self, *, object_list=None, **kwargs):
+        # Breed分類ツリーの取得
+        tree = NodeTree(
+            [BreedEntity(record) for record in BreedRepository.get_breed_hierarchy()]
+        )
+        context["data"] = json.dumps(tree.export(), ensure_ascii=False)
+
+        return context
+
+
+class ObservationView(TemplateView):
+    template_name = "taxonomy/observation.html"
+
+    def get_context_data(self, **kwargs):
         """
-        See Also: https://github.com/EE2dev/d3-indented-tree#examples
+        Observationページのコンテキストデータを設定
         """
-        context = super(IndexView, self).get_context_data(**kwargs)
-        tree = NodeTree([BreedEntity(record) for record in self.get_queryset()])
-        context['data'] = json.dumps(tree.export(), ensure_ascii=False)
+        context = super().get_context_data(**kwargs)
+
+        # 餌の投入量と卵生産量データを取得
+        feed_vs_egg = ChickenObservationsRepository.get_feed_vs_egg_production()
+        context["feed_vs_egg"] = mark_safe(json.dumps(feed_vs_egg, ensure_ascii=False))
+
+        # Feed Group別の産卵率データを取得
+        context["feed_group_laying_rate"] = (
+            ChickenObservationsRepository.get_feed_group_laying_rates_table()
+        )
 
         return context
 
