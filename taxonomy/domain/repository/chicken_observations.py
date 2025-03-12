@@ -84,7 +84,7 @@ class ChickenObservationsRepository:
             data_by_group[group_name].append(
                 {
                     "date": ledger.recorded_date.isoformat(),
-                    "weather_code": ledger.weather_code.code,
+                    "weather_code": ledger.weather_code.summary_code,
                     "laying_rate": ledger.laying_rate(),
                 }
             )
