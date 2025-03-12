@@ -65,7 +65,7 @@
                                     {% if request.path == '/rental_shop/' %}selected{% endif %}>RENTAL_SHOP
                             </option>
                             <option value="{% url 'txo:index' %}"
-                                    {% if request.path == '/taxonomy/' %}selected{% endif %}>
+                                    {% if request.path == '/taxonomy/' %}selected{% endif %}{% if request.path == '/taxonomy/observation/' %}selected{% endif %}>
                                 TAXONOMY
                             </option>
                             <option value="{% url 'soil:home' %}"
