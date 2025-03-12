@@ -226,7 +226,7 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 ### master data
 
 - `python manage.py import_weather_master` のバッチをまわす
-- `python manage.py import_weather_master_manual` のバッチをまわす（ごくたまに天気コードを取り込んでgitに焼き付ける）
+- `python manage.py import_weather_code_master` のバッチをまわす（たまに天気コードを更新してください）
 
 ### weather data
 
