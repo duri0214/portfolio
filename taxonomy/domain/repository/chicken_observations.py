@@ -71,7 +71,7 @@ class ChickenObservationsRepository:
     def get_feed_group_laying_rates_table():
         """
         フィードグループ別の産卵率データをテーブル形式で返します。
-        :return: [{"feed_group": "Group Name", "data": [{"date": "2023-10-01", "laying_rate": 0.75}, ...]}, ...]
+        :return: [{"feed_group": "Group Name", "data": [{"date": "2023-10-01", "weather_code": "100", "laying_rate": 0.75}, ...]}, ...]
         """
         queryset = EggLedger.objects.select_related("feed_group").all()
 
@@ -84,6 +84,7 @@ class ChickenObservationsRepository:
             data_by_group[group_name].append(
                 {
                     "date": ledger.recorded_date.isoformat(),
+                    "weather_code": ledger.weather_code.code,
                     "laying_rate": ledger.laying_rate(),
                 }
             )
