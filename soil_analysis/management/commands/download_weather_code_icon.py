@@ -4,25 +4,14 @@ import shutil
 import requests
 from django.core.management.base import BaseCommand
 
-from soil_analysis.domain.valueobject.weather.jma import JmaConstWeatherCode
-from soil_analysis.models import (
-    JmaWeatherCode,
-)
-
 
 class Command(BaseCommand):
-    help = "Import jma weather code master from manual data."
+    help = "気象庁の天気アイコンSVGをダウンロードします"
 
     def handle(self, *args, **options):
-        """
-        任意の都市の天気ページの `ページのソースを表示` から `TELOPS=` でページ内検索して data に当て込む
-        https://www.jma.go.jp/bosai/forecast/#area_type=class20s&area_code=2810000
-
-        Args:
-            *args: Additional positional arguments.
-            **options: Additional keyword arguments.
-        """
-        data = {
+        # 天気コードのデータ辞書
+        # 形式: code: [day_icon, night_icon, telop_code, name, name_en]
+        weather_code_data = {
             100: ["100.svg", "500.svg", "100", "\u6674", "CLEAR"],
             101: [
                 "101.svg",
@@ -777,7 +766,8 @@ class Command(BaseCommand):
         url_base = "https://www.jma.go.jp/bosai/forecast/img/"
         download_dir = os.path.expanduser("~/Downloads/images/")
         os.makedirs(download_dir, exist_ok=True)
-        for code in data.keys():
+
+        for code in weather_code_data.keys():
             svg_name = f"{code}.svg"
             url = f"{url_base}{svg_name}"
 
@@ -787,31 +777,6 @@ class Command(BaseCommand):
                 with open(os.path.join(download_dir, svg_name), "wb") as f:
                     response.raw.decode_content = True
                     shutil.copyfileobj(response.raw, f)
-                print(f"Downloaded {url}")
+                self.stdout.write(self.style.SUCCESS(f"ダウンロード完了: {url}"))
             else:
-                print(f"Error downloading {url}")
-
-        # Clear
-        JmaWeatherCode.objects.all().delete()
-
-        weather_code_list = [
-            JmaConstWeatherCode(key, *values) for key, values in data.items()
-        ]
-
-        jma_weather_code_list = [
-            JmaWeatherCode(
-                code=x.code,
-                image=x.image_day,
-                summary_code=x.summary_code,
-                name=x.name,
-                name_en=x.name_en,
-            )
-            for x in weather_code_list
-        ]
-        JmaWeatherCode.objects.bulk_create(jma_weather_code_list)
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                "Successfully imported all jma weather code master from manual data."
-            )
-        )
+                self.stdout.write(self.style.ERROR(f"ダウンロードエラー: {url}"))

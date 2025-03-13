@@ -228,6 +228,7 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 
 - `python manage.py import_weather_const_master` のバッチをまわす
 - `python manage.py generate_weather_code_fixture` のバッチをまわす（たまに天気コードを更新してください）
+- `python manage.py download_weather_code_icon` のバッチをまわす（たまに天気コードを更新してください）
 
 ### weather data
 
