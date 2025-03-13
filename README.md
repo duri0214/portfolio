@@ -105,6 +105,7 @@ python manage.py loaddata .\soil_analysis\fixtures\land_block.json
 python manage.py loaddata .\soil_analysis\fixtures\land_period.json
 python manage.py loaddata .\soil_analysis\fixtures\cultivationtype.json
 # ここで soil analysis の master data バッチをまわす
+python manage.py loaddata .\soil_analysis\fixtures\jma_weather_code.json
 python manage.py loaddata .\soil_analysis\fixtures\land.json
 # ここ以降で soil analysis の weather data バッチをまわす
 python manage.py loaddata .\soil_analysis\fixtures\samplingmethod.json
@@ -226,7 +227,8 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 ### master data
 
 - `python manage.py import_weather_const_master` のバッチをまわす
-- `python manage.py import_weather_code_master` のバッチをまわす（たまに天気コードを更新してください）
+- `python manage.py generate_weather_code_fixture` のバッチをまわす（たまに天気コードを更新してください）
+- `python manage.py download_weather_code_icon` のバッチをまわす（たまに天気コードを更新してください）
 
 ### weather data
 
