@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 
-from lib.geo.valueobject.coord import CaptureLocationCoords, LandCoords
+from lib.geo.valueobject.coord import XarvioCoord, LandLocation
 from soil_analysis.domain.service.photoprocessingservice import PhotoProcessingService
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.land import Land
@@ -41,10 +41,10 @@ class TestPhotoProcessingService(TestCase):
         ]
 
     def test_calculate_distance(self):
-        coords1 = CaptureLocationCoords(
+        coords1 = XarvioCoord(
             longitude=137.6492809, latitude=34.743865
         )  # ススムA3撮影座標
-        coords2 = LandCoords(
+        coords2 = LandLocation(
             "137.6487935,34.744671"
         )  # ススムA3撮影座標から100mの場所（Landで代用）
         expected_distance = 100.0  # 期待される距離（100メートル）

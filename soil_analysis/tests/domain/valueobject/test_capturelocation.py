@@ -17,7 +17,7 @@ class TestCaptureLocation(TestCase):
         self.capture_point_lat = 34.743865
         self.capture_point_azimuth = 190
 
-    def test_origin_coords(self):
+    def test_capture_location(self):
         capture_location = CaptureLocation(
             longitude=self.capture_point_lng,
             latitude=self.capture_point_lat,
