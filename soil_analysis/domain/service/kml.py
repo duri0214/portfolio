@@ -35,11 +35,11 @@ class LandCandidateService:
             kml_doc.from_string(kml_str)
             kml_document = list(kml_doc.features())[self.KML_DOCUMENT]
 
-            for placemark in kml_document.features():
-                placemark_object = placemark.geometry
-                name = placemark.name
+            for place_mark in kml_document.features():
+                place_mark_object = place_mark.geometry
+                name = place_mark.name
                 coords_str = self.to_str(
-                    placemark_object.geoms[self.KML_POLYGON].exterior.coords
+                    place_mark_object.geoms[self.KML_POLYGON].exterior.coords
                 )
                 land_candidate = Land(name, coords_str)
                 land_candidates.add(land_candidate)
