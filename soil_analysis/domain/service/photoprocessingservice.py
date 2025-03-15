@@ -1,8 +1,6 @@
-from typing import List
-
 from haversine import haversine, Unit
 
-from lib.geo.valueobject.coord import CaptureLocationCoords, LandCoords
+from lib.geo.valueobject.coord import XarvioCoord, LandLocation
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.land import Land
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
@@ -11,22 +9,22 @@ from soil_analysis.domain.valueobject.photo.androidphoto import AndroidPhoto
 
 class PhotoProcessingService:
     def process_photos(
-        self, photosfolder: List[str], land_candidates: LandCandidates
-    ) -> List[str]:
+        self, folder_path_list: list[str], land_candidates: LandCandidates
+    ) -> list[str]:
         processed_photos = []
 
         # あるフォルダのn個の写真を処理
-        for photopath in photosfolder:
+        for folder_path in folder_path_list:
             # IMG20230630190442.jpg のようなファイル名になっている
-            android_photo = AndroidPhoto(photopath)
+            android_photo = AndroidPhoto(folder_path)
             # 画像（＝撮影位置）から最も近い圃場を特定
             nearest_land = self.find_nearest_land(
                 android_photo.location, land_candidates
             )
 
-            # TODO: ここで写真のリネーム処理やoutputfolderへの保存などの操作を行う
+            # TODO: ここで写真のリネーム処理や output_folder への保存などの操作を行う
 
-            processed_photos.append(photopath)
+            processed_photos.append(folder_path)
 
         return processed_photos
 
@@ -52,7 +50,7 @@ class PhotoProcessingService:
 
     @staticmethod
     def calculate_distance(
-        coords1: CaptureLocationCoords, coords2: LandCoords, unit: str = Unit.METERS
+        coords1: XarvioCoord, coords2: LandLocation, unit: str = Unit.METERS
     ) -> float:
         """
         他の座標との距離を計算します。
