@@ -22,7 +22,7 @@ from lib.geo.valueobject.coords import GoogleMapCoords
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.landrepository import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
-from soil_analysis.domain.service.landcandidateservice import LandCandidateService
+from soil_analysis.domain.service.kml import LandCandidateService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (

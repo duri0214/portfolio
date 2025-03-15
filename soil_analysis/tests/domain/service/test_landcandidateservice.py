@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from soil_analysis.domain.service.landcandidateservice import LandCandidateService
+from soil_analysis.domain.service.kml import LandCandidateService
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 
 
