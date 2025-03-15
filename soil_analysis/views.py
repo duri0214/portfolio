@@ -142,8 +142,8 @@ class LocationInfoView(View):
         lat = float(lat_str.strip())
         lon = float(lon_str.strip())
 
-        coords = GoogleMapsCoord(latitude=lat, longitude=lon)
-        ydf = ReverseGeocoderService.get_ydf_from_coords(coords)
+        coord = GoogleMapsCoord(latitude=lat, longitude=lon)
+        ydf = ReverseGeocoderService.get_ydf_from_coord(coord)
 
         try:
             jma_city = ReverseGeocoderService.get_jma_city(ydf)
@@ -409,7 +409,7 @@ class RouteSuggestUploadView(FormView):
         for land_candidate in land_candidates:
             coordinates_str = land_candidate.center.to_google().to_str()
             entity = RouteSuggestImport.objects.create(
-                name=land_candidate.name, coords=coordinates_str
+                name=land_candidate.name, coord=coordinates_str
             )
             entities.append(entity)
         RouteSuggestImport.objects.all().delete()
@@ -452,11 +452,11 @@ class RouteSuggestSuccessView(TemplateView):
         for route_suggest_import in route_suggest_imports:
             company_name, land_name = route_suggest_import.name.split(" - ")
             company_list.append(company_name)
-            land_list.append({"name": land_name, "coords": route_suggest_import.coords})
+            land_list.append({"name": land_name, "coord": route_suggest_import.coord})
 
         context["company_list"] = company_list
         context["land_list"] = land_list
-        context["coords_list"] = list(land["coords"] for land in land_list)
+        context["coord_list"] = list(land["coord"] for land in land_list)
         context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
 
         return context
