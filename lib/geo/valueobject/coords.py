@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class BaseCoords(ABC):
+class BaseCoord(ABC):
     def __init__(self, latitude: float, longitude: float):
         self.latitude = latitude
         self.longitude = longitude
@@ -27,7 +27,7 @@ class BaseCoords(ABC):
         pass
 
 
-class GoogleMapsCoord(BaseCoords):
+class GoogleMapsCoord(BaseCoord):
     """
     Google Map 用の座標変換クラス。BaseCoordsを継承します。
 
@@ -43,7 +43,7 @@ class GoogleMapsCoord(BaseCoords):
         return f"{self.latitude},{self.longitude}"
 
 
-class CaptureLocationCoords(BaseCoords):
+class CaptureLocationCoords(BaseCoord):
     """
     Capture Location 用の座標変換クラス。BaseCoordsを継承します。
     xarvio用に作ったので、順序が Google Map とは異なり、(経度,緯度)です。
@@ -52,7 +52,7 @@ class CaptureLocationCoords(BaseCoords):
     メソッド:
     to_tuple: 座標をタプル形式で取得します。戻り値は (経度,緯度) 形式です。
     to_str : 座標を文字列形式で取得します。戻り値は "経度, 緯度" 形式です。
-    to_googlemap: CaptureLocation 用の座標を GoogleMapsCoord に変換します。
+    to_google: CaptureLocation 用の座標を GoogleMapsCoord に変換します。
     """
 
     def to_tuple(self) -> tuple[float, float]:
@@ -61,11 +61,11 @@ class CaptureLocationCoords(BaseCoords):
     def to_str(self) -> str:
         return f"{self.longitude},{self.latitude}"
 
-    def to_googlemap(self) -> GoogleMapsCoord:
+    def to_google(self) -> GoogleMapsCoord:
         return GoogleMapsCoord(self.latitude, self.longitude)
 
 
-class LandCoords(BaseCoords):
+class LandCoords(BaseCoord):
     def __init__(self, coords_str: str):
         """
         Land 用の座標変換クラス。BaseCoordsを継承します。
@@ -74,7 +74,7 @@ class LandCoords(BaseCoords):
         メソッド:
         to_tuple: 座標をタプル形式で取得します。戻り値は (経度,緯度) 形式です。
         to_str : 座標を文字列形式で取得します。戻り値は "経度, 緯度" 形式です。
-        to_googlemap: Land 用の座標を GoogleMapsCoord に変換します。
+        to_google: Land 用の座標を GoogleMapsCoord に変換します。
 
         Notes:
         xarvioは圃場情報を 経度緯度(lng, lat) のタプルで4以上（通常5）で構成し、その座標をスペースで区切ってエクスポートします。たとえば：
@@ -106,5 +106,5 @@ class LandCoords(BaseCoords):
     def to_str(self) -> str:
         return f"{self.longitude},{self.latitude}"
 
-    def to_googlemap(self) -> GoogleMapsCoord:
+    def to_google(self) -> GoogleMapsCoord:
         return GoogleMapsCoord(self.latitude, self.longitude)

@@ -401,13 +401,13 @@ class RouteSuggestUploadView(FormView):
         if len(land_candidates) > 10:
             messages.error(
                 self.request,
-                "GoogleMapAPIのレート上昇制約により 10 地点までしか計算できません",
+                "GoogleMapsAPIのレート上昇制約により 10 地点までしか計算できません",
             )
             return redirect(self.request.META.get("HTTP_REFERER"))
 
         entities = []
         for land_candidate in land_candidates:
-            coordinates_str = land_candidate.center.to_googlemap().to_str()
+            coordinates_str = land_candidate.center.to_google().to_str()
             entity = RouteSuggestImport.objects.create(
                 name=land_candidate.name, coords=coordinates_str
             )

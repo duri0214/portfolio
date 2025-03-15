@@ -14,17 +14,17 @@ class TestCoords(TestCase):
         self.assertEqual((137.6490462, 34.7442398), xarvio_coords.to_tuple())
         self.assertEqual("137.6490462,34.7442398", xarvio_coords.to_str())
 
-    def test_land_coords_to_googlemap_coords(self):
+    def test_land_coords_to_google_coord(self):
         coords_str = "137.6489657,34.7443565 137.6491266,34.744123"
         land_coords = LandCoords(coords_str)
-        googlemap_coords = land_coords.to_googlemap()
-        self.assertEqual((34.7442398, 137.6490462), googlemap_coords.to_tuple())
-        self.assertEqual("34.7442398,137.6490462", googlemap_coords.to_str())
+        google_coord = land_coords.to_google()
+        self.assertEqual((34.7442398, 137.6490462), google_coord.to_tuple())
+        self.assertEqual("34.7442398,137.6490462", google_coord.to_str())
 
-    def test_googlemap_coords_get_coords(self):
-        googlemap_coords = GoogleMapsCoord(34.7443565, 137.6489657)
-        self.assertEqual((34.7443565, 137.6489657), googlemap_coords.to_tuple())
-        self.assertEqual("34.7443565,137.6489657", googlemap_coords.to_str())
+    def test_google_coord_get_coords(self):
+        google_coord = GoogleMapsCoord(34.7443565, 137.6489657)
+        self.assertEqual((34.7443565, 137.6489657), google_coord.to_tuple())
+        self.assertEqual("34.7443565,137.6489657", google_coord.to_str())
 
     def test_capture_location_coord_get_coords(self):
         capture_location_coords = CaptureLocationCoords(137.6489657, 34.7443565)

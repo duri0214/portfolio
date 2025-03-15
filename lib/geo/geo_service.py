@@ -253,11 +253,11 @@ if __name__ == "__main__":
 
     # 画像の中央ピクセルの緯度経度を取得して表示
     center_coords = geo_service.get_center_coordinates(target_file_path)
-    print(f"GoogleMap format(Center): {center_coords.to_str()}")
+    print(f"GoogleMaps format(Center): {center_coords.to_str()}")
 
     # 任意のピクセル位置(例えばピクセル位置 (100, 150)) の緯度経度を取得して表示
     pixel_coords = geo_service.get_pixel_coordinates(target_file_path, 100, 150)
-    print(f"GoogleMap format(Specific (100, 150)): {pixel_coords.to_str()}")
+    print(f"GoogleMaps format(Specific (100, 150)): {pixel_coords.to_str()}")
 
     # 指定されたバンドを numpy 配列として読み込んで表示
     band_array = geo_service.read_band_as_array(target_file_path, band_index=1)
