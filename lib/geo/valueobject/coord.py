@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 
 class BaseCoord(ABC):
@@ -29,11 +30,7 @@ class BaseCoord(ABC):
 
 class GoogleMapsCoord(BaseCoord):
     """
-    Google Map 用の座標変換クラス。BaseCoordを継承します。
-
-    メソッド:
-    to_tuple: 座標をタプル形式で取得します。戻り値は (緯度,経度) 形式です。
-    to_str : 座標を文字列形式で取得します。戻り値は "緯度, 経度" 形式です。
+    Google Maps 用の座標変換クラス。BaseCoordを継承します。 (緯度,経度)です。
     """
 
     def to_tuple(self) -> tuple[float, float]:
@@ -48,7 +45,6 @@ class XarvioCoord(BaseCoord):
     """
     Capture Location 用の座標変換クラス。BaseCoordを継承します。
     xarvio用に作ったので、順序が Google Maps とは異なり、(経度,緯度)です。
-
     """
 
     def to_tuple(self) -> tuple[float, float]:
