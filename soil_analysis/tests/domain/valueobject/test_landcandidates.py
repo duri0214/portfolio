@@ -1,14 +1,14 @@
 from unittest import TestCase
 
-from soil_analysis.domain.valueobject.land import Land
+from soil_analysis.domain.valueobject.land import LandLocation
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 
 
 class TestLandCandidates(TestCase):
     def test_add(self):
         candidates = LandCandidates()
-        land1 = Land("Land A", "137.6492809,34.743865")
-        land2 = Land("Land B", "137.6487935,34.744671")
+        land1 = LandLocation("137.6492809,34.743865", "Land A")
+        land2 = LandLocation("137.6487935,34.744671", "Land B")
 
         candidates.add(land1)
         candidates.add(land2)
@@ -17,8 +17,8 @@ class TestLandCandidates(TestCase):
 
     def test_search_existing_land(self):
         candidates = LandCandidates()
-        land1 = Land("Land A", "137.6492809,34.743865")
-        land2 = Land("Land B", "137.6487935,34.744671")
+        land1 = LandLocation("137.6492809,34.743865", "Land A")
+        land2 = LandLocation("137.6487935,34.744671", "Land B")
 
         candidates.add(land1)
         candidates.add(land2)
@@ -28,8 +28,8 @@ class TestLandCandidates(TestCase):
 
     def test_search_non_existing_land(self):
         candidates = LandCandidates()
-        land1 = Land("Land A", "137.6492809,34.743865")
-        land2 = Land("Land B", "137.6487935,34.744671")
+        land1 = LandLocation("137.6492809,34.743865", "Land A")
+        land2 = LandLocation("137.6487935,34.744671", "Land B")
 
         candidates.add(land1)
         candidates.add(land2)
@@ -39,8 +39,8 @@ class TestLandCandidates(TestCase):
 
     def test_list(self):
         candidates = LandCandidates()
-        land1 = Land("Land A", "137.6492809,34.743865")
-        land2 = Land("Land B", "137.6487935,34.744671")
+        land1 = LandLocation("137.6492809,34.743865", "Land A")
+        land2 = LandLocation("137.6487935,34.744671", "Land B")
 
         candidates.add(land1)
         candidates.add(land2)

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from gmarker.models import Place
-from lib.geo.valueobject.coords import GoogleMapCoords
+from lib.geo.valueobject.coord import GoogleMapsCoord
 
 
 @dataclass
@@ -10,13 +10,13 @@ class RequestBody:
     Google Maps Places APIでNearby Searchのリクエストボディを表現するVO。
 
     Attributes:
-        center: 検索の中心座標をGoogleMapCoordsで受け取る。
+        center: 検索の中心座標をGoogleMapsCoordで受け取る。
         radius: 検索範囲の半径（メートル）。
         search_types: 検索タイプのリスト。
         lang: 使用する言語（デフォルトは日本語 "ja"）。
     """
 
-    center: GoogleMapCoords
+    center: GoogleMapsCoord
     radius: int
     search_types: list[str]
     lang: str = "ja"
@@ -69,14 +69,14 @@ class PlaceVO:
 
     Attributes:
         place: このレビューが関連付けられるPlaceモデルのインスタンス。
-        location: 場所の座標を表すGoogleMapCoordsのインスタンス。
+        location: 場所の座標を表すGoogleMapsCoordのインスタンス。
         name: 場所の名前を表す文字列。
         rating: 場所の評価を表す浮動小数点数。
         reviews: 将来的に場所のレビュー情報を含む可能性があるリスト。
     """
 
     place: Place
-    location: GoogleMapCoords
+    location: GoogleMapsCoord
     name: str
     rating: float
     reviews: list[ReviewVO]

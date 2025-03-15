@@ -1,10 +1,10 @@
 from fastkml import kml
 
-from soil_analysis.domain.valueobject.land import Land
+from soil_analysis.domain.valueobject.land import LandLocation
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 
 
-class LandCandidateService:
+class KmlService:
     KML_DOCUMENT = 0
     KML_POLYGON = 0
     KML_LNG = 0
@@ -20,7 +20,7 @@ class LandCandidateService:
         Notes: xarvioなら以下でOK
             upload_file: InMemoryUploadedFile = self.request.FILES['file']
             kml_raw = upload_file.read()
-            land_candidate_service = LandCandidateService()
+            kml_service = KmlService()
 
         Returns:
             LandCandidates: 解析されたLandCandidatesオブジェクト。
@@ -35,25 +35,29 @@ class LandCandidateService:
             kml_doc.from_string(kml_str)
             kml_document = list(kml_doc.features())[self.KML_DOCUMENT]
 
-            for placemark in kml_document.features():
-                placemark_object = placemark.geometry
-                name = placemark.name
-                coords_str = self._convert_coords_str(placemark_object.geoms[self.KML_POLYGON].exterior.coords)
-                land_candidate = Land(name, coords_str)
+            for place_mark in kml_document.features():
+                place_mark_object = place_mark.geometry
+                name = place_mark.name
+                coord_str = self.to_str(
+                    place_mark_object.geoms[self.KML_POLYGON].exterior.coords
+                )
+                land_candidate = LandLocation(coord_str, name)
                 land_candidates.add(land_candidate)
 
             return land_candidates
         except ValueError as e:
             raise ValueError("Invalid KML format") from e
 
-    def _convert_coords_str(self, coords):
+    def to_str(self, coord_list: list):
         """
         座標のリストを文字列表現に変換します。
 
         Args:
-            coords (list): 座標のリスト。各座標はタプルとして表されます。
+            coord_list (list): 座標のリスト。各座標はタプルとして表されます。
 
         Returns:
             str: 座標の文字列表現。
         """
-        return ' '.join([f"{coord[self.KML_LNG]},{coord[self.KML_LAT]}" for coord in coords])
+        return " ".join(
+            [f"{coord[self.KML_LNG]},{coord[self.KML_LAT]}" for coord in coord_list]
+        )

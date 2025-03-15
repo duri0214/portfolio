@@ -4,10 +4,10 @@ import rasterio
 from matplotlib.patches import Rectangle
 from rasterio.windows import Window
 
-from lib.geo.valueobject.coords import (
-    GoogleMapCoords,
+from lib.geo.valueobject.coord import (
+    GoogleMapsCoord,
 )
-from lib.geo.valueobject.tiff import MetaData, RectangleCoords, Point
+from lib.geo.valueobject.tiff import MetaData, RectangleCoords, Coord
 
 
 class GeoService:
@@ -36,7 +36,7 @@ class GeoService:
             )
 
     @staticmethod
-    def get_center_coordinates(file_path: str) -> GoogleMapCoords:
+    def get_center_from_geotiff(file_path: str) -> GoogleMapsCoord:
         """
         指定したGeoTIFFファイルの中央ピクセルの緯度経度を取得する。
 
@@ -58,18 +58,18 @@ class GeoService:
             lon, lat = rasterio.transform.xy(
                 transform, center_y, center_x, offset="center"
             )
-            return GoogleMapCoords(latitude=lat, longitude=lon)
+            return GoogleMapsCoord(latitude=lat, longitude=lon)
 
     @staticmethod
-    def get_pixel_coordinates_from_geo(
-        file_path: str, coords: GoogleMapCoords
+    def get_pixel_coord_from_google_maps_coord(
+        file_path: str, coord: GoogleMapsCoord
     ) -> tuple[int, int]:
         """
         緯度経度からピクセル座標に変換する。
 
         Args:
             file_path (str): GeoTIFFファイルのパス。
-            coords (GoogleMapCoords): 緯度経度のデータ。
+            coord (GoogleMapsCoord): 緯度経度のデータ。
 
         Returns:
             tuple[int, int]: ピクセル座標 (x, y)。
@@ -78,14 +78,12 @@ class GeoService:
             transform = dataset.transform
 
             # 緯度経度をピクセル座標に変換
-            col, row = ~transform * (coords.longitude, coords.latitude)  # 逆変換
+            col, row = ~transform * (coord.longitude, coord.latitude)  # 逆変換
 
             return int(col), int(row)
 
     @staticmethod
-    def get_pixel_coordinates(
-        file_path: str, pixel_x: int, pixel_y: int
-    ) -> GoogleMapCoords:
+    def get_pixel_coord(file_path: str, pixel_x: int, pixel_y: int) -> GoogleMapsCoord:
         """
         指定したピクセルの座標（緯度経度）を取得する。
 
@@ -104,7 +102,7 @@ class GeoService:
             lon, lat = rasterio.transform.xy(
                 transform, pixel_y, pixel_x, offset="center"
             )
-            return GoogleMapCoords(latitude=lat, longitude=lon)
+            return GoogleMapsCoord(latitude=lat, longitude=lon)
 
     @staticmethod
     def read_band_as_array(file_path: str, band_index: int = 1) -> np.ndarray:
@@ -122,39 +120,39 @@ class GeoService:
             return dataset.read(band_index)
 
     @staticmethod
-    def get_value_by_coords(file_path: str, coords: GoogleMapCoords) -> float:
+    def get_value_by_coord(file_path: str, coord: GoogleMapsCoord) -> float:
         """
         緯度経度を指定してピンポイントの値を取得する。
 
         Args:
             file_path (str): GeoTIFFファイルのパス。
-            coords (GoogleMapCoords): 緯度経度。
+            coord (GoogleMapsCoord): 緯度経度。
 
         Returns:
             float: 指定した位置の値。
         """
         with rasterio.open(file_path) as dataset:
-            py, px = dataset.index(coords.longitude, coords.latitude)
+            py, px = dataset.index(coord.longitude, coord.latitude)
             return dataset.read(1)[py, px]
 
     @staticmethod
     def crop_by_bbox(
-        file_path: str, min_coords: GoogleMapCoords, max_coords: GoogleMapCoords
+        file_path: str, min_coord: GoogleMapsCoord, max_coord: GoogleMapsCoord
     ) -> np.ndarray:
         """
         指定した緯度経度範囲のデータを切り取る。
 
         Args:
             file_path (str): GeoTIFFファイルのパス。
-            min_coords (GoogleMapCoords): 左下の緯度経度。
-            max_coords (GoogleMapCoords): 右上の緯度経度。
+            min_coord (GoogleMapsCoord): 左下の緯度経度。
+            max_coord (GoogleMapsCoord): 右上の緯度経度。
 
         Returns:
             np.ndarray: 指定範囲のデータ。
         """
         with rasterio.open(file_path) as src:
-            py, px = src.index(min_coords.longitude, min_coords.latitude)
-            py2, px2 = src.index(max_coords.longitude, max_coords.latitude)
+            py, px = src.index(min_coord.longitude, min_coord.latitude)
+            py2, px2 = src.index(max_coord.longitude, max_coord.latitude)
 
             # 左上 (y: py2), 右下 (y: py) のピクセル範囲を指定
             window = Window.from_slices((py2, py + 1), (px, px2 + 1))
@@ -179,7 +177,7 @@ class GeoService:
 
         # 赤枠を描画する
         rect = Rectangle(
-            (rectangle_coords.min_point.x, rectangle_coords.min_point.y),  # 左下の座標
+            (rectangle_coords.min_coord.x, rectangle_coords.min_coord.y),  # 左下の座標
             rectangle_coords.width,  # 幅
             rectangle_coords.height,  # 高さ
             linewidth=2,
@@ -243,7 +241,7 @@ class GeoService:
 
 # サンプル利用(tifは800MBとかあるのでgithubにアップロードはできない）
 if __name__ == "__main__":
-    target_file_path = r"C:\Users\yoshi\Downloads\衛星画像\sample_geo_picture.tif"
+    target_file_path = r"C:\Users\yoshi\Documents\衛星画像\sample_geo_picture.tif"
 
     geo_service = GeoService()
 
@@ -252,41 +250,41 @@ if __name__ == "__main__":
     print("Metadata:", metadata_vo)
 
     # 画像の中央ピクセルの緯度経度を取得して表示
-    center_coords = geo_service.get_center_coordinates(target_file_path)
-    print(f"GoogleMap format(Center): {center_coords.to_str()}")
+    center_coord = geo_service.get_center_from_geotiff(target_file_path)
+    print(f"GoogleMaps format(Center): {center_coord.to_str()}")
 
     # 任意のピクセル位置(例えばピクセル位置 (100, 150)) の緯度経度を取得して表示
-    pixel_coords = geo_service.get_pixel_coordinates(target_file_path, 100, 150)
-    print(f"GoogleMap format(Specific (100, 150)): {pixel_coords.to_str()}")
+    pixel_coord = geo_service.get_pixel_coord(target_file_path, 100, 150)
+    print(f"GoogleMaps format(Specific (100, 150)): {pixel_coord.to_str()}")
 
     # 指定されたバンドを numpy 配列として読み込んで表示
     band_array = geo_service.read_band_as_array(target_file_path, band_index=1)
     print("Band Array Shape:", band_array.shape)
 
     # 緯度経度を指定してピクセル値を取得して表示
-    target_coords = GoogleMapCoords(
+    target_coord = GoogleMapsCoord(
         latitude=37.391049, longitude=136.902589
     )  # 任意の緯度経度
-    value = geo_service.get_value_by_coords(target_file_path, target_coords)
-    print(f"Value at ({target_coords.latitude}, {target_coords.longitude}): {value}")
+    value = geo_service.get_value_by_coord(target_file_path, target_coord)
+    print(f"Value at ({target_coord.latitude}, {target_coord.longitude}): {value}")
 
     # 緯度経度範囲を指定して画像を切り取る
-    location_coords = {
+    location_coord_list = {
         "schoolyard": [
-            GoogleMapCoords(latitude=37.389831, longitude=136.902589),  # 左下（西南）
-            GoogleMapCoords(latitude=37.391049, longitude=136.904030),  # 右上（北東）
+            GoogleMapsCoord(latitude=37.389831, longitude=136.902589),  # 左下（西南）
+            GoogleMapsCoord(latitude=37.391049, longitude=136.904030),  # 右上（北東）
         ],
         "forest": [
-            GoogleMapCoords(latitude=37.388843, longitude=136.903071),  # 左下（西南）
-            GoogleMapCoords(latitude=37.389491, longitude=136.904273),  # 右上（北東）
+            GoogleMapsCoord(latitude=37.388843, longitude=136.903071),  # 左下（西南）
+            GoogleMapsCoord(latitude=37.389491, longitude=136.904273),  # 右上（北東）
         ],
     }
 
     location = "schoolyard"
     w_cropped_data = geo_service.crop_by_bbox(
         file_path=target_file_path,
-        min_coords=location_coords[location][0],
-        max_coords=location_coords[location][1],
+        min_coord=location_coord_list[location][0],
+        max_coord=location_coord_list[location][1],
     )
     print("Cropped Data Shape:", w_cropped_data.shape)
 
@@ -301,11 +299,11 @@ if __name__ == "__main__":
     geo_service.rescale_cropped_data_and_save(w_cropped_data, cropped_rescaled_path)
 
     # 緯度経度範囲からピクセル位置を計算
-    min_pixel_coords = geo_service.get_pixel_coordinates_from_geo(
-        target_file_path, location_coords[location][0]
+    min_pixel_coord = geo_service.get_pixel_coord_from_google_maps_coord(
+        target_file_path, location_coord_list[location][0]
     )
-    max_pixel_coords = geo_service.get_pixel_coordinates_from_geo(
-        target_file_path, location_coords[location][1]
+    max_pixel_coord = geo_service.get_pixel_coord_from_google_maps_coord(
+        target_file_path, location_coord_list[location][1]
     )
 
     # 全体写真に赤枠を描画して保存
@@ -313,8 +311,8 @@ if __name__ == "__main__":
     geo_service.draw_bbox_on_cropped_image(
         full_image_data=geo_service.read_band_as_array(target_file_path),
         rectangle_coords=RectangleCoords(
-            min_point=Point(*min_pixel_coords),  # 左下（西南）
-            max_point=Point(*max_pixel_coords),  # 右上（北東）
+            min_coord=Coord(*min_pixel_coord),  # 左下（西南）
+            max_coord=Coord(*max_pixel_coord),  # 右上（北東）
         ),
         output_path=output_image_path,
     )

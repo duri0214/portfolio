@@ -18,11 +18,11 @@ from django.views.generic import (
     FormView,
 )
 
-from lib.geo.valueobject.coords import GoogleMapCoords
+from lib.geo.valueobject.coord import GoogleMapsCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.landrepository import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
-from soil_analysis.domain.service.landcandidateservice import LandCandidateService
+from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (
@@ -142,8 +142,8 @@ class LocationInfoView(View):
         lat = float(lat_str.strip())
         lon = float(lon_str.strip())
 
-        coords = GoogleMapCoords(latitude=lat, longitude=lon)
-        ydf = ReverseGeocoderService.get_ydf_from_coords(coords)
+        coord = GoogleMapsCoord(latitude=lat, longitude=lon)
+        ydf = ReverseGeocoderService.get_ydf_from_coord(coord)
 
         try:
             jma_city = ReverseGeocoderService.get_jma_city(ydf)
@@ -391,8 +391,8 @@ class RouteSuggestUploadView(FormView):
         """
         upload_file: InMemoryUploadedFile = self.request.FILES["file"]
         kml_raw = upload_file.read()
-        land_candidate_service = LandCandidateService()
-        land_candidates = land_candidate_service.parse_kml(kml_raw).list()
+        kml_service = KmlService()
+        land_candidates = kml_service.parse_kml(kml_raw).list()
 
         if len(land_candidates) < 2:
             messages.error(self.request, "少なくとも 2 つの場所を指定してください")
@@ -401,15 +401,15 @@ class RouteSuggestUploadView(FormView):
         if len(land_candidates) > 10:
             messages.error(
                 self.request,
-                "GoogleMapAPIのレート上昇制約により 10 地点までしか計算できません",
+                "GoogleMapsAPIのレート上昇制約により 10 地点までしか計算できません",
             )
             return redirect(self.request.META.get("HTTP_REFERER"))
 
         entities = []
         for land_candidate in land_candidates:
-            coordinates_str = land_candidate.center.to_googlemap().to_str()
+            coordinates_str = land_candidate.center.to_google().to_str()
             entity = RouteSuggestImport.objects.create(
-                name=land_candidate.name, coords=coordinates_str
+                name=land_candidate.name, coord=coordinates_str
             )
             entities.append(entity)
         RouteSuggestImport.objects.all().delete()
@@ -452,11 +452,11 @@ class RouteSuggestSuccessView(TemplateView):
         for route_suggest_import in route_suggest_imports:
             company_name, land_name = route_suggest_import.name.split(" - ")
             company_list.append(company_name)
-            land_list.append({"name": land_name, "coords": route_suggest_import.coords})
+            land_list.append({"name": land_name, "coord": route_suggest_import.coord})
 
         context["company_list"] = company_list
         context["land_list"] = land_list
-        context["coords_list"] = list(land["coords"] for land in land_list)
+        context["coord_list"] = list(land["coord"] for land in land_list)
         context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
 
         return context

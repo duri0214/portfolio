@@ -1,9 +1,9 @@
 import requests
 
-from gmarker.domain.repository.googlemaps import PlaceRepository
-from gmarker.domain.valueobject.googlemaps import PlaceVO, ReviewVO, RequestBody
+from gmarker.domain.repository.google import PlaceRepository
+from gmarker.domain.valueobject.google import PlaceVO, ReviewVO, RequestBody
 from gmarker.models import Place
-from lib.geo.valueobject.coords import GoogleMapCoords
+from lib.geo.valueobject.coord import GoogleMapsCoord
 
 
 class GoogleMapsService:
@@ -13,7 +13,7 @@ class GoogleMapsService:
 
     def nearby_search(
         self,
-        center: GoogleMapCoords,
+        center: GoogleMapsCoord,
         search_types: list[str],
         radius: int,
         fields: list[str],
@@ -75,7 +75,7 @@ class GoogleMapsService:
             for place_data in places_data:
                 latlng = place_data.get("location")
                 if latlng:
-                    latlng = GoogleMapCoords(
+                    latlng = GoogleMapsCoord(
                         latitude=latlng.get("latitude"),
                         longitude=latlng.get("longitude"),
                     )
@@ -137,9 +137,9 @@ class GoogleMapsService:
 
             # 新しいPlaceを登録
             latlng = place_data.get("location")
-            coords = None
+            coord = None
             if latlng:
-                coords = GoogleMapCoords(
+                coord = GoogleMapsCoord(
                     latitude=latlng.get("latitude"),
                     longitude=latlng.get("longitude"),
                 )
@@ -147,7 +147,7 @@ class GoogleMapsService:
                 Place(
                     place_id=place_id,
                     name=place_data.get("displayName", {}).get("text"),
-                    location=coords.to_str() if coords else None,
+                    location=coord.to_str() if coord else None,
                     rating=place_data.get("rating"),
                 )
             )

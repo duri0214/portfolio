@@ -34,7 +34,7 @@ class MetaData:
 
 
 @dataclass
-class Point:
+class Coord:
     """
     ピクセル座標を表すクラス。
     """
@@ -54,19 +54,19 @@ class RectangleCoords:
     左下（西南）と右上（北東）のピクセル座標を保持する。
     """
 
-    min_point: Point  # 左下のピクセル座標
-    max_point: Point  # 右上のピクセル座標
+    min_coord: Coord  # 左下のピクセル座標
+    max_coord: Coord  # 右上のピクセル座標
 
     @property
     def width(self) -> int:
         """矩形の幅を計算"""
-        return self.max_point.x - self.min_point.x
+        return self.max_coord.x - self.min_coord.x
 
     @property
     def height(self) -> int:
         """矩形の高さを計算"""
-        return self.max_point.y - self.min_point.y
+        return self.max_coord.y - self.min_coord.y
 
     def to_tuple(self) -> tuple[tuple[int, int], tuple[int, int]]:
         """矩形座標をタプル形式で返す"""
-        return self.min_point.to_tuple(), self.max_point.to_tuple()
+        return self.min_coord.to_tuple(), self.max_coord.to_tuple()
