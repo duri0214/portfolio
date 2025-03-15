@@ -7,7 +7,7 @@
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
     <script type="module" src="{% static "soil_analysis/js/route_suggest/display-route-script.js" %}"></script>
     {% autoescape off %}
-        <script>let coordsList = {{ coords_list }};</script>
+        <script>let coordList = {{ coord_list }};</script>
     {% endautoescape %}
 {% endblock %}
 {% block content %}
@@ -49,7 +49,7 @@
         <div id="map" class="flex-item"></div>
         <ol class="list-group list-group-numbered flex-item">
             {% for land in land_list %}
-                <li id="{{ land.id }}" class="list-group-item">{{ land.name }}（{{ land.coords }}）</li>
+                <li id="{{ land.id }}" class="list-group-item">{{ land.name }}（{{ land.coord }}）</li>
             {% endfor %}
         </ol>
     </div>
