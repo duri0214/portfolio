@@ -24,30 +24,30 @@ class LandLocation(BaseCoord):
             name: 圃場の名前
         """
         # 重複を排除
-        coords = list(set(coord_str.split()))
+        coord_list = list(set(coord_str.split()))
 
         # 元の座標リストを XarvioCoord として保持
-        original_coords = []
+        original_coord_list = []
         latitude_sum = 0.0
         longitude_sum = 0.0
 
-        for coord in coords:
+        for coord in coord_list:
             lng, lat = coord.split(",")
             lng_float = float(lng)
             lat_float = float(lat)
             # XarvioCoordは(latitude, longitude)の順で引数を取る
-            original_coords.append(XarvioCoord(lat_float, lng_float))
+            original_coord_list.append(XarvioCoord(lat_float, lng_float))
             longitude_sum += lng_float
             latitude_sum += lat_float
 
-        num_points = len(coords)
+        num_points = len(coord_list)
         center_lat = round(latitude_sum / num_points, 7)
         center_lng = round(longitude_sum / num_points, 7)
 
         # 中心点を XarvioCoord として保持
         # XarvioCoordは(latitude, longitude)の順で引数を取る
         self.center = XarvioCoord(center_lat, center_lng)
-        self.original_coords = original_coords
+        self.original_coord_list = original_coord_list
         self.name = name
 
         # BaseCoordの初期化（latitude, longitude）
