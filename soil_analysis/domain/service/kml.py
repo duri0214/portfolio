@@ -4,7 +4,7 @@ from soil_analysis.domain.valueobject.land import Land
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 
 
-class LandCandidateService:
+class KmlService:
     KML_DOCUMENT = 0
     KML_POLYGON = 0
     KML_LNG = 0
@@ -20,7 +20,7 @@ class LandCandidateService:
         Notes: xarvioなら以下でOK
             upload_file: InMemoryUploadedFile = self.request.FILES['file']
             kml_raw = upload_file.read()
-            land_candidate_service = LandCandidateService()
+            kml_service = KmlService()
 
         Returns:
             LandCandidates: 解析されたLandCandidatesオブジェクト。

@@ -22,7 +22,7 @@ from lib.geo.valueobject.coords import GoogleMapCoords
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.landrepository import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
-from soil_analysis.domain.service.kml import LandCandidateService
+from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (
@@ -391,8 +391,8 @@ class RouteSuggestUploadView(FormView):
         """
         upload_file: InMemoryUploadedFile = self.request.FILES["file"]
         kml_raw = upload_file.read()
-        land_candidate_service = LandCandidateService()
-        land_candidates = land_candidate_service.parse_kml(kml_raw).list()
+        kml_service = KmlService()
+        land_candidates = kml_service.parse_kml(kml_raw).list()
 
         if len(land_candidates) < 2:
             messages.error(self.request, "少なくとも 2 つの場所を指定してください")
