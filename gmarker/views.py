@@ -5,8 +5,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy, reverse
 from django.views.generic import TemplateView
 
-from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
-from gmarker.domain.service.googlemaps import GoogleMapsService
+from gmarker.domain.repository.google import NearbyPlaceRepository
+from gmarker.domain.service.google import GoogleMapsService
 from gmarker.forms import CoordinateForm
 from lib.geo.valueobject.coord import GoogleMapsCoord
 
@@ -75,7 +75,7 @@ class IndexView(TemplateView):
 
 
 class CoordinateRegisterView(TemplateView):
-    template_name = "gmarker/coords/create.html"
+    template_name = "gmarker/coord/create.html"
 
     def get(self, request, *args, **kwargs):
         # 初期値として使用する緯度と経度を空で定義
@@ -101,10 +101,10 @@ class CoordinateRegisterView(TemplateView):
             longitude = form.cleaned_data["longitude"]
 
             # GoogleMapsCoordクラスで処理
-            coords = GoogleMapsCoord(latitude, longitude)
+            coord = GoogleMapsCoord(latitude, longitude)
 
             # リポジトリを利用してアップサート処理
-            nearby_place = NearbyPlaceRepository.upsert_default_location(coords)
+            nearby_place = NearbyPlaceRepository.upsert_default_location(coord)
             if nearby_place:
                 print(f"upsert NearbyPlace: {nearby_place.place.location}")
 

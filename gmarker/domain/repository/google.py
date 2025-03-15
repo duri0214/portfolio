@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from django.db import OperationalError, IntegrityError
 
-from gmarker.domain.valueobject.googlemaps import PlaceVO
+from gmarker.domain.valueobject.google import PlaceVO
 from gmarker.models import NearbyPlace, Place, PlaceReview
 from lib.geo.valueobject.coord import GoogleMapsCoord
 
@@ -138,19 +138,19 @@ class NearbyPlaceRepository:
 
     @staticmethod
     def upsert_default_location(
-        coords: GoogleMapsCoord, name: str = "My Center Location"
+        coord: GoogleMapsCoord, name: str = "My Center Location"
     ) -> NearbyPlace:
         """
         category=9 (デフォルトの場所) のアップサートを行います。
 
         Args:
-            coords (GoogleMapsCoord): GoogleMapsCoordオブジェクト（緯度と経度）
+            coord (GoogleMapsCoord): GoogleMapsCoordオブジェクト（緯度と経度）
             name (str): レコード作成時のデフォルト名（任意）
 
         Returns:
             NearbyPlace: 更新または作成されたレコード
         """
-        location_str = coords.to_str()  # 座標を文字列化
+        location_str = coord.to_str()  # 座標を文字列化
         # アップサート処理
         nearby_place, created = NearbyPlace.objects.update_or_create(
             category=9,  # 固定のカテゴリ
