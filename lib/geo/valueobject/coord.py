@@ -29,7 +29,7 @@ class BaseCoord(ABC):
 
 class GoogleMapsCoord(BaseCoord):
     """
-    Google Map 用の座標変換クラス。BaseCoordsを継承します。
+    Google Map 用の座標変換クラス。BaseCoordを継承します。
 
     メソッド:
     to_tuple: 座標をタプル形式で取得します。戻り値は (緯度,経度) 形式です。
@@ -43,9 +43,9 @@ class GoogleMapsCoord(BaseCoord):
         return f"{self.latitude},{self.longitude}"
 
 
-class CaptureLocationCoords(BaseCoord):
+class XarvioCoord(BaseCoord):
     """
-    Capture Location 用の座標変換クラス。BaseCoordsを継承します。
+    Capture Location 用の座標変換クラス。BaseCoordを継承します。
     xarvio用に作ったので、順序が Google Map とは異なり、(経度,緯度)です。
     ※写真側の緯度経度取り扱い形式にしないといけないのかもしれない
 
@@ -65,10 +65,10 @@ class CaptureLocationCoords(BaseCoord):
         return GoogleMapsCoord(self.latitude, self.longitude)
 
 
-class LandCoords(BaseCoord):
-    def __init__(self, coords_str: str):
+class LandLocation(BaseCoord):
+    def __init__(self, coord_str: str):
         """
-        Land 用の座標変換クラス。BaseCoordsを継承します。
+        Land 用の座標変換クラス。BaseCoordを継承します。
         xarvio用に作ったので、順序が Google Map とは異なり、(経度,緯度)です。
 
         メソッド:
@@ -86,8 +86,9 @@ class LandCoords(BaseCoord):
         """
         super().__init__(0.0, 0.0)  # initial values set to zero
 
-        coords = coords_str.split()
-        coords = list(set(coords))  # 始点と終点の座標が一致するため、重複を排除する
+        # 始点と終点の座標が一致するため、重複を排除する
+        coords = list(set(coord_str.split()))
+
         latitude_sum = 0.0
         longitude_sum = 0.0
         num_points = len(coords)
