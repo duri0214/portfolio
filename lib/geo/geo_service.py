@@ -299,10 +299,10 @@ if __name__ == "__main__":
     geo_service.rescale_cropped_data_and_save(w_cropped_data, cropped_rescaled_path)
 
     # 緯度経度範囲からピクセル位置を計算
-    min_pixel_coords = geo_service.get_pixel_coord_from_google_maps_coord(
+    min_pixel_coord = geo_service.get_pixel_coord_from_google_maps_coord(
         target_file_path, location_coord_list[location][0]
     )
-    max_pixel_coords = geo_service.get_pixel_coord_from_google_maps_coord(
+    max_pixel_coord = geo_service.get_pixel_coord_from_google_maps_coord(
         target_file_path, location_coord_list[location][1]
     )
 
@@ -311,8 +311,8 @@ if __name__ == "__main__":
     geo_service.draw_bbox_on_cropped_image(
         full_image_data=geo_service.read_band_as_array(target_file_path),
         rectangle_coords=RectangleCoords(
-            min_coord=Coord(*min_pixel_coords),  # 左下（西南）
-            max_coord=Coord(*max_pixel_coords),  # 右上（北東）
+            min_coord=Coord(*min_pixel_coord),  # 左下（西南）
+            max_coord=Coord(*max_pixel_coord),  # 右上（北東）
         ),
         output_path=output_image_path,
     )
