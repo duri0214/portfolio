@@ -1,6 +1,6 @@
 from fastkml import kml
 
-from soil_analysis.domain.valueobject.land import Land
+from soil_analysis.domain.valueobject.land import LandLocation
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 
 
@@ -41,7 +41,7 @@ class KmlService:
                 coords_str = self.to_str(
                     place_mark_object.geoms[self.KML_POLYGON].exterior.coords
                 )
-                land_candidate = Land(name, coords_str)
+                land_candidate = LandLocation(coords_str, name)
                 land_candidates.add(land_candidate)
 
             return land_candidates
