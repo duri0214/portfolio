@@ -1,8 +1,8 @@
 from haversine import haversine, Unit
 
-from lib.geo.valueobject.coord import XarvioCoord, LandLocation
+from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
-from soil_analysis.domain.valueobject.land import Land
+from soil_analysis.domain.valueobject.land import LandLocation
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 from soil_analysis.domain.valueobject.photo.androidphoto import AndroidPhoto
 
@@ -30,7 +30,7 @@ class PhotoProcessingService:
 
     def find_nearest_land(
         self, photo_coords: CaptureLocation, land_candidates: LandCandidates
-    ) -> Land:
+    ) -> LandLocation:
         """
         n個圃場の距離をそれぞれ調べていちばん距離の近い圃場を特定します
         :param photo_coords:
