@@ -38,26 +38,26 @@ class KmlService:
             for place_mark in kml_document.features():
                 place_mark_object = place_mark.geometry
                 name = place_mark.name
-                coords_str = self.to_str(
+                coord_str = self.to_str(
                     place_mark_object.geoms[self.KML_POLYGON].exterior.coords
                 )
-                land_candidate = LandLocation(coords_str, name)
+                land_candidate = LandLocation(coord_str, name)
                 land_candidates.add(land_candidate)
 
             return land_candidates
         except ValueError as e:
             raise ValueError("Invalid KML format") from e
 
-    def to_str(self, coords):
+    def to_str(self, coord_list: list):
         """
         座標のリストを文字列表現に変換します。
 
         Args:
-            coords (list): 座標のリスト。各座標はタプルとして表されます。
+            coord_list (list): 座標のリスト。各座標はタプルとして表されます。
 
         Returns:
             str: 座標の文字列表現。
         """
         return " ".join(
-            [f"{coord[self.KML_LNG]},{coord[self.KML_LAT]}" for coord in coords]
+            [f"{coord[self.KML_LNG]},{coord[self.KML_LAT]}" for coord in coord_list]
         )
