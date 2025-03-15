@@ -1,7 +1,6 @@
 from unittest import TestCase
 
-from lib.geo.valueobject.coord import LandLocation
-from soil_analysis.domain.valueobject.land import Land
+from soil_analysis.domain.valueobject.land import LandLocation
 
 
 class TestLand(TestCase):
@@ -13,9 +12,11 @@ class TestLand(TestCase):
         )
 
         # ススムA3の中心点を google maps で手動で手に入れた
-        expected_coords = LandLocation("137.6491060553256,34.74361968398954")
+        expected_coords = LandLocation(
+            "137.6491060553256,34.74361968398954", "ススムA3の中心点"
+        )
 
-        land = Land(name, coords_str)
+        land = LandLocation(coords_str, name)
 
         self.assertEqual(name, land.name)
         self.assertAlmostEqual(
