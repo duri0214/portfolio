@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from lib.geo.valueobject.coords import GoogleMapsCoord
+from lib.geo.valueobject.coord import GoogleMapsCoord
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from gmarker.models import Place
-from lib.geo.valueobject.coords import GoogleMapsCoord
+from lib.geo.valueobject.coord import GoogleMapsCoord
 
 
 @dataclass

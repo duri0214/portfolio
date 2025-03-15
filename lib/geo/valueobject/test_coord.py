@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from lib.geo.valueobject.coords import (
+from lib.geo.valueobject.coord import (
     GoogleMapsCoord,
     CaptureLocationCoords,
     LandCoords,

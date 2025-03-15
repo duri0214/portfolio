@@ -4,7 +4,7 @@ from django.db import OperationalError, IntegrityError
 
 from gmarker.domain.valueobject.googlemaps import PlaceVO
 from gmarker.models import NearbyPlace, Place, PlaceReview
-from lib.geo.valueobject.coords import GoogleMapsCoord
+from lib.geo.valueobject.coord import GoogleMapsCoord
 
 
 class PlaceRepository:

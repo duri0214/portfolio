@@ -1,6 +1,6 @@
 import math
 
-from lib.geo.valueobject.coords import CaptureLocationCoords
+from lib.geo.valueobject.coord import CaptureLocationCoords
 
 
 class CaptureLocation:

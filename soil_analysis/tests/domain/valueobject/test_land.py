@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from lib.geo.valueobject.coords import LandCoords
+from lib.geo.valueobject.coord import LandCoords
 from soil_analysis.domain.valueobject.land import Land
 
 

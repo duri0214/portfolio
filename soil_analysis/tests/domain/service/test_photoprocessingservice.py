@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 
-from lib.geo.valueobject.coords import CaptureLocationCoords, LandCoords
+from lib.geo.valueobject.coord import CaptureLocationCoords, LandCoords
 from soil_analysis.domain.service.photoprocessingservice import PhotoProcessingService
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.land import Land

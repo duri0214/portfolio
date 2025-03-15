@@ -2,7 +2,7 @@ from typing import List
 
 from haversine import haversine, Unit
 
-from lib.geo.valueobject.coords import CaptureLocationCoords, LandCoords
+from lib.geo.valueobject.coord import CaptureLocationCoords, LandCoords
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.land import Land
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates

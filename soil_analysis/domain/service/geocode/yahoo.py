@@ -4,7 +4,7 @@ import xml.etree.ElementTree as et
 
 import requests
 
-from lib.geo.valueobject.coords import GoogleMapsCoord
+from lib.geo.valueobject.coord import GoogleMapsCoord
 from soil_analysis.domain.valueobject.geocode.yahoo import YDF
 from soil_analysis.models import JmaCity
 

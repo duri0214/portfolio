@@ -3,7 +3,7 @@ import requests
 from gmarker.domain.repository.googlemaps import PlaceRepository
 from gmarker.domain.valueobject.googlemaps import PlaceVO, ReviewVO, RequestBody
 from gmarker.models import Place
-from lib.geo.valueobject.coords import GoogleMapsCoord
+from lib.geo.valueobject.coord import GoogleMapsCoord
 
 
 class GoogleMapsService:

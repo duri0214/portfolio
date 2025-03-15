@@ -8,7 +8,7 @@ from django.views.generic import TemplateView
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
 from gmarker.forms import CoordinateForm
-from lib.geo.valueobject.coords import GoogleMapsCoord
+from lib.geo.valueobject.coord import GoogleMapsCoord
 
 
 class IndexView(TemplateView):

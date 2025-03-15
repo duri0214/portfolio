@@ -4,7 +4,7 @@ import rasterio
 from matplotlib.patches import Rectangle
 from rasterio.windows import Window
 
-from lib.geo.valueobject.coords import (
+from lib.geo.valueobject.coord import (
     GoogleMapsCoord,
 )
 from lib.geo.valueobject.tiff import MetaData, RectangleCoords, Point

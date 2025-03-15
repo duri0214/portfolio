@@ -18,7 +18,7 @@ from django.views.generic import (
     FormView,
 )
 
-from lib.geo.valueobject.coords import GoogleMapsCoord
+from lib.geo.valueobject.coord import GoogleMapsCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.landrepository import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
