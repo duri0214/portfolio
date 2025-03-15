@@ -34,7 +34,7 @@ class TestCaptureLocation(TestCase):
             delta=0.0003,
         )
 
-    def test_corrected_coords(self):
+    def test_corrected_coord(self):
         capture_location = CaptureLocation(
             self.capture_point_lng, self.capture_point_lat, self.capture_point_azimuth
         )
