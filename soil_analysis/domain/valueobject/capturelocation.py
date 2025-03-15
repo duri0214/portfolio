@@ -11,15 +11,15 @@ class CaptureLocation:
     """
 
     def __init__(self, longitude: float, latitude: float, azimuth: float = None):
-        self._coords_origin = XarvioCoord(
+        self._coord_origin = XarvioCoord(
             longitude=longitude,
             latitude=latitude,
         )
 
         if azimuth:
-            self._coords = self._move(azimuth)
+            self._coord = self._move(azimuth)
         else:
-            self._coords = self._coords_origin
+            self._coord = self._coord_origin
 
     def _move(self, azimuth: float, distance: float = 0.01):
         """
@@ -27,9 +27,9 @@ class CaptureLocation:
 
         :param azimuth: 方位角（単位: 度）
         :param distance: 移動距離（単位: キロメートル）
-        :return: 移動後の座標を表す Coords オブジェクト
+        :return: 移動後の座標を表す XarvioCoord オブジェクト
         """
-        origin_longitude, origin_latitude = self._coords_origin.to_tuple()
+        origin_longitude, origin_latitude = self._coord_origin.to_tuple()
 
         # 角度をラジアンに変換
         azimuth_rad = math.radians(azimuth)
@@ -58,7 +58,7 @@ class CaptureLocation:
         圃場方向に 10m 進んだあとのオブジェクト
         :rtype: XarvioCoord
         """
-        return self._coords
+        return self._coord
 
     @property
     def origin(self) -> XarvioCoord:
@@ -66,4 +66,4 @@ class CaptureLocation:
         圃場方向に進む前（撮影位置）のオブジェクト
         :rtype: XarvioCoord
         """
-        return self._coords_origin
+        return self._coord_origin
