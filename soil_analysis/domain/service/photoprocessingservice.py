@@ -29,11 +29,11 @@ class PhotoProcessingService:
         return processed_photos
 
     def find_nearest_land(
-        self, photo_coords: CaptureLocation, land_candidates: LandCandidates
+        self, photo_coord: CaptureLocation, land_candidates: LandCandidates
     ) -> LandLocation:
         """
         n個圃場の距離をそれぞれ調べていちばん距離の近い圃場を特定します
-        :param photo_coords:
+        :param photo_coord:
         :param land_candidates:
         :return:
         """
@@ -41,7 +41,7 @@ class PhotoProcessingService:
         nearest_land = None
 
         for land in land_candidates.list():
-            distance = self.calculate_distance(photo_coords.corrected, land.center)
+            distance = self.calculate_distance(photo_coord.corrected, land.center)
             if distance < min_distance:
                 min_distance = distance
                 nearest_land = land
@@ -50,7 +50,7 @@ class PhotoProcessingService:
 
     @staticmethod
     def calculate_distance(
-        coords1: XarvioCoord, coords2: LandLocation, unit: str = Unit.METERS
+        coord1: XarvioCoord, coord2: LandLocation, unit: str = Unit.METERS
     ) -> float:
         """
         他の座標との距離を計算します。
@@ -58,13 +58,13 @@ class PhotoProcessingService:
         haversineライブラリは 緯度経度(lat,lng) を2セット受け入れて距離を測る
         そのため、haversineライブラリを使うタイミングでタプルを逆にしている
 
-        :param coords1: 座標1
-        :param coords2: 座標2
+        :param coord1: 座標1
+        :param coord2: 座標2
         :param unit: 距離の単位（'km'、'miles'、'm'など）
         :return: 距離（単位に応じた値）
         """
         return haversine(
-            coords1.to_google().to_tuple(),
-            coords2.to_google().to_tuple(),
+            coord1.to_google().to_tuple(),
+            coord2.to_google().to_tuple(),
             unit=unit,
         )
