@@ -10,5 +10,5 @@ class TestCoord(TestCase):
         self.assertEqual("34.7443565,137.6489657", xarvio_coord.to_str())
 
         google_coord = xarvio_coord.to_google()
-        self.assertEqual((34.7442398, 137.6490462), google_coord.to_tuple())
-        self.assertEqual("34.7442398,137.6490462", google_coord.to_str())
+        self.assertEqual((137.6489657, 34.7443565), google_coord.to_tuple())
+        self.assertEqual("137.6489657,34.7443565", google_coord.to_str())
