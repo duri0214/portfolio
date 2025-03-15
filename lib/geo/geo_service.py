@@ -241,7 +241,7 @@ class GeoService:
 
 # サンプル利用(tifは800MBとかあるのでgithubにアップロードはできない）
 if __name__ == "__main__":
-    target_file_path = r"C:\Users\yoshi\Downloads\衛星画像\sample_geo_picture.tif"
+    target_file_path = r"C:\Users\yoshi\Documents\衛星画像\sample_geo_picture.tif"
 
     geo_service = GeoService()
 
