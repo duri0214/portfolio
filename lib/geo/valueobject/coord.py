@@ -43,16 +43,12 @@ class GoogleMapsCoord(BaseCoord):
         return f"{self.latitude},{self.longitude}"
 
 
+@dataclass
 class XarvioCoord(BaseCoord):
     """
     Capture Location 用の座標変換クラス。BaseCoordを継承します。
-    xarvio用に作ったので、順序が Google Map とは異なり、(経度,緯度)です。
-    ※写真側の緯度経度取り扱い形式にしないといけないのかもしれない
+    xarvio用に作ったので、順序が Google Maps とは異なり、(経度,緯度)です。
 
-    メソッド:
-    to_tuple: 座標をタプル形式で取得します。戻り値は (経度,緯度) 形式です。
-    to_str : 座標を文字列形式で取得します。戻り値は "経度, 緯度" 形式です。
-    to_google: CaptureLocation 用の座標を GoogleMapsCoord に変換します。
     """
 
     def to_tuple(self) -> tuple[float, float]:
