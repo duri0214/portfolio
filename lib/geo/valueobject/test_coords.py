@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from lib.geo.valueobject.coords import (
-    GoogleMapCoords,
+    GoogleMapsCoord,
     CaptureLocationCoords,
     LandCoords,
 )
@@ -22,7 +22,7 @@ class TestCoords(TestCase):
         self.assertEqual("34.7442398,137.6490462", googlemap_coords.to_str())
 
     def test_googlemap_coords_get_coords(self):
-        googlemap_coords = GoogleMapCoords(34.7443565, 137.6489657)
+        googlemap_coords = GoogleMapsCoord(34.7443565, 137.6489657)
         self.assertEqual((34.7443565, 137.6489657), googlemap_coords.to_tuple())
         self.assertEqual("34.7443565,137.6489657", googlemap_coords.to_str())
 

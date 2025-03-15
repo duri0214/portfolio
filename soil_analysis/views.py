@@ -18,7 +18,7 @@ from django.views.generic import (
     FormView,
 )
 
-from lib.geo.valueobject.coords import GoogleMapCoords
+from lib.geo.valueobject.coords import GoogleMapsCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.landrepository import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
@@ -142,7 +142,7 @@ class LocationInfoView(View):
         lat = float(lat_str.strip())
         lon = float(lon_str.strip())
 
-        coords = GoogleMapCoords(latitude=lat, longitude=lon)
+        coords = GoogleMapsCoord(latitude=lat, longitude=lon)
         ydf = ReverseGeocoderService.get_ydf_from_coords(coords)
 
         try:

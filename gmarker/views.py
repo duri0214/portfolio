@@ -8,7 +8,7 @@ from django.views.generic import TemplateView
 from gmarker.domain.repository.googlemaps import NearbyPlaceRepository
 from gmarker.domain.service.googlemaps import GoogleMapsService
 from gmarker.forms import CoordinateForm
-from lib.geo.valueobject.coords import GoogleMapCoords
+from lib.geo.valueobject.coords import GoogleMapsCoord
 
 
 class IndexView(TemplateView):
@@ -53,7 +53,7 @@ class IndexView(TemplateView):
 
             service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
             place_vo_list = service.nearby_search(
-                center=GoogleMapCoords(center_lat, center_lng),
+                center=GoogleMapsCoord(center_lat, center_lng),
                 search_types=search_types,
                 radius=1500,
                 fields=[
@@ -100,8 +100,8 @@ class CoordinateRegisterView(TemplateView):
             latitude = form.cleaned_data["latitude"]
             longitude = form.cleaned_data["longitude"]
 
-            # GoogleMapCoordsクラスで処理
-            coords = GoogleMapCoords(latitude, longitude)
+            # GoogleMapsCoordクラスで処理
+            coords = GoogleMapsCoord(latitude, longitude)
 
             # リポジトリを利用してアップサート処理
             nearby_place = NearbyPlaceRepository.upsert_default_location(coords)

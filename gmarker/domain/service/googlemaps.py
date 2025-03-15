@@ -3,7 +3,7 @@ import requests
 from gmarker.domain.repository.googlemaps import PlaceRepository
 from gmarker.domain.valueobject.googlemaps import PlaceVO, ReviewVO, RequestBody
 from gmarker.models import Place
-from lib.geo.valueobject.coords import GoogleMapCoords
+from lib.geo.valueobject.coords import GoogleMapsCoord
 
 
 class GoogleMapsService:
@@ -13,7 +13,7 @@ class GoogleMapsService:
 
     def nearby_search(
         self,
-        center: GoogleMapCoords,
+        center: GoogleMapsCoord,
         search_types: list[str],
         radius: int,
         fields: list[str],
@@ -75,7 +75,7 @@ class GoogleMapsService:
             for place_data in places_data:
                 latlng = place_data.get("location")
                 if latlng:
-                    latlng = GoogleMapCoords(
+                    latlng = GoogleMapsCoord(
                         latitude=latlng.get("latitude"),
                         longitude=latlng.get("longitude"),
                     )
@@ -139,7 +139,7 @@ class GoogleMapsService:
             latlng = place_data.get("location")
             coords = None
             if latlng:
-                coords = GoogleMapCoords(
+                coords = GoogleMapsCoord(
                     latitude=latlng.get("latitude"),
                     longitude=latlng.get("longitude"),
                 )

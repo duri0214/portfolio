@@ -5,7 +5,7 @@ from matplotlib.patches import Rectangle
 from rasterio.windows import Window
 
 from lib.geo.valueobject.coords import (
-    GoogleMapCoords,
+    GoogleMapsCoord,
 )
 from lib.geo.valueobject.tiff import MetaData, RectangleCoords, Point
 
@@ -36,7 +36,7 @@ class GeoService:
             )
 
     @staticmethod
-    def get_center_coordinates(file_path: str) -> GoogleMapCoords:
+    def get_center_coordinates(file_path: str) -> GoogleMapsCoord:
         """
         指定したGeoTIFFファイルの中央ピクセルの緯度経度を取得する。
 
@@ -58,18 +58,18 @@ class GeoService:
             lon, lat = rasterio.transform.xy(
                 transform, center_y, center_x, offset="center"
             )
-            return GoogleMapCoords(latitude=lat, longitude=lon)
+            return GoogleMapsCoord(latitude=lat, longitude=lon)
 
     @staticmethod
     def get_pixel_coordinates_from_geo(
-        file_path: str, coords: GoogleMapCoords
+        file_path: str, coords: GoogleMapsCoord
     ) -> tuple[int, int]:
         """
         緯度経度からピクセル座標に変換する。
 
         Args:
             file_path (str): GeoTIFFファイルのパス。
-            coords (GoogleMapCoords): 緯度経度のデータ。
+            coords (GoogleMapsCoord): 緯度経度のデータ。
 
         Returns:
             tuple[int, int]: ピクセル座標 (x, y)。
@@ -85,7 +85,7 @@ class GeoService:
     @staticmethod
     def get_pixel_coordinates(
         file_path: str, pixel_x: int, pixel_y: int
-    ) -> GoogleMapCoords:
+    ) -> GoogleMapsCoord:
         """
         指定したピクセルの座標（緯度経度）を取得する。
 
@@ -104,7 +104,7 @@ class GeoService:
             lon, lat = rasterio.transform.xy(
                 transform, pixel_y, pixel_x, offset="center"
             )
-            return GoogleMapCoords(latitude=lat, longitude=lon)
+            return GoogleMapsCoord(latitude=lat, longitude=lon)
 
     @staticmethod
     def read_band_as_array(file_path: str, band_index: int = 1) -> np.ndarray:
@@ -122,13 +122,13 @@ class GeoService:
             return dataset.read(band_index)
 
     @staticmethod
-    def get_value_by_coords(file_path: str, coords: GoogleMapCoords) -> float:
+    def get_value_by_coords(file_path: str, coords: GoogleMapsCoord) -> float:
         """
         緯度経度を指定してピンポイントの値を取得する。
 
         Args:
             file_path (str): GeoTIFFファイルのパス。
-            coords (GoogleMapCoords): 緯度経度。
+            coords (GoogleMapsCoord): 緯度経度。
 
         Returns:
             float: 指定した位置の値。
@@ -139,15 +139,15 @@ class GeoService:
 
     @staticmethod
     def crop_by_bbox(
-        file_path: str, min_coords: GoogleMapCoords, max_coords: GoogleMapCoords
+        file_path: str, min_coords: GoogleMapsCoord, max_coords: GoogleMapsCoord
     ) -> np.ndarray:
         """
         指定した緯度経度範囲のデータを切り取る。
 
         Args:
             file_path (str): GeoTIFFファイルのパス。
-            min_coords (GoogleMapCoords): 左下の緯度経度。
-            max_coords (GoogleMapCoords): 右上の緯度経度。
+            min_coords (GoogleMapsCoord): 左下の緯度経度。
+            max_coords (GoogleMapsCoord): 右上の緯度経度。
 
         Returns:
             np.ndarray: 指定範囲のデータ。
@@ -264,7 +264,7 @@ if __name__ == "__main__":
     print("Band Array Shape:", band_array.shape)
 
     # 緯度経度を指定してピクセル値を取得して表示
-    target_coords = GoogleMapCoords(
+    target_coords = GoogleMapsCoord(
         latitude=37.391049, longitude=136.902589
     )  # 任意の緯度経度
     value = geo_service.get_value_by_coords(target_file_path, target_coords)
@@ -273,12 +273,12 @@ if __name__ == "__main__":
     # 緯度経度範囲を指定して画像を切り取る
     location_coords = {
         "schoolyard": [
-            GoogleMapCoords(latitude=37.389831, longitude=136.902589),  # 左下（西南）
-            GoogleMapCoords(latitude=37.391049, longitude=136.904030),  # 右上（北東）
+            GoogleMapsCoord(latitude=37.389831, longitude=136.902589),  # 左下（西南）
+            GoogleMapsCoord(latitude=37.391049, longitude=136.904030),  # 右上（北東）
         ],
         "forest": [
-            GoogleMapCoords(latitude=37.388843, longitude=136.903071),  # 左下（西南）
-            GoogleMapCoords(latitude=37.389491, longitude=136.904273),  # 右上（北東）
+            GoogleMapsCoord(latitude=37.388843, longitude=136.903071),  # 左下（西南）
+            GoogleMapsCoord(latitude=37.389491, longitude=136.904273),  # 右上（北東）
         ],
     }
 

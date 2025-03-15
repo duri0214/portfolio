@@ -4,19 +4,19 @@ import xml.etree.ElementTree as et
 
 import requests
 
-from lib.geo.valueobject.coords import GoogleMapCoords
+from lib.geo.valueobject.coords import GoogleMapsCoord
 from soil_analysis.domain.valueobject.geocode.yahoo import YDF
 from soil_analysis.models import JmaCity
 
 
 class ReverseGeocoderService:
     @staticmethod
-    def get_ydf_from_coords(coords: GoogleMapCoords) -> YDF:
+    def get_ydf_from_coords(coords: GoogleMapsCoord) -> YDF:
         """
         Args:
-            coords: The GoogleMapCoords
+            coords: The GoogleMapsCoord
         Returns:
-            An instance of the YDF obtained from the GoogleMapCoords
+            An instance of the YDF obtained from the GoogleMapsCoord
         """
         xml_str = ReverseGeocoderService._fetch_xml(coords)
         return ReverseGeocoderService._xml_to_ydf(xml_str)
@@ -54,7 +54,7 @@ class ReverseGeocoderService:
         )
 
     @staticmethod
-    def _fetch_xml(coords: GoogleMapCoords) -> str:
+    def _fetch_xml(coords: GoogleMapsCoord) -> str:
         params = {
             "lat": coords.latitude,
             "lon": coords.longitude,
