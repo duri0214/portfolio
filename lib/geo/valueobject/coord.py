@@ -52,4 +52,4 @@ class XarvioCoord(BaseCoord):
         return f"{self.longitude},{self.latitude}"
 
     def to_google(self) -> GoogleMapsCoord:
-        return GoogleMapsCoord(self.latitude, self.longitude)
+        return GoogleMapsCoord(latitude=self.latitude, longitude=self.longitude)
