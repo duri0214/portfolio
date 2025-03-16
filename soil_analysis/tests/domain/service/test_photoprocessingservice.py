@@ -146,13 +146,17 @@ class TestPhotoProcessingService(TestCase):
             # 1枚目の写真のモック設定
             mock_instance1 = MagicMock()
             mock_instance1.location = CaptureLocation(
-                longitude=139.456, latitude=35.123, azimuth=90  # 東向き
+                longitude=self.land2.center.to_tuple()[0],  # land2の経度に合わせる
+                latitude=self.land2.center.to_tuple()[1],  # land2の緯度に合わせる
+                azimuth=90,  # 東向き
             )
 
             # 2枚目の写真のモック設定
             mock_instance2 = MagicMock()
             mock_instance2.location = CaptureLocation(
-                longitude=139.457, latitude=35.124, azimuth=180  # 南向き
+                longitude=self.land3.center.to_tuple()[0],  # land3の経度に合わせる
+                latitude=self.land3.center.to_tuple()[1],  # land3の緯度に合わせる
+                azimuth=180,  # 南向き
             )
 
             # サイド・エフェクト設定で連続する呼び出しに対して異なる値を返す
