@@ -9,23 +9,31 @@ from soil_analysis.domain.valueobject.photo.androidphoto import AndroidPhoto
 
 class PhotoProcessingService:
     def process_photos(
-        self, folder_path_list: list[str], land_candidates: LandCandidates
+        self, photo_path_list: list[str], land_candidates: LandCandidates
     ) -> list[str]:
-        """フォルダパスのリストから写真を処理します。
+        """写真パスのリストから写真を処理し、最寄りの圃場と紐づけます。
+
+        複数の写真（写真A、写真Bなど）それぞれについて、GPSメタデータから撮影位置を抽出し、
+        候補となる圃場リストの中から最も近い圃場を特定します。この処理により、
+        各写真がどの圃場を撮影したものかを自動的に判別します。
 
         Args:
-            folder_path_list: 処理する写真フォルダのパスリスト
-            land_candidates: 検索対象の圃場リスト
+            photo_path_list: 処理する写真ファイルのパスリスト
+            land_candidates: 検索対象の圃場リスト（複数の圃場の位置情報）
 
         Returns:
-            list[str]: 処理された写真のパスリスト
+            list[str]: 処理された写真のパスリスト（圃場と紐づけられた状態）
+
+        Note:
+            写真のGPSメタデータから撮影位置を取得し、その位置から最も近い圃場を特定します。
+            将来的に写真のリネームや特定フォルダへの移動などの処理も行う予定です。
         """
         processed_photos = []
 
-        # あるフォルダのn個の写真を処理
-        for folder_path in folder_path_list:
+        # 複数の写真ファイルを処理
+        for photo_path in photo_path_list:
             # IMG20230630190442.jpg のようなファイル名になっている
-            android_photo = AndroidPhoto(folder_path)
+            android_photo = AndroidPhoto(photo_path)
             # 画像（＝撮影位置）から最も近い圃場を特定
             nearest_land = self.find_nearest_land(
                 android_photo.location, land_candidates
@@ -33,7 +41,7 @@ class PhotoProcessingService:
 
             # TODO: ここで写真のリネーム処理や output_folder への保存などの操作を行う
 
-            processed_photos.append(folder_path)
+            processed_photos.append(photo_path)
 
         return processed_photos
 
@@ -42,7 +50,12 @@ class PhotoProcessingService:
     ) -> LandLocation:
         """撮影位置から最も近い圃場を特定します。
 
-        カメラの方向に調整された位置を使用して、より正確に撮影対象の圃場を特定します。
+        写真のGPSメタデータから抽出した撮影位置を使用して、候補となる圃場の中から
+        最も距離が近い圃場を特定します。カメラの方向情報が含まれている場合は、
+        その方向に調整された位置を使用して、より正確に撮影対象の圃場を特定します。
+
+        例えば、複数の隣接する圃場（A1、A2、A3など）を撮影した場合、各写真がどの圃場を
+        対象としているかを自動的に判別することができます。
 
         Args:
             photo_coord: 撮影位置情報（方位角による調整を含む）
