@@ -41,7 +41,9 @@ class PhotoProcessingService:
         nearest_land = None
 
         for land in land_candidates.list():
-            distance = self.calculate_distance(photo_coord.corrected, land.center)
+            distance = self.calculate_distance(
+                photo_coord.adjusted_position, land.center
+            )
             if distance < min_distance:
                 min_distance = distance
                 nearest_land = land

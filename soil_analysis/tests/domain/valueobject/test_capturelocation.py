@@ -25,12 +25,12 @@ class TestCaptureLocation(TestCase):
         )
         self.assertAlmostEqual(
             self.capture_point_lng,
-            capture_location.origin.to_tuple()[0],
+            capture_location.original_position.to_tuple()[0],
             delta=0.0003,
         )
         self.assertAlmostEqual(
             self.capture_point_lat,
-            capture_location.origin.to_tuple()[1],
+            capture_location.original_position.to_tuple()[1],
             delta=0.0003,
         )
 
@@ -40,11 +40,11 @@ class TestCaptureLocation(TestCase):
         )
         print(f"gmap検証用_撮影位置: 34.743865,137.6492809")
         print(
-            f"gmap検証用_10m先の位置: {capture_location.corrected.to_google().to_tuple()}"
+            f"gmap検証用_10m先の位置: {capture_location.adjusted_position.to_google().to_tuple()}"
         )
         self.assertAlmostEqual(
-            137.6492, capture_location.corrected.to_tuple()[1], delta=0.0003
+            137.6492, capture_location.adjusted_position.to_tuple()[1], delta=0.0003
         )
         self.assertAlmostEqual(
-            34.74378, capture_location.corrected.to_tuple()[0], delta=0.0003
+            34.74378, capture_location.adjusted_position.to_tuple()[0], delta=0.0003
         )

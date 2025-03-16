@@ -28,13 +28,13 @@ class TestIphonePhoto(TestCase):
         expected_location = CaptureLocation(140.41932067, 35.80548371)  # xarvio based
         actual_location = self.iphone_photo._extract_location()
         self.assertAlmostEqual(
-            expected_location.corrected.to_tuple()[0],
-            actual_location.corrected.to_tuple()[0],
+            expected_location.adjusted_position.to_tuple()[0],
+            actual_location.adjusted_position.to_tuple()[0],
             delta=0.001,
         )
         self.assertAlmostEqual(
-            expected_location.corrected.to_tuple()[1],
-            actual_location.corrected.to_tuple()[1],
+            expected_location.adjusted_position.to_tuple()[1],
+            actual_location.adjusted_position.to_tuple()[1],
             delta=0.001,
         )
 

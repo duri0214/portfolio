@@ -30,13 +30,13 @@ class TestAndroidPhoto(TestCase):
         expected_location = CaptureLocation(137.8266552, 34.6942567)  # xarvio based
         actual_location = self.android_photo._extract_location()
         self.assertAlmostEqual(
-            expected_location.corrected.to_tuple()[0],
-            actual_location.corrected.to_tuple()[0],
+            expected_location.adjusted_position.to_tuple()[0],
+            actual_location.adjusted_position.to_tuple()[0],
             delta=0.001,
         )
         self.assertAlmostEqual(
-            expected_location.corrected.to_tuple()[1],
-            actual_location.corrected.to_tuple()[1],
+            expected_location.adjusted_position.to_tuple()[1],
+            actual_location.adjusted_position.to_tuple()[1],
             delta=0.001,
         )
 
