@@ -131,9 +131,7 @@ class TestPhotoProcessingService(TestCase):
         """複数写真の処理と圃場紐づけ機能をテストします。"""
         # 圃場の位置をGoogleマップで確認できる形式で出力
         for i, land in enumerate([self.land1, self.land2, self.land3, self.land4]):
-            print(
-                f"Land {i + 1} | 座標: {land.center.to_tuple()} | Google Maps: {land.center.to_google().to_str()}"
-            )
+            print(f"{land.name} | Google Maps: {land.center.to_google().to_str()}")
 
         # 写真の位置を設定
         # land1に近い位置を設定
@@ -143,9 +141,6 @@ class TestPhotoProcessingService(TestCase):
         # land3に近い位置を設定
         photo2_lng = 137.6491  # land3に近い経度
         photo2_lat = 34.7436  # land3に近い緯度
-
-        print(f"Photo 1 | 位置 (緯度,経度): {photo1_lat}, {photo1_lng}")
-        print(f"Photo 2 | 位置 (緯度,経度): {photo2_lat}, {photo2_lng}")
 
         # AndroidPhotoクラスのモック
         with patch(
