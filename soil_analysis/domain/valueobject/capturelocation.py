@@ -42,6 +42,7 @@ class CaptureLocation:
             longitude=longitude,
             latitude=latitude,
         )
+        self._azimuth = azimuth
 
         if azimuth:
             self._adjusted_position = self._calculate_adjusted_position(azimuth)
@@ -105,18 +106,10 @@ class CaptureLocation:
         """
         return self._original_position
 
-    def __str__(self):
-        """人間が読みやすい文字列表現を返します。
+    def __repr__(self):
+        """開発者向けの文字列表現を返します。
 
         Returns:
-            str: 座標と方位角を含む文字列表現
+            str: オブジェクトを再現可能な詳細な表現
         """
-        original_pos = self._original_position.to_google().to_str()
-        adjusted_pos = self._adjusted_position.to_google().to_str()
-
-        if self._original_position == self._adjusted_position:
-            return f"CaptureLocation(位置: {original_pos}, 方位角補正なし)"
-        else:
-            return (
-                f"CaptureLocation(元位置: {original_pos}, 補正後位置: {adjusted_pos})"
-            )
+        return f"CaptureLocation(longitude={self._original_position.longitude}, latitude={self._original_position.latitude}, azimuth={self._azimuth})"

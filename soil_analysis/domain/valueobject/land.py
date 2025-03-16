@@ -61,3 +61,12 @@ class LandLocation(BaseCoord):
 
     def to_google(self) -> GoogleMapsCoord:
         return self.center.to_google()
+
+    def __repr__(self) -> str:
+        """オブジェクトの文字列表現を返します。
+
+        Returns:
+            str: 圃場名と中心座標を含む文字列表現
+        """
+        center_str = self.center.to_google().to_str()
+        return f"LandLocation(name='{self.name}', center={center_str})"
