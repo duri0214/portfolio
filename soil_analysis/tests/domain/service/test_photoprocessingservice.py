@@ -131,8 +131,9 @@ class TestPhotoProcessingService(TestCase):
         """複数写真の処理と圃場紐づけ機能をテストします。"""
         # 圃場の位置をGoogleマップで確認できる形式で出力
         for i, land in enumerate([self.land1, self.land2, self.land3, self.land4]):
-            print(f"Land {i + 1} center coordinates: {land.center.to_tuple()}")
-            print(f"Land {i + 1} Google Maps: {land.center.to_google().to_str()}")
+            print(
+                f"Land {i + 1} | 座標: {land.center.to_tuple()} | Google Maps: {land.center.to_google().to_str()}"
+            )
 
         # 写真の位置を設定
         # land1に近い位置を設定
@@ -143,8 +144,8 @@ class TestPhotoProcessingService(TestCase):
         photo2_lng = 137.6491  # land3に近い経度
         photo2_lat = 34.7436  # land3に近い緯度
 
-        print(f"Photo 1 position (lat, lng): {photo1_lat}, {photo1_lng}")
-        print(f"Photo 2 position (lat, lng): {photo2_lat}, {photo2_lng}")
+        print(f"Photo 1 | 位置 (緯度,経度): {photo1_lat}, {photo1_lng}")
+        print(f"Photo 2 | 位置 (緯度,経度): {photo2_lat}, {photo2_lng}")
 
         # AndroidPhotoクラスのモック
         with patch(
@@ -157,15 +158,6 @@ class TestPhotoProcessingService(TestCase):
             )
             mock_instance1.location = capture_loc1
 
-            # CaptureLocationクラスの確認
-            print(f"Photo 1 capture location: {capture_loc1}")
-            print(
-                f"Photo 1 adjusted position: {capture_loc1.adjusted_position.to_tuple()}"
-            )
-            print(
-                f"Photo 1 adjusted Google Maps: {capture_loc1.adjusted_position.to_google().to_str()}"
-            )
-
             # 2枚目の写真のモック設定
             mock_instance2 = MagicMock()
             capture_loc2 = CaptureLocation(
@@ -173,14 +165,9 @@ class TestPhotoProcessingService(TestCase):
             )
             mock_instance2.location = capture_loc2
 
-            # CaptureLocationクラスの確認
-            print(f"Photo 2 capture location: {capture_loc2}")
-            print(
-                f"Photo 2 adjusted position: {capture_loc2.adjusted_position.to_tuple()}"
-            )
-            print(
-                f"Photo 2 adjusted Google Maps: {capture_loc2.adjusted_position.to_google().to_str()}"
-            )
+            # 撮影位置情報を出力
+            print(f"Photo 1 | 撮影情報: {capture_loc1}")
+            print(f"Photo 2 | 撮影情報: {capture_loc2}")
 
             # サイド・エフェクト設定
             mock_android_photo.side_effect = [mock_instance1, mock_instance2]
@@ -191,13 +178,11 @@ class TestPhotoProcessingService(TestCase):
 
             # どの圃場が選ばれたかを出力
             print(
-                f"Selected land for photo 1: {result[0].nearest_land.center.to_google().to_str()}"
+                f"Photo 1 | 選択された圃場: {result[0].nearest_land.center.to_google().to_str()} | 距離: {result[0].distance}m"
             )
             print(
-                f"Selected land for photo 2: {result[1].nearest_land.center.to_google().to_str()}"
+                f"Photo 2 | 選択された圃場: {result[1].nearest_land.center.to_google().to_str()} | 距離: {result[1].distance}m"
             )
-            print(f"Distance for photo 1: {result[0].distance}")
-            print(f"Distance for photo 2: {result[1].distance}")
 
             # 結果の検証
             self.assertEqual(len(result), 2)
@@ -206,18 +191,9 @@ class TestPhotoProcessingService(TestCase):
             self.assertEqual(result[0].photo_path, self.photo_paths[0])
             self.assertEqual(result[1].photo_path, self.photo_paths[1])
 
-            # 実際に近い圃場に合わせて期待値を設定
-            # デバッグ出力の結果に基づいて、適切な圃場を指定
-            expected_land1 = self.land1  # 1枚目の写真に対して
-            expected_land2 = (
-                self.land1
-            )  # 2枚目の写真に対して、デバッグ出力によればland1が選ばれている
-
-            # 現在の状況では、両方の写真に対してland1が選ばれていると思われる
-            self.assertEqual(result[0].nearest_land, expected_land1)
-            self.assertEqual(
-                result[1].nearest_land, expected_land2
-            )  # 期待値をland1に変更
+            # 両方の写真がland1に関連付けられていることを確認
+            self.assertEqual(result[0].nearest_land, self.land1)
+            self.assertEqual(result[1].nearest_land, self.land1)
 
             self.assertIsNotNone(result[0].distance)
             self.assertIsNotNone(result[1].distance)
