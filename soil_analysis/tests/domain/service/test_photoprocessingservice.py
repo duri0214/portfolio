@@ -173,10 +173,10 @@ class TestPhotoProcessingService(TestCase):
 
             # どの圃場が選ばれたかを出力
             print(
-                f"Photo 1 | 選択された圃場: {result[0].nearest_land.center.to_google().to_str()} | 距離: {result[0].distance}m"
+                f"Photo 1 | 選択された圃場({result[0].nearest_land.name}): {result[0].nearest_land.center.to_google().to_str()} | 距離: {result[0].distance}m"
             )
             print(
-                f"Photo 2 | 選択された圃場: {result[1].nearest_land.center.to_google().to_str()} | 距離: {result[1].distance}m"
+                f"Photo 2 | 選択された圃場({result[1].nearest_land.name}): {result[1].nearest_land.center.to_google().to_str()} | 距離: {result[1].distance}m"
             )
 
             # 結果の検証
