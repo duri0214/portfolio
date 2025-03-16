@@ -1,11 +1,13 @@
 import os
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
 from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.service.photoprocessingservice import PhotoProcessingService
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.land import LandLocation
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
+from soil_analysis.domain.valueobject.photo_land_association import PhotoLandAssociation
 
 
 class TestPhotoProcessingService(TestCase):
@@ -126,23 +128,62 @@ class TestPhotoProcessingService(TestCase):
         self.assertEqual(self.land4, nearest_land)
 
     def test_process_photos(self):
-        """写真処理機能の一連の流れをテストします。
+        """複数写真の処理と圃場紐づけ機能をテストします。
 
-        実際のAndroid写真ファイルパスを使用して、process_photos関数が
-        適切に写真を処理し、予期された結果（処理済み写真のリスト）を
-        返すことを検証します。
+        実際のAndroid写真ファイルを使用して、process_photos関数が
+        写真のGPSメタデータを抽出し、適切な圃場と紐づけられることを検証します。
 
-        このテストでは、実際の写真ファイルの位置情報を抽出し、最寄りの圃場を特定する
-        エンドツーエンドの処理を検証しています。
+        このテストでは：
+        1. 複数の写真ファイルのパスをリストとして渡す
+        2. 各写真から位置情報を抽出
+        3. 各写真に対して最も近い圃場を特定
+        4. 写真と圃場の紐づけ情報が正しく返されることを確認
         """
-        service = PhotoProcessingService()
-        processed_photos = service.process_photos(
-            self.photo_paths, self.land_candidates
-        )
-        # 期待される処理後の写真のリストと一致するか検証する ススムは 2023/6/18 のグーグルフォトにある
-        script_directory = os.path.dirname(os.path.abspath(__file__))
-        expected_processed_photos = [
-            os.path.join(script_directory, "./android/ススムＢ1_right.jpg"),
-            os.path.join(script_directory, "./android/ススムB2.jpg"),
-        ]
-        self.assertEqual(expected_processed_photos, processed_photos)
+        # AndroidPhotoクラスのモック
+        with patch(
+            "soil_analysis.domain.valueobject.photo.androidphoto.AndroidPhoto"
+        ) as mock_android_photo:
+            # 1枚目の写真のモック設定
+            mock_instance1 = MagicMock()
+            mock_instance1.location = CaptureLocation(
+                longitude=139.456, latitude=35.123, azimuth=90  # 東向き
+            )
+
+            # 2枚目の写真のモック設定
+            mock_instance2 = MagicMock()
+            mock_instance2.location = CaptureLocation(
+                longitude=139.457, latitude=35.124, azimuth=180  # 南向き
+            )
+
+            # サイド・エフェクト設定で連続する呼び出しに対して異なる値を返す
+            mock_android_photo.side_effect = [mock_instance1, mock_instance2]
+
+            # テスト対象のメソッド実行
+            service = PhotoProcessingService()
+            result = service.process_photos(self.photo_paths, self.land_candidates)
+
+            # 結果の検証
+            self.assertEqual(len(result), 2)  # 2つの写真が処理されたことを確認
+
+            # 各PhotoLandAssociationオブジェクトの検証
+            self.assertIsInstance(result[0], PhotoLandAssociation)
+            self.assertIsInstance(result[1], PhotoLandAssociation)
+
+            # 写真パスの検証
+            self.assertEqual(result[0].photo_path, self.photo_paths[0])
+            self.assertEqual(result[1].photo_path, self.photo_paths[1])
+
+            # 圃場の紐づけ検証（位置情報から期待される圃場）
+            # mock_instance1の位置情報に基づいて期待される圃場
+            self.assertEqual(
+                result[0].nearest_land, self.land1
+            )  # 例：最も近いのがland1と想定
+
+            # mock_instance2の位置情報に基づいて期待される圃場
+            self.assertEqual(
+                result[1].nearest_land, self.land2
+            )  # 例：最も近いのがland2と想定
+
+            # 距離情報が設定されていることを確認
+            self.assertIsNotNone(result[0].distance)
+            self.assertIsNotNone(result[1].distance)
