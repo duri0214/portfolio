@@ -31,16 +31,22 @@ class PhotoProcessingService:
     def find_nearest_land(
         self, photo_coord: CaptureLocation, land_candidates: LandCandidates
     ) -> LandLocation:
-        """
-        n個圃場の距離をそれぞれ調べていちばん距離の近い圃場を特定します
-        :param photo_coord:
-        :param land_candidates:
-        :return:
+        """撮影位置から最も近い圃場を特定します。
+
+        カメラの方向に調整された位置を使用して、より正確に撮影対象の圃場を特定します。
+
+        Args:
+            photo_coord: 撮影位置情報（方位角による調整を含む）
+            land_candidates: 検索対象の圃場リスト
+
+        Returns:
+            LandLocation: 最も近いと判断された圃場
         """
         min_distance = float("inf")
         nearest_land = None
 
         for land in land_candidates.list():
+            # 調整された位置から各圃場までの距離を計算
             distance = self.calculate_distance(
                 photo_coord.adjusted_position, land.center
             )
