@@ -1,10 +1,10 @@
 from unittest import TestCase
 
-from soil_analysis.domain.service.landcandidateservice import LandCandidateService
+from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 
 
-class TestLandCandidateService(TestCase):
+class TestKmlService(TestCase):
     def test_parse_kml(self):
         kml_str = """
         <?xml version="1.0" encoding="UTF-8"?>
@@ -40,8 +40,8 @@ class TestLandCandidateService(TestCase):
         </kml>
         """
 
-        service = LandCandidateService()
-        land_candidates = service.parse_kml(kml_str)
+        kml_service = KmlService()
+        land_candidates = kml_service.parse_kml(kml_str)
 
         # パース結果の確認
         self.assertIsInstance(land_candidates, LandCandidates)

@@ -1,6 +1,6 @@
 import math
 
-from lib.geo.valueobject.coords import CaptureLocationCoords
+from lib.geo.valueobject.coord import XarvioCoord
 
 
 class CaptureLocation:
@@ -11,15 +11,15 @@ class CaptureLocation:
     """
 
     def __init__(self, longitude: float, latitude: float, azimuth: float = None):
-        self._coords_origin = CaptureLocationCoords(
+        self._coord_origin = XarvioCoord(
             longitude=longitude,
             latitude=latitude,
         )
 
         if azimuth:
-            self._coords = self._move(azimuth)
+            self._coord = self._move(azimuth)
         else:
-            self._coords = self._coords_origin
+            self._coord = self._coord_origin
 
     def _move(self, azimuth: float, distance: float = 0.01):
         """
@@ -27,9 +27,9 @@ class CaptureLocation:
 
         :param azimuth: 方位角（単位: 度）
         :param distance: 移動距離（単位: キロメートル）
-        :return: 移動後の座標を表す Coords オブジェクト
+        :return: 移動後の座標を表す XarvioCoord オブジェクト
         """
-        origin_longitude, origin_latitude = self._coords_origin.to_tuple()
+        origin_longitude, origin_latitude = self._coord_origin.to_tuple()
 
         # 角度をラジアンに変換
         azimuth_rad = math.radians(azimuth)
@@ -50,20 +50,20 @@ class CaptureLocation:
         # 目的地の経度を計算
         destination_longitude = origin_longitude + math.degrees(delta_longitude)
 
-        return CaptureLocationCoords(destination_longitude, destination_latitude)
+        return XarvioCoord(destination_longitude, destination_latitude)
 
     @property
-    def corrected(self) -> CaptureLocationCoords:
+    def corrected(self) -> XarvioCoord:
         """
         圃場方向に 10m 進んだあとのオブジェクト
-        :rtype: CaptureLocationCoords
+        :rtype: XarvioCoord
         """
-        return self._coords
+        return self._coord
 
     @property
-    def origin(self) -> CaptureLocationCoords:
+    def origin(self) -> XarvioCoord:
         """
         圃場方向に進む前（撮影位置）のオブジェクト
-        :rtype: CaptureLocationCoords
+        :rtype: XarvioCoord
         """
-        return self._coords_origin
+        return self._coord_origin

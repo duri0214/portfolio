@@ -451,7 +451,7 @@ class RouteSuggestImport(models.Model):
     """
 
     name = models.CharField(max_length=256)
-    coords = models.CharField(max_length=256)
+    coord = models.CharField(max_length=256)
     ordering = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)

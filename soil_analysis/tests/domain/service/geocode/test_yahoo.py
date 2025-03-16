@@ -3,13 +3,13 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from lib.geo.valueobject.coords import GoogleMapCoords
+from lib.geo.valueobject.coord import GoogleMapsCoord
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 
 
-class TestGetYdfFromCoords(TestCase):
+class TestGetYdfFromCoord(TestCase):
     @patch("requests.get")
-    def test_get_ydf_from_coords(self, mock_get):
+    def test_get_ydf_from_coord(self, mock_get):
         mock_response = mock.Mock()
         mock_response.text = """
         <YDF xmlns="http://olp.yahooapis.jp/ydf/1.0" totalResultsReturned="1">
@@ -72,8 +72,8 @@ class TestGetYdfFromCoords(TestCase):
         """
         mock_get.return_value = mock_response
 
-        coords = GoogleMapCoords(latitude=35.681236, longitude=139.767125)
-        ydf = ReverseGeocoderService.get_ydf_from_coords(coords)
+        coord = GoogleMapsCoord(latitude=35.681236, longitude=139.767125)
+        ydf = ReverseGeocoderService.get_ydf_from_coord(coord)
 
         assert ydf.result_info.count == 1
         assert ydf.result_info.total == 1

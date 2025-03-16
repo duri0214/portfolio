@@ -29,7 +29,7 @@
     <p>一番上が始点、一番下が終点。はさまれている地点が最適化されます</p>
     <ul id="sortable-list">
         {% for land in object_list %}
-            <li id="{{ land.id }}" class="list-group-item">圃場名: {{ land.name }}, 座標: {{ land.coords }}</li>
+            <li id="{{ land.id }}" class="list-group-item">圃場名: {{ land.name }}, 座標: {{ land.coord }}</li>
         {% endfor %}
     </ul>
     <form id="orderForm" method="POST" action="{% url 'soil:route_suggest_ordering' %}">
