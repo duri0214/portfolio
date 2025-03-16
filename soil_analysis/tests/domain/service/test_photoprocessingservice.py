@@ -133,14 +133,22 @@ class TestPhotoProcessingService(TestCase):
         for i, land in enumerate([self.land1, self.land2, self.land3, self.land4]):
             print(f"{land.name} | Google Maps: {land.center.to_google().to_str()}")
 
-        # 写真の位置を設定
+        # 写真の位置を設定（azimuthは GoogleMaps で圃場中心方向に向けた値を特定したもの）
         # land1に近い位置を設定
-        photo1_lng = 137.6487  # land1に近い経度
-        photo1_lat = 34.744  # land1に近い緯度
+        photo1_lng = 137.649086  # land1に近い経度
+        photo1_lat = 34.744268  # land1に近い緯度
+        capture_loc1 = CaptureLocation(
+            longitude=photo1_lng, latitude=photo1_lat, azimuth=250
+        )
+        print(f"撮影位置1: {capture_loc1}")
 
         # land3に近い位置を設定
-        photo2_lng = 137.6491  # land3に近い経度
-        photo2_lat = 34.7436  # land3に近い緯度
+        photo2_lng = 137.649407  # land3に近い経度
+        photo2_lat = 34.743749  # land3に近い緯度
+        capture_loc2 = CaptureLocation(
+            longitude=photo2_lng, latitude=photo2_lat, azimuth=250
+        )
+        print(f"撮影位置2: {capture_loc2}")
 
         # AndroidPhotoクラスのモック
         with patch(
@@ -148,21 +156,11 @@ class TestPhotoProcessingService(TestCase):
         ) as mock_android_photo:
             # 1枚目の写真のモック設定
             mock_instance1 = MagicMock()
-            capture_loc1 = CaptureLocation(
-                longitude=photo1_lng, latitude=photo1_lat, azimuth=90  # 東向き
-            )
             mock_instance1.location = capture_loc1
 
             # 2枚目の写真のモック設定
             mock_instance2 = MagicMock()
-            capture_loc2 = CaptureLocation(
-                longitude=photo2_lng, latitude=photo2_lat, azimuth=180  # 南向き
-            )
             mock_instance2.location = capture_loc2
-
-            # 撮影位置情報を出力
-            print(f"撮影位置1: {capture_loc1}")
-            print(f"撮影位置2: {capture_loc2}")
 
             # サイド・エフェクト設定
             mock_android_photo.side_effect = [mock_instance1, mock_instance2]
