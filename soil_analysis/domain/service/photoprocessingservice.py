@@ -11,6 +11,15 @@ class PhotoProcessingService:
     def process_photos(
         self, folder_path_list: list[str], land_candidates: LandCandidates
     ) -> list[str]:
+        """フォルダパスのリストから写真を処理します。
+
+        Args:
+            folder_path_list: 処理する写真フォルダのパスリスト
+            land_candidates: 検索対象の圃場リスト
+
+        Returns:
+            list[str]: 処理された写真のパスリスト
+        """
         processed_photos = []
 
         # あるフォルダのn個の写真を処理
@@ -60,16 +69,19 @@ class PhotoProcessingService:
     def calculate_distance(
         coord1: XarvioCoord, coord2: LandLocation, unit: str = Unit.METERS
     ) -> float:
-        """
-        他の座標との距離を計算します。
-        xarvio は 経度緯度(lng,lat) をエクスポートする
-        haversineライブラリは 緯度経度(lat,lng) を2セット受け入れて距離を測る
-        そのため、haversineライブラリを使うタイミングでタプルを逆にしている
+        """２つの座標間の距離を計算します。
 
-        :param coord1: 座標1
-        :param coord2: 座標2
-        :param unit: 距離の単位（'km'、'miles'、'm'など）
-        :return: 距離（単位に応じた値）
+        xarvioは経度緯度(lng,lat)をエクスポートする一方、
+        haversineライブラリは緯度経度(lat,lng)の2セットを受け取って距離を計算します。
+        そのため、haversineライブラリを使用する際に座標のタプルを逆にしています。
+
+        Args:
+            coord1: 開始座標
+            coord2: 終了座標
+            unit: 距離の単位（デフォルトはメートル）
+
+        Returns:
+            float: 指定単位での2点間の距離
         """
         return haversine(
             coord1.to_google().to_tuple(),
