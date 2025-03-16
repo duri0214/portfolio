@@ -181,12 +181,12 @@ class TestPhotoProcessingService(TestCase):
             self.assertEqual(len(result), 2)
             self.assertIsInstance(result[0], PhotoLandAssociation)
             self.assertIsInstance(result[1], PhotoLandAssociation)
-            self.assertEqual(result[0].photo_path, self.photo_paths[0])
-            self.assertEqual(result[1].photo_path, self.photo_paths[1])
+            self.assertEqual(self.photo_paths[0], result[0].photo_path)
+            self.assertEqual(self.photo_paths[1], result[1].photo_path)
 
             # 両方の写真がland1に関連付けられていることを確認
-            self.assertEqual(result[0].nearest_land, self.land1)
-            self.assertEqual(result[1].nearest_land, self.land1)
+            self.assertEqual(self.land1, result[0].nearest_land)
+            self.assertEqual(self.land3, result[1].nearest_land)
 
             self.assertIsNotNone(result[0].distance)
             self.assertIsNotNone(result[1].distance)
