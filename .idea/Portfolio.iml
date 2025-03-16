@@ -25,11 +25,8 @@
     </content>
     <orderEntry type="jdk" jdkName="Python 3.12 virtualenv at C:\Users\yoshi\OneDrive\dev\portfolio\venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="jquery-3.5.1" level="application" />
-    <orderEntry type="library" name="bootstrap" level="application" />
-    <orderEntry type="library" name="bootstrap" level="application" />
-    <orderEntry type="library" name="js-cookie" level="application" />
-    <orderEntry type="library" name="jquery-3.5.1" level="application" />
+    <orderEntry type="library" name="jquery-ui" level="application" />
+    <orderEntry type="library" name="jquery-3.6.0" level="application" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="keepMatchingSpecifier" value="false" />
