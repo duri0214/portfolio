@@ -83,7 +83,9 @@ class CaptureLocation:
         # 目的地の経度を計算
         destination_longitude = origin_longitude + math.degrees(delta_longitude)
 
-        return XarvioCoord(destination_longitude, destination_latitude)
+        return XarvioCoord(
+            longitude=destination_longitude, latitude=destination_latitude
+        )
 
     @property
     def adjusted_position(self) -> XarvioCoord:
@@ -115,4 +117,6 @@ class CaptureLocation:
         if self._original_position == self._adjusted_position:
             return f"CaptureLocation(位置: {original_pos}, 方位角補正なし)"
         else:
-            return f"CaptureLocation(元位置: {original_pos}, 補正位置: {adjusted_pos})"
+            return (
+                f"CaptureLocation(元位置: {original_pos}, 補正後位置: {adjusted_pos})"
+            )

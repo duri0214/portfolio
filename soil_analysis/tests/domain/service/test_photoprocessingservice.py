@@ -161,8 +161,8 @@ class TestPhotoProcessingService(TestCase):
             mock_instance2.location = capture_loc2
 
             # 撮影位置情報を出力
-            print(f"Photo 1 | 撮影情報: {capture_loc1}")
-            print(f"Photo 2 | 撮影情報: {capture_loc2}")
+            print(f"撮影位置1: {capture_loc1}")
+            print(f"撮影位置2: {capture_loc2}")
 
             # サイド・エフェクト設定
             mock_android_photo.side_effect = [mock_instance1, mock_instance2]
@@ -173,10 +173,10 @@ class TestPhotoProcessingService(TestCase):
 
             # どの圃場が選ばれたかを出力
             print(
-                f"Photo 1 | 選択された圃場({result[0].nearest_land.name}): {result[0].nearest_land.center.to_google().to_str()} | 距離: {result[0].distance}m"
+                f"撮影位置1から選択された圃場({result[0].nearest_land.name}): {result[0].nearest_land.center.to_google().to_str()} | 距離: {result[0].distance}m"
             )
             print(
-                f"Photo 2 | 選択された圃場({result[1].nearest_land.name}): {result[1].nearest_land.center.to_google().to_str()} | 距離: {result[1].distance}m"
+                f"撮影位置2から選択された圃場({result[1].nearest_land.name}): {result[1].nearest_land.center.to_google().to_str()} | 距離: {result[1].distance}m"
             )
 
             # 結果の検証
