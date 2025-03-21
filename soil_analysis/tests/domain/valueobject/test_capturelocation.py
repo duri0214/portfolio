@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 
 
@@ -19,8 +20,9 @@ class TestCaptureLocation(TestCase):
 
     def test_capture_location(self):
         capture_location = CaptureLocation(
-            longitude=self.capture_point_lng,
-            latitude=self.capture_point_lat,
+            XarvioCoord(
+                longitude=self.capture_point_lng, latitude=self.capture_point_lat
+            ),
             azimuth=self.capture_point_azimuth,
         )
         self.assertAlmostEqual(
@@ -36,7 +38,10 @@ class TestCaptureLocation(TestCase):
 
     def test_corrected_coord(self):
         capture_location = CaptureLocation(
-            self.capture_point_lng, self.capture_point_lat, self.capture_point_azimuth
+            XarvioCoord(
+                longitude=self.capture_point_lng, latitude=self.capture_point_lat
+            ),
+            azimuth=self.capture_point_azimuth,
         )
         print(f"gmap検証用_撮影位置: 34.743865,137.6492809")
         print(
