@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -56,11 +55,8 @@ class TestPhotoProcessingService(TestCase):
             [self.land1, self.land2, self.land3, self.land4]
         )
 
-        script_directory = os.path.dirname(os.path.abspath(__file__))
-        self.photo_paths = [
-            os.path.join(script_directory, r"./android/ススムＢ1_right.jpg"),
-            os.path.join(script_directory, r"./android/ススムB2.jpg"),
-        ]
+        # 写真パスの設定
+        self.photo_paths = ["テスト写真パス1", "テスト写真パス2"]
 
     def test_calculate_distance(self):
         """座標間の距離計算機能をテストします。
@@ -137,22 +133,10 @@ class TestPhotoProcessingService(TestCase):
         # land1に近い位置を設定
         photo1_lng = 137.649086  # land1に近い経度
         photo1_lat = 34.744268  # land1に近い緯度
-        capture_loc1 = CaptureLocation(
-            longitude=photo1_lng, latitude=photo1_lat, azimuth=210
-        )
-        print(
-            f"撮影位置1: org {capture_loc1.original_position.to_google().to_str()} > adj {capture_loc1.adjusted_position.to_google().to_str()}"
-        )
 
         # land3に近い位置を設定
         photo2_lng = 137.649407  # land3に近い経度
         photo2_lat = 34.743749  # land3に近い緯度
-        capture_loc2 = CaptureLocation(
-            longitude=photo2_lng, latitude=photo2_lat, azimuth=210
-        )
-        print(
-            f"撮影位置2: org {capture_loc2.original_position.to_google().to_str()} > adj {capture_loc2.adjusted_position.to_google().to_str()}"
-        )
 
         # AndroidPhotoクラスのモック
         with patch(
@@ -160,11 +144,21 @@ class TestPhotoProcessingService(TestCase):
         ) as mock_android_photo:
             # 1枚目の写真のモック設定
             mock_instance1 = MagicMock()
-            mock_instance1.location = capture_loc1
+            mock_instance1.location = CaptureLocation(
+                longitude=photo1_lng, latitude=photo1_lat, azimuth=210
+            )
+            print(
+                f"撮影位置1: org {mock_instance1.location.original_position.to_google().to_str()} > adj {mock_instance1.location.adjusted_position.to_google().to_str()}"
+            )
 
             # 2枚目の写真のモック設定
             mock_instance2 = MagicMock()
-            mock_instance2.location = capture_loc2
+            mock_instance2.location = CaptureLocation(
+                longitude=photo2_lng, latitude=photo2_lat, azimuth=210
+            )
+            print(
+                f"撮影位置2: org {mock_instance2.location.original_position.to_google().to_str()} > adj {mock_instance2.location.adjusted_position.to_google().to_str()}"
+            )
 
             # サイド・エフェクト設定
             mock_android_photo.side_effect = [mock_instance1, mock_instance2]
