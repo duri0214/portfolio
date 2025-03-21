@@ -140,7 +140,7 @@ class TestPhotoProcessingService(TestCase):
 
         # AndroidPhotoクラスのモック
         with patch(
-            "soil_analysis.domain.valueobject.photo.androidphoto.AndroidPhoto"
+            "soil_analysis.domain.valueobject.photo.AndroidPhoto"
         ) as mock_android_photo:
             # 1枚目の写真のモック設定
             mock_instance1 = MagicMock()
