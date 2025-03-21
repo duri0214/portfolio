@@ -30,18 +30,14 @@ class CaptureLocation:
     # クラス定数
     ADJUSTMENT_DISTANCE_KM = 0.01  # 10メートル
 
-    def __init__(self, longitude: float, latitude: float, azimuth: float = None):
+    def __init__(self, xarvio_coord: XarvioCoord, azimuth: float = None):
         """CaptureLocation オブジェクトを初期化します。
 
         Args:
-            longitude: 経度
-            latitude: 緯度
+            xarvio_coord: 撮影位置
             azimuth: 方位角（度）。指定された場合、この方向に少し移動した位置も計算します。
         """
-        self._original_position = XarvioCoord(
-            longitude=longitude,
-            latitude=latitude,
-        )
+        self._original_position = xarvio_coord
         self._azimuth = azimuth
 
         if azimuth:
