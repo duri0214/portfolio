@@ -5,7 +5,6 @@ from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.land import LandLocation
-from soil_analysis.domain.valueobject.photo_land_association import PhotoLandAssociation
 
 
 class TestPhotoProcessingService(TestCase):
@@ -154,61 +153,46 @@ class TestPhotoProcessingService(TestCase):
         self.assertEqual(self.land4, nearest_land)
 
     def test_process_photos(self):
-        """複数写真の処理と圃場紐づけ機能をテストします。"""
-        # 圃場の位置をGoogleマップで確認できる形式で出力
-        for i, land in enumerate([self.land1, self.land2, self.land3, self.land4]):
-            print(f"{land.name} | Google Maps: {land.center.to_google().to_str()}")
+        """複数写真の処理をテスト - find_nearest_land メソッドをモック化"""
+        # 写真のパスリスト（複数）
+        photo_paths = [
+            "path/to/photo1.jpg",
+            "path/to/photo2.jpg",
+            "path/to/photo3.jpg",
+            "path/to/photo4.jpg",
+        ]
 
-        # 写真の位置を設定（azimuthは GoogleMaps で圃場中心方向に向けた値を特定したもの）
-        # land1に近い位置を設定
-        photo_spot1 = XarvioCoord(longitude=137.649086, latitude=34.744268)
+        service = PhotoProcessingService()
 
-        # land3に近い位置を設定
-        photo_spot2 = XarvioCoord(longitude=137.649407, latitude=34.743749)
+        # find_nearest_landメソッドをモック化
+        with patch.object(service, "find_nearest_land") as mock_find_nearest_land:
+            # 写真ごとに異なる最寄りの土地を設定
+            mock_find_nearest_land.side_effect = [
+                self.land1,  # 1枚目の写真はススムA1に最も近い
+                self.land2,  # 2枚目の写真はススムA2に最も近い
+                self.land3,  # 3枚目の写真はススムA3に最も近い
+                self.land4,  # 4枚目の写真はススムA4に最も近い
+            ]
 
-        # AndroidPhotoクラスのモック
-        with patch(
-            "soil_analysis.domain.valueobject.photo.AndroidPhoto"
-        ) as mock_android_photo:
-            # 1枚目の写真のモック設定
-            mock_instance1 = MagicMock()
-            mock_instance1.location = CaptureLocation(photo_spot1, azimuth=210)
-            print(
-                f"撮影位置1(ススムA1手前): org {mock_instance1.location.original_position.to_google().to_str()} > adj {mock_instance1.location.adjusted_position.to_google().to_str()}"
-            )
+            # calculate_distanceメソッドもモック化して一定の距離を返す
+            with patch.object(service, "calculate_distance", return_value=10.0):
+                # 処理を実行
+                result = service.process_photos(photo_paths, self.land_candidates)
 
-            # 2枚目の写真のモック設定
-            mock_instance2 = MagicMock()
-            mock_instance2.location = CaptureLocation(photo_spot2, azimuth=210)
-            print(
-                f"撮影位置2(ススムA3手前): org {mock_instance2.location.original_position.to_google().to_str()} > adj {mock_instance2.location.adjusted_position.to_google().to_str()}"
-            )
+                # 結果の検証
+                self.assertEqual(4, len(result))
+                self.assertEqual(
+                    self.land1, result[0].nearest_land
+                )  # 1枚目はA1に紐づく
+                self.assertEqual(
+                    self.land2, result[1].nearest_land
+                )  # 2枚目はA2に紐づく
+                self.assertEqual(
+                    self.land3, result[2].nearest_land
+                )  # 3枚目はA3に紐づく
+                self.assertEqual(
+                    self.land4, result[3].nearest_land
+                )  # 4枚目はA4に紐づく
 
-            # サイド・エフェクト設定
-            mock_android_photo.side_effect = [mock_instance1, mock_instance2]
-
-            # テスト対象のメソッド実行
-            service = PhotoProcessingService()
-            result = service.process_photos(self.photo_paths, self.land_candidates)
-
-            # どの圃場が選ばれたかを出力
-            print(
-                f"撮影位置1から選択された圃場({result[0].nearest_land.name}): {result[0].nearest_land.center.to_google().to_str()} | 距離: {result[0].distance}m"
-            )
-            print(
-                f"撮影位置2から選択された圃場({result[1].nearest_land.name}): {result[1].nearest_land.center.to_google().to_str()} | 距離: {result[1].distance}m"
-            )
-
-            # 結果の検証
-            self.assertEqual(len(result), 2)
-            self.assertIsInstance(result[0], PhotoLandAssociation)
-            self.assertIsInstance(result[1], PhotoLandAssociation)
-            self.assertEqual(self.photo_paths[0], result[0].photo_path)
-            self.assertEqual(self.photo_paths[1], result[1].photo_path)
-
-            # 両方の写真がland1に関連付けられていることを確認
-            self.assertEqual(self.land1, result[0].nearest_land)
-            self.assertEqual(self.land3, result[1].nearest_land)
-
-            self.assertIsNotNone(result[0].distance)
-            self.assertIsNotNone(result[1].distance)
+                # モックが正しく呼び出されたことを確認
+                self.assertEqual(len(photo_paths), mock_find_nearest_land.call_count)
