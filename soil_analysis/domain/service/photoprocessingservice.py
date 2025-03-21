@@ -4,7 +4,7 @@ from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.land import LandLocation
 from soil_analysis.domain.valueobject.landcandidates import LandCandidates
-from soil_analysis.domain.valueobject.photo.androidphoto import AndroidPhoto
+from soil_analysis.domain.valueobject.photo import AndroidPhoto
 from soil_analysis.domain.valueobject.photo_land_association import PhotoLandAssociation
 
 
