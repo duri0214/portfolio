@@ -111,7 +111,9 @@ class TestPhotoProcessingService(TestCase):
         撮影位置をススムA1の正面に設定し、find_nearest_land関数が
         ススムA1を最も近い圃場として正しく特定できることを検証します。
         """
-        photo_spot = CaptureLocation(longitude=137.64905, latitude=34.74424)
+        photo_spot = CaptureLocation(
+            XarvioCoord(longitude=137.64905, latitude=34.74424)
+        )
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_spot, self.land_candidates)
         self.assertEqual(self.land1, nearest_land)
@@ -122,7 +124,7 @@ class TestPhotoProcessingService(TestCase):
         撮影位置をススムA2の正面に設定し、find_nearest_land関数が
         ススムA2を最も近い圃場として正しく特定できることを検証します。
         """
-        photo_spot = CaptureLocation(longitude=137.64921, latitude=34.744)
+        photo_spot = CaptureLocation(XarvioCoord(longitude=137.64921, latitude=34.744))
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_spot, self.land_candidates)
         self.assertEqual(self.land2, nearest_land)
@@ -133,7 +135,9 @@ class TestPhotoProcessingService(TestCase):
         撮影位置をススムA3の正面に設定し、find_nearest_land関数が
         ススムA3を最も近い圃場として正しく特定できることを検証します。
         """
-        photo_spot = CaptureLocation(longitude=137.64938, latitude=34.74374)
+        photo_spot = CaptureLocation(
+            XarvioCoord(longitude=137.64938, latitude=34.74374)
+        )
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_spot, self.land_candidates)
         self.assertEqual(self.land3, nearest_land)
@@ -144,7 +148,7 @@ class TestPhotoProcessingService(TestCase):
         撮影位置をススムA4の正面に設定し、find_nearest_land関数が
         ススムA4を最も近い圃場として正しく特定できることを検証します。
         """
-        photo_spot = CaptureLocation(137.6496, 34.7434)
+        photo_spot = CaptureLocation(XarvioCoord(longitude=137.6496, latitude=34.7434))
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_spot, self.land_candidates)
         self.assertEqual(self.land4, nearest_land)
@@ -157,12 +161,10 @@ class TestPhotoProcessingService(TestCase):
 
         # 写真の位置を設定（azimuthは GoogleMaps で圃場中心方向に向けた値を特定したもの）
         # land1に近い位置を設定
-        photo1_lng = 137.649086  # land1に近い経度
-        photo1_lat = 34.744268  # land1に近い緯度
+        photo_spot1 = XarvioCoord(longitude=137.649086, latitude=34.744268)
 
         # land3に近い位置を設定
-        photo2_lng = 137.649407  # land3に近い経度
-        photo2_lat = 34.743749  # land3に近い緯度
+        photo_spot2 = XarvioCoord(longitude=137.649407, latitude=34.743749)
 
         # AndroidPhotoクラスのモック
         with patch(
@@ -170,20 +172,16 @@ class TestPhotoProcessingService(TestCase):
         ) as mock_android_photo:
             # 1枚目の写真のモック設定
             mock_instance1 = MagicMock()
-            mock_instance1.location = CaptureLocation(
-                longitude=photo1_lng, latitude=photo1_lat, azimuth=210
-            )
+            mock_instance1.location = CaptureLocation(photo_spot1, azimuth=210)
             print(
-                f"撮影位置1: org {mock_instance1.location.original_position.to_google().to_str()} > adj {mock_instance1.location.adjusted_position.to_google().to_str()}"
+                f"撮影位置1(ススムA1手前): org {mock_instance1.location.original_position.to_google().to_str()} > adj {mock_instance1.location.adjusted_position.to_google().to_str()}"
             )
 
             # 2枚目の写真のモック設定
             mock_instance2 = MagicMock()
-            mock_instance2.location = CaptureLocation(
-                longitude=photo2_lng, latitude=photo2_lat, azimuth=210
-            )
+            mock_instance2.location = CaptureLocation(photo_spot2, azimuth=210)
             print(
-                f"撮影位置2: org {mock_instance2.location.original_position.to_google().to_str()} > adj {mock_instance2.location.adjusted_position.to_google().to_str()}"
+                f"撮影位置2(ススムA3手前): org {mock_instance2.location.original_position.to_google().to_str()} > adj {mock_instance2.location.adjusted_position.to_google().to_str()}"
             )
 
             # サイド・エフェクト設定
