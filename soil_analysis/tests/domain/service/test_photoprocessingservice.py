@@ -50,11 +50,14 @@ class TestPhotoProcessingService(TestCase):
             "137.6492192,34.7429904 137.6489738,34.7433604",
             "ススムA4",
         )
-        self.land_candidates = LandCandidates(
-            [self.land1, self.land2, self.land3, self.land4]
+
+        # 土地候補のリストを作成
+        self.land_candidates = MagicMock()
+        self.land_candidates.list = MagicMock(
+            return_value=[self.land1, self.land2, self.land3, self.land4]
         )
 
-        # 写真パスの設定
+        # テスト用の写真パス（実際のファイルパスは使わない）
         self.photo_paths = ["テスト写真パス1", "テスト写真パス2"]
 
     def test_calculate_distance(self):
