@@ -1,6 +1,7 @@
 import os
 from unittest import TestCase
 
+from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.photo import AndroidPhoto
 from soil_analysis.domain.valueobject.photo import IphonePhoto
@@ -111,11 +112,15 @@ class TestBasePhotoFunctionality(TestCase):
         エラーハンドリングも検証します。
         """
         # iPhone位置情報の検証
-        expected_iphone_loc = CaptureLocation(140.41932067, 35.80548371)
+        expected_iphone_loc = CaptureLocation(
+            XarvioCoord(longitude=140.41932067, latitude=35.80548371)
+        )
         self._assert_locations_equal(expected_iphone_loc, self.iphone_photo.location)
 
         # Android位置情報の検証
-        expected_android_loc = CaptureLocation(137.8266552, 34.6942567)
+        expected_android_loc = CaptureLocation(
+            XarvioCoord(longitude=137.8266552, latitude=34.6942567)
+        )
         self._assert_locations_equal(expected_android_loc, self.android_photo.location)
 
         # 異常系テスト
