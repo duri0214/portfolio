@@ -4,6 +4,7 @@ import re
 
 import exifread
 
+from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 
 
@@ -72,8 +73,10 @@ class BasePhoto:
             raise ValueError("Invalid GPSLatitude value: None")
 
         return CaptureLocation(
-            self._convert_to_degrees(gps_longitude),
-            self._convert_to_degrees(gps_latitude),
+            XarvioCoord(
+                longitude=self._convert_to_degrees(gps_longitude),
+                latitude=self._convert_to_degrees(gps_latitude),
+            )
         )
 
     @staticmethod
