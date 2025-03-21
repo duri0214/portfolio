@@ -60,6 +60,30 @@ class TestPhotoProcessingService(TestCase):
         # テスト用の写真パス（実際のファイルパスは使わない）
         self.photo_paths = ["テスト写真パス1", "テスト写真パス2"]
 
+        # AndroidPhotoとIphonePhotoのモックを設定
+        self.android_photo_patcher = patch(
+            "soil_analysis.domain.service.photo_processing_service.AndroidPhoto"
+        )
+        self.mock_android_photo = self.android_photo_patcher.start()
+
+        # モック写真オブジェクトを作成
+        self.android_photo_instance = MagicMock()
+        self.mock_android_photo.return_value = self.android_photo_instance
+
+        # 写真の位置情報を設定（実際の土地に近い位置）
+        test_location = MagicMock()
+        test_location.adjusted_position = MagicMock()
+        test_location.adjusted_position.to_google = MagicMock()
+        test_location.adjusted_position.to_google.return_value = MagicMock()
+        test_location.adjusted_position.to_google.return_value.to_tuple = MagicMock(
+            return_value=(34.7440, 137.6490)
+        )
+
+        self.android_photo_instance.location = test_location
+        self.android_photo_instance.filepath = "テスト写真パス1"
+        self.android_photo_instance.filename = "android_photo.jpg"
+        self.android_photo_instance.date = "2023-08-27"
+
     def test_calculate_distance(self):
         """座標間の距離計算機能をテストします。
 
