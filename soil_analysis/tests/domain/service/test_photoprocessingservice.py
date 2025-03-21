@@ -138,17 +138,21 @@ class TestPhotoProcessingService(TestCase):
         photo1_lng = 137.649086  # land1に近い経度
         photo1_lat = 34.744268  # land1に近い緯度
         capture_loc1 = CaptureLocation(
-            longitude=photo1_lng, latitude=photo1_lat, azimuth=250
+            longitude=photo1_lng, latitude=photo1_lat, azimuth=210
         )
-        print(f"撮影位置1: {capture_loc1}")
+        print(
+            f"撮影位置1: org {capture_loc1.original_position.to_google().to_str()} > adj {capture_loc1.adjusted_position.to_google().to_str()}"
+        )
 
         # land3に近い位置を設定
         photo2_lng = 137.649407  # land3に近い経度
         photo2_lat = 34.743749  # land3に近い緯度
         capture_loc2 = CaptureLocation(
-            longitude=photo2_lng, latitude=photo2_lat, azimuth=250
+            longitude=photo2_lng, latitude=photo2_lat, azimuth=210
         )
-        print(f"撮影位置2: {capture_loc2}")
+        print(
+            f"撮影位置2: org {capture_loc2.original_position.to_google().to_str()} > adj {capture_loc2.adjusted_position.to_google().to_str()}"
+        )
 
         # AndroidPhotoクラスのモック
         with patch(
