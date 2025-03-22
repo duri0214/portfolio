@@ -10,7 +10,10 @@ class TestCoord(TestCase):
         XarvioCoord (経度,緯度) と GoogleMapsCoord (緯度,経度) の
         相互変換と文字列表現をテストします。
         """
-        xarvio_coord = XarvioCoord(34.7443565, 137.6489657)
+        xarvio_coord = XarvioCoord(
+            longitude=137.6489657,
+            latitude=34.7443565,
+        )
         self.assertEqual((137.6489657, 34.7443565), xarvio_coord.to_tuple())
         self.assertEqual("137.6489657,34.7443565", xarvio_coord.to_str())
 

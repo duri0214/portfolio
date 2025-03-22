@@ -36,7 +36,9 @@ class LandLocation(BaseCoord):
             lng_float = float(lng)
             lat_float = float(lat)
             # XarvioCoordは(latitude, longitude)の順で引数を取る
-            original_coord_list.append(XarvioCoord(lat_float, lng_float))
+            original_coord_list.append(
+                XarvioCoord(longitude=lng_float, latitude=lat_float)
+            )
             longitude_sum += lng_float
             latitude_sum += lat_float
 
@@ -46,7 +48,7 @@ class LandLocation(BaseCoord):
 
         # 中心点を XarvioCoord として保持
         # XarvioCoordは(latitude, longitude)の順で引数を取る
-        self.center = XarvioCoord(center_lat, center_lng)
+        self.center = XarvioCoord(longitude=center_lng, latitude=center_lat)
         self.original_coord_list = original_coord_list
         self.name = name
 
