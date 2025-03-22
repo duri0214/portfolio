@@ -6,89 +6,93 @@
     <link rel="stylesheet" href="{% static 'soil_analysis/css/land/list.css' %}">
 {% endblock %}
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:company_list' %}">{{ company.name }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Land list</li>
-        </ol>
-    </nav>
-    <a class="btn btn-outline-primary mb-3" href="{% url 'soil:land_create' company.id %}"
-       role="button">＋圃場の追加</a>
-    {% for a_land in object_list %}
-        {% if not forloop.counter|divisibleby:"2" %}
-            <div class="row mb-4">
-        {% endif %}
-    <div class="col-sm-6">
-        <div class="card">
-            <div class="image-placeholder">
-                {% if a_land.image %}
-                    <img src="{{ a_land.image.url }}" alt="Land Image">
-                {% else %}
-                    <p>Now Printing</p>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                <a href="{% url 'soil:land_detail' a_land.company.pk a_land.pk %}"><h5
-                        class="card-title">{{ a_land.name }}</h5></a>
-                <div class="weather-list">
-                    {% for weather in a_land.jma_city.jma_region.weathers %}
-                        {% with 'soil_analysis/images/weather/svg/'|add:weather.jma_weather_code.summary_code|add:'.svg' as weather_svg_path %}
-                            <div class="weather-item">
-                                <img width="50" src="{% static weather_svg_path %}" alt="Weather Image">
-                                <p>{{ weather.reporting_date|date:"m/d" }}</p>
-                            </div>
-                        {% endwith %}
-                    {% empty %}
-                        <p>（該当天気なし）</p>
-                    {% endfor %}
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_list' %}">{{ company.name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Land list</li>
+            </ol>
+        </nav>
+        <a class="btn btn-outline-primary mb-3" href="{% url 'soil:land_create' company.id %}"
+           role="button">＋圃場の追加</a>
+        {% for a_land in object_list %}
+            {% if not forloop.counter|divisibleby:"2" %}
+                <div class="row mb-4">
+            {% endif %}
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="image-placeholder">
+                    {% if a_land.image %}
+                        <img src="{{ a_land.image.url }}" alt="Land Image">
+                    {% else %}
+                        <p>Now Printing</p>
+                    {% endif %}
                 </div>
-                <div class="warning-list">
-                    {% for warning in a_land.jma_city.jma_region.warnings %}
-                        <div class="warning-item">
-                            <span class="label">{{ warning.warnings }}</span>
-                        </div>
-                    {% empty %}
-                        <p>（該当警報なし）</p>
-                    {% endfor %}
-                </div>
-
-                <ul class="card-text">
-                    <li>都道府県: {{ a_land.jma_city.jma_region.jma_prefecture.name|default:"-" }}</li>
-                    <li>市区町村: {{ a_land.jma_city.name|default:"-" }}</li>
-                    <li>緯度経度: {% if a_land.latlon %}<a href="https://www.google.co.jp/maps/@{{ a_land.latlon }},17z"
-                                                           target="_blank">{{ a_land.latlon }}</a>{% else %}-{% endif %}
-                    </li>
-                    <li>面積: {{ a_land.area|default:"-" }} ㎡</li>
-                    <li>作型: {{ a_land.cultivation_type|default:"-" }}</li>
-                    <li>オーナー: {{ a_land.owner.username|default:"-" }}</li>
-                    <li>備考: {{ a_land.remark|default:"-" }}</li>
-                </ul>
-
-                <div class="dropdown">
-                    <button class="m-1 btn btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton1"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                        -- 化学レポートを選択 --
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="select a report">
-                        {% for land_ledger in land_ledger_map|get_value:a_land %}
-                            <li><a class="dropdown-item"
-                                   href="{% url 'soil:land_report_chemical' a_land.company.id land_ledger.pk %}">{{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.land_period.name }}</a>
-                            </li>
+                <div class="card-body">
+                    <a href="{% url 'soil:land_detail' a_land.company.pk a_land.pk %}"><h5
+                            class="card-title">{{ a_land.name }}</h5></a>
+                    <div class="weather-list">
+                        {% for weather in a_land.jma_city.jma_region.weathers %}
+                            {% with 'soil_analysis/images/weather/svg/'|add:weather.jma_weather_code.summary_code|add:'.svg' as weather_svg_path %}
+                                <div class="weather-item">
+                                    <img width="50" src="{% static weather_svg_path %}" alt="Weather Image">
+                                    <p>{{ weather.reporting_date|date:"m/d" }}</p>
+                                </div>
+                            {% endwith %}
+                        {% empty %}
+                            <p>（該当天気なし）</p>
                         {% endfor %}
+                    </div>
+                    <div class="warning-list">
+                        {% for warning in a_land.jma_city.jma_region.warnings %}
+                            <div class="warning-item">
+                                <span class="label">{{ warning.warnings }}</span>
+                            </div>
+                        {% empty %}
+                            <p>（該当警報なし）</p>
+                        {% endfor %}
+                    </div>
+
+                    <ul class="card-text">
+                        <li>都道府県: {{ a_land.jma_city.jma_region.jma_prefecture.name|default:"-" }}</li>
+                        <li>市区町村: {{ a_land.jma_city.name|default:"-" }}</li>
+                        <li>緯度経度: {% if a_land.latlon %}
+                            <a href="https://www.google.co.jp/maps/@{{ a_land.latlon }},17z"
+                               target="_blank">{{ a_land.latlon }}</a>{% else %}-{% endif %}
+                        </li>
+                        <li>面積: {{ a_land.area|default:"-" }} ㎡</li>
+                        <li>作型: {{ a_land.cultivation_type|default:"-" }}</li>
+                        <li>オーナー: {{ a_land.owner.username|default:"-" }}</li>
+                        <li>備考: {{ a_land.remark|default:"-" }}</li>
                     </ul>
-                </div>
-                <div class="dropdown">
-                    <button class="m-1 btn btn-outline-primary dropdown-toggle disabled" type="button"
-                            id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                        -- 物理レポートを選択 --
-                    </button>
+
+                    <div class="dropdown">
+                        <button class="m-1 btn btn-outline-primary dropdown-toggle" type="button"
+                                id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            -- 化学レポートを選択 --
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="select a report">
+                            {% for land_ledger in land_ledger_map|get_value:a_land %}
+                                <li><a class="dropdown-item"
+                                       href="{% url 'soil:land_report_chemical' a_land.company.id land_ledger.pk %}">{{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.land_period.name }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <button class="m-1 btn btn-outline-primary dropdown-toggle disabled" type="button"
+                                id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                            -- 物理レポートを選択 --
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+        {% if forloop.counter|divisibleby:"2" %}
+            </div>
+        {% endif %}
+        {% endfor %}
     </div>
-    {% if forloop.counter|divisibleby:"2" %}
-        </div>
-    {% endif %}
-    {% endfor %}
 {% endblock %}

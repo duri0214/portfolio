@@ -2,119 +2,120 @@
 {% load static %}
 
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:land_list' company.id %}">Land List</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Create</li>
-        </ol>
-    </nav>
     <div class="container">
-        <h1>新規作成</h1>
-        {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <input type="hidden" name="company-id" value="{{ company.pk }}">
-            <button type="submit" class="btn btn-outline-primary mb-3">送信</button>
-        </form>
-    </div>
-    <script>
-        function clearDropdown(selectElement) {
-            const defaultOption = document.createElement('option')
-            defaultOption.value = ""
-            defaultOption.text = "選択してください"
-            defaultOption.selected = true
-            selectElement.appendChild(defaultOption)
-        }
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:land_list' company.id %}">Land List</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Create</li>
+            </ol>
+        </nav>
+        <div class="container">
+            <h1>新規作成</h1>
+            {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <input type="hidden" name="company-id" value="{{ company.pk }}">
+                <button type="submit" class="btn btn-outline-primary mb-3">送信</button>
+            </form>
+        </div>
+        <script>
+            function clearDropdown(selectElement) {
+                const defaultOption = document.createElement('option')
+                defaultOption.value = ""
+                defaultOption.text = "選択してください"
+                defaultOption.selected = true
+                selectElement.appendChild(defaultOption)
+            }
 
-        function setDropdownList(optionsData, selectElement) {
-            optionsData.map(item => {
-                const option = document.createElement('option')
-                option.value = item.id
-                option.text = item.name
-                selectElement.appendChild(option)
-            })
-        }
+            function setDropdownList(optionsData, selectElement) {
+                optionsData.map(item => {
+                    const option = document.createElement('option')
+                    option.value = item.id
+                    option.text = item.name
+                    selectElement.appendChild(option)
+                })
+            }
 
-        /**
-         * 都道府省のデータをフェッチし、それに応じて都道府県ドロップダウンオプションを設定します。
-         */
-        async function fetchPrefectures() {
-            const prefectureSelect = document.getElementById("id_jma_prefecture")
-            prefectureSelect.innerHTML = ''
-            clearDropdown(prefectureSelect)
+            /**
+             * 都道府省のデータをフェッチし、それに応じて都道府県ドロップダウンオプションを設定します。
+             */
+            async function fetchPrefectures() {
+                const prefectureSelect = document.getElementById("id_jma_prefecture")
+                prefectureSelect.innerHTML = ''
+                clearDropdown(prefectureSelect)
 
-            const response = await fetch('{% url 'soil:prefectures' %}')
-            const data = await response.json()
-            setDropdownList(data.prefectures, prefectureSelect)
-        }
-
-        /**
-         * 指定された都道府県 ID に基づいて都市データを取得し、それに応じて都市ドロップダウン オプションを設定します
-         * 都道府県 ID が指定されていない場合、都市のドロップダウンはクリアされます
-         *
-         * @param {string} prefectureId - The ID of the prefecture.
-         */
-        async function fetchCities(prefectureId) {
-            const citySelect = document.getElementById("id_jma_city")
-            citySelect.innerHTML = ''
-            clearDropdown(citySelect)
-
-            if (prefectureId) {
-                const response = await fetch(`/soil_analysis/prefecture/${prefectureId}/cities`)
+                const response = await fetch('{% url 'soil:prefectures' %}')
                 const data = await response.json()
-                setDropdownList(data.cities, citySelect)
+                setDropdownList(data.prefectures, prefectureSelect)
             }
-        }
 
-        /**
-         * 土地の緯度経度に基づいてその位置情報を取得します
-         *
-         * @param {string} latlon - 緯度経度のペア。
-         */
-        async function fetchLandLocationInfo(latlon) {
-            const response = await fetch("{% url 'soil:land_location_info' %}", {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': Cookies.get('csrftoken')
-                },
-                body: JSON.stringify({latlon})
-            })
-            return response.json()
-        }
+            /**
+             * 指定された都道府県 ID に基づいて都市データを取得し、それに応じて都市ドロップダウン オプションを設定します
+             * 都道府県 ID が指定されていない場合、都市のドロップダウンはクリアされます
+             *
+             * @param {string} prefectureId - The ID of the prefecture.
+             */
+            async function fetchCities(prefectureId) {
+                const citySelect = document.getElementById("id_jma_city")
+                citySelect.innerHTML = ''
+                clearDropdown(citySelect)
 
-        document.getElementById("id_latlon").addEventListener("change", async function () {
-            const latlon = this.value
-            const prefectureSelect = document.getElementById("id_jma_prefecture")
-            const citySelect = document.getElementById("id_jma_city")
-
-            if (latlon) {
-                const landLocationInfo = await fetchLandLocationInfo(latlon)
-                if (landLocationInfo.error) {
-                    alert(landLocationInfo.error)
-                } else {
-                    await fetchPrefectures()
-                    prefectureSelect.value = landLocationInfo.jma_prefecture_id
-                    await fetchCities(landLocationInfo.jma_prefecture_id)
-                    citySelect.value = landLocationInfo.jma_city_id
+                if (prefectureId) {
+                    const response = await fetch(`/soil_analysis/prefecture/${prefectureId}/cities`)
+                    const data = await response.json()
+                    setDropdownList(data.cities, citySelect)
                 }
-            } else {
-                await fetchCities(undefined)
             }
-        })
 
-        document.getElementById("id_jma_prefecture").addEventListener("change", function () {
-            const prefectureId = this.value
-            fetchCities(prefectureId)
-        })
-    </script>
+            /**
+             * 土地の緯度経度に基づいてその位置情報を取得します
+             *
+             * @param {string} latlon - 緯度経度のペア。
+             */
+            async function fetchLandLocationInfo(latlon) {
+                const response = await fetch("{% url 'soil:land_location_info' %}", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': Cookies.get('csrftoken')
+                    },
+                    body: JSON.stringify({latlon})
+                })
+                return response.json()
+            }
+
+            document.getElementById("id_latlon").addEventListener("change", async function () {
+                const latlon = this.value
+                const prefectureSelect = document.getElementById("id_jma_prefecture")
+                const citySelect = document.getElementById("id_jma_city")
+
+                if (latlon) {
+                    const landLocationInfo = await fetchLandLocationInfo(latlon)
+                    if (landLocationInfo.error) {
+                        alert(landLocationInfo.error)
+                    } else {
+                        await fetchPrefectures()
+                        prefectureSelect.value = landLocationInfo.jma_prefecture_id
+                        await fetchCities(landLocationInfo.jma_prefecture_id)
+                        citySelect.value = landLocationInfo.jma_city_id
+                    }
+                } else {
+                    await fetchCities(undefined)
+                }
+            })
+
+            document.getElementById("id_jma_prefecture").addEventListener("change", function () {
+                const prefectureId = this.value
+                fetchCities(prefectureId)
+            })
+        </script>
+    </div>
 {% endblock %}
-
