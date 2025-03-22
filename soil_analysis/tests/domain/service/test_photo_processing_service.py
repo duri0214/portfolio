@@ -126,6 +126,23 @@ class TestPhotoProcessingService(TestCase):
         self.assertEqual(self.land4, nearest_land)
 
     def test_process_photos(self):
+        """
+        写真処理サービスのprocess_photos機能を検証するテストです。
+
+        このテストでは以下の内容を確認します：
+        1. 複数の写真を一括処理する機能が正しく動作すること
+        2. 各写真に対して適切な圃場（最も近い圃場）が関連付けられること
+        3. 写真と圃場の距離が正確に計算されること
+
+        テスト手法：
+        - 4枚の写真をモックし、それぞれ異なる位置情報を持たせる
+        - それぞれの写真に対して、最も近い圃場が正しく特定されるか検証
+        - 写真処理サービスのprocess_photosメソッドの戻り値を検証
+
+        検証項目：
+        - 結果のリストが入力写真数と同じ長さであること
+        - 各写真に対して、期待される最寄り圃場が正しく関連付けられていること
+        """
         # AndroidPhotoのモックを作成
         with patch(
             "soil_analysis.domain.service.photo_processing_service.AndroidPhoto"
