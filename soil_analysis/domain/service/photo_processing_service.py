@@ -80,7 +80,7 @@ class PhotoProcessingService:
 
     @staticmethod
     def calculate_distance(
-        coord1: XarvioCoord, coord2: LandLocation, unit: str = Unit.METERS
+        photo_spot: XarvioCoord, land_spot: LandLocation, unit: str = Unit.METERS
     ) -> float:
         """２つの座標間の距離を計算します。
 
@@ -89,15 +89,15 @@ class PhotoProcessingService:
         そのため、haversineライブラリを使用する際に座標のタプルを逆にしています。
 
         Args:
-            coord1: 開始座標
-            coord2: 終了座標
+            photo_spot: 開始座標
+            land_spot: 終了座標
             unit: 距離の単位（デフォルトはメートル）
 
         Returns:
             float: 指定単位での2点間の距離
         """
         return haversine(
-            coord1.to_google().to_tuple(),
-            coord2.to_google().to_tuple(),
+            photo_spot.to_google().to_tuple(),
+            land_spot.to_google().to_tuple(),
             unit=unit,
         )
