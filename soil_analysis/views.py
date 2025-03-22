@@ -560,19 +560,18 @@ class AssociatePictureAndLandResultView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         nearest_land_name = self.request.session.get("nearest_land_name")
-        photo_spot = self.request.session.get("photo_spot")
+        photo_spot_coord = self.request.session.get("photo_spot")
 
-        if nearest_land_name and photo_spot:
+        if nearest_land_name and photo_spot_coord:
             # 圃場名から圃場データを取得
             land = AssociatePictureAndLandView.get_land_by_name(nearest_land_name)
 
-            # ダミーデータを使用するため、Landオブジェクトの代わりに名前と座標を渡す
             context["nearest_land"] = {
-                "name": nearest_land_name,
+                "name": land.name,
                 "location": land.to_google().to_str(),
                 "owner": "テスト所有者",
             }
             # 撮影地点情報
-            context["photo_spot"] = photo_spot
+            context["photo_spot_coord"] = photo_spot_coord
 
         return context
