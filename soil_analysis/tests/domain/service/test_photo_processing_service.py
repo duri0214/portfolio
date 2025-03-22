@@ -206,10 +206,10 @@ class TestPhotoProcessingService(TestCase):
         }
 
         # AndroidPhotoのモックが毎回異なる座標を返すように設定
-        def android_photo_side_effect(photo_path):
+        def android_photo_side_effect(file_path):
             mock = MagicMock()
             location_mock = MagicMock()
-            location_mock.adjusted_position = photo_location_map[photo_path]
+            location_mock.adjusted_position = photo_location_map[file_path]
             mock.location = location_mock
             return mock
 
@@ -231,16 +231,18 @@ class TestPhotoProcessingService(TestCase):
         # デバッグ出力（Googleマップで確認できる形式）
         for i, r in enumerate(result):
             photo_path = list(photo_location_map.keys())[i]
-            land = r.nearest_land
-            print(f"結果 {i + 1}: ファイル={photo_path}, 圃場={land.name}")
+            nearest_land = r.nearest_land
+            print(f"結果 {i + 1}: ファイル={photo_path}, 圃場={nearest_land.name}")
 
             # 写真の座標をGoogleマップ形式で出力
             photo_coord = photo_location_map[photo_path]
             print(f"  写真の座標: {photo_coord.to_google().to_str()}")
 
             # 最寄り圃場の座標をGoogleマップ形式で出力
-            land_coord = land.center
+            land_coord = nearest_land.center
             print(f"  圃場の座標: {land_coord.to_google().to_str()}")
 
-            # 距離も表示
-            print(f"  距離: {service.calculate_distance(photo_coord, land_coord):.2f}m")
+            # 距離も表示 - 更新された引数名でメソッドを呼び出す
+            print(
+                f"  距離: {service.calculate_distance(photo_spot=photo_coord, land_spot=nearest_land, unit='m'):.2f}m"
+            )
