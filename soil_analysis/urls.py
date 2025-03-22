@@ -85,4 +85,14 @@ urlpatterns = [
         views.RouteSuggestSuccessView.as_view(),
         name="route_suggest_success",
     ),
+    path(
+        "picture/land/associate",
+        views.AssociatePictureAndLandView.as_view(),
+        name="associate_picture_and_land",
+    ),
+    path(
+        "picture/land/associate/result",
+        views.AssociatePictureAndLandResultView.as_view(),
+        name="associate_picture_and_land_result",
+    ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

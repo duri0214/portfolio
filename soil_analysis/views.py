@@ -18,12 +18,16 @@ from django.views.generic import (
     FormView,
 )
 
-from lib.geo.valueobject.coord import GoogleMapsCoord
+from lib.geo.valueobject.coord import GoogleMapsCoord, XarvioCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.landrepository import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.kml import KmlService
+from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
+from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
+from soil_analysis.domain.valueobject.land import LandLocation
+from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (
     Company,
@@ -458,5 +462,120 @@ class RouteSuggestSuccessView(TemplateView):
         context["land_list"] = land_list
         context["coord_list"] = list(land["coord"] for land in land_list)
         context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
+
+        return context
+
+
+class AssociatePictureAndLandView(TemplateView):
+    template_name = "soil_analysis/picture_land_associate/form.html"
+    success_url = reverse_lazy("soil:associate_picture_and_land_result")
+
+    @staticmethod
+    def get_dummy_land_list() -> LandCandidates:
+        return LandCandidates(
+            [
+                LandLocation(
+                    "137.6489657,34.7443565 137.6491266,34.744123 137.648613,34.7438929 "
+                    "137.6484413,34.7441175 137.6489657,34.7443565",
+                    "ススムA1",
+                ),
+                LandLocation(
+                    "137.649128,34.7441119 137.6492862,34.7438795 137.6487833,34.7436526 "
+                    "137.6486224,34.7438861 137.649128,34.7441119",
+                    "ススムA2",
+                ),
+                LandLocation(
+                    "137.6492809,34.743865 137.6494646,34.7436029 137.6489644,34.7433683 "
+                    "137.6487806,34.7436403 137.6492809,34.743865",
+                    "ススムA3",
+                ),
+                LandLocation(
+                    "137.6489738,34.7433604 137.6494633,34.7435774 137.6497127,34.7432096 "
+                    "137.6492192,34.7429904 137.6489738,34.7433604",
+                    "ススムA4",
+                ),
+            ]
+        )
+
+    @staticmethod
+    def get_land_by_name(name: str) -> LandLocation:
+        """
+        圃場名から圃場データを取得する関数
+        注: これは開発時のダミーデータ用関数で、本番環境では削除して
+            データベースから取得する実装に置き換えること
+        """
+        land_candidates = AssociatePictureAndLandView.get_dummy_land_list()
+        for land in land_candidates.list():
+            if land.name == name:
+                return land
+        return None
+
+    @staticmethod
+    def get_dummy_photo_spots() -> list[XarvioCoord]:
+        """テスト用の座標データを返します"""
+        return [
+            XarvioCoord(longitude=137.64905, latitude=34.74424),  # A1用
+            XarvioCoord(longitude=137.64921, latitude=34.744),  # A2用
+            XarvioCoord(longitude=137.64938, latitude=34.74374),  # A3用
+            XarvioCoord(longitude=137.6496, latitude=34.7434),  # A4用
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Picture.objects.all()は使わず、代わりに座標データを追加
+        context["photo_spots"] = self.get_dummy_photo_spots()
+
+        # Land.objects.all()の代わりにget_dummy_land_listを使用
+        land_candidates = self.get_dummy_land_list()
+        context["lands"] = land_candidates.list()
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        # フォームクラスを使わないのでフォーム検証は不要
+        if "photo_spot" not in request.POST:  # 名前も変更
+            # エラー処理
+            return self.render_to_response(self.get_context_data())
+
+        spot_index = int(request.POST["photo_spot"])  # 名前も変更
+        photo_spots = self.get_dummy_photo_spots()
+
+        selected_spot = CaptureLocation(photo_spots[spot_index])
+        land_candidates = self.get_dummy_land_list()
+
+        service = PhotoProcessingService()
+        nearest_land = service.find_nearest_land(selected_spot, land_candidates)
+
+        # セッションに結果を保存
+        self.request.session["nearest_land_name"] = nearest_land.name
+        self.request.session["photo_spot"] = [
+            selected_spot.adjusted_position.longitude,
+            selected_spot.adjusted_position.latitude,
+        ]  # 名前も変更
+
+        return HttpResponseRedirect(self.success_url)
+
+
+class AssociatePictureAndLandResultView(TemplateView):
+    template_name = "soil_analysis/picture_land_associate/result.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        nearest_land_name = self.request.session.get("nearest_land_name")
+        photo_spot = self.request.session.get("photo_spot")
+
+        if nearest_land_name and photo_spot:
+            # 圃場名から圃場データを取得
+            land = AssociatePictureAndLandView.get_land_by_name(nearest_land_name)
+
+            # ダミーデータを使用するため、Landオブジェクトの代わりに名前と座標を渡す
+            context["nearest_land"] = {
+                "name": nearest_land_name,
+                "location": land.to_google().to_str(),
+                "owner": "テスト所有者",
+            }
+            # 撮影地点情報
+            context["photo_spot"] = photo_spot
 
         return context
