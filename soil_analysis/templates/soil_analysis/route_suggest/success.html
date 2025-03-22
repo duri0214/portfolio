@@ -11,73 +11,75 @@
     {% endautoescape %}
 {% endblock %}
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:route_suggest_upload' %}">KML Upload</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:route_suggest_ordering' %}">Ordering</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Success</li>
-        </ol>
-    </nav>
-    <h1>作業指示書</h1>
-    <p>TODO: placeオブジェクトにラップして、マウスオーバー時に圃場の名前を表示する<br>TODO: ピンと圃場名が違うかもしれない<br>TODO:
-        印刷用の余白ゼロのページを作る</p>
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:route_suggest_upload' %}">KML Upload</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:route_suggest_ordering' %}">Ordering</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Success</li>
+            </ol>
+        </nav>
+        <h1>作業指示書</h1>
+        <p>TODO: placeオブジェクトにラップして、マウスオーバー時に圃場の名前を表示する<br>TODO: ピンと圃場名が違うかもしれない<br>TODO:
+            印刷用の余白ゼロのページを作る</p>
 
-    <p>発行日: YYYY-MM-DD</p>
-    <p>依頼者: X XX</p>
-    <p>作業者: Aさん</p>
-    <p>作業日: YYYY-MM-DD</p>
-    <p>シーズン: 施肥前測定</p>
-    <p>作業単価（円/件） 1,000円／件</p>
+        <p>発行日: YYYY-MM-DD</p>
+        <p>依頼者: X XX</p>
+        <p>作業者: Aさん</p>
+        <p>作業日: YYYY-MM-DD</p>
+        <p>シーズン: 施肥前測定</p>
+        <p>作業単価（円/件） 1,000円／件</p>
 
-    <h4 class="mt-4">作業内容</h4>
-    <ul>
-        <li>化学性測定
-            <ul>
-                <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
-            </ul>
-        </li>
-        <li>物理性測定
-            <ul>
-                <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
-            </ul>
-        </li>
-    </ul>
+        <h4 class="mt-4">作業内容</h4>
+        <ul>
+            <li>化学性測定
+                <ul>
+                    <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
+                </ul>
+            </li>
+            <li>物理性測定
+                <ul>
+                    <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
+                </ul>
+            </li>
+        </ul>
 
-    <h4 class="mt-4">作業場所</h4>
-    <div class="flex-container">
-        <div id="map" class="flex-item"></div>
-        <ol class="list-group list-group-numbered flex-item">
-            {% for land in land_list %}
-                <li id="{{ land.id }}" class="list-group-item">{{ land.name }}（{{ land.coord }}）</li>
-            {% endfor %}
-        </ol>
+        <h4 class="mt-4">作業場所</h4>
+        <div class="flex-container">
+            <div id="map" class="flex-item"></div>
+            <ol class="list-group list-group-numbered flex-item">
+                {% for land in land_list %}
+                    <li id="{{ land.id }}" class="list-group-item">{{ land.name }}（{{ land.coord }}）</li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <h4 class="mt-4">提出物</h4>
+        <ul>
+            <li>土</li>
+            <li>物理性測定データ</li>
+        </ul>
+
+        <h4 class="mt-4">その他</h4>
+        共通する事項は基本契約で交わしておく
+        <ul>
+            <li>データの取り扱いについて</li>
+            <li>秘密保持について</li>
+            <li>支払い条件について</li>
+            <li>保険（作業中に倒れるとか、怪我するとか）</li>
+        </ul>
+
+        <!--
+          The `defer` attribute causes the callback to execute after the full HTML
+          document has been parsed. For non-blocking uses, avoiding race conditions,
+          and consistent behavior across browsers, consider loading using Promises.
+          See https://developers.google.com/maps/documentation/javascript/load-maps-js-api
+          for more information.
+          -->
+        <script
+                src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initMap&v=weekly"
+                defer
+        ></script>
     </div>
-
-    <h4 class="mt-4">提出物</h4>
-    <ul>
-        <li>土</li>
-        <li>物理性測定データ</li>
-    </ul>
-
-    <h4 class="mt-4">その他</h4>
-    共通する事項は基本契約で交わしておく
-    <ul>
-        <li>データの取り扱いについて</li>
-        <li>秘密保持について</li>
-        <li>支払い条件について</li>
-        <li>保険（作業中に倒れるとか、怪我するとか）</li>
-    </ul>
-
-    <!--
-      The `defer` attribute causes the callback to execute after the full HTML
-      document has been parsed. For non-blocking uses, avoiding race conditions,
-      and consistent behavior across browsers, consider loading using Promises.
-      See https://developers.google.com/maps/documentation/javascript/load-maps-js-api
-      for more information.
-      -->
-    <script
-            src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initMap&v=weekly"
-            defer
-    ></script>
 {% endblock %}
