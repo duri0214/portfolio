@@ -472,7 +472,11 @@ class AssociatePictureAndLandView(TemplateView):
 
     @staticmethod
     def get_dummy_land_candidates() -> LandCandidates:
-        """テスト用の圃場データを返します"""
+        """
+        テスト用の圃場データを返します
+        注: これは開発時のダミーデータ用関数で、本番環境では削除して
+            データベースから取得する実装に置き換えること
+        """
         return LandCandidates(
             [
                 LandLocation(
@@ -513,7 +517,11 @@ class AssociatePictureAndLandView(TemplateView):
 
     @staticmethod
     def get_dummy_photo_spots() -> list[XarvioCoord]:
-        """テスト用の撮影位置データを返します"""
+        """
+        テスト用の撮影位置データを返します
+        注: これは開発時のダミーデータ用関数で、本番環境では削除して
+            データベースから取得する実装に置き換えること
+        """
         return [
             XarvioCoord(longitude=137.64905, latitude=34.74424),  # A1用
             XarvioCoord(longitude=137.64921, latitude=34.744),  # A2用
@@ -531,7 +539,6 @@ class AssociatePictureAndLandView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        # フォームクラスを使わないのでフォーム検証は不要
         if "photo_spot" not in request.POST:
             return self.render_to_response(self.get_context_data())
 
@@ -571,7 +578,6 @@ class AssociatePictureAndLandResultView(TemplateView):
                 "location": land.to_google().to_str(),
                 "owner": "テスト所有者",
             }
-            # 撮影地点情報
             context["photo_spot_coord"] = photo_spot_coord
 
         return context
