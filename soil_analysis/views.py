@@ -533,11 +533,10 @@ class AssociatePictureAndLandView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         # フォームクラスを使わないのでフォーム検証は不要
-        if "photo_spot" not in request.POST:  # 名前も変更
-            # エラー処理
+        if "photo_spot" not in request.POST:
             return self.render_to_response(self.get_context_data())
 
-        spot_index = int(request.POST["photo_spot"])  # 名前も変更
+        spot_index = int(request.POST["photo_spot"])
         photo_spots = self.get_dummy_photo_spots()
 
         selected_spot = CaptureLocation(photo_spots[spot_index])
@@ -548,10 +547,9 @@ class AssociatePictureAndLandView(TemplateView):
 
         # セッションに結果を保存
         self.request.session["nearest_land_name"] = nearest_land.name
-        self.request.session["photo_spot"] = [
-            selected_spot.adjusted_position.longitude,
-            selected_spot.adjusted_position.latitude,
-        ]  # 名前も変更
+        self.request.session["photo_spot"] = (
+            selected_spot.original_position.to_google().to_str()
+        )
 
         return HttpResponseRedirect(self.success_url)
 
