@@ -1,0 +1,35 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="container">
+        <h2>写真と圃場の紐づけ結果</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">選択された撮影地点</div>
+                    <div class="card-body">
+                        <p>座標: {{ photo_spot_coord }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">最も近い圃場</div>
+                    <div class="card-body">
+                        <h5>{{ nearest_land.name }}</h5>
+                        <p>位置: {{ nearest_land.location }}</p>
+                        <p>面積: xxxx ㎡</p>
+                        <p>所有者: {{ nearest_land.owner }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{% url 'soil:associate_picture_and_land' %}" class="btn btn-secondary">戻る</a>
+        </div>
+    </div>
+{% endblock %}

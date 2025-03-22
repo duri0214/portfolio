@@ -2,41 +2,43 @@
 {% load static %}
 
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Company list</li>
-        </ol>
-    </nav>
-    <a class="btn btn-outline-primary mb-3" href="{% url 'soil:company_create' %}"
-       role="button">＋農業法人の追加</a>
-    {% for a_company in object_list %}
-        {% if not forloop.counter|divisibleby:"2" %}
-            <div class="row mb-4">
-        {% endif %}
-    <div class="col-sm-6">
-        <div class="card">
-            {% if a_company.image %}
-                <img src="{{ a_company.image.url }}" width="100%" height="180" alt="Land Image">
-            {% else %}
-                <svg class="bd-placeholder-img card-img-top" width="100%" height="180"
-                     xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false"
-                     role="img" aria-label="Placeholder: Image cap"><title>Placeholder</title>
-                    <rect fill="#868e96" width="100%" height="100%"/>
-                    <text fill="#dee2e6" dy=".3em" x="38%" y="50%">Image cap</text>
-                </svg>
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Company list</li>
+            </ol>
+        </nav>
+        <a class="btn btn-outline-primary mb-3" href="{% url 'soil:company_create' %}"
+           role="button">＋農業法人の追加</a>
+        {% for a_company in object_list %}
+            {% if not forloop.counter|divisibleby:"2" %}
+                <div class="row mb-4">
             {% endif %}
-            <div class="card-body">
-                <a href="{% url 'soil:company_detail' a_company.pk %}"><h5
-                        class="card-title">{{ a_company.name }}</h5></a>
-                <p class="card-text">備考: {{ a_company.remark|default:"-" }}</p>
-                <a href="{% url 'soil:land_list' a_company.pk %}"
-                   class="btn btn-outline-primary">圃場リスト</a>
+        <div class="col-sm-6">
+            <div class="card">
+                {% if a_company.image %}
+                    <img src="{{ a_company.image.url }}" width="100%" height="180" alt="Land Image">
+                {% else %}
+                    <svg class="bd-placeholder-img card-img-top" width="100%" height="180"
+                         xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false"
+                         role="img" aria-label="Placeholder: Image cap"><title>Placeholder</title>
+                        <rect fill="#868e96" width="100%" height="100%"/>
+                        <text fill="#dee2e6" dy=".3em" x="38%" y="50%">Image cap</text>
+                    </svg>
+                {% endif %}
+                <div class="card-body">
+                    <a href="{% url 'soil:company_detail' a_company.pk %}"><h5
+                            class="card-title">{{ a_company.name }}</h5></a>
+                    <p class="card-text">備考: {{ a_company.remark|default:"-" }}</p>
+                    <a href="{% url 'soil:land_list' a_company.pk %}"
+                       class="btn btn-outline-primary">圃場リスト</a>
+                </div>
             </div>
         </div>
+        {% if forloop.counter|divisibleby:"2" %}
+            </div>
+        {% endif %}
+        {% endfor %}
     </div>
-    {% if forloop.counter|divisibleby:"2" %}
-        </div>
-    {% endif %}
-    {% endfor %}
 {% endblock %}

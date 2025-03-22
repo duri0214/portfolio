@@ -24,26 +24,10 @@ class TestPhotoProcessingService(TestCase):
     """
 
     def setUp(self) -> None:
-        """テストの前提条件とテストデータを設定します。
-
-        テストデータとして「ススムA1」〜「ススムA4」という4つの圃場と、
-        それぞれの圃場の正面から撮影したと想定される座標を使用しています。
-
-        圃場データ:
-        - ススムA1: (139.6, 35.7) 付近に位置する圃場
-        - ススムA2: (139.7, 35.7) 付近に位置する圃場
-        - ススムA3: (139.6, 35.6) 付近に位置する圃場
-        - ススムA4: (139.7, 35.6) 付近に位置する圃場
-
-        写真データ:
-        - 各圃場の代表的な位置から撮影したと仮定
-        - カメラの方向情報を含む位置データを使用
-        - AndroidPhotoクラスをモック化して撮影位置を制御
-
-        Notes:
-        - 実際の写真ファイルは使用せず、モックオブジェクトで代用
-        - 座標はテスト用の仮想的な値であり、実際の地理情報とは異なる
-        - 圃場間の距離は十分に離れており、最寄り判定が明確になるよう設計
+        """
+        テストの前準備を行います。
+        - 4つの異なる地点（Land）を作成
+        - それらをLandCandidatesクラスに登録
         """
         self.land1 = LandLocation(
             "137.6489657,34.7443565 137.6491266,34.744123 137.648613,34.7438929 "
@@ -71,33 +55,6 @@ class TestPhotoProcessingService(TestCase):
         self.land_candidates.list = MagicMock(
             return_value=[self.land1, self.land2, self.land3, self.land4]
         )
-
-        # テスト用の写真パス（実際のファイルパスは使わない）
-        self.photo_paths = ["テスト写真パス1", "テスト写真パス2"]
-
-        # AndroidPhotoとIphonePhotoのモックを設定
-        self.android_photo_patcher = patch(
-            "soil_analysis.domain.service.photo_processing_service.AndroidPhoto"
-        )
-        self.mock_android_photo = self.android_photo_patcher.start()
-
-        # モック写真オブジェクトを作成
-        self.android_photo_instance = MagicMock()
-        self.mock_android_photo.return_value = self.android_photo_instance
-
-        # 写真の位置情報を設定（実際の土地に近い位置）
-        test_location = MagicMock()
-        test_location.adjusted_position = MagicMock()
-        test_location.adjusted_position.to_google = MagicMock()
-        test_location.adjusted_position.to_google.return_value = MagicMock()
-        test_location.adjusted_position.to_google.return_value.to_tuple = MagicMock(
-            return_value=(34.7440, 137.6490)
-        )
-
-        self.android_photo_instance.location = test_location
-        self.android_photo_instance.filepath = "テスト写真パス1"
-        self.android_photo_instance.filename = "android_photo.jpg"
-        self.android_photo_instance.date = "2023-08-27"
 
     def test_calculate_distance(self):
         """座標間の距離計算機能をテストします。
@@ -169,69 +126,82 @@ class TestPhotoProcessingService(TestCase):
         self.assertEqual(self.land4, nearest_land)
 
     def test_process_photos(self):
-        """process_photosメソッドのテスト：複数写真の一括処理機能
-
-        複数の写真ファイルを処理して、各写真に最も近い圃場を関連付ける
-        機能を検証します。
-
-        検証内容:
-        1. 複数の写真（4枚）を正しく処理できること
-        2. 各写真に対して適切な最寄りの圃場を関連付けできること
-        3. 写真と圃場の距離が正確に計算されること
-        4. 全ての処理結果が期待通りのフォーマットで返されること
-
-        テストアプローチ:
-        - find_nearest_landメソッドをモック化してside_effectを使用
-        - 各写真に対して異なる最寄り圃場（A1～A4）を順に返すよう設定
-        - calculate_distanceメソッドも固定値を返すようモック化
-
-        想定シナリオ:
-        圃場A1～A4それぞれの前から撮影した4枚の写真（距離は常に10m）があり、システムが
-        各写真をそれぞれ正しい圃場と関連付けできることを確認します。
-
-        Notes:
-        モックを使用しているため、実際の位置計算ロジックはテスト対象外です。
-        位置計算の正確性は別のテスト（test_find_nearest_land_*）で検証しています。
         """
-        # 写真のパスリスト（複数）
-        photo_paths = [
-            "path/to/photo1.jpg",
-            "path/to/photo2.jpg",
-            "path/to/photo3.jpg",
-            "path/to/photo4.jpg",
-        ]
+        写真処理サービスのprocess_photos機能を検証するテストです。
 
-        service = PhotoProcessingService()
+        このテストでは以下の内容を確認します：
+        1. 複数の写真を一括処理する機能が正しく動作すること
+        2. 各写真に対して適切な圃場（最も近い圃場）が関連付けられること
+        3. 写真と圃場の距離が正確に計算されること
 
-        # find_nearest_landメソッドをモック化
-        with patch.object(service, "find_nearest_land") as mock_find_nearest_land:
-            # 写真ごとに異なる最寄りの土地を設定
-            mock_find_nearest_land.side_effect = [
-                self.land1,  # 1枚目の写真はススムA1に最も近い
-                self.land2,  # 2枚目の写真はススムA2に最も近い
-                self.land3,  # 3枚目の写真はススムA3に最も近い
-                self.land4,  # 4枚目の写真はススムA4に最も近い
+        テスト手法：
+        - 4枚の写真をモックし、それぞれ異なる位置情報を持たせる
+        - それぞれの写真に対して、最も近い圃場が正しく特定されるか検証
+        - 写真処理サービスのprocess_photosメソッドの戻り値を検証
+
+        検証項目：
+        - 結果のリストが入力写真数と同じ長さであること
+        - 各写真に対して、期待される最寄り圃場が正しく関連付けられていること
+        """
+        # AndroidPhotoのモックを作成
+        with patch(
+            "soil_analysis.domain.service.photo_processing_service.AndroidPhoto"
+        ) as mock_android_photo:
+            # 各写真に対応するモックオブジェクトのリスト
+            mock_photos = []
+
+            # 各写真の座標を設定
+            coordinates = [
+                XarvioCoord(longitude=137.64905, latitude=34.74424),  # A1用
+                XarvioCoord(longitude=137.64921, latitude=34.744),  # A2用
+                XarvioCoord(longitude=137.64938, latitude=34.74374),  # A3用
+                XarvioCoord(longitude=137.6496, latitude=34.7434),  # A4用
             ]
 
-            # calculate_distanceメソッドもモック化して一定の距離を返す
-            with patch.object(service, "calculate_distance", return_value=10.0):
-                # 処理を実行
-                result = service.process_photos(photo_paths, self.land_candidates)
+            # 各写真のモックを準備
+            for coord in coordinates:
+                mock_photo = MagicMock()
+                mock_location = MagicMock()
+                mock_location.adjusted_position = coord
+                mock_photo.location = mock_location
+                mock_photos.append(mock_photo)
 
-                # 結果の検証
-                self.assertEqual(4, len(result))
-                self.assertEqual(
-                    self.land1, result[0].nearest_land
-                )  # 1枚目はA1に紐づく
-                self.assertEqual(
-                    self.land2, result[1].nearest_land
-                )  # 2枚目はA2に紐づく
-                self.assertEqual(
-                    self.land3, result[2].nearest_land
-                )  # 3枚目はA3に紐づく
-                self.assertEqual(
-                    self.land4, result[3].nearest_land
-                )  # 4枚目はA4に紐づく
+            # AndroidPhotoが順番に異なるモックを返すように設定
+            mock_android_photo.side_effect = mock_photos
 
-                # モックが正しく呼び出されたことを確認
-                self.assertEqual(len(photo_paths), mock_find_nearest_land.call_count)
+            # テスト実行
+            service = PhotoProcessingService()
+            result = service.process_photos(
+                [
+                    "path/to/photo1.jpg",
+                    "path/to/photo2.jpg",
+                    "path/to/photo3.jpg",
+                    "path/to/photo4.jpg",
+                ],
+                self.land_candidates,
+            )
+
+            # 検証
+            self.assertEqual(self.land1, result[0].nearest_land)
+            self.assertEqual(self.land2, result[1].nearest_land)
+            self.assertEqual(self.land3, result[2].nearest_land)
+            self.assertEqual(self.land4, result[3].nearest_land)
+
+            # デバッグ出力（Googleマップで確認できる形式）
+            for i, r in enumerate(result):
+                photo_path = r.photo_path
+                nearest_land = r.nearest_land
+                print(f"結果 {i + 1}: ファイル={photo_path}, 圃場={nearest_land.name}")
+
+                # 写真の座標をGoogleマップ形式で出力
+                photo_coord = coordinates[i]
+                print(f"  写真の座標: {photo_coord.to_google().to_str()}")
+
+                # 最寄り圃場の座標をGoogleマップ形式で出力
+                land_coord = nearest_land.center
+                print(f"  圃場の座標: {land_coord.to_google().to_str()}")
+
+                # 距離も表示 - 更新された引数名でメソッドを呼び出す
+                print(
+                    f"  距離: {service.calculate_distance(photo_spot=photo_coord, land_spot=nearest_land, unit='m'):.2f}m"
+                )

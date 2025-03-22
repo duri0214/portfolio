@@ -16,33 +16,35 @@
 {% endblock %}
 
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:route_suggest_upload' %}">KML Upload</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Ordering</li>
-        </ol>
-    </nav>
-    <h1>並べ替えしましょう</h1>
-    <p>一番上が始点、一番下が終点。はさまれている地点が最適化されます</p>
-    <ul id="sortable-list">
-        {% for land in object_list %}
-            <li id="{{ land.id }}" class="list-group-item">圃場名: {{ land.name }}, 座標: {{ land.coord }}</li>
-        {% endfor %}
-    </ul>
-    <form id="orderForm" method="POST" action="{% url 'soil:route_suggest_ordering' %}">
-        {% csrf_token %}
-        <input type="hidden" id="orderData" name="order_data">
-        <button class="btn btn-outline-primary mb-3" type="submit">送信</button>
-    </form>
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:route_suggest_upload' %}">KML Upload</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Ordering</li>
+            </ol>
+        </nav>
+        <h1>並べ替えしましょう</h1>
+        <p>一番上が始点、一番下が終点。はさまれている地点が最適化されます</p>
+        <ul id="sortable-list">
+            {% for land in object_list %}
+                <li id="{{ land.id }}" class="list-group-item">圃場名: {{ land.name }}, 座標: {{ land.coord }}</li>
+            {% endfor %}
+        </ul>
+        <form id="orderForm" method="POST" action="{% url 'soil:route_suggest_ordering' %}">
+            {% csrf_token %}
+            <input type="hidden" id="orderData" name="order_data">
+            <button class="btn btn-outline-primary mb-3" type="submit">送信</button>
+        </form>
 
-    <script>
-        $(function () {
-            $('.list-group-item').hover(function () {
-                $(this).addClass('active');
-            }, function () {
-                $(this).removeClass('active');
+        <script>
+            $(function () {
+                $('.list-group-item').hover(function () {
+                    $(this).addClass('active');
+                }, function () {
+                    $(this).removeClass('active');
+                });
             });
-        });
-    </script>
+        </script>
+    </div>
 {% endblock %}

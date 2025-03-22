@@ -2,14 +2,14 @@
 {% load static %}
 
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:company_list' %}">Company list</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Create</li>
-        </ol>
-    </nav>
     <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_list' %}">Company list</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Create</li>
+            </ol>
+        </nav>
         <h1>会社の作成</h1>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}

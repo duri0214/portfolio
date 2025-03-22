@@ -4,34 +4,34 @@
     <link rel="stylesheet" href="{% static 'soil_analysis/css/landreport/chemical.css' %}">
 {% endblock %}
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:land_list' company.id %}">Land list</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Land report chemical</li>
-        </ol>
-    </nav>
-    <div class="row mb-4">
-        <div class="col-sm-6">
-            <img src="data:image/png;base64,{{ charts.chart1 | safe }}" alt="窒素関連">
-        </div>
-        <div class="col-sm-6">
-            <img src="data:image/png;base64,{{ charts.chart2 | safe }}" alt="塩基類関連">
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-6">
-            <img src="data:image/png;base64,{{ charts.chart3 | safe }}" alt="リン酸関連">
-        </div>
-        <div class="col-sm-6">
-            <img src="data:image/png;base64,{{ charts.chart4 | safe }}" alt="土壌ポテンシャル関連">
-        </div>
-    </div>
-    <div class="alert alert-primary m-4" role="alert">
-        {{ land_review.first.comment }}
-    </div>
-
     <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:land_list' company.id %}">Land list</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Land report chemical</li>
+            </ol>
+        </nav>
+        <div class="row mb-4">
+            <div class="col-sm-6">
+                <img src="data:image/png;base64,{{ charts.chart1 | safe }}" alt="窒素関連">
+            </div>
+            <div class="col-sm-6">
+                <img src="data:image/png;base64,{{ charts.chart2 | safe }}" alt="塩基類関連">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <img src="data:image/png;base64,{{ charts.chart3 | safe }}" alt="リン酸関連">
+            </div>
+            <div class="col-sm-6">
+                <img src="data:image/png;base64,{{ charts.chart4 | safe }}" alt="土壌ポテンシャル関連">
+            </div>
+        </div>
+        <div class="alert alert-primary m-4" role="alert">
+            {{ land_review.first.comment }}
+        </div>
+
         <table class="table table-sm">
             <tbody>
             <tr>
@@ -76,53 +76,53 @@
             </tr>
             </tbody>
         </table>
-    </div>
 
-    <div class="card-group justify-content-center">
-        {% for land_score in land_scores %}
-            {% if forloop.first %}
-                <div class="row mb-4">
-            {% endif %}
-        <div class="col-sm-4">
-            <div class="card">
-                <svg class="bd-placeholder-img card-img-top" width="100%" height="180"
-                     xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false"
-                     role="img" aria-label="Placeholder: Image cap"><title>Placeholder</title>
-                    <rect fill="#868e96" width="100%" height="100%"/>
-                    <text fill="#dee2e6" dy=".3em" x="38%" y="50%">Image cap</text>
-                </svg>
-                <div class="card-body">
-                    <h5 class="card-title">{{ land_score.land_block.name }}</h5>
-                    <ul class="card-text">
-                        <li>電気伝導率: {{ land_score.ec }}</li>
-                        <li>アンモニア態窒素: {{ land_score.nh4n }}</li>
-                        <li>硝酸態窒素: {{ land_score.no3n }}</li>
-                        <li>無機態窒素: {{ land_score.total_nitrogen }}</li>
-                        <li>アンモニア態窒素比: {{ land_score.nh4_per_nitrogen }}</li>
-                        <li>水素イオン濃度: {{ land_score.ph }}</li>
-                        <li>交換性石灰: {{ land_score.cao }}</li>
-                        <li>交換性苦土: {{ land_score.mgo }}</li>
-                        <li>交換性加里: {{ land_score.k2o }}</li>
-                        <li>塩基飽和度: {{ land_score.base_saturation }}</li>
-                        <li>交換性石灰/交換性苦土: {{ land_score.cao_per_mgo }}</li>
-                        <li>交換性苦土/交換性加里: {{ land_score.mgo_per_k2o }}</li>
-                        <li>リン酸吸収係数: {{ land_score.phosphorus_absorption }}</li>
-                        <li>可給態リン酸: {{ land_score.p2o5 }}</li>
-                        <li>塩基置換容量: {{ land_score.cec }}</li>
-                        <li>腐植: {{ land_score.humus }}</li>
-                        <li>仮比重: {{ land_score.bulk_density }}</li>
-                        <li>備考: {{ land_score.remark|default:"-" }}</li>
-                    </ul>
+        <div class="card-group justify-content-center">
+            {% for land_score in land_scores %}
+                {% if forloop.first %}
+                    <div class="row mb-4">
+                {% endif %}
+            <div class="col-sm-4">
+                <div class="card">
+                    <svg class="bd-placeholder-img card-img-top" width="100%" height="180"
+                         xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false"
+                         role="img" aria-label="Placeholder: Image cap"><title>Placeholder</title>
+                        <rect fill="#868e96" width="100%" height="100%"/>
+                        <text fill="#dee2e6" dy=".3em" x="38%" y="50%">Image cap</text>
+                    </svg>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ land_score.land_block.name }}</h5>
+                        <ul class="card-text">
+                            <li>電気伝導率: {{ land_score.ec }}</li>
+                            <li>アンモニア態窒素: {{ land_score.nh4n }}</li>
+                            <li>硝酸態窒素: {{ land_score.no3n }}</li>
+                            <li>無機態窒素: {{ land_score.total_nitrogen }}</li>
+                            <li>アンモニア態窒素比: {{ land_score.nh4_per_nitrogen }}</li>
+                            <li>水素イオン濃度: {{ land_score.ph }}</li>
+                            <li>交換性石灰: {{ land_score.cao }}</li>
+                            <li>交換性苦土: {{ land_score.mgo }}</li>
+                            <li>交換性加里: {{ land_score.k2o }}</li>
+                            <li>塩基飽和度: {{ land_score.base_saturation }}</li>
+                            <li>交換性石灰/交換性苦土: {{ land_score.cao_per_mgo }}</li>
+                            <li>交換性苦土/交換性加里: {{ land_score.mgo_per_k2o }}</li>
+                            <li>リン酸吸収係数: {{ land_score.phosphorus_absorption }}</li>
+                            <li>可給態リン酸: {{ land_score.p2o5 }}</li>
+                            <li>塩基置換容量: {{ land_score.cec }}</li>
+                            <li>腐植: {{ land_score.humus }}</li>
+                            <li>仮比重: {{ land_score.bulk_density }}</li>
+                            <li>備考: {{ land_score.remark|default:"-" }}</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
+            {% if forloop.counter|divisibleby:"3" and not forloop.last %}
+                </div>
+                <div class="row mb-4">
+            {% endif %}
+            {% if forloop.last %}
+                </div>
+            {% endif %}
+            {% endfor %}
         </div>
-        {% if forloop.counter|divisibleby:"3" and not forloop.last %}
-            </div>
-            <div class="row mb-4">
-        {% endif %}
-        {% if forloop.last %}
-            </div>
-        {% endif %}
-        {% endfor %}
     </div>
 {% endblock %}

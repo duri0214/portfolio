@@ -1,17 +1,19 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Upload hardness</li>
-        </ol>
-    </nav>
-    <h1>土壌硬度データのアップロード</h1>
-    <p>取り込みCSV フォルダをzip化してアップロードしてください</p>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button class="btn btn-outline-primary mb-3" type="submit">Upload</button>
-    </form>
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Upload hardness</li>
+            </ol>
+        </nav>
+        <h1>土壌硬度データのアップロード</h1>
+        <p>取り込みCSV フォルダをzip化してアップロードしてください</p>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn btn-outline-primary mb-3" type="submit">Upload</button>
+        </form>
+    </div>
 {% endblock %}

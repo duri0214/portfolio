@@ -2,39 +2,41 @@
 {% load static %}
 
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:hardness_upload' %}">Upload hardness</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">Upload success</li>
-        </ol>
-    </nav>
-    <h1>Upload Successful</h1>
-    {% if import_errors %}
-        <p>処理は成功しましたが、エラーが発生したデータがあります。詳細は以下のテーブルをご確認ください。</p>
-        <table class="table table-bordered table-gray table-striped">
-            <thead>
-            <tr>
-                <th>CSV File</th>
-                <th>CSV Folder</th>
-                <th>Message</th>
-                <th>Created At</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for error in import_errors %}
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:hardness_upload' %}">Upload hardness</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Upload success</li>
+            </ol>
+        </nav>
+        <h1>Upload Successful</h1>
+        {% if import_errors %}
+            <p>処理は成功しましたが、エラーが発生したデータがあります。詳細は以下のテーブルをご確認ください。</p>
+            <table class="table table-bordered table-gray table-striped">
+                <thead>
                 <tr>
-                    <td>{{ error.file }}</td>
-                    <td>{{ error.folder }}</td>
-                    <td>{{ error.message }}</td>
-                    <td>{{ error.created_at }}</td>
+                    <th>CSV File</th>
+                    <th>CSV Folder</th>
+                    <th>Message</th>
+                    <th>Created At</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>アップロードデータに異常はありませんでした！</p>
-        <a class="btn btn-outline-primary mb-3" href="{% url 'soil:hardness_association' %}" role="button">取り込みデータのアサインへ進む</a>
-    {% endif %}
+                </thead>
+                <tbody>
+                {% for error in import_errors %}
+                    <tr>
+                        <td>{{ error.file }}</td>
+                        <td>{{ error.folder }}</td>
+                        <td>{{ error.message }}</td>
+                        <td>{{ error.created_at }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>アップロードデータに異常はありませんでした！</p>
+            <a class="btn btn-outline-primary mb-3" href="{% url 'soil:hardness_association' %}" role="button">取り込みデータのアサインへ進む</a>
+        {% endif %}
+    </div>
 {% endblock %}

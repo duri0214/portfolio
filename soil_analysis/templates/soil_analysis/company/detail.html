@@ -2,26 +2,28 @@
 {% load static %}
 
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'soil:company_list' %}">Company list</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Detail</li>
-        </ol>
-    </nav>
     <div class="container">
-        <h1>会社の詳細</h1>
-        {% if object.image %}
-            <img src="{{ object.image.url }}" alt="Company Image">
-        {% endif %}
-        <ul>
-            <li>名称: {{ object.name }}</li>
-            <li>備考: {{ object.remark|default:'-' }}</li>
-            <li>カテゴリー: {{ object.category }}</li>
-        </ul>
-        <form method="GET" class="registration" action="{% url 'soil:company_list' %}">
-            {% csrf_token %}
-            <button type="submit">戻る</button>
-        </form>
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_list' %}">Company list</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detail</li>
+            </ol>
+        </nav>
+        <div class="container">
+            <h1>会社の詳細</h1>
+            {% if object.image %}
+                <img src="{{ object.image.url }}" alt="Company Image">
+            {% endif %}
+            <ul>
+                <li>名称: {{ object.name }}</li>
+                <li>備考: {{ object.remark|default:'-' }}</li>
+                <li>カテゴリー: {{ object.category }}</li>
+            </ul>
+            <form method="GET" class="registration" action="{% url 'soil:company_list' %}">
+                {% csrf_token %}
+                <button type="submit">戻る</button>
+            </form>
+        </div>
     </div>
 {% endblock %}

@@ -2,14 +2,18 @@
 {% load static %}
 
 {% block content %}
-    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item">Home</li>
-        </ol>
-    </nav>
-    <a class="btn btn-outline-primary mb-3" href="{% url 'soil:company_list' %}" role="button">農業法人の一覧</a>
-    <a class="btn btn-outline-primary mb-3" href="{% url 'soil:hardness_upload' %}"
-       role="button">土壌硬度データ取り込み</a>
-    <a class="btn btn-outline-primary mb-3" href="{% url 'soil:route_suggest_upload' %}"
-       role="button">圃場ルートサジェスト（試作）</a>
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">Home</li>
+            </ol>
+        </nav>
+        <a class="btn btn-outline-primary mb-3" href="{% url 'soil:company_list' %}" role="button">農業法人の一覧</a>
+        <a class="btn btn-outline-primary mb-3" href="{% url 'soil:hardness_upload' %}"
+           role="button">土壌硬度データ取り込み</a>
+        <a class="btn btn-outline-primary mb-3" href="{% url 'soil:route_suggest_upload' %}"
+           role="button">圃場ルートサジェスト（試作）</a>
+        <a class="btn btn-outline-primary mb-3" href="{% url 'soil:associate_picture_and_land' %}"
+           role="button">写真と圃場の自動紐づけ</a>
+    </div>
 {% endblock %}
