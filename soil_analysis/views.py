@@ -553,7 +553,7 @@ class AssociatePictureAndLandView(TemplateView):
 
         # セッションに結果を保存
         self.request.session["nearest_land_name"] = nearest_land.name
-        self.request.session["photo_spot"] = (
+        self.request.session["photo_spot_coord"] = (
             selected_spot.original_position.to_google().to_str()
         )
 
@@ -563,15 +563,35 @@ class AssociatePictureAndLandView(TemplateView):
 class AssociatePictureAndLandResultView(TemplateView):
     template_name = "soil_analysis/picture_land_associate/result.html"
 
+    # Googleマップルートのパラメータを定数として定義
+    GOOGLE_MAPS_PARAMS = {
+        "DISPLAY_OPTIONS": "!3m1!4b1",  # マップの表示オプション
+        "ROUTE_PARAMS": "!4m2!4m1",  # ルート関連パラメータ
+        "TRANSPORT_MODES": {
+            "CAR": "!3e0",  # 自動車での移動
+            "PUBLIC_TRANSPORT": "!3e1",  # 公共交通機関での移動
+            "WALKING": "!3e2",  # 徒歩での移動
+            "BICYCLE": "!3e3",  # 自転車での移動
+        },
+    }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        photo_spot_coord = self.request.session.get("photo_spot_coord")
         nearest_land_name = self.request.session.get("nearest_land_name")
-        photo_spot_coord = self.request.session.get("photo_spot")
 
         if nearest_land_name and photo_spot_coord:
             # 圃場名から圃場データを取得
             land = AssociatePictureAndLandView.get_land_by_name(nearest_land_name)
+
+            # ルートURL作成（徒歩ルート指定）
+            context["route_url"] = (
+                f"https://www.google.com/maps/dir/{photo_spot_coord}/{land.to_google().to_str()}/"
+                f"data={self.GOOGLE_MAPS_PARAMS['DISPLAY_OPTIONS']}"
+                f"{self.GOOGLE_MAPS_PARAMS['ROUTE_PARAMS']}"
+                f"{self.GOOGLE_MAPS_PARAMS['TRANSPORT_MODES']['WALKING']}"
+            )
 
             context["nearest_land"] = {
                 "name": land.name,

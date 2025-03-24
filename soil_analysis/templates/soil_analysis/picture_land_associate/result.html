@@ -50,6 +50,22 @@
             </div>
         </div>
 
+        {% if route_url %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">撮影地点から圃場へのルート</div>
+                        <div class="card-body">
+                            <p>以下のリンクから、撮影地点から圃場までの徒歩ルートを確認できます：</p>
+                            <a href="{{ route_url }}" class="btn btn-primary" target="_blank">
+                                <i class="bi bi-map"></i> Googleマップでルートを確認する
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
         <div class="mt-4">
             <a href="{% url 'soil:associate_picture_and_land' %}" class="btn btn-secondary">戻る</a>
         </div>
