@@ -3,7 +3,13 @@
 
 {% block content %}
     <div class="container">
-        <h2>写真と圃場の自動紐づけ</h2>
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Picture Land Associate</li>
+            </ol>
+        </nav>
+        <h1>写真と圃場の自動紐づけ</h1>
 
         <div class="alert alert-info mb-4">
             <p><strong>📸 写真のGPS位置情報について</strong></p>
