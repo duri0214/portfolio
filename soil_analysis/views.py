@@ -102,7 +102,7 @@ class LandListView(ListView):
         company = Company.objects.get(pk=self.kwargs["company_id"])
         land_repository = LandRepository(company)
         land_ledger_map = {
-            land: land_repository.read_land_ledgers(land)
+            land: land_repository.get_land_ledgers(land)
             for land in context["object_list"]
         }
         context["company"] = company
