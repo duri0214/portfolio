@@ -20,6 +20,7 @@ from django.views.generic import (
 
 from lib.geo.valueobject.coord import GoogleMapsCoord, XarvioCoord
 from lib.zipfileservice import ZipFileService
+from soil_analysis.domain.repository.company import CompanyRepository
 from soil_analysis.domain.repository.land import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.kml import KmlService
@@ -79,7 +80,9 @@ class LandListView(ListView):
     template_name = "soil_analysis/land/list.html"
 
     def get_queryset(self):
-        company = Company(pk=self.kwargs["company_id"])
+        company_id = self.kwargs["company_id"]
+        company = CompanyRepository.get_company_by_id(company_id)
+
         weather_prefetch = Prefetch(
             "jma_city__jma_region__jmaweather_set",
             queryset=JmaWeather.objects.all(),
