@@ -20,7 +20,7 @@ from django.views.generic import (
 
 from lib.geo.valueobject.coord import GoogleMapsCoord, XarvioCoord
 from lib.zipfileservice import ZipFileService
-from soil_analysis.domain.repository.landrepository import LandRepository
+from soil_analysis.domain.repository.land import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
