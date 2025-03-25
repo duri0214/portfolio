@@ -45,7 +45,7 @@
     "fields": {
       "id": 4,
       "name": "農業法人2の圃場1（静岡ススムA1）",
-      "latlon": "34.74415025922645,137.64878663318697",
+      "latlon": "34.7441225,137.6487867",
       "jma_city": 971,
       "area": 100,
       "cultivation_type": 1,
@@ -60,7 +60,7 @@
     "fields": {
       "id": 5,
       "name": "農業法人2の圃場2（静岡ススムA2）",
-      "latlon": "34.74390650637759,137.64896206679987",
+      "latlon": "34.7438825,137.648955",
       "jma_city": 971,
       "cultivation_type": 2,
       "company": 2,
@@ -73,7 +73,7 @@
     "fields": {
       "id": 6,
       "name": "農業法人2の圃場3（静岡ススムA3）",
-      "latlon": "34.7436732368514,137.64911676734297",
+      "latlon": "34.7436191,137.6491226",
       "jma_city": 971,
       "cultivation_type": 2,
       "company": 2,
@@ -85,6 +85,19 @@
     "model": "soil_analysis.land",
     "fields": {
       "id": 7,
+      "name": "農業法人2の圃場3（静岡ススムA4）",
+      "latlon": "34.7432844,137.6493423",
+      "jma_city": 971,
+      "cultivation_type": 2,
+      "company": 2,
+      "owner": 4,
+      "created_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.land",
+    "fields": {
+      "id": 8,
       "name": "農業法人3の圃場1（徳島）",
       "latlon": "33.93227169151002,134.50777575465415",
       "jma_city": 1422,
@@ -99,7 +112,7 @@
   {
     "model": "soil_analysis.land",
     "fields": {
-      "id": 8,
+      "id": 9,
       "name": "農業法人3の圃場2（徳島）",
       "latlon": "33.93226507528661,134.50777734950506",
       "jma_city": 1422,
@@ -112,7 +125,7 @@
   {
     "model": "soil_analysis.land",
     "fields": {
-      "id": 9,
+      "id": 10,
       "name": "農業法人3の圃場3（徳島）",
       "latlon": "33.93232726776639,134.50717130616542",
       "jma_city": 1422,
