@@ -27,8 +27,6 @@ from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
-from soil_analysis.domain.valueobject.land import LandLocation
-from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (
     Company,
