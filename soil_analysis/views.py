@@ -513,16 +513,15 @@ class AssociatePictureAndLandView(TemplateView):
         spot_index = int(request.POST["photo_spot"])
         photo_spots = self.get_dummy_photo_spots()
 
-        selected_spot = CaptureLocation(photo_spots[spot_index])
-        land_candidates = self.get_dummy_land_candidates()
+        photo_spot = CaptureLocation(photo_spots[spot_index])
 
         service = PhotoProcessingService()
-        nearest_land = service.find_nearest_land(selected_spot, land_candidates)
+        nearest_land = service.find_nearest_land(photo_spot, self.get_dummy_lands())
 
         # セッションに結果を保存
-        self.request.session["nearest_land_name"] = nearest_land.name
+        self.request.session["nearest_land_id"] = nearest_land.id
         self.request.session["photo_spot_coord"] = (
-            selected_spot.original_position.to_google().to_str()
+            photo_spot.original_position.to_google().to_str()
         )
 
         return HttpResponseRedirect(self.success_url)
@@ -547,11 +546,11 @@ class AssociatePictureAndLandResultView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         photo_spot_coord = self.request.session.get("photo_spot_coord")
-        nearest_land_name = self.request.session.get("nearest_land_name")
+        nearest_land_id = self.request.session.get("nearest_land_id")
 
-        if nearest_land_name and photo_spot_coord:
-            # 圃場名から圃場データを取得
-            land = AssociatePictureAndLandView.get_land_by_name(nearest_land_name)
+        if nearest_land_id and photo_spot_coord:
+            # 圃場idから圃場データを取得
+            land = LandRepository.find_land_by_id(nearest_land_id)
 
             # ルートURL作成（徒歩ルート指定）
             context["route_url"] = (
@@ -564,7 +563,8 @@ class AssociatePictureAndLandResultView(TemplateView):
             context["nearest_land"] = {
                 "name": land.name,
                 "location": land.to_google().to_str(),
-                "owner": "テスト所有者",
+                "area": land.area,
+                "owner": land.owner.name,
             }
             context["photo_spot_coord"] = photo_spot_coord
 
