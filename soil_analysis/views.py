@@ -500,9 +500,7 @@ class AssociatePictureAndLandView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["photo_spots"] = self.get_dummy_photo_spots()
-
-        land_candidates = self.get_dummy_land_candidates()
-        context["lands"] = land_candidates.list()
+        context["lands"] = self.get_dummy_lands()
 
         return context
 
