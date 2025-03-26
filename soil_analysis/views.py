@@ -560,7 +560,7 @@ class AssociatePictureAndLandResultView(TemplateView):
                 "name": land.name,
                 "location": land.to_google().to_str(),
                 "area": land.area,
-                "owner": land.owner.name,
+                "owner": land.owner.username,
             }
             context["photo_spot_coord"] = photo_spot_coord
 
