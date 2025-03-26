@@ -473,7 +473,7 @@ class AssociatePictureAndLandView(TemplateView):
     success_url = reverse_lazy("soil:associate_picture_and_land_result")
 
     @staticmethod
-    def get_dummy_land_candidates() -> list[Land]:
+    def get_dummy_lands() -> list[Land]:
         """
         テスト用の圃場データを返します
         注: これは開発時のダミーデータ用関数で、本番環境では削除して
