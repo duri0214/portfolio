@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from soil_analysis.domain.valueobject.land import LandLocation
+from soil_analysis.models import Land
 
 
 @dataclass(frozen=True)
@@ -12,7 +12,7 @@ class PhotoLandAssociation:
     """
 
     photo_path: str
-    nearest_land: LandLocation
+    nearest_land: Land
     distance: Optional[float] = None
 
     def __str__(self) -> str:
