@@ -396,13 +396,13 @@ class RouteSuggestUploadView(FormView):
         upload_file: InMemoryUploadedFile = self.request.FILES["file"]
         kml_raw = upload_file.read()
         kml_service = KmlService()
-        land_candidates = kml_service.parse_kml(kml_raw).list()
+        land_locations = kml_service.parse_kml(kml_raw)
 
-        if len(land_candidates) < 2:
+        if len(land_locations) < 2:
             messages.error(self.request, "少なくとも 2 つの場所を指定してください")
             return redirect(self.request.META.get("HTTP_REFERER"))
 
-        if len(land_candidates) > 10:
+        if len(land_locations) > 10:
             messages.error(
                 self.request,
                 "GoogleMapsAPIのレート上昇制約により 10 地点までしか計算できません",
@@ -410,10 +410,10 @@ class RouteSuggestUploadView(FormView):
             return redirect(self.request.META.get("HTTP_REFERER"))
 
         entities = []
-        for land_candidate in land_candidates:
-            coordinates_str = land_candidate.center.to_google().to_str()
+        for land_location in land_locations:
+            coordinates_str = land_location.center.to_google().to_str()
             entity = RouteSuggestImport.objects.create(
-                name=land_candidate.name, coord=coordinates_str
+                name=land_location.name, coord=coordinates_str
             )
             entities.append(entity)
         RouteSuggestImport.objects.all().delete()
