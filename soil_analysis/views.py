@@ -473,49 +473,15 @@ class AssociatePictureAndLandView(TemplateView):
     success_url = reverse_lazy("soil:associate_picture_and_land_result")
 
     @staticmethod
-    def get_dummy_land_candidates() -> LandCandidates:
+    def get_dummy_land_candidates() -> list[Land]:
         """
         テスト用の圃場データを返します
         注: これは開発時のダミーデータ用関数で、本番環境では削除して
             データベースから取得する実装に置き換えること
         """
-        return LandCandidates(
-            [
-                LandLocation(
-                    "137.6489657,34.7443565 137.6491266,34.744123 137.648613,34.7438929 "
-                    "137.6484413,34.7441175 137.6489657,34.7443565",
-                    "ススムA1",
-                ),
-                LandLocation(
-                    "137.649128,34.7441119 137.6492862,34.7438795 137.6487833,34.7436526 "
-                    "137.6486224,34.7438861 137.649128,34.7441119",
-                    "ススムA2",
-                ),
-                LandLocation(
-                    "137.6492809,34.743865 137.6494646,34.7436029 137.6489644,34.7433683 "
-                    "137.6487806,34.7436403 137.6492809,34.743865",
-                    "ススムA3",
-                ),
-                LandLocation(
-                    "137.6489738,34.7433604 137.6494633,34.7435774 137.6497127,34.7432096 "
-                    "137.6492192,34.7429904 137.6489738,34.7433604",
-                    "ススムA4",
-                ),
-            ]
-        )
+        lands = Land.objects.filter(pk__in=[4, 5, 6, 7]).order_by("pk")
 
-    @staticmethod
-    def get_land_by_name(name: str) -> LandLocation | None:
-        """
-        圃場名から圃場データを取得する関数
-        注: これは開発時のダミーデータ用関数で、本番環境では削除して
-            データベースから取得する実装に置き換えること
-        """
-        land_candidates = AssociatePictureAndLandView.get_dummy_land_candidates()
-        for land in land_candidates.list():
-            if land.name == name:
-                return land
-        return None
+        return list(lands)
 
     @staticmethod
     def get_dummy_photo_spots() -> list[XarvioCoord]:
