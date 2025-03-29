@@ -9,13 +9,13 @@ from soil_analysis.models import Land
 
 class PhotoProcessingService:
     def process_photos(
-        self, photo_path_list: list[str], lands: list[Land]
+        self, photo_path_list: list[str], land_list: list[Land]
     ) -> list[PhotoLandAssociation]:
         """写真パスのリストから写真を処理し、最寄りの圃場と紐づけます。
 
         Args:
             photo_path_list: 処理する写真ファイルのパスリスト
-            lands: 検索対象の圃場リスト
+            land_list: 検索対象の圃場リスト
 
         Returns:
             list[PhotoLandAssociation]: 写真と圃場の紐づけ情報のリスト
@@ -29,7 +29,7 @@ class PhotoProcessingService:
             photo_location = android_photo.location
 
             # 画像（＝撮影位置）から最も近い圃場を特定
-            nearest_land = self.find_nearest_land(photo_location, lands)
+            nearest_land = self.find_nearest_land(photo_location, land_list)
 
             # 距離を計算
             distance = self.calculate_distance(
@@ -45,7 +45,7 @@ class PhotoProcessingService:
         return associations
 
     def find_nearest_land(
-        self, photo_coord: CaptureLocation, lands: list[Land]
+        self, photo_coord: CaptureLocation, land_list: list[Land]
     ) -> Land:
         """撮影位置から最も近い圃場を特定します。
 
@@ -58,7 +58,7 @@ class PhotoProcessingService:
 
         Args:
             photo_coord: 撮影位置情報（方位角による調整を含む）
-            lands: 検索対象の圃場リスト
+            land_list: 検索対象の圃場リスト
 
         Returns:
             Land: 最も近いと判断された圃場
@@ -66,7 +66,7 @@ class PhotoProcessingService:
         min_distance = float("inf")
         nearest_land = None
 
-        for land in lands:
+        for land in land_list:
             distance = self.calculate_distance(photo_coord.adjusted_position, land)
             if distance < min_distance:
                 min_distance = distance

@@ -471,15 +471,13 @@ class AssociatePictureAndLandView(TemplateView):
     success_url = reverse_lazy("soil:associate_picture_and_land_result")
 
     @staticmethod
-    def get_dummy_lands() -> list[Land]:
+    def get_dummy_land_list() -> list[Land]:
         """
         テスト用の圃場データを返します
         注: これは開発時のダミーデータ用関数で、本番環境では削除して
             データベースから取得する実装に置き換えること
         """
-        lands = Land.objects.filter(pk__in=[4, 5, 6, 7]).order_by("pk")
-
-        return list(lands)
+        return list(Land.objects.filter(pk__in=[4, 5, 6, 7]).order_by("pk"))
 
     @staticmethod
     def get_dummy_photo_spots() -> list[XarvioCoord]:
@@ -498,7 +496,7 @@ class AssociatePictureAndLandView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["photo_spots"] = self.get_dummy_photo_spots()
-        context["lands"] = self.get_dummy_lands()
+        context["land_list"] = self.get_dummy_land_list()
 
         return context
 
@@ -512,7 +510,7 @@ class AssociatePictureAndLandView(TemplateView):
         photo_spot = CaptureLocation(photo_spots[spot_index])
 
         service = PhotoProcessingService()
-        nearest_land = service.find_nearest_land(photo_spot, self.get_dummy_lands())
+        nearest_land = service.find_nearest_land(photo_spot, self.get_dummy_land_list())
 
         # セッションに結果を保存
         self.request.session["nearest_land_id"] = nearest_land.id
