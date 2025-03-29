@@ -207,7 +207,7 @@ class TestPhotoProcessingService(TestCase):
                 print(f"  写真の座標: {photo_coord.to_google().to_str()}")
 
                 # 最寄り圃場の座標をGoogleマップ形式で出力
-                print(f"  圃場の座標: {nearest_land.center}")
+                print(f"  圃場の座標: {nearest_land.to_google().to_str()}")
 
                 # 距離も表示 - 更新された引数名でメソッドを呼び出す
                 print(
