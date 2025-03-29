@@ -16,19 +16,6 @@ class LandRepository:
         return LandLedger.objects.filter(land__in=land_list)
 
     @staticmethod
-    def get_land_ledger_map(land_list: list[Land]) -> dict[int, list[LandLedger]]:
-        """
-        圃場IDをキー、その圃場の台帳のリストを値とする辞書を返す
-        """
-        land_ledger_map = {}
-        land_ledgers = LandRepository.find_land_ledgers_by_land_list(land_list)
-
-        for land in land_list:
-            land_ledger_map[land.id] = list(land_ledgers.filter(land=land))
-
-        return land_ledger_map
-
-    @staticmethod
     def get_land_list_by_company(company: Company = None) -> QuerySet:
         """
         会社に紐づく圃場を取得する
