@@ -1,5 +1,6 @@
-from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, Mock
+
+from django.test import TestCase
 
 from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
@@ -23,38 +24,30 @@ class TestPhotoProcessingService(TestCase):
     「撮影した圃場の自動判別」機能の正確性を担保します。
     """
 
-    def setUp(self) -> None:
-        """
-        テストの前準備を行います。
-        - 4つの異なる地点（Land）を作成
-        - それらをLandCandidatesクラスに登録
-        """
-        self.land1 = LandLocation(
-            "137.6489657,34.7443565 137.6491266,34.744123 137.648613,34.7438929 "
-            "137.6484413,34.7441175 137.6489657,34.7443565",
-            "ススムA1",
-        )
-        self.land2 = LandLocation(
-            "137.649128,34.7441119 137.6492862,34.7438795 137.6487833,34.7436526 "
-            "137.6486224,34.7438861 137.649128,34.7441119",
-            "ススムA2",
-        )
-        self.land3 = LandLocation(
-            "137.6492809,34.743865 137.6494646,34.7436029 137.6489644,34.7433683 "
-            "137.6487806,34.7436403 137.6492809,34.743865",
-            "ススムA3",
-        )
-        self.land4 = LandLocation(
-            "137.6489738,34.7433604 137.6494633,34.7435774 137.6497127,34.7432096 "
-            "137.6492192,34.7429904 137.6489738,34.7433604",
-            "ススムA4",
-        )
+    def setUp(self):
+        # モックオブジェクトを作成
+        self.land1 = Mock()
+        self.land1.name = "農業法人2の圃場1（静岡ススムA1）"
+        self.land1.center = "34.7441225,137.6487867"
+        self.land1.id = 4
+
+        self.land2 = Mock()
+        self.land2.name = "農業法人2の圃場2（静岡ススムA2）"
+        self.land2.center = "34.7438825,137.648955"
+        self.land2.id = 5
+
+        self.land3 = Mock()
+        self.land3.name = "農業法人2の圃場3（静岡ススムA3）"
+        self.land3.center = "34.7436191,137.6491226"
+        self.land3.id = 6
+
+        self.land4 = Mock()
+        self.land4.name = "農業法人2の圃場3（静岡ススムA4）"
+        self.land4.center = "34.7432844,137.6493423"
+        self.land4.id = 7
 
         # 土地候補のリストを作成
-        self.land_candidates = MagicMock()
-        self.land_candidates.list = MagicMock(
-            return_value=[self.land1, self.land2, self.land3, self.land4]
-        )
+        self.land_list = [self.land1, self.land2, self.land3, self.land4]
 
     def test_calculate_distance(self):
         """座標間の距離計算機能をテストします。
@@ -87,7 +80,7 @@ class TestPhotoProcessingService(TestCase):
             XarvioCoord(longitude=137.64905, latitude=34.74424)
         )
         service = PhotoProcessingService()
-        nearest_land = service.find_nearest_land(photo_spot, self.land_candidates)
+        nearest_land = service.find_nearest_land(photo_spot, self.land_list)
         self.assertEqual(self.land1, nearest_land)
 
     def test_find_nearest_land_a2(self):
@@ -98,7 +91,7 @@ class TestPhotoProcessingService(TestCase):
         """
         photo_spot = CaptureLocation(XarvioCoord(longitude=137.64921, latitude=34.744))
         service = PhotoProcessingService()
-        nearest_land = service.find_nearest_land(photo_spot, self.land_candidates)
+        nearest_land = service.find_nearest_land(photo_spot, self.land_list)
         self.assertEqual(self.land2, nearest_land)
 
     def test_find_nearest_land_a3(self):
@@ -111,7 +104,7 @@ class TestPhotoProcessingService(TestCase):
             XarvioCoord(longitude=137.64938, latitude=34.74374)
         )
         service = PhotoProcessingService()
-        nearest_land = service.find_nearest_land(photo_spot, self.land_candidates)
+        nearest_land = service.find_nearest_land(photo_spot, self.land_list)
         self.assertEqual(self.land3, nearest_land)
 
     def test_find_nearest_land_a4(self):
@@ -122,7 +115,7 @@ class TestPhotoProcessingService(TestCase):
         """
         photo_spot = CaptureLocation(XarvioCoord(longitude=137.6496, latitude=34.7434))
         service = PhotoProcessingService()
-        nearest_land = service.find_nearest_land(photo_spot, self.land_candidates)
+        nearest_land = service.find_nearest_land(photo_spot, self.land_list)
         self.assertEqual(self.land4, nearest_land)
 
     def test_process_photos(self):
@@ -178,7 +171,7 @@ class TestPhotoProcessingService(TestCase):
                     "path/to/photo3.jpg",
                     "path/to/photo4.jpg",
                 ],
-                self.land_candidates,
+                self.land_list,
             )
 
             # 検証
