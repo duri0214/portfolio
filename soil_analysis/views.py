@@ -3,7 +3,7 @@ import os
 import shutil
 
 from django.contrib import messages
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.db.models import Count, Prefetch
 from django.http import HttpResponseRedirect, JsonResponse
@@ -20,14 +20,13 @@ from django.views.generic import (
 
 from lib.geo.valueobject.coord import GoogleMapsCoord, XarvioCoord
 from lib.zipfileservice import ZipFileService
-from soil_analysis.domain.repository.landrepository import LandRepository
+from soil_analysis.domain.repository.company import CompanyRepository
+from soil_analysis.domain.repository.land import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
-from soil_analysis.domain.valueobject.land import LandLocation
-from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (
     Company,
@@ -79,7 +78,9 @@ class LandListView(ListView):
     template_name = "soil_analysis/land/list.html"
 
     def get_queryset(self):
-        company = Company(pk=self.kwargs["company_id"])
+        company_id = self.kwargs["company_id"]
+        company = CompanyRepository.get_company_by_id(company_id)
+
         weather_prefetch = Prefetch(
             "jma_city__jma_region__jmaweather_set",
             queryset=JmaWeather.objects.all(),
@@ -99,14 +100,13 @@ class LandListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        company = Company.objects.get(pk=self.kwargs["company_id"])
-        land_repository = LandRepository(company)
-        land_ledger_map = {
-            land: land_repository.read_land_ledgers(land)
-            for land in context["object_list"]
-        }
+        company_id = self.kwargs["company_id"]
+        company = CompanyRepository.get_company_by_id(company_id)
+
+        context["land_ledger_map"] = LandRepository.get_land_to_ledgers_map(
+            context["object_list"]
+        )
         context["company"] = company
-        context["land_ledger_map"] = land_ledger_map
 
         return context
 
@@ -393,16 +393,16 @@ class RouteSuggestUploadView(FormView):
          可能であれば、クエリでのユーザー入力を最大 10 地点に制限します。10 を超える地点を含むリクエストは、課金レートが高くなります。
          https://developers.google.com/maps/optimization-guide?hl=ja#routes
         """
-        upload_file: InMemoryUploadedFile = self.request.FILES["file"]
+        upload_file: UploadedFile = self.request.FILES["file"]
         kml_raw = upload_file.read()
         kml_service = KmlService()
-        land_candidates = kml_service.parse_kml(kml_raw).list()
+        land_location_list = kml_service.parse_kml(kml_raw)
 
-        if len(land_candidates) < 2:
+        if len(land_location_list) < 2:
             messages.error(self.request, "少なくとも 2 つの場所を指定してください")
             return redirect(self.request.META.get("HTTP_REFERER"))
 
-        if len(land_candidates) > 10:
+        if len(land_location_list) > 10:
             messages.error(
                 self.request,
                 "GoogleMapsAPIのレート上昇制約により 10 地点までしか計算できません",
@@ -410,10 +410,10 @@ class RouteSuggestUploadView(FormView):
             return redirect(self.request.META.get("HTTP_REFERER"))
 
         entities = []
-        for land_candidate in land_candidates:
-            coordinates_str = land_candidate.center.to_google().to_str()
+        for land_location in land_location_list:
+            coordinates_str = land_location.center.to_google().to_str()
             entity = RouteSuggestImport.objects.create(
-                name=land_candidate.name, coord=coordinates_str
+                name=land_location.name, coord=coordinates_str
             )
             entities.append(entity)
         RouteSuggestImport.objects.all().delete()
@@ -466,61 +466,20 @@ class RouteSuggestSuccessView(TemplateView):
         return context
 
 
-class AssociatePictureAndLandView(TemplateView):
+class AssociatePictureAndLandView(ListView):
+    model = Land
     template_name = "soil_analysis/picture_land_associate/form.html"
+    context_object_name = "land_list"
     success_url = reverse_lazy("soil:associate_picture_and_land_result")
 
-    @staticmethod
-    def get_dummy_land_candidates() -> LandCandidates:
-        """
-        テスト用の圃場データを返します
-        注: これは開発時のダミーデータ用関数で、本番環境では削除して
-            データベースから取得する実装に置き換えること
-        """
-        return LandCandidates(
-            [
-                LandLocation(
-                    "137.6489657,34.7443565 137.6491266,34.744123 137.648613,34.7438929 "
-                    "137.6484413,34.7441175 137.6489657,34.7443565",
-                    "ススムA1",
-                ),
-                LandLocation(
-                    "137.649128,34.7441119 137.6492862,34.7438795 137.6487833,34.7436526 "
-                    "137.6486224,34.7438861 137.649128,34.7441119",
-                    "ススムA2",
-                ),
-                LandLocation(
-                    "137.6492809,34.743865 137.6494646,34.7436029 137.6489644,34.7433683 "
-                    "137.6487806,34.7436403 137.6492809,34.743865",
-                    "ススムA3",
-                ),
-                LandLocation(
-                    "137.6489738,34.7433604 137.6494633,34.7435774 137.6497127,34.7432096 "
-                    "137.6492192,34.7429904 137.6489738,34.7433604",
-                    "ススムA4",
-                ),
-            ]
-        )
-
-    @staticmethod
-    def get_land_by_name(name: str) -> LandLocation | None:
-        """
-        圃場名から圃場データを取得する関数
-        注: これは開発時のダミーデータ用関数で、本番環境では削除して
-            データベースから取得する実装に置き換えること
-        """
-        land_candidates = AssociatePictureAndLandView.get_dummy_land_candidates()
-        for land in land_candidates.list():
-            if land.name == name:
-                return land
-        return None
+    def get_queryset(self):
+        return Land.objects.all().order_by("pk")
 
     @staticmethod
     def get_dummy_photo_spots() -> list[XarvioCoord]:
         """
         テスト用の撮影位置データを返します
-        注: これは開発時のダミーデータ用関数で、本番環境では削除して
-            データベースから取得する実装に置き換えること
+        注: GPSが正確な撮影位置を取得できるようになったらここを置き換える
         """
         return [
             XarvioCoord(longitude=137.64905, latitude=34.74424),  # A1用
@@ -532,10 +491,6 @@ class AssociatePictureAndLandView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["photo_spots"] = self.get_dummy_photo_spots()
-
-        land_candidates = self.get_dummy_land_candidates()
-        context["lands"] = land_candidates.list()
-
         return context
 
     def post(self, request, *args, **kwargs):
@@ -545,16 +500,15 @@ class AssociatePictureAndLandView(TemplateView):
         spot_index = int(request.POST["photo_spot"])
         photo_spots = self.get_dummy_photo_spots()
 
-        selected_spot = CaptureLocation(photo_spots[spot_index])
-        land_candidates = self.get_dummy_land_candidates()
+        photo_spot = CaptureLocation(photo_spots[spot_index])
 
         service = PhotoProcessingService()
-        nearest_land = service.find_nearest_land(selected_spot, land_candidates)
+        nearest_land = service.find_nearest_land(photo_spot, list(self.get_queryset()))
 
         # セッションに結果を保存
-        self.request.session["nearest_land_name"] = nearest_land.name
+        self.request.session["nearest_land_id"] = nearest_land.id
         self.request.session["photo_spot_coord"] = (
-            selected_spot.original_position.to_google().to_str()
+            photo_spot.original_position.to_google().to_str()
         )
 
         return HttpResponseRedirect(self.success_url)
@@ -579,11 +533,11 @@ class AssociatePictureAndLandResultView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         photo_spot_coord = self.request.session.get("photo_spot_coord")
-        nearest_land_name = self.request.session.get("nearest_land_name")
+        nearest_land_id = self.request.session.get("nearest_land_id")
 
-        if nearest_land_name and photo_spot_coord:
-            # 圃場名から圃場データを取得
-            land = AssociatePictureAndLandView.get_land_by_name(nearest_land_name)
+        if nearest_land_id and photo_spot_coord:
+            # 圃場idから圃場データを取得
+            land = LandRepository.find_land_by_id(nearest_land_id)
 
             # ルートURL作成（徒歩ルート指定）
             context["route_url"] = (
@@ -596,7 +550,8 @@ class AssociatePictureAndLandResultView(TemplateView):
             context["nearest_land"] = {
                 "name": land.name,
                 "location": land.to_google().to_str(),
-                "owner": "テスト所有者",
+                "area": land.area,
+                "owner": land.owner.username,
             }
             context["photo_spot_coord"] = photo_spot_coord
 

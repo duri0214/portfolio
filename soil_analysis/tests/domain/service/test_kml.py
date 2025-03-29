@@ -1,7 +1,6 @@
 from unittest import TestCase
 
 from soil_analysis.domain.service.kml import KmlService
-from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 
 
 class TestKmlService(TestCase):
@@ -41,29 +40,29 @@ class TestKmlService(TestCase):
         """
 
         kml_service = KmlService()
-        land_candidates = kml_service.parse_kml(kml_str)
+        land_location_list = kml_service.parse_kml(kml_str)
 
         # パース結果の確認
-        self.assertIsInstance(land_candidates, LandCandidates)
-        self.assertEqual(2, len(land_candidates.list()))
+        self.assertIsInstance(land_location_list, list)
+        self.assertEqual(2, len(land_location_list))
 
         # 個別の領域の確認
         self.assertEqual(
-            "株式会社ABC_ABCグループ - ススムA1", land_candidates.list()[0].name
+            "株式会社ABC_ABCグループ - ススムA1", land_location_list[0].name
         )
         self.assertAlmostEqual(
-            137.6487867, land_candidates.list()[0].center.longitude, delta=0.000001
+            137.6487867, land_location_list[0].center.longitude, delta=0.000001
         )
         self.assertAlmostEqual(
-            34.7441225, land_candidates.list()[0].center.latitude, delta=0.000001
+            34.7441225, land_location_list[0].center.latitude, delta=0.000001
         )
 
         self.assertEqual(
-            "株式会社ABC_ABCグループ - ススムA3", land_candidates.list()[1].name
+            "株式会社ABC_ABCグループ - ススムA3", land_location_list[1].name
         )
         self.assertAlmostEqual(
-            137.6491226, land_candidates.list()[1].center.longitude, delta=0.000001
+            137.6491226, land_location_list[1].center.longitude, delta=0.000001
         )
         self.assertAlmostEqual(
-            34.7436191, land_candidates.list()[1].center.latitude, delta=0.000001
+            34.7436191, land_location_list[1].center.latitude, delta=0.000001
         )

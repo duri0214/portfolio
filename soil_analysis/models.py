@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from lib.geo.valueobject.coord import GoogleMapsCoord
+
 
 class JmaArea(models.Model):
     """
@@ -250,7 +252,7 @@ class Land(models.Model):
     圃場マスタ
     name        圃場名
     jma_city    市区町村       e.g. 八千代町
-    latlon      緯度経度    e.g. 36.164677272061,139.86772928159
+    center      緯度経度    e.g. 36.164677272061,139.86772928159
     area        面積       e.g. 100㎡
     image       写真
     remark      備考
@@ -261,7 +263,7 @@ class Land(models.Model):
 
     name = models.CharField(max_length=256)
     jma_city = models.ForeignKey(JmaCity, on_delete=models.CASCADE)
-    latlon = models.CharField(max_length=256)
+    center = models.CharField(max_length=256)
     area = models.FloatField(null=True, blank=True)
     image = models.ImageField(upload_to="land/", null=True, blank=True)
     remark = models.TextField(null=True, blank=True)
@@ -270,6 +272,18 @@ class Land(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     cultivation_type = models.ForeignKey(CultivationType, on_delete=models.CASCADE)
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+
+    def to_google(self) -> GoogleMapsCoord:
+        """
+        圃場の中心座標をGoogleMapsCoord形式で返します
+
+        Returns:
+            GoogleMapsCoord: 圃場の中心座標
+        """
+        lat_str, lng_str = self.center.split(",")
+        latitude = float(lat_str.strip())
+        longitude = float(lng_str.strip())
+        return GoogleMapsCoord(latitude=latitude, longitude=longitude)
 
 
 class SamplingMethod(models.Model):

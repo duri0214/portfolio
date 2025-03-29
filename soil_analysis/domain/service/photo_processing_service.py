@@ -2,21 +2,20 @@ from haversine import haversine, Unit
 
 from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
-from soil_analysis.domain.valueobject.land import LandLocation
-from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 from soil_analysis.domain.valueobject.photo import AndroidPhoto
 from soil_analysis.domain.valueobject.photo_land_association import PhotoLandAssociation
+from soil_analysis.models import Land
 
 
 class PhotoProcessingService:
     def process_photos(
-        self, photo_path_list: list[str], land_candidates: LandCandidates
+        self, photo_path_list: list[str], land_list: list[Land]
     ) -> list[PhotoLandAssociation]:
         """写真パスのリストから写真を処理し、最寄りの圃場と紐づけます。
 
         Args:
             photo_path_list: 処理する写真ファイルのパスリスト
-            land_candidates: 検索対象の圃場リスト
+            land_list: 検索対象の圃場リスト
 
         Returns:
             list[PhotoLandAssociation]: 写真と圃場の紐づけ情報のリスト
@@ -27,14 +26,14 @@ class PhotoProcessingService:
         for photo_path in photo_path_list:
             # IMG20230630190442.jpg のようなファイル名になっている
             android_photo = AndroidPhoto(photo_path)
-            photo_location = android_photo.location
+            photo_spot = android_photo.location
 
             # 画像（＝撮影位置）から最も近い圃場を特定
-            nearest_land = self.find_nearest_land(photo_location, land_candidates)
+            nearest_land = self.find_nearest_land(photo_spot, land_list)
 
             # 距離を計算
             distance = self.calculate_distance(
-                photo_location.adjusted_position, nearest_land.center
+                photo_spot.adjusted_position, nearest_land
             )
 
             # 写真と圃場の紐づけ情報を作成
@@ -46,8 +45,8 @@ class PhotoProcessingService:
         return associations
 
     def find_nearest_land(
-        self, photo_coord: CaptureLocation, land_candidates: LandCandidates
-    ) -> LandLocation:
+        self, photo_spot: CaptureLocation, land_list: list[Land]
+    ) -> Land:
         """撮影位置から最も近い圃場を特定します。
 
         写真のGPSメタデータから抽出した撮影位置を使用して、候補となる圃場の中から
@@ -58,20 +57,17 @@ class PhotoProcessingService:
         対象としているかを自動的に判別することができます。
 
         Args:
-            photo_coord: 撮影位置情報（方位角による調整を含む）
-            land_candidates: 検索対象の圃場リスト
+            photo_spot: 撮影位置情報（方位角による調整を含む）
+            land_list: 検索対象の圃場リスト
 
         Returns:
-            LandLocation: 最も近いと判断された圃場
+            Land: 最も近いと判断された圃場
         """
         min_distance = float("inf")
         nearest_land = None
 
-        for land in land_candidates.list():
-            # 調整された位置から各圃場までの距離を計算
-            distance = self.calculate_distance(
-                photo_coord.adjusted_position, land.center
-            )
+        for land in land_list:
+            distance = self.calculate_distance(photo_spot.adjusted_position, land)
             if distance < min_distance:
                 min_distance = distance
                 nearest_land = land
@@ -80,7 +76,7 @@ class PhotoProcessingService:
 
     @staticmethod
     def calculate_distance(
-        photo_spot: XarvioCoord, land_spot: LandLocation, unit: str = Unit.METERS
+        photo_spot: XarvioCoord, land: Land, unit: str = Unit.METERS
     ) -> float:
         """２つの座標間の距離を計算します。
 
@@ -90,7 +86,7 @@ class PhotoProcessingService:
 
         Args:
             photo_spot: 開始座標
-            land_spot: 終了座標
+            land: 圃場（中心点を終了座標として使用）
             unit: 距離の単位（デフォルトはメートル）
 
         Returns:
@@ -98,6 +94,6 @@ class PhotoProcessingService:
         """
         return haversine(
             photo_spot.to_google().to_tuple(),
-            land_spot.to_google().to_tuple(),
+            land.to_google().to_tuple(),
             unit=unit,
         )

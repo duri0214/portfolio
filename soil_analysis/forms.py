@@ -45,7 +45,7 @@ class LandCreateForm(forms.ModelForm):
         model = Land
         fields = (
             "name",
-            "latlon",
+            "center",
             "jma_prefecture",
             "jma_city",
             "area",
@@ -56,7 +56,7 @@ class LandCreateForm(forms.ModelForm):
         )
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control", "tabindex": "1"}),
-            "latlon": forms.TextInput(
+            "center": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "tabindex": "2",

@@ -127,18 +127,18 @@ class Command(BaseCommand):
             )
             for code, data in raw_data["class20s"].items()
         ]
-        JmaCity.objects.bulk_create(
-            [
-                JmaCity(
-                    code=vo.code,
-                    name=vo.name,
-                    jma_region=jma_region_cache.get(
-                        jma_city_group_cache.get(vo.parent).parent
-                    ),
-                )
-                for vo in jma_city_list
-            ]
-        )
+        cities_to_create = []
+        for i, vo in enumerate(jma_city_list, start=1):
+            city = JmaCity(
+                id=i,  # pkを明示的に設定
+                code=vo.code,
+                name=vo.name,
+                jma_region=jma_region_cache.get(
+                    jma_city_group_cache.get(vo.parent).parent
+                ),
+            )
+            cities_to_create.append(city)
+        JmaCity.objects.bulk_create(cities_to_create)
 
         # Part2: from forecast_area.json
         url = "https://www.jma.go.jp/bosai/forecast/const/forecast_area.json"

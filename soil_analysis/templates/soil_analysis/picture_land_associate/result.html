@@ -43,7 +43,7 @@
                     <div class="card-body">
                         <h5>{{ nearest_land.name }}</h5>
                         <p>位置: {{ nearest_land.location }}</p>
-                        <p>面積: xxxx ㎡</p>
+                        <p>面積: {{ nearest_land.area|default:"-" }} ㎡</p>
                         <p>所有者: {{ nearest_land.owner }}</p>
                     </div>
                 </div>

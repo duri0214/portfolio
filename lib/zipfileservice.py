@@ -2,12 +2,12 @@ import zipfile
 from pathlib import Path
 
 from django.conf import settings
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import UploadedFile
 
 
 class ZipFileService:
     @staticmethod
-    def handle_uploaded_zip(file: InMemoryUploadedFile, app_name: str) -> Path:
+    def handle_uploaded_zip(file: UploadedFile, app_name: str) -> Path:
         """
         アップロードされたファイルを一時フォルダ media/{app_name} に保存
         Args:

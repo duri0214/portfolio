@@ -1,7 +1,6 @@
 from fastkml import kml
 
 from soil_analysis.domain.valueobject.land import LandLocation
-from soil_analysis.domain.valueobject.landcandidates import LandCandidates
 
 
 class KmlService:
@@ -12,7 +11,7 @@ class KmlService:
 
     def parse_kml(self, kml_str):
         """
-        KML形式の文字列を解析してLandCandidatesオブジェクトを作成します。
+        KML形式の文字列を解析して 圃場位置情報のリスト を作成します。
 
         Args:
             kml_str (str): KML形式の文字列データ。
@@ -23,12 +22,12 @@ class KmlService:
             kml_service = KmlService()
 
         Returns:
-            LandCandidates: 解析されたLandCandidatesオブジェクト。
+            list[LandLocation]: 解析された圃場位置情報のリスト。
 
         Raises:
             ValueError: 不正なKML形式の文字列が指定された場合に発生します。
         """
-        land_candidates = LandCandidates()
+        land_location_list: list[LandLocation] = []
 
         try:
             kml_doc = kml.KML()
@@ -41,10 +40,9 @@ class KmlService:
                 coord_str = self.to_str(
                     place_mark_object.geoms[self.KML_POLYGON].exterior.coords
                 )
-                land_candidate = LandLocation(coord_str, name)
-                land_candidates.add(land_candidate)
+                land_location_list.append(LandLocation(coord_str, name))
 
-            return land_candidates
+            return land_location_list
         except ValueError as e:
             raise ValueError("Invalid KML format") from e
 
