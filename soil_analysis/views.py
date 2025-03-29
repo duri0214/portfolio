@@ -3,7 +3,7 @@ import os
 import shutil
 
 from django.contrib import messages
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.db.models import Count, Prefetch
 from django.http import HttpResponseRedirect, JsonResponse
@@ -393,7 +393,7 @@ class RouteSuggestUploadView(FormView):
          可能であれば、クエリでのユーザー入力を最大 10 地点に制限します。10 を超える地点を含むリクエストは、課金レートが高くなります。
          https://developers.google.com/maps/optimization-guide?hl=ja#routes
         """
-        upload_file: InMemoryUploadedFile = self.request.FILES["file"]
+        upload_file: UploadedFile = self.request.FILES["file"]
         kml_raw = upload_file.read()
         kml_service = KmlService()
         land_locations = kml_service.parse_kml(kml_raw)
