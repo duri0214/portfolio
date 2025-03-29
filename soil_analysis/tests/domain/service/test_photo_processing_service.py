@@ -207,10 +207,9 @@ class TestPhotoProcessingService(TestCase):
                 print(f"  写真の座標: {photo_coord.to_google().to_str()}")
 
                 # 最寄り圃場の座標をGoogleマップ形式で出力
-                land_coord = nearest_land.center
-                print(f"  圃場の座標: {land_coord.to_google().to_str()}")
+                print(f"  圃場の座標: {nearest_land.center}")
 
                 # 距離も表示 - 更新された引数名でメソッドを呼び出す
                 print(
-                    f"  距離: {service.calculate_distance(photo_spot=photo_coord, land_spot=nearest_land, unit='m'):.2f}m"
+                    f"  距離: {service.calculate_distance(photo_spot=photo_coord, land=nearest_land, unit='m'):.2f}m"
                 )
