@@ -160,7 +160,7 @@ class TestPhotoProcessingService(TestCase):
             mock_photos = []
 
             # 各写真の座標を設定
-            coordinates = [
+            photo_spots = [
                 XarvioCoord(longitude=137.64905, latitude=34.74424),  # A1用
                 XarvioCoord(longitude=137.64921, latitude=34.744),  # A2用
                 XarvioCoord(longitude=137.64938, latitude=34.74374),  # A3用
@@ -168,10 +168,10 @@ class TestPhotoProcessingService(TestCase):
             ]
 
             # 各写真のモックを準備
-            for coord in coordinates:
+            for photo_spot in photo_spots:
                 mock_photo = MagicMock()
                 mock_location = MagicMock()
-                mock_location.adjusted_position = coord
+                mock_location.adjusted_position = photo_spot
                 mock_photo.location = mock_location
                 mock_photos.append(mock_photo)
 
@@ -203,13 +203,13 @@ class TestPhotoProcessingService(TestCase):
                 print(f"結果 {i + 1}: ファイル={photo_path}, 圃場={nearest_land.name}")
 
                 # 写真の座標をGoogleマップ形式で出力
-                photo_coord = coordinates[i]
-                print(f"  写真の座標: {photo_coord.to_google().to_str()}")
+                photo_spot = photo_spots[i]
+                print(f"  写真の座標: {photo_spot.to_google().to_str()}")
 
                 # 最寄り圃場の座標をGoogleマップ形式で出力
                 print(f"  圃場の座標: {nearest_land.to_google().to_str()}")
 
                 # 距離も表示 - 更新された引数名でメソッドを呼び出す
                 print(
-                    f"  距離: {service.calculate_distance(photo_spot=photo_coord, land=nearest_land, unit='m'):.2f}m"
+                    f"  距離: {service.calculate_distance(photo_spot=photo_spot, land=nearest_land, unit='m'):.2f}m"
                 )

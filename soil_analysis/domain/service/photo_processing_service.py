@@ -45,7 +45,7 @@ class PhotoProcessingService:
         return associations
 
     def find_nearest_land(
-        self, photo_coord: CaptureLocation, land_list: list[Land]
+        self, photo_spot: CaptureLocation, land_list: list[Land]
     ) -> Land:
         """撮影位置から最も近い圃場を特定します。
 
@@ -57,7 +57,7 @@ class PhotoProcessingService:
         対象としているかを自動的に判別することができます。
 
         Args:
-            photo_coord: 撮影位置情報（方位角による調整を含む）
+            photo_spot: 撮影位置情報（方位角による調整を含む）
             land_list: 検索対象の圃場リスト
 
         Returns:
@@ -67,7 +67,7 @@ class PhotoProcessingService:
         nearest_land = None
 
         for land in land_list:
-            distance = self.calculate_distance(photo_coord.adjusted_position, land)
+            distance = self.calculate_distance(photo_spot.adjusted_position, land)
             if distance < min_distance:
                 min_distance = distance
                 nearest_land = land
