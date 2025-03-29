@@ -466,25 +466,20 @@ class RouteSuggestSuccessView(TemplateView):
         return context
 
 
-class AssociatePictureAndLandView(TemplateView):
+class AssociatePictureAndLandView(ListView):
+    model = Land
     template_name = "soil_analysis/picture_land_associate/form.html"
+    context_object_name = "land_list"
     success_url = reverse_lazy("soil:associate_picture_and_land_result")
 
-    @staticmethod
-    def get_dummy_land_list() -> list[Land]:
-        """
-        テスト用の圃場データを返します
-        注: これは開発時のダミーデータ用関数で、本番環境では削除して
-            データベースから取得する実装に置き換えること
-        """
-        return list(Land.objects.filter(pk__in=[4, 5, 6, 7]).order_by("pk"))
+    def get_queryset(self):
+        return Land.objects.all().order_by("pk")
 
     @staticmethod
     def get_dummy_photo_spots() -> list[XarvioCoord]:
         """
         テスト用の撮影位置データを返します
-        注: これは開発時のダミーデータ用関数で、本番環境では削除して
-            データベースから取得する実装に置き換えること
+        注: GPSが正確な撮影位置を取得できるようになったらここを置き換える
         """
         return [
             XarvioCoord(longitude=137.64905, latitude=34.74424),  # A1用
@@ -496,8 +491,6 @@ class AssociatePictureAndLandView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["photo_spots"] = self.get_dummy_photo_spots()
-        context["land_list"] = self.get_dummy_land_list()
-
         return context
 
     def post(self, request, *args, **kwargs):
@@ -510,7 +503,7 @@ class AssociatePictureAndLandView(TemplateView):
         photo_spot = CaptureLocation(photo_spots[spot_index])
 
         service = PhotoProcessingService()
-        nearest_land = service.find_nearest_land(photo_spot, self.get_dummy_land_list())
+        nearest_land = service.find_nearest_land(photo_spot, list(self.get_queryset()))
 
         # セッションに結果を保存
         self.request.session["nearest_land_id"] = nearest_land.id
