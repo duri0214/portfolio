@@ -27,7 +27,7 @@ class KmlService:
         Raises:
             ValueError: 不正なKML形式の文字列が指定された場合に発生します。
         """
-        land_locations: list[LandLocation] = []
+        land_location_list: list[LandLocation] = []
 
         try:
             kml_doc = kml.KML()
@@ -40,9 +40,9 @@ class KmlService:
                 coord_str = self.to_str(
                     place_mark_object.geoms[self.KML_POLYGON].exterior.coords
                 )
-                land_locations.append(LandLocation(coord_str, name))
+                land_location_list.append(LandLocation(coord_str, name))
 
-            return land_locations
+            return land_location_list
         except ValueError as e:
             raise ValueError("Invalid KML format") from e
 
