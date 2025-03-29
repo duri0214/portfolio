@@ -30,21 +30,37 @@ class TestPhotoProcessingService(TestCase):
         self.land1.name = "農業法人2の圃場1（静岡ススムA1）"
         self.land1.center = "34.7441225,137.6487867"
         self.land1.id = 4
+        self.land1.to_google.return_value.to_tuple.return_value = (
+            34.7441225,
+            137.6487867,
+        )
 
         self.land2 = Mock()
         self.land2.name = "農業法人2の圃場2（静岡ススムA2）"
         self.land2.center = "34.7438825,137.648955"
         self.land2.id = 5
+        self.land2.to_google.return_value.to_tuple.return_value = (
+            34.7438825,
+            137.648955,
+        )
 
         self.land3 = Mock()
         self.land3.name = "農業法人2の圃場3（静岡ススムA3）"
         self.land3.center = "34.7436191,137.6491226"
         self.land3.id = 6
+        self.land3.to_google.return_value.to_tuple.return_value = (
+            34.7436191,
+            137.6491226,
+        )
 
         self.land4 = Mock()
         self.land4.name = "農業法人2の圃場3（静岡ススムA4）"
         self.land4.center = "34.7432844,137.6493423"
         self.land4.id = 7
+        self.land4.to_google.return_value.to_tuple.return_value = (
+            34.7432844,
+            137.6493423,
+        )
 
         # 土地候補のリストを作成
         self.land_list = [self.land1, self.land2, self.land3, self.land4]
