@@ -26,14 +26,14 @@ class PhotoProcessingService:
         for photo_path in photo_path_list:
             # IMG20230630190442.jpg のようなファイル名になっている
             android_photo = AndroidPhoto(photo_path)
-            photo_location = android_photo.location
+            photo_spot = android_photo.location
 
             # 画像（＝撮影位置）から最も近い圃場を特定
-            nearest_land = self.find_nearest_land(photo_location, land_list)
+            nearest_land = self.find_nearest_land(photo_spot, land_list)
 
             # 距離を計算
             distance = self.calculate_distance(
-                photo_location.adjusted_position, nearest_land
+                photo_spot.adjusted_position, nearest_land
             )
 
             # 写真と圃場の紐づけ情報を作成
