@@ -1,22 +1,10 @@
-from django.db.models import QuerySet
-
-from soil_analysis.models import Land, Company, LandLedger
+from soil_analysis.models import Land, LandLedger
 
 
 class LandRepository:
     @staticmethod
     def find_land_by_id(land_id: int) -> Land:
         return Land.objects.get(pk=land_id)
-
-    @staticmethod
-    def get_land_list_by_company(company: Company = None) -> QuerySet:
-        """
-        会社に紐づく圃場を取得する
-        会社が指定されていない場合は全圃場を返す
-        """
-        if company:
-            return Land.objects.filter(company=company)
-        return Land.objects.all()
 
     @staticmethod
     def get_land_to_ledgers_map(land_list: list[Land]):
