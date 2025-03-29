@@ -9,13 +9,6 @@ class LandRepository:
         return Land.objects.get(pk=land_id)
 
     @staticmethod
-    def find_land_ledgers_by_land_list(land_list: list[Land]) -> QuerySet:
-        """
-        複数の圃場に関連する台帳をまとめて取得する
-        """
-        return LandLedger.objects.filter(land__in=land_list)
-
-    @staticmethod
     def get_land_list_by_company(company: Company = None) -> QuerySet:
         """
         会社に紐づく圃場を取得する
