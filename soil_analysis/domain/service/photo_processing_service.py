@@ -86,7 +86,7 @@ class PhotoProcessingService:
 
         Args:
             photo_spot: 開始座標
-            land: 終了座標
+            land: 圃場（中心点を終了座標として使用）
             unit: 距離の単位（デフォルトはメートル）
 
         Returns:
