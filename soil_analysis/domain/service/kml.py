@@ -11,7 +11,7 @@ class KmlService:
 
     def parse_kml(self, kml_str):
         """
-        KML形式の文字列を解析して 解析された圃場位置情報のリスト を作成します。
+        KML形式の文字列を解析して 圃場位置情報のリスト を作成します。
 
         Args:
             kml_str (str): KML形式の文字列データ。
