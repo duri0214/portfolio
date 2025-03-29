@@ -40,25 +40,29 @@ class TestKmlService(TestCase):
         """
 
         kml_service = KmlService()
-        land_locations = kml_service.parse_kml(kml_str)
+        land_location_list = kml_service.parse_kml(kml_str)
 
         # パース結果の確認
-        self.assertIsInstance(land_locations, list)
-        self.assertEqual(2, len(land_locations))
+        self.assertIsInstance(land_location_list, list)
+        self.assertEqual(2, len(land_location_list))
 
         # 個別の領域の確認
-        self.assertEqual("株式会社ABC_ABCグループ - ススムA1", land_locations[0].name)
-        self.assertAlmostEqual(
-            137.6487867, land_locations[0].center.longitude, delta=0.000001
+        self.assertEqual(
+            "株式会社ABC_ABCグループ - ススムA1", land_location_list[0].name
         )
         self.assertAlmostEqual(
-            34.7441225, land_locations[0].center.latitude, delta=0.000001
+            137.6487867, land_location_list[0].center.longitude, delta=0.000001
+        )
+        self.assertAlmostEqual(
+            34.7441225, land_location_list[0].center.latitude, delta=0.000001
         )
 
-        self.assertEqual("株式会社ABC_ABCグループ - ススムA3", land_locations[1].name)
-        self.assertAlmostEqual(
-            137.6491226, land_locations[1].center.longitude, delta=0.000001
+        self.assertEqual(
+            "株式会社ABC_ABCグループ - ススムA3", land_location_list[1].name
         )
         self.assertAlmostEqual(
-            34.7436191, land_locations[1].center.latitude, delta=0.000001
+            137.6491226, land_location_list[1].center.longitude, delta=0.000001
+        )
+        self.assertAlmostEqual(
+            34.7436191, land_location_list[1].center.latitude, delta=0.000001
         )
