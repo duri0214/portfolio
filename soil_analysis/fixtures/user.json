@@ -3,10 +3,10 @@
     "model": "auth.user",
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "yoshitaka okada",
-      "first_name": "yoshitaka",
-      "last_name": "okada",
-      "email": "okada@example.com",
+      "username": "森本 春香",
+      "first_name": "春香",
+      "last_name": "森本",
+      "email": "haruka@example.com",
       "is_staff": 1
     }
   },
@@ -14,10 +14,10 @@
     "model": "auth.user",
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "yoshiyuki minami",
-      "first_name": "yoshiyuki",
-      "last_name": "minami",
-      "email": "minami@example.com",
+      "username": "山田 太郎",
+      "first_name": "太郎",
+      "last_name": "山田",
+      "email": "taro@example.com",
       "is_staff": 1
     }
   },
