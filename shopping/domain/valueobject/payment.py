@@ -1,12 +1,4 @@
 from dataclasses import dataclass
-from enum import Enum
-
-
-class PaymentStatus(Enum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    REFUNDED = "refunded"
 
 
 @dataclass(frozen=True)
