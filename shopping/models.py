@@ -42,7 +42,10 @@ class Staff(models.Model):
 
 
 class Products(models.Model):
-    """商品"""
+    """
+    商品
+    TODO: `Product` だよね `s` いらない
+    """
 
     code = models.CharField("商品コード", max_length=200)
     name = models.CharField("商品名", max_length=200)
