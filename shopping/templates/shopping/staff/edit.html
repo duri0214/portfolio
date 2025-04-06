@@ -2,18 +2,28 @@
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'shopping/css/staff/detail.css' %}">
+    <link rel="stylesheet" href="{% static 'shopping/css/staff/edit.css' %}">
 {% endblock %}
 
 {% block content %}
     <div class="container">
-        <h1>店員プロフィール（編集）</h1>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button class="btn btn-outline-primary mx-1" type="submit">送信</button>
-            <a href="{% url 'shp:staff_detail' object.pk %}" role="button"
-               class="btn btn-outline-secondary mx-1">戻る</a>
-        </form>
+        <h3 class="page-title">店員プロフィール（編集）</h3>
+
+        <div class="edit-form-card">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-fields">
+                    {{ form.as_p }}
+                </div>
+                <div class="form-actions">
+                    <button class="submit-button" type="submit">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                    <a href="{% url 'shp:staff_detail' object.pk %}" class="cancel-button">
+                        <i class="fas fa-arrow-left"></i> 戻る
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 {% endblock %}
