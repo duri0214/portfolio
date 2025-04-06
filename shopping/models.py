@@ -8,7 +8,7 @@ class Store(models.Model):
 
     name = models.CharField("店名", max_length=255)
     created_at = models.DateTimeField("作成日時", default=timezone.now)
-    updated_at = models.DateTimeField("更新日時", auto_now=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -30,7 +30,7 @@ class Staff(models.Model):
         User, verbose_name="ログインユーザー", on_delete=models.CASCADE
     )
     created_at = models.DateTimeField("作成日時", default=timezone.now)
-    updated_at = models.DateTimeField("更新日時", auto_now=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -50,7 +50,7 @@ class Products(models.Model):
     description = models.TextField("説明")
     picture = models.ImageField("商品写真", upload_to="shopping/")
     created_at = models.DateTimeField("作成日時", default=timezone.now)
-    updated_at = models.DateTimeField("更新日時", auto_now=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
 
     def __str__(self):
         return f"{self.code}: {self.name}"
@@ -86,7 +86,7 @@ class BuyingHistory(models.Model):
         default=PENDING,
     )
     created_at = models.DateTimeField("日付", default=timezone.now)
-    updated_at = models.DateTimeField("更新日時", auto_now=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
 
     def __str__(self):
         return f"{self.product.name} - {self.user.username} ({self.created_at.strftime('%Y-%m-%d')})"
