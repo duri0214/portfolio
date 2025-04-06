@@ -25,7 +25,12 @@ class ProductCreateFormSingle(forms.ModelForm):
 class ProductCreateFormBulk(forms.Form):
     """formのname 属性が 'file' になる"""
 
-    file = forms.FileField(required=True, label="")
+    file = forms.FileField(
+        required=True,
+        label="CSVファイル",
+        help_text="商品情報が記載されたCSVファイルをアップロードしてください。",
+        widget=forms.FileInput(attrs={"class": "form-control"}),
+    )
 
     def clean_file(self):
         """csvファイル要件を満たすかどうかをチェックします"""
