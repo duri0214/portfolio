@@ -106,6 +106,8 @@ class StaffEditForm(forms.ModelForm):
             "description": forms.Textarea(
                 attrs={"tabindex": "2", "class": "form-control", "rows": "5"}
             ),
-            "image": forms.ClearableFileInput(attrs={"tabindex": "3"}),
+            "image": forms.FileInput(
+                attrs={"tabindex": "3", "class": "form-control-file"}
+            ),
             "store": forms.Select(attrs={"tabindex": "4", "class": "form-control"}),
         }

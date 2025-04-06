@@ -13,7 +13,29 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="form-fields">
-                    {{ form.as_p }}
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% if field.name == 'image' %}
+                                {% if object.image %}
+                                    <div class="current-image mb-2">
+                                        <img src="{{ object.image.url }}" alt="現在の画像"
+                                             style="max-height: 150px; max-width: 100%;" class="img-thumbnail">
+                                    </div>
+                                {% endif %}
+                                {{ field }}
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in field.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
                 </div>
                 <div class="form-actions">
                     <button class="submit-button" type="submit">
