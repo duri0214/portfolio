@@ -1,5 +1,3 @@
-import csv
-import io
 import os
 
 import stripe
@@ -15,6 +13,7 @@ from django.views.generic import (
     ListView,
 )
 
+from .domain.service.product import CsvService
 from .forms import (
     ProductCreateFormSingle,
     ProductCreateFormBulk,
@@ -56,29 +55,43 @@ class CreateBulk(FormView):
     success_url = reverse_lazy("shp:index")
 
     def form_valid(self, form):
-        # read csv
-        reader = csv.reader(
-            io.TextIOWrapper(form.cleaned_data["file"], encoding="utf-8")
-        )
-        # ignore header
-        next(reader)
-        # count of insert
-        for record in reader:
-            # insert if the record not exists.
-            product, created = Products.objects.get_or_create(code=record[0])
-            product.code = record[0]
-            product.name = record[1]
-            product.price = record[2]
-            product.description = record[3]
-            product.save()
-        return super().form_valid(form)
+        try:
+            # CSVファイルをサービスに渡して処理
+            csv_file = form.cleaned_data["file"]
+            results = CsvService.process(csv_file)
+
+            # 処理結果をメッセージとして表示
+            if results["success_count"] > 0:
+                messages.success(
+                    self.request,
+                    f"{results['success_count']}件の商品を正常に処理しました。",
+                )
+
+            if results["error_count"] > 0:
+                messages.warning(
+                    self.request,
+                    f"{results['error_count']}件の商品で処理エラーが発生しました。",
+                )
+                for error in results["errors"][:5]:  # 最初の5つのエラーのみ表示
+                    messages.error(self.request, error)
+                if len(results["errors"]) > 5:
+                    messages.error(
+                        self.request,
+                        f"他にも{len(results['errors']) - 5}件のエラーが発生しています。",
+                    )
+
+            return super().form_valid(form)
+
+        except Exception as e:
+            form.add_error(None, f"商品の一括作成に失敗しました: {str(e)}")
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
-        messages.add_message(self.request, messages.WARNING, form.errors)
-        return redirect("shp:index")
+        messages.error(self.request, "フォームの入力に問題があります")
+        return super().form_invalid(form)
 
 
-class Index(ListView):
+class IndexView(ListView):
     model = Products
     template_name = "shopping/index.html"
     paginate_by = 5
