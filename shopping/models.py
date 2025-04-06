@@ -78,14 +78,14 @@ class BuyingHistory(models.Model):
     )
     user = models.ForeignKey(User, verbose_name="購入者", on_delete=models.PROTECT)
     shipped = models.BooleanField("発送済み", default=False)
-    stripe_id = models.CharField("タイトル", max_length=200)
+    stripe_id = models.CharField("Stripe決済ID", max_length=200)
     payment_status = models.CharField(
         "支払い状態",
         max_length=20,
         choices=PAYMENT_STATUS_CHOICES,
         default=PENDING,
     )
-    created_at = models.DateTimeField("日付", default=timezone.now)
+    created_at = models.DateTimeField("作成日時", default=timezone.now)
     updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
 
     def __str__(self):
