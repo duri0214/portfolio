@@ -7,27 +7,106 @@ from shopping.models import Products
 class CsvService:
     @staticmethod
     def process(csv_file):
-        """CSVファイルから商品データを一括処理する"""
+        """
+        CSVファイルから商品データを一括処理し、Products モデルに登録・更新する
+
+        期待されるCSV形式:
+            - ヘッダー行: code,name,price,description
+            - データ行: 各列がカンマ区切りで、上記の順序で値が含まれる
+
+        バリデーション:
+            - ヘッダー行が正確に一致していること
+            - 各行は正確に4フィールドを含むこと
+            - 商品コード(code)と商品名(name)は必須
+            - 価格(price)は数値に変換可能であること
+
+        処理内容:
+            - 既存の商品コードの場合は商品情報を更新
+            - 新規の商品コードの場合は新しいレコードを作成
+
+        Args:
+            csv_file: アップロードされたCSVファイルオブジェクト
+
+        Returns:
+            dict: 処理結果を含む辞書
+                - success_count: 正常に処理された行数
+                - error_count: エラーが発生した行数
+                - errors: エラーメッセージのリスト（行番号付き）
+
+        エラー例:
+            - CSVファイルが空の場合
+            - ヘッダー形式が不正な場合
+            - フィールド数が不正な場合
+            - 必須フィールドが欠けている場合
+            - 価格が数値でない場合
+
+        サンプルデータ:
+        code,name,price,description
+        rice001,特選コシヒカリ（新潟県産）,2480,5kg入り 令和5年産 特A評価
+        bread001,生食パン（高級食パン）,580,1斤 北海道産小麦100%使用
+        milk001,北海道牛乳,238,1000ml 成分無調整
+        egg001,平飼い有精卵,398,10個入り 非ケージ飼育
+        veg001,有機野菜セット,1280,季節の有機栽培野菜 5〜7種類
+        meat001,黒毛和牛切り落とし,1980,400g A4ランク 国産
+        fish001,刺身用マグロ（中トロ）,1580,200g 解凍済み
+        snack001,ポテトチップス塩味,198,150g 国産じゃがいも使用
+        drink001,緑茶ペットボトル,128,525ml 無糖
+        fruit001,季節のフルーツミックス,780,3種類のカットフルーツ 250g
+        """
+
         decoded_file = csv_file.read().decode("utf-8-sig")
         io_string = io.StringIO(decoded_file)
         reader = csv.reader(io_string, delimiter=",", quotechar='"')
 
-        # ヘッダー行をスキップ
-        next(reader)
-
         results = {"success_count": 0, "error_count": 0, "errors": []}
 
-        for record in reader:
+        # ヘッダー行の検証
+        try:
+            headers = next(reader)
+            expected_headers = ["code", "name", "price", "description"]
+            if headers != expected_headers:
+                results["errors"].append(
+                    f"無効なヘッダー形式: {headers}, 期待される形式: {expected_headers}"
+                )
+                return results
+        except StopIteration:
+            results["errors"].append("CSVファイルが空です")
+            return results
+
+        # ヘッダー行が1行目なので、データは2行目から始まる
+        # next(reader)でヘッダー行を読み取り済みのため、ポインタは既に2行目を指している
+        # start=2を指定することで、row_numをCSVファイルの実際の行番号と一致させる
+        for row_num, record in enumerate(reader, start=2):
             try:
-                if len(record) < 4:
-                    results["errors"].append(f"不十分なフィールド数: {record}")
+                if len(record) != 4:
+                    results["errors"].append(
+                        f"行 {row_num}: 無効なフィールド数 ({len(record)}). 正確に4フィールドが必要です"
+                    )
                     results["error_count"] += 1
                     continue
 
                 code = record[0].strip()
                 name = record[1].strip()
-                price = int(record[2].strip()) if record[2].strip() else 0
-                description = record[3].strip() if len(record) > 3 else ""
+                price_str = record[2].strip()
+                description = record[3].strip()
+
+                # 必須フィールドの検証
+                if not code or not name:
+                    results["errors"].append(
+                        f"行 {row_num}: 商品コードと商品名は必須です"
+                    )
+                    results["error_count"] += 1
+                    continue
+
+                # 価格の変換と検証
+                try:
+                    price = int(price_str) if price_str else 0
+                except ValueError:
+                    results["errors"].append(
+                        f"行 {row_num}: 価格は数値でなければなりません: '{price_str}'"
+                    )
+                    results["error_count"] += 1
+                    continue
 
                 existing_product = Products.objects.filter(code=code).first()
 
@@ -44,7 +123,7 @@ class CsvService:
                 results["success_count"] += 1
 
             except Exception as e:
-                error_message = f"レコード {record} の処理中にエラーが発生: {str(e)}"
+                error_message = f"行 {row_num}: 処理中にエラーが発生: {str(e)}"
                 results["errors"].append(error_message)
                 results["error_count"] += 1
 
