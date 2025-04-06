@@ -41,16 +41,12 @@ class StripePaymentRepository(PaymentRepositoryBase):
             )
             return True
         except IntegrityError as e:
-            # 一意性制約違反などのデータ整合性エラー
             print(f"支払い記録の整合性エラー: {e}")
             return False
         except DatabaseError as e:
-            # その他のデータベース関連エラー
             print(f"データベースエラー: {e}")
             return False
         except Exception as e:
-            # 予期しない例外の場合は、再スローして上位で処理させる
-            # または、ここで適切にログを残して処理を続行
             print(f"予期しない例外が発生: {e}")
             raise  # 上位に再スロー
 
