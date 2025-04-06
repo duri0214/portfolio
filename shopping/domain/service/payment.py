@@ -77,6 +77,7 @@ class StripePaymentService(PaymentServiceBase):
                 error_code="stripe_error",
             )
         except Exception as e:
+            # TODO: printはloggerに置き換える（settings.pyに設定書いてあるから）
             print(f"支払い処理中に予期しないエラー: {e}")
             return PaymentResult(
                 success=False,
