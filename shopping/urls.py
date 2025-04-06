@@ -9,6 +9,7 @@ from .views import (
     StaffEditView,
     StaffCreateView,
     ProductEditView,
+    PaymentConfirmView,
 )
 
 app_name = "shp"
@@ -25,6 +26,11 @@ urlpatterns = [
     ),
     path("product/create/bulk/", CreateBulkView.as_view(), name="product_create_bulk"),
     path("staff/detail/<int:pk>/", StaffDetailView.as_view(), name="staff_detail"),
+    path(
+        "payment/confirm/<int:pk>/",
+        PaymentConfirmView.as_view(),
+        name="payment_confirm",
+    ),
     path("staff/edit/<int:pk>/", StaffEditView.as_view(), name="staff_edit"),
     path("staff/create/", StaffCreateView.as_view(), name="staff_create"),
 ]

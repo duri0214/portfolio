@@ -1,0 +1,129 @@
+/* 支払い確認画面のスタイル */
+.payment-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 商品概要部分 */
+.product-summary {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.product-image {
+    max-width: 100%;
+    max-height: 150px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    object-fit: contain;
+}
+
+/* 支払い詳細部分 */
+.payment-details {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.total-price {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+/* 支払いフォーム部分 */
+.payment-form {
+    margin-top: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+#card-element {
+    background-color: white;
+    padding: 10px 12px;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+}
+
+#card-element:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+#card-errors {
+    color: #d70000;
+    margin-top: 10px;
+    font-size: 0.9em;
+}
+
+/* 編集ページと同様のフォームアクション */
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.submit-button, .cancel-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.submit-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.submit-button:hover {
+    background-color: #45a049;
+}
+
+.cancel-button {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+    flex-grow: 0;
+}
+
+.cancel-button:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .product-image {
+        max-height: 120px;
+        margin: 0 auto 15px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .submit-button, .cancel-button {
+        width: 100%;
+        margin-right: 0;
+    }
+}

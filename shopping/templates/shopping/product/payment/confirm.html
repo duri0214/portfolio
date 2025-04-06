@@ -1,0 +1,127 @@
+{% extends "shopping/base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}決済確認 - {{ object.name }}{% endblock %}
+
+{% block extra_head %}
+    <script src="https://js.stripe.com/v3/"></script>
+    <link rel="stylesheet" href="{% static 'shopping/css/product/payment/confirm.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container my-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">決済確認</h3>
+            </div>
+
+            <div class="card-body">
+                <div class="product-summary mb-4">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            {% if object.image %}
+                                <img src="{{ object.image.url }}" alt="{{ object.name }}"
+                                     class="product-image img-fluid rounded">
+                            {% else %}
+                                <img src="{% static 'shopping/images/no-image.png' %}" alt="商品画像なし"
+                                     class="product-image img-fluid rounded">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <h4 class="card-title">{{ object.name }}</h4>
+                            <p class="text-muted">{{ object.description|truncatewords:30 }}</p>
+                            <div class="d-flex justify-content-between">
+                                <span class="badge bg-info p-2">単価: {{ object.price|intcomma }}円</span>
+                                <span class="badge bg-secondary p-2">数量: {{ quantity }}個</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-details mb-4">
+                    <h4 class="border-bottom pb-2 mb-3">お支払い金額</h4>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p>商品小計 ({{ quantity }}点)</p>
+                            <p>送料</p>
+                            <p>消費税</p>
+                            <p class="total-price">合計</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <p>{{ object.price|intcomma }}円 × {{ quantity }} = {{ subtotal|intcomma }}円</p>
+                            <p>無料</p>
+                            <p>{{ tax|intcomma }}円 (10%)</p>
+                            <p class="total-price text-danger">{{ total_price|intcomma }}円</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-form">
+                    <h4 class="border-bottom pb-2 mb-3">クレジットカード情報入力</h4>
+                    <form id="payment-form">
+                        <div id="card-element" class="form-control mb-3">
+                            <!-- Stripeのカード情報入力フォームがここに挿入されます -->
+                        </div>
+                        <div id="card-errors" role="alert" class="text-danger mb-3"></div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-lock"></i> 決済を完了する
+                            </button>
+                            <a href="{% url 'shp:product_detail' object.pk %}" class="cancel-button">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Stripe公開キーの設定
+            const stripe = Stripe('{{ STRIPE_PUBLIC_KEY }}');
+            const elements = stripe.elements();
+
+            // カード要素のスタイル
+            const style = {
+                base: {
+                    color: '#32325d',
+                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                    fontSmoothing: 'antialiased',
+                    fontSize: '16px',
+                    '::placeholder': {
+                        color: '#aab7c4'
+                    }
+                },
+                invalid: {
+                    color: '#fa755a',
+                    iconColor: '#fa755a'
+                }
+            };
+
+            // カード要素の作成とマウント
+            const card = elements.create('card', {style: style});
+            card.mount('#card-element');
+
+            // カードエラーのハンドリング
+            card.addEventListener('change', function (event) {
+                const displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+
+            // フォーム送信のハンドリング
+            const form = document.getElementById('payment-form');
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                // ここにフォーム送信の処理を追加
+            });
+        });
+    </script>
+{% endblock %}

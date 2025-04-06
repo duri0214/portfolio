@@ -10,6 +10,7 @@ from django.views.generic import (
     ListView,
 )
 
+from config import settings
 from .domain.repository.payment import StripePaymentRepository
 from .domain.service.csv_upload import CsvService
 from .forms import (
@@ -169,10 +170,36 @@ class ProductDetailView(DetailView):
         return self.render_to_response(self.get_context_data())
 
     @staticmethod
-    def _redirect_to_confirm(product_id, quantity):
+    def _redirect_to_confirm(pk, quantity):
         """購入確認画面へのリダイレクト"""
-        url = reverse("shp:payment_confirm", kwargs={"pk": product_id})
+        url = reverse("shp:payment_confirm", kwargs={"pk": pk})
         return redirect(f"{url}?quantity={quantity}")
+
+
+class PaymentConfirmView(DetailView):
+    model = Products
+    template_name = "shopping/product/payment/confirm.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        quantity = int(self.request.GET.get("quantity", 1))
+        product = self.get_object()
+
+        # 必要な計算をビューで行う
+        subtotal = product.price * quantity
+        tax = subtotal * 0.1  # 消費税10%
+        total_price = subtotal + tax
+
+        context.update(
+            {
+                "quantity": quantity,
+                "subtotal": subtotal,
+                "tax": tax,
+                "total_price": total_price,
+                "STRIPE_PUBLIC_KEY": settings.STRIPE_PUBLIC_KEY,
+            }
+        )
+        return context
 
 
 class ProductEditView(UpdateView):
