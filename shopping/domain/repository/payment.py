@@ -57,4 +57,8 @@ class StripePaymentRepository(PaymentRepositoryBase):
             return None
 
     def get_unpaid_orders(self, user_id: int) -> list:
-        return list(BuyingHistory.objects.filter(user_id=user_id, stripe_id=""))
+        return list(
+            BuyingHistory.objects.filter(
+                user_id=user_id, payment_status=BuyingHistory.PENDING
+            )
+        )
