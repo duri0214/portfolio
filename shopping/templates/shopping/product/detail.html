@@ -9,34 +9,27 @@
     <div class="container">
         <p>{{ message }}</p>
 
-        <!-- ピザ情報の表示 -->
+        <!-- 商品情報の表示 -->
         <h1>{{ object.name }}</h1>
         <div class="product-image-container">
             <img src="{{ object.picture.url }}" alt="{{ object.name }}" class="product-image">
         </div>
         <p class="lead">{{ object.created_at }} - {{ object.price }}円</p>
-        <p>{{ object.description | linebreaksbr }}<p>
-        <p>
-            開発やテスト中に使用するカード情報については
-            <a href="https://docs.stripe.com/testing?testing-method=card-numbers#visa" target="_blank"
-               rel="noopener noreferrer">こちら</a>
-            をご確認ください。
-        </p>
+        <p>{{ object.description | linebreaksbr }}</p>
 
-        <!-- 購入ボタン・フォームの作成 -->
+        <!-- 数量選択フォーム -->
         <form method="POST">
             {% csrf_token %}
-            <script
-                    src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                    data-key="{{ public_key }}"
-                    data-amount="{{ object.price }}"
-                    data-name="よろずや"
-                    data-description="{{ object.name }}"
-                    data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
-                    data-locale="ja"
-                    data-currency="jpy"
-                    data-email="{{ user.email }}">
-            </script>
+            <div class="form-group mb-3">
+                {{ purchase_form.quantity.label_tag }}
+                {{ purchase_form.quantity }}
+                {% if purchase_form.quantity.errors %}
+                    <div class="alert alert-danger">
+                        {{ purchase_form.quantity.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            <button type="submit" name="confirm" class="btn btn-primary">購入手続きへ進む</button>
             <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary mx-1">戻る</a>
         </form>
     </div>

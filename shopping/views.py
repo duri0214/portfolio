@@ -1,10 +1,7 @@
-import os
-
-import stripe
-from django.conf import settings
 from django.contrib import messages
-from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     DetailView,
     CreateView,
@@ -13,6 +10,7 @@ from django.views.generic import (
     ListView,
 )
 
+from .domain.repository.payment import StripePaymentRepository
 from .domain.service.csv_upload import CsvService
 from .forms import (
     ProductCreateFormSingle,
@@ -21,11 +19,9 @@ from .forms import (
     StaffEditForm,
     StaffDetailForm,
     StaffCreateForm,
+    PurchaseForm,
 )
-from .models import Products, BuyingHistory, Staff
-
-# stripe api key
-stripe.api_key = os.environ.get("STRIPE_API_KEY")
+from .models import Products, Staff
 
 
 class CreateSingleView(CreateView):
@@ -58,6 +54,8 @@ class CreateBulkView(FormView):
     template_name = "shopping/product/create_bulk.html"
     form_class = ProductCreateFormBulk
     success_url = reverse_lazy("shp:index")
+
+    # TODO: まだ見直し必要です
 
     def form_valid(self, form):
         try:
@@ -111,42 +109,70 @@ class IndexView(ListView):
 
 
 class ProductDetailView(DetailView):
-    """DetailView"""
+    """
+    商品詳細表示と購入数量入力を行うビュー
+    TODO: 関連商品の表示機能を追加する
+      - Products モデルに category フィールド（ForeignKey）を追加
+      - または products_tags のような中間テーブルを作成して商品タグ付け
+      - get_context_data メソッド内で同カテゴリ/タグの商品を取得
+      - テンプレートに関連商品セクションを追加（カルーセル等）
+      - レコメンデーションロジックを実装（閲覧履歴ベース、購入履歴ベースなど）
+    TODO: 在庫管理機能を追加する
+      - Products モデルに stock フィールドを追加
+      - 購入時に在庫数をチェックして、不足している場合はエラーメッセージを表示
+      - 購入完了時に在庫数を減らす処理を実装
+    """
 
     template_name = "shopping/product/detail.html"
     model = Products
 
-    def post(self, request, *args, **kwargs):
-        """post"""
-        product = self.get_object()
-        token = request.POST["stripeToken"]  # 'stripeToken' will be made by form submit
-        try:
-            # buy
-            charge = stripe.Charge.create(
-                amount=product.price,
-                currency="jpy",
-                source=token,
-                description="メール:{} 商品名:{}".format(
-                    request.user.email, product.name
-                ),
-            )
-        except stripe.error.CardError as errors:
-            # errors: Payment was not successful. e.g. payment limit over
-            context = self.get_context_data()
-            context["message"] = errors.error.message
-            return render(request, "shopping/product/detail.html", context)
-        else:
-            # ok
-            BuyingHistory.objects.create(
-                product=product, user=request.user, stripe_id=charge.id
-            )
-            return redirect("shp:index")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.purchase_form = PurchaseForm()  # 初期値1のフォームを作成
+        self.payment_repository = StripePaymentRepository()
 
     def get_context_data(self, **kwargs):
-        """STRIPE_PUBLIC_KEYを渡したいだけ"""
         context = super().get_context_data(**kwargs)
-        context["public_key"] = settings.STRIPE_PUBLIC_KEY
+        # フォームをコンテキストに追加
+        context["purchase_form"] = self.purchase_form
         return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = PurchaseForm(request.POST)
+        self.purchase_form = form
+
+        if form.is_valid():
+            return self._process_valid_form(form)
+
+        messages.error(request, "入力内容に問題があります。")
+        return self.render_to_response(self.get_context_data())
+
+    def _process_valid_form(self, form):
+        """有効なフォームの処理"""
+        product_id = self.object.id
+        quantity = form.cleaned_data["quantity"]
+
+        # 商品情報をリポジトリから取得
+        product = self.payment_repository.get_product_by_id(product_id)
+        if not product:
+            messages.error(self.request, "商品が見つかりません。")
+            return HttpResponseRedirect(self.request.path)
+
+        # 在庫チェックは現段階では実装しない
+        # 将来的にProducts モデルにstockフィールドを追加する予定
+
+        # 購入確認画面へ進む
+        if "confirm" in self.request.POST:
+            return self._redirect_to_confirm(product_id, quantity)
+
+        return self.render_to_response(self.get_context_data())
+
+    @staticmethod
+    def _redirect_to_confirm(product_id, quantity):
+        """購入確認画面へのリダイレクト"""
+        url = reverse("shp:payment_confirm", kwargs={"pk": product_id})
+        return redirect(f"{url}?quantity={quantity}")
 
 
 class ProductEditView(UpdateView):

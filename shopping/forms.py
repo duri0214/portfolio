@@ -116,3 +116,16 @@ class StaffEditForm(forms.ModelForm):
             ),
             "store": forms.Select(attrs={"tabindex": "4", "class": "form-control"}),
         }
+
+
+class PurchaseForm(forms.Form):
+    """商品購入のためのフォーム"""
+
+    quantity = forms.IntegerField(
+        label="数量",
+        min_value=1,
+        initial=1,
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "placeholder": "購入数量を入力"}
+        ),
+    )
