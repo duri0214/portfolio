@@ -13,7 +13,7 @@ from django.views.generic import (
     ListView,
 )
 
-from .domain.service.product import CsvService
+from .domain.service.csv_upload import CsvService
 from .forms import (
     ProductCreateFormSingle,
     ProductCreateFormBulk,
