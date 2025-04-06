@@ -36,21 +36,13 @@ class CreateSingle(CreateView):
     success_url = reverse_lazy("shp:index")
 
     def form_valid(self, form):
-        # prepare
-        code = form.cleaned_data.get("code")
-        # delete if old exists for db
-        Products.objects.filter(code=code).delete()
-        form.save()
-        # e.g. filename: apple, ext: .png
-        filename, ext = os.path.splitext(form.cleaned_data["picture"].name)
-        # delete if old exists for file
-        move_to = settings.STATIC_ROOT + "/shopping/img/" + code + ext.lower()
-        if os.path.exists(move_to):
-            os.remove(move_to)
-        # move file from media directory
-        move_from = settings.MEDIA_ROOT + "/shopping/" + filename + ext.lower()
-        os.rename(move_from, move_to)
-        return super().form_valid(form)
+        try:
+            self.object = form.save()
+            return super().form_valid(form)
+        except Exception as e:
+            print(f"商品作成中にエラーが発生: {e}")
+            form.add_error(None, f"商品の作成に失敗しました: {e}")
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
         print(form.errors)
