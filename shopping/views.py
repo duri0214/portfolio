@@ -29,10 +29,11 @@ stripe.api_key = os.environ.get("STRIPE_API_KEY")
 
 
 class CreateSingleView(CreateView):
+    """単一商品登録"""
+
     model = Products
     template_name = "shopping/product/create_single.html"
     form_class = ProductCreateFormSingle
-    success_url = reverse_lazy("shp:index")
 
     def form_valid(self, form):
         try:
@@ -47,6 +48,10 @@ class CreateSingleView(CreateView):
         print(form.errors)
         messages.add_message(self.request, messages.WARNING, form.errors)
         return redirect("shp:index")
+
+    def get_success_url(self):
+        """作成した商品の詳細ページにリダイレクトする"""
+        return reverse_lazy("shp:product_detail", kwargs={"pk": self.object.pk})
 
 
 class CreateBulkView(FormView):
