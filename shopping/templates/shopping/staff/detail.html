@@ -3,7 +3,6 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'shopping/css/staff/detail.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
 {% endblock %}
 
 {% block content %}
@@ -12,7 +11,11 @@
         <div class="card card-one">
             <header>
                 <div class="avatar">
-                    <img src="{{ object.image.url }}" alt="missing picture"/>
+                    {% if object.image %}
+                        <img src="{{ object.image.url }}" alt="{{ object.name }}"/>
+                    {% else %}
+                        <i class="fas fa-user-circle" style="font-size: 100px; color: #6c757d;"></i>
+                    {% endif %}
                 </div>
             </header>
 

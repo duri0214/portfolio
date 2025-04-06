@@ -26,7 +26,11 @@
         <h2>｜店員一覧</h2>
         {% if staffs %}
             {% for staff in staffs %}
-                <img src="{{ staff.image.url }}" width="100px" alt="missing picture">
+                {% if staff.image %}
+                    <img src="{{ staff.image.url }}" width="100px" alt="{{ staff.name }}">
+                {% else %}
+                    <i class="fas fa-user-circle" style="font-size: 100px; color: #6c757d;"></i>
+                {% endif %}
                 {{ staff.name }}
                 <a class="small" href="{% url 'shp:staff_detail' staff.pk %}">プロフィール</a>
             {% endfor %}
