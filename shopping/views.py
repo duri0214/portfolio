@@ -28,7 +28,7 @@ from .models import Products, BuyingHistory, Staff
 stripe.api_key = os.environ.get("STRIPE_API_KEY")
 
 
-class CreateSingle(CreateView):
+class CreateSingleView(CreateView):
     model = Products
     template_name = "shopping/product/create_single.html"
     form_class = ProductCreateFormSingle
@@ -49,7 +49,7 @@ class CreateSingle(CreateView):
         return redirect("shp:index")
 
 
-class CreateBulk(FormView):
+class CreateBulkView(FormView):
     template_name = "shopping/product/create_bulk.html"
     form_class = ProductCreateFormBulk
     success_url = reverse_lazy("shp:index")
@@ -105,7 +105,7 @@ class IndexView(ListView):
         return context
 
 
-class ProductDetail(DetailView):
+class ProductDetailView(DetailView):
     """DetailView"""
 
     template_name = "shopping/product/detail.html"
@@ -144,27 +144,27 @@ class ProductDetail(DetailView):
         return context
 
 
-class ProductEdit(UpdateView):
+class ProductEditView(UpdateView):
     template_name = "shopping/product/edit.html"
     form_class = ProductEditForm
     success_url = reverse_lazy("shp:index")
     model = Products
 
 
-class StaffDetail(DetailView):
+class StaffDetailView(DetailView):
     template_name = "shopping/staff/detail.html"
     form_class = StaffDetailForm
     model = Staff
 
 
-class StaffEdit(UpdateView):
+class StaffEditView(UpdateView):
     template_name = "shopping/staff/edit.html"
     form_class = StaffEditForm
     success_url = reverse_lazy("shp:index")
     model = Staff
 
 
-class StaffCreate(CreateView):
+class StaffCreateView(CreateView):
     template_name = "shopping/staff/create.html"
     form_class = StaffCreateForm
     success_url = reverse_lazy("shp:index")
