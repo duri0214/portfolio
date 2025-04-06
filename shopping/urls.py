@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import (
-    Index,
+    IndexView,
     ProductDetail,
     CreateSingle,
     CreateBulk,
@@ -13,7 +13,7 @@ from .views import (
 
 app_name = "shp"
 urlpatterns = [
-    path("", Index.as_view(), name="index"),
+    path("", IndexView.as_view(), name="index"),
     path("product/edit/<int:pk>/", ProductEdit.as_view(), name="product_edit"),
     path("product/detail/<int:pk>/", ProductDetail.as_view(), name="product_detail"),
     path(
