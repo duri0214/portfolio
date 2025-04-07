@@ -58,13 +58,19 @@
 
                 <div class="payment-form">
                     <h4 class="border-bottom pb-2 mb-3">クレジットカード情報入力</h4>
+                    <p>
+                        開発やテスト中に使用するカード情報については
+                        <a href="https://docs.stripe.com/testing?testing-method=card-numbers#visa"
+                           target="_blank"
+                           rel="noopener noreferrer">こちら</a>
+                        をご確認ください。
+                    </p>
                     <form id="payment-form">
                         <div id="card-element" class="form-control mb-3">
                             <!-- Stripeのカード情報入力フォームがここに挿入されます -->
                         </div>
                         <div id="card-errors" role="alert" class="text-danger mb-3"></div>
 
-                        {# TODO: ボタンに css があたらないので staffのedit画面のようにしたい #}
                         <div class="form-actions">
                             <button class="submit-button" type="submit">
                                 <i class="fas fa-lock"></i> 決済を完了する
