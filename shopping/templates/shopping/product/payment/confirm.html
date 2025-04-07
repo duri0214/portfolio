@@ -4,8 +4,7 @@
 
 {% block title %}決済確認 - {{ object.name }}{% endblock %}
 
-{% block extra_head %}
-    <script src="https://js.stripe.com/v3/"></script>
+{% block extra_css %}
     <link rel="stylesheet" href="{% static 'shopping/css/product/payment/confirm.css' %}">
 {% endblock %}
 
