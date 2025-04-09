@@ -57,7 +57,7 @@
                 </div>
 
                 <div class="payment-form">
-                    <h4 class="border-bottom pb-2 mb-3">クレジットカード情報入力</h4>
+                    <h4 class="border-bottom pb-2 mb-3">クレジットカード決済</h4>
                     <p>
                         開発やテスト中に使用するカード情報については
                         <a href="https://docs.stripe.com/testing?testing-method=card-numbers#visa"
@@ -65,69 +65,26 @@
                            rel="noopener noreferrer">こちら</a>
                         をご確認ください。
                     </p>
-                    <form id="payment-form">
-                        <div id="card-element" class="form-control mb-3">
-                            <!-- Stripeのカード情報入力フォームがここに挿入されます -->
-                        </div>
-                        <div id="card-errors" role="alert" class="text-danger mb-3"></div>
 
-                        <div class="form-actions">
-                            <button class="submit-button" type="submit">
-                                <i class="fas fa-lock"></i> 決済を完了する
-                            </button>
-                            <a href="{% url 'shp:product_detail' object.pk %}" class="cancel-button">
-                                <i class="fas fa-arrow-left"></i> 戻る
-                            </a>
-                        </div>
+                    <!-- 購入ボタン・フォームの作成 -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        <script
+                                src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                                data-key="{{ public_key }}"
+                                data-amount="{{ total_price }}"
+                                data-name="よろずや"
+                                data-description="{{ object.name }} × {{ quantity }}個"
+                                data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
+                                data-locale="ja"
+                                data-currency="jpy"
+                                data-email="{{ user.email }}">
+                        </script>
+                        <a href="{% url 'shp:product_detail' object.pk %}" role="button"
+                           class="btn btn-outline-secondary mx-1">戻る</a>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Stripe公開キーの設定
-            const stripe = Stripe('{{ STRIPE_PUBLIC_KEY }}');
-            const elements = stripe.elements();
-
-            // カード要素のスタイル
-            const style = {
-                base: {
-                    color: '#32325d',
-                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-                    fontSmoothing: 'antialiased',
-                    fontSize: '16px',
-                    '::placeholder': {
-                        color: '#aab7c4'
-                    }
-                },
-                invalid: {
-                    color: '#fa755a',
-                    iconColor: '#fa755a'
-                }
-            };
-
-            // カード要素の作成とマウント
-            const card = elements.create('card', {style: style});
-            card.mount('#card-element');
-
-            // カードエラーのハンドリング
-            card.addEventListener('change', function (event) {
-                const displayError = document.getElementById('card-errors');
-                if (event.error) {
-                    displayError.textContent = event.error.message;
-                } else {
-                    displayError.textContent = '';
-                }
-            });
-
-            // フォーム送信のハンドリング
-            const form = document.getElementById('payment-form');
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                // TODO: ここにフォーム送信の処理を追加
-            });
-        });
-    </script>
 {% endblock %}

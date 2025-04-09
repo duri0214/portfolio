@@ -181,6 +181,19 @@ class PaymentConfirmView(DetailView):
     template_name = "shopping/product/payment/confirm.html"
 
     def get_context_data(self, **kwargs):
+        """
+        コンテキストデータを取得し、Stripe決済に必要な情報を追加します。
+
+        public_key: StripeのAPIパブリックキー。テンプレート内でStripeチェックアウトを
+        初期化する際に必要です。これはStripeの決済フォームをクライアント側で
+        レンダリングするために不可欠です。
+
+        また、商品の価格計算や数量、税金などの決済に必要な情報も
+        コンテキストに含めています。
+
+        Returns:
+            dict: 拡張されたコンテキストデータ
+        """
         context = super().get_context_data(**kwargs)
         quantity = int(self.request.GET.get("quantity", 1))
         product = self.get_object()
@@ -196,7 +209,7 @@ class PaymentConfirmView(DetailView):
                 "subtotal": subtotal,
                 "tax": tax,
                 "total_price": total_price,
-                "STRIPE_PUBLIC_KEY": settings.STRIPE_PUBLIC_KEY,
+                "public_key": settings.STRIPE_PUBLIC_KEY,
             }
         )
         return context
