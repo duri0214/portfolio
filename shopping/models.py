@@ -80,6 +80,7 @@ class BuyingHistory(models.Model):
         Products, verbose_name="商品名", on_delete=models.PROTECT
     )
     user = models.ForeignKey(User, verbose_name="購入者", on_delete=models.PROTECT)
+    amount = models.IntegerField("購入金額", default=0)
     shipped = models.BooleanField("発送済み", default=False)
     stripe_id = models.CharField("Stripe決済ID", max_length=200)
     payment_status = models.CharField(
