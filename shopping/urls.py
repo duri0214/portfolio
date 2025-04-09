@@ -10,6 +10,7 @@ from .views import (
     StaffCreateView,
     ProductEditView,
     PaymentConfirmView,
+    PaymentCompleteView,
 )
 
 app_name = "shp"
@@ -30,6 +31,11 @@ urlpatterns = [
         "payment/confirm/<int:pk>/",
         PaymentConfirmView.as_view(),
         name="payment_confirm",
+    ),
+    path(
+        "payment/complete/<int:pk>/",
+        PaymentCompleteView.as_view(),
+        name="payment_complete",
     ),
     path("staff/edit/<int:pk>/", StaffEditView.as_view(), name="staff_edit"),
     path("staff/create/", StaffCreateView.as_view(), name="staff_create"),

@@ -24,7 +24,7 @@ from .forms import (
     StaffCreateForm,
     PurchaseForm,
 )
-from .models import Products, Staff
+from .models import Products, Staff, BuyingHistory
 
 
 class CreateSingleView(CreateView):
@@ -278,6 +278,19 @@ class PaymentConfirmView(DetailView):
             # 予期せぬエラーのハンドリング
             messages.error(request, f"予期せぬエラーが発生しました: {str(e)}")
             return redirect("shp:payment_confirm", pk=product.pk)
+
+
+class PaymentCompleteView(DetailView):
+    """支払い完了画面"""
+
+    model = BuyingHistory
+    template_name = "shopping/product/payment/complete.html"
+    context_object_name = "buying_history"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # 必要に応じて追加情報をコンテキストに入れる
+        return context
 
 
 class ProductEditView(UpdateView):

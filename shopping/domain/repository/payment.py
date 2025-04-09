@@ -38,6 +38,7 @@ class StripePaymentRepository(PaymentRepositoryBase):
                 user_id=user_id,
                 amount=amount,
                 stripe_id=payment_provider_id,
+                payment_status=BuyingHistory.COMPLETED,
             )
             return True
         except IntegrityError as e:
