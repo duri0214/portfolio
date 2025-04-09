@@ -8,6 +8,7 @@ class PaymentIntent:
     amount: int
     currency: str
     description: str | None = None
+    payment_method: str | None = None
 
 
 @dataclass(frozen=True)

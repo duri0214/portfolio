@@ -13,6 +13,8 @@ from django.views.generic import (
 from config import settings
 from .domain.repository.payment import StripePaymentRepository
 from .domain.service.csv_upload import CsvService
+from .domain.service.payment import StripePaymentService
+from .domain.valueobject.payment import PaymentIntent
 from .forms import (
     ProductCreateFormSingle,
     ProductCreateFormBulk,
@@ -180,6 +182,11 @@ class PaymentConfirmView(DetailView):
     model = Products
     template_name = "shopping/product/payment/confirm.html"
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.payment_repository = StripePaymentRepository()
+        self.payment_service = StripePaymentService()
+
     def get_context_data(self, **kwargs):
         """
         コンテキストデータを取得し、Stripe決済に必要な情報を追加します。
@@ -213,6 +220,64 @@ class PaymentConfirmView(DetailView):
             }
         )
         return context
+
+    def post(self, request, *args, **kwargs):
+        """
+        Stripeからの決済完了後のPOSTリクエストを処理します。
+
+        このメソッドは、Stripeチェックアウトフォームが送信された後に呼び出され、
+        決済処理を行い、購入履歴を作成して決済完了ページにリダイレクトします。
+
+        Returns:
+            HttpResponseRedirect: 決済完了ページへのリダイレクト
+        """
+        product = self.get_object()
+        quantity = int(request.GET.get("quantity", 1))
+        total_amount = int(product.price * quantity * 1.1)  # 税込金額（10%）
+
+        # Stripeトークンを取得
+        token = request.POST.get("stripeToken")
+
+        try:
+            # PaymentIntentオブジェクトの作成
+            payment_intent = PaymentIntent(
+                amount=total_amount,
+                currency="jpy",
+                description=f"{product.name} × {quantity}個",
+                payment_method=token,
+            )
+
+            # 支払い処理の実行
+            payment_result = self.payment_service.create_payment(payment_intent)
+
+            if payment_result.success:
+                # 支払い成功時は購入履歴に記録
+                saved = self.payment_repository.save_payment_record(
+                    product_id=product.id,
+                    user_id=request.user.id,
+                    amount=total_amount,
+                    payment_provider_id=payment_result.payment_id,
+                )
+
+                if saved:
+                    # 決済完了ページにリダイレクト
+                    return redirect("shp:payment_complete", pk=product.pk)
+                else:
+                    # 記録失敗時のエラーハンドリング
+                    messages.error(
+                        request,
+                        "購入履歴の保存に失敗しました。サポートにお問い合わせください。",
+                    )
+                    return redirect("shp:payment_confirm", pk=product.pk)
+            else:
+                # 支払い失敗時のエラーメッセージ
+                messages.error(request, f"決済エラー: {payment_result.error_message}")
+                return redirect("shp:payment_confirm", pk=product.pk)
+
+        except Exception as e:
+            # 予期せぬエラーのハンドリング
+            messages.error(request, f"予期せぬエラーが発生しました: {str(e)}")
+            return redirect("shp:payment_confirm", pk=product.pk)
 
 
 class ProductEditView(UpdateView):

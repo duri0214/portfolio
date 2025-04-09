@@ -36,16 +36,29 @@ class StripePaymentService(PaymentServiceBase):
 
     def create_payment(self, intent: PaymentIntent) -> PaymentResult:
         try:
-            payment_intent = stripe.PaymentIntent.create(
-                amount=intent.amount,
-                currency=intent.currency,
-                description=intent.description,
-            )
-            return PaymentResult(
-                success=True,
-                payment_id=payment_intent.id,
-                client_secret=payment_intent.client_secret,
-            )
+            if intent.payment_method:
+                charge = stripe.Charge.create(
+                    amount=intent.amount,
+                    currency=intent.currency,
+                    description=intent.description,
+                    source=intent.payment_method,  # トークンをsourceとして使用
+                )
+                return PaymentResult(
+                    success=True,
+                    payment_id=charge.id,
+                )
+            else:
+                # 通常のPaymentIntentフロー（クライアントサイド決済用）
+                payment_intent = stripe.PaymentIntent.create(
+                    amount=intent.amount,
+                    currency=intent.currency,
+                    description=intent.description,
+                )
+                return PaymentResult(
+                    success=True,
+                    payment_id=payment_intent.id,
+                    client_secret=payment_intent.client_secret,
+                )
         except stripe.error.CardError as e:
             return PaymentResult(
                 success=False,
