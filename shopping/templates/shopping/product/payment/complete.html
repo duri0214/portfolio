@@ -24,9 +24,24 @@
                             <dt class="col-sm-4">支払い状態:</dt>
                             <dd class="col-sm-8">
                                 {% if buying_history.payment_status == 'completed' %}
-                                    <span class="badge badge-success">支払い完了</span>
+                                    <div class="d-flex align-items-center">
+                                <span class="badge badge-pill badge-success mr-2 text-black">
+                                    <i class="fas fa-check-circle mr-1"></i>支払い完了
+                                </span>
+                                        <small class="text-muted">{{ buying_history.created_at|date:"Y/m/d" }}</small>
+                                    </div>
+                                {% elif buying_history.payment_status == 'pending' %}
+                                    <div class="d-flex align-items-center">
+                                <span class="badge badge-pill badge-warning mr-2">
+                                    <i class="fas fa-clock mr-1"></i>支払い処理中
+                                </span>
+                                    </div>
                                 {% else %}
-                                    <span class="badge badge-warning">{{ buying_history.get_payment_status_display }}</span>
+                                    <div class="d-flex align-items-center">
+                                <span class="badge badge-pill badge-danger mr-2">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>{{ buying_history.get_payment_status_display }}
+                                </span>
+                                    </div>
                                 {% endif %}
                             </dd>
 
@@ -43,9 +58,25 @@
                             <dt class="col-sm-4">配送状況:</dt>
                             <dd class="col-sm-8">
                                 {% if buying_history.shipped %}
-                                    <span class="badge badge-info">発送済み</span>
+                                    <div class="d-flex align-items-center">
+                                <span class="badge badge-pill badge-info mr-2">
+                                    <i class="fas fa-shipping-fast mr-1"></i>発送済み
+                                </span>
+                                        <div class="progress ml-2" style="height: 8px; width: 100px;">
+                                            <div class="progress-bar bg-info" role="progressbar"
+                                                 style="width: 100%"></div>
+                                        </div>
+                                    </div>
                                 {% else %}
-                                    <span class="badge badge-secondary">準備中</span>
+                                    <div class="d-flex align-items-center">
+                                <span class="badge badge-pill badge-secondary text-black mr-2">
+                                    <i class="fas fa-box mr-1"></i>準備中
+                                </span>
+                                        <div class="progress ml-2" style="height: 8px; width: 100px;">
+                                            <div class="progress-bar bg-secondary" role="progressbar"
+                                                 style="width: 30%"></div>
+                                        </div>
+                                    </div>
                                 {% endif %}
                             </dd>
                         </dl>
@@ -77,11 +108,7 @@
 
                 <div class="text-center">
                     <a href="{% url 'shp:index' %}" class="btn btn-primary">
-                        <i class="fas fa-shopping-cart mr-2"></i>ショッピングを続ける
-                    </a>
-                    <a href="#" class="btn btn-outline-secondary ml-2">
-                        <i class="fas fa-history mr-2"></i>注文履歴を見る
-                    </a>
+                        <i class="fas fa-shopping-cart mr-2"></i>ショッピングを続ける</a>
                 </div>
             </div>
         </div>
