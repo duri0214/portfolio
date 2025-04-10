@@ -1,14 +1,14 @@
 import csv
 import io
 
-from shopping.models import Products
+from shopping.models import Product
 
 
 class CsvService:
     @staticmethod
     def process(csv_file):
         """
-        CSVファイルから商品データを一括処理し、Products モデルに登録・更新する
+        CSVファイルから商品データを一括処理し、Product モデルに登録・更新する
 
         期待されるCSV形式:
             - ヘッダー行: code,name,price,description
@@ -108,7 +108,7 @@ class CsvService:
                     results["error_count"] += 1
                     continue
 
-                existing_product = Products.objects.filter(code=code).first()
+                existing_product = Product.objects.filter(code=code).first()
 
                 if existing_product:
                     existing_product.name = name
@@ -116,7 +116,7 @@ class CsvService:
                     existing_product.description = description
                     existing_product.save()
                 else:
-                    Products.objects.create(
+                    Product.objects.create(
                         code=code, name=name, price=price, description=description
                     )
 

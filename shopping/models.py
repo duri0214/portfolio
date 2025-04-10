@@ -41,10 +41,9 @@ class Staff(models.Model):
         return f"{self.store.name} - {self.name}"
 
 
-class Products(models.Model):
+class Product(models.Model):
     """
     商品
-    TODO: `Product` だよね `s` いらない
     """
 
     code = models.CharField("商品コード", max_length=200)
@@ -77,7 +76,7 @@ class BuyingHistory(models.Model):
     ]
 
     product = models.ForeignKey(
-        Products, verbose_name="商品名", on_delete=models.PROTECT
+        Product, verbose_name="商品名", on_delete=models.PROTECT
     )
     user = models.ForeignKey(User, verbose_name="購入者", on_delete=models.PROTECT)
     amount = models.IntegerField("購入金額", default=0)

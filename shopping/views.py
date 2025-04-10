@@ -24,13 +24,13 @@ from .forms import (
     StaffCreateForm,
     PurchaseForm,
 )
-from .models import Products, Staff, BuyingHistory
+from .models import Product, Staff, BuyingHistory
 
 
 class CreateSingleView(CreateView):
     """単一商品登録"""
 
-    model = Products
+    model = Product
     template_name = "shopping/product/create_single.html"
     form_class = ProductCreateFormSingle
 
@@ -98,12 +98,12 @@ class CreateBulkView(FormView):
 
 
 class IndexView(ListView):
-    model = Products
+    model = Product
     template_name = "shopping/index.html"
     paginate_by = 5
 
     def get_queryset(self):
-        return Products.objects.order_by("id")
+        return Product.objects.order_by("id")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -115,19 +115,19 @@ class ProductDetailView(DetailView):
     """
     商品詳細表示と購入数量入力を行うビュー
     TODO: 関連商品の表示機能を追加する
-      - Products モデルに category フィールド（ForeignKey）を追加
-      - または products_tags のような中間テーブルを作成して商品タグ付け
+      - Product モデルに category フィールド（ForeignKey）を追加
+      - または product_tags のような中間テーブルを作成して商品タグ付け
       - get_context_data メソッド内で同カテゴリ/タグの商品を取得
       - テンプレートに関連商品セクションを追加（カルーセル等）
       - レコメンデーションロジックを実装（閲覧履歴ベース、購入履歴ベースなど）
     TODO: 在庫管理機能を追加する
-      - Products モデルに stock フィールドを追加
+      - Product モデルに stock フィールドを追加
       - 購入時に在庫数をチェックして、不足している場合はエラーメッセージを表示
       - 購入完了時に在庫数を減らす処理を実装
     """
 
     template_name = "shopping/product/detail.html"
-    model = Products
+    model = Product
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -163,7 +163,7 @@ class ProductDetailView(DetailView):
             return HttpResponseRedirect(self.request.path)
 
         # 在庫チェックは現段階では実装しない
-        # 将来的にProducts モデルにstockフィールドを追加する予定
+        # 将来的にProduct モデルにstockフィールドを追加する予定
 
         # 購入確認画面へ進む
         if "confirm" in self.request.POST:
@@ -179,7 +179,7 @@ class ProductDetailView(DetailView):
 
 
 class PaymentConfirmView(DetailView):
-    model = Products
+    model = Product
     template_name = "shopping/product/payment/confirm.html"
 
     def __init__(self, **kwargs):
@@ -297,7 +297,7 @@ class ProductEditView(UpdateView):
     template_name = "shopping/product/edit.html"
     form_class = ProductEditForm
     success_url = reverse_lazy("shp:index")
-    model = Products
+    model = Product
 
 
 class StaffDetailView(DetailView):

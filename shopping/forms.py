@@ -1,11 +1,11 @@
 from django import forms
 
-from shopping.models import Products, Staff
+from shopping.models import Product, Staff
 
 
 class ProductCreateFormSingle(forms.ModelForm):
     class Meta:
-        model = Products
+        model = Product
         fields = ("code", "name", "price", "picture", "description")
         widgets = {
             "code": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
@@ -42,7 +42,7 @@ class ProductCreateFormBulk(forms.Form):
 
 class ProductEditForm(forms.ModelForm):
     class Meta:
-        model = Products
+        model = Product
         fields = ("code", "name", "price", "description")
         widgets = {
             "code": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
