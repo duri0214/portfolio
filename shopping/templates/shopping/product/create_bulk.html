@@ -3,51 +3,89 @@
 
 {% block content %}
     <div class="container">
-        <h1>CSV登録</h1>
-        <p>ヘッダー行は必ずつけてください</p>
-        <p>ダブルクォートで囲まないでください</p>
-        <table id="csv_format" class="table">
-            <thead>
-            <tr>
-                <th>code</th>
-                <th>name</th>
-                <th>price</th>
-                <th>description</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>beer2</td>
-                <td>アサヒスーパードライ</td>
-                <td>302</td>
-                <td>缶　３５０ｍｌ</td>
-            </tr>
-            <tr>
-                <td>beer3</td>
-                <td>アサヒスーパードライ</td>
-                <td>303</td>
-                <td>缶　３５０ｍｌ</td>
-            </tr>
-            <tr>
-                <td>beer4</td>
-                <td>アサヒスーパードライ</td>
-                <td>304</td>
-                <td>缶　３５０ｍｌ</td>
-            </tr>
-            <tr>
-                <td>beer5</td>
-                <td>アサヒスーパードライ</td>
-                <td>305</td>
-                <td>缶　３５０ｍｌ</td>
-            </tr>
-            </tbody>
-        </table>
-        <form action="{% url 'shp:product_create_bulk' %}" method="POST" class="registration"
-              enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button class="btn btn-outline-primary mx-1" type="submit">送信</button>
-            <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary mx-1">戻る</a>
-        </form>
+        <h1 class="mb-4">CSV一括登録</h1>
+
+        <div class="card mb-4">
+            <div class="card-header bg-warning-subtle">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>CSV形式の注意事項</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i>ヘッダー行は必ずつけてください
+                    </li>
+                    <li class="list-group-item"><i class="bi bi-x-circle-fill text-danger me-2"></i>ダブルクォートで囲まないでください
+                    </li>
+                    <li class="list-group-item"><i class="bi bi-info-circle-fill text-primary me-2"></i>文字コードはUTF-8を使用してください
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-info-subtle">
+                <h5 class="mb-0">CSVファイル形式例</h5>
+            </div>
+            <div class="card-body p-0">
+                <table id="csv_format" class="table table-striped table-hover mb-0">
+                    <thead class="table-primary">
+                    <tr>
+                        <th>code</th>
+                        <th>name</th>
+                        <th>price</th>
+                        <th>description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>beer2</td>
+                        <td>アサヒスーパードライ</td>
+                        <td>302</td>
+                        <td>缶　３５０ｍｌ</td>
+                    </tr>
+                    <tr>
+                        <td>beer3</td>
+                        <td>アサヒスーパードライ</td>
+                        <td>303</td>
+                        <td>缶　３５０ｍｌ</td>
+                    </tr>
+                    <tr>
+                        <td>beer4</td>
+                        <td>アサヒスーパードライ</td>
+                        <td>304</td>
+                        <td>缶　３５０ｍｌ</td>
+                    </tr>
+                    <tr>
+                        <td>beer5</td>
+                        <td>アサヒスーパードライ</td>
+                        <td>305</td>
+                        <td>缶　３５０ｍｌ</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-primary-subtle">
+                <h5 class="mb-0">ファイルアップロード</h5>
+            </div>
+            <div class="card-body">
+                <form action="{% url 'shp:product_create_bulk' %}" method="POST" class="registration"
+                      enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.as_p }}
+                    </div>
+                    <div class="d-flex">
+                        <button class="btn btn-primary me-2" type="submit">
+                            <i class="bi bi-upload me-1"></i>アップロード
+                        </button>
+                        <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>戻る
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 {% endblock %}

@@ -1,0 +1,23 @@
+.product-image-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.product-image {
+    max-width: 500px; /* 最大幅を設定 */
+    max-height: 400px; /* 最大高さを設定 */
+    width: auto;
+    height: auto;
+    object-fit: contain; /* 画像全体が表示されるようにする */
+    border-radius: 8px; /* 角を少し丸くする */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 影を追加 */
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .product-image {
+        max-width: 100%;
+        max-height: 300px;
+    }
+}

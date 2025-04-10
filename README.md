@@ -88,7 +88,7 @@ python manage.py loaddata .\gmarker\fixtures\place.json
 python manage.py loaddata .\gmarker\fixtures\nearbyPlace.json
 python manage.py loaddata .\shopping\fixtures\store.json
 python manage.py loaddata .\shopping\fixtures\staff.json
-python manage.py loaddata .\shopping\fixtures\products.json
+python manage.py loaddata .\shopping\fixtures\product.json
 python manage.py loaddata .\rental_shop\fixtures\warehouse.json
 python manage.py loaddata .\rental_shop\fixtures\staff.json
 python manage.py loaddata .\rental_shop\fixtures\rentalStatus.json

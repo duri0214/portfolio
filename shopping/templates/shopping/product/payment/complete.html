@@ -1,0 +1,116 @@
+{% extends "shopping/base.html" %}
+{% load humanize %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0"><i class="fas fa-check-circle mr-2"></i>ご購入ありがとうございます！</h3>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-shopping-bag fa-4x text-success mb-3"></i>
+                    <h4>購入が完了しました</h4>
+                    <p class="text-muted">注文IDは <strong>{{ buying_history.id }}</strong> です</p>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>注文情報</h5>
+                        <dl class="row">
+                            <dt class="col-sm-4">購入日時:</dt>
+                            <dd class="col-sm-8">{{ buying_history.created_at|date:"Y年m月d日 H:i" }}</dd>
+
+                            <dt class="col-sm-4">支払い状態:</dt>
+                            <dd class="col-sm-8">
+                                {% if buying_history.payment_status == 'completed' %}
+                                    <div class="d-flex align-items-center">
+                                <span class="text-success font-weight-bold">
+                                    <i class="fas fa-check-circle mr-1"></i>支払い完了
+                                </span>
+                                        <small class="text-muted ml-2">{{ buying_history.created_at|date:"Y/m/d" }}</small>
+                                    </div>
+                                {% elif buying_history.payment_status == 'pending' %}
+                                    <div class="d-flex align-items-center">
+                                <span class="text-warning font-weight-bold">
+                                    <i class="fas fa-clock mr-1"></i>支払い処理中
+                                </span>
+                                    </div>
+                                {% else %}
+                                    <div class="d-flex align-items-center">
+                                <span class="text-danger font-weight-bold">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>{{ buying_history.get_payment_status_display }}
+                                </span>
+                                    </div>
+                                {% endif %}
+                            </dd>
+
+                            <dt class="col-sm-4">決済ID:</dt>
+                            <dd class="col-sm-8">{{ buying_history.stripe_id }}</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>配送情報</h5>
+                        <dl class="row">
+                            <dt class="col-sm-4">お名前:</dt>
+                            <dd class="col-sm-8">{{ buying_history.user.last_name }} {{ buying_history.user.first_name }}</dd>
+
+                            <dt class="col-sm-4">配送状況:</dt>
+                            <dd class="col-sm-8">
+                                {% if buying_history.shipped %}
+                                    <div class="d-flex align-items-center">
+                                <span class="text-info font-weight-bold">
+                                    <i class="fas fa-shipping-fast mr-1"></i>発送済み
+                                </span>
+                                        <div class="progress ml-3" style="height: 6px; width: 80px;">
+                                            <div class="progress-bar bg-info" role="progressbar"
+                                                 style="width: 100%"></div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="d-flex align-items-center">
+                                <span class="text-secondary font-weight-bold">
+                                    <i class="fas fa-box mr-1"></i>準備中
+                                </span>
+                                        <div class="progress ml-3" style="height: 6px; width: 80px;">
+                                            <div class="progress-bar bg-secondary" role="progressbar"
+                                                 style="width: 30%"></div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">購入商品</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <img src="{{ buying_history.product.picture.url }}"
+                                     alt="{{ buying_history.product.name }}" class="img-fluid rounded">
+                            </div>
+                            <div class="col-md-7">
+                                <h5>{{ buying_history.product.name }}</h5>
+                                <p class="text-muted">商品コード: {{ buying_history.product.code }}</p>
+                                <p class="small">{{ buying_history.product.description|truncatewords:20 }}</p>
+                            </div>
+                            <div class="col-md-3 text-right">
+                                <h4 class="text-primary">
+                                    ¥{{ buying_history.product.price|stringformat:"d"|intcomma }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <a href="{% url 'shp:index' %}" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart mr-2"></i>ショッピングを続ける</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,11 +1,11 @@
 from django import forms
 
-from shopping.models import Products, Staff
+from shopping.models import Product, Staff
 
 
 class ProductCreateFormSingle(forms.ModelForm):
     class Meta:
-        model = Products
+        model = Product
         fields = ("code", "name", "price", "picture", "description")
         widgets = {
             "code": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
@@ -25,7 +25,12 @@ class ProductCreateFormSingle(forms.ModelForm):
 class ProductCreateFormBulk(forms.Form):
     """formのname 属性が 'file' になる"""
 
-    file = forms.FileField(required=True, label="")
+    file = forms.FileField(
+        required=True,
+        label="CSVファイル",
+        help_text="商品情報が記載されたCSVファイルをアップロードしてください。",
+        widget=forms.FileInput(attrs={"class": "form-control"}),
+    )
 
     def clean_file(self):
         """csvファイル要件を満たすかどうかをチェックします"""
@@ -37,7 +42,7 @@ class ProductCreateFormBulk(forms.Form):
 
 class ProductEditForm(forms.ModelForm):
     class Meta:
-        model = Products
+        model = Product
         fields = ("code", "name", "price", "description")
         widgets = {
             "code": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
@@ -106,6 +111,21 @@ class StaffEditForm(forms.ModelForm):
             "description": forms.Textarea(
                 attrs={"tabindex": "2", "class": "form-control", "rows": "5"}
             ),
-            "image": forms.ClearableFileInput(attrs={"tabindex": "3"}),
+            "image": forms.FileInput(
+                attrs={"tabindex": "3", "class": "form-control-file"}
+            ),
             "store": forms.Select(attrs={"tabindex": "4", "class": "form-control"}),
         }
+
+
+class PurchaseForm(forms.Form):
+    """商品購入のためのフォーム"""
+
+    quantity = forms.IntegerField(
+        label="数量",
+        min_value=1,
+        initial=1,
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "placeholder": "購入数量を入力"}
+        ),
+    )

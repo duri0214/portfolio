@@ -1,28 +1,42 @@
 from django.urls import path
 
 from .views import (
-    Index,
-    ProductDetail,
-    CreateSingle,
-    CreateBulk,
-    StaffDetail,
-    StaffEdit,
-    StaffCreate,
-    ProductEdit,
+    IndexView,
+    ProductDetailView,
+    CreateSingleView,
+    CreateBulkView,
+    StaffDetailView,
+    StaffEditView,
+    StaffCreateView,
+    ProductEditView,
+    PaymentConfirmView,
+    PaymentCompleteView,
 )
 
 app_name = "shp"
 urlpatterns = [
-    path("", Index.as_view(), name="index"),
-    path("product/edit/<int:pk>/", ProductEdit.as_view(), name="product_edit"),
-    path("product/detail/<int:pk>/", ProductDetail.as_view(), name="product_detail"),
+    path("", IndexView.as_view(), name="index"),
+    path("product/edit/<int:pk>/", ProductEditView.as_view(), name="product_edit"),
+    path(
+        "product/detail/<int:pk>/", ProductDetailView.as_view(), name="product_detail"
+    ),
     path(
         "product/create/single/",
-        CreateSingle.as_view(),
+        CreateSingleView.as_view(),
         name="product_create_single",
     ),
-    path("product/create/bulk/", CreateBulk.as_view(), name="product_create_bulk"),
-    path("staff/detail/<int:pk>/", StaffDetail.as_view(), name="staff_detail"),
-    path("staff/edit/<int:pk>/", StaffEdit.as_view(), name="staff_edit"),
-    path("staff/create/", StaffCreate.as_view(), name="staff_create"),
+    path("product/create/bulk/", CreateBulkView.as_view(), name="product_create_bulk"),
+    path("staff/detail/<int:pk>/", StaffDetailView.as_view(), name="staff_detail"),
+    path(
+        "payment/confirm/<int:pk>/",
+        PaymentConfirmView.as_view(),
+        name="payment_confirm",
+    ),
+    path(
+        "payment/complete/<int:pk>/",
+        PaymentCompleteView.as_view(),
+        name="payment_complete",
+    ),
+    path("staff/edit/<int:pk>/", StaffEditView.as_view(), name="staff_edit"),
+    path("staff/create/", StaffCreateView.as_view(), name="staff_create"),
 ]
