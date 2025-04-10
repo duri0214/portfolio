@@ -50,12 +50,14 @@
                                 price: @{{ product.price | intcomma }} 円<br>
                                 {{ product.description | truncatechars:20 }}
                             </p>
-                            <a href="{% url 'shp:product_detail' product.pk %}"
-                               style="font-size: small;">もっと詳しく</a>
-                            <a href="{% url 'shp:product_edit' product.pk %}"
-                               class="btn btn-primary">
-                                <i class="fas fa-pencil-alt"></i>
-                            </a>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'shp:product_detail' product.pk %}" class="btn btn-success">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </a>
+                                <a href="{% url 'shp:product_edit' product.pk %}" class="btn btn-primary">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
