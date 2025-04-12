@@ -12,6 +12,8 @@ from django.views.generic import (
 
 from config import settings
 from .domain.repository.payment import StripePaymentRepository
+from .domain.repository.product import ProductRepository
+from .domain.repository.staff import StaffRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
 from .domain.valueobject.payment import PaymentIntent
@@ -24,7 +26,7 @@ from .forms import (
     StaffCreateForm,
     PurchaseForm,
 )
-from .models import Product, Staff, BuyingHistory
+from .models import Product, Staff, BuyingHistory  # TODO: repositoryに移動して
 
 
 class CreateSingleView(CreateView):
@@ -103,11 +105,11 @@ class IndexView(ListView):
     paginate_by = 5
 
     def get_queryset(self):
-        return Product.objects.order_by("id")
+        return ProductRepository.get_all_products()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["staffs"] = Staff.objects.all()
+        context["staffs"] = StaffRepository.get_all_staff()
         return context
 
 
