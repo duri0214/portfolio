@@ -145,39 +145,57 @@ class ProductDetailView(DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        form = PurchaseForm(request.POST)
-        self.purchase_form = form
-
-        if form.is_valid():
-            return self._process_valid_form(form)
-
-        messages.error(request, "入力内容に問題があります。")
-        return self.render_to_response(self.get_context_data())
-
-    def _process_valid_form(self, form):
-        """有効なフォームの処理"""
         product_id = self.object.id
-        quantity = form.cleaned_data["quantity"]
 
-        # 商品情報をリポジトリから取得
-        product = self.payment_repository.get_product_by_id(product_id)
+        product = self.product_repository.get_product_by_id(product_id)
         if not product:
-            messages.error(self.request, "商品が見つかりません。")
-            return HttpResponseRedirect(self.request.path)
+            messages.error(request, "商品が見つかりません")
+            return redirect("shp:index")
 
-        # 在庫チェックは現段階では実装しない
+        self.purchase_form = PurchaseForm(request.POST)
+
+        if self.purchase_form.is_valid():
+            return self._process_valid_form(request, product)
+        else:
+            return self.render_to_response(self.get_context_data())
+
+    def _process_valid_form(
+        self, request: HttpRequest, product: Product
+    ) -> HttpResponse:
+        """
+        商品購入フォームが有効な場合の処理を行います。
+
+        Args:
+            request: HTTP リクエスト
+            product: 購入対象の商品
+
+        Returns:
+            HttpResponse: 確認画面へのリダイレクトまたはエラー時の応答
+        """
+        quantity = self.purchase_form.cleaned_data["quantity"]
+
+        if quantity <= 0:
+            messages.error(request, "数量は1以上を指定してください")
+            return self.render_to_response(self.get_context_data())
+
+        # TODO: 在庫チェックは現段階では実装しない
         # 将来的にProduct モデルにstockフィールドを追加する予定
 
-        # 購入確認画面へ進む
-        if "confirm" in self.request.POST:
-            return self._redirect_to_confirm(product_id, quantity)
-
-        return self.render_to_response(self.get_context_data())
+        return self._redirect_to_confirm(product, quantity)
 
     @staticmethod
-    def _redirect_to_confirm(pk, quantity):
-        """購入確認画面へのリダイレクト"""
-        url = reverse("shp:payment_confirm", kwargs={"pk": pk})
+    def _redirect_to_confirm(product: Product, quantity: int) -> HttpResponseRedirect:
+        """
+        商品と数量を指定して、確認画面へリダイレクトします。
+
+        Args:
+            product: リダイレクト先で表示する商品
+            quantity: 購入数量
+
+        Returns:
+            HttpResponseRedirect: 確認画面へのリダイレクトレスポンス
+        """
+        url = reverse("shp:payment_confirm", kwargs={"pk": product.id})
         return redirect(f"{url}?quantity={quantity}")
 
 
