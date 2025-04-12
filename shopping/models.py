@@ -79,8 +79,9 @@ class BuyingHistory(models.Model):
         Product, verbose_name="商品名", on_delete=models.PROTECT
     )
     user = models.ForeignKey(User, verbose_name="購入者", on_delete=models.PROTECT)
-    amount = models.IntegerField("購入金額", default=0)
-    shipped = models.BooleanField("発送済み", default=False)
+    price = models.IntegerField("商品単価", default=0)
+    quantity = models.IntegerField("購入数量", default=1)
+    tax_rate = models.DecimalField("税率", max_digits=5, decimal_places=2, default=0.10)
     stripe_id = models.CharField("Stripe決済ID", max_length=200)
     payment_status = models.CharField(
         "支払い状態",
@@ -88,8 +89,24 @@ class BuyingHistory(models.Model):
         choices=PAYMENT_STATUS_CHOICES,
         default=PENDING,
     )
+    shipped = models.BooleanField("発送済み", default=False)
     created_at = models.DateTimeField("作成日時", default=timezone.now)
     updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
 
     def __str__(self):
         return f"{self.product.name} - {self.user.username} ({self.created_at.strftime('%Y-%m-%d')})"
+
+    @property
+    def subtotal(self) -> int:
+        """税抜きの小計を計算します"""
+        return self.price * self.quantity
+
+    @property
+    def tax_amount(self) -> int:
+        """税額を計算します"""
+        return int(self.subtotal * float(self.tax_rate))
+
+    @property
+    def total_amount(self) -> int:
+        """合計金額（税込）を計算します"""
+        return self.subtotal + self.tax_amount
