@@ -20,14 +20,22 @@
         <hr class="my-4">
         <p>You can buy and manage pizza system.</p>
         <div class="d-flex gap-2">
-            <a class="btn btn-primary btn-lg" href="{% url 'shp:staff_create' %}" role="button">
-                店員作成
+            <!-- 店員作成 -->
+            <a class="btn btn-primary btn-sm d-flex align-items-center gap-1" href="{% url 'shp:staff_create' %}"
+               role="button">
+                <i class="fas fa-user-plus"></i> 店員作成
             </a>
-            <a class="btn btn-success btn-lg" href="{% url 'shp:product_create_single' %}" role="button">
-                単品登録
+
+            <!-- 単品登録 -->
+            <a class="btn btn-success btn-sm d-flex align-items-center gap-1"
+               href="{% url 'shp:product_create_single' %}" role="button">
+                <i class="fas fa-box"></i> 単品登録
             </a>
-            <a class="btn btn-warning btn-lg" href="{% url 'shp:product_create_bulk' %}" role="button">
-                CSV登録
+
+            <!-- CSV登録 -->
+            <a class="btn btn-warning btn-sm d-flex align-items-center gap-1" href="{% url 'shp:product_create_bulk' %}"
+               role="button">
+                <i class="fas fa-file-csv"></i> CSV登録
             </a>
         </div>
     </div>
