@@ -140,7 +140,7 @@ class ProductDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # フォームをコンテキストに追加
-        context["purchase_form"] = self.purchase_form
+        context["purchase_form"] = PurchaseForm()
         return context
 
     def post(self, request, *args, **kwargs):
