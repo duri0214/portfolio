@@ -1,0 +1,27 @@
+.page-title {
+    font-size: 1.5rem;
+    color: #343a40;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+#csv_format {
+    margin: 0;
+    border-radius: 0 0 8px 8px;
+}
+
+#csv_format .table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.form-fields .form-group {
+    margin-bottom: 15px;
+}
+
+.form-actions {
+    gap: 10px;
+}

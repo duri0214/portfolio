@@ -1,10 +1,16 @@
 {% extends 'shopping/base.html' %}
 {% load static %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'shopping/css/product/create_bulk.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="container">
-        <h1 class="mb-4">CSV一括登録</h1>
+        <!-- ページタイトル -->
+        <h3 class="page-title mb-4">CSV一括登録</h3>
 
+        <!-- 注意事項カード -->
         <div class="card mb-4">
             <div class="card-header bg-warning-subtle">
                 <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>CSV形式の注意事項</h5>
@@ -21,9 +27,10 @@
             </div>
         </div>
 
+        <!-- CSVサンプルデータカード -->
         <div class="card mb-4">
             <div class="card-header bg-info-subtle">
-                <h5 class="mb-0">CSVファイル形式例</h5>
+                <h5 class="mb-0"><i class="bi bi-table me-2"></i>CSVファイル形式例</h5>
             </div>
             <div class="card-body p-0">
                 <table id="csv_format" class="table table-striped table-hover mb-0">
@@ -37,46 +44,53 @@
                     </thead>
                     <tbody>
                     <tr>
-                        <td>beer2</td>
-                        <td>アサヒスーパードライ</td>
-                        <td>302</td>
-                        <td>缶　３５０ｍｌ</td>
+                        <td>rice001</td>
+                        <td>特選コシヒカリ（新潟県産）</td>
+                        <td>2480</td>
+                        <td>5kg入り 令和5年産 特A評価</td>
                     </tr>
                     <tr>
-                        <td>beer3</td>
-                        <td>アサヒスーパードライ</td>
-                        <td>303</td>
-                        <td>缶　３５０ｍｌ</td>
+                        <td>bread001</td>
+                        <td>生食パン（高級食パン）</td>
+                        <td>580</td>
+                        <td>1斤 北海道産小麦100%使用</td>
                     </tr>
                     <tr>
-                        <td>beer4</td>
-                        <td>アサヒスーパードライ</td>
-                        <td>304</td>
-                        <td>缶　３５０ｍｌ</td>
+                        <td>milk001</td>
+                        <td>北海道牛乳</td>
+                        <td>238</td>
+                        <td>1000ml 成分無調整</td>
                     </tr>
                     <tr>
-                        <td>beer5</td>
-                        <td>アサヒスーパードライ</td>
-                        <td>305</td>
-                        <td>缶　３５０ｍｌ</td>
+                        <td>veg001</td>
+                        <td>有機野菜セット</td>
+                        <td>1280</td>
+                        <td>季節の有機栽培野菜 5〜7種類</td>
+                    </tr>
+                    <tr>
+                        <td>fish001</td>
+                        <td>刺身用マグロ（中トロ）</td>
+                        <td>1580</td>
+                        <td>200g 解凍済み</td>
                     </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
+        <!-- ファイルアップロードカード -->
         <div class="card">
             <div class="card-header bg-primary-subtle">
-                <h5 class="mb-0">ファイルアップロード</h5>
+                <h5 class="mb-0"><i class="bi bi-file-earmark-arrow-up me-2"></i>ファイルアップロード</h5>
             </div>
             <div class="card-body">
                 <form action="{% url 'shp:product_create_bulk' %}" method="POST" class="registration"
                       enctype="multipart/form-data">
                     {% csrf_token %}
-                    <div class="mb-3">
+                    <div class="form-fields mb-3">
                         {{ form.as_p }}
                     </div>
-                    <div class="d-flex">
+                    <div class="form-actions d-flex">
                         <button class="btn btn-primary me-2" type="submit">
                             <i class="bi bi-upload me-1"></i>アップロード
                         </button>
