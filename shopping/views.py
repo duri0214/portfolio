@@ -138,70 +138,60 @@ class ProductDetailView(DetailView):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.purchase_form = None
         self.payment_repository = StripePaymentRepository()
-        self.product_repository = ProductRepository()
+        self.purchase_form = PurchaseForm()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # フォームをコンテキストに追加
-        context["purchase_form"] = PurchaseForm()
+        context["purchase_form"] = self.purchase_form
         return context
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        form = PurchaseForm(request.POST)
+
+        if form.is_valid():
+            return self._process_valid_form(form.cleaned_data["quantity"])
+        else:
+            messages.error(request, "入力内容に誤りがあります")
+            context = self.get_context_data(object=self.object, purchase_form=form)
+            return self.render_to_response(context)
+
+    def _process_valid_form(self, quantity: int):
+        """フォームのバリデーション後の処理"""
+        user_id = self.request.user.id
         product_id = self.object.id
 
-        product = self.product_repository.get_product_by_id(product_id)
-        if not product:
-            messages.error(request, "商品が見つかりません")
-            return redirect("shp:index")
+        try:
+            # 支払い金額の計算
+            payment_amounts = self.payment_repository.calculate_payment_amounts(
+                product_id=product_id, quantity=quantity
+            )
 
-        self.purchase_form = PurchaseForm(request.POST)
+            # PaymentInfo値オブジェクトを作成
+            payment_info = PaymentInfo(
+                product_id=product_id,
+                user_id=user_id,
+                quantity=quantity,
+                price=payment_amounts["price"],
+                subtotal=payment_amounts["subtotal"],
+                tax_amount=payment_amounts["tax_amount"],
+                total_amount=payment_amounts["total_amount"],
+                tax_rate=payment_amounts["tax_rate"],
+            )
 
-        if self.purchase_form.is_valid():
-            return self._process_valid_form(request, product)
-        else:
-            return self.render_to_response(self.get_context_data())
+            # セッションに支払い情報を保存
+            self.request.session["payment_info"] = payment_info.to_dict()
 
-    def _process_valid_form(
-        self, request: HttpRequest, product: Product
-    ) -> HttpResponse:
-        """
-        商品購入フォームが有効な場合の処理を行います。
+            # 確認画面にリダイレクト
+            return HttpResponseRedirect(
+                reverse("shp:payment_confirm", kwargs={"pk": product_id})
+            )
 
-        Args:
-            request: HTTP リクエスト
-            product: 購入対象の商品
-
-        Returns:
-            HttpResponse: 確認画面へのリダイレクトまたはエラー時の応答
-        """
-        quantity = self.purchase_form.cleaned_data["quantity"]
-
-        if quantity <= 0:
-            messages.error(request, "数量は1以上を指定してください")
-            return self.render_to_response(self.get_context_data())
-
-        # TODO: 在庫チェックは現段階では実装しない
-        # 将来的にProduct モデルにstockフィールドを追加する予定
-
-        return self._redirect_to_confirm(product, quantity)
-
-    @staticmethod
-    def _redirect_to_confirm(product: Product, quantity: int) -> HttpResponseRedirect:
-        """
-        商品と数量を指定して、確認画面へリダイレクトします。
-
-        Args:
-            product: リダイレクト先で表示する商品
-            quantity: 購入数量
-
-        Returns:
-            HttpResponseRedirect: 確認画面へのリダイレクトレスポンス
-        """
-        url = reverse("shp:payment_confirm", kwargs={"pk": product.id})
-        return redirect(f"{url}?quantity={quantity}")
+        except ValueError as e:
+            messages.error(self.request, str(e))
+            context = self.get_context_data(object=self.object)
+            return self.render_to_response(context)
 
 
 class PaymentConfirmView(DetailView):
