@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from django.db import IntegrityError, DatabaseError
 
-from shopping.models import Product, BuyingHistory
+from shopping.models import BuyingHistory
 
 
 class PaymentRepositoryBase(ABC):
@@ -13,11 +13,6 @@ class PaymentRepositoryBase(ABC):
         self, product_id: int, user_id: int, amount: int, payment_provider_id: str
     ) -> bool:
         """支払い記録を保存する"""
-        pass
-
-    @abstractmethod
-    def get_product_by_id(self, product_id: int) -> Product | None:
-        """商品IDから商品を取得する"""
         pass
 
     @abstractmethod
@@ -50,12 +45,6 @@ class StripePaymentRepository(PaymentRepositoryBase):
         except Exception as e:
             print(f"予期しない例外が発生: {e}")
             raise  # 上位に再スロー
-
-    def get_product_by_id(self, product_id: int) -> Product | None:
-        try:
-            return Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return None
 
     def get_unpaid_orders(self, user_id: int) -> list:
         return list(
