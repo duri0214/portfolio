@@ -1,5 +1,7 @@
+import logging
+
 from django.contrib import messages
-from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import (
@@ -16,7 +18,7 @@ from .domain.repository.product import ProductRepository
 from .domain.repository.staff import StaffRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
-from .domain.valueobject.payment import PaymentIntent
+from .domain.valueobject.payment import PaymentIntent, PaymentInfo
 from .forms import (
     ProductCreateFormSingle,
     ProductCreateFormBulk,
@@ -27,6 +29,9 @@ from .forms import (
     PurchaseForm,
 )
 from .models import Product, Staff, BuyingHistory  # TODO: repositoryに移動して
+
+# ロガーの取得
+logger = logging.getLogger(__name__)
 
 
 class CreateSingleView(CreateView):
