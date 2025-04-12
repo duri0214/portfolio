@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import (
@@ -133,8 +133,9 @@ class ProductDetailView(DetailView):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.purchase_form = PurchaseForm()  # 初期値1のフォームを作成
+        self.purchase_form = None
         self.payment_repository = StripePaymentRepository()
+        self.product_repository = ProductRepository()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
