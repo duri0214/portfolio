@@ -218,23 +218,25 @@ class PaymentConfirmView(DetailView):
             dict: 拡張されたコンテキストデータ
         """
         context = super().get_context_data(**kwargs)
-        quantity = int(self.request.GET.get("quantity", 1))
-        product = self.get_object()
 
-        # 必要な計算をビューで行う
-        subtotal = product.price * quantity
-        tax = subtotal * 0.1  # 消費税10%
-        total_price = subtotal + tax
+        # セッションから支払い情報を取得
+        payment_info_dict = self.request.session.get("payment_info")
 
-        context.update(
-            {
-                "quantity": quantity,
-                "subtotal": subtotal,
-                "tax": tax,
-                "total_price": total_price,
-                "public_key": settings.STRIPE_PUBLIC_KEY,
-            }
-        )
+        if payment_info_dict:
+            payment_info = PaymentInfo.from_dict(payment_info_dict)
+
+            context.update(
+                {
+                    "quantity": payment_info.quantity,
+                    "subtotal": payment_info.subtotal,
+                    "tax": payment_info.tax_amount,
+                    "total_price": payment_info.total_amount,
+                    "public_key": settings.STRIPE_PUBLIC_KEY,
+                }
+            )
+        else:
+            context["error"] = "支払い情報が取得できませんでした。再度お試しください。"
+
         return context
 
     def post(self, request, *args, **kwargs):
