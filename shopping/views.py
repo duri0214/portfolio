@@ -249,53 +249,78 @@ class PaymentConfirmView(DetailView):
         Returns:
             HttpResponseRedirect: 決済完了ページへのリダイレクト
         """
-        product = self.get_object()
-        quantity = int(request.GET.get("quantity", 1))
-        total_amount = int(product.price * quantity * 1.1)  # 税込金額（10%）
+        self.object = self.get_object()
 
-        # Stripeトークンを取得
-        token = request.POST.get("stripeToken")
+        # セッションから支払い情報を取得
+        payment_info_dict = request.session.get("payment_info")
+
+        if not payment_info_dict:
+            messages.error(
+                request,
+                "支払い情報の取得に失敗しました。商品詳細ページからやり直してください。",
+            )
+            return HttpResponseRedirect(
+                reverse("shp:product_detail", kwargs={"pk": self.object.pk})
+            )
+        payment_info = PaymentInfo.from_dict(payment_info_dict)
 
         try:
             # PaymentIntentオブジェクトの作成
+            amount_in_int = int(payment_info.total_amount)
             payment_intent = PaymentIntent(
-                amount=total_amount,
+                amount=amount_in_int,  # Stripe APIは整数を受け取る
                 currency="jpy",
                 description=f"{product.name} × {quantity}個",
                 payment_method=token,
+                description=f"{self.object.name} × {payment_info.quantity}",  # 商品名と数量を説明文に付加
+                payment_method=request.POST.get("stripeToken"),  # Stripeトークン
             )
 
             # 支払い処理の実行
             payment_result = self.payment_service.create_payment(payment_intent)
 
             if payment_result.success:
-                # 支払い成功時は購入履歴に記録
-                saved = self.payment_repository.save_payment_record(
-                    product_id=product.id,
-                    user_id=request.user.id,
-                    amount=total_amount,
-                    payment_provider_id=payment_result.payment_id,
+                logger.info(
+                    f"支払い成功: ID={payment_result.payment_id}, 金額={payment_info.formatted_total_amount}円"
                 )
 
-                if saved:
-                    # 決済完了ページにリダイレクト
-                    return redirect("shp:payment_complete", pk=product.pk)
-                else:
-                    # 記録失敗時のエラーハンドリング
-                    messages.error(
-                        request,
-                        "購入履歴の保存に失敗しました。サポートにお問い合わせください。",
+                # 購入履歴の保存
+                try:
+                    history = BuyingHistory(
+                        user=request.user,
+                        product=self.object,
+                        quantity=payment_info.quantity,
+                        price=payment_info.price,  # 単価を保存
+                        stripe_id=payment_result.payment_id,
+                        payment_status=BuyingHistory.COMPLETED,
                     )
-                    return redirect("shp:payment_confirm", pk=product.pk)
-            else:
-                # 支払い失敗時のエラーメッセージ
-                messages.error(request, f"決済エラー: {payment_result.error_message}")
-                return redirect("shp:payment_confirm", pk=product.pk)
+                    history.save()
 
+                    # セッション削除
+                    if "payment_info" in request.session:
+                        del request.session["payment_info"]
+
+                    # 遷移先をshp:payment_completeに変更
+                    return HttpResponseRedirect(
+                        reverse("shp:payment_complete", kwargs={"pk": history.pk})
+                    )
+                except Exception as e:
+                    logger.error(f"購入履歴保存エラー: {e}")
+                    messages.error(
+                        request, f"購入履歴の保存中にエラーが発生しました: {e}"
+                    )
+            else:
+                logger.error(f"支払いエラー: {payment_result.error_message}")
+                messages.error(
+                    request, f"支払いに失敗しました: {payment_result.error_message}"
+                )
         except Exception as e:
-            # 予期せぬエラーのハンドリング
-            messages.error(request, f"予期せぬエラーが発生しました: {str(e)}")
-            return redirect("shp:payment_confirm", pk=product.pk)
+            logger.error(f"予期しないエラー: {e}")
+            messages.error(request, f"予期しないエラーが発生しました: {e}")
+
+        return HttpResponseRedirect(
+            reverse("product_detail", kwargs={"pk": self.object.pk})
+        )
 
 
 class PaymentCompleteView(DetailView):
