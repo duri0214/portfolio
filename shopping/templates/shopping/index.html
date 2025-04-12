@@ -43,7 +43,12 @@
             {% for product in page_obj %}
                 <div class="col">
                     <div class="card m-3" style="width: 15rem">
-                        <img src="{{ product.picture.url }}" class="card-img-top" alt="{{ product.code }}">
+                        {% if product.picture %}
+                            <img src="{{ product.picture.url }}" alt="{{ product.code }}" class="card-img-top">
+                        {% else %}
+                            <img src="{% static 'shopping/images/no-image.png' %}" alt="商品画像なし"
+                                 class="card-img-top">
+                        {% endif %}
                         <div class="card-body">
                             <h6 class="card-title">{{ product.name | truncatechars:12 }}</h6>
                             <p style="font-size: small;" class="card-text">
