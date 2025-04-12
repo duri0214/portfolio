@@ -13,3 +13,12 @@
 .custom-section ul li button {
     margin-right: 4px; /* ボタン同士の間隔調整 */
 }
+
+/* 商品画像の固定サイズを設定 */
+.product-image {
+    width: 216px; /* 横幅を固定 */
+    height: 151px; /* 縦幅を固定 */
+    object-fit: cover; /* 画像全体が表示されるよう調整 */
+    border-radius: 8px; /* 角を軽く丸める（任意） */
+    background-color: #f8f9fa; /* 背景色を設定 */
+}
