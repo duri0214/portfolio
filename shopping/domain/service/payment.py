@@ -47,9 +47,6 @@ class StripePaymentService(PaymentServiceBase):
                     description=intent.description,
                     source=intent.payment_method,  # トークンをsourceとして使用
                 )
-                logger.info(
-                    f"支払い成功: ID={charge.id}, 金額={intent.amount}{intent.currency}"
-                )
                 return PaymentResult(
                     success=True,
                     payment_id=charge.id,
