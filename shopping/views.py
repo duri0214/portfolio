@@ -28,7 +28,7 @@ from .forms import (
     StaffCreateForm,
     PurchaseForm,
 )
-from .models import Product, Staff, BuyingHistory  # TODO: repositoryに移動して
+from .models import Product, Staff, BuyingHistory
 
 # ロガーの取得
 logger = logging.getLogger(__name__)
