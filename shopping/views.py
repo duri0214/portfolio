@@ -270,8 +270,6 @@ class PaymentConfirmView(DetailView):
             payment_intent = PaymentIntent(
                 amount=amount_in_int,  # Stripe APIは整数を受け取る
                 currency="jpy",
-                description=f"{product.name} × {quantity}個",
-                payment_method=token,
                 description=f"{self.object.name} × {payment_info.quantity}",  # 商品名と数量を説明文に付加
                 payment_method=request.POST.get("stripeToken"),  # Stripeトークン
             )
