@@ -1,37 +1,62 @@
 {% extends 'shopping/base.html' %}
+{% load humanize %}
 {% load static %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'shopping/css/product/detail.css' %}">
+{% endblock %}
+
 {% block content %}
-    <div class="container">
-        <p>{{ message }}</p>
+    <div class="container py-5">
 
-        <!-- ピザ情報の表示 -->
-        <h1>{{ object.name }}</h1>
-        <img src="{{ object.picture.url }}" alt="missing picture">
-        <p class="lead">{{ object.created_at }} - {{ object.price }}円</p>
-        <p>{{ object.description | linebreaksbr }}<p>
-        <p>
-            開発やテスト中に使用するカード情報については
-            <a href="https://docs.stripe.com/testing?testing-method=card-numbers#visa" target="_blank"
-               rel="noopener noreferrer">こちら</a>
-            をご確認ください。
-        </p>
+        {% if message %}
+            <p class="alert alert-info">{{ message }}</p>
+        {% endif %}
 
-        <!-- 購入ボタン・フォームの作成 -->
-        <form method="POST">
-            {% csrf_token %}
-            <script
-                    src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                    data-key="{{ public_key }}"
-                    data-amount="{{ object.price }}"
-                    data-name="よろずや"
-                    data-description="{{ object.name }}"
-                    data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
-                    data-locale="ja"
-                    data-currency="jpy"
-                    data-email="{{ user.email }}">
-            </script>
-            <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary mx-1">戻る</a>
-        </form>
+        <!-- 商品情報セクション -->
+        <div class="row">
+            <!-- 商品画像 -->
+            <div class="col-lg-5 col-md-6 col-sm-12 text-center mb-4">
+                <div class="product-image-container">
+                    {% if object.picture %}
+                        <img src="{{ object.picture.url }}" alt="{{ object.name }}" class="product-image img-fluid">
+                    {% else %}
+                        <img src="{% static 'shopping/images/no-image.png' %}" alt="画像がありません"
+                             class="product-image img-fluid">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 商品詳細な情報 -->
+            <div class="col-lg-7 col-md-6 col-sm-12">
+                <h1 class="display-5 fw-bold">{{ object.name }}</h1>
+                <p class="text-muted">登録日: {{ object.created_at|date:"Y年m月d日" }}</p>
+                <h2 class="text-danger my-3">価格: ￥{{ object.price|intcomma }}</h2>
+                <p class="lead mb-4">{{ object.description | linebreaksbr }}</p>
+            </div>
+        </div>
+
+        <!-- 購入フォームセクション -->
+        <div class="row mt-5">
+            <div class="col">
+                <h3 class="mb-3">数量をお選びください</h3>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="form-group mb-4">
+                        {{ purchase_form.quantity.label_tag }}
+                        {{ purchase_form.quantity }}
+                        {% if purchase_form.quantity.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {{ purchase_form.quantity.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-3">
+                        <button type="submit" name="confirm" class="btn btn-primary btn-lg">購入手続きへ進む</button>
+                        <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary btn-lg">戻る</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 {% endblock %}

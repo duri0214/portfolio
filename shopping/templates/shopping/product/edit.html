@@ -1,14 +1,51 @@
 {% extends 'shopping/base.html' %}
 {% load static %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'shopping/css/product/edit.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="container">
-        <h1>商品の編集</h1>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button class="btn btn-outline-primary mx-1" type="submit">送信</button>
-            <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary mx-1">戻る</a>
-        </form>
+        <h3 class="page-title">商品情報（編集）</h3>
+
+        <div class="edit-form-card">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-fields">
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% if field.name == 'picture' %}
+                                {% if object.picture %}
+                                    <div class="current-image mb-2">
+                                        <img src="{{ object.picture.url }}" alt="現在の画像"
+                                             style="max-height: 150px; max-width: 100%;" class="img-thumbnail">
+                                    </div>
+                                {% endif %}
+                                {{ field }}
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in field.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="form-actions">
+                    <button class="submit-button btn btn-primary" type="submit">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                    <a href="{% url 'shp:product_detail' object.pk %}" class="cancel-button btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 戻る
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 {% endblock %}

@@ -1,15 +1,42 @@
 {% extends 'shopping/base.html' %}
 {% load static %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'shopping/css/product/create_single.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="container">
-        <h1>単品登録</h1>
-        <form action="{% url 'shp:product_create_single' %}" method="post" class="registration"
-              enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button class="btn btn-outline-primary mx-1" type="submit">送信</button>
-            <a href="{% url 'shp:index' %}" role="button" class="btn btn-outline-secondary mx-1">戻る</a>
-        </form>
+        <h3 class="page-title">単品登録</h3>
+
+        <div class="registration-form-card">
+            <form action="{% url 'shp:product_create_single' %}" method="post" class="registration"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-fields">
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in field.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="form-actions">
+                    <button class="submit-button btn btn-primary" type="submit">
+                        <i class="fas fa-save"></i> 登録
+                    </button>
+                    <a href="{% url 'shp:index' %}" class="cancel-button btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 戻る
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 {% endblock %}

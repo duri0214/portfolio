@@ -1,0 +1,90 @@
+{% extends "shopping/base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}決済確認 - {{ object.name }}{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'shopping/css/product/payment/confirm.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container my-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">決済確認</h3>
+            </div>
+
+            <div class="card-body">
+                <div class="product-summary mb-4">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            {% if object.image %}
+                                <img src="{{ object.image.url }}" alt="{{ object.name }}"
+                                     class="product-image img-fluid rounded">
+                            {% else %}
+                                <img src="{% static 'shopping/images/no-image.png' %}" alt="商品画像なし"
+                                     class="product-image img-fluid rounded">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <h4 class="card-title">{{ object.name }}</h4>
+                            <p class="text-muted">{{ object.description|truncatewords:30 }}</p>
+                            <div class="d-flex justify-content-between">
+                                <span class="badge bg-info p-2">単価: {{ object.price|intcomma }}円</span>
+                                <span class="badge bg-secondary p-2">数量: {{ quantity }}個</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-details mb-4">
+                    <h4 class="border-bottom pb-2 mb-3">お支払い金額</h4>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p>商品小計 ({{ quantity }}点)</p>
+                            <p>送料</p>
+                            <p>消費税</p>
+                            <p class="total-price">合計</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <p>{{ object.price|intcomma }}円 × {{ quantity }} = {{ subtotal|intcomma }}円</p>
+                            <p>無料</p>
+                            <p>{{ tax|intcomma }}円 (10%)</p>
+                            <p class="total-price text-danger">{{ total_price|intcomma }}円</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-form">
+                    <h4 class="border-bottom pb-2 mb-3">クレジットカード決済</h4>
+                    <p>
+                        開発やテスト中に使用するカード情報については
+                        <a href="https://docs.stripe.com/testing?testing-method=card-numbers#visa"
+                           target="_blank"
+                           rel="noopener noreferrer">こちら</a>
+                        をご確認ください。
+                    </p>
+
+                    <!-- 購入ボタン・フォームの作成 -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        <script
+                                src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                                data-key="{{ public_key }}"
+                                data-amount="{{ total_price }}"
+                                data-name="よろずや"
+                                data-description="{{ object.name }} × {{ quantity }}個"
+                                data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
+                                data-locale="ja"
+                                data-currency="jpy"
+                                data-email="{{ user.email }}">
+                        </script>
+                        <a href="{% url 'shp:product_detail' object.pk %}" role="button"
+                           class="btn btn-outline-secondary mx-1">戻る</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -13,3 +13,38 @@
 .custom-section ul li button {
     margin-right: 4px; /* ボタン同士の間隔調整 */
 }
+
+/* 商品カードのスタイル */
+.card {
+    margin: 10px 0; /* 上下の余白を追加 */
+    padding: 0; /* カード全体のパディングをリセット */
+    text-align: center; /* カード内のコンテンツを中央寄せ */
+    width: 100%; /* カード幅を親要素に対して可変にする */
+    max-width: 238px; /* 最大幅を設定して、巨大化しすぎるのを防ぐ */
+}
+
+/* 商品画像のスタイル */
+.product-image {
+    width: 100%; /* カード幅に合わせて調整 */
+    height: auto; /* 縦横比を維持しながら高さを自動調整 */
+    object-fit: cover; /* 画像全体が見えるようにカバー */
+    border-radius: 8px; /* 角を丸める */
+    background-color: #f8f9fa; /* 背景色を設定 */
+}
+
+/* カードの間隔調整 */
+.row-cols-1 .col,
+.row-cols-2 .col,
+.row-cols-3 .col,
+.row-cols-4 .col {
+    padding: 15px; /* カード間隔を調整 */
+    display: flex; /* 中央寄せのためフレックスボックスを追加 */
+    justify-content: center;
+}
+
+/* スマートフォンや小画面向けに調整 */
+@media (max-width: 576px) {
+    .card {
+        max-width: 100%; /* 小画面ではカード幅を最大化 */
+    }
+}

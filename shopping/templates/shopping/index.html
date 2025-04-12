@@ -19,39 +19,79 @@
         <p class="lead">yummy yummy pizza</p>
         <hr class="my-4">
         <p>You can buy and manage pizza system.</p>
-        <a class="btn btn-primary btn-lg" href="{% url 'shp:staff_create' %}" role="button">店員作成</a>
+        <div class="d-flex gap-2">
+            <!-- 店員作成 -->
+            <a class="btn btn-primary btn-sm d-flex align-items-center gap-1" href="{% url 'shp:staff_create' %}"
+               role="button">
+                <i class="fas fa-user-plus"></i> 店員作成
+            </a>
+
+            <!-- 単品登録 -->
+            <a class="btn btn-success btn-sm d-flex align-items-center gap-1"
+               href="{% url 'shp:product_create_single' %}" role="button">
+                <i class="fas fa-box"></i> 単品登録
+            </a>
+
+            <!-- CSV登録 -->
+            <a class="btn btn-warning btn-sm d-flex align-items-center gap-1" href="{% url 'shp:product_create_bulk' %}"
+               role="button">
+                <i class="fas fa-file-csv"></i> CSV登録
+            </a>
+        </div>
     </div>
 
     <div class="container">
-        <h2>｜店員一覧</h2>
+        <div class="section-header d-flex align-items-center my-4">
+            <i class="fas fa-users text-primary me-2" style="font-size: 1.5rem;"></i>
+            <h2 class="m-0">店員一覧</h2>
+        </div>
         {% if staffs %}
             {% for staff in staffs %}
-                <img src="{{ staff.image.url }}" width="100px" alt="missing picture">
-                {{ staff.name }}
-                <a class="small" href="{% url 'shp:staff_detail' staff.pk %}">プロフィール</a>
+                <div class="staff-item mb-3 d-flex align-items-center">
+                    {% if staff.image %}
+                        <img src="{{ staff.image.url }}" class="rounded-circle me-3" width="80" alt="{{ staff.name }}">
+                    {% else %}
+                        <i class="fas fa-user-circle" style="font-size: 80px; color: #6c757d; margin-right: 15px;"></i>
+                    {% endif %}
+                    <div>
+                        <div class="staff-name fw-bold">{{ staff.name }}</div>
+                        <a class="text-secondary small" href="{% url 'shp:staff_detail' staff.pk %}">プロフィール</a>
+                    </div>
+                </div>
             {% endfor %}
         {% else %}
-            店員がいません
+            <p class="text-muted">店員がいません</p>
         {% endif %}
 
-        <h2 class="mt-4">｜商品一覧</h2>
-        <div class="card-group">
+        <div class="section-header d-flex align-items-center mt-4 mb-3">
+            <i class="fas fa-boxes text-success me-2" style="font-size: 1.5rem;"></i>
+            <h2 class="m-0">商品一覧</h2>
+        </div>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
             {% for product in page_obj %}
-                <div class="col">
-                    <div class="card m-3" style="width: 15rem">
-                        <img src="{{ product.picture.url }}" class="card-img-top" alt="{{ product.code }}">
+                <div class="col d-flex justify-content-center">
+                    <div class="card">
+                        {% if product.picture %}
+                            <img src="{{ product.picture.url }}" alt="{{ product.code }}"
+                                 class="card-img-top product-image">
+                        {% else %}
+                            <img src="{% static 'shopping/images/no-image.png' %}" alt="商品画像なし"
+                                 class="card-img-top product-image">
+                        {% endif %}
                         <div class="card-body">
                             <h6 class="card-title">{{ product.name | truncatechars:12 }}</h6>
                             <p style="font-size: small;" class="card-text">
                                 price: @{{ product.price | intcomma }} 円<br>
                                 {{ product.description | truncatechars:20 }}
                             </p>
-                            <a href="{% url 'shp:product_detail' product.pk %}"
-                               style="font-size: small;">もっと詳しく</a>
-                            <a href="{% url 'shp:product_edit' product.pk %}"
-                               class="btn btn-primary">
-                                <i class="fas fa-pencil-alt"></i>
-                            </a>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'shp:product_detail' product.pk %}" class="btn btn-success">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </a>
+                                <a href="{% url 'shp:product_edit' product.pk %}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -80,10 +120,6 @@
                 {% endif %}
             </ul>
         </nav>
-
-        <h2 id="maintain" class="mt-4">｜管理用</h2>
-        <a href="{% url 'shp:product_create_single' %}">単品登録</a>
-        <a href="{% url 'shp:product_create_bulk' %}">CSV登録</a>
     </div>
 
 {% endblock %}

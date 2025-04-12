@@ -1,0 +1,27 @@
+/* 商品画像の調整 */
+.product-image {
+    width: 100%; /* 親要素に応じてサイズ調整 */
+    max-width: 400px; /* 最大サイズ */
+    height: auto; /* 縦横比を維持 */
+    border-radius: 8px; /* 角を丸める */
+    background-color: #f8f9fa; /* 背景色を薄いグレーに */
+    padding: 10px; /* 画像に余白を追加 */
+    border: 1px solid #dee2e6; /* 境界線 */
+}
+
+/* テキストの余白調整 */
+.lead {
+    font-size: 1.2rem;
+    line-height: 1.6; /* 行間を広めに */
+}
+
+h2.text-danger {
+    font-size: 1.65rem;
+    font-weight: bold;
+    margin-bottom: 2rem; /* 価格の下に余白を追加 */
+}
+
+/* ボタン間の調整 */
+.d-flex.gap-3 > * {
+    flex: 1;
+}
