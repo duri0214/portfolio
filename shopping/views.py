@@ -65,8 +65,6 @@ class CreateBulkView(FormView):
     form_class = ProductCreateFormBulk
     success_url = reverse_lazy("shp:index")
 
-    # TODO: まだ見直し必要です
-
     def form_valid(self, form):
         try:
             # CSVファイルをサービスに渡して処理
