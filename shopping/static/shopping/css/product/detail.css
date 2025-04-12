@@ -1,23 +1,27 @@
-.product-image-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-}
-
+/* 商品画像の調整 */
 .product-image {
-    max-width: 500px; /* 最大幅を設定 */
-    max-height: 400px; /* 最大高さを設定 */
-    width: auto;
-    height: auto;
-    object-fit: contain; /* 画像全体が表示されるようにする */
-    border-radius: 8px; /* 角を少し丸くする */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 影を追加 */
+    width: 100%; /* 親要素に応じてサイズ調整 */
+    max-width: 400px; /* 最大サイズ */
+    height: auto; /* 縦横比を維持 */
+    border-radius: 8px; /* 角を丸める */
+    background-color: #f8f9fa; /* 背景色を薄いグレーに */
+    padding: 10px; /* 画像に余白を追加 */
+    border: 1px solid #dee2e6; /* 境界線 */
 }
 
-/* レスポンシブ対応 */
-@media (max-width: 768px) {
-    .product-image {
-        max-width: 100%;
-        max-height: 300px;
-    }
+/* テキストの余白調整 */
+.lead {
+    font-size: 1.2rem;
+    line-height: 1.6; /* 行間を広めに */
+}
+
+h2.text-danger {
+    font-size: 1.65rem;
+    font-weight: bold;
+    margin-bottom: 2rem; /* 価格の下に余白を追加 */
+}
+
+/* ボタン間の調整 */
+.d-flex.gap-3 > * {
+    flex: 1;
 }
