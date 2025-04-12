@@ -33,22 +33,32 @@
     </div>
 
     <div class="container">
-        <h2>｜店員一覧</h2>
+        <div class="section-header d-flex align-items-center my-4">
+            <i class="fas fa-users text-primary me-2" style="font-size: 1.5rem;"></i>
+            <h2 class="m-0">店員一覧</h2>
+        </div>
         {% if staffs %}
             {% for staff in staffs %}
-                {% if staff.image %}
-                    <img src="{{ staff.image.url }}" width="100px" alt="{{ staff.name }}">
-                {% else %}
-                    <i class="fas fa-user-circle" style="font-size: 100px; color: #6c757d;"></i>
-                {% endif %}
-                {{ staff.name }}
-                <a class="small" href="{% url 'shp:staff_detail' staff.pk %}">プロフィール</a>
+                <div class="staff-item mb-3 d-flex align-items-center">
+                    {% if staff.image %}
+                        <img src="{{ staff.image.url }}" class="rounded-circle me-3" width="80" alt="{{ staff.name }}">
+                    {% else %}
+                        <i class="fas fa-user-circle" style="font-size: 80px; color: #6c757d; margin-right: 15px;"></i>
+                    {% endif %}
+                    <div>
+                        <div class="staff-name fw-bold">{{ staff.name }}</div>
+                        <a class="text-secondary small" href="{% url 'shp:staff_detail' staff.pk %}">プロフィール</a>
+                    </div>
+                </div>
             {% endfor %}
         {% else %}
-            店員がいません
+            <p class="text-muted">店員がいません</p>
         {% endif %}
 
-        <h2 class="mt-4">｜商品一覧</h2>
+        <div class="section-header d-flex align-items-center mt-4 mb-3">
+            <i class="fas fa-boxes text-success me-2" style="font-size: 1.5rem;"></i>
+            <h2 class="m-0">商品一覧</h2>
+        </div>
         <div class="card-group">
             {% for product in page_obj %}
                 <div class="col">
