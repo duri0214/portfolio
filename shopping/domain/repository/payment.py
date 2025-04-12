@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from django.db import IntegrityError, DatabaseError
 
-from shopping.models import BuyingHistory
+from shopping.models import BuyingHistory, Product
 
 
 class PaymentRepositoryBase(ABC):
@@ -18,6 +18,13 @@ class PaymentRepositoryBase(ABC):
     @abstractmethod
     def get_unpaid_orders(self, user_id: int) -> list:
         """未払いの注文を取得する"""
+        pass
+
+    @abstractmethod
+    def calculate_payment_amounts(
+        self, product_id: int, quantity: int, tax_rate: float | None = None
+    ) -> dict:
+        """支払い金額の内訳を計算する"""
         pass
 
 
@@ -52,3 +59,43 @@ class StripePaymentRepository(PaymentRepositoryBase):
                 user_id=user_id, payment_status=BuyingHistory.PENDING
             )
         )
+
+    def calculate_payment_amounts(
+        self, product_id: int, quantity: int, tax_rate: float | None = None
+    ) -> dict:
+        """
+        商品IDと数量から支払い金額の内訳を計算する
+
+        Args:
+            product_id: 商品ID
+            quantity: 購入数量
+            tax_rate: 税率（指定がない場合はデフォルト値の0.10が使用される）
+
+        Returns:
+            金額内訳の辞書 (subtotal, tax_amount, total_amount)
+        """
+        try:
+            product = Product.objects.get(id=product_id)
+            price = product.price
+
+            # 税率のデフォルト値
+            if tax_rate is None:
+                tax_rate = 0.10
+
+            subtotal = price * quantity
+            tax_amount = int(subtotal * tax_rate)
+            total_amount = subtotal + tax_amount
+
+            return {
+                "price": price,
+                "quantity": quantity,
+                "subtotal": subtotal,
+                "tax_amount": tax_amount,
+                "total_amount": total_amount,
+                "tax_rate": tax_rate,
+            }
+        except Product.DoesNotExist:
+            raise ValueError(f"商品ID {product_id} が見つかりません")
+        except Exception as e:
+            print(f"金額計算中にエラーが発生しました: {e}")
+            raise
