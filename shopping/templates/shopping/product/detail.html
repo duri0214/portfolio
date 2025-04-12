@@ -1,4 +1,5 @@
 {% extends 'shopping/base.html' %}
+{% load humanize %}
 {% load static %}
 
 {% block extra_css %}
@@ -12,9 +13,13 @@
         <!-- 商品情報の表示 -->
         <h1>{{ object.name }}</h1>
         <div class="product-image-container">
-            <img src="{{ object.picture.url }}" alt="{{ object.name }}" class="product-image">
+            {% if object.picture %}
+                <img src="{{ object.picture.url }}" alt="{{ object.name }}" class="product-image">
+            {% else %}
+                <img src="{% static 'shopping/images/no-image.png' %}" alt="画像がありません" class="product-image">
+            {% endif %}
         </div>
-        <p class="lead">{{ object.created_at }} - {{ object.price }}円</p>
+        <p class="lead">{{ object.created_at }} - {{ object.price|intcomma }}円</p>
         <p>{{ object.description | linebreaksbr }}</p>
 
         <!-- 数量選択フォーム -->
