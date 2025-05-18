@@ -39,7 +39,7 @@ class FormTests(TestCase):
 
     def test_exchange_calc(self):
         """
-        予算、単価、為替レートを使って購入可能な株数を計算するテスト。
+        予算、単価、為替レートを使って購入可能な購入可能な株数を計算するテスト。
 
         テスト内容:
         - budget (予算): 購入するための資金額（JPY）。
@@ -47,22 +47,27 @@ class FormTests(TestCase):
         - rate (為替レート): JPYからVNDへの変換レート。
 
         期待する挙動:
-        - 予算内で購入可能な株数を整数値で計算。
-        - 必要に応じて変数に値を分解して検算。
+        - 予算内で購入可能な株数を計算し、結果を確認。
+        - 合計計算式として分かりやすく `f-string` 表現で情報を出力。
         """
         # テストデータ
         budget = 100000  # 予算 (JPY)
         unit_price = 100000  # 株の単価 (VND)
         rate = 171.05713308244952  # 固定為替レート (JPY → VND)
 
-        # 単価に基づいて 1 株あたりに必要な日本円を計算 (検算用)
+        # 1口あたりの金額を計算
         yen_per_unit = unit_price / rate
-        print(f"1口あたりの金額 (JPY): {yen_per_unit:.5f}")
+        print(f"1口あたりの金額 (JPY): {yen_per_unit:.2f}円")
 
         # 購入可能な株数を計算
         can_be_buy = int(budget / yen_per_unit)
-        print(f"購入可能な株数: {can_be_buy}")
 
-        # 検証: 購入可能な株数が期待値通りであるか
-        expected_can_be_buy = 171  # ※計算上、レートの整数部分にほぼ等しい
+        # 合計計算結果を計算して、理解しやすい表現で出力
+        total_spent_yen = can_be_buy * yen_per_unit
+        print(
+            f"合計金額({total_spent_yen:.1f}円) = 株数({can_be_buy}口) * 1株あたりの金額({yen_per_unit:.2f}円)"
+        )
+
+        # 検証: 購入可能な株数が期待値通りか
+        expected_can_be_buy = 171  # 計算上、株数171が期待される
         self.assertEqual(can_be_buy, expected_can_be_buy)
