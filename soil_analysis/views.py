@@ -485,7 +485,7 @@ class AssociatePictureAndLandView(ListView):
     success_url = reverse_lazy("soil:associate_picture_and_land_result")
 
     def get_queryset(self):
-        return Land.objects.all().order_by("pk")
+        return LandRepository.find_all()
 
     @staticmethod
     def get_dummy_photo_spots() -> list[XarvioCoord]:
