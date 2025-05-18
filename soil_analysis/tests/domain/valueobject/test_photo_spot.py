@@ -1,10 +1,10 @@
 from unittest import TestCase
 
 from lib.geo.valueobject.coord import XarvioCoord
-from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
+from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
 
 
-class TestCaptureLocation(TestCase):
+class TestPhotoSpot(TestCase):
     def setUp(self):
         """
         Note: テスト要件 座標はxarvioベース(lng,lat)で記す
@@ -18,8 +18,8 @@ class TestCaptureLocation(TestCase):
         self.capture_point_lat = 34.743865
         self.capture_point_azimuth = 190
 
-    def test_capture_location(self):
-        capture_location = CaptureLocation(
+    def test_photo_spot(self):
+        photo_spot = PhotoSpot(
             XarvioCoord(
                 longitude=self.capture_point_lng, latitude=self.capture_point_lat
             ),
@@ -27,17 +27,17 @@ class TestCaptureLocation(TestCase):
         )
         self.assertAlmostEqual(
             self.capture_point_lng,
-            capture_location.original_position.to_tuple()[0],
+            photo_spot.original_position.to_tuple()[0],
             delta=0.0003,
         )
         self.assertAlmostEqual(
             self.capture_point_lat,
-            capture_location.original_position.to_tuple()[1],
+            photo_spot.original_position.to_tuple()[1],
             delta=0.0003,
         )
 
     def test_corrected_coord(self):
-        capture_location = CaptureLocation(
+        photo_spot = PhotoSpot(
             XarvioCoord(
                 longitude=self.capture_point_lng, latitude=self.capture_point_lat
             ),
@@ -45,11 +45,11 @@ class TestCaptureLocation(TestCase):
         )
         print(f"gmap検証用_撮影位置: 34.743865,137.6492809")
         print(
-            f"gmap検証用_10m先の位置: {capture_location.adjusted_position.to_google().to_str()}"
+            f"gmap検証用_10m先の位置: {photo_spot.adjusted_position.to_google().to_str()}"
         )
         self.assertAlmostEqual(
-            137.6492, capture_location.adjusted_position.to_tuple()[0], delta=0.0003
+            137.6492, photo_spot.adjusted_position.to_tuple()[0], delta=0.0003
         )
         self.assertAlmostEqual(
-            34.74378, capture_location.adjusted_position.to_tuple()[1], delta=0.0003
+            34.74378, photo_spot.adjusted_position.to_tuple()[1], delta=0.0003
         )

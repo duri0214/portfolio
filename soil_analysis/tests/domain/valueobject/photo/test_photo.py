@@ -2,9 +2,9 @@ import os
 from unittest import TestCase
 
 from lib.geo.valueobject.coord import XarvioCoord
-from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.photo import AndroidPhoto
 from soil_analysis.domain.valueobject.photo import IphonePhoto
+from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
 
 
 class TestBasePhotoFunctionality(TestCase):
@@ -100,7 +100,7 @@ class TestBasePhotoFunctionality(TestCase):
         1. 正常系テスト:
            - IphonePhoto: 経度140.41932067、緯度35.80548371が正しく抽出されるか
            - AndroidPhoto: 経度137.8266552、緯度34.6942567が正しく抽出されるか
-           - 抽出された位置情報がCaptureLocationオブジェクトとして適切に生成されるか
+           - 抽出された位置情報がPhotoSpotオブジェクトとして適切に生成されるか
 
         2. 異常系テスト:
            - GPS GPSLongitudeがNoneの場合に適切なValueErrorが発生するか
@@ -112,13 +112,13 @@ class TestBasePhotoFunctionality(TestCase):
         エラーハンドリングも検証します。
         """
         # iPhone位置情報の検証
-        expected_iphone_loc = CaptureLocation(
+        expected_iphone_loc = PhotoSpot(
             XarvioCoord(longitude=140.41932067, latitude=35.80548371)
         )
         self._assert_locations_equal(expected_iphone_loc, self.iphone_photo.location)
 
         # Android位置情報の検証
-        expected_android_loc = CaptureLocation(
+        expected_android_loc = PhotoSpot(
             XarvioCoord(longitude=137.8266552, latitude=34.6942567)
         )
         self._assert_locations_equal(expected_android_loc, self.android_photo.location)
@@ -172,13 +172,13 @@ class TestBasePhotoFunctionality(TestCase):
     def _assert_locations_equal(self, expected, actual):
         """位置情報の比較を行うヘルパーメソッドです。
 
-        CaptureLocationオブジェクトの比較を行い、経度と緯度が許容誤差（0.001度）内で
+        PhotoSpotオブジェクトの比較を行い、経度と緯度が許容誤差（0.001度）内で
         一致しているかを確認します。浮動小数点の比較には直接的な等価比較ではなく、
         許容誤差を考慮した比較を使用します。
 
         Args:
-            expected: 期待されるCaptureLocationオブジェクト
-            actual: 実際のCaptureLocationオブジェクト
+            expected: 期待されるPhotoSpotオブジェクト
+            actual: 実際のPhotoSpotオブジェクト
 
         該当テスト: test_extract_location
         """

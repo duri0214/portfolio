@@ -26,7 +26,7 @@ from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
-from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
+from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (
     Company,
@@ -500,7 +500,7 @@ class AssociatePictureAndLandView(ListView):
         spot_index = int(request.POST["photo_spot"])
         photo_spots = self.get_dummy_photo_spots()
 
-        photo_spot = CaptureLocation(photo_spots[spot_index])
+        photo_spot = PhotoSpot(photo_spots[spot_index])
 
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_spot, list(self.get_queryset()))
