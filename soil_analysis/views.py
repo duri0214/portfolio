@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.db.models import Count, Prefetch
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -79,7 +79,13 @@ class LandListView(ListView):
 
     def get_queryset(self):
         company_id = self.kwargs["company_id"]
-        company = CompanyRepository.get_company_by_id(company_id)
+        if not company_id:
+            raise Http404("Company ID is required.")
+
+        try:
+            company = CompanyRepository.get_company_by_id(company_id)
+        except Company.DoesNotExist:
+            raise Http404("Company does not exist.")
 
         weather_prefetch = Prefetch(
             "jma_city__jma_region__jmaweather_set",
@@ -101,7 +107,13 @@ class LandListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         company_id = self.kwargs["company_id"]
-        company = CompanyRepository.get_company_by_id(company_id)
+        if not company_id:
+            raise Http404("Company ID is required.")
+
+        try:
+            company = CompanyRepository.get_company_by_id(company_id)
+        except Company.DoesNotExist:
+            raise Http404("Company does not exist.")
 
         context["land_ledger_map"] = LandRepository.get_land_to_ledgers_map(
             context["object_list"]
