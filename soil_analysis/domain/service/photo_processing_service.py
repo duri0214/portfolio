@@ -1,9 +1,9 @@
 from haversine import haversine, Unit
 
 from lib.geo.valueobject.coord import XarvioCoord
-from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.photo import AndroidPhoto
 from soil_analysis.domain.valueobject.photo_land_association import PhotoLandAssociation
+from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
 from soil_analysis.models import Land
 
 
@@ -44,9 +44,7 @@ class PhotoProcessingService:
 
         return associations
 
-    def find_nearest_land(
-        self, photo_spot: CaptureLocation, land_list: list[Land]
-    ) -> Land:
+    def find_nearest_land(self, photo_spot: PhotoSpot, land_list: list[Land]) -> Land:
         """撮影位置から最も近い圃場を特定します。
 
         写真のGPSメタデータから抽出した撮影位置を使用して、候補となる圃場の中から

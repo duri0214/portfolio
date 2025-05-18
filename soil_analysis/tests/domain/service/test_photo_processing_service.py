@@ -4,8 +4,8 @@ from django.test import TestCase
 
 from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
-from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
 from soil_analysis.domain.valueobject.land import LandLocation
+from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
 
 
 class TestPhotoProcessingService(TestCase):
@@ -92,9 +92,7 @@ class TestPhotoProcessingService(TestCase):
         撮影位置をススムA1の正面に設定し、find_nearest_land関数が
         ススムA1を最も近い圃場として正しく特定できることを検証します。
         """
-        photo_spot = CaptureLocation(
-            XarvioCoord(longitude=137.64905, latitude=34.74424)
-        )
+        photo_spot = PhotoSpot(XarvioCoord(longitude=137.64905, latitude=34.74424))
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_spot, self.land_list)
         self.assertEqual(self.land1, nearest_land)
@@ -105,7 +103,7 @@ class TestPhotoProcessingService(TestCase):
         撮影位置をススムA2の正面に設定し、find_nearest_land関数が
         ススムA2を最も近い圃場として正しく特定できることを検証します。
         """
-        photo_spot = CaptureLocation(XarvioCoord(longitude=137.64921, latitude=34.744))
+        photo_spot = PhotoSpot(XarvioCoord(longitude=137.64921, latitude=34.744))
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_spot, self.land_list)
         self.assertEqual(self.land2, nearest_land)
@@ -116,9 +114,7 @@ class TestPhotoProcessingService(TestCase):
         撮影位置をススムA3の正面に設定し、find_nearest_land関数が
         ススムA3を最も近い圃場として正しく特定できることを検証します。
         """
-        photo_spot = CaptureLocation(
-            XarvioCoord(longitude=137.64938, latitude=34.74374)
-        )
+        photo_spot = PhotoSpot(XarvioCoord(longitude=137.64938, latitude=34.74374))
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_spot, self.land_list)
         self.assertEqual(self.land3, nearest_land)
@@ -129,7 +125,7 @@ class TestPhotoProcessingService(TestCase):
         撮影位置をススムA4の正面に設定し、find_nearest_land関数が
         ススムA4を最も近い圃場として正しく特定できることを検証します。
         """
-        photo_spot = CaptureLocation(XarvioCoord(longitude=137.6496, latitude=34.7434))
+        photo_spot = PhotoSpot(XarvioCoord(longitude=137.6496, latitude=34.7434))
         service = PhotoProcessingService()
         nearest_land = service.find_nearest_land(photo_spot, self.land_list)
         self.assertEqual(self.land4, nearest_land)

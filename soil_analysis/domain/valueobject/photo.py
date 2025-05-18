@@ -5,7 +5,7 @@ import re
 import exifread
 
 from lib.geo.valueobject.coord import XarvioCoord
-from soil_analysis.domain.valueobject.capturelocation import CaptureLocation
+from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
 
 
 class ExifReader:
@@ -63,7 +63,7 @@ class BasePhoto:
 
         raise ValueError("Invalid GPS date format")
 
-    def _extract_location(self) -> CaptureLocation:
+    def _extract_location(self) -> PhotoSpot:
         """EXIFデータから位置情報を抽出する"""
         gps_longitude = self.exif_data.get("GPS GPSLongitude")
         if gps_longitude is None:
@@ -72,7 +72,7 @@ class BasePhoto:
         if gps_latitude is None:
             raise ValueError("Invalid GPSLatitude value: None")
 
-        return CaptureLocation(
+        return PhotoSpot(
             XarvioCoord(
                 longitude=self._convert_to_degrees(gps_longitude),
                 latitude=self._convert_to_degrees(gps_latitude),

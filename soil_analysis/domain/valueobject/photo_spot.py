@@ -3,7 +3,7 @@ import math
 from lib.geo.valueobject.coord import XarvioCoord
 
 
-class CaptureLocation:
+class PhotoSpot:
     """撮影位置と方向を表現し、圃場特定のための位置補正を行うクラス。
 
     ## 背景と目的
@@ -31,7 +31,7 @@ class CaptureLocation:
     ADJUSTMENT_DISTANCE_KM = 0.01  # 10メートル
 
     def __init__(self, xarvio_coord: XarvioCoord, azimuth: float = None):
-        """CaptureLocation オブジェクトを初期化します。
+        """PhotoSpot オブジェクトを初期化します。
 
         Args:
             xarvio_coord: 撮影位置
@@ -108,4 +108,4 @@ class CaptureLocation:
         Returns:
             str: オブジェクトを再現可能な詳細な表現
         """
-        return f"CaptureLocation(longitude={self._original_position.longitude}, latitude={self._original_position.latitude}, azimuth={self._azimuth})"
+        return f"PhotoSpot(longitude={self._original_position.longitude}, latitude={self._original_position.latitude}, azimuth={self._azimuth})"
