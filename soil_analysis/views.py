@@ -5,8 +5,8 @@ import shutil
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
-from django.db.models import Count, Prefetch
-from django.http import HttpResponseRedirect, JsonResponse
+from django.db.models import Prefetch
+from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -21,6 +21,9 @@ from django.views.generic import (
 from lib.geo.valueobject.coord import GoogleMapsCoord, XarvioCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.company import CompanyRepository
+from soil_analysis.domain.repository.hardness_measurement import (
+    SoilHardnessMeasurementRepository,
+)
 from soil_analysis.domain.repository.land import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.kml import KmlService
@@ -79,7 +82,13 @@ class LandListView(ListView):
 
     def get_queryset(self):
         company_id = self.kwargs["company_id"]
-        company = CompanyRepository.get_company_by_id(company_id)
+        if not company_id:
+            raise Http404("Company ID is required.")
+
+        try:
+            company = CompanyRepository.get_company_by_id(company_id)
+        except Company.DoesNotExist:
+            raise Http404("Company does not exist.")
 
         weather_prefetch = Prefetch(
             "jma_city__jma_region__jmaweather_set",
@@ -101,7 +110,13 @@ class LandListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         company_id = self.kwargs["company_id"]
-        company = CompanyRepository.get_company_by_id(company_id)
+        if not company_id:
+            raise Http404("Company ID is required.")
+
+        try:
+            company = CompanyRepository.get_company_by_id(company_id)
+        except Company.DoesNotExist:
+            raise Http404("Company does not exist.")
 
         context["land_ledger_map"] = LandRepository.get_land_to_ledgers_map(
             context["object_list"]
@@ -249,14 +264,7 @@ class HardnessAssociationView(ListView):
     template_name = "soil_analysis/hardness/association/list.html"
 
     def get_queryset(self, **kwargs):
-        return (
-            super()
-            .get_queryset()
-            .filter(land_block__isnull=True)
-            .values("set_memory", "set_datetime")
-            .annotate(cnt=Count("pk"))
-            .order_by("set_memory")
-        )
+        return SoilHardnessMeasurementRepository.group_measurements()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -293,12 +301,12 @@ class HardnessAssociationView(ListView):
                 sampling_method=land_ledger.sampling_method
             ).order_by("ordering")
             for memory_anchor in form_checkboxes:
-                hardness_measurements = SoilHardnessMeasurement.objects.filter(
-                    set_memory__range=(
-                        memory_anchor,
-                        memory_anchor + (total_sampling_times - 1),
+                hardness_measurements = (
+                    SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
+                        memory_anchor, total_sampling_times
                     )
-                ).order_by("pk")
+                )
+
                 for i, hardness_measurement in enumerate(hardness_measurements):
                     hardness_measurement.land_block = land_block_orders[
                         needle
@@ -306,7 +314,7 @@ class HardnessAssociationView(ListView):
                     hardness_measurement.land_ledger = land_ledger
                     forward_the_needle = (
                         i > 0
-                        and i % (hardness_measurement.setdepth * sampling_times) == 0
+                        and i % (hardness_measurement.set_depth * sampling_times) == 0
                     )
                     if forward_the_needle:
                         needle += 1
@@ -326,18 +334,15 @@ class HardnessAssociationIndividualView(ListView):
         form_land_ledger = self.kwargs.get("land_ledger")
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
         total_sampling_times = 5 * land_ledger.sampling_method.times
-        return (
-            super()
-            .get_queryset()
-            .filter(
-                set_memory__range=(
-                    form_memory_anchor,
-                    form_memory_anchor + (total_sampling_times - 1),
-                )
+
+        hardness_measurements = (
+            SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
+                form_memory_anchor, total_sampling_times
             )
-            .values("set_memory", "set_datetime")
-            .annotate(cnt=Count("pk"))
-            .order_by("set_memory")
+        )
+
+        return SoilHardnessMeasurementRepository.group_measurements(
+            hardness_measurements
         )
 
     def get_context_data(self, **kwargs):
@@ -359,12 +364,13 @@ class HardnessAssociationIndividualView(ListView):
         form_land_blocks = request.POST.getlist("land-blocks[]")
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
         total_sampling_times = 5 * land_ledger.sampling_method.times
-        hardness_measurements = SoilHardnessMeasurement.objects.filter(
-            set_memory__range=(
-                form_memory_anchor,
-                form_memory_anchor + (total_sampling_times - 1),
+
+        hardness_measurements = (
+            SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
+                form_memory_anchor, total_sampling_times
             )
-        ).order_by("pk")
+        )
+
         for i, hardness_measurement in enumerate(hardness_measurements):
             needle = i // 60
             hardness_measurement.land_block_id = form_land_blocks[needle]
@@ -482,10 +488,10 @@ class AssociatePictureAndLandView(ListView):
         注: GPSが正確な撮影位置を取得できるようになったらここを置き換える
         """
         return [
-            XarvioCoord(longitude=137.64905, latitude=34.74424),  # A1用
-            XarvioCoord(longitude=137.64921, latitude=34.744),  # A2用
-            XarvioCoord(longitude=137.64938, latitude=34.74374),  # A3用
-            XarvioCoord(longitude=137.6496, latitude=34.7434),  # A4用
+            XarvioCoord(longitude=137.64905, latitude=34.74424),  # 静岡ススムA1用
+            XarvioCoord(longitude=137.64921, latitude=34.744),  # 静岡ススムA2用
+            XarvioCoord(longitude=137.64938, latitude=34.74374),  # 静岡ススムA3用
+            XarvioCoord(longitude=137.6496, latitude=34.7434),  # 静岡ススムA4用
         ]
 
     def get_context_data(self, **kwargs):

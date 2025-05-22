@@ -3,7 +3,7 @@ from datetime import datetime, date
 import requests
 from django.core.management import BaseCommand
 
-from soil_analysis.domain.repository.weather.jma import JmaRepository
+from soil_analysis.domain.repository.jma import JmaRepository
 from soil_analysis.domain.valueobject.weather.jma import (
     WindData,
     MeanCalculable,
