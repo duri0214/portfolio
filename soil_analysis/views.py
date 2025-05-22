@@ -335,13 +335,15 @@ class HardnessAssociationIndividualView(ListView):
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
         total_sampling_times = 5 * land_ledger.sampling_method.times
 
-        measurements = (
+        hardness_measurements = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
                 form_memory_anchor, total_sampling_times
             )
         )
 
-        return SoilHardnessMeasurementRepository.group_measurements(measurements)
+        return SoilHardnessMeasurementRepository.group_measurements(
+            hardness_measurements
+        )
 
     def get_context_data(self, **kwargs):
         form_memory_anchor = self.kwargs.get("memory_anchor")
