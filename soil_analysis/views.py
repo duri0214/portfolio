@@ -488,10 +488,10 @@ class AssociatePictureAndLandView(ListView):
         注: GPSが正確な撮影位置を取得できるようになったらここを置き換える
         """
         return [
-            XarvioCoord(longitude=137.64905, latitude=34.74424),  # A1用
-            XarvioCoord(longitude=137.64921, latitude=34.744),  # A2用
-            XarvioCoord(longitude=137.64938, latitude=34.74374),  # A3用
-            XarvioCoord(longitude=137.6496, latitude=34.7434),  # A4用
+            XarvioCoord(longitude=137.64905, latitude=34.74424),  # 静岡ススムA1用
+            XarvioCoord(longitude=137.64921, latitude=34.744),  # 静岡ススムA2用
+            XarvioCoord(longitude=137.64938, latitude=34.74374),  # 静岡ススムA3用
+            XarvioCoord(longitude=137.6496, latitude=34.7434),  # 静岡ススムA4用
         ]
 
     def get_context_data(self, **kwargs):
