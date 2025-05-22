@@ -314,7 +314,7 @@ class HardnessAssociationView(ListView):
                     hardness_measurement.land_ledger = land_ledger
                     forward_the_needle = (
                         i > 0
-                        and i % (hardness_measurement.setdepth * sampling_times) == 0
+                        and i % (hardness_measurement.set_depth * sampling_times) == 0
                     )
                     if forward_the_needle:
                         needle += 1
