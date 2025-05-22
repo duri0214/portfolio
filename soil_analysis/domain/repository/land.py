@@ -1,13 +1,7 @@
-from django.db.models import QuerySet
-
 from soil_analysis.models import Land, LandLedger
 
 
 class LandRepository:
-    @staticmethod
-    def find_all() -> QuerySet:
-        return Land.objects.all().order_by("pk")
-
     @staticmethod
     def find_land_by_id(land_id: int) -> Land:
         return Land.objects.get(pk=land_id)
