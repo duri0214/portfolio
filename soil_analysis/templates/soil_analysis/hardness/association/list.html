@@ -43,9 +43,7 @@
                         <td>{{ measurement.cnt }}</td>
                         {% if forloop.counter0|divisibleby:25 %}
                             <td rowspan="5">
-                                <div class="alert alert-info" role="alert" style="font-size: 0.9rem; padding: 0.5rem;">
-                                    基本的にRパターンで登録されます
-                                </div>
+                                <p> 基本的にRパターンで登録されます </p>
                                 <button class="btn btn-outline-secondary mb-3" type="submit" name="btn_individual"
                                         value="{{ measurement.set_memory }}">圃場をRパターン以外で登録
                                 </button>
