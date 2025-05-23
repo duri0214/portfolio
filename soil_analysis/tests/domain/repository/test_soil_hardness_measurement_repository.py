@@ -119,19 +119,31 @@ class TestSoilHardnessMeasurementRepository(TestCase):
         """
         get_measurements_by_memory_rangeメソッドのテスト
 
-        このテストでは、指定したメモリ範囲内の計測データを正しく取得できることを確認します。
-        特に以下の点を検証:
-        1. 指定したメモリ範囲内のデータが正しく取得されるか
-        2. 取得されたデータ数が期待通りか
-        3. 取得されたデータが適切に並べられているか
+        【シナリオ】
+        実際の圃場計測では、各ブロックで5点法（1ブロック内の5箇所で測定）を用いて計測を行い、
+        各ブロックにメモリ番号が割り振られます。
+        このテストでは、以下のシナリオを想定します：
+        1. A1ブロック: メモリ1-5
+        2. A3ブロック: メモリ6-10
+        3. B2ブロック: メモリ11-15
+        4. C1ブロック: メモリ16-20
+        5. C3ブロック: メモリ21-25
+        6. テストではメモリ1-3のみを取得したい場合、memory_range(1, 3)を指定します
+
+        【期待される結果】
+        - メモリ1-3の取得: 3個のデータ（3メモリ×1深度）
+          ※実際の運用では180個（3メモリ×60深度）になります
+        - メモリの分布: {1: 1, 2: 1, 3: 1}（各メモリに1つずつデータがある）
+        - メモリ1のみの取得: 1個のデータ（1メモリ×1深度）
+          ※実際の運用では60個（1メモリ×60深度）になります
         """
-        # メモリ1から3の計測データを取得 (合計15個のデータになる)
+        # メモリ1から3の計測データを取得
         results = SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
             1, 3
         )
 
         # 結果の検証
-        self.assertEqual(len(results), 15)  # 3メモリ x 5深度 = 15データ
+        self.assertEqual(len(results), 3)  # 3メモリ x 1深度 = 3データ
         self.assertEqual(results.first().set_memory, 1)  # 最初のデータのメモリが1
         self.assertEqual(results.last().set_memory, 3)  # 最後のデータのメモリが3
 
@@ -140,14 +152,14 @@ class TestSoilHardnessMeasurementRepository(TestCase):
         for item in results:
             memory_counts[item.set_memory] = memory_counts.get(item.set_memory, 0) + 1
 
-        # 各メモリごとに5つのデータが存在することを確認
-        self.assertEqual(memory_counts, {1: 5, 2: 5, 3: 5})
+        # 各メモリごとに1つのデータが存在することを確認
+        self.assertEqual(memory_counts, {1: 1, 2: 1, 3: 1})
 
         # 境界値のテスト - 1つだけのメモリデータを取得
         single_results = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(1, 1)
         )
-        self.assertEqual(len(single_results), 5)  # 1メモリ x 5深度 = 5データ
+        self.assertEqual(len(single_results), 1)  # 1メモリ x 1深度 = 1データ
         self.assertEqual(single_results.first().set_memory, 1)
         self.assertEqual(single_results.last().set_memory, 1)
 
