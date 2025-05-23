@@ -98,6 +98,19 @@ class TestSoilHardnessMeasurementRepository(TestCase):
             if block in ["C1", "C3"]:  # C1とC3ブロックのみ土地ブロックを割り当て
                 measurement.land_block = self.land_blocks[block]
                 measurement.save()
+                print(
+                    f"土地ブロック割当: メモリ={measurement.set_memory}, ブロック={block}, 土地ブロック={measurement.land_block.name}"
+                )
+
+        # 設定完了後の情報表示
+        print(f"\n===== 圃場データセットアップ完了 =====")
+        print(f"合計測定データ: {SoilHardnessMeasurement.objects.count()}件")
+        print(
+            f"土地ブロック未割当: {SoilHardnessMeasurement.objects.filter(land_block__isnull=True).count()}件"
+        )
+        print(
+            f"土地ブロック割当済: {SoilHardnessMeasurement.objects.filter(land_block__isnull=False).count()}件\n"
+        )
 
     def test_get_measurements_by_memory_range(self):
         """
