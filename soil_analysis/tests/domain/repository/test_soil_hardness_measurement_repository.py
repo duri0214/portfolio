@@ -36,45 +36,68 @@ class TestSoilHardnessMeasurementRepository(TestCase):
           テストの簡略化のため、各メモリには深度0, 15, 30, 45, 60cmの5レコードのみ設定しています。
 
         【データの内訳】
-        - 全データ数: 300レコード（5メモリ×60深度）→テストでは25レコード（5メモリ×5深度）
-        - 土地ブロック未割当: 180レコード（メモリ1,2,3の各60レコード）→テストでは15レコード
-        - テスト用ブロックA割当: 60レコード（メモリ4の60レコード）→テストでは5レコード
-        - テスト用ブロックB割当: 60レコード（メモリ5の60レコード）→テストでは5レコード
+        - 全データ数: 25レコード（25メモリ×1深度）→実際の運用では1500レコード（25メモリ×60深度）
+        - 土地ブロック未割当: 15レコード（A1, A3, B2ブロックのメモリ1-15）→実際の運用では900レコード
+        - 土地ブロック割当済み: 10レコード（C1, C3ブロックのメモリ16-25）→実際の運用では600レコード
+          - C1ブロック: メモリ16-20 → 5レコード（実際の運用では300レコード）
+          - C3ブロック: メモリ21-25 → 5レコード（実際の運用では300レコード）
         """
         # テスト用デバイスの作成
         self.device = Device.objects.create(name="テスト用デバイス")
 
-        # テスト用土地ブロックの作成
-        self.land_block1 = LandBlock.objects.create(name="テスト用ブロックA")
-        self.land_block2 = LandBlock.objects.create(name="テスト用ブロックB")
+        # テスト用土地ブロックの作成 - 各ブロック位置に対応する土地ブロックを作成
+        self.land_blocks = {
+            "A1": LandBlock.objects.create(name="A1ブロック"),
+            "A3": LandBlock.objects.create(name="A3ブロック"),
+            "B2": LandBlock.objects.create(name="B2ブロック"),
+            "C1": LandBlock.objects.create(name="C1ブロック"),
+            "C3": LandBlock.objects.create(name="C3ブロック"),
+        }
 
         # テスト用の計測データを作成
         self.base_datetime = timezone.now()
         self.measurements = []
 
-        # メモリ1-5のデータを作成 (合計25個のデータ)
-        for memory in range(1, 6):
-            for depth in range(5):  # 各メモリに対して5つの深度
+        # ブロック位置とメモリ範囲の対応関係を辞書で定義
+        self.block_memory_ranges = {
+            "A1": range(1, 6),  # A1ブロックはメモリ1-5に対応
+            "A3": range(6, 11),  # A3ブロックはメモリ6-10に対応
+            "B2": range(11, 16),  # B2ブロックはメモリ11-15に対応
+            "C1": range(16, 21),  # C1ブロックはメモリ16-20に対応
+            "C3": range(21, 26),  # C3ブロックはメモリ21-25に対応
+        }
+
+        # メモリからブロックを逆引きするための辞書を作成
+        self.memory_to_block = {}
+        for block, memory_range in self.block_memory_ranges.items():
+            for memory_id in memory_range:
+                self.memory_to_block[memory_id] = block
+
+        # 5つのブロック、各ブロック5点法（5メモリ）のデータを作成
+        # 実際には各メモリに0-60cmまでの60レコードがあるが、テストでは簡略化
+        for block, memory_range in self.block_memory_ranges.items():
+            for memory_id in memory_range:
                 measurement = SoilHardnessMeasurement.objects.create(
-                    set_memory=memory,
+                    set_memory=memory_id,
                     set_datetime=self.base_datetime,
-                    set_depth=30,
+                    set_depth=60,  # 計測の最大深度は60cm
                     set_spring=1,
                     set_cone=1,
-                    depth=depth * 5,  # 0, 5, 10, 15, 20
-                    pressure=100 + depth,
+                    depth=1,  # すべての測定位置で1cmの深度を記録
+                    pressure=100,
                     folder="test_folder",
                     set_device=self.device,
                 )
                 self.measurements.append(measurement)
 
-        # 一部のデータに土地ブロックを割り当て (メモリ4と5には土地ブロックを割り当て)
-        for i in range(15, 25):  # メモリ4と5のデータ
-            if i < 20:  # メモリ4のデータにはland_block1を割り当て
-                self.measurements[i].land_block = self.land_block1
-            else:  # メモリ5のデータにはland_block2を割り当て
-                self.measurements[i].land_block = self.land_block2
-            self.measurements[i].save()
+        # 各メモリに対応する土地ブロックを割り当て
+        # テストの目的のため、一部のブロック（A1, A3, B2）には土地ブロックを割り当てず、
+        # C1とC3ブロックにのみ土地ブロックを割り当てる
+        for measurement in self.measurements:
+            block = self.memory_to_block.get(measurement.set_memory)
+            if block in ["C1", "C3"]:  # C1とC3ブロックのみ土地ブロックを割り当て
+                measurement.land_block = self.land_blocks[block]
+                measurement.save()
 
     def test_get_measurements_by_memory_range(self):
         """
