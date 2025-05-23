@@ -289,6 +289,7 @@ class HardnessAssociationView(ListView):
                 )
             )
 
+        # TODO: form_checkboxes は消滅したのでこの if は消して良さそう issue269
         form_checkboxes = [
             int(checkbox) for checkbox in request.POST.getlist("form_checkboxes[]")
         ]
