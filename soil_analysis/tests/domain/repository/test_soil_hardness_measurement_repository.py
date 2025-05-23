@@ -84,9 +84,12 @@ class TestSoilHardnessMeasurementRepository(TestCase):
                     set_spring=1,
                     set_cone=1,
                     depth=1,  # すべての測定位置で1cmの深度を記録
-                    pressure=100,
+                    pressure=100,  # 測定値を簡略化して一定値を使用
                     folder="test_folder",
                     set_device=self.device,
+                )
+                print(
+                    f"測定データ作成: ブロック={block}, メモリ={memory_id}, 深度={measurement.depth}cm"
                 )
                 self.measurements.append(measurement)
 
