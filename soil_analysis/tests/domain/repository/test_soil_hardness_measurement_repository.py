@@ -211,14 +211,10 @@ class TestSoilHardnessMeasurementRepository(TestCase):
         )  # 未割り当てデータのグループ数は15（メモリ1-15の3ブロック分）
 
         # 各グループの内容を検証
-        expected_results = [
-            {"set_memory": 1, "cnt": 1, "set_datetime": self.base_datetime},
-            {"set_memory": 2, "cnt": 1, "set_datetime": self.base_datetime},
-            {"set_memory": 3, "cnt": 1, "set_datetime": self.base_datetime},
-        ]
-
-        for i, group in enumerate(results):
-            expected = expected_results[i]
+        # メモリ1-15の検証
+        for i, group in enumerate(results, 1):  # インデックス1から開始
+            # 各メモリに対して期待する結果を動的に生成
+            expected = {"set_memory": i, "cnt": 1, "set_datetime": self.base_datetime}
             self.assertEqual(group["set_memory"], expected["set_memory"])
             self.assertEqual(group["cnt"], expected["cnt"])
             self.assertEqual(group["set_datetime"], expected["set_datetime"])
@@ -226,9 +222,9 @@ class TestSoilHardnessMeasurementRepository(TestCase):
         # 集計されたデータの総数を確認
         total_records = sum(group["cnt"] for group in results)
         self.assertEqual(
-            total_records, 3
-        )  # 未割り当てデータの合計は3個（3メモリ×1深度）
-        # 実際の運用では180レコード（3メモリ×60深度）になる
+            total_records, 15
+        )  # 未割り当てデータの合計は15個（15メモリ×1深度）
+        # 実際の運用では900レコード（15メモリ×60深度）になる
 
     def test_group_measurements_with_queryset(self):
         """
