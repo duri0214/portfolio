@@ -289,7 +289,8 @@ class TestSoilHardnessMeasurementRepository(TestCase):
             self.assertEqual(group["cnt"], 1)  # 各メモリには深度データが1つある
             self.assertEqual(group["set_datetime"], self.base_datetime)
 
-        # 異なるクエリセットでのテスト - 土地ブロックが割り当てられたデータのみ
+        # シナリオ2: 土地ブロックが割り当てられたデータのみを対象とする（B2, A1ブロック = メモリ16-25）
+        # すでに割り当て済みのデータの確認や再処理を行う場合の処理パターン
         with_block_queryset = SoilHardnessMeasurement.objects.filter(
             land_block__isnull=False
         )
@@ -297,11 +298,27 @@ class TestSoilHardnessMeasurementRepository(TestCase):
             with_block_queryset
         )
 
-        self.assertEqual(len(with_block_results), 2)  # メモリ4と5の2つのグループ
+        # 結果の検証 - グループ数
+        self.assertEqual(
+            len(with_block_results), 10
+        )  # B2, A1ブロック（メモリ16-25）の10グループ
 
+        # メモリ値の範囲が期待通りであることを確認
         memory_values = [group["set_memory"] for group in with_block_results]
-        self.assertEqual(memory_values, [4, 5])
+        self.assertTrue(all(16 <= memory <= 25 for memory in memory_values))
+        self.assertEqual(
+            sorted(memory_values), list(range(16, 26))
+        )  # メモリ16-25が含まれる
 
         # 各グループのカウント数を確認
         for group in with_block_results:
-            self.assertEqual(group["cnt"], 5)
+            self.assertEqual(group["cnt"], 1)  # 各メモリには深度データが1つある
+            # 実際の運用では各メモリに60レコード（0-60cmまでの深度データ）が含まれる
+            self.assertEqual(group["set_datetime"], self.base_datetime)
+
+        # 総レコード数の確認
+        total_records = sum(group["cnt"] for group in with_block_results)
+        self.assertEqual(
+            total_records, 10
+        )  # 割り当て済みデータの合計は10個（10メモリ×1深度）
+        # 実際の運用では600レコード（10メモリ×60深度）になる
