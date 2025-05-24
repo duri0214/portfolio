@@ -230,28 +230,63 @@ class TestSoilHardnessMeasurementRepository(TestCase):
         """
         group_measurementsメソッドのテスト (クエリセットを指定する場合)
 
-        このテストでは、特定のクエリセットを指定してメモリセットごとに
-        グループ化できることを確認します。
-        特に以下の点を検証:
-        1. 指定したクエリセットだけがグループ化対象になるか
-        2. グループ化されたデータの数が期待通りか
-        3. 各グループが正しいメモリ値と集計値を持つか
-        4. グループの順序が正しく維持されるか
+        【実際のviewsでの使用ケース】
+        HardnessAssociationIndividualViewでは、特定のメモリ範囲（25個分=5ブロック×5点法）のデータを
+        取得して圃場ブロックを直接選択・割り当てる処理を行います。このビューでは:
+        1. get_measurements_by_memory_rangeでメモリ範囲のデータ（１圃場ぶん）を取得
+        2. 取得したクエリセットをgroup_measurementsに渡してグループ化
+        3. 圃場ブロックを選択して割り当て
+
+        このテストでは、そのようなクエリセット使用パターンをシミュレートします。
+
+        【シナリオ1：特定メモリ範囲のデータのみを対象にする】
+        圃場分析では、特定のメモリ範囲のデータだけを分析したいケースがあります。
+        このシナリオでは、メモリ1-5（C1ブロック全体の5点法測定データ）をフィルタリングして集計します。
+        テストデータでは、メモリ1-15が未割当（C1, C3, A3ブロック）で、そのうちC1ブロックのメモリ1-5を
+        テストで使用します。実務では、このような未割当データをC1ブロックに割り当てる処理を行います。
+        これはHardnessAssociationIndividualViewでの一部データ処理のシミュレーションです。
+
+        【シナリオ2：分析済みデータのみを対象にする】
+        すでに土地ブロックに割り当て済みのデータ（分析済みデータ）だけを集計したいケースがあります。
+        このシナリオでは、B2ブロック（中中、メモリ16-20）とA1ブロック（右下、メモリ21-25）に割り当て済みのデータだけを集計します。
+        これは、すでに割り当て済みのデータの確認や再処理を行う場合の処理パターンです。
+
+        【期待される結果（シナリオ1）】
+        - グループ数: 5つ（メモリ1-5 = C1ブロック全体の5点法データ）
+        - 各グループのカウント: 各グループとも1（各メモリに深度データが1つある）
+          ※実際の運用では各グループ60レコード
+        - 合計: 5レコード（5グループ×1深度）※実際の運用では300レコード（5メモリ×60深度）
+        - 実務では、このデータ群をC1ブロックに割り当てて土壌分析を行う
+
+        【期待される結果（シナリオ2）】
+        - グループ数: 10つ（メモリ16-25 = B2,A1ブロックに割り当て済み）
+        - 各グループのカウント: 各グループとも1（各メモリに深度データが1つある）
+          ※実際の運用では各グループ60レコード
+        - 合計: 10レコード（10グループ×1深度）※実際の運用では600レコード
         """
-        # メモリ1-3のデータのみを対象とする
-        base_queryset = SoilHardnessMeasurement.objects.filter(set_memory__lte=3)
+        # シナリオ1: メモリ1-5のデータを対象とする（C1ブロック全体の5点法測定データ）
+        # 未割当のメモリは1-15（C1, C3, A3ブロック）で、そのうちC1ブロック全体（メモリ1-5）を使用
+        # 実務では、このデータをC1ブロックに割り当てる処理を行う
+        # HardnessAssociationIndividualViewでの使用パターンに相当：特定のメモリ範囲を取得してグループ化
+        base_queryset = SoilHardnessMeasurement.objects.filter(set_memory__lte=5)
         results = SoilHardnessMeasurementRepository.group_measurements(base_queryset)
 
-        # 結果の検証
-        self.assertEqual(len(results), 3)  # 3つのメモリセットのみ
+        # 結果の検証 - グループ数
+        self.assertEqual(
+            len(results), 5
+        )  # 5つのメモリセットがグループ化される（C1ブロック全体）
 
         # メモリ値が期待通りであることを確認
         memory_values = [group["set_memory"] for group in results]
-        self.assertEqual(memory_values, [1, 2, 3])
+        self.assertEqual(
+            memory_values, [1, 2, 3, 4, 5]
+        )  # メモリ1-5の順にソートされている（C1ブロック全体）
 
-        # 各グループのカウント数と日時を確認
-        for group in results:
-            self.assertEqual(group["cnt"], 5)  # 各メモリは5つのデータを持つ
+        # 各グループのカウント数を確認（C1ブロック全体の5点法データ）
+        for i, group in enumerate(results, 1):
+            expected_memory = i  # メモリ番号は1から始まる
+            self.assertEqual(group["set_memory"], expected_memory)
+            self.assertEqual(group["cnt"], 1)  # 各メモリには深度データが1つある
             self.assertEqual(group["set_datetime"], self.base_datetime)
 
         # 異なるクエリセットでのテスト - 土地ブロックが割り当てられたデータのみ
