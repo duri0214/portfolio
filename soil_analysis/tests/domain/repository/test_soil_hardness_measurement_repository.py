@@ -106,11 +106,11 @@ class TestSoilHardnessMeasurementRepository(TestCase):
                 self.measurements.append(measurement)
 
         # 各メモリに対応する土地ブロックを割り当て
-        # テストの目的のため、一部のブロック（A1, A3, B2）には土地ブロックを割り当てず、
-        # C1とC3ブロックにのみ土地ブロックを割り当てる
+        # テストの目的のため、一部のブロック（C1, C3, A3）には土地ブロックを割り当てず、
+        # B2とA1ブロックにのみ土地ブロックを割り当てる
         for measurement in self.measurements:
             block = self.memory_to_block.get(measurement.set_memory)
-            if block in ["C1", "C3"]:  # C1とC3ブロックのみ土地ブロックを割り当て
+            if block in ["B2", "A1"]:  # B2とA1ブロックのみ土地ブロックを割り当て
                 measurement.land_block = self.land_blocks[block]
                 measurement.save()
                 print(
