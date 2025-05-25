@@ -329,16 +329,20 @@ class HardnessAssociationView(ListView):
                 )
 
                 for i, hardness_measurement in enumerate(hardness_measurements):
+                    # 硬度測定データ (hardness_measurements) に対して、
+                    # 適切な土地ブロック情報 (land_block) と土地台帳 (land_ledger) を割り当て
                     hardness_measurement.land_block = land_block_orders[
                         needle
                     ].land_block
                     hardness_measurement.land_ledger = land_ledger
-                    forward_the_needle = (
-                        i > 0
-                        and i % (hardness_measurement.set_depth * sampling_times) == 0
-                    )
-                    if forward_the_needle:
+
+                    # 「i番目のレコードが、1ブロック分のレコード数（= records_per_block）のちょうど区切り目かどうか
+                    # 条件を満たしたら、インデックス（needle）を +1 して次の土地ブロックに進める
+                    records_per_block = hardness_measurement.set_depth * sampling_times
+                    can_forward_the_needle = i > 0 and i % records_per_block == 0
+                    if can_forward_the_needle:
                         needle += 1
+
                 SoilHardnessMeasurement.objects.bulk_update(
                     hardness_measurements, fields=["land_block", "land_ledger"]
                 )
