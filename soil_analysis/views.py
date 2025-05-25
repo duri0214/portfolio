@@ -295,12 +295,14 @@ class HardnessAssociationView(ListView):
         ]
         if form_checkboxes:
             land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
-
             blocks = SamplingOrder.objects.filter(
                 sampling_method=land_ledger.sampling_method
             ).count()
-            sampling_times_per_block = 5
-            total_sampling_times = blocks * sampling_times_per_block
+            total_sampling_times = (
+                SoilHardnessMeasurementRepository.calculate_total_sampling_times(
+                    land_ledger
+                )
+            )
 
             needle = 0
             land_block_orders = SamplingOrder.objects.filter(
@@ -338,12 +340,11 @@ class HardnessAssociationIndividualView(ListView):
         form_memory_anchor = self.kwargs.get("memory_anchor")
         form_land_ledger = self.kwargs.get("land_ledger")
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
-
-        blocks = SamplingOrder.objects.filter(
-            sampling_method=land_ledger.sampling_method
-        ).count()
-        sampling_times_per_block = 5
-        total_sampling_times = blocks * sampling_times_per_block
+        total_sampling_times = (
+            SoilHardnessMeasurementRepository.calculate_total_sampling_times(
+                land_ledger
+            )
+        )
 
         hardness_measurements = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
@@ -373,12 +374,11 @@ class HardnessAssociationIndividualView(ListView):
         form_land_ledger = self.kwargs.get("land_ledger")
         form_land_blocks = request.POST.getlist("land-blocks[]")
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
-
-        blocks = SamplingOrder.objects.filter(
-            sampling_method=land_ledger.sampling_method
-        ).count()
-        sampling_times_per_block = 5
-        total_sampling_times = blocks * sampling_times_per_block
+        total_sampling_times = (
+            SoilHardnessMeasurementRepository.calculate_total_sampling_times(
+                land_ledger
+            )
+        )
 
         hardness_measurements = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
