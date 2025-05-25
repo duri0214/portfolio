@@ -339,6 +339,7 @@ class HardnessAssociationIndividualView(ListView):
     def get_queryset(self, **kwargs):
         form_memory_anchor = self.kwargs.get("memory_anchor")
         form_land_ledger_id = int(self.kwargs.get("land_ledger"))
+
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger_id).first()
         total_sampling_times = (
             SoilHardnessMeasurementRepository.calculate_total_sampling_times(
@@ -373,6 +374,7 @@ class HardnessAssociationIndividualView(ListView):
         form_memory_anchor = self.kwargs.get("memory_anchor")
         form_land_ledger_id = int(self.kwargs.get("land_ledger"))
         form_land_blocks = request.POST.getlist("land-blocks[]")
+
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger_id).first()
         total_sampling_times = (
             SoilHardnessMeasurementRepository.calculate_total_sampling_times(
