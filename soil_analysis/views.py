@@ -295,8 +295,13 @@ class HardnessAssociationView(ListView):
         ]
         if form_checkboxes:
             land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
-            sampling_times = land_ledger.sampling_method.times
-            total_sampling_times = 5 * sampling_times
+
+            blocks = SamplingOrder.objects.filter(
+                sampling_method=land_ledger.sampling_method
+            ).count()
+            sampling_times_per_block = 5
+            total_sampling_times = blocks * sampling_times_per_block
+
             needle = 0
             land_block_orders = SamplingOrder.objects.filter(
                 sampling_method=land_ledger.sampling_method
@@ -314,8 +319,7 @@ class HardnessAssociationView(ListView):
                     ].land_block
                     hardness_measurement.land_ledger = land_ledger
                     forward_the_needle = (
-                        i > 0
-                        and i % (hardness_measurement.set_depth * sampling_times) == 0
+                        i > 0 and i % (hardness_measurement.set_depth * blocks) == 0
                     )
                     if forward_the_needle:
                         needle += 1
@@ -334,7 +338,12 @@ class HardnessAssociationIndividualView(ListView):
         form_memory_anchor = self.kwargs.get("memory_anchor")
         form_land_ledger = self.kwargs.get("land_ledger")
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
-        total_sampling_times = 5 * land_ledger.sampling_method.times
+
+        blocks = SamplingOrder.objects.filter(
+            sampling_method=land_ledger.sampling_method
+        ).count()
+        sampling_times_per_block = 5
+        total_sampling_times = blocks * sampling_times_per_block
 
         hardness_measurements = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
@@ -364,7 +373,12 @@ class HardnessAssociationIndividualView(ListView):
         form_land_ledger = self.kwargs.get("land_ledger")
         form_land_blocks = request.POST.getlist("land-blocks[]")
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
-        total_sampling_times = 5 * land_ledger.sampling_method.times
+
+        blocks = SamplingOrder.objects.filter(
+            sampling_method=land_ledger.sampling_method
+        ).count()
+        sampling_times_per_block = 5
+        total_sampling_times = blocks * sampling_times_per_block
 
         hardness_measurements = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
