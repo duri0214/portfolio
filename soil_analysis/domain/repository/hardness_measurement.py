@@ -1,6 +1,6 @@
 from django.db.models import Count, QuerySet
 
-from soil_analysis.models import SoilHardnessMeasurement, SamplingOrder, LandLedger
+from soil_analysis.models import SoilHardnessMeasurement
 
 
 class SoilHardnessMeasurementRepository:
@@ -44,21 +44,3 @@ class SoilHardnessMeasurementRepository:
             .annotate(cnt=Count("pk"))
             .order_by("set_memory")
         )
-
-    @staticmethod
-    def calculate_total_sampling_times(land_ledger: LandLedger) -> int:
-        """
-        土壌硬度計測データの総採土回数を計算する
-
-        Args:
-            land_ledger: 対象の LandLedger インスタンス
-
-        Returns:
-            int: 総採土回数（ブロック数 × 1ブロックあたりの採土回数）
-        """
-        blocks = SamplingOrder.objects.filter(
-            sampling_method=land_ledger.sampling_method
-        ).count()
-        sampling_times_per_block = 5  # 固定値として定義
-
-        return blocks * sampling_times_per_block
