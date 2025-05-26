@@ -49,6 +49,8 @@ from soil_analysis.models import (
     JmaWarning,
 )
 
+SAMPLING_TIMES_PER_BLOCK = 5
+
 
 class Home(TemplateView):
     template_name = "soil_analysis/home.html"
@@ -312,8 +314,7 @@ class HardnessAssociationView(ListView):
             blocks = SamplingOrder.objects.filter(
                 sampling_method=land_ledger.sampling_method
             ).count()
-            sampling_times_per_block = 5
-            total_sampling_times = blocks * sampling_times_per_block
+            total_sampling_times = blocks * SAMPLING_TIMES_PER_BLOCK
 
             needle = 0
             land_block_orders = SamplingOrder.objects.filter(
@@ -336,7 +337,9 @@ class HardnessAssociationView(ListView):
 
                     # 「i番目のレコードが、1ブロック分のレコード数（= records_per_block）のちょうど区切り目かどうか
                     # 条件を満たしたら、インデックス（needle）を +1 して次の土地ブロックに進める
-                    records_per_block = hardness_measurement.set_depth * sampling_times
+                    records_per_block = (
+                        hardness_measurement.set_depth * SAMPLING_TIMES_PER_BLOCK
+                    )
                     can_forward_the_needle = i > 0 and i % records_per_block == 0
                     if can_forward_the_needle:
                         needle += 1
@@ -362,8 +365,7 @@ class HardnessAssociationIndividualView(ListView):
         blocks = SamplingOrder.objects.filter(
             sampling_method=land_ledger.sampling_method
         ).count()
-        sampling_times_per_block = 5
-        total_sampling_times = blocks * sampling_times_per_block
+        total_sampling_times = blocks * SAMPLING_TIMES_PER_BLOCK
 
         hardness_measurements = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
@@ -399,8 +401,7 @@ class HardnessAssociationIndividualView(ListView):
         blocks = SamplingOrder.objects.filter(
             sampling_method=land_ledger.sampling_method
         ).count()
-        sampling_times_per_block = 5
-        total_sampling_times = blocks * sampling_times_per_block
+        total_sampling_times = blocks * SAMPLING_TIMES_PER_BLOCK
 
         hardness_measurements = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
