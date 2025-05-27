@@ -321,8 +321,6 @@ class HardnessAssociationView(ListView):
                     ].land_block
                     hardness_measurement.land_ledger = land_ledger
 
-                    # 「i番目のレコードが、1ブロック分のレコード数（= records_per_block）のちょうど区切り目かどうか
-                    # 条件を満たしたら、インデックス（needle）を +1 して次の土地ブロックに進める
                     records_per_block = (
                         hardness_measurement.set_depth * SAMPLING_TIMES_PER_BLOCK
                     )
