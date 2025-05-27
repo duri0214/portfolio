@@ -326,12 +326,12 @@ class HardnessAssociationView(ListView):
                     )
                 )
 
-                needle = 1  # 1-based index
+                needle = 0
                 for i, hardness_measurement in enumerate(hardness_measurements):
                     # 硬度測定データ (hardness_measurements) に対して、
                     # 適切な土地ブロック情報 (land_block) と土地台帳 (land_ledger) を割り当て
                     hardness_measurement.land_block = land_block_orders[
-                        needle - 1
+                        needle
                     ].land_block
                     hardness_measurement.land_ledger = land_ledger
 
