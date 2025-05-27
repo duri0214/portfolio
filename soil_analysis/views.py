@@ -49,6 +49,8 @@ from soil_analysis.models import (
     JmaWarning,
 )
 
+SAMPLING_TIMES_PER_BLOCK = 5
+
 
 class Home(TemplateView):
     template_name = "soil_analysis/home.html"
@@ -277,27 +279,29 @@ class HardnessAssociationView(ListView):
         R型 で登録するときは、圃場の1ブロックが5点計測なので、採土法（5点法、9点法）の回数を乗ずると、1圃場での採取回数になる
         R型以外のときはIndividualViewへ飛ぶ
         """
-        form_land_ledger = int(request.POST.get("land_ledger")[0])
+        form_land_ledger_id = int(request.POST.get("land_ledger")[0])
         if "btn_individual" in request.POST:
             return HttpResponseRedirect(
                 reverse(
                     "soil:hardness_association_individual",
                     kwargs={
                         "memory_anchor": int(request.POST.get("btn_individual")),
-                        "land_ledger": form_land_ledger,
+                        "land_ledger": form_land_ledger_id,
                     },
                 )
             )
 
-        # TODO: form_checkboxes は消滅したのでこの if は消して良さそう issue269
         form_checkboxes = [
             int(checkbox) for checkbox in request.POST.getlist("form_checkboxes[]")
         ]
         if form_checkboxes:
-            land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
-            sampling_times = land_ledger.sampling_method.times
-            total_sampling_times = 5 * sampling_times
-            needle = 0
+            land_ledger = LandLedger.objects.filter(pk=form_land_ledger_id).first()
+
+            blocks = SamplingOrder.objects.filter(
+                sampling_method=land_ledger.sampling_method
+            ).count()
+            total_sampling_times = blocks * SAMPLING_TIMES_PER_BLOCK
+
             land_block_orders = SamplingOrder.objects.filter(
                 sampling_method=land_ledger.sampling_method
             ).order_by("ordering")
@@ -308,17 +312,22 @@ class HardnessAssociationView(ListView):
                     )
                 )
 
+                needle = 0
                 for i, hardness_measurement in enumerate(hardness_measurements):
+                    # 硬度測定データ (hardness_measurements) に対して、
+                    # 適切な土地ブロック情報 (land_block) と土地台帳 (land_ledger) を割り当て
                     hardness_measurement.land_block = land_block_orders[
                         needle
                     ].land_block
                     hardness_measurement.land_ledger = land_ledger
-                    forward_the_needle = (
-                        i > 0
-                        and i % (hardness_measurement.set_depth * sampling_times) == 0
+
+                    records_per_block = (
+                        hardness_measurement.set_depth * SAMPLING_TIMES_PER_BLOCK
                     )
-                    if forward_the_needle:
+                    can_forward_the_needle = i > 0 and i % records_per_block == 0
+                    if can_forward_the_needle:
                         needle += 1
+
                 SoilHardnessMeasurement.objects.bulk_update(
                     hardness_measurements, fields=["land_block", "land_ledger"]
                 )
@@ -332,9 +341,14 @@ class HardnessAssociationIndividualView(ListView):
 
     def get_queryset(self, **kwargs):
         form_memory_anchor = self.kwargs.get("memory_anchor")
-        form_land_ledger = self.kwargs.get("land_ledger")
-        land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
-        total_sampling_times = 5 * land_ledger.sampling_method.times
+        form_land_ledger_id = int(self.kwargs.get("land_ledger"))
+
+        land_ledger = LandLedger.objects.filter(pk=form_land_ledger_id).first()
+
+        blocks = SamplingOrder.objects.filter(
+            sampling_method=land_ledger.sampling_method
+        ).count()
+        total_sampling_times = blocks * SAMPLING_TIMES_PER_BLOCK
 
         hardness_measurements = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(
@@ -348,10 +362,10 @@ class HardnessAssociationIndividualView(ListView):
 
     def get_context_data(self, **kwargs):
         form_memory_anchor = self.kwargs.get("memory_anchor")
-        form_land_ledger = self.kwargs.get("land_ledger")
+        form_land_ledger_id = int(self.kwargs.get("land_ledger"))
         context = super().get_context_data(**kwargs)
         context["memory_anchor"] = form_memory_anchor
-        context["land_ledger"] = form_land_ledger
+        context["land_ledger"] = form_land_ledger_id
         context["land_blocks"] = LandBlock.objects.order_by("pk").all()
         return context
 
@@ -361,10 +375,15 @@ class HardnessAssociationIndividualView(ListView):
         フォームから25レコードの情報がくるのでそれぞれを更新する
         """
         form_memory_anchor = self.kwargs.get("memory_anchor")
-        form_land_ledger = self.kwargs.get("land_ledger")
+        form_land_ledger_id = int(self.kwargs.get("land_ledger"))
         form_land_blocks = request.POST.getlist("land-blocks[]")
-        land_ledger = LandLedger.objects.filter(pk=form_land_ledger).first()
-        total_sampling_times = 5 * land_ledger.sampling_method.times
+
+        land_ledger = LandLedger.objects.filter(pk=form_land_ledger_id).first()
+
+        blocks = SamplingOrder.objects.filter(
+            sampling_method=land_ledger.sampling_method
+        ).count()
+        total_sampling_times = blocks * SAMPLING_TIMES_PER_BLOCK
 
         hardness_measurements = (
             SoilHardnessMeasurementRepository.get_measurements_by_memory_range(

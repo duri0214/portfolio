@@ -1,11 +1,13 @@
-from django.db.models import Count
+from django.db.models import Count, QuerySet
 
 from soil_analysis.models import SoilHardnessMeasurement
 
 
 class SoilHardnessMeasurementRepository:
     @staticmethod
-    def get_measurements_by_memory_range(memory_anchor: int, total_sampling_times: int):
+    def get_measurements_by_memory_range(
+        memory_anchor: int, total_sampling_times: int
+    ) -> QuerySet:
         """
         指定されたメモリアンカーからtotal_sampling_times分の計測データを取得します
 
@@ -24,7 +26,7 @@ class SoilHardnessMeasurementRepository:
         ).order_by("pk")
 
     @staticmethod
-    def group_measurements(queryset=None):
+    def group_measurements(queryset: QuerySet = None) -> QuerySet:
         """
         計測データをメモリセットごとにグループ化して取得します
 
