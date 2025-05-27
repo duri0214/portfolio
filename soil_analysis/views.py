@@ -347,7 +347,6 @@ class HardnessAssociationIndividualView(ListView):
 
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger_id).first()
 
-        # ひとつの圃場におけるブロック数と、ブロックあたりの測定数から、total_sampling_timesを算出
         blocks = SamplingOrder.objects.filter(
             sampling_method=land_ledger.sampling_method
         ).count()
