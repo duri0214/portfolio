@@ -291,20 +291,6 @@ class HardnessAssociationView(ListView):
                 )
             )
 
-        # TODO: 土地ブロックが割り当てられていないデータをグループ化したもの
-        #  form_checkboxes を置き換えることができる
-        # unassigned_data = SoilHardnessMeasurementRepository.group_measurements()
-        # print(unassigned_data.query)
-        # SQL 結果メモ
-        # ```
-        # set_memory | set_datetime           | cnt
-        # -----------|------------------------|-----
-        # 1          | 2017-03-05 00:00:35    | 60
-        # 2          | 2017-03-05 00:00:49    | 60
-        # 3          | 2017-03-05 00:01:02    | 60
-        # ```
-
-        # TODO: form_checkboxes は消滅したのでこの if は消して良さそう issue269
         form_checkboxes = [
             int(checkbox) for checkbox in request.POST.getlist("form_checkboxes[]")
         ]
