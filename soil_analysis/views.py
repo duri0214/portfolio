@@ -316,7 +316,6 @@ class HardnessAssociationView(ListView):
             ).count()
             total_sampling_times = blocks * SAMPLING_TIMES_PER_BLOCK
 
-            needle = 0
             land_block_orders = SamplingOrder.objects.filter(
                 sampling_method=land_ledger.sampling_method
             ).order_by("ordering")
@@ -327,11 +326,12 @@ class HardnessAssociationView(ListView):
                     )
                 )
 
+                needle = 1  # 1-based index
                 for i, hardness_measurement in enumerate(hardness_measurements):
                     # 硬度測定データ (hardness_measurements) に対して、
                     # 適切な土地ブロック情報 (land_block) と土地台帳 (land_ledger) を割り当て
                     hardness_measurement.land_block = land_block_orders[
-                        needle
+                        needle - 1
                     ].land_block
                     hardness_measurement.land_ledger = land_ledger
 
