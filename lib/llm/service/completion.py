@@ -5,11 +5,8 @@ from typing import Generator
 
 import tiktoken
 from dotenv import load_dotenv
-from google import generativeai
 from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
-from langchain.prompts import (
-    ChatPromptTemplate,
-)
+from langchain.prompts import ChatPromptTemplate
 from langchain_chroma import Chroma
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
