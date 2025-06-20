@@ -41,6 +41,8 @@ def count_tokens(text: str) -> int:
 
     See Also: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
     """
+    if not text:
+        return 0
 
     encoding = tiktoken.get_encoding("o200k_base")
     tokens = encoding.encode(text)
@@ -63,6 +65,9 @@ def cut_down_chat_history(
     Returns:
         list[Message]: 削減されたチャット履歴メッセージのリスト。
     """
+    if not chat_history:
+        return []
+
     token_count = 0
 
     for i in range(len(chat_history) - 1, -1, -1):  # 逆順にループ
