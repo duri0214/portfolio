@@ -80,8 +80,22 @@ def cut_down_chat_history(
 
 
 class LlmService(ABC):
+    """
+    LLMサービスの基底クラス。すべてのLLMサービス実装はこのクラスを継承します。
+    """
+
     @abstractmethod
     def retrieve_answer(self, **kwargs):
+        """
+        LLMから回答を取得するための抽象メソッド。
+        各サブクラスで具体的な実装を提供する必要があります。
+
+        Args:
+            **kwargs: サービス固有のパラメータ
+
+        Returns:
+            LLMからの応答
+        """
         pass
 
 
