@@ -153,16 +153,40 @@ class LlmCompletionService(LlmService):
         )
 
 
-class OpenAILlmCompletionStreamingService(LlmService):
-    def __init__(self, config: OpenAIGptConfig):
 # 後方互換性のためのエイリアス
 # TODO: アプリケーション側の参照を LlmCompletionService に更新した後、これらのエイリアスを削除する
 GeminiLlmCompletionService = LlmCompletionService
 OpenAILlmCompletionService = LlmCompletionService
 
 
+class LlmCompletionStreamingService(LlmService):
+    """
+    OpenAIとGeminiの両方に対応したストリーミングLLM完了サービス。
+    OpenAIのAPIインターフェースを使用してGeminiモデルにもストリーミングアクセスできます。
+    """
+
+    def __init__(self, config: OpenAIGptConfig | GeminiConfig):
         super().__init__()
         self.config = config
+        self.client = self._initialize_client()
+
+    def _initialize_client(self) -> OpenAI:
+        """
+        APIクライアントを初期化します。
+        GeminiConfigの場合はOpenAI互換エンドポイントを使用します。
+
+        Returns:
+            OpenAI: 設定されたAPIクライアント
+        """
+        client_params = {"api_key": self.config.api_key}
+
+        # GeminiConfigの場合はOpenAI互換エンドポイントを設定
+        if isinstance(self.config, GeminiConfig):
+            client_params["base_url"] = (
+                "https://generativelanguage.googleapis.com/v1beta/openai/"
+            )
+
+        return OpenAI(**client_params)
 
     def retrieve_answer(
         self, chat_history: list[Message]
@@ -170,15 +194,22 @@ OpenAILlmCompletionService = LlmCompletionService
         """
         OpenAIのストリーミングレスポンスを処理し、応答をジェネレーターとして返します。
 
+        Args:
+            chat_history (list[Message]): チャット履歴
+
         Returns:
             Generator[StreamResponse, None, None]:
                 - `StreamResponse`はジェネレーターが`yield`するオブジェクト。
                 - `None`（2つ目の型）はジェネレーターに対して値を送り込む型がないことを示します。
                 - `None`（3つ目の型）はこのジェネレーターが停止時に明示的な`return`を行わないことを示します。
         """
-
         cut_down_history = cut_down_chat_history(chat_history, self.config)
-        stream = OpenAI(api_key=self.config.api_key).chat.completions.create(
+
+        # 空のチャット履歴の場合はエラー
+        if not cut_down_history:
+            raise ValueError("Chat history cannot be empty")
+
+        stream = self.client.chat.completions.create(
             model=self.config.model,
             messages=[x.to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
@@ -216,7 +247,6 @@ OpenAILlmCompletionService = LlmCompletionService
         See Also:
             - https://platform.openai.com/docs/api-reference/streaming
         """
-
         try:
             for chunk in self.retrieve_answer(chat_history):
                 yield chunk
