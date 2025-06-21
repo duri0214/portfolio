@@ -401,16 +401,27 @@ class OpenAILlmSpeechToText(LlmService):
 
 
 class OpenAILlmRagService(LlmService):
+    """
+    OpenAIモデルを使用した検索拡張生成（RAG）サービス。
+    PDFなどのドキュメントに基づいた質問応答を実現します。
+
+    See Also: https://python.langchain.com/docs/how_to/qa_sources/
+    """
+
     def __init__(
-        self, config: OpenAIGptConfig, dataloader: PdfDataloader, n_results: int = 3
+        self,
+        config: OpenAIGptConfig,
+        dataloader: PdfDataloader,
+        n_results: int = 3,
+        embedding_model: str = "text-embedding-3-large",
     ):
-        """
-        See Also: https://python.langchain.com/docs/how_to/qa_sources/
-        """
         super().__init__()
         self.config = config
         self.dataloader = dataloader
         self.n_results = n_results
+        self.embedding_model = embedding_model
+
+        # プロンプトテンプレートの設定
         self.system_template = """
             以下の資料の注意点を念頭に置いて回答してください
             ・ユーザの質問に対して、できる限り根拠を示してください
@@ -426,32 +437,54 @@ class OpenAILlmRagService(LlmService):
         ]
         self.prompt_template = ChatPromptTemplate.from_messages(messages)
 
-    @staticmethod
-    def _create_vectorstore(dataloader: PdfDataloader) -> Chroma:
+    def _create_vectorstore(self) -> Chroma:
         """
-        Note: OpenAIEmbeddings runs on "text-embedding-ada-002"
+        エンベディングとドキュメントを使用してベクトルストアを作成します。
+
+        Returns:
+            Chroma: 作成されたベクトルストア
         """
-        embeddings = OpenAIEmbeddings()
+        if not self.dataloader or not self.dataloader.data:
+            raise ValueError("Dataloader must contain valid documents")
+
+        embeddings = OpenAIEmbeddings(model=self.embedding_model)
 
         return Chroma.from_documents(
-            documents=dataloader.data,
+            documents=self.dataloader.data,
             embedding=embeddings,
-            persist_directory=".",
+            persist_directory="./chroma_db",  # 永続化ディレクトリを指定
         )
 
     def retrieve_answer(self, message: Message) -> dict:
-        embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+        """
+        与えられたメッセージに基づいて、ドキュメントから関連情報を検索し回答を生成します。
+
+        Args:
+            message (Message): 質問を含むメッセージ
+
+        Returns:
+            dict: 回答と使用されたソースドキュメントを含む辞書
+        """
+        if not message or not message.content:
+            raise ValueError("Message content cannot be empty for RAG query")
+
+        # ベクトルストアの作成または再利用
+        embeddings = OpenAIEmbeddings(model=self.embedding_model)
         docsearch = Chroma.from_texts(
             texts=[x.page_content for x in self.dataloader.data],
             embedding=embeddings,
             metadatas=[x.metadata for x in self.dataloader.data],
         )
+
+        # LLMチェーンの作成
         chain = RetrievalQAWithSourcesChain.from_chain_type(
-            llm=ChatOpenAI(temperature=0, model=self.config.model),
+            llm=ChatOpenAI(
+                temperature=0, model=self.config.model, api_key=self.config.api_key
+            ),
             chain_type="stuff",
             reduce_k_below_max_tokens=True,
             return_source_documents=True,
-            retriever=docsearch.as_retriever(),
+            retriever=docsearch.as_retriever(search_kwargs={"k": self.n_results}),
             chain_type_kwargs={"prompt": self.prompt_template},
         )
 
