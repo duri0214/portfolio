@@ -301,12 +301,29 @@ OpenAILlmCompletionStreamingService = LlmCompletionStreamingService
 
 
 class OpenAILlmDalleService(LlmService):
+    """
+    OpenAIのDALL-Eモデルを使用して画像生成を行うサービス。
+    """
+
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()
         self.config = config
+        self.client = OpenAI(api_key=self.config.api_key)
 
     def retrieve_answer(self, message: Message) -> ImagesResponse:
-        return OpenAI(api_key=self.config.api_key).images.generate(
+        """
+        メッセージの内容に基づいて画像を生成します。
+
+        Args:
+            message (Message): 画像生成プロンプトを含むメッセージ
+
+        Returns:
+            ImagesResponse: 生成された画像のレスポンス
+        """
+        if not message or not message.content:
+            raise ValueError("Message content cannot be empty for image generation")
+
+        return self.client.images.generate(
             model=self.config.model,
             prompt=message.content,
             size="1024x1024",
