@@ -333,12 +333,32 @@ class OpenAILlmDalleService(LlmService):
 
 
 class OpenAILlmTextToSpeech(LlmService):
+    """
+    OpenAIのテキスト音声変換サービス。
+    テキストを音声に変換します。
+    """
+
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()
         self.config = config
+        self.client = OpenAI(api_key=self.config.api_key)
 
     def retrieve_answer(self, message: Message):
-        return OpenAI(api_key=self.config.api_key).audio.speech.create(
+        """
+        テキストを音声に変換します。
+
+        Args:
+            message (Message): 音声に変換するテキストを含むメッセージ
+
+        Returns:
+            音声ファイルのレスポンス
+        """
+        if not message or not message.content:
+            raise ValueError(
+                "Message content cannot be empty for text-to-speech conversion"
+            )
+
+        return self.client.audio.speech.create(
             model=self.config.model,
             voice="alloy",
             input=message.content,
