@@ -10,7 +10,7 @@ from PIL import Image
 from django.contrib.auth.models import User
 
 from config.settings import MEDIA_ROOT, BASE_DIR
-from lib.llm.llm_service import (
+from lib.llm.service.completion import (
     OpenAILlmCompletionService,
     OpenAILlmCompletionStreamingService,
     OpenAILlmDalleService,

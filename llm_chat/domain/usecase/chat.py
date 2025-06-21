@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import UploadedFile
 
 from config.settings import MEDIA_ROOT
-from lib.llm.llm_service import OpenAILlmCompletionStreamingService
+from lib.llm.service.completion import OpenAILlmCompletionStreamingService
 from lib.llm.valueobject.chat import RoleType, StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
