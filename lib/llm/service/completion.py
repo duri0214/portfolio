@@ -155,6 +155,12 @@ class LlmCompletionService(LlmService):
 
 class OpenAILlmCompletionStreamingService(LlmService):
     def __init__(self, config: OpenAIGptConfig):
+# 後方互換性のためのエイリアス
+# TODO: アプリケーション側の参照を LlmCompletionService に更新した後、これらのエイリアスを削除する
+GeminiLlmCompletionService = LlmCompletionService
+OpenAILlmCompletionService = LlmCompletionService
+
+
         super().__init__()
         self.config = config
 
