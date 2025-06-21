@@ -99,29 +99,54 @@ class LlmService(ABC):
         pass
 
 
-class GeminiLlmCompletionService(LlmService):
-    def __init__(self, config: GeminiConfig):
+class LlmCompletionService(LlmService):
+    """
+    OpenAIとGeminiの両方に対応した統合LLM完了サービス。
+    OpenAIのAPIインターフェースを使用してGeminiモデルにもアクセスできます。
+
+    See Also: https://ai.google.dev/gemini-api/docs/openai
+    """
+
+    def __init__(self, config: OpenAIGptConfig | GeminiConfig):
         super().__init__()
         self.config = config
+        self.client = self._initialize_client()
 
-    def retrieve_answer(self, chat_history: list[Message]):
-        # TODO: [-1]しか処理してないから、そのうち Gemini用のMessage にしたいね
-        #  https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=python&hl=ja
-        cut_down_history = cut_down_chat_history(chat_history, self.config)
-        generativeai.configure(api_key=self.config.api_key)
-        return generativeai.GenerativeModel(self.config.model).generate_content(
-            cut_down_history[-1].content
-        )
+    def _initialize_client(self) -> OpenAI:
+        """
+        APIクライアントを初期化します。
+        GeminiConfigの場合はOpenAI互換エンドポイントを使用します。
 
+        Returns:
+            OpenAI: 設定されたAPIクライアント
+        """
+        client_params = {"api_key": self.config.api_key}
 
-class OpenAILlmCompletionService(LlmService):
-    def __init__(self, config: OpenAIGptConfig):
-        super().__init__()
-        self.config = config
+        # GeminiConfigの場合はOpenAI互換エンドポイントを設定
+        if isinstance(self.config, GeminiConfig):
+            client_params["base_url"] = (
+                "https://generativelanguage.googleapis.com/v1beta/openai/"
+            )
+
+        return OpenAI(**client_params)
 
     def retrieve_answer(self, chat_history: list[Message]) -> ChatCompletion:
+        """
+        チャット履歴から回答を取得します。
+
+        Args:
+            chat_history (list[Message]): チャット履歴メッセージのリスト
+
+        Returns:
+            ChatCompletion: OpenAI形式のチャット完了レスポンス
+        """
         cut_down_history = cut_down_chat_history(chat_history, self.config)
-        return OpenAI(api_key=self.config.api_key).chat.completions.create(
+
+        # 空のチャット履歴の場合はエラー
+        if not cut_down_history:
+            raise ValueError("Chat history cannot be empty")
+
+        return self.client.chat.completions.create(
             model=self.config.model,
             messages=[x.to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
