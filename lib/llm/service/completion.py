@@ -291,9 +291,13 @@ class LlmCompletionStreamingService(LlmService):
             - SSEに関する詳細: https://developer.mozilla.org/ja/docs/Web/API/Server-sent_events
             - OpenAIストリーミングAPI: https://platform.openai.com/docs/api-reference/streaming
         """
-
         for chunk in generator:
             yield f"data: {chunk.to_json()}\n\n"
+
+
+# 後方互換性のためのエイリアス
+# TODO: アプリケーション側の参照を LlmCompletionStreamingService に更新した後、このエイリアスを削除する
+OpenAILlmCompletionStreamingService = LlmCompletionStreamingService
 
 
 class OpenAILlmDalleService(LlmService):
