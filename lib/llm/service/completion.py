@@ -367,16 +367,37 @@ class OpenAILlmTextToSpeech(LlmService):
 
 
 class OpenAILlmSpeechToText(LlmService):
+    """
+    OpenAIの音声テキスト変換サービス。
+    音声ファイルをテキストに変換します。
+    """
+
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()
         self.config = config
+        self.client = OpenAI(api_key=self.config.api_key)
 
     def retrieve_answer(self, file_path: str):
-        file_path = os.path.join(MEDIA_ROOT, file_path)
-        audio = open(file_path, "rb")
-        return OpenAI(api_key=self.config.api_key).audio.transcriptions.create(
-            model=self.config.model, file=audio
-        )
+        """
+        音声ファイルをテキストに変換します。
+
+        Args:
+            file_path (str): 変換する音声ファイルのパス（MEDIA_ROOTからの相対パス）
+
+        Returns:
+            音声のテキスト変換結果
+        """
+        if not file_path:
+            raise ValueError("File path cannot be empty for speech-to-text conversion")
+
+        full_path = os.path.join(MEDIA_ROOT, file_path)
+        if not os.path.exists(full_path):
+            raise FileNotFoundError(f"Audio file not found at {full_path}")
+
+        with open(full_path, "rb") as audio_file:
+            return self.client.audio.transcriptions.create(
+                model=self.config.model, file=audio_file
+            )
 
 
 class OpenAILlmRagService(LlmService):
