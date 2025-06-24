@@ -71,6 +71,7 @@ class SyncResponseView(View):
                 user_input = "N/A"
                 use_case = OpenAISpeechToTextUseCase(audio_file=audio_file)
             elif use_case_type == "OpenAIRag":
+                user_input = None  # RAGでは入力を使用しない
                 use_case = OpenAIRagUseCase()
 
             if not use_case:
