@@ -138,7 +138,7 @@ class GeminiChatService(ChatService):
         return MessageDTO(
             user=user_message.user,
             role=RoleType.ASSISTANT,
-            content=response.text,
+            content=response.choices[0].message.content,
             invisible=False,
         )
 
