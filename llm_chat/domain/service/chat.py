@@ -355,6 +355,9 @@ class OpenAIRagChatService(ChatService):
             Path(BASE_DIR)
             / "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
         )
+        print(f"file_path: {file_path}")
+        print(f"file_path exists: {file_path.exists()}")
+
         response_dict = OpenAILlmRagService(
             config=self.config,
             dataloader=PdfDataloader(str(file_path)),
