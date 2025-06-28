@@ -80,7 +80,7 @@ class BasePhoto:
         )
 
     @staticmethod
-    def _convert_to_degrees(coord: exifread.classes.IfdTag) -> float:
+    def _convert_to_degrees(coord) -> float:
         """座標を度に変換する"""
         degrees = float(coord.values[0].num) / float(coord.values[0].den)
         minutes = float(coord.values[1].num) / float(coord.values[1].den)
