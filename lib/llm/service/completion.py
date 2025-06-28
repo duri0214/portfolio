@@ -440,7 +440,6 @@ class OpenAILlmRagService(LlmService):
     def _create_vectorstore(self) -> Chroma:
         """
         エンベディングとドキュメントを使用してベクトルストアを作成します。
-        テレメトリー機能にバグがあるため、やむを得ず無効化しています。
 
         Note:
             ChromaDBのテレメトリー機能で "capture() takes 1 positional argument but 3 were given"
