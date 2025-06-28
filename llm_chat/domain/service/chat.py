@@ -16,8 +16,7 @@ from lib.llm.service.completion import (
     OpenAILlmDalleService,
     OpenAILlmTextToSpeech,
     OpenAILlmSpeechToText,
-    GeminiLlmCompletionService,
-    OpenAILlmRagService,
+    GeminiLlmCompletionService, OpenAILlmRagService,
 )
 from lib.llm.valueobject.chat import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
@@ -345,24 +344,18 @@ class OpenAIRagChatService(ChatService):
             max_tokens=4000,
             model="gpt-4o-mini",
         )
-
     def generate(self, user_message: MessageDTO) -> MessageDTO:
         # Step1: User の質問を保存
         ChatLogRepository.insert(user_message)
-
         # Step2: langchainからの回答を保存
         file_path = (
             Path(BASE_DIR)
             / "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
         )
-        print(f"file_path: {file_path}")
-        print(f"file_path exists: {file_path.exists()}")
-
         response_dict = OpenAILlmRagService(
             config=self.config,
             dataloader=PdfDataloader(str(file_path)),
         ).retrieve_answer(user_message.to_message())
-
         user_message.role = RoleType.ASSISTANT
         user_message.content = RetrievalQAWithSourcesChainAnswer(**response_dict).answer
         return user_message
