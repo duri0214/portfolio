@@ -268,7 +268,8 @@ if __name__ == "__main__":
     except requests.exceptions.HTTPError as http_err:
         print(f"[HTTP Error] {http_err}")
 
-    # # TODO: チケットを作成する機能を作る　https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
+    # TODO: チケットを作成する機能を作る Issue236
+    #  https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
     # payload_xxx = CreateIssuePayload(
     #     description_text="Order entry fails when selecting supplier.",
     #     issue_type_id="10000",
@@ -279,12 +280,12 @@ if __name__ == "__main__":
     #     reporter_id="5b10a2844c20165700ede21g",
     #     summary="Main order flow broken",
     # )
-    # # チケットを作成
+    # チケットを作成
     # try:
     #     result = jira_service.create_issue(payload_xxx)
     #     print("チケットが作成されました:", result)
     # except HTTPError as e:
     #     print("エラーが発生しました:", str(e))
     #
-    # # TODO: チケットを削除する
-    # # TODO: チケットを編集する
+    # TODO: チケットを削除する Issue236
+    # TODO: チケットを編集する Issue236
