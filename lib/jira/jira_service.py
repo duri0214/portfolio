@@ -223,33 +223,6 @@ class JiraService:
 
         return " ".join(description_text)
 
-    # def create_issue(self, payload: CreateIssuePayload):
-    #     """
-    #     JIRAチケットを作成する
-    #
-    #     Args:
-    #         payload (CreateIssuePayload): ペイロードデータを表すValue Object
-    #
-    #     Returns:
-    #         dict: 作成されたチケットの詳細
-    #     """
-    #     url = f"{self.base_url}/rest/api/3/issue"
-    #
-    #     # POSTリクエストを送信
-    #     response = requests.post(
-    #         url,
-    #         data=json.dumps(payload.to_dict()),
-    #         headers=self.headers,
-    #         auth=self.auth,
-    #     )
-    #
-    #     if response.status_code != 201:  # 201は「作成成功」を表す
-    #         raise HTTPError(
-    #             f"Failed to create issue: {response.status_code} {response.text}"
-    #         )
-    #
-    #     return response.json()  # 作成されたチケットのJSONレスポンスを返す
-
 
 if __name__ == "__main__":
     # API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about
