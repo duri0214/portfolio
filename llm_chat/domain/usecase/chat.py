@@ -303,7 +303,7 @@ class OpenAIRagUseCase(UseCase):
         user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
-            content="RAG質問",
+            content=content,
             invisible=False,
         )
         user_message = chat_service.generate(user_message)
