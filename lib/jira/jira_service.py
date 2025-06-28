@@ -14,7 +14,7 @@ from lib.jira.valueobject.ticket import (
 )
 
 # .env ファイルを読み込む
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 
@@ -225,6 +225,26 @@ class JiraService:
 
 
 if __name__ == "__main__":
+    """
+    このスクリプトを直接実行する場合のメイン処理。
+
+    動作内容:
+    - JIRAの全プロジェクトを取得
+    - 各プロジェクトの課題（Task）を取得して表示
+
+    必要な環境変数:
+    - JIRA_YOUR_DOMAIN: JIRAのドメイン名
+    - EMAIL_HOST_USER: JIRA認証用のメールアドレス
+    - JIRA_API_KEY: JIRA API キー
+
+    注意: 
+    このスクリプトと同じディレクトリ（lib/jira/）の.envファイルから環境変数を読み込みます。
+
+    PyCharmで実行する場合:
+    メニューバー → Run → Edit Configurations... でWorking directoryを
+    lib/jira/ に設定してください。Working directoryがズレていると
+    .envファイルが正しく読み込まれずに実行に失敗します。
+    """
     # API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about
 
     # JIRA configuration: Replace with actual values or environment variables
