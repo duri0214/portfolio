@@ -287,11 +287,11 @@ class OpenAIRagUseCase(UseCase):
     def execute(self, user: User, content: str | None) -> MessageDTO:
         """
         RagServiceを利用し、Pdfをソースに。
-        contentパラメータは使用されません（Noneが渡されることを想定）。
+        contentパラメータは必ずNoneであること。
 
         Args:
             user (User): DjangoのUserモデルのインスタンス
-            content (str | None): この引数は使用されません（常にNone）
+            content (str | None): この引数は現在利用されていません。
 
         Raises:
             ValueError: contentがNoneでない場合
@@ -299,6 +299,9 @@ class OpenAIRagUseCase(UseCase):
         Returns:
             RAG処理の結果
         """
+        if content is None:
+            raise ValueError("content cannot be None for OpenAIRagUseCase")
+
         chat_service = OpenAIRagChatService()
         user_message = MessageDTO(
             user=user,
