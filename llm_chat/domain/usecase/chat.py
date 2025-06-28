@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import UploadedFile
 
 from config.settings import MEDIA_ROOT
-from lib.llm.llm_service import OpenAILlmCompletionStreamingService
+from lib.llm.service.completion import OpenAILlmCompletionStreamingService
 from lib.llm.valueobject.chat import RoleType, StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
@@ -297,10 +297,11 @@ class OpenAIRagUseCase(UseCase):
             ValueError: contentがNoneでない場合
 
         Returns:
-            音声をテキストに変換した結果
+            RAG処理の結果
         """
         if content is None:
             raise ValueError("content cannot be None for OpenAIRagUseCase")
+
         chat_service = OpenAIRagChatService()
         user_message = MessageDTO(
             user=user,

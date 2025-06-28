@@ -6,7 +6,7 @@ import requests
 from dotenv import load_dotenv
 
 # .env ファイルを読み込む
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 TODAY = 0
@@ -53,6 +53,25 @@ class WeatherService:
 
 
 if __name__ == "__main__":
+    """
+    このスクリプトを直接実行する場合のメイン処理。
+
+    動作内容:
+    - 東京都（city_code: 130010）の天気情報を取得
+    - Slackの指定チャンネルに天気情報を送信
+
+    必要な環境変数:
+    - SLACK_CHANNEL_ID: SlackのチャンネルID
+    - SLACK_WEBHOOK_URL: SlackのWebhook URL
+
+    注意: 
+    このスクリプトと同じディレクトリ（lib/slack/）の.envファイルから環境変数を読み込みます。
+
+    PyCharmで実行する場合:
+    メニューバー → Run → Edit Configurations... でWorking directoryを
+    lib/slack/ に設定してください。Working directoryがズレていると
+    .envファイルが正しく読み込まれずに実行に失敗します。
+    """
     city_code = "130010"
     slack_service = SlackService(
         channel_id=os.getenv("SLACK_CHANNEL_ID"),

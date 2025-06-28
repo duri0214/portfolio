@@ -10,7 +10,7 @@ from PIL import Image
 from django.contrib.auth.models import User
 
 from config.settings import MEDIA_ROOT, BASE_DIR
-from lib.llm.llm_service import (
+from lib.llm.service.completion import (
     OpenAILlmCompletionService,
     OpenAILlmCompletionStreamingService,
     OpenAILlmDalleService,
@@ -138,7 +138,7 @@ class GeminiChatService(ChatService):
         return MessageDTO(
             user=user_message.user,
             role=RoleType.ASSISTANT,
-            content=response.text,
+            content=response.choices[0].message.content,
             invisible=False,
         )
 

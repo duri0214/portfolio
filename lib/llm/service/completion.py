@@ -5,11 +5,8 @@ from typing import Generator
 
 import tiktoken
 from dotenv import load_dotenv
-from google import generativeai
 from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
-from langchain.prompts import (
-    ChatPromptTemplate,
-)
+from langchain.prompts import ChatPromptTemplate
 from langchain_chroma import Chroma
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
@@ -44,6 +41,8 @@ def count_tokens(text: str) -> int:
 
     See Also: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
     """
+    if not text:
+        return 0
 
     encoding = tiktoken.get_encoding("o200k_base")
     tokens = encoding.encode(text)
@@ -66,6 +65,9 @@ def cut_down_chat_history(
     Returns:
         list[Message]: 削減されたチャット履歴メッセージのリスト。
     """
+    if not chat_history:
+        return []
+
     token_count = 0
 
     for i in range(len(chat_history) - 1, -1, -1):  # 逆順にループ
@@ -78,44 +80,113 @@ def cut_down_chat_history(
 
 
 class LlmService(ABC):
+    """
+    LLMサービスの基底クラス。すべてのLLMサービス実装はこのクラスを継承します。
+    """
+
     @abstractmethod
     def retrieve_answer(self, **kwargs):
+        """
+        LLMから回答を取得するための抽象メソッド。
+        各サブクラスで具体的な実装を提供する必要があります。
+
+        Args:
+            **kwargs: サービス固有のパラメータ
+
+        Returns:
+            LLMからの応答
+        """
         pass
 
 
-class GeminiLlmCompletionService(LlmService):
-    def __init__(self, config: GeminiConfig):
+class LlmCompletionService(LlmService):
+    """
+    OpenAIとGeminiの両方に対応した統合LLM完了サービス。
+    OpenAIのAPIインターフェースを使用してGeminiモデルにもアクセスできます。
+
+    See Also: https://ai.google.dev/gemini-api/docs/openai
+    """
+
+    def __init__(self, config: OpenAIGptConfig | GeminiConfig):
         super().__init__()
         self.config = config
+        self.client = self._initialize_client()
 
-    def retrieve_answer(self, chat_history: list[Message]):
-        # TODO: [-1]しか処理してないから、そのうち Gemini用のMessage にしたいね
-        #  https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=python&hl=ja
-        cut_down_history = cut_down_chat_history(chat_history, self.config)
-        generativeai.configure(api_key=self.config.api_key)
-        return generativeai.GenerativeModel(self.config.model).generate_content(
-            cut_down_history[-1].content
-        )
+    def _initialize_client(self) -> OpenAI:
+        """
+        APIクライアントを初期化します。
+        GeminiConfigの場合はOpenAI互換エンドポイントを使用します。
 
+        Returns:
+            OpenAI: 設定されたAPIクライアント
+        """
+        client_params = {"api_key": self.config.api_key}
 
-class OpenAILlmCompletionService(LlmService):
-    def __init__(self, config: OpenAIGptConfig):
-        super().__init__()
-        self.config = config
+        # GeminiConfigの場合はOpenAI互換エンドポイントを設定
+        if isinstance(self.config, GeminiConfig):
+            client_params["base_url"] = (
+                "https://generativelanguage.googleapis.com/v1beta/openai/"
+            )
+
+        return OpenAI(**client_params)
 
     def retrieve_answer(self, chat_history: list[Message]) -> ChatCompletion:
+        """
+        チャット履歴から回答を取得します。
+
+        Args:
+            chat_history (list[Message]): チャット履歴メッセージのリスト
+
+        Returns:
+            ChatCompletion: OpenAI形式のチャット完了レスポンス
+        """
         cut_down_history = cut_down_chat_history(chat_history, self.config)
-        return OpenAI(api_key=self.config.api_key).chat.completions.create(
+
+        # 空のチャット履歴の場合はエラー
+        if not cut_down_history:
+            raise ValueError("Chat history cannot be empty")
+
+        return self.client.chat.completions.create(
             model=self.config.model,
             messages=[x.to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
         )
 
 
-class OpenAILlmCompletionStreamingService(LlmService):
-    def __init__(self, config: OpenAIGptConfig):
+# 後方互換性のためのエイリアス
+# TODO: アプリケーション側の参照を LlmCompletionService に更新した後、これらのエイリアスを削除する
+GeminiLlmCompletionService = LlmCompletionService
+OpenAILlmCompletionService = LlmCompletionService
+
+
+class LlmCompletionStreamingService(LlmService):
+    """
+    OpenAIとGeminiの両方に対応したストリーミングLLM完了サービス。
+    OpenAIのAPIインターフェースを使用してGeminiモデルにもストリーミングアクセスできます。
+    """
+
+    def __init__(self, config: OpenAIGptConfig | GeminiConfig):
         super().__init__()
         self.config = config
+        self.client = self._initialize_client()
+
+    def _initialize_client(self) -> OpenAI:
+        """
+        APIクライアントを初期化します。
+        GeminiConfigの場合はOpenAI互換エンドポイントを使用します。
+
+        Returns:
+            OpenAI: 設定されたAPIクライアント
+        """
+        client_params = {"api_key": self.config.api_key}
+
+        # GeminiConfigの場合はOpenAI互換エンドポイントを設定
+        if isinstance(self.config, GeminiConfig):
+            client_params["base_url"] = (
+                "https://generativelanguage.googleapis.com/v1beta/openai/"
+            )
+
+        return OpenAI(**client_params)
 
     def retrieve_answer(
         self, chat_history: list[Message]
@@ -123,15 +194,22 @@ class OpenAILlmCompletionStreamingService(LlmService):
         """
         OpenAIのストリーミングレスポンスを処理し、応答をジェネレーターとして返します。
 
+        Args:
+            chat_history (list[Message]): チャット履歴
+
         Returns:
             Generator[StreamResponse, None, None]:
                 - `StreamResponse`はジェネレーターが`yield`するオブジェクト。
                 - `None`（2つ目の型）はジェネレーターに対して値を送り込む型がないことを示します。
                 - `None`（3つ目の型）はこのジェネレーターが停止時に明示的な`return`を行わないことを示します。
         """
-
         cut_down_history = cut_down_chat_history(chat_history, self.config)
-        stream = OpenAI(api_key=self.config.api_key).chat.completions.create(
+
+        # 空のチャット履歴の場合はエラー
+        if not cut_down_history:
+            raise ValueError("Chat history cannot be empty")
+
+        stream = self.client.chat.completions.create(
             model=self.config.model,
             messages=[x.to_dict() for x in cut_down_history],
             temperature=self.config.temperature,
@@ -169,7 +247,6 @@ class OpenAILlmCompletionStreamingService(LlmService):
         See Also:
             - https://platform.openai.com/docs/api-reference/streaming
         """
-
         try:
             for chunk in self.retrieve_answer(chat_history):
                 yield chunk
@@ -214,18 +291,39 @@ class OpenAILlmCompletionStreamingService(LlmService):
             - SSEに関する詳細: https://developer.mozilla.org/ja/docs/Web/API/Server-sent_events
             - OpenAIストリーミングAPI: https://platform.openai.com/docs/api-reference/streaming
         """
-
         for chunk in generator:
             yield f"data: {chunk.to_json()}\n\n"
 
 
+# 後方互換性のためのエイリアス
+# TODO: アプリケーション側の参照を LlmCompletionStreamingService に更新した後、このエイリアスを削除する
+OpenAILlmCompletionStreamingService = LlmCompletionStreamingService
+
+
 class OpenAILlmDalleService(LlmService):
+    """
+    OpenAIのDALL-Eモデルを使用して画像生成を行うサービス。
+    """
+
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()
         self.config = config
+        self.client = OpenAI(api_key=self.config.api_key)
 
     def retrieve_answer(self, message: Message) -> ImagesResponse:
-        return OpenAI(api_key=self.config.api_key).images.generate(
+        """
+        メッセージの内容に基づいて画像を生成します。
+
+        Args:
+            message (Message): 画像生成プロンプトを含むメッセージ
+
+        Returns:
+            ImagesResponse: 生成された画像のレスポンス
+        """
+        if not message or not message.content:
+            raise ValueError("Message content cannot be empty for image generation")
+
+        return self.client.images.generate(
             model=self.config.model,
             prompt=message.content,
             size="1024x1024",
@@ -235,12 +333,32 @@ class OpenAILlmDalleService(LlmService):
 
 
 class OpenAILlmTextToSpeech(LlmService):
+    """
+    OpenAIのテキスト音声変換サービス。
+    テキストを音声に変換します。
+    """
+
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()
         self.config = config
+        self.client = OpenAI(api_key=self.config.api_key)
 
     def retrieve_answer(self, message: Message):
-        return OpenAI(api_key=self.config.api_key).audio.speech.create(
+        """
+        テキストを音声に変換します。
+
+        Args:
+            message (Message): 音声に変換するテキストを含むメッセージ
+
+        Returns:
+            音声ファイルのレスポンス
+        """
+        if not message or not message.content:
+            raise ValueError(
+                "Message content cannot be empty for text-to-speech conversion"
+            )
+
+        return self.client.audio.speech.create(
             model=self.config.model,
             voice="alloy",
             input=message.content,
@@ -249,29 +367,61 @@ class OpenAILlmTextToSpeech(LlmService):
 
 
 class OpenAILlmSpeechToText(LlmService):
+    """
+    OpenAIの音声テキスト変換サービス。
+    音声ファイルをテキストに変換します。
+    """
+
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()
         self.config = config
+        self.client = OpenAI(api_key=self.config.api_key)
 
     def retrieve_answer(self, file_path: str):
-        file_path = os.path.join(MEDIA_ROOT, file_path)
-        audio = open(file_path, "rb")
-        return OpenAI(api_key=self.config.api_key).audio.transcriptions.create(
-            model=self.config.model, file=audio
-        )
+        """
+        音声ファイルをテキストに変換します。
+
+        Args:
+            file_path (str): 変換する音声ファイルのパス（MEDIA_ROOTからの相対パス）
+
+        Returns:
+            音声のテキスト変換結果
+        """
+        if not file_path:
+            raise ValueError("File path cannot be empty for speech-to-text conversion")
+
+        full_path = os.path.join(MEDIA_ROOT, file_path)
+        if not os.path.exists(full_path):
+            raise FileNotFoundError(f"Audio file not found at {full_path}")
+
+        with open(full_path, "rb") as audio_file:
+            return self.client.audio.transcriptions.create(
+                model=self.config.model, file=audio_file
+            )
 
 
 class OpenAILlmRagService(LlmService):
+    """
+    OpenAIモデルを使用した検索拡張生成（RAG）サービス。
+    PDFなどのドキュメントに基づいた質問応答を実現します。
+
+    See Also: https://python.langchain.com/docs/how_to/qa_sources/
+    """
+
     def __init__(
-        self, config: OpenAIGptConfig, dataloader: PdfDataloader, n_results: int = 3
+        self,
+        config: OpenAIGptConfig,
+        dataloader: PdfDataloader,
+        n_results: int = 3,
+        embedding_model: str = "text-embedding-3-large",
     ):
-        """
-        See Also: https://python.langchain.com/docs/how_to/qa_sources/
-        """
         super().__init__()
         self.config = config
         self.dataloader = dataloader
         self.n_results = n_results
+        self.embedding_model = embedding_model
+
+        # プロンプトテンプレートの設定
         self.system_template = """
             以下の資料の注意点を念頭に置いて回答してください
             ・ユーザの質問に対して、できる限り根拠を示してください
@@ -287,32 +437,60 @@ class OpenAILlmRagService(LlmService):
         ]
         self.prompt_template = ChatPromptTemplate.from_messages(messages)
 
-    @staticmethod
-    def _create_vectorstore(dataloader: PdfDataloader) -> Chroma:
+    def _create_vectorstore(self) -> Chroma:
         """
-        Note: OpenAIEmbeddings runs on "text-embedding-ada-002"
+        エンベディングとドキュメントを使用してベクトルストアを作成します。
+
+        Note:
+            ChromaDBのテレメトリー機能で "capture() takes 1 positional argument but 3 were given"
+            エラーが発生する既知のバグがあります。
+            docs: https://docs.trychroma.com/docs/overview/telemetry
+            関連issue: https://github.com/chroma-core/chroma/issues/2640
+
+        Returns:
+            Chroma: 作成されたベクトルストア
         """
-        embeddings = OpenAIEmbeddings()
+        if not self.dataloader or not self.dataloader.data:
+            raise ValueError("Dataloader must contain valid documents")
+
+        embeddings = OpenAIEmbeddings(model=self.embedding_model)
 
         return Chroma.from_documents(
-            documents=dataloader.data,
+            documents=self.dataloader.data,
             embedding=embeddings,
-            persist_directory=".",
+            persist_directory="./chroma_db",  # 永続化ディレクトリを指定
         )
 
     def retrieve_answer(self, message: Message) -> dict:
-        embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+        """
+        与えられたメッセージに基づいて、ドキュメントから関連情報を検索し回答を生成します。
+
+        Args:
+            message (Message): 質問を含むメッセージ
+
+        Returns:
+            dict: 回答と使用されたソースドキュメントを含む辞書
+        """
+        if not message or not message.content:
+            raise ValueError("Message content cannot be empty for RAG query")
+
+        # ベクトルストアの作成または再利用
+        embeddings = OpenAIEmbeddings(model=self.embedding_model)
         docsearch = Chroma.from_texts(
             texts=[x.page_content for x in self.dataloader.data],
             embedding=embeddings,
             metadatas=[x.metadata for x in self.dataloader.data],
         )
+
+        # LLMチェーンの作成
         chain = RetrievalQAWithSourcesChain.from_chain_type(
-            llm=ChatOpenAI(temperature=0, model=self.config.model),
+            llm=ChatOpenAI(
+                temperature=0, model=self.config.model, api_key=self.config.api_key
+            ),
             chain_type="stuff",
             reduce_k_below_max_tokens=True,
             return_source_documents=True,
-            retriever=docsearch.as_retriever(),
+            retriever=docsearch.as_retriever(search_kwargs={"k": self.n_results}),
             chain_type_kwargs={"prompt": self.prompt_template},
         )
 

@@ -14,7 +14,7 @@ from lib.jira.valueobject.ticket import (
 )
 
 # .env ファイルを読み込む
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 
@@ -54,7 +54,7 @@ class JiraService:
         Fetch all projects from the JIRA API using `isLast` for termination.
 
         Returns:
-            List[ProjectVO]: A list of ProjectVOs containing project key and name.
+            List[ProjectVO]: A list of ProjectVOs containing the project key and name.
 
         Raises:
             HTTPError: If the HTTP request returns an error response.
@@ -223,35 +223,28 @@ class JiraService:
 
         return " ".join(description_text)
 
-    # def create_issue(self, payload: CreateIssuePayload):
-    #     """
-    #     JIRAチケットを作成する
-    #
-    #     Args:
-    #         payload (CreateIssuePayload): ペイロードデータを表すValue Object
-    #
-    #     Returns:
-    #         dict: 作成されたチケットの詳細
-    #     """
-    #     url = f"{self.base_url}/rest/api/3/issue"
-    #
-    #     # POSTリクエストを送信
-    #     response = requests.post(
-    #         url,
-    #         data=json.dumps(payload.to_dict()),
-    #         headers=self.headers,
-    #         auth=self.auth,
-    #     )
-    #
-    #     if response.status_code != 201:  # 201は「作成成功」を表す
-    #         raise HTTPError(
-    #             f"Failed to create issue: {response.status_code} {response.text}"
-    #         )
-    #
-    #     return response.json()  # 作成されたチケットのJSONレスポンスを返す
-
 
 if __name__ == "__main__":
+    """
+    このスクリプトを直接実行する場合のメイン処理。
+
+    動作内容:
+    - JIRAの全プロジェクトを取得
+    - 各プロジェクトの課題（Task）を取得して表示
+
+    必要な環境変数:
+    - JIRA_YOUR_DOMAIN: JIRAのドメイン名
+    - EMAIL_HOST_USER: JIRA認証用のメールアドレス
+    - JIRA_API_KEY: JIRA API キー
+
+    注意: 
+    このスクリプトと同じディレクトリ（lib/jira/）の.envファイルから環境変数を読み込みます。
+
+    PyCharmで実行する場合:
+    メニューバー → Run → Edit Configurations... でWorking directoryを
+    lib/jira/ に設定してください。Working directoryがズレていると
+    .envファイルが正しく読み込まれずに実行に失敗します。
+    """
     # API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about
 
     # JIRA configuration: Replace with actual values or environment variables
@@ -275,7 +268,8 @@ if __name__ == "__main__":
     except requests.exceptions.HTTPError as http_err:
         print(f"[HTTP Error] {http_err}")
 
-    # # TODO: チケットを作成する機能を作る　https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
+    # TODO: チケットを作成する機能を作る Issue236
+    #  https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
     # payload_xxx = CreateIssuePayload(
     #     description_text="Order entry fails when selecting supplier.",
     #     issue_type_id="10000",
@@ -286,12 +280,12 @@ if __name__ == "__main__":
     #     reporter_id="5b10a2844c20165700ede21g",
     #     summary="Main order flow broken",
     # )
-    # # チケットを作成
+    # チケットを作成
     # try:
     #     result = jira_service.create_issue(payload_xxx)
     #     print("チケットが作成されました:", result)
     # except HTTPError as e:
     #     print("エラーが発生しました:", str(e))
     #
-    # # TODO: チケットを削除する
-    # # TODO: チケットを編集する
+    # TODO: チケットを削除する Issue236
+    # TODO: チケットを編集する Issue236
