@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Generator
 
 import tiktoken
+from chromadb.config import Settings
 from dotenv import load_dotenv
 from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
 from langchain.prompts import ChatPromptTemplate
@@ -440,6 +441,12 @@ class OpenAILlmRagService(LlmService):
     def _create_vectorstore(self) -> Chroma:
         """
         エンベディングとドキュメントを使用してベクトルストアを作成します。
+        テレメトリー機能にバグがあるため、やむを得ず無効化しています。
+
+        Note:
+            ChromaDBのテレメトリー機能で "capture() takes 1 positional argument but 3 were given" 
+            エラーが発生する既知のバグがあります。
+            関連issue: https://github.com/chroma-core/chroma/issues/2640
 
         Returns:
             Chroma: 作成されたベクトルストア
@@ -453,6 +460,7 @@ class OpenAILlmRagService(LlmService):
             documents=self.dataloader.data,
             embedding=embeddings,
             persist_directory="./chroma_db",  # 永続化ディレクトリを指定
+            client_settings=Settings(anonymized_telemetry=False)  # テレメトリーのバグ回避のため無効化
         )
 
     def retrieve_answer(self, message: Message) -> dict:
@@ -474,6 +482,7 @@ class OpenAILlmRagService(LlmService):
             texts=[x.page_content for x in self.dataloader.data],
             embedding=embeddings,
             metadatas=[x.metadata for x in self.dataloader.data],
+            client_settings=Settings(anonymized_telemetry=False)  # テレメトリーのバグ回避のため無効化
         )
 
         # LLMチェーンの作成
