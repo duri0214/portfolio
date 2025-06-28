@@ -54,7 +54,7 @@ class JiraService:
         Fetch all projects from the JIRA API using `isLast` for termination.
 
         Returns:
-            List[ProjectVO]: A list of ProjectVOs containing project key and name.
+            List[ProjectVO]: A list of ProjectVOs containing the project key and name.
 
         Raises:
             HTTPError: If the HTTP request returns an error response.
