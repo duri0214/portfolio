@@ -235,7 +235,7 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 - `python manage.py fetch_weather_forecast` のバッチをまわす
 - `python manage.py fetch_weather_warning` のバッチをまわす
 
-## securities report
+## securities
 
 - edinet data を zip でダウンロードする
     - `python manage.py daily_download_edinet` のバッチをまわす
