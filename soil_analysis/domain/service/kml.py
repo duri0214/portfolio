@@ -30,11 +30,10 @@ class KmlService:
         land_location_list: list[LandLocation] = []
 
         try:
-            kml_doc = kml.KML()
-            kml_doc.from_string(kml_str)
-            kml_document = list(kml_doc.features())[self.KML_DOCUMENT]
+            kml_doc = kml.KML.from_string(kml_str)
+            kml_document = list(kml_doc.features)[self.KML_DOCUMENT]
 
-            for place_mark in kml_document.features():
+            for place_mark in kml_document.features:
                 place_mark_object = place_mark.geometry
                 name = place_mark.name
                 coord_str = self.to_str(
