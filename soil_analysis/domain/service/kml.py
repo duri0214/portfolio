@@ -1,4 +1,5 @@
 from fastkml import kml
+from fastkml.features import Placemark
 
 from soil_analysis.domain.valueobject.land import LandLocation
 
@@ -16,10 +17,22 @@ class KmlService:
         Args:
             kml_str (str): KML形式の文字列データ。
 
-        Notes: xarvioなら以下でOK
+        Notes:
+            xarvioなら以下でOK
             upload_file: InMemoryUploadedFile = self.request.FILES['file']
             kml_raw = upload_file.read()
             kml_service = KmlService()
+
+            fastkmlライブラリについて:
+            - kml_document.featuresはList[_Feature]を返すが、実際の要素はPlacemarkオブジェクト
+            - _Featureは抽象基底クラスで、Placemarkは_FeatureのDirect known subclass
+            - geometry属性はPlacemark固有のため、型キャストが必要
+            - このキャストは安全（実際の要素はPlacemarkインスタンス）
+
+            XML宣言の処理について:
+            - lxmlライブラリは文字列（str）にXML宣言が含まれていると処理できない
+            - "Unicode strings with encoding declaration are not supported" エラーが発生
+            - 実際のKMLファイルにはXML宣言が含まれることが多いため、前処理で除去
 
         Returns:
             list[LandLocation]: 解析された圃場位置情報のリスト。
@@ -30,10 +43,19 @@ class KmlService:
         land_location_list: list[LandLocation] = []
 
         try:
-            kml_doc = kml.KML.from_string(kml_str)
+            # XML宣言を除去（lxmlの制限回避）
+            clean_kml_str = kml_str
+            if kml_str.strip().startswith('<?xml'):
+                # XML宣言行を除去
+                lines = kml_str.strip().split('\n')
+                clean_kml_str = '\n'.join(line for line in lines if not line.strip().startswith('<?xml'))
+
+            kml_doc = kml.KML.from_string(clean_kml_str)
             kml_document = list(kml_doc.features)[self.KML_DOCUMENT]
 
-            for place_mark in kml_document.features:
+            for feature in kml_document.features:
+                # _FeatureからPlacemarkへの型キャスト（安全：実際の要素はPlacemarkインスタンス）
+                place_mark: Placemark = feature  # type: ignore
                 place_mark_object = place_mark.geometry
                 name = place_mark.name
                 coord_str = self.to_str(
