@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree
 
 
 class SimpleKmlPlacemark:
@@ -88,7 +88,7 @@ class KmlDocumentVO:
     def to_kml_object(self):
         """XMLパーサーを使用してKMLを解析し、シンプルなオブジェクトを返す"""
         try:
-            root = ET.fromstring(self.raw_kml)
+            root = ElementTree.fromstring(self.raw_kml)
             placemarks = []
 
             # 名前空間なしでPlacemarkを検索（テストデータに合わせて）
