@@ -33,6 +33,16 @@ class SimplePolygon:
     def exterior(self):
         return SimpleLinearRing(self._coordinates)
 
+    @property
+    def coords(self):
+        # Point型ジオメトリの場合に使用される座標リスト
+        coords_list = []
+        for coord_pair in self._coordinates.strip().split():
+            if ',' in coord_pair:
+                lon, lat = coord_pair.split(',')
+                coords_list.append((float(lon), float(lat)))
+        return coords_list
+
 
 class SimpleLinearRing:
     """シンプルなLinearRingクラス"""
