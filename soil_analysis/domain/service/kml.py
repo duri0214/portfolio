@@ -3,7 +3,8 @@ from soil_analysis.domain.valueobject.land import LandLocation
 
 
 class KmlService:
-    def parse_kml(self, kml_str: str) -> list[LandLocation]:
+    @staticmethod
+    def parse_kml(kml_str: str) -> list[LandLocation]:
         """
         KML形式の文字列を解析して圃場位置情報のリストを作成します。
 
