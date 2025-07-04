@@ -50,8 +50,18 @@ class KmlService:
                 lines = kml_str.strip().split('\n')
                 clean_kml_str = '\n'.join(line for line in lines if not line.strip().startswith('<?xml'))
 
+            # namespace宣言がない場合は追加（xarvio対応）
+            if '<kml>' in clean_kml_str and 'xmlns=' not in clean_kml_str:
+                clean_kml_str = clean_kml_str.replace('<kml>', '<kml xmlns="http://www.opengis.net/kml/2.2">')
+
             kml_doc = kml.KML.from_string(clean_kml_str)
-            kml_document = list(kml_doc.features)[self.KML_DOCUMENT]
+            features_list = list(kml_doc.features)
+
+            # featuresが空でないことを確認
+            if not features_list:
+                raise ValueError("No features found in KML document")
+
+            kml_document = features_list[self.KML_DOCUMENT]
 
             for feature in kml_document.features:
                 # _FeatureからPlacemarkへの型キャスト（安全：実際の要素はPlacemarkインスタンス）
@@ -59,10 +69,10 @@ class KmlService:
                 place_mark_object = place_mark.geometry
                 name = place_mark.name
 
-                # geoms属性がtupleを返すため、直接インデックスアクセスを使用
-                geoms = place_mark_object.geoms
+                # geoms属性がgeneratorを返すため、リストに変換してからアクセス
+                geoms = list(place_mark_object.geoms)
                 if geoms:
-                    # tuple[Point, ...]なので、最初の要素にアクセス
+                    # リストの最初の要素にアクセス
                     first_geom = geoms[0]
 
                     # ジオメトリの型によって座標の取得方法を変更
