@@ -121,7 +121,7 @@ class KmlDocumentVO:
 @dataclass
 class KmlPlacemarkVO:
     """Placemarkの型キャストと座標抽出を担当するValue Object"""
-    feature: any  # SimpleKmlPlacemark or _Feature
+    feature: SimpleKmlPlacemark | object  # SimpleKmlPlacemark or _Feature
 
     def __post_init__(self):
         self._validate_placemark()
