@@ -58,10 +58,22 @@ class KmlService:
                 place_mark: Placemark = feature  # type: ignore
                 place_mark_object = place_mark.geometry
                 name = place_mark.name
-                coord_str = self.to_str(
-                    place_mark_object.geoms[self.KML_POLYGON].exterior.coords
-                )
-                land_location_list.append(LandLocation(coord_str, name))
+
+                # geoms属性がtupleを返すため、直接インデックスアクセスを使用
+                geoms = place_mark_object.geoms
+                if geoms:
+                    # tuple[Point, ...]なので、最初の要素にアクセス
+                    first_geom = geoms[0]
+
+                    # ジオメトリの型によって座標の取得方法を変更
+                    if hasattr(first_geom, 'exterior'):
+                        # Polygonの場合
+                        coord_str = self.to_str(list(first_geom.exterior.coords))
+                    else:
+                        # Pointの場合
+                        coord_str = self.to_str(list(first_geom.coords))
+
+                    land_location_list.append(LandLocation(coord_str, name))
 
             return land_location_list
         except ValueError as e:
