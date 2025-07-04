@@ -52,7 +52,7 @@ class KmlService:
 
             # namespace宣言がない場合は追加（xarvio対応）
             if '<kml>' in clean_kml_str and 'xmlns=' not in clean_kml_str:
-                clean_kml_str = clean_kml_str.replace('<kml>', '<kml xmlns="http://www.opengis.net/kml/2.2">')
+                clean_kml_str = clean_kml_str.replace('<kml>', '<kml xmlns="https://www.opengis.net/kml/2.2">')
 
             kml_doc = kml.KML.from_string(clean_kml_str)
             features_list = list(kml_doc.features)
