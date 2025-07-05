@@ -19,15 +19,20 @@ class Placemark:
         return Geometry(self._coordinates)
 
 
-class SimpleGeometry:
-    """シンプルなGeometryクラス"""
+class Geometry:
+    """
+    xarvioにおけるKML Geometry要素 - 圃場の幾何学的データを管理
+
+    Placemarkに包含される要素で、圃場の地理的形状を定義します。
+    通常はPolygonTag（多角形）として圃場の境界を表現します。
+    """
 
     def __init__(self, coordinates: str):
         self._coordinates = coordinates
 
     @property
     def geoms(self):
-        return [SimplePolygon(self._coordinates)]
+        return [PolygonTag(self._coordinates)]
 
 
 class SimplePolygon:
