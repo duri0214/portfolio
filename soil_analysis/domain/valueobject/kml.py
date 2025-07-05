@@ -55,11 +55,6 @@ class KmlDocumentVO:
             # 再度空白文字を除去
             self.raw_kml = self.raw_kml.strip()
 
-        # namespace宣言がない場合は追加（xarvio対応）
-        # NOTE: テスト用に一時的に無効化
-        # if '<kml>' in self.raw_kml and 'xmlns=' not in self.raw_kml:
-        #     self.raw_kml = self.raw_kml.replace('<kml>', '<kml xmlns="https://www.opengis.net/kml/2.2">')
-
     def to_kml_object(self):
         """XMLパーサーを使用してKMLを解析し、シンプルなオブジェクトを返す"""
         try:
