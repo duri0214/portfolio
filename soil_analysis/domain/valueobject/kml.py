@@ -12,7 +12,7 @@ class Placemark:
 
     def __init__(self, name: str, coordinates: str):
         self.name = name
-        self._coordinates = coordinates
+        self.coordinates_str = coordinates
 
 
 class KmlDocument:
@@ -140,4 +140,4 @@ class KmlPlacemarkVO:
         """xarvio用の座標文字列を返す"""
         # Placemarkクラスのcoordinatesをそのまま返す
         # XMLから直接抽出済みの座標文字列
-        return getattr(self.placemark, "_coordinates", "")
+        return self.placemark.coordinates_str
