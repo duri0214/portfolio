@@ -45,7 +45,7 @@ class MarketAbstract(ABC):
     @abstractmethod
     def rss(self, json_data: dict) -> Rss:
         """
-        Create a Rss instance from json object.
+        Create a Rss instance from JSON object.
         Args:
             json_data: json dictionary.
         Returns:
