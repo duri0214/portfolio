@@ -159,12 +159,12 @@ class KmlDocumentVO:
 
                 if coords_elem is not None and coords_elem.text:
                     coordinates = coords_elem.text.strip()
-                    placemarks.append(SimpleKmlPlacemark(name, coordinates))
+                    placemarks.append(Placemark(name, coordinates))
 
             if not placemarks:
                 raise ValueError("No valid Placemarks with coordinates found")
 
-            return SimpleKmlDocument(placemarks)
+            return KmlDocument(placemarks)
 
         except Exception as e:
             raise ValueError(f"Failed to parse KML: {str(e)}")
@@ -187,7 +187,7 @@ class KmlPlacemarkVO:
         個別のPlacemarkとして定義されています。
     """
 
-    feature: SimpleKmlPlacemark | object  # SimpleKmlPlacemark or _Feature
+    feature: Placemark | object  # Placemark or _Feature
 
     def __post_init__(self):
         self._validate_placemark()
