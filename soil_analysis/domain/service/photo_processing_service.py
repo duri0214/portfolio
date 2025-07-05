@@ -7,6 +7,7 @@ from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
 from soil_analysis.models import Land
 
 
+# TODO: ファイル名を photo_processing.py に変更 Issue284
 class PhotoProcessingService:
     def process_photos(
         self, photo_path_list: list[str], land_list: list[Land]
