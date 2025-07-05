@@ -118,6 +118,7 @@ class KmlDocumentVO:
                 # name要素を取得
                 name_elem = placemark_elem.find(".//name")
                 name = name_elem.text if name_elem is not None else ""
+                print(f"処理中の圃場: {name}")
 
                 # coordinates要素を取得
                 coords_elem = placemark_elem.find(".//coordinates")
@@ -132,9 +133,7 @@ class KmlDocumentVO:
             return SimpleKmlDocument(placemarks)
 
         except Exception as e:
-            raise ValueError(
-                f"Failed to parse KML: {str(e)}. KML content: {self.raw_kml[:200]}..."
-            )
+            raise ValueError(f"Failed to parse KML: {str(e)}")
 
 
 @dataclass
