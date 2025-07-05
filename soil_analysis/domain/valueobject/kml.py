@@ -2,8 +2,13 @@ from dataclasses import dataclass
 from xml.etree import ElementTree
 
 
-class SimpleKmlPlacemark:
-    """シンプルなPlacemarkクラス"""
+class Placemark:
+    """
+    xarvioにおけるKML Placemark要素 - 個別の圃場を表現
+
+    KmlDocumentに包含される要素で、一つの圃場（農地区画）を表します。
+    各圃場は名前と地理的境界データ（Geometry）を持ちます。
+    """
 
     def __init__(self, name: str, coordinates: str):
         self.name = name
@@ -11,7 +16,7 @@ class SimpleKmlPlacemark:
 
     @property
     def geometry(self):
-        return SimpleGeometry(self._coordinates)
+        return Geometry(self._coordinates)
 
 
 class SimpleGeometry:
