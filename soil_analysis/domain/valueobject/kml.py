@@ -138,7 +138,20 @@ class KmlDocumentVO:
 
 @dataclass
 class KmlPlacemarkVO:
-    """Placemarkの型キャストと座標抽出を担当するValue Object"""
+    """
+    KML Placemarkの型キャストと座標抽出を担当するValue Object
+
+    このクラスは農業システムにおける圃場（農地の単位）を表すPlacemarkデータを扱います。
+    圃場は農地を管理・運営する上での基本単位であり、各圃場は名前と地理的境界線を持ちます。
+    KMLファイルでは、一つのPlacemarkが一つの圃場に対応します。
+
+    Attributes:
+        feature: SimpleKmlPlacemarkまたはfastkmlのPlacemarkオブジェクト
+
+    使用例:
+        圃場A、圃場B、圃場Cといった具体的な農地区画がKMLファイル内の
+        個別のPlacemarkとして定義されています。
+    """
 
     feature: SimpleKmlPlacemark | object  # SimpleKmlPlacemark or _Feature
 
