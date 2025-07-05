@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 from xml.etree import ElementTree
 
 
@@ -67,7 +66,7 @@ class SimpleLinearRing:
 class SimpleKmlDocument:
     """シンプルなKML Documentクラス"""
 
-    def __init__(self, placemarks: List[SimpleKmlPlacemark]):
+    def __init__(self, placemarks: list[SimpleKmlPlacemark]):
         self._placemarks = placemarks
 
     @property
