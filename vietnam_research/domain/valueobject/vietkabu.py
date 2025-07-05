@@ -8,6 +8,26 @@ import pandas as pd
 from bs4 import Tag
 
 
+class MarketDataRowError(Exception):
+    """MarketDataRowの初期化に失敗した場合の例外"""
+    def __init__(self, message: str, tag_tr: Tag):
+        super().__init__(message)
+        self.tag_tr = tag_tr
+
+    def get_simplified_html(self) -> str:
+        """HTMLの各tdの内容をカンマ区切りで簡潔に返す"""
+        tds = self.tag_tr.find_all("td")
+        td_texts = []
+        for td in tds:
+            # tdの中身をテキストのみ抽出し、改行や余分な空白を除去
+            text = td.get_text(strip=True).replace('\n', ' ').replace('\t', ' ')
+            # 連続する空白を1つにまとめる
+            text = ' '.join(text.split())
+            td_texts.append(text)
+        return ", ".join(td_texts)
+
+
+
 @dataclass
 class Counting:
     """
@@ -87,25 +107,43 @@ class MarketDataRow:
     def __init__(self, tr: Tag):
         super().__init__()
         tag_tds_center = tr.find_all("td", class_="table_list_center")
-        self.code = re.sub("＊", "", tag_tds_center[0].text.strip())
-        self.name = tag_tds_center[0].a.get("title")
-        self.industry_title = tag_tds_center[1].img.get("title")
-        self.industry1 = re.sub(r"\[(.+)]", "", self.industry_title)
-        self.industry2 = re.search(
-            r"(?<=\[).*?(?=])", tag_tds_center[1].img.get("title")
-        ).group()
 
-        tag_tds_right = [
-            Counting(td.text.strip())
-            for td in tr.find_all("td", class_="table_list_right")
-        ]
-        self.open_price = tag_tds_right[2].value
-        self.high_price = tag_tds_right[3].value
-        self.low_price = tag_tds_right[4].value
-        self.closing_price = tag_tds_right[1].value
-        self.volume = tag_tds_right[7].value
-        self.marketcap = tag_tds_right[9].value
-        self.per = tag_tds_right[10].value
+        # 業種情報の存在チェック
+        if len(tag_tds_center) < 2:
+            raise MarketDataRowError("業種情報（table_list_centerが2つ未満）がありません", tr)
+
+        # imgタグの存在チェック
+        if not tag_tds_center[1].find("img"):
+            raise MarketDataRowError("業種画像（imgタグ）がありません", tr)
+
+        try:
+            self.code = re.sub("＊", "", tag_tds_center[0].text.strip())
+            self.name = tag_tds_center[0].a.get("title")
+            self.industry_title = tag_tds_center[1].img.get("title")
+            self.industry1 = re.sub(r"\[(.+)]", "", self.industry_title)
+            self.industry2 = re.search(
+                r"(?<=\[).*?(?=])", tag_tds_center[1].img.get("title")
+            ).group()
+
+            tag_tds_right = [
+                Counting(td.text.strip())
+                for td in tr.find_all("td", class_="table_list_right")
+            ]
+
+            # 計数データの存在チェック
+            if len(tag_tds_right) < 11:
+                raise MarketDataRowError("計数データが不足しています（table_list_rightが11未満）", tr)
+
+            self.open_price = tag_tds_right[2].value
+            self.high_price = tag_tds_right[3].value
+            self.low_price = tag_tds_right[4].value
+            self.closing_price = tag_tds_right[1].value
+            self.volume = tag_tds_right[7].value
+            self.marketcap = tag_tds_right[9].value
+            self.per = tag_tds_right[10].value
+
+        except (AttributeError, IndexError, TypeError) as e:
+            raise MarketDataRowError(f"データ解析でエラーが発生しました: {str(e)}", tr)
 
 
 class IndustryGraphVO:

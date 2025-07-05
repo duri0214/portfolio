@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import matplotlib
 import numpy as np
 import pandas as pd
 from django.core.management.base import BaseCommand
@@ -47,11 +48,24 @@ class Command(BaseCommand):
         """
         Industryテーブルの業種別積み上げを時系列で表示
 
+        処理内容:
+        1. 業種別の時価総額データを取得
+        2. 積み上げ棒グラフを生成
+        3. X軸ラベルを月初のみ表示するよう調整
+        4. 凡例と日本語フォントを設定
+        5. PNGファイルとして保存
+
+        Notes:
+        - matplotlib.use('Agg'): Anti-Grain Geometry バックエンドを使用
+          GUI環境不要でPNGファイル生成に特化したレンダリングエンジン
+        - チャートサイズ: 20x10インチで出力
+
         See Also: https://pystyle.info/matplotlib-stacked-bar-chart/#outline__3
         See Also: https://docs.djangoproject.com/en/4.2/howto/custom-management-commands/
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
 
+        matplotlib.use('Agg')  # GUIを使わないバックエンドを指定
         plt.rcParams["font.family"] = get_font()
         df = get_data()
         n_rows, n_cols = df.shape

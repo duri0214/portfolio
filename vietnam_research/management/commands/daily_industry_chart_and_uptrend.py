@@ -3,6 +3,7 @@ import os
 from glob import glob
 from pathlib import Path
 
+import matplotlib
 import pandas as pd
 from PIL import Image
 from django.core.management.base import BaseCommand
@@ -43,15 +44,29 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """
-        Industryテーブルのuptrend
+        Industryテーブルから上昇トレンドの銘柄を抽出し、チャートを生成する
+
+        処理内容:
+        1. 既存のPNGファイルとUptrendレコードを削除
+        2. 各銘柄の終値データを取得
+        3. 線形回帰による傾きを14日、7日、3日で計算
+        4. 全期間で上昇傾向またはウォッチリスト銘柄のチャートを生成
+        5. 移動平均線（20日、40日）と回帰直線をプロット
+        6. 条件を満たす銘柄をUptrendテーブルに保存
+
+        Notes:
+        - matplotlib.use('Agg'): Anti-Grain Geometry バックエンドを使用
+          GUI環境不要でPNGファイル生成に特化したレンダリングエンジン
+        - チャートサイズ: 640x480 → 250x200にリサイズ
 
         See Also: https://docs.djangoproject.com/en/4.2/howto/custom-management-commands/
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
         log_service = LogService("./result.log")
 
+        matplotlib.use('Agg')  # GUIを使わないバックエンドを指定
         plt.rcParams["font.family"] = ["IPAexGothic"]
-        # make folder if not exists and delete old files and delete table data
+        # make a folder if not exists and delete old files and delete table data
         out_folder = (
             BASE_DIR.resolve() / "vietnam_research/static/vietnam_research/chart"
         )

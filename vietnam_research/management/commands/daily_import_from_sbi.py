@@ -30,7 +30,7 @@ class Command(BaseCommand):
         for x in tag_tr:
             try:
                 sbi_list.append(Sbi(symbol_id=m_symbol.get(code=x.th.p.string).id))
-            except m_symbol.DoesNotExist:
+            except Symbol.DoesNotExist:
                 continue
 
         caller_file_name = Path(__file__).stem
