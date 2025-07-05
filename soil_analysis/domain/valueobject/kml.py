@@ -35,15 +35,20 @@ class Geometry:
         return [PolygonTag(self._coordinates)]
 
 
-class SimplePolygon:
-    """シンプルなPolygonクラス"""
+class PolygonTag:
+    """
+    xarvioにおけるKML Polygon要素 - 圃場の多角形境界を定義
+
+    Geometryに包含される要素で、圃場の外形を多角形として表現します。
+    LinearRingTagによって閉じた境界線を形成します。
+    """
 
     def __init__(self, coordinates: str):
         self._coordinates = coordinates
 
     @property
     def exterior(self):
-        return SimpleLinearRing(self._coordinates)
+        return LinearRingTag(self._coordinates)
 
     @property
     def coords(self):
