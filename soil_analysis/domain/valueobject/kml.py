@@ -91,10 +91,16 @@ class LinearRingTag:
         return coords_list
 
 
-class SimpleKmlDocument:
-    """シンプルなKML Documentクラス"""
+class KmlDocument:
+    """
+    xarvioにおけるKML Document要素 - 複数の圃場を包含する文書構造
 
-    def __init__(self, placemarks: list[SimpleKmlPlacemark]):
+    KMLファイルの最上位要素で、複数のPlacemark（圃場）を管理します。
+    一つのKMLファイルには通常一つのKmlDocumentが含まれ、
+    その中に複数の圃場データが格納されます。
+    """
+
+    def __init__(self, placemarks: list[Placemark]):
         self._placemarks = placemarks
 
     @property
