@@ -215,13 +215,7 @@ class KmlPlacemarkVO:
             return ""
 
         first_geom = geoms[0]
-
-        # ジオメトリの型によって座標の取得方法を変更
-        if hasattr(first_geom, "exterior"):
-            # Polygonの場合
-            coords = list(first_geom.exterior.coords)
-        else:
-            # Pointの場合
-            coords = list(first_geom.coords)
+        # xarvioでは常にPolygon（outerBoundaryIs）形式
+        coords = list(first_geom.exterior.coords)
 
         return " ".join([f"{coord[0]},{coord[1]}" for coord in coords])
