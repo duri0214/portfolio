@@ -110,21 +110,21 @@ class KmlPlacemarkVO:
     KMLファイルでは、一つのPlacemarkが一つの圃場に対応します。
 
     Attributes:
-        feature: PlacemarkまたはfastkmlのPlacemarkオブジェクト
+        feature: Placemarkオブジェクト
 
     使用例:
         圃場A、圃場B、圃場Cといった具体的な農地区画がKMLファイル内の
         個別のPlacemarkとして定義されています。
     """
 
-    feature: Placemark | object  # Placemark or _Feature
+    feature: Placemark | object  # Placemark object
 
     def __post_init__(self):
         self._validate_placemark()
 
     def _validate_placemark(self):
         """Placemarkへの型キャスト（安全性確認）"""
-        # PlacemarkまたはfastkmlのPlacemarkを受け入れる
+        # Placemarkオブジェクトを受け入れる
         pass
 
     @property
