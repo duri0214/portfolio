@@ -73,9 +73,6 @@ class Command(BaseCommand):
                     debug_message = f"スキップした行 {i}: {str(e)} - データ: {e.get_simplified_html()}"
                     log_service.write(debug_message)
 
-            summary_message = f"{market.code}: 処理対象 {len(market_data_rows)}行, スキップ {skip_count}行"
-            log_service.write(summary_message)
-
             processed_count = 0
             for market_data_row in market_data_rows:
                 # STEP1: 業種マスタを引いて
@@ -126,5 +123,5 @@ class Command(BaseCommand):
                 processed_count += 1
 
             total_rows = len(market_data_rows) + skip_count
-            final_message = f"{market.code}の処理が完了しました。全{total_rows}件中{processed_count}件が処理されました（スキップ{skip_count}件）。"
+            final_message = f"{market.code}の処理が完了しました。全{total_rows}件中{processed_count}件が処理されました（スキップ{skip_count}件）"
             log_service.write(final_message)
