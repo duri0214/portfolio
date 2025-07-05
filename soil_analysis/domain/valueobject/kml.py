@@ -47,7 +47,19 @@ class SimplePolygon:
 
 
 class SimpleLinearRing:
-    """シンプルなLinearRingクラス"""
+    """
+    KML LinearRing要素を表すクラス - 圃場の輪郭を定義
+
+    LinearRingは圃場の境界線を表現するKML構造で、閉じた座標環を定義します。
+    最初と最後の座標点が同じになることで、圃場の外周を完全に囲む輪郭を形成します。
+
+    農業システムにおいて、この輪郭データは以下の用途で使用されます：
+    - 圃場の正確な面積計算
+    - 農地境界の可視化
+    - 作業範囲の特定
+
+    座標は経度,緯度の形式で空白区切りで格納されます。
+    """
 
     def __init__(self, coordinates: str):
         self._coordinates = coordinates
