@@ -180,7 +180,7 @@ class KmlPlacemarkVO:
     KMLファイルでは、一つのPlacemarkが一つの圃場に対応します。
 
     Attributes:
-        feature: SimpleKmlPlacemarkまたはfastkmlのPlacemarkオブジェクト
+        feature: PlacemarkまたはfastkmlのPlacemarkオブジェクト
 
     使用例:
         圃場A、圃場B、圃場Cといった具体的な農地区画がKMLファイル内の
@@ -194,7 +194,7 @@ class KmlPlacemarkVO:
 
     def _validate_placemark(self):
         """Placemarkへの型キャスト（安全性確認）"""
-        # SimpleKmlPlacemarkまたはfastkmlのPlacemarkを受け入れる
+        # PlacemarkまたはfastkmlのPlacemarkを受け入れる
         pass
 
     @property
@@ -207,7 +207,7 @@ class KmlPlacemarkVO:
 
     @property
     def coordinates(self) -> str:
-        """ジオメトリの型に応じた座標文字列を返す"""
+        """xarvio用Polygon形式の座標文字列を返す"""
         geometry = self.placemark.geometry
         geoms = list(geometry.geoms)
 
