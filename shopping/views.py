@@ -73,9 +73,16 @@ class CreateBulkView(FormView):
 
             # 処理結果をメッセージとして表示
             if results["success_count"] > 0:
+                detail_msg = []
+                if results.get("created_count", 0) > 0:
+                    detail_msg.append(f"新規登録: {results['created_count']}件")
+                if results.get("updated_count", 0) > 0:
+                    detail_msg.append(f"更新: {results['updated_count']}件")
+
+                detail_text = f" ({', '.join(detail_msg)})" if detail_msg else ""
                 messages.success(
                     self.request,
-                    f"{results['success_count']}件の商品を正常に処理しました。",
+                    f"{results['success_count']}件の商品を正常に処理しました。{detail_text}",
                 )
 
             if results["error_count"] > 0:
