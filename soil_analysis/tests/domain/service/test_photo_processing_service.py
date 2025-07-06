@@ -3,9 +3,9 @@ from unittest.mock import MagicMock, patch, Mock
 from django.test import TestCase
 
 from lib.geo.valueobject.coord import XarvioCoord
-from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
+from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.valueobject.land import LandLocation
-from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
+from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 
 
 class TestPhotoProcessingService(TestCase):
@@ -150,7 +150,7 @@ class TestPhotoProcessingService(TestCase):
         """
         # AndroidPhotoのモックを作成
         with patch(
-            "soil_analysis.domain.service.photo_processing_service.AndroidPhoto"
+            "soil_analysis.domain.service.photo_processing.AndroidPhoto"
         ) as mock_android_photo:
             # 各写真に対応するモックオブジェクトのリスト
             mock_photos = []
