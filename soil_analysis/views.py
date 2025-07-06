@@ -420,7 +420,7 @@ class RouteSuggestUploadView(FormView):
          https://developers.google.com/maps/optimization-guide?hl=ja#routes
         """
         upload_file: UploadedFile = self.request.FILES["file"]
-        kml_raw = upload_file.read()
+        kml_raw = upload_file.read().decode('utf-8')
         kml_service = KmlService()
         land_location_list = kml_service.parse_kml(kml_raw)
 
