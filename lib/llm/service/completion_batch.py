@@ -11,7 +11,6 @@ from lib.llm.valueobject.chat_batch import MessageChunk
 from lib.llm.valueobject.config import OpenAIGptConfig
 
 
-# TODO: ファイル名を service/completion_batch.py にリネームする
 class OpenAIBatchCompletionService(LlmService):
     def __init__(self, config: OpenAIGptConfig):
         super().__init__()

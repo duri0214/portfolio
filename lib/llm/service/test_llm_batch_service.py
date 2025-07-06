@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
-from lib.llm.llm_batch_service import OpenAIBatchCompletionService
+from lib.llm.service.completion_batch import OpenAIBatchCompletionService
 from lib.llm.valueobject.chat import RoleType, Message
 from lib.llm.valueobject.chat_batch import MessageChunk
 from lib.llm.valueobject.config import OpenAIGptConfig
@@ -88,11 +88,11 @@ class TestOpenAIBatchCompletionService(TestCase):
             self.service.remove_file_if_exists(file_path)
 
     @patch(
-        "lib.llm.llm_batch_service.OpenAIBatchCompletionService.remove_file_if_exists"
+        "lib.llm.service.completion_batch.OpenAIBatchCompletionService.remove_file_if_exists"
     )
-    @patch("lib.llm.llm_batch_service.OpenAIBatchCompletionService.export_jsonl_file")
+    @patch("lib.llm.service.completion_batch.OpenAIBatchCompletionService.export_jsonl_file")
     @patch("builtins.open", new_callable=MagicMock)
-    @patch("lib.llm.llm_batch_service.OpenAI")
+    @patch("lib.llm.service.completion_batch.OpenAI")
     def test_upload_jsonl_file(
         self,
         mock_openai,
