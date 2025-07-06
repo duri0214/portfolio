@@ -11,12 +11,11 @@ from django.contrib.auth.models import User
 
 from config.settings import MEDIA_ROOT, BASE_DIR
 from lib.llm.service.completion import (
-    OpenAILlmCompletionService,
-    OpenAILlmCompletionStreamingService,
+    LlmCompletionService,
+    LlmCompletionStreamingService,
     OpenAILlmDalleService,
     OpenAILlmTextToSpeech,
     OpenAILlmSpeechToText,
-    GeminiLlmCompletionService,
     OpenAILlmRagService,
 )
 from lib.llm.valueobject.chat import RoleType, StreamResponse
@@ -131,7 +130,7 @@ class GeminiChatService(ChatService):
     def generate(self, user_message: MessageDTO) -> MessageDTO:
         self.chat_history = get_chat_history(user_message)
 
-        response = GeminiLlmCompletionService(self.config).retrieve_answer(
+        response = LlmCompletionService(self.config).retrieve_answer(
             [x.to_message() for x in self.chat_history]
         )
 
@@ -157,7 +156,7 @@ class OpenAIChatService(ChatService):
     def generate(self, user_message: MessageDTO, gender: Gender) -> MessageDTO:
         self.chat_history = get_chat_history(user_message, gender)
 
-        response = OpenAILlmCompletionService(self.config).retrieve_answer(
+        response = LlmCompletionService(self.config).retrieve_answer(
             [x.to_message() for x in self.chat_history]
         )
         assistant_message = MessageDTO(
@@ -179,7 +178,7 @@ class OpenAIChatService(ChatService):
         ChatLogRepository.insert(invisible_user_message)
         self.chat_history.append(invisible_user_message)
 
-        response = OpenAILlmCompletionService(self.config).retrieve_answer(
+        response = LlmCompletionService(self.config).retrieve_answer(
             [x.to_message() for x in self.chat_history]
         )
         invisible_assistant_message = MessageDTO(
@@ -208,7 +207,7 @@ class OpenAIChatStreamingService(ChatService):
     ) -> Generator[StreamResponse, None, None]:
         self.chat_history = get_chat_history(user_message)
 
-        return OpenAILlmCompletionStreamingService(self.config).retrieve_answer(
+        return LlmCompletionStreamingService(self.config).retrieve_answer(
             [x.to_message() for x in self.chat_history]
         )
 
