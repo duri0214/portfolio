@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import UploadedFile
 
 from config.settings import MEDIA_ROOT
-from lib.llm.service.completion import OpenAILlmCompletionStreamingService
+from lib.llm.service.completion import LlmCompletionStreamingService
 from lib.llm.valueobject.chat import RoleType, StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
@@ -153,7 +153,7 @@ class OpenAIGptStreamingUseCase(UseCase):
 
     @staticmethod
     def convert_to_sse(stored_stream: Generator[StreamResponse, None, None]):
-        return OpenAILlmCompletionStreamingService.streaming_from_generator(
+        return LlmCompletionStreamingService.streaming_from_generator(
             generator=stored_stream
         )
 

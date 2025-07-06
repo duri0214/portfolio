@@ -153,12 +153,6 @@ class LlmCompletionService(LlmService):
         )
 
 
-# 後方互換性のためのエイリアス
-# TODO: アプリケーション側の参照を LlmCompletionService に更新した後、これらのエイリアスを削除する
-GeminiLlmCompletionService = LlmCompletionService
-OpenAILlmCompletionService = LlmCompletionService
-
-
 class LlmCompletionStreamingService(LlmService):
     """
     OpenAIとGeminiの両方に対応したストリーミングLLM完了サービス。
@@ -293,11 +287,6 @@ class LlmCompletionStreamingService(LlmService):
         """
         for chunk in generator:
             yield f"data: {chunk.to_json()}\n\n"
-
-
-# 後方互換性のためのエイリアス
-# TODO: アプリケーション側の参照を LlmCompletionStreamingService に更新した後、このエイリアスを削除する
-OpenAILlmCompletionStreamingService = LlmCompletionStreamingService
 
 
 class OpenAILlmDalleService(LlmService):
