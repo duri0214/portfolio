@@ -142,10 +142,7 @@ class XbrlService:
         xbrl_path = str(next(temp_dir.glob("XBRL/PublicDoc/*.xbrl")))
 
         ctrl = Cntlr.Cntlr()
-
-        # TODO: VPSここでつっかえてるな...（質問中）
         model_xbrl = ctrl.modelManager.load(xbrl_path)
-        # TODO: ここまでこれていない
 
         logging.info(f"  xbrl: {Path(xbrl_path).name}")
         counting_data = self._assign_attributes(
