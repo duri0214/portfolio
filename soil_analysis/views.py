@@ -27,9 +27,9 @@ from soil_analysis.domain.repository.hardness_measurement import (
 from soil_analysis.domain.repository.land import LandRepository
 from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.kml import KmlService
-from soil_analysis.domain.service.photo_processing_service import PhotoProcessingService
+from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
-from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
+from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
 from soil_analysis.models import (
     Company,

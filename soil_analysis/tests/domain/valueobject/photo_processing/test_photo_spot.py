@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from lib.geo.valueobject.coord import XarvioCoord
-from soil_analysis.domain.valueobject.photo_spot import PhotoSpot
+from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 
 
 class TestPhotoSpot(TestCase):
