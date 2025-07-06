@@ -1,11 +1,11 @@
-from django.db.models import Count, QuerySet
+from django.db.models import Count
 
 from vietnam_research.models import Articles, Likes
 
 
 class LikeRepository:
     @staticmethod
-    def get_article(article_id) -> QuerySet:
+    def get_article(article_id) -> Articles:
         return Articles.objects.get(pk=article_id)
 
     @staticmethod
@@ -13,7 +13,7 @@ class LikeRepository:
         return Likes.objects.filter(user=user, articles=article).exists()
 
     @staticmethod
-    def create_like(user, article) -> QuerySet:
+    def create_like(user, article) -> Likes:
         return Likes.objects.create(user=user, articles=article)
 
     @staticmethod

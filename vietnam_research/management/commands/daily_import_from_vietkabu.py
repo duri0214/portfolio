@@ -9,6 +9,7 @@ from lib.log_service import LogService
 from vietnam_research.domain.valueobject.vietkabu import (
     TransactionDate,
     MarketDataRow,
+    MarketDataRowError,
 )
 from vietnam_research.models import Symbol, Industry, Market, IndClass
 
@@ -59,10 +60,20 @@ class Command(BaseCommand):
             tag_trs = [
                 tr for tr in soup.find_all("tr", id=True) if tr.get("id") != "trdemo"
             ]
-            market_data_rows = [MarketDataRow(tag_tr) for tag_tr in tag_trs]
+
+            # MarketDataRow作成時のエラーハンドリング
+            market_data_rows = []
+            skip_count = 0
+            for i, tag_tr in enumerate(tag_trs):
+                try:
+                    market_data_row = MarketDataRow(tag_tr)
+                    market_data_rows.append(market_data_row)
+                except MarketDataRowError as e:
+                    skip_count += 1
+                    debug_message = f"スキップした行 {i}: {str(e)} - データ: {e.get_simplified_html()}"
+                    log_service.write(debug_message)
 
             processed_count = 0
-            denominator = 0
             for market_data_row in market_data_rows:
                 # STEP1: 業種マスタを引いて
                 try:
@@ -95,7 +106,6 @@ class Command(BaseCommand):
                     if symbol.name != market_data_row.name:
                         symbol.name = market_data_row.name
                         symbol.save(update_fields=["name"])
-                denominator += 1
 
                 # STEP3: Industry table（計数）
                 Industry.objects.create(
@@ -112,5 +122,6 @@ class Command(BaseCommand):
                 )
                 processed_count += 1
 
-            message = f"{market.code}の処理が完了しました。全{denominator}件中{processed_count}件が処理されました。"
-            log_service.write(message)
+            total_rows = len(market_data_rows) + skip_count
+            final_message = f"{market.code}の処理が完了しました。全{total_rows}件中{processed_count}件が処理されました（スキップ{skip_count}件）"
+            log_service.write(final_message)
