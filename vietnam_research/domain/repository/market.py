@@ -16,7 +16,7 @@ from vietnam_research.models import Industry, Watchlist
 class MarketRepository:
     @staticmethod
     def get_articles(login_id):
-        # TODO: 試作なのでデザインの都合上「投稿」は3つしか取得しない
+        # デザインの都合上「投稿」は3つしか取得しない
         return (
             Articles.with_state(login_id)
             .annotate(user_name=F("user__email"))
