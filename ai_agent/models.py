@@ -53,6 +53,8 @@ class Entity(models.Model):
         ("google_maps_based", "Google Mapsレビューに基づく"),  # Type A
         ("rag_based", "RAGベースの推論"),  # Type B
         ("ng_word_based", "NGワードに基づく制限"),  # Type C
+        ("openai_assistant", "OpenAI会話エージェント"),  # Type D
+        ("openai_assistant_strict", "OpenAI会話エージェント（厳格モード）"),  # Type E
     )
 
     name = models.CharField(max_length=100)
@@ -107,3 +109,37 @@ class ActionHistory(models.Model):
 
     def __str__(self):
         return f"{self.entity.name} - Turn: {self.acted_at_turn} - Done: {self.done}"
+
+
+class GuardrailConfig(models.Model):
+    """
+    エンティティ別ガードレール設定
+
+    Attributes:
+        entity: 対象エンティティ
+        forbidden_words: 禁止ワードリスト（JSON形式）
+        max_input_length: 入力文字数制限
+        use_openai_moderation: OpenAI Moderation APIを使用するか
+        strict_mode: 厳格モード（エラー時もブロック）
+    """
+
+    entity = models.OneToOneField(Entity, on_delete=models.CASCADE)
+    forbidden_words = models.JSONField(
+        default=list, blank=True, help_text="禁止ワードのリスト（JSON形式）"
+    )
+    max_input_length = models.IntegerField(default=500, help_text="入力文字数の上限")
+    use_openai_moderation = models.BooleanField(
+        default=True, help_text="OpenAI Moderation APIを使用するか"
+    )
+    strict_mode = models.BooleanField(
+        default=False, help_text="厳格モード（エラー時もブロック）"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "ガードレール設定"
+        verbose_name_plural = "ガードレール設定"
+
+    def __str__(self):
+        return f"{self.entity.name}のガードレール設定"
