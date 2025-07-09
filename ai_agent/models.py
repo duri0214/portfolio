@@ -43,8 +43,6 @@ class Entity(models.Model):
                 - "google_maps_based" (Google Mapsレビューに基づく)
                 - "rag_based" (RAGベースの推論)
                 - "ng_word_based" (NGワードに基づく制限)
-        forbidden_keywords (str, optional): A list of keywords that the entity should avoid,
-            typically used with "ng_word_based" reasoning.
         vector (binary, optional): A binary vector representation of the entity's attributes,
             commonly used for embedding-based reasoning with "rag_based".
         speed (int): The decision-making speed or response speed of the entity, where
@@ -61,7 +59,6 @@ class Entity(models.Model):
     thinking_type = models.CharField(
         max_length=50, choices=THINKING_TYPE_CHOICES, default="google_maps_based"
     )
-    forbidden_keywords = models.TextField(blank=True, null=True)  # Type C用
     vector = models.BinaryField(null=True, blank=True)  # Type B用
     speed = models.IntegerField(default=10)
 
