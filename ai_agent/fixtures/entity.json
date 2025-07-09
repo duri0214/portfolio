@@ -57,8 +57,9 @@
     "fields": {
       "entity": 5,
       "forbidden_words": [
-        "test_forbidden",
-        "禁止ワード"
+        "暴力",
+        "脅迫",
+        "違法"
       ],
       "max_input_length": 500,
       "use_openai_moderation": true,
@@ -72,9 +73,10 @@
     "fields": {
       "entity": 6,
       "forbidden_words": [
-        "test_forbidden",
-        "禁止ワード",
-        "abc"
+        "暴力",
+        "脅迫",
+        "違法",
+        "危険"
       ],
       "max_input_length": 300,
       "use_openai_moderation": true,
