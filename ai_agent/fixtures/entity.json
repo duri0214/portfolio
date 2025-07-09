@@ -62,7 +62,8 @@
       ],
       "max_input_length": 500,
       "use_openai_moderation": true,
-      "strict_mode": false
+      "strict_mode": false,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -77,7 +78,8 @@
       ],
       "max_input_length": 300,
       "use_openai_moderation": true,
-      "strict_mode": true
+      "strict_mode": true,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -91,7 +93,8 @@
       ],
       "max_input_length": 500,
       "use_openai_moderation": false,
-      "strict_mode": false
+      "strict_mode": false,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   }
 ]

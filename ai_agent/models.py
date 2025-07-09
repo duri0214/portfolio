@@ -135,7 +135,7 @@ class GuardrailConfig(models.Model):
         default=False, help_text="厳格モード（エラー時もブロック）"
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         verbose_name = "ガードレール設定"
