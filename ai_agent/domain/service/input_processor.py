@@ -1,10 +1,11 @@
 import logging
 import os
 
-from agents import Agent, Runner
-from agents.guardrail import InputGuardrail, OutputGuardrail
+from agents import Agent
+from agents.guardrail import InputGuardrail, OutputGuardrail, GuardrailFunctionOutput
 
 from ai_agent.domain.valueobject.input_processor import (
+    AgentInvoker,
     GuardrailResult,
     InputProcessorConfig,
     ProcessedInput,
@@ -70,7 +71,6 @@ class InputProcessor:
             self.entity.name, self.config.strict_mode
         )
 
-        # TODO: https://openai.github.io/openai-agents-python/ref/guardrail/#agents.guardrail.InputGuardrail
         return InputGuardrail(
             name="moderation_guardrail", guardrail_function=moderation_check
         )
@@ -78,32 +78,41 @@ class InputProcessor:
     def _create_custom_guardrail(self):
         """カスタムガードレール（禁止ワード・文字数制限）"""
 
-        def custom_check(context, agent, input_text):
+        def custom_check(_, __, input_text):
+            # input_textが文字列の場合の処理
+            if isinstance(input_text, str):
+                processed_text = input_text
+            elif isinstance(input_text, list):
+                # リストの場合は最初の要素を使用、または結合
+                processed_text = str(input_text[0]) if input_text else ""
+            else:
+                # その他の型の場合は文字列に変換
+                processed_text = str(input_text)
+
             # 禁止ワードチェック
             for word in self.config.forbidden_words:
-                if word.lower() in input_text.lower():
-                    return {
-                        "blocked": True,
-                        "message": f"{self.entity.name}: 申し訳ありませんが、その内容にはお答えできません。",
-                    }
+                if word.lower() in processed_text.lower():
+                    return GuardrailFunctionOutput(
+                        output_info=f"{self.entity.name}: 申し訳ありませんが、その内容にはお答えできません。",
+                        tripwire_triggered=True,
+                    )
 
             # 文字数制限チェック
-            if len(input_text) > self.config.max_input_length:
-                return {
-                    "blocked": True,
-                    "message": f"{self.entity.name}: メッセージが長すぎます。{self.config.max_input_length}文字以内でお願いします。",
-                }
+            if len(processed_text) > self.config.max_input_length:
+                return GuardrailFunctionOutput(
+                    output_info=f"{self.entity.name}: メッセージが長すぎます。{self.config.max_input_length}文字以内でお願いします。",
+                    tripwire_triggered=True,
+                )
 
             # 空文字チェック
-            if not input_text.strip():
-                return {
-                    "blocked": True,
-                    "message": f"{self.entity.name}: メッセージが空です。何かお聞きしたいことがあれば教えてください。",
-                }
+            if not processed_text.strip():
+                return GuardrailFunctionOutput(
+                    output_info=f"{self.entity.name}: メッセージが空です。何かお聞きしたいことがあれば教えてください。",
+                    tripwire_triggered=True,
+                )
 
-            return {"blocked": False}
+            return GuardrailFunctionOutput(output_info="", tripwire_triggered=False)
 
-        # TODO: https://openai.github.io/openai-agents-python/ref/guardrail/#agents.guardrail.InputGuardrail
         return InputGuardrail(name="custom_guardrail", guardrail_function=custom_check)
 
     def _create_output_moderation_guardrail(self):
@@ -112,7 +121,6 @@ class InputProcessor:
             self.moderation_service.create_output_moderation_guardrail(self.entity.name)
         )
 
-        # TODO: https://openai.github.io/openai-agents-python/ref/guardrail/#agents.guardrail.OutputGuardrail
         return OutputGuardrail(
             name="output_moderation_guardrail",
             guardrail_function=output_moderation_check,
@@ -150,21 +158,8 @@ class InputProcessor:
         Returns:
             Agents SDKからの応答
         """
-        try:
-            # エージェント実行（ガードレールは自動適用）
-            # TODO: https://openai.github.io/openai-agents-python/running_agents/
-            result = await Runner.run(
-                agent=self.agent,
-                input=user_input,
-                input_guardrails=self.input_guardrails,
-                output_guardrails=self.output_guardrails,
-            )
-
-            return result.response
-
-        except Exception as e:
-            logger.error(f"Agents SDK error for entity {self.entity.name}: {e}")
-            return f"{self.entity.name}: 申し訳ありませんが、現在応答できません。しばらくしてから再度お試しください。"
+        invoker = AgentInvoker(agent=self.agent, entity_name=self.entity.name)
+        return await invoker.execute(user_input)
 
     def _preprocess_input(self, user_input: str) -> ProcessedInput:
         """
@@ -306,10 +301,13 @@ class InputProcessor:
             if not categories:
                 categories = ["moderation_error"] if self.config.strict_mode else []
 
+            # ModerationCategoryオブジェクトから名前を取得
+            category_names = [cat.name for cat in categories] if categories else []
+
             return GuardrailResult(
                 blocked=True,
                 message=moderation_result.message,
-                violation_categories=categories,
+                violation_categories=category_names,
             )
 
         return GuardrailResult(blocked=False, message="")
