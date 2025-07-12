@@ -114,43 +114,8 @@ class TestModerationService(TestCase):
         self.mock_client = Mock()
         self.service.openai_client = self.mock_client
 
-        # 安全なレスポンスのモック
-        self.mock_safe_response = Mock()
-        self.mock_safe_response.results = [Mock()]
-        self.mock_safe_response.results[0].flagged = False
-        self.mock_safe_response.results[0].message = self.safe_text
-        self.mock_safe_response.results[0].categories.model_dump.return_value = {
-            "violence": False,
-            "hate": False,
-            "harassment": False,
-            "self-harm": False,
-            "sexual": False,
-            "sexual/minors": False,
-            "violence/graphic": False,
-            "hate/threatening": False,
-            "harassment/threatening": False,
-            "self-harm/intent": False,
-            "self-harm/instructions": False,
-        }
-
-        # 危険なレスポンスのモック
-        self.mock_unsafe_response = Mock()
-        self.mock_unsafe_response.results = [Mock()]
-        self.mock_unsafe_response.results[0].flagged = True
-        self.mock_unsafe_response.results[0].message = self.unsafe_text
-        self.mock_unsafe_response.results[0].categories.model_dump.return_value = {
-            "violence": True,
-            "hate": False,
-            "harassment": False,
-            "self-harm": False,
-            "sexual": False,
-            "sexual/minors": False,
-            "violence/graphic": False,
-            "hate/threatening": False,
-            "harassment/threatening": False,
-            "self-harm/intent": False,
-            "self-harm/instructions": False,
-        }
+        self.mock_safe_response = create_mock_safe_response(self.safe_text)
+        self.mock_unsafe_response = create_mock_unsafe_response(self.unsafe_text)
 
     def test_check_input_moderation_safe_content(self):
         """
@@ -169,6 +134,7 @@ class TestModerationService(TestCase):
         重要度: 高
         理由: 通常の安全なやり取りが正常に通過し、ユーザー体験に支障が出ないことを保証
         """
+        # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_safe_response
 
         # テスト実行
@@ -203,7 +169,7 @@ class TestModerationService(TestCase):
         重要度: 高
         理由: 不適切なコンテンツが確実にブロックされることを保証
         """
-        # モックレスポンスを設定
+        # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_unsafe_response
 
         # テスト実行
@@ -238,6 +204,7 @@ class TestModerationService(TestCase):
         重要度: 中
         理由: API障害時でもサービスが継続できることを保証
         """
+        # モックでAPI例外を発生させる
         self.mock_client.moderations.create.side_effect = Exception("API Error")
 
         # ログのモック
@@ -274,7 +241,7 @@ class TestModerationService(TestCase):
         重要度: 高
         理由: 厳格モードでは安全性を最優先することを保証
         """
-        # モックにエラーを仕込む
+        # モックでAPI例外を発生させる
         self.mock_client.moderations.create.side_effect = Exception("API Error")
 
         # テスト実行
@@ -303,6 +270,7 @@ class TestModerationService(TestCase):
         重要度: 高
         理由: 通常のAI応答が正常に出力されることを保証
         """
+        # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_safe_response
 
         # テスト実行
@@ -329,7 +297,7 @@ class TestModerationService(TestCase):
         重要度: 高
         理由: AI応答が不適切な場合に確実にブロックされることを保証
         """
-        # モックレスポンスを設定
+        # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_unsafe_response
 
         # テスト実行
@@ -358,7 +326,7 @@ class TestModerationService(TestCase):
         重要度: 中
         理由: Agents SDKとの統合機能が正常に動作することを保証
         """
-        # モックレスポンスを設定
+        # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_unsafe_response
 
         # ガードレール関数の生成
@@ -391,7 +359,7 @@ class TestModerationService(TestCase):
         重要度: 中
         理由: Agents SDKとの統合機能が正常に動作することを保証
         """
-        # モックレスポンスを設定
+        # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_unsafe_response
 
         # ガードレール関数の生成
@@ -448,6 +416,9 @@ class TestModerationServiceIntegration(TestCase):
         self.mock_client = Mock()
         self.service.openai_client = self.mock_client
 
+        self.mock_safe_response = create_mock_safe_response()
+        self.mock_unsafe_response = create_mock_unsafe_response()
+
     def test_full_moderation_workflow(self):
         """
         完全なモデレーションワークフローのテスト
@@ -464,11 +435,8 @@ class TestModerationServiceIntegration(TestCase):
         重要度: 高
         理由: 実際のユーザー体験に直結する統合動作を保証
         """
-        # 安全なレスポンスを設定
-        mock_safe_response = Mock()
-        mock_safe_response.results = [Mock()]
-        mock_safe_response.results[0].flagged = False
-        self.mock_client.moderations.create.return_value = mock_safe_response
+        # モックレスポンスを使って統一
+        self.mock_client.moderations.create.return_value = create_mock_safe_response()
 
         # 入力モデレーションのテスト
         input_result = self.service.check_input_moderation(
