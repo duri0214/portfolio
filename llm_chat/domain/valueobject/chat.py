@@ -4,7 +4,7 @@ from enum import Enum
 
 from django.contrib.auth.models import User
 
-from lib.llm.valueobject.chat import RoleType, Message
+from lib.llm.valueobject.completion import RoleType, Message
 from llm_chat.models import ChatLogs
 
 

@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from lib.llm.service.completion import count_tokens, cut_down_chat_history
-from lib.llm.valueobject.chat import RoleType, Message
+from lib.llm.valueobject.completion import RoleType, Message
 from lib.llm.valueobject.config import OpenAIGptConfig, validate_temperature
 
 

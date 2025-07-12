@@ -18,7 +18,7 @@ from lib.llm.service.completion import (
     OpenAILlmSpeechToText,
     OpenAILlmRagService,
 )
-from lib.llm.valueobject.chat import RoleType, StreamResponse
+from lib.llm.valueobject.completion import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader, RetrievalQAWithSourcesChainAnswer
 from llm_chat.domain.repository.chat import ChatLogRepository

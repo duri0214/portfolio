@@ -11,7 +11,7 @@ from ai_agent.domain.valueobject.input_processor import (
 )
 from lib.llm.service.agent import ModerationService
 from lib.llm.service.completion import LlmCompletionService
-from lib.llm.valueobject.chat import Message, RoleType
+from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
 
 logger = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import UploadedFile
 
 from config.settings import MEDIA_ROOT
 from lib.llm.service.completion import LlmCompletionStreamingService
-from lib.llm.valueobject.chat import RoleType, StreamResponse
+from lib.llm.valueobject.completion import RoleType, StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
     GeminiChatService,
