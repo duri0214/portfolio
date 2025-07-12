@@ -42,7 +42,26 @@ class InputProcessor:
         self._setup_openai_agents()
 
     def _setup_openai_agents(self):
-        """OpenAI Agents SDKの初期化とガードレール設定"""
+        """
+        OpenAI Agents SDKの初期化とガードレール設定
+
+        エージェントの作成と入力・出力ガードレールの設定を行う。
+        エンティティの設定に基づいて適切なガードレールを組み合わせ、
+        安全で信頼性の高い対話システムを構築する。
+
+        処理内容:
+        1. Agentオブジェクトの作成（gpt-4o-mini使用）
+        2. 入力ガードレールの設定
+           - OpenAI Moderation（設定により有効化）
+           - カスタムガードレール（必須）
+        3. 出力ガードレールの設定
+           - OpenAI Moderation（設定により有効化）
+
+        Note:
+            - エージェントの指示は日本語での親しみやすい対話を重視
+            - カスタムガードレールは常に有効（禁止ワード、文字数制限等）
+            - OpenAI Moderationは設定により選択的に有効化
+        """
         # エージェントの作成
         self.agent = Agent(
             name=self.entity.name,
@@ -66,7 +85,21 @@ class InputProcessor:
             self.output_guardrails.append(self._create_output_moderation_guardrail())
 
     def _create_moderation_guardrail(self):
-        """ユーザー入力を事前チェックするガードレール（詳細はModerationService.create_moderation_guardrailを参照）"""
+        """
+        OpenAI Moderation APIを使用した入力ガードレールを作成
+
+        ModerationServiceを使用してユーザー入力を事前チェックするガードレールを作成する。
+        不適切なコンテンツ（暴力、ハラスメント、自傷行為など）を検出し、
+        設定に応じて厳格モードまたは標準モードで判定を行う。
+
+        Returns:
+            InputGuardrail: OpenAI Moderation APIベースのガードレールオブジェクト
+
+        Note:
+            - ModerationService.create_moderation_guardrailの詳細処理を参照
+            - strict_modeがTrueの場合、より厳格な基準で判定
+            - エンティティ名を含むパーソナライズされたエラーメッセージを生成
+        """
         moderation_check = self.moderation_service.create_moderation_guardrail(
             self.entity.name, self.config.strict_mode
         )
@@ -76,20 +109,32 @@ class InputProcessor:
         )
 
     def _create_custom_guardrail(self):
-        """カスタムガードレール（禁止ワード・文字数制限）"""
+        """
+        カスタムガードレールを作成
+
+        禁止ワード、文字数制限、空文字チェックを行うガードレール関数を作成する。
+        入力テキストの型に応じた前処理を行い、複数の検証ルールを適用する。
+
+        Returns:
+            InputGuardrail: カスタムガードレールオブジェクト
+
+        Note:
+            内部のcustom_check関数は以下の処理を順次実行:
+            1. input_textの型チェック（str, list, その他）
+            2. 統一された文字列形式（processed_text）への変換
+            3. 禁止ワードチェック（大文字小文字無視）
+            4. 文字数制限チェック
+            5. 空文字・空白文字チェック
+        """
 
         def custom_check(_, __, input_text):
-            # input_textが文字列の場合の処理
             if isinstance(input_text, str):
                 processed_text = input_text
             elif isinstance(input_text, list):
-                # リストの場合は最初の要素を使用、または結合
                 processed_text = str(input_text[0]) if input_text else ""
             else:
-                # その他の型の場合は文字列に変換
                 processed_text = str(input_text)
 
-            # 禁止ワードチェック
             for word in self.config.forbidden_words:
                 if word.lower() in processed_text.lower():
                     return GuardrailFunctionOutput(
@@ -97,14 +142,12 @@ class InputProcessor:
                         tripwire_triggered=True,
                     )
 
-            # 文字数制限チェック
             if len(processed_text) > self.config.max_input_length:
                 return GuardrailFunctionOutput(
                     output_info=f"{self.entity.name}: メッセージが長すぎます。{self.config.max_input_length}文字以内でお願いします。",
                     tripwire_triggered=True,
                 )
 
-            # 空文字チェック
             if not processed_text.strip():
                 return GuardrailFunctionOutput(
                     output_info=f"{self.entity.name}: メッセージが空です。何かお聞きしたいことがあれば教えてください。",
@@ -116,7 +159,21 @@ class InputProcessor:
         return InputGuardrail(name="custom_guardrail", guardrail_function=custom_check)
 
     def _create_output_moderation_guardrail(self):
-        """GPT応答を事後チェックするガードレール（詳細はModerationService.create_output_moderation_guardrailを参照）"""
+        """
+        OpenAI Moderation APIを使用した出力ガードレールを作成
+
+        ModerationServiceを使用してGPT応答を事後チェックするガードレールを作成する。
+        生成されたテキストが不適切なコンテンツを含んでいないかを検証し、
+        問題がある場合は安全な代替メッセージに置き換える。
+
+        Returns:
+            OutputGuardrail: OpenAI Moderation APIベースの出力ガードレールオブジェクト
+
+        Note:
+            - ModerationService.create_output_moderation_guardrailの詳細処理を参照
+            - エージェントが生成したテキストの最終段階でのセーフティチェック
+            - ユーザーに不適切な内容が表示されることを防止
+        """
         output_moderation_check = (
             self.moderation_service.create_output_moderation_guardrail(self.entity.name)
         )
