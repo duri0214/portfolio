@@ -32,7 +32,7 @@ class TestModerationService(TestCase):
 
         # モッククライアント生成
         self.mock_client = Mock()
-        self.service.openai_client = self.mock_client  # ← ここで差し替える
+        self.service.openai_client = self.mock_client
 
         # 安全なレスポンスのモック
         self.mock_safe_response = Mock()
