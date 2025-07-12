@@ -1,15 +1,15 @@
 import logging
+import os
 
 from agents import Agent, Runner
 from agents.guardrail import InputGuardrail, OutputGuardrail
-from django.conf import settings
-from openai import OpenAI
 
 from ai_agent.domain.valueobject.input_processor import (
     GuardrailResult,
     InputProcessorConfig,
     ProcessedInput,
 )
+from lib.llm.service.agent import ModerationService
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.chat import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
@@ -26,14 +26,14 @@ class InputProcessor:
     def __init__(self, entity):
         self.entity = entity
         self.config = InputProcessorConfig.from_entity(entity)
-        self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        self.moderation_service = ModerationService()
 
         # LlmCompletionServiceの初期化
         self.llm_config = OpenAIGptConfig(
             model="gpt-4o-mini",
             temperature=0.7,
             max_tokens=2000,
-            api_key=settings.OPENAI_API_KEY,
+            api_key=os.getenv("OPENAI_API_KEY"),
         )
         self.llm_service = LlmCompletionService(self.llm_config)
 
@@ -65,36 +65,10 @@ class InputProcessor:
             self.output_guardrails.append(self._create_output_moderation_guardrail())
 
     def _create_moderation_guardrail(self):
-        """OpenAI Moderation APIを使用した入力ガードレール"""
-
-        def moderation_check(context, agent, input_text):
-            try:
-                response = self.openai_client.moderations.create(
-                    model="text-moderation-latest", input=input_text
-                )
-
-                moderation_result = response.results[0]
-                if moderation_result.flagged:
-                    flagged_categories = [
-                        category
-                        for category, flagged in moderation_result.categories.model_dump().items()
-                        if flagged
-                    ]
-                    return {
-                        "blocked": True,
-                        "message": f"{self.entity.name}: 申し訳ありませんが、その内容は適切ではないため、お答えできません。",
-                        "categories": flagged_categories,
-                    }
-
-                return {"blocked": False}
-            except Exception as e:
-                logger.warning(f"OpenAI Moderation API error: {e}")
-                if self.config.strict_mode:
-                    return {
-                        "blocked": True,
-                        "message": f"{self.entity.name}: 現在、安全性チェックが利用できません。しばらくしてから再度お試しください。",
-                    }
-                return {"blocked": False}
+        """ユーザー入力を事前チェックするガードレール（詳細はModerationService.create_moderation_guardrailを参照）"""
+        moderation_check = self.moderation_service.create_moderation_guardrail(
+            self.entity.name, self.config.strict_mode
+        )
 
         # TODO: https://openai.github.io/openai-agents-python/ref/guardrail/#agents.guardrail.InputGuardrail
         return InputGuardrail(
@@ -133,25 +107,10 @@ class InputProcessor:
         return InputGuardrail(name="custom_guardrail", guardrail_function=custom_check)
 
     def _create_output_moderation_guardrail(self):
-        """出力用モデレーションガードレール"""
-
-        def output_moderation_check(context, agent, output_text):
-            try:
-                response = self.openai_client.moderations.create(
-                    model="text-moderation-latest", input=output_text
-                )
-
-                moderation_result = response.results[0]
-                if moderation_result.flagged:
-                    return {
-                        "blocked": True,
-                        "message": f"{self.entity.name}: 申し訳ありませんが、適切な回答を生成できませんでした。別の質問をお試しください。",
-                    }
-
-                return {"blocked": False}
-            except Exception as e:
-                logger.warning(f"Output moderation error: {e}")
-                return {"blocked": False}
+        """GPT応答を事後チェックするガードレール（詳細はModerationService.create_output_moderation_guardrailを参照）"""
+        output_moderation_check = (
+            self.moderation_service.create_output_moderation_guardrail(self.entity.name)
+        )
 
         # TODO: https://openai.github.io/openai-agents-python/ref/guardrail/#agents.guardrail.OutputGuardrail
         return OutputGuardrail(
@@ -337,45 +296,23 @@ class InputProcessor:
         Returns:
             動的ガードレール処理結果
         """
-        try:
-            response = self.openai_client.moderations.create(
-                model="text-moderation-latest", input=user_input
+        moderation_result = self.moderation_service.check_input_moderation(
+            user_input, self.entity.name, self.config.strict_mode
+        )
+
+        if moderation_result["blocked"]:
+            # categoriesがある場合は取得、なければ空リスト
+            categories = moderation_result.get("categories", [])
+            if not categories:
+                categories = ["moderation_error"] if self.config.strict_mode else []
+
+            return GuardrailResult(
+                blocked=True,
+                message=moderation_result["message"],
+                violation_categories=categories,
             )
 
-            moderation_result = response.results[0]
-
-            if moderation_result.flagged:
-                # 違反カテゴリの取得
-                flagged_categories = [
-                    category
-                    for category, flagged in moderation_result.categories.model_dump().items()
-                    if flagged
-                ]
-
-                return GuardrailResult(
-                    blocked=True,
-                    message=f"{self.entity.name}: 申し訳ありませんが、その内容は適切ではないため、お答えできません。",
-                    violation_categories=flagged_categories,
-                )
-
-            return GuardrailResult(blocked=False, message="")
-
-        except Exception as e:
-            # Moderation APIエラー時の処理
-            logger.warning(
-                f"OpenAI Moderation API error for entity {self.entity.name}: {e}"
-            )
-
-            # 厳格モードの場合はエラー時もブロック
-            if self.config.strict_mode:
-                return GuardrailResult(
-                    blocked=True,
-                    message=f"{self.entity.name}: 現在、安全性チェックが利用できません。しばらくしてから再度お試しください。",
-                    violation_categories=["moderation_error"],
-                )
-
-            # 非厳格モードの場合は通す
-            return GuardrailResult(blocked=False, message="")
+        return GuardrailResult(blocked=False, message="")
 
     def _process_default(self, user_input: str) -> str:
         """
