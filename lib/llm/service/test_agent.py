@@ -38,6 +38,7 @@ class TestModerationService(TestCase):
         self.mock_safe_response = Mock()
         self.mock_safe_response.results = [Mock()]
         self.mock_safe_response.results[0].flagged = False
+        self.mock_safe_response.results[0].message = self.safe_text
         self.mock_safe_response.results[0].categories.model_dump.return_value = {
             "violence": False,
             "hate": False,
@@ -56,6 +57,7 @@ class TestModerationService(TestCase):
         self.mock_unsafe_response = Mock()
         self.mock_unsafe_response.results = [Mock()]
         self.mock_unsafe_response.results[0].flagged = True
+        self.mock_unsafe_response.results[0].message = self.unsafe_text
         self.mock_unsafe_response.results[0].categories.model_dump.return_value = {
             "violence": True,
             "hate": False,
@@ -81,11 +83,11 @@ class TestModerationService(TestCase):
 
         期待結果:
             - blocked = False
-            - messageが空または未設定
+            - message は元のテキストと同じ内容（ブロックされないためそのまま利用）
             - categoriesが含まれない
 
         重要度: 高
-        理由: 通常の安全なやり取りが正常に動作することを保証
+        理由: 通常の安全なやり取りが正常に通過し、ユーザー体験に支障が出ないことを保証
         """
         self.mock_client.moderations.create.return_value = self.mock_safe_response
 
@@ -150,8 +152,8 @@ class TestModerationService(TestCase):
 
         期待結果:
             - blocked = False (非厳格モードのため通す)
+            - message は空文字列（ユーザーへの通知は行わない）
             - エラーログが出力される
-            - ユーザーには影響しない
 
         重要度: 中
         理由: API障害時でもサービスが継続できることを保証
@@ -216,7 +218,7 @@ class TestModerationService(TestCase):
 
         期待結果:
             - blocked = False
-            - 出力テキストがそのまま使用可能
+            - message は元のテキストと同じ内容（安全なのでそのまま返される）
 
         重要度: 高
         理由: 通常のAI応答が正常に出力されることを保証
