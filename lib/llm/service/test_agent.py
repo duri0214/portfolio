@@ -106,7 +106,6 @@ class TestModerationService(TestCase):
     テスト設計上の特徴:
         - OpenAI Moderation API の仕様に従ったレスポンスモックを関数で共通化
         - モデレーション結果は VO (ModerationResult) で表現
-        - message は API のフィールドではなく、アプリケーションレベルの通知文言として扱う
 
     参考: OpenAI Moderation API 仕様
     https://platform.openai.com/docs/guides/moderation
