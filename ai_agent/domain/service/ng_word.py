@@ -2,17 +2,23 @@ class NGWordService:
     @staticmethod
     def can_respond(input_text, entity):
         """
-        Determine if the entity can respond based on forbidden keywords.
+        禁止ワードに基づいてエンティティが応答できるかどうかを判定します。
 
         Args:
-            input_text (str): The input text to check.
-            entity (Entity): The entity being evaluated.
+            input_text (str): チェック対象の入力テキスト
+            entity (Entity): 評価対象のエンティティ
 
         Returns:
-            bool: True if no forbidden keywords are detected, otherwise False.
+            bool: 禁止ワードが検出されなかった場合はTrue、そうでなければFalse
         """
-        if entity.forbidden_keywords:
-            forbidden_list = entity.forbidden_keywords.split(",")
-            if any(keyword in input_text for keyword in forbidden_list):
+        try:
+            # GuardrailConfigから禁止ワードを取得
+            guardrail_config = entity.guardrailconfig
+            forbidden_list = guardrail_config.forbidden_words
+            if forbidden_list and any(
+                keyword in input_text for keyword in forbidden_list
+            ):
                 return False
+        except AttributeError:
+            print("GuardrailConfigがありませんでした")
         return True

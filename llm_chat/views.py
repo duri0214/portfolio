@@ -8,7 +8,7 @@ from django.views import View
 from django.views.generic import FormView
 from dotenv import load_dotenv
 
-from lib.llm.valueobject.chat import StreamResponse
+from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.usecase.chat import (
     UseCase,

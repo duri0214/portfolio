@@ -1,7 +1,7 @@
 import uuid
 from dataclasses import dataclass
 
-from lib.llm.valueobject.chat import Message
+from lib.llm.valueobject.completion import Message
 
 
 @dataclass

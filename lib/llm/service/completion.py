@@ -15,7 +15,7 @@ from openai.types import ImagesResponse
 from openai.types.chat import ChatCompletion
 
 from config.settings import MEDIA_ROOT
-from lib.llm.valueobject.chat import Message, StreamResponse
+from lib.llm.valueobject.completion import Message, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader
 
@@ -249,7 +249,7 @@ class LlmCompletionStreamingService(LlmService):
 
     @staticmethod
     def streaming_from_generator(
-        generator: Generator[StreamResponse, None, None]
+        generator: Generator[StreamResponse, None, None],
     ) -> Generator[str, None, None]:
         """
         サーバー送信イベント形式（Server-Sent Events, SSE）としてジェネレーターからデータをストリームします。

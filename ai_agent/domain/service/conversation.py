@@ -11,7 +11,7 @@ class ConversationService:
     def calculate_next_turn_increment(speed: float) -> float:
         """
         Calculate the increment for next_turn based on entity speed.
-        This ensures consistency in how the increment is derived, and makes future
+        This ensures consistency in how the increment is derived and makes future
         adjustments easier.
         """
         return 1 / speed
@@ -125,8 +125,8 @@ class ConversationService:
         Process the entity's thought logic to determine if it can respond.
 
         Args:
-            entity (Entity): The entity performing the thought process.
-            input_text (str): The input text to evaluate.
+            entity (Entity): The entity performing the thought process
+            input_text (str): The input text to evaluate
 
         Returns:
             bool: True if the entity can respond, False otherwise.

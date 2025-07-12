@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 
-from lib.llm.valueobject.chat import RoleType
+from lib.llm.valueobject.completion import RoleType
 from llm_chat.domain.valueobject.chat import MessageDTO
 from llm_chat.models import ChatLogs
 
