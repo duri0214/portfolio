@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -187,14 +188,34 @@ class InputProcessor:
         """
         ユーザー入力を処理してエージェントの応答を生成
 
+        エンティティのthinking_typeに基づいて適切な処理方法を選択し、
+        同期的なインターフェースで応答を返す。OpenAI Agents SDKを使用する場合は
+        内部で非同期処理を実行する。
+
         Args:
-            user_input: ユーザーからの入力テキスト
+            user_input (str): ユーザーからの入力テキスト
 
         Returns:
-            エージェントからの応答テキスト
-        """
-        import asyncio
+            str: エージェントからの応答テキスト
 
+        Note:
+            thinking_typeによる処理分岐:
+            - "openai_assistant" / "openai_assistant_strict":
+              OpenAI Agents SDKを使用（非同期処理）
+            - その他: 従来の処理（同期処理）
+
+            非同期処理の同期化について:
+            - OpenAI Agents SDKは非同期APIを提供
+            - このメソッドは同期的なインターフェースを維持する必要がある
+            - asyncio.run()を使用して非同期処理を同期的に実行
+            - asyncio.run()は新しいイベントループを作成し、非同期処理を完了まで待機
+
+            処理フロー（OpenAI Agents SDK使用時）:
+            1. _process_with_openai_agents()を非同期で実行
+            2. asyncio.run()が新しいイベントループを作成
+            3. 非同期処理が完了するまでブロック
+            4. 結果を同期的に返却
+        """
         # thinking_typeに基づく処理の分岐
         if self.entity.thinking_type in ["openai_assistant", "openai_assistant_strict"]:
             return asyncio.run(self._process_with_openai_agents(user_input))
@@ -207,13 +228,29 @@ class InputProcessor:
 
     async def _process_with_openai_agents(self, user_input: str) -> str:
         """
-        Agents SDKを使用した応答生成（標準ガードレール付き）
+        Agents SDKを使用した非同期応答生成（標準ガードレール付き）
+
+        OpenAI Agents SDKを使用してユーザー入力を処理し、応答を生成する。
+        このメソッドは非同期で実行され、I/Oバウンドな処理（API呼び出し）を効率的に処理する。
 
         Args:
-            user_input: ユーザーからの入力テキスト
+            user_input (str): ユーザーからの入力テキスト
 
         Returns:
-            Agents SDKからの応答
+            str: Agents SDKからの応答テキスト
+
+        Note:
+            非同期処理について:
+            - このメソッドはasync/awaitパターンを使用
+            - OpenAI APIへの通信は時間がかかるため、非同期処理でブロッキングを回避
+            - AgentInvoker.execute()が非同期メソッドなので、awaitキーワードで待機
+            - 呼び出し元（process_input）では asyncio.run() を使用して同期的に実行
+
+            処理フロー:
+            1. AgentInvokerインスタンスを作成
+            2. invoker.execute()を非同期で実行（await）
+            3. OpenAI APIとの通信が完了するまで待機
+            4. 応答テキストを返却
         """
         invoker = AgentInvoker(agent=self.agent, entity_name=self.entity.name)
         return await invoker.execute(user_input)
