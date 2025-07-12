@@ -27,7 +27,6 @@ def create_mock_safe_response(text: str = "こんにちは、お元気ですか�
     mock_response = Mock()
     result = Mock()
     result.flagged = False
-    result.message = text
     result.categories.model_dump.return_value = {
         "violence": False,
         "hate": False,
@@ -67,7 +66,6 @@ def create_mock_unsafe_response(text: str = "暴力的な内容を含むテキ�
     mock_response = Mock()
     result = Mock()
     result.flagged = True
-    result.message = text
     result.categories.model_dump.return_value = {
         "violence": True,
         "hate": False,
