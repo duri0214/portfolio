@@ -300,15 +300,15 @@ class InputProcessor:
             user_input, self.entity.name, self.config.strict_mode
         )
 
-        if moderation_result["blocked"]:
+        if moderation_result.blocked:
             # categoriesがある場合は取得、なければ空リスト
-            categories = moderation_result.get("categories", [])
+            categories = moderation_result.categories
             if not categories:
                 categories = ["moderation_error"] if self.config.strict_mode else []
 
             return GuardrailResult(
                 blocked=True,
-                message=moderation_result["message"],
+                message=moderation_result.message,
                 violation_categories=categories,
             )
 
