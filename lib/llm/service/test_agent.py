@@ -111,7 +111,7 @@ class TestModerationService(TestCase):
     https://platform.openai.com/docs/guides/moderation
     """
 
-    @patch('lib.llm.service.agent.OpenAI')
+    @patch("lib.llm.service.agent.OpenAI")
     def setUp(self, mock_openai):
         # OpenAI APIクライアントの初期化をモック化
         self.mock_client = Mock()
@@ -381,7 +381,7 @@ class TestModerationService(TestCase):
         self.assertTrue(result["blocked"])
         self.assertIn(self.entity_name, result["message"])
 
-    @patch('lib.llm.service.agent.OpenAI')
+    @patch("lib.llm.service.agent.OpenAI")
     def test_service_initialization(self, mock_openai):
         """
         ModerationService の初期化処理を検証する
@@ -424,7 +424,7 @@ class TestModerationServiceIntegration(TestCase):
         - OpenAI Moderation API 仕様: https://platform.openai.com/docs/guides/moderation
     """
 
-    @patch('lib.llm.service.agent.OpenAI')
+    @patch("lib.llm.service.agent.OpenAI")
     def setUp(self, mock_openai):
         # OpenAI APIクライアントの初期化をモック化
         self.mock_client = Mock()
