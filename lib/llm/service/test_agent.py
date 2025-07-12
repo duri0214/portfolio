@@ -424,7 +424,7 @@ class TestModerationServiceIntegration(TestCase):
         self.service = ModerationService()
         self.entity_name = "統合テスト用エンティティ"
 
-        # モッククライアントの作成と差し替え
+        # モッククライアント生成
         self.mock_client = Mock()
         self.service.openai_client = self.mock_client
 
