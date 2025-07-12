@@ -111,15 +111,16 @@ class TestModerationService(TestCase):
     https://platform.openai.com/docs/guides/moderation
     """
 
-    def setUp(self):
+    @patch('lib.llm.service.agent.OpenAI')
+    def setUp(self, mock_openai):
+        # OpenAI APIクライアントの初期化をモック化
+        self.mock_client = Mock()
+        mock_openai.return_value = self.mock_client
+
         self.service = ModerationService()
         self.entity_name = "テストエンティティ"
         self.safe_text = "こんにちは、お元気ですか？"
         self.unsafe_text = "暴力的な内容を含むテキスト"
-
-        # モッククライアント生成
-        self.mock_client = Mock()
-        self.service.openai_client = self.mock_client
 
         self.mock_safe_response = create_mock_safe_response()
         self.mock_unsafe_response = create_mock_unsafe_response()
@@ -380,7 +381,8 @@ class TestModerationService(TestCase):
         self.assertTrue(result["blocked"])
         self.assertIn(self.entity_name, result["message"])
 
-    def test_service_initialization(self):
+    @patch('lib.llm.service.agent.OpenAI')
+    def test_service_initialization(self, mock_openai):
         """
         ModerationService の初期化処理を検証する
 
@@ -394,6 +396,9 @@ class TestModerationService(TestCase):
         重要度:
             低 — 初期化ロジックが破綻していないことを保証
         """
+        mock_client = Mock()
+        mock_openai.return_value = mock_client
+
         service = ModerationService()
         self.assertIsNotNone(service)
         self.assertIsNotNone(service.openai_client)
@@ -419,13 +424,14 @@ class TestModerationServiceIntegration(TestCase):
         - OpenAI Moderation API 仕様: https://platform.openai.com/docs/guides/moderation
     """
 
-    def setUp(self):
+    @patch('lib.llm.service.agent.OpenAI')
+    def setUp(self, mock_openai):
+        # OpenAI APIクライアントの初期化をモック化
+        self.mock_client = Mock()
+        mock_openai.return_value = self.mock_client
+
         self.service = ModerationService()
         self.entity_name = "統合テスト用エンティティ"
-
-        # モッククライアント生成
-        self.mock_client = Mock()
-        self.service.openai_client = self.mock_client
 
         self.mock_safe_response = create_mock_safe_response()
         self.mock_unsafe_response = create_mock_unsafe_response()
