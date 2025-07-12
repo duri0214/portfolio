@@ -5,7 +5,7 @@ from django.test import TestCase
 from lib.llm.service.agent import ModerationService
 
 
-def create_mock_safe_response(text: str = "こんにちは、お元気ですか？") -> Mock:
+def create_mock_safe_response() -> Mock:
     """
     OpenAI Moderation API の「安全なレスポンス」を模倣したモックオブジェクトを生成する。
 
@@ -13,9 +13,6 @@ def create_mock_safe_response(text: str = "こんにちは、お元気ですか�
     モデレーション結果を返すように設定されたモックを返します。
 
     主にユニットテストにおいて、正常系（safe content）のシナリオを再現するために使用します。
-
-    Args:
-        text (str): モックレスポンスに含める入力テキスト（任意、デフォルトは日本語の挨拶）
 
     Returns:
         Mock: OpenAI Moderation API のレスポンス形式を模倣したモックオブジェクト
@@ -44,7 +41,7 @@ def create_mock_safe_response(text: str = "こんにちは、お元気ですか�
     return mock_response
 
 
-def create_mock_unsafe_response(text: str = "暴力的な内容を含むテキスト") -> Mock:
+def create_mock_unsafe_response() -> Mock:
     """
     OpenAI Moderation API の「不適切なレスポンス（flagged=True）」を模倣したモックオブジェクトを生成する。
 
@@ -52,9 +49,6 @@ def create_mock_unsafe_response(text: str = "暴力的な内容を含むテキ�
     モデレーション結果を返すように設定されたモックを返します。
 
     主にユニットテストにおいて、異常系（unsafe content）のシナリオを再現するために使用します。
-
-    Args:
-        text (str): モックレスポンスに含める入力テキスト（任意、デフォルトは不適切な日本語の例）
 
     Returns:
         Mock: OpenAI Moderation API のレスポンス形式を模倣したモックオブジェクト
@@ -128,8 +122,8 @@ class TestModerationService(TestCase):
         self.mock_client = Mock()
         self.service.openai_client = self.mock_client
 
-        self.mock_safe_response = create_mock_safe_response(self.safe_text)
-        self.mock_unsafe_response = create_mock_unsafe_response(self.unsafe_text)
+        self.mock_safe_response = create_mock_safe_response()
+        self.mock_unsafe_response = create_mock_unsafe_response()
 
     def test_check_input_moderation_safe_content(self):
         """
