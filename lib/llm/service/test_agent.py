@@ -130,17 +130,17 @@ class TestModerationService(TestCase):
         [正常系] ユーザー入力が安全な場合のモデレーション動作を検証する
 
         シナリオ:
-            - OpenAI Moderation API に安全な入力テキストを渡す
-            - APIレスポンスは `flagged=False`（違反なし）を返す
-            - サービスは blocked=False, message="" を返却する
+            - OpenAI Moderation API に安全なテキストを渡す
+            - APIは `flagged=False`（違反なし）を返す
+            - サービスは `blocked=False`、かつ `message=""`（エラーメッセージなし）を返す
 
-        期待される結果:
-            - `blocked` は False
-            - `message` は空文字列
+        期待結果:
+            - `blocked` は False（処理がブロックされない）
+            - `message` は空文字列（エラーなし＝安全な状態）
             - `categories` に違反カテゴリが含まれない
 
         重要度:
-            高 — 通常利用時の想定パスであり、誤ブロックがないことを確認する
+            高 — 通常利用時の想定パスで誤ブロックがないことを確認
         """
         # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_safe_response
@@ -162,20 +162,20 @@ class TestModerationService(TestCase):
 
     def test_check_input_moderation_unsafe_content(self):
         """
-        [異常系] ユーザー入力が危険なコンテンツの場合の検出処理を検証する
+        [異常系] 不適切なユーザー入力に対する検出処理を検証する
 
         シナリオ:
-            - 不適切な入力テキストを与える
-            - API は `flagged=True` および `violence=True` を含むレスポンスを返す
-            - サービスは blocked=True, エラーメッセージ, 違反カテゴリを返す
+            - 不適切なテキストを入力
+            - APIは `flagged=True`、かつ違反カテゴリ（例: violence）を返す
+            - サービスは `blocked=True`、理由を含むメッセージ、違反カテゴリを返す
 
-        期待される結果:
-            - `blocked` は True
-            - `message` にブロック理由とエンティティ名が含まれる
-            - `categories` に "violence" を含む
+        期待結果:
+            - `blocked` は True（処理をブロック）
+            - `message` にブロック理由とエンティティ名を含む
+            - `categories` に該当する違反カテゴリが含まれる
 
         重要度:
-            高 — ユーザー保護・規約遵守のために確実に検出されることが必要
+            高 — ユーザー保護・規約遵守のため、確実な検出が必須
         """
         # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_unsafe_response
@@ -197,20 +197,20 @@ class TestModerationService(TestCase):
 
     def test_check_input_moderation_api_error_non_strict(self):
         """
-        [エラー系] API失敗時に strict_mode=False の場合の寛容な処理を検証する
+        [エラー系] API例外発生時、strict_mode=Falseでの寛容な処理を検証する
 
         シナリオ:
-            - Moderation API から例外が発生
-            - strict_mode=False（非厳格モード）で呼び出す
-            - サービスはエラーログを出力しつつ blocked=False で処理を許可
+            - Moderation API が例外を発生
+            - strict_mode=False で呼び出す
+            - サービスはログに警告を出しつつ `blocked=False` で処理を許可
 
-        期待される結果:
-            - `blocked` は False
-            - `message` は空文字列
-            - エラー内容がロガーに出力される
+        期待結果:
+            - `blocked` は False（処理は許可）
+            - `message` は空文字列（エラー表示なし）
+            - ログにエラー情報が出力される
 
         重要度:
-            中 — 一時的なAPI障害がユーザー体験に過度な影響を与えないことを保証
+            中 — 一時的API障害がユーザー体験を過度に悪化させない設計
         """
         # モックでAPI例外を発生させる
         self.mock_client.moderations.create.side_effect = Exception("API Error")
@@ -234,19 +234,19 @@ class TestModerationService(TestCase):
 
     def test_check_input_moderation_api_error_strict(self):
         """
-        [エラー系] API失敗時に strict_mode=True の場合、安全側に倒す処理を検証する
+        [エラー系] API例外発生時、strict_mode=Trueで安全側に倒す処理を検証する
 
         シナリオ:
-            - Moderation API から例外が発生
-            - strict_mode=True（厳格モード）で呼び出す
-            - サービスは blocked=True を返却し、利用不可メッセージを返す
+            - Moderation API が例外を発生
+            - strict_mode=True で呼び出す
+            - サービスは `blocked=True`、安全性チェック不能のメッセージを返す
 
-        期待される結果:
-            - `blocked` は True
-            - `message` に「安全性チェックが利用できません」が含まれる
+        期待結果:
+            - `blocked` は True（処理をブロック）
+            - `message` に安全性チェック不可の旨とエンティティ名を含む
 
         重要度:
-            高 — 安全重視運用モードにおいてリスク排除を優先する設計
+            高 — 安全最優先の運用モードでリスク排除を保証
         """
         # モックでAPI例外を発生させる
         self.mock_client.moderations.create.side_effect = Exception("API Error")
@@ -266,16 +266,16 @@ class TestModerationService(TestCase):
         [正常系] AI出力が安全な場合のモデレーション処理を検証する
 
         シナリオ:
-            - 安全な出力テキストを与える
+            - 安全な出力テキストを入力
             - APIは `flagged=False` を返す
-            - サービスはそのままの出力を返却する
+            - サービスは `blocked=False`、空メッセージを返す
 
-        期待される結果:
-            - `blocked` は False
-            - `message` は空文字列（= ブロックなし）
+        期待結果:
+            - `blocked` は False（処理がブロックされない）
+            - `message` は空文字列（エラーなし）
 
         重要度:
-            高 — 通常の応答が正しく処理されることを保証
+            高 — 通常の応答が正常に処理されることを保証
         """
         # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_safe_response
@@ -289,20 +289,19 @@ class TestModerationService(TestCase):
 
     def test_check_output_moderation_unsafe_content(self):
         """
-        [異常系] AI出力が不適切なコンテンツの場合の検出処理を検証する
+        [異常系] AI出力が不適切なコンテンツの場合の検出を検証する
 
         シナリオ:
-            - 危険な出力テキストを与える
+            - 危険な出力テキストを入力
             - APIは `flagged=True` を返す
-            - サービスは代替の警告メッセージを返す
+            - サービスは `blocked=True`、警告メッセージを返す
 
-        期待される結果:
-            - `blocked` は True
-            - `message` に「適切な回答を生成できませんでした」などの文言が含まれる
-            - エンティティ名も含まれる
+        期待結果:
+            - `blocked` は True（出力をブロック）
+            - `message` に警告文言とエンティティ名を含む
 
         重要度:
-            高 — ユーザーへの不適切な出力を確実に防止する
+            高 — 不適切な応答防止のため必須
         """
         # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_unsafe_response
@@ -319,18 +318,18 @@ class TestModerationService(TestCase):
 
     def test_create_moderation_guardrail(self):
         """
-        入力ガードレール関数の生成とその動作確認
+        入力モデレーション用ガードレール関数の生成と動作確認を行う
 
         シナリオ:
-            - `create_moderation_guardrail` を使って関数を生成
-            - その関数が適切にモデレーションを呼び出すか検証
+            - `create_moderation_guardrail` で関数生成
+            - 生成関数がモデレーションを呼び出し、正しくブロック判定を返すか検証
 
-        期待される結果:
+        期待結果:
             - 呼び出し可能な関数が返る
-            - unsafe_text を与えると `blocked=True` を返す
+            - 不適切テキストで `blocked=True` を返す
 
         重要度:
-            中 — Agents SDK との接続点として正しく機能することが必要
+            中 — Agents SDK 連携の接続点として正確な動作が必要
         """
         # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_unsafe_response
@@ -351,18 +350,18 @@ class TestModerationService(TestCase):
 
     def test_create_output_moderation_guardrail(self):
         """
-        出力ガードレール関数の生成とその動作確認
+        出力モデレーション用ガードレール関数の生成と動作検証を行う
 
         シナリオ:
-            - `create_output_moderation_guardrail` を使って関数を生成
-            - その関数が適切に出力のモデレーションを行うか確認
+            - `create_output_moderation_guardrail` で関数生成
+            - 生成関数が出力のモデレーションを行い適切にブロック判定するか検証
 
-        期待される結果:
+        期待結果:
             - 呼び出し可能な関数が返る
-            - 危険な出力に対して `blocked=True` を返す
+            - 不適切出力で `blocked=True` を返す
 
         重要度:
-            中 — 応答内容のフィルタリング機構として正しく動作することが重要
+            中 — 応答内容のフィルタリング機構として必須
         """
         # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = self.mock_unsafe_response
@@ -384,17 +383,17 @@ class TestModerationService(TestCase):
 
     def test_service_initialization(self):
         """
-        ModerationService の初期化が正常に行われるかを確認する
+        ModerationService の初期化処理を検証する
 
         シナリオ:
-            - インスタンス化時に openai_client が自動的に初期化されているか確認
+            - インスタンス化時に openai_client が正しく初期化されているか確認
 
-        期待される結果:
-            - service インスタンスが None でないこと
-            - `openai_client` プロパティが設定されていること
+        期待結果:
+            - インスタンスが None でないこと
+            - `openai_client` がセットされていること
 
         重要度:
-            低 — 初期化ロジックが壊れていないことを保証
+            低 — 初期化ロジックが破綻していないことを保証
         """
         service = ModerationService()
         self.assertIsNotNone(service)
@@ -435,20 +434,19 @@ class TestModerationServiceIntegration(TestCase):
 
     def test_full_moderation_workflow(self):
         """
-        [統合正常系] 入力と出力モデレーションが連携して機能するかを確認する
+        [統合正常系] 入力・出力モデレーションが連携して正常動作するかを検証する
 
         シナリオ:
-            1. ユーザーからの入力に対して check_input_moderation を呼び出す
-            2. その応答を前提に、check_output_moderation を呼び出す
-            3. どちらも安全なケースとして mock safe response を返す
+            1. 安全なユーザー入力に対して `check_input_moderation` を呼ぶ
+            2. 安全なAI出力に対して `check_output_moderation` を呼ぶ
+            3. 両方のAPI呼び出しはモックで安全レスポンスを返す
 
-        期待される結果:
-            - 両方のモデレーションが blocked=False を返す
-            - API呼び出しが2回行われる（入力・出力それぞれ）
-            - 正常な会話フローが構築可能
+        期待結果:
+            - 両方のチェックで `blocked=False` が返る
+            - モックAPIの呼び出しがそれぞれ1回ずつ行われる
 
         重要度:
-            高 — 入力と出力を通じてサービス全体が連携し、予期通りの動作をするかを保証
+            高 — 入力・出力両面で正常なサービス連携を保証
         """
         # モックレスポンスを使って統一
         self.mock_client.moderations.create.return_value = create_mock_safe_response()
