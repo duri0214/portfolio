@@ -5,6 +5,86 @@ from django.test import TestCase
 from lib.llm.service.agent import ModerationService
 
 
+def create_mock_safe_response(text: str = "こんにちは、お元気ですか？") -> Mock:
+    """
+    OpenAI Moderation API の「安全なレスポンス」を模倣したモックオブジェクトを生成する。
+
+    この関数は、flagged=False（安全）かつすべてのカテゴリが False の
+    モデレーション結果を返すように設定されたモックを返します。
+
+    主にユニットテストにおいて、正常系（safe content）のシナリオを再現するために使用します。
+
+    Args:
+        text (str): モックレスポンスに含める入力テキスト（任意、デフォルトは日本語の挨拶）
+
+    Returns:
+        Mock: OpenAI Moderation API のレスポンス形式を模倣したモックオブジェクト
+
+    参考:
+        OpenAI Moderation API リファレンス:
+        https://platform.openai.com/docs/guides/moderation/overview
+    """
+    mock_response = Mock()
+    result = Mock()
+    result.flagged = False
+    result.message = text
+    result.categories.model_dump.return_value = {
+        "violence": False,
+        "hate": False,
+        "harassment": False,
+        "self-harm": False,
+        "sexual": False,
+        "sexual/minors": False,
+        "violence/graphic": False,
+        "hate/threatening": False,
+        "harassment/threatening": False,
+        "self-harm/intent": False,
+        "self-harm/instructions": False,
+    }
+    mock_response.results = [result]
+    return mock_response
+
+
+def create_mock_unsafe_response(text: str = "暴力的な内容を含むテキスト") -> Mock:
+    """
+    OpenAI Moderation API の「不適切なレスポンス（flagged=True）」を模倣したモックオブジェクトを生成する。
+
+    この関数は、flagged=True（危険）かつ "violence" カテゴリのみ True の
+    モデレーション結果を返すように設定されたモックを返します。
+
+    主にユニットテストにおいて、異常系（unsafe content）のシナリオを再現するために使用します。
+
+    Args:
+        text (str): モックレスポンスに含める入力テキスト（任意、デフォルトは不適切な日本語の例）
+
+    Returns:
+        Mock: OpenAI Moderation API のレスポンス形式を模倣したモックオブジェクト
+
+    参考:
+        OpenAI Moderation API リファレンス:
+        https://platform.openai.com/docs/guides/moderation/overview
+    """
+    mock_response = Mock()
+    result = Mock()
+    result.flagged = True
+    result.message = text
+    result.categories.model_dump.return_value = {
+        "violence": True,
+        "hate": False,
+        "harassment": False,
+        "self-harm": False,
+        "sexual": False,
+        "sexual/minors": False,
+        "violence/graphic": False,
+        "hate/threatening": False,
+        "harassment/threatening": False,
+        "self-harm/intent": False,
+        "self-harm/instructions": False,
+    }
+    mock_response.results = [result]
+    return mock_response
+
+
 class TestModerationService(TestCase):
     """
     ModerationServiceクラスのテストケース。
