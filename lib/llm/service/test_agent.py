@@ -420,7 +420,6 @@ class TestModerationServiceIntegration(TestCase):
     """
 
     def setUp(self):
-        """統合テスト用のセットアップ"""
         self.service = ModerationService()
         self.entity_name = "統合テスト用エンティティ"
 
