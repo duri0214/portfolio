@@ -208,8 +208,7 @@ class TestModerationService(TestCase):
         self.assertIn("現在、安全性チェックが利用できません", result.message)
         self.assertIn(self.entity_name, result.message)
 
-    @patch("lib.llm.service.agent.OpenAI")
-    def test_check_output_moderation_safe_content(self, mock_openai):
+    def test_check_output_moderation_safe_content(self):
         """
         出力モデレーションの正常系テスト: 安全なコンテンツの処理
 
@@ -225,10 +224,7 @@ class TestModerationService(TestCase):
         重要度: 高
         理由: 通常のAI応答が正常に出力されることを保証
         """
-        # OpenAI クライアントのモック設定
-        mock_client = Mock()
-        mock_openai.return_value = mock_client
-        mock_client.moderations.create.return_value = self.mock_safe_response
+        self.mock_client.moderations.create.return_value = self.mock_safe_response
 
         # テスト実行
         result = self.service.check_output_moderation(self.safe_text, self.entity_name)
@@ -369,8 +365,11 @@ class TestModerationServiceIntegration(TestCase):
         self.service = ModerationService()
         self.entity_name = "統合テスト用エンティティ"
 
-    @patch("lib.llm.service.agent.OpenAI")
-    def test_full_moderation_workflow(self, mock_openai):
+        # モッククライアントの作成と差し替え
+        self.mock_client = Mock()
+        self.service.openai_client = self.mock_client
+
+    def test_full_moderation_workflow(self):
         """
         完全なモデレーションワークフローのテスト
 
@@ -386,15 +385,11 @@ class TestModerationServiceIntegration(TestCase):
         重要度: 高
         理由: 実際のユーザー体験に直結する統合動作を保証
         """
-        # OpenAI クライアントのモック設定
-        mock_client = Mock()
-        mock_openai.return_value = mock_client
-
         # 安全なレスポンスを設定
         mock_safe_response = Mock()
         mock_safe_response.results = [Mock()]
         mock_safe_response.results[0].flagged = False
-        mock_client.moderations.create.return_value = mock_safe_response
+        self.mock_client.moderations.create.return_value = mock_safe_response
 
         # 入力モデレーションのテスト
         input_result = self.service.check_input_moderation(
@@ -409,4 +404,4 @@ class TestModerationServiceIntegration(TestCase):
         self.assertFalse(output_result.blocked)
 
         # API呼び出し回数の確認
-        self.assertEqual(mock_client.moderations.create.call_count, 2)
+        self.assertEqual(self.mock_client.moderations.create.call_count, 2)
