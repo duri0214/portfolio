@@ -175,8 +175,7 @@ class TestModerationService(TestCase):
                 "OpenAI Moderation API error", mock_logger.warning.call_args[0][0]
             )
 
-    @patch("lib.llm.service.agent.OpenAI")
-    def test_check_input_moderation_api_error_strict(self, mock_openai):
+    def test_check_input_moderation_api_error_strict(self):
         """
         入力モデレーションのエラー系テスト: API呼び出し失敗時の処理（厳格モード）
 
@@ -193,10 +192,8 @@ class TestModerationService(TestCase):
         重要度: 高
         理由: 厳格モードでは安全性を最優先することを保証
         """
-        # OpenAI クライアントのモック設定（エラーを発生させる）
-        mock_client = Mock()
-        mock_openai.return_value = mock_client
-        mock_client.moderations.create.side_effect = Exception("API Error")
+        # モックにエラーを仕込む
+        self.mock_client.moderations.create.side_effect = Exception("API Error")
 
         # テスト実行
         result = self.service.check_input_moderation(
