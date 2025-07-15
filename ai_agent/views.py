@@ -6,8 +6,12 @@ from django.views.generic.edit import FormView
 
 from ai_agent.domain.repository.conversation import ConversationRepository
 from ai_agent.domain.service.conversation import ConversationService
+from ai_agent.domain.service.input_processor import InputProcessor
 from ai_agent.forms import SendMessageForm
 from ai_agent.models import Message, Entity, ActionHistory
+from lib.log_service import LogService
+
+log_service = LogService("ai_agent_views.log")
 
 
 class IndexView(FormView):
@@ -38,11 +42,32 @@ class IndexView(FormView):
         return context
 
     def form_valid(self, form):
-        entity = Entity.objects.get(name="User")
-        Message.objects.create(
-            entity=entity,
-            message_content=form.cleaned_data["user_input"],
-        )
+        try:
+            entity = Entity.objects.get(name="User")
+            user_input = form.cleaned_data["user_input"]
+
+            if not user_input:
+                messages.error(self.request, "メッセージが入力されていません")
+                return super().form_invalid(form)
+
+            processor = InputProcessor(entity)
+            processed_message = processor.process_input(user_input)
+
+            Message.objects.create(
+                entity=entity,
+                message_content=processed_message,
+            )
+
+            messages.success(self.request, "メッセージが送信されました")
+
+        except Entity.DoesNotExist:
+            log_service.write("User entity not found")
+            messages.error(self.request, "ユーザーエンティティが見つかりません")
+            return super().form_invalid(form)
+        except Exception as e:
+            log_service.write(f"Message processing error: {e}")
+            messages.error(self.request, "処理中にエラーが発生しました")
+            return super().form_invalid(form)
 
         return super().form_valid(form)
 
