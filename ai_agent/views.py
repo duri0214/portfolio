@@ -88,11 +88,11 @@ class ResetTimelineView(View):
         """タイムラインをリセット"""
         # メッセージ履歴をクリア
         Message.objects.all().delete()
-        print("All messages have been cleared.")  # デバッグログ
+        log_service.write("All messages have been cleared.")
 
         # ActionHistoryをクリア
         ActionHistory.objects.all().delete()
-        print("All ActionHistory records have been cleared.")  # デバッグログ
+        log_service.write("All ActionHistory records have been cleared.")
 
         # タイムラインを初期化
         ConversationService.initialize_timeline()
