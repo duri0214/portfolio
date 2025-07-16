@@ -416,4 +416,4 @@ class InputProcessor:
         Returns:
             デフォルト応答テキスト
         """
-        return f"{self.entity.name}: {user_input}について考えてみますね..."
+        return f"{self.entity.name}: {user_input}"
