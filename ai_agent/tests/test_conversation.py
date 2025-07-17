@@ -11,7 +11,7 @@ from ai_agent.models import Entity, ActionTimeline
 class ConversationServiceTest(TestCase):
     def setUp(self):
         """
-        Set up entities and initialize timeline for testing.
+        Set up entities and initialize the timeline for testing.
         """
         # Entity1: 高速で Google Maps レビューに基づくタイプ
         self.entity1 = Entity.objects.create(
