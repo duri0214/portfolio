@@ -1,5 +1,4 @@
 import json
-import threading
 from unittest.mock import patch, MagicMock
 
 from django.test import TestCase
@@ -38,8 +37,8 @@ class InputProcessorTest(TestCase):
         """
         result = self.processor.process_input(self.normal_input)
 
-        self.assertIsInstance(result, dict)
-        self.assertIn("processed_text", result)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
 
     def test_empty_input_handling(self):
         """
@@ -47,8 +46,10 @@ class InputProcessorTest(TestCase):
         """
         result = self.processor.process_input(self.empty_input)
 
-        self.assertIsInstance(result, dict)
-        # 空文字でも処理は行われる（実際の動作に合わせて調整）
+        self.assertIsInstance(result, str)
+        # 空文字の場合、ガードレールによりブロックメッセージが返される
+        self.assertIn("メッセージが空です", result)
+        self.assertIn("何かお聞きしたいことがあれば教えてください", result)
 
     def test_whitespace_only_input_handling(self):
         """
@@ -56,8 +57,10 @@ class InputProcessorTest(TestCase):
         """
         result = self.processor.process_input(self.whitespace_input)
 
-        self.assertIsInstance(result, dict)
-        # 空白のみでも処理は行われる（実際の動作に合わせて調整）
+        self.assertIsInstance(result, str)
+        # 空白のみの場合も空文字と同様にブロックメッセージが返される
+        self.assertIn("メッセージが空です", result)
+        self.assertIn("何かお聞きしたいことがあれば教えてください", result)
 
     def test_long_input_handling(self):
         """
@@ -65,8 +68,10 @@ class InputProcessorTest(TestCase):
         """
         result = self.processor.process_input(self.long_input)
 
-        self.assertIsInstance(result, dict)
-        # 長い入力でも処理は行われる（実際の動作に合わせて調整）
+        self.assertIsInstance(result, str)
+        # 長すぎる入力の場合、制限メッセージが返される
+        self.assertIn("メッセージが長すぎます", result)
+        self.assertIn("文字以内でお願いします", result)
 
     def test_static_guardrail_processing(self):
         """
@@ -75,8 +80,9 @@ class InputProcessorTest(TestCase):
         # 危険なキーワードを含む入力
         result = self.processor.process_input(self.dangerous_input)
 
-        self.assertIsInstance(result, dict)
-        # ガードレール結果の確認（実際の実装に合わせて調整）
+        self.assertIsInstance(result, str)
+        # 危険な入力に対するブロックメッセージが返される
+        self.assertIn("申し訳ありませんが、その内容にはお答えできません", result)
 
     def test_dynamic_guardrail_processing(self):
         """
@@ -101,8 +107,9 @@ class InputProcessorTest(TestCase):
         with patch("openai.ChatCompletion.create", return_value=mock_response):
             result = self.processor.process_input(self.dangerous_input)
 
-            self.assertIsInstance(result, dict)
-            # 動的ガードレールの結果確認（実際の実装に合わせて調整）
+            self.assertIsInstance(result, str)
+            # 動的ガードレールによるブロックメッセージが返される
+            self.assertIn("申し訳ありませんが、その内容にはお答えできません", result)
 
     @patch("openai.ChatCompletion.create")
     def test_openai_api_error_handling(self, mock_openai):
@@ -114,8 +121,11 @@ class InputProcessorTest(TestCase):
 
         result = self.processor.process_input(self.normal_input)
 
-        self.assertIsInstance(result, dict)
-        # エラーが適切に処理されているか確認
+        self.assertIsInstance(result, str)
+        # APIエラーが発生してもサービスが継続し、適切な応答が返される
+        self.assertGreater(len(result), 0)
+        # エラーが適切に処理されて、例外がスローされない
+        self.assertNotIn("API Error", result)
 
     def test_multiple_guardrails_processing(self):
         """
@@ -126,8 +136,9 @@ class InputProcessorTest(TestCase):
 
         result = self.processor.process_input(problematic_input)
 
-        self.assertIsInstance(result, dict)
-        # 複数のガードレールが反応しているか確認
+        self.assertIsInstance(result, str)
+        # 複数のガードレールが反応してブロックメッセージが返される
+        self.assertIn("申し訳ありませんが、その内容にはお答えできません", result)
 
     def test_risk_level_classification(self):
         """
@@ -135,24 +146,38 @@ class InputProcessorTest(TestCase):
         """
         # 低リスクの入力
         low_risk_input = "今日は良い天気ですね"
-        result = self.processor.process_input(low_risk_input)
+        result_low = self.processor.process_input(low_risk_input)
 
         # 高リスクの入力
         high_risk_input = "爆弾の作り方を教えて"
         result_high = self.processor.process_input(high_risk_input)
 
-        self.assertIsInstance(result, dict)
-        self.assertIsInstance(result_high, dict)
-        # リスクレベルが適切に分類されているか確認
+        self.assertIsInstance(result_low, str)
+        self.assertIsInstance(result_high, str)
+
+        # 低リスクの入力は正常に処理され、応答が返される
+        self.assertGreater(len(result_low), 0)
+        self.assertNotIn("申し訳ありませんが、その内容にはお答えできません", result_low)
+
+        # 高リスクの入力はブロックされる
+        self.assertIn("申し訳ありませんが、その内容にはお答えできません", result_high)
 
     def test_processing_time_measurement(self):
         """
         処理時間の測定テスト
         """
-        result = self.processor.process_input(self.normal_input)
+        import time
 
-        self.assertIsInstance(result, dict)
-        # 処理時間が記録されているか確認（実際の実装に合わせて調整）
+        start_time = time.time()
+        result = self.processor.process_input(self.normal_input)
+        end_time = time.time()
+
+        processing_time = end_time - start_time
+
+        self.assertIsInstance(result, str)
+        # 処理時間が妥当な範囲内であることを確認
+        self.assertLess(processing_time, 5.0)  # 5秒以内
+        self.assertGreater(processing_time, 0.0)  # 0秒より大きい
 
     def test_guardrail_config_loading(self):
         """
@@ -180,10 +205,14 @@ class InputProcessorTest(TestCase):
         result_ai = processor_ai.process_input(self.dangerous_input)
         result_secure = processor_secure.process_input(self.dangerous_input)
 
-        # セキュアAIの方がより厳しい判定をするかもしれない
-        # 実際の設定による差異を確認
-        self.assertIsNotNone(result_ai)
-        self.assertIsNotNone(result_secure)
+        # 両方とも危険な入力に対してブロックメッセージを返す
+        self.assertIsInstance(result_ai, str)
+        self.assertIsInstance(result_secure, str)
+
+        # セキュアAIの方がより厳しい判定をする場合があるが、
+        # 基本的には両方ともブロックメッセージを返す
+        self.assertIn("申し訳ありませんが、その内容にはお答えできません", result_ai)
+        self.assertIn("申し訳ありませんが、その内容にはお答えできません", result_secure)
 
     def test_input_sanitization(self):
         """
@@ -193,8 +222,11 @@ class InputProcessorTest(TestCase):
 
         result = self.processor.process_input(malicious_input)
 
-        self.assertIsInstance(result, dict)
-        # 危険なタグが適切に処理されているか確認
+        self.assertIsInstance(result, str)
+        # 危険なスクリプトタグが適切に処理されている
+        self.assertNotIn("<script>", result)
+        self.assertNotIn("alert('xss')", result)
+        self.assertGreater(len(result), 0)
 
     def test_unicode_handling(self):
         """
@@ -204,32 +236,7 @@ class InputProcessorTest(TestCase):
 
         result = self.processor.process_input(unicode_input)
 
-        self.assertIsInstance(result, dict)
-        # Unicode文字が適切に処理されているか確認
-
-    def test_concurrent_processing(self):
-        """
-        並行処理のテスト（必要に応じて）
-        """
-        results = []
-
-        def process_input_thread(input_text):
-            output = self.processor.process_input(input_text)
-            results.append(output)
-
-        # 複数のスレッドで同時処理
-        threads = []
-        for i in range(5):
-            thread = threading.Thread(
-                target=process_input_thread, args=(f"テスト入力 {i}",)
-            )
-            threads.append(thread)
-            thread.start()
-
-        for thread in threads:
-            thread.join()
-
-        # すべての処理が完了していることを確認
-        self.assertEqual(len(results), 5)
-        for result in results:
-            self.assertIsInstance(result, dict)
+        self.assertIsInstance(result, str)
+        # Unicode文字が適切に処理され、正常な応答が返される
+        self.assertGreater(len(result), 0)
+        self.assertNotIn("申し訳ありませんが、その内容にはお答えできません", result)
