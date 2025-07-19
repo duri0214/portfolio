@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import os
 
 from agents import Agent
@@ -15,8 +14,9 @@ from lib.llm.service.agent import ModerationService
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
+from lib.log_service import LogService
 
-logger = logging.getLogger(__name__)
+log_service = LogService("input_processor.log")
 
 
 class InputProcessor:
@@ -84,6 +84,8 @@ class InputProcessor:
         self.output_guardrails = []
         if self.config.use_openai_moderation:
             self.output_guardrails.append(self._create_output_moderation_guardrail())
+
+        log_service.write(f"OpenAI Agent初期化完了: {self.entity.name}")
 
     def _create_moderation_guardrail(self):
         """
@@ -312,7 +314,7 @@ class InputProcessor:
             return response.choices[0].message.content
 
         except Exception as e:
-            logger.error(f"OpenAI API error for entity {self.entity.name}: {e}")
+            log_service.write(f"OpenAI API error for entity {self.entity.name}: {e}")
             return f"{self.entity.name}: 申し訳ありませんが、現在応答できません。しばらくしてから再度お試しください。"
 
     def _check_guardrails(self, user_input: str) -> GuardrailResult:
