@@ -50,10 +50,7 @@ class ConversationRepository:
         Returns:
             ActionTimeline or None: エンティティのアクションタイムライン、存在しない場合はNone
         """
-        try:
-            return ActionTimeline.objects.get(entity=entity)
-        except ActionTimeline.DoesNotExist:
-            return None
+        return ActionTimeline.objects.filter(entity=entity).first()
 
     @staticmethod
     def update_next_turn(action_timeline, increment):
