@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import os
 
 from agents import Agent
@@ -15,8 +14,9 @@ from lib.llm.service.agent import ModerationService
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
+from lib.log_service import LogService
 
-logger = logging.getLogger(__name__)
+log_service = LogService("input_processor.log")
 
 
 class InputProcessor:
@@ -64,17 +64,20 @@ class InputProcessor:
             - OpenAI Moderationは設定により選択的に有効化
         """
         # エージェントの作成
-        self.agent = Agent(
+        self.agent: Agent = Agent(
             name=self.entity.name,
             model="gpt-4o-mini",
             instructions=f"""あなたは{self.entity.name}です。
                 井戸端会議のように気楽に話してください。
                 不適切な内容には応答しないでください。
-                日本語で回答してください。""",
+                日本語で回答してください。
+
+                会話の文脈を理解して、自然で興味深い返答をしてください。
+                他の参加者との会話の流れに合わせて、適切なタイミングで発言してください。""",
         )
 
         # 入力ガードレール設定
-        self.input_guardrails = []
+        self.input_guardrails: list[InputGuardrail] = []
         if self.config.use_openai_moderation:
             self.input_guardrails.append(self._create_moderation_guardrail())
 
@@ -84,6 +87,18 @@ class InputProcessor:
         self.output_guardrails = []
         if self.config.use_openai_moderation:
             self.output_guardrails.append(self._create_output_moderation_guardrail())
+
+        # ガードレールをエージェントに適用
+        try:
+            for guardrail in self.input_guardrails:
+                self.agent.input_guardrails.append(guardrail)
+
+            for guardrail in self.output_guardrails:
+                self.agent.output_guardrails.append(guardrail)
+        except Exception as e:
+            log_service.write(f"ガードレール設定中にエラーが発生: {e}")
+
+        log_service.write(f"OpenAI Agent初期化完了: {self.entity.name}")
 
     def _create_moderation_guardrail(self):
         """
@@ -312,7 +327,7 @@ class InputProcessor:
             return response.choices[0].message.content
 
         except Exception as e:
-            logger.error(f"OpenAI API error for entity {self.entity.name}: {e}")
+            log_service.write(f"OpenAI API error for entity {self.entity.name}: {e}")
             return f"{self.entity.name}: 申し訳ありませんが、現在応答できません。しばらくしてから再度お試しください。"
 
     def _check_guardrails(self, user_input: str) -> GuardrailResult:

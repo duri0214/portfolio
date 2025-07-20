@@ -38,19 +38,35 @@
                             {% endfor %}
                         {% endif %}
                         {% for chat_message in chat_messages %}
-                            <div class="alert alert-info" role="alert">
-                                {{ chat_message.message_content }}
-                            </div>
+                            {% if '[ERROR]' in chat_message.message_content %}
+                                <div class="alert alert-danger" role="alert">
+                                    {{ chat_message.message_content }}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info" role="alert">
+                                    {{ chat_message.message_content }}
+                                </div>
+                            {% endif %}
                         {% empty %}
                             <div class="alert alert-warning" role="alert">
                                 メッセージ履歴がありません。
                             </div>
                         {% endfor %}
-                        <form method="POST" action="{% url 'agt:index' %}">
-                            {% csrf_token %}
-                            {{ form.as_p }}
-                            <button type="submit" class="btn btn-primary mt-2">Send</button>
-                        </form>
+
+                        {% with next_entity=future_actions.first.entity %}
+                            <form method="POST" action="{% url 'agt:index' %}">
+                                {% csrf_token %}
+                                {{ form.as_p }}
+                                <button type="submit" class="btn btn-primary mt-2"
+                                        {% if next_entity.name != 'User' %}disabled{% endif %}>Send
+                                </button>
+                            </form>
+                            {% if next_entity.name != 'User' %}
+                                <div class="alert alert-info mt-2">
+                                    現在は {{ next_entity.name }} のターンです。「1単位時間進める」ボタンをクリックしてください。
+                                </div>
+                            {% endif %}
+                        {% endwith %}
                     </div>
                 </div>
 

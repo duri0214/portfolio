@@ -4,7 +4,8 @@
     "pk": 1,
     "fields": {
       "name": "User",
-      "thinking_type": "google_maps_based"
+      "thinking_type": "google_maps_based",
+      "speed": 5
     }
   },
   {
@@ -12,7 +13,8 @@
     "pk": 2,
     "fields": {
       "name": "Agent-A",
-      "thinking_type": "google_maps_based"
+      "thinking_type": "google_maps_based",
+      "speed": 8
     }
   },
   {
@@ -20,7 +22,8 @@
     "pk": 3,
     "fields": {
       "name": "Agent-B",
-      "thinking_type": "rag_based"
+      "thinking_type": "rag_based",
+      "speed": 10
     }
   },
   {
@@ -28,7 +31,8 @@
     "pk": 4,
     "fields": {
       "name": "Agent-C",
-      "thinking_type": "ng_word_based"
+      "thinking_type": "ng_word_based",
+      "speed": 14
     }
   },
   {

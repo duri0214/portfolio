@@ -10,16 +10,24 @@ class ConversationService:
     @staticmethod
     def calculate_next_turn_increment(speed: float) -> float:
         """
-        Calculate the increment for next_turn based on entity speed.
-        This ensures consistency in how the increment is derived and makes future
-        adjustments easier.
+        エンティティの速度に基づいてnext_turnの増分を計算します。
+        この方法により、増分の導出方法に一貫性が保たれ、将来の調整が容易になります。
+
+        Args:
+            speed (float): エンティティの速度値
+
+        Returns:
+            float: 次のターンまでの増分値（1/speed）
         """
         return 1 / speed
 
     @staticmethod
     def initialize_timeline():
         """
-        Initialize the timeline by assigning first turn values based on entity speed.
+        エンティティの速度に基づいて最初のターン値を割り当て、タイムラインを初期化します。
+
+        各エンティティのActionTimelineレコードを作成または更新し、next_turn値を設定します。
+        この初期化により、エンティティの行動順序が速度に応じて決定されます。
         """
         entities = ConversationRepository.get_all_entities()
         for entity in entities:
@@ -35,21 +43,25 @@ class ConversationService:
     @staticmethod
     def get_next_entity(input_text: str):
         """
-        Get the next entity to act based on the timeline, considering
-        its ability to act (`can_act`) determined by `think`.
+        タイムラインに基づいて次に行動するエンティティを取得します。
+        各エンティティの発言可能状態（`can_act`）は`think`メソッドによって決定されます。
+
+        複数のエンティティが同じnext_turnを持つ場合は、エンティティIDの昇順で選択されます。
+        これにより、同じタイミングで行動可能な複数のエンティティがあっても、
+        常に決定論的に一意のエンティティが選択されます。
 
         Args:
-            input_text (str): The input text for the entity's `think` process.
+            input_text (str): エンティティの`think`プロセスに渡す入力テキスト
 
         Returns:
-            Entity: The next entity that should act.
+            Entity: 次に行動すべきエンティティ
 
         Raises:
-            ValueError: If no entities are available to act.
+            ValueError: 行動可能なエンティティが存在しない場合
         """
         timelines = ConversationRepository.get_timelines_ordered_by_next_turn()
         if not timelines.exists():
-            raise ValueError("No entities available in the timeline.")
+            raise ValueError("タイムラインにエンティティが存在しません。")
 
         candidates = []
         for timeline in timelines:
@@ -60,7 +72,7 @@ class ConversationService:
 
         # 次の行動順 (next_turn) 最小値のエンティティを選択する
         if candidates:
-            next_action = min(candidates, key=lambda t: t.next_turn)
+            next_action = min(candidates, key=lambda t: (t.next_turn, t.entity.id))
             ConversationRepository.update_next_turn(
                 action_timeline=next_action,
                 increment=ConversationService.calculate_next_turn_increment(
@@ -77,28 +89,35 @@ class ConversationService:
                     timeline.entity.speed
                 ),
             )
-        raise ValueError("No entities are available to act in this turn.")
+        raise ValueError("このターンで行動可能なエンティティが存在しません。")
 
     @staticmethod
     def simulate_next_actions(max_steps=10) -> list[EntityVO]:
         """
-        Simulates the next sequence of entity actions up to 'max_steps'
-        and creates ActionHistory records for each action.
+        最大`max_steps`回数の次のエンティティアクションのシーケンスをシミュレーションし、
+        各アクションに対応するActionHistoryレコードを作成します。
+
+        next_turnが同じエンティティが複数存在する場合は、エンティティIDの昇順で選択されます。
+        min関数とタプルによる複合キー比較（next_turn, entity.id）を使用することで、
+        常に決定論的な順序でエンティティが選択されます。
 
         Args:
-            max_steps (int): How many actions to simulate.
+            max_steps (int): シミュレーションするアクションの数
 
         Returns:
-            List[EntityVO]: A list of EntityVO objects containing the entity's name and the turn when they act.
+            List[EntityVO]: エンティティ名と行動ターンを含むEntityVOオブジェクトのリスト
+
+        Raises:
+            ValueError: タイムラインにエンティティが存在しない場合
         """
         timelines = list(ConversationRepository.get_timelines_ordered_by_next_turn())
         if not timelines:
-            raise ValueError("No entities available in the timeline.")
+            raise ValueError("タイムラインにエンティティが存在しません。")
 
         simulation = []
         for i in range(1, max_steps + 1):
             # 次の行動を決定 (next_turn が最小のタイムラインを選ぶ)
-            next_action = min(timelines, key=lambda t: t.next_turn)
+            next_action = min(timelines, key=lambda t: (t.next_turn, t.entity.id))
 
             # ActionHistory レコードを作成
             ActionHistory.objects.create(
@@ -122,14 +141,17 @@ class ConversationService:
     @staticmethod
     def think(entity: Entity, input_text: str):
         """
-        Process the entity's thought logic to determine if it can respond.
+        エンティティの思考ロジックを処理し、応答可能かどうかを判断します。
+
+        エンティティのthinking_typeに基づいて適切な判断サービスを選択し、
+        入力テキストに対して応答可能かどうかを評価します。
 
         Args:
-            entity (Entity): The entity performing the thought process
-            input_text (str): The input text to evaluate
+            entity (Entity): 思考プロセスを実行するエンティティ
+            input_text (str): 評価する入力テキスト
 
         Returns:
-            bool: True if the entity can respond, False otherwise.
+            bool: 応答可能な場合はTrue、そうでない場合はFalse
         """
         if entity.thinking_type == "google_maps_based":
             return GoogleMapsReviewService.can_respond(input_text, entity)
