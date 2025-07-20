@@ -66,10 +66,7 @@ class IndexView(FormView):
             else 0
         )
         # ユーザーエンティティの情報を追加
-        try:
-            context["user_entity"] = Entity.objects.get(name="User")
-        except Entity.DoesNotExist:
-            context["user_entity"] = None
+        context["user_entity"] = Entity.objects.filter(name="User").first()
         return context
 
     def form_valid(self, form):
