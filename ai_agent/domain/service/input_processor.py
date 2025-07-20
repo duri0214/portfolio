@@ -64,13 +64,16 @@ class InputProcessor:
             - OpenAI Moderationは設定により選択的に有効化
         """
         # エージェントの作成
-        self.agent = Agent(
+        self.agent: Agent = Agent(
             name=self.entity.name,
             model="gpt-4o-mini",
             instructions=f"""あなたは{self.entity.name}です。
                 井戸端会議のように気楽に話してください。
                 不適切な内容には応答しないでください。
-                日本語で回答してください。""",
+                日本語で回答してください。
+
+                会話の文脈を理解して、自然で興味深い返答をしてください。
+                他の参加者との会話の流れに合わせて、適切なタイミングで発言してください。""",
         )
 
         # 入力ガードレール設定
