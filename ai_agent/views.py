@@ -238,7 +238,7 @@ class NextTurnView(View):
             thinking_type_display = next_action.entity.get_thinking_type_display()
 
             # エンティティが会話不能状態の場合は、その旨のメッセージを表示
-            response = f"（{next_action.entity.name}（{thinking_type_display}）はチャットに参加できませんでした）"
+            response = f"{next_action.entity.name}（{thinking_type_display}）はチャットに参加できませんでした"
             # 特別なメッセージとしてマークする（テンプレートで赤背景表示用）
             message = ConversationRepository.create_message(
                 next_action.entity, response
