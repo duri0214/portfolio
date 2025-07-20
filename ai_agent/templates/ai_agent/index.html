@@ -40,7 +40,7 @@
                         {% for chat_message in chat_messages %}
                             {% if '[ERROR]' in chat_message.message_content %}
                                 <div class="alert alert-danger" role="alert">
-                                    {{ chat_message.message_content|slice:'7:' }}
+                                    {{ chat_message.message_content }}
                                 </div>
                             {% else %}
                                 <div class="alert alert-info" role="alert">
