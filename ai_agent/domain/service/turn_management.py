@@ -1,12 +1,14 @@
-from ai_agent.domain.repository.conversation import ConversationRepository
-from ai_agent.domain.service.googlemaps_review import GoogleMapsReviewService
-from ai_agent.domain.service.ng_word import NGWordService
-from ai_agent.domain.service.rag import RagService
-from ai_agent.domain.valueobject.conversation import EntityVO
+from ai_agent.domain.repository.turn_management import TurnManagementRepository
+from ai_agent.domain.service.thinking_engines.googlemaps_review import (
+    GoogleMapsReviewService,
+)
+from ai_agent.domain.service.thinking_engines.ng_word import NGWordService
+from ai_agent.domain.service.thinking_engines.rag import RagService
+from ai_agent.domain.valueobject.turn_management import EntityVO
 from ai_agent.models import Entity, ActionHistory
 
 
-class ConversationService:
+class TurnManagementService:
     @staticmethod
     def calculate_next_turn_increment(speed: float) -> float:
         """
@@ -29,12 +31,12 @@ class ConversationService:
         各エンティティのActionTimelineレコードを作成または更新し、next_turn値を設定します。
         この初期化により、エンティティの行動順序が速度に応じて決定されます。
         """
-        entities = ConversationRepository.get_all_entities()
+        entities = TurnManagementRepository.get_all_entities()
         for entity in entities:
-            ConversationRepository.update_or_create_action_timeline(
+            TurnManagementRepository.update_or_create_action_timeline(
                 entity=entity,
                 defaults={
-                    "next_turn": ConversationService.calculate_next_turn_increment(
+                    "next_turn": TurnManagementService.calculate_next_turn_increment(
                         entity.speed
                     )
                 },
@@ -59,13 +61,13 @@ class ConversationService:
         Raises:
             ValueError: 行動可能なエンティティが存在しない場合
         """
-        timelines = ConversationRepository.get_timelines_ordered_by_next_turn()
+        timelines = TurnManagementRepository.get_timelines_ordered_by_next_turn()
         if not timelines.exists():
             raise ValueError("タイムラインにエンティティが存在しません。")
 
         candidates = []
         for timeline in timelines:
-            timeline.can_act = ConversationService.think(timeline.entity, input_text)
+            timeline.can_act = TurnManagementService.think(timeline.entity, input_text)
             timeline.save()
             if timeline.can_act:
                 candidates.append(timeline)
@@ -73,9 +75,9 @@ class ConversationService:
         # 次の行動順 (next_turn) 最小値のエンティティを選択する
         if candidates:
             next_action = min(candidates, key=lambda t: (t.next_turn, t.entity.id))
-            ConversationRepository.update_next_turn(
+            TurnManagementRepository.update_next_turn(
                 action_timeline=next_action,
-                increment=ConversationService.calculate_next_turn_increment(
+                increment=TurnManagementService.calculate_next_turn_increment(
                     next_action.entity.speed
                 ),
             )
@@ -83,9 +85,9 @@ class ConversationService:
 
         # このターンでは発言可能なエンティティがいない場合、すべてのエンティティの next_turn を更新して次のターンへ進む
         for timeline in timelines:
-            ConversationRepository.update_next_turn(
+            TurnManagementRepository.update_next_turn(
                 action_timeline=timeline,
-                increment=ConversationService.calculate_next_turn_increment(
+                increment=TurnManagementService.calculate_next_turn_increment(
                     timeline.entity.speed
                 ),
             )
@@ -110,7 +112,7 @@ class ConversationService:
         Raises:
             ValueError: タイムラインにエンティティが存在しない場合
         """
-        timelines = list(ConversationRepository.get_timelines_ordered_by_next_turn())
+        timelines = list(TurnManagementRepository.get_timelines_ordered_by_next_turn())
         if not timelines:
             raise ValueError("タイムラインにエンティティが存在しません。")
 
@@ -132,8 +134,10 @@ class ConversationService:
             )
 
             # 次の行動予定を仮で更新
-            next_action.next_turn += ConversationService.calculate_next_turn_increment(
-                next_action.entity.speed
+            next_action.next_turn += (
+                TurnManagementService.calculate_next_turn_increment(
+                    next_action.entity.speed
+                )
             )
 
         return simulation
