@@ -1,3 +1,4 @@
+import html
 import os
 
 from agents import Agent
@@ -6,11 +7,9 @@ from agents.guardrail import InputGuardrail, OutputGuardrail, GuardrailFunctionO
 from ai_agent.domain.valueobject.input_processor import (
     GuardrailResult,
     InputProcessorConfig,
-    ProcessedInput,
 )
 from lib.llm.service.agent import ModerationService
 from lib.llm.service.completion import LlmCompletionService
-from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
 from lib.log_service import LogService
 
@@ -197,6 +196,21 @@ class InputProcessor:
             guardrail_function=output_moderation_check,
         )
 
+    @staticmethod
+    def sanitize_input(text: str) -> str:
+        """
+        入力テキストからHTMLタグなどの危険な要素を除去
+
+        Args:
+            text (str): 無害化する入力テキスト
+
+        Returns:
+            str: 無害化されたテキスト
+        """
+        # HTMLタグの無害化（タグをエスケープしてテキストとして表示）
+        sanitized = html.escape(text)
+        return sanitized
+
     def process_input(self, user_input: str) -> str:
         """
         ユーザー入力を処理してエージェントの応答を生成
@@ -217,12 +231,15 @@ class InputProcessor:
             3. 不適切な入力であればブロックメッセージを返す
         """
         try:
+            # 入力の無害化
+            sanitized_input = self.sanitize_input(user_input)
+
             # ガードレール機能による入力検証
             validation_result = self._check_guardrails(user_input)
 
             # ガードレールをパスした場合、処理を実行
             if not validation_result.blocked:
-                return self._process_default(user_input)
+                return self._process_default(sanitized_input)
 
             # ブロックされた場合はブロックメッセージを返す
             return (
@@ -232,66 +249,6 @@ class InputProcessor:
         except Exception as e:
             log_service.write(f"Input processing error: {e}")
             return f"{self.entity.name}: 処理中にエラーが発生しました。しばらくしてからお試しください。"
-
-    def _preprocess_input(self, user_input: str) -> ProcessedInput:
-        """
-        入力の前処理とガードレールチェック
-
-        Args:
-            user_input: 元の入力テキスト
-
-        Returns:
-            処理済み入力オブジェクト
-        """
-        # ガードレールチェック
-        guard_result = self._check_guardrails(user_input)
-
-        if guard_result.blocked:
-            return ProcessedInput(
-                original_input=user_input,
-                processed_input=user_input,
-                is_blocked=True,
-                block_reason=guard_result.message,
-            )
-
-        # 入力の正規化（必要に応じて）
-        processed_input = user_input.strip()
-
-        return ProcessedInput(
-            original_input=user_input, processed_input=processed_input, is_blocked=False
-        )
-
-    def _process_with_openai(self, user_input: str) -> str:
-        """
-        OpenAI APIを使用した応答生成
-
-        Args:
-            user_input: 処理済み入力テキスト
-
-        Returns:
-            OpenAI APIからの応答
-        """
-        try:
-            # システムメッセージの設定
-            system_message = f"""あなたは{self.entity.name}です。
-                井戸端会議のように気楽に話してください。
-                不適切な内容には応答しないでください。
-                日本語で回答してください。"""
-
-            # メッセージ履歴の作成
-            chat_history = [
-                Message(role=RoleType.SYSTEM, content=system_message),
-                Message(role=RoleType.USER, content=user_input),
-            ]
-
-            # LlmCompletionServiceを使用してOpenAI APIにリクエスト
-            response = self.llm_service.retrieve_answer(chat_history)
-
-            return response.choices[0].message.content
-
-        except Exception as e:
-            log_service.write(f"OpenAI API error for entity {self.entity.name}: {e}")
-            return f"{self.entity.name}: 申し訳ありませんが、現在応答できません。しばらくしてから再度お試しください。"
 
     def _check_guardrails(self, user_input: str) -> GuardrailResult:
         """
@@ -386,13 +343,10 @@ class InputProcessor:
 
     def _process_default(self, user_input: str) -> str:
         """
-        シンプルなオウム返し応答生成
-
-        ユーザー入力をそのまま返す単純な処理です。
-        SDKの非同期処理は使用せず、単にエンティティ名とユーザー入力を組み合わせます。
+        オウム返し応答生成
 
         Args:
-            user_input: 処理済み入力テキスト
+            user_input: 処理済み入力テキスト（既に無害化済み）
 
         Returns:
             エンティティ名付きのオウム返しテキスト
