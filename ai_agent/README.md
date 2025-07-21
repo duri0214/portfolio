@@ -9,17 +9,18 @@
 ```
 ai_agent/
 ├── domain/                # ドメイン層（DDD設計）
-│   ├── service/           # ビジネスロジックサービス
-│   │   ├── conversation.py  # 会話管理サービス
-│   │   ├── googlemaps_review.py  # Googleマップレビュー分析
-│   │   ├── input_processor.py  # 入力処理・ガードレール
-│   │   ├── ng_word.py      # 禁止ワード処理
-│   │   └── rag.py          # RAG（検索拡張生成）処理
 │   ├── repository/        # データアクセス層
-│   │   └── conversation.py  # 会話データリポジトリ
+│   │   └── turn_management.py  # ターン管理リポジトリ
+│   ├── service/           # ビジネスロジックサービス
+│   │   ├── input_processor.py  # 入力処理・ガードレール
+│   │   ├── thinking_engines/   # 思考エンジン
+│   │       ├── googlemaps_review.py  # Googleマップレビュー分析
+│   │       ├── ng_word.py      # 禁止ワード処理
+│   │       └── rag.py          # RAG（検索拡張生成）処理
+│   │   └── turn_management.py  # ターン管理サービス
 │   └── valueobject/       # 値オブジェクト
-│       ├── conversation.py  # 会話関連の値オブジェクト
-│       └── input_processor.py  # 入力処理の値オブジェクト
+│       ├── input_processor.py  # 入力処理の値オブジェクト
+│       └── turn_management.py  # ターン管理の値オブジェクト
 ├── tests/                 # テスト
 │   ├── test_input_processor.py  # 入力処理テスト
 │   ├── test_conversation.py     # 会話管理テスト
@@ -37,15 +38,15 @@ ai_agent/
 
 ## 主要コンポーネント
 
-### 1. 会話管理システム (ConversationService)
+### 1. ターン管理システム (TurnManagementService)
 
-`domain/service/conversation.py`にあるConversationServiceは、エージェント間の会話の流れを制御します。
+`domain/service/turn_management.py`にあるTurnManagementServiceは、エージェント間の会話の流れとターン制御を担当します。
 
 主な機能：
 
-- エンティティのターン管理（速度に基づいた次の発言順序の決定）
-- エンティティの思考ロジック（think）による応答可否の判断
+- エンティティの速度に基づいた次の発言順序の決定
 - タイムラインの初期化と更新
+- エンティティの思考ロジック（think）による応答可否の判断
 - 次のアクションのシミュレーション
 
 処理フロー：
@@ -53,7 +54,7 @@ ai_agent/
 1. タイムラインの初期化（initialize_timeline）
 2. 入力テキストに対する次のエンティティの決定（get_next_entity）
 3. 各エンティティのthinking_typeに基づいた応答可否の判断（think）
-4. 次のターンの計算と更新
+4. 次のターンの計算と更新（calculate_next_turn_increment）
 
 ### 2. 入力処理システム (InputProcessor)
 
@@ -74,43 +75,40 @@ ai_agent/
 - リスクレベルに基づいた処理分岐
 - 堅牢なエラーハンドリングとフォールバック処理
 
-### 3. 特殊応答生成サービス
+### 2. 思考エンジン
 
-複数の応答生成サービスにより、様々なコンテキストでの対話が可能です：
+複数の思考エンジンにより、様々なコンテキストでの対話が可能です：
 
-- **GoogleMapsReviewService** (`domain/service/googlemaps_review.py`)
+- **GoogleMapsReviewService** (`domain/service/thinking_engines/googlemaps_review.py`)
     - Googleマップのレビューデータに基づいた応答生成
     - `can_respond`メソッドで応答可否を判断
 
-- **RagService** (`domain/service/rag.py`)
+- **RagService** (`domain/service/thinking_engines/rag.py`)
     - RAG（検索拡張生成）を用いた高度な応答生成
     - 特定のナレッジベースを活用した情報提供
 
-- **NGWordService** (`domain/service/ng_word.py`)
+- **NGWordService** (`domain/service/thinking_engines/ng_word.py`)
     - 禁止ワードに基づいた応答制御
     - コンテンツの安全性確保
 
-### 4. データアクセス層
+### 3. データアクセス層
 
 `domain/repository`にあるリポジトリクラスは、データベースとのやり取りを抽象化します：
 
-- **ConversationRepository**
-    - エンティティと会話データの取得・更新
-    - タイムラインの管理
+- **TurnManagementRepository**
+    - エンティティの取得
+    - タイムラインの管理と更新
 
 ## 処理の流れ
 
 典型的なチャットのライフサイクル：
 
 1. ユーザーがテキスト入力を送信
-2. `InputProcessor`が入力を処理・検証
-    - ガードレールによる検証
-    - 適切な処理方法の選択
-3. `ConversationService.get_next_entity`が次の応答エンティティを決定
-4. エンティティの`thinking_type`に基づいて応答可能性を判断
+2. `TurnManagementService.get_next_entity`が次の応答エンティティを決定
+3. エンティティの`thinking_type`に基づいて応答可能性を判断
     - GoogleMapsReviewService、RagService、NGWordServiceなどを利用
-5. 応答可能な場合、エンティティが応答を生成
-6. タイムラインが更新され、次のターンの準備
+4. 応答可能な場合、エンティティが応答を生成
+5. タイムラインが更新され、次のターンの増分が計算され準備
 
 ## モデル
 
@@ -174,12 +172,51 @@ ai_agent/
 
 - 複数エンティティでの連続的な会話進行テスト
 - 複数ターンにわたるシステム状態変化テスト
+- エンティティの速度値に基づく次のターン計算テスト
+- 同じnext_turnを持つエンティティの選択ロジックテスト
+- エンティティの応答可否判断ロジックテスト
+- タイムラインの初期化と更新テスト
+- 将来アクションのシミュレーションテスト
 
 ## 会話フローのシーケンス図
 
-現在のシステムでは、テキスト入力処理とターン進行は独立した2つの処理として実装されています。以下の2つのシーケンス図でそれぞれの流れを説明します。
+以下のシーケンス図で処理の流れを説明します。
 
-### 1. テキスト入力処理のフロー
+### 1. ターン管理プロセスのフロー
+
+```mermaid
+sequenceDiagram
+    participant View as View
+    participant TMS as TurnManagementService
+    participant TMR as TurnManagementRepository
+    participant ThinkingEngine as 思考エンジン
+
+    View->>TMS: get_next_entity(input_text)
+    activate TMS
+    TMS->>TMR: get_timelines_ordered_by_next_turn()
+    TMR-->>TMS: 順序付けされたタイムライン
+
+    loop 各タイムラインに対して
+        TMS->>TMS: think(entity, input_text)
+        TMS->>ThinkingEngine: can_respond(input_text, entity)
+        ThinkingEngine-->>TMS: 応答可能性(True/False)
+        TMS->>TMR: timeline.save()
+    end
+
+    alt 応答可能なエンティティがある場合
+        TMS->>TMS: 最小next_turnを持つエンティティを選択
+        TMS->>TMR: update_next_turn(timeline, increment)
+        TMS-->>View: 次のエンティティ
+    else 応答可能なエンティティがない場合
+        loop 全タイムラインに対して
+            TMS->>TMR: update_next_turn(timeline, increment)
+        end
+        TMS-->>View: ValueError
+    end
+    deactivate TMS
+```
+
+### 2. テキスト入力処理のフロー
 
 ```mermaid
 sequenceDiagram
@@ -219,48 +256,6 @@ sequenceDiagram
     deactivate IP
 ```
 
-### 2. ターン進行処理のフロー
-
-```mermaid
-sequenceDiagram
-    actor User as ユーザー
-    participant NTV as NextTurnView
-    participant CS as ConversationService
-    participant SS as 特殊サービス<br>(GoogleMapsReviewService/RagService/NGWordService)
-    participant IP as InputProcessor
-    participant DB as データベース
-
-    User->>NTV: 「1単位時間進める」<br>ボタンをクリック
-    activate NTV
-    Note over NTV: NextTurnView: process_next_turn()
-    NTV->>CS: get_next_entity()
-
-    activate CS
-    CS->>DB: ActionTimeline取得
-    Note over CS: ConversationService: 次のエンティティを決定
-    CS->>SS: think(entity, context)
-
-    alt can_respond = false
-        Note over SS: 例: NGWordService: 禁止ワードチェック失敗
-        SS-->>CS: False (応答不可)
-        CS-->>NTV: ValueError
-        NTV-->>User: エラーメッセージ
-    else can_respond = true
-        Note over SS: 例: NGWordService: 禁止ワードチェック通過
-        SS-->>CS: True (応答可能)
-        CS->>DB: ActionTimeline更新
-        CS->>DB: ActionHistory作成/更新
-        CS-->>NTV: entity
-
-        NTV->>IP: process_input(dummy_text)
-        IP-->>NTV: 応答テキスト
-        NTV->>DB: Message.objects.create()<br>(AIメッセージ保存)
-        NTV-->>User: インデックスページに<br>リダイレクト
-    end
-    deactivate CS
-    deactivate NTV
-```
-
 ## システムの特徴
 
 このシステムは以下の特徴を持っています：
@@ -282,27 +277,12 @@ sequenceDiagram
     - 日本語を含む多言語テキスト処理
     - 絵文字や特殊文字のサポート
 
-現在のシステムでは、テキスト入力処理とターン進行処理は2つの独立したプロセスとして実装されています：
+現在のシステムでは、テキスト入力処理とターン管理は連携して動作します：
 
-1. **テキスト入力処理（IndexView経由）**
-    - ユーザーがテキストフォームからメッセージを入力
-    - InputProcessorがガードレール処理
-    - メッセージがDBに保存される
-    - **重要**: この処理ではターンは進行しない
-
-2. **ターン進行処理（NextTurnView経由）**
-    - ユーザーが「1単位時間進める」ボタンをクリック
-    - ConversationServiceが次のエンティティを決定
-    - 特殊サービスがエンティティの応答可否を判定
-    - エンティティが応答可能な場合、ダミーテキストでメッセージが生成され、ターンが進行
-
-この設計により、テキスト入力とターン進行が分離されているため：
-
-- ユーザーは何度でもテキスト入力できるが、ターンは手動で進める必要がある
-- NGWordServiceなどの特殊サービスは、ターン進行時にのみチェックされる
-- InputProcessorのガードレールとConversationServiceの特殊サービスは別々のタイミングで実行される
-
-現在、これらの2つのプロセスを統合する改善が計画されています（Sub-issue #6）。
+- ユーザーのテキスト入力はInputProcessorによってガードレールチェックされます
+- 安全と判断された入力は保存され、TurnManagementServiceが次のエンティティを決定します
+- 選ばれたエンティティの思考エンジンが応答を生成します
+- タイムラインが更新され、次のターンの準備が行われます
 
 ## ライセンス
 
