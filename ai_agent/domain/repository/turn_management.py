@@ -3,7 +3,7 @@ from datetime import datetime
 from ai_agent.models import Entity, ActionTimeline, Message
 
 
-class ConversationRepository:
+class TurnManagementRepository:
     @staticmethod
     def get_all_entities():
         """

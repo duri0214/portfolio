@@ -2,11 +2,11 @@ class RagService:
     @staticmethod
     def can_respond(input_text, entity):
         """
-        Determine if the entity can respond using RAG (Retrieval-Augmented Generation).
+        Determine if the entity can respond using RAG (Retrieval-Augmented Generation)
 
         Args:
-            input_text (str): Input text to process.
-            entity (Entity): The entity being queried.
+            input_text (str): Input text to process
+            entity (Entity): The entity being queried
 
         Returns:
             bool: True if relevant data can be retrieved, otherwise False.

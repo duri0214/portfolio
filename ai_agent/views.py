@@ -4,9 +4,9 @@ from django.urls import reverse_lazy
 from django.views.generic import View
 from django.views.generic.edit import FormView
 
-from ai_agent.domain.repository.conversation import ConversationRepository
-from ai_agent.domain.service.conversation import ConversationService
+from ai_agent.domain.repository.turn_management import TurnManagementRepository
 from ai_agent.domain.service.input_processor import InputProcessor
+from ai_agent.domain.service.turn_management import TurnManagementService
 from ai_agent.forms import SendMessageForm
 from ai_agent.models import Message, Entity, ActionHistory
 from lib.log_service import LogService
@@ -165,10 +165,10 @@ class ResetTimelineView(View):
         log_service.write("All ActionHistory records have been cleared.")
 
         # タイムラインを初期化
-        ConversationService.initialize_timeline()
+        TurnManagementService.initialize_timeline()
 
         # 未来の10ターン分をActionHistoryに登録
-        ConversationService.simulate_next_actions(max_steps=10)
+        TurnManagementService.simulate_next_actions(max_steps=10)
 
         # ActionHistoryのすべての行動を未完了（done=False）にする
         ActionHistory.objects.all().update(done=False)
@@ -232,7 +232,7 @@ class NextTurnView(View):
         next_action.save()
 
         # ActionTimelineのエンティティを取得し、can_actの状態を確認
-        timeline = ConversationRepository.get_action_timeline(next_action.entity)
+        timeline = TurnManagementRepository.get_action_timeline(next_action.entity)
         if timeline and not timeline.can_act:
             # エンティティの種類に基づいて理由を追加
             thinking_type_display = next_action.entity.get_thinking_type_display()
@@ -240,7 +240,7 @@ class NextTurnView(View):
             # エンティティが会話不能状態の場合は、その旨のメッセージを表示
             response = f"{next_action.entity.name}（{thinking_type_display}）はチャットに参加できませんでした"
             # 特別なメッセージとしてマークする（テンプレートで赤背景表示用）
-            message = ConversationRepository.create_message(
+            message = TurnManagementRepository.create_message(
                 next_action.entity, response
             )
             message.message_content = f"[ERROR]{message.message_content}"
@@ -254,13 +254,13 @@ class NextTurnView(View):
         try:
             # 次のエンティティとその処理を取得
             # input_text = request.POST.get("input_text")  # TODO: ユーザー入力を処理する場合のメモ
-            next_entity = ConversationService.get_next_entity(input_text="")
+            next_entity = TurnManagementService.get_next_entity(input_text="")
 
             # 仮の応答を生成
             response = f"{next_entity.name} が行動しました: 仮の応答テキスト"
 
             # メッセージを作成
-            ConversationRepository.create_message(next_entity, response)
+            TurnManagementRepository.create_message(next_entity, response)
 
             # フラッシュメッセージを設定
             messages.success(request, f"{next_entity.name} のターンが完了しました。")
