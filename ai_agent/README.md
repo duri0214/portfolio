@@ -2,7 +2,7 @@
 
 ## 概要
 
-このプロジェクトはDjangoフレームワークを使用した会話型AIエージェントシステムです。複数のAIエージェント（エンティティ）による対話型のコミュニケーションを実現し、様々な情報源に基づいた応答生成を行います。
+このプロジェクトはDjangoフレームワークを使用した会話型AIエージェントシステムです。複数のAIエージェント（エンティティ）による対話型のコミュニケーションを実現し、ユーザー入力の安全性を確保しながら、様々な情報源に基づいた応答生成を行います。
 
 ## プロジェクト構造
 
@@ -12,7 +12,7 @@ ai_agent/
 │   ├── service/           # ビジネスロジックサービス
 │   │   ├── conversation.py  # 会話管理サービス
 │   │   ├── googlemaps_review.py  # Googleマップレビュー分析
-│   │   ├── input_processor.py  # 入力処理
+│   │   ├── input_processor.py  # 入力処理・ガードレール
 │   │   ├── ng_word.py      # 禁止ワード処理
 │   │   └── rag.py          # RAG（検索拡張生成）処理
 │   ├── repository/        # データアクセス層
@@ -20,10 +20,12 @@ ai_agent/
 │   └── valueobject/       # 値オブジェクト
 │       ├── conversation.py  # 会話関連の値オブジェクト
 │       └── input_processor.py  # 入力処理の値オブジェクト
-├── static/                # 静的ファイル
-├── templates/             # テンプレート
 ├── tests/                 # テスト
+│   ├── test_input_processor.py  # 入力処理テスト
+│   ├── test_conversation.py     # 会話管理テスト
+│   └── test_next_turn_logic.py  # ターン管理テスト
 ├── fixtures/              # フィクスチャーデータ
+│   └── entity.json        # エンティティデータ
 ├── migrations/            # DBマイグレーション
 └── 各種Djangoファイル
     ├── models.py          # データモデル
@@ -60,10 +62,17 @@ ai_agent/
 主な機能：
 
 - ガードレール機能による入力検証
-    - 静的ガードレール（禁止ワード、文字数制限）
+    - 静的ガードレール（禁止ワード、文字数制限、スパム検出）
     - 動的ガードレール（OpenAI Moderation API）
+- セキュリティ対策（XSS対策、入力サニタイゼーション）
 - OpenAI Agents SDKを使用した応答生成
-- 非同期処理のサポート
+- Unicode文字や多言語処理のサポート
+
+特徴：
+
+- エンティティごとにカスタマイズ可能なガードレール設定
+- リスクレベルに基づいた処理分岐
+- 堅牢なエラーハンドリングとフォールバック処理
 
 ### 3. 特殊応答生成サービス
 
@@ -110,6 +119,9 @@ ai_agent/
 - **Entity**: AIエージェントエンティティ
     - name, thinking_type, speed等の属性
 
+- **GuardrailConfig**: ガードレール設定
+    - 禁止ワード、文字数制限等の安全性設定
+
 - **ActionTimeline**: エンティティの行動タイミング管理
     - next_turn, can_act等の属性
 
@@ -127,6 +139,41 @@ ai_agent/
 1. 新しい`thinking_type`を定義
 2. 対応するサービスクラスを実装
 3. `ConversationService.think`メソッドに新しいタイプの処理を追加
+
+## テスト
+
+本プロジェクトでは以下の主要なテストが実装されています：
+
+### 1. InputProcessorTest (`tests/test_input_processor.py`)
+
+入力処理とガードレール機能のテスト：
+
+- 基本的な入力処理テスト
+- 空入力や空白のみの入力処理
+- 文字数制限超過テスト
+- 静的ガードレール（禁止ワード）テスト
+- 動的ガードレール（OpenAI Moderation API）テスト
+- APIエラーハンドリングテスト
+- 複数ガードレールの同時適用テスト
+- リスクレベル分類テスト
+- 処理時間測定テスト
+- 入力サニタイゼーションテスト
+- Unicode文字処理テスト
+
+### 2. ConversationServiceTest (`tests/test_conversation.py`)
+
+会話管理システムのテスト：
+
+- エンティティのターン管理テスト
+- タイムライン初期化テスト
+- 応答可否判断テスト
+
+### 3. NextTurnLogicTestCase (`tests/test_next_turn_logic.py`)
+
+ターン管理ロジックのテスト：
+
+- 複数エンティティでの連続的な会話進行テスト
+- 複数ターンにわたるシステム状態変化テスト
 
 ## 会話フローのシーケンス図
 
@@ -146,7 +193,7 @@ sequenceDiagram
     View->>IP: process_input(user_input)
 
     activate IP
-    Note over IP: InputProcessor: _preprocess_input()
+    Note over IP: 入力処理開始
     IP->>IP: _static_guardrails(user_input)<br>（禁止ワード、文字数制限など）
     alt 静的ガードレールでブロック
         IP-->>View: ブロックメッセージ
@@ -161,12 +208,8 @@ sequenceDiagram
         alt いずれかのガードレールでブロック
             View-->>User: エラーメッセージ表示
         else 全ガードレール通過
-            Note over IP: エンティティのthinking_typeに基づく分岐<br>(Sub-issue #7で改善予定)
-            alt thinking_type が openai_assistant* の場合
-                IP->>IP: _process_with_openai_agents(user_input)
-            else その他のthinking_typeの場合
-                IP->>IP: _process_default(user_input)
-            end
+            Note over IP: 入力処理の実行<br>(将来的にSub-issueで改善予定)
+            IP->>IP: _process_default(user_input)
 
             IP-->>View: 処理済みメッセージ
             View->>DB: Message.objects.create()<br>(DBに保存)
@@ -183,7 +226,7 @@ sequenceDiagram
     actor User as ユーザー
     participant NTV as NextTurnView
     participant CS as ConversationService
-    participant SS as 特殊サービス<br>(GoogleMapsReview/RAG/NGWord)
+    participant SS as 特殊サービス<br>(GoogleMapsReviewService/RagService/NGWordService)
     participant IP as InputProcessor
     participant DB as データベース
 
@@ -198,12 +241,12 @@ sequenceDiagram
     CS->>SS: think(entity, context)
 
     alt can_respond = false
-        Note over SS: NGWordService: 禁止ワードチェック失敗
+        Note over SS: 例: NGWordService: 禁止ワードチェック失敗
         SS-->>CS: False (応答不可)
         CS-->>NTV: ValueError
         NTV-->>User: エラーメッセージ
     else can_respond = true
-        Note over SS: NGWordService: 禁止ワードチェック通過
+        Note over SS: 例: NGWordService: 禁止ワードチェック通過
         SS-->>CS: True (応答可能)
         CS->>DB: ActionTimeline更新
         CS->>DB: ActionHistory作成/更新
@@ -218,9 +261,28 @@ sequenceDiagram
     deactivate NTV
 ```
 
-## システムの特徴と課題
+## システムの特徴
 
-現在のシステムでは、以下の2つの独立したプロセスが存在します：
+このシステムは以下の特徴を持っています：
+
+1. **安全性重視の設計**
+    - 多層的なガードレール機能により、危険な入力や不適切なコンテンツをブロック
+    - 静的チェックと動的チェックの組み合わせによる効率的な処理
+    - セキュリティ対策（XSS対策、入力サニタイゼーション）の実装
+
+2. **エンティティごとのカスタマイズ**
+    - エンティティごとに異なるガードレール設定が可能
+    - 特性に合わせた応答生成メカニズム
+
+3. **堅牢なエラーハンドリング**
+    - 外部API障害時のフォールバック処理
+    - 例外発生時のグレースフルな対応
+
+4. **多言語・Unicode対応**
+    - 日本語を含む多言語テキスト処理
+    - 絵文字や特殊文字のサポート
+
+現在のシステムでは、テキスト入力処理とターン進行処理は2つの独立したプロセスとして実装されています：
 
 1. **テキスト入力処理（IndexView経由）**
     - ユーザーがテキストフォームからメッセージを入力
