@@ -90,9 +90,6 @@ class InputProcessorConfig:
 
         Returns:
             InputProcessorConfig: 設定済みの設定オブジェクト
-
-        Note:
-            strict_modeはentity.thinking_typeが"openai_assistant_strict"の場合にTrueになる
         """
         # GuardrailConfigが存在する場合はそこから取得、なければデフォルト値
         try:
@@ -109,7 +106,7 @@ class InputProcessorConfig:
                 forbidden_words=["abc", "test_forbidden", "禁止ワード"],
                 max_input_length=500,
                 use_openai_moderation=True,
-                strict_mode=entity.thinking_type == "openai_assistant_strict",
+                strict_mode=False,
             )
 
 
@@ -158,104 +155,3 @@ class ProcessedInput:
             bool: ブロックされていない場合はTrue、ブロックされている場合はFalse
         """
         return not self.is_blocked
-
-
-@dataclass
-class AgentInvoker:
-    """
-    OpenAI Agents SDKの呼び出し処理を担当するValue Object
-
-    OpenAI Agents SDKのAgentオブジェクトを適切に呼び出し、
-    レスポンスを処理してエラーハンドリングを行う。
-
-    Attributes:
-        agent (object): OpenAI Agents SDKのAgentインスタンス
-        entity_name (str): エンティティ名（エラーメッセージ用）
-
-    Examples:
-        invoker = AgentInvoker(agent=my_agent, entity_name="ChatBot")
-        # invoker.entity_name -> "ChatBot"
-
-        response = await invoker.execute("Hello, world!")
-        # response -> "Hello! How can I help you today?"
-    """
-
-    agent: object
-    entity_name: str
-
-    async def execute(self, user_input: str) -> str:
-        """
-        適切なメソッドを選択してAgentを実行
-
-        利用可能なメソッドを自動検出し、Agentを実行する。
-        エラーが発生した場合は適切なエラーメッセージを返す。
-
-        Args:
-            user_input (str): ユーザーからの入力テキスト
-
-        Returns:
-            str: Agentからの応答テキスト、またはエラーメッセージ
-        """
-        try:
-            result = await self._invoke_agent(user_input)
-            return self._extract_content(result)
-        except Exception as e:
-            return self._handle_error(e)
-
-    async def _invoke_agent(self, user_input: str):
-        """
-        利用可能なメソッドを使用してAgentを実行
-
-        Agent オブジェクトが持つメソッドを優先順位順に検査し、
-        利用可能な最初のメソッドを使用してAgentを実行する。
-
-        Args:
-            user_input (str): ユーザーからの入力テキスト
-
-        Returns:
-            object: Agentからの応答オブジェクト
-
-        Raises:
-            AttributeError: 利用可能なメソッドが見つからない場合
-        """
-        if hasattr(self.agent, "chat"):
-            return await self.agent.chat(user_input)
-        elif hasattr(self.agent, "run"):
-            return await self.agent.run(user_input)
-        else:
-            raise AttributeError(f"Agent has no callable method for processing input")
-
-    @staticmethod
-    def _extract_content(result) -> str:
-        """
-        結果からコンテンツを抽出
-
-        Agentの応答オブジェクトから実際のテキストコンテンツを抽出する。
-        content属性がある場合はそれを使用し、なければ文字列に変換する。
-
-        Args:
-            result (object): Agentからの応答オブジェクト
-
-        Returns:
-            str: 抽出されたコンテンツテキスト
-        """
-        return result.content if hasattr(result, "content") else str(result)
-
-    def _handle_error(self, error: Exception) -> str:
-        """
-        エラーハンドリング
-
-        Agent実行中に発生したエラーをログに記録し、
-        ユーザーに適切なエラーメッセージを返す。
-
-        Args:
-            error (Exception): 発生したエラー
-
-        Returns:
-            str: ユーザー向けのエラーメッセージ
-        """
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.error(f"Agents SDK error for entity {self.entity_name}: {error}")
-        return f"{self.entity_name}: 申し訳ありませんが、現在応答できません。しばらくしてから再度お試しください。"
