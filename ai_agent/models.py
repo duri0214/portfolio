@@ -53,8 +53,6 @@ class Entity(models.Model):
         ("google_maps_based", "Google Mapsレビューに基づく"),  # Type A
         ("rag_based", "RAGベースの推論"),  # Type B
         ("ng_word_based", "NGワードに基づく制限"),  # Type C
-        ("openai_assistant", "OpenAI会話エージェント"),  # Type D
-        ("openai_assistant_strict", "OpenAI会話エージェント（厳格モード）"),  # Type E
     )
 
     name = models.CharField(max_length=100)

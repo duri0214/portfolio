@@ -1,18 +1,15 @@
-import asyncio
+import html
 import os
 
 from agents import Agent
 from agents.guardrail import InputGuardrail, OutputGuardrail, GuardrailFunctionOutput
 
 from ai_agent.domain.valueobject.input_processor import (
-    AgentInvoker,
     GuardrailResult,
     InputProcessorConfig,
-    ProcessedInput,
 )
 from lib.llm.service.agent import ModerationService
 from lib.llm.service.completion import LlmCompletionService
-from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
 from lib.log_service import LogService
 
@@ -199,13 +196,27 @@ class InputProcessor:
             guardrail_function=output_moderation_check,
         )
 
+    @staticmethod
+    def sanitize_input(text: str) -> str:
+        """
+        入力テキストからHTMLタグなどの危険な要素を除去
+
+        Args:
+            text (str): 無害化する入力テキスト
+
+        Returns:
+            str: 無害化されたテキスト
+        """
+        # HTMLタグの無害化（タグをエスケープしてテキストとして表示）
+        sanitized = html.escape(text)
+        return sanitized
+
     def process_input(self, user_input: str) -> str:
         """
         ユーザー入力を処理してエージェントの応答を生成
 
-        エンティティのthinking_typeに基づいて適切な処理方法を選択し、
-        同期的なインターフェースで応答を返す。OpenAI Agents SDKを使用する場合は
-        内部で非同期処理を実行する。
+        ガードレールを使用して入力を検証し、
+        安全であれば処理を行い、そうでなければブロックメッセージを返す。
 
         Args:
             user_input (str): ユーザーからの入力テキスト
@@ -214,121 +225,30 @@ class InputProcessor:
             str: エージェントからの応答テキスト
 
         Note:
-            thinking_typeによる処理分岐:
-            - "openai_assistant" / "openai_assistant_strict":
-              OpenAI Agents SDKを使用（非同期処理）
-            - その他: 従来の処理（同期処理）
-
-            非同期処理の同期化について:
-            - OpenAI Agents SDKは非同期APIを提供
-            - このメソッドは同期的なインターフェースを維持する必要がある
-            - asyncio.run()を使用して非同期処理を同期的に実行
-            - asyncio.run()は新しいイベントループを作成し、非同期処理を完了まで待機
-
-            処理フロー（OpenAI Agents SDK使用時）:
-            1. _process_with_openai_agents()を非同期で実行
-            2. asyncio.run()が新しいイベントループを作成
-            3. 非同期処理が完了するまでブロック
-            4. 結果を同期的に返却
-        """
-        # thinking_typeに基づく処理の分岐
-        if self.entity.thinking_type in ["openai_assistant", "openai_assistant_strict"]:
-            return asyncio.run(self._process_with_openai_agents(user_input))
-        else:
-            # 従来の処理（ガードレールチェック付き）
-            processed = self._preprocess_input(user_input)
-            if not processed.should_respond:
-                return processed.block_reason
-            return self._process_default(processed.processed_input)
-
-    async def _process_with_openai_agents(self, user_input: str) -> str:
-        """
-        Agents SDKを使用した非同期応答生成（標準ガードレール付き）
-
-        OpenAI Agents SDKを使用してユーザー入力を処理し、応答を生成する。
-        このメソッドは非同期で実行され、I/Oバウンドな処理（API呼び出し）を効率的に処理する。
-
-        Args:
-            user_input (str): ユーザーからの入力テキスト
-
-        Returns:
-            str: Agents SDKからの応答テキスト
-
-        Note:
-            非同期処理について:
-            - このメソッドはasync/awaitパターンを使用
-            - OpenAI APIへの通信は時間がかかるため、非同期処理でブロッキングを回避
-            - AgentInvoker.execute()が非同期メソッドなので、awaitキーワードで待機
-            - 呼び出し元（process_input）では asyncio.run() を使用して同期的に実行
-
             処理フロー:
-            1. AgentInvokerインスタンスを作成
-            2. invoker.execute()を非同期で実行（await）
-            3. OpenAI APIとの通信が完了するまで待機
-            4. 応答テキストを返却
-        """
-        invoker = AgentInvoker(agent=self.agent, entity_name=self.entity.name)
-        return await invoker.execute(user_input)
-
-    def _preprocess_input(self, user_input: str) -> ProcessedInput:
-        """
-        入力の前処理とガードレールチェック
-
-        Args:
-            user_input: 元の入力テキスト
-
-        Returns:
-            処理済み入力オブジェクト
-        """
-        # ガードレールチェック
-        guard_result = self._check_guardrails(user_input)
-
-        if guard_result.blocked:
-            return ProcessedInput(
-                original_input=user_input,
-                processed_input=user_input,
-                is_blocked=True,
-                block_reason=guard_result.message,
-            )
-
-        # 入力の正規化（必要に応じて）
-        processed_input = user_input.strip()
-
-        return ProcessedInput(
-            original_input=user_input, processed_input=processed_input, is_blocked=False
-        )
-
-    def _process_with_openai(self, user_input: str) -> str:
-        """
-        OpenAI APIを使用した応答生成
-
-        Args:
-            user_input: 処理済み入力テキスト
-
-        Returns:
-            OpenAI APIからの応答
+            1. ガードレール検証を実行
+            2. 安全な入力であれば_process_defaultで処理
+            3. 不適切な入力であればブロックメッセージを返す
         """
         try:
-            # システムメッセージの設定
-            system_message = f"""あなたは{self.entity.name}です。
-                井戸端会議のように気楽に話してください。
-                不適切な内容には応答しないでください。
-                日本語で回答してください。"""
+            # 入力の無害化
+            sanitized_input = self.sanitize_input(user_input)
 
-            # メッセージ履歴の作成
-            chat_history = [
-                Message(role=RoleType.SYSTEM, content=system_message),
-                Message(role=RoleType.USER, content=user_input),
-            ]
+            # ガードレール機能による入力検証
+            validation_result = self._check_guardrails(user_input)
 
-            # LlmCompletionServiceを使用してOpenAI APIにリクエスト
-            response = self.llm_service.retrieve_answer(chat_history)
+            # ガードレールをパスした場合、処理を実行
+            if not validation_result.blocked:
+                return self._process_default(sanitized_input)
 
-            return response.choices[0].message.content
-
+            # ブロックされた場合はブロックメッセージを返す
+            return (
+                validation_result.message
+                or f"{self.entity.name}: その入力は許可されていません。"
+            )
         except Exception as e:
-            log_service.write(f"OpenAI API error for entity {self.entity.name}: {e}")
-            return f"{self.entity.name}: 申し訳ありませんが、現在応答できません。しばらくしてから再度お試しください。"
+            log_service.write(f"Input processing error: {e}")
+            return f"{self.entity.name}: 処理中にエラーが発生しました。しばらくしてからお試しください。"
 
     def _check_guardrails(self, user_input: str) -> GuardrailResult:
         """
@@ -423,12 +343,12 @@ class InputProcessor:
 
     def _process_default(self, user_input: str) -> str:
         """
-        既存のデフォルト処理（従来のダミーテキスト）
+        オウム返し応答生成
 
         Args:
-            user_input: 処理済み入力テキスト
+            user_input: 処理済み入力テキスト（既に無害化済み）
 
         Returns:
-            デフォルト応答テキスト
+            エンティティ名付きのオウム返しテキスト
         """
         return f"{self.entity.name}: {user_input}"
