@@ -2,15 +2,15 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from ai_agent.domain.repository.conversation import ConversationRepository
-from ai_agent.domain.service.conversation import ConversationService
-from ai_agent.domain.valueobject.conversation import EntityVO
+from ai_agent.domain.repository.turn_management import TurnManagementRepository
+from ai_agent.domain.service.turn_management import TurnManagementService
+from ai_agent.domain.valueobject.turn_management import EntityVO
 from ai_agent.models import Entity, ActionTimeline
 
 
-class ConversationServiceTest(TestCase):
+class TurnManagementServiceTest(TestCase):
     """
-    ConversationServiceのドメインサービステスト
+    TurnManagementServiceのドメインサービステスト
 
     このテストクラスは、AI Agent システムの会話管理ドメインサービスの
     コアロジックをテストします。データベース統合を含む統合テストとして、
@@ -55,7 +55,7 @@ class ConversationServiceTest(TestCase):
     - 依存関係：モデル層 vs View + Model + URL + Message framework
 
     このテストの責務：
-    ConversationServiceのコアアルゴリズムが数学的に正確に動作することを保証する
+    TurnManagementServiceのコアアルゴリズムが数学的に正確に動作することを保証する
     """
 
     def setUp(self):
@@ -92,7 +92,7 @@ class ConversationServiceTest(TestCase):
         )
 
         # 初期化時にタイムラインを設定
-        ConversationService.initialize_timeline()
+        TurnManagementService.initialize_timeline()
 
         # テスト用の入力テキスト
         self.test_input_text = "sample input text"
@@ -170,20 +170,20 @@ class ConversationServiceTest(TestCase):
         低速な専門AIは慎重に応答するという差別化が実現される。
         """
         # 最初に行動するのは高速な Entity1 のはず
-        next_entity = ConversationService.get_next_entity(self.test_input_text)
+        next_entity = TurnManagementService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity1)
 
         # Entity1 が次回行動予定を早く更新するため、2回目も Entity1 が選ばれる
-        next_entity = ConversationService.get_next_entity(self.test_input_text)
+        next_entity = TurnManagementService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity1)
 
         # 速度の差が 10 倍であるため、Entity1 が 8 回行動した後に Entity2 のターンが来る
         for _ in range(9):
-            next_entity = ConversationService.get_next_entity(self.test_input_text)
+            next_entity = TurnManagementService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity2)
 
         # Entity2 が行動した次には再び高速な Entity1 の順番となる
-        next_entity = ConversationService.get_next_entity(self.test_input_text)
+        next_entity = TurnManagementService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity1)
 
     def test_create_message_updates_timeline(self):
@@ -202,7 +202,7 @@ class ConversationServiceTest(TestCase):
         4. 更新後状態：Entity1の next_turn = 0.02
 
         テスト内容：
-        - ConversationRepository.create_message()の動作確認
+        - TurnManagementRepository.create_message()の動作確認
         - メッセージ作成とタイムライン更新の分離確認
         - get_next_entity()実行時のタイムライン更新確認
         - データベースの一貫性確認
@@ -223,7 +223,7 @@ class ConversationServiceTest(TestCase):
         行動タイミングが自動的に調整され、公平な行動順序が保たれる。
         """
         # Entity1 でメッセージを作成
-        ConversationRepository.create_message(self.entity1, "Test Message")
+        TurnManagementRepository.create_message(self.entity1, "Test Message")
 
         # タイムラインを確認
         timeline = ActionTimeline.objects.get(entity=self.entity1)
@@ -232,7 +232,7 @@ class ConversationServiceTest(TestCase):
         self.assertEqual(timeline.next_turn, 1 / self.entity1.speed)
 
         # get_next_entity を1回実行すると next_turn が更新される
-        ConversationService.get_next_entity(self.test_input_text)
+        TurnManagementService.get_next_entity(self.test_input_text)
         timeline.refresh_from_db()  # タイムラインを再取得
         self.assertEqual(
             timeline.next_turn, 1 / self.entity1.speed + 1 / self.entity1.speed
@@ -288,7 +288,7 @@ class ConversationServiceTest(TestCase):
         この機能により、ユーザーは今後の会話の流れを予測でき、
         システム管理者はエンティティの行動パターンをデバッグできる。
         """
-        simulation = ConversationService.simulate_next_actions(max_steps=11)
+        simulation = TurnManagementService.simulate_next_actions(max_steps=11)
 
         # シミュレーション結果の期待値
         expected_simulation = [
@@ -309,7 +309,7 @@ class ConversationServiceTest(TestCase):
             self.assertEqual(actual.name, expected.name)
             self.assertAlmostEqual(actual.next_turn, expected.next_turn, places=2)
 
-    @patch("ai_agent.domain.service.conversation.ConversationService.think")
+    @patch("ai_agent.domain.service.turn_management.TurnManagementService.think")
     def test_can_act_false_skips_entity(self, mock_think):
         """
         エンティティ行動可能性判定とスキップ機能のテスト
@@ -369,7 +369,7 @@ class ConversationServiceTest(TestCase):
         mock_think.side_effect = mock_think_side_effect
 
         # Entity1 は skip され、Entity2 が選ばれるはず
-        next_entity = ConversationService.get_next_entity(self.test_input_text)
+        next_entity = TurnManagementService.get_next_entity(self.test_input_text)
         self.assertEqual(next_entity, self.entity2)
 
         # Entity2 が選ばれた後、next_turn が次のターン（0.2）になることを確認する
