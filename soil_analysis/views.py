@@ -420,7 +420,7 @@ class RouteSuggestUploadView(FormView):
          https://developers.google.com/maps/optimization-guide?hl=ja#routes
         """
         upload_file: UploadedFile = self.request.FILES["file"]
-        kml_raw = upload_file.read().decode('utf-8')
+        kml_raw = upload_file.read().decode("utf-8")
         kml_service = KmlService()
         land_location_list = kml_service.parse_kml(kml_raw)
 
@@ -487,7 +487,7 @@ class RouteSuggestSuccessView(TemplateView):
         context["company_list"] = company_list
         context["land_list"] = land_list
         context["coord_list"] = list(land["coord"] for land in land_list)
-        context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
+        context["google_maps_fe_api_key"] = os.getenv("GOOGLE_MAPS_FE_API_KEY")
 
         return context
 
