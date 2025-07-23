@@ -37,7 +37,7 @@ class IndexView(TemplateView):
             ensure_ascii=False,
         )
 
-        context["google_maps_api_key"] = os.getenv("GOOGLE_MAPS_API_KEY")
+        context["google_maps_fe_api_key"] = os.getenv("GOOGLE_MAPS_FE_API_KEY")
         context["places"] = place_data
         return context
 
@@ -51,7 +51,7 @@ class IndexView(TemplateView):
             if not search_types:
                 return redirect(reverse("mrk:index"))
 
-            service = GoogleMapsService(os.getenv("GOOGLE_MAPS_API_KEY"))
+            service = GoogleMapsService(os.getenv("GOOGLE_MAPS_BE_API_KEY"))
             place_vo_list = service.nearby_search(
                 center=GoogleMapsCoord(center_lat, center_lng),
                 search_types=search_types,
