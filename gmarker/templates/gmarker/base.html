@@ -41,8 +41,8 @@
             });
         };
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=myMapInit&libraries=places&v=weekly"
-            async defer onerror="console.error('Google Maps API failed to load.');"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=myMapInit&libraries=places,marker&v=weekly"
+            async onerror="console.error('Google Maps API failed to load.');"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
 </head>
 
