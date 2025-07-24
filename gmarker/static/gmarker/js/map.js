@@ -142,7 +142,7 @@ function createMarkersFromData(places, AdvancedMarkerElement, map) {
     places.map(place => {
         try {
             // データ構造のチェック
-            if (!place.location || (!place.location.lat && !place.location.lat === 0)) {
+            if (!place.location || (place.location.lat === undefined || place.location.lng === undefined)) {
                 console.error('Invalid place data, missing location coordinates:', place);
                 return;
             }
