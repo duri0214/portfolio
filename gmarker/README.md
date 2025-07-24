@@ -81,3 +81,46 @@ GCP技術サポートからの回答では、Places API (New)
 - バックエンドのPythonコードでは `GOOGLE_MAPS_BE_API_KEY` を使用する
 - フロントエンドのJavaScriptコードでは `GOOGLE_MAPS_FE_API_KEY` を使用する
 - テンプレート内でAPIキーを渡す際は、目的に応じて適切なキーを選択する
+
+## 必要な環境変数
+
+```
+GOOGLE_MAPS_FE_API_KEY=フロントエンド用APIキー
+GOOGLE_MAPS_BE_API_KEY=バックエンド用APIキー
+GOOGLE_MAPS_MAP_ID=マップID
+```
+
+### Map ID
+
+`GOOGLE_MAPS_MAP_ID`は地図のスタイルや特定の機能を有効にするためのIDです。このIDは単なる設定項目の識別子ではなく、Google
+Cloud Platform上で作成・管理される地図の「スタイル設定パッケージ」を指定するための固有識別子です。
+
+Map IDを使用することで以下が可能になります：
+
+- カスタマイズされた地図スタイル（色、ラベル、地形表示など）の適用
+- Advanced Markersなどの高度なGoogleマップ機能の有効化
+- 地図表示の一貫性の確保
+
+Google Cloud Platformのコンソールで「マップ管理」から作成できます。
+
+## トラブルシューティング
+
+### Advanced Markers に関する問題
+
+Google Maps APIのv3.56以降では、Advanced Markersを使用するためにMap IDが必要になりました。以下の点を確認してください：
+
+1. 有効なMap IDが設定されていること
+2. Google Cloud Platformで作成したMap IDが環境変数`GOOGLE_MAPS_MAP_ID`に設定されていること
+3. APIキーに「Maps JavaScript API」が有効化されていること
+4. スクリプト読み込みに`libraries=marker`パラメータが含まれていること
+
+### マーカーが表示されない問題
+
+マップは表示されるがマーカーが表示されない場合は、以下を確認してください：
+
+1. ブラウザのコンソールでエラーメッセージを確認する
+2. ブラウザのネットワークタブでAPIリクエストのレスポンスを確認する
+3. データソースの問題を確認する：
+    - データベースにPlaceとNearbyPlaceのレコードが存在するか
+    - APIキーにPlaces APIの権限が付与されているか
+    - Google Cloud Platform上でAPIの利用制限（クォータ）に達していないか

@@ -33,6 +33,7 @@ class IndexView(TemplateView):
                     "lng": center_lng,
                 },
                 "places": place_data,
+                "mapId": os.getenv("GOOGLE_MAPS_MAP_ID", "8f6a4cf0806f4732"),
             },
             ensure_ascii=False,
         )
