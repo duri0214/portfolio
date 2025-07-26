@@ -251,15 +251,18 @@ class NextTurnView(View):
                 content=f"[ERROR]{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できませんでした",
             )
             message.save()
-            upcoming_action = (
+
+            next_action_history = (
                 ActionHistory.objects.filter(done=False)
                 .order_by("acted_at_turn")
                 .first()
             )
             warning_msg = f"{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できない状態です。"
 
-            if upcoming_action:
-                warning_msg += f"\n現在は {upcoming_action.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
+            if next_action_history:
+                warning_msg += f"\n現在は {next_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
+            else:
+                warning_msg += "\n処理すべきアクションはもうありません。"
 
             messages.warning(request, warning_msg)
             return
