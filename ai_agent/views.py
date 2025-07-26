@@ -76,9 +76,8 @@ class IndexView(FormView):
         処理の流れ：
         1. ユーザーエンティティを取得
         2. 現在の未完了アクションを取得（ユーザーターンとして処理）
-        3. メッセージを処理して保存
-        4. ユーザーのターンを完了済みにする（ユーザーのアクションのみ）
-        5. 次のエンティティの情報を含むメッセージを表示
+        3. メッセージを処理して保存し、同時にアクションを完了状態に更新
+        4. 次のエンティティの情報を含むメッセージを表示
 
         Args:
             form (SendMessageForm): 検証済みのフォームインスタンス
@@ -105,16 +104,12 @@ class IndexView(FormView):
                 messages.error(self.request, "現在はユーザーのターンではありません")
                 return super().form_invalid(form)
 
-            # 3. メッセージを処理して保存
+            # 3. メッセージを処理して保存し、同時にアクションを完了状態に更新
             processor = InputProcessor(user_entity)
             TurnManagementRepository.create_message(
-                entity=user_entity,
                 content=processor.process_input(user_input),
+                action_history=current_action_history,
             )
-
-            # 4. ユーザーのターンを完了済みにする（ユーザーのアクションのみ）
-            current_action_history.done = True
-            current_action_history.save()
 
             # 5. 次のエンティティの情報を含むメッセージを表示
             upcoming_action_history = (
@@ -244,10 +239,11 @@ class NextTurnView(View):
         処理の流れ：
         1. 現在のターンのアクションを取得
         2. アクションが存在しない場合はタイムラインをリセット
-        3. アクションを完了状態に更新
-        4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
-        5. 行動可能な場合は次のエンティティを取得してメッセージを生成
-        6. 行動可能なエンティティがない場合はタイムラインをリセット
+        3. エンティティが行動可能か確認し、不可能な場合はその旨を通知
+           - メッセージ作成と同時にアクションを完了状態に更新
+        4. 行動可能な場合は次のエンティティを取得してメッセージを生成
+           - メッセージ作成と同時にアクションを完了状態に更新
+        5. 行動可能なエンティティがない場合はタイムラインをリセット
 
         Args:
             request (HttpRequest): リクエストオブジェクト
@@ -274,13 +270,9 @@ class NextTurnView(View):
                 current_action_history.entity.get_thinking_type_display()
             )
             TurnManagementRepository.create_message(
-                entity=current_action_history.entity,
                 content=f"[ERROR]{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できませんでした",
+                action_history=current_action_history,
             )
-
-            # 3. アクションを完了状態に更新
-            current_action_history.done = True
-            current_action_history.save()
 
             upcoming_action_history = (
                 ActionHistory.objects.filter(done=False)
@@ -311,13 +303,9 @@ class NextTurnView(View):
                 "仮の応答テキスト"
             )  # request.POST.get("input_text")
             TurnManagementRepository.create_message(
-                entity=active_entity,
                 content=f"{active_entity.name} が行動しました: {response_text}",
+                action_history=current_action_history,
             )
-
-            # 3. アクションを完了状態に更新
-            current_action_history.done = True
-            current_action_history.save()
 
             # フラッシュメッセージを設定
             # 次のターンのアクションを取得
