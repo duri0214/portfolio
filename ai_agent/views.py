@@ -246,12 +246,10 @@ class NextTurnView(View):
             thinking_type_disp = (
                 current_action_history.entity.get_thinking_type_display()
             )
-            response = f"{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できませんでした"
-            # 特別なメッセージとしてマークする（テンプレートで赤背景表示用）
             message = TurnManagementRepository.create_message(
-                current_action_history.entity, response
+                entity=current_action_history.entity,
+                content=f"[ERROR]{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できませんでした",
             )
-            message.message_content = f"[ERROR]{message.message_content}"
             message.save()
             upcoming_action = (
                 ActionHistory.objects.filter(done=False)
