@@ -30,28 +30,33 @@
                     <div class="container mt-4">
                         <h2>AI Agent Simulation</h2>
                         {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags|default:'secondary' }} alert-dismissible fade show"
-                                     role="alert">
-                                    {{ message }}
+                            <div class="system-messages mb-4 p-3 border rounded bg-light">
+                                <h5 class="mb-3"><i class="bi bi-info-circle"></i> システム通知</h5>
+                                <ul class="list-unstyled mb-0">
+                                    {% for message in messages %}
+                                        <li class="mb-2">{{ message }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        <div class="chat-history mb-4">
+                            <h5 class="mb-3"><i class="bi bi-chat-dots"></i> チャット履歴</h5>
+                            {% for chat_message in chat_messages %}
+                                {% if '[ERROR]' in chat_message.message_content %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ chat_message.message_content }}
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-light border" role="alert">
+                                        {{ chat_message.message_content }}
+                                    </div>
+                                {% endif %}
+                            {% empty %}
+                                <div class="alert alert-warning" role="alert">
+                                    メッセージ履歴がありません。
                                 </div>
                             {% endfor %}
-                        {% endif %}
-                        {% for chat_message in chat_messages %}
-                            {% if '[ERROR]' in chat_message.message_content %}
-                                <div class="alert alert-danger" role="alert">
-                                    {{ chat_message.message_content }}
-                                </div>
-                            {% else %}
-                                <div class="alert alert-info" role="alert">
-                                    {{ chat_message.message_content }}
-                                </div>
-                            {% endif %}
-                        {% empty %}
-                            <div class="alert alert-warning" role="alert">
-                                メッセージ履歴がありません。
-                            </div>
-                        {% endfor %}
+                        </div>
 
                         {% with next_entity=future_actions.first.entity %}
                             <form method="POST" action="{% url 'agt:index' %}">
