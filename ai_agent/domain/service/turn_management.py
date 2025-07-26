@@ -43,57 +43,6 @@ class TurnManagementService:
             )
 
     @staticmethod
-    def get_next_entity(input_text: str):
-        """
-        タイムラインに基づいて次に行動するエンティティを取得します。
-        各エンティティの発言可能状態（`can_act`）は`think`メソッドによって決定されます。
-
-        複数のエンティティが同じnext_turnを持つ場合は、エンティティIDの昇順で選択されます。
-        これにより、同じタイミングで行動可能な複数のエンティティがあっても、
-        常に決定論的に一意のエンティティが選択されます。
-
-        Args:
-            input_text (str): エンティティの`think`プロセスに渡す入力テキスト
-
-        Returns:
-            Entity: 次に行動すべきエンティティ
-
-        Raises:
-            ValueError: 行動可能なエンティティが存在しない場合
-        """
-        timelines = TurnManagementRepository.get_timelines_ordered_by_next_turn()
-        if not timelines.exists():
-            raise ValueError("タイムラインにエンティティが存在しません。")
-
-        candidates = []
-        for timeline in timelines:
-            timeline.can_act = TurnManagementService.think(timeline.entity, input_text)
-            timeline.save()
-            if timeline.can_act:
-                candidates.append(timeline)
-
-        # 次の行動順 (next_turn) 最小値のエンティティを選択する
-        if candidates:
-            next_action = min(candidates, key=lambda t: (t.next_turn, t.entity.id))
-            TurnManagementRepository.update_next_turn(
-                action_timeline=next_action,
-                increment=TurnManagementService.calculate_next_turn_increment(
-                    next_action.entity.speed
-                ),
-            )
-            return next_action.entity
-
-        # このターンでは発言可能なエンティティがいない場合、すべてのエンティティの next_turn を更新して次のターンへ進む
-        for timeline in timelines:
-            TurnManagementRepository.update_next_turn(
-                action_timeline=timeline,
-                increment=TurnManagementService.calculate_next_turn_increment(
-                    timeline.entity.speed
-                ),
-            )
-        raise ValueError("このターンで行動可能なエンティティが存在しません。")
-
-    @staticmethod
     def simulate_next_actions(max_steps=10) -> list[EntityVO]:
         """
         最大`max_steps`回数の次のエンティティアクションのシーケンスをシミュレーションし、

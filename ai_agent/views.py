@@ -73,8 +73,11 @@ class IndexView(FormView):
         """
         ユーザーからの入力フォームが有効な場合の処理を行います。
 
-        ユーザーエンティティを取得し、入力メッセージを処理してデータベースに保存します。
-        メッセージが空の場合やエンティティが見つからない場合はエラーメッセージを表示します。
+        処理の流れ：
+        1. ユーザーエンティティを取得
+        2. 現在の未完了アクションを取得（ユーザーターンとして処理）
+        3. メッセージを処理して保存し、同時にアクションを完了状態に更新
+        4. 次のエンティティの情報を含むメッセージを表示
 
         Args:
             form (SendMessageForm): 検証済みのフォームインスタンス
@@ -83,22 +86,45 @@ class IndexView(FormView):
             HttpResponse: 処理後のリダイレクトレスポンス
         """
         try:
-            entity = Entity.objects.get(name="User")
+            # 1. ユーザーエンティティを取得
+            user_entity = Entity.objects.get(name="User")
             user_input = form.cleaned_data["user_input"]
 
             if not user_input:
                 messages.error(self.request, "メッセージが入力されていません")
                 return super().form_invalid(form)
 
-            processor = InputProcessor(entity)
-            processed_message = processor.process_input(user_input)
+            # 2. 現在の未完了アクションを取得（ユーザーターンとして処理）
+            current_action_history = (
+                ActionHistory.objects.filter(done=False, entity=user_entity)
+                .order_by("acted_at_turn")
+                .first()
+            )
+            if not current_action_history:
+                messages.error(self.request, "現在はユーザーのターンではありません")
+                return super().form_invalid(form)
 
-            Message.objects.create(
-                entity=entity,
-                message_content=processed_message,
+            # 3. メッセージを処理して保存し、同時にアクションを完了状態に更新
+            processor = InputProcessor(user_entity)
+            TurnManagementRepository.create_message(
+                content=processor.process_input(user_input),
+                action_history=current_action_history,
             )
 
-            messages.success(self.request, "メッセージが送信されました")
+            # 4. 次のエンティティの情報を含むメッセージを表示
+            upcoming_action_history = (
+                ActionHistory.objects.filter(done=False)
+                .order_by("acted_at_turn")
+                .first()
+            )
+            success_msg = f"{user_entity.name} のターンが完了しました。"
+
+            if upcoming_action_history:
+                success_msg += f"\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
+            else:
+                success_msg += "\n処理すべきアクションはもうありません。"
+
+            messages.success(self.request, success_msg)
 
         except Entity.DoesNotExist:
             log_service.write("User entity not found")
@@ -194,14 +220,6 @@ class NextTurnView(View):
         """
         次のターンに進むPOSTリクエストを処理します。
 
-        処理の流れ：
-        1. 未完了の最初のアクションを取得
-        2. アクションが存在しない場合はタイムラインをリセット
-        3. アクションを完了状態に更新
-        4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
-        5. 行動可能な場合は次のエンティティを取得してメッセージを生成
-        6. 行動可能なエンティティがない場合はタイムラインをリセット
-
         Args:
             request (HttpRequest): リクエストオブジェクト
             *args: 可変位置引数
@@ -210,65 +228,109 @@ class NextTurnView(View):
         Returns:
             HttpResponseRedirect: インデックスページへのリダイレクト
         """
-        # 未完了の最初のアクションを取得。
-        next_action = (
+        NextTurnView.process_next_turn(request)
+        return redirect("agt:index")
+
+    @staticmethod
+    def process_next_turn(request):
+        """
+        次のターンに進む処理を行います。
+
+        処理の流れ：
+        1. 現在のターンのアクションを取得
+        2. アクションが存在しない場合はタイムラインをリセット
+        3. エンティティのアクションタイムラインを取得
+        4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
+           - メッセージ作成と同時にアクションを完了状態に更新
+        5. 行動可能な場合は現在行動するエンティティを取得してメッセージを生成
+           - メッセージ作成と同時にアクションを完了状態に更新
+        6. 行動可能なエンティティがない場合はタイムラインをリセット
+
+        Args:
+            request (HttpRequest): リクエストオブジェクト
+        """
+        # 1. 現在のターンのアクションを取得
+        current_action_history = (
             ActionHistory.objects.filter(done=False).order_by("acted_at_turn").first()
         )
-
-        if not next_action:
-            # 未完了のアクションがない場合フラッシュメッセージ設定
+        if not current_action_history:
+            # 2. アクションが存在しない場合はタイムラインをリセット
             messages.info(
                 request,
                 "処理すべきアクションはもうありません。タイムラインがリセットされました。",
             )
-
-            # リセット処理を直接呼び出し
             ResetTimelineView.reset_timeline()
+            return
 
-            return redirect("agt:index")
-
-        # 選択されたアクションを完了済みにする
-        next_action.done = True
-        next_action.save()
-
-        # ActionTimelineのエンティティを取得し、can_actの状態を確認
-        timeline = TurnManagementRepository.get_action_timeline(next_action.entity)
+        # 3. エンティティのアクションタイムラインを取得
+        timeline = TurnManagementRepository.get_action_timeline(
+            current_action_history.entity
+        )
+        # 4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
         if timeline and not timeline.can_act:
-            # エンティティの種類に基づいて理由を追加
-            thinking_type_display = next_action.entity.get_thinking_type_display()
+            thinking_type_disp = (
+                current_action_history.entity.get_thinking_type_display()
+            )
+            TurnManagementRepository.create_message(
+                content=f"[ERROR]{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できませんでした",
+                action_history=current_action_history,
+            )
 
-            # エンティティが会話不能状態の場合は、その旨のメッセージを表示
-            response = f"{next_action.entity.name}（{thinking_type_display}）はチャットに参加できませんでした"
-            # 特別なメッセージとしてマークする（テンプレートで赤背景表示用）
-            message = TurnManagementRepository.create_message(
-                next_action.entity, response
+            upcoming_action_history = (
+                ActionHistory.objects.filter(done=False)
+                .order_by("acted_at_turn")
+                .first()
             )
-            message.message_content = f"[ERROR]{message.message_content}"
-            message.save()
-            messages.warning(
-                request,
-                f"{next_action.entity.name}（{thinking_type_display}）はチャットに参加できない状態です。",
-            )
-            return redirect("agt:index")
+            warning_msg = f"{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できない状態です。"
+
+            if upcoming_action_history:
+                warning_msg += f"\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
+            else:
+                warning_msg += "\n処理すべきアクションはもうありません。"
+
+            messages.warning(request, warning_msg)
+            return
 
         try:
-            # 次のエンティティとその処理を取得
-            # input_text = request.POST.get("input_text")  # TODO: ユーザー入力を処理する場合のメモ
-            next_entity = TurnManagementService.get_next_entity(input_text="")
+            # 5. 行動可能な場合は現在行動するエンティティを取得してメッセージを生成
+            active_entity = current_action_history.entity
 
-            # 仮の応答を生成
-            response = f"{next_entity.name} が行動しました: 仮の応答テキスト"
+            # Userの場合はスキップ（Userはform_validで処理されるため）
+            if active_entity.name == "User":
+                messages.error(
+                    request,
+                    "Userエンティティのターンは「1単位時間進める」ボタンでは進められません。チャットフォームからメッセージを送信してください。",
+                )
+                return
 
-            # メッセージを作成
-            TurnManagementRepository.create_message(next_entity, response)
+            processor = InputProcessor(active_entity)
+            response_text = processor.process_input(
+                "仮の応答テキスト"
+            )  # request.POST.get("input_text")
+            TurnManagementRepository.create_message(
+                content=f"{active_entity.name} が行動しました: {response_text}",
+                action_history=current_action_history,
+            )
 
             # フラッシュメッセージを設定
-            messages.success(request, f"{next_entity.name} のターンが完了しました。")
+            # 次のターンのアクションを取得
+            upcoming_action_history = (
+                ActionHistory.objects.filter(done=False)
+                .order_by("acted_at_turn")
+                .first()
+            )
+            success_msg = f"{active_entity.name} のターンが完了しました。"
+
+            if upcoming_action_history:
+                success_msg += f"\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
+            else:
+                success_msg += "\n処理すべきアクションはもうありません。"
+
+            messages.success(request, success_msg)
+
         except ValueError:
-            # 行動可能なエンティティがない場合、一旦リセット
+            # 6. 行動可能なエンティティがない場合はタイムラインをリセット
             messages.info(
                 request, "No more actions left to process. Timeline has been reset."
             )
             ResetTimelineView.reset_timeline()
-
-        return redirect("agt:index")

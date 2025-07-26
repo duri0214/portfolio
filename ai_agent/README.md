@@ -55,7 +55,7 @@ ai_agent/
 処理フロー：
 
 1. タイムラインの初期化（initialize_timeline）
-2. 入力テキストに対する次のエンティティの決定（get_next_entity）
+2. 未完了のActionHistoryから現在のエンティティを取得
 3. 各エンティティのthinking_typeに基づいた応答可否の判断（think）
 4. 次のターンの計算と更新（calculate_next_turn_increment）
 
@@ -122,7 +122,7 @@ ai_agent/
 典型的なチャットのライフサイクル：
 
 1. ユーザーがテキスト入力を送信
-2. `TurnManagementService.get_next_entity`が次の応答エンティティを決定
+2. ActionHistoryから現在のターンのエンティティを取得
 3. エンティティの`thinking_type`に基づいて応答可能性を判断
     - GoogleMapsReviewService、RagService、NGWordServiceなどを利用
 4. 応答可能な場合、エンティティが応答を生成
@@ -233,33 +233,38 @@ ai_agent/
 ```mermaid
 sequenceDiagram
     participant View as View
+    participant AH as ActionHistory
     participant TMS as TurnManagementService
     participant TMR as TurnManagementRepository
     participant ThinkingEngine as 思考エンジン
 
-    View->>TMS: get_next_entity(input_text)
-    activate TMS
-    TMS->>TMR: get_timelines_ordered_by_next_turn()
-    TMR-->>TMS: 順序付けされたタイムライン
+    View->>AH: get_first_undone_action()
+    AH-->>View: 現在のアクション履歴
+    activate View
+    View->>TMR: get_action_timeline(entity)
+    TMR-->>View: エンティティのタイムライン
 
-    loop 各タイムラインに対して
-        TMS->>TMS: think(entity, input_text)
+    alt タイムラインのcan_actがtrueの場合
+        View->>TMS: think(entity, input_text)
         TMS->>ThinkingEngine: can_respond(input_text, entity)
         ThinkingEngine-->>TMS: 応答可能性(True/False)
-        TMS->>TMR: timeline.save()
-    end
+        TMS-->>View: 応答可能性(True/False)
 
-    alt 応答可能なエンティティがある場合
-        TMS->>TMS: 最小next_turnを持つエンティティを選択
-        TMS->>TMR: update_next_turn(timeline, increment)
-        TMS-->>View: 次のエンティティ
-    else 応答可能なエンティティがない場合
-        loop 全タイムラインに対して
-            TMS->>TMR: update_next_turn(timeline, increment)
+        alt 応答可能な場合
+            View->>TMR: create_message(content, action_history)
+            TMR->>AH: 次のアクション履歴を取得
+            AH-->>View: 次のエンティティ情報
+        else 応答不可能な場合
+            View->>TMR: create_message(error_content, action_history)
+            View->>AH: 次のアクション履歴を取得
+            AH-->>View: 次のエンティティ情報
         end
-        TMS-->>View: ValueError
+    else タイムラインのcan_actがfalseの場合
+        View->>TMR: create_message(error_content, action_history)
+        View->>AH: 次のアクション履歴を取得
+        AH-->>View: 次のエンティティ情報
     end
-    deactivate TMS
+    deactivate View
 ```
 
 ### 2. テキスト入力処理のフロー
