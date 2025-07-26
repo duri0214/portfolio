@@ -221,12 +221,12 @@ class NextTurnView(View):
         Args:
             request (HttpRequest): リクエストオブジェクト
         """
-        # 現在のターンのアクションを取得
+        # 1. 現在のターンのアクションを取得
         current_action_history = (
             ActionHistory.objects.filter(done=False).order_by("acted_at_turn").first()
         )
         if not current_action_history:
-            # アクションが存在しない場合はタイムラインをリセット
+            # 2. アクションが存在しない場合はタイムラインをリセット
             messages.info(
                 request,
                 "処理すべきアクションはもうありません。タイムラインがリセットされました。",
@@ -234,7 +234,7 @@ class NextTurnView(View):
             ResetTimelineView.reset_timeline()
             return
 
-        # アクションを完了状態に更新
+        # 3. アクションを完了状態に更新
         current_action_history.done = True
         current_action_history.save()
 
