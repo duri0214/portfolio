@@ -321,16 +321,15 @@ class NextTurnView(View):
                 .order_by("acted_at_turn")
                 .first()
             )
+            success_msg = f"{active_entity.name} のターンが完了しました。"
+
             if upcoming_action_history:
-                messages.success(
-                    request,
-                    f"{active_entity.name} のターンが完了しました。\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。",
-                )
+                success_msg += f"\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
             else:
-                messages.success(
-                    request,
-                    f"{active_entity.name} のターンが完了しました。処理すべきアクションはもうありません。",
-                )
+                success_msg += "\n処理すべきアクションはもうありません。"
+
+            messages.success(request, success_msg)
+
         except ValueError:
             # 6. 行動可能なエンティティがない場合はタイムラインをリセット
             messages.info(
