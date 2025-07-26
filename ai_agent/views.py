@@ -111,7 +111,7 @@ class IndexView(FormView):
                 action_history=current_action_history,
             )
 
-            # 5. 次のエンティティの情報を含むメッセージを表示
+            # 4. 次のエンティティの情報を含むメッセージを表示
             upcoming_action_history = (
                 ActionHistory.objects.filter(done=False)
                 .order_by("acted_at_turn")
