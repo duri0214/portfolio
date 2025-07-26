@@ -1,4 +1,4 @@
-from ai_agent.models import Entity, ActionTimeline, Message
+from ai_agent.models import Entity, ActionTimeline, Message, ActionHistory
 
 
 class TurnManagementRepository:
