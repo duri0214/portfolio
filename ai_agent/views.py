@@ -252,15 +252,15 @@ class NextTurnView(View):
             )
             message.save()
 
-            next_action_history = (
+            upcoming_action_history = (
                 ActionHistory.objects.filter(done=False)
                 .order_by("acted_at_turn")
                 .first()
             )
             warning_msg = f"{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できない状態です。"
 
-            if next_action_history:
-                warning_msg += f"\n現在は {next_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
+            if upcoming_action_history:
+                warning_msg += f"\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
             else:
                 warning_msg += "\n処理すべきアクションはもうありません。"
 
@@ -268,35 +268,36 @@ class NextTurnView(View):
             return
 
         try:
-            # 5. 行動可能な場合は次のエンティティを取得してメッセージを生成
+            # 5. 行動可能な場合は現在行動するエンティティを取得してメッセージを生成
             # TODO: [issue303] get_next_entityメソッドをリファクタリングする
             # - input_textパラメータは現在空文字列を渡しているが不要
             # - TurnManagementService.thinkメソッドでガードレール的なチェックに使用
             # - ユーザー入力は別のガードレールで処理されているため重複している
             # - このパラメータを削除し、メソッドシグネチャを簡素化する
-            next_entity = TurnManagementService.get_next_entity(input_text="")
+            active_entity = TurnManagementService.get_next_entity(input_text="")
 
-            input_text = "仮の応答テキスト"  # request.POST.get("input_text")
+            response_text = "仮の応答テキスト"  # request.POST.get("input_text")
             TurnManagementRepository.create_message(
-                entity=next_entity,
-                content=f"{next_entity.name} が行動しました: {input_text}",
+                entity=active_entity,
+                content=f"{active_entity.name} が行動しました: {response_text}",
             )
 
             # フラッシュメッセージを設定
-            # 次のエンティティを取得
-            upcoming_action = (
+            # 次のターンのアクションを取得
+            upcoming_action_history = (
                 ActionHistory.objects.filter(done=False)
                 .order_by("acted_at_turn")
                 .first()
             )
-            if upcoming_action:
+            if upcoming_action_history:
                 messages.success(
                     request,
-                    f"{next_entity.name} のターンが完了しました。\n現在は {upcoming_action.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。",
+                    f"{active_entity.name} のターンが完了しました。\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。",
                 )
             else:
                 messages.success(
-                    request, f"{next_entity.name} のターンが完了しました。"
+                    request,
+                    f"{active_entity.name} のターンが完了しました。処理すべきアクションはもうありません。",
                 )
         except ValueError:
             # 6. 行動可能なエンティティがない場合はタイムラインをリセット
