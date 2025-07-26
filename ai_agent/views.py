@@ -73,8 +73,12 @@ class IndexView(FormView):
         """
         ユーザーからの入力フォームが有効な場合の処理を行います。
 
-        ユーザーエンティティを取得し、入力メッセージを処理してデータベースに保存します。
-        メッセージが空の場合やエンティティが見つからない場合はエラーメッセージを表示します。
+        処理の流れ：
+        1. ユーザーエンティティを取得
+        2. 現在の未完了アクションを取得（ユーザーターンとして処理）
+        3. メッセージを処理して保存
+        4. ユーザーのターンを完了済みにする（ユーザーのアクションのみ）
+        5. 次のエンティティの情報を含むメッセージを表示
 
         Args:
             form (SendMessageForm): 検証済みのフォームインスタンス
@@ -83,23 +87,52 @@ class IndexView(FormView):
             HttpResponse: 処理後のリダイレクトレスポンス
         """
         try:
-            entity = Entity.objects.get(name="User")
+            # 1. ユーザーエンティティを取得
+            user_entity = Entity.objects.get(name="User")
             user_input = form.cleaned_data["user_input"]
 
             if not user_input:
                 messages.error(self.request, "メッセージが入力されていません")
                 return super().form_invalid(form)
 
-            processor = InputProcessor(entity)
-            processed_message = processor.process_input(user_input)
+            # 2. 現在の未完了アクションを取得（ユーザーターンとして処理）
+            current_action_history = (
+                ActionHistory.objects.filter(done=False, entity=user_entity)
+                .order_by("acted_at_turn")
+                .first()
+            )
+            if not current_action_history:
+                messages.error(self.request, "現在はユーザーのターンではありません")
+                return super().form_invalid(form)
 
+            # 3. メッセージを処理して保存
+            processor = InputProcessor(user_entity)
+            processed_message = processor.process_input(user_input)
             Message.objects.create(
-                entity=entity,
+                entity=user_entity,
                 message_content=processed_message,
             )
 
-            messages.success(self.request, "メッセージが送信されました")
+            # 4. ユーザーのターンを完了済みにする（ユーザーのアクションのみ）
+            current_action_history.done = True
+            current_action_history.save()
 
+            # 5. 次のエンティティの情報を含むメッセージを表示
+            upcoming_action_history = (
+                ActionHistory.objects.filter(done=False)
+                .order_by("acted_at_turn")
+                .first()
+            )
+            if upcoming_action_history:
+                messages.success(
+                    self.request,
+                    f"{user_entity.name} のターンが完了しました。\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。",
+                )
+            else:
+                messages.success(
+                    self.request,
+                    f"{user_entity.name} のターンが完了しました。処理すべきアクションはもうありません。",
+                )
         except Entity.DoesNotExist:
             log_service.write("User entity not found")
             messages.error(self.request, "ユーザーエンティティが見つかりません")
