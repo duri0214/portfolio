@@ -291,11 +291,6 @@ class NextTurnView(View):
 
         try:
             # 5. 行動可能な場合は現在行動するエンティティを取得してメッセージを生成
-            # TODO: [issue303] get_next_entityメソッドをリファクタリングする
-            # - input_textパラメータは現在空文字列を渡しているが不要
-            # - TurnManagementService.thinkメソッドでガードレール的なチェックに使用
-            # - ユーザー入力は別のガードレールで処理されているため重複している
-            # - このパラメータを削除し、メソッドシグネチャを簡素化する
             active_entity = current_action_history.entity
 
             # Userの場合はスキップ（Userはform_validで処理されるため）
