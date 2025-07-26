@@ -65,15 +65,24 @@ class TurnManagementRepository:
         action_timeline.save()
 
     @staticmethod
-    def create_message(entity, content):
+    def create_message(content: str, action_history: ActionHistory) -> Message:
         """
-        エンティティのメッセージを作成し、データベースに保存します。
+        アクション履歴に関連するエンティティのメッセージを作成し、データベースに保存します。
+        同時にアクション履歴を完了状態に更新します。
 
         Args:
-            entity (Entity): メッセージを送信するエンティティ
             content (str): メッセージの内容
+            action_history (ActionHistory): 完了状態に更新するアクション履歴
 
         Returns:
             Message: 作成されたメッセージオブジェクト
         """
-        return Message.objects.create(entity=entity, message_content=content)
+        message = Message.objects.create(
+            entity=action_history.entity, message_content=content
+        )
+
+        # アクション履歴を完了状態に更新
+        action_history.done = True
+        action_history.save()
+
+        return message
