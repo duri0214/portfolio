@@ -238,8 +238,10 @@ class NextTurnView(View):
         current_action_history.done = True
         current_action_history.save()
 
-        # ActionTimelineのエンティティを取得し、can_actの状態を確認
-        timeline = TurnManagementRepository.get_action_timeline(next_action.entity)
+        timeline = TurnManagementRepository.get_action_timeline(
+            current_action_history.entity
+        )
+        # 4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
         if timeline and not timeline.can_act:
             # エンティティの種類に基づいて理由を追加
             thinking_type_display = next_action.entity.get_thinking_type_display()
