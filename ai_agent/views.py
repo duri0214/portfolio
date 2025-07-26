@@ -299,7 +299,7 @@ class NextTurnView(View):
                     request, f"{next_entity.name} のターンが完了しました。"
                 )
         except ValueError:
-            # 行動可能なエンティティがない場合、一旦リセット
+            # 6. 行動可能なエンティティがない場合はタイムラインをリセット
             messages.info(
                 request, "No more actions left to process. Timeline has been reset."
             )
