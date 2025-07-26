@@ -266,8 +266,20 @@ class NextTurnView(View):
         timeline = TurnManagementRepository.get_action_timeline(
             current_action_history.entity
         )
+
+        # タイムラインが存在しない場合は処理を中断
+        if not timeline:
+            messages.error(request, "エンティティのタイムラインが見つかりません。")
+            return
+
+        # エンティティのcan_actフラグをthink関数で更新
+        timeline.can_act = TurnManagementService.think(
+            current_action_history.entity, ""
+        )
+        timeline.save()
+
         # 4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
-        if timeline and not timeline.can_act:
+        if not timeline.can_act:
             thinking_type_disp = (
                 current_action_history.entity.get_thinking_type_display()
             )
