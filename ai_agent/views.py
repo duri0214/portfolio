@@ -107,10 +107,9 @@ class IndexView(FormView):
 
             # 3. メッセージを処理して保存
             processor = InputProcessor(user_entity)
-            processed_message = processor.process_input(user_input)
-            Message.objects.create(
+            TurnManagementRepository.create_message(
                 entity=user_entity,
-                message_content=processed_message,
+                content=processor.process_input(user_input),
             )
 
             # 4. ユーザーのターンを完了済みにする（ユーザーのアクションのみ）
