@@ -221,19 +221,16 @@ class NextTurnView(View):
         Args:
             request (HttpRequest): リクエストオブジェクト
         """
-        # 未完了の最初のアクションを取得。
-        next_action = (
+        # 現在のターンのアクションを取得
+        current_action_history = (
             ActionHistory.objects.filter(done=False).order_by("acted_at_turn").first()
         )
-
-        if not next_action:
-            # 未完了のアクションがない場合フラッシュメッセージ設定
+        if not current_action_history:
+            # アクションが存在しない場合はタイムラインをリセット
             messages.info(
                 request,
                 "処理すべきアクションはもうありません。タイムラインがリセットされました。",
             )
-
-            # リセット処理を直接呼び出し
             ResetTimelineView.reset_timeline()
             return
 
