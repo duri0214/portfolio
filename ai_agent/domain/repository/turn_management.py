@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from ai_agent.models import Entity, ActionTimeline, Message
 
 
@@ -78,8 +76,4 @@ class TurnManagementRepository:
         Returns:
             Message: 作成されたメッセージオブジェクト
         """
-        return Message.objects.create(
-            entity=entity,
-            message_content=content,
-            created_at=datetime.now(),
-        )
+        return Message.objects.create(entity=entity, message_content=content)
