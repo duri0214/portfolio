@@ -123,16 +123,15 @@ class IndexView(FormView):
                 .order_by("acted_at_turn")
                 .first()
             )
+            success_msg = f"{user_entity.name} のターンが完了しました。"
+
             if upcoming_action_history:
-                messages.success(
-                    self.request,
-                    f"{user_entity.name} のターンが完了しました。\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。",
-                )
+                success_msg += f"\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
             else:
-                messages.success(
-                    self.request,
-                    f"{user_entity.name} のターンが完了しました。処理すべきアクションはもうありません。",
-                )
+                success_msg += "\n処理すべきアクションはもうありません。"
+
+            messages.success(self.request, success_msg)
+
         except Entity.DoesNotExist:
             log_service.write("User entity not found")
             messages.error(self.request, "ユーザーエンティティが見つかりません")
