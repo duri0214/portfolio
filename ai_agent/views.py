@@ -306,7 +306,10 @@ class NextTurnView(View):
             # - このパラメータを削除し、メソッドシグネチャを簡素化する
             active_entity = TurnManagementService.get_next_entity(input_text="")
 
-            response_text = "仮の応答テキスト"  # request.POST.get("input_text")
+            processor = InputProcessor(active_entity)
+            response_text = processor.process_input(
+                "仮の応答テキスト"
+            )  # request.POST.get("input_text")
             TurnManagementRepository.create_message(
                 entity=active_entity,
                 content=f"{active_entity.name} が行動しました: {response_text}",
