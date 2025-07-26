@@ -276,11 +276,11 @@ class NextTurnView(View):
             # - このパラメータを削除し、メソッドシグネチャを簡素化する
             next_entity = TurnManagementService.get_next_entity(input_text="")
 
-            # 仮の応答を生成
-            response = f"{next_entity.name} が行動しました: 仮の応答テキスト"
-
-            # メッセージを作成
-            TurnManagementRepository.create_message(next_entity, response)
+            input_text = "仮の応答テキスト"  # request.POST.get("input_text")
+            TurnManagementRepository.create_message(
+                entity=next_entity,
+                content=f"{next_entity.name} が行動しました: {input_text}",
+            )
 
             # フラッシュメッセージを設定
             # 次のエンティティを取得
