@@ -279,11 +279,10 @@ class NextTurnView(View):
             thinking_type_disp = (
                 current_action_history.entity.get_thinking_type_display()
             )
-            message = TurnManagementRepository.create_message(
+            TurnManagementRepository.create_message(
                 entity=current_action_history.entity,
                 content=f"[ERROR]{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できませんでした",
             )
-            message.save()
 
             upcoming_action_history = (
                 ActionHistory.objects.filter(done=False)
