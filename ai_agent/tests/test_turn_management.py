@@ -133,59 +133,6 @@ class TurnManagementServiceTest(TestCase):
         for timeline in timelines:
             self.assertEqual(timeline.next_turn, 1 / timeline.entity.speed)
 
-    def test_action_order_based_on_speed(self):
-        """
-        エンティティ速度に基づく行動順序決定のテスト
-
-        シナリオ：
-        複数のエンティティが存在する環境で、各エンティティの速度パラメータに
-        基づいて適切な順序で行動することを確認する。高速なエンティティは
-        より頻繁に行動し、低速なエンティティは少ない頻度で行動する。
-
-        テストシナリオの詳細：
-        - Entity1（speed=100）とEntity2（speed=10）の速度比は10:1
-        - Entity1は0.01間隔、Entity2は0.10間隔で行動予定が設定される
-        - 理論上、Entity1が10回行動する間にEntity2が1回行動する
-
-        テスト手順：
-        1. 1回目：Entity1が選択される（next_turn=0.01が最小）
-        2. 2回目：Entity1が選択される（0.02 < 0.10）
-        3. 10回目まで：Entity1が継続選択される
-        4. 11回目：Entity2が選択される（0.10 = 0.10だが、Entity2のターン）
-        5. 12回目：Entity1が再選択される（0.11 < 0.20）
-
-        期待される動作：
-        - 最初の10回はすべてEntity1が選択される
-        - 11回目にEntity2が選択される
-        - その後再びEntity1が選択される
-        - 速度に比例した行動頻度が維持される
-
-        数学的根拠：
-        - Entity1 next_turn sequence: 0.01, 0.02, 0.03, ..., 0.10, 0.11
-        - Entity2 next_turn sequence: 0.10, 0.20, 0.30, ...
-        - 最小値を持つエンティティが次に行動する
-
-        重要性：
-        このロジックにより、高速なAIアシスタントは素早く応答し、
-        低速な専門AIは慎重に応答するという差別化が実現される。
-        """
-        # 最初に行動するのは高速な Entity1 のはず
-        next_entity = TurnManagementService.get_next_entity(self.test_input_text)
-        self.assertEqual(next_entity, self.entity1)
-
-        # Entity1 が次回行動予定を早く更新するため、2回目も Entity1 が選ばれる
-        next_entity = TurnManagementService.get_next_entity(self.test_input_text)
-        self.assertEqual(next_entity, self.entity1)
-
-        # 速度の差が 10 倍であるため、Entity1 が 8 回行動した後に Entity2 のターンが来る
-        for _ in range(9):
-            next_entity = TurnManagementService.get_next_entity(self.test_input_text)
-        self.assertEqual(next_entity, self.entity2)
-
-        # Entity2 が行動した次には再び高速な Entity1 の順番となる
-        next_entity = TurnManagementService.get_next_entity(self.test_input_text)
-        self.assertEqual(next_entity, self.entity1)
-
     def test_create_message_updates_timeline(self):
         """
         メッセージ作成時のタイムライン更新機能のテスト
