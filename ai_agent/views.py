@@ -265,10 +265,6 @@ class NextTurnView(View):
             ResetTimelineView.reset_timeline()
             return
 
-        # 3. アクションを完了状態に更新
-        current_action_history.done = True
-        current_action_history.save()
-
         timeline = TurnManagementRepository.get_action_timeline(
             current_action_history.entity
         )
@@ -281,6 +277,10 @@ class NextTurnView(View):
                 entity=current_action_history.entity,
                 content=f"[ERROR]{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できませんでした",
             )
+
+            # 3. アクションを完了状態に更新
+            current_action_history.done = True
+            current_action_history.save()
 
             upcoming_action_history = (
                 ActionHistory.objects.filter(done=False)
@@ -314,6 +314,10 @@ class NextTurnView(View):
                 entity=active_entity,
                 content=f"{active_entity.name} が行動しました: {response_text}",
             )
+
+            # 3. アクションを完了状態に更新
+            current_action_history.done = True
+            current_action_history.save()
 
             # フラッシュメッセージを設定
             # 次のターンのアクションを取得
