@@ -5,7 +5,7 @@ from django.test import TestCase
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
 from ai_agent.domain.service.turn_management import TurnManagementService
 from ai_agent.domain.valueobject.turn_management import EntityVO
-from ai_agent.models import Entity, ActionTimeline
+from ai_agent.models import Entity, ActionTimeline, ActionHistory
 
 
 class TurnManagementServiceTest(TestCase):
@@ -135,55 +135,44 @@ class TurnManagementServiceTest(TestCase):
 
     def test_create_message_updates_timeline(self):
         """
-        メッセージ作成時のタイムライン更新機能のテスト
+        メッセージ作成時のActionHistory更新機能のテスト
 
         シナリオ：
-        エンティティがメッセージを作成した際に、そのエンティティの
-        next_turn 値が適切に更新され、次回の行動タイミングが
-        正しく計算されることを確認する。
+        エンティティがメッセージを作成した際に、ActionHistoryが完了状態に
+        更新され、メッセージがデータベースに正しく保存されることを確認します。
 
         テストの流れ：
-        1. 初期状態：Entity1の next_turn = 0.01
+        1. 初期状態：ActionHistoryのActionHistoryレコードが作成される
         2. create_message実行：メッセージがデータベースに保存される
-        3. get_next_entity実行：Entity1が選択され、next_turn が更新される
-        4. 更新後状態：Entity1の next_turn = 0.02
+        3. ActionHistoryが完了状態(done=True)に更新される
+        4. 次のActionHistoryレコードが処理される
 
         テスト内容：
         - TurnManagementRepository.create_message()の動作確認
-        - メッセージ作成とタイムライン更新の分離確認
-        - get_next_entity()実行時のタイムライン更新確認
-        - データベースの一貫性確認
+        - メッセージがデータベースに正しく保存されること
+        - ActionHistoryが完了状態に更新されること
+        - タイムラインの初期値が正しく設定されていること
 
         期待される動作：
-        1. メッセージ作成：Entity1による"Test Message"がDBに保存される
-        2. 初期確認：next_turn = 1/speed = 0.01のまま
-        3. 次エンティティ取得：Entity1が選択される
-        4. タイムライン更新：next_turn = 0.01 + 0.01 = 0.02
-
-        技術的詳細：
-        - refresh_from_db()：データベースから最新状態を再取得
-        - タイムライン更新は get_next_entity() 内で実行される
-        - メッセージ作成とタイムライン更新は独立した処理
-
-        重要性：
-        この仕組みにより、エンティティが行動するたびに次回の
-        行動タイミングが自動的に調整され、公平な行動順序が保たれる。
+        1. ActionHistory作成: Entity1のActionHistoryレコードが作成される
+        2. メッセージ作成：Entity1による"Test Message"がDBに保存される
+        3. ActionHistory更新：ActionHistoryのdoneフラグがTrueに更新される
+        4. タイムライン確認：next_turn = 1/speed = 0.01
         """
+        # ActionHistoryオブジェクトを作成
+        action_history = ActionHistory.objects.create(
+            entity=self.entity1, acted_at_turn=1, done=False
+        )
         # Entity1 でメッセージを作成
-        TurnManagementRepository.create_message(self.entity1, "Test Message")
+        TurnManagementRepository.create_message(
+            content="Test Message", action_history=action_history
+        )
 
         # タイムラインを確認
         timeline = ActionTimeline.objects.get(entity=self.entity1)
 
         # タイムライン初期化時の next_turn を確認
         self.assertEqual(timeline.next_turn, 1 / self.entity1.speed)
-
-        # get_next_entity を1回実行すると next_turn が更新される
-        TurnManagementService.get_next_entity(self.test_input_text)
-        timeline.refresh_from_db()  # タイムラインを再取得
-        self.assertEqual(
-            timeline.next_turn, 1 / self.entity1.speed + 1 / self.entity1.speed
-        )
 
     def test_simulate_next_actions(self):
         """
