@@ -234,9 +234,9 @@ class NextTurnView(View):
             ResetTimelineView.reset_timeline()
             return
 
-        # 選択されたアクションを完了済みにする
-        next_action.done = True
-        next_action.save()
+        # アクションを完了状態に更新
+        current_action_history.done = True
+        current_action_history.save()
 
         # ActionTimelineのエンティティを取得し、can_actの状態を確認
         timeline = TurnManagementRepository.get_action_timeline(next_action.entity)
