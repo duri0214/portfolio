@@ -194,6 +194,22 @@ class NextTurnView(View):
         """
         次のターンに進むPOSTリクエストを処理します。
 
+        Args:
+            request (HttpRequest): リクエストオブジェクト
+            *args: 可変位置引数
+            **kwargs: 可変キーワード引数
+
+        Returns:
+            HttpResponseRedirect: インデックスページへのリダイレクト
+        """
+        NextTurnView.process_next_turn(request)
+        return redirect("agt:index")
+
+    @staticmethod
+    def process_next_turn(request):
+        """
+        次のターンに進む処理を行います。
+
         処理の流れ：
         1. 未完了の最初のアクションを取得
         2. アクションが存在しない場合はタイムラインをリセット
@@ -204,11 +220,6 @@ class NextTurnView(View):
 
         Args:
             request (HttpRequest): リクエストオブジェクト
-            *args: 可変位置引数
-            **kwargs: 可変キーワード引数
-
-        Returns:
-            HttpResponseRedirect: インデックスページへのリダイレクト
         """
         # 未完了の最初のアクションを取得。
         next_action = (
@@ -224,8 +235,7 @@ class NextTurnView(View):
 
             # リセット処理を直接呼び出し
             ResetTimelineView.reset_timeline()
-
-            return redirect("agt:index")
+            return
 
         # 選択されたアクションを完了済みにする
         next_action.done = True
@@ -245,11 +255,18 @@ class NextTurnView(View):
             )
             message.message_content = f"[ERROR]{message.message_content}"
             message.save()
-            messages.warning(
-                request,
-                f"{next_action.entity.name}（{thinking_type_display}）はチャットに参加できない状態です。",
+            upcoming_action = (
+                ActionHistory.objects.filter(done=False)
+                .order_by("acted_at_turn")
+                .first()
             )
-            return redirect("agt:index")
+            warning_msg = f"{next_action.entity.name}（{thinking_type_display}）はチャットに参加できない状態です。"
+
+            if upcoming_action:
+                warning_msg += f"\n現在は {upcoming_action.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
+
+            messages.warning(request, warning_msg)
+            return
 
         try:
             # 次のエンティティとその処理を取得
@@ -263,12 +280,24 @@ class NextTurnView(View):
             TurnManagementRepository.create_message(next_entity, response)
 
             # フラッシュメッセージを設定
-            messages.success(request, f"{next_entity.name} のターンが完了しました。")
+            # 次のエンティティを取得
+            upcoming_action = (
+                ActionHistory.objects.filter(done=False)
+                .order_by("acted_at_turn")
+                .first()
+            )
+            if upcoming_action:
+                messages.success(
+                    request,
+                    f"{next_entity.name} のターンが完了しました。\n現在は {upcoming_action.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。",
+                )
+            else:
+                messages.success(
+                    request, f"{next_entity.name} のターンが完了しました。"
+                )
         except ValueError:
             # 行動可能なエンティティがない場合、一旦リセット
             messages.info(
                 request, "No more actions left to process. Timeline has been reset."
             )
             ResetTimelineView.reset_timeline()
-
-        return redirect("agt:index")
