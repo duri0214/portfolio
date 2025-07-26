@@ -244,7 +244,9 @@ class NextTurnView(View):
         # 4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
         if timeline and not timeline.can_act:
             # エンティティの種類に基づいて理由を追加
-            thinking_type_display = next_action.entity.get_thinking_type_display()
+            thinking_type_display = (
+                current_action_history.entity.get_thinking_type_display()
+            )
 
             # エンティティが会話不能状態の場合は、その旨のメッセージを表示
             response = f"{next_action.entity.name}（{thinking_type_display}）はチャットに参加できませんでした"
