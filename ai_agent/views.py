@@ -243,16 +243,13 @@ class NextTurnView(View):
         )
         # 4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
         if timeline and not timeline.can_act:
-            # エンティティの種類に基づいて理由を追加
-            thinking_type_display = (
+            thinking_type_disp = (
                 current_action_history.entity.get_thinking_type_display()
             )
-
-            # エンティティが会話不能状態の場合は、その旨のメッセージを表示
-            response = f"{next_action.entity.name}（{thinking_type_display}）はチャットに参加できませんでした"
+            response = f"{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できませんでした"
             # 特別なメッセージとしてマークする（テンプレートで赤背景表示用）
             message = TurnManagementRepository.create_message(
-                next_action.entity, response
+                current_action_history.entity, response
             )
             message.message_content = f"[ERROR]{message.message_content}"
             message.save()
@@ -261,7 +258,7 @@ class NextTurnView(View):
                 .order_by("acted_at_turn")
                 .first()
             )
-            warning_msg = f"{next_action.entity.name}（{thinking_type_display}）はチャットに参加できない状態です。"
+            warning_msg = f"{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できない状態です。"
 
             if upcoming_action:
                 warning_msg += f"\n現在は {upcoming_action.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
