@@ -296,7 +296,15 @@ class NextTurnView(View):
             # - TurnManagementService.thinkメソッドでガードレール的なチェックに使用
             # - ユーザー入力は別のガードレールで処理されているため重複している
             # - このパラメータを削除し、メソッドシグネチャを簡素化する
-            active_entity = TurnManagementService.get_next_entity(input_text="")
+            active_entity = current_action_history.entity
+
+            # Userの場合はスキップ（Userはform_validで処理されるため）
+            if active_entity.name == "User":
+                messages.error(
+                    request,
+                    "Userエンティティのターンは「1単位時間進める」ボタンでは進められません。チャットフォームからメッセージを送信してください。",
+                )
+                return
 
             processor = InputProcessor(active_entity)
             response_text = processor.process_input(
