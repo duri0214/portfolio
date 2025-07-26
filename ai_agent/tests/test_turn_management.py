@@ -248,11 +248,11 @@ class TurnManagementServiceTest(TestCase):
     @patch("ai_agent.domain.service.turn_management.TurnManagementService.think")
     def test_can_act_false_skips_entity(self, mock_think):
         """
-        エンティティの行動可能性判定（can_act）機能は現在は
-        ActionHistoryを使用した新しい実装方法に移行しています。
+        このテストでは、TurnManagementServiceのthinkメソッドの基本的な動作を検証します。
 
-        TurnManagementService.thinkメソッド自体は引き続き存在するため、
-        このテストでは、thinkメソッドの基本的な動作のみを確認します。
+        thinkメソッドはエンティティの思考タイプに基づいて、適切な思考エンジンを選択し、
+        入力テキストに対して応答可能かどうかを判断します。各思考エンジンは異なる判断基準を
+        持ち、エンティティごとの振る舞いをカスタマイズできる設計になっています。
         """
 
         # think をモック化
