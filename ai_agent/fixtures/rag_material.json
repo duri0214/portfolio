@@ -1,0 +1,92 @@
+[
+  {
+    "model": "ai_agent.RagMaterial",
+    "pk": 1,
+    "fields": {
+      "material_type": "googlemaps_review",
+      "source_text": "とても美味しかったです。店員さんの対応も良く、また行きたいです。",
+      "vector": null,
+      "entity": null,
+      "metadata": {
+        "location_name": "サンプルレストラン",
+        "rating": 5.0,
+        "author_name": "サンプルユーザー1",
+        "review_date": "2025-07-26T12:00:00Z",
+        "latitude": 35.6812,
+        "longitude": 139.7671
+      },
+      "created_at": "2025-07-27T00:00:00Z",
+      "updated_at": "2025-07-27T00:00:00Z"
+    }
+  },
+  {
+    "model": "ai_agent.RagMaterial",
+    "pk": 2,
+    "fields": {
+      "material_type": "googlemaps_review",
+      "source_text": "静かな環境で作業するのに最適です。コーヒーも美味しいです。",
+      "vector": null,
+      "entity": null,
+      "metadata": {
+        "location_name": "サンプルカフェ",
+        "rating": 4.5,
+        "author_name": "サンプルユーザー2",
+        "review_date": "2025-07-26T12:00:00Z",
+        "latitude": 35.6581,
+        "longitude": 139.7017
+      },
+      "created_at": "2025-07-27T00:00:00Z",
+      "updated_at": "2025-07-27T00:00:00Z"
+    }
+  },
+  {
+    "model": "ai_agent.RagMaterial",
+    "pk": 3,
+    "fields": {
+      "material_type": "googlemaps_review",
+      "source_text": "とても素晴らしい景色でした。写真スポットがたくさんあります。",
+      "vector": null,
+      "entity": null,
+      "metadata": {
+        "location_name": "サンプル観光スポット",
+        "rating": 4.0,
+        "author_name": "サンプルユーザー3",
+        "review_date": "2025-07-26T12:00:00Z",
+        "latitude": 35.7101,
+        "longitude": 139.8107
+      },
+      "created_at": "2025-07-27T00:00:00Z",
+      "updated_at": "2025-07-27T00:00:00Z"
+    }
+  },
+  {
+    "model": "ai_agent.RagMaterial",
+    "pk": 4,
+    "fields": {
+      "material_type": "cloud_act_pdf",
+      "source_text": "Cloud Actは、米国における電子通信に関する法的枠組みを近代化するために2018年に制定された法律です。この法律により、米国の法執行機関は、米国内の企業が保有する海外サーバー上のデータにアクセスすることが可能になりました。また、外国政府と協定を結ぶことで、相互のデータアクセスを可能にする枠組みも提供しています。プライバシーと安全保障のバランスを取る目的で設計されていますが、国際的なデータ保護の観点から議論も起きています。",
+      "vector": null,
+      "entity": null,
+      "metadata": {
+        "file_path": "lib/llm/pdf_sample/doj_cloud_act_white_paper_2019_04_10.pdf"
+      },
+      "created_at": "2025-07-27T00:00:00Z",
+      "updated_at": "2025-07-27T00:00:00Z"
+    }
+  },
+  {
+    "model": "ai_agent.RagMaterial",
+    "pk": 5,
+    "fields": {
+      "material_type": "declining_birth_rate_pdf",
+      "source_text": "少子化対策白書によると、日本の合計特殊出生率は2021年に1.30まで低下しています。少子化の主な要因として、晩婚化・晩産化の進行、若年層の経済的不安定さ、仕事と育児の両立の難しさなどが挙げられています。政府は子育て支援や働き方改革を通じて、若い世代が結婚や出産に希望を持てる社会づくりを目指しています。保育所の整備や児童手当の拡充、育児休業制度の充実など、様々な施策が展開されています。少子化対策は社会全体で取り組む課題として位置付けられています。",
+      "vector": null,
+      "entity": null,
+      "metadata": {
+        "file_path": "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
+      },
+      "created_at": "2025-07-27T00:00:00Z",
+      "updated_at": "2025-07-27T00:00:00Z"
+    }
+  }
+]
