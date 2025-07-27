@@ -21,9 +21,9 @@ class Entity(models.Model):
     """
 
     THINKING_TYPE_CHOICES = (
-        ("google_maps_based", "Google Mapsレビューに基づく"),  # Type A
-        ("rag_based", "RAGベースの推論"),  # Type B
-        ("ng_word_based", "NGワードに基づく制限"),  # Type C
+        ("google_maps_based", "Google Mapsレビューに基づく"),
+        ("cloud_act_based", "Cloud Act PDFをデータソースとするRAG"),
+        ("declining_birth_rate_based", "少子化対策PDFをデータソースとするRAG"),
     )
 
     name = models.CharField(max_length=100)
