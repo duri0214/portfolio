@@ -10,13 +10,12 @@ class Entity(models.Model):
 
     Attributes:
         name (str): The name of the entity (e.g., a bot or user)
-        thinking_type (str): The reasoning or decision-making type associated with the entity
+        thinking_type (str, optional): The reasoning or decision-making type associated with the entity
             Choices:
                 - "google_maps_based" (Google Mapsレビューに基づく)
-                - "rag_based" (RAGベースの推論)
-                - "ng_word_based" (NGワードに基づく制限)
-        vector (binary, optional): A binary vector representation of the entity's attributes,
-            commonly used for embedding-based reasoning with "rag_based"
+                - "cloud_act_based" (Cloud Act PDFをデータソースとするRAG)
+                - "declining_birth_rate_based" (少子化対策PDFをデータソースとするRAG)
+                - None (User等、特定の思考タイプを持たないエンティティ)
         speed (int): The decision-making speed or response speed of the entity, where
             higher values may indicate slower response times.
     """
@@ -29,7 +28,7 @@ class Entity(models.Model):
 
     name = models.CharField(max_length=100)
     thinking_type = models.CharField(
-        max_length=50, choices=THINKING_TYPE_CHOICES, default="google_maps_based"
+        max_length=50, choices=THINKING_TYPE_CHOICES, null=True, blank=True
     )
     speed = models.IntegerField(default=10)
 
