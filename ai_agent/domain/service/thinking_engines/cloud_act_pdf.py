@@ -3,14 +3,19 @@ from lib.llm.valueobject.rag import PdfDataloader
 
 class CloudActPdfService:
     _pdf_loader = None
+    _pdf_path = "lib/llm/pdf_sample/doj_cloud_act_white_paper_2019_04_10.pdf"
 
     @classmethod
     def _get_pdf_loader(cls):
-        """シングルトンパターンでPDFローダーを取得"""
+        """シングルトンパターンでPDFローダーを取得
+
+        Note:
+            現在実際のPDF解析は行われておらず、あらかじめデータベースシーダーで
+            登録したPDFの要約・抜粋を使用しています。このメソッドは将来的に
+            実際のPDF解析を実装する際に使用される予定です。
+        """
         if cls._pdf_loader is None:
-            cls._pdf_loader = PdfDataloader(
-                "lib/llm/pdf_sample/doj_cloud_act_white_paper_2019_04_10.pdf"
-            )
+            cls._pdf_loader = PdfDataloader(cls._pdf_path)
         return cls._pdf_loader
 
     @staticmethod

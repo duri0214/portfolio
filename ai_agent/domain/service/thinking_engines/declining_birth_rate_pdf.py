@@ -3,14 +3,19 @@ from lib.llm.valueobject.rag import PdfDataloader
 
 class DecliningBirthRatePdfService:
     _pdf_loader = None
+    _pdf_path = "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
 
     @classmethod
     def _get_pdf_loader(cls):
-        """シングルトンパターンでPDFローダーを取得"""
+        """シングルトンパターンでPDFローダーを取得
+
+        Note:
+            現在実際のPDF解析は行われておらず、あらかじめデータベースシーダーで
+            登録した少子化対策白書PDFの要約・抜粋を使用しています。このメソッドは
+            将来的に実際のPDF解析を実装する際に使用される予定です。
+        """
         if cls._pdf_loader is None:
-            cls._pdf_loader = PdfDataloader(
-                "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
-            )
+            cls._pdf_loader = PdfDataloader(cls._pdf_path)
         return cls._pdf_loader
 
     @staticmethod
