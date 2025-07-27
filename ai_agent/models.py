@@ -1,30 +1,33 @@
 from django.db import models
 
+# データソースタイプの選択肢（全モデルで共通）
+DATA_SOURCE_CHOICES = (
+    ("google_maps_based", "Google Mapsレビューに基づく"),
+    ("cloud_act_based", "Cloud Act PDFに基づく"),
+    ("declining_birth_rate_based", "少子化対策PDFに基づく"),
+)
+
 
 class Entity(models.Model):
     """
-    Represents an entity involved in conversations and defines its behavior.
+    会話に参加するエンティティとその行動特性を定義するモデル
 
-    This model is used to define conversation participants, each with specific reasoning
-    mechanisms, restrictions, and additional attributes for dynamic behavior in a system.
+    このモデルは、会話参加者を定義し、それぞれに特定の思考メカニズム、制約、
+    およびシステム内での動的な行動のための追加属性を提供します。
 
     Attributes:
-        name (str): The name of the entity (e.g., a bot or user)
-        thinking_type (str, optional): The reasoning or decision-making type associated with the entity
-            Choices:
+        name (str): エンティティの名前（ボットやユーザーなど）
+        thinking_type (str, optional): エンティティに関連付けられた思考タイプやデータソース
+            選択肢:
                 - "google_maps_based" (Google Mapsレビューに基づく)
                 - "cloud_act_based" (Cloud Act PDFをデータソースとするRAG)
                 - "declining_birth_rate_based" (少子化対策PDFをデータソースとするRAG)
                 - None (User等、特定の思考タイプを持たないエンティティ)
-        speed (int): The decision-making speed or response speed of the entity, where
-            higher values may indicate slower response times.
+        speed (int): 意思決定速度または応答速度。値が大きいほど応答が速くなります（値は行動頻度を表します）。
     """
 
-    THINKING_TYPE_CHOICES = (
-        ("google_maps_based", "Google Mapsレビューに基づく"),
-        ("cloud_act_based", "Cloud Act PDFをデータソースとするRAG"),
-        ("declining_birth_rate_based", "少子化対策PDFをデータソースとするRAG"),
-    )
+    # 思考タイプの選択肢（モジュールレベルのDATA_SOURCE_CHOICESを使用）
+    THINKING_TYPE_CHOICES = DATA_SOURCE_CHOICES
 
     name = models.CharField(max_length=100)
     thinking_type = models.CharField(
@@ -44,18 +47,15 @@ class RagMaterial(models.Model):
     エンティティのthinking_typeに基づいて適切な情報を提供します。
 
     Attributes:
-        material_type (str): 素材のタイプ (googlemaps_review, cloud_act_pdf, declining_birth_rate_pdf)
+        material_type (str): 素材のタイプ
         source_text (str): 生のテキストデータ
         vector (binary, optional): ベクトル表現（将来的なベクトル検索用）
         entity (Entity, optional): 関連付けられたエンティティ
         metadata (JSON): 追加メタデータ（ソースタイプ固有の情報を保持）
     """
 
-    MATERIAL_TYPE_CHOICES = (
-        ("googlemaps_review", "Google Mapsレビュー"),
-        ("cloud_act_pdf", "Cloud Act PDF"),
-        ("declining_birth_rate_pdf", "少子化対策PDF"),
-    )
+    # データソースタイプの選択肢（モジュールレベルのDATA_SOURCE_CHOICESを使用）
+    MATERIAL_TYPE_CHOICES = DATA_SOURCE_CHOICES
 
     material_type = models.CharField(max_length=50, choices=MATERIAL_TYPE_CHOICES)
     source_text = models.TextField()
