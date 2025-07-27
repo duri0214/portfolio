@@ -31,7 +31,6 @@ class Entity(models.Model):
     thinking_type = models.CharField(
         max_length=50, choices=THINKING_TYPE_CHOICES, default="google_maps_based"
     )
-    vector = models.BinaryField(null=True, blank=True)  # Type B用
     speed = models.IntegerField(default=10)
 
     def __str__(self):
