@@ -97,7 +97,9 @@ class Message(models.Model):
 
 class ActionTimeline(models.Model):
     """
-    Tracks the next turn for each entity based on their speed.
+    各エンティティの次のターンをスピードに基づいて追跡するモデル
+
+    エンティティの行動順序を管理し、会話の進行を制御します。
     """
 
     entity = models.OneToOneField(Entity, on_delete=models.CASCADE)
@@ -109,6 +111,19 @@ class ActionTimeline(models.Model):
 
 
 class ActionHistory(models.Model):
+    """
+    エンティティのアクション履歴を記録するモデル
+
+    会話の中で各エンティティがいつ行動したかを追跡し、
+    ターン制の会話進行を管理します。
+
+    Attributes:
+        entity (Entity): アクションを実行したエンティティ
+        acted_at_turn (int): アクションが実行されたターン番号
+        done (bool): アクションが完了したかどうか
+        created_at (datetime): レコードが作成された日時
+    """
+
     entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
     acted_at_turn = models.IntegerField()
     done = models.BooleanField(default=False)
