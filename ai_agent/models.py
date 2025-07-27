@@ -77,13 +77,13 @@ class RagMaterial(models.Model):
 
 class Message(models.Model):
     """
-    Represents a message in a conversation.
+    チャット履歴（メッセージ）を管理するモデル
 
     Attributes:
-        entity (Entity): The entity that sent the message
-        message_content (str): Content of the message
-        created_at (datetime): Timestamp when the message was created
-        updated_at (datetime): Timestamp when the message was last updated
+        entity (Entity): メッセージを送信したエンティティ
+        message_content (str): メッセージの内容
+        created_at (datetime): メッセージが作成された日時
+        updated_at (datetime): メッセージが最後に更新された日時
     """
 
     entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
