@@ -272,8 +272,8 @@ class NextTurnView(View):
             messages.error(request, "エンティティのタイムラインが見つかりません。")
             return
 
-        # エンティティのcan_actフラグをthink関数で更新
-        timeline.can_act = TurnManagementService.think(
+        # エンティティのcan_actフラグを更新
+        timeline.can_act = TurnManagementService.can_respond_to_input(
             current_action_history.entity, ""
         )
         timeline.save()
