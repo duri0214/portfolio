@@ -1,10 +1,23 @@
+from ai_agent.domain.service.thinking_engines.base_rag_service import BaseRagService
 from ai_agent.models import RagMaterial
 
 
-class GoogleMapsReviewService:
+class GoogleMapsReviewService(BaseRagService):
+    """Google Mapsレビューに関するRAGサービス"""
+
+    material_type = "googlemaps_review"
+    relevant_keywords = [
+        "店",
+        "レストラン",
+        "カフェ",
+        "場所",
+        "行った",
+        "美味しい",
+        "サービス",
+    ]
 
     @classmethod
-    def load_reviews_to_rag_material(cls):
+    def load_source_to_rag_material(cls):
         """Google Mapsレビューをデータソースから収集し、RagMaterialに保存します。
 
         Note:
@@ -18,19 +31,56 @@ class GoogleMapsReviewService:
         #  3. 各レビューをベクトル化
         #  4. RagMaterialテーブルに保存（ベクトルとメタデータを含む）
         # 現在はシーダーで登録されたデータを使用するため、実装は保留
+        # 基底クラスのメソッドを呼び出す
+        super().load_source_to_rag_material()
 
-    @staticmethod
-    def can_respond(input_text: str, entity) -> bool:
+    @classmethod
+    def get_reviews(cls) -> str:
         """
-        Determines if the entity can respond based on Google Maps reviews.
+        全てのGoogle Mapsレビューを取得して結合したテキストを返します。
 
-        TODO: Implement proper review-based logic.
-
-        Args:
-            input_text (str): The input text to evaluate.
-            entity (Entity): The entity performing the evaluation.
+        Note:
+            現在はシーダーで登録した疑似レビューデータを使用しており、実際のGoogle Mapsからの
+            データ収集は行われていません。開発・テスト目的の限定的なデータのみが利用可能です。
 
         Returns:
-            bool: Always True for now (temporarily hardcoded for testing purposes).
+            str: 全てのGoogle Mapsレビュー素材を結合したテキスト
         """
-        return True
+        # 基本的なコンテンツ取得
+        basic_content = cls.get_content()
+
+        # レビューの場合は複数レコードを結合して返す特殊処理
+        materials = RagMaterial.objects.filter(material_type=cls.material_type)
+        if materials.count() > 1:
+            return "\n\n".join([material.source_text for material in materials])
+
+        return basic_content
+
+    @classmethod
+    def generate_rag_response(cls, entity, input_text: str):
+        """Google Mapsレビューに関する入力に対してRAGベースのレスポンスを生成する
+
+        Args:
+            entity (Entity): 応答を生成するエンティティ
+            input_text (str): ユーザーからの入力テキスト
+
+        Returns:
+            Optional[str]: 生成された応答、または応答できない場合はNone
+        """
+        if not cls.can_respond(input_text, entity):
+            return None
+
+        # レビューの場合は特殊処理：複数のレビューを取得
+        reviews = cls.get_reviews()
+
+        # レスポンスを整形
+        response = f"{entity.name}は以下のレビュー情報を提供します:\n\n"
+        response += reviews
+
+        # キーワードに応じた追加コメント
+        if "レストラン" in input_text or "食事" in input_text:
+            response += "\n\nこれらのレビューから、おすすめのレストランを選ぶ際の参考にしてください。"
+        elif "カフェ" in input_text:
+            response += "\n\nカフェでの作業環境についてのレビューも参考になるでしょう。"
+
+        return response

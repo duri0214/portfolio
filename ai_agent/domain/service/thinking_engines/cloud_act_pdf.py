@@ -1,10 +1,14 @@
-from ai_agent.models import RagMaterial
+from ai_agent.domain.service.thinking_engines.base_rag_service import BaseRagService
 from lib.llm.valueobject.rag import PdfDataloader
 
 
-class CloudActPdfService:
+class CloudActPdfService(BaseRagService):
+    """Cloud Act PDFに関するRAGサービス"""
+
     _pdf_loader = None
     _pdf_path = "lib/llm/pdf_sample/doj_cloud_act_white_paper_2019_04_10.pdf"
+    material_type = "cloud_act_pdf"
+    relevant_keywords = ["法律", "law", "cloud", "act", "クラウド", "法案"]
 
     @classmethod
     def _get_pdf_loader(cls):
@@ -20,7 +24,7 @@ class CloudActPdfService:
         return cls._pdf_loader
 
     @classmethod
-    def load_pdf_to_rag_material(cls):
+    def load_source_to_rag_material(cls):
         """PDFを読み込んでRagMaterialに保存する
 
         Note:
@@ -34,22 +38,42 @@ class CloudActPdfService:
         #  4. RagMaterialテーブルに保存（ベクトルとメタデータを含む）
         loader = cls._get_pdf_loader()
         # 現在はシーダーで登録されたデータを使用するため、実装は保留
+        # 基底クラスのメソッドを呼び出す
+        super().load_source_to_rag_material()
 
-    @staticmethod
-    def can_respond(input_text: str, entity) -> bool:
-        """
-        Cloud Act PDFに基づいてエンティティが応答可能かどうかを判定します。
+    @classmethod
+    def get_pdf_content(cls):
+        """Cloud Act PDFの内容を取得します。
 
-        Args:
-            input_text (str): チェック対象の入力テキスト
-            entity (Entity): 評価対象のエンティティ
+        Note:
+            現在はPDFファイルから直接抽出したテキストではなく、シーダーで事前に
+            登録されたサンプルデータや要約が使用しています。
 
         Returns:
-            bool: 入力テキストが「法律」または「cloud act」に関連する場合はTrue
+            str: PDFから抽出したテキスト（または事前登録されたサンプルデータ）
         """
-        # PDFデータの内容に基づいて、このエンティティが応答すべきかを判断
-        # 現時点では、特定のキーワードに基づく簡易な判定
-        relevant_keywords = ["法律", "law", "cloud", "act", "クラウド", "法案"]
-        return any(
-            keyword.lower() in input_text.lower() for keyword in relevant_keywords
-        )
+        return cls.get_content()
+
+    @classmethod
+    def generate_rag_response(cls, entity, input_text: str):
+        """Cloud Actに関する入力に対してRAGベースのレスポンスを生成する
+
+        Args:
+            entity (Entity): 応答を生成するエンティティ
+            input_text (str): ユーザーからの入力テキスト
+
+        Returns:
+            Optional[str]: 生成された応答、または応答できない場合はNone
+        """
+        # 基底クラスのgenerate_rag_responseメソッドを呼び出す
+        response = super().generate_rag_response(entity, input_text)
+
+        # レスポンスをよりCloud Act特化した形式に整形
+        if response:
+            # 特定のキーワードに基づいて応答をカスタマイズする例
+            if "法律" in input_text.lower() or "law" in input_text.lower():
+                response += "\n\nCloud Actは米国の法律であり、国際的なデータアクセスに影響を与えます。"
+            elif "クラウド" in input_text or "cloud" in input_text.lower():
+                response += "\n\nクラウドサービスを利用する企業は、Cloud Actの影響を理解することが重要です。"
+
+        return response
