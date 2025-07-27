@@ -318,12 +318,41 @@ class NextTurnView(View):
                 )
                 return
 
-            processor = InputProcessor(active_entity)
-            response_text = processor.process_input(
-                "仮の応答テキスト"
-            )  # request.POST.get("input_text")
+            # 直近5つのチャットメッセージをコンテキストとして取得
+            context = "\n".join(
+                [
+                    msg.message_content
+                    for msg in Message.objects.order_by("-created_at")[:5]
+                ]
+            )
+
+            # エンティティの思考タイプに応じて適切な応答を生成
+            if active_entity.thinking_type == "google_maps_based":
+                reviews = GoogleMapsReviewService.get_reviews()
+                processor = InputProcessor(active_entity)
+                response_text = processor.process_input(
+                    f"以下のGoogleマップレビューを参考に回答を生成: {reviews}\n\nコンテキスト: {context}"
+                )
+            elif active_entity.thinking_type == "cloud_act_based":
+                processor = InputProcessor(active_entity)
+                response_text = processor.process_input(
+                    f"Cloud Act関連の知識ベースに基づいて応答を生成\n\nコンテキスト: {context}"
+                )
+            elif active_entity.thinking_type == "declining_birth_rate_based":
+                processor = InputProcessor(active_entity)
+                response_text = processor.process_input(
+                    f"少子化対策に関する専門知識に基づいて応答を生成\n\nコンテキスト: {context}"
+                )
+            else:
+                # 標準的な応答処理
+                processor = InputProcessor(active_entity)
+                response_text = processor.process_input(
+                    "通常の対話モードで応答を生成します"
+                )
+
+            # 生成した応答をアクション履歴と共に保存
             TurnManagementRepository.create_message(
-                content=f"{active_entity.name} が行動しました: {response_text}",
+                content=response_text,
                 action_history=current_action_history,
             )
 
