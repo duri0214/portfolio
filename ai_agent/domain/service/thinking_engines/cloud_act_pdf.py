@@ -1,4 +1,5 @@
 from ai_agent.domain.service.thinking_engines.base_rag_service import BaseRagService
+from ai_agent.models import Entity
 from lib.llm.valueobject.rag import PdfDataloader
 
 
@@ -55,7 +56,7 @@ class CloudActPdfService(BaseRagService):
         return cls.get_content()
 
     @classmethod
-    def generate_rag_response(cls, entity, input_text: str):
+    def generate_rag_response(cls, entity: Entity, input_text: str):
         """Cloud Actに関する入力に対してRAGベースのレスポンスを生成する
 
         Args:
