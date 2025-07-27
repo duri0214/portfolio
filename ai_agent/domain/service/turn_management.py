@@ -1,9 +1,11 @@
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
+from ai_agent.domain.service.thinking_engines.cloud_act_pdf import CloudActPdfService
+from ai_agent.domain.service.thinking_engines.declining_birth_rate_pdf import (
+    DecliningBirthRatePdfService,
+)
 from ai_agent.domain.service.thinking_engines.googlemaps_review import (
     GoogleMapsReviewService,
 )
-from ai_agent.domain.service.thinking_engines.ng_word import NGWordService
-from ai_agent.domain.service.thinking_engines.rag import RagService
 from ai_agent.domain.valueobject.turn_management import EntityVO
 from ai_agent.models import Entity, ActionHistory
 
@@ -109,11 +111,11 @@ class TurnManagementService:
         if entity.thinking_type == "google_maps_based":
             return GoogleMapsReviewService.can_respond(input_text, entity)
 
-        elif entity.thinking_type == "rag_based":
-            return RagService.can_respond(input_text, entity)
+        elif entity.thinking_type == "cloud_act_based":
+            return CloudActPdfService.can_respond(input_text, entity)
 
-        elif entity.thinking_type == "ng_word_based":
-            return NGWordService.can_respond(input_text, entity)
+        elif entity.thinking_type == "declining_birth_rate_based":
+            return DecliningBirthRatePdfService.can_respond(input_text, entity)
 
         # デフォルトで発言可能
         return True
