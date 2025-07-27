@@ -6,6 +6,9 @@ from django.views.generic.edit import FormView
 
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
 from ai_agent.domain.service.input_processor import InputProcessor
+from ai_agent.domain.service.thinking_engines.googlemaps_review import (
+    GoogleMapsReviewService,
+)
 from ai_agent.domain.service.turn_management import TurnManagementService
 from ai_agent.forms import SendMessageForm
 from ai_agent.models import Message, Entity, ActionHistory
