@@ -36,6 +36,45 @@ class Entity(models.Model):
         return f"{self.name} ({self.get_thinking_type_display()})"
 
 
+class RagMaterial(models.Model):
+    """
+    RAG (Retrieval Augmented Generation) の素材を管理するモデル
+
+    様々なソース（Google Mapsレビュー、PDF文書など）からの情報を統一的に管理し、
+    エンティティのthinking_typeに基づいて適切な情報を提供します。
+
+    Attributes:
+        material_type (str): 素材のタイプ (googlemaps_review, cloud_act_pdf, declining_birth_rate_pdf)
+        source_text (str): 生のテキストデータ
+        vector (binary, optional): ベクトル表現（将来的なベクトル検索用）
+        entity (Entity, optional): 関連付けられたエンティティ
+        metadata (JSON): 追加メタデータ（ソースタイプ固有の情報を保持）
+    """
+
+    MATERIAL_TYPE_CHOICES = (
+        ("googlemaps_review", "Google Mapsレビュー"),
+        ("cloud_act_pdf", "Cloud Act PDF"),
+        ("declining_birth_rate_pdf", "少子化対策PDF"),
+    )
+
+    material_type = models.CharField(max_length=50, choices=MATERIAL_TYPE_CHOICES)
+    source_text = models.TextField()
+    vector = models.BinaryField(null=True, blank=True)  # 将来的なベクトル検索用
+    entity = models.ForeignKey(
+        "Entity",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rag_materials",
+    )
+    metadata = models.JSONField(default=dict, blank=True)  # ソースタイプ固有の追加情報
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.get_material_type_display()} ({self.id})"
+
+
 class Message(models.Model):
     """
     Represents a message in a conversation.
