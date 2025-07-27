@@ -94,15 +94,15 @@ class TurnManagementService:
         return simulation
 
     @staticmethod
-    def think(entity: Entity, input_text: str):
+    def can_respond_to_input(entity: Entity, input_text: str) -> bool:
         """
-        エンティティの思考ロジックを処理し、応答可能かどうかを判断します。
+        エンティティが入力テキストに応答可能かどうかを判断します。
 
         エンティティのthinking_typeに基づいて適切な判断サービスを選択し、
         入力テキストに対して応答可能かどうかを評価します。
 
         Args:
-            entity (Entity): 思考プロセスを実行するエンティティ
+            entity (Entity): 応答可能性を評価するエンティティ
             input_text (str): 評価する入力テキスト
 
         Returns:
