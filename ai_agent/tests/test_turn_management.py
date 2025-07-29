@@ -209,11 +209,12 @@ class TurnManagementServiceTest(TestCase):
         - 各next_turn値が正確に計算されている
         - 実際のデータベース状態は変更されない
 
-        検証項目：
-        - 返される配列の長さ = max_steps
-        - 各EntityVOのname属性の正確性
-        - 各EntityVOのnext_turn属性の数学的正確性
-        - 速度比に基づく行動頻度の正確性
+        テスト準備：
+        - 11ステップ分のアクションをシミュレーション
+
+        テストケース：
+        - シミュレーション結果が期待値と一致すること
+          (以下の点を検証: 配列長、EntityVO名前、next_turn値、速度比に基づく行動頻度)
 
         技術的詳細：
         - EntityVO：Value Objectパターンによる不変オブジェクト
@@ -224,10 +225,10 @@ class TurnManagementServiceTest(TestCase):
         この機能により、ユーザーは今後の会話の流れを予測でき、
         システム管理者はエンティティの行動パターンをデバッグできる。
         """
-        # テストケース1: 次の11ステップをシミュレーション
+        # テスト準備: 次の11ステップをシミュレーション実行
         simulation = TurnManagementService.simulate_next_actions(max_steps=11)
 
-        # テストケース2: シミュレーション結果と期待値を比較
+        # テストケース: シミュレーション結果と期待値を比較（各EntityVOの名前と次のターン値の検証）
         expected_simulation = [
             EntityVO(name="Entity1", next_turn=0.01),
             EntityVO(name="Entity1", next_turn=0.02),
