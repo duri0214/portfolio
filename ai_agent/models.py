@@ -50,7 +50,6 @@ class RagMaterial(models.Model):
         material_type (str): 素材のタイプ
         source_text (str): 生のテキストデータ
         vector (binary, optional): ベクトル表現（将来的なベクトル検索用）
-        entity (Entity, optional): 関連付けられたエンティティ
         metadata (JSON): 追加メタデータ（ソースタイプ固有の情報を保持）
     """
 
