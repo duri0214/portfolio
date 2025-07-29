@@ -60,13 +60,6 @@ class RagMaterial(models.Model):
     material_type = models.CharField(max_length=50, choices=MATERIAL_TYPE_CHOICES)
     source_text = models.TextField()
     vector = models.BinaryField(null=True, blank=True)  # 将来的なベクトル検索用
-    entity = models.ForeignKey(
-        "Entity",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="rag_materials",
-    )
     metadata = models.JSONField(default=dict, blank=True)  # ソースタイプ固有の追加情報
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

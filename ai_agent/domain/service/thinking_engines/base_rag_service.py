@@ -35,11 +35,11 @@ class BaseRagService(ABC):
 
     @classmethod
     def can_respond(cls, input_text: str, entity) -> bool:
-        """入力テキストに基づいてエンティティが応答可能かどうかを判定する
+        """入力テキストに基づいて応答可能かどうかを判定する
 
         Args:
             input_text (str): チェック対象の入力テキスト
-            entity (Entity): 評価対象のエンティティ
+            entity (Entity): 評価対象のエンティティ（互換性のために残す）
 
         Returns:
             bool: 入力テキストが関連キーワードに一致し、かつ
