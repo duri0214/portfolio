@@ -1,5 +1,4 @@
 from abc import ABC
-from typing import Optional
 
 from ai_agent.models import Entity, RagMaterial
 
@@ -96,7 +95,7 @@ class BaseRagService(ABC):
         return f"{cls.material_type}に関する情報が見つかりませんでした。"
 
     @classmethod
-    def generate_rag_response(cls, entity: Entity, input_text: str) -> Optional[str]:
+    def generate_rag_response(cls, entity: Entity, input_text: str) -> str | None:
         """RAGベースのレスポンスを生成する
 
         入力テキストと保存されたRAG素材に基づいて、適切な応答を生成します。
@@ -107,7 +106,7 @@ class BaseRagService(ABC):
             input_text (str): ユーザーからの入力テキスト
 
         Returns:
-            Optional[str]: 生成された応答、または応答できない場合はNone
+            str | None: 生成された応答、または応答できない場合はNone
         """
         if not cls.can_respond(input_text, entity):
             return None
