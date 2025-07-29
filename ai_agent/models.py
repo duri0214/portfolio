@@ -142,7 +142,7 @@ class GuardrailConfig(models.Model):
         forbidden_words: 禁止ワードリスト（JSON形式）
         max_input_length: 入力文字数制限
         use_openai_moderation: OpenAI Moderation APIを使用するか
-        strict_mode: 厳格モード（エラー時もブロック）
+        strict_mode: 厳格モード（OpenAI API障害などの検証機能自体のエラー時も入力をブロック）
     """
 
     entity = models.OneToOneField(Entity, on_delete=models.CASCADE)
@@ -154,7 +154,8 @@ class GuardrailConfig(models.Model):
         default=True, help_text="OpenAI Moderation APIを使用するか"
     )
     strict_mode = models.BooleanField(
-        default=False, help_text="厳格モード（エラー時もブロック）"
+        default=False,
+        help_text="厳格モード（OpenAI API障害などの検証機能自体のエラー時も入力をブロック）",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
