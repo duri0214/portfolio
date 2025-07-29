@@ -117,9 +117,9 @@ class TurnManagementServiceTest(TestCase):
         - Entity2: next_turn = 1/10 = 0.10
         - 高速エンティティほど小さな next_turn 値を持つ
 
-        検証項目：
-        - タイムラインレコード数 = エンティティ数（2個）
-        - 各エンティティの next_turn = 1 / entity.speed
+        テストケース：
+        1. タイムラインレコード数 = エンティティ数（2個）
+        2. 各エンティティの next_turn = 1 / entity.speed
 
         重要性：
         この機能が正しく動作しないと、エンティティの行動順序が
@@ -129,7 +129,7 @@ class TurnManagementServiceTest(TestCase):
         timelines = ActionTimeline.objects.all()
         self.assertEqual(timelines.count(), 2)
 
-        # テストケース2: 各エンティティの next_turn が適切に計算されているか確認
+        # テストケース2: 各エンティティの next_turn が 1/speed で計算されているか確認
         for timeline in timelines:
             self.assertEqual(timeline.next_turn, 1 / timeline.entity.speed)
 
@@ -141,11 +141,10 @@ class TurnManagementServiceTest(TestCase):
         エンティティがメッセージを作成した際に、ActionHistoryが完了状態に
         更新され、メッセージがデータベースに正しく保存されることを確認します。
 
-        テストの流れ：
-        1. 初期状態：ActionHistoryのActionHistoryレコードが作成される
+        テストケース：
+        1. ActionHistoryのActionHistoryレコードが作成される
         2. create_message実行：メッセージがデータベースに保存される
-        3. ActionHistoryが完了状態(done=True)に更新される
-        4. 次のActionHistoryレコードが処理される
+        3. タイムライン値の確認：next_turn値が正しく設定されていることを確認
 
         テスト内容：
         - TurnManagementRepository.create_message()の動作確認
