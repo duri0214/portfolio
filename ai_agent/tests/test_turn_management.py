@@ -256,9 +256,16 @@ class TurnManagementServiceTest(TestCase):
         can_respond_to_inputメソッドはエンティティの思考タイプに基づいて、適切な思考エンジンを選択し、
         入力テキストに対して応答可能かどうかを判断します。各思考エンジンは異なる判断基準を
         持ち、エンティティごとの振る舞いをカスタマイズできる設計になっています。
+
+        テスト準備：
+        - can_respond_to_inputメソッドをモック化し、Entity1にはFalse、その他にはTrueを返すよう設定
+
+        テストケース：
+        - エンティティの応答可能性が正しく判定されること
+          (Entity1が応答不可、Entity2が応答可能)
         """
 
-        # テストケース1: モック関数の設定
+        # テスト準備: モック関数の設定 - エンティティごとの応答可否をシミュレート
         def mock_can_respond_side_effect(entity, input_text):
             if entity == self.entity1:
                 return False  # Entity1 は行動不可
@@ -266,14 +273,14 @@ class TurnManagementServiceTest(TestCase):
 
         mock_can_respond.side_effect = mock_can_respond_side_effect
 
-        # テストケース2: Entity1は応答不可能
+        # テストケース1: Entity1は応答不可能なことを確認
         self.assertFalse(
             TurnManagementService.can_respond_to_input(
                 self.entity1, self.test_input_text
             )
         )
 
-        # テストケース3: Entity2は応答可能
+        # テストケース2: Entity2は応答可能なことを確認
         self.assertTrue(
             TurnManagementService.can_respond_to_input(
                 self.entity2, self.test_input_text
