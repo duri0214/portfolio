@@ -34,9 +34,8 @@ class CloudActPdfServiceTestCase(unittest.TestCase):
         このテストでは、CloudActPdfServiceのgenerate_rag_responseメソッドが
         入力テキストに含まれるキーワードに基づいて適切に応答を拡張することを検証します。
 
-        テスト内容：
-        1. 「法律」というキーワードを含む入力に対する応答の拡張
-        2. 「クラウド」というキーワードを含む入力に対する応答の拡張
+        テストケース1: 「法律」というキーワードを含む入力に対する応答の拡張
+        テストケース2: 「クラウド」というキーワードを含む入力に対する応答の拡張
 
         基底クラスのgenerate_rag_responseメソッドはモック化し、このテストでは
         CloudActPdfServiceによる応答の拡張部分のみに焦点を当てています。
@@ -56,6 +55,25 @@ class CloudActPdfServiceTestCase(unittest.TestCase):
         )
         self.assertIn("基本的な応答", result)
         self.assertIn("クラウドサービスを利用する企業", result)
+
+    @patch(
+        "ai_agent.domain.service.thinking_engines.base_rag_service.BaseRagService.can_respond"
+    )
+    def test_cannot_respond(self, mock_can_respond):
+        """応答できない場合のテスト
+
+        このテストでは、CloudActPdfServiceが応答できない場合に
+        適切にNoneを返すことを検証します。
+
+        テストケース1: can_respondがFalseを返す場合にNoneが返されることを確認
+        """
+        # モックの設定 - 応答不可
+        mock_can_respond.return_value = False
+
+        # テストケース1: 応答できない場合のテスト
+        entity = Entity(name="法律ボット")
+        result = CloudActPdfService.generate_rag_response(entity, "無関係な質問")
+        self.assertIsNone(result)
 
 
 class DecliningBirthRatePdfServiceTestCase(unittest.TestCase):
@@ -81,9 +99,8 @@ class DecliningBirthRatePdfServiceTestCase(unittest.TestCase):
         このテストでは、DecliningBirthRatePdfServiceのgenerate_rag_responseメソッドが
         入力テキストに含まれるキーワードに基づいて適切に応答を拡張することを検証します。
 
-        テスト内容：
-        1. 「出生率」というキーワードを含む入力に対する応答の拡張
-        2. 「子育て支援」というキーワードを含む入力に対する応答の拡張
+        テストケース1: 「出生率」というキーワードを含む入力に対する応答の拡張
+        テストケース2: 「子育て支援」というキーワードを含む入力に対する応答の拡張
 
         基底クラスのgenerate_rag_responseメソッドはモック化し、このテストでは
         DecliningBirthRatePdfServiceによる応答の拡張部分のみに焦点を当てています。
@@ -105,6 +122,27 @@ class DecliningBirthRatePdfServiceTestCase(unittest.TestCase):
         )
         self.assertIn("基本的な応答", result)
         self.assertIn("子育て支援策は少子化対策の重要な柱", result)
+
+    @patch(
+        "ai_agent.domain.service.thinking_engines.base_rag_service.BaseRagService.can_respond"
+    )
+    def test_cannot_respond(self, mock_can_respond):
+        """応答できない場合のテスト
+
+        このテストでは、DecliningBirthRatePdfServiceが応答できない場合に
+        適切にNoneを返すことを検証します。
+
+        テストケース1: can_respondがFalseを返す場合にNoneが返されることを確認
+        """
+        # モックの設定 - 応答不可
+        mock_can_respond.return_value = False
+
+        # テストケース1: 応答できない場合のテスト
+        entity = Entity(name="少子化ボット")
+        result = DecliningBirthRatePdfService.generate_rag_response(
+            entity, "無関係な質問"
+        )
+        self.assertIsNone(result)
 
 
 class GoogleMapsReviewServiceTestCase(unittest.TestCase):
@@ -136,9 +174,8 @@ class GoogleMapsReviewServiceTestCase(unittest.TestCase):
         このテストでは、GoogleMapsReviewServiceのgenerate_rag_responseメソッドが
         以下の機能を正しく実行することを検証します：
 
-        1. レストランに関する質問に対して、レビューデータを含む応答を生成
-        2. カフェに関する質問に対して、レビューデータを含む応答を生成
-        3. 応答できない質問（can_respondがFalseを返す場合）に対してNoneを返す
+        テストケース1: レストランに関する質問に対して、レビューデータを含む応答を生成
+        テストケース2: カフェに関する質問に対して、レビューデータを含む応答を生成
 
         GoogleMapsReviewServiceのcan_respondメソッドとget_reviewsメソッドは
         モック化されており、テストの制御性と再現性を高めています。
@@ -166,7 +203,21 @@ class GoogleMapsReviewServiceTestCase(unittest.TestCase):
         self.assertIn("レビュー2", result)
         self.assertIn("カフェでの作業環境", result)
 
-        # テストケース3: 応答できない場合のテスト
+    @patch(
+        "ai_agent.domain.service.thinking_engines.googlemaps_review.GoogleMapsReviewService.can_respond"
+    )
+    def test_cannot_respond(self, mock_can_respond):
+        """応答できない場合のテスト
+
+        このテストでは、GoogleMapsReviewServiceが応答できない場合に
+        適切にNoneを返すことを検証します。
+
+        テストケース1: can_respondがFalseを返す場合にNoneが返されることを確認
+        """
+        # モックの設定 - 応答不可
         mock_can_respond.return_value = False
+
+        # テストケース1: 応答できない場合のテスト
+        entity = Entity(name="レビューボット")
         result = GoogleMapsReviewService.generate_rag_response(entity, "無関係な質問")
         self.assertIsNone(result)
