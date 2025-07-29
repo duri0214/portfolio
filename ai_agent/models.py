@@ -158,7 +158,7 @@ class GuardrailConfig(models.Model):
         help_text="厳格モード（OpenAI API障害などの検証機能自体のエラー時も入力をブロック）",
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "ガードレール設定"
