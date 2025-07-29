@@ -146,7 +146,7 @@ class TurnManagementServiceTest(TestCase):
         2. create_message実行：メッセージをデータベースに保存
 
         テストケース：
-        1. タイムライン値の確認：next_turn値が正しく設定されていることを確認
+        - メッセージ作成後のタイムライン値が正しく設定されていること
 
         テスト内容：
         - TurnManagementRepository.create_message()の動作確認
