@@ -141,10 +141,12 @@ class TurnManagementServiceTest(TestCase):
         エンティティがメッセージを作成した際に、ActionHistoryが完了状態に
         更新され、メッセージがデータベースに正しく保存されることを確認します。
 
+        テスト準備：
+        1. ActionHistoryのActionHistoryレコードを作成
+        2. create_message実行：メッセージをデータベースに保存
+
         テストケース：
-        1. ActionHistoryのActionHistoryレコードが作成される
-        2. create_message実行：メッセージがデータベースに保存される
-        3. タイムライン値の確認：next_turn値が正しく設定されていることを確認
+        1. タイムライン値の確認：next_turn値が正しく設定されていることを確認
 
         テスト内容：
         - TurnManagementRepository.create_message()の動作確認
@@ -158,17 +160,17 @@ class TurnManagementServiceTest(TestCase):
         3. ActionHistory更新：ActionHistoryのdoneフラグがTrueに更新される
         4. タイムライン確認：next_turn = 1/speed = 0.01
         """
-        # テストケース1: ActionHistoryオブジェクトを作成
+        # テスト準備1: ActionHistoryオブジェクトを作成
         action_history = ActionHistory.objects.create(
             entity=self.entity1, acted_at_turn=1, done=False
         )
 
-        # テストケース2: Entity1でメッセージを作成
+        # テスト準備2: Entity1でメッセージを作成
         TurnManagementRepository.create_message(
             content="Test Message", action_history=action_history
         )
 
-        # テストケース3: タイムラインの設定が正しいか確認
+        # テストケース: タイムラインの設定が正しいか確認
         timeline = ActionTimeline.objects.get(entity=self.entity1)
         self.assertEqual(timeline.next_turn, 1 / self.entity1.speed)
 
