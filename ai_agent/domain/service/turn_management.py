@@ -100,8 +100,8 @@ class TurnManagementService:
 
         各エンティティのthinking_typeに基づいて適切な思考エンジンサービスを選択し、
         入力テキストに対してそのエンティティが応答可能かどうかを評価します。
-        例えば、「レストラン」というキーワードはGoogleMapsReviewServiceが処理できます。
-        「法律」というキーワードはCloudActPdfServiceが処理できます。
+        例えば、「レストラン」というキーワードはGoogleMapsReviewServiceがうまく処理できます。
+        「法律」というキーワードはCloudActPdfServiceがうまく処理できます。
 
         処理の流れ：
         1. エンティティのthinking_typeを確認
