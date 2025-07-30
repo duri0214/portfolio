@@ -42,6 +42,8 @@ class GoogleMapsReviewService(BaseRagService):
         Note:
             現在はシーダーで登録した疑似レビューデータを使用しており、実際のGoogle Mapsからの
             データ収集は行われていません。開発・テスト目的の限定的なデータのみが利用可能です。
+            基底クラスのget_content()メソッドは使用せず、複数レコードの取得と結合を
+            独自に実装しています。
 
         Returns:
             str: 全てのGoogle Mapsレビュー素材を結合したテキスト
