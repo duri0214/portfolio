@@ -143,6 +143,24 @@ class BaseRagService(ABC):
         入力テキストと保存されたRAG素材に基づいて、適切な応答を生成します。
         RAGベースの応答が不可能な場合はNoneを返します。
 
+        Note:
+            現実装は真のRAG（Retrieval-Augmented Generation）ではなく、シンプルな
+            キーワードマッチングに基づくコンテンツ取得と応答生成を行っています。
+            - ベクトル検索を使用していない
+            - セマンティック類似性での検索ではなく、キーワード部分一致
+            - LLMを使用したコンテンツの再生成を行わない
+
+            将来的な実装では以下が計画されています：
+            - LangChainなどのRAGフレームワークの活用
+            - 埋め込みベクトルを使用したセマンティック検索
+            - 複数ソースからの情報の統合と要約
+            - プロンプトエンジニアリングによる高度な応答生成
+
+            子クラス（GoogleMapsReviewService、CloudActPdfServiceなど）では、
+            material_typeとrelevant_keywordsを適切に設定し、必要に応じて
+            このメソッドをオーバーライドして特定のキーワードに基づいた
+            カスタム応答を生成しています。
+
         Args:
             entity (Entity): 応答を生成するエンティティ
             input_text (str): ユーザーからの入力テキスト
