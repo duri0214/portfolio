@@ -57,13 +57,20 @@ class BaseRagService(ABC):
     def _check_data_exists(cls) -> bool:
         """必要なデータが存在するかを確認する
 
-        Returns:
-            bool: データが存在する場合True
-        """
-        if cls.material_type == "":
-            return False
+        material_typeが設定されていない場合、または指定されたタイプの
+        RagMaterialデータが存在しない場合はFalseを返します。
 
-        return RagMaterial.objects.filter(material_type=cls.material_type).exists()
+        Note:
+            material_typeは子クラスで必ず設定する必要があります。未設定の場合は
+            不正な状態となり、RAG処理が正しく機能しません。
+
+        Returns:
+            bool: データが存在する場合True、そうでない場合はFalse
+        """
+        return (
+            cls.material_type != ""
+            and RagMaterial.objects.filter(material_type=cls.material_type).exists()
+        )
 
     @classmethod
     def _check_relevance(cls, input_text: str) -> bool:
