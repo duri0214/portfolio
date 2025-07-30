@@ -112,7 +112,11 @@ class BaseRagService(ABC):
 
     @classmethod
     def get_content(cls) -> str:
-        """RagMaterialから単一のレコードの内容を取得する（first()を使用）
+        """RagMaterialから単一のレコードの内容を取得する
+
+        Note:
+            このメソッドは単一レコードのみを取得します（first()を使用）。
+            複数レコードを取得する場合は get_contents_merged() を使用してください。
 
         Returns:
             str: RagMaterialから取得した単一レコードのコンテンツ
@@ -121,6 +125,32 @@ class BaseRagService(ABC):
         if material:
             return material.source_text
         return f"{cls.material_type}に関する情報が見つかりませんでした。"
+
+    @classmethod
+    def get_contents_merged(cls, separator="\n\n") -> str:
+        """RagMaterialから全てのレコードを取得して結合したテキストを返す
+
+        Args:
+            separator (str, optional): 複数レコードを結合する際の区切り文字。デフォルトは改行2つ。
+
+        Note:
+            複数のRagMaterialレコードが存在する場合、全てのレコードを取得して
+            指定されたセパレータで結合したテキストを返します。
+            単一レコードの場合はget_content()と同じ結果を返します。
+
+        Returns:
+            str: RagMaterialから取得した全レコードを結合したコンテンツ
+        """
+        materials = RagMaterial.objects.filter(material_type=cls.material_type)
+        if not materials.exists():
+            return f"{cls.material_type}に関する情報が見つかりませんでした。"
+
+        # 1レコードの場合はそのまま返す
+        if materials.count() == 1:
+            return materials.first().source_text
+
+        # 複数レコードの場合は結合して返す
+        return separator.join([material.source_text for material in materials])
 
     @classmethod
     def generate_rag_response(cls, entity: Entity, input_text: str) -> str | None:

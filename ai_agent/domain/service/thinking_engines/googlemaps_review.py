@@ -1,5 +1,4 @@
 from ai_agent.domain.service.thinking_engines.base_rag_service import BaseRagService
-from ai_agent.models import RagMaterial
 
 
 class GoogleMapsReviewService(BaseRagService):
@@ -42,23 +41,12 @@ class GoogleMapsReviewService(BaseRagService):
         Note:
             現在はシーダーで登録した疑似レビューデータを使用しており、実際のGoogle Mapsからの
             データ収集は行われていません。開発・テスト目的の限定的なデータのみが利用可能です。
-            基底クラスのget_content()メソッドは使用せず、複数レコードの取得と結合を
-            独自に実装しています。
+            基底クラスのget_contents_mergedメソッドを使用して、複数レコードの取得と結合を行います。
 
         Returns:
             str: 全てのGoogle Mapsレビュー素材を結合したテキスト
         """
-        # レビューの場合は複数レコードを直接取得
-        materials = RagMaterial.objects.filter(material_type=cls.material_type)
-        if not materials.exists():
-            return f"{cls.material_type}に関する情報が見つかりませんでした。"
-
-        # 1レコードの場合はそのまま返す
-        if materials.count() == 1:
-            return materials.first().source_text
-
-        # 複数レコードの場合は結合して返す
-        return "\n\n".join([material.source_text for material in materials])
+        return cls.get_contents_merged()
 
     @classmethod
     def generate_rag_response(cls, entity, input_text: str):
