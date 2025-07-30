@@ -141,7 +141,7 @@ class BaseRagService(ABC):
         """RAGベースのレスポンスを生成する
 
         入力テキストと保存されたRAG素材に基づいて、適切な応答を生成します。
-        RAGベースの応答が不可能な場合はNoneを返します。
+        entityの応答が不可能な場合はNoneを返します。
 
         Note:
             現実装は真のRAG（Retrieval-Augmented Generation）ではなく、シンプルな
