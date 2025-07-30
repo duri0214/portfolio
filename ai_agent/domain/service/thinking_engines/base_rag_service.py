@@ -112,10 +112,10 @@ class BaseRagService(ABC):
 
     @classmethod
     def get_content(cls) -> str:
-        """RagMaterialから内容を取得する
+        """RagMaterialから単一のレコードの内容を取得する（first()を使用）
 
         Returns:
-            str: RagMaterialから取得したコンテンツ
+            str: RagMaterialから取得した単一レコードのコンテンツ
         """
         material = RagMaterial.objects.filter(material_type=cls.material_type).first()
         if material:
