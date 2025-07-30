@@ -46,15 +46,17 @@ class GoogleMapsReviewService(BaseRagService):
         Returns:
             str: 全てのGoogle Mapsレビュー素材を結合したテキスト
         """
-        # 基本的なコンテンツ取得
-        basic_content = cls.get_content()
-
-        # レビューの場合は複数レコードを結合して返す特殊処理
+        # レビューの場合は複数レコードを直接取得
         materials = RagMaterial.objects.filter(material_type=cls.material_type)
-        if materials.count() > 1:
-            return "\n\n".join([material.source_text for material in materials])
+        if not materials.exists():
+            return f"{cls.material_type}に関する情報が見つかりませんでした。"
 
-        return basic_content
+        # 1レコードの場合はそのまま返す
+        if materials.count() == 1:
+            return materials.first().source_text
+
+        # 複数レコードの場合は結合して返す
+        return "\n\n".join([material.source_text for material in materials])
 
     @classmethod
     def generate_rag_response(cls, entity, input_text: str):
