@@ -111,22 +111,6 @@ class BaseRagService(ABC):
         return False
 
     @classmethod
-    def get_content(cls) -> str:
-        """RagMaterialから単一のレコードの内容を取得する
-
-        Note:
-            このメソッドは単一レコードのみを取得します（first()を使用）。
-            複数レコードを取得する場合は get_contents_merged() を使用してください。
-
-        Returns:
-            str: RagMaterialから取得した単一レコードのコンテンツ
-        """
-        material = RagMaterial.objects.filter(material_type=cls.material_type).first()
-        if material:
-            return material.source_text
-        return f"{cls.material_type}に関する情報が見つかりませんでした。"
-
-    @classmethod
     def get_contents_merged(cls, separator="\n\n") -> str:
         """RagMaterialから全てのレコードを取得して結合したテキストを返す
 
@@ -136,7 +120,7 @@ class BaseRagService(ABC):
         Note:
             複数のRagMaterialレコードが存在する場合、全てのレコードを取得して
             指定されたセパレータで結合したテキストを返します。
-            単一レコードの場合はget_content()と同じ結果を返します。
+            単一レコードの場合も同様に動作します。
 
         Returns:
             str: RagMaterialから取得した全レコードを結合したコンテンツ
@@ -170,7 +154,7 @@ class BaseRagService(ABC):
             return None
 
         # 関連するコンテンツを取得
-        content = cls.get_content()
+        content = cls.get_contents_merged()
 
         # 入力と取得したコンテンツに基づいて応答を生成
         response = (

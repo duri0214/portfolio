@@ -62,7 +62,7 @@ class DecliningBirthRatePdfService(BaseRagService):
         Returns:
             str: PDFから抽出したテキスト（または事前登録されたサンプルデータ）
         """
-        return cls.get_content()
+        return cls.get_contents_merged()
 
     @classmethod
     def generate_rag_response(cls, entity: Entity, input_text: str):
