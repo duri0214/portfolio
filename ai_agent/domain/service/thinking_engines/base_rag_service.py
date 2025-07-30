@@ -74,20 +74,41 @@ class BaseRagService(ABC):
 
     @classmethod
     def _check_relevance(cls, input_text: str) -> bool:
-        """入力テキストが関連キーワードに一致するかを確認する
+        """入力テキストが関連キーワードを含むかを確認する
 
         Args:
             input_text (str): チェック対象の入力テキスト
 
+        Note:
+            relevant_keywordsは子クラスで必ず設定する必要があります。未設定の場合は
+            どのような入力に対しても不一致となり、RAG処理が正しく機能しません。
+
+            このメソッドは「部分一致」で判定します。つまり、input_textの中に
+            relevant_keywordsのいずれかの文字列が含まれていれば一致と判定します。
+
+            大文字小文字は区別されません。例えば：
+            - relevant_keywords=["Cat", "Dog"] のとき
+            - 「私はCAT（猫）が好きです」は一致します
+            - 「cat好き」も一致します
+
         Returns:
-            bool: 関連キーワードに一致する場合True
+            bool: 入力テキストが関連キーワードのいずれかを含む場合True、含まない場合False
         """
         if not cls.relevant_keywords:
             return False
 
-        return any(
-            keyword.lower() in input_text.lower() for keyword in cls.relevant_keywords
-        )
+        # 入力テキストを小文字に変換
+        lowercase_input = input_text.lower()
+
+        # キーワードも事前に小文字に変換してリスト化
+        lowercase_keywords = [keyword.lower() for keyword in cls.relevant_keywords]
+
+        # 各キーワードが入力テキストに含まれているかチェック（部分一致）
+        for keyword in lowercase_keywords:
+            if keyword in lowercase_input:
+                return True
+
+        return False
 
     @classmethod
     def get_content(cls) -> str:
