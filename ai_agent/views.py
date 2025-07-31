@@ -6,9 +6,7 @@ from django.views.generic.edit import FormView
 
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
 from ai_agent.domain.service.input_processor import InputProcessor
-from ai_agent.domain.service.thinking_engines.googlemaps_review import (
-    GoogleMapsReviewService,
-)
+from ai_agent.domain.service.thinking_engine_processor import ThinkingEngineProcessor
 from ai_agent.domain.service.turn_management import TurnManagementService
 from ai_agent.forms import SendMessageForm
 from ai_agent.models import Message, Entity, ActionHistory
@@ -204,177 +202,20 @@ class ResetTimelineView(View):
 
 
 class NextTurnView(View):
-    """
-    会話の次のターンに進むための処理を行うビュー。
-
-    このビューは、タイムライン上の次のアクション（未完了の最初のActionHistory）を
-    取得し、そのアクションを完了状態に更新します。次に、対応するエンティティが
-    行動可能かどうかを確認し、行動可能な場合は次のエンティティを取得して
-    メッセージを生成します。
-
-    エンティティが行動できない場合やこれ以上のアクションがない場合は、
-    適切なメッセージを表示し、必要に応じてタイムラインをリセットします。
-
-    このビューはチャットシステムのターン制進行を制御する中心的な役割を担っています。
-    """
-
     @staticmethod
     def post(request, *args, **kwargs):
         """
         次のターンに進むPOSTリクエストを処理します。
 
-        Args:
-            request (HttpRequest): リクエストオブジェクト
-            *args: 可変位置引数
-            **kwargs: 可変キーワード引数
-
         Returns:
             HttpResponseRedirect: インデックスページへのリダイレクト
         """
-        NextTurnView.process_next_turn(request)
-        return redirect("agt:index")
-
-    @staticmethod
-    def process_next_turn(request):
-        """
-        次のターンに進む処理を行います。
-
-        処理の流れ：
-        1. 現在のターンのアクションを取得
-        2. アクションが存在しない場合はタイムラインをリセット
-        3. エンティティのアクションタイムラインを取得
-        4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
-           - メッセージ作成と同時にアクションを完了状態に更新
-        5. 行動可能な場合は現在行動するエンティティを取得してメッセージを生成
-           - メッセージ作成と同時にアクションを完了状態に更新
-        6. 行動可能なエンティティがない場合はタイムラインをリセット
-
-        Args:
-            request (HttpRequest): リクエストオブジェクト
-        """
-        # 1. 現在のターンのアクションを取得
-        current_action_history = (
-            ActionHistory.objects.filter(done=False).order_by("acted_at_turn").first()
-        )
-        if not current_action_history:
-            # 2. アクションが存在しない場合はタイムラインをリセット
-            messages.info(
-                request,
-                "処理すべきアクションはもうありません。タイムラインがリセットされました。",
-            )
-            ResetTimelineView.reset_timeline()
-            return
-
-        # 3. エンティティのアクションタイムラインを取得
-        timeline = TurnManagementRepository.get_action_timeline(
-            current_action_history.entity
-        )
-
-        # タイムラインが存在しない場合は処理を中断
-        if not timeline:
-            messages.error(request, "エンティティのタイムラインが見つかりません。")
-            return
-
-        # エンティティのcan_actフラグを更新
-        timeline.can_act = TurnManagementService.can_respond_to_input(
-            current_action_history.entity, ""
-        )
-        timeline.save()
-
-        # 4. エンティティが行動可能か確認し、不可能な場合はその旨を通知
-        if not timeline.can_act:
-            thinking_type_disp = (
-                current_action_history.entity.get_thinking_type_display()
-            )
-            TurnManagementRepository.create_message(
-                content=f"[ERROR]{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できませんでした",
-                action_history=current_action_history,
-            )
-
-            upcoming_action_history = (
-                ActionHistory.objects.filter(done=False)
-                .order_by("acted_at_turn")
-                .first()
-            )
-            warning_msg = f"{current_action_history.entity.name}（{thinking_type_disp}）はチャットに参加できない状態です。"
-
-            if upcoming_action_history:
-                warning_msg += f"\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
-            else:
-                warning_msg += "\n処理すべきアクションはもうありません。"
-
-            messages.warning(request, warning_msg)
-            return
-
         try:
-            # 5. 行動可能な場合は現在行動するエンティティを取得してメッセージを生成
-            active_entity = current_action_history.entity
-
-            # Userの場合はスキップ（Userはform_validで処理されるため）
-            if active_entity.name == "User":
-                messages.error(
-                    request,
-                    "Userエンティティのターンは「1単位時間進める」ボタンでは進められません。チャットフォームからメッセージを送信してください。",
-                )
-                return
-
-            # 直近5つのチャットメッセージをコンテキストとして取得
-            context = "\n".join(
-                [
-                    msg.message_content
-                    for msg in Message.objects.order_by("-created_at")[:5]
-                ]
+            ThinkingEngineProcessor.process_turn(request)
+        except Exception as e:
+            log_service.write(f"次のターン処理中にエラーが発生しました: {e}")
+            messages.error(
+                request, "処理中にエラーが発生しました。管理者に連絡してください。"
             )
 
-            # エンティティの思考タイプに応じて適切な応答を生成
-            if active_entity.thinking_type == "google_maps_based":
-                reviews = GoogleMapsReviewService.get_reviews()
-                processor = InputProcessor(active_entity)
-                response_text = processor.process_input(
-                    f"以下のGoogleマップレビューを参考に回答を生成: {reviews}\n\nコンテキスト: {context}"
-                )
-            elif active_entity.thinking_type == "cloud_act_based":
-                processor = InputProcessor(active_entity)
-                response_text = processor.process_input(
-                    f"Cloud Act関連の知識ベースに基づいて応答を生成\n\nコンテキスト: {context}"
-                )
-            elif active_entity.thinking_type == "declining_birth_rate_based":
-                processor = InputProcessor(active_entity)
-                response_text = processor.process_input(
-                    f"少子化対策に関する専門知識に基づいて応答を生成\n\nコンテキスト: {context}"
-                )
-            else:
-                # 標準的な応答処理
-                processor = InputProcessor(active_entity)
-                response_text = processor.process_input(
-                    "通常の対話モードで応答を生成します"
-                )
-
-            # 生成した応答をアクション履歴と共に保存
-            TurnManagementRepository.create_message(
-                content=response_text,
-                action_history=current_action_history,
-            )
-
-            # フラッシュメッセージを設定
-            # 次のターンのアクションを取得
-            upcoming_action_history = (
-                ActionHistory.objects.filter(done=False)
-                .order_by("acted_at_turn")
-                .first()
-            )
-            success_msg = f"{active_entity.name} のターンが完了しました。"
-
-            if upcoming_action_history:
-                success_msg += f"\n次は {upcoming_action_history.entity.name} のターンです。「1単位時間進める」ボタンをクリックしてください。"
-            else:
-                success_msg += "\n処理すべきアクションはもうありません。"
-
-            messages.success(request, success_msg)
-
-        except ValueError:
-            # 6. 行動可能なエンティティがない場合はタイムラインをリセット
-            messages.info(
-                request, "No more actions left to process. Timeline has been reset."
-            )
-            ResetTimelineView.reset_timeline()
+        return redirect("agt:index")
