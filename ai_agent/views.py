@@ -182,6 +182,7 @@ class ResetTimelineView(View):
         5. すべてのActionHistoryレコードを未完了状態（done=False）に設定
 
         この処理により、エンティティのスピード属性に基づいた新しい行動順序が決定されます。
+        TODO: ai_agent/domain/service/thinking_engine_processor.py に移す issue 322
         """
         # メッセージ履歴をクリア
         Message.objects.all().delete()
