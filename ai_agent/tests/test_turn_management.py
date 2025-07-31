@@ -117,19 +117,19 @@ class TurnManagementServiceTest(TestCase):
         - Entity2: next_turn = 1/10 = 0.10
         - 高速エンティティほど小さな next_turn 値を持つ
 
-        検証項目：
-        - タイムラインレコード数 = エンティティ数（2個）
-        - 各エンティティの next_turn = 1 / entity.speed
+        テストケース：
+        1. タイムラインレコード数 = エンティティ数（2個）
+        2. 各エンティティの next_turn = 1 / entity.speed
 
         重要性：
         この機能が正しく動作しないと、エンティティの行動順序が
         不正確になり、システム全体の動作が破綻する。
         """
-        # タイムラインに全エンティティが登録されているか確認
+        # テストケース1: タイムラインに全エンティティが登録されているか確認
         timelines = ActionTimeline.objects.all()
         self.assertEqual(timelines.count(), 2)
 
-        # 各エンティティの next_turn が適切に計算されているか確認
+        # テストケース2: 各エンティティの next_turn が 1/speed で計算されているか確認
         for timeline in timelines:
             self.assertEqual(timeline.next_turn, 1 / timeline.entity.speed)
 
@@ -141,11 +141,12 @@ class TurnManagementServiceTest(TestCase):
         エンティティがメッセージを作成した際に、ActionHistoryが完了状態に
         更新され、メッセージがデータベースに正しく保存されることを確認します。
 
-        テストの流れ：
-        1. 初期状態：ActionHistoryのActionHistoryレコードが作成される
-        2. create_message実行：メッセージがデータベースに保存される
-        3. ActionHistoryが完了状態(done=True)に更新される
-        4. 次のActionHistoryレコードが処理される
+        テスト準備：
+        1. ActionHistoryのActionHistoryレコードを作成
+        2. create_message実行：メッセージをデータベースに保存
+
+        テストケース：
+        - メッセージ作成後のタイムライン値が正しく設定されていること
 
         テスト内容：
         - TurnManagementRepository.create_message()の動作確認
@@ -159,19 +160,18 @@ class TurnManagementServiceTest(TestCase):
         3. ActionHistory更新：ActionHistoryのdoneフラグがTrueに更新される
         4. タイムライン確認：next_turn = 1/speed = 0.01
         """
-        # ActionHistoryオブジェクトを作成
+        # テスト準備1: ActionHistoryオブジェクトを作成
         action_history = ActionHistory.objects.create(
             entity=self.entity1, acted_at_turn=1, done=False
         )
-        # Entity1 でメッセージを作成
+
+        # テスト準備2: Entity1でメッセージを作成
         TurnManagementRepository.create_message(
             content="Test Message", action_history=action_history
         )
 
-        # タイムラインを確認
+        # テストケース: タイムラインの設定が正しいか確認
         timeline = ActionTimeline.objects.get(entity=self.entity1)
-
-        # タイムライン初期化時の next_turn を確認
         self.assertEqual(timeline.next_turn, 1 / self.entity1.speed)
 
     def test_simulate_next_actions(self):
@@ -209,11 +209,12 @@ class TurnManagementServiceTest(TestCase):
         - 各next_turn値が正確に計算されている
         - 実際のデータベース状態は変更されない
 
-        検証項目：
-        - 返される配列の長さ = max_steps
-        - 各EntityVOのname属性の正確性
-        - 各EntityVOのnext_turn属性の数学的正確性
-        - 速度比に基づく行動頻度の正確性
+        テスト準備：
+        - 11ステップ分のアクションをシミュレーション
+
+        テストケース：
+        - シミュレーション結果が期待値と一致すること
+          (以下の点を検証: 配列長、EntityVO名前、next_turn値、速度比に基づく行動頻度)
 
         技術的詳細：
         - EntityVO：Value Objectパターンによる不変オブジェクト
@@ -224,9 +225,10 @@ class TurnManagementServiceTest(TestCase):
         この機能により、ユーザーは今後の会話の流れを予測でき、
         システム管理者はエンティティの行動パターンをデバッグできる。
         """
+        # テスト準備: 次の11ステップをシミュレーション実行
         simulation = TurnManagementService.simulate_next_actions(max_steps=11)
 
-        # シミュレーション結果の期待値
+        # テストケース: シミュレーション結果と期待値を比較（各EntityVOの名前と次のターン値の検証）
         expected_simulation = [
             EntityVO(name="Entity1", next_turn=0.01),
             EntityVO(name="Entity1", next_turn=0.02),
@@ -240,31 +242,47 @@ class TurnManagementServiceTest(TestCase):
             EntityVO(name="Entity1", next_turn=0.10),
             EntityVO(name="Entity2", next_turn=0.10),
         ]
-        # リスト全体を比較
         for actual, expected in zip(simulation, expected_simulation):
             self.assertEqual(actual.name, expected.name)
             self.assertAlmostEqual(actual.next_turn, expected.next_turn, places=2)
 
-    @patch("ai_agent.domain.service.turn_management.TurnManagementService.think")
-    def test_can_act_false_skips_entity(self, mock_think):
+    @patch(
+        "ai_agent.domain.service.turn_management.TurnManagementService.can_respond_to_input"
+    )
+    def test_can_act_false_skips_entity(self, mock_can_respond):
         """
-        このテストでは、TurnManagementServiceのthinkメソッドの基本的な動作を検証します。
+        このテストでは、TurnManagementServiceのcan_respond_to_inputメソッドの基本的な動作を検証します。
 
-        thinkメソッドはエンティティの思考タイプに基づいて、適切な思考エンジンを選択し、
+        can_respond_to_inputメソッドはエンティティの思考タイプに基づいて、適切な思考エンジンを選択し、
         入力テキストに対して応答可能かどうかを判断します。各思考エンジンは異なる判断基準を
         持ち、エンティティごとの振る舞いをカスタマイズできる設計になっています。
+
+        テスト準備：
+        - can_respond_to_inputメソッドをモック化し、Entity1にはFalse、その他にはTrueを返すよう設定
+
+        テストケース：
+        - エンティティの応答可能性が正しく判定されること
+          (Entity1が応答不可、Entity2が応答可能)
         """
 
-        # think をモック化
-        def mock_think_side_effect(entity, input_text):
+        # テスト準備: モック関数の設定 - エンティティごとの応答可否をシミュレート
+        def mock_can_respond_side_effect(entity, input_text):
             if entity == self.entity1:
                 return False  # Entity1 は行動不可
             return True  # 他のエンティティは行動可能
 
-        mock_think.side_effect = mock_think_side_effect
+        mock_can_respond.side_effect = mock_can_respond_side_effect
 
-        # thinkメソッドが期待通りの値を返すことを確認
+        # テストケース1: Entity1は応答不可能なことを確認
         self.assertFalse(
-            TurnManagementService.think(self.entity1, self.test_input_text)
+            TurnManagementService.can_respond_to_input(
+                self.entity1, self.test_input_text
+            )
         )
-        self.assertTrue(TurnManagementService.think(self.entity2, self.test_input_text))
+
+        # テストケース2: Entity2は応答可能なことを確認
+        self.assertTrue(
+            TurnManagementService.can_respond_to_input(
+                self.entity2, self.test_input_text
+            )
+        )

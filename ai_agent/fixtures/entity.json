@@ -1,10 +1,10 @@
-[
+[  
   {
     "model": "ai_agent.entity",
     "pk": 1,
     "fields": {
       "name": "User",
-      "thinking_type": "google_maps_based",
+      "thinking_type": null,
       "speed": 5
     }
   },
@@ -22,7 +22,7 @@
     "pk": 3,
     "fields": {
       "name": "Agent-B",
-      "thinking_type": "rag_based",
+      "thinking_type": "cloud_act_based",
       "speed": 10
     }
   },
@@ -31,23 +31,8 @@
     "pk": 4,
     "fields": {
       "name": "Agent-C",
-      "thinking_type": "ng_word_based",
+      "thinking_type": "declining_birth_rate_based",
       "speed": 14
-    }
-  },
-  {
-    "model": "ai_agent.GuardrailConfig",
-    "pk": 1,
-    "fields": {
-      "entity": 4,
-      "forbidden_words": [
-        "暴力",
-        "万引き"
-      ],
-      "max_input_length": 500,
-      "use_openai_moderation": false,
-      "strict_mode": false,
-      "created_at": "2025-01-01T00:00:00Z"
     }
   }
 ]
