@@ -15,9 +15,6 @@ class GoogleMapsReviewService(BaseRagService):
         "サービス",
     ]
 
-    def __init__(self, relevant_keywords: list[str] = None):
-        super().__init__(relevant_keywords)
-
     @classmethod
     def load_source_to_rag_material(cls):
         """Google Mapsレビューをデータソースから収集し、RagMaterialに保存します。
