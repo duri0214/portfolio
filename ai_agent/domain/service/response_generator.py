@@ -1,3 +1,6 @@
+from ai_agent.domain.repository.thinking_engine_processor import (
+    ThinkingEngineProcessorRepository,
+)
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
 from ai_agent.domain.service.thinking_engine_processor import ThinkingEngineProcessor
 from ai_agent.domain.service.turn_management import TurnManagementService
@@ -33,7 +36,7 @@ class ResponseGenerator:
         """
         # 1. エンティティ情報を取得し、最新の会話コンテキストを取得
         entity = action_history.entity
-        context = ThinkingEngineProcessor.get_recent_context()
+        context = ThinkingEngineProcessorRepository.get_recent_messages()
 
         # 2. エンティティのアクションタイムラインを確認し、存在しない場合はエラー
         active_entity_timeline = TurnManagementRepository.get_action_timeline(entity)
@@ -63,6 +66,7 @@ class ResponseGenerator:
         )
 
         # 5. 生成された最新のメッセージ内容を返却
-        response_text = ThinkingEngineProcessor.get_recent_context(limit=1)
+        latest_message = ThinkingEngineProcessorRepository.get_latest_message()
+        response_text = latest_message.message_content if latest_message else ""
 
         return response_text
