@@ -1,5 +1,4 @@
 from ai_agent.domain.service.thinking_engines.base_rag_service import BaseRagService
-from ai_agent.models import Entity
 from lib.llm.valueobject.rag import PdfDataloader
 
 
@@ -54,27 +53,3 @@ class CloudActPdfService(BaseRagService):
             str: PDFから抽出したテキスト（または事前登録されたサンプルデータ）
         """
         return cls.get_contents_merged()
-
-    @classmethod
-    def generate_rag_response(cls, entity: Entity, input_text: str):
-        """Cloud Actに関する入力に対してRAGベースのレスポンスを生成する
-
-        Args:
-            entity (Entity): 応答を生成するエンティティ
-            input_text (str): ユーザーからの入力テキスト
-
-        Returns:
-            Optional[str]: 生成された応答、または応答できない場合はNone
-        """
-        # 基底クラスのgenerate_rag_responseメソッドを呼び出す
-        response = super().generate_rag_response(entity, input_text)
-
-        # レスポンスをよりCloud Act特化した形式に整形
-        if response:
-            # 特定のキーワードに基づいて応答をカスタマイズする例
-            if "法律" in input_text.lower() or "law" in input_text.lower():
-                response += "\n\nCloud Actは米国の法律であり、国際的なデータアクセスに影響を与えます。"
-            elif "クラウド" in input_text or "cloud" in input_text.lower():
-                response += "\n\nクラウドサービスを利用する企業は、Cloud Actの影響を理解することが重要です。"
-
-        return response

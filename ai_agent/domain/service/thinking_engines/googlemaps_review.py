@@ -47,32 +47,3 @@ class GoogleMapsReviewService(BaseRagService):
             str: 全てのGoogle Mapsレビュー素材を結合したテキスト
         """
         return cls.get_contents_merged()
-
-    @classmethod
-    def generate_rag_response(cls, entity, input_text: str):
-        """Google Mapsレビューに関する入力に対してRAGベースのレスポンスを生成する
-
-        Args:
-            entity (Entity): 応答を生成するエンティティ
-            input_text (str): ユーザーからの入力テキスト
-
-        Returns:
-            Optional[str]: 生成された応答、または応答できない場合はNone
-        """
-        if not cls.can_respond(input_text, entity):
-            return None
-
-        # レビューの場合は特殊処理：複数のレビューを取得
-        reviews = cls.get_reviews()
-
-        # レスポンスを整形
-        response = f"{entity.name}は以下のレビュー情報を提供します:\n\n"
-        response += reviews
-
-        # キーワードに応じた追加コメント
-        if "レストラン" in input_text or "食事" in input_text:
-            response += "\n\nこれらのレビューから、おすすめのレストランを選ぶ際の参考にしてください。"
-        elif "カフェ" in input_text:
-            response += "\n\nカフェでの作業環境についてのレビューも参考になるでしょう。"
-
-        return response
