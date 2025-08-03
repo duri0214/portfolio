@@ -67,7 +67,9 @@ class BaseRagService(ABC):
         """
         return (
             self.__class__.material_type != ""
-            and RagMaterial.objects.filter(material_type=self.__class__.material_type).exists()
+            and RagMaterial.objects.filter(
+                material_type=self.__class__.material_type
+            ).exists()
         )
 
     def _check_relevance(self, input_text: str) -> bool:
