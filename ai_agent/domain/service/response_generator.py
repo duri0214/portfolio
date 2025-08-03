@@ -2,8 +2,15 @@ from ai_agent.domain.repository.thinking_engine_processor import (
     ThinkingEngineProcessorRepository,
 )
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
+from ai_agent.domain.service.context_analyzer import ContextAnalyzerService
 from ai_agent.domain.service.thinking_engine_processor import ThinkingEngineProcessor
-from ai_agent.domain.service.turn_management import TurnManagementService
+from ai_agent.domain.service.thinking_engines.cloud_act_pdf import CloudActPdfService
+from ai_agent.domain.service.thinking_engines.declining_birth_rate_pdf import (
+    DecliningBirthRatePdfService,
+)
+from ai_agent.domain.service.thinking_engines.googlemaps_review import (
+    GoogleMapsReviewService,
+)
 from ai_agent.models import ActionHistory
 from lib.log_service import LogService
 
@@ -25,8 +32,16 @@ class ResponseGenerator:
         1. エンティティ情報を取得し、最新の会話コンテキストを取得
         2. エンティティのアクションタイムラインを確認し、存在しない場合はエラー
         3. エンティティが現在の会話内容に対応できるかチェック
+           - エンティティのthinking_typeに基づいて適切な思考エンジンサービスを選択
+           - RAG素材を使用してチャット履歴をエンティティの専門性に合わせてリフレーミング
+           - リフレーミングされたコンテキストが応答可能かどうかを評価（True/False）
         4. ThinkingEngineProcessorを使用して応答を生成・保存
         5. 生成された最新のメッセージ内容を返却
+
+        サポートされている思考エンジン：
+        - GoogleMapsReviewService: 地図・レビュー関連の質問に対応
+        - CloudActPdfService: 法律文書・クラウド関連の質問に対応
+        - DecliningBirthRatePdfService: 少子化・人口動態関連の質問に対応
 
         Args:
             action_history (ActionHistory): 現在のアクション履歴（エンティティ情報を含む）
@@ -48,7 +63,38 @@ class ResponseGenerator:
             return error_message
 
         # 3. エンティティが現在の会話内容に対応できるかチェック
-        can_act = TurnManagementService.can_respond_to_input(entity, context)
+        can_act = True
+
+        # エンティティのthinking_typeに基づいて適切な思考エンジンサービスを選択
+        if entity.thinking_type == "google_maps_based":
+            # RAG素材を使用してチャット履歴をエンティティの専門性に合わせてリフレーミング
+            service = GoogleMapsReviewService()
+            reframed_context = ContextAnalyzerService.reframe_context_for_entity(
+                context=context,
+                entity=entity,
+                rag_source=service.get_contents_merged(),
+            )
+            # リフレーミングされたコンテキストが応答可能かどうかを評価（True/False）
+            can_act = service.can_respond(reframed_context, entity)
+
+        elif entity.thinking_type == "cloud_act_based":
+            service = CloudActPdfService()
+            reframed_context = ContextAnalyzerService.reframe_context_for_entity(
+                context=context,
+                entity=entity,
+                rag_source=service.get_contents_merged(),
+            )
+            can_act = service.can_respond(reframed_context, entity)
+
+        elif entity.thinking_type == "declining_birth_rate_based":
+            service = DecliningBirthRatePdfService()
+            reframed_context = ContextAnalyzerService.reframe_context_for_entity(
+                context=context,
+                entity=entity,
+                rag_source=service.get_contents_merged(),
+            )
+            can_act = service.can_respond(reframed_context, entity)
+
         active_entity_timeline.can_act = can_act
         active_entity_timeline.save()
         if not can_act:
