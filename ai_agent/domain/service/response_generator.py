@@ -66,6 +66,7 @@ class ResponseGenerator:
         can_act = True
 
         # エンティティのthinking_typeに基づいて適切な思考エンジンサービスを選択
+        reframed_context = context
         if entity.thinking_type == "google_maps_based":
             # RAG素材を使用してチャット履歴をエンティティの専門性に合わせてリフレーミング
             service = GoogleMapsReviewService()
@@ -108,7 +109,7 @@ class ResponseGenerator:
         # 4. ThinkingEngineProcessorを使用して応答を生成・保存
         processor = ThinkingEngineProcessor()
         processor.apply_guardrail_and_generate_response(
-            action_history=action_history, context=context
+            action_history=action_history, context=reframed_context
         )
 
         # 5. 生成された最新のメッセージ内容を返却
