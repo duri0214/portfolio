@@ -8,7 +8,6 @@ from django.views.generic.edit import FormView
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
 from ai_agent.domain.service.input_processor import InputProcessor
 from ai_agent.domain.service.response_generator import ResponseGenerator
-from ai_agent.domain.service.thinking_engine_processor import ThinkingEngineProcessor
 from ai_agent.domain.service.turn_management import TurnManagementService
 from ai_agent.forms import SendMessageForm
 from ai_agent.models import Message, Entity, ActionHistory
@@ -214,11 +213,10 @@ class NextTurnView(View):
         1. 現在のターンのアクションを取得
         2. アクションが存在しない場合はタイムラインをリセット
         3. エンティティの基本情報を取得
-        4. エンティティに紐づくタイムラインが存在しない場合はシステムエラー（データ不整合）
-        5. Userエンティティの場合は操作を拒否（ボタンではなくチャットフォームからの入力が必要なため）
-        6. ResponseGeneratorを使用してガードレールを適用し応答を生成
-        7. エラーが発生した場合は処理を中断
-        8. 次のターンのアクションを確認して、ユーザーに通知
+        4. Userエンティティの場合は操作を拒否（ボタンではなくチャットフォームからの入力が必要なため）
+        5. ResponseGeneratorを使用してガードレールを適用し応答を生成
+        6. エラーが発生した場合は処理を中断
+        7. 次のターンのアクションを確認して、ユーザーに通知
 
         Returns:
             HttpResponseRedirect: インデックスページへのリダイレクト
@@ -239,33 +237,19 @@ class NextTurnView(View):
 
             # 3. エンティティの基本情報を取得
             active_entity = current_action_history.entity
-            active_entity_timeline = TurnManagementRepository.get_action_timeline(
-                active_entity
-            )
 
-            # 4. エンティティに紐づくタイムラインが存在しない場合はシステムエラー（データ不整合）
-            if not active_entity_timeline:
-                error_message = f"重大なエラー: {active_entity.name}のアクションタイムラインが見つかりません。システム管理者に連絡してください。"
-                messages.error(request, error_message)
-                log_service.write(
-                    f"DATA INCONSISTENCY ERROR: Entity {active_entity.id}:{active_entity.name} has ActionHistory but no ActionTimeline"
-                )
-                # このような状態はシステムの整合性エラーなので、管理者が修正するまでリセットしない
-                return redirect("agt:index")
-
-            # 5. Userエンティティの場合は操作を拒否（ボタンではなくチャットフォームからの入力が必要なため）
+            # 4. Userエンティティの場合は操作を拒否（ボタンではなくチャットフォームからの入力が必要なため）
             if active_entity.name == "User":
                 error_message = "Userエンティティのターンは「1単位時間進める」ボタンでは進められません。チャットフォームからメッセージを送信してください。"
                 messages.error(request, error_message)
                 return redirect("agt:index")
 
-            # 6. ResponseGeneratorを使用してガードレールを適用し応答を生成
+            # 5. ResponseGeneratorを使用してガードレールを適用し応答を生成
             response_text = ResponseGenerator.generate_response(
-                action_history=current_action_history,
-                context=ThinkingEngineProcessor.get_recent_context(),
+                action_history=current_action_history
             )
 
-            # 7. エラーが発生した場合は処理を中断
+            # 6. エラーが発生した場合は処理を中断
             if response_text.startswith("[ERROR]"):
                 messages.warning(
                     request,
@@ -273,7 +257,7 @@ class NextTurnView(View):
                 )
                 return redirect("agt:index")
 
-            # 8. 次のターンのアクションを確認して、ユーザーに通知
+            # 7. 次のターンのアクションを確認して、ユーザーに通知
             upcoming_action_history = (
                 ActionHistory.objects.filter(done=False)
                 .order_by("acted_at_turn")
