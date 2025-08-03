@@ -1,13 +1,6 @@
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
-from ai_agent.domain.service.thinking_engines.cloud_act_pdf import CloudActPdfService
-from ai_agent.domain.service.thinking_engines.declining_birth_rate_pdf import (
-    DecliningBirthRatePdfService,
-)
-from ai_agent.domain.service.thinking_engines.googlemaps_review import (
-    GoogleMapsReviewService,
-)
 from ai_agent.domain.valueobject.turn_management import EntityVO
-from ai_agent.models import Entity, ActionHistory
+from ai_agent.models import ActionHistory
 
 
 class TurnManagementService:
@@ -92,49 +85,3 @@ class TurnManagementService:
             )
 
         return simulation
-
-    @staticmethod
-    def can_respond_to_input(entity: Entity, context: str) -> bool:
-        """
-        エンティティが入力テキストに応答可能かどうかを判断します。
-
-        各エンティティのthinking_typeに基づいて適切な思考エンジンサービスを選択し、
-        入力テキストに対してそのエンティティが応答可能かどうかを評価します。
-        例えば、「レストラン」というキーワードはGoogleMapsReviewServiceがうまく処理できます。
-        「法律」というキーワードはCloudActPdfServiceがうまく処理できます。
-
-        処理の流れ：
-        1. エンティティのthinking_typeを確認
-        2. 適切な専門サービスに入力テキストを渡す
-        3. 専門サービスの判断結果（True/False）を返す
-
-        サポートされている思考エンジン：
-        - GoogleMapsReviewService: 地図・レビュー関連の質問に対応
-        - CloudActPdfService: 法律文書・クラウド関連の質問に対応
-        - DecliningBirthRatePdfService: 少子化・人口動態関連の質問に対応
-
-        重要な動作：
-        - 各思考エンジンは入力テキストが自分の専門領域に関連するかを判断します
-        - エンティティのthinking_typeに適さない入力の場合はFalseを返します
-          （例：GoogleMapsベースのエンティティに法律の質問をした場合はFalse）
-        - Falseが返された場合、そのエンティティは応答せず、他のエンティティが応答機会を得ます
-
-        Args:
-            entity (Entity): 応答可能性を評価するエンティティ
-            context (str): 評価する入力テキスト
-
-        Returns:
-            bool: 応答可能な場合はTrue、そうでない場合はFalse
-        """
-        if entity.thinking_type == "google_maps_based":
-            return GoogleMapsReviewService.can_respond(context, entity)
-
-        elif entity.thinking_type == "cloud_act_based":
-            return CloudActPdfService.can_respond(context, entity)
-
-        elif entity.thinking_type == "declining_birth_rate_based":
-            return DecliningBirthRatePdfService.can_respond(context, entity)
-
-        # 未知のthinking_typeの場合はデフォルトで発言可能
-        # これにより、新しい思考エンジンが追加された場合でもシステムが動作し続ける
-        return True
