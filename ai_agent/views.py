@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import View
@@ -152,7 +153,7 @@ class ResetTimelineView(View):
     """
 
     @staticmethod
-    def post(request, *args, **kwargs):
+    def post(request, *args, **kwargs) -> HttpResponseRedirect:
         """
         POSTリクエストを処理し、タイムラインのリセットを実行します。
 
@@ -205,7 +206,7 @@ class ResetTimelineView(View):
 
 class NextTurnView(View):
     @staticmethod
-    def post(request, *args, **kwargs):
+    def post(request, *args, **kwargs) -> HttpResponseRedirect:
         """
         次のターンに進むPOSTリクエストを処理します。
 
