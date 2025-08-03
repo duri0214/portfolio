@@ -33,8 +33,7 @@ class BaseRagService(ABC):
         #  4. RagMaterialテーブルに保存（ベクトルとメタデータを含む）
         # 現在はシーダーで登録されたデータを使用するため、実装は保留
 
-    @classmethod
-    def can_respond(cls, input_text: str, entity) -> bool:
+    def can_respond(self, input_text: str, entity) -> bool:
         """入力テキストに基づいて応答可能かどうかを判定する
 
         Args:
@@ -46,15 +45,14 @@ class BaseRagService(ABC):
                  必要なデータがRagMaterialに存在する場合にTrue
         """
         # まず関連データが存在するか確認
-        if not cls._check_data_exists():
+        if not self._check_data_exists():
             # データが存在しない場合は応答できない
             return False
 
         # キーワードマッチングで関連性を判定
-        return cls._check_relevance(input_text)
+        return self._check_relevance(input_text)
 
-    @classmethod
-    def _check_data_exists(cls) -> bool:
+    def _check_data_exists(self) -> bool:
         """必要なデータが存在するかを確認する
 
         material_typeが設定されていない場合、または指定されたタイプの
@@ -68,12 +66,11 @@ class BaseRagService(ABC):
             bool: データが存在する場合True、そうでない場合はFalse
         """
         return (
-            cls.material_type != ""
-            and RagMaterial.objects.filter(material_type=cls.material_type).exists()
+            self.__class__.material_type != ""
+            and RagMaterial.objects.filter(material_type=self.__class__.material_type).exists()
         )
 
-    @classmethod
-    def _check_relevance(cls, input_text: str) -> bool:
+    def _check_relevance(self, input_text: str) -> bool:
         """入力テキストが関連キーワードを含むかを確認する
 
         Args:
@@ -94,14 +91,14 @@ class BaseRagService(ABC):
         Returns:
             bool: 入力テキストが関連キーワードのいずれかを含む場合True、含まない場合False
         """
-        if not cls.relevant_keywords:
+        if not self.relevant_keywords:
             return False
 
         # 入力テキストを小文字に変換
         lowercase_input = input_text.lower()
 
         # キーワードも事前に小文字に変換してリスト化
-        lowercase_keywords = [keyword.lower() for keyword in cls.relevant_keywords]
+        lowercase_keywords = [keyword.lower() for keyword in self.relevant_keywords]
 
         # 各キーワードが入力テキストに含まれているかチェック（部分一致）
         for keyword in lowercase_keywords:
