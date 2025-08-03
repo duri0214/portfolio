@@ -287,11 +287,6 @@ class NextTurnView(View):
                 success_msg += "\n処理すべきアクションはもうありません。"
                 messages.success(request, success_msg)
 
-        except ValueError:
-            # エラー処理: 行動可能なエンティティがない場合はタイムラインをリセット
-            reset_message = "処理すべきアクションはもうありません。タイムラインがリセットされました。"
-            messages.info(request, reset_message)
-            ResetTimelineView.reset_timeline()
         except Exception as e:
             log_service.write(f"次のターン処理中にエラーが発生しました: {e}")
             messages.error(
