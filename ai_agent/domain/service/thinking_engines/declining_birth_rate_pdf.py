@@ -19,6 +19,9 @@ class DecliningBirthRatePdfService(BaseRagService):
         "人口減少",
     ]
 
+    def __init__(self, relevant_keywords: list[str] = None):
+        super().__init__(relevant_keywords)
+
     @classmethod
     def _get_pdf_loader(cls):
         """シングルトンパターンでPDFローダーを取得

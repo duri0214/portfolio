@@ -11,6 +11,9 @@ class CloudActPdfService(BaseRagService):
     material_type = "cloud_act_pdf"
     relevant_keywords = ["法律", "law", "cloud", "act", "クラウド", "法案"]
 
+    def __init__(self, relevant_keywords: list[str] = None):
+        super().__init__(relevant_keywords)
+
     @classmethod
     def _get_pdf_loader(cls):
         """シングルトンパターンでPDFローダーを取得
