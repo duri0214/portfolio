@@ -94,7 +94,7 @@ class TurnManagementService:
         return simulation
 
     @staticmethod
-    def can_respond_to_input(entity: Entity, input_text: str) -> bool:
+    def can_respond_to_input(entity: Entity, context: str) -> bool:
         """
         エンティティが入力テキストに応答可能かどうかを判断します。
 
@@ -121,19 +121,19 @@ class TurnManagementService:
 
         Args:
             entity (Entity): 応答可能性を評価するエンティティ
-            input_text (str): 評価する入力テキスト
+            context (str): 評価する入力テキスト
 
         Returns:
             bool: 応答可能な場合はTrue、そうでない場合はFalse
         """
         if entity.thinking_type == "google_maps_based":
-            return GoogleMapsReviewService.can_respond(input_text, entity)
+            return GoogleMapsReviewService.can_respond(context, entity)
 
         elif entity.thinking_type == "cloud_act_based":
-            return CloudActPdfService.can_respond(input_text, entity)
+            return CloudActPdfService.can_respond(context, entity)
 
         elif entity.thinking_type == "declining_birth_rate_based":
-            return DecliningBirthRatePdfService.can_respond(input_text, entity)
+            return DecliningBirthRatePdfService.can_respond(context, entity)
 
         # 未知のthinking_typeの場合はデフォルトで発言可能
         # これにより、新しい思考エンジンが追加された場合でもシステムが動作し続ける
