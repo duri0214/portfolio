@@ -23,19 +23,15 @@ class TurnManagementService:
         """
         エンティティの速度に基づいて最初のターン値を割り当て、タイムラインを初期化します。
 
-        各エンティティのActionTimelineレコードを作成または更新し、next_turn値を設定します。
+        各エンティティのnext_turn値を設定します。
         この初期化により、エンティティの行動順序が速度に応じて決定されます。
         """
-        entities = TurnManagementRepository.get_all_entities()
+        entities = TurnManagementRepository.get_entities_ordered()
         for entity in entities:
-            TurnManagementRepository.update_or_create_action_timeline(
-                entity=entity,
-                defaults={
-                    "next_turn": TurnManagementService.calculate_next_turn_increment(
-                        entity.speed
-                    )
-                },
+            entity.next_turn = TurnManagementService.calculate_next_turn_increment(
+                entity.speed
             )
+            entity.save()
 
     @staticmethod
     def simulate_next_actions(max_steps=10) -> list[EntityVO]:
