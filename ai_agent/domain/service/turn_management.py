@@ -40,44 +40,40 @@ class TurnManagementService:
         各アクションに対応するActionHistoryレコードを作成します。
 
         next_turnが同じエンティティが複数存在する場合は、エンティティIDの昇順で選択されます。
-        min関数とタプルによる複合キー比較（next_turn, entity.id）を使用することで、
+        min関数とタプルによる複合キー比較（next_turn, id）を使用することで、
         常に決定論的な順序でエンティティが選択されます。
 
         Args:
             max_steps (int): シミュレーションするアクションの数
 
         Returns:
-            List[EntityVO]: エンティティ名と行動ターンを含むEntityVOオブジェクトのリスト
-
-        Raises:
-            ValueError: タイムラインにエンティティが存在しない場合
+            List[EntityVO]: エンティティ名と行動ターンを含むEntityVOオブジェクトのリスト。
+            エンティティが存在しない場合は空リストを返します。
         """
-        timelines = list(TurnManagementRepository.get_timelines_ordered_by_next_turn())
-        if not timelines:
-            raise ValueError("タイムラインにエンティティが存在しません。")
+        entities = list(TurnManagementRepository.get_entities_ordered())
+        if not entities:
+            return []
 
         simulation = []
         for i in range(1, max_steps + 1):
-            # 次の行動を決定 (next_turn が最小のタイムラインを選ぶ)
-            next_action = min(timelines, key=lambda t: (t.next_turn, t.entity.id))
+            # 次の行動を決定 (next_turn が最小のエンティティを選ぶ)
+            next_entity = min(entities, key=lambda e: (e.next_turn, e.id))
 
             # ActionHistory レコードを作成
             ActionHistory.objects.create(
-                entity=next_action.entity,
+                entity=next_entity,
                 acted_at_turn=i,
                 done=False,
             )
 
             # シミュレーションの結果を保存
             simulation.append(
-                EntityVO(name=next_action.entity.name, next_turn=next_action.next_turn)
+                EntityVO(name=next_entity.name, next_turn=next_entity.next_turn)
             )
 
             # 次の行動予定を仮で更新
-            next_action.next_turn += (
-                TurnManagementService.calculate_next_turn_increment(
-                    next_action.entity.speed
-                )
+            next_entity.next_turn += (
+                TurnManagementService.calculate_next_turn_increment(next_entity.speed)
             )
 
         return simulation
