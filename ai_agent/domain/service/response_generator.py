@@ -1,9 +1,7 @@
 from ai_agent.domain.repository.response_generator import ResponseGeneratorRepository
-from ai_agent.domain.repository.thinking_engine_processor import (
-    ThinkingEngineProcessorRepository,
-)
+from ai_agent.domain.repository.turn_management import TurnManagementRepository
 from ai_agent.domain.service.context_analyzer import ContextAnalyzerService
-from ai_agent.domain.service.thinking_engine_processor import ThinkingEngineProcessor
+from ai_agent.domain.service.input_processor import InputProcessor
 from ai_agent.models import ActionHistory
 from lib.log_service import LogService
 
@@ -25,7 +23,7 @@ class ResponseGenerator:
         処理の流れ：
         1. エンティティ情報を取得し、最新の会話コンテキストを取得
         2. RAG素材を使用してチャット履歴をエンティティの専門性に合わせてリフレーミング
-        3. ThinkingEngineProcessorを使用して応答を生成・保存
+        3. ガードレールを適用して応答を生成・保存
         4. 生成された最新のメッセージ内容を返却
 
         サポートされている思考エンジン：
@@ -41,25 +39,26 @@ class ResponseGenerator:
         """
         # 1. エンティティ情報を取得し、最新の会話コンテキストを取得
         entity = action_history.entity
-        context = ThinkingEngineProcessorRepository.get_recent_messages()
+        context = ResponseGeneratorRepository.get_recent_chat_messages()
 
         # 2. RAG素材を使用してチャット履歴をエンティティの専門性に合わせてリフレーミング
         reframed_context = ContextAnalyzerService.reframe_context_for_entity(
             context=context,
             entity=entity,
-            rag_source=ResponseGeneratorRepository.get_contents_merged(
+            rag_source=ResponseGeneratorRepository.get_rag_source_merged(
                 entity.thinking_type
             ),
         )
 
-        # 3. ThinkingEngineProcessorを使用して応答を生成・保存
-        processor = ThinkingEngineProcessor()
-        processor.apply_guardrail_and_generate_response(
-            action_history=action_history, context=reframed_context
+        # 3. ガードレールを適用して応答を生成・保存
+        processor = InputProcessor(entity)
+        response_text = processor.process_input(reframed_context)
+        TurnManagementRepository.create_message(
+            content=response_text, action_history=action_history
         )
 
         # 4. 生成された最新のメッセージ内容を返却
-        latest_message = ThinkingEngineProcessorRepository.get_latest_message()
+        latest_message = ResponseGeneratorRepository.get_latest_chat_message()
         response_text = latest_message.message_content if latest_message else ""
 
         return response_text
