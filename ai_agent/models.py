@@ -24,6 +24,7 @@ class Entity(models.Model):
                 - "declining_birth_rate_based" (少子化対策PDFをデータソースとするRAG)
                 - None (User等、特定の思考タイプを持たないエンティティ)
         speed (int): 意思決定速度または応答速度。値が大きいほど応答が速くなります（値は行動頻度を表します）。
+        next_turn (float): エンティティが次に行動するターン値。ターン管理システムで使用される内部値。
     """
 
     # 思考タイプの選択肢（モジュールレベルのDATA_SOURCE_CHOICESを使用）
@@ -34,6 +35,7 @@ class Entity(models.Model):
         max_length=50, choices=THINKING_TYPE_CHOICES, null=True, blank=True
     )
     speed = models.IntegerField(default=10)
+    next_turn = models.FloatField(default=0)
 
     def __str__(self):
         return f"{self.name} ({self.get_thinking_type_display()})"
@@ -85,21 +87,6 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.entity.name} at {self.created_at}"
-
-
-class ActionTimeline(models.Model):
-    """
-    各エンティティの次のターンをスピードに基づいて追跡するモデル
-
-    エンティティの行動順序を管理し、会話の進行を制御します。
-    """
-
-    entity = models.OneToOneField(Entity, on_delete=models.CASCADE)
-    next_turn = models.FloatField(default=0)
-    can_act = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"{self.entity.name} - Next Turn: {self.next_turn}"
 
 
 class ActionHistory(models.Model):
