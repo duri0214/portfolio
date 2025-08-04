@@ -115,7 +115,7 @@ ai_agent/
 `domain/repository`にあるリポジトリクラスは、データベースとのやり取りを抽象化します：
 
 - **TurnManagementRepository**
-    - エンティティの取得（get_all_entities）
+    - エンティティの取得（get_entities_ordered）
     - タイムラインの管理と更新（update_or_create_action_timeline）
     - 次のターン値の計算と設定（update_next_turn）
     - メッセージの作成と保存（create_message）
