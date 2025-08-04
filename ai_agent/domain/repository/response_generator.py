@@ -1,4 +1,4 @@
-from ai_agent.models import RagMaterial
+from ai_agent.models import Message, RagMaterial
 
 
 class ResponseGeneratorRepository:
@@ -9,7 +9,7 @@ class ResponseGeneratorRepository:
     """
 
     @staticmethod
-    def get_contents_merged(material_type: str, separator="\n\n") -> str:
+    def get_rag_source_merged(material_type: str, separator="\n\n") -> str:
         """指定されたmaterial_typeに基づいてRagMaterialから全てのレコードを取得して結合したテキストを返す
 
         Args:
@@ -34,3 +34,25 @@ class ResponseGeneratorRepository:
 
         # 複数レコードの場合は結合して返す
         return separator.join([material.source_text for material in materials])
+
+    @staticmethod
+    def get_recent_chat_messages(limit: int = 5) -> str:
+        """直近のチャットメッセージを取得し、内容を連結して返します
+
+        Args:
+            limit (int): 取得するメッセージの数
+
+        Returns:
+            str: 連結されたチャットメッセージ内容
+        """
+        messages = Message.objects.order_by("-created_at")[:limit]
+        return "\n".join([msg.message_content for msg in messages])
+
+    @staticmethod
+    def get_latest_chat_message() -> Message | None:
+        """最新のチャットメッセージを1件だけ取得します
+
+        Returns:
+            Message | None: 最新のチャットメッセージ（存在しない場合はNone）
+        """
+        return Message.objects.order_by("-created_at").first()
