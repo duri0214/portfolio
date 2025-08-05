@@ -1,9 +1,9 @@
-import unittest
+from django.test import TestCase
 
 from ai_agent.domain.service.turn_management import TurnManagementService
 
 
-class TurnManagementServiceTestCase(unittest.TestCase):
+class TurnManagementServiceTestCase(TestCase):
     """TurnManagementServiceのテストケース
 
     このテストケースでは、TurnManagementServiceクラスの機能をテストします。
