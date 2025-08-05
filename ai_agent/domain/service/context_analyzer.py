@@ -1,7 +1,7 @@
 import os
 
 from ai_agent.domain.repository.response_generator import ResponseGeneratorRepository
-from ai_agent.models import Entity
+from ai_agent.models import Entity, DATA_SOURCE_CHOICES
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
@@ -14,15 +14,27 @@ class ContextAnalyzerService:
     リフレーミングします。
     """
 
+    # thinking_typeからthinking_type名称を取得するための辞書をキャッシュ
+    _thinking_type_map: dict[str, str] = {k: v for k, v in DATA_SOURCE_CHOICES}
+
     @classmethod
-    def _extract_keywords_from_rag(
-        cls, thinking_type: str, thinking_type_disp: str
-    ) -> str:
+    def get_thinking_type_display(cls, thinking_type: str) -> str:
+        """思考タイプコードから表示名を取得する
+
+        Args:
+            thinking_type (str): 思考タイプコード
+
+        Returns:
+            str: 思考タイプの表示名、コードが見つからない場合はコードをそのまま返す
+        """
+        return cls._thinking_type_map.get(thinking_type, thinking_type)
+
+    @classmethod
+    def _extract_keywords_from_rag(cls, thinking_type: str) -> str:
         """エンティティの思考タイプに関連するRAG素材から重要なキーワードを抽出する
 
         Args:
             thinking_type (str): エンティティの思考タイプ (material_typeと一致)
-            thinking_type_disp (str): エンティティの思考タイプの表示名
 
         Returns:
             str: 抽出されたキーワード（カンマ区切り）
@@ -31,6 +43,9 @@ class ContextAnalyzerService:
         rag_source = ResponseGeneratorRepository.get_rag_source_merged(thinking_type)
         if not rag_source:
             return ""
+
+        # 思考タイプの表示名を取得
+        thinking_type_disp = cls.get_thinking_type_display(thinking_type)
 
         config = OpenAIGptConfig(
             model="gpt-4o-mini",
@@ -100,9 +115,7 @@ class ContextAnalyzerService:
         # 3. エンティティの思考タイプに関連するRAG素材から重要キーワードを抽出
         rag_keywords = ""
         if thinking_type:
-            rag_keywords = cls._extract_keywords_from_rag(
-                thinking_type, thinking_type_disp
-            )
+            rag_keywords = cls._extract_keywords_from_rag(thinking_type)
 
         # 4. ユーザープロンプトを構築し、LLMによるリフレーミングを実行
         user_prompt = f"以下の会話を、{thinking_type_disp} の専門家の視点でリフレーミングしてください: 会話コンテキスト: {context}\n\n{rag_keywords}"
