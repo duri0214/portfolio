@@ -108,6 +108,23 @@ ai_agent/
 - エンティティごとに異なる応答特性の実現
 - コンテキスト分析サービスとの連携による適切な応答
 
+### 4. コンテキスト分析システム (ContextAnalyzer)
+
+`domain/service/context_analyzer.py`のコンテキスト分析システムは、会話の文脈をエンティティの専門性に合わせて最適化します。
+
+主な機能：
+
+- チャット履歴のエンティティ専門領域へのリフレーミング
+- RAG素材からの重要キーワード抽出
+- 専門分野視点でのコンテキスト解釈
+
+特徴：
+
+- LLMを活用した高度なコンテキスト変換
+- エンティティごとの専門的視点の反映
+- RAG素材との連携による関連キーワードの強調
+- 専門知識に基づく会話解釈の深化
+
 ## 処理の流れ
 
 典型的なチャットのライフサイクル：
@@ -118,71 +135,6 @@ ai_agent/
     - GoogleMapsReviewService、RagService、NGWordServiceなどを利用
 4. 応答可能な場合、エンティティが応答を生成
 5. タイムラインが更新され、次のターンの増分が計算され準備
-
-## テスト
-
-本プロジェクトでは、ドメイン駆動設計（DDD）の原則に従い、各ドメインサービスに対して包括的なテストを実装しています。テストは単体テストから統合テストまで様々なレベルをカバーし、システムの堅牢性を確保しています。
-
-### 1. InputProcessorTest (`tests/test_input_processor.py`)
-
-入力処理とガードレール機能のテスト：
-
-### 3. タイムラインリセット処理のフロー
-
-```mermaid
-sequenceDiagram
-    actor User as ユーザー
-    participant View as ResetTimelineView
-    participant Message as Message
-    participant AH as ActionHistory
-    participant TMS as TurnManagementService
-
-    User->>View: リセットボタンをクリック
-    activate View
-
-    View->>Message: objects.all().delete()
-    Note over Message: すべてのメッセージを削除
-
-    View->>AH: objects.all().delete()
-    Note over AH: すべてのActionHistoryを削除
-
-    View->>TMS: initialize_timeline()
-    Note over TMS: エンティティの速度に基づいてタイムラインを初期化
-
-    View->>TMS: simulate_next_actions(max_steps=10)
-    Note over TMS: 次の10ターン分の行動をシミュレーション
-
-    View->>AH: objects.all().update(done=False)
-    Note over AH: すべての行動を未完了状態に設定
-
-    View-->>User: インデックスページにリダイレクト
-    deactivate View
-```
-
-- **基本的な入力処理テスト**: 正常な入力に対する処理の検証
-- **空入力や空白のみの入力処理**: エッジケースの適切な処理の確認
-- **文字数制限超過テスト**: 長文入力に対する制限機能の検証
-- **静的ガードレール（禁止ワード）テスト**: 事前定義された禁止ワードの検出機能
-- **動的ガードレール（OpenAI Moderation API）テスト**: 外部APIを使用した不適切コンテンツ検出
-- **APIエラーハンドリングテスト**: 外部サービス障害時の回復性検証
-
-### 2. TurnManagementServiceTest (`tests/test_turn_management.py`)
-
-会話管理システムのテスト：
-
-- **タイムライン初期化テスト**: システム起動時の正確な初期化確認
-- **エンティティ速度に基づく行動順序テスト**: 数学的に正確な順序決定の検証
-- **メッセージ作成時のタイムライン更新テスト**: データベース状態変更の整合性確認
-- **未来アクションのシミュレーションテスト**: 予測機能の正確性検証
-
-### 3. DomainServiceTurnManagementTest (`tests/domain/service/test_turn_management.py`)
-
-ドメインサービス層のターン管理テスト：
-
-- **サービスレイヤーの統合テスト**: ドメインサービスの連携動作の検証
-- **ドメイン固有ルールのテスト**: ビジネスロジックの正確な実装の確認
-- **リポジトリとの連携テスト**: データアクセス抽象化の検証
-- **ドメインイベントのテスト**: ドメインイベント発行と処理の確認
 
 ## 会話フローのシーケンス図
 
