@@ -127,6 +127,38 @@ ai_agent/
 
 入力処理とガードレール機能のテスト：
 
+### 3. タイムラインリセット処理のフロー
+
+```mermaid
+sequenceDiagram
+    actor User as ユーザー
+    participant View as ResetTimelineView
+    participant Message as Message
+    participant AH as ActionHistory
+    participant TMS as TurnManagementService
+
+    User->>View: リセットボタンをクリック
+    activate View
+
+    View->>Message: objects.all().delete()
+    Note over Message: すべてのメッセージを削除
+
+    View->>AH: objects.all().delete()
+    Note over AH: すべてのActionHistoryを削除
+
+    View->>TMS: initialize_timeline()
+    Note over TMS: エンティティの速度に基づいてタイムラインを初期化
+
+    View->>TMS: simulate_next_actions(max_steps=10)
+    Note over TMS: 次の10ターン分の行動をシミュレーション
+
+    View->>AH: objects.all().update(done=False)
+    Note over AH: すべての行動を未完了状態に設定
+
+    View-->>User: インデックスページにリダイレクト
+    deactivate View
+```
+
 - **基本的な入力処理テスト**: 正常な入力に対する処理の検証
 - **空入力や空白のみの入力処理**: エッジケースの適切な処理の確認
 - **文字数制限超過テスト**: 長文入力に対する制限機能の検証
@@ -160,37 +192,47 @@ ai_agent/
 
 ```mermaid
 sequenceDiagram
-    participant View as View
+    actor User as ユーザー
+    participant View as NextTurnView
     participant AH as ActionHistory
-    participant TMS as TurnManagementService
+    participant RG as ResponseGenerator
     participant TMR as TurnManagementRepository
-    participant ThinkingEngine as 思考エンジン
+    participant Message as Message
 
-    View->>AH: get_first_undone_action()
-    AH-->>View: 現在のアクション履歴
+    User->>View: 「1単位時間進める」ボタンをクリック
     activate View
-    View->>TMR: get_action_timeline(entity)
-    TMR-->>View: エンティティのタイムライン
+    View->>AH: filter(done=False).order_by('acted_at_turn').first()
+    AH-->>View: 現在のActionHistory
 
-    alt タイムラインのcan_actがtrueの場合
-        View->>TMS: think(entity, input_text)
-        TMS->>ThinkingEngine: can_respond(input_text, entity)
-        ThinkingEngine-->>TMS: 応答可能性(True/False)
-        TMS-->>View: 応答可能性(True/False)
+    alt ActionHistoryが存在しない場合
+        View-->>User: タイムラインリセットメッセージ
+        View->>View: ResetTimelineView.reset_timeline()
+    else ActionHistoryが存在する場合
+        View->>View: エンティティ情報を取得
 
-        alt 応答可能な場合
-            View->>TMR: create_message(content, action_history)
-            TMR->>AH: 次のアクション履歴を取得
-            AH-->>View: 次のエンティティ情報
-        else 応答不可能な場合
-            View->>TMR: create_message(error_content, action_history)
-            View->>AH: 次のアクション履歴を取得
-            AH-->>View: 次のエンティティ情報
+        alt エンティティがUserの場合
+            View-->>User: エラーメッセージ（チャットフォームからの入力を促す）
+        else エンティティがAIの場合
+            View->>RG: generate_response(action_history)
+            RG-->>View: 応答テキスト
+
+            alt 応答が[ERROR]で始まる場合
+                View-->>User: 警告メッセージ（次のターンに進めるよう促す）
+            else 正常応答の場合
+                View->>TMR: create_message(response_text, action_history)
+                TMR->>Message: 応答メッセージを保存
+                TMR->>AH: action_historyをdone=Trueに更新
+
+                View->>AH: filter(done=False).order_by('acted_at_turn').first()
+                AH-->>View: 次のActionHistory
+
+                alt 次のActionHistoryが存在する場合
+                    View-->>User: 次のエンティティ情報を含む成功メッセージ
+                else 次のActionHistoryが存在しない場合
+                    View-->>User: 「処理すべきアクションはもうありません」メッセージ
+                end
+            end
         end
-    else タイムラインのcan_actがfalseの場合
-        View->>TMR: create_message(error_content, action_history)
-        View->>AH: 次のアクション履歴を取得
-        AH-->>View: 次のエンティティ情報
     end
     deactivate View
 ```
@@ -201,78 +243,42 @@ sequenceDiagram
 sequenceDiagram
     actor User as ユーザー
     participant View as IndexView
+    participant Entity as Entity
+    participant AH as ActionHistory
     participant IP as InputProcessor
-    participant DB as データベース
+    participant TMR as TurnManagementRepository
 
     User->>View: テキストフォームから<br>メッセージ入力
     View->>View: form_valid(form)
-    View->>IP: process_input(user_input)
 
-    activate IP
-    Note over IP: 入力処理開始
-    IP->>IP: _static_guardrails(user_input)<br>（禁止ワード、文字数制限など）
-    alt 静的ガードレールでブロック
-        IP-->>View: ブロックメッセージ
-    else 静的ガードレール通過
-        alt OpenAI Moderation有効時
-            IP->>IP: _dynamic_guardrails(user_input)<br>（OpenAI Moderation API）
-            alt 動的ガードレールでブロック
-                IP-->>View: ブロックメッセージ
-            end
-        end
+    View->>Entity: get(name='User')
+    Entity-->>View: Userエンティティ
 
-        alt いずれかのガードレールでブロック
-            View-->>User: エラーメッセージ表示
-        else 全ガードレール通過
-            Note over IP: 入力処理の実行<br>(将来的にSub-issueで改善予定)
-            IP->>IP: _process_default(user_input)
+    View->>AH: filter(done=False, entity=user_entity).order_by('acted_at_turn').first()
+    AH-->>View: 現在のActionHistory
 
-            IP-->>View: 処理済みメッセージ
-            View->>DB: Message.objects.create()<br>(DBに保存)
-            View-->>User: 「メッセージが送信されました」
+    alt Userのターンではない場合
+        View-->>User: エラーメッセージ（ユーザーのターンではない）
+    else 空の入力の場合
+        View-->>User: エラーメッセージ（メッセージが入力されていない）
+    else Userのターン＆有効な入力の場合
+        View->>IP: process_input(user_input)
+
+        activate IP
+        Note over IP: ガードレールによる入力検証
+        IP-->>View: 処理済みメッセージ
+        deactivate IP
+
+        View->>TMR: create_message(content, action_history)
+        TMR->>AH: ActionHistoryをdone=Trueに更新
+
+        View->>AH: filter(done=False).order_by('acted_at_turn').first()
+        AH-->>View: 次のActionHistory
+
+        alt 次のActionHistoryが存在する場合
+            View-->>User: 次のエンティティ情報を含む成功メッセージ
+        else 次のActionHistoryが存在しない場合
+            View-->>User: 「処理すべきアクションはもうありません」メッセージ
         end
     end
-    deactivate IP
 ```
-
-## システムの特徴
-
-このシステムは以下の特徴を持っています：
-
-1. **安全性重視の設計**
-    - 多層的なガードレール機能により、危険な入力や不適切なコンテンツをブロック
-    - 静的チェック（禁止ワード、文字数制限）と動的チェック（OpenAI Moderation API）の組み合わせ
-    - セキュリティ対策（XSS対策）の実装
-    - HTML特殊文字のエスケープ処理によるインジェクション攻撃対策
-
-2. **エンティティごとのカスタマイズ**
-    - エンティティごとに異なるガードレール設定（GuardrailConfig）
-    - 速度パラメータによる応答頻度の調整（high frequency vs. high quality）
-    - 思考タイプによる特化型AIの実現（地域情報特化、安全性特化など）
-    - カスタマイズ可能なOpenAI Agent設定（温度、トークン数など）
-
-3. **堅牢なエラーハンドリング**
-    - 外部API障害時のフォールバック処理
-    - 例外発生時のユーザーフレンドリーなエラーメッセージ
-    - ログサービスによる詳細なエラー記録
-    - APIリトライメカニズム（将来的な拡張予定）
-
-4. **拡張性と保守性の高い設計**
-    - ドメイン駆動設計（DDD）による明確な責務分離
-    - リポジトリパターンによるデータアクセス抽象化
-    - 詳細なドキュメント付きのコード（docstring、テストドキュメント）
-    - 新しい思考エンジンの追加が容易な設計
-
-5. **性能最適化**
-    - 効率的なデータベースクエリ（インデックス活用）
-    - 必要最小限のAPIコール
-    - 適切なキャッシュ戦略（将来的な拡張予定）
-    - パフォーマンステストによる継続的な監視
-
-現在のシステムでは、テキスト入力処理とターン管理は連携して動作し、次のフローで処理されます：
-
-1. ユーザーのテキスト入力はInputProcessorによってガードレールチェック
-2. 安全と判断された入力は保存され、TurnManagementServiceが次のエンティティを決定
-3. 選ばれたエンティティの思考エンジンが応答を生成
-4. タイムラインが更新され、次のターンの準備が完了
-5. 応答がユーザーに表示され、会話が継続
