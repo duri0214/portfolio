@@ -33,6 +33,14 @@ class ContextAnalyzerService:
     def _extract_keywords_from_rag(cls, thinking_type: str) -> str:
         """エンティティの思考タイプに関連するRAG素材から重要なキーワードを抽出する
 
+        Note:
+            このメソッドは実際のRAG（Retrieval Augmented Generation）を実装していません。
+            本来のRAGは埋め込みベクトルと類似度検索を使用してベクトルDBから関連文書を取得しますが、
+            このメソッドは単純に素材全体からキーワードを抽出するだけです。
+            完全なRAG実装はlib.llm.service.completion.OpenAILlmRagServiceを参照してください。
+
+            TODO: ベクトル検索に基づく本格的なRAGを実装する (#ISSUE-XXX)
+
         Args:
             thinking_type (str): エンティティの思考タイプ (material_typeと一致)
 
@@ -129,7 +137,7 @@ class ContextAnalyzerService:
         rag_keywords = cls._extract_keywords_from_rag(thinking_type)
 
         # 5. ユーザープロンプトを構築し、LLMによるリフレーミングを実行
-        user_prompt = f"以下の会話を、{thinking_type_disp} の専門家の視点でリフレーミングしてください: 会話コンテキスト: {context}\n\n{rag_keywords}"
+        user_prompt = f"以下の会話を、{thinking_type_disp} の専門家の視点でリフレーミングしてください: 会話コンテキスト: {context}\n\n専門家の視点: {rag_keywords}"
 
         try:
             response = llm_service.retrieve_answer(
