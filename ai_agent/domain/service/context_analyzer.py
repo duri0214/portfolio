@@ -1,5 +1,6 @@
 import os
 
+from ai_agent.domain.repository.response_generator import ResponseGeneratorRepository
 from ai_agent.models import Entity
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
@@ -15,17 +16,19 @@ class ContextAnalyzerService:
 
     @classmethod
     def _extract_keywords_from_rag(
-        cls, thinking_type_disp: str, rag_source: str
+        cls, thinking_type: str, thinking_type_disp: str
     ) -> str:
-        """RAG素材から重要なキーワードを抽出する
+        """エンティティの思考タイプに関連するRAG素材から重要なキーワードを抽出する
 
         Args:
-            thinking_type_disp (str): エンティティの思考タイプ
-            rag_source (str): RAG素材テキスト
+            thinking_type (str): エンティティの思考タイプ (material_typeと一致)
+            thinking_type_disp (str): エンティティの思考タイプの表示名
 
         Returns:
             str: 抽出されたキーワード（カンマ区切り）
         """
+        # エンティティの思考タイプからRAG素材を取得
+        rag_source = ResponseGeneratorRepository.get_rag_source_merged(thinking_type)
         if not rag_source:
             return ""
 
@@ -57,22 +60,19 @@ class ContextAnalyzerService:
             return ""
 
     @classmethod
-    def reframe_context_for_entity(
-        cls, context: str, entity: Entity, rag_source: str = None
-    ) -> str:
+    def reframe_context_for_entity(cls, context: str, entity: Entity) -> str:
         """チャット履歴をエンティティの専門領域に合わせてリフレーミングします
 
         処理の流れ：
         1. リフレーミングのためのOpenAI設定を初期化
         2. エンティティの専門分野に基づいたシステムプロンプトを構築
-        3. RAG素材から関連キーワードを抽出（素材が提供されている場合）
+        3. エンティティの思考タイプに関連するRAG素材から重要キーワードを抽出
         4. ユーザープロンプトを構築し、LLMによるリフレーミングを実行
         5. リフレーミング結果を返却（エラー時は元のコンテキストを返却）
 
         Args:
             context (str): リフレーミング対象のチャット履歴
             entity (Entity): リフレーミングを適用するエンティティ
-            rag_source (str, optional): エンティティの専門領域に関するRAG素材テキスト
 
         Returns:
             str: エンティティの専門領域に合わせてリフレーミングされたコンテキスト。
@@ -88,7 +88,8 @@ class ContextAnalyzerService:
         llm_service = LlmCompletionService(config)
 
         # 2. エンティティの専門分野に基づいたシステムプロンプトを構築
-        thinking_type_disp = entity.get_thinking_type_display() or entity.thinking_type
+        thinking_type = entity.thinking_type
+        thinking_type_disp = entity.get_thinking_type_display() or thinking_type
         system_prompt = f"""
         あなたは専門分野に特化したAIアシスタントです。会話の内容を{entity.name}の専門分野に合わせて解釈し直してください。
         {entity.name}の専門分野は {thinking_type_disp} です。
@@ -96,11 +97,11 @@ class ContextAnalyzerService:
         元の文脈を維持しながらも、専門的な要素や関連性を強調し、その分野の専門家が考えるような形に書き換えてください。
         """
 
-        # 3. RAG素材から重要なキーワードを抽出（素材が提供されている場合）
+        # 3. エンティティの思考タイプに関連するRAG素材から重要キーワードを抽出
         rag_keywords = ""
-        if rag_source:
+        if thinking_type:
             rag_keywords = cls._extract_keywords_from_rag(
-                thinking_type_disp, rag_source
+                thinking_type, thinking_type_disp
             )
 
         # 4. ユーザープロンプトを構築し、LLMによるリフレーミングを実行

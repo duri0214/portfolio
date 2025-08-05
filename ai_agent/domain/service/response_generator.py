@@ -41,13 +41,9 @@ class ResponseGenerator:
         entity = action_history.entity
         context = ResponseGeneratorRepository.get_recent_chat_messages()
 
-        # 2. RAG素材を使用してチャット履歴をエンティティの専門性に合わせてリフレーミング
+        # 2. チャット履歴をエンティティの専門性に合わせてリフレーミング
         reframed_context = ContextAnalyzerService.reframe_context_for_entity(
-            context=context,
-            entity=entity,
-            rag_source=ResponseGeneratorRepository.get_rag_source_merged(
-                entity.thinking_type
-            ),
+            context=context, entity=entity
         )
 
         # 3. ガードレールを適用して応答を生成・保存
