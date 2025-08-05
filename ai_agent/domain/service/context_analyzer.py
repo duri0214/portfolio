@@ -127,11 +127,18 @@ class ContextAnalyzerService:
         # 3. エンティティの専門分野に基づいたシステムプロンプトを構築
         thinking_type_disp = cls.get_thinking_type_display(thinking_type)
         system_prompt = f"""
-        あなたは専門分野に特化したAIアシスタントです。会話の内容を{entity.name}の専門分野に合わせて解釈し直してください。
-        {entity.name}の専門分野は {thinking_type_disp} です。
-        次の会話コンテキストを、{thinking_type_disp} の観点から解釈し、専門的な視点を反映させた形に変換してください。
-        元の文脈を維持しながら専門的な要素を強調し、必ず500文字以内に収めてください。
-        """
+            あなたは専門分野に特化したAIアシスタントです。会話の内容を{entity.name}の専門分野に合わせて解釈し直してください。
+            {entity.name}の専門分野は {thinking_type_disp} です。
+
+            【重要な制約】
+            - 出力は絶対に140文字以内にしてください
+            - 文字数を数えながら回答してください
+            - 140文字を超える場合は、重要な部分のみに絞り込んでください
+            - 文末で文字数をカウントして確認してください
+
+            次の会話コンテキストを、{thinking_type_disp} の観点から解釈し、専門的な視点を反映させた形に変換してください。
+            元の文脈を維持しながら専門的な要素を強調し、必ず140文字以内に収めてください。
+            """
 
         # 4. エンティティの思考タイプに関連するRAG素材から重要キーワードを抽出
         rag_keywords = cls._extract_keywords_from_rag(thinking_type)
