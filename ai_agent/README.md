@@ -25,7 +25,10 @@ ai_agent/
 │       └── turn_management.py  # ターン管理の値オブジェクト
 ├── tests/                 # テスト
 │   ├── test_input_processor.py  # 入力処理テスト
-│   └── test_turn_management.py  # 会話管理テスト
+│   ├── test_turn_management.py  # 会話管理テスト
+│   └── domain/              # ドメインテスト
+│       └── service/         # サービスレイヤーテスト
+│           └── test_turn_management.py  # 会話管理サービステスト
 ├── fixtures/              # フィクスチャーデータ
 │   ├── entity.json        # エンティティデータ
 │   ├── guardrail_config.json  # ガードレール設定データ
