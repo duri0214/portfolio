@@ -11,7 +11,6 @@ class ContextAnalyzerService:
 
     このサービスはチャットコンテキストを分析し、エンティティの専門領域に合わせて
     リフレーミングします。
-    TODO: Issue-323 reframe_context_for_entityメソッドを base_rag_service.py の load_source_to_rag_material に移行する
     """
 
     @classmethod
