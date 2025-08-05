@@ -39,7 +39,7 @@ class ContextAnalyzerService:
             このメソッドは単純に素材全体からキーワードを抽出するだけです。
             完全なRAG実装はlib.llm.service.completion.OpenAILlmRagServiceを参照してください。
 
-            TODO: ベクトル検索に基づく本格的なRAGを実装する (#ISSUE-XXX)
+            TODO: ベクトル検索に基づく本格的なRAGを実装する (#ISSUE-324)
 
         Args:
             thinking_type (str): エンティティの思考タイプ (material_typeと一致)
