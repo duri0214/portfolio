@@ -58,7 +58,7 @@ class ContextAnalyzerService:
         config = OpenAIGptConfig(
             model="gpt-4o-mini",
             temperature=0.7,
-            max_tokens=500,  # キーワード抽出には少ないトークン数で十分
+            max_tokens=4000,  # RAG素材から多くのキーワードを抽出するため多めにトークン数を設定
             api_key=os.getenv("OPENAI_API_KEY"),
         )
 
