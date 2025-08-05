@@ -42,9 +42,12 @@ class ResponseGenerator:
         context = ResponseGeneratorRepository.get_recent_chat_messages()
 
         # 2. チャット履歴をエンティティの専門性に合わせてリフレーミング
-        reframed_context = ContextAnalyzerService.reframe_context_for_entity(
-            context=context, entity=entity
-        )
+        try:
+            reframed_context = ContextAnalyzerService.reframe_context_for_entity(
+                context=context, entity=entity
+            )
+        except ValueError:
+            reframed_context = context
 
         # 3. ガードレールを適用して応答を生成・保存
         processor = InputProcessor(entity)

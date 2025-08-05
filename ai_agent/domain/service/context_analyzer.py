@@ -79,11 +79,11 @@ class ContextAnalyzerService:
         """チャット履歴をエンティティの専門領域に合わせてリフレーミングします
 
         処理の流れ：
-        1. リフレーミングのためのOpenAI設定を初期化
-        2. エンティティの専門分野に基づいたシステムプロンプトを構築
-        3. エンティティの思考タイプに関連するRAG素材から重要キーワードを抽出
-        4. ユーザープロンプトを構築し、LLMによるリフレーミングを実行
-        5. リフレーミング結果を返却（エラー時は元のコンテキストを返却）
+        1. thinking_typeがない場合は例外を発生させる
+        2. リフレーミングのためのOpenAI設定を初期化
+        3. エンティティの専門分野に基づいたシステムプロンプトを構築
+        4. エンティティの思考タイプに関連するRAG素材から重要キーワードを抽出
+        5. ユーザープロンプトを構築し、LLMによるリフレーミングを実行
 
         Args:
             context (str): リフレーミング対象のチャット履歴
@@ -92,8 +92,22 @@ class ContextAnalyzerService:
         Returns:
             str: エンティティの専門領域に合わせてリフレーミングされたコンテキスト。
                  LLMアクセスに失敗した場合は元のコンテキストをそのまま返します。
+
+        Raises:
+            ValueError: thinking_typeがNoneの場合（Userエンティティなど）
+
+        Note:
+            このメソッドはthinking_typeが設定されているエンティティに対してのみ使用してください。
+            Userエンティティなど、thinking_typeがNoneのエンティティに対しては適用できません。
         """
-        # 1. リフレーミングのためのOpenAI設定を初期化
+        # 1. thinking_typeがない場合は例外を発生させる
+        thinking_type = entity.thinking_type
+        if not thinking_type:
+            raise ValueError(
+                f"エンティティ {entity.name} にはthinking_typeが設定されていません。このメソッドはユーザー以外のエンティティでのみ使用してください。"
+            )
+
+        # 2. リフレーミングのためのOpenAI設定を初期化
         config = OpenAIGptConfig(
             model="gpt-4o-mini",
             temperature=0.7,
@@ -102,9 +116,8 @@ class ContextAnalyzerService:
         )
         llm_service = LlmCompletionService(config)
 
-        # 2. エンティティの専門分野に基づいたシステムプロンプトを構築
-        thinking_type = entity.thinking_type
-        thinking_type_disp = entity.get_thinking_type_display() or thinking_type
+        # 3. エンティティの専門分野に基づいたシステムプロンプトを構築
+        thinking_type_disp = cls.get_thinking_type_display(thinking_type)
         system_prompt = f"""
         あなたは専門分野に特化したAIアシスタントです。会話の内容を{entity.name}の専門分野に合わせて解釈し直してください。
         {entity.name}の専門分野は {thinking_type_disp} です。
@@ -112,12 +125,10 @@ class ContextAnalyzerService:
         元の文脈を維持しながらも、専門的な要素や関連性を強調し、その分野の専門家が考えるような形に書き換えてください。
         """
 
-        # 3. エンティティの思考タイプに関連するRAG素材から重要キーワードを抽出
-        rag_keywords = ""
-        if thinking_type:
-            rag_keywords = cls._extract_keywords_from_rag(thinking_type)
+        # 4. エンティティの思考タイプに関連するRAG素材から重要キーワードを抽出
+        rag_keywords = cls._extract_keywords_from_rag(thinking_type)
 
-        # 4. ユーザープロンプトを構築し、LLMによるリフレーミングを実行
+        # 5. ユーザープロンプトを構築し、LLMによるリフレーミングを実行
         user_prompt = f"以下の会話を、{thinking_type_disp} の専門家の視点でリフレーミングしてください: 会話コンテキスト: {context}\n\n{rag_keywords}"
 
         try:
