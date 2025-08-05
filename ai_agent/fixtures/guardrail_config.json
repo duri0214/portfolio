@@ -1,0 +1,18 @@
+[
+  {
+    "model": "ai_agent.GuardrailConfig",
+    "pk": 1,
+    "fields": {
+      "entity": 4,
+      "forbidden_words": [
+        "暴力",
+        "万引き"
+      ],
+      "max_input_length": 500,
+      "use_openai_moderation": false,
+      "strict_mode": false,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-07-27T00:00:00Z"
+    }
+  }
+]

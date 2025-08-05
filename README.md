@@ -134,6 +134,8 @@ python manage.py loaddata .\hospital\fixtures\election.json
 python manage.py loaddata .\hospital\fixtures\userattribute.json
 python manage.py loaddata .\hospital\fixtures\voteplace.json
 python manage.py loaddata .\ai_agent\fixtures\entity.json
+python manage.py loaddata .\ai_agent\fixtures\guardrail_config.json
+python manage.py loaddata .\ai_agent\fixtures\rag_material.json
 
 ```
 

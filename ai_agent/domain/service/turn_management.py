@@ -1,11 +1,6 @@
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
-from ai_agent.domain.service.thinking_engines.googlemaps_review import (
-    GoogleMapsReviewService,
-)
-from ai_agent.domain.service.thinking_engines.ng_word import NGWordService
-from ai_agent.domain.service.thinking_engines.rag import RagService
 from ai_agent.domain.valueobject.turn_management import EntityVO
-from ai_agent.models import Entity, ActionHistory
+from ai_agent.models import ActionHistory
 
 
 class TurnManagementService:
@@ -28,19 +23,15 @@ class TurnManagementService:
         """
         エンティティの速度に基づいて最初のターン値を割り当て、タイムラインを初期化します。
 
-        各エンティティのActionTimelineレコードを作成または更新し、next_turn値を設定します。
+        各エンティティのnext_turn値を設定します。
         この初期化により、エンティティの行動順序が速度に応じて決定されます。
         """
-        entities = TurnManagementRepository.get_all_entities()
+        entities = TurnManagementRepository.get_entities_ordered()
         for entity in entities:
-            TurnManagementRepository.update_or_create_action_timeline(
-                entity=entity,
-                defaults={
-                    "next_turn": TurnManagementService.calculate_next_turn_increment(
-                        entity.speed
-                    )
-                },
+            entity.next_turn = TurnManagementService.calculate_next_turn_increment(
+                entity.speed
             )
+            entity.save()
 
     @staticmethod
     def simulate_next_actions(max_steps=10) -> list[EntityVO]:
@@ -49,71 +40,40 @@ class TurnManagementService:
         各アクションに対応するActionHistoryレコードを作成します。
 
         next_turnが同じエンティティが複数存在する場合は、エンティティIDの昇順で選択されます。
-        min関数とタプルによる複合キー比較（next_turn, entity.id）を使用することで、
+        min関数とタプルによる複合キー比較（next_turn, id）を使用することで、
         常に決定論的な順序でエンティティが選択されます。
 
         Args:
             max_steps (int): シミュレーションするアクションの数
 
         Returns:
-            List[EntityVO]: エンティティ名と行動ターンを含むEntityVOオブジェクトのリスト
-
-        Raises:
-            ValueError: タイムラインにエンティティが存在しない場合
+            List[EntityVO]: エンティティ名と行動ターンを含むEntityVOオブジェクトのリスト。
+            エンティティが存在しない場合は空リストを返します。
         """
-        timelines = list(TurnManagementRepository.get_timelines_ordered_by_next_turn())
-        if not timelines:
-            raise ValueError("タイムラインにエンティティが存在しません。")
+        entities = list(TurnManagementRepository.get_entities_ordered())
+        if not entities:
+            return []
 
         simulation = []
         for i in range(1, max_steps + 1):
-            # 次の行動を決定 (next_turn が最小のタイムラインを選ぶ)
-            next_action = min(timelines, key=lambda t: (t.next_turn, t.entity.id))
+            # 次の行動を決定 (next_turn が最小のエンティティを選ぶ)
+            next_entity = min(entities, key=lambda e: (e.next_turn, e.id))
 
             # ActionHistory レコードを作成
             ActionHistory.objects.create(
-                entity=next_action.entity,
+                entity=next_entity,
                 acted_at_turn=i,
                 done=False,
             )
 
             # シミュレーションの結果を保存
             simulation.append(
-                EntityVO(name=next_action.entity.name, next_turn=next_action.next_turn)
+                EntityVO(name=next_entity.name, next_turn=next_entity.next_turn)
             )
 
             # 次の行動予定を仮で更新
-            next_action.next_turn += (
-                TurnManagementService.calculate_next_turn_increment(
-                    next_action.entity.speed
-                )
+            next_entity.next_turn += (
+                TurnManagementService.calculate_next_turn_increment(next_entity.speed)
             )
 
         return simulation
-
-    @staticmethod
-    def think(entity: Entity, input_text: str):
-        """
-        エンティティの思考ロジックを処理し、応答可能かどうかを判断します。
-
-        エンティティのthinking_typeに基づいて適切な判断サービスを選択し、
-        入力テキストに対して応答可能かどうかを評価します。
-
-        Args:
-            entity (Entity): 思考プロセスを実行するエンティティ
-            input_text (str): 評価する入力テキスト
-
-        Returns:
-            bool: 応答可能な場合はTrue、そうでない場合はFalse
-        """
-        if entity.thinking_type == "google_maps_based":
-            return GoogleMapsReviewService.can_respond(input_text, entity)
-
-        elif entity.thinking_type == "rag_based":
-            return RagService.can_respond(input_text, entity)
-
-        elif entity.thinking_type == "ng_word_based":
-            return NGWordService.can_respond(input_text, entity)
-
-        # デフォルトで発言可能
-        return True
