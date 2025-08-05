@@ -55,21 +55,18 @@ ai_agent/
 
 - エンティティの速度に基づいた次の発言順序の決定
 - タイムラインの初期化と更新
-- エンティティの思考ロジック（think）による応答可否の判断
 - 次のアクションのシミュレーション
 
 処理フロー：
 
 1. タイムラインの初期化（initialize_timeline）
 2. 未完了のActionHistoryから現在のエンティティを取得
-3. 各エンティティのthinking_typeに基づいた応答可否の判断（think）
-4. 次のターンの計算と更新（calculate_next_turn_increment）
+3. 次のターンの計算と更新（calculate_next_turn_increment）
 
 実装の特徴：
 
 - 数学的に正確な速度計算（1/speed）により、公平なターン制御を実現
 - 同じnext_turnを持つエンティティの場合はIDの昇順で選択（決定論的）
-- 行動できないエンティティは自動的にスキップされる柔軟な設計
 - 将来の行動シーケンスをシミュレーションする機能
 
 ### 2. 入力処理システム (InputProcessor)
@@ -129,12 +126,14 @@ ai_agent/
 
 典型的なチャットのライフサイクル：
 
-1. ユーザーがテキスト入力を送信
-2. ActionHistoryから現在のターンのエンティティを取得
-3. エンティティの`thinking_type`に基づいて応答可能性を判断
-    - GoogleMapsReviewService、RagService、NGWordServiceなどを利用
-4. 応答可能な場合、エンティティが応答を生成
-5. タイムラインが更新され、次のターンの増分が計算され準備
+1. ユーザーがテキスト入力を送信（IndexView経由）
+2. InputProcessorがガードレールチェックを実行
+3. ActionHistoryから現在のターンのエンティティを取得
+4. ResponseGeneratorを使用して応答を生成
+    - エンティティの`thinking_type`に基づいた専門分野の知識を活用
+    - ContextAnalyzerServiceで会話文脈をエンティティの専門領域に最適化
+5. TurnManagementRepositoryを通じてメッセージを保存し、ActionHistoryを更新
+6. 次のエンティティのターンを準備
 
 ## 会話フローのシーケンス図
 
