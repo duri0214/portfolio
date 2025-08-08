@@ -30,7 +30,6 @@ class InputProcessor:
         # LlmCompletionServiceの初期化
         self.llm_config = OpenAIGptConfig(
             model="gpt-5-mini",
-            temperature=0.7,
             max_tokens=2000,
             api_key=os.getenv("OPENAI_API_KEY"),
         )

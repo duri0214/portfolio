@@ -22,7 +22,7 @@ class TestOpenAIBatchCompletionService(TestCase):
 
         # Mock Config
         self.mock_config = OpenAIGptConfig(
-            api_key="fake-api-key", model="gpt-5-mini", max_tokens=1000, temperature=0.7
+            api_key="fake-api-key", model="gpt-5-mini", max_tokens=1000
         )
 
         # サービスを初期化

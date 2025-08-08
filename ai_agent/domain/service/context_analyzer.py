@@ -57,7 +57,6 @@ class ContextAnalyzerService:
 
         config = OpenAIGptConfig(
             model="gpt-5-mini",
-            temperature=0.7,
             max_tokens=500,  # 単純に素材全体からキーワードを抽出するだけなので小さくてOK
             api_key=os.getenv("OPENAI_API_KEY"),
         )
@@ -118,7 +117,6 @@ class ContextAnalyzerService:
         # 2. リフレーミングのためのOpenAI設定を初期化
         config = OpenAIGptConfig(
             model="gpt-5-mini",
-            temperature=0.7,
             max_tokens=2000,
             api_key=os.getenv("OPENAI_API_KEY"),
         )

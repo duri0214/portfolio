@@ -142,7 +142,6 @@ if __name__ == "__main__":
             api_key="your-api-key",
             model="gpt-5-mini",
             max_tokens=1000,
-            temperature=0.7,
         )
     )
     sample_chunks = [
