@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from lib.llm.service.completion import count_tokens, cut_down_chat_history
 from lib.llm.valueobject.completion import RoleType, Message
-from lib.llm.valueobject.config import OpenAIGptConfig, validate_temperature
+from lib.llm.valueobject.config import OpenAIGptConfig
 
 
 class TestLlmService(TestCase):
@@ -47,9 +47,7 @@ class TestLlmService(TestCase):
 
         - `config.max_tokens > チャット履歴すべてのトークン数` であるとき、チャット履歴が変更されないことを確認します。
         """
-        config = OpenAIGptConfig(
-            api_key="xxx", max_tokens=100, model="gpt-4o-mini", temperature=0.5
-        )
+        config = OpenAIGptConfig(api_key="xxx", max_tokens=100, model="gpt-5-mini")
         cut_history = cut_down_chat_history(self.chat_history, config)
         self.assertIsInstance(cut_history, list)
         self.assertEqual(len(cut_history), 3)
@@ -61,9 +59,7 @@ class TestLlmService(TestCase):
         - config.max_tokens を極端に小さくした場合、古いメッセージが削除され、
           必要なトークン数を満たす、最も新しいメッセージだけが残ることを確認します。
         """
-        config = OpenAIGptConfig(
-            api_key="xxx", max_tokens=2, model="gpt-4o-mini", temperature=0.5
-        )
+        config = OpenAIGptConfig(api_key="xxx", max_tokens=2, model="gpt-5-mini")
         cut_history = cut_down_chat_history(self.chat_history, config)
         self.assertEqual(len(cut_history), 1)
         self.assertEqual(cut_history[0].content, "world!")
@@ -74,38 +70,6 @@ class TestLlmService(TestCase):
 
         - チャット履歴が空の場合、関数が空のリストを返すことを確認します。
         """
-        config = OpenAIGptConfig(
-            api_key="xxx", max_tokens=100, model="gpt-4o-mini", temperature=0.5
-        )
+        config = OpenAIGptConfig(api_key="xxx", max_tokens=100, model="gpt-5-mini")
         cut_history = cut_down_chat_history([], config)
         self.assertEqual(cut_history, [], "空のリストであるはずです")
-
-
-class TestValidateTemperature(TestCase):
-    """
-    validate_temperature関数をテストするためのテストケース。
-
-    - 温度パラメータが有効な値であるかどうかを確認します。
-    """
-
-    def test_valid_temperature(self):
-        """
-        有効な温度値が与えられた場合、エラーが発生せず値がそのまま返却されることをテストします。
-
-        テスト範囲:
-            - 温度: 0, 0.5, 1（有効な範囲内）
-        """
-        for temp in [0, 0.5, 1]:
-            result = validate_temperature(temp)
-            self.assertEqual(result, temp)
-
-    def test_invalid_temperature(self):
-        """
-        無効な温度値が与えられた場合、ValueErrorがスローされることをテストします。
-
-        テスト範囲:
-            - 温度: -1, 1.5（有効範囲外）
-        """
-        for temp in [-1, 1.5]:
-            with self.assertRaises(ValueError):
-                validate_temperature(temp)

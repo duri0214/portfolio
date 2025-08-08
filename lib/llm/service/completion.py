@@ -149,7 +149,6 @@ class LlmCompletionService(LlmService):
         return self.client.chat.completions.create(
             model=self.config.model,
             messages=[x.to_dict() for x in cut_down_history],
-            temperature=self.config.temperature,
         )
 
 
@@ -206,7 +205,6 @@ class LlmCompletionStreamingService(LlmService):
         stream = self.client.chat.completions.create(
             model=self.config.model,
             messages=[x.to_dict() for x in cut_down_history],
-            temperature=self.config.temperature,
             stream=True,
         )
         for chunk in stream:
@@ -473,9 +471,7 @@ class OpenAILlmRagService(LlmService):
 
         # LLMチェーンの作成
         chain = RetrievalQAWithSourcesChain.from_chain_type(
-            llm=ChatOpenAI(
-                temperature=0, model=self.config.model, api_key=self.config.api_key
-            ),
+            llm=ChatOpenAI(model=self.config.model, api_key=self.config.api_key),
             chain_type="stuff",
             reduce_k_below_max_tokens=True,
             return_source_documents=True,

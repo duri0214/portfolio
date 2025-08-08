@@ -122,7 +122,6 @@ class GeminiChatService(ChatService):
         self.chat_history = []
         self.config = GeminiConfig(
             api_key=os.getenv("GEMINI_API_KEY"),
-            temperature=0.5,
             max_tokens=4000,
             model="gemini-1.5-flash",
         )
@@ -148,9 +147,8 @@ class OpenAIChatService(ChatService):
         self.chat_history = []
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.5,
             max_tokens=4000,
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
         )
 
     def generate(self, user_message: MessageDTO, gender: Gender) -> MessageDTO:
@@ -197,9 +195,8 @@ class OpenAIChatStreamingService(ChatService):
         self.chat_history = []
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.5,
             max_tokens=4000,
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
         )
 
     def generate(
@@ -217,7 +214,6 @@ class OpenAIDalleChatService(ChatService):
         super().__init__()
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.5,
             max_tokens=4000,
             model="dall-e-3",
         )
@@ -273,7 +269,6 @@ class OpenAITextToSpeechChatService(ChatService):
         super().__init__()
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.5,
             max_tokens=4000,
             model="tts-1",
         )
@@ -314,7 +309,6 @@ class OpenAISpeechToTextChatService(ChatService):
         super().__init__()
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.5,
             max_tokens=4000,
             model="whisper-1",
         )
@@ -340,9 +334,8 @@ class OpenAIRagChatService(ChatService):
         super().__init__()
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.5,
             max_tokens=4000,
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
         )
 
     def generate(self, user_message: MessageDTO) -> MessageDTO:
