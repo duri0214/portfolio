@@ -22,7 +22,7 @@ class TestOpenAIBatchCompletionService(TestCase):
 
         # Mock Config
         self.mock_config = OpenAIGptConfig(
-            api_key="fake-api-key", model="gpt-4o", max_tokens=1000, temperature=0.7
+            api_key="fake-api-key", model="gpt-5-mini", max_tokens=1000, temperature=0.7
         )
 
         # サービスを初期化
@@ -50,7 +50,7 @@ class TestOpenAIBatchCompletionService(TestCase):
         # 結果の確認
         self.assertIsInstance(result_chunk, MessageChunk)
         self.assertEqual(result_chunk.messages, self.sample_messages)
-        self.assertEqual(result_chunk.model, "gpt-4o")
+        self.assertEqual(result_chunk.model, "gpt-5-mini")
         self.assertEqual(result_chunk.max_tokens, 1000)
 
     def test_export_jsonl_file(self):

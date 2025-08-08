@@ -150,7 +150,7 @@ class OpenAIChatService(ChatService):
             api_key=os.getenv("OPENAI_API_KEY"),
             temperature=0.5,
             max_tokens=4000,
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
         )
 
     def generate(self, user_message: MessageDTO, gender: Gender) -> MessageDTO:
@@ -199,7 +199,7 @@ class OpenAIChatStreamingService(ChatService):
             api_key=os.getenv("OPENAI_API_KEY"),
             temperature=0.5,
             max_tokens=4000,
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
         )
 
     def generate(
@@ -342,7 +342,7 @@ class OpenAIRagChatService(ChatService):
             api_key=os.getenv("OPENAI_API_KEY"),
             temperature=0.5,
             max_tokens=4000,
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
         )
 
     def generate(self, user_message: MessageDTO) -> MessageDTO:

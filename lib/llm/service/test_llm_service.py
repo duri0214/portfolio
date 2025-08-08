@@ -48,7 +48,7 @@ class TestLlmService(TestCase):
         - `config.max_tokens > チャット履歴すべてのトークン数` であるとき、チャット履歴が変更されないことを確認します。
         """
         config = OpenAIGptConfig(
-            api_key="xxx", max_tokens=100, model="gpt-4o-mini", temperature=0.5
+            api_key="xxx", max_tokens=100, model="gpt-5-mini", temperature=0.5
         )
         cut_history = cut_down_chat_history(self.chat_history, config)
         self.assertIsInstance(cut_history, list)
@@ -62,7 +62,7 @@ class TestLlmService(TestCase):
           必要なトークン数を満たす、最も新しいメッセージだけが残ることを確認します。
         """
         config = OpenAIGptConfig(
-            api_key="xxx", max_tokens=2, model="gpt-4o-mini", temperature=0.5
+            api_key="xxx", max_tokens=2, model="gpt-5-mini", temperature=0.5
         )
         cut_history = cut_down_chat_history(self.chat_history, config)
         self.assertEqual(len(cut_history), 1)
@@ -75,7 +75,7 @@ class TestLlmService(TestCase):
         - チャット履歴が空の場合、関数が空のリストを返すことを確認します。
         """
         config = OpenAIGptConfig(
-            api_key="xxx", max_tokens=100, model="gpt-4o-mini", temperature=0.5
+            api_key="xxx", max_tokens=100, model="gpt-5-mini", temperature=0.5
         )
         cut_history = cut_down_chat_history([], config)
         self.assertEqual(cut_history, [], "空のリストであるはずです")
