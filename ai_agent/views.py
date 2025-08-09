@@ -165,7 +165,6 @@ class ResetTimelineView(View):
         Returns:
             HttpResponseRedirect: インデックスページへのリダイレクト
         """
-        # リセット処理を呼び出し
         TurnManagementService.reset_timeline()
         return redirect("agt:index")
 
