@@ -31,6 +31,8 @@ class ContextAnalyzerRepository:
             指定されたセパレータで結合したテキストを返します。
             単一レコードの場合も同様に動作します。
 
+            メタデータ情報を常に含めます。メタデータは素材のテキストの前に追加されます。
+
             この実装は簡易的なRAG (Retrieval Augmented Generation) であり、
             将来的にはベクトル検索を用いた本格的なRAG実装に置き換える予定です。
 
@@ -42,9 +44,22 @@ class ContextAnalyzerRepository:
         if not materials.exists():
             return f"{material_type}に関する情報が見つかりませんでした。"
 
+        result_texts = []
+
+        for material in materials:
+            source_text = material.source_text
+
+            processed_text = source_text
+            if material.metadata:
+                metadata_str = str(material.metadata)
+                if metadata_str and metadata_str != "{}":
+                    processed_text = f"メタデータ: {metadata_str}\n{source_text}"
+
+            result_texts.append(processed_text)
+
         # 1レコードの場合はそのまま返す
         if materials.count() == 1:
-            return materials.first().source_text
+            return result_texts[0]
 
         # 複数レコードの場合は結合して返す
-        return separator.join([material.source_text for material in materials])
+        return separator.join(result_texts)
