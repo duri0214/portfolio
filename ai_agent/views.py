@@ -155,9 +155,6 @@ class ResetTurnView(View):
         Returns:
             HttpResponseRedirect: インデックスページへのリダイレクト
         """
-        messages.success(
-            request, "会話がリセットされました。新しい会話を開始できます。"
-        )
         TurnManagementService.reset_turn()
         return redirect("agt:index")
 
