@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Generator
 
-import tiktoken
 from dotenv import load_dotenv
 from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
 from langchain.prompts import ChatPromptTemplate
@@ -24,59 +23,32 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
-def count_tokens(text: str) -> int:
-    """
-    与えられたテキストのトークン数をカウントします。
-
-    この関数では、OpenAIのtiktokenライブラリを使用してトークン数をカウントしています。
-    適切なエンコーディングを取得するため、特定のモデル名ではなく "o200k_base" を直接使用します。
-    使用するエンコーディングは、与えられたテキストに対するトークンIDの配列（例：[15496, 2159, 0]）を返します。
-    この配列の長さは、テキスト内のトークンの数を意味します。
-
-    引数:
-        text (str): トークン数を数えるテキスト。
-
-    戻り値:
-        int: テキスト内のトークン数。
-
-    See Also: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
-    """
-    if not text:
-        return 0
-
-    encoding = tiktoken.get_encoding("o200k_base")
-    tokens = encoding.encode(text)
-    return len(tokens)
-
-
 def cut_down_chat_history(
-    chat_history: list[Message], config: OpenAIGptConfig | GeminiConfig
+    chat_history: list[Message],
+    max_messages: int = 5,
 ) -> list[Message]:
     """
-    チャット履歴のメッセージリストを削減し、トークンの総数が config で指定した max_tokens を超えないようにします。
+    チャット履歴メッセージのリストを削減し、直近のメッセージ件数を max_messages に制限します。
 
-    この関数では、発生の逆順にメッセージを走査し、それらのトークン数を合計します。
-    それが max_tokens を超えたとき、チャット履歴の早い部分をカットオフします。
+    以前はトークン数ベースで履歴を管理していましたが、メッセージ件数ベースに変更しました：
+    本来はtiktoken等を利用してトークンを算出し、モデルごとのllm-max-inputのようなトークン制限値に基づいてダイエットするべきですが、
+    LLMに入力するために絞る方法として単純に最新5件のメッセージに簡略化したため、
+    現在はトークン数による削減は行わず、単純にメッセージ件数ベースで直近のメッセージのみを保持するようになっています。
 
     Args:
         chat_history (list[Message]): チャット履歴メッセージのリスト。
-        config (OpenAIGptConfig | GeminiConfig): モデルの設定。max_tokens を含みます。
+        max_messages (int, optional): 保持する最大メッセージ件数。デフォルト値は5。
 
     Returns:
-        list[Message]: 削減されたチャット履歴メッセージのリスト。
+        list[Message]: 直近のmax_messages件に削減されたチャット履歴メッセージのリスト。
     """
     if not chat_history:
         return []
 
-    token_count = 0
-
-    for i in range(len(chat_history) - 1, -1, -1):  # 逆順にループ
-        message = chat_history[i]
-        token_count += count_tokens(message.content)
-        if token_count > config.max_tokens:
-            return chat_history[i + 1 :]  # 切り捨てた範囲の次から返す
-
-    return chat_history
+    if len(chat_history) <= max_messages:
+        return chat_history
+    else:
+        return chat_history[-max_messages:]
 
 
 class LlmService(ABC):
@@ -130,17 +102,24 @@ class LlmCompletionService(LlmService):
 
         return OpenAI(**client_params)
 
-    def retrieve_answer(self, chat_history: list[Message]) -> ChatCompletion:
+    def retrieve_answer(
+        self, chat_history: list[Message], max_messages: int = 5
+    ) -> ChatCompletion:
         """
         チャット履歴から回答を取得します。
 
+        注意: この機能はトークン数ベースの制限から単純なメッセージ件数ベースの制限に移行したため、
+        内部処理が形骸化されました。現在はmax_messagesパラメータを使用して直近の指定件数のみを
+        保持する方式に置き換えられています。
+
         Args:
             chat_history (list[Message]): チャット履歴メッセージのリスト
+            max_messages (int, optional): 保持する最大メッセージ件数。デフォルト値は5。
 
         Returns:
             ChatCompletion: OpenAI形式のチャット完了レスポンス
         """
-        cut_down_history = cut_down_chat_history(chat_history, self.config)
+        cut_down_history = cut_down_chat_history(chat_history, max_messages)
 
         # 空のチャット履歴の場合はエラー
         if not cut_down_history:
@@ -182,13 +161,14 @@ class LlmCompletionStreamingService(LlmService):
         return OpenAI(**client_params)
 
     def retrieve_answer(
-        self, chat_history: list[Message]
+        self, chat_history: list[Message], max_messages: int = 5
     ) -> Generator[StreamResponse, None, None]:
         """
         OpenAIのストリーミングレスポンスを処理し、応答をジェネレーターとして返します。
 
         Args:
             chat_history (list[Message]): チャット履歴
+            max_messages (int, optional): 保持する最大メッセージ件数。デフォルト値は5。
 
         Returns:
             Generator[StreamResponse, None, None]:
@@ -196,7 +176,7 @@ class LlmCompletionStreamingService(LlmService):
                 - `None`（2つ目の型）はジェネレーターに対して値を送り込む型がないことを示します。
                 - `None`（3つ目の型）はこのジェネレーターが停止時に明示的な`return`を行わないことを示します。
         """
-        cut_down_history = cut_down_chat_history(chat_history, self.config)
+        cut_down_history = cut_down_chat_history(chat_history, max_messages)
 
         # 空のチャット履歴の場合はエラー
         if not cut_down_history:
@@ -213,7 +193,7 @@ class LlmCompletionStreamingService(LlmService):
             yield StreamResponse(content=delta_content, finish_reason=finish_reason)
 
     def stream_chunks(
-        self, chat_history: list[Message]
+        self, chat_history: list[Message], max_messages: int = 5
     ) -> Generator[StreamResponse, None, None]:
         """
         チャット履歴に基づくストリーミングレスポンスを取得し、正常データおよび例外発生時のエラーメッセージを
@@ -221,6 +201,7 @@ class LlmCompletionStreamingService(LlmService):
 
         Args:
             chat_history (list[Message]): チャット履歴
+            max_messages (int, optional): 保持する最大メッセージ件数。デフォルト値は5。
 
         Yields:
             StreamResponse:
@@ -240,7 +221,7 @@ class LlmCompletionStreamingService(LlmService):
             - https://platform.openai.com/docs/api-reference/streaming
         """
         try:
-            for chunk in self.retrieve_answer(chat_history):
+            for chunk in self.retrieve_answer(chat_history, max_messages):
                 yield chunk
         except Exception as e:
             yield StreamResponse(content=f"{str(e)}", finish_reason="stop")
