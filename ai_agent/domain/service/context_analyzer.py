@@ -1,6 +1,6 @@
 import os
 
-from ai_agent.domain.repository.response_generator import ResponseGeneratorRepository
+from ai_agent.domain.repository.context_analyzer import ContextAnalyzerRepository
 from ai_agent.models import Entity, DATA_SOURCE_CHOICES
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
@@ -48,7 +48,7 @@ class ContextAnalyzerService:
             str: 抽出されたキーワード（カンマ区切り）
         """
         # エンティティの思考タイプからRAG素材を取得
-        rag_source = ResponseGeneratorRepository.get_rag_source_merged(thinking_type)
+        rag_source = ContextAnalyzerRepository.get_rag_source_merged(thinking_type)
         if not rag_source:
             return ""
 

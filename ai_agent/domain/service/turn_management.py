@@ -1,6 +1,11 @@
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
+from ai_agent.domain.service.context_analyzer import ContextAnalyzerService
+from ai_agent.domain.service.input_processor import InputProcessor
 from ai_agent.domain.valueobject.turn_management import EntityVO
-from ai_agent.models import ActionHistory
+from ai_agent.models import ActionHistory, Message
+from lib.log_service import LogService
+
+log_service = LogService("turn_management_service.log")
 
 
 class TurnManagementService:
@@ -77,3 +82,78 @@ class TurnManagementService:
             )
 
         return simulation
+
+    @staticmethod
+    def reset_turn():
+        """
+        チャットをリセットし、新しい会話の準備をします。
+
+        以下の処理を実行します：
+        1. すべてのメッセージ履歴を削除
+        2. すべてのActionHistory（行動履歴）レコードを削除
+        3. 各エンティティのActionTimelineを初期化（speed属性に基づいて）
+        4. 次の10ターン分のアクションをシミュレーションしてActionHistoryに登録
+        5. すべてのActionHistoryレコードを未完了状態（done=False）に設定
+
+        この処理により、エンティティのスピード属性に基づいた新しい行動順序が決定され、
+        ユーザーは新しい会話を開始できます。
+        """
+        # 1. すべてのメッセージ履歴を削除
+        Message.objects.all().delete()
+        log_service.write("すべてのメッセージが削除されました")
+
+        # 2. すべてのActionHistory（行動履歴）レコードを削除
+        ActionHistory.objects.all().delete()
+        log_service.write("すべてのActionHistoryレコードが削除されました")
+
+        # 3. 各エンティティのActionTimelineを初期化（speed属性に基づいて）
+        TurnManagementService.initialize_timeline()
+
+        # 4. 次の10ターン分のアクションをシミュレーションしてActionHistoryに登録
+        TurnManagementService.simulate_next_actions(max_steps=10)
+
+        # 5. すべてのActionHistoryレコードを未完了状態（done=False）に設定
+        ActionHistory.objects.all().update(done=False)
+
+    @staticmethod
+    def progress_turn(action_history: ActionHistory) -> str:
+        """
+        現在のアクション履歴に基づいてエンティティの応答を生成し、
+        ターンを進行させるメソッド。
+
+        処理の流れ：
+        1. エンティティ情報を取得し、最新の会話コンテキストを取得
+        2. チャット履歴をエンティティの専門性に合わせてリフレーミング
+        3. ガードレールを適用して応答を生成・保存
+        4. 生成された最新のメッセージ内容を返却
+
+        Args:
+            action_history (ActionHistory): 現在のアクション履歴（エンティティ情報を含む）
+
+        Returns:
+            str: 生成された応答テキスト（エラーの場合はエラーメッセージ）
+        """
+        # 1. エンティティ情報を取得し、最新の会話コンテキストを取得
+        entity = action_history.entity
+        context = TurnManagementRepository.get_recent_chat_messages()
+
+        # 2. チャット履歴をエンティティの専門性に合わせてリフレーミング
+        try:
+            reframed_context = ContextAnalyzerService.reframe_context_for_entity(
+                context=context, entity=entity
+            )
+        except ValueError:
+            reframed_context = context
+
+        # 3. ガードレールを適用して応答を生成・保存
+        processor = InputProcessor(entity)
+        response_text = processor.process_input(reframed_context)
+        TurnManagementRepository.create_message(
+            content=response_text, action_history=action_history
+        )
+
+        # 4. 生成された最新のメッセージ内容を返却
+        latest_message = TurnManagementRepository.get_latest_chat_message()
+        response_text = latest_message.message_content if latest_message else ""
+
+        return response_text

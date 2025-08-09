@@ -4,6 +4,14 @@ from ai_agent.models import Entity, Message, ActionHistory
 
 
 class TurnManagementRepository:
+    """
+    ターン管理に関するデータアクセスを提供するリポジトリクラス
+
+    このクラスは、エンティティのアクション順序管理、メッセージ作成、
+    アクション履歴の取得などのデータアクセス機能を提供します。
+    TurnManagementServiceから主に使用され、会話のターン進行をサポートします。
+    """
+
     @staticmethod
     def get_entities_ordered() -> QuerySet:
         """
@@ -39,3 +47,25 @@ class TurnManagementRepository:
         action_history.save()
 
         return message
+
+    @staticmethod
+    def get_recent_chat_messages(limit: int = 5) -> str:
+        """直近のチャットメッセージを取得し、内容を連結して返します
+
+        Args:
+            limit (int): 取得するメッセージの数
+
+        Returns:
+            str: 連結されたチャットメッセージ内容
+        """
+        messages = Message.objects.order_by("-created_at")[:limit]
+        return "\n".join([msg.message_content for msg in messages])
+
+    @staticmethod
+    def get_latest_chat_message() -> Message | None:
+        """最新のチャットメッセージを1件だけ取得します
+
+        Returns:
+            Message | None: 最新のチャットメッセージ（存在しない場合はNone）
+        """
+        return Message.objects.order_by("-created_at").first()
