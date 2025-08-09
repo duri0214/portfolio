@@ -7,7 +7,6 @@ from django.views.generic.edit import FormView
 
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
 from ai_agent.domain.service.input_processor import InputProcessor
-from ai_agent.domain.service.response_generator import ResponseGenerator
 from ai_agent.domain.service.turn_management import TurnManagementService
 from ai_agent.forms import SendMessageForm
 from ai_agent.models import Message, Entity, ActionHistory
@@ -167,40 +166,8 @@ class ResetTimelineView(View):
             HttpResponseRedirect: インデックスページへのリダイレクト
         """
         # リセット処理を呼び出し
-        ResetTimelineView.reset_timeline()
+        TurnManagementService.reset_timeline()
         return redirect("agt:index")
-
-    @staticmethod
-    def reset_timeline():
-        """
-        タイムラインをリセットし、新しい会話の準備をします。
-
-        以下の処理を実行します：
-        1. すべてのメッセージ履歴を削除
-        2. すべてのActionHistory（行動履歴）レコードを削除
-        3. 各エンティティのActionTimelineを初期化（speed属性に基づいて）
-        4. 次の10ターン分のアクションをシミュレーションしてActionHistoryに登録
-        5. すべてのActionHistoryレコードを未完了状態（done=False）に設定
-
-        この処理により、エンティティのスピード属性に基づいた新しい行動順序が決定されます。
-        TODO: ai_agent/domain/service/thinking_engine_processor.py に移す issue 322
-        """
-        # メッセージ履歴をクリア
-        Message.objects.all().delete()
-        log_service.write("All messages have been cleared.")
-
-        # ActionHistoryをクリア
-        ActionHistory.objects.all().delete()
-        log_service.write("All ActionHistory records have been cleared.")
-
-        # タイムラインを初期化
-        TurnManagementService.initialize_timeline()
-
-        # 未来の10ターン分をActionHistoryに登録
-        TurnManagementService.simulate_next_actions(max_steps=10)
-
-        # ActionHistoryのすべての行動を未完了（done=False）にする
-        ActionHistory.objects.all().update(done=False)
 
 
 class NextTurnView(View):
@@ -232,7 +199,7 @@ class NextTurnView(View):
                 # 2. アクションが存在しない場合はタイムラインをリセット
                 reset_message = "処理すべきアクションはもうありません。タイムラインがリセットされました。"
                 messages.info(request, reset_message)
-                ResetTimelineView.reset_timeline()
+                TurnManagementService.reset_timeline()
                 return redirect("agt:index")
 
             # 3. エンティティの基本情報を取得
@@ -244,8 +211,8 @@ class NextTurnView(View):
                 messages.error(request, error_message)
                 return redirect("agt:index")
 
-            # 5. ResponseGeneratorを使用してガードレールを適用し応答を生成
-            response_text = ResponseGenerator.generate_response(
+            # 5. TurnManagementServiceを使用してターンを進行し応答を生成
+            response_text = TurnManagementService.progress_turn(
                 action_history=current_action_history
             )
 
