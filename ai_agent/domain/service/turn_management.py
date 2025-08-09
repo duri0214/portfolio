@@ -84,9 +84,9 @@ class TurnManagementService:
         return simulation
 
     @staticmethod
-    def reset_timeline():
+    def reset_turn():
         """
-        タイムラインをリセットし、新しい会話の準備をします。
+        チャットをリセットし、新しい会話の準備をします。
 
         以下の処理を実行します：
         1. すべてのメッセージ履歴を削除
@@ -95,23 +95,24 @@ class TurnManagementService:
         4. 次の10ターン分のアクションをシミュレーションしてActionHistoryに登録
         5. すべてのActionHistoryレコードを未完了状態（done=False）に設定
 
-        この処理により、エンティティのスピード属性に基づいた新しい行動順序が決定されます。
+        この処理により、エンティティのスピード属性に基づいた新しい行動順序が決定され、
+        ユーザーは新しい会話を開始できます。
         """
-        # すべてのメッセージ履歴を削除
+        # 1. すべてのメッセージ履歴を削除
         Message.objects.all().delete()
-        log_service.write("All messages have been cleared.")
+        log_service.write("すべてのメッセージが削除されました")
 
-        # すべてのActionHistory（行動履歴）レコードを削除
+        # 2. すべてのActionHistory（行動履歴）レコードを削除
         ActionHistory.objects.all().delete()
-        log_service.write("All ActionHistory records have been cleared.")
+        log_service.write("すべてのActionHistoryレコードが削除されました")
 
-        # 各エンティティのActionTimelineを初期化（speed属性に基づいて）
+        # 3. 各エンティティのActionTimelineを初期化（speed属性に基づいて）
         TurnManagementService.initialize_timeline()
 
-        # 次の10ターン分のアクションをシミュレーションしてActionHistoryに登録
+        # 4. 次の10ターン分のアクションをシミュレーションしてActionHistoryに登録
         TurnManagementService.simulate_next_actions(max_steps=10)
 
-        # すべてのActionHistoryレコードを未完了状態（done=False）に設定
+        # 5. すべてのActionHistoryレコードを未完了状態（done=False）に設定
         ActionHistory.objects.all().update(done=False)
 
     @staticmethod

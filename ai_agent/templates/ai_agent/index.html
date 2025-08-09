@@ -9,9 +9,9 @@
         <p>Interact with the AI Agent below.</p>
         <ul class="list-items">
             <li>
-                <form method="POST" action="{% url 'agt:reset_timeline' %}" style="display: inline;">
+                <form method="POST" action="{% url 'agt:reset_turn' %}" style="display: inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">リセット</button>
+                    <button type="submit" class="btn btn-danger">会話をリセット</button>
                 </form>
             </li>
             <li>
@@ -32,8 +32,8 @@
     <div class="container">
         <section id="content-section" class="d-flex flex-column">
             <div class="d-flex flex-grow-1">
-                <!-- タイムラインディスプレイ (左側コンテンツ) -->
-                <div class="timeline-display flex-grow-1">
+                <!-- チャットディスプレイ (左側コンテンツ) -->
+                <div class="flex-grow-1">
                     <div class="container mt-4">
                         <h2>AI Agent Simulation</h2>
                         {% if messages %}
@@ -70,7 +70,7 @@
                                 {% csrf_token %}
                                 {{ form.as_p }}
                                 <button type="submit" class="btn btn-primary mt-2"
-                                        {% if next_entity.name != 'User' %}disabled{% endif %}>Send
+                                        {% if next_entity.name != 'User' %}disabled{% endif %}>送信
                                 </button>
                             </form>
                         {% endwith %}

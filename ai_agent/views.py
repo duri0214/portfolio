@@ -139,21 +139,11 @@ class IndexView(FormView):
         return super().form_valid(form)
 
 
-class ResetTimelineView(View):
-    """
-    会話タイムラインをリセットし、将来のアクションを初期化するビュー。
-
-    すべてのメッセージ履歴とアクション履歴を削除し、エンティティの行動タイムラインを
-    初期化します。その後、次の10ターン分のアクションをシミュレーションして
-    ActionHistoryに登録します。
-
-    このビューは、会話が行き詰まった場合や新しい会話を開始したい場合に使用されます。
-    """
-
+class ResetTurnView(View):
     @staticmethod
     def post(request, *args, **kwargs) -> HttpResponseRedirect:
         """
-        POSTリクエストを処理し、タイムラインのリセットを実行します。
+        POSTリクエストを処理し、会話のリセットを実行します。
 
         リセット処理を実行した後、インデックスページにリダイレクトします。
 
@@ -165,7 +155,10 @@ class ResetTimelineView(View):
         Returns:
             HttpResponseRedirect: インデックスページへのリダイレクト
         """
-        TurnManagementService.reset_timeline()
+        messages.success(
+            request, "会話がリセットされました。新しい会話を開始できます。"
+        )
+        TurnManagementService.reset_turn()
         return redirect("agt:index")
 
 
@@ -198,7 +191,7 @@ class NextTurnView(View):
                 # 2. アクションが存在しない場合はタイムラインをリセット
                 reset_message = "処理すべきアクションはもうありません。タイムラインがリセットされました。"
                 messages.info(request, reset_message)
-                TurnManagementService.reset_timeline()
+                TurnManagementService.reset_turn()
                 return redirect("agt:index")
 
             # 3. エンティティの基本情報を取得
