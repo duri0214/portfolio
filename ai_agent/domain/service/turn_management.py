@@ -95,21 +95,21 @@ class TurnManagementService:
 
         この処理により、エンティティのスピード属性に基づいた新しい行動順序が決定されます。
         """
-        # メッセージ履歴をクリア
+        # すべてのメッセージ履歴を削除
         Message.objects.all().delete()
         log_service.write("All messages have been cleared.")
 
-        # ActionHistoryをクリア
+        # すべてのActionHistory（行動履歴）レコードを削除
         ActionHistory.objects.all().delete()
         log_service.write("All ActionHistory records have been cleared.")
 
-        # タイムラインを初期化
+        # 各エンティティのActionTimelineを初期化（speed属性に基づいて）
         TurnManagementService.initialize_timeline()
 
-        # 未来の10ターン分をActionHistoryに登録
+        # 次の10ターン分のアクションをシミュレーションしてActionHistoryに登録
         TurnManagementService.simulate_next_actions(max_steps=10)
 
-        # ActionHistoryのすべての行動を未完了（done=False）にする
+        # すべてのActionHistoryレコードを未完了状態（done=False）に設定
         ActionHistory.objects.all().update(done=False)
 
     @staticmethod
