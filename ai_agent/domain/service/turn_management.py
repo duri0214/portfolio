@@ -1,4 +1,6 @@
 from ai_agent.domain.repository.turn_management import TurnManagementRepository
+from ai_agent.domain.service.context_analyzer import ContextAnalyzerService
+from ai_agent.domain.service.input_processor import InputProcessor
 from ai_agent.domain.valueobject.turn_management import EntityVO
 from ai_agent.models import ActionHistory, Message
 from lib.log_service import LogService
@@ -119,9 +121,10 @@ class TurnManagementService:
         ターンを進行させるメソッド。
 
         処理の流れ：
-        1. エンティティの応答生成
-        2. 生成された応答をメッセージとして保存
-        3. 現在のアクションを完了状態にマーク
+        1. エンティティ情報を取得し、最新の会話コンテキストを取得
+        2. チャット履歴をエンティティの専門性に合わせてリフレーミング
+        3. ガードレールを適用して応答を生成・保存
+        4. 生成された最新のメッセージ内容を返却
 
         Args:
             action_history (ActionHistory): 現在のアクション履歴（エンティティ情報を含む）
@@ -129,9 +132,6 @@ class TurnManagementService:
         Returns:
             str: 生成された応答テキスト（エラーの場合はエラーメッセージ）
         """
-        from ai_agent.domain.service.context_analyzer import ContextAnalyzerService
-        from ai_agent.domain.service.input_processor import InputProcessor
-
         # 1. エンティティ情報を取得し、最新の会話コンテキストを取得
         entity = action_history.entity
         context = TurnManagementRepository.get_recent_chat_messages()
