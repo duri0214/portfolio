@@ -17,10 +17,17 @@
             <li>
                 <form method="POST" action="{% url 'agt:next_turn' %}" style="display: inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-primary">1単位時間進める</button>
+                    {% if user.is_superuser %}
+                        <button type="submit" class="btn btn-primary">1単位時間進める</button>
+                    {% else %}
+                        <button type="submit" class="btn btn-outline-secondary" disabled>1単位時間進める</button>
+                    {% endif %}
                 </form>
             </li>
         </ul>
+        {% if not user.is_superuser %}
+            <div class="mt-3 text-secondary">「1単位時間進める」ボタンは管理者権限が必要です</div>
+        {% endif %}
     </div>
     <div class="container">
         <section id="content-section" class="d-flex flex-column">
