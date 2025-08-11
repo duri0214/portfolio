@@ -6,7 +6,14 @@
       "entity": 4,
       "forbidden_words": [
         "暴力",
-        "万引き"
+        "万引き",
+        "犯罪",
+        "自殺",
+        "麻薬",
+        "詐欺",
+        "ハッキング",
+        "差別",
+        "ヘイトスピーチ"
       ],
       "max_input_length": 500,
       "use_openai_moderation": false,
