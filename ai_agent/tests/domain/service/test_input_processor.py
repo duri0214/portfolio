@@ -100,10 +100,7 @@ class TestInputProcessor(TestCase):
         - 処理が即座に中断され、危険な内容が処理されない
         """
         # fixtures/guardrail_config.jsonから読み込まれた禁止ワードリストを使用
-        # 少なくとも一つの禁止ワードが含まれることを確認（実際のfixture内容によって異なる）
-        self.assertTrue(
-            len(self.processor.config.forbidden_words) > 0, "禁止ワードリストが空です"
-        )
+        self.assertTrue(len(self.processor.config.forbidden_words) > 0)
 
         # fixtureに含まれる禁止ワードを使って危険な入力をテスト
         if self.processor.config.forbidden_words:
@@ -286,9 +283,7 @@ class TestInputProcessor(TestCase):
         - 処理が効率的に実行される（全てのチェックを実行せずに早期終了）
         """
         # fixtureから読み込まれた禁止ワードが存在することを確認
-        self.assertTrue(
-            len(self.processor.config.forbidden_words) > 0, "禁止ワードリストが空です"
-        )
+        self.assertTrue(len(self.processor.config.forbidden_words) > 0)
 
         # 複数の問題を含む入力を作成
         # 1. 禁止ワードを含む
