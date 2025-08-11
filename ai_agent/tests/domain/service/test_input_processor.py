@@ -350,21 +350,19 @@ class TestInputProcessor(TestCase):
             ),
             ("", True, ["empty_input"], "空文字"),
             ("   ", True, ["empty_input"], "空白文字のみ"),
+            (
+                f"{self.processor.config.forbidden_words[0]}について",
+                True,
+                ["forbidden_word"],
+                f"禁止ワード「{self.processor.config.forbidden_words[0]}」を含む",
+            ),
+            (
+                f"{self.processor.config.forbidden_words[1]}について",
+                True,
+                ["forbidden_word"],
+                f"禁止ワード「{self.processor.config.forbidden_words[1]}」を含む",
+            ),
         ]
-
-        # 禁止ワードに基づく動的テストケース
-        if self.processor.config.forbidden_words:
-            for word in self.processor.config.forbidden_words[
-                :2
-            ]:  # 最大2つの禁止ワードをテスト
-                test_cases.append(
-                    (
-                        f"{word}について",
-                        True,
-                        ["forbidden_word"],
-                        f"禁止ワード「{word}」を含む",
-                    )
-                )
 
         # 各テストケースを検証
         for input_text, should_block, expected_categories, description in test_cases:
