@@ -1,5 +1,9 @@
 # AI Agent プロジェクト
 
+![Static Badge](https://img.shields.io/badge/python-3.13-blue)
+![Static Badge](https://img.shields.io/badge/django-5.1-blue)
+![Static Badge](https://img.shields.io/badge/openai-api-green)
+
 ## 概要
 
 このプロジェクトはDjangoフレームワークを使用した会話型AIエージェントシステムです。複数のAIエージェント（エンティティ）による対話型のコミュニケーションを実現し、ユーザー入力の安全性を確保しながら、様々な情報源に基づいた応答生成を行います。
@@ -7,55 +11,26 @@
 AI
 Agentとは、複数の業務機能（ツール）を連携させながら、統一されたインターフェースで対話を行うシステムです。クライアントの視点から見た「複数の業務機能を横断するAIシステム」として設計されています。個々のエージェント（エンティティ）が特定の思考エンジンを持ち、それぞれの専門分野（Googleマップレビュー分析、RAG検索、コンテンツ安全性など）に特化した対応を行うマルチエージェントシステムとなっています。
 
-## プロジェクト構造
+### ✨ 特徴
 
-```
-ai_agent/
-├── domain/                # ドメイン層（DDD設計）
-│   ├── repository/        # データアクセス層
-│   │   ├── turn_management.py  # ターン管理リポジトリ
-│   │   └── response_generator.py  # 応答生成リポジトリ
-│   ├── service/           # ビジネスロジックサービス
-│   │   ├── input_processor.py  # 入力処理・ガードレール
-│   │   ├── turn_management.py  # ターン管理サービス
-│   │   ├── response_generator.py  # 応答生成サービス
-│   │   └── context_analyzer.py  # コンテキスト分析サービス
-│   └── valueobject/       # 値オブジェクト
-│       ├── input_processor.py  # 入力処理の値オブジェクト
-│       └── turn_management.py  # ターン管理の値オブジェクト
-├── tests/                 # テスト
-│   ├── test_input_processor.py  # 入力処理テスト
-│   ├── test_turn_management.py  # 会話管理テスト
-│   └── domain/              # ドメインテスト
-│       └── service/         # サービスレイヤーテスト
-│           └── test_turn_management.py  # 会話管理サービステスト
-├── fixtures/              # フィクスチャーデータ
-│   ├── entity.json        # エンティティデータ
-│   ├── guardrail_config.json  # ガードレール設定データ
-│   └── rag_material.json  # RAG素材データ
-├── static/                # 静的ファイル
-├── templates/             # テンプレート
-├── migrations/            # DBマイグレーション
-├── apps.py                # アプリケーション設定
-├── models.py              # データモデル
-├── views.py               # ビュー
-├── urls.py                # URL設定
-├── forms.py               # フォーム
-├── admin.py               # 管理画面設定
-└── __init__.py            # 初期化ファイル
-```
+- **プラグアンドプレイ方式**: Django上で多様なAI対話機能をモジュラーに提供
+- **複数エージェント管理**: ターン制管理によるエージェント間の自然な会話の実現
+- **高度なガードレール**: 不適切な入力や出力の検出と処理
+- **多様なRAGソース対応**: GoogleマップレビューやPDFなど様々な情報源からの知識拡張
+- **堅牢なテスト**: 厳密なユニットテストによる品質保証
 
 ## 主要コンポーネント
 
 ### 1. ターン管理システム (TurnManagementService)
 
-`domain/service/turn_management.py`にあるTurnManagementServiceは、エージェント間の会話の流れとターン制御を担当します。
+`domain/service/turn_management.py`
+にあるTurnManagementServiceは、エージェント間の会話の流れとターン制御を担当します。「どのエージェントが次に発言するか」を速度パラメータに基づいて数学的に管理します。
 
 主な機能：
 
-- エンティティの速度に基づいた次の発言順序の決定
-- タイムラインの初期化と更新
-- 次のアクションのシミュレーション
+- エンティティの速度に基づいた次の発言順序の決定（数学的に公平なターン制御）
+- タイムラインの初期化と更新（ActionHistoryによる状態管理）
+- 次のアクションのシミュレーション（未来の会話展開の予測）
 
 処理フロー：
 
@@ -71,14 +46,16 @@ ai_agent/
 
 ### 2. 入力処理システム (InputProcessor)
 
-`domain/service/input_processor.py`の入力処理システムは、ユーザー入力の安全性確保と処理を担当します。
+`domain/service/input_processor.py`の入力処理システムは、ユーザー入力の安全性確保と処理を担当します。多層的なガードレールによって入力の健全性を維持します。
 
 主な機能：
 
-- ガードレール機能による入力検証
+- 多層ガードレール機能による入力検証
     - 静的ガードレール（禁止ワード、文字数制限、スパム検出）
-    - 動的ガードレール（OpenAI Moderation API）
-- セキュリティ対策（XSS対策）
+    - 動的ガードレール（OpenAI Moderation API連携）
+    - カスタムガードレール（エンティティごとの設定）
+- セキュリティ対策（XSS対策、サニタイズ機能）
+- ユニコード対応と国際化対応
 
 特徴：
 
@@ -86,24 +63,6 @@ ai_agent/
 - リスクレベルに基づいた処理分岐
 - 堅牢なエラーハンドリングとフォールバック処理
 - OpenAI APIの障害に対する耐性
-
-### 3. 応答生成システム (ResponseGenerator)
-
-`domain/service/response_generator.py`の応答生成システムは、AIエージェントの応答生成を担当します。
-
-主な機能：
-
-- RAG（検索拡張生成）を活用した専門的な応答生成
-- エンティティの特性に合わせた回答のカスタマイズ
-- コンテキスト分析に基づく適切な応答の選択
-- 応答履歴の管理と保存
-
-特徴：
-
-- 専門分野に特化した高品質な応答生成
-- 柔軟なRAG素材の管理（`domain/repository/response_generator.py`）
-- エンティティごとに異なる応答特性の実現
-- コンテキスト分析サービスとの連携による適切な応答
 
 ### 4. コンテキスト分析システム (ContextAnalyzer)
 
@@ -146,7 +105,6 @@ sequenceDiagram
     actor User as ユーザー
     participant View as NextTurnView
     participant AH as ActionHistory
-    participant RG as ResponseGenerator
     participant TMR as TurnManagementRepository
     participant Message as Message
 
@@ -164,8 +122,8 @@ sequenceDiagram
         alt エンティティがUserの場合
             View-->>User: エラーメッセージ（チャットフォームからの入力を促す）
         else エンティティがAIの場合
-            View->>RG: generate_response(action_history)
-            RG-->>View: 応答テキスト
+            View->>View: エンティティに基づく応答生成
+            View-->>View: 応答テキスト
 
             alt 応答が[ERROR]で始まる場合
                 View-->>User: 警告メッセージ（次のターンに進めるよう促す）
@@ -233,3 +191,31 @@ sequenceDiagram
         end
     end
 ```
+
+## 開発者向け情報
+
+### テスト実行
+
+```console
+# 全テストを実行
+python manage.py test ai_agent
+
+# 特定のテストクラスを実行
+python manage.py test ai_agent.tests.test_input_processor.InputProcessorTest
+```
+
+### ドキュメント
+
+各クラスとメソッドには詳細なドキュメントコメントが含まれています。特に以下の点に注目してください：
+
+- GuardrailResultとInputProcessorConfigの実装例
+- TurnManagementServiceのターン計算ロジック
+- ContextAnalyzerServiceのRAGメタデータ活用方法
+
+### 拡張方法
+
+エンティティの専門性を拡張するには：
+
+1. Entityモデルに新しい`thinking_type`を追加
+2. ContextAnalyzerServiceの`_thinking_type_map`に対応するプロンプトを追加
+3. 必要に応じてRAGメタデータクラスを実装（RagMetadataBase継承）
