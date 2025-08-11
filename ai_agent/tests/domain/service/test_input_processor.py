@@ -419,12 +419,12 @@ class TestInputProcessorClassMethods(TestCase):
             # (入力, 期待される出力, 説明)
             (
                 "<script>alert('XSS');</script>",
-                "&lt;script&gt;alert('XSS');&lt;/script&gt;",
+                "&lt;script&gt;alert(&#x27;XSS&#x27;);&lt;/script&gt;",
                 "HTMLスクリプトタグ",
             ),
             (
                 "<img src=x onerror=alert('XSS')>",
-                "&lt;img src=x onerror=alert('XSS')&gt;",
+                "&lt;img src=x onerror=alert(&#x27;XSS&#x27;)&gt;",
                 "画像タグ",
             ),
             ("通常のテキスト", "通常のテキスト", "通常テキスト"),
