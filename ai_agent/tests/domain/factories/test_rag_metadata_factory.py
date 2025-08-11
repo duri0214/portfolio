@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from ai_agent.domain.factories.rag_metadata_factory import RagMetadataFactory
+from ai_agent.domain.factory.rag_metadata_factory import RagMetadataFactory
 from ai_agent.domain.valueobject.context_analyzer import (
     PdfSourceMetadata,
     GoogleMapsMetadata,
