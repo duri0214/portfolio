@@ -366,18 +366,24 @@ class TestInputProcessor(TestCase):
 
         # 各テストケースを検証
         for input_text, should_block, expected_categories, description in test_cases:
+            # subTest を使うことで、この1ケースを「独立した小テスト」として扱える
+            # → このケースが失敗しても、他のケースの実行は継続される
+            # → description がテスト名として出力され、失敗時にどのケースかが分かりやすくなる
             with self.subTest(description=description):
+                # テスト対象メソッドを実行
                 result = self.processor._check_guardrails(input_text)
 
-                # blockされたされないの検証
+                # 「ブロックされたかどうか」の検証
                 self.assertEqual(result.blocked, should_block)
 
                 # ModerationCategoryオブジェクトの違反カテゴリの検証
                 if expected_categories:
+                    # 期待カテゴリと実際のカテゴリをセット比較（順不同で比較）
                     self.assertEqual(
                         set(result.violation_categories), set(expected_categories)
                     )
                 else:
+                    # 違反カテゴリが空であることを確認
                     self.assertEqual(result.violation_categories, [])
 
 
