@@ -369,25 +369,16 @@ class TestInputProcessor(TestCase):
             with self.subTest(description=description):
                 result = self.processor._check_guardrails(input_text)
 
-                self.assertEqual(
-                    result.blocked,
-                    should_block,
-                    f"[{description}] blocked が {should_block} であるべき",
-                )
+                # blockされたされないの検証
+                self.assertEqual(result.blocked, should_block)
 
-                # カテゴリの検証
+                # ModerationCategoryオブジェクトの違反カテゴリの検証
                 if expected_categories:
                     self.assertEqual(
-                        set(result.violation_categories),
-                        set(expected_categories),
-                        f"[{description}] 違反カテゴリが一致しない",
+                        set(result.violation_categories), set(expected_categories)
                     )
                 else:
-                    self.assertEqual(
-                        result.violation_categories,
-                        [],
-                        f"[{description}] 違反カテゴリが空であるべき",
-                    )
+                    self.assertEqual(result.violation_categories, [])
 
 
 class TestInputProcessorClassMethods(TestCase):
