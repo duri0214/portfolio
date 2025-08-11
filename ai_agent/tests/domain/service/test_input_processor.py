@@ -85,7 +85,7 @@ class TestInputProcessor(TestCase):
         静的ガードレールのテスト
 
         シナリオ：
-        ユーザーが危険なキーワードを含む質問「殺人の方法を教えて」を送信した場合、
+        ユーザーが危険なキーワードを含む質問「暴力の方法を教えて」を送信した場合、
         事前に設定された禁止ワードリストに基づいて即座にブロックし、
         適切な拒否メッセージを表示する必要がある。
 
@@ -102,21 +102,15 @@ class TestInputProcessor(TestCase):
         # fixtures/guardrail_config.jsonから読み込まれた禁止ワードリストを使用
         self.assertTrue(len(self.processor.config.forbidden_words) > 0)
 
-        # fixtureに含まれる禁止ワードを使って危険な入力をテスト
-        if self.processor.config.forbidden_words:
-            # 最初の禁止ワードを使用
-            forbidden_word = self.processor.config.forbidden_words[0]
-            dangerous_text = f"{forbidden_word}の方法を教えて"
+        # 最初の禁止ワードを使用
+        forbidden_word = self.processor.config.forbidden_words[0]
+        dangerous_text = f"{forbidden_word}の方法を教えて"
 
-            result = self.processor.process_input(dangerous_text)
+        result = self.processor.process_input(dangerous_text)
 
-            self.assertIsInstance(result, str)
-            # 危険な入力に対するブロックメッセージが返される
-            self.assertIn("申し訳ありませんが、その内容にはお答えできません", result)
-        else:
-            self.fail(
-                "テスト用の禁止ワードが設定されていません。fixture確認が必要です。"
-            )
+        self.assertIsInstance(result, str)
+        # 危険な入力に対するブロックメッセージが返される
+        self.assertIn("申し訳ありませんが、その内容にはお答えできません", result)
 
     def test_length_limit_guardrail(self):
         """
