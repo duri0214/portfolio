@@ -58,9 +58,6 @@ class TestInputProcessor(TestCase):
         print(f"テスト実行時の禁止ワード: {self.processor.config.forbidden_words}")
         print(f"テスト実行時の文字数制限: {self.processor.config.max_input_length}")
 
-        # 危険な入力例 - 実際のfixtureに基づいて動的に定義する必要がある
-        # テスト実行時に禁止ワードリストから取得する
-
         # 通常の入力例
         self.normal_input = "こんにちは、お元気ですか？"
 
