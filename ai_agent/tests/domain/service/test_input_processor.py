@@ -401,23 +401,27 @@ class TestInputProcessorClassMethods(TestCase):
             (
                 "<script>alert('XSS');</script>",
                 "&lt;script&gt;alert(&#x27;XSS&#x27;);&lt;/script&gt;",
-                "HTMLスクリプトタグ",
+                "HTMLスクリプトタグを安全化できること",
             ),
             (
                 "<img src=x onerror=alert('XSS')>",
                 "&lt;img src=x onerror=alert(&#x27;XSS&#x27;)&gt;",
-                "画像タグ",
+                "画像タグを安全化できること",
             ),
-            ("通常のテキスト", "通常のテキスト", "通常テキスト"),
+            (
+                "通常のテキスト",
+                "通常のテキスト",
+                "安全化不要のテキストはそのまま残ること",
+            ),
             (
                 "<b>太字</b>と<i>斜体</i>",
                 "&lt;b&gt;太字&lt;/b&gt;と&lt;i&gt;斜体&lt;/i&gt;",
-                "書式タグ",
+                "書式タグを安全化できること",
             ),
             (
                 "&lt;既にエスケープされた&gt;",
                 "&amp;lt;既にエスケープされた&amp;gt;",
-                "二重エスケープ",
+                "既にエスケープ済みの文字を二重エスケープできること",
             ),
         ]
 
