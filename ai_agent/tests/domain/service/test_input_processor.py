@@ -38,7 +38,8 @@ class TestInputProcessor(TestCase):
 
     fixtures = ["entity.json", "guardrail_config.json"]
 
-    def setUp(self):
+    @patch("ai_agent.domain.service.input_processor.ModerationService")
+    def setUp(self, mock_moderation_service_class):
         """
         テスト前の準備処理
 
@@ -47,6 +48,9 @@ class TestInputProcessor(TestCase):
         - InputProcessorインスタンスの初期化
         - 安全な入力と危険な入力のサンプルを設定
         """
+        # ModerationServiceをモック化
+        self.mock_moderation_service = mock_moderation_service_class.return_value
+
         # テスト用のエンティティとガードレール設定を取得
         self.test_entity = Entity.objects.get(pk=4)
 
@@ -161,8 +165,7 @@ class TestInputProcessor(TestCase):
         result_whitespace = self.processor.process_input(self.whitespace_input)
         self.assertIn("メッセージが空です", result_whitespace)
 
-    @patch("ai_agent.domain.service.input_processor.ModerationService")
-    def test_dynamic_guardrail_processing(self, mock_moderation_service):
+    def test_dynamic_guardrail_processing(self):
         """
         動的ガードレール（OpenAI Moderation）のテスト
 
@@ -185,14 +188,13 @@ class TestInputProcessor(TestCase):
         moderation_result_mock.message = "APIによってブロックされました"
         moderation_result_mock.categories = [MagicMock(name="violence")]
 
-        # OpenAI Moderation APIの呼び出しをモック
-        mock_moderation_instance = mock_moderation_service.return_value
-        mock_moderation_instance.check_input_moderation.return_value = (
+        # setUp内で作成されたモックを使用
+        self.mock_moderation_service.check_input_moderation.return_value = (
             moderation_result_mock
         )
 
         # モックオブジェクトをプロセッサに直接設定
-        self.processor.moderation_service = mock_moderation_instance
+        self.processor.moderation_service = self.mock_moderation_service
 
         # 禁止ワードリストを一時的に空にして静的ガードレールをパスさせる
         original_forbidden_words = self.processor.config.forbidden_words
@@ -206,7 +208,7 @@ class TestInputProcessor(TestCase):
             result = self.processor.process_input(self.normal_input)
 
             # Moderation APIが呼ばれたことを確認
-            mock_moderation_instance.check_input_moderation.assert_called_once_with(
+            self.mock_moderation_service.check_input_moderation.assert_called_once_with(
                 self.normal_input,
                 self.test_entity.name,
                 self.processor.config.strict_mode,
@@ -218,8 +220,7 @@ class TestInputProcessor(TestCase):
             # テスト終了後に元の設定に戻す
             self.processor.config.forbidden_words = original_forbidden_words
 
-    @patch("ai_agent.domain.service.input_processor.ModerationService")
-    def test_normal_input_processing(self, mock_moderation_service):
+    def test_normal_input_processing(self):
         """
         通常の入力処理フローのテスト
 
@@ -236,17 +237,14 @@ class TestInputProcessor(TestCase):
         - ガードレールチェックをすべて通過
         - エンティティ名を含む応答が返される
         """
-        # OpenAI Moderation APIの呼び出しをモック
-        mock_moderation_instance = mock_moderation_service.return_value
-
         # モデレーション結果のモック（ブロックなし）
         moderation_result_mock = MagicMock()
         moderation_result_mock.blocked = False
         moderation_result_mock.message = ""
         moderation_result_mock.categories = []
 
-        # check_input_moderationメソッドの戻り値を設定
-        mock_moderation_instance.check_input_moderation.return_value = (
+        # setUp内で作成されたモックを使用
+        self.mock_moderation_service.check_input_moderation.return_value = (
             moderation_result_mock
         )
 
@@ -338,6 +336,14 @@ class TestInputProcessor(TestCase):
         - 正常な入力では blocked=False
         - 問題のある入力では blocked=True と適切な違反カテゴリ
         """
+        # 動的ガードレールがテストで呼ばれた場合にブロックしないようにする
+        moderation_result_mock = MagicMock()
+        moderation_result_mock.blocked = False
+        moderation_result_mock.message = ""
+        moderation_result_mock.categories = []
+        self.mock_moderation_service.check_input_moderation.return_value = (
+            moderation_result_mock
+        )
         # fixtureから読み込まれた設定に基づくテストケースを構築
         test_cases = [
             # 常に一定のテストケース
@@ -390,6 +396,7 @@ class TestInputProcessor(TestCase):
 class TestInputProcessorClassMethods(TestCase):
     """
     InputProcessor クラスの静的メソッドに関するテスト
+    静的メソッドのテストにはModerationServiceのモック化は必要ない
     """
 
     def test_sanitize_input_with_various_inputs(self):
