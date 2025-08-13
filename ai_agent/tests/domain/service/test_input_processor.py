@@ -39,7 +39,8 @@ class TestInputProcessor(TestCase):
     fixtures = ["entity.json", "guardrail_config.json"]
 
     @patch("ai_agent.domain.service.input_processor.ModerationService")
-    def setUp(self, mock_moderation_service_class):
+    @patch("ai_agent.domain.service.input_processor.LlmCompletionService")
+    def setUp(self, mock_llm_service_class, mock_moderation_service_class):
         """
         テスト前の準備処理
 
@@ -51,11 +52,17 @@ class TestInputProcessor(TestCase):
         # ModerationServiceをモック化
         self.mock_moderation_service = mock_moderation_service_class.return_value
 
+        # LlmCompletionServiceをモック化
+        self.mock_llm_service = mock_llm_service_class.return_value
+
         # テスト用のエンティティとガードレール設定を取得
         self.test_entity = Entity.objects.get(pk=4)
 
         # InputProcessorはentityパラメータが必要
         self.processor = InputProcessor(entity=self.test_entity)
+
+        # LlmServiceを手動でモックに置き換え
+        self.processor.llm_service = self.mock_llm_service
 
         # fixtureから読み込まれたガードレール設定を使用
         # 設定値の確認（テスト実行の参考情報として出力）
