@@ -1,6 +1,7 @@
 import inspect
 import logging
 import os
+from pathlib import Path
 
 
 class LogService:
@@ -43,14 +44,18 @@ class LogService:
         file_name = os.path.basename(caller_file_name)
         self.logger = logging.getLogger(file_name)
         self.logger.setLevel(logging.INFO)
-        self._setup_file_handler(log_file_name)
 
-    def _setup_file_handler(self, log_file_name: str):
+        # 呼び出し元のディレクトリをベースにログファイルパスを設定
+        self.base_dir = Path(caller_file_name).resolve().parent
+        log_path = self.base_dir / log_file_name
+        self._setup_file_handler(log_path)
+
+    def _setup_file_handler(self, log_file_name: Path):
         """
         ファイルハンドラーを設定します
 
         Args:
-            log_file_name (str): ログファイルのパス
+            log_file_name (Path): ログファイルのパス
 
         Notes:
             UTF-8エンコーディングでログファイルを作成し、

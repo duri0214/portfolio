@@ -148,6 +148,9 @@ python manage.py import_soil_hardness /path/to/folder
 
 ## よくつかうメンテナンスコマンド
 
+- 環境変数 `.env` が作ってありますか？
+- migrate は最新ですか？
+
 `-R` は recursive
 `ubuntu:www-data` は ubuntuユーザ:apacheグループの所有者にする
 
