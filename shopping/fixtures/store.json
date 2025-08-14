@@ -1,12 +1,14 @@
 [
   {
     "model": "shopping.store",
+    "pk": 1,
     "fields": {
       "name": "笹塚"
     }
   },
   {
     "model": "shopping.store",
+    "pk": 2,
     "fields": {
       "name": "新宿"
     }

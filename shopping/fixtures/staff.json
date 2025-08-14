@@ -1,6 +1,7 @@
 [
   {
     "model": "shopping.staff",
+    "pk": 1,
     "fields": {
       "name": "スタッフ1",
       "description": "男性スタッフです",

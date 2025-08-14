@@ -1,6 +1,7 @@
 [
   {
     "model": "shopping.product",
+    "pk": 1,
     "fields": {
       "code": "asparagus",
       "name": "モッツァレラとアスパラベーコンのピザ",
@@ -12,6 +13,7 @@
   },
   {
     "model": "shopping.product",
+    "pk": 2,
     "fields": {
       "code": "bulgogipotato",
       "name": "プルコギポテト",
@@ -23,6 +25,7 @@
   },
   {
     "model": "shopping.product",
+    "pk": 3,
     "fields": {
       "code": "cheeserubber",
       "name": "ピザーラチーズラバー",
@@ -34,6 +37,7 @@
   },
   {
     "model": "shopping.product",
+    "pk": 4,
     "fields": {
       "code": "freshtomato",
       "name": "フレッシュトマト＆バジル",
@@ -45,6 +49,7 @@
   },
   {
     "model": "shopping.product",
+    "pk": 5,
     "fields": {
       "code": "juicysteak",
       "name": "ジューシーステーキ",
@@ -56,6 +61,7 @@
   },
   {
     "model": "shopping.product",
+    "pk": 6,
     "fields": {
       "code": "margherita",
       "name": "マルゲリータ",
@@ -67,6 +73,7 @@
   },
   {
     "model": "shopping.product",
+    "pk": 7,
     "fields": {
       "code": "mascarpone",
       "name": "マスカルポーネと熟成サラミ",
@@ -78,6 +85,7 @@
   },
   {
     "model": "shopping.product",
+    "pk": 8,
     "fields": {
       "code": "pepperonirubber",
       "name": "ペパロニラバー",
