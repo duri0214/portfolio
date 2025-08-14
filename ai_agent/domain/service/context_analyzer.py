@@ -5,9 +5,6 @@ from ai_agent.models import Entity, DATA_SOURCE_CHOICES
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
-from lib.log_service import LogService
-
-log_service = LogService("context_analyzer.log")
 
 
 class ContextAnalyzerService:

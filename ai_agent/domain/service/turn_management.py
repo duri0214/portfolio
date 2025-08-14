@@ -3,9 +3,6 @@ from ai_agent.domain.service.context_analyzer import ContextAnalyzerService
 from ai_agent.domain.service.input_processor import InputProcessor
 from ai_agent.domain.valueobject.turn_management import EntityVO
 from ai_agent.models import ActionHistory, Message
-from lib.log_service import LogService
-
-log_service = LogService("turn_management_service.log")
 
 
 class TurnManagementService:
@@ -100,11 +97,11 @@ class TurnManagementService:
         """
         # 1. すべてのメッセージ履歴を削除
         Message.objects.all().delete()
-        log_service.write("すべてのメッセージが削除されました")
+        print("すべてのメッセージが削除されました")
 
         # 2. すべてのActionHistory（行動履歴）レコードを削除
         ActionHistory.objects.all().delete()
-        log_service.write("すべてのActionHistoryレコードが削除されました")
+        print("すべてのActionHistoryレコードが削除されました")
 
         # 3. 各エンティティのActionTimelineを初期化（speed属性に基づいて）
         TurnManagementService.initialize_timeline()

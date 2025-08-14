@@ -11,9 +11,6 @@ from ai_agent.domain.valueobject.input_processor import (
 from lib.llm.service.agent import ModerationService
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.config import OpenAIGptConfig
-from lib.log_service import LogService
-
-log_service = LogService("input_processor.log")
 
 
 class InputProcessor:
@@ -92,9 +89,9 @@ class InputProcessor:
             for guardrail in self.output_guardrails:
                 self.agent.output_guardrails.append(guardrail)
         except Exception as e:
-            log_service.write(f"ガードレール設定中にエラーが発生: {e}")
+            print(f"ガードレール設定中にエラーが発生: {e}")
 
-        log_service.write(f"OpenAI Agent初期化完了: {self.entity.name}")
+        print(f"OpenAI Agent初期化完了: {self.entity.name}")
 
     def _create_moderation_guardrail(self):
         """
@@ -246,7 +243,7 @@ class InputProcessor:
                 or f"{self.entity.name}: その入力は許可されていません。"
             )
         except Exception as e:
-            log_service.write(f"Input processing error: {e}")
+            print(f"Input processing error: {e}")
             return f"{self.entity.name}: 処理中にエラーが発生しました。しばらくしてからお試しください。"
 
     def _check_guardrails(self, user_input: str) -> GuardrailResult:
