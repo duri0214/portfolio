@@ -1,15 +1,14 @@
-from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from rental_shop.models import Warehouse, Staff
+from rental_shop.models import Warehouse, Staff, WarehouseStaff
 
 
 class TestView(TestCase):
     @classmethod
     def setUpTestData(cls):
-        User.objects.create_user(email="tester@b.c").set_password("12345")
-        Warehouse.objects.create(
+        # 倉庫を作成
+        warehouse = Warehouse.objects.create(
             code="iru-ma",
             name="入間倉庫",
             address="埼玉県狭山市稲荷山２丁目３",
@@ -18,9 +17,10 @@ class TestView(TestCase):
             depth=3,
             created_at="2023-02-12 00:00:00",
         )
-        Staff.objects.create(
-            name="スタッフ1", created_at="2023-02-12 00:00:00", warehouse_id=1
-        )
+        # スタッフを作成
+        staff = Staff.objects.create(name="スタッフ1", created_at="2023-02-12 00:00:00")
+        # 倉庫とスタッフを関連付け
+        WarehouseStaff.objects.create(warehouse=warehouse, staff=staff)
 
     def test_get_top_page_200(self):
         response = self.client.get(reverse("ren:index"))
