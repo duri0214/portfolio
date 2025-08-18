@@ -197,6 +197,12 @@ chmod 774 /var/www
 ## gmarker
 
 - google map api を使って、マーカーを操作できる
+- [Google Cloud Platform コンソール](https://console.cloud.google.com/)でAPIキーを設定する際の注意点:
+    - バックエンド用APIキー(`GOOGLE_MAPS_BE_API_KEY`)にIPアドレス制限を設定する場合、ローカル開発環境の`127.0.0.1`ではなく、
+      **グローバルIPアドレス(IPv6)**（例: `240d:1a:d9:YYYY:XXXX:eab:ZZZZ:42ab`）を設定してください
+    - お使いの開発用PCで、ブラウザを開き「what is my ip」などと検索してください。
+    - これは、ローカルのDjangoサーバー(`http://127.0.0.1:8000`)
+      からGoogleのAPIサーバーにリクエストを送信する際、Google側から見える送信元のIPアドレスはルーターに割り当てられたグローバルIPアドレスとなるためです
 
 ## shopping
 

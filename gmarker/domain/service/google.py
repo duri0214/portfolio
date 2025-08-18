@@ -21,6 +21,11 @@ class GoogleMapsService:
         """
         Google Maps Places APIのNearby Search (New)を使用して施設を検索します。
 
+        注意：
+            [Google Cloud Platform コンソール](https://console.cloud.google.com/)でAPIキーの制限を設定する際は、ローカル開発環境（127.0.0.1）からの
+            リクエストはインターネットを経由した際に送信元のグローバルIPアドレス(IPv6)に変換されます。そのため、IPアドレス制限には「グローバルIPアドレス」
+            （例：240d:1a:d9:YYYY:XXXX:eab:ZZZZ:42ab）を設定してください。お使いの開発用PCで、ブラウザを開き「what is my ip」などと検索してください。
+
         Args:
             center: 検索中心の座標。
             search_types: 検索する場所のタイプ。
