@@ -1,0 +1,196 @@
+{% extends 'welfare_services/base.html' %}
+
+{% block title %}福祉事務所空き状況登録 - 東京都福祉事務所情報ポータル{% endblock %}
+
+{% block extra_css %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/facility_availability/form.css' %}">
+{% endblock %}
+
+{% block content %}
+    <section class="py-5">
+        <div class="container">
+            <div class="form-header text-center">
+                <h1 class="h2 mb-3">福祉事務所空き状況登録</h1>
+                <p class="lead">月次の空き状況を簡単に登録・更新できます</p>
+            </div>
+
+            <div class="form-container">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label for="{{ form.facility.id_for_label }}"
+                               class="form-label fw-bold">{{ form.facility.label }}</label>
+                        {{ form.facility }}
+                        {% if form.facility.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.facility.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.facility.help_text %}
+                            <small class="help-block">{{ form.facility.help_text }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.year_month.id_for_label }}"
+                               class="form-label fw-bold">{{ form.year_month.label }}</label>
+                        {{ form.year_month }}
+                        {% if form.year_month.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.year_month.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.year_month.help_text %}
+                            <small class="help-block">{{ form.year_month.help_text }}</small>
+                        {% endif %}
+                        <small class="help-block mt-1"><i class="fas fa-info-circle text-info me-1"></i>同じ年月の空き状況を再度登録すると、データが更新されます</small>
+                        <small class="help-block mt-1"><i class="fas fa-info-circle text-info me-1"></i>入力された年月は内部的には月末日として保存されます（例：2025-08
+                            → 2025-08-31）</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.available_count.id_for_label }}"
+                               class="form-label fw-bold">{{ form.available_count.label }}</label>
+                        <div class="input-with-signal">
+                            <div style="flex-grow: 1;">
+                                {{ form.available_count }}
+                            </div>
+                            <div class="signal-indicator">
+                                <div class="signal-light" id="signal-red"></div>
+                                <div class="signal-light" id="signal-yellow"></div>
+                                <div class="signal-light" id="signal-green"></div>
+                                <span class="signal-text ms-2" id="signal-text">空き状況</span>
+                            </div>
+                        </div>
+                        {% if form.available_count.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.available_count.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="help-block">0を入力すると「空きなし」<span class="text-danger">🔴</span>、1～3で「残りわずか」<span
+                                class="text-warning">🟡</span>、4以上で「空きあり」<span class="text-success">🟢</span>として登録されます</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.remarks.id_for_label }}"
+                               class="form-label fw-bold">{{ form.remarks.label }}</label>
+                        {{ form.remarks }}
+                        {% if form.remarks.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.remarks.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="help-block">受け入れ条件や特記事項があれば入力してください</small>
+                    </div>
+
+                    <div class="form-footer">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">登録する</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="tips-section">
+                <h3 class="h5 mb-3"><i class="fas fa-lightbulb text-warning me-2"></i>運用のヒント</h3>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i><strong>前提事項：</strong>
+                    <p class="mb-0">
+                        このフォームは、各福祉事務所の担当者が、民間の福祉施設の空き状況データを取りまとめて入力するためのものです。福祉施設での利用者情報の確認や集計後に、このシステムへの情報入力をお願いします。</p>
+                </div>
+                <p>
+                    月次で入力していただくことで、空き状況の推移を確認できるようになります。これにより、利用者の方々は計画的にサービスを検討することができます。入力いただいたデータは東京都福祉事務所ポータルで公開されます。</p>
+                <p>なお、将来的には以下のような改善が考えられます：</p>
+                <ul>
+                    <li>利用者登録情報と連携し、退所情報から自動的に空き状況を更新</li>
+                    <li>予約システムとの連携による空き状況のリアルタイム更新</li>
+                    <li>定期的な更新リマインダーの自動送信機能</li>
+                    <li>福祉施設の職員がタブレット等で記録した情報を福祉事務所管理者が承認して一括登録</li>
+                </ul>
+                <p class="mb-0">
+                    これらの機能により、福祉施設側の入力作業をさらに軽減できる可能性があります。システム改善のご要望がありましたら担当までお寄せください。</p>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // フォームバリデーション強化
+        (function () {
+            'use strict';
+
+            // すべてのフォームを取得して検証
+            var forms = document.querySelectorAll('.needs-validation');
+
+            // 各フォームにsubmitイベントリスナーを追加
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+
+                    form.classList.add('was-validated');
+                }, false);
+            });
+
+            // 信号機表示機能
+            const availableCountInput = document.getElementById('id_available_count');
+            const signalRed = document.getElementById('signal-red');
+            const signalYellow = document.getElementById('signal-yellow');
+            const signalGreen = document.getElementById('signal-green');
+            const signalText = document.getElementById('signal-text');
+
+            // 信号機の初期表示を設定
+            updateSignal(availableCountInput.value);
+
+            // 入力値変更時に信号機表示を更新
+            availableCountInput.addEventListener('input', function () {
+                updateSignal(this.value);
+            });
+
+            // 値に応じて信号機表示を更新する関数
+            function updateSignal(value) {
+                // 全ての信号をリセット
+                signalRed.className = 'signal-light';
+                signalYellow.className = 'signal-light';
+                signalGreen.className = 'signal-light';
+
+                // 数値に変換
+                const count = parseInt(value) || 0;
+
+                // 値に応じて適切な信号を点灯
+                if (count === 0) {
+                    signalRed.classList.add('red');
+                    signalText.textContent = '空きなし 🔴';
+                    signalText.style.color = '#dc3545';
+                } else if (count >= 1 && count <= 3) {
+                    signalYellow.classList.add('yellow');
+                    signalText.textContent = '残りわずか 🟡';
+                    signalText.style.color = '#ffc107';
+                } else {
+                    signalGreen.classList.add('green');
+                    signalText.textContent = '空きあり 🟢';
+                    signalText.style.color = '#28a745';
+                }
+            }
+        })();
+    </script>
+{% endblock %}

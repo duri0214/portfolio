@@ -31,7 +31,7 @@ python manage.py monthly_cleanup_linebot_engine
 - サーバで実行するときは makemigrations は基本的に必要ない（migrationファイルがgithubで焼き付けてあるから）
 
 ```
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks welfare_services
 python manage.py migrate
 
 python manage.py createsuperuser
@@ -304,3 +304,34 @@ sequenceDiagram
       ユーザーは新しい取引注文（売買）を入力し登録することができます。
     - 板情報の表示機能  
       現在の板情報（売り注文・買い注文の残存状態）を動的に計算し、わかりやすい形式で表示します。
+
+## 東京都福祉事務所情報ポータル
+
+### 概要
+
+東京都内の福祉事務所の情報を一元管理し、利用者に提供するポータルサイトです。
+空き状況や福祉事務所の詳細情報を簡単に検索でき、福祉サービスの利用を検討している方々の意思決定をサポートします。
+
+東京都が提供している「福祉事務所名」のオープンデータを活用しています。
+福祉事務所とは、生活保護や児童福祉、障害者福祉などの社会福祉サービスを提供する行政機関です。
+
+### 機能
+
+- 福祉事務所の検索・閲覧
+- 空き状況の確認（信号機表示で直感的に把握）
+- 地図上での福祉事務所の場所確認
+- 空き状況の履歴表示による傾向把握
+- 月別の空き状況入力（バックデート対応）
+- 施設情報の詳細表示
+- 東京都オープンデータAPIからの情報取得
+
+```bash
+# 初期データの取得（東京都APIから）
+python manage.py fetch_facilities
+
+# 施設の空き状況データを生成
+python manage.py create_availabilities_fixtures --months 6
+
+# レビューデータの生成
+python manage.py create_review_fixtures --count 100
+```

@@ -1,0 +1,156 @@
+{% extends 'welfare_services/base.html' %}
+
+{% block title %}福祉事務所一覧 - 東京都福祉事務所情報ポータル{% endblock %}
+
+{% block extra_css %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/facility/list.css' %}">
+{% endblock %}
+
+{% block content %}
+    <section class="py-5">
+        <div class="container">
+            <h1 class="mb-4">福祉事務所一覧</h1>
+
+            <!-- 検索フォーム -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <form method="get" action="{% url 'welfare_services:facility_list' %}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="name" class="form-label">事務所名</label>
+                            <input type="text" class="form-control" id="name" name="name"
+                                   value="{{ request.GET.name|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="area" class="form-label">エリア</label>
+                            <select class="form-select" id="area" name="area">
+                                <option value="">すべてのエリア</option>
+                                {% for area in areas %}
+                                    <option value="{{ area }}"
+                                            {% if request.GET.area == area %}selected{% endif %}>{{ area }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">空き状況</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">すべての状況</option>
+                                <option value="available" {% if request.GET.status == 'available' %}selected{% endif %}>
+                                    空きあり
+                                </option>
+                                <option value="limited" {% if request.GET.status == 'limited' %}selected{% endif %}>
+                                    残りわずか
+                                </option>
+                                <option value="unavailable"
+                                        {% if request.GET.status == 'unavailable' %}selected{% endif %}>空きなし
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">検索</button>
+                            <a href="{% url 'welfare_services:facility_list' %}"
+                               class="btn btn-outline-secondary">リセット</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 検索結果 -->
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">検索結果: {{ total_count }}件
+                        {% if total_count != all_facilities_count %} (全{{ all_facilities_count }}件中){% endif %}</h5>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>事務所名</th>
+                                <th>住所</th>
+                                <th>電話番号</th>
+                                <th>空き状況</th>
+                                <th>詳細</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for facility in facilities %}
+                                <tr>
+                                    <td>{{ facility.name }}</td>
+                                    <td>{{ facility.address }}</td>
+                                    <td>{{ facility.phone|default:"未登録" }}</td>
+                                    <td>
+                                        {% if facility.latest_availability %}
+                                            <span class="badge {{ facility.latest_availability.status_badge_class }} p-2">
+                                        {{ facility.latest_availability.get_status_display }}
+                                    </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">未登録</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'welfare_services:facility_detail' facility.id %}"
+                                           class="btn btn-sm btn-outline-primary">詳細</a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <p class="mb-0">条件に一致する施設が見つかりません。</p>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ページネーション -->
+                    {% if facilities.has_other_pages %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mt-4">
+                                {% if facilities.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=
+
+                                                {{ facilities.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            前へ
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">前へ</span>
+                                    </li>
+                                {% endif %}
+
+                                {% for i in paginator.page_range %}
+                                    {% if facilities.number == i %}
+                                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=
+
+                                                    {{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if facilities.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=
+
+                                                {{ facilities.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            次へ
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">次へ</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

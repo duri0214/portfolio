@@ -1,6 +1,6 @@
 """portfolio URL Configuration
 
-The `urlpatterns` list routes URLs to views. For more information please see:
+The `urlpatterns` list routes URLs to views. For more information please see.:
     https://docs.djangoproject.com/en/2.1/topics/http/urls/
 Examples:
 Function views
@@ -36,6 +36,7 @@ urlpatterns = [
     path("llm_chat/", include("llm_chat.urls")),
     path("ai_agent/", include("ai_agent.urls")),
     path("jp_stocks/", include("jp_stocks.urls")),
+    path("welfare_services/", include("welfare_services.urls")),
     path("admin/", admin.site.urls),
     path("accounts/login/", CustomLoginView.as_view(), name="login"),
     path("accounts/logout/", LogoutView.as_view(), name="logout"),
