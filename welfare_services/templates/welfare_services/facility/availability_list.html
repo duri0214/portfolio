@@ -1,0 +1,32 @@
+{% comment %}
+空き状況の推移を表示するテンプレート部品
+使用方法：
+{% include "welfare_services/facility/availability_list.html" with availability_history=facility.availability_history %}
+{% endcomment %}
+
+{% if availability_history %}
+    <div class="availability-chart mt-3">
+        <p class="small mb-1 fw-bold">空き状況の推移:</p>
+        <div class="d-flex flex-wrap gap-1">
+            {% for history in availability_history %}
+                <div class="text-center" style="min-width: 60px;">
+            <span class="badge {{ history.status_badge_class }} d-block px-2 py-1">
+                {% if history.available_count > 0 %}{{ history.available_count }}人{% else %}0{% endif %}
+            </span>
+                    <small class="d-block text-muted"
+                           style="font-size: 0.7rem;">{{ history.target_date|date:"Y/m" }}</small>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if show_legend|default:True %}
+            <div class="mt-2">
+                <small class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success">緑</span>空きあり
+                    <span class="badge bg-warning">黄</span>残りわずか
+                    <span class="badge bg-danger">赤</span>空きなし
+                </small>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

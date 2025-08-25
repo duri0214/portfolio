@@ -1,0 +1,41 @@
+{% extends 'welfare_services/base.html' %}
+
+{% block title %}空き状況登録完了 - 東京都福祉事務所情報{% endblock %}
+
+{% block extra_css %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/facility_availability/complete.css' %}">
+{% endblock %}
+
+{% block content %}
+    <section class="py-5">
+        <div class="container">
+            <div class="complete-container">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+
+                <h1 class="h2 mb-3">登録完了</h1>
+                <p class="lead mb-4">空き状況の登録が完了しました。ご協力ありがとうございます。</p>
+                <p>登録いただいた情報は、利用者の方々が施設を選ぶ際の貴重な情報源となります。<br>定期的な更新にご協力をお願いいたします。
+                </p>
+
+                <div class="action-buttons">
+                    <a href="{% url 'welfare_services:facility_availability_create' %}"
+                       class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-plus-circle me-2"></i>続けて登録する
+                    </a>
+                    <a href="{% url 'welfare_services:index' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home me-2"></i>トップページへ戻る
+                    </a>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i><strong>運用上のご注意：</strong>
+                        <p class="mb-0">
+                            このシステムは、各福祉事務所の担当者が民間の福祉施設の空き状況を取りまとめて登録するためのものです。福祉施設での利用者情報の集計・確認後に、本システムへの入力をお願いします。月次での定期更新にご協力ください。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

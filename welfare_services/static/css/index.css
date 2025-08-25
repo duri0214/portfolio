@@ -1,0 +1,102 @@
+/* インデックスページ固有のスタイル */
+
+/* ヒーローセクション */
+.hero-section {
+    background-color: #f8f9fa;
+    padding: 4rem 0;
+    position: relative;
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: linear-gradient(to bottom right, transparent 49%, #fff 50%);
+}
+
+/* ワークフローステップ */
+.workflow-step {
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    height: 100%;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.workflow-step:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.workflow-step .badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.step-number {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    border-radius: 50%;
+    background-color: #4a89dc;
+    color: white;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    box-shadow: 0 3px 10px rgba(74, 137, 220, 0.3);
+}
+
+/* カードフッターアクション */
+.card-footer-actions {
+    margin-top: auto;
+    padding-top: 1rem;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ワークフローステップのカードボディ */
+.workflow-step .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.workflow-step .card-text {
+    flex-grow: 1;
+}
+
+/* CTAセクション */
+.cta-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: linear-gradient(to top right, transparent 49%, #f8f9fa 50%);
+}
+
+/* レスポンシブ調整 */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 3rem 0;
+    }
+
+    .workflow-step {
+        margin-bottom: 1.5rem;
+    }
+}

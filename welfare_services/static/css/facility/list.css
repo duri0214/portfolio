@@ -1,0 +1,38 @@
+/* 福祉事務所一覧ページ用スタイル */
+
+.card {
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* 検索フォームスタイル */
+.form-control:focus, .form-select:focus {
+    border-color: #4a89dc;
+    box-shadow: 0 0 0 0.25rem rgba(74, 137, 220, 0.25);
+}
+
+/* ページネーション */
+.pagination .page-link {
+    color: #4a89dc;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #ffffff;
+    border-color: #4a89dc;
+    color: #4a89dc;
+    font-weight: bold;
+}

@@ -1,0 +1,86 @@
+/* 福祉事務所詳細ページ用スタイル */
+
+.card {
+    border: none;
+}
+
+.breadcrumb-item a {
+    color: #4a89dc;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* 空き状況バッジ */
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529;
+}
+
+/* レビュー関連のスタイル */
+.stars i {
+    margin-right: 2px;
+}
+
+.review-item {
+    transition: background-color 0.2s;
+}
+
+.review-item:hover {
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+.rating-bars .progress {
+    background-color: #f0f0f0;
+    border-radius: 4px;
+}
+
+.badge.bg-info {
+    background-color: #17a2b8 !important;
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+/* サイドバーカード */
+.card.shadow-sm {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card.shadow-sm:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 空き状況履歴グラフ */
+.availability-chart {
+    height: 200px;
+    margin-bottom: 1rem;
+}
+
+/* 空き状況登録ボタン */
+.btn-primary {
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+}

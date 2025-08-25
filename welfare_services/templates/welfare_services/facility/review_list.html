@@ -1,0 +1,128 @@
+{% comment %}
+利用者レビュー一覧を表示するテンプレート部品
+使用方法：
+{% include "welfare_services/facility/review_list.html" with reviews=reviews average_rating=average_rating average_rating_rounded=average_rating_rounded rating_distribution=rating_distribution %}
+{% endcomment %}
+
+{% if reviews %}
+    <div class="mb-4">
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="me-3 mb-0">{{ average_rating|floatformat:1 }}</h4>
+            <div>
+                <div class="stars">
+                    {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= average_rating_rounded %}
+                            <i class="fas fa-star text-warning"></i>
+                        {% elif forloop.counter <= average_rating_rounded|add:0.5 and average_rating_rounded < average_rating %}
+                            <i class="fas fa-star-half-alt text-warning"></i>
+                        {% else %}
+                            <i class="far fa-star text-warning"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <small class="text-muted">{{ reviews.count }}件のレビュー</small>
+            </div>
+        </div>
+
+        <!-- フィルターオプション -->
+        <div class="review-filters mb-3">
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-sm btn-outline-secondary filter-all active">すべて</button>
+                <button class="btn btn-sm btn-outline-primary filter-type" data-type="physical">身体障害者手帳</button>
+                <button class="btn btn-sm btn-outline-success filter-type" data-type="intellectual">療育手帳</button>
+                <button class="btn btn-sm btn-outline-info filter-type" data-type="mental">精神障害者保健福祉手帳
+                </button>
+                <button class="btn btn-sm btn-outline-warning filter-type" data-type="other">その他</button>
+                <button class="btn btn-sm btn-outline-danger filter-affiliated">提携事業所あり</button>
+            </div>
+        </div>
+
+        <!-- 評価分布 -->
+        <div class="rating-bars">
+            {% for rating_count in rating_distribution reversed %}
+                <div class="d-flex align-items-center mb-1">
+                    <div class="me-2" style="width: 35px;">{{ forloop.counter0|add:1 }}★</div>
+                    <div class="progress flex-grow-1" style="height: 8px;">
+                        <div class="progress-bar bg-warning" role="progressbar"
+                             style="width: {{ rating_count.percentage }}%;"></div>
+                    </div>
+                    <div class="ms-2 small text-muted">{{ rating_count.count }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- レビュー一覧 -->
+    <div class="review-list">
+        {% for review in reviews %}
+            <div class="review-item {% if not forloop.last %}border-bottom pb-3 mb-3{% endif %}"
+                 data-certificate-type="{{ review.certificate_type }}"
+                 data-has-affiliated="{% if review.affiliated_facility_name %}true{% else %}false{% endif %}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div class="d-flex align-items-center mb-1">
+                            <h6 class="mb-0 me-2">{{ review.reviewer_name }}</h6>
+                            <span class="badge bg-secondary me-1">{{ review.get_certificate_type_display }}</span>
+                            <span class="badge bg-secondary">{% if review.certificate_grade %}
+                                {{ review.certificate_grade }}{% else %}未入力{% endif %}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="stars small me-2">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">{{ review.created_at|date:"Y年m月d日" }}</small>
+                        </div>
+                    </div>
+                    {% if review.affiliated_facility_name %}
+                        <span class="badge bg-info">{{ review.affiliated_facility_name }}</span>
+                    {% endif %}
+                </div>
+                <p class="mb-0">{{ review.comment }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if reviews.count > 5 and show_load_more|default:True %}
+        <div class="text-center mt-3">
+            <button class="btn btn-outline-secondary btn-sm" id="load-more-reviews">もっと見る</button>
+        </div>
+    {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // フィルターボタンのイベントハンドラー
+            document.querySelectorAll('.review-filters button').forEach(button => {
+                button.addEventListener('click', function () {
+                    // アクティブクラスを切り替え
+                    document.querySelectorAll('.review-filters button').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // フィルタリング
+                    const filterType = this.classList.contains('filter-all') ? 'all' :
+                        this.classList.contains('filter-affiliated') ? 'affiliated' :
+                            this.dataset.type;
+
+                    document.querySelectorAll('.review-item').forEach(item => {
+                        if (filterType === 'all') {
+                            item.style.display = 'block';
+                        } else if (filterType === 'affiliated') {
+                            item.style.display = item.dataset.hasAffiliated === 'true' ? 'block' : 'none';
+                        } else {
+                            item.style.display = item.dataset.certificateType === filterType ? 'block' : 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+{% else %}
+    <div class="text-center py-4">
+        <p class="mb-0">この福祉事務所のレビューはまだありません。</p>
+    </div>
+{% endif %}
