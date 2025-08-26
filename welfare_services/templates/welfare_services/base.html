@@ -155,9 +155,10 @@
             <div class="col-md-4">
                 <h5>リンク</h5>
                 <ul class="list-unstyled">
-                    <li><a href="#" class="text-white">ホーム</a></li>
-                    <li><a href="#" class="text-white">福祉事務所を探す</a></li>
-                    <li><a href="#" class="text-white">福祉事務所の方へ</a></li>
+                    <li><a href="{% url 'welf:index' %}" class="text-white">ホーム</a></li>
+                    <li><a href="{% url 'welf:facility_list' %}" class="text-white">福祉事務所を探す</a></li>
+                    <li><a href="{% url 'welf:facility_availability_create' %}"
+                           class="text-white">福祉事務所の方へ</a></li>
                     <li><a href="#" class="text-white">お問い合わせ</a></li>
                 </ul>
             </div>
