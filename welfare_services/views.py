@@ -70,7 +70,7 @@ class FetchFacilitiesView(View):
             messages.error(request, f"データ取得中にエラーが発生しました: {str(e)}")
 
         # トップページにリダイレクト
-        return HttpResponseRedirect(reverse("welfare_services:index"))
+        return HttpResponseRedirect(reverse("welf:index"))
 
 
 class FacilityAvailabilityCreateView(CreateView):
@@ -79,7 +79,7 @@ class FacilityAvailabilityCreateView(CreateView):
     model = FacilityAvailability
     form_class = FacilityAvailabilityForm
     template_name = "welfare_services/facility_availability/form.html"
-    success_url = reverse_lazy("welfare_services:facility_availability_complete")
+    success_url = reverse_lazy("welf:facility_availability_complete")
 
     def form_valid(self, form):
         # フォームから施設と年月を取得

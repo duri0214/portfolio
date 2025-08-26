@@ -17,7 +17,7 @@
 <!-- ナビゲーションバー -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary-gradient">
     <div class="container">
-        <a class="navbar-brand" href="{% url 'welfare_services:index' %}">東京都福祉事務所ポータル</a>
+        <a class="navbar-brand" href="{% url 'welf:index' %}">東京都福祉事務所ポータル</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -25,14 +25,14 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'welfare_services:index' %}">ホーム</a>
+                    <a class="nav-link" href="{% url 'welf:index' %}">ホーム</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'welfare_services:facility_list' %}">福祉事務所を探す</a>
+                    <a class="nav-link" href="{% url 'welf:facility_list' %}">福祉事務所を探す</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link"
-                       href="{% url 'welfare_services:facility_availability_create' %}">福祉事務所の方へ</a>
+                       href="{% url 'welf:facility_availability_create' %}">福祉事務所の方へ</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">お問い合わせ</a>

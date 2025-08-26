@@ -12,8 +12,8 @@
         <div class="container">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'welfare_services:index' %}">ホーム</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'welfare_services:facility_list' %}">福祉事務所一覧</a>
+                    <li class="breadcrumb-item"><a href="{% url 'welf:index' %}">ホーム</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'welf:facility_list' %}">福祉事務所一覧</a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">{{ facility.name }}</li>
                 </ol>
@@ -162,7 +162,7 @@
                         <div class="card-body">
                             <h5 class="card-title">福祉事務所の方へ</h5>
                             <p>この福祉施設の最新の空き状況を登録することができます。</p>
-                            <a href="{% url 'welfare_services:facility_availability_create' %}?facility={{ facility.id }}"
+                            <a href="{% url 'welf:facility_availability_create' %}?facility={{ facility.id }}"
                                class="btn btn-primary w-100">
                                 空き状況を登録する
                             </a>
