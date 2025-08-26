@@ -4,7 +4,7 @@
 
 {% block extra_css %}
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/facility/list.css' %}">
+    <link rel="stylesheet" href="{% static 'welfare_services/css/facility/list.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -112,6 +112,7 @@
                                         <a class="page-link" href="?page=
 
 
+
                                                 {{ facilities.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
                                             前へ
                                         </a>
@@ -131,6 +132,7 @@
 
 
 
+
                                                     {{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
                                         </li>
                                     {% endif %}
@@ -139,6 +141,7 @@
                                 {% if facilities.has_next %}
                                     <li class="page-item">
                                         <a class="page-link" href="?page=
+
 
 
 
