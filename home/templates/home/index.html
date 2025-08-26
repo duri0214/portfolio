@@ -278,19 +278,18 @@
             <div class="col-md-4">
                 <div class="card mb-4 shadow-sm">
                     <figure class="card-img-top">
-                        <img src="{% static 'home/images/no-image.png' %}" alt="準備中のツール"
+                        <img src="{% static 'home/images/welfare_services.png' %}" alt="東京都福祉事務所情報ポータル"
                              class="img-fluid rounded shadow">
-                        <figcaption class="cat-name bg-warning text-white px-2 py-1">CATEGORY</figcaption>
+                        <figcaption class="cat-name bg-info text-white px-2 py-1">ハッカソン</figcaption>
                     </figure>
                     <div class="card-body">
-                        <h5 class="card-title">TITLE</h5>
+                        <h5 class="card-title">東京都福祉事務所情報ポータル</h5>
                         <div class="card-text">
-                            SUMMARY
+                            2025年当時、東京都内の福祉事務所の情報を一元管理し、利用者に提供するポータルサイト。空き状況を信号機表示で直感的に把握できます。都知事杯オープンデータ・ハッカソン2025で「障がい福祉サービス空き情報の見える化」をテーマに開発。
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="#" class="btn btn-primary btn-sm" role="button">
-                            {# TODO: リンク差し替え #}
+                        <a href="{% url 'home:about_welfare_services' %}" class="btn btn-primary btn-sm" role="button">
                             詳細を見る
                         </a>
                     </div>
