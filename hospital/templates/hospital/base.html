@@ -90,6 +90,10 @@
                                     {% if request.path == '/jp_stocks/' %}selected{% endif %}>
                                 JP_STOCKS
                             </option>
+                            <option value="{% url 'welf:index' %}"
+                                    {% if request.path == '/welfare_services/' %}selected{% endif %}>
+                                WELFARE SERVICES
+                            </option>
                         </select>
                     </li>
                 </ul>
