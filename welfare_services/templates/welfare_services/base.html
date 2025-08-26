@@ -37,6 +37,7 @@
 <body>
 <h1></h1>
 <header>
+    <!-- グローバルナビ -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid px-3">
             <a class="navbar-brand" href="{% url 'home:index' %}">Henojiya</a>
@@ -106,8 +107,8 @@
     </nav>
 </header>
 
-<!-- ナビゲーションバー -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary-gradient">
+<!-- 福祉事務所専用ナビゲーションバー -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary-gradient fixed-top" style="top: 70px;">
     <div class="container">
         <a class="navbar-brand" href="{% url 'welf:index' %}">東京都福祉事務所ポータル</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -117,13 +118,15 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'welf:index' %}">ホーム</a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active fw-bold{% endif %}"
+                       href="{% url 'welf:index' %}">ホーム</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'welf:facility_list' %}">福祉事務所を探す</a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'facility_list' %}active fw-bold{% endif %}"
+                       href="{% url 'welf:facility_list' %}">福祉事務所を探す</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link"
+                    <a class="nav-link {% if request.resolver_match.url_name == 'facility_availability_create' %}active fw-bold{% endif %}"
                        href="{% url 'welf:facility_availability_create' %}">福祉事務所の方へ</a>
                 </li>
                 <li class="nav-item">
@@ -137,10 +140,9 @@
 <!-- メッセージ表示 -->
 {% include 'welfare_services/messages.html' %}
 
-<!-- メインコンテンツ -->
-<main>
+<div id="main" style="margin-top: 126px;"> {# 2つのナビバーの高さ分 (70px + 56px) #}
     {% block content %}{% endblock %}
-</main>
+</div>
 
 <!-- フッター -->
 <footer class="mt-5">
