@@ -39,9 +39,9 @@
 
         <!-- 評価分布 -->
         <div class="rating-bars">
-            {% for rating_count in rating_distribution reversed %}
+            {% for rating_count in rating_distribution %}
                 <div class="d-flex align-items-center mb-1">
-                    <div class="me-2" style="width: 35px;">{{ forloop.counter0|add:1 }}★</div>
+                    <div class="me-2" style="width: 35px;">{{ rating_count.rating }}★</div>
                     <div class="progress flex-grow-1" style="height: 8px;">
                         <div class="progress-bar bg-warning" role="progressbar"
                              style="width: {{ rating_count.percentage }}%;"></div>
