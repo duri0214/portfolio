@@ -12,6 +12,7 @@ from django.views import View
 from django.views.generic import TemplateView, CreateView
 
 from .domain.repository.facility_repository import FacilityRepository
+from .domain.repository.review_repository import ReviewRepository
 from .forms import FacilityAvailabilityForm
 from .models import Facility, FacilityAvailability
 
@@ -225,25 +226,8 @@ class FacilityDetailView(TemplateView):
         # レビューを取得
         reviews = ReviewRepository.get_facility_reviews(facility)
 
-        # 平均評価を計算
-        average_rating = reviews.aggregate(Avg("rating"))["rating__avg"] or 0
-        average_rating_rounded = int(average_rating)
-
-        # 評価ごとの件数と割合を計算
-        rating_counts = (
-            reviews.values("rating").annotate(count=Count("rating")).order_by("rating")
-        )
-        rating_distribution = []
-        total_reviews = reviews.count()
-
-        for i in range(1, 6):  # 1-5の評価それぞれに対して
-            count = next(
-                (item["count"] for item in rating_counts if item["rating"] == i), 0
-            )
-            percentage = (count / total_reviews * 100) if total_reviews > 0 else 0
-            rating_distribution.append(
-                {"rating": i, "count": count, "percentage": percentage}
-            )
+        # レビューの統計情報を取得してコンテキストに直接追加
+        review_stats = ReviewRepository.get_review_stats(facility)
 
         # リレーションフィールドには直接代入できないので、コンテキストに渡す
         context["facility"] = facility
