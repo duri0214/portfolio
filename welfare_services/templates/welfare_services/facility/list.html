@@ -4,7 +4,7 @@
 
 {% block extra_css %}
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/facility/list.css' %}">
+    <link rel="stylesheet" href="{% static 'welfare_services/css/facility/list.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
             <!-- 検索フォーム -->
             <div class="card mb-4 shadow-sm">
                 <div class="card-body">
-                    <form method="get" action="{% url 'welfare_services:facility_list' %}" class="row g-3">
+                    <form method="get" action="{% url 'welf:facility_list' %}" class="row g-3">
                         <div class="col-md-4">
                             <label for="name" class="form-label">事務所名</label>
                             <input type="text" class="form-control" id="name" name="name"
@@ -48,7 +48,7 @@
                         </div>
                         <div class="col-12 text-end">
                             <button type="submit" class="btn btn-primary">検索</button>
-                            <a href="{% url 'welfare_services:facility_list' %}"
+                            <a href="{% url 'welf:facility_list' %}"
                                class="btn btn-outline-secondary">リセット</a>
                         </div>
                     </form>
@@ -88,7 +88,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'welfare_services:facility_detail' facility.id %}"
+                                        <a href="{% url 'welf:facility_detail' facility.id %}"
                                            class="btn btn-sm btn-outline-primary">詳細</a>
                                     </td>
                                 </tr>
@@ -111,6 +111,8 @@
                                     <li class="page-item">
                                         <a class="page-link" href="?page=
 
+
+
                                                 {{ facilities.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
                                             前へ
                                         </a>
@@ -128,6 +130,9 @@
                                         <li class="page-item">
                                             <a class="page-link" href="?page=
 
+
+
+
                                                     {{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
                                         </li>
                                     {% endif %}
@@ -136,6 +141,9 @@
                                 {% if facilities.has_next %}
                                     <li class="page-item">
                                         <a class="page-link" href="?page=
+
+
+
 
                                                 {{ facilities.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
                                             次へ

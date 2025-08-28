@@ -13,6 +13,7 @@ from home.views import (
     LlmChatIndexView,
     AiAgentIndexView,
     JpStocksIndexView,
+    WelfareServicesIndexView,
 )
 
 app_name = "home"
@@ -37,4 +38,9 @@ urlpatterns = [
     path("about/llm_chat/", LlmChatIndexView.as_view(), name="about_llm_chat"),
     path("about/ai_agent/", AiAgentIndexView.as_view(), name="about_ai_agent"),
     path("about/jp_stocks/", JpStocksIndexView.as_view(), name="about_jp_stocks"),
+    path(
+        "about/welfare_services/",
+        WelfareServicesIndexView.as_view(),
+        name="about_welfare_services",
+    ),
 ]

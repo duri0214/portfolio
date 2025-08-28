@@ -47,3 +47,7 @@ class AiAgentIndexView(TemplateView):
 
 class JpStocksIndexView(TemplateView):
     template_name = "home/jp_stocks/index.html"
+
+
+class WelfareServicesIndexView(TemplateView):
+    template_name = "home/welfare_services/index.html"

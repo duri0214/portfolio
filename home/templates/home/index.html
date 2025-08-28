@@ -193,7 +193,7 @@
                         <h5 class="card-title">金融庁の有価証券報告書を分析</h5>
                         <div class="card-text">
                             2019年当時、金融の業務知識を総動員して "有価証券報告書" をpythonで取得するプログラムを作った
-                            （そのときは単にファイル処理をするもの）。2023年頃にWebアプリ（API版）として移植したついでに、分析する機能をつけた
+                            （当初は単にダウンロード済みの有価証券報告書ファイルを処理するもの）。2023年頃にWebアプリ（API版）として移植したついでに、分析する機能をつけた
                         </div>
                     </div>
                     <div class="card-footer">
@@ -261,9 +261,9 @@
                         <figcaption class="cat-name bg-success text-white px-2 py-1">経済</figcaption>
                     </figure>
                     <div class="card-body">
-                        <h5 class="card-title">JP-STOCKS</h5>
+                        <h5 class="card-title">日本の株価を分析する</h5>
                         <div class="card-text">
-                            SUMMARY
+                            2025年当時、日本の株価を分析するための機能があればオモシロイと思った。現在は板シミュレーションしかおいていないが、そのうちrssでニュースを取得したりできるとよい仮の文章仮の文章仮の文章仮の文章仮の文章仮の文章仮の文章仮の文章
                         </div>
                     </div>
                     <div class="card-footer">
@@ -278,19 +278,18 @@
             <div class="col-md-4">
                 <div class="card mb-4 shadow-sm">
                     <figure class="card-img-top">
-                        <img src="{% static 'home/images/no-image.png' %}" alt="準備中のツール"
+                        <img src="{% static 'home/images/welfare_services.png' %}" alt="東京都福祉事務所情報ポータル"
                              class="img-fluid rounded shadow">
-                        <figcaption class="cat-name bg-warning text-white px-2 py-1">CATEGORY</figcaption>
+                        <figcaption class="cat-name bg-info text-white px-2 py-1">ハッカソン</figcaption>
                     </figure>
                     <div class="card-body">
-                        <h5 class="card-title">TITLE</h5>
+                        <h5 class="card-title">東京都福祉事務所情報ポータル</h5>
                         <div class="card-text">
-                            SUMMARY
+                            2025年当時、東京都内の福祉事務所の情報を一元管理し、利用者に提供するポータルサイト。空き状況を信号機表示で直感的に把握できます。都知事杯オープンデータ・ハッカソン2025で「障がい福祉サービス空き情報の見える化」をテーマに開発。
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="#" class="btn btn-primary btn-sm" role="button">
-                            {# TODO: リンク差し替え #}
+                        <a href="{% url 'home:about_welfare_services' %}" class="btn btn-primary btn-sm" role="button">
                             詳細を見る
                         </a>
                     </div>
