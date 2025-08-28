@@ -222,14 +222,8 @@ class FacilityDetailView(TemplateView):
         # テンプレート変数を設定
         facility.latest_availability = latest_availability
 
-        # レビューデータを取得
-        from django.db.models import Count, Avg
-        from .models import FacilityReview
-
-        # 承認済みのレビューのみ取得
-        reviews = FacilityReview.objects.filter(
-            facility=facility, is_approved=True
-        ).order_by("-created_at")
+        # レビューを取得
+        reviews = ReviewRepository.get_facility_reviews(facility)
 
         # 平均評価を計算
         average_rating = reviews.aggregate(Avg("rating"))["rating__avg"] or 0
