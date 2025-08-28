@@ -226,14 +226,14 @@ class FacilityDetailView(TemplateView):
         # レビューを取得
         reviews = ReviewRepository.get_facility_reviews(facility)
 
-        # レビューの統計情報を取得してコンテキストに直接追加
+        # レビューの統計情報を取得
         review_stats = ReviewRepository.get_review_stats(facility)
 
         # リレーションフィールドには直接代入できないので、コンテキストに渡す
         context["facility"] = facility
         context["availabilities"] = availabilities
         context["reviews"] = reviews
-        context["average_rating"] = average_rating
-        context["average_rating_rounded"] = average_rating_rounded
-        context["rating_distribution"] = rating_distribution
+        context["average_rating"] = review_stats.average_rating
+        context["average_rating_rounded"] = review_stats.average_rating_rounded
+        context["rating_distribution"] = review_stats.rating_distribution
         return context
