@@ -118,13 +118,15 @@ class ReviewRepository:
             ]
 
         rating_data = list(
-            reviews.values("rating").annotate(
-                count=Count("rating"),
+            reviews.values("rating")
+            .annotate(
+                count=Count("id"),
                 percentage=ExpressionWrapper(
-                    100.0 * Cast(Count("rating"), FloatField()) / total_reviews,
+                    100.0 * Cast(Count("id"), FloatField()) / total_reviews,
                     output_field=FloatField(),
                 ),
             )
+            .order_by("-rating")
         )
 
         # 評価値をキーとする辞書を作成（高速検索のため）
@@ -137,7 +139,7 @@ class ReviewRepository:
                 item = rating_dict[rating]
                 rating_distribution.append(
                     RatingDistributionVO(
-                        rating=item["rating"],
+                        rating=rating,
                         count=item["count"],
                         percentage=item["percentage"],
                     )
