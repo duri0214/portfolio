@@ -82,3 +82,53 @@ class ReviewRepositoryTestCase(TestCase):
             self.facility, approval_filter=None
         )
         self.assertEqual(all_reviews.count(), 10)  # 承認・未承認含む全レビュー
+
+    def test_get_review_stats(self):
+        """get_review_statsメソッドのテスト
+
+        シナリオ:
+           1. 総レビュー数が正しいこと
+           2. 平均評価が正しく計算されていること（加重平均）
+           3. 整数部分（切り捨て）が3になることを確認
+           4. 各評価の件数と割合が正しいこと
+        """
+        # 実際のレビューデータを取得
+        reviews = ReviewRepository.get_facility_reviews(self.facility)
+
+        # 実データから評価の分布を集計
+        ratings_count = {}
+        for review in reviews:
+            rating = review.rating
+            ratings_count[rating] = ratings_count.get(rating, 0) + 1
+        total = sum(ratings_count.values())
+
+        # レビュー統計を取得
+        stats = ReviewRepository.get_review_stats(self.facility)
+
+        # 1. 総レビュー数が正しいこと
+        self.assertEqual(stats.total_reviews, 9)
+
+        # 2. 平均評価が正しく計算されていること（加重平均）: (5×3 + 4×2 + 3×1 + 2×2 + 1×1) ÷ 9 = 3.44...
+        expected_avg = (
+            sum(rating * count for rating, count in ratings_count.items()) / total
+        )
+        self.assertAlmostEqual(stats.average_rating, expected_avg, places=2)
+
+        # 3. 整数部分（切り捨て）が3になることを確認
+        self.assertEqual(stats.average_rating_rounded, 3)
+
+        # 4. 各評価の件数と割合が正しいこと
+        distribution_dict = {d.rating: d for d in stats.rating_distribution}
+        expected_counts = ratings_count
+        expected_percentages = {
+            rating: round(count / total * 100, 2)
+            for rating, count in ratings_count.items()
+        }
+
+        for rating in range(5, 0, -1):
+            self.assertEqual(distribution_dict[rating].count, expected_counts[rating])
+            self.assertAlmostEqual(
+                distribution_dict[rating].percentage,
+                expected_percentages[rating],
+                places=2,
+            )
