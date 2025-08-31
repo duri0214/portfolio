@@ -136,12 +136,11 @@ class ReviewRepository:
         rating_distribution = []
         for rating in range(5, 0, -1):
             if rating in rating_dict:
-                item = rating_dict[rating]
                 rating_distribution.append(
                     RatingDistributionVO(
                         rating=rating,
-                        count=item["count"],
-                        percentage=item["percentage"],
+                        count=rating_dict[rating]["count"],
+                        percentage=rating_dict[rating]["percentage"],
                     )
                 )
             else:
