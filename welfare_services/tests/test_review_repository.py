@@ -56,7 +56,7 @@ class ReviewRepositoryTestCase(TestCase):
         2. approval_filter=Falseで未承認レビューのみ取得できることを確認
         3. approval_filter=Noneですべてのレビュー（承認・未承認含む）が取得できることを確認
         """
-        # 承認済みレビューの取得テスト
+        # 1. approval_filter=True（デフォルト）で承認済みレビューのみ取得できることを確認
         reviews = ReviewRepository.get_facility_reviews(self.facility)
         self.assertEqual(reviews.count(), 9)  # 全レビュー数
 
@@ -71,13 +71,13 @@ class ReviewRepositoryTestCase(TestCase):
             is_approved=False,
         )
 
-        # 未承認のみのレビュー取得テスト (approval_filter=False)
+        # 2. approval_filter=Falseで未承認レビューのみ取得できることを確認
         unapproved_reviews = ReviewRepository.get_facility_reviews(
             self.facility, approval_filter=False
         )
         self.assertEqual(unapproved_reviews.count(), 1)  # 未承認のレビューのみ
 
-        # 全レビュー取得テスト (承認状態を問わない: approval_filter=None)
+        # 3. approval_filter=Noneですべてのレビュー（承認・未承認含む）が取得できることを確認
         all_reviews = ReviewRepository.get_facility_reviews(
             self.facility, approval_filter=None
         )
