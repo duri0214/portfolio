@@ -10,19 +10,23 @@ from welfare_services.models import FacilityReview, Facility
 
 class ReviewRepository:
     @staticmethod
-    def get_facility_reviews(facility: Facility, is_approved: bool = True):
+    def get_facility_reviews(facility: Facility, approval_filter: bool | None = True):
         """施設のレビューを取得する
 
         Args:
             facility: レビューを取得する施設
-            is_approved: 承認済みレビューのみを取得するかどうか
+            approval_filter: レビューの承認状態フィルタリング
+                          - True: 承認済みレビューのみを取得（デフォルト）
+                          - False: 未承認レビューのみを取得
+                          - None: 承認状態に関係なく全てのレビューを取得（明示的にNoneを渡す必要あり）
 
         Returns:
             施設のレビューのクエリセット（最新順にソート）
         """
-        return FacilityReview.objects.filter(
-            facility=facility, is_approved=is_approved
-        ).order_by("-created_at")
+        query = FacilityReview.objects.filter(facility=facility)
+        if approval_filter is not None:
+            query = query.filter(is_approved=approval_filter)
+        return query.order_by("-created_at")
 
     @staticmethod
     def get_review_stats(facility: Facility, is_approved: bool = True):
