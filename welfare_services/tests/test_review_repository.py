@@ -132,3 +132,42 @@ class ReviewRepositoryTestCase(TestCase):
                 expected_percentages[rating],
                 places=2,
             )
+
+    def test_get_rating_distribution(self):
+        """get_rating_distributionメソッドのテスト
+
+        シナリオ:
+        1. 評価分布が降順（5→1）に並んでいるか
+        2. 各評価（★1～★5）のカウント数が正しいか
+        3. 各評価のパーセンテージが正しく計算されているか
+        """
+        # 実データから評価の分布を手動で集計
+        reviews = ReviewRepository.get_facility_reviews(self.facility)
+        ratings_count = {}
+        for review in reviews:
+            rating = review.rating
+            ratings_count[rating] = ratings_count.get(rating, 0) + 1
+
+        total = sum(ratings_count.values())
+        expected_percentages = {
+            rating: round(count / total * 100, 2)
+            for rating, count in ratings_count.items()
+        }
+
+        # 評価分布を取得
+        distribution = ReviewRepository.get_rating_distribution(reviews)
+
+        # 1. 評価分布が降順（5→1）に並んでいるか
+        ratings = [d.rating for d in distribution]
+        self.assertEqual(ratings, [5, 4, 3, 2, 1])
+
+        for dist in distribution:
+            # 2. 各評価（★1～★5）のカウント数が正しいか
+            rating = dist.rating
+            self.assertEqual(dist.count, ratings_count.get(rating, 0))
+
+            # 3. 各評価のパーセンテージが正しく計算されているか
+            if dist.count > 0:
+                self.assertAlmostEqual(
+                    dist.percentage, expected_percentages[rating], places=2
+                )
