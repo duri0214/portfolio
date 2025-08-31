@@ -171,3 +171,34 @@ class ReviewRepositoryTestCase(TestCase):
                 self.assertAlmostEqual(
                     dist.percentage, expected_percentages[rating], places=2
                 )
+
+    def test_no_reviews(self):
+        """レビューがない場合のテスト
+
+        シナリオ:
+           1. 総レビュー数が0になること
+           2. 平均評価が0になること（ゼロ除算を回避できているか）
+           3. 平均評価の整数部分が0になること
+           4. 全ての評価（★1～★5）の件数が0で、割合も0%になること
+        """
+        # レビューのない新しい施設を作成
+        empty_facility = Facility.objects.create(
+            name="レビューなし施設",
+            address="大阪府大阪市",
+        )
+
+        # 統計を取得
+        stats = ReviewRepository.get_review_stats(empty_facility)
+
+        # 1. 総レビュー数が0になること
+        self.assertEqual(stats.total_reviews, 0)
+        # 2. 平均評価が0になること（ゼロ除算を回避できているか）
+        self.assertEqual(stats.average_rating, 0)
+        # 3. 平均評価の整数部分が0になること
+        self.assertEqual(stats.average_rating_rounded, 0)
+
+        # 4. 全ての評価（★1～★5）の件数が0で、割合も0%になること
+        self.assertEqual(len(stats.rating_distribution), 5)  # 5段階評価
+        for dist in stats.rating_distribution:
+            self.assertEqual(dist.count, 0)
+            self.assertEqual(dist.percentage, 0.0)
