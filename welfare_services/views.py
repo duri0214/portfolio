@@ -12,6 +12,7 @@ from django.views import View
 from django.views.generic import TemplateView, CreateView
 
 from .domain.repository.facility_repository import FacilityRepository
+from .domain.repository.review_repository import ReviewRepository
 from .forms import FacilityAvailabilityForm
 from .models import Facility, FacilityAvailability
 
@@ -70,7 +71,7 @@ class FetchFacilitiesView(View):
             messages.error(request, f"データ取得中にエラーが発生しました: {str(e)}")
 
         # トップページにリダイレクト
-        return HttpResponseRedirect(reverse("welfare_services:index"))
+        return HttpResponseRedirect(reverse("welf:index"))
 
 
 class FacilityAvailabilityCreateView(CreateView):
@@ -79,7 +80,7 @@ class FacilityAvailabilityCreateView(CreateView):
     model = FacilityAvailability
     form_class = FacilityAvailabilityForm
     template_name = "welfare_services/facility_availability/form.html"
-    success_url = reverse_lazy("welfare_services:facility_availability_complete")
+    success_url = reverse_lazy("welf:facility_availability_complete")
 
     def form_valid(self, form):
         # フォームから施設と年月を取得
@@ -222,40 +223,17 @@ class FacilityDetailView(TemplateView):
         # テンプレート変数を設定
         facility.latest_availability = latest_availability
 
-        # レビューデータを取得
-        from django.db.models import Count, Avg
-        from .models import FacilityReview
+        # レビューを取得
+        reviews = ReviewRepository.get_facility_reviews(facility)
 
-        # 承認済みのレビューのみ取得
-        reviews = FacilityReview.objects.filter(
-            facility=facility, is_approved=True
-        ).order_by("-created_at")
-
-        # 平均評価を計算
-        average_rating = reviews.aggregate(Avg("rating"))["rating__avg"] or 0
-        average_rating_rounded = int(average_rating)
-
-        # 評価ごとの件数と割合を計算
-        rating_counts = (
-            reviews.values("rating").annotate(count=Count("rating")).order_by("rating")
-        )
-        rating_distribution = []
-        total_reviews = reviews.count()
-
-        for i in range(1, 6):  # 1-5の評価それぞれに対して
-            count = next(
-                (item["count"] for item in rating_counts if item["rating"] == i), 0
-            )
-            percentage = (count / total_reviews * 100) if total_reviews > 0 else 0
-            rating_distribution.append(
-                {"rating": i, "count": count, "percentage": percentage}
-            )
+        # レビューの統計情報を取得
+        review_stats = ReviewRepository.get_review_stats(facility)
 
         # リレーションフィールドには直接代入できないので、コンテキストに渡す
         context["facility"] = facility
         context["availabilities"] = availabilities
         context["reviews"] = reviews
-        context["average_rating"] = average_rating
-        context["average_rating_rounded"] = average_rating_rounded
-        context["rating_distribution"] = rating_distribution
+        context["average_rating"] = review_stats.average_rating
+        context["average_rating_rounded"] = review_stats.average_rating_rounded
+        context["rating_distribution"] = review_stats.rating_distribution
         return context

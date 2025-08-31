@@ -11,9 +11,10 @@
             <div>
                 <div class="stars">
                     {% for i in "12345"|make_list %}
+                        {# 例: 平均評価が3.7の場合、3つの星（★★★）を表示し、4つ目を半欠けの星にする #}
                         {% if forloop.counter <= average_rating_rounded %}
                             <i class="fas fa-star text-warning"></i>
-                        {% elif forloop.counter <= average_rating_rounded|add:0.5 and average_rating_rounded < average_rating %}
+                        {% elif forloop.counter == average_rating_rounded|add:1 and average_rating_rounded < average_rating %}
                             <i class="fas fa-star-half-alt text-warning"></i>
                         {% else %}
                             <i class="far fa-star text-warning"></i>
@@ -39,9 +40,9 @@
 
         <!-- 評価分布 -->
         <div class="rating-bars">
-            {% for rating_count in rating_distribution reversed %}
+            {% for rating_count in rating_distribution %}
                 <div class="d-flex align-items-center mb-1">
-                    <div class="me-2" style="width: 35px;">{{ forloop.counter0|add:1 }}★</div>
+                    <div class="me-2" style="width: 35px;">{{ rating_count.rating }}★</div>
                     <div class="progress flex-grow-1" style="height: 8px;">
                         <div class="progress-bar bg-warning" role="progressbar"
                              style="width: {{ rating_count.percentage }}%;"></div>

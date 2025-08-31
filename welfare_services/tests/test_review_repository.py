@@ -1,0 +1,204 @@
+from django.test import TestCase
+
+from welfare_services.domain.repository.review_repository import ReviewRepository
+from welfare_services.models import Facility, FacilityReview
+
+
+class ReviewRepositoryTestCase(TestCase):
+    """ReviewRepositoryのテストケース
+
+    レビューリポジトリの機能を検証するテストケース群。
+    主に以下の機能をテスト：
+    - レビュー取得機能（承認済み/未承認/全て）
+    - レビュー統計情報の計算（平均評価、分布）
+    - 評価分布の集計と変換
+    - エッジケース（レビューなし）の処理
+    """
+
+    def setUp(self):
+        # テスト用の施設を作成
+        self.facility = Facility.objects.create(
+            name="テスト施設",
+            address="東京都新宿区",
+        )
+
+        # テスト用のレビューデータを作成
+        # 5★：3件、4★：2件、3★：1件、2★：2件、1★：1件
+        ratings_data = [
+            # (評価, 手帳種類, 手帳番号)
+            (5, "physical", "P001"),
+            (5, "physical", "P002"),
+            (5, "intellectual", "I001"),
+            (4, "intellectual", "I002"),
+            (4, "mental", "M001"),
+            (3, "mental", "M002"),
+            (2, "other", "O001"),
+            (2, "other", "O002"),
+            (1, "physical", "P003"),
+        ]
+
+        for i, (rating, cert_type, cert_num) in enumerate(ratings_data):
+            FacilityReview.objects.create(
+                facility=self.facility,
+                reviewer_name=f"テスト利用者{i+1}",
+                certificate_type=cert_type,
+                certificate_number=cert_num,
+                rating=rating,
+                comment="これはテストコメントです。",
+                is_approved=True,
+            )
+
+    def test_get_facility_reviews(self):
+        """get_facility_reviewsメソッドのテスト
+
+        シナリオ:
+        1. approval_filter=True（デフォルト）で承認済みレビューのみ取得できることを確認
+        2. approval_filter=Falseで未承認レビューのみ取得できることを確認
+        3. approval_filter=Noneですべてのレビュー（承認・未承認含む）が取得できることを確認
+        """
+        # 1. approval_filter=True（デフォルト）で承認済みレビューのみ取得できることを確認
+        reviews = ReviewRepository.get_facility_reviews(self.facility)
+        self.assertEqual(reviews.count(), 9)  # 全レビュー数
+
+        # 未承認のレビューを1件作成
+        FacilityReview.objects.create(
+            facility=self.facility,
+            reviewer_name="未承認ユーザー",
+            certificate_type="physical",
+            certificate_number="P999",
+            rating=3,
+            comment="未承認のレビューです。",
+            is_approved=False,
+        )
+
+        # 2. approval_filter=Falseで未承認レビューのみ取得できることを確認
+        unapproved_reviews = ReviewRepository.get_facility_reviews(
+            self.facility, approval_filter=False
+        )
+        self.assertEqual(unapproved_reviews.count(), 1)  # 未承認のレビューのみ
+
+        # 3. approval_filter=Noneですべてのレビュー（承認・未承認含む）が取得できることを確認
+        all_reviews = ReviewRepository.get_facility_reviews(
+            self.facility, approval_filter=None
+        )
+        self.assertEqual(all_reviews.count(), 10)  # 承認・未承認含む全レビュー
+
+    def test_get_review_stats(self):
+        """get_review_statsメソッドのテスト
+
+        シナリオ:
+           1. 総レビュー数が正しいこと
+           2. 平均評価が正しく計算されていること（加重平均）
+           3. 整数部分（切り捨て）が3になることを確認
+           4. 各評価の件数と割合が正しいこと
+        """
+        # 実際のレビューデータを取得
+        reviews = ReviewRepository.get_facility_reviews(self.facility)
+
+        # 実データから評価の分布を集計
+        ratings_count = {}
+        for review in reviews:
+            rating = review.rating
+            ratings_count[rating] = ratings_count.get(rating, 0) + 1
+        total = sum(ratings_count.values())
+
+        # レビュー統計を取得
+        stats = ReviewRepository.get_review_stats(self.facility)
+
+        # 1. 総レビュー数が正しいこと
+        self.assertEqual(stats.total_reviews, 9)
+
+        # 2. 平均評価が正しく計算されていること（加重平均）: (5×3 + 4×2 + 3×1 + 2×2 + 1×1) ÷ 9 = 3.44...
+        expected_avg = (
+            sum(rating * count for rating, count in ratings_count.items()) / total
+        )
+        self.assertAlmostEqual(stats.average_rating, expected_avg, places=2)
+
+        # 3. 整数部分（切り捨て）が3になることを確認
+        self.assertEqual(stats.average_rating_rounded, 3)
+
+        # 4. 各評価の件数と割合が正しいこと
+        distribution_dict = {d.rating: d for d in stats.rating_distribution}
+        expected_counts = ratings_count
+        expected_percentages = {
+            rating: round(count / total * 100, 2)
+            for rating, count in ratings_count.items()
+        }
+
+        for rating in range(5, 0, -1):
+            self.assertEqual(distribution_dict[rating].count, expected_counts[rating])
+            self.assertAlmostEqual(
+                distribution_dict[rating].percentage,
+                expected_percentages[rating],
+                places=2,
+            )
+
+    def test_get_rating_distribution(self):
+        """get_rating_distributionメソッドのテスト
+
+        シナリオ:
+        1. 評価分布が降順（5→1）に並んでいるか
+        2. 各評価（★1～★5）のカウント数が正しいか
+        3. 各評価のパーセンテージが正しく計算されているか
+        """
+        # 実データから評価の分布を手動で集計
+        reviews = ReviewRepository.get_facility_reviews(self.facility)
+        ratings_count = {}
+        for review in reviews:
+            rating = review.rating
+            ratings_count[rating] = ratings_count.get(rating, 0) + 1
+
+        total = sum(ratings_count.values())
+        expected_percentages = {
+            rating: round(count / total * 100, 2)
+            for rating, count in ratings_count.items()
+        }
+
+        # 評価分布を取得
+        distribution = ReviewRepository.get_rating_distribution(reviews)
+
+        # 1. 評価分布が降順（5→1）に並んでいるか
+        ratings = [d.rating for d in distribution]
+        self.assertEqual(ratings, [5, 4, 3, 2, 1])
+
+        for dist in distribution:
+            # 2. 各評価（★1～★5）のカウント数が正しいか
+            rating = dist.rating
+            self.assertEqual(dist.count, ratings_count.get(rating, 0))
+
+            # 3. 各評価のパーセンテージが正しく計算されているか
+            if dist.count > 0:
+                self.assertAlmostEqual(
+                    dist.percentage, expected_percentages[rating], places=2
+                )
+
+    def test_no_reviews(self):
+        """レビューがない場合のテスト
+
+        シナリオ:
+           1. 総レビュー数が0になること
+           2. 平均評価が0になること（ゼロ除算を回避できているか）
+           3. 平均評価の整数部分が0になること
+           4. 全ての評価（★1～★5）の件数が0で、割合も0%になること
+        """
+        # レビューのない新しい施設を作成
+        empty_facility = Facility.objects.create(
+            name="レビューなし施設",
+            address="大阪府大阪市",
+        )
+
+        # 統計を取得
+        stats = ReviewRepository.get_review_stats(empty_facility)
+
+        # 1. 総レビュー数が0になること
+        self.assertEqual(stats.total_reviews, 0)
+        # 2. 平均評価が0になること（ゼロ除算を回避できているか）
+        self.assertEqual(stats.average_rating, 0)
+        # 3. 平均評価の整数部分が0になること
+        self.assertEqual(stats.average_rating_rounded, 0)
+
+        # 4. 全ての評価（★1～★5）の件数が0で、割合も0%になること
+        self.assertEqual(len(stats.rating_distribution), 5)  # 5段階評価
+        for dist in stats.rating_distribution:
+            self.assertEqual(dist.count, 0)
+            self.assertEqual(dist.percentage, 0.0)
