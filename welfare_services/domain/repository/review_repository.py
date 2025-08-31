@@ -29,12 +29,15 @@ class ReviewRepository:
         return query.order_by("-created_at")
 
     @staticmethod
-    def get_review_stats(facility: Facility, is_approved: bool = True):
+    def get_review_stats(facility: Facility, approval_filter: bool | None = True):
         """施設のレビュー統計を取得する
 
         Args:
             facility: 統計を取得する施設
-            is_approved: 承認済みレビューのみを対象とするかどうか
+            approval_filter: レビューの承認状態フィルタリング
+                           - True: 承認済みレビューのみを対象（デフォルト）
+                           - False: 未承認レビューのみを対象
+                           - None: 全てのレビューを対象（明示的にNoneを渡す必要あり）
 
         Returns:
             ReviewStatsVO: レビュー統計情報を表すValueObject
@@ -51,7 +54,7 @@ class ReviewRepository:
             (5×3 + 4×2 + 3×1) ÷ (3+2+1) = 4.33...
         """
         # レビューを取得
-        reviews = ReviewRepository.get_facility_reviews(facility, is_approved)
+        reviews = ReviewRepository.get_facility_reviews(facility, approval_filter)
 
         # 総レビュー数を取得
         total_reviews = reviews.count()
@@ -70,7 +73,14 @@ class ReviewRepository:
 
         # 評価分布から加重平均を計算
         weighted_sum = sum(dist.rating * dist.count for dist in rating_distribution)
-        average_rating = weighted_sum / total_reviews
+
+        # 0除算を防止（レビュー数が0の場合は平均評価も0となる）
+        if total_reviews > 0:
+            average_rating = weighted_sum / total_reviews
+        else:
+            average_rating = 0
+
+        # 平均評価の小数点以下を適切に処理（四捨五入ではなく切り捨て）
         average_rating_rounded = int(average_rating)
 
         # ValueObjectを生成して返却
