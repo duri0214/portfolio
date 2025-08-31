@@ -14,7 +14,7 @@
                         {# 例: 平均評価が3.7の場合、3つの星（★★★）を表示し、4つ目を半欠けの星にする #}
                         {% if forloop.counter <= average_rating_rounded %}
                             <i class="fas fa-star text-warning"></i>
-                        {% elif forloop.counter <= average_rating_rounded|add:0.5 and average_rating_rounded < average_rating %}
+                        {% elif forloop.counter == average_rating_rounded|add:1 and average_rating_rounded < average_rating %}
                             <i class="fas fa-star-half-alt text-warning"></i>
                         {% else %}
                             <i class="far fa-star text-warning"></i>
