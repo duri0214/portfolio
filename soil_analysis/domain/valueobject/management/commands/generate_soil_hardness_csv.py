@@ -5,7 +5,6 @@ class SoilHardnessDevice:
     """土壌硬度計測器に関連する定数と仕様"""
 
     # デバイスの仕様値
-    CONE_VALUE = 2.0
     MAX_DEPTH = 60
 
     # GPS情報
@@ -51,7 +50,7 @@ class SoilHardnessCsvHeader:
             CsvHeaderItem("Set Depth[cm]", str(SoilHardnessDevice.MAX_DEPTH)),
             CsvHeaderItem("Date and Time", date_str),
             CsvHeaderItem("Spring[N/48.5mm]", "490"),
-            CsvHeaderItem("Cone[cm2]", str(SoilHardnessDevice.CONE_VALUE)),
+            CsvHeaderItem("Cone[cm2]", "2"),
         ]
 
         # ヘッダー行に変換
