@@ -193,16 +193,6 @@ class Command(BaseCommand):
         return characteristics
 
     @staticmethod
-    def _generate_gps_coords(base_lat=None, base_lng=None, block_idx=None):
-        """
-        固定のGPS座標を返す（業務要件では常に0を使用）
-
-        Returns:
-            tuple: (緯度文字列, 経度文字列)
-        """
-        return SoilHardnessDevice.GPS_COORD_FILENAME
-
-    @staticmethod
     def _generate_csv_file(
         filepath,
         memory_no,
