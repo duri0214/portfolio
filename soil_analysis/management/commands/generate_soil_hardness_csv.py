@@ -158,49 +158,32 @@ class Command(BaseCommand):
                     depth * characteristics["depth_factor"]
                 )
 
-                # 硬盤層の影響を追加
-                if (
-                    characteristics["hard_layer"]
-                    and characteristics["hard_layer"][0]
-                    <= depth
-                    <= characteristics["hard_layer"][1]
-                ):
-                    # 硬盤層内では急激に圧力が上昇
-                    hard_layer_effect = characteristics["hard_layer_strength"]
-                    hard_layer_position = (depth - characteristics["hard_layer"][0]) / (
-                        characteristics["hard_layer"][1]
-                        - characteristics["hard_layer"][0]
-                    )
-                    # 硬盤層の中央付近で最大値
-                    hard_layer_multiplier = 1 - abs(hard_layer_position - 0.5) * 2
-                    base_pressure += hard_layer_effect * hard_layer_multiplier
-
                 # ランダム変動
                 noise_min, noise_max = characteristics["noise_range"]
                 random_variation = random.randint(noise_min, noise_max)
 
-                # 前回値との連続性を考慮
-                if depth > 1:
-                    # 急激な変化を抑制
-                    pressure_change_limit = 100  # 最大変化量
-                    raw_pressure = base_pressure + random_variation
-                    pressure_change = raw_pressure - prev_pressure
+                # ランダムな変動を追加
+                noise_min, noise_max = characteristics["noise_range"]
+                random_variation = random.randint(noise_min, noise_max)
 
-                    if abs(pressure_change) > pressure_change_limit:
+                # 前回値との連続性を考慮（急激な変化を抑制）
+                if depth > 1:
+                    max_change = 100  # 最大変化量
+                    raw_pressure = base_pressure + random_variation
+                    change = raw_pressure - prev_pressure
+
+                    if abs(change) > max_change:
                         # 変化量を制限
-                        clamped_change = (
-                            pressure_change_limit
-                            if pressure_change > 0
-                            else -pressure_change_limit
+                        pressure = prev_pressure + (
+                            max_change if change > 0 else -max_change
                         )
-                        pressure = prev_pressure + clamped_change
                     else:
                         pressure = raw_pressure
                 else:
                     pressure = base_pressure + random_variation
 
-                # 最終的な圧力値: 範囲内に収める
-                pressure = max(100, min(2500, pressure))
+                # 最終的な圧力値: 232～3000の範囲に収める
+                pressure = max(232, min(3000, pressure))
                 prev_pressure = pressure  # 次回の連続性のために保存
 
                 # データ行の書き込み
