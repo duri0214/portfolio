@@ -103,19 +103,15 @@ class Command(BaseCommand):
             for row in header_rows:
                 writer.writerow(row)
 
-            # 測定値の連続性を維持するための前回値
-            prev_pressure = characteristics.base_pressure
+            # 測定値の連続性を維持するための前回値（初期値は基本圧力値）
+            last_depth_pressure = characteristics.base_pressure
 
             # 深度に応じて土壌圧力データを生成
             for depth in range(1, SoilHardnessDevice.MAX_DEPTH + 1):
-                # 基本圧力: 特性に基づいて計算
-                base_pressure = characteristics.base_pressure + (
+                # 深度を加味した圧力を計算
+                depth_base_pressure = characteristics.base_pressure + (
                     depth * characteristics.depth_factor
                 )
-
-                # ランダム変動
-                noise_min, noise_max = characteristics.noise_range
-                random_variation = random.randint(noise_min, noise_max)
 
                 # ランダムな変動を追加
                 noise_min, noise_max = characteristics.noise_range
