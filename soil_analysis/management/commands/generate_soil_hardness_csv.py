@@ -119,45 +119,14 @@ class Command(BaseCommand):
             )
         )
 
-            # ZIPファイルを作成しない場合、一時ディレクトリのパスを表示して終了
-            if no_zip:
-                self.stdout.write(
-                    f"生成されたファイルは一時ディレクトリに保存されています: {output_path}"
-                )
-                self.stdout.write(
-                    "※このディレクトリは一時的なものです。必要に応じてファイルをコピーしてください。"
-                )
-                return
+        self.stdout.write(
+            f"生成されたファイルは以下のディレクトリに保存されています: {output_path}"
+        )
 
-            # ZIPファイル名が指定されていない場合、デフォルト名を使用
-            if not zip_filename:
-                zip_filename = SoilHardnessDevice.DEFAULT_ZIP_FILENAME
-
-            # ZIPファイルを作成
-            try:
-                zip_file_path = ZipFileService.create_zip_from_dir(
-                    output_path, zip_filename
-                )
-                self.stdout.write(
-                    self.style.SUCCESS(f"ZIPファイルを作成しました: {zip_file_path}")
-                )
-            except Exception as e:
-                self.stdout.write(
-                    self.style.ERROR(f"ZIPファイル作成中にエラーが発生しました: {e}")
-                )
-                self.stdout.write(
-                    f"生成されたファイルは一時ディレクトリに保存されています: {output_path}"
-                )
-        finally:
-            # 一時ディレクトリの削除（ZIPファイルが正常に作成された場合のみ）
-            if not no_zip and "zip_file_path" in locals() and zip_file_path.exists():
-                try:
-                    shutil.rmtree(temp_dir)
-                    self.stdout.write("一時ディレクトリを削除しました")
-                except Exception as e:
-                    self.stdout.write(
-                        f"一時ディレクトリの削除中にエラーが発生しました: {e}"
-                    )
+        # 一時ディレクトリの注意書きを表示
+        self.stdout.write(
+            "※このディレクトリは一時的なものです。必要に応じてファイルをコピーしてください。"
+        )
 
     def _get_block_characteristics(self, field_pattern, block_idx, realistic_mode):
         """
