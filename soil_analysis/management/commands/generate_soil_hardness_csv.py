@@ -76,7 +76,6 @@ class Command(BaseCommand):
                     self._generate_csv_file(
                         filepath=filepath,
                         memory_no=file_counter,
-                        device_name=device_name,
                         characteristics=block_characteristics,
                         measurement_num=measurement,
                     )
@@ -167,7 +166,6 @@ class Command(BaseCommand):
     def _generate_csv_file(
         filepath,
         memory_no,
-        device_name,
         characteristics=None,
         measurement_num=1,
     ):
@@ -177,7 +175,6 @@ class Command(BaseCommand):
         Args:
             filepath: 出力ファイルパス
             memory_no: メモリ番号
-            device_name: デバイス名
             characteristics: ブロックの特性情報
             measurement_num: 測定回数（同一ブロック内での繰り返し番号）
         """
