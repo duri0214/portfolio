@@ -13,6 +13,9 @@ from soil_analysis.domain.valueobject.management.commands.generate_soil_hardness
     SoilHardnessCharacteristics,
 )
 
+# 圧力値の変化量の最大値（急激な変化を防ぐための制限値）
+MAX_PRESSURE_DELTA = 100
+
 
 class Command(BaseCommand):
     help = "土壌硬度計測器CSVファイルを生成するバッチ"
@@ -119,23 +122,24 @@ class Command(BaseCommand):
 
                 # 前回値との連続性を考慮（急激な変化を抑制）
                 if depth > 1:
-                    max_change = 100  # 最大変化量
-                    raw_pressure = base_pressure + random_variation
-                    change = raw_pressure - prev_pressure
+                    calculated_pressure = depth_base_pressure + random_variation
 
-                    if abs(change) > max_change:
-                        # 変化量を制限
-                        pressure = prev_pressure + (
-                            max_change if change > 0 else -max_change
-                        )
+                    # 深度間の圧力差分（前の深さとの圧力値の差）
+                    delta = calculated_pressure - last_depth_pressure
+
+                    # 深度間の圧力変化量が大きすぎる場合は制限する
+                    if delta > MAX_PRESSURE_DELTA:
+                        pressure = last_depth_pressure + MAX_PRESSURE_DELTA
+                    elif delta < -MAX_PRESSURE_DELTA:
+                        pressure = last_depth_pressure - MAX_PRESSURE_DELTA
                     else:
-                        pressure = raw_pressure
+                        pressure = calculated_pressure
                 else:
-                    pressure = base_pressure + random_variation
+                    pressure = depth_base_pressure + random_variation
 
                 # 最終的な圧力値: 232～3000の範囲に収める
                 pressure = max(232, min(3000, pressure))
-                prev_pressure = pressure  # 次回の連続性のために保存
+                last_depth_pressure = pressure  # 次回の連続性のために保存
 
                 # データ行の書き込み
                 writer.writerow([depth, int(pressure), date_str, 0, 0])
