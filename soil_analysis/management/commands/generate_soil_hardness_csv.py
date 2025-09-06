@@ -48,14 +48,11 @@ class Command(BaseCommand):
             for block_idx in range(9):
                 block_characteristics = self._get_simple_characteristics()
 
-                # 各ブロックで複数回測定
-                for measurement in range(1, 6):  # 5回の測定
-                    # ファイル名生成（4桁のシーケンス番号）
+                # 各ブロックで5回の測定
+                for measurement in range(1, 6):
                     file_seq = str(file_counter).zfill(4)
                     filename = f"{SoilHardnessDevice.DEVICE_NAME}_{file_seq}_N00000000_E000000000.csv"
                     filepath = os.path.join(field_dir, filename)
-
-                    # CSVファイル生成
                     self._generate_csv_file(
                         filepath=filepath,
                         memory_no=file_counter,
