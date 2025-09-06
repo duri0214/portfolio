@@ -112,17 +112,15 @@ class Command(BaseCommand):
         Args:
             filepath: 出力ファイルパス
             memory_no: メモリ番号
-            characteristics: ブロックの特性情報
+            characteristics: 土壌特性情報
             measurement_num: 測定回数（同一ブロック内での繰り返し番号）
         """
         # 特性が指定されていない場合のデフォルト値
         if characteristics is None:
             characteristics = {
-                "base_pressure": 300,
+                "base_pressure": 250,
                 "depth_factor": 10,
-                "noise_range": (-200, 200),
-                "hard_layer": None,
-                "hard_layer_strength": 0,
+                "noise_range": (-100, 100),
             }
 
         # 現在時刻からCSV用の日時形式に変換（測定日はランダム過去日）
