@@ -36,11 +36,6 @@ class Command(BaseCommand):
             help="最大深度（cm）",
         )
         parser.add_argument(
-            "--realistic_mode",
-            action="store_true",
-            help="より現実的なデータパターンを生成",
-        )
-        parser.add_argument(
             "--field_pattern",
             type=str,
             choices=["standard", "dry", "wet", "compacted", "mixed"],
@@ -52,7 +47,6 @@ class Command(BaseCommand):
         device_name = options["device_name"]
         num_fields = options["num_fields"]
         max_depth = options["max_depth"]
-        realistic_mode = options["realistic_mode"]
         field_pattern = options["field_pattern"]
 
         # 一時ディレクトリを作成
@@ -64,8 +58,6 @@ class Command(BaseCommand):
         os.makedirs(csv_output_path, exist_ok=True)
 
         self.stdout.write(f"圃場パターン: {field_pattern}")
-        if realistic_mode:
-            self.stdout.write("現実的データモード: 有効")
 
         total_files = 0
         for field_num in range(1, num_fields + 1):
@@ -83,7 +75,7 @@ class Command(BaseCommand):
             for block_idx, block_name in enumerate(block_names):
                 # ブロックごとの特性を設定
                 block_characteristics = self._get_block_characteristics(
-                    field_pattern, block_idx, realistic_mode
+                    field_pattern, block_idx
                 )
 
                 # 各ブロックで複数回測定
@@ -103,7 +95,6 @@ class Command(BaseCommand):
                         device_name=device_name,
                         max_depth=max_depth,
                         characteristics=block_characteristics,
-                        realistic_mode=realistic_mode,
                         measurement_num=measurement,
                     )
 
@@ -128,14 +119,13 @@ class Command(BaseCommand):
             "※このディレクトリは一時的なものです。必要に応じてファイルをコピーしてください。"
         )
 
-    def _get_block_characteristics(self, field_pattern, block_idx, realistic_mode):
+    def _get_block_characteristics(self, field_pattern, block_idx):
         """
         圃場のパターンに基づいて、ブロックごとの特性を決定する
 
         Args:
             field_pattern: 圃場パターン（standard, dry, wet, compacted, mixed）
             block_idx: ブロックのインデックス（0-8）
-            realistic_mode: 現実的なデータパターンを生成するか
 
         Returns:
             dict: ブロックの特性情報
@@ -166,29 +156,27 @@ class Command(BaseCommand):
             characteristics["hard_layer_strength"] = 300
             characteristics["depth_factor"] = 12
 
-        elif field_pattern == "mixed" and realistic_mode:
+        elif field_pattern == "mixed":
             # 混合パターンでは、ブロックごとに異なる特性を割り当て
             patterns = ["standard", "dry", "wet", "compacted"]
             sub_pattern = patterns[block_idx % len(patterns)]
-            return self._get_block_characteristics(sub_pattern, 0, True)
+            return self._get_block_characteristics(sub_pattern, 0)
 
-        # 現実的なモードでは位置による変動を追加
-        if realistic_mode:
-            # ブロックの位置に基づいた変動要素を追加
-            row = block_idx // 3  # 0, 1, 2 (A, B, C)
-            col = block_idx % 3  # 0, 1, 2 (1, 2, 3)
+        # ブロックの位置に基づいた変動要素を追加
+        row = block_idx // 3  # 0, 1, 2 (A, B, C)
+        col = block_idx % 3  # 0, 1, 2 (1, 2, 3)
 
-            # 圃場の端（row=0,2またはcol=0,2）では圧力が異なる傾向
-            if row == 0 or row == 2 or col == 0 or col == 2:
-                characteristics["base_pressure"] += random.randint(-50, 50)
+        # 圃場の端（row=0,2またはcol=0,2）では圧力が異なる傾向
+        if row == 0 or row == 2 or col == 0 or col == 2:
+            characteristics["base_pressure"] += random.randint(-50, 50)
 
-            # 硬盤層の有無と深さをランダムに変化
-            if random.random() < 0.3 and not characteristics["hard_layer"]:
-                characteristics["hard_layer"] = (
-                    random.randint(10, 20),
-                    random.randint(25, 40),
-                )
-                characteristics["hard_layer_strength"] = random.randint(100, 400)
+        # 硬盤層の有無と深さをランダムに変化
+        if random.random() < 0.3 and not characteristics["hard_layer"]:
+            characteristics["hard_layer"] = (
+                random.randint(10, 20),
+                random.randint(25, 40),
+            )
+            characteristics["hard_layer_strength"] = random.randint(100, 400)
 
         return characteristics
 
@@ -199,7 +187,6 @@ class Command(BaseCommand):
         device_name,
         max_depth=60,
         characteristics=None,
-        realistic_mode=False,
         measurement_num=1,
     ):
         """
@@ -211,7 +198,6 @@ class Command(BaseCommand):
             device_name: デバイス名
             max_depth: 最大深度
             characteristics: ブロックの特性情報
-            realistic_mode: 現実的なデータパターンを生成するか
             measurement_num: 測定回数（同一ブロック内での繰り返し番号）
         """
         # 特性が指定されていない場合のデフォルト値
@@ -286,8 +272,8 @@ class Command(BaseCommand):
                 noise_min, noise_max = characteristics["noise_range"]
                 random_variation = random.randint(noise_min, noise_max)
 
-                # 現実的モードでは、前回値との連続性を考慮
-                if realistic_mode and depth > 1:
+                # 前回値との連続性を考慮
+                if depth > 1:
                     # 急激な変化を抑制
                     pressure_change_limit = 100  # 最大変化量
                     raw_pressure = base_pressure + random_variation
