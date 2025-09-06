@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
         total_files = 0
         for field_num in range(1, num_fields + 1):
-            self.stdout.write(f"\n圃場 {field_num} のファイル生成中...")
+            self.stdout.write(f"圃場 {field_num} のファイル生成中...")
 
             # 圃場ごとに異なるフォルダを作成（FIELD001など）
             field_dirname = f"FIELD{str(field_num).zfill(3)}"
