@@ -96,8 +96,7 @@ class Command(BaseCommand):
 
             # ヘッダー部分をValueObjectを使用して生成
             header_rows = SoilHardnessCsvHeader.create_header_rows(
-                memory_no=memory_no,
-                date_str=date_str,
+                memory_no=memory_no, date_str=date_str
             )
 
             # すべてのヘッダー行を書き込み
