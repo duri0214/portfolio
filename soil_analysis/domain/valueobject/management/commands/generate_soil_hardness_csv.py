@@ -5,6 +5,7 @@ class SoilHardnessDevice:
     """土壌硬度計測器に関連する定数と仕様"""
 
     # デバイスの仕様値
+    DEVICE_NAME = "DIK-5531"
     MAX_DEPTH = 60
 
     # GPS情報
@@ -43,7 +44,7 @@ class SoilHardnessCsvHeader:
             List[List[str]]: CSVヘッダー行のリスト
         """
         headers = [
-            CsvHeaderItem("DIK-5531", "Digital Cone Penetrometer"),
+            CsvHeaderItem(SoilHardnessDevice.DEVICE_NAME, "Digital Cone Penetrometer"),
             CsvHeaderItem("Memory No.", str(memory_no)),
             CsvHeaderItem("Latitude", "N 00.00.0000"),
             CsvHeaderItem("Longitude", "E 000.00.0000"),
