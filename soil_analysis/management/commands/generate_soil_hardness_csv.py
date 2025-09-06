@@ -56,9 +56,9 @@ class Command(BaseCommand):
         field_pattern = options["field_pattern"]
 
         # 一時ディレクトリを作成
-        temp_dir = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
+        output_path = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
+
         try:
-            self.stdout.write(f"一時ディレクトリを作成しました: {temp_dir}")
 
             # 出力ディレクトリ名を設定
             output_dir_name = SoilHardnessDevice.CSV_DIR_NAME
