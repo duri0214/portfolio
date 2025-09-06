@@ -68,61 +68,61 @@ class Command(BaseCommand):
             # GPS座標は常に0を使用（パースは必要なし）
             base_lat, base_lng = None, None  # 使用しないが互換性のために変数は保持
 
-            self.stdout.write(f"圃場パターン: {field_pattern}")
-            if realistic_mode:
-                self.stdout.write("現実的データモード: 有効")
+        self.stdout.write(f"圃場パターン: {field_pattern}")
+        if realistic_mode:
+            self.stdout.write("現実的データモード: 有効")
 
-            total_files = 0
-            for field_num in range(1, num_fields + 1):
-                self.stdout.write(f"\n圃場 {field_num} のファイル生成中...")
+        total_files = 0
+        for field_num in range(1, num_fields + 1):
+            self.stdout.write(f"\n圃場 {field_num} のファイル生成中...")
 
-                # 圃場ごとに異なるフォルダを作成（DIK-5531_FIELD001など）
-                field_dirname = f"{device_name}_FIELD{str(field_num).zfill(3)}"
-                field_dir = os.path.join(output_path, field_dirname)
-                os.makedirs(field_dir, exist_ok=True)
+            # 圃場ごとに異なるフォルダを作成（DIK-5531_FIELD001など）
+            field_dirname = f"{device_name}_FIELD{str(field_num).zfill(3)}"
+            field_dir = os.path.join(csv_output_path, field_dirname)
+            os.makedirs(field_dir, exist_ok=True)
 
-                # 行（A, B, C）と列（1, 2, 3）の組み合わせで9ブロック
-                file_counter = 1
-                block_names = [f"{row}{col}" for row in "ABC" for col in "123"]
+            # 行（A, B, C）と列（1, 2, 3）の組み合わせで9ブロック
+            file_counter = 1
+            block_names = [f"{row}{col}" for row in "ABC" for col in "123"]
 
-                for block_idx, block_name in enumerate(block_names):
-                    # ブロックごとの特性を設定
-                    block_characteristics = self._get_block_characteristics(
-                        field_pattern, block_idx, realistic_mode
+            for block_idx, block_name in enumerate(block_names):
+                # ブロックごとの特性を設定
+                block_characteristics = self._get_block_characteristics(
+                    field_pattern, block_idx, realistic_mode
+                )
+
+                # 各ブロックで複数回測定
+                for measurement in range(1, 6):  # 5回の測定
+                    # 固定のGPS座標 - ファイル名用
+                    lat_str, lng_str = SoilHardnessDevice.GPS_COORD_FILENAME
+
+                    # ファイル名生成（4桁のシーケンス番号）
+                    file_seq = str(file_counter).zfill(4)
+                    filename = f"{device_name}_{file_seq}_{lat_str}_{lng_str}.csv"
+                    filepath = os.path.join(field_dir, filename)
+
+                    # CSVファイル生成
+                    self._generate_csv_file(
+                        filepath=filepath,
+                        memory_no=file_counter,
+                        device_name=device_name,
+                        max_depth=max_depth,
+                        characteristics=block_characteristics,
+                        realistic_mode=realistic_mode,
+                        measurement_num=measurement,
                     )
 
-                    # 各ブロックで複数回測定
-                    for measurement in range(1, 6):  # 5回の測定
-                        # 固定のGPS座標 - ファイル名用
-                        lat_str, lng_str = SoilHardnessDevice.GPS_COORD_FILENAME
+                    file_counter += 1
+                    total_files += 1
 
-                        # ファイル名生成（4桁のシーケンス番号）
-                        file_seq = str(file_counter).zfill(4)
-                        filename = f"{device_name}_{file_seq}_{lat_str}_{lng_str}.csv"
-                        filepath = os.path.join(field_dir, filename)
+                    if file_counter % 10 == 0:
+                        self.stdout.write(f"  {file_counter}ファイル生成完了...")
 
-                        # CSVファイル生成
-                        self._generate_csv_file(
-                            filepath=filepath,
-                            memory_no=file_counter,
-                            device_name=device_name,
-                            max_depth=max_depth,
-                            characteristics=block_characteristics,
-                            realistic_mode=realistic_mode,
-                            measurement_num=measurement,
-                        )
-
-                        file_counter += 1
-                        total_files += 1
-
-                        if file_counter % 10 == 0:
-                            self.stdout.write(f"  {file_counter}ファイル生成完了...")
-
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"完了！{num_fields}圃場分、合計{total_files}ファイルを生成しました"
-                )
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"完了！{num_fields}圃場分、合計{total_files}ファイルを生成しました"
             )
+        )
 
             # ZIPファイルを作成しない場合、一時ディレクトリのパスを表示して終了
             if no_zip:
