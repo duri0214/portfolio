@@ -4,7 +4,6 @@ from dataclasses import dataclass
 class SoilHardnessDevice:
     """土壌硬度計測器に関連する定数と仕様"""
 
-    # デバイスの仕様値
     DEVICE_NAME = "DIK-5531"
     MAX_DEPTH = 60
 
