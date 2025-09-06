@@ -17,7 +17,7 @@ class CsvHeaderItem:
 
     def to_row(self) -> list[str]:
         """CSVの行形式に変換"""
-        return [self.key, self.value, "", "", ""]
+        return [self.key, self.value]
 
 
 class SoilHardnessCsvHeader:
