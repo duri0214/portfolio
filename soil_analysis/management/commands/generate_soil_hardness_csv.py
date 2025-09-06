@@ -1,0 +1,384 @@
+import csv
+import os
+import random
+import shutil
+import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+
+from django.core.management.base import BaseCommand
+
+from lib.zipfileservice import ZipFileService
+from soil_analysis.domain.valueobject.management.commands.generate_soil_hardness_csv import (
+    SoilHardnessDevice,
+    SoilHardnessCsvHeader,
+)
+
+
+class Command(BaseCommand):
+    help = "土壌硬度計測器CSVファイルを生成するバッチ"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--device_name",
+            type=str,
+            default=SoilHardnessDevice.DEFAULT_DEVICE_NAME,
+            help="計測器名（DIK-5531など）",
+        )
+        parser.add_argument(
+            "--num_fields",
+            type=int,
+            default=1,
+            help="生成する圃場数",
+        )
+        parser.add_argument(
+            "--max_depth",
+            type=int,
+            default=60,
+            help="最大深度（cm）",
+        )
+        parser.add_argument(
+            "--realistic_mode",
+            action="store_true",
+            help="より現実的なデータパターンを生成",
+        )
+        parser.add_argument(
+            "--field_pattern",
+            type=str,
+            choices=["standard", "dry", "wet", "compacted", "mixed"],
+            default="standard",
+            help="圃場の土壌パターン（standard:標準, dry:乾燥, wet:湿潤, compacted:締固め, mixed:混合）",
+        )
+        parser.add_argument(
+            "--gps_coords",
+            type=str,
+            default=None,
+            help="GPSの基準座標（常に N00000000_E00000000 が使用されます）",
+        )
+        parser.add_argument(
+            "--zip_filename",
+            type=str,
+            default=None,
+            help="作成するZIPファイルの名前（指定しない場合は自動生成）",
+        )
+        parser.add_argument(
+            "--no_zip",
+            action="store_true",
+            help="ZIPファイルを作成せず、一時ディレクトリにファイルを保存",
+        )
+
+    def handle(self, *args, **options):
+        device_name = options["device_name"]
+        num_fields = options["num_fields"]
+        max_depth = options["max_depth"]
+        realistic_mode = options["realistic_mode"]
+        field_pattern = options["field_pattern"]
+        gps_coords = options["gps_coords"]
+        zip_filename = options["zip_filename"]
+        no_zip = options["no_zip"]
+
+        # 一時ディレクトリを作成
+        temp_dir = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
+        try:
+            self.stdout.write(f"一時ディレクトリを作成しました: {temp_dir}")
+
+            # 出力ディレクトリ名を設定
+            output_dir_name = SoilHardnessDevice.CSV_DIR_NAME
+            output_path = temp_dir / output_dir_name
+            os.makedirs(output_path, exist_ok=True)
+
+            # GPS座標は常に0を使用（パースは必要なし）
+            base_lat, base_lng = None, None  # 使用しないが互換性のために変数は保持
+
+            self.stdout.write(f"圃場パターン: {field_pattern}")
+            if realistic_mode:
+                self.stdout.write("現実的データモード: 有効")
+
+            total_files = 0
+            for field_num in range(1, num_fields + 1):
+                self.stdout.write(f"\n圃場 {field_num} のファイル生成中...")
+
+                # 圃場ごとに異なるフォルダを作成（DIK-5531_FIELD001など）
+                field_dirname = f"{device_name}_FIELD{str(field_num).zfill(3)}"
+                field_dir = os.path.join(output_path, field_dirname)
+                os.makedirs(field_dir, exist_ok=True)
+
+                # 行（A, B, C）と列（1, 2, 3）の組み合わせで9ブロック
+                file_counter = 1
+                block_names = [f"{row}{col}" for row in "ABC" for col in "123"]
+
+                for block_idx, block_name in enumerate(block_names):
+                    # ブロックごとの特性を設定
+                    block_characteristics = self._get_block_characteristics(
+                        field_pattern, block_idx, realistic_mode
+                    )
+
+                    # 各ブロックで複数回測定
+                    for measurement in range(1, 6):  # 5回の測定
+                        # 固定のGPS座標 - ファイル名用
+                        lat_str, lng_str = SoilHardnessDevice.GPS_COORD_FILENAME
+
+                        # ファイル名生成（4桁のシーケンス番号）
+                        file_seq = str(file_counter).zfill(4)
+                        filename = f"{device_name}_{file_seq}_{lat_str}_{lng_str}.csv"
+                        filepath = os.path.join(field_dir, filename)
+
+                        # CSVファイル生成
+                        self._generate_csv_file(
+                            filepath=filepath,
+                            memory_no=file_counter,
+                            device_name=device_name,
+                            max_depth=max_depth,
+                            characteristics=block_characteristics,
+                            realistic_mode=realistic_mode,
+                            measurement_num=measurement,
+                        )
+
+                        file_counter += 1
+                        total_files += 1
+
+                        if file_counter % 10 == 0:
+                            self.stdout.write(f"  {file_counter}ファイル生成完了...")
+
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"完了！{num_fields}圃場分、合計{total_files}ファイルを生成しました"
+                )
+            )
+
+            # ZIPファイルを作成しない場合、一時ディレクトリのパスを表示して終了
+            if no_zip:
+                self.stdout.write(
+                    f"生成されたファイルは一時ディレクトリに保存されています: {output_path}"
+                )
+                self.stdout.write(
+                    "※このディレクトリは一時的なものです。必要に応じてファイルをコピーしてください。"
+                )
+                return
+
+            # ZIPファイル名が指定されていない場合、デフォルト名を使用
+            if not zip_filename:
+                zip_filename = SoilHardnessDevice.DEFAULT_ZIP_FILENAME
+
+            # ZIPファイルを作成
+            try:
+                zip_file_path = ZipFileService.create_zip_from_dir(
+                    output_path, zip_filename
+                )
+                self.stdout.write(
+                    self.style.SUCCESS(f"ZIPファイルを作成しました: {zip_file_path}")
+                )
+            except Exception as e:
+                self.stdout.write(
+                    self.style.ERROR(f"ZIPファイル作成中にエラーが発生しました: {e}")
+                )
+                self.stdout.write(
+                    f"生成されたファイルは一時ディレクトリに保存されています: {output_path}"
+                )
+        finally:
+            # 一時ディレクトリの削除（ZIPファイルが正常に作成された場合のみ）
+            if not no_zip and "zip_file_path" in locals() and zip_file_path.exists():
+                try:
+                    shutil.rmtree(temp_dir)
+                    self.stdout.write("一時ディレクトリを削除しました")
+                except Exception as e:
+                    self.stdout.write(
+                        f"一時ディレクトリの削除中にエラーが発生しました: {e}"
+                    )
+
+    def _get_block_characteristics(self, field_pattern, block_idx, realistic_mode):
+        """
+        圃場のパターンに基づいて、ブロックごとの特性を決定する
+
+        Args:
+            field_pattern: 圃場パターン（standard, dry, wet, compacted, mixed）
+            block_idx: ブロックのインデックス（0-8）
+            realistic_mode: 現実的なデータパターンを生成するか
+
+        Returns:
+            dict: ブロックの特性情報
+        """
+        # 基本特性
+        characteristics = {
+            "base_pressure": 300,  # 基本圧力値
+            "depth_factor": 10,  # 深度による増加係数
+            "noise_range": (-150, 150),  # ノイズ範囲
+            "hard_layer": None,  # 硬盤層の位置（cmの範囲）
+            "hard_layer_strength": 0,  # 硬盤層の強さ係数
+        }
+
+        # 圃場パターンに応じた調整
+        if field_pattern == "dry":
+            characteristics["base_pressure"] = 400
+            characteristics["depth_factor"] = 15
+            characteristics["noise_range"] = (-100, 100)
+
+        elif field_pattern == "wet":
+            characteristics["base_pressure"] = 200
+            characteristics["depth_factor"] = 5
+            characteristics["noise_range"] = (-200, 100)
+
+        elif field_pattern == "compacted":
+            characteristics["base_pressure"] = 350
+            characteristics["hard_layer"] = (15, 30)
+            characteristics["hard_layer_strength"] = 300
+            characteristics["depth_factor"] = 12
+
+        elif field_pattern == "mixed" and realistic_mode:
+            # 混合パターンでは、ブロックごとに異なる特性を割り当て
+            patterns = ["standard", "dry", "wet", "compacted"]
+            sub_pattern = patterns[block_idx % len(patterns)]
+            return self._get_block_characteristics(sub_pattern, 0, True)
+
+        # 現実的なモードでは位置による変動を追加
+        if realistic_mode:
+            # ブロックの位置に基づいた変動要素を追加
+            row = block_idx // 3  # 0, 1, 2 (A, B, C)
+            col = block_idx % 3  # 0, 1, 2 (1, 2, 3)
+
+            # 圃場の端（row=0,2またはcol=0,2）では圧力が異なる傾向
+            if row == 0 or row == 2 or col == 0 or col == 2:
+                characteristics["base_pressure"] += random.randint(-50, 50)
+
+            # 硬盤層の有無と深さをランダムに変化
+            if random.random() < 0.3 and not characteristics["hard_layer"]:
+                characteristics["hard_layer"] = (
+                    random.randint(10, 20),
+                    random.randint(25, 40),
+                )
+                characteristics["hard_layer_strength"] = random.randint(100, 400)
+
+        return characteristics
+
+    @staticmethod
+    def _generate_gps_coords(base_lat=None, base_lng=None, block_idx=None):
+        """
+        固定のGPS座標を返す（業務要件では常に0を使用）
+
+        Returns:
+            tuple: (緯度文字列, 経度文字列)
+        """
+        return SoilHardnessDevice.GPS_COORD_FILENAME
+
+    @staticmethod
+    def _generate_csv_file(
+        filepath,
+        memory_no,
+        device_name,
+        max_depth=60,
+        characteristics=None,
+        realistic_mode=False,
+        measurement_num=1,
+    ):
+        """
+        CSVファイルを生成する
+
+        Args:
+            filepath: 出力ファイルパス
+            memory_no: メモリ番号
+            device_name: デバイス名
+            max_depth: 最大深度
+            characteristics: ブロックの特性情報
+            realistic_mode: 現実的なデータパターンを生成するか
+            measurement_num: 測定回数（同一ブロック内での繰り返し番号）
+        """
+        # 特性が指定されていない場合のデフォルト値
+        if characteristics is None:
+            characteristics = {
+                "base_pressure": 300,
+                "depth_factor": 10,
+                "noise_range": (-200, 200),
+                "hard_layer": None,
+                "hard_layer_strength": 0,
+            }
+
+        # 現在時刻からCSV用の日時形式に変換（測定日はランダム過去日）
+        now = datetime.now() - timedelta(
+            days=random.randint(1, 30),
+            hours=random.randint(0, 23),
+            minutes=random.randint(0, 59),
+        )
+
+        # 同一ブロック内での測定は時間差をつける
+        now = now + timedelta(minutes=measurement_num * 2)  # 2分間隔で測定と仮定
+        date_str = now.strftime("%y.%m.%d %H:%M:%S")
+
+        # CSVデータの作成
+        with open(filepath, "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+
+            # ヘッダー部分をValueObjectを使用して生成
+            header_rows = SoilHardnessCsvHeader.create_header_rows(
+                device_name=device_name,
+                memory_no=memory_no,
+                max_depth=max_depth,
+                date_str=date_str,
+            )
+
+            # すべてのヘッダー行を書き込み
+            for row in header_rows:
+                writer.writerow(row)
+
+            # GPS情報
+            gps_mode = SoilHardnessDevice.GPS_MODE
+            gps_satellites = SoilHardnessDevice.GPS_SATELLITES
+
+            # 測定値の連続性を維持するための前回値
+            prev_pressure = characteristics["base_pressure"]
+
+            # 深度に応じて土壌圧力データを生成
+            for depth in range(1, max_depth + 1):
+                # 基本圧力: 特性に基づいて計算
+                base_pressure = characteristics["base_pressure"] + (
+                    depth * characteristics["depth_factor"]
+                )
+
+                # 硬盤層の影響を追加
+                if (
+                    characteristics["hard_layer"]
+                    and characteristics["hard_layer"][0]
+                    <= depth
+                    <= characteristics["hard_layer"][1]
+                ):
+                    # 硬盤層内では急激に圧力が上昇
+                    hard_layer_effect = characteristics["hard_layer_strength"]
+                    hard_layer_position = (depth - characteristics["hard_layer"][0]) / (
+                        characteristics["hard_layer"][1]
+                        - characteristics["hard_layer"][0]
+                    )
+                    # 硬盤層の中央付近で最大値
+                    hard_layer_multiplier = 1 - abs(hard_layer_position - 0.5) * 2
+                    base_pressure += hard_layer_effect * hard_layer_multiplier
+
+                # ランダム変動
+                noise_min, noise_max = characteristics["noise_range"]
+                random_variation = random.randint(noise_min, noise_max)
+
+                # 現実的モードでは、前回値との連続性を考慮
+                if realistic_mode and depth > 1:
+                    # 急激な変化を抑制
+                    pressure_change_limit = 100  # 最大変化量
+                    raw_pressure = base_pressure + random_variation
+                    pressure_change = raw_pressure - prev_pressure
+
+                    if abs(pressure_change) > pressure_change_limit:
+                        # 変化量を制限
+                        clamped_change = (
+                            pressure_change_limit
+                            if pressure_change > 0
+                            else -pressure_change_limit
+                        )
+                        pressure = prev_pressure + clamped_change
+                    else:
+                        pressure = raw_pressure
+                else:
+                    pressure = base_pressure + random_variation
+
+                # 最終的な圧力値: 範囲内に収める
+                pressure = max(100, min(2500, pressure))
+                prev_pressure = pressure  # 次回の連続性のために保存
+
+                # データ行の書き込み
+                writer.writerow(
+                    [depth, int(pressure), date_str, gps_mode, gps_satellites]
+                )
