@@ -5,7 +5,6 @@ class SoilHardnessDevice:
     """土壌硬度計測器に関連する定数と仕様"""
 
     # デバイスの仕様値
-    SPRING_VALUE = 490
     CONE_VALUE = 2.0
     DEVICE_TYPE = "Digital Cone Penetrometer"
     DEFAULT_DEVICE_NAME = "DIK-5531"
@@ -56,7 +55,7 @@ class SoilHardnessCsvHeader:
             CsvHeaderItem("Longitude", "E 000.00.0000"),
             CsvHeaderItem("Set Depth[cm]", str(SoilHardnessDevice.MAX_DEPTH)),
             CsvHeaderItem("Date and Time", date_str),
-            CsvHeaderItem("Spring[N/48.5mm]", str(SoilHardnessDevice.SPRING_VALUE)),
+            CsvHeaderItem("Spring[N/48.5mm]", '490'),
             CsvHeaderItem("Cone[cm2]", str(SoilHardnessDevice.CONE_VALUE)),
         ]
 
