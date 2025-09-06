@@ -36,7 +36,7 @@ class SoilHardnessCharacteristics:
         # 初期値設定
         self.last_pressure = self.base_pressure
 
-    def calculate_pressure_for_depth(self, depth: int) -> int:
+    def calculate_pressure(self, depth: int) -> int:
         """深度に応じた圧力値を計算する
 
         数学関数式: P(d) = P₀ + k × (d/d_max)² + noise

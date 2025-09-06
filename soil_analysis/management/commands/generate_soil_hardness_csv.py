@@ -106,7 +106,7 @@ class Command(BaseCommand):
             # 深度に応じて土壌圧力データを生成
             for depth in range(1, SoilHardnessDevice.MAX_DEPTH + 1):
                 # ValueObjectの計算メソッドを使用
-                pressure = characteristics.calculate_pressure_for_depth(depth=depth)
+                pressure = characteristics.calculate_pressure(depth)
 
                 # データ行の書き込み
                 writer.writerow([depth, int(pressure), date_str, 0, 0])
