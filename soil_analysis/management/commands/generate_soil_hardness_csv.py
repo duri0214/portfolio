@@ -1,14 +1,12 @@
 import csv
 import os
 import random
-import shutil
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
-from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.valueobject.management.commands.generate_soil_hardness_csv import (
     SoilHardnessDevice,
     SoilHardnessCsvHeader,
@@ -55,17 +53,6 @@ class Command(BaseCommand):
             default=None,
             help="GPSの基準座標（常に N00000000_E00000000 が使用されます）",
         )
-        parser.add_argument(
-            "--zip_filename",
-            type=str,
-            default=None,
-            help="作成するZIPファイルの名前（指定しない場合は自動生成）",
-        )
-        parser.add_argument(
-            "--no_zip",
-            action="store_true",
-            help="ZIPファイルを作成せず、一時ディレクトリにファイルを保存",
-        )
 
     def handle(self, *args, **options):
         device_name = options["device_name"]
@@ -74,8 +61,6 @@ class Command(BaseCommand):
         realistic_mode = options["realistic_mode"]
         field_pattern = options["field_pattern"]
         gps_coords = options["gps_coords"]
-        zip_filename = options["zip_filename"]
-        no_zip = options["no_zip"]
 
         # 一時ディレクトリを作成
         temp_dir = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
