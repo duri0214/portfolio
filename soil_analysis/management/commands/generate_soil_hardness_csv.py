@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
             # 行（A, B, C）と列（1, 2, 3）の組み合わせで9ブロック
             file_counter = 1
-            for block_idx in range(9):  # 9ブロック分処理
+            for block_idx in range(9):
                 block_characteristics = self._get_simple_characteristics()
 
                 # 各ブロックで複数回測定
@@ -67,16 +67,11 @@ class Command(BaseCommand):
                     total_files += 1
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"完了！{num_fields}圃場分、合計{total_files}ファイルを生成しました"
-            )
+            f"完了！{num_fields}圃場分、合計{total_files}ファイルを生成しました"
         )
-
         self.stdout.write(
             f"生成されたファイルは以下のディレクトリに保存されています: {output_path}"
         )
-
-        # 一時ディレクトリの注意書きを表示
         self.stdout.write(
             "※このディレクトリは一時的なものです。必要に応じてファイルをコピーしてください。"
         )
