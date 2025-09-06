@@ -55,7 +55,7 @@ class SoilHardnessCsvHeader:
             CsvHeaderItem("Longitude", "E 000.00.0000"),
             CsvHeaderItem("Set Depth[cm]", str(SoilHardnessDevice.MAX_DEPTH)),
             CsvHeaderItem("Date and Time", date_str),
-            CsvHeaderItem("Spring[N/48.5mm]", '490'),
+            CsvHeaderItem("Spring[N/48.5mm]", "490"),
             CsvHeaderItem("Cone[cm2]", str(SoilHardnessDevice.CONE_VALUE)),
         ]
 
