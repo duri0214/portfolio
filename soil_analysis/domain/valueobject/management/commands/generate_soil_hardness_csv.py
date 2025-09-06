@@ -8,10 +8,6 @@ class SoilHardnessDevice:
     DEVICE_NAME = "DIK-5531"
     MAX_DEPTH = 60
 
-    # GPS情報
-    GPS_MODE = 0
-    GPS_SATELLITES = 0
-
     # ファイル関連
     CSV_DIR_NAME = "取り込みCSV"
     DEFAULT_ZIP_FILENAME = "取り込みCSV.zip"

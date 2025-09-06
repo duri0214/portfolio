@@ -212,10 +212,6 @@ class Command(BaseCommand):
             for row in header_rows:
                 writer.writerow(row)
 
-            # GPS情報
-            gps_mode = SoilHardnessDevice.GPS_MODE
-            gps_satellites = SoilHardnessDevice.GPS_SATELLITES
-
             # 測定値の連続性を維持するための前回値
             prev_pressure = characteristics["base_pressure"]
 
@@ -272,6 +268,4 @@ class Command(BaseCommand):
                 prev_pressure = pressure  # 次回の連続性のために保存
 
                 # データ行の書き込み
-                writer.writerow(
-                    [depth, int(pressure), date_str, gps_mode, gps_satellites]
-                )
+                writer.writerow([depth, int(pressure), date_str, 0, 0])
