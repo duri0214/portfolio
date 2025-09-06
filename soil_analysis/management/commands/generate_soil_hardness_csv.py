@@ -42,8 +42,6 @@ class Command(BaseCommand):
         csv_output_path = output_path / "取り込みCSV"
         os.makedirs(csv_output_path, exist_ok=True)
 
-        self.stdout.write(f"圃場パターン: {field_pattern}")
-
         total_files = 0
         for field_num in range(1, num_fields + 1):
             self.stdout.write(f"\n圃場 {field_num} のファイル生成中...")
