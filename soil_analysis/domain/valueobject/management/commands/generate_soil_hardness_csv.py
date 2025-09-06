@@ -24,7 +24,7 @@ class SoilHardnessCharacteristics:
     # 毎回ランダム値を生成するにはdefault_factory関数を使用
     base_pressure: int = field(default_factory=lambda: random.randint(232, 350))
     depth_factor: int = field(default_factory=lambda: random.randint(8, 15))
-    noise_range: tuple[int, int] = field(default_factory=lambda: (-100, 100))
+    noise_range: tuple[int, int] = field(default_factory=lambda: (0, 100))
 
 
 class SoilHardnessCsvHeader:

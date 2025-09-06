@@ -106,36 +106,41 @@ class Command(BaseCommand):
             for row in header_rows:
                 writer.writerow(row)
 
-            # 測定値の連続性を維持するための前回値（初期値は基本圧力値）
-            last_depth_pressure = characteristics.base_pressure
+            # 初期圧力値（表層の柔らかさ）
+            base_pressure = characteristics.base_pressure
 
             # 深度に応じて土壌圧力データを生成
             for depth in range(1, SoilHardnessDevice.MAX_DEPTH + 1):
-                # 深度を加味した圧力を計算
-                depth_base_pressure = characteristics.base_pressure + (
-                    depth * characteristics.depth_factor
+                # 数学関数式: P(d) = P₀ + k × (d/d_max)²
+                # P₀: 基本圧力値, d: 深度, d_max: 最大深度, k: 最大増加圧力
+                # 2次関数モデルにより深度の増加に対して加速度的に圧力が増加
+
+                # 係数を調整して適切な曲線を作る
+                depth_ratio = depth / SoilHardnessDevice.MAX_DEPTH  # 0～1の比率
+                quadratic_factor = depth_ratio**2  # 2次関数的な増加
+
+                # 深度60cmで最大になる曲線を作成
+                max_pressure_increase = 2000  # 最大増加量
+                depth_pressure = base_pressure + (
+                    quadratic_factor * max_pressure_increase
                 )
 
-                # ランダムな変動を追加
-                noise_min, noise_max = characteristics.noise_range
-                random_variation = random.randint(noise_min, noise_max)
+                # 自然な揺らぎを追加（常に正の値を加算）
+                random_variation = random.randint(10, 50)
 
-                # 前回値との連続性を考慮（急激な変化を抑制）
+                # 圧力値を計算（前回値との連続性も考慮）
+                calculated_pressure = int(depth_pressure) + random_variation
+
+                # 前回値からの増加量が大きすぎる場合は制限する
                 if depth > 1:
-                    calculated_pressure = depth_base_pressure + random_variation
-
-                    # 深度間の圧力差分（前の深さとの圧力値の差）
                     delta = calculated_pressure - last_depth_pressure
 
-                    # 深度間の圧力変化量が大きすぎる場合は制限する
                     if delta > MAX_PRESSURE_DELTA:
                         pressure = last_depth_pressure + MAX_PRESSURE_DELTA
-                    elif delta < -MAX_PRESSURE_DELTA:
-                        pressure = last_depth_pressure - MAX_PRESSURE_DELTA
                     else:
                         pressure = calculated_pressure
                 else:
-                    pressure = depth_base_pressure + random_variation
+                    pressure = calculated_pressure
 
                 # 最終的な圧力値: 232～3000の範囲に収める
                 pressure = max(232, min(3000, pressure))
