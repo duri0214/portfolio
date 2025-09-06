@@ -259,7 +259,6 @@ python manage.py generate_soil_hardness_csv --num_fields 2 --field_pattern compa
 #### 利用可能なオプション
 
 - `--num_fields` - 生成する圃場数（デフォルト: 1）
-- `--max_depth` - 最大深度（cm）（デフォルト: 60）
 - `--realistic_mode` - より現実的なデータパターンを生成
 - `--field_pattern` - 圃場の土壌パターン（standard, dry, wet, compacted, mixed）
 

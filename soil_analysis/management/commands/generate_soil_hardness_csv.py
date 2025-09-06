@@ -24,12 +24,6 @@ class Command(BaseCommand):
             help="生成する圃場数",
         )
         parser.add_argument(
-            "--max_depth",
-            type=int,
-            default=60,
-            help="最大深度（cm）",
-        )
-        parser.add_argument(
             "--field_pattern",
             type=str,
             choices=["standard", "dry", "wet", "compacted", "mixed"],
@@ -40,7 +34,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         device_name = SoilHardnessDevice.DEFAULT_DEVICE_NAME
         num_fields = options["num_fields"]
-        max_depth = options["max_depth"]
+        max_depth = 60
         field_pattern = options["field_pattern"]
 
         # 一時ディレクトリを作成
