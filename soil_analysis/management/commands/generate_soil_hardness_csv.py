@@ -18,12 +18,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--device_name",
-            type=str,
-            default=SoilHardnessDevice.DEFAULT_DEVICE_NAME,
-            help="計測器名（DIK-5531など）",
-        )
-        parser.add_argument(
             "--num_fields",
             type=int,
             default=1,
@@ -44,7 +38,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        device_name = options["device_name"]
+        device_name = SoilHardnessDevice.DEFAULT_DEVICE_NAME
         num_fields = options["num_fields"]
         max_depth = options["max_depth"]
         field_pattern = options["field_pattern"]

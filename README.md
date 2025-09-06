@@ -258,7 +258,6 @@ python manage.py generate_soil_hardness_csv --num_fields 2 --field_pattern compa
 
 #### 利用可能なオプション
 
-- `--device_name` - 計測器名（デフォルト: "DIK-5531"）
 - `--num_fields` - 生成する圃場数（デフォルト: 1）
 - `--max_depth` - 最大深度（cm）（デフォルト: 60）
 - `--realistic_mode` - より現実的なデータパターンを生成
