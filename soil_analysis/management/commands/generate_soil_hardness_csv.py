@@ -23,17 +23,9 @@ class Command(BaseCommand):
             default=1,
             help="生成する圃場数",
         )
-        parser.add_argument(
-            "--field_pattern",
-            type=str,
-            choices=["standard", "dry", "wet", "compacted", "mixed"],
-            default="standard",
-            help="圃場の土壌パターン（standard:標準, dry:乾燥, wet:湿潤, compacted:締固め, mixed:混合）",
-        )
 
     def handle(self, *args, **options):
         num_fields = options["num_fields"]
-        field_pattern = options["field_pattern"]
 
         # 一時ディレクトリを作成
         output_path = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
@@ -53,13 +45,8 @@ class Command(BaseCommand):
 
             # 行（A, B, C）と列（1, 2, 3）の組み合わせで9ブロック
             file_counter = 1
-            block_names = [f"{row}{col}" for row in "ABC" for col in "123"]
-
-            for block_idx, block_name in enumerate(block_names):
-                # ブロックごとの特性を設定
-                block_characteristics = self._get_block_characteristics(
-                    field_pattern, block_idx
-                )
+            for block_idx in range(9):  # 9ブロック分処理
+                block_characteristics = self._get_simple_characteristics()
 
                 # 各ブロックで複数回測定
                 for measurement in range(1, 6):  # 5回の測定
@@ -97,66 +84,20 @@ class Command(BaseCommand):
             "※このディレクトリは一時的なものです。必要に応じてファイルをコピーしてください。"
         )
 
-    def _get_block_characteristics(self, field_pattern, block_idx):
+    @staticmethod
+    def _get_simple_characteristics():
         """
-        圃場のパターンに基づいて、ブロックごとの特性を決定する
-
-        Args:
-            field_pattern: 圃場パターン（standard, dry, wet, compacted, mixed）
-            block_idx: ブロックのインデックス（0-8）
+        シンプルな土壌特性を生成する
 
         Returns:
-            dict: ブロックの特性情報
+            dict: 土壌特性情報
         """
-        # 基本特性
-        characteristics = {
-            "base_pressure": 300,  # 基本圧力値
-            "depth_factor": 10,  # 深度による増加係数
-            "noise_range": (-150, 150),  # ノイズ範囲
-            "hard_layer": None,  # 硬盤層の位置（cmの範囲）
-            "hard_layer_strength": 0,  # 硬盤層の強さ係数
+        # シンプルな特性
+        return {
+            "base_pressure": random.randint(232, 350),  # 初期圧力値（232～350）
+            "depth_factor": random.randint(8, 15),  # 深度による増加係数
+            "noise_range": (-100, 100),  # ばらつき範囲
         }
-
-        # 圃場パターンに応じた調整
-        if field_pattern == "dry":
-            characteristics["base_pressure"] = 400
-            characteristics["depth_factor"] = 15
-            characteristics["noise_range"] = (-100, 100)
-
-        elif field_pattern == "wet":
-            characteristics["base_pressure"] = 200
-            characteristics["depth_factor"] = 5
-            characteristics["noise_range"] = (-200, 100)
-
-        elif field_pattern == "compacted":
-            characteristics["base_pressure"] = 350
-            characteristics["hard_layer"] = (15, 30)
-            characteristics["hard_layer_strength"] = 300
-            characteristics["depth_factor"] = 12
-
-        elif field_pattern == "mixed":
-            # 混合パターンでは、ブロックごとに異なる特性を割り当て
-            patterns = ["standard", "dry", "wet", "compacted"]
-            sub_pattern = patterns[block_idx % len(patterns)]
-            return self._get_block_characteristics(sub_pattern, 0)
-
-        # ブロックの位置に基づいた変動要素を追加
-        row = block_idx // 3  # 0, 1, 2 (A, B, C)
-        col = block_idx % 3  # 0, 1, 2 (1, 2, 3)
-
-        # 圃場の端（row=0,2またはcol=0,2）では圧力が異なる傾向
-        if row == 0 or row == 2 or col == 0 or col == 2:
-            characteristics["base_pressure"] += random.randint(-50, 50)
-
-        # 硬盤層の有無と深さをランダムに変化
-        if random.random() < 0.3 and not characteristics["hard_layer"]:
-            characteristics["hard_layer"] = (
-                random.randint(10, 20),
-                random.randint(25, 40),
-            )
-            characteristics["hard_layer_strength"] = random.randint(100, 400)
-
-        return characteristics
 
     @staticmethod
     def _generate_csv_file(
