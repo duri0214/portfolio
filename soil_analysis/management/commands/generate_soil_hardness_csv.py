@@ -34,7 +34,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         device_name = SoilHardnessDevice.DEFAULT_DEVICE_NAME
         num_fields = options["num_fields"]
-        max_depth = 60
         field_pattern = options["field_pattern"]
 
         # 一時ディレクトリを作成
@@ -81,7 +80,6 @@ class Command(BaseCommand):
                         filepath=filepath,
                         memory_no=file_counter,
                         device_name=device_name,
-                        max_depth=max_depth,
                         characteristics=block_characteristics,
                         measurement_num=measurement,
                     )
@@ -173,7 +171,6 @@ class Command(BaseCommand):
         filepath,
         memory_no,
         device_name,
-        max_depth=60,
         characteristics=None,
         measurement_num=1,
     ):
@@ -184,7 +181,6 @@ class Command(BaseCommand):
             filepath: 出力ファイルパス
             memory_no: メモリ番号
             device_name: デバイス名
-            max_depth: 最大深度
             characteristics: ブロックの特性情報
             measurement_num: 測定回数（同一ブロック内での繰り返し番号）
         """
@@ -217,7 +213,6 @@ class Command(BaseCommand):
             header_rows = SoilHardnessCsvHeader.create_header_rows(
                 device_name=device_name,
                 memory_no=memory_no,
-                max_depth=max_depth,
                 date_str=date_str,
             )
 
@@ -233,7 +228,7 @@ class Command(BaseCommand):
             prev_pressure = characteristics["base_pressure"]
 
             # 深度に応じて土壌圧力データを生成
-            for depth in range(1, max_depth + 1):
+            for depth in range(1, SoilHardnessDevice.MAX_DEPTH + 1):
                 # 基本圧力: 特性に基づいて計算
                 base_pressure = characteristics["base_pressure"] + (
                     depth * characteristics["depth_factor"]

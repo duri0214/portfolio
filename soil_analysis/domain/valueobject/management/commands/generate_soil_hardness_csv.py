@@ -9,6 +9,7 @@ class SoilHardnessDevice:
     CONE_VALUE = 2.0
     DEVICE_TYPE = "Digital Cone Penetrometer"
     DEFAULT_DEVICE_NAME = "DIK-5531"
+    MAX_DEPTH = 60
 
     # GPS情報
     GPS_MODE = 0
@@ -40,14 +41,13 @@ class SoilHardnessCsvHeader:
 
     @classmethod
     def create_header_rows(
-        cls, device_name: str, memory_no: int, max_depth: int, date_str: str
+        cls, device_name: str, memory_no: int, date_str: str
     ) -> list[list[str]]:
         """CSVヘッダー行のリストを生成する
 
         Args:
             device_name: 計測器名
             memory_no: メモリ番号
-            max_depth: 最大深度
             date_str: 日時文字列
 
         Returns:
@@ -61,7 +61,7 @@ class SoilHardnessCsvHeader:
             CsvHeaderItem("Memory No.", str(memory_no)),
             CsvHeaderItem("Latitude", lat_str),
             CsvHeaderItem("Longitude", lng_str),
-            CsvHeaderItem("Set Depth[cm]", str(max_depth)),
+            CsvHeaderItem("Set Depth[cm]", str(SoilHardnessDevice.MAX_DEPTH)),
             CsvHeaderItem("Date and Time", date_str),
             CsvHeaderItem("Spring[N/48.5mm]", str(SoilHardnessDevice.SPRING_VALUE)),
             CsvHeaderItem("Cone[cm2]", str(SoilHardnessDevice.CONE_VALUE)),
