@@ -13,9 +13,6 @@ from soil_analysis.domain.valueobject.management.commands.generate_soil_hardness
     SoilHardnessCharacteristics,
 )
 
-# 圧力値の変化量の最大値（急激な変化を防ぐための制限値）
-MAX_PRESSURE_DELTA = 100
-
 
 class Command(BaseCommand):
     help = "土壌硬度計測器CSVファイルを生成するバッチ"
@@ -106,45 +103,10 @@ class Command(BaseCommand):
             for row in header_rows:
                 writer.writerow(row)
 
-            # 初期圧力値（表層の柔らかさ）
-            base_pressure = characteristics.base_pressure
-
             # 深度に応じて土壌圧力データを生成
             for depth in range(1, SoilHardnessDevice.MAX_DEPTH + 1):
-                # 数学関数式: P(d) = P₀ + k × (d/d_max)²
-                # P₀: 基本圧力値, d: 深度, d_max: 最大深度, k: 最大増加圧力
-                # 2次関数モデルにより深度の増加に対して加速度的に圧力が増加
-
-                # 係数を調整して適切な曲線を作る
-                depth_ratio = depth / SoilHardnessDevice.MAX_DEPTH  # 0～1の比率
-                quadratic_factor = depth_ratio**2  # 2次関数的な増加
-
-                # 深度60cmで最大になる曲線を作成
-                max_pressure_increase = 2000  # 最大増加量
-                depth_pressure = base_pressure + (
-                    quadratic_factor * max_pressure_increase
-                )
-
-                # 自然な揺らぎを追加（常に正の値を加算）
-                random_variation = random.randint(10, 50)
-
-                # 圧力値を計算（前回値との連続性も考慮）
-                calculated_pressure = int(depth_pressure) + random_variation
-
-                # 前回値からの増加量が大きすぎる場合は制限する
-                if depth > 1:
-                    delta = calculated_pressure - last_depth_pressure
-
-                    if delta > MAX_PRESSURE_DELTA:
-                        pressure = last_depth_pressure + MAX_PRESSURE_DELTA
-                    else:
-                        pressure = calculated_pressure
-                else:
-                    pressure = calculated_pressure
-
-                # 最終的な圧力値: 232～3000の範囲に収める
-                pressure = max(232, min(3000, pressure))
-                last_depth_pressure = pressure  # 次回の連続性のために保存
+                # ValueObjectの計算メソッドを使用
+                pressure = characteristics.calculate_pressure_for_depth(depth=depth)
 
                 # データ行の書き込み
                 writer.writerow([depth, int(pressure), date_str, 0, 0])
