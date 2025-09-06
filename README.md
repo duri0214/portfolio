@@ -251,21 +251,16 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 土壌硬度計測器が出力するCSVファイルのテストデータを生成するコマンドです。実際の土壌硬度計（DIK-5531など）が出力するCSVファイルと同様の形式でテストデータを生成します。
 
 ```bash
-python manage.py generate_soil_hardness_csv --num_fields 2 --realistic_mode --field_pattern compacted
+python manage.py generate_soil_hardness_csv --num_fields 2
 ```
 
-生成したファイルは自動的にZIPファイルにまとめられ、ダウンロードフォルダに保存されます。
+生成したファイルは一時ディレクトリに保存され、パスが実行時に表示されます。
 
 #### 利用可能なオプション
 
-- `--device_name` - 計測器名（デフォルト: "DIK-5531"）
 - `--num_fields` - 生成する圃場数（デフォルト: 1）
-- `--max_depth` - 最大深度（cm）（デフォルト: 60）
 - `--realistic_mode` - より現実的なデータパターンを生成
 - `--field_pattern` - 圃場の土壌パターン（standard, dry, wet, compacted, mixed）
-- `--gps_coords` - GPSの基準座標（N35.12.3456_E139.45.6789形式）
-- `--zip_filename` - 作成するZIPファイルの名前
-- `--no_zip` - ZIPファイルを作成せず、一時ディレクトリにファイルを保存
 
 ## securities
 
