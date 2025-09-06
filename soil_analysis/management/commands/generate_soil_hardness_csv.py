@@ -47,12 +47,6 @@ class Command(BaseCommand):
             default="standard",
             help="圃場の土壌パターン（standard:標準, dry:乾燥, wet:湿潤, compacted:締固め, mixed:混合）",
         )
-        parser.add_argument(
-            "--gps_coords",
-            type=str,
-            default=None,
-            help="GPSの基準座標（常に N00000000_E00000000 が使用されます）",
-        )
 
     def handle(self, *args, **options):
         device_name = options["device_name"]
@@ -60,7 +54,6 @@ class Command(BaseCommand):
         max_depth = options["max_depth"]
         realistic_mode = options["realistic_mode"]
         field_pattern = options["field_pattern"]
-        gps_coords = options["gps_coords"]
 
         # 一時ディレクトリを作成
         temp_dir = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
