@@ -58,15 +58,10 @@ class Command(BaseCommand):
         # 一時ディレクトリを作成
         output_path = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
 
-        try:
-
-            # 出力ディレクトリ名を設定
-            output_dir_name = SoilHardnessDevice.CSV_DIR_NAME
-            output_path = temp_dir / output_dir_name
-            os.makedirs(output_path, exist_ok=True)
-
-            # GPS座標は常に0を使用（パースは必要なし）
-            base_lat, base_lng = None, None  # 使用しないが互換性のために変数は保持
+        # CSVファイル出力用のディレクトリ名を設定
+        csv_dir_name = SoilHardnessDevice.CSV_DIR_NAME
+        csv_output_path = output_path / csv_dir_name
+        os.makedirs(csv_output_path, exist_ok=True)
 
         self.stdout.write(f"圃場パターン: {field_pattern}")
         if realistic_mode:
