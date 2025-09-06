@@ -32,7 +32,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        device_name = "DIK-5531"
         num_fields = options["num_fields"]
         field_pattern = options["field_pattern"]
 
@@ -51,7 +50,7 @@ class Command(BaseCommand):
             self.stdout.write(f"\n圃場 {field_num} のファイル生成中...")
 
             # 圃場ごとに異なるフォルダを作成（DIK-5531_FIELD001など）
-            field_dirname = f"{device_name}_FIELD{str(field_num).zfill(3)}"
+            field_dirname = f"FIELD{str(field_num).zfill(3)}"
             field_dir = os.path.join(csv_output_path, field_dirname)
             os.makedirs(field_dir, exist_ok=True)
 
@@ -69,7 +68,7 @@ class Command(BaseCommand):
                 for measurement in range(1, 6):  # 5回の測定
                     # ファイル名生成（4桁のシーケンス番号）
                     file_seq = str(file_counter).zfill(4)
-                    filename = f"{device_name}_{file_seq}_N00000000_E000000000.csv"
+                    filename = f"DIK-5531_{file_seq}_N00000000_E000000000.csv"
                     filepath = os.path.join(field_dir, filename)
 
                     # CSVファイル生成
