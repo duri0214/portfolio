@@ -39,8 +39,7 @@ class Command(BaseCommand):
         output_path = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
 
         # CSVファイル出力用のディレクトリ名を設定
-        csv_dir_name = SoilHardnessDevice.CSV_DIR_NAME
-        csv_output_path = output_path / csv_dir_name
+        csv_output_path = output_path / "取り込みCSV"
         os.makedirs(csv_output_path, exist_ok=True)
 
         self.stdout.write(f"圃場パターン: {field_pattern}")
