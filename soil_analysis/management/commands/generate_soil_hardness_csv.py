@@ -66,9 +66,6 @@ class Command(BaseCommand):
                     file_counter += 1
                     total_files += 1
 
-                    if file_counter % 10 == 0:
-                        self.stdout.write(f"  {file_counter}ファイル生成完了...")
-
         self.stdout.write(
             self.style.SUCCESS(
                 f"完了！{num_fields}圃場分、合計{total_files}ファイルを生成しました"
