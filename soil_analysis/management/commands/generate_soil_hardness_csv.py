@@ -67,12 +67,9 @@ class Command(BaseCommand):
 
                 # 各ブロックで複数回測定
                 for measurement in range(1, 6):  # 5回の測定
-                    # 固定のGPS座標 - ファイル名用
-                    lat_str, lng_str = SoilHardnessDevice.GPS_COORD_FILENAME
-
                     # ファイル名生成（4桁のシーケンス番号）
                     file_seq = str(file_counter).zfill(4)
-                    filename = f"{device_name}_{file_seq}_{lat_str}_{lng_str}.csv"
+                    filename = f"{device_name}_{file_seq}_N00000000_E000000000.csv"
                     filepath = os.path.join(field_dir, filename)
 
                     # CSVファイル生成
