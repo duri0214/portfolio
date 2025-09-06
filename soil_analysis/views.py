@@ -247,7 +247,12 @@ class HardnessUploadView(FormView):
         )
         if os.path.exists(upload_folder):
             call_command("import_soil_hardness", upload_folder)
-            shutil.rmtree(upload_folder)
+            try:
+                shutil.rmtree(upload_folder)
+            except (PermissionError, OSError):
+                # ファイル削除エラーは無視して続行
+                # OneDriveなどの同期フォルダではこの例外が発生することがある
+                pass
 
         return super().form_valid(form)
 
