@@ -32,7 +32,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        device_name = SoilHardnessDevice.DEFAULT_DEVICE_NAME
+        device_name = "DIK-5531"
         num_fields = options["num_fields"]
         field_pattern = options["field_pattern"]
 
@@ -208,7 +208,6 @@ class Command(BaseCommand):
 
             # ヘッダー部分をValueObjectを使用して生成
             header_rows = SoilHardnessCsvHeader.create_header_rows(
-                device_name=device_name,
                 memory_no=memory_no,
                 date_str=date_str,
             )
