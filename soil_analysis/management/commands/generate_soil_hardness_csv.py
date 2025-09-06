@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand
 from soil_analysis.domain.valueobject.management.commands.generate_soil_hardness_csv import (
     SoilHardnessDevice,
     SoilHardnessCsvHeader,
+    SoilHardnessCharacteristics,
 )
 
 
@@ -46,8 +47,6 @@ class Command(BaseCommand):
             # 行（A, B, C）と列（1, 2, 3）の組み合わせで9ブロック
             file_counter = 1
             for block_idx in range(9):
-                block_characteristics = self._get_simple_characteristics()
-
                 # 各ブロックで5回の測定
                 for measurement in range(1, 6):
                     file_seq = str(file_counter).zfill(4)
@@ -56,7 +55,6 @@ class Command(BaseCommand):
                     self._generate_csv_file(
                         filepath=filepath,
                         memory_no=file_counter,
-                        characteristics=block_characteristics,
                         measurement_num=measurement,
                     )
 
@@ -74,25 +72,9 @@ class Command(BaseCommand):
         )
 
     @staticmethod
-    def _get_simple_characteristics():
-        """
-        シンプルな土壌特性を生成する
-
-        Returns:
-            dict: 土壌特性情報
-        """
-        # シンプルな特性
-        return {
-            "base_pressure": random.randint(232, 350),  # 初期圧力値（232～350）
-            "depth_factor": random.randint(8, 15),  # 深度による増加係数
-            "noise_range": (-100, 100),  # ばらつき範囲
-        }
-
-    @staticmethod
     def _generate_csv_file(
         filepath,
         memory_no,
-        characteristics=None,
         measurement_num=1,
     ):
         """
@@ -101,16 +83,10 @@ class Command(BaseCommand):
         Args:
             filepath: 出力ファイルパス
             memory_no: メモリ番号
-            characteristics: 土壌特性情報
             measurement_num: 測定回数（同一ブロック内での繰り返し番号）
         """
-        # 特性が指定されていない場合のデフォルト値
-        if characteristics is None:
-            characteristics = {
-                "base_pressure": 250,
-                "depth_factor": 10,
-                "noise_range": (-100, 100),
-            }
+        # 土壌特性は毎回ランダム値で生成
+        characteristics = SoilHardnessCharacteristics()
 
         # 現在時刻からCSV用の日時形式に変換（測定日はランダム過去日）
         now = datetime.now() - timedelta(
@@ -138,21 +114,21 @@ class Command(BaseCommand):
                 writer.writerow(row)
 
             # 測定値の連続性を維持するための前回値
-            prev_pressure = characteristics["base_pressure"]
+            prev_pressure = characteristics.base_pressure
 
             # 深度に応じて土壌圧力データを生成
             for depth in range(1, SoilHardnessDevice.MAX_DEPTH + 1):
                 # 基本圧力: 特性に基づいて計算
-                base_pressure = characteristics["base_pressure"] + (
-                    depth * characteristics["depth_factor"]
+                base_pressure = characteristics.base_pressure + (
+                    depth * characteristics.depth_factor
                 )
 
                 # ランダム変動
-                noise_min, noise_max = characteristics["noise_range"]
+                noise_min, noise_max = characteristics.noise_range
                 random_variation = random.randint(noise_min, noise_max)
 
                 # ランダムな変動を追加
-                noise_min, noise_max = characteristics["noise_range"]
+                noise_min, noise_max = characteristics.noise_range
                 random_variation = random.randint(noise_min, noise_max)
 
                 # 前回値との連続性を考慮（急激な変化を抑制）

@@ -1,8 +1,30 @@
+import random
+from dataclasses import dataclass, field
+
+
 class SoilHardnessDevice:
     """土壌硬度計測器に関連する定数と仕様"""
 
     DEVICE_NAME = "DIK-5531"
     MAX_DEPTH = 60
+
+
+@dataclass
+class SoilHardnessCharacteristics:
+    """土壌特性を表すValueObject
+
+    パラメータを指定しない場合は自動的にランダム値が使用されます。
+
+    Attributes:
+        base_pressure: 基本圧力値
+        depth_factor: 深度による増加係数
+        noise_range: 変動範囲のタプル (min, max)
+    """
+
+    # 毎回ランダム値を生成するにはdefault_factory関数を使用
+    base_pressure: int = field(default_factory=lambda: random.randint(232, 350))
+    depth_factor: int = field(default_factory=lambda: random.randint(8, 15))
+    noise_range: tuple[int, int] = field(default_factory=lambda: (-100, 100))
 
 
 class SoilHardnessCsvHeader:
