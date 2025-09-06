@@ -19,7 +19,7 @@ class SoilHardnessCsvHeader:
         Returns:
             List[List[str]]: CSVヘッダー行のリスト
         """
-        result = [
+        return [
             [SoilHardnessDevice.DEVICE_NAME, "Digital Cone Penetrometer"],
             ["Memory No.", str(memory_no).zfill(4)],
             ["Latitude", "N 00.00.0000"],
@@ -31,5 +31,3 @@ class SoilHardnessCsvHeader:
             [],
             ["Depth[cm]", "Pressure[kPa]", "DateTime", "GpsMode", "GPS Satellites"],
         ]
-
-        return result
