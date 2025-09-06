@@ -55,7 +55,6 @@ class Command(BaseCommand):
                     self._generate_csv_file(
                         filepath=filepath,
                         memory_no=file_counter,
-                        measurement_num=measurement,
                     )
 
                     file_counter += 1
@@ -72,18 +71,13 @@ class Command(BaseCommand):
         )
 
     @staticmethod
-    def _generate_csv_file(
-        filepath,
-        memory_no,
-        measurement_num=1,
-    ):
+    def _generate_csv_file(filepath, memory_no):
         """
         CSVファイルを生成する
 
         Args:
             filepath: 出力ファイルパス
             memory_no: メモリ番号
-            measurement_num: 測定回数（同一ブロック内での繰り返し番号）
         """
         # 土壌特性は毎回ランダム値で生成
         characteristics = SoilHardnessCharacteristics()
@@ -94,9 +88,6 @@ class Command(BaseCommand):
             hours=random.randint(0, 23),
             minutes=random.randint(0, 59),
         )
-
-        # 同一ブロック内での測定は時間差をつける
-        now = now + timedelta(minutes=measurement_num * 2)  # 2分間隔で測定と仮定
         date_str = now.strftime("%y.%m.%d %H:%M:%S")
 
         # CSVデータの作成
