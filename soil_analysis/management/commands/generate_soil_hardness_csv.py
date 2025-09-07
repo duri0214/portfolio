@@ -62,6 +62,14 @@ class Command(BaseCommand):
         csv_output_path = output_path / "取り込みCSV"
         os.makedirs(csv_output_path, exist_ok=True)
 
+        # 全圃場共通の測定日を生成（1日で全圃場を計測する前提）
+        measurement_date = datetime.now() - timedelta(
+            days=random.randint(1, 30),
+            hours=random.randint(8, 17),  # 8時-17時の間で開始
+            minutes=random.randint(0, 59),
+        )
+        date_str = measurement_date.strftime("%y.%m.%d %H:%M:%S")
+
         # 全圃場を通してmemoryを連番で管理
         global_memory_counter = 1
         total_files = 0
@@ -83,6 +91,7 @@ class Command(BaseCommand):
                     self._generate_csv_file(
                         filepath=filepath,
                         memory_no=global_memory_counter,
+                        date_str=date_str,
                     )
 
                     global_memory_counter += 1
@@ -99,24 +108,17 @@ class Command(BaseCommand):
         )
 
     @staticmethod
-    def _generate_csv_file(filepath, memory_no):
+    def _generate_csv_file(filepath, memory_no, date_str):
         """
         CSVファイルを生成する
 
         Args:
             filepath: 出力ファイルパス
             memory_no: メモリ番号
+            date_str: 測定日時文字列（全圃場で統一）
         """
         # 土壌特性は毎回ランダム値で生成
         characteristics = SoilHardnessCharacteristics()
-
-        # 現在時刻からCSV用の日時形式に変換（測定日はランダム過去日）
-        now = datetime.now() - timedelta(
-            days=random.randint(1, 30),
-            hours=random.randint(0, 23),
-            minutes=random.randint(0, 59),
-        )
-        date_str = now.strftime("%y.%m.%d %H:%M:%S")
 
         # CSVデータの作成
         with open(filepath, "w", newline="") as csvfile:
