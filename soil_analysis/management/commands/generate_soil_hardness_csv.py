@@ -18,6 +18,10 @@ class Command(BaseCommand):
     help = """
     土壌硬度計測器CSVファイルを生成するバッチ
 
+    計測器制約:
+    - 計測器は400メモリーまで保存可能
+    - 1圃場あたり25メモリー消費のため、1日最大16圃場まで計測可能
+
     計測シナリオ:
     圃場は3x3の9ブロックに分かれるが、実際の計測は5ブロックのみ実施
     ┌────┬────┬────┐
@@ -38,11 +42,18 @@ class Command(BaseCommand):
             "--num_fields",
             type=int,
             default=1,
-            help="生成する圃場数",
+            help="生成する圃場数（最大16圃場）",
         )
 
     def handle(self, *args, **options):
-        num_fields = options["num_fields"]
+        num_fields = min(options["num_fields"], 16)
+
+        if options["num_fields"] > 16:
+            self.stdout.write(
+                self.style.WARNING(
+                    f"指定された{options['num_fields']}圃場は計測器の制約により16圃場に制限されました"
+                )
+            )
 
         # 一時ディレクトリを作成
         output_path = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
