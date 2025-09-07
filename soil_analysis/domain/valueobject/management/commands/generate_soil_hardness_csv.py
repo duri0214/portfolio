@@ -27,7 +27,7 @@ class SoilHardnessCharacteristics:
 
     # 毎回ランダム値を生成するにはdefault_factory関数を使用
     base_pressure: int = field(default_factory=lambda: random.randint(232, 350))
-    max_pressure_increase: int = field(default_factory=lambda: 2000)
+    max_pressure_increase: int = field(default_factory=lambda: 3000)
     noise_range: tuple[int, int] = field(default_factory=lambda: (-200, 200))
     last_pressure: int | None = None
 
