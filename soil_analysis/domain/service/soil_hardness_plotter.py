@@ -74,6 +74,7 @@ class SoilHardnessPlotterService:
         ax.set_xlabel("圃場内位置")
         ax.set_ylabel("深度 (cm)")
         ax.set_zlabel("圧力 (kPa)")
+        ax.set_zlim(0, 3000)  # z軸を0-3000kPaに固定
         ax.set_title(f"{company} - {land} 土壌硬度分布 ({date})")
 
         fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label="圧力 (kPa)")
