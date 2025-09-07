@@ -301,22 +301,17 @@ def create_soil_hardness_plots(land_ledger_id=None, output_dir="."):
     unassigned = SoilHardnessMeasurement.objects.filter(
         land_ledger__isnull=True
     ).count()
+    assigned = total_measurements - unassigned
 
-    print(f"土壌硬度測定データの状態:")
-    print(f"  総データ数: {total_measurements}")
-    print(f"  帳簿未割当データ数: {unassigned}")
-    print(f"  帳簿割当済データ数: {total_measurements - unassigned}")
+    print(f"土壌硬度測定データ: {assigned}/{total_measurements}件が帳簿割当済み")
+
+    if assigned == 0:
+        print("❌ 処理中断: 帳簿に紐づけられたデータが存在しません")
+        print("💡 解決方法: 先にSoilHardnessMeasurementデータを帳簿に紐づけてください")
+        return
 
     if unassigned > 0:
-        print(f"警告: {unassigned}件のデータが帳簿に紐づけられていません。")
-        print("これらのデータはプロット対象から除外されます。")
-        print("データを紐づけるには、まず適切な帳簿を設定してください。")
-
-    if total_measurements == unassigned:
-        print(
-            "エラー: プロット可能なデータがありません。すべてのデータが帳簿に紐づけられていません。"
-        )
-        return
+        print(f"⚠️  {unassigned}件の未割当データは除外してプロット作成を続行します")
 
     plotter = SoilHardnessPlotter(output_dir=output_dir)
 
