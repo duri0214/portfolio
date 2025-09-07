@@ -18,7 +18,7 @@ class SoilHardnessCharacteristics:
     Attributes:
         base_pressure: 基本圧力値（表層の硬度）
         max_pressure_increase: 最大増加量（深度MAX_DEPTHでの増加量）
-        noise_range: ランダム変動範囲のタプル (min, max)、常に正の値
+        noise_range: ランダム変動範囲のタプル (min, max)、マイナス値も含む
         last_pressure: 前回の圧力値（連続性維持用）
     """
 
@@ -28,7 +28,7 @@ class SoilHardnessCharacteristics:
     # 毎回ランダム値を生成するにはdefault_factory関数を使用
     base_pressure: int = field(default_factory=lambda: random.randint(232, 350))
     max_pressure_increase: int = field(default_factory=lambda: 2000)
-    noise_range: tuple[int, int] = field(default_factory=lambda: (10, 50))
+    noise_range: tuple[int, int] = field(default_factory=lambda: (-200, 200))
     last_pressure: int | None = None
 
     def __post_init__(self):

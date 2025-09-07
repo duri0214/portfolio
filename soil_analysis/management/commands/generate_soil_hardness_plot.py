@@ -21,6 +21,7 @@ class Command(BaseCommand):
             os.path.dirname(os.path.abspath(__file__)), "output"
         )
         os.makedirs(output_dir, exist_ok=True)
+        self.stdout.write(f"出力先: {output_dir}")
 
         # データチェック
         total = SoilHardnessMeasurement.objects.count()
