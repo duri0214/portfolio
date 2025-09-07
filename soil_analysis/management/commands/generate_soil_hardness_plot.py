@@ -239,7 +239,7 @@ class Command(BaseCommand):
             "--output_dir",
             type=str,
             default=None,
-            help="出力ディレクトリ（指定しない場合はカレントディレクトリの'output'フォルダ）",
+            help="出力ディレクトリ（指定しない場合はカレントディレクトリの 'output' フォルダ）",
         )
         parser.add_argument(
             "--land_ledger_id",
