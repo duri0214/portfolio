@@ -115,7 +115,6 @@ class SoilHardnessPlotter:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
 
-        print(f"保存完了: {save_path}")
         return save_path
 
     def plot_3d_surface(self, land_ledger_id=None, folder=None):
@@ -135,89 +134,92 @@ class SoilHardnessPlotter:
         if folder:
             queryset = queryset.filter(folder=folder)
 
-        land_ledgers = queryset.values_list("land_ledger", flat=True).distinct()
+        # フォルダごとに1つのプロットのみを作成するため、最初のland_ledgerの情報を使用
+        first_ledger_data = queryset.first()
+        if not first_ledger_data:
+            return
 
-        for ledger_id in land_ledgers:
-            ledger_data = queryset.filter(land_ledger_id=ledger_id)
+        # 圃場情報取得（最初のレコードから）
+        company_name = first_ledger_data.land_ledger.land.company.name
+        land_name = first_ledger_data.land_ledger.land.name
+        sampling_date = first_ledger_data.land_ledger.sampling_date.strftime("%Y%m%d")
 
-            # 同じfolderのデータのみを取得
-            if folder:
-                ledger_data = ledger_data.filter(folder=folder)
+        # folderが指定されている場合はタイトルに追加
+        if folder:
+            land_name = f"{land_name}_{folder}"
 
-            # 圃場情報取得
-            land_info = self._get_land_info(ledger_data)
-            if land_info is None:
-                continue
+        # プロット作成処理を1回だけ実行
+        self._create_single_plot(
+            queryset, company_name, land_name, sampling_date, folder
+        )
 
-            company_name, land_name, sampling_date = land_info
+    def _create_single_plot(
+        self, ledger_data, company_name, land_name, sampling_date, folder
+    ):
+        """単一のプロットを作成する（重複実行を避けるため分離）"""
+        # 圃場内位置の組み合わせを取得（A1, A2, A3, B1, B2, B3, C1, C2, C3）
+        location_combinations = []
+        for data_point in ledger_data:
+            block_name = data_point.land_block.name[0]  # A, B, C
+            position = data_point.set_memory  # 1, 2, 3
+            combination = f"{block_name}{position}"
+            if combination not in location_combinations:
+                location_combinations.append(combination)
 
-            # folderが指定されている場合はタイトルに追加
-            if folder:
-                land_name = f"{land_name}_{folder}"
+        location_combinations.sort()  # ソート
 
-            # 圃場内位置の組み合わせを取得（A1, A2, A3, B1, B2, B3, C1, C2, C3）
-            location_combinations = []
-            for data_point in ledger_data:
-                block_name = data_point.land_block.name[0]  # A, B, C
-                position = data_point.set_memory  # 1, 2, 3
-                combination = f"{block_name}{position}"
-                if combination not in location_combinations:
-                    location_combinations.append(combination)
+        # 深度のリストを取得
+        depths = sorted(ledger_data.values_list("depth", flat=True).distinct())
 
-            location_combinations.sort()  # ソート
+        # 圧力データを2次元配列に格納（locations x depths）
+        pressure_data = np.zeros((len(location_combinations), len(depths)))
+        pressure_data.fill(np.nan)
 
-            # 深度のリストを取得
-            depths = sorted(ledger_data.values_list("depth", flat=True).distinct())
+        for data_point in ledger_data:
+            block_name = data_point.land_block.name[0]
+            position = data_point.set_memory
+            combination = f"{block_name}{position}"
 
-            # 圧力データを2次元配列に格納（locations x depths）
-            pressure_data = np.zeros((len(location_combinations), len(depths)))
-            pressure_data.fill(np.nan)
+            try:
+                location_idx = location_combinations.index(combination)
+                depth_idx = depths.index(data_point.depth)
+                pressure_data[location_idx, depth_idx] = data_point.pressure
+            except ValueError:
+                continue  # データが見つからない場合はスキップ
 
-            for data_point in ledger_data:
-                block_name = data_point.land_block.name[0]
-                position = data_point.set_memory
-                combination = f"{block_name}{position}"
+        # 3Dプロット作成
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_subplot(111, projection="3d")
 
-                try:
-                    location_idx = location_combinations.index(combination)
-                    depth_idx = depths.index(data_point.depth)
-                    pressure_data[location_idx, depth_idx] = data_point.pressure
-                except ValueError:
-                    continue  # データが見つからない場合はスキップ
+        # X軸: 圃場内位置のインデックス（0, 1, 2, ...）
+        # Y軸: 深度（cm）
+        x = np.arange(len(location_combinations))
+        y = np.array(depths)
+        x, y = np.meshgrid(x, y)
 
-            # 3Dプロット作成
-            fig = plt.figure(figsize=(12, 8))
-            ax = fig.add_subplot(111, projection="3d")
+        # Z軸: 圧力データ（転置して深度×位置の形にする）
+        z = pressure_data.T
 
-            # X軸: 圃場内位置のインデックス（0, 1, 2, ...）
-            # Y軸: 深度（cm）
-            x = np.arange(len(location_combinations))
-            y = np.array(depths)
-            x, y = np.meshgrid(x, y)
+        # 3D表面プロット
+        surf = ax.plot_surface(x, y, z, cmap="viridis", alpha=0.8)
 
-            # Z軸: 圧力データ（転置して深度×位置の形にする）
-            z = pressure_data.T
+        # X軸の目盛りラベルを圃場内位置の組み合わせに設定
+        ax.set_xticks(np.arange(len(location_combinations)))
+        ax.set_xticklabels(location_combinations)
 
-            # 3D表面プロット
-            surf = ax.plot_surface(x, y, z, cmap="viridis", alpha=0.8)
+        # 軸ラベル
+        ax.set_xlabel("圃場内位置")
+        ax.set_ylabel("深度 (cm)")
+        ax.set_zlabel("圧力 (kPa)")
 
-            # X軸の目盛りラベルを圃場内位置の組み合わせに設定
-            ax.set_xticks(np.arange(len(location_combinations)))
-            ax.set_xticklabels(location_combinations)
+        # タイトル
+        ax.set_title(f"{company_name} - {land_name} 土壌硬度分布 ({sampling_date})")
 
-            # 軸ラベル
-            ax.set_xlabel("圃場内位置")
-            ax.set_ylabel("深度 (cm)")
-            ax.set_zlabel("圧力 (kPa)")
+        # カラーバー
+        fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label="圧力 (kPa)")
 
-            # タイトル
-            ax.set_title(f"{company_name} - {land_name} 土壌硬度分布 ({sampling_date})")
-
-            # カラーバー
-            fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label="圧力 (kPa)")
-
-            # 保存
-            self._save_plot(fig, company_name, land_name, sampling_date, "3d_surface")
+        # 保存（1回のみ実行）
+        self._save_plot(fig, company_name, land_name, sampling_date, "3d_surface")
 
 
 class Command(BaseCommand):
@@ -285,20 +287,46 @@ class Command(BaseCommand):
                 f"⚠️  {unassigned}件の未割当データは除外してプロット作成を続行します"
             )
 
-        # folderごとにプロット作成
-        folders = SoilHardnessMeasurement.objects.values_list(
-            "folder", flat=True
-        ).distinct()
+        # folderごとにプロット作成（重複を排除）
+        if options["land_ledger_id"]:
+            # 特定の圃場台帳IDが指定されている場合
+            folders = (
+                SoilHardnessMeasurement.objects.filter(
+                    land_ledger_id=options["land_ledger_id"], land_ledger__isnull=False
+                )
+                .values_list("folder", flat=True)
+                .distinct()
+            )
+        else:
+            # 全ての圃場台帳IDを対象とする場合
+            folders = (
+                SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
+                .values_list("folder", flat=True)
+                .distinct()
+            )
 
-        self.stdout.write(f"検出されたフォルダ数: {len(folders)}")
+        # Noneやから文字列を除外
+        folders = [f for f in folders if f and f.strip()]
+
+        self.stdout.write(f"画像化する圃場数: {len(folders)}")
 
         plotter = SoilHardnessPlotter(output_dir=output_dir)
 
+        # 処理済みの組み合わせを記録（重複防止）
+        processed_combinations = set()
+
         for folder in folders:
-            if folder:  # 空のfolderをスキップ
-                self.stdout.write(f"フォルダ {folder} のプロット作成中...")
-                plotter.plot_3d_surface(
-                    land_ledger_id=options["land_ledger_id"], folder=folder
+            # 処理済みかチェック
+            combination_key = f"{options.get('land_ledger_id', 'all')}_{folder}"
+            if combination_key in processed_combinations:
+                self.stdout.write(
+                    f"⚠️ フォルダ {folder} は既に処理済みのためスキップします"
                 )
+                continue
+
+            processed_combinations.add(combination_key)
+            plotter.plot_3d_surface(
+                land_ledger_id=options["land_ledger_id"], folder=folder
+            )
 
         self.stdout.write(self.style.SUCCESS("全てのプロット作成が完了しました"))
