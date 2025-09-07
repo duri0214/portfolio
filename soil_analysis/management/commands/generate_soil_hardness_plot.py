@@ -157,16 +157,12 @@ class SoilHardnessPlotter:
         self, ledger_data, company_name, land_name, sampling_date, folder
     ):
         """単一のプロットを作成する（重複実行を避けるため分離）"""
-        # 圃場内位置の組み合わせを取得（A1, A2, A3, B1, B2, B3, C1, C2, C3）
-        location_combinations = []
-        for data_point in ledger_data:
-            block_name = data_point.land_block.name[0]  # A, B, C
-            position = data_point.set_memory  # 1, 2, 3
-            combination = f"{block_name}{position}"
-            if combination not in location_combinations:
-                location_combinations.append(combination)
-
-        location_combinations.sort()  # ソート
+        # 圃場内位置の組み合わせを取得（land_blockでグループ化してdistinct）
+        location_combinations = list(
+            ledger_data.values_list("land_block__name", flat=True)
+            .distinct()
+            .order_by("land_block__name")
+        )
 
         # 深度のリストを取得
         depths = sorted(ledger_data.values_list("depth", flat=True).distinct())
@@ -176,12 +172,10 @@ class SoilHardnessPlotter:
         pressure_data.fill(np.nan)
 
         for data_point in ledger_data:
-            block_name = data_point.land_block.name[0]
-            position = data_point.set_memory
-            combination = f"{block_name}{position}"
+            block_name = data_point.land_block.name
 
             try:
-                location_idx = location_combinations.index(combination)
+                location_idx = location_combinations.index(block_name)
                 depth_idx = depths.index(data_point.depth)
                 pressure_data[location_idx, depth_idx] = data_point.pressure
             except ValueError:
@@ -227,7 +221,7 @@ class Command(BaseCommand):
     土壌硬度測定データから3D表面プロットを生成するバッチコマンド
 
     各folder（圃場計測データ）ごとに3D表面プロットを作成します。
-    X軸: 圃場内位置（A1, A2, A3, B1, B2, B3, C1, C2, C3）
+    X軸: 圃場内位置（C3, A3, B2, C1, A1）
     Y軸: 深度（cm）
     Z軸: 圧力値（kPa）
 
