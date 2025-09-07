@@ -262,6 +262,21 @@ python manage.py generate_soil_hardness_csv --num_fields 2
 - `--realistic_mode` - より現実的なデータパターンを生成
 - `--field_pattern` - 圃場の土壌パターン（standard, dry, wet, compacted, mixed）
 
+### 土壌硬度プロット生成
+
+土壌硬度測定データから3Dプロットを生成するバッチコマンドです。各folder（圃場計測データ）ごとに3Dプロットを作成し、土壌の硬度分布を視覚化します。
+
+```bash
+# 全folderのプロットを生成（soil_analysis/management/commands/outputフォルダに保存）
+python manage.py generate_soil_hardness_plot
+
+# 出力ディレクトリを指定
+python manage.py generate_soil_hardness_plot --output_dir /path/to/output
+
+# 特定の圃場台帳IDのみを対象とする
+python manage.py generate_soil_hardness_plot --land_ledger_id 1
+```
+
 ## securities
 
 - edinet data を zip でダウンロードする

@@ -1,7 +1,13 @@
 import os
 
+import matplotlib
+
+matplotlib.use("Agg")  # GUIバックエンドを使わずにヘッドレスモードに設定
 import matplotlib.pyplot as plt
 import numpy as np
+from django.core.management.base import BaseCommand
+
+from soil_analysis.models import SoilHardnessMeasurement
 
 
 class SoilHardnessPlotter:
@@ -214,56 +220,85 @@ class SoilHardnessPlotter:
             self._save_plot(fig, company_name, land_name, sampling_date, "3d_surface")
 
 
-def create_soil_hardness_plots(land_ledger_id=None, output_dir="."):
-    """土壌硬度プロットの作成
+class Command(BaseCommand):
+    help = """
+    土壌硬度測定データから3D表面プロットを生成するバッチコマンド
 
-    Args:
-        land_ledger_id: 特定の圃場台帳ID（Noneの場合は全データ）
-        output_dir: 出力ディレクトリ（デフォルトはカレントディレクトリ）
+    各folder（圃場計測データ）ごとに3D表面プロットを作成します。
+    X軸: 圃場内位置（A1, A2, A3, B1, B2, B3, C1, C2, C3）
+    Y軸: 深度（cm）
+    Z軸: 圧力値（kPa）
+
+    使用例:
+    python manage.py generate_soil_hardness_plot
+    python manage.py generate_soil_hardness_plot --output_dir /path/to/output
     """
-    # データの状態をチェック
-    total_measurements = SoilHardnessMeasurement.objects.count()
-    unassigned = SoilHardnessMeasurement.objects.filter(
-        land_ledger__isnull=True
-    ).count()
-    assigned = total_measurements - unassigned
 
-    print(f"土壌硬度測定データ: {assigned}/{total_measurements}件が帳簿割当済み")
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--output_dir",
+            type=str,
+            default=None,
+            help="出力ディレクトリ（指定しない場合はカレントディレクトリの'output'フォルダ）",
+        )
+        parser.add_argument(
+            "--land_ledger_id",
+            type=int,
+            default=None,
+            help="特定の圃場台帳IDのみを対象とする場合に指定",
+        )
 
-    if assigned == 0:
-        print("❌ 処理中断: 帳簿に紐づけられたデータが存在しません")
-        print("💡 解決方法: 先にSoilHardnessMeasurementデータを帳簿に紐づけてください")
-        return
+    def handle(self, *args, **options):
+        # 出力ディレクトリの設定
+        if options["output_dir"]:
+            output_dir = options["output_dir"]
+        else:
+            # バッチファイルがあるディレクトリにoutputフォルダを作成
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            output_dir = os.path.join(script_dir, "output")
 
-    if unassigned > 0:
-        print(f"⚠️  {unassigned}件の未割当データは除外してプロット作成を続行します")
+        os.makedirs(output_dir, exist_ok=True)
+        self.stdout.write(f"出力ディレクトリ: {output_dir}")
 
-    plotter = SoilHardnessPlotter(output_dir=output_dir)
+        # データの状態をチェック
+        total_measurements = SoilHardnessMeasurement.objects.count()
+        unassigned = SoilHardnessMeasurement.objects.filter(
+            land_ledger__isnull=True
+        ).count()
+        assigned = total_measurements - unassigned
 
-    # 統合された3D表面プロット
-    plotter.plot_3d_surface(land_ledger_id=land_ledger_id)
+        self.stdout.write(
+            f"土壌硬度測定データ: {assigned}/{total_measurements}件が帳簿割当済み"
+        )
 
+        if assigned == 0:
+            self.stdout.write(
+                self.style.ERROR("❌ 処理中断: 帳簿に紐づけられたデータが存在しません")
+            )
+            self.stdout.write(
+                "💡 解決方法: 先にSoilHardnessMeasurementデータを帳簿に紐づけてください"
+            )
+            return
 
-if __name__ == "__main__":
-    # カレントディレクトリに output フォルダを作成して使用
-    plot_output_dir = os.path.join(os.getcwd(), "output")
-    os.makedirs(plot_output_dir, exist_ok=True)
-    print(f"出力ディレクトリ: {plot_output_dir}")
+        if unassigned > 0:
+            self.stdout.write(
+                f"⚠️  {unassigned}件の未割当データは除外してプロット作成を続行します"
+            )
 
-    # folderごとにプロット作成
-    from soil_analysis.models import SoilHardnessMeasurement
+        # folderごとにプロット作成
+        folders = SoilHardnessMeasurement.objects.values_list(
+            "folder", flat=True
+        ).distinct()
 
-    folders = SoilHardnessMeasurement.objects.values_list(
-        "folder", flat=True
-    ).distinct()
+        self.stdout.write(f"検出されたフォルダ数: {len(folders)}")
 
-    print(f"検出されたフォルダ数: {len(folders)}")
+        plotter = SoilHardnessPlotter(output_dir=output_dir)
 
-    plotter = SoilHardnessPlotter(output_dir=plot_output_dir)
+        for folder in folders:
+            if folder:  # 空のfolderをスキップ
+                self.stdout.write(f"フォルダ {folder} のプロット作成中...")
+                plotter.plot_3d_surface(
+                    land_ledger_id=options["land_ledger_id"], folder=folder
+                )
 
-    for folder in folders:
-        if folder:  # 空のfolderをスキップ
-            print(f"フォルダ {folder} のプロット作成中...")
-            plotter.plot_3d_surface(folder=folder)
-
-    print("全てのプロット作成が完了しました")
+        self.stdout.write(self.style.SUCCESS("全てのプロット作成が完了しました"))
