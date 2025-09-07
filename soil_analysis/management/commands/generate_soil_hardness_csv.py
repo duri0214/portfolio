@@ -15,7 +15,23 @@ from soil_analysis.domain.valueobject.management.commands.generate_soil_hardness
 
 
 class Command(BaseCommand):
-    help = "土壌硬度計測器CSVファイルを生成するバッチ"
+    help = """
+    土壌硬度計測器CSVファイルを生成するバッチ
+
+    計測シナリオ:
+    圃場は3x3の9ブロックに分かれるが、実際の計測は5ブロックのみ実施
+    ┌────┬────┬────┐
+    │ C3 │ B3 │ A3 │  → C3, A3を計測
+    ├────┼────┼────┤
+    │ C2 │ B2 │ A2 │  → B2のみ計測
+    ├────┼────┼────┤
+    │ C1 │ B1 │ A1 │  → C1, A1を計測
+    └────┴────┴────┘
+
+    各ブロックで5点法による5回の測定を実施
+    1圃場あたり25メモリー（5ブロック × 5測定）を消費
+    複数圃場を計測する場合、memoryは連番で増加し続ける
+    """
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -35,6 +51,8 @@ class Command(BaseCommand):
         csv_output_path = output_path / "取り込みCSV"
         os.makedirs(csv_output_path, exist_ok=True)
 
+        # 全圃場を通してmemoryを連番で管理
+        global_memory_counter = 1
         total_files = 0
         for field_num in range(1, num_fields + 1):
             self.stdout.write(f"圃場 {field_num} のファイル生成中...")
@@ -44,20 +62,19 @@ class Command(BaseCommand):
             field_dir = os.path.join(csv_output_path, field_dirname)
             os.makedirs(field_dir, exist_ok=True)
 
-            # 行（A, B, C）と列（1, 2, 3）の組み合わせで9ブロック
-            file_counter = 1
-            for block_idx in range(9):
+            # 実際の計測では5ブロック（C1, C3, B2, A1, A3）のみを計測
+            for block_idx in range(5):
                 # 各ブロックで5回の測定
                 for measurement in range(1, 6):
-                    file_seq = str(file_counter).zfill(4)
+                    file_seq = str(global_memory_counter).zfill(4)
                     filename = f"{SoilHardnessDevice.DEVICE_NAME}_{file_seq}_N00000000_E000000000.csv"
                     filepath = os.path.join(field_dir, filename)
                     self._generate_csv_file(
                         filepath=filepath,
-                        memory_no=file_counter,
+                        memory_no=global_memory_counter,
                     )
 
-                    file_counter += 1
+                    global_memory_counter += 1
                     total_files += 1
 
         self.stdout.write(
