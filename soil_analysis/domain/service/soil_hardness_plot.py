@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -35,6 +37,9 @@ class SoilHardnessPlotter:
 
         if land_ledger_id:
             queryset = queryset.filter(land_ledger_id=land_ledger_id)
+        else:
+            # land_ledger_idがNoneの場合は、land_ledgerが設定されているデータのみを対象とする
+            queryset = queryset.filter(land_ledger__isnull=False)
 
         # 圃場台帳ごとにグループ化
         land_ledgers = queryset.values_list("land_ledger", flat=True).distinct()
@@ -302,15 +307,13 @@ def create_soil_hardness_plots(land_ledger_id=None, output_dir="."):
 
 
 if __name__ == "__main__":
-    # 使用例: 全データから作成
-    import os
-
     # カレントディレクトリに output フォルダを作成して使用
     plot_output_dir = os.path.join(os.getcwd(), "output")
     os.makedirs(plot_output_dir, exist_ok=True)
     print(f"出力ディレクトリ: {plot_output_dir}")
 
+    # Case1: 全データから作成
     create_soil_hardness_plots(output_dir=plot_output_dir)
 
-    # 特定の圃場台帳IDを指定する場合
+    # Case2: 特定の圃場台帳IDを指定する場合
     # create_soil_hardness_plots(land_ledger_id=1, output_dir=plot_output_dir)
