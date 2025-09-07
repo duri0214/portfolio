@@ -318,11 +318,11 @@ class HardnessAssociationView(ListView):
                 )
 
                 needle = 0
-                max_needle = land_block_orders.count() - 1  # 最大インデックスを取得
+                land_block_count = land_block_orders.count()
                 for i, hardness_measurement in enumerate(hardness_measurements):
                     # 硬度測定データ (hardness_measurements) に対して、
                     # 適切な土地ブロック情報 (land_block) と土地台帳 (land_ledger) を割り当て
-                    if needle <= max_needle:  # 境界チェック
+                    if needle < land_block_count:  # 境界チェック
                         hardness_measurement.land_block = land_block_orders[
                             needle
                         ].land_block
@@ -332,9 +332,7 @@ class HardnessAssociationView(ListView):
                         hardness_measurement.set_depth * SAMPLING_TIMES_PER_BLOCK
                     )
                     can_forward_the_needle = i > 0 and i % records_per_block == 0
-                    if (
-                        can_forward_the_needle and needle < max_needle
-                    ):  # needleが範囲内の場合のみインクリメント
+                    if can_forward_the_needle:
                         needle += 1
 
                 SoilHardnessMeasurement.objects.bulk_update(
