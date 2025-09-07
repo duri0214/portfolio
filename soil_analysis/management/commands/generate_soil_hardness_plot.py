@@ -1,5 +1,4 @@
 import os
-import re
 
 import matplotlib
 
@@ -15,12 +14,6 @@ class SoilHardnessPlotter:
     def __init__(self, output_dir="."):
         self.output_dir = output_dir
         plt.rcParams["font.family"] = ["IPAexGothic"]
-
-    @staticmethod
-    def _clean_filename(filename):
-        # 無効な文字を置換
-        cleaned = re.sub(r'[<>:"|?*\\/]', "_", filename)
-        return re.sub(r"_+", "_", cleaned)
 
     def plot_3d_surface(self, land_ledger_id=None, folder=None):
         # データ取得
@@ -87,9 +80,7 @@ class SoilHardnessPlotter:
         fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label="圧力 (kPa)")
 
         # 保存
-        filename = self._clean_filename(
-            f"soil_hardness_{company}_{land}_{date}_3d_surface.png"
-        )
+        filename = f"soil_hardness_{company}_{land}_{date}_3d_surface.png"
         save_path = os.path.join(self.output_dir, filename)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
