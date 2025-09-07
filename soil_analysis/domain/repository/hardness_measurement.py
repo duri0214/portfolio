@@ -35,12 +35,13 @@ class SoilHardnessMeasurementRepository:
 
         Returns:
             QuerySet: メモリセットごとにグループ化された計測データ
+            folder(圃場)別、set_memory(メモリ番号)別にソート
         """
         if queryset is None:
             queryset = SoilHardnessMeasurement.objects.filter(land_block__isnull=True)
 
         return (
-            queryset.values("set_memory", "set_datetime")
+            queryset.values("folder", "set_memory", "set_datetime")
             .annotate(cnt=Count("pk"))
-            .order_by("set_memory")
+            .order_by("folder", "set_memory")
         )
