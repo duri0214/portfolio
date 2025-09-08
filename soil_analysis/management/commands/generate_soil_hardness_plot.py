@@ -2,7 +2,7 @@ import os
 
 from django.core.management.base import BaseCommand
 
-from soil_analysis.domain.service.soil_hardness_plotter import (
+from soil_analysis.domain.service.management.commands.soil_hardness_plotter import (
     SoilHardnessPlotterService,
 )
 from soil_analysis.models import SoilHardnessMeasurement
