@@ -63,21 +63,28 @@ class SoilHardnessPlotterService:
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_subplot(111, projection="3d")
 
-        x = np.arange(len(land_block_names))
-        y = np.array(depth_labels)
-        x, y = np.meshgrid(x, y)
-        z = pressure_data.T
+        block_indices = np.arange(
+            len(land_block_names)
+        )  # 例: [0, 1, 2, 3] for ['A1', 'A3', 'B2', 'C1']
+        depth_values = np.array(depth_labels)  # 例: [1, 5, 10, ..., 60]
+        # 3Dプロット用のメッシュグリッド（格子）を作成
+        block_grid, depth_grid = np.meshgrid(block_indices, depth_values)
+        pressure_grid = pressure_data.T
 
-        surf = ax.plot_surface(x, y, z, cmap="viridis", alpha=0.8)
+        surf = ax.plot_surface(
+            block_grid, depth_grid, pressure_grid, cmap="viridis", alpha=0.8
+        )
 
+        # X軸: ブロック名をスケール化（['A1', 'A3', 'B2'] → [0, 1, 2]）して等間隔表示
         ax.set_xticks(np.arange(len(land_block_names)))
         ax.set_xticklabels(land_block_names)
-        ax.set_xlabel("圃場内位置")
-        ax.set_ylabel("深度 (cm)")
-        ax.set_zlabel("圧力 (kPa)")
+        ax.set_xlabel("圃場内位置")  # X軸全体のラベル
+        ax.set_ylabel("深度 (cm)")  # Y軸: 深度（実際の深度値をそのまま使用）
+        ax.set_zlabel("圧力 (kPa)")  # Z軸: 圧力値（0-3000kPaの範囲で固定表示）
         ax.set_zlim(0, 3000)  # z軸を0-3000kPaに固定
         ax.set_title(f"{company} - {land} 土壌硬度分布 ({date})")
 
+        # カラーバー追加（圧力値の色対応表を右側に表示）
         fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label="圧力 (kPa)")
 
         # 保存
