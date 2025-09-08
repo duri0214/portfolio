@@ -54,7 +54,9 @@ class Command(BaseCommand):
         self.stdout.write(f"画像化する圃場数: {len(folders)}")
 
         if len(folders) == 0:
-            self.stdout.write(self.style.WARNING("処理対象の圃場が見つかりません"))
+            self.stdout.write(
+                self.style.WARNING("処理中断: 処理対象の圃場が見つかりません")
+            )
             return
 
         # データ数の内訳を計算して表示
