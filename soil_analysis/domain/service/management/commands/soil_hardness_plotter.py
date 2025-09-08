@@ -47,14 +47,14 @@ class SoilHardnessPlotterService:
             .distinct()
             .order_by("land_block__name")
         )
-        depths = sorted(queryset.values_list("depth", flat=True).distinct())
+        depth_labels = sorted(queryset.values_list("depth", flat=True).distinct())
 
-        pressure_data = np.full((len(land_block_names), len(depths)), np.nan)
+        pressure_data = np.full((len(land_block_names), len(depth_labels)), np.nan)
 
         for data in queryset:
             try:
                 block_idx = land_block_names.index(data.land_block.name)
-                depth_idx = depths.index(data.depth)
+                depth_idx = depth_labels.index(data.depth)
                 pressure_data[block_idx, depth_idx] = data.pressure
             except ValueError:
                 continue
@@ -64,7 +64,7 @@ class SoilHardnessPlotterService:
         ax = fig.add_subplot(111, projection="3d")
 
         x = np.arange(len(land_block_names))
-        y = np.array(depths)
+        y = np.array(depth_labels)
         x, y = np.meshgrid(x, y)
         z = pressure_data.T
 
