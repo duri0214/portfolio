@@ -60,4 +60,8 @@ class ZipFileService:
 
         See Also: https://qiita.com/tohka383/items/b72970b295cbc4baf5ab
         """
-        return folder_name.encode("cp437").decode("cp932")
+        try:
+            return folder_name.encode("cp437").decode("cp932")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            # エンコーディング変換に失敗した場合は元のファイル名を返す
+            return folder_name

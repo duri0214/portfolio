@@ -247,7 +247,12 @@ class HardnessUploadView(FormView):
         )
         if os.path.exists(upload_folder):
             call_command("import_soil_hardness", upload_folder)
-            shutil.rmtree(upload_folder)
+            try:
+                shutil.rmtree(upload_folder)
+            except (PermissionError, OSError):
+                # ファイル削除エラーは無視して続行
+                # OneDriveなどの同期フォルダではこの例外が発生することがある
+                pass
 
         return super().form_valid(form)
 
@@ -313,12 +318,14 @@ class HardnessAssociationView(ListView):
                 )
 
                 needle = 0
+                land_block_count = land_block_orders.count()
                 for i, hardness_measurement in enumerate(hardness_measurements):
                     # 硬度測定データ (hardness_measurements) に対して、
                     # 適切な土地ブロック情報 (land_block) と土地台帳 (land_ledger) を割り当て
-                    hardness_measurement.land_block = land_block_orders[
-                        needle
-                    ].land_block
+                    if needle < land_block_count:  # 境界チェック
+                        hardness_measurement.land_block = land_block_orders[
+                            needle
+                        ].land_block
                     hardness_measurement.land_ledger = land_ledger
 
                     records_per_block = (

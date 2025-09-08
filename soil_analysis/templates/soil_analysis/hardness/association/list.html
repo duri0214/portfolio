@@ -29,6 +29,7 @@
             <table class="table table-bordered table-gray table-striped">
                 <thead>
                 <tr>
+                    <th>folder</th>
                     <th>memory</th>
                     <th>datetime</th>
                     <th>count</th>
@@ -38,6 +39,7 @@
                 <tbody>
                 {% for measurement in object_list %}
                     <tr>
+                        <td>{{ measurement.folder }}</td>
                         <td>{{ measurement.set_memory }}</td>
                         <td>{{ measurement.set_datetime|date:"Y-m-d" }}</td>
                         <td>{{ measurement.cnt }}</td>
