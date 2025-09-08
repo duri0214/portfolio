@@ -53,23 +53,26 @@ class Command(BaseCommand):
 
         self.stdout.write(f"画像化する圃場数: {len(folders)}")
 
-        # データ数の内訳を計算して表示
-        if len(folders) > 0:
-            data_per_field = assigned // len(folders)  # 1圃場あたりのデータ数
-            blocks_per_field = 5  # 5ブロック想定
-            measurements_per_block = 5  # 各ブロック5回計測想定
-            total_measurements_per_field = blocks_per_field * measurements_per_block
-            depth_data_count = (
-                data_per_field // total_measurements_per_field
-                if total_measurements_per_field > 0
-                else 0
-            )
+        if len(folders) == 0:
+            self.stdout.write(self.style.WARNING("処理対象の圃場が見つかりません"))
+            return
 
-            self.stdout.write(
-                f"データ内訳: {assigned:,} ÷ {len(folders)} = {data_per_field:,}(1圃場あたり) "
-                f"÷ {total_measurements_per_field}({blocks_per_field}ブロック×各{measurements_per_block}回計測) = "
-                f"{depth_data_count}(深度データ数)"
-            )
+        # データ数の内訳を計算して表示
+        data_per_field = assigned // len(folders)  # 1圃場あたりのデータ数
+        blocks_per_field = 5  # 5ブロック想定
+        measurements_per_block = 5  # 各ブロック5回計測想定
+        total_measurements_per_field = blocks_per_field * measurements_per_block
+        depth_data_count = (
+            data_per_field // total_measurements_per_field
+            if total_measurements_per_field > 0
+            else 0
+        )
+
+        self.stdout.write(
+            f"データ内訳: {assigned:,} ÷ {len(folders)} = {data_per_field:,}(1圃場あたり) "
+            f"÷ {total_measurements_per_field}({blocks_per_field}ブロック×各{measurements_per_block}回計測) = "
+            f"{depth_data_count}(深度データ数)"
+        )
 
         # プロット作成
         plotter = SoilHardnessPlotterService(output_dir=output_dir)
