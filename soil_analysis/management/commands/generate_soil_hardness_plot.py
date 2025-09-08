@@ -36,18 +36,18 @@ class Command(BaseCommand):
             return
 
         # TODO: issue#359 - フォルダベースの処理をland_ledger_idベースに変更してKISS原則に従う
-        # フォルダ取得
-        folders_queryset = SoilHardnessMeasurement.objects.filter(
+        # 処理対象データ取得
+        target_data_queryset = SoilHardnessMeasurement.objects.filter(
             land_ledger__isnull=False
         )
         if options["land_ledger_id"]:
-            folders_queryset = folders_queryset.filter(
+            target_data_queryset = target_data_queryset.filter(
                 land_ledger_id=options["land_ledger_id"]
             )
 
         folders = [
             f
-            for f in folders_queryset.values_list("folder", flat=True).distinct()
+            for f in target_data_queryset.values_list("folder", flat=True).distinct()
             if f and f.strip()
         ]
 
