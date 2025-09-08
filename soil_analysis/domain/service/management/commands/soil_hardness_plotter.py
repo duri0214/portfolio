@@ -15,6 +15,7 @@ class SoilHardnessPlotterService:
         plt.rcParams["font.family"] = ["IPAexGothic"]
 
     def plot_3d_surface(self, land_ledger_id=None, folder=None):
+        # TODO: issue#359 - KISS原則に従いfolder引数を削除し、land_ledger_idのみでデータを特定する
         # データ取得
         queryset = SoilHardnessMeasurement.objects.select_related(
             "land_ledger__land__company", "land_ledger__land", "land_block"

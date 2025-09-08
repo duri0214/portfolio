@@ -35,6 +35,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR("処理中断: 割当済みデータがありません"))
             return
 
+        # TODO: issue#359 - フォルダベースの処理をland_ledger_idベースに変更してKISS原則に従う
         # フォルダ取得
         folders_queryset = SoilHardnessMeasurement.objects.filter(
             land_ledger__isnull=False
