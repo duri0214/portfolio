@@ -42,20 +42,20 @@ class SoilHardnessPlotterService:
             land = f"{land}_{folder}"
 
         # データ整理
-        locations = list(
+        land_block_names = list(
             queryset.values_list("land_block__name", flat=True)
             .distinct()
             .order_by("land_block__name")
         )
         depths = sorted(queryset.values_list("depth", flat=True).distinct())
 
-        pressure_data = np.full((len(locations), len(depths)), np.nan)
+        pressure_data = np.full((len(land_block_names), len(depths)), np.nan)
 
         for data in queryset:
             try:
-                loc_idx = locations.index(data.land_block.name)
+                block_idx = land_block_names.index(data.land_block.name)
                 depth_idx = depths.index(data.depth)
-                pressure_data[loc_idx, depth_idx] = data.pressure
+                pressure_data[block_idx, depth_idx] = data.pressure
             except ValueError:
                 continue
 
@@ -63,15 +63,15 @@ class SoilHardnessPlotterService:
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_subplot(111, projection="3d")
 
-        x = np.arange(len(locations))
+        x = np.arange(len(land_block_names))
         y = np.array(depths)
         x, y = np.meshgrid(x, y)
         z = pressure_data.T
 
         surf = ax.plot_surface(x, y, z, cmap="viridis", alpha=0.8)
 
-        ax.set_xticks(np.arange(len(locations)))
-        ax.set_xticklabels(locations)
+        ax.set_xticks(np.arange(len(land_block_names)))
+        ax.set_xticklabels(land_block_names)
         ax.set_xlabel("圃場内位置")
         ax.set_ylabel("深度 (cm)")
         ax.set_zlabel("圧力 (kPa)")
