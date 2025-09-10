@@ -332,6 +332,20 @@ class HardnessAssociationView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["land_ledgers"] = LandLedger.objects.all().order_by("pk")
+
+        # 進捗情報を追加
+        total_groups = (
+            SoilHardnessMeasurement.objects.values("folder").distinct().count()
+        )
+        processed_groups = (
+            SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
+            .values("folder")
+            .distinct()
+            .count()
+        )
+        context["total_groups"] = total_groups
+        context["processed_groups"] = processed_groups
+
         return context
 
     @staticmethod
@@ -592,22 +606,12 @@ class HardnessAssociationFieldGroupView(ListView):
         )
 
         messages.success(
-            request, f"メモリー{memory_anchor}番からの圃場データを処理しました"
+            request,
+            f"フォルダ「{measurements[0].folder if measurements else ''}」の処理が完了しました",
         )
 
-        # 処理完了後は必ずlist画面に戻る
-        remaining_count = SoilHardnessMeasurement.objects.filter(
-            land_block__isnull=True
-        ).count()
-        if remaining_count > 0:
-            messages.success(
-                request,
-                f"フォルダ「{measurements[0].folder if measurements else ''}」の処理が完了しました。残り{remaining_count}レコードの処理を続けてください。",
-            )
-            return HttpResponseRedirect(reverse("soil:hardness_association"))
-        else:
-            messages.success(request, "全ての硬度データの関連付けが完了しました！")
-            return HttpResponseRedirect(reverse("soil:hardness_association_success"))
+        # 処理完了後は常にリスト画面に戻る（シンプル化）
+        return HttpResponseRedirect(reverse("soil:hardness_association"))
 
 
 class HardnessAssociationIndividualView(ListView):

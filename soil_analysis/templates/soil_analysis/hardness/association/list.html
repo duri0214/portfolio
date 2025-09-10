@@ -14,9 +14,16 @@
 
         <!-- 処理進捗表示 -->
         <div class="alert alert-info mb-4">
-            <h5><i class="fas fa-info-circle"></i> 処理方式について</h5>
-            <p>各圃場グループを個別に処理することで、異なる所有者の帳簿混在を防ぎます。</p>
-            <p><strong>処理進捗:</strong> 下記の圃場グループを1つずつ処理してください。</p>
+            <div class="row">
+                <div class="col-md-8">
+                    <h5><i class="fas fa-info-circle"></i> 処理方式について</h5>
+                    <p>各圃場グループを個別に処理することで、異なる所有者の帳簿混在を防ぎます。</p>
+                    <p><strong>処理進捗:</strong> 下記の圃場グループを1つずつ処理してください。</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-primary fs-6">{{ processed_groups }}/{{ total_groups }} 完了</span>
+                </div>
+            </div>
         </div>
 
         <div class="row mb-4">
@@ -114,21 +121,11 @@
                         </div>
                     </div>
                 {% endif %}
-            {% empty %}
-                <div class="col-12">
-                    <div class="alert alert-warning">
-                        <h5><i class="fas fa-exclamation-triangle"></i> データがありません</h5>
-                        <p>処理対象の硬度データが見つかりません。先にデータをアップロードしてください。</p>
-                        <a href="{% url 'soil:hardness_upload' %}" class="btn btn-primary">
-                            <i class="fas fa-upload"></i> データをアップロード
-                        </a>
-                    </div>
-                </div>
             {% endfor %}
         </div>
 
         <!-- 完了チェック -->
-        {% if object_list and not unprocessed_groups %}
+        {% if not object_list %}
             <div class="alert alert-success">
                 <h5><i class="fas fa-check-circle"></i> 全ての処理が完了しました</h5>
                 <p>全ての圃場グループの関連付けが完了しました。</p>
