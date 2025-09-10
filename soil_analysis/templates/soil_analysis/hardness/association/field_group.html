@@ -104,7 +104,7 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label for="land_ledger" class="form-label mb-0">関連付ける帳簿を選択してください</label>
-                            <!-- TODO: 帳簿マスタ新規登録機能 -->
+                            <!-- TODO issue360: 帳簿マスタ新規登録機能 -->
                             <!-- 
                             新機能実装予定：
                             - CSVデータ取り込み直後には対応する帳簿（LandLedger）が存在しない場合が多い
@@ -151,9 +151,15 @@
                         <a href="{% url 'soil:hardness_association' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> 戻る
                         </a>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-check"></i> この帳簿で処理実行
-                        </button>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary btn-sm me-2" id="btn_individual_adjust"
+                                    disabled>
+                                <i class="fas fa-cogs"></i> 個別調整 (未実装)
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> この帳簿で処理実行
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
