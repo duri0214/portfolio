@@ -452,6 +452,10 @@ class HardnessAssociationView(ListView):
                 sampling_method=land_ledger.sampling_method
             ).order_by("ordering")
 
+            # 1つのland_blockあたりのレコード数を計算（深度×採取回数）
+            max_depth = max(m.set_depth for m in hardness_measurements)
+            records_per_block = max_depth * SAMPLING_TIMES_PER_BLOCK
+
             needle = 0
             land_block_count = land_block_orders.count()
             for i, hardness_measurement in enumerate(hardness_measurements):
@@ -461,11 +465,8 @@ class HardnessAssociationView(ListView):
                     ].land_block
                 hardness_measurement.land_ledger = land_ledger
 
-                records_per_block = (
-                    hardness_measurement.set_depth * SAMPLING_TIMES_PER_BLOCK
-                )
-                can_forward_the_needle = i > 0 and i % records_per_block == 0
-                if can_forward_the_needle:
+                # records_per_blockごとにneedleを進める
+                if (i + 1) % records_per_block == 0:
                     needle += 1
 
             SoilHardnessMeasurement.objects.bulk_update(
@@ -627,6 +628,10 @@ class HardnessAssociationFieldGroupView(ListView):
             sampling_method=land_ledger.sampling_method
         ).order_by("ordering")
 
+        # 1つのland_blockあたりのレコード数を計算（深度×採取回数）
+        max_depth = max(m.set_depth for m in hardness_measurements)
+        records_per_block = max_depth * SAMPLING_TIMES_PER_BLOCK
+
         needle = 0
         land_block_count = land_block_orders.count()
         for i, hardness_measurement in enumerate(hardness_measurements):
@@ -634,11 +639,8 @@ class HardnessAssociationFieldGroupView(ListView):
                 hardness_measurement.land_block = land_block_orders[needle].land_block
             hardness_measurement.land_ledger = land_ledger
 
-            records_per_block = (
-                hardness_measurement.set_depth * SAMPLING_TIMES_PER_BLOCK
-            )
-            can_forward_the_needle = i > 0 and i % records_per_block == 0
-            if can_forward_the_needle:
+            # records_per_blockごとにneedleを進める
+            if (i + 1) % records_per_block == 0:
                 needle += 1
 
         SoilHardnessMeasurement.objects.bulk_update(
@@ -725,6 +727,158 @@ class HardnessAssociationIndividualView(ListView):
 
 class HardnessAssociationSuccessView(TemplateView):
     template_name = "soil_analysis/hardness/association/success.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["import_errors"] = SoilHardnessMeasurementImportErrors.objects.all()
+
+        # 関連付けされたデータのみを対象とする（land_ledgerとland_blockが設定済み）
+        associated_measurements = SoilHardnessMeasurement.objects.filter(
+            land_ledger__isnull=False, land_block__isnull=False
+        )
+
+        # フォルダ別集計データを追加
+        from django.db.models import Count, Min, Max
+
+        folder_stats = (
+            associated_measurements.select_related(
+                "set_device",
+                "land_block",
+                "land_ledger__land",
+                "land_ledger__crop",
+                "land_ledger__land_period",
+            )
+            .values("folder")
+            .annotate(
+                count=Count(
+                    "id", distinct=True
+                ),  # 重複を排除してidの実際の数をカウント
+                min_datetime=Min("set_datetime"),
+                max_datetime=Max("set_datetime"),
+            )
+            .order_by("folder")
+        )
+
+        # 各フォルダで使用された機材名とland_block、land_ledger情報を取得
+        folder_devices = {}
+        folder_blocks = {}
+        folder_ledgers = {}
+
+        for measurement in (
+            associated_measurements.select_related(
+                "set_device", "land_block", "land_ledger__land", "land_ledger__crop"
+            )
+            .values(
+                "folder",
+                "set_device__name",
+                "land_block__name",
+                "land_ledger__land__name",
+                "land_ledger__sampling_date",
+                "land_ledger__crop__name",
+            )
+            .distinct()
+            .order_by("folder", "land_block__name")  # フォルダとland_block名でソート
+        ):
+            folder = measurement["folder"]
+
+            # デバイス情報
+            device_name = measurement["set_device__name"]
+            if folder not in folder_devices:
+                folder_devices[folder] = []
+            if device_name and device_name not in folder_devices[folder]:
+                folder_devices[folder].append(device_name)
+
+            # land_block情報
+            block_name = measurement["land_block__name"]
+            if folder not in folder_blocks:
+                folder_blocks[folder] = []
+            if block_name and block_name not in folder_blocks[folder]:
+                folder_blocks[folder].append(block_name)
+
+        # 各フォルダのland_block名をソート
+        for folder in folder_blocks:
+            folder_blocks[folder].sort()
+
+            # land_ledger情報
+            if folder not in folder_ledgers:
+                folder_ledgers[folder] = []
+            ledger_info = {
+                "land_name": measurement["land_ledger__land__name"],
+                "sampling_date": measurement["land_ledger__sampling_date"],
+                "crop_name": measurement["land_ledger__crop__name"],
+            }
+            if ledger_info not in folder_ledgers[folder]:
+                folder_ledgers[folder].append(ledger_info)
+
+        # folder_statsに関連付け情報を追加
+        folder_stats_with_details = []
+        for stats in folder_stats:
+            stats["device_names"] = folder_devices.get(stats["folder"], [])
+            stats["land_block_names"] = folder_blocks.get(stats["folder"], [])
+            stats["land_ledger_info"] = folder_ledgers.get(stats["folder"], [])
+            folder_stats_with_details.append(stats)
+
+        # Land Block別集計
+        land_block_stats = (
+            associated_measurements.select_related("land_block")
+            .values("land_block__name")
+            .annotate(
+                count=Count("id"),
+                set_depth=Min("set_depth"),  # 設定深度を表示（通常は固定値60cm）
+                min_pressure=Min("pressure"),
+                max_pressure=Max("pressure"),
+            )
+            .order_by("land_block__name")
+        )
+
+        # Land Ledger別集計
+        land_ledger_stats = (
+            associated_measurements.select_related(
+                "land_ledger__land", "land_ledger__crop", "land_ledger__land_period"
+            )
+            .values(
+                "land_ledger__land__name",
+                "land_ledger__sampling_date",
+                "land_ledger__crop__name",
+                "land_ledger__land_period__name",
+            )
+            .annotate(
+                count=Count("id"),
+            )
+            .order_by("land_ledger__sampling_date")
+        )
+
+        # レスポンス用にフィールド名を整理
+        land_block_stats_formatted = []
+        for stat in land_block_stats:
+            land_block_stats_formatted.append(
+                {
+                    "land_block_name": stat["land_block__name"],
+                    "count": stat["count"],
+                    "set_depth": stat["set_depth"],
+                    "min_pressure": stat["min_pressure"],
+                    "max_pressure": stat["max_pressure"],
+                }
+            )
+
+        land_ledger_stats_formatted = []
+        for stat in land_ledger_stats:
+            land_ledger_stats_formatted.append(
+                {
+                    "land_name": stat["land_ledger__land__name"],
+                    "sampling_date": stat["land_ledger__sampling_date"],
+                    "crop_name": stat["land_ledger__crop__name"],
+                    "period_name": stat["land_ledger__land_period__name"],
+                    "count": stat["count"],
+                }
+            )
+
+        context["folder_stats"] = folder_stats_with_details
+        context["land_block_stats"] = land_block_stats_formatted
+        context["land_ledger_stats"] = land_ledger_stats_formatted
+        context["total_records"] = associated_measurements.count()
+
+        return context
 
 
 class RouteSuggestUploadView(FormView):
