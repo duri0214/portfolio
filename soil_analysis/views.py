@@ -5,7 +5,7 @@ import shutil
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Count, Min, Max
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -263,9 +263,6 @@ class HardnessSuccessView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["import_errors"] = SoilHardnessMeasurementImportErrors.objects.all()
-
-        # フォルダ別集計データを追加（N+1問題対策でprefetch_related使用）
-        from django.db.models import Count, Min, Max
 
         folder_stats = (
             SoilHardnessMeasurement.objects.select_related("set_device")
@@ -736,9 +733,6 @@ class HardnessAssociationSuccessView(TemplateView):
         associated_measurements = SoilHardnessMeasurement.objects.filter(
             land_ledger__isnull=False, land_block__isnull=False
         )
-
-        # フォルダ別集計データを追加
-        from django.db.models import Count, Min, Max
 
         folder_stats = (
             associated_measurements.select_related(
