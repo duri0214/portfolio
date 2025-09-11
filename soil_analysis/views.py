@@ -393,6 +393,7 @@ class HardnessAssociationView(ListView):
         - 処理完了後に次の未処理圃場へ自動遷移
         """
         # 個別処理ボタンが押された場合
+        # TODO: Issue #364 - individual/list.html への遷移フローが削除されているため復旧が必要
         if "btn_individual" in request.POST:
             try:
                 memory_anchor_str = request.POST.get("btn_individual")
