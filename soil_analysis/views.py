@@ -39,7 +39,6 @@ from soil_analysis.models import (
     LandLedger,
     SoilHardnessMeasurementImportErrors,
     SoilHardnessMeasurement,
-    LandBlock,
     SamplingOrder,
     RouteSuggestImport,
     JmaCity,
@@ -392,11 +391,11 @@ class HardnessAssociationView(ListView):
         - 単一圃場グループの帳簿選択処理
         - 処理完了後に次の未処理圃場へ自動遷移
         """
-        # 個別処理ボタンが押された場合
-        # TODO: Issue #364 - individual/list.html への遷移フローが削除されているため復旧が必要
-        if "btn_individual" in request.POST:
+
+        # 圃場グループ処理ボタンが押された場合（この圃場を処理ボタン）
+        if "btn_process_group" in request.POST:
             try:
-                memory_anchor_str = request.POST.get("btn_individual")
+                memory_anchor_str = request.POST.get("btn_process_group")
                 if not memory_anchor_str:
                     messages.error(request, "メモリーアンカーが指定されていません")
                     return HttpResponseRedirect(reverse("soil:hardness_association"))
