@@ -61,9 +61,9 @@ urlpatterns = [
         name="hardness_association",
     ),
     path(
-        "hardness/association/individual/<int:memory_anchor>/<int:land_ledger>",
-        views.HardnessAssociationIndividualView.as_view(),
-        name="hardness_association_individual",
+        "hardness/association/field_group/<int:memory_anchor>",
+        views.HardnessAssociationFieldGroupView.as_view(),
+        name="hardness_association_field_group",
     ),
     path(
         "hardness/association/success",

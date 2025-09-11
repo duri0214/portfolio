@@ -10,65 +10,129 @@
                 <li class="breadcrumb-item active" aria-current="page">Association</li>
             </ol>
         </nav>
-        <h1>データの関連付け</h1>
-        <form method="post" action="{% url 'soil:hardness_association' %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="row">
-                <div class="dropdown col-6">
-                    <select class="form-select" name="land_ledger" required aria-label="帳簿を選択">
-                        <option selected disabled value="">帳簿を選択</option>
-                        {% for land_ledger in land_ledgers %}
-                            <option value="{{ land_ledger.pk }}">{{ land_ledger.land.company.name }} {{ land_ledger.land.name }} {{ land_ledger.sampling_date|date:"Ym" }} {{ land_ledger.land_period.name }}</option>
-                        {% endfor %}
-                        <option value="{{ land_ledger.pk }}">新規作成（未実装）</option>
-                    </select>
-                </div>
-                <input class="btn btn-outline-primary mb-3 col-2" type="submit" name="button" value="送信">
-            </div>
+        <h1>硬度データの関連付け - 圃場別処理</h1>
 
-            <table class="table table-bordered table-gray table-striped">
-                <thead>
-                <tr>
-                    <th>folder</th>
-                    <th>memory</th>
-                    <th>datetime</th>
-                    <th>count</th>
-                    <th class="centered">R</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for measurement in object_list %}
-                    <tr>
-                        <td>{{ measurement.folder }}</td>
-                        <td>{{ measurement.set_memory }}</td>
-                        <td>{{ measurement.set_datetime|date:"Y-m-d" }}</td>
-                        <td>{{ measurement.cnt }}</td>
-                        {% if forloop.counter0|divisibleby:25 %}
-                            <td rowspan="5">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="form_checkboxes[]"
-                                           value="{{ measurement.set_memory }}" id="form_checkbox" checked>
-                                    <label class="form-check-label" for="form_checkbox">
-                                        圃場をRパターンで登録
-                                    </label>
+        <!-- 処理進捗表示 -->
+        <div class="alert alert-info mb-4">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5><i class="fas fa-info-circle"></i> 処理方式について</h5>
+                    <p>各圃場グループを個別に処理することで、異なる所有者の帳簿混在を防ぎます。</p>
+                    <p><strong>処理進捗:</strong> 下記の圃場グループを1つずつ処理してください。</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-primary fs-6">{{ processed_groups }}/{{ total_groups }} 完了</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            {% for group in object_list %}
+                {% if group.measurements.0.land_ledger %}
+                    <!-- 処理済みグループ -->
+                    <div class="col-12 mb-3">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-check-circle"></i>
+                                    処理済み - フォルダ: {{ group.measurements.0.folder }}
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <table class="table table-sm mb-0">
+                                            <thead>
+                                            <tr>
+                                                <th>フォルダ名</th>
+                                                <th>メモリー範囲</th>
+                                                <th>総レコード数</th>
+                                                <th>登録日時</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td><strong>{{ group.folder_name }}</strong></td>
+                                                <td>{{ group.min_memory }}番〜{{ group.max_memory }}番</td>
+                                                <td><span class="badge bg-success">{{ group.count }}</span> レコード
+                                                </td>
+                                                <td>{{ group.measurements.0.set_datetime|date:"Y-m-d H:i" }}</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="mb-1"><strong>関連付け済み帳簿:</strong></p>
+                                        <p class="text-success">
+                                            {{ group.measurements.0.land_ledger.land.company.name }}<br>
+                                            {{ group.measurements.0.land_ledger.land.name }}<br>
+                                            {{ group.measurements.0.land_ledger.sampling_date|date:"Y年m月" }}
+                                        </p>
+                                    </div>
                                 </div>
-                                <button class="btn btn-outline-secondary mb-3" type="submit" name="btn_individual"
-                                        value="{{ measurement.set_memory }}">圃場をRパターン以外で登録
-                                </button>
-                            </td>
-                        {% endif %}
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-            <input type="hidden" name="form_land_ledger" id="selected_land_ledger" value="">
-        </form>
-        <script>
-            const dropdown = document.querySelector('.dropdown select');
-            const hiddenInput = document.getElementById('selected_land_ledger');
-            dropdown.addEventListener('change', (event) => {
-                hiddenInput.value = event.target.value;
-            });
-        </script>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- 未処理グループ -->
+                    <div class="col-12 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    未処理 - フォルダ: {{ group.measurements.0.folder }}
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <table class="table table-sm mb-0">
+                                            <thead>
+                                            <tr>
+                                                <th>フォルダ名</th>
+                                                <th>メモリー範囲</th>
+                                                <th>総レコード数</th>
+                                                <th>登録日時</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td><strong>{{ group.folder_name }}</strong></td>
+                                                <td>{{ group.min_memory }}番〜{{ group.max_memory }}番</td>
+                                                <td><span class="badge bg-primary">{{ group.count }}</span> レコード
+                                                </td>
+                                                <td>{{ group.measurements.0.set_datetime|date:"Y-m-d H:i" }}</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-4 d-flex flex-column justify-content-center">
+                                        <form method="post" class="mb-2">
+                                            {% csrf_token %}
+                                            <button class="btn btn-primary w-100" type="submit"
+                                                    name="btn_process_group"
+                                                    value="{{ group.memory_anchor }}">
+                                                <i class="fas fa-cog"></i> この圃場を処理
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- 完了チェック -->
+        {% if not object_list %}
+            <div class="alert alert-success">
+                <h5><i class="fas fa-check-circle"></i> 全ての処理が完了しました</h5>
+                <p>全ての圃場グループの関連付けが完了しました。</p>
+                <a href="{% url 'soil:hardness_association_success' %}" class="btn btn-success">
+                    <i class="fas fa-arrow-right"></i> 完了画面へ
+                </a>
+            </div>
+        {% endif %}
     </div>
 {% endblock %}
