@@ -1,4 +1,4 @@
-from django.db.models import Count, QuerySet
+from django.db.models import Count, QuerySet, Min, Max
 
 from soil_analysis.models import SoilHardnessMeasurement
 
@@ -45,3 +45,50 @@ class SoilHardnessMeasurementRepository:
             .annotate(cnt=Count("pk"))
             .order_by("folder", "set_memory")
         )
+
+    @staticmethod
+    def get_folder_stats(associated_only: bool = False) -> QuerySet:
+        """
+        フォルダ別の統計情報を取得します
+
+        Args:
+            associated_only: Trueの場合は関連付け済み（land_ledger, land_blockが設定済み）のデータのみを対象とする
+                            Falseの場合は全てのデータを対象とする
+
+        Returns:
+            QuerySet: フォルダ別統計情報（レコード数、メモリ番号範囲、測定日時範囲）
+        """
+        if associated_only:
+            # 関連付け済みデータのみを対象（HardnessAssociationSuccessView用）
+            queryset = SoilHardnessMeasurement.objects.filter(
+                land_ledger__isnull=False, land_block__isnull=False
+            ).select_related(
+                "set_device",
+                "land_block",
+                "land_ledger__land",
+                "land_ledger__crop",
+                "land_ledger__land_period",
+            )
+            return (
+                queryset.values("folder")
+                .annotate(
+                    count=Count("id", distinct=True),
+                    min_datetime=Min("set_datetime"),
+                    max_datetime=Max("set_datetime"),
+                )
+                .order_by("folder")
+            )
+        else:
+            # 全データを対象（HardnessSuccessView用）
+            return (
+                SoilHardnessMeasurement.objects.select_related("set_device")
+                .values("folder")
+                .annotate(
+                    count=Count("id"),
+                    min_memory=Min("set_memory"),
+                    max_memory=Max("set_memory"),
+                    min_datetime=Min("set_datetime"),
+                    max_datetime=Max("set_datetime"),
+                )
+                .order_by("folder")
+            )

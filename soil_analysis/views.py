@@ -263,17 +263,9 @@ class HardnessSuccessView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["import_errors"] = SoilHardnessMeasurementImportErrors.objects.all()
 
-        folder_stats = (
-            SoilHardnessMeasurement.objects.select_related("set_device")
-            .values("folder")
-            .annotate(
-                count=Count("id"),
-                min_memory=Min("set_memory"),
-                max_memory=Max("set_memory"),
-                min_datetime=Min("set_datetime"),
-                max_datetime=Max("set_datetime"),
-            )
-            .order_by("folder")
+        # CSVインポートされた硬度測定データをフォルダ名でグループ化し、各フォルダの統計情報を取得
+        folder_stats = SoilHardnessMeasurementRepository.get_folder_stats(
+            associated_only=False
         )
 
         # 各フォルダで使用された機材名を取得（N+1対策）
@@ -591,23 +583,9 @@ class HardnessAssociationSuccessView(TemplateView):
             land_ledger__isnull=False, land_block__isnull=False
         )
 
-        folder_stats = (
-            associated_measurements.select_related(
-                "set_device",
-                "land_block",
-                "land_ledger__land",
-                "land_ledger__crop",
-                "land_ledger__land_period",
-            )
-            .values("folder")
-            .annotate(
-                count=Count(
-                    "id", distinct=True
-                ),  # 重複を排除してidの実際の数をカウント
-                min_datetime=Min("set_datetime"),
-                max_datetime=Max("set_datetime"),
-            )
-            .order_by("folder")
+        # CSVインポートされた硬度測定データをフォルダ名でグループ化し、各フォルダの統計情報を取得
+        folder_stats = SoilHardnessMeasurementRepository.get_folder_stats(
+            associated_only=True
         )
 
         # 各フォルダで使用された機材名とland_block、land_ledger情報を取得
