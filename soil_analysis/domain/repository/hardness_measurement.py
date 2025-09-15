@@ -148,7 +148,6 @@ class SoilHardnessMeasurementRepository:
     @staticmethod
     def get_processed_groups_count():
         """処理済みフォルダグループ数を取得"""
-        # 各フォルダで少なくとも1レコードがland_ledgerに関連付けられているフォルダ数をカウント
         return (
             SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
             .values("folder")
