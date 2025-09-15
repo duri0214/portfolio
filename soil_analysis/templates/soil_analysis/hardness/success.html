@@ -35,8 +35,70 @@
                 </tbody>
             </table>
         {% else %}
-            <p>アップロードデータに異常はありませんでした！</p>
-            <a class="btn btn-outline-primary mb-3" href="{% url 'soil:hardness_association' %}" role="button">取り込みデータのアサインへ進む</a>
+            <div class="alert alert-success">
+                <h5><i class="fas fa-check-circle"></i> アップロードデータに異常はありませんでした！</h5>
+                <p class="mb-0">総 <strong>{{ total_records }}</strong> レコードを正常に取り込みました。</p>
+            </div>
+
+            <!-- フォルダ別集計情報 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar"></i> 取り込みデータ集計</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th>フォルダ名</th>
+                                <th>レコード数</th>
+                                <th>メモリー範囲</th>
+                                <th>測定期間</th>
+                                <th>使用機材</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for stats in folder_stats %}
+                                <tr>
+                                    <td><strong>{{ stats.folder }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ stats.count }}</span> レコード
+                                    </td>
+                                    <td>{{ stats.min_memory }}番〜{{ stats.max_memory }}番</td>
+                                    <td>
+                                        {{ stats.min_datetime|date:"Y-m-d H:i" }}<br>
+                                        〜 {{ stats.max_datetime|date:"Y-m-d H:i" }}
+                                    </td>
+                                    <td>
+                                        {% if stats.set_device__name %}
+                                            <span class="badge bg-success me-1">{{ stats.set_device__name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">不明</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- データ品質チェックのヒント -->
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="fas fa-info-circle"></i> データ確認のポイント</h6>
+                        <ul class="mb-0">
+                            <li>各フォルダのレコード数が想定と一致しているか確認してください</li>
+                            <li>メモリー範囲に欠番がないか確認してください</li>
+                            <li>測定期間が適切な範囲内であることを確認してください</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <a class="btn btn-primary btn-lg" href="{% url 'soil:hardness_association' %}" role="button">
+                    <i class="fas fa-arrow-right"></i> 取り込みデータのアサインへ進む
+                </a>
+            </div>
         {% endif %}
     </div>
 {% endblock %}

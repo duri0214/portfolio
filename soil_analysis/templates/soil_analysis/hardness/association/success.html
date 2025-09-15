@@ -8,7 +8,7 @@
                 <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
                 <li class="breadcrumb-item"><a href="{% url 'soil:hardness_upload' %}">Upload hardness</a>
                 </li>
-                <li class="breadcrumb-item active" aria-current="page">Upload hardness</li>
+                <li class="breadcrumb-item active" aria-current="page">Upload success</li>
             </ol>
         </nav>
         <h1>Association Successful</h1>
@@ -35,8 +35,154 @@
                 </tbody>
             </table>
         {% else %}
-            <p>関連付けが成功しました！</p>
-            <a class="btn btn-outline-primary mb-3" href="#" role="button">XXXXへ進む</a>
+            <div class="alert alert-success">
+                <h5><i class="fas fa-check-circle"></i> 関連付けデータに異常はありませんでした！</h5>
+                <p class="mb-0">総 <strong>{{ total_records }}</strong> レコードをland_ledgerとland_blockに正常に関連付けしました。
+                </p>
+            </div>
+
+            <!-- 関連付けデータ集計情報 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar"></i> 関連付けデータ集計</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th>フォルダ名</th>
+                                <th>レコード数</th>
+                                <th>関連付けland_block</th>
+                                <th>関連付けland_ledger</th>
+                                <th>測定期間</th>
+                                <th>使用機材</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for stats in folder_stats %}
+                                <tr>
+                                    <td><strong>{{ stats.folder }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ stats.count }}</span> レコード
+                                    </td>
+                                    <td>
+                                        {% for block_name in stats.land_block_names %}
+                                            <span class="badge bg-info me-1">{{ block_name }}</span>
+                                        {% empty %}
+                                            <span class="text-muted">未関連付け</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% for ledger_info in stats.land_ledger_info %}
+                                            <small class="d-block">{{ ledger_info.land_name }}
+                                                ({{ ledger_info.sampling_date|date:"Y-m-d" }})</small>
+                                        {% empty %}
+                                            <span class="text-muted">未関連付け</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {{ stats.min_datetime|date:"Y-m-d H:i" }}<br>
+                                        〜 {{ stats.max_datetime|date:"Y-m-d H:i" }}
+                                    </td>
+                                    <td>
+                                        {% for device_name in stats.device_names %}
+                                            <span class="badge bg-success me-1">{{ device_name }}</span>
+                                        {% empty %}
+                                            <span class="text-muted">不明</span>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Land Block別集計 -->
+                    {% if land_block_stats %}
+                        <div class="mt-4">
+                            <h6><i class="fas fa-map"></i> Land Block別集計</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Block名</th>
+                                        <th>関連付けレコード数</th>
+                                        <th>設定深度</th>
+                                        <th>圧力範囲</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for block_stat in land_block_stats %}
+                                        <tr>
+                                            <td><strong>{{ block_stat.land_block_name }}</strong></td>
+                                            <td><span class="badge bg-secondary">{{ block_stat.count }}</span></td>
+                                            <td>{{ block_stat.set_depth }}cm</td>
+                                            <td>{{ block_stat.min_pressure }}〜{{ block_stat.max_pressure }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Land Ledger別集計 -->
+                    {% if land_ledger_stats %}
+                        <div class="mt-4">
+                            <h6><i class="fas fa-book"></i> Land Ledger別集計</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>圃場名</th>
+                                        <th>採土日</th>
+                                        <th>作物</th>
+                                        <th>関連付けレコード数</th>
+                                        <th>測定データ概要</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for ledger_stat in land_ledger_stats %}
+                                        <tr>
+                                            <td><strong>{{ ledger_stat.land_name }}</strong></td>
+                                            <td>{{ ledger_stat.sampling_date|date:"Y-m-d" }}</td>
+                                            <td>{{ ledger_stat.crop_name }}</td>
+                                            <td><span class="badge bg-secondary">{{ ledger_stat.count }}</span></td>
+                                            <td>
+                                                <small>
+                                                    期間: {{ ledger_stat.period_name }}
+                                                </small>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- データ品質チェックのヒント -->
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="fas fa-info-circle"></i> 関連付けデータ確認のポイント</h6>
+                        <ul class="mb-0">
+                            <li>各フォルダのレコードが適切なland_blockに関連付けられているか確認してください</li>
+                            <li>land_ledgerとの関連付けが正しい採土日・圃場と一致しているか確認してください</li>
+                            <li>測定期間と採土日が整合性を保っているか確認してください</li>
+                            <li>未関連付けデータがないか確認してください</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <a class="btn btn-primary btn-lg" href="{% url 'soil:home' %}" role="button">
+                    <i class="fas fa-home"></i> ホームに戻る
+                </a>
+                <a class="btn btn-outline-secondary btn-lg ms-2" href="{% url 'soil:hardness_upload' %}" role="button">
+                    <i class="fas fa-upload"></i> 新しいデータをアップロード
+                </a>
+            </div>
         {% endif %}
     </div>
 {% endblock %}
