@@ -154,3 +154,89 @@ class SoilHardnessMeasurementRepository:
             .distinct()
             .count()
         )
+
+    @staticmethod
+    def get_folder_groups_for_association():
+        """関連付け用のフォルダグループを取得
+
+        各フォルダの代表データと統計情報を含む構造化されたデータを返します。
+        HardnessAssociationViewで使用するためのメソッドです。
+
+        Returns:
+            list: フォルダグループ情報のリスト。例：
+                [
+                    {
+                        "memory_anchor": 1,
+                        "measurements": [<SoilHardnessMeasurement: 1>],
+                        "folder_name": "静岡ススムA1_20230701",
+                        "count": 150,
+                        "min_memory": 1,
+                        "max_memory": 5
+                    },
+                    {
+                        "memory_anchor": 6,
+                        "measurements": [<SoilHardnessMeasurement: 6>],
+                        "folder_name": "静岡ススムA2_20230701",
+                        "count": 120,
+                        "min_memory": 6,
+                        "max_memory": 9
+                    }
+                ]
+        """
+        # フォルダ単位でグループ化されたデータを取得
+        folder_groups = (
+            SoilHardnessMeasurement.objects.filter(land_block__isnull=True)
+            .values("folder")
+            .distinct()
+        )
+
+        # テンプレート用に構造を変換
+        result = []
+        for folder_group in folder_groups:
+            folder_name = folder_group["folder"]
+
+            # 該当フォルダのレコード数を取得
+            total_count = SoilHardnessMeasurement.objects.filter(
+                folder=folder_name, land_block__isnull=True
+            ).count()
+
+            # 代表データとして最初の1レコードのみを取得
+            representative_measurement = (
+                SoilHardnessMeasurement.objects.filter(
+                    folder=folder_name, land_block__isnull=True
+                )
+                .order_by("set_memory", "depth")
+                .first()
+            )
+
+            if representative_measurement:
+                # メモリー番号の範囲を計算
+                memory_numbers = list(
+                    SoilHardnessMeasurement.objects.filter(
+                        folder=folder_name, land_block__isnull=True
+                    )
+                    .values_list("set_memory", flat=True)
+                    .distinct()
+                )
+                min_memory = (
+                    min(memory_numbers)
+                    if memory_numbers
+                    else representative_measurement.set_memory
+                )
+                max_memory = (
+                    max(memory_numbers)
+                    if memory_numbers
+                    else representative_measurement.set_memory
+                )
+
+                group = {
+                    "memory_anchor": representative_measurement.set_memory,
+                    "measurements": [representative_measurement],  # 代表データ1件のみ
+                    "folder_name": folder_name,
+                    "count": total_count,
+                    "min_memory": min_memory,
+                    "max_memory": max_memory,
+                }
+                result.append(group)
+
+        return result
