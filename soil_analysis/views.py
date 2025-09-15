@@ -328,18 +328,6 @@ class HardnessAssociationView(ListView):
 
         return HttpResponseRedirect(reverse("soil:hardness_association"))
 
-    @staticmethod
-    def _find_next_unprocessed_group():
-        """次の未処理圃場グループのメモリーアンカーを探す"""
-        grouped_measurements = SoilHardnessMeasurementRepository.group_measurements()
-        for group in grouped_measurements:
-            if (
-                group.get("measurements")
-                and group["measurements"][0].land_ledger is None
-            ):
-                return group.get("memory_anchor")
-        return None
-
 
 class HardnessAssociationFieldGroupView(ListView):
     """
