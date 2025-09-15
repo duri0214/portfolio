@@ -453,6 +453,7 @@ class HardnessAssociationSuccessView(TemplateView):
     template_name = "soil_analysis/hardness/association/success.html"
 
     def get_context_data(self, **kwargs):
+        # TODO: repositoryにもってってスッキリできそう
         context = super().get_context_data(**kwargs)
         context["import_errors"] = SoilHardnessMeasurementImportErrors.objects.all()
 
