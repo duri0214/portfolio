@@ -70,11 +70,11 @@
                                         〜 {{ stats.max_datetime|date:"Y-m-d H:i" }}
                                     </td>
                                     <td>
-                                        {% for device_name in stats.device_names %}
-                                            <span class="badge bg-success me-1">{{ device_name }}</span>
-                                        {% empty %}
+                                        {% if stats.device_name %}
+                                            <span class="badge bg-success me-1">{{ stats.device_name }}</span>
+                                        {% else %}
                                             <span class="text-muted">不明</span>
-                                        {% endfor %}
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}

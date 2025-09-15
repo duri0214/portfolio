@@ -268,15 +268,7 @@ class HardnessSuccessView(TemplateView):
             associated_only=False
         )
 
-        # テンプレート用にdevice_namesリストを追加
-        folder_stats_with_devices = []
-        for stats in folder_stats:
-            stats_dict = dict(stats)
-            device_name = stats_dict.get("set_device__name")
-            stats_dict["device_names"] = [device_name] if device_name else []
-            folder_stats_with_devices.append(stats_dict)
-
-        context["folder_stats"] = folder_stats_with_devices
+        context["folder_stats"] = folder_stats
         context["total_records"] = SoilHardnessMeasurement.objects.count()
 
         return context
@@ -350,17 +342,12 @@ class HardnessAssociationView(ListView):
         context["land_ledgers"] = LandLedger.objects.all().order_by("pk")
 
         # 進捗情報を追加
-        total_groups = (
-            SoilHardnessMeasurement.objects.values("folder").distinct().count()
+        context["total_groups"] = (
+            SoilHardnessMeasurementRepository.get_total_groups_count()
         )
-        processed_groups = (
-            SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
-            .values("folder")
-            .distinct()
-            .count()
+        context["processed_groups"] = (
+            SoilHardnessMeasurementRepository.get_processed_groups_count()
         )
-        context["total_groups"] = total_groups
-        context["processed_groups"] = processed_groups
 
         return context
 
@@ -374,8 +361,8 @@ class HardnessAssociationView(ListView):
 
         # 圃場グループ処理ボタンが押された場合（この圃場を処理ボタン）
         if "btn_process_group" in request.POST:
+            memory_anchor_str = request.POST.get("btn_process_group")
             try:
-                memory_anchor_str = request.POST.get("btn_process_group")
                 if not memory_anchor_str:
                     messages.error(request, "メモリーアンカーが指定されていません")
                     return HttpResponseRedirect(reverse("soil:hardness_association"))
@@ -388,8 +375,10 @@ class HardnessAssociationView(ListView):
                     )
                 )
             except (ValueError, TypeError) as e:
+                # memory_anchor_strが未定義の可能性があるため、エラー変数を使用
                 messages.error(
-                    request, f"無効なメモリーアンカーです: {memory_anchor_str}"
+                    request,
+                    f"無効なメモリーアンカーです: {memory_anchor_str if 'memory_anchor_str' in locals() else 'unknown'}",
                 )
                 return HttpResponseRedirect(reverse("soil:hardness_association"))
 
@@ -461,7 +450,9 @@ class HardnessAssociationFieldGroupView(ListView):
             min_memory = max_memory = memory_anchor
 
         # フォルダ名に基づいて適切な帳簿のみを表示
-        suitable_ledgers = self._get_suitable_ledgers(folder_name)
+        suitable_ledgers = SoilHardnessMeasurementRepository.get_suitable_ledgers(
+            folder_name
+        )
 
         context.update(
             {
@@ -470,42 +461,14 @@ class HardnessAssociationFieldGroupView(ListView):
                 "max_memory": max_memory,
                 "folder_name": folder_name,
                 "land_ledgers": suitable_ledgers,
-                "total_groups": self._get_total_groups_count(),
-                "processed_groups": self._get_processed_groups_count(),
+                "total_groups": SoilHardnessMeasurementRepository.get_total_groups_count(),
+                "processed_groups": SoilHardnessMeasurementRepository.get_processed_groups_count(),
             }
         )
         return context
 
-    def _get_suitable_ledgers(self, folder_name):
-        """フォルダ名に基づいて適切な帳簿を取得"""
-        # フォルダ名から会社名や圃場名を推定して適切な帳簿を絞り込み
-        if folder_name:
-            # フォルダ名に含まれるキーワードで圃場を検索
-            lands = Land.objects.filter(name__icontains=folder_name.split("_")[0])
-            if lands.exists():
-                company = lands.first().company
-                return LandLedger.objects.filter(land__company=company).distinct()
-
-        # 該当なしの場合は全帳簿を返す
-        return LandLedger.objects.all().order_by("pk")
-
-    def _get_total_groups_count(self):
-        """総フォルダグループ数を取得"""
-        return SoilHardnessMeasurement.objects.values("folder").distinct().count()
-
-    def _get_processed_groups_count(self):
-        """処理済みフォルダグループ数を取得"""
-        # 各フォルダで少なくとも1レコードがland_ledgerに関連付けられているフォルダ数をカウント
-        processed_folders = (
-            SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
-            .values("folder")
-            .distinct()
-        )
-        return processed_folders.count()
-
     def post(self, request, **kwargs):
         """圃場グループの帳簿選択処理"""
-        memory_anchor = self.kwargs.get("memory_anchor")
         form_land_ledger_id = int(request.POST.get("land_ledger"))
 
         land_ledger = LandLedger.objects.filter(pk=form_land_ledger_id).first()
@@ -518,11 +481,6 @@ class HardnessAssociationFieldGroupView(ListView):
         if not measurements:
             messages.error(request, "処理対象のデータが見つかりません")
             return HttpResponseRedirect(reverse("soil:hardness_association"))
-
-        blocks = SamplingOrder.objects.filter(
-            sampling_method=land_ledger.sampling_method
-        ).count()
-        total_sampling_times = blocks * SAMPLING_TIMES_PER_BLOCK
 
         # フォルダ全体のデータを処理対象とする
         hardness_measurements = measurements
@@ -616,7 +574,20 @@ class HardnessAssociationSuccessView(TemplateView):
         for folder in folder_blocks:
             folder_blocks[folder].sort()
 
-            # land_ledger情報
+        # land_ledger情報を収集
+        for measurement in (
+            associated_measurements.select_related(
+                "set_device", "land_block", "land_ledger__land", "land_ledger__crop"
+            )
+            .values(
+                "folder",
+                "land_ledger__land__name",
+                "land_ledger__sampling_date",
+                "land_ledger__crop__name",
+            )
+            .distinct()
+        ):
+            folder = measurement["folder"]
             if folder not in folder_ledgers:
                 folder_ledgers[folder] = []
             ledger_info = {

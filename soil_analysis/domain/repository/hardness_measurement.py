@@ -1,6 +1,6 @@
 from django.db.models import Count, QuerySet, Min, Max
 
-from soil_analysis.models import SoilHardnessMeasurement
+from soil_analysis.models import SoilHardnessMeasurement, Land, LandLedger
 
 
 class SoilHardnessMeasurementRepository:
@@ -47,7 +47,7 @@ class SoilHardnessMeasurementRepository:
         )
 
     @staticmethod
-    def get_folder_stats(associated_only: bool = False) -> QuerySet:
+    def get_folder_stats(associated_only: bool = False) -> list:
         """
         フォルダ別の統計情報を取得します
 
@@ -55,7 +55,7 @@ class SoilHardnessMeasurementRepository:
         [
             {
                 "folder": "folder_A",
-                "set_device__name": "DIK-5531",
+                "device_name": "DIK-5531",
                 "count": 100,
                 "min_memory": 1,
                 "max_memory": 5,
@@ -64,7 +64,7 @@ class SoilHardnessMeasurementRepository:
             },
             {
                 "folder": "folder_B",
-                "set_device__name": "DIK-5532",
+                "device_name": "DIK-5532",
                 "count": 50,
                 "min_memory": 6,
                 "max_memory": 8,
@@ -103,7 +103,7 @@ class SoilHardnessMeasurementRepository:
             count_field = Count("id")
 
         # 共通の集計処理
-        return (
+        folder_stats = (
             queryset.values("folder", "set_device__name")
             .annotate(
                 count=count_field,
@@ -113,4 +113,45 @@ class SoilHardnessMeasurementRepository:
                 max_datetime=Max("set_datetime"),
             )
             .order_by("folder")
+        )
+
+        # テンプレート用にフィールド名を調整
+        result = []
+        for stats in folder_stats:
+            stats_dict = dict(stats)
+            # set_device__nameをdevice_nameにリネーム
+            stats_dict["device_name"] = (
+                stats_dict.pop("set_device__name", None) or "不明"
+            )
+            result.append(stats_dict)
+
+        return result
+
+    @staticmethod
+    def get_suitable_ledgers(folder_name: str):
+        """フォルダ名に基づいて適切な帳簿を取得"""
+        if folder_name:
+            # フォルダ名に含まれるキーワードで圃場を検索
+            lands = Land.objects.filter(name__icontains=folder_name.split("_")[0])
+            if lands.exists():
+                company = lands.first().company
+                return LandLedger.objects.filter(land__company=company).distinct()
+
+        # 該当なしの場合は全帳簿を返す
+        return LandLedger.objects.all().order_by("pk")
+
+    @staticmethod
+    def get_total_groups_count():
+        """総フォルダグループ数を取得"""
+        return SoilHardnessMeasurement.objects.values("folder").distinct().count()
+
+    @staticmethod
+    def get_processed_groups_count():
+        """処理済みフォルダグループ数を取得"""
+        # 各フォルダで少なくとも1レコードがland_ledgerに関連付けられているフォルダ数をカウント
+        return (
+            SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
+            .values("folder")
+            .distinct()
+            .count()
         )
