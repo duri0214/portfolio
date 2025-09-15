@@ -1,8 +1,10 @@
+import os
 import zipfile
 from pathlib import Path
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
+from django.http import HttpResponse
 
 
 class ZipFileService:
@@ -52,6 +54,31 @@ class ZipFileService:
         for zip_file in zip_files:
             with zipfile.ZipFile(str(zip_file), "r") as zip_f:
                 zip_f.extractall(str(target_dir_path))
+
+    @staticmethod
+    def create_zip_download(
+        folder_path: str, filename: str = "download.zip"
+    ) -> HttpResponse:
+        """
+        フォルダをZIP化してダウンロードレスポンスを作成
+        """
+        import io
+
+        # メモリ上でZIPファイルを作成
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(folder_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arc_name = os.path.relpath(file_path, folder_path)
+                    zipf.write(file_path, arc_name)
+
+        # HTTPレスポンスを作成
+        response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        return response
 
     @staticmethod
     def _convert_to_cp932(folder_name: str) -> str:

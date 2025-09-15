@@ -107,6 +107,9 @@ class Command(BaseCommand):
             "※このディレクトリは一時的なものです。必要に応じてファイルをコピーしてください。"
         )
 
+        # 出力パスを返す（プログラムからの呼び出し用）
+        return str(csv_output_path)
+
     @staticmethod
     def _generate_csv_file(filepath, memory_no, date_str):
         """

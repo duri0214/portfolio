@@ -9,11 +9,127 @@
             </ol>
         </nav>
         <h1>土壌硬度データのアップロード</h1>
-        <p>取り込みCSV フォルダをzip化してアップロードしてください</p>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button class="btn btn-outline-primary mb-3" type="submit">Upload</button>
-        </form>
+
+        <!-- 既存のアップロード機能 -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h3>CSVファイルアップロード</h3>
+                <p class="text-muted">取り込みCSV フォルダをzip化してアップロードしてください</p>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-upload"></i> アップロード
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- 開発・テスト用機能 -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">
+                            <i class="bi bi-file-earmark-plus"></i> テスト用CSV生成
+                        </h5>
+                        <p class="card-text text-muted">
+                            開発・テスト用のサンプルCSVデータを生成してダウンロードできます。
+                            <br><small>※指定した圃場数分のテストデータが生成されます</small>
+                        </p>
+                        <form method="post" action="{% url 'soil:hardness_generate_csv' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ csv_generate_form.num_fields.label_tag }}
+                                {{ csv_generate_form.num_fields }}
+                                {% if csv_generate_form.num_fields.help_text %}
+                                    <div class="form-text">{{ csv_generate_form.num_fields.help_text }}</div>
+                                {% endif %}
+                                {% if csv_generate_form.num_fields.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in csv_generate_form.num_fields.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-download"></i> テスト用CSV生成・ダウンロード
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <div class="card border-danger">
+                    <div class="card-body">
+                        <h5 class="card-title text-danger">
+                            <i class="bi bi-trash"></i> 全データ削除
+                        </h5>
+                        <p class="card-text text-muted">
+                            SoilHardnessMeasurementテーブルの全レコードを削除します。
+                            <br><small class="text-danger">※この操作は取り消すことができません</small>
+                        </p>
+                        <button type="button" class="btn btn-danger" onclick="confirmDeleteAll()">
+                            <i class="bi bi-exclamation-triangle"></i> 全データ削除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 説明セクション -->
+        <div class="alert alert-info mt-4" role="alert">
+            <h6><i class="bi bi-info-circle"></i> 機能説明</h6>
+            <ul class="mb-0">
+                <li><strong>アップロード:</strong> 実際の計測データのZIPファイルをアップロードしてデータベースに取り込みます
+                </li>
+                <li><strong>CSV生成:</strong> テスト用のサンプルデータを生成してダウンロードできます（開発・テスト用）
+                </li>
+                <li><strong>全削除:</strong> データベース内の全ての硬度測定データを削除します（開発・テスト用）</li>
+            </ul>
+        </div>
     </div>
+
+    <!-- 削除確認モーダル -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteConfirmModalLabel">
+                        <i class="bi bi-exclamation-triangle"></i> 全消し注意
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger" role="alert">
+                        <strong>警告:</strong> この操作により、SoilHardnessMeasurementテーブルの全データが完全に削除されます。
+                    </div>
+                    <p>この操作は取り消すことができません。本当に実行しますか？</p>
+                    <p class="text-muted">削除を実行する場合は「削除実行」ボタンをクリックしてください。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <form method="post" action="{% url 'soil:hardness_delete_all' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> 削除実行
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmDeleteAll() {
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            deleteModal.show();
+        }
+    </script>
 {% endblock %}

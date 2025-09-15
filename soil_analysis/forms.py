@@ -128,3 +128,21 @@ class UploadForm(forms.Form):
     file = forms.FileField(
         widget=ClearableFileInput(attrs={"class": "form-control", "tabindex": "1"})
     )
+
+
+class CsvGenerateForm(forms.Form):
+    num_fields = forms.IntegerField(
+        label="生成する圃場数",
+        min_value=1,
+        max_value=16,
+        initial=3,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "1-16の範囲で入力してください",
+                "min": "1",
+                "max": "16",
+            }
+        ),
+        help_text="1〜16圃場まで指定可能です（計測器の制約により最大16圃場）",
+    )
