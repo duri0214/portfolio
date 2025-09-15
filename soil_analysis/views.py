@@ -10,6 +10,7 @@ from django.db.models import Prefetch, Count, Min, Max
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import (
     ListView,
@@ -501,17 +502,20 @@ class HardnessAssociationFieldGroupView(ListView):
 
         needle = 0
         land_block_count = land_block_orders.count()
+        current_time = timezone.now()
+
         for i, hardness_measurement in enumerate(hardness_measurements):
             if needle < land_block_count:
                 hardness_measurement.land_block = land_block_orders[needle].land_block
             hardness_measurement.land_ledger = land_ledger
+            hardness_measurement.updated_at = current_time
 
             # records_per_blockごとにneedleを進める
             if (i + 1) % records_per_block == 0:
                 needle += 1
 
         SoilHardnessMeasurement.objects.bulk_update(
-            hardness_measurements, fields=["land_block", "land_ledger"]
+            hardness_measurements, fields=["land_block", "land_ledger", "updated_at"]
         )
 
         messages.success(
