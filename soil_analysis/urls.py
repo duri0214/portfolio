@@ -51,6 +51,16 @@ urlpatterns = [
         name="hardness_upload",
     ),
     path(
+        "hardness/delete_all",
+        views.HardnessDeleteAllView.as_view(),
+        name="hardness_delete_all",
+    ),
+    path(
+        "hardness/generate_csv",
+        views.HardnessGenerateCsvView.as_view(),
+        name="hardness_generate_csv",
+    ),
+    path(
         "hardness/success",
         views.HardnessSuccessView.as_view(),
         name="hardness_success",

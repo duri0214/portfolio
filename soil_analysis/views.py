@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from pathlib import Path
 
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
@@ -30,7 +31,12 @@ from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
-from soil_analysis.forms import CompanyCreateForm, LandCreateForm, UploadForm
+from soil_analysis.forms import (
+    CompanyCreateForm,
+    LandCreateForm,
+    UploadForm,
+    CsvGenerateForm,
+)
 from soil_analysis.models import (
     Company,
     Land,
@@ -238,6 +244,11 @@ class HardnessUploadView(FormView):
     form_class = UploadForm
     success_url = reverse_lazy("soil:hardness_success")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["csv_generate_form"] = CsvGenerateForm()
+        return context
+
     def form_valid(self, form):
         # Zipを処理してバッチ実行
         app_name = self.request.resolver_match.app_name
@@ -254,6 +265,69 @@ class HardnessUploadView(FormView):
                 pass
 
         return super().form_valid(form)
+
+
+class HardnessDeleteAllView(View):
+    """
+    SoilHardnessMeasurementテーブルの全データ削除
+    開発・テスト環境での使用を想定
+    """
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        try:
+            # 削除前のレコード数を取得
+            count = SoilHardnessMeasurement.objects.count()
+
+            # 全データ削除
+            SoilHardnessMeasurement.objects.all().delete()
+
+            messages.success(
+                request,
+                f"SoilHardnessMeasurementテーブルの全データ（{count}件）を削除しました。",
+            )
+        except Exception as e:
+            messages.error(request, f"削除中にエラーが発生しました: {str(e)}")
+
+        return HttpResponseRedirect(reverse("soil:hardness_upload"))
+
+
+class HardnessGenerateCsvView(View):
+    """
+    テスト用CSVを生成してZIPファイルでダウンロード提供
+    """
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        try:
+            num_fields = int(request.POST.get("num_fields", 3))
+
+            if num_fields < 1 or num_fields > 16:
+                messages.error(request, "圃場数は1〜16の範囲で指定してください。")
+                return HttpResponseRedirect(reverse("soil:hardness_upload"))
+
+            # CSVを生成して出力パスを取得
+            csv_output_path = call_command(
+                "generate_soil_hardness_csv", f"--num_fields={num_fields}"
+            )
+
+            if csv_output_path and os.path.exists(csv_output_path):
+                # ZIP化してダウンロード
+                response = ZipFileService.create_zip_download(
+                    csv_output_path, "取り込みCSV.zip"
+                )
+
+                # 一時ディレクトリを削除
+                shutil.rmtree(Path(csv_output_path).parent)
+
+                return response
+            else:
+                messages.error(request, "CSV生成に失敗しました。")
+                return HttpResponseRedirect(reverse("soil:hardness_upload"))
+
+        except Exception as e:
+            messages.error(request, f"CSV生成中にエラーが発生しました: {str(e)}")
+            return HttpResponseRedirect(reverse("soil:hardness_upload"))
 
 
 class HardnessSuccessView(TemplateView):
