@@ -268,25 +268,13 @@ class HardnessSuccessView(TemplateView):
             associated_only=False
         )
 
-        # 各フォルダで使用された機材名を取得（N+1対策）
-        folder_devices = {}
-        for measurement in (
-            SoilHardnessMeasurement.objects.select_related("set_device")
-            .values("folder", "set_device__name")
-            .distinct()
-        ):
-            folder = measurement["folder"]
-            device_name = measurement["set_device__name"]
-            if folder not in folder_devices:
-                folder_devices[folder] = []
-            if device_name not in folder_devices[folder]:
-                folder_devices[folder].append(device_name)
-
-        # folder_statsに機材情報を追加
+        # テンプレート用にdevice_namesリストを追加
         folder_stats_with_devices = []
         for stats in folder_stats:
-            stats["device_names"] = folder_devices.get(stats["folder"], [])
-            folder_stats_with_devices.append(stats)
+            stats_dict = dict(stats)
+            device_name = stats_dict.get("set_device__name")
+            stats_dict["device_names"] = [device_name] if device_name else []
+            folder_stats_with_devices.append(stats_dict)
 
         context["folder_stats"] = folder_stats_with_devices
         context["total_records"] = SoilHardnessMeasurement.objects.count()
