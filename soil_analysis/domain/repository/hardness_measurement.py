@@ -73,17 +73,7 @@ class SoilHardnessMeasurementRepository:
             .order_by("folder")
         )
 
-        # テンプレート用にフィールド名を調整
-        result = []
-        for stats in folder_stats:
-            stats_dict = dict(stats)
-            # set_device__nameをdevice_nameにリネーム
-            stats_dict["device_name"] = (
-                stats_dict.pop("set_device__name", None) or "不明"
-            )
-            result.append(stats_dict)
-
-        return result
+        return list(folder_stats)
 
     @staticmethod
     def get_suitable_ledgers(folder_name: str):

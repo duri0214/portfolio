@@ -70,8 +70,8 @@
                                         〜 {{ stats.max_datetime|date:"Y-m-d H:i" }}
                                     </td>
                                     <td>
-                                        {% if stats.device_name %}
-                                            <span class="badge bg-success me-1">{{ stats.device_name }}</span>
+                                        {% if stats.set_device__name %}
+                                            <span class="badge bg-success me-1">{{ stats.set_device__name }}</span>
                                         {% else %}
                                             <span class="text-muted">不明</span>
                                         {% endif %}
