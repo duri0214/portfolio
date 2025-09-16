@@ -59,7 +59,7 @@
                                 SHOPPING
                             </option>
                             <option value="{% url 'ren:index' %}"
-                                    {% if request.path == '/rental_shop/' %}selected{% endif %}>RENTAL_SHOP
+                                    {% if request.path == '/rental_shop/' %}selected{% endif %}>RENTAL SHOP
                             </option>
                             <option value="{% url 'txo:index' %}"
                                     {% if request.path == '/taxonomy/' %}selected{% endif %}{% if request.path == '/taxonomy/observation/' %}selected{% endif %}>
@@ -77,15 +77,15 @@
                             </option>
                             <option value="{% url 'llm:index' %}"
                                     {% if request.path == '/llm_chat/' %}selected{% endif %}>
-                                LLM_CHAT
+                                LLM CHAT
                             </option>
                             <option value="{% url 'agt:index' %}"
                                     {% if request.path == '/ai_agent/' %}selected{% endif %}>
-                                AI_AGENT
+                                AI AGENT
                             </option>
                             <option value="{% url 'jpn:index' %}"
                                     {% if request.path == '/jp_stocks/' %}selected{% endif %}>
-                                JP_STOCKS
+                                JP STOCKS
                             </option>
                             <option value="{% url 'welf:index' %}"
                                     {% if request.path == '/welfare_services/' %}selected{% endif %}>
