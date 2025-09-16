@@ -1,7 +1,17 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.forms import ClearableFileInput
 
-from .models import Company, Land, JmaPrefecture, JmaCity
+from .models import (
+    Company,
+    Land,
+    JmaPrefecture,
+    JmaCity,
+    LandLedger,
+    SamplingMethod,
+)
+
+User = get_user_model()
 
 
 class CompanyCreateForm(forms.ModelForm):
@@ -146,3 +156,87 @@ class CsvGenerateForm(forms.Form):
         ),
         help_text="1〜16圃場まで指定可能です（計測器の制約により最大16圃場）",
     )
+
+
+class LandLedgerCreateForm(forms.ModelForm):
+    """
+    帳簿（LandLedger）の新規作成フォーム
+    Field Group画面から直接新規帳簿を作成する際に使用
+    """
+
+    class Meta:
+        model = LandLedger
+        fields = [
+            "sampling_date",
+            "land",
+            "crop",
+            "land_period",
+            "sampling_method",
+            "analytical_agency",
+            "sampling_staff",
+        ]
+        widgets = {
+            "sampling_date": forms.DateInput(
+                attrs={"class": "form-control", "type": "date", "tabindex": "1"}
+            ),
+            "land": forms.Select(attrs={"class": "form-select", "tabindex": "2"}),
+            "crop": forms.Select(attrs={"class": "form-select", "tabindex": "3"}),
+            "land_period": forms.Select(
+                attrs={"class": "form-select", "tabindex": "4"}
+            ),
+            "sampling_method": forms.Select(
+                attrs={"class": "form-select", "tabindex": "5"}
+            ),
+            "analytical_agency": forms.Select(
+                attrs={"class": "form-select", "tabindex": "6"}
+            ),
+            "sampling_staff": forms.Select(
+                attrs={"class": "form-select", "tabindex": "7"}
+            ),
+        }
+        labels = {
+            "sampling_date": "採土日*",
+            "land": "圃場*",
+            "crop": "作物*",
+            "land_period": "時期*",
+            "sampling_method": "採土法*",
+            "analytical_agency": "分析機関*",
+            "sampling_staff": "採土者*",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # 必須フィールドのスタイル設定
+        for field_name in self.fields:
+            field = self.fields[field_name]
+            if field.required:
+                field.widget.attrs["required"] = True
+
+        # デフォルトで5点法を選択状態にする
+        try:
+            default_sampling_method = SamplingMethod.objects.filter(
+                name__icontains="5点法"
+            ).first()
+            if default_sampling_method:
+                self.fields["sampling_method"].initial = default_sampling_method.id
+        except SamplingMethod.DoesNotExist:
+            pass
+
+    def clean(self):
+        cleaned_data = super().clean()
+        land = cleaned_data.get("land")
+        land_period = cleaned_data.get("land_period")
+
+        # 同一圃場・同一時期の帳簿が既に存在するかチェック
+        if land and land_period:
+            existing_ledger = LandLedger.objects.filter(
+                land=land, land_period=land_period
+            ).first()
+
+            if existing_ledger:
+                raise forms.ValidationError(
+                    f"圃場「{land.name}」の{land_period.year}年{land_period.name}の帳簿は既に存在します。"
+                )
+
+        return cleaned_data

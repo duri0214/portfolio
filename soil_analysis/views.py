@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.db.models import Prefetch, Count, Min, Max
@@ -37,6 +38,7 @@ from soil_analysis.forms import (
     LandCreateForm,
     UploadForm,
     CsvGenerateForm,
+    LandLedgerCreateForm,
 )
 from soil_analysis.models import (
     Company,
@@ -53,6 +55,9 @@ from soil_analysis.models import (
     JmaPrefecture,
     JmaWeather,
     JmaWarning,
+    Crop,
+    LandPeriod,
+    SamplingMethod,
 )
 
 SAMPLING_TIMES_PER_BLOCK = 5
@@ -238,6 +243,154 @@ class LandReportChemicalListView(ListView):
         context["land_review"] = LandReview.objects.filter(land_ledger=land_ledger)
 
         return context
+
+
+class LandLedgerCreateAjaxView(View):
+    """
+    帳簿（LandLedger）の新規作成Ajax処理
+    Field Group画面から直接新規帳簿を作成する際に使用
+    """
+
+    @staticmethod
+    def post(request):
+        form = LandLedgerCreateForm(request.POST)
+
+        if form.is_valid():
+            try:
+                # 新規帳簿を作成
+                land_ledger = form.save()
+
+                # 成功レスポンス
+                response_data = {
+                    "success": True,
+                    "message": f"帳簿「{land_ledger.land.name} - {land_ledger.land_period.year} {land_ledger.land_period.name}」を作成しました。",
+                    "land_ledger": {
+                        "id": land_ledger.id,
+                        "display_name": f"{land_ledger.land.company.name} - {land_ledger.land.name} ({land_ledger.land_period.year} {land_ledger.land_period.name})",
+                    },
+                }
+
+                return JsonResponse(response_data)
+
+            except Exception as e:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": f"帳簿の作成中にエラーが発生しました: {str(e)}",
+                    },
+                    status=500,
+                )
+
+        else:
+            # フォームバリデーションエラー
+            errors = []
+            for field, error_list in form.errors.items():
+                field_label = form.fields[field].label or field
+                for error in error_list:
+                    errors.append(f"{field_label}: {error}")
+
+            return JsonResponse(
+                {"success": False, "message": "エラー：\n" + "\n".join(errors)},
+                status=400,
+            )
+
+    def get(self, request):
+        """
+        フォーム表示用データをAjaxで取得
+        フォルダ名から圃場を推定する処理も含む
+        """
+        folder_name = request.GET.get("folder_name", "")
+
+        # フォーム初期化
+        form = LandLedgerCreateForm()
+
+        # 圃場の選択肢を取得し、フォルダ名から推定
+        lands = (
+            Land.objects.all()
+            .select_related("company")
+            .order_by("company__name", "name")
+        )
+        suggested_land = None
+
+        if folder_name:
+            # フォルダ名から圃場を推定（部分一致）
+            for land in lands:
+                if (
+                    land.name.lower() in folder_name.lower()
+                    or folder_name.lower() in land.name.lower()
+                ):
+                    suggested_land = land
+                    break
+
+        # フォルダ名からSoilHardnessMeasurementの最新set_datetimeを取得
+        suggested_sampling_date = None
+        if folder_name:
+            latest_measurement = (
+                SoilHardnessMeasurement.objects.filter(folder=folder_name)
+                .order_by("-set_datetime")
+                .first()
+            )
+
+            if latest_measurement:
+                suggested_sampling_date = latest_measurement.set_datetime.date()
+
+        # 各選択肢のデータを構築
+        response_data = {
+            "form_html": self._render_form_fields(form),
+            "lands": [
+                {
+                    "id": land.id,
+                    "name": f"{land.company.name} - {land.name}",
+                    "selected": (
+                        land.id == suggested_land.id if suggested_land else False
+                    ),
+                }
+                for land in lands
+            ],
+            "crops": [
+                {"id": crop.id, "name": crop.name} for crop in Crop.objects.all()
+            ],
+            "land_periods": [
+                {"id": period.id, "name": f"{period.year} {period.name}"}
+                for period in LandPeriod.objects.all().order_by("-year", "name")
+            ],
+            "sampling_methods": [
+                {
+                    "id": method.id,
+                    "name": method.name,
+                    "selected": "5点法" in method.name,
+                }
+                for method in SamplingMethod.objects.all()
+            ],
+            "analytical_agencies": [
+                {"id": company.id, "name": company.name}
+                for company in Company.objects.filter(category_id=2)
+            ],
+            "sampling_staff": [
+                {"id": user.id, "name": user.username}
+                for user in get_user_model().objects.all()
+            ],
+            "suggested_land_id": suggested_land.id if suggested_land else None,
+            "suggested_sampling_date": (
+                suggested_sampling_date.isoformat() if suggested_sampling_date else None
+            ),
+            "folder_name": folder_name,
+        }
+
+        return JsonResponse(response_data)
+
+    @staticmethod
+    def _render_form_fields(form):
+        """フォームフィールドのHTMLを生成（簡易版）"""
+        return {
+            field_name: {
+                "widget_type": field.widget.__class__.__name__,
+                "required": field.required,
+                "label": field.label,
+                "help_text": field.help_text,
+            }
+            for field_name, field in form.fields.items()
+        }
 
 
 class HardnessUploadView(FormView):

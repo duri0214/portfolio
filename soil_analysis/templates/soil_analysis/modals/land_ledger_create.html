@@ -1,0 +1,463 @@
+<!-- 帳簿新規作成モーダル -->
+<div class="modal fade" id="landLedgerCreateModal" tabindex="-1" aria-labelledby="landLedgerCreateModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="landLedgerCreateModalLabel">
+                    <i class="fas fa-plus"></i> 新規帳簿作成
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- ローディング表示 -->
+                <div id="modalLoading" class="text-center py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">フォームを読み込んでいます...</p>
+                </div>
+
+                <!-- フォーム本体 -->
+                <form id="landLedgerCreateForm" style="display: none;">
+                    {% csrf_token %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>フォルダ名「<span id="folderNameDisplay">{{ folder_name }}</span>」</strong>から推定した圃場が事前選択されています。
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_sampling_date" class="form-label">採土日 <span
+                                        class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="id_sampling_date" name="sampling_date"
+                                       required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_land_period" class="form-label">時期 <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select" id="id_land_period" name="land_period" required>
+                                    <option value="">選択してください</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_land" class="form-label">圃場 <span class="text-danger">*</span></label>
+                                <!-- 検索フィールド -->
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="landSearchInput"
+                                           placeholder="圃場名で検索..." autocomplete="off">
+                                    <button class="btn btn-outline-secondary" type="button" id="clearLandSearch">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <!-- セレクトボックス -->
+                                <select class="form-select" id="id_land" name="land" required size="5"
+                                        style="min-height: 120px;">
+                                    <option value="">選択してください</option>
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-lightbulb"></i> フォルダ名から推定した圃場が選択されています
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_crop" class="form-label">作物 <span class="text-danger">*</span></label>
+                                <!-- 検索フィールド -->
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="cropSearchInput"
+                                           placeholder="作物名で検索..." autocomplete="off">
+                                    <button class="btn btn-outline-secondary" type="button" id="clearCropSearch">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <!-- セレクトボックス -->
+                                <select class="form-select" id="id_crop" name="crop" required size="4"
+                                        style="min-height: 100px;">
+                                    <option value="">選択してください</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_sampling_method" class="form-label">採土法 <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select" id="id_sampling_method" name="sampling_method" required>
+                                    <option value="">選択してください</option>
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> デフォルトで5点法が選択されています
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_analytical_agency" class="form-label">分析機関 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_analytical_agency" name="analytical_agency" required>
+                                    <option value="">選択してください</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_sampling_staff" class="form-label">採土者 <span
+                                class="text-danger">*</span></label>
+                        <select class="form-select" id="id_sampling_staff" name="sampling_staff" required>
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
+
+                    <!-- エラーメッセージ表示エリア -->
+                    <div id="formErrors" class="alert alert-danger" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div id="errorMessages"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
+                <button type="submit" form="landLedgerCreateForm" class="btn btn-success" id="btnSubmitLedger">
+                    <i class="fas fa-save"></i> 帳簿を作成
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('landLedgerCreateModal');
+        const form = document.getElementById('landLedgerCreateForm');
+        const loadingDiv = document.getElementById('modalLoading');
+        const btnSubmit = document.getElementById('btnSubmitLedger');
+        const errorDiv = document.getElementById('formErrors');
+        const errorMessages = document.getElementById('errorMessages');
+
+        // モーダル表示時にフォームデータを読み込み
+        modal.addEventListener('show.bs.modal', function () {
+            loadFormData();
+        });
+
+        // フォーム送信処理
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            submitForm();
+        });
+
+        function loadFormData() {
+            // ローディング表示
+            loadingDiv.style.display = 'block';
+            form.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            // フォルダ名を取得
+            const folderName = '{{ folder_name }}';
+            document.getElementById('folderNameDisplay').textContent = folderName;
+
+            // Ajax でフォームデータを取得
+            fetch(`{% url 'soil:land_ledger_create_ajax' %}?folder_name=${encodeURIComponent(folderName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    // 各セレクトボックスにオプションを設定
+                    populateSelect('id_land', data.lands, 'id', 'name', 'selected');
+                    populateSelect('id_crop', data.crops, 'id', 'name');
+                    populateSelect('id_land_period', data.land_periods, 'id', 'name');
+                    populateSelect('id_sampling_method', data.sampling_methods, 'id', 'name', 'selected');
+                    populateSelect('id_analytical_agency', data.analytical_agencies, 'id', 'name');
+                    populateSelect('id_sampling_staff', data.sampling_staff, 'id', 'name');
+
+                    // 採土日を設定（SoilHardnessMeasurementのset_datetimeまたは今日の日付）
+                    const samplingDateInput = document.getElementById('id_sampling_date');
+                    if (data.suggested_sampling_date) {
+                        samplingDateInput.value = data.suggested_sampling_date;
+                    } else {
+                        // フォルダからの推定ができない場合は今日の日付
+                        const today = new Date();
+                        const todayStr = today.getFullYear() + '-' +
+                            String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                            String(today.getDate()).padStart(2, '0');
+                        samplingDateInput.value = todayStr;
+                    }
+
+                    // フォーム表示
+                    loadingDiv.style.display = 'none';
+                    form.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error loading form data:', error);
+                    showError('フォームデータの読み込みに失敗しました。');
+                    loadingDiv.style.display = 'none';
+                });
+        }
+
+        // データを保持するグローバル変数
+        let allLands = [];
+        let allCrops = [];
+
+        function populateSelect(elementId, options, valueField, textField, selectedField = null) {
+            const select = document.getElementById(elementId);
+
+            // 圃場セレクトの場合は、データを保存してフィルタリング機能を初期化
+            if (elementId === 'id_land') {
+                allLands = options;
+                setupLandFiltering(options, valueField, textField, selectedField);
+                return;
+            }
+
+            // 作物セレクトの場合は、データを保存してフィルタリング機能を初期化
+            if (elementId === 'id_crop') {
+                allCrops = options;
+                setupCropFiltering(options, valueField, textField, selectedField);
+                return;
+            }
+
+            // 既存のオプション（最初のプレースホルダー以外）をクリア
+            while (select.children.length > 1) {
+                select.removeChild(select.lastChild);
+            }
+
+            // 新しいオプションを追加
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option[valueField];
+                optionElement.textContent = option[textField];
+
+                // 事前選択の処理
+                if (selectedField && option[selectedField]) {
+                    optionElement.selected = true;
+                }
+
+                select.appendChild(optionElement);
+            });
+        }
+
+        function setupLandFiltering(options, valueField, textField, selectedField) {
+            const select = document.getElementById('id_land');
+            const searchInput = document.getElementById('landSearchInput');
+            const clearButton = document.getElementById('clearLandSearch');
+
+            // 初期状態でオプションを表示
+            updateLandOptions(options, valueField, textField, selectedField);
+
+            // 検索イベントリスナー
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                const filteredOptions = options.filter(option =>
+                    option[textField].toLowerCase().includes(searchTerm)
+                );
+                updateLandOptions(filteredOptions, valueField, textField, selectedField);
+            });
+
+            // クリアボタンイベントリスナー
+            clearButton.addEventListener('click', function () {
+                searchInput.value = '';
+                updateLandOptions(options, valueField, textField, selectedField);
+                searchInput.focus();
+            });
+
+            // Enterキーでの選択を防ぐ
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function updateLandOptions(options, valueField, textField, selectedField) {
+            const select = document.getElementById('id_land');
+            const currentValue = select.value;
+
+            // 既存のオプション（最初のプレースホルダー以外）をクリア
+            while (select.children.length > 1) {
+                select.removeChild(select.lastChild);
+            }
+
+            // 新しいオプションを追加
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option[valueField];
+                optionElement.textContent = option[textField];
+
+                // 事前選択の処理（初期ロード時のみ）
+                if (selectedField && option[selectedField] && !currentValue) {
+                    optionElement.selected = true;
+                }
+                // 既に選択されていた値を維持
+                else if (currentValue && option[valueField] == currentValue) {
+                    optionElement.selected = true;
+                }
+
+                select.appendChild(optionElement);
+            });
+
+            // フィルタリング結果をステータス表示
+            const resultCount = options.length;
+            if (resultCount === 0) {
+                const noResultOption = document.createElement('option');
+                noResultOption.value = '';
+                noResultOption.textContent = '該当する圃場が見つかりません';
+                noResultOption.disabled = true;
+                select.appendChild(noResultOption);
+            }
+        }
+
+        function setupCropFiltering(options, valueField, textField, selectedField) {
+            const select = document.getElementById('id_crop');
+            const searchInput = document.getElementById('cropSearchInput');
+            const clearButton = document.getElementById('clearCropSearch');
+
+            // 初期状態でオプションを表示
+            updateCropOptions(options, valueField, textField, selectedField);
+
+            // 検索イベントリスナー
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                const filteredOptions = options.filter(option =>
+                    option[textField].toLowerCase().includes(searchTerm)
+                );
+                updateCropOptions(filteredOptions, valueField, textField, selectedField);
+            });
+
+            // クリアボタンイベントリスナー
+            clearButton.addEventListener('click', function () {
+                searchInput.value = '';
+                updateCropOptions(options, valueField, textField, selectedField);
+                searchInput.focus();
+            });
+
+            // Enterキーでの選択を防ぐ
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function updateCropOptions(options, valueField, textField, selectedField) {
+            const select = document.getElementById('id_crop');
+            const currentValue = select.value;
+
+            // 既存のオプション（最初のプレースホルダー以外）をクリア
+            while (select.children.length > 1) {
+                select.removeChild(select.lastChild);
+            }
+
+            // 新しいオプションを追加
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option[valueField];
+                optionElement.textContent = option[textField];
+
+                // 既に選択されていた値を維持
+                if (currentValue && option[valueField] == currentValue) {
+                    optionElement.selected = true;
+                }
+
+                select.appendChild(optionElement);
+            });
+
+            // フィルタリング結果をステータス表示
+            const resultCount = options.length;
+            if (resultCount === 0) {
+                const noResultOption = document.createElement('option');
+                noResultOption.value = '';
+                noResultOption.textContent = '該当する作物が見つかりません';
+                noResultOption.disabled = true;
+                select.appendChild(noResultOption);
+            }
+        }
+
+        function submitForm() {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 作成中...';
+            errorDiv.style.display = 'none';
+
+            const formData = new FormData(form);
+
+            fetch('{% url "soil:land_ledger_create_ajax" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 成功：帳簿選択セレクトボックスに追加
+                        const landLedgerSelect = document.getElementById('land_ledger');
+                        const newOption = document.createElement('option');
+                        newOption.value = data.land_ledger.id;
+                        newOption.textContent = data.land_ledger.display_name;
+                        newOption.selected = true;
+                        landLedgerSelect.appendChild(newOption);
+
+                        // モーダルを閉じる
+                        bootstrap.Modal.getInstance(modal).hide();
+
+                        // 成功メッセージを表示
+                        showSuccessMessage(data.message);
+                    } else {
+                        showError(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting form:', error);
+                    showError('帳簿作成中にエラーが発生しました。');
+                })
+                .finally(() => {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<i class="fas fa-save"></i> 帳簿を作成';
+                });
+        }
+
+        function showError(message) {
+            errorMessages.innerHTML = message.replace(/\n/g, '<br>');
+            errorDiv.style.display = 'block';
+        }
+
+        function showSuccessMessage(message) {
+            // メインページに成功メッセージを表示
+            const alertHtml = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+
+            // メインコンテンツの先頭に成功メッセージを挿入
+            const container = document.querySelector('.container');
+            const breadcrumb = container.querySelector('nav');
+            breadcrumb.insertAdjacentHTML('afterend', alertHtml);
+
+            // 5秒後に自動で消去
+            setTimeout(() => {
+                const alert = container.querySelector('.alert-success');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+    });
+</script>
