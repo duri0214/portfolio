@@ -199,14 +199,22 @@
             selectElement.appendChild(defaultOption)
         }
 
-            function setDropdownList(optionsData, selectElement) {
-                optionsData.map(item => {
-                    const option = document.createElement('option')
-                    option.value = item.id
-                    option.text = item.name
-                    selectElement.appendChild(option)
-                })
-            }
+        /**
+         * ドロップダウンにオプションリストを設定し、確実にenableにします
+         *
+         * @param {Array<{id: string, name: string}>} optionsData - 設定するオプションデータの配列
+         * @param {HTMLSelectElement} selectElement - オプションを設定するセレクト要素
+         */
+        function setDropdownList(optionsData, selectElement) {
+            selectElement.disabled = false
+            selectElement.classList.remove('disabled-field')
+            optionsData.map(item => {
+                const option = document.createElement('option')
+                option.value = item.id
+                option.text = item.name
+                selectElement.appendChild(option)
+            })
+        }
 
         /**
          * 市区町村セレクトボックスを無効化し、初期状態にリセットします
