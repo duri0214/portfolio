@@ -24,7 +24,7 @@ class CompanyCreateForm(forms.ModelForm):
                 attrs={"class": "form-control", "tabindex": "2"}
             ),
             "remark": forms.TextInput(attrs={"class": "form-control", "tabindex": "3"}),
-            "category": forms.Select(attrs={"class": "form-control", "tabindex": "4"}),
+            "category": forms.Select(attrs={"class": "form-select", "tabindex": "4"}),
         }
         labels = {
             "name": "圃場名",

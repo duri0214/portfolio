@@ -261,29 +261,19 @@
             }
         }
 
-        /**
-         * フォームフィールドに適切なBootstrapクラスを適用します
-         * DjangoのFormフィールドにBootstrapのスタイリングクラスを動的に追加し、
-         * 統一されたUIデザインを実現します
-         */
-        function applyBootstrapClasses() {
-            const formFields = document.querySelectorAll('input, select, textarea')
-            formFields.forEach(field => {
-                if (field.type === 'hidden') return
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初期状態では都市選択を無効化
+            disableCitySelect()
 
-                if (field.tagName.toLowerCase() === 'select') {
-                    field.classList.add('form-select')
-                } else if (field.tagName.toLowerCase() === 'textarea') {
-                    field.classList.add('form-control')
-                } else {
-                    field.classList.add('form-control')
-                }
-            })
-
-            document.getElementById("id_jma_prefecture").addEventListener("change", function () {
-                const prefectureId = this.value
-                fetchCities(prefectureId)
-            })
-        </script>
-    </div>
+            // 都道府県選択の変更イベント
+            const prefectureSelect = document.getElementById("id_jma_prefecture")
+            if (prefectureSelect) {
+                prefectureSelect.addEventListener("change", function () {
+                    const prefectureId = this.value
+                    fetchCities(prefectureId)
+                })
+            }
+        })
+    </script>
 {% endblock %}
