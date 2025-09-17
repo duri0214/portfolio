@@ -208,18 +208,36 @@
                 })
             }
 
-            /**
-             * 都道府省のデータをフェッチし、それに応じて都道府県ドロップダウンオプションを設定します。
-             */
-            async function fetchPrefectures() {
-                const prefectureSelect = document.getElementById("id_jma_prefecture")
-                prefectureSelect.innerHTML = ''
-                clearDropdown(prefectureSelect)
+        /**
+         * 市区町村セレクトボックスを無効化し、初期状態にリセットします
+         *
+         * 都道府県が未選択の場合に実行され、データの整合性を保つため
+         * 市区町村の選択を無効化します。
+         */
+        function disableCitySelect() {
+            const citySelect = document.getElementById("id_jma_city")
+            citySelect.innerHTML = ''
+            clearDropdown(citySelect)
+            citySelect.disabled = true
+            citySelect.classList.add('disabled-field')
+        }
 
+        /**
+         * 都道府省のデータをフェッチし、それに応じて都道府県ドロップダウンオプションを設定します。
+         */
+        async function fetchPrefectures() {
+            const prefectureSelect = document.getElementById("id_jma_prefecture")
+            prefectureSelect.innerHTML = ''
+            clearDropdown(prefectureSelect)
+
+            try {
                 const response = await fetch('{% url 'soil:prefectures' %}')
                 const data = await response.json()
                 setDropdownList(data.prefectures, prefectureSelect)
+            } catch (error) {
+                console.error('都道府県の取得に失敗しました:', error)
             }
+        }
 
         /**
          * 指定された都道府県 ID に基づいて都市データを取得し、それに応じて都市ドロップダウン オプションを設定します
