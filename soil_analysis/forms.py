@@ -55,9 +55,9 @@ class LandCreateForm(forms.ModelForm):
         model = Land
         fields = (
             "name",
-            "center",
             "jma_prefecture",
             "jma_city",
+            "center",
             "area",
             "image",
             "remark",
@@ -66,27 +66,26 @@ class LandCreateForm(forms.ModelForm):
         )
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control", "tabindex": "1"}),
-            "center": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "tabindex": "2",
-                    "placeholder": "例: 35.658581,139.745433",
-                }
-            ),
-            # TODO: なぜか bootstrap が反映されない（react化で解決したほうがよさそう）
             "jma_prefecture": forms.Select(
                 attrs={
                     "class": "form-control",
-                    "tabindex": "3",
-                    "placeholder": "例: 兵庫県",
+                    "tabindex": "2",
+                    "placeholder": "都道府県を選択してください",
                 }
             ),
-            # TODO: なぜか bootstrap が反映されない（react化で解決したほうがよさそう）
             "jma_city": forms.Select(
                 attrs={
                     "class": "form-control",
+                    "tabindex": "3",
+                    "placeholder": "市区町村を選択してください",
+                }
+            ),
+            "center": forms.TextInput(
+                attrs={
+                    "class": "form-control",
                     "tabindex": "4",
-                    "placeholder": "例: 姫路市",
+                    "placeholder": "例: 35.658581,139.745433",
+                    "value": "35.658581,139.745433",
                 }
             ),
             "area": forms.TextInput(
@@ -107,15 +106,15 @@ class LandCreateForm(forms.ModelForm):
             "company": forms.HiddenInput(),
         }
         labels = {
-            "name": "圃場名*",
-            "latlon": "緯度・経度*",
-            "jma_prefecture": "都道府県*",
-            "jma_city": "市区町村*",
+            "name": "圃場名",
+            "jma_prefecture": "都道府県",
+            "jma_city": "市区町村",
+            "center": "中心座標",
             "area": "圃場面積（㎡）",
             "image": "画像",
             "remark": "備考",
-            "cultivation_type": "栽培タイプ*",
-            "owner": "所有者*",
+            "cultivation_type": "栽培タイプ",
+            "owner": "所有者",
         }
 
     def clean_name(self):
