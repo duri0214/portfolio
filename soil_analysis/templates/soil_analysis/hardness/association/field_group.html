@@ -104,23 +104,10 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label for="land_ledger" class="form-label mb-0">関連付ける帳簿を選択してください</label>
-                            <!-- TODO issue360: 帳簿マスタ新規登録機能 -->
-                            <!-- 
-                            新機能実装予定：
-                            - CSVデータ取り込み直後には対応する帳簿（LandLedger）が存在しない場合が多い
-                            - このページから直接新規帳簿を作成できる機能を追加する
-                            - 必要なフィールド：
-                              * sampling_date (採土日)
-                              * land (圃場) - フォルダ名から推定
-                              * crop (作物)
-                              * land_period (時期)
-                              * sampling_method (採土法) - デフォルト5点法
-                              * analytical_agency (分析機関)
-                              * sampling_staff (採土者)
-                            -->
+                            <!-- 新規帳簿作成ボタン -->
                             <button type="button" class="btn btn-outline-success btn-sm" id="btn_create_ledger"
-                                    disabled>
-                                <i class="fas fa-plus"></i> 新規帳簿作成 (未実装)
+                                    data-bs-toggle="modal" data-bs-target="#landLedgerCreateModal">
+                                <i class="fas fa-plus"></i> 新規帳簿作成
                             </button>
                         </div>
                         <select class="form-select" name="land_ledger" id="land_ledger" required>
@@ -142,7 +129,7 @@
                         {% if not land_ledgers %}
                             <div class="alert alert-warning mt-2">
                                 <i class="fas fa-exclamation-triangle"></i>
-                                このフォルダに適した帳簿が見つかりません。新規帳簿作成機能の実装をお待ちください。
+                                このフォルダに適した帳簿が見つかりません。「新規帳簿作成」ボタンから帳簿を作成してください。
                             </div>
                         {% endif %}
                     </div>
@@ -175,4 +162,7 @@
             </ul>
         </div>
     </div>
+
+    <!-- 新規帳簿作成モーダル -->
+    {% include 'soil_analysis/modals/land_ledger_create.html' %}
 {% endblock %}

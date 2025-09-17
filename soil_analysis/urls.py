@@ -105,4 +105,9 @@ urlpatterns = [
         views.AssociatePictureAndLandResultView.as_view(),
         name="associate_picture_and_land_result",
     ),
+    path(
+        "land-ledger/create-ajax/",
+        views.LandLedgerCreateAjaxView.as_view(),
+        name="land_ledger_create_ajax",
+    ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
