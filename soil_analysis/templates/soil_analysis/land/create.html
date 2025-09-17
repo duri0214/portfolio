@@ -187,6 +187,10 @@
     </div>
 
     <script>
+        /**
+         * ドロップダウンを初期化し、デフォルトオプション「選択してください」を追加します
+         * @param {HTMLSelectElement} selectElement - 初期化するセレクト要素
+         */
         function clearDropdown(selectElement) {
             const defaultOption = document.createElement('option')
             defaultOption.value = ""
