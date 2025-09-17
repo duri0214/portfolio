@@ -45,10 +45,12 @@ class CompanyCreateForm(forms.ModelForm):
 
 class LandCreateForm(forms.ModelForm):
     jma_prefecture = forms.ModelChoiceField(
-        queryset=JmaPrefecture.objects.all(), empty_label="選択してください"
+        queryset=JmaPrefecture.objects.all(),
+        empty_label="選択してください",
+        label="都道府県",
     )
     jma_city = forms.ModelChoiceField(
-        queryset=JmaCity.objects.all(), empty_label="選択してください"
+        queryset=JmaCity.objects.all(), empty_label="選択してください", label="市区町村"
     )
 
     class Meta:
