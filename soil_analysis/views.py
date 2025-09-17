@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 from pathlib import Path
@@ -21,14 +20,13 @@ from django.views.generic import (
     FormView,
 )
 
-from lib.geo.valueobject.coord import GoogleMapsCoord, XarvioCoord
+from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.company import CompanyRepository
 from soil_analysis.domain.repository.hardness_measurement import (
     SoilHardnessMeasurementRepository,
 )
 from soil_analysis.domain.repository.land import LandRepository
-from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
@@ -159,8 +157,10 @@ class LandCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.company_id = self.kwargs["company_id"]
-        lat, lon = form.instance.latlon.split(", ")
-        form.instance.latlon = ",".join([lat, lon])
+        if form.instance.center:
+            # center フィールドの値を正規化（スペースを除去）
+            lat, lon = form.instance.center.split(",")
+            form.instance.center = ",".join([lat.strip(), lon.strip()])
         return super().form_valid(form)
 
     def get_success_url(self):
