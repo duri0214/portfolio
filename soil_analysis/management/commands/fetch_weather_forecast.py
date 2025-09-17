@@ -45,8 +45,8 @@ def update_prefecture_ids(prefecture_ids: list[str]) -> tuple[list[str], dict]:
     Example:
         prefecture_ids = ["014030", "460040"]
         updated_ids, special_add_region_ids = update_prefecture_ids(prefecture_ids)
-        print(updated_ids)  # Output: ["014100", "460100"]
-        print(special_add_region_ids)  # Output: {"014100": "014030", "460100": "460040"}
+        print(updated_ids) # Output: ["014100", "460100"]
+        print(special_add_region_ids) # Output: {"014100": "014030", "460100": "460040"}
     """
     pairs_to_check = [("014030", "014100"), ("460040", "460100")]
     special_add_region_ids = {}
