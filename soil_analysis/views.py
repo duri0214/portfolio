@@ -164,42 +164,7 @@ class LandCreateView(CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        company = Company(pk=self.kwargs["company_id"])
-        return reverse(
-            "soil:land_detail", kwargs={"company_id": company.id, "pk": self.object.pk}
-        )
-
-
-class LocationInfoView(View):
-    """
-    圃場新規作成時のフォームで latlon 入力が終了した際に非同期で情報を取得
-    """
-
-    @staticmethod
-    def post(request, *args, **kwargs):
-        data = json.loads(request.body.decode("utf-8"))
-        lat_str, lon_str = data.get("latlon").split(",")
-        lat = float(lat_str.strip())
-        lon = float(lon_str.strip())
-
-        coord = GoogleMapsCoord(latitude=lat, longitude=lon)
-        ydf = ReverseGeocoderService.get_ydf_from_coord(coord)
-
-        try:
-            jma_city = ReverseGeocoderService.get_jma_city(ydf)
-        except JmaCity.DoesNotExist:
-            return JsonResponse(
-                {
-                    "error": f"{ydf.feature.prefecture.name} {ydf.feature.city.name} が見つかりませんでした"
-                }
-            )
-
-        return JsonResponse(
-            {
-                "jma_city_id": jma_city.id,
-                "jma_prefecture_id": jma_city.jma_region.jma_prefecture.id,
-            }
-        )
+        return reverse("soil:hardness_success")
 
 
 class PrefecturesView(View):
