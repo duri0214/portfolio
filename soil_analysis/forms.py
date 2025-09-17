@@ -102,9 +102,9 @@ class LandCreateForm(forms.ModelForm):
             ),
             "remark": forms.TextInput(attrs={"class": "form-control", "tabindex": "7"}),
             "cultivation_type": forms.Select(
-                attrs={"class": "form-control", "tabindex": "8"}
+                attrs={"class": "form-select", "tabindex": "8"}
             ),
-            "owner": forms.Select(attrs={"class": "form-control", "tabindex": "9"}),
+            "owner": forms.Select(attrs={"class": "form-select", "tabindex": "9"}),
             "company": forms.HiddenInput(),
         }
         labels = {
