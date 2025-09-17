@@ -149,6 +149,14 @@ class LandCreateView(CreateView):
         context["company"] = Company(pk=self.kwargs["company_id"])
         return context
 
+    def get_initial(self):
+        initial = super().get_initial()
+        # URLパラメータから圃場名を事前設定
+        suggested_name = self.request.GET.get("suggested_name")
+        if suggested_name:
+            initial["name"] = suggested_name
+        return initial
+
     def form_valid(self, form):
         form.instance.company_id = self.kwargs["company_id"]
         lat, lon = form.instance.latlon.split(", ")
