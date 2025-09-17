@@ -261,40 +261,22 @@
             }
         }
 
-            /**
-             * 土地の緯度経度に基づいてその位置情報を取得します
-             *
-             * @param {string} latlon - 緯度経度のペア。
-             */
-            async function fetchLandLocationInfo(latlon) {
-                const response = await fetch("{% url 'soil:land_location_info' %}", {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': Cookies.get('csrftoken')
-                    },
-                    body: JSON.stringify({latlon})
-                })
-                return response.json()
-            }
+        /**
+         * フォームフィールドに適切なBootstrapクラスを適用します
+         * DjangoのFormフィールドにBootstrapのスタイリングクラスを動的に追加し、
+         * 統一されたUIデザインを実現します
+         */
+        function applyBootstrapClasses() {
+            const formFields = document.querySelectorAll('input, select, textarea')
+            formFields.forEach(field => {
+                if (field.type === 'hidden') return
 
-            document.getElementById("id_latlon").addEventListener("change", async function () {
-                const latlon = this.value
-                const prefectureSelect = document.getElementById("id_jma_prefecture")
-                const citySelect = document.getElementById("id_jma_city")
-
-                if (latlon) {
-                    const landLocationInfo = await fetchLandLocationInfo(latlon)
-                    if (landLocationInfo.error) {
-                        alert(landLocationInfo.error)
-                    } else {
-                        await fetchPrefectures()
-                        prefectureSelect.value = landLocationInfo.jma_prefecture_id
-                        await fetchCities(landLocationInfo.jma_prefecture_id)
-                        citySelect.value = landLocationInfo.jma_city_id
-                    }
+                if (field.tagName.toLowerCase() === 'select') {
+                    field.classList.add('form-select')
+                } else if (field.tagName.toLowerCase() === 'textarea') {
+                    field.classList.add('form-control')
                 } else {
-                    await fetchCities(undefined)
+                    field.classList.add('form-control')
                 }
             })
 
