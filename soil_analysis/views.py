@@ -469,8 +469,20 @@ class HardnessSuccessView(TemplateView):
             associated_only=False
         )
 
+        # フォルダ名に基づいて新規登録が必要な圃場を特定
+        missing_lands = []
+        for stats in folder_stats:
+            folder_name = stats["folder"]
+            land_name = self._extract_land_name_from_folder(folder_name)
+
+            if land_name and not Land.objects.filter(name=land_name).exists():
+                missing_lands.append(
+                    {"folder_name": folder_name, "suggested_land_name": land_name}
+                )
+
         context["folder_stats"] = folder_stats
         context["total_records"] = SoilHardnessMeasurement.objects.count()
+        context["missing_lands"] = missing_lands
 
         return context
 
