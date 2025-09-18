@@ -77,16 +77,27 @@ class SoilHardnessMeasurementRepository:
 
     @staticmethod
     def get_suitable_ledgers(folder_name: str):
-        """フォルダ名に基づいて適切な帳簿を取得"""
+        """フォルダ名に基づいて適切な帳簿を取得（使用済み帳簿は除外）"""
+        # 既に硬度データに関連付けられた帳簿のIDを取得
+        used_ledger_ids = (
+            SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
+            .values_list("land_ledger_id", flat=True)
+            .distinct()
+        )
+
+        # 基本クエリ：使用済み帳簿を除外
+        base_query = LandLedger.objects.exclude(id__in=used_ledger_ids)
+
+        # フォルダ名による絞り込み（既存ロジック維持）
         if folder_name:
             # フォルダ名に含まれるキーワードで圃場を検索
             lands = Land.objects.filter(name__icontains=folder_name.split("_")[0])
             if lands.exists():
                 company = lands.first().company
-                return LandLedger.objects.filter(land__company=company).distinct()
+                return base_query.filter(land__company=company).distinct()
 
-        # 該当なしの場合は全帳簿を返す
-        return LandLedger.objects.all().order_by("pk")
+        # 該当なしの場合は未使用の全帳簿を返す
+        return base_query.order_by("pk")
 
     @staticmethod
     def get_total_groups_count():

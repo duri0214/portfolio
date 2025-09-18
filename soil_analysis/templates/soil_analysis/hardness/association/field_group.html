@@ -123,7 +123,9 @@
                         {% if folder_name %}
                             <div class="form-text">
                                 <i class="fas fa-info-circle"></i>
-                                フォルダ名「{{ folder_name }}」に適した帳簿が優先表示されています
+                                フォルダ名「{{ folder_name }}」に適した帳簿が優先表示されています<br>
+                                <i class="fas fa-shield-alt text-success"></i>
+                                <small class="text-success">使用済み帳簿は自動的に除外されます</small>
                             </div>
                         {% endif %}
                         {% if not land_ledgers %}
