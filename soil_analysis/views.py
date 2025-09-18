@@ -171,7 +171,10 @@ class LandCreateView(CreateView):
             return reverse("soil:hardness_success")
 
         # 通常の圃場作成の場合は圃場詳細画面に遷移
-        return reverse("soil:land_detail", kwargs={"pk": self.object.pk})
+        return reverse(
+            "soil:land_detail",
+            kwargs={"company_id": self.kwargs["company_id"], "pk": self.object.pk},
+        )
 
 
 class PrefecturesView(View):
