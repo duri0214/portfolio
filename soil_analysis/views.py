@@ -165,7 +165,13 @@ class LandCreateView(CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse("soil:hardness_success")
+        # suggested_nameがある場合（硬度測定データからの圃場作成）は硬度測定画面に戻る
+        suggested_name = self.request.GET.get("suggested_name")
+        if suggested_name:
+            return reverse("soil:hardness_success")
+
+        # 通常の圃場作成の場合は圃場詳細画面に遷移
+        return reverse("soil:land_detail", kwargs={"pk": self.object.pk})
 
 
 class PrefecturesView(View):
