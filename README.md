@@ -243,8 +243,8 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 
 ### weather data
 
-- `python manage.py weather.fetch_forecast` のバッチをまわす
-- `python manage.py weather.fetch_warning` のバッチをまわす
+- `python manage.py weather_fetch_forecast` のバッチをまわす
+- `python manage.py weather_fetch_warning` のバッチをまわす
 
 ### 土壌硬度計測データ生成
 
