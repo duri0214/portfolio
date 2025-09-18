@@ -268,13 +268,13 @@ python manage.py generate_soil_hardness_csv --num_fields 20
 
 ```bash
 # 全folderのプロットを生成（soil_analysis/management/commands/outputフォルダに保存）
-python manage.py generate_soil_hardness_plot
+python manage.py hardness_generate_plot
 
 # 出力ディレクトリを指定
-python manage.py generate_soil_hardness_plot --output_dir /path/to/output
+python manage.py hardness_generate_plot --output_dir /path/to/output
 
 # 特定の圃場台帳IDのみを対象とする
-python manage.py generate_soil_hardness_plot --land_ledger_id 1
+python manage.py hardness_generate_plot --land_ledger_id 1
 ```
 
 ## securities
