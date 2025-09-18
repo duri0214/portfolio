@@ -14,8 +14,7 @@ class SoilHardnessPlotterService:
         self.output_dir = output_dir
         plt.rcParams["font.family"] = ["IPAexGothic"]
 
-    def plot_3d_surface(self, land_ledger_id=None, folder=None):
-        # TODO: issue#359 - KISS原則に従いfolder引数を削除し、land_ledger_idのみでデータを特定する
+    def plot_3d_surface(self, land_ledger_id=None):
         # データ取得
         queryset = SoilHardnessMeasurement.objects.select_related(
             "land_ledger__land__company", "land_ledger__land", "land_block"
@@ -26,9 +25,6 @@ class SoilHardnessPlotterService:
         else:
             queryset = queryset.filter(land_ledger__isnull=False)
 
-        if folder:
-            queryset = queryset.filter(folder=folder)
-
         first_data = queryset.first()
         if not first_data:
             return
@@ -37,9 +33,6 @@ class SoilHardnessPlotterService:
         company = first_data.land_ledger.land.company.name
         land = first_data.land_ledger.land.name
         date = first_data.land_ledger.sampling_date.strftime("%Y%m%d")
-
-        if folder:
-            land = f"{land}_{folder}"
 
         # データ整理
         land_block_names = list(
