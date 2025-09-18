@@ -3,8 +3,8 @@ from unittest import mock
 
 from django.test import TestCase
 
-from soil_analysis.management.commands import fetch_weather_forecast
-from soil_analysis.management.commands.fetch_weather_forecast import (
+from soil_analysis.management.commands import weather_fetch_forecast
+from soil_analysis.management.commands.weather_fetch_forecast import (
     get_data,
     get_indexes,
 )
@@ -13,7 +13,7 @@ from soil_analysis.management.commands.fetch_weather_forecast import (
 class TestFetchWeatherForecast(TestCase):
     def setUp(self):
         # 天気予報取得バッチの 十勝地方、奄美地方 変換
-        self.func = fetch_weather_forecast.update_prefecture_ids
+        self.func = weather_fetch_forecast.update_prefecture_ids
 
     def test_update_prefecture_ids_with_invalid_id(self):
         prefecture_ids = ["014030", "032010", "082050", "460040"]

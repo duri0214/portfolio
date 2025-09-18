@@ -10,7 +10,7 @@ class JmaRepository:
         辞書のキーは地域コード、値はその地域に関連したAMEDASコードのリストを持つ。
         都道府県に特別地域IDが設定されている場合、それらも結果の辞書に含まれる。
 
-        このメソッドは、Django のバッチ処理内（例: `fetch_weather_forecast` バッチ）で
+        このメソッドは、Django のバッチ処理内（例: `weather_fetch_forecast` バッチ）で
         天気データ収集用の地域ごとのAMEDASコードを取得するために使用される。
 
         Args:
