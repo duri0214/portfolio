@@ -91,6 +91,66 @@
                             <li>測定期間が適切な範囲内であることを確認してください</li>
                         </ul>
                     </div>
+
+                    <!-- 不足している圃場の情報 -->
+                    {% if missing_lands %}
+                        <div class="alert alert-warning mt-3">
+                            <h6><i class="fas fa-exclamation-triangle"></i> 圃場の事前作成が必要</h6>
+                            <p class="mb-2">
+                                以下のフォルダに対応する圃場が見つかりません。帳簿作成の前に圃場を作成してください：</p>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th>フォルダ名</th>
+                                        <th>推定圃場名</th>
+                                        <th>操作</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for missing in missing_lands %}
+                                        <tr>
+                                            <td><code>{{ missing.folder_name }}</code></td>
+                                            <td><strong>{{ missing.suggested_land_name }}</strong></td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-outline-primary btn-sm dropdown-toggle"
+                                                            type="button" id="landCreateDropdown{{ forloop.counter }}"
+                                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="fas fa-plus"></i> 圃場作成
+                                                    </button>
+                                                    <ul class="dropdown-menu"
+                                                        aria-labelledby="landCreateDropdown{{ forloop.counter }}">
+                                                        {% for company in companies %}
+                                                            <li>
+                                                                <a class="dropdown-item"
+                                                                   href="{% url 'soil:land_create' company_id=company.id %}?suggested_name={{ missing.suggested_land_name|urlencode }}">
+                                                                    {{ company.name }}
+                                                                </a>
+                                                            </li>
+                                                        {% empty %}
+                                                            <li>
+                                                                    <span class="dropdown-item-text text-muted">
+                                                                        <i class="fas fa-info-circle"></i> 利用可能な会社がありません
+                                                                    </span>
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    会社を選択して圃場作成画面へ進んでください。圃場名は自動で入力されます。
+                                </small>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 

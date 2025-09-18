@@ -1,121 +1,305 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/land/create.css' %}">
+{% endblock %}
+
 {% block content %}
-    <div class="container">
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:land_list' company.id %}">Land List</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Create</li>
-            </ol>
-        </nav>
+    <div class="container-fluid bg-light min-vh-100 py-4">
         <div class="container">
-            <h1>新規作成</h1>
-            {% if messages %}
-                <ul class="messages">
-                    {% for message in messages %}
-                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <input type="hidden" name="company-id" value="{{ company.pk }}">
-                <button type="submit" class="btn btn-outline-primary mb-3">送信</button>
-            </form>
+            <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'soil:land_list' company.id %}">Land List</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Create</li>
+                </ol>
+            </nav>
+
+            <!-- Main Content Card -->
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h1 class="card-title mb-0 h3">
+                        <i class="fas fa-plus-circle me-2"></i>新規圃場作成
+                    </h1>
+                    <p class="card-text mb-0 text-light">新しい圃場情報を入力してください</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Messages Section -->
+                    {% if messages %}
+                        <div class="mb-4">
+                            {% for message in messages %}
+                                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% elif message.tags == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show"
+                                     role="alert">
+                                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Form Section -->
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <!-- 圃場名（1行全体） -->
+                        <div class="row">
+                            <div class="col-12 mb-4">
+                                <div class="form-group">
+                                    {% if form.name.label %}
+                                        <label for="{{ form.name.id_for_label }}"
+                                               class="form-label text-muted fw-semibold mb-2">
+                                            {{ form.name.label }}
+                                            {% if form.name.field.required %}
+                                                <span class="text-danger ms-1">*</span>
+                                            {% endif %}
+                                        </label>
+                                    {% endif %}
+
+                                    <div class="input-wrapper">
+                                        {{ form.name }}
+                                    </div>
+
+                                    {% if form.name.errors %}
+                                        {% for error in form.name.errors %}
+                                            <div class="invalid-feedback d-block mt-1">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 都道府県・市区町村（横並び） -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="form-group">
+                                    {% if form.jma_prefecture.label %}
+                                        <label for="{{ form.jma_prefecture.id_for_label }}"
+                                               class="form-label text-muted fw-semibold mb-2">
+                                            {{ form.jma_prefecture.label }}
+                                            {% if form.jma_prefecture.field.required %}
+                                                <span class="text-danger ms-1">*</span>
+                                            {% endif %}
+                                        </label>
+                                    {% endif %}
+
+                                    <div class="input-wrapper">
+                                        {{ form.jma_prefecture }}
+                                    </div>
+
+                                    {% if form.jma_prefecture.errors %}
+                                        {% for error in form.jma_prefecture.errors %}
+                                            <div class="invalid-feedback d-block mt-1">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="form-group">
+                                    {% if form.jma_city.label %}
+                                        <label for="{{ form.jma_city.id_for_label }}"
+                                               class="form-label text-muted fw-semibold mb-2">
+                                            {{ form.jma_city.label }}
+                                            {% if form.jma_city.field.required %}
+                                                <span class="text-danger ms-1">*</span>
+                                            {% endif %}
+                                        </label>
+                                    {% endif %}
+
+                                    <div class="input-wrapper">
+                                        {{ form.jma_city }}
+                                    </div>
+
+                                    {% if form.jma_city.errors %}
+                                        {% for error in form.jma_city.errors %}
+                                            <div class="invalid-feedback d-block mt-1">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- その他のフィールド -->
+                        <div class="row">
+                            {% for field in form %}
+                                {% if field.name != 'name' and field.name != 'jma_prefecture' and field.name != 'jma_city' %}
+                                    <div class="col-md-6 mb-4">
+                                        <div class="form-group">
+                                            {% if field.label %}
+                                                <label for="{{ field.id_for_label }}"
+                                                       class="form-label text-muted fw-semibold mb-2">
+                                                    {{ field.label }}
+                                                    {% if field.field.required %}
+                                                        <span class="text-danger ms-1">*</span>
+                                                    {% endif %}
+                                                </label>
+                                            {% endif %}
+
+                                            <div class="input-wrapper">
+                                                {{ field }}
+                                            </div>
+
+                                            {% if field.help_text %}
+                                                <div class="form-text text-muted small mt-1">
+                                                    <i class="fas fa-info-circle me-1"></i>{{ field.help_text }}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if field.errors %}
+                                                {% for error in field.errors %}
+                                                    <div class="invalid-feedback d-block mt-1">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                                    </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <input type="hidden" name="company-id" value="{{ company.pk }}">
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                            <a href="{% url 'soil:land_list' company.id %}"
+                               class="btn btn-outline-secondary btn-lg me-md-2">
+                                <i class="fas fa-times me-2"></i>キャンセル
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>作成する
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <script>
-            function clearDropdown(selectElement) {
-                const defaultOption = document.createElement('option')
-                defaultOption.value = ""
-                defaultOption.text = "選択してください"
-                defaultOption.selected = true
-                selectElement.appendChild(defaultOption)
-            }
+    </div>
 
-            function setDropdownList(optionsData, selectElement) {
-                optionsData.map(item => {
-                    const option = document.createElement('option')
-                    option.value = item.id
-                    option.text = item.name
-                    selectElement.appendChild(option)
-                })
-            }
+    <script>
+        /**
+         * ドロップダウンを初期化し、デフォルトオプション「選択してください」を追加します
+         * @param {HTMLSelectElement} selectElement - 初期化するセレクト要素
+         */
+        function clearDropdown(selectElement) {
+            const defaultOption = document.createElement('option')
+            defaultOption.value = ""
+            defaultOption.text = "選択してください"
+            defaultOption.selected = true
+            selectElement.appendChild(defaultOption)
+        }
 
-            /**
-             * 都道府省のデータをフェッチし、それに応じて都道府県ドロップダウンオプションを設定します。
-             */
-            async function fetchPrefectures() {
-                const prefectureSelect = document.getElementById("id_jma_prefecture")
-                prefectureSelect.innerHTML = ''
-                clearDropdown(prefectureSelect)
+        /**
+         * ドロップダウンにオプションリストを設定し、確実にenableにします
+         *
+         * @param {Array<{id: string, name: string}>} optionsData - 設定するオプションデータの配列
+         * @param {HTMLSelectElement} selectElement - オプションを設定するセレクト要素
+         */
+        function setDropdownList(optionsData, selectElement) {
+            selectElement.disabled = false
+            selectElement.classList.remove('disabled-field')
+            optionsData.map(item => {
+                const option = document.createElement('option')
+                option.value = item.id
+                option.text = item.name
+                selectElement.appendChild(option)
+            })
+        }
 
+        /**
+         * 市区町村セレクトボックスを無効化し、初期状態にリセットします
+         *
+         * 都道府県が未選択の場合に実行され、データの整合性を保つため
+         * 市区町村の選択を無効化します。
+         */
+        function disableCitySelect() {
+            const citySelect = document.getElementById("id_jma_city")
+            citySelect.innerHTML = ''
+            clearDropdown(citySelect)
+            citySelect.disabled = true
+            citySelect.classList.add('disabled-field')
+        }
+
+        /**
+         * 都道府省のデータをフェッチし、それに応じて都道府県ドロップダウンオプションを設定します。
+         */
+        async function fetchPrefectures() {
+            const prefectureSelect = document.getElementById("id_jma_prefecture")
+            prefectureSelect.innerHTML = ''
+            clearDropdown(prefectureSelect)
+
+            try {
                 const response = await fetch('{% url 'soil:prefectures' %}')
                 const data = await response.json()
                 setDropdownList(data.prefectures, prefectureSelect)
+            } catch (error) {
+                console.error('都道府県の取得に失敗しました:', error)
+            }
+        }
+
+        /**
+         * 指定された都道府県 ID に基づいて都市データを取得し、それに応じて都市ドロップダウン オプションを設定します
+         * 都道府県 ID が指定されていない場合、都市のドロップダウンはクリアされ無効化されます
+         *
+         * 【詳細な動作の流れ】
+         * - 都道府県が選択されていない間: disableCitySelect()を実行してreturnで処理をスキップ
+         * - 都道府県選択時のみ以下を実行:
+         *   1. 市区町村セレクトボックスを一旦無効化（API通信中の状態）
+         *   2. APIから市区町村データを非同期取得
+         *   3. setDropdownList()でデータセット＋セレクトボックス有効化
+         *
+         * @param {string} prefectureId - 都道府県ID（空文字の場合は処理をスキップ）
+         */
+        async function fetchCities(prefectureId) {
+            const citySelect = document.getElementById("id_jma_city")
+
+            // 都道府県が選択されていない間は市区町村を無効化したままスキップ
+            if (!prefectureId) {
+                disableCitySelect()
+                return
             }
 
-            /**
-             * 指定された都道府県 ID に基づいて都市データを取得し、それに応じて都市ドロップダウン オプションを設定します
-             * 都道府県 ID が指定されていない場合、都市のドロップダウンはクリアされます
-             *
-             * @param {string} prefectureId - The ID of the prefecture.
-             */
-            async function fetchCities(prefectureId) {
-                const citySelect = document.getElementById("id_jma_city")
-                citySelect.innerHTML = ''
-                clearDropdown(citySelect)
+            // ステップ1: 市区町村セレクトボックスを一旦無効化（API通信中の状態）
+            citySelect.innerHTML = ''
+            clearDropdown(citySelect)
+            citySelect.disabled = true
+            citySelect.classList.add('disabled-field')
 
-                if (prefectureId) {
-                    const response = await fetch(`/soil_analysis/prefecture/${prefectureId}/cities`)
-                    const data = await response.json()
-                    setDropdownList(data.cities, citySelect)
-                }
+            try {
+                // ステップ2: APIから市区町村データを取得（この間disabled状態が続く）
+                const response = await fetch(`/soil_analysis/prefecture/${prefectureId}/cities`)
+                const data = await response.json()
+                // ステップ3: データセット＋セレクトボックス有効化
+                setDropdownList(data.cities, citySelect)
+            } catch (error) {
+                console.error('都市の取得に失敗しました:', error)
+                disableCitySelect()
             }
+        }
 
-            /**
-             * 土地の緯度経度に基づいてその位置情報を取得します
-             *
-             * @param {string} latlon - 緯度経度のペア。
-             */
-            async function fetchLandLocationInfo(latlon) {
-                const response = await fetch("{% url 'soil:land_location_info' %}", {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': Cookies.get('csrftoken')
-                    },
-                    body: JSON.stringify({latlon})
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初期状態では都市選択を無効化
+            disableCitySelect()
+
+            // 都道府県選択の変更イベント
+            const prefectureSelect = document.getElementById("id_jma_prefecture")
+            if (prefectureSelect) {
+                prefectureSelect.addEventListener("change", function () {
+                    const prefectureId = this.value
+                    fetchCities(prefectureId)
                 })
-                return response.json()
             }
-
-            document.getElementById("id_latlon").addEventListener("change", async function () {
-                const latlon = this.value
-                const prefectureSelect = document.getElementById("id_jma_prefecture")
-                const citySelect = document.getElementById("id_jma_city")
-
-                if (latlon) {
-                    const landLocationInfo = await fetchLandLocationInfo(latlon)
-                    if (landLocationInfo.error) {
-                        alert(landLocationInfo.error)
-                    } else {
-                        await fetchPrefectures()
-                        prefectureSelect.value = landLocationInfo.jma_prefecture_id
-                        await fetchCities(landLocationInfo.jma_prefecture_id)
-                        citySelect.value = landLocationInfo.jma_city_id
-                    }
-                } else {
-                    await fetchCities(undefined)
-                }
-            })
-
-            document.getElementById("id_jma_prefecture").addEventListener("change", function () {
-                const prefectureId = this.value
-                fetchCities(prefectureId)
-            })
-        </script>
-    </div>
+        })
+    </script>
 {% endblock %}

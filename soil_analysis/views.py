@@ -1,5 +1,5 @@
-import json
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -21,14 +21,13 @@ from django.views.generic import (
     FormView,
 )
 
-from lib.geo.valueobject.coord import GoogleMapsCoord, XarvioCoord
+from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.company import CompanyRepository
 from soil_analysis.domain.repository.hardness_measurement import (
     SoilHardnessMeasurementRepository,
 )
 from soil_analysis.domain.repository.land import LandRepository
-from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
@@ -149,49 +148,30 @@ class LandCreateView(CreateView):
         context["company"] = Company(pk=self.kwargs["company_id"])
         return context
 
+    def get_initial(self):
+        initial = super().get_initial()
+        # URLパラメータから圃場名を事前設定
+        suggested_name = self.request.GET.get("suggested_name")
+        if suggested_name:
+            initial["name"] = suggested_name
+        return initial
+
     def form_valid(self, form):
         form.instance.company_id = self.kwargs["company_id"]
-        lat, lon = form.instance.latlon.split(", ")
-        form.instance.latlon = ",".join([lat, lon])
+        if form.instance.center:
+            # center フィールドの値を正規化（スペースを除去）
+            lat, lon = form.instance.center.split(",")
+            form.instance.center = ",".join([lat.strip(), lon.strip()])
         return super().form_valid(form)
 
     def get_success_url(self):
-        company = Company(pk=self.kwargs["company_id"])
-        return reverse(
-            "soil:land_detail", kwargs={"company_id": company.id, "pk": self.object.pk}
-        )
+        # suggested_nameがある場合（硬度測定データからの圃場作成）は硬度測定画面に戻る
+        suggested_name = self.request.GET.get("suggested_name")
+        if suggested_name:
+            return reverse("soil:hardness_success")
 
-
-class LocationInfoView(View):
-    """
-    圃場新規作成時のフォームで latlon 入力が終了した際に非同期で情報を取得
-    """
-
-    @staticmethod
-    def post(request, *args, **kwargs):
-        data = json.loads(request.body.decode("utf-8"))
-        lat_str, lon_str = data.get("latlon").split(",")
-        lat = float(lat_str.strip())
-        lon = float(lon_str.strip())
-
-        coord = GoogleMapsCoord(latitude=lat, longitude=lon)
-        ydf = ReverseGeocoderService.get_ydf_from_coord(coord)
-
-        try:
-            jma_city = ReverseGeocoderService.get_jma_city(ydf)
-        except JmaCity.DoesNotExist:
-            return JsonResponse(
-                {
-                    "error": f"{ydf.feature.prefecture.name} {ydf.feature.city.name} が見つかりませんでした"
-                }
-            )
-
-        return JsonResponse(
-            {
-                "jma_city_id": jma_city.id,
-                "jma_prefecture_id": jma_city.jma_region.jma_prefecture.id,
-            }
-        )
+        # 通常の圃場作成の場合は圃場詳細画面に遷移
+        return reverse("soil:land_detail", kwargs={"pk": self.object.pk})
 
 
 class PrefecturesView(View):
@@ -496,10 +476,51 @@ class HardnessSuccessView(TemplateView):
             associated_only=False
         )
 
+        # フォルダ名に基づいて新規登録が必要な圃場を特定
+        missing_lands = []
+        for stats in folder_stats:
+            folder_name = stats["folder"]
+            land_name = self._extract_land_name_from_folder(folder_name)
+
+            if land_name and not Land.objects.filter(name=land_name).exists():
+                missing_lands.append(
+                    {"folder_name": folder_name, "suggested_land_name": land_name}
+                )
+
         context["folder_stats"] = folder_stats
         context["total_records"] = SoilHardnessMeasurement.objects.count()
+        context["missing_lands"] = missing_lands
+
+        # 圃場作成用の会社一覧を追加（農業法人のみ）
+        if missing_lands:
+            context["companies"] = Company.objects.filter(category_id=1).order_by(
+                "name"
+            )
 
         return context
+
+    @staticmethod
+    def _extract_land_name_from_folder(folder_name: str) -> str:
+        """フォルダ名から圃場名を抽出
+
+        変換パターン例:
+        - "静岡ススムA1_20230701" → "静岡ススムA1"
+        - "静岡ススムA1_20230701_1" → "静岡ススムA1"
+        - "静岡ススムA120230701" → "静岡ススムA1"
+        - "静岡ススムA120230701_extra" → "静岡ススムA1"
+        - "静岡ススムA1" → "静岡ススムA1"
+        """
+        # アンダースコアがある場合は最初の部分を取得
+        if "_" in folder_name:
+            base_name = folder_name.split("_")[0]
+        else:
+            base_name = folder_name
+
+        # 8桁日付パターン（YYYYMMDD）以降をすべて除去
+        date_pattern = r"\d{8}.*$"
+        base_name = re.sub(date_pattern, "", base_name)
+
+        return base_name.strip()
 
 
 class HardnessAssociationView(ListView):
