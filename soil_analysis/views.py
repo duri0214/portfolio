@@ -484,6 +484,12 @@ class HardnessSuccessView(TemplateView):
         context["total_records"] = SoilHardnessMeasurement.objects.count()
         context["missing_lands"] = missing_lands
 
+        # 圃場作成用の会社一覧を追加（農業法人のみ）
+        if missing_lands:
+            context["companies"] = Company.objects.filter(category_id=1).order_by(
+                "name"
+            )
+
         return context
 
 
