@@ -393,7 +393,7 @@ class HardnessUploadView(FormView):
             self.request.FILES["file"], app_name
         )
         if os.path.exists(upload_folder):
-            call_command("import_soil_hardness", upload_folder)
+            call_command("hardness_load_data", upload_folder)
             try:
                 shutil.rmtree(upload_folder)
             except (PermissionError, OSError):
