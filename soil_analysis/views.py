@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -491,6 +492,29 @@ class HardnessSuccessView(TemplateView):
             )
 
         return context
+
+    @staticmethod
+    def _extract_land_name_from_folder(folder_name: str) -> str:
+        """フォルダ名から圃場名を抽出
+
+        変換パターン例:
+        - "静岡ススムA1_20230701" → "静岡ススムA1"
+        - "静岡ススムA1_20230701_1" → "静岡ススムA1"
+        - "静岡ススムA120230701" → "静岡ススムA1"
+        - "静岡ススムA120230701_extra" → "静岡ススムA1"
+        - "静岡ススムA1" → "静岡ススムA1"
+        """
+        # アンダースコアがある場合は最初の部分を取得
+        if "_" in folder_name:
+            base_name = folder_name.split("_")[0]
+        else:
+            base_name = folder_name
+
+        # 8桁日付パターン（YYYYMMDD）以降をすべて除去
+        date_pattern = r"\d{8}.*$"
+        base_name = re.sub(date_pattern, "", base_name)
+
+        return base_name.strip()
 
 
 class HardnessAssociationView(ListView):
