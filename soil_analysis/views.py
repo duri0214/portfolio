@@ -445,7 +445,7 @@ class HardnessGenerateCsvView(View):
 
             # CSVを生成して出力パスを取得
             csv_output_path = call_command(
-                "generate_soil_hardness_csv", f"--num_fields={num_fields}"
+                "hardness_generate_csv", f"--num_fields={num_fields}"
             )
 
             if csv_output_path and os.path.exists(csv_output_path):
