@@ -24,23 +24,24 @@ python manage.py makemigrations vietnam_research gmarker shopping linebot_engine
 ```
 
 ## fixture
-
+### `convert_csv_to_fixture` バッチ
 CSV ファイルを Django フィクスチャ JSON 形式に変換します。
-このコマンドは「`convert_csv_to_fixture.py` スクリプトが配置されているディレクトリ内のすべての CSV ファイルを処理」します。
-そしてそれらを Django 用の JSON フィクスチャ ファイルに変換します。JSON の「model」フィールドは
-CSV ファイル名によって決まります。ファイル名のアンダースコアはドットに置き換えられます。
-CSVファイル名は2つのセクションに分ける必要があります。例えば「hospital_cityGroup.csv」のように。
+このコマンドは `convert_csv_to_fixture.py` スクリプトが配置されているディレクトリ内のすべてのCSVファイルをフィクスチャに変換します。
+JSON の「model」フィールドはCSVファイル名によって決まります。
+- CSVファイル名のアンダースコアはドットに置き換えられます
+- CSVファイル名は2つのセクションに分ける必要があります
+- 例: `hospital_cityGroup.csv`
 
 ```
 python manage.py convert_csv_to_fixture
 ```
 
+### `loaddata` するにあたっての注意事項
 - createsuperuser を実行してください
-    - createsuperuser をやって1のidを作らないと失敗するfixtureがあるよ(vietnam_research)
-- `auth_user` の seeder は `(各アプリ)/fixtures/auth_user.json` にある
+    - 1のidを作らないと失敗するfixtureがある(vietnam_research)
+- `auth_user` の seeder はそれぞれのアプリごとにわけて作ってある
 - `auth_user` の初期パスワードは `test#1234`
-- サーバで実行するときはバッククォートを `/` に置換する
-- バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` の seeder は14日ぶん用意しましょう
+- バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` のデータを14日分用意しましょう
     - seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
 
 ```text
@@ -57,7 +58,13 @@ WHERE recorded_date = '2023-01-17';
 ```
 
 ```
+-- portfolio_db をつくった直後はスーパーユーザーが作成する
 python manage.py createsuperuser
+```
+
+```
+-- サーバで実行するときはバッククォートを `/` に置換する
+
 python manage.py loaddata .\vietnam_research\fixtures\group.json
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
 python manage.py loaddata .\vietnam_research\fixtures\market.json
