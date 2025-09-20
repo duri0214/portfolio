@@ -703,30 +703,7 @@ class HardnessAssociationSuccessView(TemplateView):
     @staticmethod
     def post(request, *args, **kwargs):
         if "btn_generate_plots" in request.POST:
-            try:
-                generated_count, errors = (
-                    HardnessPlotGenerationService.generate_and_save_plots()
-                )
-
-                if not generated_count and not errors:
-                    messages.warning(request, "プロット生成対象のデータがありません")
-                elif generated_count > 0:
-                    messages.success(
-                        request,
-                        f"{generated_count}件のプロット画像を生成してLandモデルに保存しました",
-                    )
-                    for error in errors:
-                        messages.error(request, error)
-                else:
-                    messages.warning(request, "プロット画像の生成に失敗しました")
-                    for error in errors:
-                        messages.error(request, error)
-
-            except Exception as e:
-                messages.error(
-                    request, f"プロット画像生成中にエラーが発生しました: {str(e)}"
-                )
-
+            HardnessPlotGenerationService.generate_and_save_plots()
             return HttpResponseRedirect(reverse("soil:home"))
 
         return HttpResponseRedirect(request.path)
