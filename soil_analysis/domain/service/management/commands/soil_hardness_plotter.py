@@ -85,3 +85,5 @@ class SoilHardnessPlotterService:
         save_path = os.path.join(self.output_dir, filename)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
+
+        return save_path
