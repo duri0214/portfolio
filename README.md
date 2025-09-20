@@ -38,7 +38,7 @@ python manage.py convert_csv_to_fixture
 
 ### `loaddata` するにあたっての注意事項
 - createsuperuser を実行してください
-    - 1のidを作らないと失敗するfixtureがある(vietnam_research)
+    - `1` のidを作らないと失敗するfixtureがある(vietnam_research)
 - `auth_user` の seeder はそれぞれのアプリごとにわけて作ってある
 - `auth_user` の初期パスワードは `test#1234`
 ### `Industry` テーブルに初期データ
