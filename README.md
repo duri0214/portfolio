@@ -41,8 +41,9 @@ python manage.py convert_csv_to_fixture
     - 1のidを作らないと失敗するfixtureがある(vietnam_research)
 - `auth_user` の seeder はそれぞれのアプリごとにわけて作ってある
 - `auth_user` の初期パスワードは `test#1234`
-- バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` のデータを14日分用意しましょう
-    - seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
+### `Industry` テーブルに初期データ
+TODO: issue378  
+バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` のデータを14日分用意しましょう。seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
 
 ```text
 -- 何月のデータがあるの？の確認
@@ -57,6 +58,7 @@ SET recorded_date = '2024-05-02'
 WHERE recorded_date = '2023-01-17';
 ```
 
+### 各種 `loaddata` コマンド
 ```
 -- portfolio_db をつくった直後はスーパーユーザーが作成する
 python manage.py createsuperuser
