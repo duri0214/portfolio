@@ -37,8 +37,15 @@
         {% else %}
             <div class="alert alert-success">
                 <h5><i class="fas fa-check-circle"></i> 関連付けデータに異常はありませんでした！</h5>
-                <p class="mb-0">総 <strong>{{ total_records }}</strong> レコードをland_ledgerとland_blockに正常に関連付けしました。
-                </p>
+                <p>総 <strong>{{ total_records }}</strong> レコードをland_ledgerとland_blockに正常に関連付けしました。</p>
+                <div class="mt-3">
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" name="btn_generate_plots" class="btn btn-success">
+                            🎯 3Dプロット画像を生成してLandモデルに保存
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <!-- 関連付けデータ集計情報 -->
