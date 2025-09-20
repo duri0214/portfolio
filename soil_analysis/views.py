@@ -704,8 +704,7 @@ class HardnessAssociationSuccessView(TemplateView):
     def post(request, *args, **kwargs):
         if "btn_generate_plots" in request.POST:
             try:
-                service = HardnessPlotGenerationService()
-                generated_count, errors = service.generate_and_save_plots()
+                generated_count, errors = HardnessPlotGenerationService.generate_and_save_plots()
 
                 if not generated_count and not errors:
                     messages.warning(request, "プロット生成対象のデータがありません")
