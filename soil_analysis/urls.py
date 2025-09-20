@@ -52,8 +52,8 @@ urlpatterns = [
     ),
     path(
         "hardness/generate_csv",
-        views.HardnessGenerateCsvView.as_view(),
-        name="hardness_generate_csv",
+        views.HardnessGenerateDummyCsvView.as_view(),
+        name="hardness_generate_dummy_csv",
     ),
     path(
         "hardness/success",

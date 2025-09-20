@@ -7,7 +7,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
-from soil_analysis.domain.valueobject.management.commands.hardness_generate_csv import (
+from soil_analysis.domain.valueobject.management.commands.hardness_generate_dummy_csv import (
     SoilHardnessDevice,
     SoilHardnessCsvHeader,
     SoilHardnessCharacteristics,

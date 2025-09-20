@@ -251,7 +251,7 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 土壌硬度計測器が出力するCSVファイルのテストデータを生成するコマンドです。実際の土壌硬度計（DIK-5531など）が出力するCSVファイルと同様の形式でテストデータを生成します。
 
 ```bash
-python manage.py hardness_generate_csv --num_fields 20
+python manage.py hardness_generate_dummy_csv --num_fields 20
 ```
 
 生成したファイルは一時ディレクトリに保存され、パスが実行時に表示されます。
