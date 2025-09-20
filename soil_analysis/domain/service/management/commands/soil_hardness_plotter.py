@@ -10,11 +10,42 @@ from soil_analysis.models import SoilHardnessMeasurement
 
 
 class SoilHardnessPlotterService:
-    def __init__(self, output_dir="."):
+    """土壌硬度測定データの3Dプロット生成サービス
+
+    プロットは圃場内位置（X軸）、深度（Y軸）、圧力（Z軸）の3次元でPNG画像として保存されます。
+
+    Attributes:
+        output_dir (str): プロット画像の保存先ディレクトリパス
+    """
+
+    def __init__(self, output_dir: str = "."):
         self.output_dir = output_dir
         plt.rcParams["font.family"] = ["IPAexGothic"]
 
-    def plot_3d_surface(self, land_ledger_id=None):
+    def plot_3d_surface(self, land_ledger_id: int | None = None) -> str:
+        """土壌硬度測定データの3D表面プロットを生成
+
+        指定されたland_ledger_idの土壌硬度測定データから3D表面プロットを生成し、
+        PNG画像として保存します。land_ledger_idが未指定の場合は、全ての関連付け済み
+        データを対象とします。
+
+        Args:
+            land_ledger_id (int | None, optional): 対象とする圃場帳簿のID。
+                                                   Noneの場合は全関連付け済みデータが対象。
+                                                   デフォルトはNone。
+
+        Returns:
+            str: 生成されたプロット画像のファイルパス。
+
+        Raises:
+            SoilHardnessMeasurement.DoesNotExist: 対象のデータが存在しない場合
+            ValueError: データの処理中にインデックスエラーが発生した場合（継続処理）
+
+        Note:
+            - プロットのZ軸（圧力）は0-3000kPaに固定されます
+            - 画像は300dpiの高解像度で保存されます
+            - matplotlibのfigureは自動的にcloseされ、メモリリークを防ぎます
+        """
         # データ取得
         queryset = SoilHardnessMeasurement.objects.select_related(
             "land_ledger__land__company", "land_ledger__land", "land_block"
@@ -27,7 +58,14 @@ class SoilHardnessPlotterService:
 
         first_data = queryset.first()
         if not first_data:
-            return
+            target_info = (
+                f"land_ledger_id={land_ledger_id}"
+                if land_ledger_id
+                else "全関連付け済みデータ"
+            )
+            raise SoilHardnessMeasurement.DoesNotExist(
+                f"土壌硬度測定データが見つかりません: {target_info}"
+            )
 
         # 基本情報取得
         company = first_data.land_ledger.land.company.name
@@ -85,3 +123,5 @@ class SoilHardnessPlotterService:
         save_path = os.path.join(self.output_dir, filename)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
+
+        return save_path
