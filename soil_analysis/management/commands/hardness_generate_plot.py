@@ -109,6 +109,9 @@ class Command(BaseCommand):
         # プロット作成
         plotter = SoilHardnessPlotterService(output_dir=output_dir)
         for land_ledger_id in land_ledger_ids:
-            plotter.plot_3d_surface(land_ledger_id=land_ledger_id)
+            result_path = plotter.plot_3d_surface(land_ledger_id=land_ledger_id)
+            if result_path:
+                self.stdout.write(f"生成完了: {result_path}")
+                self.stdout.write(f"Landモデルのimageフィールドに画像を保存しました")
 
         self.stdout.write(self.style.SUCCESS("完了"))
