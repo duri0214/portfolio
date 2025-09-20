@@ -137,7 +137,6 @@ python manage.py loaddata .\ai_agent\fixtures\rag_material.json
 
 ```
 python manage.py runserver
-python manage.py hardness_load_data /path/to/folder
 ```
 
 ## よくつかうメンテナンスコマンド
