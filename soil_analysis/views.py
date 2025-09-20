@@ -727,6 +727,8 @@ class HardnessAssociationSuccessView(TemplateView):
                     request, f"プロット画像生成中にエラーが発生しました: {str(e)}"
                 )
 
+            return HttpResponseRedirect(reverse("soil:home"))
+
         return HttpResponseRedirect(request.path)
 
     def get_context_data(self, **kwargs):
