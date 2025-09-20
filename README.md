@@ -261,8 +261,6 @@ python manage.py hardness_generate_dummy_csv --num_fields 20
 #### 利用可能なオプション
 
 - `--num_fields` - 生成する圃場数（デフォルト: 1）
-- `--realistic_mode` - より現実的なデータパターンを生成
-- `--field_pattern` - 圃場の土壌パターン（standard, dry, wet, compacted, mixed）
 
 ### 土壌硬度プロット生成
 
