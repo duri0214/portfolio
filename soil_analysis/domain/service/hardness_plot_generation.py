@@ -1,3 +1,4 @@
+import os
 from django.core.files.base import ContentFile
 from soil_analysis.models import SoilHardnessMeasurement, LandLedger
 from soil_analysis.domain.service.management.commands.soil_hardness_plotter import (
@@ -21,10 +22,16 @@ def _generate_single_plot(land_ledger_id: int) -> bool:
     plot_path = plotter.plot_3d_surface(land_ledger_id)
 
     if plot_path:
-        with open(plot_path, "rb") as f:
-            filename = f"land_{land_ledger.land.id}_{land_ledger.sampling_date.strftime('%Y%m%d')}_3d_surface.png"
-            land_ledger.land.image.save(filename, ContentFile(f.read()), save=True)
-        return True
+        try:
+            with open(plot_path, "rb") as f:
+                filename = f"land_{land_ledger.land.id}_{land_ledger.sampling_date.strftime('%Y%m%d')}_3d_surface.png"
+                land_ledger.land.image.save(filename, ContentFile(f.read()), save=True)
+            os.remove(plot_path)
+            return True
+        except (OSError, PermissionError):
+            # ファイル削除エラーは無視して続行
+            # OneDriveなどの同期フォルダではこの例外が発生することがある
+            return True
 
     return False
 
