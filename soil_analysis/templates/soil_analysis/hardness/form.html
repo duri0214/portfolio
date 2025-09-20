@@ -10,6 +10,75 @@
         </nav>
         <h1>土壌硬度データのアップロード</h1>
 
+        <!-- オペレーションマニュアル -->
+        <div class="alert alert-primary" role="alert">
+            <h5><i class="bi bi-journal-bookmark"></i> 操作手順ガイド</h5>
+            <p class="mb-3">硬度データの処理は以下の順序で進めてください：</p>
+
+            <div class="card border-light mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-3">1</span>
+                        <div>
+                            <strong>データアップロード</strong>
+                            <br><small class="text-muted">ZIPファイルをアップロードして処理完了を待つ</small>
+                            <br><small class="text-muted">※補足：テスト用CSV生成、全データ削除機能も下記にあります</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-light mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-3">2</span>
+                        <div>
+                            <strong>アップロードデータ確認</strong>
+                            <br><small class="text-muted">取り込みデータ数を確認し、必要に応じて不足している圃場の新規登録を行う</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-light mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-3">3</span>
+                        <div>
+                            <strong>硬度データの関連付け</strong>
+                            <br><small class="text-muted">各圃場グループごとに適切な帳簿を選択・関連付け（必要に応じて新規帳簿作成）</small>
+                            <br><small class="text-muted">※すべてのグループの処理完了まで次のステップに進めません</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-light mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-3">4</span>
+                        <div>
+                            <strong>関連付けデータ確認</strong>
+                            <br><small class="text-muted">関連付けデータ集計（フォルダ別・圃場のブロック別・計測帳簿別）を確認</small>
+                            <br><small class="text-muted">必要に応じて「3Dプロット画像を生成して圃場に紐づける」ボタンを押下</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-light mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-3">5</span>
+                        <div>
+                            <strong>グラフ確認</strong>
+                            <br><small class="text-muted"><a href="{% url 'soil:company_list' %}">圃場一覧画面</a>で生成された3Dプロット画像を確認</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 既存のアップロード機能 -->
         <div class="row mb-4">
             <div class="col-md-8">
@@ -79,18 +148,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- 説明セクション -->
-        <div class="alert alert-info mt-4" role="alert">
-            <h6><i class="bi bi-info-circle"></i> 機能説明</h6>
-            <ul class="mb-0">
-                <li><strong>アップロード:</strong> 実際の計測データのZIPファイルをアップロードしてデータベースに取り込みます
-                </li>
-                <li><strong>CSV生成:</strong> テスト用のサンプルデータを生成してダウンロードできます（開発・テスト用）
-                </li>
-                <li><strong>全削除:</strong> データベース内の全ての硬度測定データを削除します（開発・テスト用）</li>
-            </ul>
         </div>
     </div>
 
