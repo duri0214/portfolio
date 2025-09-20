@@ -13,14 +13,15 @@ pip install -r requirements.txt
 pip freeze > requirements.txt
 ```
 
-## Migrate
-
-- サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
-- サーバで実行するときは makemigrations は基本的に必要ない（migrationファイルがgithubで焼き付けてあるから）
+## migrate
+サーバにデプロイするときは makemigrations は基本的に必要ない
 
 ```
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks welfare_services
 python manage.py migrate
+
+-- ※開発時 デプロイするときは必要ない
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks welfare_services
+
 ```
 
 ## fixture
