@@ -13,14 +13,11 @@ pip install -r requirements.txt
 pip freeze > requirements.txt
 ```
 
-## すべてのテーブルをカラにする
-
-```
-python manage.py flush --noinput
-```
-
 ## Clean up
+LineBot Engine アプリ内の古いデータを月次でクリーンアップする処理
 
+具体的には、LineBotとのやり取りで蓄積されたメッセージログや一時的なユーザーデータなど、古くなった不要なデータを定期的に削除することで、データベースの容量を最適化し、システムのパフォーマンスを維持する目的があります。
+月次で実行することで、データの肥大化を防ぎ、LineBotエンジンが効率的に動作し続けるためのメンテナンス処理となっています。
 ```
 python manage.py monthly_cleanup_linebot_engine
 ```
@@ -33,8 +30,6 @@ python manage.py monthly_cleanup_linebot_engine
 ```
 python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks welfare_services
 python manage.py migrate
-
-python manage.py createsuperuser
 ```
 
 ## fixture
