@@ -13,15 +13,6 @@ pip install -r requirements.txt
 pip freeze > requirements.txt
 ```
 
-## Clean up
-LineBot Engine アプリ内の古いデータを月次でクリーンアップする処理
-
-具体的には、LineBotとのやり取りで蓄積されたメッセージログや一時的なユーザーデータなど、古くなった不要なデータを定期的に削除することで、データベースの容量を最適化し、システムのパフォーマンスを維持する目的があります。
-月次で実行することで、データの肥大化を防ぎ、LineBotエンジンが効率的に動作し続けるためのメンテナンス処理となっています。
-```
-python manage.py monthly_cleanup_linebot_engine
-```
-
 ## Migrate
 
 - サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
@@ -215,6 +206,15 @@ https://qiita.com/YoshitakaOkada/items/f51f52a8041439a1dbc9#line
     - User: 食べた
 
 Userが「食べた」と答えた回数を集計して、最近「食べた」と答えなかったらアラート、みたいな
+
+### Clean up バッチ
+LineBot Engine アプリ内の古いデータを月次でクリーンアップする処理
+
+具体的には、LineBotとのやり取りで蓄積されたメッセージログや一時的なユーザーデータなど、古くなった不要なデータを定期的に削除することで、データベースの容量を最適化し、システムのパフォーマンスを維持する目的があります。
+月次で実行することで、データの肥大化を防ぎ、LineBotエンジンが効率的に動作し続けるためのメンテナンス処理となっています。
+```
+python manage.py monthly_cleanup_linebot_engine
+```
 
 ## warehouse
 
