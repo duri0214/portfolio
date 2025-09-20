@@ -139,7 +139,7 @@ python manage.py loaddata .\ai_agent\fixtures\rag_material.json
 python manage.py runserver
 ```
 
-## よくつかうメンテナンスコマンド
+## 本番サーバメンテナンスコマンド
 
 - 環境変数 `.env` が作ってありますか？
 - migrate は最新ですか？
