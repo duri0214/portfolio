@@ -584,17 +584,6 @@ class HardnessAssociationView(ListView):
 class HardnessAssociationFieldGroupView(ListView):
     """
     単一圃場グループの帳簿選択画面
-
-    TODO: 帳簿マスタ新規登録機能の実装
-    - CSVデータ取り込み直後は対応するLandLedgerが存在しないケースが多い
-    - このページから直接新規帳簿（LandLedger）を作成できる機能が必要
-    - 実装予定機能：
-      1. 「新規帳簿作成」ボタンをクリックでモーダル表示
-      2. フォルダ名から圃場（Land）を推定して事前選択
-      3. 必要項目入力後、新規LandLedgerを作成
-      4. 作成完了後、自動的に帳簿選択に反映
-    - 関連URL: soil:land_ledger_create_ajax
-    - 関連テンプレート: modals/land_ledger_create.html
     """
 
     model = SoilHardnessMeasurement
