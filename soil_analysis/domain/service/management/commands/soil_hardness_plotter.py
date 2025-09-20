@@ -58,8 +58,14 @@ class SoilHardnessPlotterService:
 
         first_data = queryset.first()
         if not first_data:
-            target_info = f"land_ledger_id={land_ledger_id}" if land_ledger_id else "全関連付け済みデータ"
-            raise SoilHardnessMeasurement.DoesNotExist(f"土壌硬度測定データが見つかりません: {target_info}")
+            target_info = (
+                f"land_ledger_id={land_ledger_id}"
+                if land_ledger_id
+                else "全関連付け済みデータ"
+            )
+            raise SoilHardnessMeasurement.DoesNotExist(
+                f"土壌硬度測定データが見つかりません: {target_info}"
+            )
 
         # 基本情報取得
         company = first_data.land_ledger.land.company.name
