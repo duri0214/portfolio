@@ -21,7 +21,6 @@ python manage.py migrate
 
 -- ※開発時 デプロイするときは必要ない
 python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks welfare_services
-
 ```
 
 ## fixture
