@@ -21,6 +21,10 @@ from django.views.generic import (
     FormView,
 )
 
+from soil_analysis.domain.service.hardness_plot_generation import (
+    HardnessPlotGenerationService,
+)
+
 from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.company import CompanyRepository
@@ -695,6 +699,34 @@ class HardnessAssociationFieldGroupView(ListView):
 
 class HardnessAssociationSuccessView(TemplateView):
     template_name = "soil_analysis/hardness/association/success.html"
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        if "btn_generate_plots" in request.POST:
+            try:
+                service = HardnessPlotGenerationService()
+                generated_count, errors = service.generate_and_save_plots()
+
+                if not generated_count and not errors:
+                    messages.warning(request, "プロット生成対象のデータがありません")
+                elif generated_count > 0:
+                    messages.success(
+                        request,
+                        f"{generated_count}件のプロット画像を生成してLandモデルに保存しました",
+                    )
+                    for error in errors:
+                        messages.error(request, error)
+                else:
+                    messages.warning(request, "プロット画像の生成に失敗しました")
+                    for error in errors:
+                        messages.error(request, error)
+
+            except Exception as e:
+                messages.error(
+                    request, f"プロット画像生成中にエラーが発生しました: {str(e)}"
+                )
+
+        return HttpResponseRedirect(request.path)
 
     def get_context_data(self, **kwargs):
         # TODO: repositoryにもってってスッキリできそう
