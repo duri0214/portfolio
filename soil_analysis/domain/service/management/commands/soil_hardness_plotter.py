@@ -10,7 +10,21 @@ from soil_analysis.models import SoilHardnessMeasurement
 
 
 class SoilHardnessPlotterService:
-    def __init__(self, output_dir="."):
+    """土壌硬度測定データの3Dプロット生成サービス
+
+    プロットは圃場内位置（X軸）、深度（Y軸）、圧力（Z軸）の3次元でPNG画像として保存されます。
+
+    Attributes:
+        output_dir (str): プロット画像の保存先ディレクトリパス
+
+    Examples:
+        特定の圃場のプロット生成:
+        >>> plotter = SoilHardnessPlotterService("./output")
+        >>> plot_path = plotter.plot_3d_surface(land_ledger_id=123)
+        >>> print(f"Plot saved to: {plot_path}")
+    """
+
+    def __init__(self, output_dir: str = "."):
         self.output_dir = output_dir
         plt.rcParams["font.family"] = ["IPAexGothic"]
 
