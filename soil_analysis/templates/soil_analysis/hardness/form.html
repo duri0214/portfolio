@@ -39,7 +39,7 @@
                             開発・テスト用のサンプルCSVデータを生成してダウンロードできます。
                             <br><small>※指定した圃場数分のテストデータが生成されます</small>
                         </p>
-                        <form method="post" action="{% url 'soil:hardness_generate_csv' %}">
+                        <form method="post" action="{% url 'soil:hardness_generate_dummy_csv' %}">
                             {% csrf_token %}
                             <div class="mb-3">
                                 {{ csv_generate_form.num_fields.label_tag }}

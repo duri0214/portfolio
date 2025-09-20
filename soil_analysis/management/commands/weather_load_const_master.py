@@ -15,7 +15,7 @@ from soil_analysis.models import (
 
 def get_data_from_url(url: str):
     try:
-        # Obtain the response from the URL
+        # get the response from the URL
         response = requests.get(url)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:

@@ -13,49 +13,37 @@ pip install -r requirements.txt
 pip freeze > requirements.txt
 ```
 
-## すべてのテーブルをカラにする
+## migrate
+サーバにデプロイするときは makemigrations は基本的に必要ない
 
 ```
-python manage.py flush --noinput
-```
-
-## Clean up
-
-```
-python manage.py monthly_cleanup_linebot_engine
-```
-
-## Migrate
-
-- サーバで実行するときは `python3` にしてバッククォートを `/` に置換する
-- サーバで実行するときは makemigrations は基本的に必要ない（migrationファイルがgithubで焼き付けてあるから）
-
-```
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks welfare_services
 python manage.py migrate
 
-python manage.py createsuperuser
+-- ※開発時 デプロイするときは必要ない
+python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks welfare_services
 ```
 
 ## fixture
-
+### `convert_csv_to_fixture` バッチ
 CSV ファイルを Django フィクスチャ JSON 形式に変換します。
-このコマンドは「`convert_csv_to_fixture.py` スクリプトが配置されているディレクトリ内のすべての CSV ファイルを処理」します。
-そしてそれらを Django 用の JSON フィクスチャ ファイルに変換します。JSON の「model」フィールドは
-CSV ファイル名によって決まります。ファイル名のアンダースコアはドットに置き換えられます。
-CSVファイル名は2つのセクションに分ける必要があります。例えば「hospital_cityGroup.csv」のように。
+このコマンドは `convert_csv_to_fixture.py` スクリプトが配置されているディレクトリ内のすべてのCSVファイルをフィクスチャに変換します。
+JSON の「model」フィールドはCSVファイル名によって決まります。
+- CSVファイル名のアンダースコアはドットに置き換えられます
+- CSVファイル名は2つのセクションに分ける必要があります
+- 例: `hospital_cityGroup.csv`
 
 ```
 python manage.py convert_csv_to_fixture
 ```
 
+### `loaddata` するにあたっての注意事項
 - createsuperuser を実行してください
-    - createsuperuser をやって1のidを作らないと失敗するfixtureがあるよ(vietnam_research)
-- `auth_user` の seeder は `(各アプリ)/fixtures/auth_user.json` にある
+    - `1` のidを作らないと失敗するfixtureがある(vietnam_research)
+- `auth_user` の seeder はそれぞれのアプリごとにわけて作ってある
 - `auth_user` の初期パスワードは `test#1234`
-- サーバで実行するときはバッククォートを `/` に置換する
-- バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` の seeder は14日ぶん用意しましょう
-    - seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
+### `Industry` テーブルに初期データ
+TODO: issue378  
+バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` のデータを14日分用意しましょう。seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
 
 ```text
 -- 何月のデータがあるの？の確認
@@ -70,8 +58,15 @@ SET recorded_date = '2024-05-02'
 WHERE recorded_date = '2023-01-17';
 ```
 
+### 各種 `loaddata` コマンド
 ```
+-- portfolio_db をつくった直後はスーパーユーザーが作成する
 python manage.py createsuperuser
+```
+
+```
+-- サーバで実行するときはバッククォートを `/` に置換する
+
 python manage.py loaddata .\vietnam_research\fixtures\group.json
 python manage.py loaddata .\vietnam_research\fixtures\indClass.json
 python manage.py loaddata .\vietnam_research\fixtures\market.json
@@ -136,17 +131,15 @@ python manage.py loaddata .\hospital\fixtures\voteplace.json
 python manage.py loaddata .\ai_agent\fixtures\entity.json
 python manage.py loaddata .\ai_agent\fixtures\guardrail_config.json
 python manage.py loaddata .\ai_agent\fixtures\rag_material.json
-
 ```
 
 ## サーバを動かす
 
 ```
 python manage.py runserver
-python manage.py import_soil_hardness /path/to/folder
 ```
 
-## よくつかうメンテナンスコマンド
+## 本番サーバメンテナンスコマンド
 
 - 環境変数 `.env` が作ってありますか？
 - migrate は最新ですか？
@@ -221,6 +214,15 @@ https://qiita.com/YoshitakaOkada/items/f51f52a8041439a1dbc9#line
 
 Userが「食べた」と答えた回数を集計して、最近「食べた」と答えなかったらアラート、みたいな
 
+### Clean up バッチ
+LineBot Engine アプリ内の古いデータを月次でクリーンアップする処理
+
+具体的には、LineBotとのやり取りで蓄積されたメッセージログや一時的なユーザーデータなど、古くなった不要なデータを定期的に削除することで、データベースの容量を最適化し、システムのパフォーマンスを維持する目的があります。
+月次で実行することで、データの肥大化を防ぎ、LineBotエンジンが効率的に動作し続けるためのメンテナンス処理となっています。
+```
+python manage.py monthly_cleanup_linebot_engine
+```
+
 ## warehouse
 
 - 倉庫とレンタル業務をイメージしたアプリ
@@ -237,21 +239,21 @@ Userが「食べた」と答えた回数を集計して、最近「食べた」�
 
 ### master data
 
-- `python manage.py import_weather_const_master` のバッチをまわす
-- `python manage.py generate_weather_code_fixture` のバッチをまわす（fixtureが変更されたときのみ実行）
-- `python manage.py download_weather_code_icon` のバッチをまわす（svgが変更されたときのみ実行）
+- `python manage.py weather_load_const_master` のバッチをまわす
+- `python manage.py weather_generate_code_fixture` のバッチをまわす（fixtureが変更されたときのみ実行）
+- `python manage.py weather_download_code_icon` のバッチをまわす（svgが変更されたときのみ実行）
 
 ### weather data
 
-- `python manage.py fetch_weather_forecast` のバッチをまわす
-- `python manage.py fetch_weather_warning` のバッチをまわす
+- `python manage.py weather_fetch_forecast` のバッチをまわす
+- `python manage.py weather_fetch_warning` のバッチをまわす
 
 ### 土壌硬度計測データ生成
 
 土壌硬度計測器が出力するCSVファイルのテストデータを生成するコマンドです。実際の土壌硬度計（DIK-5531など）が出力するCSVファイルと同様の形式でテストデータを生成します。
 
 ```bash
-python manage.py generate_soil_hardness_csv --num_fields 20
+python manage.py hardness_generate_dummy_csv --num_fields 20
 ```
 
 生成したファイルは一時ディレクトリに保存され、パスが実行時に表示されます。
@@ -268,13 +270,13 @@ python manage.py generate_soil_hardness_csv --num_fields 20
 
 ```bash
 # 全folderのプロットを生成（soil_analysis/management/commands/outputフォルダに保存）
-python manage.py generate_soil_hardness_plot
+python manage.py hardness_generate_plot
 
 # 出力ディレクトリを指定
-python manage.py generate_soil_hardness_plot --output_dir /path/to/output
+python manage.py hardness_generate_plot --output_dir /path/to/output
 
 # 特定の圃場台帳IDのみを対象とする
-python manage.py generate_soil_hardness_plot --land_ledger_id 1
+python manage.py hardness_generate_plot --land_ledger_id 1
 ```
 
 ## securities

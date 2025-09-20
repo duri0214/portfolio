@@ -393,7 +393,7 @@ class HardnessUploadView(FormView):
             self.request.FILES["file"], app_name
         )
         if os.path.exists(upload_folder):
-            call_command("import_soil_hardness", upload_folder)
+            call_command("hardness_load_data", upload_folder)
             try:
                 shutil.rmtree(upload_folder)
             except (PermissionError, OSError):
@@ -429,7 +429,7 @@ class HardnessDeleteAllView(View):
         return HttpResponseRedirect(reverse("soil:hardness_upload"))
 
 
-class HardnessGenerateCsvView(View):
+class HardnessGenerateDummyCsvView(View):
     """
     テスト用CSVを生成してZIPファイルでダウンロード提供
     """
@@ -445,7 +445,7 @@ class HardnessGenerateCsvView(View):
 
             # CSVを生成して出力パスを取得
             csv_output_path = call_command(
-                "generate_soil_hardness_csv", f"--num_fields={num_fields}"
+                "hardness_generate_dummy_csv", f"--num_fields={num_fields}"
             )
 
             if csv_output_path and os.path.exists(csv_output_path):

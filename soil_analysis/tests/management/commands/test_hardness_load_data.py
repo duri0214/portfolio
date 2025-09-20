@@ -5,7 +5,7 @@ import pytz
 from django.core.management import call_command
 from django.test import TestCase
 
-from soil_analysis.management.commands.import_soil_hardness import (
+from soil_analysis.management.commands.hardness_load_data import (
     extract_device,
     extract_datetime,
     extract_numeric_value,
@@ -17,7 +17,7 @@ class TestImportSoilHardness(TestCase):
         out = StringIO()
         err = StringIO()
         folder_path = "/path/to/nonexistent/folder"
-        call_command("import_soil_hardness", folder_path, stdout=out, stderr=err)
+        call_command("hardness_load_data", folder_path, stdout=out, stderr=err)
         self.assertIn(f"Folder path does not exist: {folder_path}", err.getvalue())
 
     def test_extract_device_valid(self):
