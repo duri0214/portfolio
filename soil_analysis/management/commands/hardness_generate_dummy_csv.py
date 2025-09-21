@@ -59,7 +59,7 @@ class Command(BaseCommand):
         output_path = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
 
         # CSVファイル出力用のディレクトリ名を設定
-        csv_output_path = output_path / "取り込みCSV"
+        csv_output_path = output_path / "generate_csv"
         os.makedirs(csv_output_path, exist_ok=True)
 
         # 全圃場共通の測定日を生成（1日で全圃場を計測する前提）
