@@ -440,80 +440,33 @@ class HardnessGenerateDummyCsvView(View):
 
     @staticmethod
     def post(request, *args, **kwargs):
-        import logging
-        from io import StringIO
-
-        logger = logging.getLogger(__name__)
-
         try:
             num_fields = int(request.POST.get("num_fields", 3))
-            logger.info(f"=== CSV generation started for {num_fields} fields ===")
 
             if num_fields < 1 or num_fields > 16:
                 messages.error(request, "圃場数は1〜16の範囲で指定してください。")
                 return HttpResponseRedirect(reverse("soil:hardness_upload"))
 
-            # call_commandの出力をキャプチャ
-            out = StringIO()
-
             # CSVを生成して出力パスを取得
             csv_output_path = call_command(
-                "hardness_generate_dummy_csv", f"--num_fields={num_fields}", stdout=out
+                "hardness_generate_dummy_csv", f"--num_fields={num_fields}"
             )
 
-            # キャプチャした出力をログに記録
-            command_output = out.getvalue()
-            for line in command_output.split("\n"):
-                if line.strip():
-                    logger.info(f"Command output: {line}")
-
-            logger.info(f"CSV generated at path: {csv_output_path}")
-
             if csv_output_path and os.path.exists(csv_output_path):
-                temp_dir = Path(csv_output_path).parent
-                logger.info(f"Temporary directory: {temp_dir}")
-
-                try:
-                    # ZIP化してダウンロード
-                    logger.info("Creating ZIP file for download...")
-                    response = ZipFileService.create_zip_download(
-                        csv_output_path, "generate_csv.zip"
-                    )
-                    logger.info("ZIP file created successfully for download")
-
-                    # 一時ディレクトリを削除
-                    try:
-                        shutil.rmtree(temp_dir)
-                        logger.info(f"Temporary directory deleted: {temp_dir}")
-                    except (PermissionError, OSError) as cleanup_error:
-                        logger.warning(
-                            f"Failed to delete temporary directory {temp_dir}: {cleanup_error}"
-                        )
-                        # ファイル削除エラーは無視して続行（OneDriveなどの同期フォルダではこの例外が発生することがある）
-                        pass
-
-                    logger.info("=== CSV generation completed successfully ===")
-                    return response
-
-                except Exception as download_error:
-                    logger.error(f"Error creating ZIP download: {download_error}")
-                    # 一時ディレクトリのクリーンアップを試行
-                    try:
-                        shutil.rmtree(temp_dir)
-                    except (PermissionError, OSError):
-                        pass
-                    raise download_error
-            else:
-                logger.error(
-                    f"CSV output path does not exist or is None: {csv_output_path}"
+                # ZIP化してダウンロード
+                response = ZipFileService.create_zip_download(
+                    csv_output_path, "取り込みCSV.zip"
                 )
+
+                # 一時ディレクトリを削除
+                shutil.rmtree(Path(csv_output_path).parent)
+
+                return response
+            else:
                 messages.error(request, "CSV生成に失敗しました。")
                 return HttpResponseRedirect(reverse("soil:hardness_upload"))
 
         except Exception as e:
-            logger.error(
-                f"Error in HardnessGenerateDummyCsvView: {str(e)}", exc_info=True
-            )
             messages.error(request, f"CSV生成中にエラーが発生しました: {str(e)}")
             return HttpResponseRedirect(reverse("soil:hardness_upload"))
 
