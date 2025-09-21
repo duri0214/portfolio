@@ -28,9 +28,10 @@ def _generate_single_plot(land_ledger_id: int) -> bool:
                 land_ledger.land.image.save(filename, ContentFile(f.read()), save=True)
             os.remove(plot_path)
             return True
-        except (OSError, PermissionError):
+        except (OSError, PermissionError) as e:
             # ファイル削除エラーは無視して続行
             # OneDriveなどの同期フォルダではこの例外が発生することがある
+            print(f"File operation error (ignoring): {e}")
             return True
 
     return False
