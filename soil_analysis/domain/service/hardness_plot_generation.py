@@ -24,7 +24,8 @@ def _generate_single_plot(land_ledger_id: int) -> bool:
     if plot_path:
         try:
             with open(plot_path, "rb") as f:
-                filename = f"land_{land_ledger.land.id}_{land_ledger.sampling_date.strftime('%Y%m%d')}_3d_surface.png"
+                date = land_ledger.sampling_date.strftime("%Y%m%d")
+                filename = f"soil_hardness_land_ledger_id_{land_ledger_id}_{date}_3d_surface.png"
                 land_ledger.land.image.save(filename, ContentFile(f.read()), save=True)
             os.remove(plot_path)
             return True

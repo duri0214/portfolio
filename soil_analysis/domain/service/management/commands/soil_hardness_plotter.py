@@ -118,7 +118,9 @@ class SoilHardnessPlotterService:
         fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label="kPa")
 
         # 保存
-        filename = f"soil_hardness_company_{company_id}_{land}_{date}_3d_surface.png"
+        filename = (
+            f"soil_hardness_land_ledger_id_{land_ledger_id}_{date}_3d_surface.png"
+        )
         save_path = os.path.join(self.output_dir, filename)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
