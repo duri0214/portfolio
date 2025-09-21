@@ -477,7 +477,7 @@ class HardnessGenerateDummyCsvView(View):
                     # ZIP化してダウンロード
                     logger.info("Creating ZIP file for download...")
                     response = ZipFileService.create_zip_download(
-                        csv_output_path, "取り込みCSV.zip"
+                        csv_output_path, "generate_csv.zip"
                     )
                     logger.info("ZIP file created successfully for download")
 
