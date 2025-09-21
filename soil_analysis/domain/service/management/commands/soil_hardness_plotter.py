@@ -20,7 +20,6 @@ class SoilHardnessPlotterService:
 
     def __init__(self, output_dir: str = "."):
         self.output_dir = output_dir
-        plt.rcParams["font.family"] = ["IPAexGothic"]
 
     def plot_3d_surface(self, land_ledger_id: int | None = None) -> str:
         """土壌硬度測定データの3D表面プロットを生成
@@ -48,7 +47,7 @@ class SoilHardnessPlotterService:
         """
         # データ取得
         queryset = SoilHardnessMeasurement.objects.select_related(
-            "land_ledger__land__company", "land_ledger__land", "land_block"
+            "land_ledger__land", "land_block"
         ).order_by("depth")
 
         if land_ledger_id:
@@ -61,14 +60,14 @@ class SoilHardnessPlotterService:
             target_info = (
                 f"land_ledger_id={land_ledger_id}"
                 if land_ledger_id
-                else "全関連付け済みデータ"
+                else "all linked data"
             )
             raise SoilHardnessMeasurement.DoesNotExist(
-                f"土壌硬度測定データが見つかりません: {target_info}"
+                f"Soil hardness measurement data not found: {target_info}"
             )
 
         # 基本情報取得
-        company = first_data.land_ledger.land.company.name
+        company_id = first_data.land_ledger.land.company_id
         land = first_data.land_ledger.land.name
         date = first_data.land_ledger.sampling_date.strftime("%Y%m%d")
 
@@ -109,17 +108,17 @@ class SoilHardnessPlotterService:
         # X軸: ブロック名をスケール化（['A1', 'A3', 'B2'] → [0, 1, 2]）して等間隔表示
         ax.set_xticks(np.arange(len(land_block_names)))
         ax.set_xticklabels(land_block_names)
-        ax.set_xlabel("圃場内位置")  # X軸全体のラベル
-        ax.set_ylabel("深度 (cm)")  # Y軸: 深度（実際の深度値をそのまま使用）
-        ax.set_zlabel("圧力 (kPa)")  # Z軸: 圧力値（0-3000kPaの範囲で固定表示）
+        ax.set_xlabel("block")  # X軸全体のラベル
+        ax.set_ylabel("depth (cm)")  # Y軸: 深度（実際の深度値をそのまま使用）
+        ax.set_zlabel("pressure (kPa)")  # Z軸: 圧力値（0-3000kPaの範囲で固定表示）
         ax.set_zlim(0, 3000)  # z軸を0-3000kPaに固定
-        ax.set_title(f"{company} - {land} 土壌硬度分布 ({date})")
+        ax.set_title(f"company_{company_id} - {land} soil_hardness ({date})")
 
         # カラーバー追加（圧力値の色対応表を右側に表示）
-        fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label="圧力 (kPa)")
+        fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label="kPa")
 
         # 保存
-        filename = f"soil_hardness_{company}_{land}_{date}_3d_surface.png"
+        filename = f"soil_hardness_company_{company_id}_{land}_{date}_3d_surface.png"
         save_path = os.path.join(self.output_dir, filename)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
