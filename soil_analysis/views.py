@@ -704,7 +704,7 @@ class HardnessAssociationSuccessView(TemplateView):
     def post(request, *args, **kwargs):
         if "btn_generate_plots" in request.POST:
             HardnessPlotGenerationService.generate_and_save_plots()
-            return HttpResponseRedirect(reverse("soil:home"))
+            return HttpResponseRedirect(reverse("soil:company_list"))
 
         return HttpResponseRedirect(request.path)
 
