@@ -1,5 +1,7 @@
 import os
 from django.core.files.base import ContentFile
+
+from config import settings
 from soil_analysis.models import SoilHardnessMeasurement, LandLedger
 from soil_analysis.domain.service.management.commands.soil_hardness_plotter import (
     SoilHardnessPlotterService,
@@ -18,7 +20,7 @@ def _generate_single_plot(land_ledger_id: int) -> bool:
     """
     land_ledger = LandLedger.objects.get(id=land_ledger_id)
 
-    plotter = SoilHardnessPlotterService()
+    plotter = SoilHardnessPlotterService(output_dir=settings.MEDIA_ROOT)
     plot_path = plotter.plot_3d_surface(land_ledger_id)
 
     if plot_path:
