@@ -139,6 +139,47 @@
             </div>
         </div>
 
+        <!-- 天気予報カード -->
+        {% if object.jma_city %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-cloud-sun"></i> 天気予報</h6>
+                </div>
+                <div class="card-body">
+                    {% if object.jma_city.jma_region.weathers %}
+                        <div class="weather-list">
+                            {% for weather in object.jma_city.jma_region.weathers %}
+                                <div class="weather-item">
+                                    <p><strong>{{ weather.reporting_date|date:"m/d" }}</strong></p>
+                                    <img src="{% static 'soil_analysis/images/weather/svg/' %}{{ weather.jma_weather_code.image }}"
+                                         alt="{{ weather.jma_weather_code.name }}"
+                                         style="width: 50px; height: 50px;">
+                                    <p>{{ weather.jma_weather_code.name }}</p>
+                                    {% if weather.avg_rain_probability %}
+                                        <p><i class="fas fa-tint"></i> {{ weather.avg_rain_probability }}%</p>
+                                    {% endif %}
+                                    {% if weather.avg_max_temperature and weather.avg_min_temperature %}
+                                        <p><i class="fas fa-temperature-high"></i> 最高 {{ weather.avg_max_temperature }}℃ / 最低 {{ weather.avg_min_temperature }}℃</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">天気予報データがありません。</p>
+                    {% endif %}
+
+                    {% if object.jma_city.jma_region.warnings %}
+                        <div class="alert alert-warning mt-3" role="alert">
+                            <h6><i class="fas fa-exclamation-triangle"></i> 気象警報</h6>
+                            {% for warning in object.jma_city.jma_region.warnings %}
+                                <p class="mb-0">{{ warning.warnings }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
         <!-- アクションボタン -->
         <div class="d-flex justify-content-between">
             <a href="{% url 'soil:home' %}" class="btn btn-secondary">
