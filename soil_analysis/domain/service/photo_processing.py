@@ -2,7 +2,9 @@ from haversine import haversine, Unit
 
 from lib.geo.valueobject.coord import XarvioCoord
 from soil_analysis.domain.valueobject.photo_processing.photo import AndroidPhoto
-from soil_analysis.domain.valueobject.photo_processing.photo_land_association import PhotoLandAssociation
+from soil_analysis.domain.valueobject.photo_processing.photo_land_association import (
+    PhotoLandAssociation,
+)
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.models import Land
 
@@ -51,8 +53,8 @@ class PhotoProcessingService:
         最も距離が近い圃場を特定します。カメラの方向情報が含まれている場合は、
         その方向に調整された位置を使用して、より正確に撮影対象の圃場を特定します。
 
-        例えば、複数の隣接する圃場（A1、A2、A3など）を撮影した場合、各写真がどの圃場を
-        対象としているかを自動的に判別することができます。
+        例えば、隣接する圃場（A1、A2、A3など）を撮影した場合、各写真がどの圃場を
+        対象としているかを自動的に判別できるでしょう。
 
         Args:
             photo_spot: 撮影位置情報（方位角による調整を含む）
