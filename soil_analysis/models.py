@@ -111,12 +111,12 @@ class JmaWeather(models.Model):
     See Also: https://www.jma.go.jp/bosai/forecast/#area_type=class20s&area_code=2820100
 
     Attributes:
-        jma_region (JmaRegion): A ForeignKey field representing the region for which the weather data is recorded.
-        reporting_date (DateField): A DateField representing the date on which the weather data is reported.
-        jma_weather_code (JmaWeatherCode): A ForeignKey field representing the weather code for the recorded data.
-        weather_text (CharField): A CharField representing the text description of the weather.
-        wind_text (CharField): A CharField representing the text description of the wind conditions.
-        wave_text (CharField): A CharField representing the text description of the wave conditions.
+        jma_region (JmaRegion): A ForeignKey field representing the region for which the weather data is recorded
+        reporting_date (DateField): A DateField representing the date on which the weather data is reported
+        jma_weather_code (JmaWeatherCode): A ForeignKey field representing the weather code for the recorded data
+        weather_text (CharField): A CharField representing the text description of the weather
+        wind_text (CharField): A CharField representing the text description of the wind conditions
+        wave_text (CharField): A CharField representing the text description of the wave conditions
         avg_rain_probability (FloatField, optional): 降水確率
         avg_min_temperature (FloatField, optional): 最低気温
         avg_max_temperature (FloatField, optional): 最高気温
@@ -146,8 +146,8 @@ class JmaWarning(models.Model):
     See Also: https://www.jma.go.jp/bosai/warning/#area_type=class20s&area_code=2810000&lang=ja
 
     Attributes:
-        jma_region (ForeignKey): The JMA region associated with the warning.
-        warnings (CharField): The description of the warning.
+        jma_region (ForeignKey): The JMA region associated with the warning
+        warnings (CharField): The description of the warning
     """
 
     jma_region = models.ForeignKey(JmaRegion, on_delete=models.CASCADE)
