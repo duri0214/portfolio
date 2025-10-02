@@ -10,8 +10,7 @@
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:land_list' object.company.pk %}">Land list</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Detail</li>
+                <li class="breadcrumb-item active" aria-current="page">Land Detail</li>
             </ol>
         </nav>
 
@@ -143,7 +142,7 @@
 
         <!-- アクションボタン -->
         <div class="d-flex justify-content-between">
-            <a href="{% url 'soil:land_list' object.company.pk %}" class="btn btn-secondary">
+            <a href="{% url 'soil:home' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> 一覧に戻る
             </a>
             <div>
