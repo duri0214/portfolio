@@ -66,16 +66,17 @@ from soil_analysis.models import (
 SAMPLING_TIMES_PER_BLOCK = 5
 
 
-class Home(TemplateView):
-    template_name = "soil_analysis/home.html"
-
-
-class CompanyListView(ListView):
+class Home(ListView):
     model = Company
-    template_name = "soil_analysis/company/list.html"
+    template_name = "soil_analysis/home.html"
+    context_object_name = "companies"
 
     def get_queryset(self):
-        return super().get_queryset().filter(category__name="農業法人")
+        return (
+            Company.objects.filter(category__name="農業法人")
+            .prefetch_related("land_set")
+            .order_by("name")
+        )
 
 
 class CompanyCreateView(CreateView):
@@ -90,38 +91,6 @@ class CompanyCreateView(CreateView):
 class CompanyDetailView(DetailView):
     model = Company
     template_name = "soil_analysis/company/detail.html"
-
-
-class LandListView(ListView):
-    model = Land
-    template_name = "soil_analysis/land/list.html"
-
-    def get_queryset(self):
-        company_id = self.kwargs["company_id"]
-        if not company_id:
-            raise Http404("Company ID is required.")
-
-        try:
-            company = CompanyRepository.get_company_by_id(company_id)
-        except Company.DoesNotExist:
-            raise Http404("Company does not exist.")
-
-        weather_prefetch = Prefetch(
-            "jma_city__jma_region__jmaweather_set",
-            queryset=JmaWeather.objects.all(),
-            to_attr="weathers",
-        )
-        warning_prefetch = Prefetch(
-            "jma_city__jma_region__jmawarning_set",
-            queryset=JmaWarning.objects.all(),
-            to_attr="warnings",
-        )
-        return (
-            super()
-            .get_queryset()
-            .filter(company=company)
-            .prefetch_related(weather_prefetch, warning_prefetch)
-        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -704,7 +673,7 @@ class HardnessAssociationSuccessView(TemplateView):
     def post(request, *args, **kwargs):
         if "btn_generate_plots" in request.POST:
             HardnessPlotGenerationService.generate_and_save_plots()
-            return HttpResponseRedirect(reverse("soil:company_list"))
+            return HttpResponseRedirect(reverse("soil:home"))
 
         return HttpResponseRedirect(request.path)
 
