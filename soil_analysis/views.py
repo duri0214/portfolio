@@ -323,7 +323,7 @@ class LandLedgerCreateAjaxView(View):
                 for company in Company.objects.filter(category_id=2)
             ],
             "sampling_staff": [
-                {"id": user.id, "name": user.username}
+                {"id": user.id, "name": user.get_username()}
                 for user in get_user_model().objects.all()
             ],
             "suggested_land_id": suggested_land.id if suggested_land else None,
