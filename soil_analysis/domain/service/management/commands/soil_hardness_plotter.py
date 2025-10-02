@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from soil_analysis.models import SoilHardnessMeasurement
+from soil_analysis.domain.valueobject.management.commands.soil_hardness_plot import (
+    SoilHardnessPlotName,
+)
 
 
 class SoilHardnessPlotterService:
@@ -69,7 +72,7 @@ class SoilHardnessPlotterService:
         # 基本情報取得
         company_id = first_data.land_ledger.land.company_id
         land = first_data.land_ledger.land.name
-        date = first_data.land_ledger.sampling_date.strftime("%Y%m%d")
+        sampling_date = first_data.land_ledger.sampling_date
 
         # データ整理
         land_block_names = list(
@@ -112,14 +115,14 @@ class SoilHardnessPlotterService:
         ax.set_ylabel("depth (cm)")  # Y軸: 深度（実際の深度値をそのまま使用）
         ax.set_zlabel("pressure (kPa)")  # Z軸: 圧力値（0-3000kPaの範囲で固定表示）
         ax.set_zlim(0, 3000)  # z軸を0-3000kPaに固定
-        ax.set_title(f"company_{company_id} - {land} soil_hardness ({date})")
+        ax.set_title(f"company_{company_id} - {land} soil_hardness ({sampling_date.strftime('%Y%m%d')})")
 
         # カラーバー追加（圧力値の色対応表を右側に表示）
         fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label="kPa")
 
         # 保存
-        filename = (
-            f"soil_hardness_land_ledger_id_{land_ledger_id}_{date}_3d_surface.png"
+        filename = SoilHardnessPlotName.build_filename(
+            land_ledger_id=land_ledger_id, sampling_date=sampling_date
         )
         save_path = os.path.join(self.output_dir, filename)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
