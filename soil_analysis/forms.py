@@ -27,7 +27,7 @@ class CompanyCreateForm(forms.ModelForm):
             "category": forms.Select(attrs={"class": "form-select", "tabindex": "4"}),
         }
         labels = {
-            "name": "圃場名",
+            "name": "企業名",
             "image": "画像",
             "remark": "備考",
             "category": "カテゴリー",
