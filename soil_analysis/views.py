@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
-from django.db.models import Count, Min, Max
+from django.db.models import Count, Min, Max, Prefetch
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -56,6 +56,8 @@ from soil_analysis.models import (
     JmaCity,
     JmaRegion,
     JmaPrefecture,
+    JmaWeather,
+    JmaWarning,
     Crop,
     LandPeriod,
     SamplingMethod,
@@ -174,6 +176,23 @@ class PrefectureCitiesView(View):
 class LandDetailView(DetailView):
     model = Land
     template_name = "soil_analysis/land/detail.html"
+
+    def get_queryset(self):
+        weather_prefetch = Prefetch(
+            "jma_city__jma_region__jmaweather_set",
+            queryset=JmaWeather.objects.all(),
+            to_attr="weathers",
+        )
+        warning_prefetch = Prefetch(
+            "jma_city__jma_region__jmawarning_set",
+            queryset=JmaWarning.objects.all(),
+            to_attr="warnings",
+        )
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(weather_prefetch, warning_prefetch)
+        )
 
 
 class LandReportChemicalListView(ListView):
