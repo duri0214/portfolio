@@ -56,8 +56,6 @@ from soil_analysis.models import (
     JmaCity,
     JmaRegion,
     JmaPrefecture,
-    JmaWeather,
-    JmaWarning,
     Crop,
     LandPeriod,
     SamplingMethod,
