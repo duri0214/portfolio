@@ -94,7 +94,7 @@ class CompanyDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        company_id = self.kwargs["company_id"]
+        company_id = self.kwargs["pk"]
         if not company_id:
             raise Http404("Company ID is required.")
 
@@ -103,8 +103,9 @@ class CompanyDetailView(DetailView):
         except Company.DoesNotExist:
             raise Http404("Company does not exist.")
 
+        company_lands = Land.objects.filter(company_id=company_id)
         context["land_ledger_map"] = LandRepository.get_land_to_ledgers_map(
-            context["object_list"]
+            company_lands
         )
         context["company"] = company
 
@@ -189,9 +190,7 @@ class LandDetailView(DetailView):
             to_attr="warnings",
         )
         return (
-            super()
-            .get_queryset()
-            .prefetch_related(weather_prefetch, warning_prefetch)
+            super().get_queryset().prefetch_related(weather_prefetch, warning_prefetch)
         )
 
 
