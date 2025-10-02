@@ -6,6 +6,9 @@ from soil_analysis.models import SoilHardnessMeasurement, LandLedger
 from soil_analysis.domain.service.management.commands.soil_hardness_plotter import (
     SoilHardnessPlotterService,
 )
+from soil_analysis.domain.valueobject.management.commands.soil_hardness_plot import (
+    SoilHardnessPlotName,
+)
 
 
 def _generate_single_plot(land_ledger_id: int) -> bool:
@@ -26,8 +29,9 @@ def _generate_single_plot(land_ledger_id: int) -> bool:
     if plot_path:
         try:
             with open(plot_path, "rb") as f:
-                date = land_ledger.sampling_date.strftime("%Y%m%d")
-                filename = f"soil_hardness_land_ledger_id_{land_ledger_id}_{date}_3d_surface.png"
+                filename = SoilHardnessPlotName.build_filename(
+                    land_ledger_id=land_ledger_id, sampling_date=land_ledger.sampling_date
+                )
                 land_ledger.land.image.save(filename, ContentFile(f.read()), save=True)
             os.remove(plot_path)
             return True
