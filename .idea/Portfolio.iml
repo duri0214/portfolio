@@ -31,6 +31,9 @@
     <orderEntry type="library" name="bootstrap-icons" level="application" />
     <orderEntry type="library" name="all" level="application" />
     <orderEntry type="library" name="all" level="application" />
+    <orderEntry type="library" name="all" level="application" />
+    <orderEntry type="library" name="js-cookie" level="application" />
+    <orderEntry type="library" name="bootstrap" level="application" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="" />
@@ -52,6 +55,7 @@
         <option value="$MODULE_DIR$/mysite/kanban/templates" />
         <option value="$MODULE_DIR$/mysite/uploader/templates" />
         <option value="$MODULE_DIR$/mysite/warehouse/templates" />
+        <option value="$MODULE_DIR$/soil_analysis/templates" />
       </list>
     </option>
   </component>
