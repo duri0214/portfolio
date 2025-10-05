@@ -2,6 +2,250 @@
 {% load static %}
 {% block extra_css %}
     <link rel="stylesheet" type="text/css" href="{% static "soil_analysis/css/route_suggest/style.css" %}"/>
+    <style>
+        .success-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+        }
+        
+        .success-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: #198754;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .success-header h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 2rem;
+        }
+        
+        .success-header .subtitle {
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e6ed;
+            margin-bottom: 2rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .info-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-item label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-item .value {
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 0.75rem;
+            color: #667eea;
+        }
+        
+        .todo-notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: #856404;
+        }
+        
+        .todo-notice strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .todo-notice ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .work-content-list {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .work-content-list ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .work-content-list li {
+            margin-bottom: 0.75rem;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .work-content-list ul ul {
+            margin-top: 0.5rem;
+            margin-bottom: 0;
+        }
+        
+        .work-content-list ul ul li {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+        
+        .map-section {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        @media (max-width: 992px) {
+            .map-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        #map {
+            height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e0e6ed;
+        }
+        
+        .location-list {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e6ed;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .location-list .list-group-item {
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .location-list .list-group-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        
+        .location-list .list-group-item::marker {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .deliverables-list,
+        .other-info-list {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1rem;
+        }
+        
+        .deliverables-list ul,
+        .other-info-list ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .deliverables-list li,
+        .other-info-list li {
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .other-info-note {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+        
+        .print-button {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .btn-print {
+            background: #198754;
+            border: none;
+            color: white;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-print:hover {
+            background: #157347;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(25, 135, 84, 0.4);
+        }
+        
+        .btn-print i {
+            margin-right: 0.5rem;
+        }
+        
+        @media print {
+            .breadcrumb,
+            .btn-print,
+            .todo-notice {
+                display: none;
+            }
+            
+            .success-container {
+                max-width: 100%;
+            }
+        }
+    </style>
 {% endblock %}
 {% block extra_head %}
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
@@ -11,7 +255,7 @@
     {% endautoescape %}
 {% endblock %}
 {% block content %}
-    <div class="container">
+    <div class="container success-container">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -20,55 +264,113 @@
                 <li class="breadcrumb-item active" aria-current="page">Success</li>
             </ol>
         </nav>
-        <h1>作業指示書</h1>
-        <p>TODO: placeオブジェクトにラップして、マウスオーバー時に圃場の名前を表示する<br>TODO: ピンと圃場名が違うかもしれない<br>TODO:
-            印刷用の余白ゼロのページを作る</p>
-
-        <p>発行日: YYYY-MM-DD</p>
-        <p>依頼者: X XX</p>
-        <p>作業者: Aさん</p>
-        <p>作業日: YYYY-MM-DD</p>
-        <p>シーズン: 施肥前測定</p>
-        <p>作業単価（円/件） 1,000円／件</p>
-
-        <h4 class="mt-4">作業内容</h4>
-        <ul>
-            <li>化学性測定
-                <ul>
-                    <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
-                </ul>
-            </li>
-            <li>物理性測定
-                <ul>
-                    <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
-                </ul>
-            </li>
-        </ul>
-
-        <h4 class="mt-4">作業場所</h4>
-        <div class="flex-container">
-            <div id="map" class="flex-item"></div>
-            <ol class="list-group list-group-numbered flex-item">
-                {% for land in land_list %}
-                    <li id="{{ land.id }}" class="list-group-item">{{ land.name }}（{{ land.coord }}）</li>
-                {% endfor %}
-            </ol>
+        
+        <div class="success-header">
+            <h1><i class="fas fa-check-circle"></i> 作業指示書</h1>
+            <p class="subtitle">最適ルートが作成されました</p>
+        </div>
+        
+        <div class="todo-notice">
+            <strong><i class="fas fa-tasks"></i> 開発メモ（TODO）:</strong>
+            <ul>
+                <li>placeオブジェクトにラップして、マウスオーバー時に圃場の名前を表示する</li>
+                <li>ピンと圃場名が違うかもしれない</li>
+                <li>印刷用の余白ゼロのページを作る</li>
+            </ul>
         </div>
 
-        <h4 class="mt-4">提出物</h4>
-        <ul>
-            <li>土</li>
-            <li>物理性測定データ</li>
-        </ul>
+        <div class="info-card">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label><i class="far fa-calendar-alt"></i> 発行日</label>
+                    <div class="value">YYYY-MM-DD</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="far fa-user"></i> 依頼者</label>
+                    <div class="value">X XX</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="fas fa-user-tie"></i> 作業者</label>
+                    <div class="value">Aさん</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="far fa-calendar-check"></i> 作業日</label>
+                    <div class="value">YYYY-MM-DD</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="fas fa-seedling"></i> シーズン</label>
+                    <div class="value">施肥前測定</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="fas fa-yen-sign"></i> 作業単価</label>
+                    <div class="value">1,000円／件</div>
+                </div>
+            </div>
+        </div>
 
-        <h4 class="mt-4">その他</h4>
-        共通する事項は基本契約で交わしておく
-        <ul>
-            <li>データの取り扱いについて</li>
-            <li>秘密保持について</li>
-            <li>支払い条件について</li>
-            <li>保険（作業中に倒れるとか、怪我するとか）</li>
-        </ul>
+        <h4 class="section-title">
+            <i class="fas fa-clipboard-list"></i> 作業内容
+        </h4>
+        <div class="work-content-list">
+            <ul>
+                <li><strong>化学性測定</strong>
+                    <ul>
+                        <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
+                    </ul>
+                </li>
+                <li><strong>物理性測定</strong>
+                    <ul>
+                        <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <h4 class="section-title">
+            <i class="fas fa-map-marked-alt"></i> 作業場所
+        </h4>
+        <div class="map-section">
+            <div id="map"></div>
+            <div class="location-list">
+                <ol class="list-group list-group-numbered">
+                    {% for land in land_list %}
+                        <li id="{{ land.id }}" class="list-group-item">
+                            <strong>{{ land.name }}</strong><br>
+                            <small style="color: #7f8c8d;">{{ land.coord }}</small>
+                        </li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+
+        <h4 class="section-title">
+            <i class="fas fa-box"></i> 提出物
+        </h4>
+        <div class="deliverables-list">
+            <ul>
+                <li><i class="fas fa-mountain"></i> 土</li>
+                <li><i class="fas fa-chart-bar"></i> 物理性測定データ</li>
+            </ul>
+        </div>
+
+        <h4 class="section-title">
+            <i class="fas fa-info-circle"></i> その他
+        </h4>
+        <div class="other-info-list">
+            <p class="other-info-note">共通する事項は基本契約で交わしておく</p>
+            <ul>
+                <li><i class="fas fa-database"></i> データの取り扱いについて</li>
+                <li><i class="fas fa-lock"></i> 秘密保持について</li>
+                <li><i class="fas fa-credit-card"></i> 支払い条件について</li>
+                <li><i class="fas fa-shield-alt"></i> 保険（作業中に倒れるとか、怪我するとか）</li>
+            </ul>
+        </div>
+
+        <div class="print-button">
+            <button class="btn btn-print" onclick="window.print()">
+                <i class="fas fa-print"></i> 印刷する
+            </button>
+        </div>
 
         <!--
           The `defer` attribute causes the callback to execute after the full HTML
