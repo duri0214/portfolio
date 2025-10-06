@@ -91,6 +91,7 @@ class Command(BaseCommand):
 
         days = [14, 7, 3]
         passed_records = []
+        log_service.write("\n🔍 Detecting uptrend stocks...")
         for ticker in tickers:
             closing_price = [
                 x["closing_price"]
