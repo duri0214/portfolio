@@ -122,7 +122,6 @@ class Command(BaseCommand):
 
             slopes = []
             attempts = passed = 0
-            price = {}
             for attempts, day in enumerate(days, start=1):
                 if len(closing_price) < day:
                     continue
