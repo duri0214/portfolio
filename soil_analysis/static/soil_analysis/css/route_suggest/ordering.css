@@ -17,9 +17,9 @@
 
 #sortable-list .list-group-item.active,
 #sortable-list .list-group-item.ui-sortable-helper {
-    background: #0dcaf0 !important;
-    color: white !important;
-    border-color: #0dcaf0 !important;
+    background: #0dcaf0;
+    color: white;
+    border-color: #0dcaf0;
 }
 
 #sortable-list .list-group-item.active::before,
@@ -29,7 +29,7 @@
 
 #sortable-list .list-group-item.active .land-name,
 #sortable-list .list-group-item.active .land-coord {
-    color: white !important;
+    color: white;
 }
 
 #sortable-list .list-group-item:first-child {
@@ -65,8 +65,8 @@
 .ui-sortable-placeholder {
     border: 2px dashed #0dcaf0;
     background: #cff4fc;
-    visibility: visible !important;
-    height: 70px !important;
+    visibility: visible;
+    height: 70px;
     border-radius: 10px;
     margin-bottom: 1rem;
 }
