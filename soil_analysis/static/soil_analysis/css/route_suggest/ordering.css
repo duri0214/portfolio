@@ -1,0 +1,72 @@
+#sortable-list {
+    list-style: none;
+    padding: 0;
+}
+
+#sortable-list .list-group-item {
+    cursor: move;
+}
+
+#sortable-list .list-group-item::before {
+    content: '\f0c9';
+    font-family: 'Font Awesome 5 Free', serif;
+    font-weight: 900;
+    color: #6c757d;
+    margin-right: 1rem;
+}
+
+#sortable-list .list-group-item.active,
+#sortable-list .list-group-item.ui-sortable-helper {
+    background: #0dcaf0;
+    color: white;
+    border-color: #0dcaf0;
+}
+
+#sortable-list .list-group-item.active::before,
+#sortable-list .list-group-item.ui-sortable-helper::before {
+    color: white;
+}
+
+#sortable-list .list-group-item.active .land-name,
+#sortable-list .list-group-item.active .land-coord {
+    color: white;
+}
+
+#sortable-list .list-group-item:first-child {
+    border-left: 4px solid #198754;
+}
+
+#sortable-list .list-group-item:first-child::after {
+    content: '始点';
+    position: absolute;
+    right: 1rem;
+    background: #198754;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+#sortable-list .list-group-item:last-child {
+    border-left: 4px solid #dc3545;
+}
+
+#sortable-list .list-group-item:last-child::after {
+    content: '終点';
+    position: absolute;
+    right: 1rem;
+    background: #dc3545;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.ui-sortable-placeholder {
+    border: 2px dashed #0dcaf0;
+    background: #cff4fc;
+    visibility: visible;
+    height: 70px;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
