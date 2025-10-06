@@ -160,8 +160,7 @@ class Command(BaseCommand):
                 Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
 
                 # Log detailed info to a file only (for charts generated)
-                add_space = 2 if passed == len(days) else 0
-                spaces = " " * add_space
+                spaces = "  "
                 watchlist_marker = (
                     " (in watchlist)" if ticker in watchlist_symbols else ""
                 )
