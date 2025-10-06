@@ -41,21 +41,11 @@ python manage.py convert_csv_to_fixture
     - `1` のidを作らないと失敗するfixtureがある(vietnam_research)
 - `auth_user` の seeder はそれぞれのアプリごとにわけて作ってある
 - `auth_user` の初期パスワードは `test#1234`
+
 ### `Industry` テーブルに初期データ
-TODO: issue378  
-バッチ `daily_industry_chart_and_uptrend` を動かすときは `industry` のデータを14日分用意しましょう。seederの日付はだんだん古くなっていくので、以下のSQLでメンテしてね（-7ヶ月から毎月2日分のデータがあるようにする）
-
-```text
--- 何月のデータがあるの？の確認
-SELECT x.recorded_date
-FROM vietnam_research_industry x
-GROUP BY x.recorded_date
-ORDER BY x.recorded_date;
-
--- ある日付を別の日付に編集する
-UPDATE portfolio_db.vietnam_research_industry
-SET recorded_date = '2024-05-02'
-WHERE recorded_date = '2023-01-17';
+※事前に `Symbol` データ（ticker の顔ぶれ）を loaddata しておく必要があります
+```
+python manage.py generate_industry_dummy_data --clear
 ```
 
 ### 各種 `loaddata` コマンド
