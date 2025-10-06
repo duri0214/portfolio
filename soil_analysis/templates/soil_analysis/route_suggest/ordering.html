@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container ordering-container">
+    <div class="container" style="max-width: 800px;">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -26,25 +26,25 @@
             </ol>
         </nav>
         
-        <div class="ordering-header">
-            <h1><i class="fas fa-sort"></i> 訪問順序の設定</h1>
+        <div class="text-center mb-4">
+            <h1 class="text-dark fw-semibold mb-3"><i class="fas fa-sort"></i> 訪問順序の設定</h1>
         </div>
         
-        <div class="ordering-instruction">
+        <div class="bg-info text-white p-4 rounded-3 mb-4 shadow-sm">
             <div class="text-center">
-                <i class="fas fa-info-circle"></i>
-                <p><strong>ドラッグ＆ドロップ</strong>で訪問順序を並べ替えてください</p>
-                <p class="instruction-detail">
+                <i class="fas fa-info-circle fs-1 mb-2"></i>
+                <p class="mb-2 fs-5"><strong>ドラッグ＆ドロップ</strong>で訪問順序を並べ替えてください</p>
+                <p class="mb-0" style="font-size: 0.95rem; opacity: 0.9;">
                     一番上が<strong>始点</strong>、一番下が<strong>終点</strong>になります。中間地点は自動的に最適化されます。
                 </p>
             </div>
         </div>
         
-        <ul id="sortable-list">
+        <ul id="sortable-list" class="mb-4">
             {% for land in object_list %}
-                <li id="{{ land.id }}" class="list-group-item">
-                    <span class="land-name">{{ land.name }}</span>
-                    <span class="land-coord">{{ land.coord }}</span>
+                <li id="{{ land.id }}" class="list-group-item bg-white border border-2 rounded-3 p-3 mb-3 d-flex align-items-center shadow-sm position-relative">
+                    <span class="land-name fw-semibold text-dark me-3">{{ land.name }}</span>
+                    <span class="land-coord text-secondary" style="font-size: 0.9rem;">{{ land.coord }}</span>
                 </li>
             {% endfor %}
         </ul>
@@ -52,9 +52,9 @@
         <form id="orderForm" method="POST" action="{% url 'soil:route_suggest_ordering' %}">
             {% csrf_token %}
             <input type="hidden" id="orderData" name="order_data">
-            <div class="submit-section">
-                <button class="btn btn-submit" type="submit">
-                    最適ルートを計算する<i class="fas fa-arrow-right"></i>
+            <div class="text-center mt-4">
+                <button class="btn btn-info text-white px-5 py-3 fs-5 fw-semibold rounded-pill shadow" type="submit">
+                    最適ルートを計算する<i class="fas fa-arrow-right ms-2"></i>
                 </button>
             </div>
         </form>

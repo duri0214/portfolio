@@ -1,7 +1,7 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 {% block extra_css %}
-    <link rel="stylesheet" type="text/css" href="{% static 'soil_analysis/css/route_suggest/success.css' %}"/>
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/route_suggest/success.css' %}">
 {% endblock %}
 {% block extra_head %}
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
@@ -11,7 +11,7 @@
     {% endautoescape %}
 {% endblock %}
 {% block content %}
-    <div class="container success-container">
+    <div class="container" style="max-width: 1200px;">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
@@ -21,110 +21,110 @@
             </ol>
         </nav>
         
-        <div class="success-header">
-            <h1><i class="fas fa-check-circle"></i> 作業指示書</h1>
-            <p class="subtitle">最適ルートが作成されました</p>
+        <div class="text-center my-4 p-4 bg-success text-white rounded-3 shadow">
+            <h1 class="mb-2"><i class="fas fa-check-circle"></i> 作業指示書</h1>
+            <p class="mb-0 fs-5" style="opacity: 0.9;">最適ルートが作成されました</p>
         </div>
         
-        <div class="todo-notice">
+        <div class="alert alert-warning border border-warning mb-4">
             <strong><i class="fas fa-tasks"></i> 開発メモ（TODO）:</strong>
-            <ul>
+            <ul class="mb-0 mt-2">
                 <li>placeオブジェクトにラップして、マウスオーバー時に圃場の名前を表示する</li>
                 <li>ピンと圃場名が違うかもしれない</li>
                 <li>印刷用の余白ゼロのページを作る</li>
             </ul>
         </div>
 
-        <div class="info-card">
-            <div class="info-grid">
-                <div class="info-item">
-                    <label><i class="far fa-calendar-alt"></i> 発行日</label>
-                    <div class="value">YYYY-MM-DD</div>
+        <div class="bg-white rounded-3 p-4 shadow-sm border mb-4">
+            <div class="info-grid mb-3">
+                <div class="info-item bg-light p-3 rounded-2">
+                    <label class="fw-semibold text-primary d-block mb-2" style="font-size: 0.9rem;"><i class="far fa-calendar-alt"></i> 発行日</label>
+                    <div class="text-dark fs-5">YYYY-MM-DD</div>
                 </div>
-                <div class="info-item">
-                    <label><i class="far fa-user"></i> 依頼者</label>
-                    <div class="value">X XX</div>
+                <div class="info-item bg-light p-3 rounded-2">
+                    <label class="fw-semibold text-primary d-block mb-2" style="font-size: 0.9rem;"><i class="far fa-user"></i> 依頼者</label>
+                    <div class="text-dark fs-5">X XX</div>
                 </div>
-                <div class="info-item">
-                    <label><i class="fas fa-user-tie"></i> 作業者</label>
-                    <div class="value">Aさん</div>
+                <div class="info-item bg-light p-3 rounded-2">
+                    <label class="fw-semibold text-primary d-block mb-2" style="font-size: 0.9rem;"><i class="fas fa-user-tie"></i> 作業者</label>
+                    <div class="text-dark fs-5">Aさん</div>
                 </div>
-                <div class="info-item">
-                    <label><i class="far fa-calendar-check"></i> 作業日</label>
-                    <div class="value">YYYY-MM-DD</div>
+                <div class="info-item bg-light p-3 rounded-2">
+                    <label class="fw-semibold text-primary d-block mb-2" style="font-size: 0.9rem;"><i class="far fa-calendar-check"></i> 作業日</label>
+                    <div class="text-dark fs-5">YYYY-MM-DD</div>
                 </div>
-                <div class="info-item">
-                    <label><i class="fas fa-seedling"></i> シーズン</label>
-                    <div class="value">施肥前測定</div>
+                <div class="info-item bg-light p-3 rounded-2">
+                    <label class="fw-semibold text-primary d-block mb-2" style="font-size: 0.9rem;"><i class="fas fa-seedling"></i> シーズン</label>
+                    <div class="text-dark fs-5">施肥前測定</div>
                 </div>
-                <div class="info-item">
-                    <label><i class="fas fa-yen-sign"></i> 作業単価</label>
-                    <div class="value">1,000円／件</div>
+                <div class="info-item bg-light p-3 rounded-2">
+                    <label class="fw-semibold text-primary d-block mb-2" style="font-size: 0.9rem;"><i class="fas fa-yen-sign"></i> 作業単価</label>
+                    <div class="text-dark fs-5">1,000円／件</div>
                 </div>
             </div>
         </div>
 
-        <h4 class="section-title">
-            <i class="fas fa-clipboard-list"></i> 作業内容
+        <h4 class="text-dark fw-semibold fs-4 my-4 pb-2 border-bottom border-primary border-3 d-flex align-items-center">
+            <i class="fas fa-clipboard-list me-2 text-primary"></i> 作業内容
         </h4>
-        <div class="work-content-list">
+        <div class="bg-white rounded-3 p-4 shadow-sm mb-4">
             <ul>
-                <li><strong>化学性測定</strong>
-                    <ul>
-                        <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
+                <li class="mb-3 text-dark"><strong>化学性測定</strong>
+                    <ul class="mt-2">
+                        <li class="text-secondary" style="font-size: 0.95rem;">（現地作業マニュアルを単に表示するだけでもよさそう）</li>
                     </ul>
                 </li>
-                <li><strong>物理性測定</strong>
-                    <ul>
-                        <li>（現地作業マニュアルを単に表示するだけでもよさそう）</li>
+                <li class="text-dark"><strong>物理性測定</strong>
+                    <ul class="mt-2">
+                        <li class="text-secondary" style="font-size: 0.95rem;">（現地作業マニュアルを単に表示するだけでもよさそう）</li>
                     </ul>
                 </li>
             </ul>
         </div>
 
-        <h4 class="section-title">
-            <i class="fas fa-map-marked-alt"></i> 作業場所
+        <h4 class="text-dark fw-semibold fs-4 my-4 pb-2 border-bottom border-primary border-3 d-flex align-items-center">
+            <i class="fas fa-map-marked-alt me-2 text-primary"></i> 作業場所
         </h4>
-        <div class="map-section">
-            <div id="map"></div>
-            <div class="location-list">
+        <div class="map-section my-4">
+            <div id="map" class="rounded-3 shadow border border-2"></div>
+            <div class="location-list bg-white rounded-3 p-4 shadow-sm border">
                 <ol class="list-group list-group-numbered">
                     {% for land in land_list %}
-                        <li id="{{ land.id }}" class="list-group-item">
+                        <li id="{{ land.id }}" class="list-group-item border rounded-2 mb-3 p-3">
                             <strong>{{ land.name }}</strong><br>
-                            <small class="coord-text">{{ land.coord }}</small>
+                            <small class="text-secondary">{{ land.coord }}</small>
                         </li>
                     {% endfor %}
                 </ol>
             </div>
         </div>
 
-        <h4 class="section-title">
-            <i class="fas fa-box"></i> 提出物
+        <h4 class="text-dark fw-semibold fs-4 my-4 pb-2 border-bottom border-primary border-3 d-flex align-items-center">
+            <i class="fas fa-box me-2 text-primary"></i> 提出物
         </h4>
-        <div class="deliverables-list">
+        <div class="bg-white rounded-3 p-4 shadow-sm mb-4">
             <ul>
-                <li><i class="fas fa-mountain"></i> 土</li>
-                <li><i class="fas fa-chart-bar"></i> 物理性測定データ</li>
+                <li class="mb-2 text-dark"><i class="fas fa-mountain"></i> 土</li>
+                <li class="text-dark"><i class="fas fa-chart-bar"></i> 物理性測定データ</li>
             </ul>
         </div>
 
-        <h4 class="section-title">
-            <i class="fas fa-info-circle"></i> その他
+        <h4 class="text-dark fw-semibold fs-4 my-4 pb-2 border-bottom border-primary border-3 d-flex align-items-center">
+            <i class="fas fa-info-circle me-2 text-primary"></i> その他
         </h4>
-        <div class="other-info-list">
-            <p class="other-info-note">共通する事項は基本契約で交わしておく</p>
+        <div class="bg-white rounded-3 p-4 shadow-sm mb-4">
+            <p class="text-secondary fst-italic mb-3" style="font-size: 0.95rem;">共通する事項は基本契約で交わしておく</p>
             <ul>
-                <li><i class="fas fa-database"></i> データの取り扱いについて</li>
-                <li><i class="fas fa-lock"></i> 秘密保持について</li>
-                <li><i class="fas fa-credit-card"></i> 支払い条件について</li>
-                <li><i class="fas fa-shield-alt"></i> 保険（作業中に倒れるとか、怪我するとか）</li>
+                <li class="mb-2 text-dark"><i class="fas fa-database"></i> データの取り扱いについて</li>
+                <li class="mb-2 text-dark"><i class="fas fa-lock"></i> 秘密保持について</li>
+                <li class="mb-2 text-dark"><i class="fas fa-credit-card"></i> 支払い条件について</li>
+                <li class="text-dark"><i class="fas fa-shield-alt"></i> 保険（作業中に倒れるとか、怪我するとか）</li>
             </ul>
         </div>
 
-        <div class="print-button">
-            <button class="btn btn-print" onclick="window.print()">
-                <i class="fas fa-print"></i> 印刷する
+        <div class="text-center my-4">
+            <button class="btn btn-success text-white px-5 py-3 fs-5 fw-semibold rounded-pill shadow" onclick="window.print()">
+                <i class="fas fa-print me-2"></i> 印刷する
             </button>
         </div>
 
