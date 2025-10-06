@@ -42,12 +42,6 @@ python manage.py convert_csv_to_fixture
 - `auth_user` の seeder はそれぞれのアプリごとにわけて作ってある
 - `auth_user` の初期パスワードは `test#1234`
 
-### `Industry` テーブルに初期データ
-※事前に `Symbol` データ（ticker の顔ぶれ）を loaddata しておく必要があります
-```
-python manage.py generate_industry_dummy_data --clear
-```
-
 ### 各種 `loaddata` コマンド
 ```
 -- portfolio_db をつくった直後はスーパーユーザーが作成する
@@ -166,15 +160,16 @@ chmod 774 /var/www
 `daily_industry_chart_and_uptrend` は 各期間（14日、7日、3日）を遡り、 すべての期間の株価が上昇傾向（斜度が正）であれば passed
 がインクリメントされる。つまり時系列データがないと画像は保存されない
 
-- ベトナムの株価を分析する
+- ベトナムの株価を分析
     - `python manage.py daily_import_from_bloomberg` のバッチをまわす
     - `python manage.py daily_import_from_sbi` のバッチをまわす
     - `python manage.py daily_import_from_vietkabu` のバッチをまわす
+    - `python manage.py generate_industry_dummy_data --clear`  のバッチをまわす
     - `python manage.py daily_industry_chart_and_uptrend` のバッチをまわす
     - `python manage.py daily_industry_stacked_bar_chart` のバッチをまわす
 - FAOから水産物供給量の推移グラフ
     - `python manage.py monthly_fao_food_balance_chart` のバッチをまわす
-- ベトナムの統計局から経済指標を取得
+- ベトナムの統計局から経済指標
     - `python manage.py monthly_vietnam_statistics` のバッチをまわす
 
 ## gmarker
@@ -307,7 +302,7 @@ sequenceDiagram
 
 - **主要機能**
     - 注文の作成機能  
-      ユーザーは新しい取引注文（売買）を入力し登録することができます。
+      ユーザーは新しい取引注文（売買）を入力し登録できます。
     - 板情報の表示機能  
       現在の板情報（売り注文・買い注文の残存状態）を動的に計算し、わかりやすい形式で表示します。
 

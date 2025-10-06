@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 import os
 from glob import glob
 from pathlib import Path
@@ -64,7 +64,7 @@ class Command(BaseCommand):
         """
         log_service = LogService("./result.log")
 
-        matplotlib.use('Agg')  # GUIを使わないバックエンドを指定
+        matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
         plt.rcParams["font.family"] = ["IPAexGothic"]
         # make a folder if not exists and delete old files and delete table data
         out_folder = (
@@ -91,6 +91,7 @@ class Command(BaseCommand):
 
         days = [14, 7, 3]
         passed_records = []
+        log_service.write("\n🔍 Detecting uptrend stocks...")
         for ticker in tickers:
             closing_price = [
                 x["closing_price"]
@@ -121,7 +122,6 @@ class Command(BaseCommand):
 
             slopes = []
             attempts = passed = 0
-            price = {}
             for attempts, day in enumerate(days, start=1):
                 if len(closing_price) < day:
                     continue
@@ -156,18 +156,22 @@ class Command(BaseCommand):
                 # save png as w640, h480
                 out_path = str(Path(out_folder) / f"{ticker}.png")
                 plt.savefig(out_path)
-                log_service.write(f"Saving file: {out_path}")
                 # resize png as w250, h200
                 Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
 
-            add_space = 2 if passed == len(days) else 0
-            spaces = " " * add_space
-            log_service.write(
-                f"{spaces}{formatted_text(ticker, slopes, passed, price)}"
-            )
+                # Log detailed info to a file only (for charts generated)
+                spaces = "  "
+                watchlist_marker = (
+                    " (in watchlist)" if ticker in watchlist_symbols else ""
+                )
+                log_service.write(
+                    f"{spaces}{formatted_text(ticker, slopes, passed, price)}{watchlist_marker}"
+                )
         Uptrend.objects.bulk_create(passed_records)
 
         caller_file_name = Path(__file__).stem
-        log_service.write(
-            f"{caller_file_name} is done.(Number of tickers processed: {len(tickers)})"
-        )
+
+        # Console output: Summary
+        log_service.write(f"\n✅ {caller_file_name} completed successfully.")
+        log_service.write(f"   - Total tickers processed: {len(tickers)}")
+        log_service.write(f"   - Charts generated: {len(passed_records)}")
