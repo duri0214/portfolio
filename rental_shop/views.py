@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView, CreateView, DetailView, ListView
@@ -11,7 +12,14 @@ from rental_shop.domain.valueobject.warehouse import (
     ShelfCell,
 )
 from rental_shop.forms import ItemCreateForm, InvoiceCreateForm
-from rental_shop.models import Item, RentalStatus, Invoice, Staff, BillingStatus
+from rental_shop.models import (
+    Item,
+    RentalStatus,
+    Invoice,
+    Staff,
+    BillingStatus,
+    BillingPerson,
+)
 
 
 class IndexView(TemplateView):
@@ -183,3 +191,12 @@ class InvoiceListView(ListView):
             invoice = Invoice.objects.all()
 
         return invoice
+
+
+def load_billing_persons(request):
+    """会社に紐づく請求担当者をJSON形式で返すAjaxエンドポイント"""
+    company_id = request.GET.get("company_id")
+    billing_persons = BillingPerson.objects.filter(company_id=company_id).order_by(
+        "name"
+    )
+    return JsonResponse(list(billing_persons.values("id", "name")), safe=False)

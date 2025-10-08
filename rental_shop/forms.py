@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Item, Invoice
+from .models import Item, Invoice, BillingPerson
 
 
 class ItemCreateForm(forms.ModelForm):
@@ -56,6 +56,29 @@ class InvoiceCreateForm(forms.ModelForm):
             ),
             "staff": forms.Select(attrs={"tabindex": "5", "class": "form-control"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 初期状態では請求担当者は空にする
+        self.fields["billing_person"].queryset = self.fields[
+            "billing_person"
+        ].queryset.none()
+
+        # 編集時またはPOST時に会社が選択されている場合
+        if "company" in self.data:
+            try:
+                company_id = int(self.data.get("company"))
+
+                self.fields["billing_person"].queryset = BillingPerson.objects.filter(
+                    company_id=company_id
+                ).order_by("name")
+            except (ValueError, TypeError):
+                pass
+        elif self.instance.pk:
+            # 既存のインスタンスを編集している場合
+            self.fields["billing_person"].queryset = (
+                self.instance.company.billingperson_set.order_by("name")
+            )
 
     def clean_company(self):
         company = self.cleaned_data["company"]
