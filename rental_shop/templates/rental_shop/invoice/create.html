@@ -67,3 +67,37 @@
         </form>
     </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const companySelect = document.getElementById('{{ form.company.id_for_label }}');
+        const billingPersonSelect = document.getElementById('{{ form.billing_person.id_for_label }}');
+
+        // 会社が選択されたときのイベントハンドラ
+        companySelect.addEventListener('change', function() {
+            const companyId = this.value;
+
+            // 請求担当者のドロップダウンをクリア
+            billingPersonSelect.innerHTML = '<option value="">---------</option>';
+
+            if (companyId) {
+                // Ajaxリクエストで請求担当者を取得
+                fetch('{% url "ren:ajax_load_billing_persons" %}?company_id=' + companyId)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(function(person) {
+                            const option = document.createElement('option');
+                            option.value = person.id;
+                            option.textContent = person.name;
+                            billingPersonSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('請求担当者の取得に失敗しました:', error);
+                    });
+            }
+        });
+    });
+</script>
+{% endblock %}

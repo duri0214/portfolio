@@ -9,6 +9,7 @@ from .views import (
     InvoiceDetailView,
     RentItemView,
     ResetRentalsView,
+    load_billing_persons,
 )
 
 app_name = "ren"
@@ -32,4 +33,5 @@ urlpatterns = [
     path(
         "invoice/detail/<int:pk>/", InvoiceDetailView.as_view(), name="invoice_detail"
     ),
+    path("ajax/load-billing-persons/", load_billing_persons, name="ajax_load_billing_persons"),
 ]
