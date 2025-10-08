@@ -100,7 +100,7 @@ class CompanyDetailView(DetailView):
         except Company.DoesNotExist:
             raise Http404("Company does not exist.")
 
-        company_lands = Land.objects.filter(company_id=company_id)
+        company_lands = list(Land.objects.filter(company_id=company_id))
         context["land_ledger_map"] = LandRepository.get_land_to_ledgers_map(
             company_lands
         )
