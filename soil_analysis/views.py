@@ -4,10 +4,9 @@ import shutil
 from pathlib import Path
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
-from django.db.models import Count, Min, Max, Prefetch
+from django.db.models import Prefetch
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
