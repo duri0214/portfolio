@@ -4,7 +4,7 @@ import xml.etree.ElementTree as et
 import requests
 
 from lib.geo.valueobject.coord import GoogleMapsCoord
-from lib.geo.valueobject.yahoo import YDF
+from lib.geo.valueobject.yahoo_geocoder import YDF
 
 
 class ReverseGeocoderService:
