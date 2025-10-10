@@ -4,12 +4,39 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from lib.geo.valueobject.coord import GoogleMapsCoord
-from soil_analysis.domain.service.geocode.yahoo import ReverseGeocoderService
+from lib.geo.yahoo_geocoder import ReverseGeocoderService
 
 
 class TestGetYdfFromCoord(TestCase):
+    """
+    ReverseGeocoderService の逆ジオコーディング機能をテストする
+
+    【テストシナリオ】
+    Yahoo Geocoding APIを使って、緯度経度から住所情報を取得する機能をテストします。
+    逆ジオコーディング（Reverse Geocoding）とは、地理座標（緯度・経度）から
+    人間が読める住所（都道府県、市区町村、番地など）に変換する処理です。
+
+    【主な用途】
+    - 地図上でクリックした地点の住所を表示する
+    - GPSで取得した位置情報から現在地の住所を取得する
+    - 圃場や測定地点の座標から所在地を特定する
+    """
+
     @patch("requests.get")
     def test_get_ydf_from_coord(self, mock_get):
+        """
+        【シナリオ】緯度経度から住所情報を取得する
+
+        Given: 東京都港区赤坂の座標（緯度35.681236, 経度139.767125）
+        When: Yahoo Geocoding APIで逆ジオコーディングを実行
+        Then: 以下の住所情報が正しく取得できること
+            - 都道府県: 東京都（とうきょうと）/ コード: 13
+            - 市区町村: 港区（みなとく）/ コード: 13103
+            - 詳細住所: 赤坂９丁目７
+            - 完全住所: 東京都港区赤坂９丁目７－１
+            - 国: 日本（JP）
+            - 座標: point型（139.73134257366763,35.666049811559205）
+        """
         mock_response = mock.Mock()
         mock_response.text = """
         <YDF xmlns="http://olp.yahooapis.jp/ydf/1.0" totalResultsReturned="1">

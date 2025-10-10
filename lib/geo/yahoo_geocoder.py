@@ -1,12 +1,10 @@
 import os
-import re
 import xml.etree.ElementTree as et
 
 import requests
 
 from lib.geo.valueobject.coord import GoogleMapsCoord
-from soil_analysis.domain.valueobject.geocode.yahoo import YDF
-from soil_analysis.models import JmaCity
+from lib.geo.valueobject.yahoo_geocoder import YDF
 
 
 class ReverseGeocoderService:
@@ -20,38 +18,6 @@ class ReverseGeocoderService:
         """
         xml_str = ReverseGeocoderService._fetch_xml(coord)
         return ReverseGeocoderService._xml_to_ydf(xml_str)
-
-    @staticmethod
-    def get_jma_city(ydf: YDF) -> JmaCity:
-        """
-        YDF地名を使って、対応するJmaCityオブジェクトを返します
-
-        地名が "郡" が含まれる場合、"郡" よりうしろの文字列を取り出します "虻田郡倶知安町 → 倶知安町"
-        地名が "市" が含まれる場合、"市" までの文字列を取り出します "浜松市中央区 → 浜松市"
-        地名が "市" や "郡" を含まない場合、全ての文字列を取り出します。
-        そうして取り出した文字列で、JmaCityの検索を行う
-        （もしかしたら文字列操作があまいところがあるかもしれない）
-
-        Args:
-            ydf: The YDF
-        Returns:
-            JmaCity: The JmaCity object via city name in the YDF object
-        """
-        match = re.search(r"郡(.+)", ydf.feature.city.name)
-        if match is not None:
-            city_name = match.group(1)
-        else:
-            match = re.search(r"(.+市)", ydf.feature.city.name)
-            if match is not None:
-                city_name = match.group(1)
-            else:
-                city_name = ydf.feature.city.name
-
-        return (
-            JmaCity.objects.select_related("jma_region__jma_prefecture")
-            .filter(name__contains=city_name)
-            .first()
-        )
 
     @staticmethod
     def _fetch_xml(coord: GoogleMapsCoord) -> str:
