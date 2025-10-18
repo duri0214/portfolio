@@ -7,11 +7,6 @@ BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 OUTPUT_DIR = BASE_DIR / "output"
 
-if not TEMPLATES_DIR.exists():
-    raise FileNotFoundError(f"templates フォルダが見つかりません: {TEMPLATES_DIR}")
-if not OUTPUT_DIR.exists():
-    raise FileNotFoundError(f"output フォルダが見つかりません: {OUTPUT_DIR}")
-
 pptx_path = TEMPLATES_DIR / "template.pptx"
 output_path = OUTPUT_DIR / "output.pptx"
 TARGET_NAME = "TextBox1"
@@ -21,6 +16,8 @@ if __name__ == "__main__":
     try:
         if not pptx_path.exists():
             raise FileNotFoundError(f"テンプレート PPTX が見つかりません: {pptx_path}")
+        if not OUTPUT_DIR.exists():
+            raise FileNotFoundError(f"出力フォルダが見つかりません: {OUTPUT_DIR}")
 
         # pptxを読み込み、全ファイルをメモリに保持
         with ZipFile(str(pptx_path), "r") as input_zip:
