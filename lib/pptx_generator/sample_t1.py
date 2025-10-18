@@ -2,7 +2,6 @@ from pathlib import Path
 
 from lib.pptx_generator.service import PptxTextReplaceService
 
-# 入力/出力と置換条件
 BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 OUTPUT_DIR = BASE_DIR / "output"
@@ -15,7 +14,6 @@ NEW_TEXT = "Hello, world!"
 if __name__ == "__main__":
     try:
         service = PptxTextReplaceService()
-        # Command スタイル: 戻り値は使用せず、置換が発生したら例外で通知
         service.replace_textbox_by_name(
             template_pptx=pptx_path,
             output_pptx=output_path,
@@ -24,6 +22,9 @@ if __name__ == "__main__":
             page=1,
         )
         print(f"✅ 書き換え完了: {output_path}")
+    except (FileNotFoundError, KeyError) as e:
+        print(f"❌ 必要なフォルダ、ファイルまたはスライドが見つかりません: {e}")
+        exit(1)
     except PermissionError:
         print("⚠️ PowerPointを閉じてから再実行してください。")
         exit(1)

@@ -54,7 +54,8 @@ class PptxTextReplaceService:
         - なし。
 
         例外:
-        - FileNotFoundError: 入力/出力パス不正、または対象スライドが ZIP 内に存在しない場合。
+        - FileNotFoundError: テンプレート PPTX または出力フォルダが存在しない。
+        - KeyError: 対象スライドが ZIP 内に存在しない。
         """
         if not template_pptx.exists():
             raise FileNotFoundError(
@@ -80,7 +81,7 @@ class PptxTextReplaceService:
         # Parse slide xml
         x_path = slide_loc.x_path
         if x_path not in zip_contents:
-            raise FileNotFoundError(f"スライドが見つかりません: {x_path}")
+            raise KeyError(f"スライドが見つかりません: {x_path}")
         root = etree.fromstring(zip_contents[x_path])
 
         # Find and replace
