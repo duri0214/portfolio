@@ -20,7 +20,7 @@ if __name__ == "__main__":
             output_pptx=output_path,
             target_shape_name=TARGET_NAME,
             new_text=NEW_TEXT,
-            slide_index=1,
+            page=1,
         )
         if original is not None:
             print(f"✅ {TARGET_NAME} を書き換え: '{original}' → '{NEW_TEXT}'")
