@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 from zipfile import ZipFile
 from lxml import etree
 
@@ -37,7 +36,7 @@ class PptxTextReplaceService:
         target_shape_name: str,
         new_text: str,
         page: int = 1,
-    ) -> Optional[str]:
+    ) -> None:
         """指定スライド上で、図形名に一致するテキストボックスの文字列を置換します。
 
         要点:
@@ -52,7 +51,7 @@ class PptxTextReplaceService:
         - page: 対象スライド番号（1 始まり）。
 
         戻り値:
-        - Optional[str]: 置換が発生した場合は最初に一致した図形の置換前テキスト。該当無しは None。
+        - なし。
 
         例外:
         - FileNotFoundError: 入力/出力パス不正、または対象スライドが ZIP 内に存在しない場合。
@@ -86,12 +85,9 @@ class PptxTextReplaceService:
 
         # Find and replace
         replaced_any = False
-        original_text: Optional[str] = None
         for sp in root.findall(".//p:sp", namespaces=ns.mapping):
             if shape_name.matches(sp, ns):
-                old = text_content.apply_to_shape(sp, ns)
-                if old is not None and not replaced_any:
-                    original_text = old
+                text_content.apply_to_shape(sp, ns)
                 replaced_any = True
 
         # Write back only if the replacement happened
@@ -105,4 +101,10 @@ class PptxTextReplaceService:
             for filename, data in zip_contents.items():
                 output_zip.writestr(filename, data)
 
-        return original_text
+        # 置換が一つも発生しなかった場合はコンソールに通知
+        if not replaced_any:
+            print(
+                f"⚠️ 対象 '{target_shape_name}' が見つからず、置換は行われませんでした。"
+            )
+
+        return None

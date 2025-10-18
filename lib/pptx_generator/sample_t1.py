@@ -15,15 +15,14 @@ NEW_TEXT = "Hello, world!"
 if __name__ == "__main__":
     try:
         service = PptxTextReplaceService()
-        original = service.replace_textbox_by_name(
+        # Command スタイル: 戻り値は使用せず、置換が発生したら例外で通知
+        service.replace_textbox_by_name(
             template_pptx=pptx_path,
             output_pptx=output_path,
             target_shape_name=TARGET_NAME,
             new_text=NEW_TEXT,
             page=1,
         )
-        if original is not None:
-            print(f"✅ {TARGET_NAME} を書き換え: '{original}' → '{NEW_TEXT}'")
         print(f"✅ 書き換え完了: {output_path}")
     except PermissionError:
         print("⚠️ PowerPointを閉じてから再実行してください。")
