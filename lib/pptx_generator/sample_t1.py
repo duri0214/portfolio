@@ -18,7 +18,7 @@ if __name__ == "__main__":
                 "p": "http://schemas.openxmlformats.org/presentationml/2006/main"
             },
         ):
-            print(elem.attrib.get("name"), elem.attrib.get("id"))
+            print(f"{elem.attrib.get("id")=}, {elem.attrib.get("name")=}")
 
     except PermissionError:
         print(
