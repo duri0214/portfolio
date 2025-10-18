@@ -30,44 +30,21 @@ if __name__ == "__main__":
         xml_content = zip_contents["ppt/slides/slide1.xml"]
         root = etree.fromstring(xml_content)
 
-        # 変更前XML（pretty print）を表示
-        before_xml_pretty = etree.tostring(root, pretty_print=True, encoding="unicode")
-        print("===== BEFORE: ppt/slides/slide1.xml =====")
-        print(before_xml_pretty)
-        print("===== END BEFORE =====")
+        ns = {
+            "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
+            "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+        }
 
-        ns_p = {"p": "http://schemas.openxmlformats.org/presentationml/2006/main"}
-        ns_a = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
-
-        # 対象テキストボックスを検索
-        for elem in root.xpath(
-            "//p:sp[p:nvSpPr/p:cNvPr[@name=$target]]",
-            namespaces=ns_p,
-            target=TARGET_NAME,
-        ):
-            txBody = elem.find(".//a:txBody", namespaces=ns_a)
-            if txBody is not None:
-                # 既存段落をすべて削除
-                for p in list(txBody.findall(".//a:p", namespaces=ns_a)):
-                    txBody.remove(p)
-
-                # 新しい段落を作り、ランとテキストを追加
-                p_new = etree.SubElement(
-                    txBody, "{http://schemas.openxmlformats.org/drawingml/2006/main}p"
-                )
-                r_new = etree.SubElement(
-                    p_new, "{http://schemas.openxmlformats.org/drawingml/2006/main}r"
-                )
-                t_new = etree.SubElement(
-                    r_new, "{http://schemas.openxmlformats.org/drawingml/2006/main}t"
-                )
-                t_new.text = NEW_TEXT
-
-        # 変更後XML（pretty print）を表示
-        after_xml_pretty = etree.tostring(root, pretty_print=True, encoding="unicode")
-        print("===== AFTER: ppt/slides/slide1.xml =====")
-        print(after_xml_pretty)
-        print("===== END AFTER =====")
+        # 対象テキストボックスを検索して文字更新
+        for sp in root.findall(".//p:sp", namespaces=ns):
+            name_elem = sp.find(".//p:cNvPr", namespaces=ns)
+            if name_elem is not None and name_elem.get("name") == TARGET_NAME:
+                t_elem = sp.find(".//a:t", namespaces=ns)
+                if t_elem is not None:
+                    print(
+                        f"✅ {TARGET_NAME} を書き換え: '{t_elem.text}' → '{NEW_TEXT}'"
+                    )
+                    t_elem.text = NEW_TEXT
 
         # 編集済みXMLを書き戻す
         zip_contents["ppt/slides/slide1.xml"] = etree.tostring(
