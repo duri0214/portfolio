@@ -36,7 +36,7 @@ class PptxTextReplaceService:
         output_pptx: Path,
         target_shape_name: str,
         new_text: str,
-        slide_index: int = 1,
+        page: int = 1,
     ) -> Optional[str]:
         """指定スライド上で、図形名に一致するテキストボックスの文字列を置換します。
 
@@ -49,7 +49,7 @@ class PptxTextReplaceService:
         - output_pptx: 出力先 PPTX のパス（親フォルダは既存である必要あり）。
         - target_shape_name: 置換対象図形（テキストボックス）の cNvPr@name。
         - new_text: 置換後の文字列。
-        - slide_index: 対象スライド番号（1 始まり）。
+        - page: 対象スライド番号（1 始まり）。
 
         戻り値:
         - Optional[str]: 置換が発生した場合は最初に一致した図形の置換前テキスト。該当無しは None。
@@ -67,7 +67,7 @@ class PptxTextReplaceService:
             )
 
         ns = Namespaces()
-        slide_loc = SlideLocation(slide_index)
+        slide_loc = SlideLocation(page)
         shape_name = ShapeName(target_shape_name)
         text_content = TextContent(new_text)
 
@@ -79,10 +79,10 @@ class PptxTextReplaceService:
             }
 
         # Parse slide xml
-        zip_key = slide_loc.zip_key()
-        if zip_key not in zip_contents:
-            raise FileNotFoundError(f"スライドが見つかりません: {zip_key}")
-        root = etree.fromstring(zip_contents[zip_key])
+        x_path = slide_loc.x_path
+        if x_path not in zip_contents:
+            raise FileNotFoundError(f"スライドが見つかりません: {x_path}")
+        root = etree.fromstring(zip_contents[x_path])
 
         # Find and replace
         replaced_any = False
@@ -96,7 +96,7 @@ class PptxTextReplaceService:
 
         # Write back only if the replacement happened
         if replaced_any:
-            zip_contents[zip_key] = etree.tostring(
+            zip_contents[x_path] = etree.tostring(
                 root, xml_declaration=True, encoding="utf-8"
             )
 
