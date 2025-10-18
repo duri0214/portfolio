@@ -30,20 +30,22 @@ class SlideLocation:
     - スライド番号（1 始まり）から、ZIP 内のスライドXMLパス（例: ppt/slides/slide1.xml）を導出します。
 
     注意点:
-    - index が 1 未満の場合はガードとして slide1.xml を返します（フォールバック）。
+    - page が 1 未満の場合はガードとして slide1.xml を返します（フォールバック）。
     - スライドの存在確認自体は行いません（サービス層で ZIP 内存在チェックを行います）。
 
     例:
-        SlideLocation(3).zip_key()  # => "ppt/slides/slide3.xml"
+        SlideLocation(3).x_path  # => "ppt/slides/slide3.xml"
     """
 
-    index: int = 1
+    page: int = 1
 
-    def zip_key(self) -> str:
-        if self.index < 1:
+    @property
+    def x_path(self) -> str:
+        """スライド XML の ZIP 内パス（例: ppt/slides/slide1.xml）を返します。"""
+        if self.page < 1:
             # Guard against invalid indices; default to 1st slide
             return "ppt/slides/slide1.xml"
-        return f"ppt/slides/slide{self.index}.xml"
+        return f"ppt/slides/slide{self.page}.xml"
 
 
 @dataclass(frozen=True)
