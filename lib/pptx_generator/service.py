@@ -20,7 +20,7 @@ from lib.pptx_generator.valueobject import (
 
 @dataclass
 class PptxToxicService:
-    """PPTX のテキスト置換を行うアプリケーションサービス。
+    """PPTX のテキスト／表の置換を行うアプリケーションサービス。
 
     役割:
     - 値オブジェクト（Namespaces, SlideLocation, TextContent）を調整し、
@@ -32,7 +32,7 @@ class PptxToxicService:
 
     注意点:
     - テキスト置換は最初の <a:t> ランのみ。複数ランや段落対応が必要なら TextContent を拡張してください。
-    - 画像や表などの図形（<p:pic> 等）は対象外。現在は <p:sp> テキストボックスのみをスキャンしています。
+    - 表は <a:tbl> または <p:tbl>（通常は p:graphicFrame 配下）を対象に、既存表を直接置換します。画像（<p:pic>）は対象外。
     - スライド番号は 1 始まり。0 以下が来た場合は SlideLocation 側で slide1.xml にフォールバックします。
     """
 
@@ -46,8 +46,8 @@ class PptxToxicService:
     ) -> None:
         """MarkdownSection の内容を指定された図形名へ反映します。
 
-        - すべてテキストボックス（<p:sp>）へのテキスト反映として実装します。
-        - 表は簡易にテキスト化（行を改行、セルはタブ区切り）して流し込みます。
+        - テキストはテキストボックス（<p:sp>）に反映します。
+        - 表はテキスト化せず、既存の PPTX 表（a:tbl / p:tbl）を直接置換します（ヘッダ行を雛形としてデータ行を増減）。
         - 指定された図形が見つからない場合は警告のみで処理継続します。
         """
         if not template_pptx.exists():
