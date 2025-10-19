@@ -10,10 +10,8 @@
 
 import unittest
 
-from lib.pptx_generator.markdown_content import (
-    MarkdownSection,
-    parse_markdown,
-)
+from lib.pptx_generator.valueobject import MarkdownSection
+from lib.pptx_generator.service import parse_markdown
 
 
 class TestMarkdownContent(unittest.TestCase):
@@ -30,7 +28,7 @@ class TestMarkdownContent(unittest.TestCase):
         """シナリオ:
         - Given: 見出し(h2)と1つの段落を含む Markdown。
         - When: parse_markdown に渡して解析する。
-        - Then: title に見出しテキスト、paragraphs に段落のみが入り、lists, tables は空。
+        - Then: title に見出しテキスト、paragraphs に段落のみが入り、bullet_list, table は空。
         """
         md = """
         ## 見出しと1つの段落をテストする
@@ -40,14 +38,14 @@ class TestMarkdownContent(unittest.TestCase):
         self.assertIsInstance(section, MarkdownSection)
         self.assertEqual(section.title, "見出しと1つの段落をテストする")
         self.assertEqual(section.paragraphs, ["これはテストです。"])
-        self.assertEqual(section.lists, [])
-        self.assertEqual(section.tables, [])
+        self.assertIsNone(section.bullet_list)
+        self.assertIsNone(section.table)
 
     def test_list_extraction(self):
         """シナリオ:
         - Given: 見出しと、ハイフン形式の箇条書き3項目。
         - When: 解析する。
-        - Then: lists に1件のリストが入り、アイテムの前後空白や改行は正規化される。paragraphs, tables は空。
+        - Then: bullet_list に1件のリストが入り、アイテムの前後空白や改行は正規化される。paragraphs, table は空。
         """
         md = """
         ## 箇条書き3項目をテストする
@@ -58,16 +56,16 @@ class TestMarkdownContent(unittest.TestCase):
         section = parse_markdown(md)
         self.assertEqual(section.title, "箇条書き3項目をテストする")
         self.assertEqual(section.paragraphs, [])
-        self.assertEqual(len(section.lists), 1)
+        self.assertIsNotNone(section.bullet_list)
         self.assertEqual(
-            section.lists[0].items,
+            section.bullet_list.items if section.bullet_list else [],
             [
                 "北海道: 120万円",
                 "東京: 350万円",
                 "大阪: 280万円",
             ],
         )
-        self.assertEqual(section.tables, [])
+        self.assertIsNone(section.table)
 
     def test_table_extraction(self):
         md = """
@@ -81,14 +79,16 @@ class TestMarkdownContent(unittest.TestCase):
         section = parse_markdown(md)
         self.assertEqual(section.title, "表をテストする")
         self.assertEqual(section.paragraphs, [])
-        self.assertEqual(section.lists, [])
+        self.assertIsNone(section.bullet_list)
 
         # One table expected
-        self.assertEqual(len(section.tables), 1)
-        table = section.tables[0]
+        self.assertIsNotNone(section.table)
+        table = section.table
 
         # Expect header + 3 rows
-        self.assertEqual(table.records[0].cells, ["拠点", "売上", "前期比"])
-        self.assertEqual(table.records[1].cells, ["北海道", "120", "+10%"])
-        self.assertEqual(table.records[2].cells, ["東京", "350", "+5%"])
-        self.assertEqual(table.records[3].cells, ["大阪", "280", "+8%"])
+        self.assertIsNotNone(table)
+        if table:
+            self.assertEqual(table.records[0].cells, ["拠点", "売上", "前期比"])
+            self.assertEqual(table.records[1].cells, ["北海道", "120", "+10%"])
+            self.assertEqual(table.records[2].cells, ["東京", "350", "+5%"])
+            self.assertEqual(table.records[3].cells, ["大阪", "280", "+8%"])

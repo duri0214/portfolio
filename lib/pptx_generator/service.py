@@ -2,13 +2,24 @@ from dataclasses import dataclass
 from pathlib import Path
 from zipfile import ZipFile
 from lxml import etree
+from bs4 import BeautifulSoup
+from markdown_it import MarkdownIt
+import textwrap
 
 from lib.pptx_generator.valueobject import (
     Namespaces,
     SlideLocation,
     ShapeName,
     TextContent,
+    HtmlTextExtractor,
+    BulletList,
+    TableRecord,
+    Table,
+    MarkdownSection,
 )
+
+
+# ---------------- PPTX Services ----------------
 
 
 @dataclass
@@ -109,3 +120,64 @@ class PptxTextReplaceService:
             )
 
         return None
+
+
+# ---------------- Markdown Services ----------------
+
+
+def _md_to_html(md_text: str) -> str:
+    """Markdown 文字列を HTML に変換する（table 有効）。"""
+    parser = MarkdownIt("commonmark").enable("table")
+    return parser.render(md_text)
+
+
+def parse_markdown(text: str) -> MarkdownSection:
+    """Markdown 文字列を解析し、見出し・段落・箇条書き・表を抽出して返す。"""
+    clean_text = textwrap.dedent(text).strip()
+    html = _md_to_html(clean_text)
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Title: first heading among h1...h6
+    title = None
+    for level in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+        elem = soup.find(level)
+        if elem:
+            title = elem.get_text(strip=True)
+            break
+
+    extractor = HtmlTextExtractor()
+
+    # Paragraphs: top-level-ish paragraphs (not nested in li or table)
+    paragraphs: list[str] = extractor.extract_all(
+        p for p in soup.find_all("p") if not p.find_parent(["li", "table"])
+    )
+
+    # Bullet list: only the first list (ul/ol) outside tables
+    bullet_list: BulletList | None = None
+    for lst in soup.find_all(["ul", "ol"]):
+        if lst.find_parent("table"):
+            continue
+        items = extractor.extract_all(lst.find_all("li", recursive=False))
+        if not items:
+            items = extractor.extract_all(lst.find_all("li"))
+        if items:
+            bullet_list = BulletList(items=items)
+            break
+
+    # Table: only the first table
+    table: Table | None = None
+    for tbl in soup.find_all("table"):
+        records: list[TableRecord] = []
+        for tr in tbl.find_all("tr"):
+            cells = tr.find_all(["th", "td"])
+            row = extractor.extract_all(cells)
+            if row:
+                records.append(TableRecord(cells=row))
+        if records:
+            table = Table(records=records)
+            break
+
+    return MarkdownSection(
+        title=title, paragraphs=paragraphs, bullet_list=bullet_list, table=table
+    )
