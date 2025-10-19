@@ -47,19 +47,49 @@ def _md_to_html(md_text: str) -> str:
 
 
 @dataclass(frozen=True)
+class BulletList:
+    """箇条書き1セット（ul/ol）を表す値オブジェクト。
+
+    - items: 各アイテムのテキスト。
+    """
+
+    items: list[str]
+
+
+@dataclass(frozen=True)
+class TableRecord:
+    """表の1レコード（1行）を表す値オブジェクト。
+
+    - cells: 各セルのテキスト。
+    """
+
+    cells: list[str]
+
+
+@dataclass(frozen=True)
+class Table:
+    """表全体を表す値オブジェクト（先頭にヘッダ行を含む）。
+
+    - records: 行（レコード）の配列。
+    """
+
+    records: list[TableRecord]
+
+
+@dataclass(frozen=True)
 class MarkdownSection:
     """Markdown の内容を中立的な構造にした値オブジェクト。
 
     - title: 最初に出現する見出し（h1〜h6）のテキスト。無ければ None。
     - paragraphs: 段落テキストの一覧（リストや表の中は除外）。
-    - lists: 各箇条書き（ul/ol）をアイテム文字列のリストとして保持。
-    - tables: 各表を 行×列 の文字列マトリクスとして保持（ヘッダ行を先頭に含む）。
+    - lists: 各箇条書きを BulletList として保持。
+    - tables: 各表を Table として保持（先頭にヘッダ行を含む）。
     """
 
     title: str | None
     paragraphs: list[str]
-    lists: list[list[str]]
-    tables: list[list[list[str]]]
+    lists: list[BulletList]
+    tables: list[Table]
 
 
 def parse_markdown(text: str) -> MarkdownSection:
@@ -83,8 +113,8 @@ def parse_markdown(text: str) -> MarkdownSection:
         p for p in soup.find_all("p") if not p.find_parent(["li", "table"])
     )
 
-    # Lists: each UL/OL as a list of items
-    lists: list[list[str]] = []
+    # Lists: each UL/OL as a BulletList
+    lists: list[BulletList] = []
     for lst in soup.find_all(["ul", "ol"]):
         # Avoid capturing list items that appear inside tables (rare in Markdown)
         if lst.find_parent("table"):
@@ -94,19 +124,19 @@ def parse_markdown(text: str) -> MarkdownSection:
         if not items:
             items = extractor.extract_all(lst.find_all("li"))
         if items:
-            lists.append(items)
+            lists.append(BulletList(items=items))
 
-    # Tables: rows and cells
-    tables: list[list[list[str]]] = []
+    # Tables: rows and cells as Table with TableRecord
+    tables: list[Table] = []
     for table in soup.find_all("table"):
-        table_rows: list[list[str]] = []
+        records: list[TableRecord] = []
         for tr in table.find_all("tr"):
             cells = tr.find_all(["th", "td"])
             row = extractor.extract_all(cells)
             if row:
-                table_rows.append(row)
-        if table_rows:
-            tables.append(table_rows)
+                records.append(TableRecord(cells=row))
+        if records:
+            tables.append(Table(records=records))
 
     return MarkdownSection(
         title=title, paragraphs=paragraphs, lists=lists, tables=tables

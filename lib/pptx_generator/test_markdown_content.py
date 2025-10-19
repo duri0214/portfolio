@@ -60,7 +60,7 @@ class TestMarkdownContent(unittest.TestCase):
         self.assertEqual(section.paragraphs, [])
         self.assertEqual(len(section.lists), 1)
         self.assertEqual(
-            section.lists[0],
+            section.lists[0].items,
             [
                 "北海道: 120万円",
                 "東京: 350万円",
@@ -88,7 +88,7 @@ class TestMarkdownContent(unittest.TestCase):
         table = section.tables[0]
 
         # Expect header + 3 rows
-        self.assertEqual(table[0], ["拠点", "売上", "前期比"])
-        self.assertEqual(table[1], ["北海道", "120", "+10%"])
-        self.assertEqual(table[2], ["東京", "350", "+5%"])
-        self.assertEqual(table[3], ["大阪", "280", "+8%"])
+        self.assertEqual(table.records[0].cells, ["拠点", "売上", "前期比"])
+        self.assertEqual(table.records[1].cells, ["北海道", "120", "+10%"])
+        self.assertEqual(table.records[2].cells, ["東京", "350", "+5%"])
+        self.assertEqual(table.records[3].cells, ["大阪", "280", "+8%"])
