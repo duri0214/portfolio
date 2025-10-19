@@ -18,9 +18,6 @@ from lib.pptx_generator.valueobject import (
 )
 
 
-# ---------------- PPTX Services ----------------
-
-
 @dataclass
 class PptxToxicService:
     """PPTX のテキスト置換を行うアプリケーションサービス。
@@ -78,15 +75,12 @@ class PptxToxicService:
             raise KeyError(f"スライドが見つかりません: {x_path}")
         root = etree.fromstring(zip_contents[x_path])
 
-        # shape name mapping (keys: title, paragraphs, bullet_list, table)
-        mapping = {
-            "title": "Title",
-            "paragraphs": "Paragraphs",
-            "bullet_list": "BulletList",
-            "table": "Table",
-        }
-        if shape_name_map:
-            mapping.update(shape_name_map)
+        # shape name mapping must be provided from caller to avoid template-specific magic strings here
+        if not shape_name_map:
+            raise ValueError(
+                "図形名マッピング(shape_name_map)が未指定です。テンプレートの図形名に合わせたマッピングを呼び出し側から渡してください。"
+            )
+        mapping = dict(shape_name_map)
 
         # prepare rendered texts
         rendered: dict[str, str] = {}
