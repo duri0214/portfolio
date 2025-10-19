@@ -36,17 +36,23 @@ class ShapeOperationFactory:
 
     @staticmethod
     def build(source: MarkdownSection) -> list[ShapeOp]:
+        """MarkdownSection から ShapeOp の配列を構築する。
+
+        方針:
+        - 箇条書き（bullet_list）のレンダリングはサービス層（PptxToxicService）の
+          BulletStyle に委譲することで単一責任を保つ。
+          そのため本ファクトリではテキストを事前整形せず、空文字をセットした
+          TextOp("bullet_list", "") を渡す。サービス側が元の MarkdownSection から
+          適切なスタイルで再レンダリングすることを想定する。
+        - 段落は "\n\n" 区切りで結合して渡す。
+        - テーブルは TableOp としてそのまま渡す。
+        """
         operations: list[ShapeOp] = []
         if source.title is not None:
             operations.append(TextOp("title", source.title))
         if source.paragraphs:
             operations.append(TextOp("paragraphs", "\n\n".join(source.paragraphs)))
         if source.bullet_list and source.bullet_list.items:
-            # Defer bullet rendering to service-side BulletStyle to keep a single responsibility
-            # Here we join with \n so service can decide exact styling; but to preserve behavior, we pass items list text rendering from service.
-            # We will pass items via placeholder; however, ShapeOp requires text. Keep empty; service will re-render from the MarkdownSection if necessary.
-            # To preserve the current exact output, we won't pre-render here; instead, the service will render from source when it sees this op.
-            # We still need a text; put a sentinel that service ignores. Leaving an empty string is fine.
             operations.append(TextOp("bullet_list", ""))
         if source.table and source.table.records:
             operations.append(TableOp("table", source.table))
