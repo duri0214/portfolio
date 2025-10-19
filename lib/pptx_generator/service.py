@@ -103,18 +103,18 @@ class PptxToxicService:
 
         # apply to shapes with robust matching
         # - Build an index of all shapes with their cNvPr@name
-        def _shape_name(sp_el: etree._Element) -> str | None:
+        def _shape_name(sp_el: etree.ElementBase) -> str | None:
             name_el = sp_el.find(".//p:cNvPr", namespaces=ns.mapping)
             return None if name_el is None else name_el.get("name")
 
         all_shapes = list(root.findall(".//p:sp", namespaces=ns.mapping))
-        indexed: list[tuple[etree._Element, str | None]] = [
+        indexed: list[tuple[etree.ElementBase, str | None]] = [
             (sp, _shape_name(sp)) for sp in all_shapes
         ]
 
         def _resolve_targets(
             name_or_names: str | list[str] | tuple[str, ...],
-        ) -> list[etree._Element]:
+        ) -> list[etree.ElementBase]:
             # Normalize targets list
             if isinstance(name_or_names, (list, tuple)):
                 target_names = [t for t in name_or_names if isinstance(t, str) and t]
@@ -161,11 +161,11 @@ class PptxToxicService:
                     root.findall(".//p:sp", namespaces=ns.mapping)
                 ) + list(root.findall(".//p:graphicFrame", namespaces=ns.mapping))
 
-                def _name_of(el: etree._Element) -> str | None:
+                def _name_of(el: etree.ElementBase) -> str | None:
                     nm = el.find(".//p:cNvPr", namespaces=ns.mapping)
                     return None if nm is None else nm.get("name")
 
-                indexed_tbl: list[tuple[etree._Element, str | None]] = [
+                indexed_tbl: list[tuple[etree.ElementBase, str | None]] = [
                     (el, _name_of(el)) for el in candidates
                 ]
 
@@ -177,7 +177,7 @@ class PptxToxicService:
                 else:
                     targets_raw = [shape_name_value] if shape_name_value else []
 
-                targets: list[etree._Element] = []
+                targets: list[etree.ElementBase] = []
                 if targets_raw:
                     exact = [el for el, nm in indexed_tbl if nm in targets_raw]
                     targets = exact
@@ -190,7 +190,7 @@ class PptxToxicService:
                         ]
                         targets = exact_ci
                     if not targets:
-                        subs: list[etree._Element] = []
+                        subs: list[etree.ElementBase] = []
                         t_lower = {t.lower() for t in targets_raw}
                         for el, nm in indexed_tbl:
                             if not isinstance(nm, str):
@@ -271,7 +271,7 @@ class PptxToxicService:
         return None
 
     @staticmethod
-    def replace_table(tbl_el: etree._Element, table: Table, ns: Namespaces) -> None:
+    def replace_table(tbl_el: etree.ElementBase, table: Table, ns: Namespaces) -> None:
         """
         既存の PPTX 表 (a:tbl / p:tbl) を Markdown の Table で置換する。
         - 先頭行（ヘッダ行）はテンプレートのまま残し、以降の行は削除して Markdown レコードで再構築。
@@ -290,7 +290,7 @@ class PptxToxicService:
         header_tr = tr_list[0]
 
         # 内部ヘルパ: 表セルにテキストを書き込む（PowerPoint が期待する構造を保つ）
-        def _set_tbl_cell_text(cell_node: etree._Element, text_value: str) -> None:
+        def _set_tbl_cell_text(cell_node: etree.ElementBase, text_value: str) -> None:
             tx_body = cell_node.find("./a:txBody", namespaces=ns.mapping)
             if tx_body is None:
                 tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
