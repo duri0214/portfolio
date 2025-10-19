@@ -121,6 +121,336 @@ class PptxTextReplaceService:
 
         return None
 
+    @staticmethod
+    def apply_markdown_section(
+        template_pptx: Path,
+        output_pptx: Path,
+        section: MarkdownSection,
+        page: int = 1,
+        shape_name_map: dict[str, str] | None = None,
+    ) -> None:
+        """MarkdownSection の内容を指定された図形名へ反映します。
+
+        - すべてテキストボックス（<p:sp>）へのテキスト反映として実装します。
+        - 表は簡易にテキスト化（行を改行、セルはタブ区切り）して流し込みます。
+        - 指定された図形が見つからない場合は警告のみで処理継続します。
+        """
+        if not template_pptx.exists():
+            raise FileNotFoundError(
+                f"テンプレート PPTX が見つかりません: {template_pptx}"
+            )
+        if not output_pptx.parent.exists():
+            raise FileNotFoundError(
+                f"出力フォルダが見つかりません: {output_pptx.parent}"
+            )
+
+        ns = Namespaces()
+        slide_loc = SlideLocation(page)
+
+        # Load pptx (zip) to memory
+        with ZipFile(str(template_pptx), "r") as input_zip:
+            zip_contents = {
+                item.filename: input_zip.read(item.filename)
+                for item in input_zip.infolist()
+            }
+
+        # Parse slide xml
+        x_path = slide_loc.x_path
+        if x_path not in zip_contents:
+            raise KeyError(f"スライドが見つかりません: {x_path}")
+        root = etree.fromstring(zip_contents[x_path])
+
+        # shape name mapping (keys: title, paragraphs, bullet_list, table)
+        mapping = {
+            "title": "Title",
+            "paragraphs": "Paragraphs",
+            "bullet_list": "BulletList",
+            "table": "Table",
+        }
+        if shape_name_map:
+            mapping.update(shape_name_map)
+
+        # prepare rendered texts
+        rendered: dict[str, str] = {}
+        if section.title is not None:
+            rendered["title"] = section.title
+        if section.paragraphs:
+            rendered["paragraphs"] = "\n\n".join(section.paragraphs)
+        if section.bullet_list and section.bullet_list.items:
+            rendered["bullet_list"] = "\n".join(
+                f"• {it}" for it in section.bullet_list.items
+            )
+        # テーブルはテキストではなく、本物の PPTX 表（a:tbl/p:tbl）を操作して反映するため、
+        # rendered には追加しない。
+
+        # apply to shapes with robust matching
+        # - Build an index of all shapes with their cNvPr@name
+        def _shape_name(sp_el: etree._Element) -> str | None:
+            name_el = sp_el.find(".//p:cNvPr", namespaces=ns.mapping)
+            return None if name_el is None else name_el.get("name")
+
+        all_shapes = list(root.findall(".//p:sp", namespaces=ns.mapping))
+        indexed: list[tuple[etree._Element, str | None]] = [
+            (sp, _shape_name(sp)) for sp in all_shapes
+        ]
+
+        def _resolve_targets(
+            name_or_names: str | list[str] | tuple[str, ...],
+        ) -> list[etree._Element]:
+            # Normalize targets list
+            if isinstance(name_or_names, (list, tuple)):
+                targets = [t for t in name_or_names if isinstance(t, str) and t]
+            else:
+                targets = [name_or_names] if name_or_names else []
+            if not targets:
+                return []
+
+            # Tier 1: exact match (case-sensitive)
+            exact = [sp for sp, nm in indexed if nm in targets]
+            if exact:
+                return exact
+
+            # Tier 2: exact match (case-insensitive)
+            t_lower = {t.lower() for t in targets}
+            exact_ci = [
+                sp
+                for sp, nm in indexed
+                if isinstance(nm, str) and nm.lower() in t_lower
+            ]
+            if exact_ci:
+                return exact_ci
+
+            # Tier 3: substring match (case-insensitive)
+            subs = []
+            for sp, nm in indexed:
+                if not isinstance(nm, str):
+                    continue
+                nm_l = nm.lower()
+                for t in t_lower:
+                    if t and t in nm_l:
+                        subs.append(sp)
+                        break
+            return subs
+
+        replaced_any = False
+
+        # --- Table replacement: operate on real PPTX tables (a:tbl / p:tbl) ---
+        if section.table and section.table.records:
+            shape_name_value = mapping.get("table")
+            if shape_name_value:
+                # Collect candidate containers: text shapes and graphic frames
+                candidates = list(
+                    root.findall(".//p:sp", namespaces=ns.mapping)
+                ) + list(root.findall(".//p:graphicFrame", namespaces=ns.mapping))
+
+                def _name_of(el: etree._Element) -> str | None:
+                    nm = el.find(".//p:cNvPr", namespaces=ns.mapping)
+                    return None if nm is None else nm.get("name")
+
+                indexed_tbl: list[tuple[etree._Element, str | None]] = [
+                    (el, _name_of(el)) for el in candidates
+                ]
+
+                # Resolve targets by name (exact, case-insensitive, then substring)
+                if isinstance(shape_name_value, (list, tuple)):
+                    targets_raw = [
+                        t for t in shape_name_value if isinstance(t, str) and t
+                    ]
+                else:
+                    targets_raw = [shape_name_value] if shape_name_value else []
+
+                targets: list[etree._Element] = []
+                if targets_raw:
+                    exact = [el for el, nm in indexed_tbl if nm in targets_raw]
+                    targets = exact
+                    if not targets:
+                        t_lower = {t.lower() for t in targets_raw}
+                        exact_ci = [
+                            el
+                            for el, nm in indexed_tbl
+                            if isinstance(nm, str) and nm.lower() in t_lower
+                        ]
+                        targets = exact_ci
+                    if not targets:
+                        subs: list[etree._Element] = []
+                        t_lower = {t.lower() for t in targets_raw}
+                        for el, nm in indexed_tbl:
+                            if not isinstance(nm, str):
+                                continue
+                            nl = nm.lower()
+                            for t in t_lower:
+                                if t and t in nl:
+                                    subs.append(el)
+                                    break
+                        targets = subs
+
+                if targets:
+                    found_any_tbl = False
+                    for el in targets:
+                        tbl_el = el.find(".//a:tbl", namespaces=ns.mapping)
+                        if tbl_el is None:
+                            tbl_el = el.find(".//p:tbl", namespaces=ns.mapping)
+                        if tbl_el is not None:
+                            _replace_table(tbl_el, section.table, ns)
+                            replaced_any = True
+                            found_any_tbl = True
+                    if not found_any_tbl:
+                        print(
+                            f"⚠️ 指定図形 '{shape_name_value}' は見つかったが、表 (a:tbl/p:tbl) が見つかりませんでした。"
+                        )
+                else:
+                    # diagnostics for available names
+                    available_names = [
+                        nm for _, nm in indexed_tbl if isinstance(nm, str)
+                    ]
+                    preview = ", ".join(available_names[:10])
+                    more = (
+                        ""
+                        if len(available_names) <= 10
+                        else f" 他 {len(available_names) - 10} 件"
+                    )
+                    print(
+                        f"⚠️ 指定された表図形 '{shape_name_value}' が見つかりませんでした。候補: {preview}{more}"
+                    )
+
+        for key, text in rendered.items():
+            shape_name_value = mapping.get(key)
+            if not shape_name_value:
+                continue
+            txt = TextContent(text)
+            targets = _resolve_targets(shape_name_value)
+            if targets:
+                for sp in targets:
+                    txt.apply_to_shape(sp, ns)
+                    replaced_any = True
+            else:
+                # prepare available names for diagnostics
+                available_names = [nm for _, nm in indexed if isinstance(nm, str)]
+                preview = ", ".join(available_names[:10])
+                more = (
+                    ""
+                    if len(available_names) <= 10
+                    else f" 他 {len(available_names) - 10} 件"
+                )
+                print(
+                    f"⚠️ 指定された図形 '{shape_name_value}'（{key}）が見つかりませんでした。候補: {preview}{more}"
+                )
+
+        # Write back only if something changed
+        if replaced_any:
+            zip_contents[x_path] = etree.tostring(
+                root, xml_declaration=True, encoding="utf-8"
+            )
+
+        # Save as new pptx
+        with ZipFile(str(output_pptx), "w") as output_zip:
+            for filename, data in zip_contents.items():
+                output_zip.writestr(filename, data)
+
+        if not replaced_any:
+            print("⚠️ 反映対象が無く、PPTX の内容は変更されませんでした。")
+
+        return None
+
+
+def _replace_table(tbl_el: etree._Element, table: Table, ns: Namespaces) -> None:
+    """
+    既存の PPTX 表 (a:tbl / p:tbl) を Markdown の Table で置換する。
+    - 先頭行（ヘッダ行）はテンプレートのまま残し、以降の行は削除して Markdown レコードで再構築。
+    - 各データ行はヘッダ行のスタイルをコピーして作成。
+    - 列数が一致しない場合は、短い方に合わせて切り詰めます。
+    """
+    # 既存行（a:tr）取得
+    tr_list = tbl_el.findall("./a:tr", namespaces=ns.mapping)
+    if not tr_list:
+        # 一部テンプレートでは名前空間上 p:tbl を使っている想定もあるためフォールバック
+        tr_list = tbl_el.findall(".//a:tr", namespaces=ns.mapping)
+    if not tr_list:
+        print("⚠️ テンプレート表に行 (a:tr) が見つかりませんでした。")
+        return
+
+    header_tr = tr_list[0]
+
+    # 先頭行（ヘッダ）を Markdown の先頭レコードで上書き
+    header_cells = header_tr.findall("./a:tc", namespaces=ns.mapping)
+    if table.records:
+        header_values = list(table.records[0].cells)
+        for cell_el, text in zip(header_cells, header_values):
+            # a:txBody を確保
+            tx_body = cell_el.find("./a:txBody", namespaces=ns.mapping)
+            if tx_body is None:
+                tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
+                cell_el.insert(0, tx_body)
+            body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
+            if body_pr is None:
+                body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
+                tx_body.insert(0, body_pr)
+            lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
+            if lst_style is None:
+                lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
+                insert_idx = 1 if len(tx_body) >= 1 else 0
+                tx_body.insert(insert_idx, lst_style)
+            for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
+                tx_body.remove(p)
+            p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
+            r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
+            t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
+            t_el.text = text
+            r_el.append(t_el)
+            p_el.append(r_el)
+            tx_body.append(p_el)
+
+    # ヘッダ以外の行を削除
+    for tr in tr_list[1:]:
+        try:
+            tbl_el.remove(tr)
+        except Exception:
+            # 念のため親子関係が違う場合は親から削除を試みる
+            parent = tr.getparent()
+            if parent is not None:
+                parent.remove(tr)
+
+    # Markdown のレコード（先頭はヘッダと想定）を反映
+    records = list(table.records)
+    if len(records) <= 1:
+        # ヘッダのみ、またはデータなしの場合は何もしない（ヘッダのみ残す）
+        return
+
+    for rec in records[1:]:  # 先頭はヘッダ想定
+        # ヘッダ行をコピーして新規行を作る
+        new_tr = etree.fromstring(etree.tostring(header_tr))
+        cells = new_tr.findall("./a:tc", namespaces=ns.mapping)
+        # セルテキストを流し込み（a:txBody/a:p/a:r/a:t が無ければ生成）
+        for cell_el, text in zip(cells, rec.cells):
+            # a:txBody を確保
+            tx_body = cell_el.find("./a:txBody", namespaces=ns.mapping)
+            if tx_body is None:
+                tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
+                cell_el.insert(0, tx_body)
+            # a:bodyPr, a:lstStyle を確保（PowerPoint が期待する構造）
+            body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
+            if body_pr is None:
+                body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
+                tx_body.insert(0, body_pr)
+            lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
+            if lst_style is None:
+                lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
+                # bodyPr の直後に置く
+                insert_idx = 1 if len(tx_body) >= 1 else 0
+                tx_body.insert(insert_idx, lst_style)
+            # 既存の段落は一旦クリア（空の endParaRPr のみ等で構造が壊れないように）
+            for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
+                tx_body.remove(p)
+            # a:p/a:r/a:t を生成
+            p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
+            r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
+            t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
+            t_el.text = text
+            r_el.append(t_el)
+            p_el.append(r_el)
+            tx_body.append(p_el)
+        tbl_el.append(new_tr)
+
 
 # ---------------- Markdown Services ----------------
 

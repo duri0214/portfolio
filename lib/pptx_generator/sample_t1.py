@@ -48,6 +48,7 @@ if __name__ == "__main__":
             shape_name_map=SHAPE_NAME_MAP,
         )
         print(f"✅ MarkdownSection の反映が完了しました: {output_path}")
+
     except (FileNotFoundError, KeyError) as e:
         print(f"❌ 必要なフォルダ、ファイルまたはスライドが見つかりません: {e}")
         exit(1)
