@@ -65,37 +65,37 @@ class PptxToxicService:
         ns = Namespaces()
         slide_loc = SlideLocation(page)
 
-        # Load pptx (zip) to memory
+        # PPTX（zip）をメモリに読み込む
         with ZipFile(str(template_pptx), "r") as input_zip:
             zip_contents = {
                 item.filename: input_zip.read(item.filename)
                 for item in input_zip.infolist()
             }
 
-        # Parse slide xml
+        # スライドの XML を解析する
         x_path = slide_loc.x_path
         if x_path not in zip_contents:
             raise KeyError(f"スライドが見つかりません: {x_path}")
         root = etree.fromstring(zip_contents[x_path])
 
-        # shape name mapping must be provided from caller to avoid template-specific magic strings here
+        # テンプレート依存のマジック文字列を避けるため、図形名のマッピングは呼び出し側から必ず渡す
         if not shape_name_map:
             raise ValueError(
                 "図形名マッピング(shape_name_map)が未指定です。テンプレートの図形名に合わせたマッピングを呼び出し側から渡してください。"
             )
         mapping = dict(shape_name_map)
 
-        # Use factory to build operations from source
+        # ソース（MarkdownSection）からファクトリで操作一覧を生成する
         operations = ShapeOperationFactory.build(source)
 
-        # apply to shapes with robust matching via Value Object
+        # Value Object を用いた堅牢な名前解決で図形へ適用する
         all_shapes = list(root.findall(".//p:sp", namespaces=ns.mapping))
         resolver = ShapeNameResolver(all_shapes, ns)
 
         has_changed = False
 
-        # Handle all operations in a single pass while preserving behavior for tables and texts
-        # Prepare candidate resolvers
+        # 表とテキストの振る舞いを保ちつつ、単一パスで全操作を処理する
+        # 候補となる図形ノードを収集し、解決器を用意する
         candidates = list(root.findall(".//p:sp", namespaces=ns.mapping)) + list(
             root.findall(".//p:graphicFrame", namespaces=ns.mapping)
         )
@@ -112,7 +112,7 @@ class PptxToxicService:
                     has_changed = True
 
             elif isinstance(op, TextOp):
-                # render text; special handling for a bullet list to preserve original styling
+                # テキストの描画。箇条書きは既存のスタイルを維持するため特別に処理する
                 text_value = op.text
                 if (
                     op.name_key == "bullet_list"
@@ -126,13 +126,13 @@ class PptxToxicService:
                 if resolver.apply_text_op(shape_name_value, txt, ns, op.name_key):
                     has_changed = True
 
-        # Write back only if something changed
+        # 変更があった場合のみ書き戻す
         if has_changed:
             zip_contents[x_path] = etree.tostring(
                 root, xml_declaration=True, encoding="utf-8"
             )
 
-        # Save as new pptx
+        # 新しい PPTX として保存する
         with ZipFile(str(output_pptx), "w") as output_zip:
             for filename, data in zip_contents.items():
                 output_zip.writestr(filename, data)
@@ -156,7 +156,7 @@ class PptxToxicService:
 
         soup = BeautifulSoup(html, "html.parser")
 
-        # Title: first heading among h1...h6
+        # タイトル: 最初に見つかった h1〜h6 の見出しを採用
         title = None
         for level in ["h1", "h2", "h3", "h4", "h5", "h6"]:
             elem = soup.find(level)
@@ -166,12 +166,12 @@ class PptxToxicService:
 
         extractor = HtmlTextExtractor()
 
-        # Paragraphs: top-level-ish paragraphs (not nested in li or table)
+        # 段落: リストや表の外側にある上位レベルの段落のみを対象
         paragraphs: list[str] = extractor.extract_all(
             p for p in soup.find_all("p") if not p.find_parent(["li", "table"])
         )
 
-        # Bullet list: only the first list (ul/ol) outside tables
+        # 箇条書き: 表の外にある最初のリスト（ul/ol）のみを対象
         bullet_list: BulletList | None = None
         lst = soup.find(
             lambda tag: tag.name in ["ul", "ol"] and not tag.find_parent("table")
@@ -183,7 +183,7 @@ class PptxToxicService:
             if items:
                 bullet_list = BulletList(items=items)
 
-        # Table: only the first table
+        # 表: 最初に見つかった表のみを対象
         table: Table | None = None
         tbl = soup.find("table")
         if tbl:
