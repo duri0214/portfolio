@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 import textwrap
-from typing import Iterable
+from typing import Iterable, cast
 from bs4 import BeautifulSoup
-from bs4.element import Tag
+from bs4.element import Tag, PageElement
 from markdown_it import MarkdownIt
 
 
@@ -26,12 +26,15 @@ class HtmlTextExtractor:
         return results
 
     def extract(self, element: Tag) -> str:
-        from typing import cast, Any
-        from bs4.element import PageElement
-
+        """BeautifulSoup.get_text の型スタブ不整合に関するエクスキューズをここに集約。
+        - いくつかの bs4 の型スタブでは get_text のシグネチャが実装と食い違い、
+          separator/strip をキーワード指定しても型検査で誤検出される場合がある。
+        - 本実装はランタイムでは正しく動作するため、誤検出のみを抑止する目的で
+          `# type: ignore[arg-type]` を最小範囲（この呼び出し行）に限定して付与している。
+        - 目的は「VO 内にライブラリ依存と型差異を閉じ込め、外部には型安全な API だけを露出する」こと。
+        """
         el = cast(PageElement, element)
-        # Use positional args via Any to appease varying stubs without
-        return cast(Any, el).get_text(self.separator, self.strip)
+        return el.get_text(separator=self.separator, strip=self.strip)  # type: ignore[arg-type]
 
 
 def _md_to_html(md_text: str) -> str:
