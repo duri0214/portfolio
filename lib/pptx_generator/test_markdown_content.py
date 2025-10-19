@@ -47,7 +47,7 @@ class TestMarkdownContent(unittest.TestCase):
         """シナリオ:
         - Given: 見出しと、ハイフン形式の箇条書き3項目。
         - When: 解析する。
-        - Then: lists に1件のリストが入り、アイテムの前後空白や改行は正規化される。paragraphs/tables は空。
+        - Then: lists に1件のリストが入り、アイテムの前後空白や改行は正規化される。paragraphs, tables は空。
         """
         md = """
         ## 箇条書き3項目をテストする
