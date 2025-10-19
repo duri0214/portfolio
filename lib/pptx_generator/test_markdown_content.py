@@ -10,10 +10,8 @@
 
 import unittest
 
-from lib.pptx_generator.markdown_content import (
-    MarkdownSection,
-    parse_markdown,
-)
+from lib.pptx_generator.valueobject import MarkdownSection
+from lib.pptx_generator.service import parse_markdown
 
 
 class TestMarkdownContent(unittest.TestCase):
