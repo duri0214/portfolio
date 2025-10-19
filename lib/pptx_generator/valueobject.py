@@ -85,10 +85,10 @@ class TextContent:
 
 
 class ShapeNameResolver:
-    """Resolve shapes by their cNvPr@name with robust matching tiers.
+    """図形の cNvPr@name に基づき、段階的な堅牢マッチで対象を解決する値オブジェクト。
 
-    - Exact match (case-sensitive), then exact (case-insensitive), then substring (case-insensitive).
-    - Exposes available names for diagnostics.
+    - 一致順序: 完全一致（大文字小文字を区別）→ 完全一致（大文字小文字を無視）→ 部分一致（大文字小文字を無視）。
+    - 診断用に利用可能な図形名一覧を提供します。
     """
 
     def __init__(self, elements: Iterable[etree.ElementBase], ns: Namespaces):
@@ -146,7 +146,7 @@ class ShapeNameResolver:
 
 @dataclass(frozen=True)
 class BulletStyle:
-    """Bullet list rendering policy as a value object."""
+    """箇条書きのレンダリング方針を表す値オブジェクト。"""
 
     marker: str = "•"
 
