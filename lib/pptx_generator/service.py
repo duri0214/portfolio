@@ -288,19 +288,18 @@ class PptxToxicService:
 
         # Bullet list: only the first list (ul/ol) outside tables
         bullet_list: BulletList | None = None
-        for lst in soup.find_all(["ul", "ol"]):
-            if lst.find_parent("table"):
-                continue
+        lst = soup.find(lambda tag: tag.name in ["ul", "ol"] and not tag.find_parent("table"))
+        if lst:
             items = extractor.extract_all(lst.find_all("li", recursive=False))
             if not items:
                 items = extractor.extract_all(lst.find_all("li"))
             if items:
                 bullet_list = BulletList(items=items)
-                break
 
         # Table: only the first table
         table: Table | None = None
-        for tbl in soup.find_all("table"):
+        tbl = soup.find("table")
+        if tbl:
             records: list[TableRecord] = []
             for tr in tbl.find_all("tr"):
                 cells = tr.find_all(["th", "td"])
@@ -309,7 +308,6 @@ class PptxToxicService:
                     records.append(TableRecord(cells=row))
             if records:
                 table = Table(records=records)
-                break
 
         return MarkdownSection(
             title=title, paragraphs=paragraphs, bullet_list=bullet_list, table=table
