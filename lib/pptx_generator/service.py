@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from markdown_it import MarkdownIt
 import textwrap
 
+from lib.pptx_generator.factory import ShapeOperationFactory, TableOp, TextOp
 from lib.pptx_generator.valueobject import (
     Namespaces,
     SlideLocation,
@@ -84,17 +85,8 @@ class PptxToxicService:
             )
         mapping = dict(shape_name_map)
 
-        # prepare rendered texts
-        rendered: dict[str, str] = {}
-        if source.title is not None:
-            rendered["title"] = source.title
-        if source.paragraphs:
-            rendered["paragraphs"] = "\n\n".join(source.paragraphs)
-        if source.bullet_list and source.bullet_list.items:
-            bullets = BulletStyle()
-            rendered["bullet_list"] = bullets.render(source.bullet_list.items)
-        # テーブルはテキストではなく、本物の PPTX 表（a:tbl/p:tbl）を操作して反映するため、
-        # rendered には追加しない。
+        # Use factory to build operations from source
+        operations = ShapeOperationFactory.build(source)
 
         # apply to shapes with robust matching via Value Object
         all_shapes = list(root.findall(".//p:sp", namespaces=ns.mapping))
@@ -102,18 +94,21 @@ class PptxToxicService:
 
         replaced_any = False
 
-        # --- Table replacement: operate on real PPTX tables (a:tbl / p:tbl) ---
-        if source.table and source.table.records:
-            shape_name_value = mapping.get("table")
-            if shape_name_value:
+        # First handle table operations (structural replacement), then text operations
+        for op in operations:
+            if isinstance(op, TableOp):
+                shape_name_value = mapping.get(op.name_key)
+                if not shape_name_value:
+                    continue
                 # Collect candidate containers: text shapes and graphic frames
                 candidates = list(
                     root.findall(".//p:sp", namespaces=ns.mapping)
                 ) + list(root.findall(".//p:graphicFrame", namespaces=ns.mapping))
 
                 resolver_tbl = ShapeNameResolver(candidates, ns)
-
-                targets: list[etree.ElementBase] = resolver_tbl.resolve(shape_name_value)
+                targets: list[etree.ElementBase] = resolver_tbl.resolve(
+                    shape_name_value
+                )
 
                 if targets:
                     found_any_tbl = False
@@ -122,7 +117,7 @@ class PptxToxicService:
                         if tbl_el is None:
                             tbl_el = el.find(".//p:tbl", namespaces=ns.mapping)
                         if tbl_el is not None:
-                            PptxToxicService.replace_table(tbl_el, source.table, ns)
+                            PptxToxicService.replace_table(tbl_el, op.table, ns)
                             replaced_any = True
                             found_any_tbl = True
                     if not found_any_tbl:
@@ -130,7 +125,6 @@ class PptxToxicService:
                             f"⚠️ 指定図形 '{shape_name_value}' は見つかったが、表 (a:tbl/p:tbl) が見つかりませんでした。"
                         )
                 else:
-                    # diagnostics for available names
                     available_names = resolver_tbl.available_names()
                     preview = ", ".join(available_names[:10])
                     more = (
@@ -142,28 +136,37 @@ class PptxToxicService:
                         f"⚠️ 指定された表図形 '{shape_name_value}' が見つかりませんでした。候補: {preview}{more}"
                     )
 
-        for key, text in rendered.items():
-            shape_name_value = mapping.get(key)
-            if not shape_name_value:
-                continue
-            txt = TextContent(text)
-            targets = resolver.resolve(shape_name_value)
-            if targets:
-                for sp in targets:
-                    txt.apply_to_shape(sp, ns)
-                    replaced_any = True
-            else:
-                # prepare available names for diagnostics
-                available_names = resolver.available_names()
-                preview = ", ".join(available_names[:10])
-                more = (
-                    ""
-                    if len(available_names) <= 10
-                    else f" 他 {len(available_names) - 10} 件"
-                )
-                print(
-                    f"⚠️ 指定された図形 '{shape_name_value}'（{key}）が見つかりませんでした。候補: {preview}{more}"
-                )
+        for op in operations:
+            if isinstance(op, TextOp):
+                shape_name_value = mapping.get(op.name_key)
+                if not shape_name_value:
+                    continue
+                # render text; special handling for a bullet list to preserve original styling
+                text_value = op.text
+                if (
+                    op.name_key == "bullet_list"
+                    and source.bullet_list
+                    and source.bullet_list.items
+                ):
+                    bullets = BulletStyle()
+                    text_value = bullets.render(source.bullet_list.items)
+                txt = TextContent(text_value)
+                targets = resolver.resolve(shape_name_value)
+                if targets:
+                    for sp in targets:
+                        txt.apply_to_shape(sp, ns)
+                        replaced_any = True
+                else:
+                    available_names = resolver.available_names()
+                    preview = ", ".join(available_names[:10])
+                    more = (
+                        ""
+                        if len(available_names) <= 10
+                        else f" 他 {len(available_names) - 10} 件"
+                    )
+                    print(
+                        f"⚠️ 指定された図形 '{shape_name_value}'（{op.name_key}）が見つかりませんでした。候補: {preview}{more}"
+                    )
 
         # Write back only if something changed
         if replaced_any:
@@ -288,7 +291,9 @@ class PptxToxicService:
 
         # Bullet list: only the first list (ul/ol) outside tables
         bullet_list: BulletList | None = None
-        lst = soup.find(lambda tag: tag.name in ["ul", "ol"] and not tag.find_parent("table"))
+        lst = soup.find(
+            lambda tag: tag.name in ["ul", "ol"] and not tag.find_parent("table")
+        )
         if lst:
             items = extractor.extract_all(lst.find_all("li", recursive=False))
             if not items:
