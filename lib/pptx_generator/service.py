@@ -94,22 +94,20 @@ class PptxToxicService:
 
         replaced_any = False
 
-        # First handle table operations (structural replacement), then text operations
+        # Handle all operations in a single pass while preserving behavior for tables and texts
+        # Prepare candidate resolvers
+        candidates = list(
+            root.findall(".//p:sp", namespaces=ns.mapping)
+        ) + list(root.findall(".//p:graphicFrame", namespaces=ns.mapping))
+        resolver_tbl = ShapeNameResolver(candidates, ns)
+
         for op in operations:
+            shape_name_value = mapping.get(op.name_key)
+            if not shape_name_value:
+                continue
+
             if isinstance(op, TableOp):
-                shape_name_value = mapping.get(op.name_key)
-                if not shape_name_value:
-                    continue
-                # Collect candidate containers: text shapes and graphic frames
-                candidates = list(
-                    root.findall(".//p:sp", namespaces=ns.mapping)
-                ) + list(root.findall(".//p:graphicFrame", namespaces=ns.mapping))
-
-                resolver_tbl = ShapeNameResolver(candidates, ns)
-                targets: list[etree.ElementBase] = resolver_tbl.resolve(
-                    shape_name_value
-                )
-
+                targets: list[etree.ElementBase] = resolver_tbl.resolve(shape_name_value)
                 if targets:
                     found_any_tbl = False
                     for el in targets:
@@ -136,11 +134,7 @@ class PptxToxicService:
                         f"⚠️ 指定された表図形 '{shape_name_value}' が見つかりませんでした。候補: {preview}{more}"
                     )
 
-        for op in operations:
-            if isinstance(op, TextOp):
-                shape_name_value = mapping.get(op.name_key)
-                if not shape_name_value:
-                    continue
+            elif isinstance(op, TextOp):
                 # render text; special handling for a bullet list to preserve original styling
                 text_value = op.text
                 if (
