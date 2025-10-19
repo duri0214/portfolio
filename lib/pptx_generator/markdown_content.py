@@ -82,14 +82,14 @@ class MarkdownSection:
 
     - title: 最初に出現する見出し（h1〜h6）のテキスト。無ければ None。
     - paragraphs: 段落テキストの一覧（リストや表の中は除外）。
-    - lists: 各箇条書きを BulletList として保持。
-    - tables: 各表を Table として保持（先頭にヘッダ行を含む）。
+    - bullet_list: スライドに載せる1セットの箇条書き（無ければ None）。
+    - table: スライドに載せる1つの表（無ければ None, 先頭にヘッダ行を含む）。
     """
 
     title: str | None
     paragraphs: list[str]
-    lists: list[BulletList]
-    tables: list[Table]
+    bullet_list: BulletList | None
+    table: Table | None
 
 
 def parse_markdown(text: str) -> MarkdownSection:
@@ -113,31 +113,31 @@ def parse_markdown(text: str) -> MarkdownSection:
         p for p in soup.find_all("p") if not p.find_parent(["li", "table"])
     )
 
-    # Lists: each UL/OL as a BulletList
-    lists: list[BulletList] = []
+    # 箇条書き: 最初の UL/OL のみを BulletList として採用（スライド=1ページの概念）
+    bullet_list: BulletList | None = None
     for lst in soup.find_all(["ul", "ol"]):
-        # Avoid capturing list items that appear inside tables (rare in Markdown)
         if lst.find_parent("table"):
             continue
         items = extractor.extract_all(lst.find_all("li", recursive=False))
-        # Fallback to a recursive collection if needed
         if not items:
             items = extractor.extract_all(lst.find_all("li"))
         if items:
-            lists.append(BulletList(items=items))
+            bullet_list = BulletList(items=items)
+            break
 
-    # Tables: rows and cells as Table with TableRecord
-    tables: list[Table] = []
-    for table in soup.find_all("table"):
+    # 表: 最初の1つの <table> のみを採用
+    table: Table | None = None
+    for tbl in soup.find_all("table"):
         records: list[TableRecord] = []
-        for tr in table.find_all("tr"):
+        for tr in tbl.find_all("tr"):
             cells = tr.find_all(["th", "td"])
             row = extractor.extract_all(cells)
             if row:
                 records.append(TableRecord(cells=row))
         if records:
-            tables.append(Table(records=records))
+            table = Table(records=records)
+            break
 
     return MarkdownSection(
-        title=title, paragraphs=paragraphs, lists=lists, tables=tables
+        title=title, paragraphs=paragraphs, bullet_list=bullet_list, table=table
     )
