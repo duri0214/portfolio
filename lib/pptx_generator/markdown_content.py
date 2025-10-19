@@ -1,7 +1,37 @@
 from dataclasses import dataclass
 import textwrap
+from typing import Iterable
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 from markdown_it import MarkdownIt
+
+
+@dataclass(frozen=True)
+class HtmlTextExtractor:
+    """BeautifulSoup の Tag から安全にテキストを抽出する値オブジェクト。
+
+    - separator と strip を固定し、型不整合をこの層で閉じ込める。
+    - 外部からは型安全な API のみを露出する。
+    """
+
+    separator: str = " "
+    strip: bool = True
+
+    def extract_all(self, elements: Iterable[Tag]) -> list[str]:
+        results: list[str] = []
+        for e in elements:
+            text = self.extract(e)
+            if text:
+                results.append(text)
+        return results
+
+    def extract(self, element: Tag) -> str:
+        from typing import cast, Any
+        from bs4.element import PageElement
+
+        el = cast(PageElement, element)
+        # Use positional args via Any to appease varying stubs without
+        return cast(Any, el).get_text(self.separator, self.strip)
 
 
 def _md_to_html(md_text: str) -> str:
@@ -45,13 +75,10 @@ def parse_markdown(text: str) -> MarkdownSection:
             break
 
     # Paragraphs: top-level-ish paragraphs (not nested in li or table)
-    paragraphs: list[str] = []
-    for p in soup.find_all("p"):
-        if p.find_parent(["li", "table"]):
-            continue
-        txt = p.get_text(" ", True)
-        if txt:
-            paragraphs.append(txt)
+    extractor = HtmlTextExtractor()
+    paragraphs: list[str] = extractor.extract_all(
+        p for p in soup.find_all("p") if not p.find_parent(["li", "table"])
+    )
 
     # Lists: each UL/OL as a list of items
     lists: list[list[str]] = []
@@ -59,17 +86,10 @@ def parse_markdown(text: str) -> MarkdownSection:
         # Avoid capturing list items that appear inside tables (rare in Markdown)
         if lst.find_parent("table"):
             continue
-        items: list[str] = []
-        for li in lst.find_all("li", recursive=False):
-            txt = li.get_text(" ", True)
-            if txt:
-                items.append(txt)
+        items = extractor.extract_all(lst.find_all("li", recursive=False))
         # Fallback to a recursive collection if needed
         if not items:
-            for li in lst.find_all("li"):
-                txt = li.get_text(" ", True)
-                if txt:
-                    items.append(txt)
+            items = extractor.extract_all(lst.find_all("li"))
         if items:
             lists.append(items)
 
@@ -79,7 +99,7 @@ def parse_markdown(text: str) -> MarkdownSection:
         table_rows: list[list[str]] = []
         for tr in table.find_all("tr"):
             cells = tr.find_all(["th", "td"])
-            row: list[str] = [c.get_text(" ", True) for c in cells]
+            row = extractor.extract_all(cells)
             if row:
                 table_rows.append(row)
         if table_rows:
