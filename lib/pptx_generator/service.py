@@ -9,7 +9,6 @@ import textwrap
 from lib.pptx_generator.valueobject import (
     Namespaces,
     SlideLocation,
-    ShapeName,
     TextContent,
     HtmlTextExtractor,
     BulletList,
@@ -23,11 +22,11 @@ from lib.pptx_generator.valueobject import (
 
 
 @dataclass
-class PptxTextReplaceService:
+class PptxToxicService:
     """PPTX のテキスト置換を行うアプリケーションサービス。
 
     役割:
-    - 値オブジェクト（Namespaces, SlideLocation, ShapeName, TextContent）を調整し、
+    - 値オブジェクト（Namespaces, SlideLocation, TextContent）を調整し、
       呼び出し側から XML の詳細（ネームスペース、スライドのZIP内パス、図形内部構造）を隠蔽します。
 
     設計意図:
@@ -41,91 +40,10 @@ class PptxTextReplaceService:
     """
 
     @staticmethod
-    def replace_textbox_by_name(
+    def apply(
         template_pptx: Path,
         output_pptx: Path,
-        target_shape_name: str,
-        new_text: str,
-        page: int = 1,
-    ) -> None:
-        """指定スライド上で、図形名に一致するテキストボックスの文字列を置換します。
-
-        要点:
-        - 最初に見つかった <a:t>（テキストラン）のみを置換対象とします。
-        - スライド番号は 1 始まりです。
-
-        パラメータ:
-        - template_pptx: 入力テンプレート PPTX のパス。
-        - output_pptx: 出力先 PPTX のパス（親フォルダは既存である必要あり）。
-        - target_shape_name: 置換対象図形（テキストボックス）の cNvPr@name。
-        - new_text: 置換後の文字列。
-        - page: 対象スライド番号（1 始まり）。
-
-        戻り値:
-        - なし。
-
-        例外:
-        - FileNotFoundError: テンプレート PPTX または出力フォルダが存在しない。
-        - KeyError: 対象スライドが ZIP 内に存在しない。
-        """
-        if not template_pptx.exists():
-            raise FileNotFoundError(
-                f"テンプレート PPTX が見つかりません: {template_pptx}"
-            )
-        if not output_pptx.parent.exists():
-            raise FileNotFoundError(
-                f"出力フォルダが見つかりません: {output_pptx.parent}"
-            )
-
-        ns = Namespaces()
-        slide_loc = SlideLocation(page)
-        shape_name = ShapeName(target_shape_name)
-        text_content = TextContent(new_text)
-
-        # Load pptx (zip) to memory
-        with ZipFile(str(template_pptx), "r") as input_zip:
-            zip_contents = {
-                item.filename: input_zip.read(item.filename)
-                for item in input_zip.infolist()
-            }
-
-        # Parse slide xml
-        x_path = slide_loc.x_path
-        if x_path not in zip_contents:
-            raise KeyError(f"スライドが見つかりません: {x_path}")
-        root = etree.fromstring(zip_contents[x_path])
-
-        # Find and replace
-        replaced_any = False
-        for sp in root.findall(".//p:sp", namespaces=ns.mapping):
-            if shape_name.matches(sp, ns):
-                text_content.apply_to_shape(sp, ns)
-                replaced_any = True
-
-        # Write back only if the replacement happened
-        if replaced_any:
-            zip_contents[x_path] = etree.tostring(
-                root, xml_declaration=True, encoding="utf-8"
-            )
-
-        # Save as new pptx
-        with ZipFile(str(output_pptx), "w") as output_zip:
-            for filename, data in zip_contents.items():
-                output_zip.writestr(filename, data)
-
-        # 置換が一つも発生しなかった場合はコンソールに通知
-        if not replaced_any:
-            print(
-                f"⚠️ 対象 '{target_shape_name}' が見つからず、置換は行われませんでした。"
-            )
-
-        return None
-
-    @staticmethod
-    def apply_markdown_section(
-        template_pptx: Path,
-        output_pptx: Path,
-        section: MarkdownSection,
+        source: MarkdownSection,
         page: int = 1,
         shape_name_map: dict[str, str] | None = None,
     ) -> None:
@@ -172,13 +90,13 @@ class PptxTextReplaceService:
 
         # prepare rendered texts
         rendered: dict[str, str] = {}
-        if section.title is not None:
-            rendered["title"] = section.title
-        if section.paragraphs:
-            rendered["paragraphs"] = "\n\n".join(section.paragraphs)
-        if section.bullet_list and section.bullet_list.items:
+        if source.title is not None:
+            rendered["title"] = source.title
+        if source.paragraphs:
+            rendered["paragraphs"] = "\n\n".join(source.paragraphs)
+        if source.bullet_list and source.bullet_list.items:
             rendered["bullet_list"] = "\n".join(
-                f"• {it}" for it in section.bullet_list.items
+                f"• {it}" for it in source.bullet_list.items
             )
         # テーブルはテキストではなく、本物の PPTX 表（a:tbl/p:tbl）を操作して反映するため、
         # rendered には追加しない。
@@ -235,7 +153,7 @@ class PptxTextReplaceService:
         replaced_any = False
 
         # --- Table replacement: operate on real PPTX tables (a:tbl / p:tbl) ---
-        if section.table and section.table.records:
+        if source.table and source.table.records:
             shape_name_value = mapping.get("table")
             if shape_name_value:
                 # Collect candidate containers: text shapes and graphic frames
@@ -291,7 +209,7 @@ class PptxTextReplaceService:
                         if tbl_el is None:
                             tbl_el = el.find(".//p:tbl", namespaces=ns.mapping)
                         if tbl_el is not None:
-                            _replace_table(tbl_el, section.table, ns)
+                            PptxToxicService._replace_table(tbl_el, source.table, ns)
                             replaced_any = True
                             found_any_tbl = True
                     if not found_any_tbl:
@@ -352,162 +270,159 @@ class PptxTextReplaceService:
 
         return None
 
+    @staticmethod
+    def _replace_table(tbl_el: etree._Element, table: Table, ns: Namespaces) -> None:
+        """
+        既存の PPTX 表 (a:tbl / p:tbl) を Markdown の Table で置換する。
+        - 先頭行（ヘッダ行）はテンプレートのまま残し、以降の行は削除して Markdown レコードで再構築。
+        - 各データ行はヘッダ行のスタイルをコピーして作成。
+        - 列数が一致しない場合は、短い方に合わせて切り詰めます。
+        """
+        # 既存行（a:tr）取得
+        tr_list = tbl_el.findall("./a:tr", namespaces=ns.mapping)
+        if not tr_list:
+            # 一部テンプレートでは名前空間上 p:tbl を使っている想定もあるためフォールバック
+            tr_list = tbl_el.findall(".//a:tr", namespaces=ns.mapping)
+        if not tr_list:
+            print("⚠️ テンプレート表に行 (a:tr) が見つかりませんでした。")
+            return
 
-def _replace_table(tbl_el: etree._Element, table: Table, ns: Namespaces) -> None:
-    """
-    既存の PPTX 表 (a:tbl / p:tbl) を Markdown の Table で置換する。
-    - 先頭行（ヘッダ行）はテンプレートのまま残し、以降の行は削除して Markdown レコードで再構築。
-    - 各データ行はヘッダ行のスタイルをコピーして作成。
-    - 列数が一致しない場合は、短い方に合わせて切り詰めます。
-    """
-    # 既存行（a:tr）取得
-    tr_list = tbl_el.findall("./a:tr", namespaces=ns.mapping)
-    if not tr_list:
-        # 一部テンプレートでは名前空間上 p:tbl を使っている想定もあるためフォールバック
-        tr_list = tbl_el.findall(".//a:tr", namespaces=ns.mapping)
-    if not tr_list:
-        print("⚠️ テンプレート表に行 (a:tr) が見つかりませんでした。")
-        return
+        header_tr = tr_list[0]
 
-    header_tr = tr_list[0]
+        # 先頭行（ヘッダ）を Markdown の先頭レコードで上書き
+        header_cells = header_tr.findall("./a:tc", namespaces=ns.mapping)
+        if table.records:
+            header_values = list(table.records[0].cells)
+            for cell_el, text in zip(header_cells, header_values):
+                # a:txBody を確保
+                tx_body = cell_el.find("./a:txBody", namespaces=ns.mapping)
+                if tx_body is None:
+                    tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
+                    cell_el.insert(0, tx_body)
+                body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
+                if body_pr is None:
+                    body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
+                    tx_body.insert(0, body_pr)
+                lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
+                if lst_style is None:
+                    lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
+                    insert_idx = 1 if len(tx_body) >= 1 else 0
+                    tx_body.insert(insert_idx, lst_style)
+                for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
+                    tx_body.remove(p)
+                p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
+                r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
+                t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
+                t_el.text = text
+                r_el.append(t_el)
+                p_el.append(r_el)
+                tx_body.append(p_el)
 
-    # 先頭行（ヘッダ）を Markdown の先頭レコードで上書き
-    header_cells = header_tr.findall("./a:tc", namespaces=ns.mapping)
-    if table.records:
-        header_values = list(table.records[0].cells)
-        for cell_el, text in zip(header_cells, header_values):
-            # a:txBody を確保
-            tx_body = cell_el.find("./a:txBody", namespaces=ns.mapping)
-            if tx_body is None:
-                tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
-                cell_el.insert(0, tx_body)
-            body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
-            if body_pr is None:
-                body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
-                tx_body.insert(0, body_pr)
-            lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
-            if lst_style is None:
-                lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
-                insert_idx = 1 if len(tx_body) >= 1 else 0
-                tx_body.insert(insert_idx, lst_style)
-            for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
-                tx_body.remove(p)
-            p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
-            r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
-            t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
-            t_el.text = text
-            r_el.append(t_el)
-            p_el.append(r_el)
-            tx_body.append(p_el)
+        # ヘッダ以外の行を削除
+        for tr in tr_list[1:]:
+            try:
+                tbl_el.remove(tr)
+            except Exception:
+                # 念のため親子関係が違う場合は親から削除を試みる
+                parent = tr.getparent()
+                if parent is not None:
+                    parent.remove(tr)
 
-    # ヘッダ以外の行を削除
-    for tr in tr_list[1:]:
-        try:
-            tbl_el.remove(tr)
-        except Exception:
-            # 念のため親子関係が違う場合は親から削除を試みる
-            parent = tr.getparent()
-            if parent is not None:
-                parent.remove(tr)
+        # Markdown のレコード（先頭はヘッダと想定）を反映
+        records = list(table.records)
+        if len(records) <= 1:
+            # ヘッダのみ、またはデータなしの場合は何もしない（ヘッダのみ残す）
+            return
 
-    # Markdown のレコード（先頭はヘッダと想定）を反映
-    records = list(table.records)
-    if len(records) <= 1:
-        # ヘッダのみ、またはデータなしの場合は何もしない（ヘッダのみ残す）
-        return
+        for rec in records[1:]:  # 先頭はヘッダ想定
+            # ヘッダ行をコピーして新規行を作る
+            new_tr = etree.fromstring(etree.tostring(header_tr))
+            cells = new_tr.findall("./a:tc", namespaces=ns.mapping)
+            # セルテキストを流し込み（a:txBody/a:p/a:r/a:t が無ければ生成）
+            for cell_el, text in zip(cells, rec.cells):
+                # a:txBody を確保
+                tx_body = cell_el.find("./a:txBody", namespaces=ns.mapping)
+                if tx_body is None:
+                    tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
+                    cell_el.insert(0, tx_body)
+                # a:bodyPr, a:lstStyle を確保（PowerPoint が期待する構造）
+                body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
+                if body_pr is None:
+                    body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
+                    tx_body.insert(0, body_pr)
+                lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
+                if lst_style is None:
+                    lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
+                    # bodyPr の直後に置く
+                    insert_idx = 1 if len(tx_body) >= 1 else 0
+                    tx_body.insert(insert_idx, lst_style)
+                # 既存の段落は一旦クリア（空の endParaRPr のみ等で構造が壊れないように）
+                for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
+                    tx_body.remove(p)
+                # a:p/a:r/a:t を生成
+                p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
+                r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
+                t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
+                t_el.text = text
+                r_el.append(t_el)
+                p_el.append(r_el)
+                tx_body.append(p_el)
+            tbl_el.append(new_tr)
 
-    for rec in records[1:]:  # 先頭はヘッダ想定
-        # ヘッダ行をコピーして新規行を作る
-        new_tr = etree.fromstring(etree.tostring(header_tr))
-        cells = new_tr.findall("./a:tc", namespaces=ns.mapping)
-        # セルテキストを流し込み（a:txBody/a:p/a:r/a:t が無ければ生成）
-        for cell_el, text in zip(cells, rec.cells):
-            # a:txBody を確保
-            tx_body = cell_el.find("./a:txBody", namespaces=ns.mapping)
-            if tx_body is None:
-                tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
-                cell_el.insert(0, tx_body)
-            # a:bodyPr, a:lstStyle を確保（PowerPoint が期待する構造）
-            body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
-            if body_pr is None:
-                body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
-                tx_body.insert(0, body_pr)
-            lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
-            if lst_style is None:
-                lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
-                # bodyPr の直後に置く
-                insert_idx = 1 if len(tx_body) >= 1 else 0
-                tx_body.insert(insert_idx, lst_style)
-            # 既存の段落は一旦クリア（空の endParaRPr のみ等で構造が壊れないように）
-            for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
-                tx_body.remove(p)
-            # a:p/a:r/a:t を生成
-            p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
-            r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
-            t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
-            t_el.text = text
-            r_el.append(t_el)
-            p_el.append(r_el)
-            tx_body.append(p_el)
-        tbl_el.append(new_tr)
+    @staticmethod
+    def _md_to_html(md_text: str) -> str:
+        """Markdown 文字列を HTML に変換する（table 有効）。"""
+        parser = MarkdownIt("commonmark").enable("table")
+        return parser.render(md_text)
 
+    @staticmethod
+    def parse_markdown(text: str) -> MarkdownSection:
+        """Markdown 文字列を解析し、見出し・段落・箇条書き・表を抽出して返す。"""
+        clean_text = textwrap.dedent(text).strip()
+        html = PptxToxicService._md_to_html(clean_text)
 
-# ---------------- Markdown Services ----------------
+        soup = BeautifulSoup(html, "html.parser")
 
+        # Title: first heading among h1...h6
+        title = None
+        for level in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+            elem = soup.find(level)
+            if elem:
+                title = elem.get_text(strip=True)
+                break
 
-def _md_to_html(md_text: str) -> str:
-    """Markdown 文字列を HTML に変換する（table 有効）。"""
-    parser = MarkdownIt("commonmark").enable("table")
-    return parser.render(md_text)
+        extractor = HtmlTextExtractor()
 
+        # Paragraphs: top-level-ish paragraphs (not nested in li or table)
+        paragraphs: list[str] = extractor.extract_all(
+            p for p in soup.find_all("p") if not p.find_parent(["li", "table"])
+        )
 
-def parse_markdown(text: str) -> MarkdownSection:
-    """Markdown 文字列を解析し、見出し・段落・箇条書き・表を抽出して返す。"""
-    clean_text = textwrap.dedent(text).strip()
-    html = _md_to_html(clean_text)
+        # Bullet list: only the first list (ul/ol) outside tables
+        bullet_list: BulletList | None = None
+        for lst in soup.find_all(["ul", "ol"]):
+            if lst.find_parent("table"):
+                continue
+            items = extractor.extract_all(lst.find_all("li", recursive=False))
+            if not items:
+                items = extractor.extract_all(lst.find_all("li"))
+            if items:
+                bullet_list = BulletList(items=items)
+                break
 
-    soup = BeautifulSoup(html, "html.parser")
+        # Table: only the first table
+        table: Table | None = None
+        for tbl in soup.find_all("table"):
+            records: list[TableRecord] = []
+            for tr in tbl.find_all("tr"):
+                cells = tr.find_all(["th", "td"])
+                row = extractor.extract_all(cells)
+                if row:
+                    records.append(TableRecord(cells=row))
+            if records:
+                table = Table(records=records)
+                break
 
-    # Title: first heading among h1...h6
-    title = None
-    for level in ["h1", "h2", "h3", "h4", "h5", "h6"]:
-        elem = soup.find(level)
-        if elem:
-            title = elem.get_text(strip=True)
-            break
-
-    extractor = HtmlTextExtractor()
-
-    # Paragraphs: top-level-ish paragraphs (not nested in li or table)
-    paragraphs: list[str] = extractor.extract_all(
-        p for p in soup.find_all("p") if not p.find_parent(["li", "table"])
-    )
-
-    # Bullet list: only the first list (ul/ol) outside tables
-    bullet_list: BulletList | None = None
-    for lst in soup.find_all(["ul", "ol"]):
-        if lst.find_parent("table"):
-            continue
-        items = extractor.extract_all(lst.find_all("li", recursive=False))
-        if not items:
-            items = extractor.extract_all(lst.find_all("li"))
-        if items:
-            bullet_list = BulletList(items=items)
-            break
-
-    # Table: only the first table
-    table: Table | None = None
-    for tbl in soup.find_all("table"):
-        records: list[TableRecord] = []
-        for tr in tbl.find_all("tr"):
-            cells = tr.find_all(["th", "td"])
-            row = extractor.extract_all(cells)
-            if row:
-                records.append(TableRecord(cells=row))
-        if records:
-            table = Table(records=records)
-            break
-
-    return MarkdownSection(
-        title=title, paragraphs=paragraphs, bullet_list=bullet_list, table=table
-    )
+        return MarkdownSection(
+            title=title, paragraphs=paragraphs, bullet_list=bullet_list, table=table
+        )

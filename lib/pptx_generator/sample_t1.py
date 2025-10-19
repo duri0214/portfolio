@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from lib.pptx_generator.service import PptxTextReplaceService, parse_markdown
+from lib.pptx_generator.service import PptxToxicService
 
 BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -38,12 +38,12 @@ SHAPE_NAME_MAP = {
 
 if __name__ == "__main__":
     try:
-        service = PptxTextReplaceService()
-        section = parse_markdown(SAMPLE_MD)
-        service.apply_markdown_section(
+        service = PptxToxicService()
+        parsed_md = PptxToxicService.parse_markdown(SAMPLE_MD)
+        service.apply(
             template_pptx=pptx_path,
             output_pptx=output_path,
-            section=section,
+            source=parsed_md,
             page=1,
             shape_name_map=SHAPE_NAME_MAP,
         )

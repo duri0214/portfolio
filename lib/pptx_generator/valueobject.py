@@ -50,31 +50,6 @@ class SlideLocation:
         return f"ppt/slides/slide{self.page}.xml"
 
 
-@dataclass(frozen=True)
-class ShapeName:
-    """PowerPoint の図形論理名（cNvPr@name）を表す値オブジェクト。
-
-    役割:
-    - <p:sp>（図形）要素に対し、cNvPr@name が一致するかどうかをカプセル化して判定します。
-
-    設計メモ:
-    - 呼び出し側は XML の詳細（cNvPr 要素の場所など）を知らなくてよいようにします。
-    """
-
-    value: str
-
-    def matches(self, shape_elem: etree._Element, ns: Namespaces) -> bool:
-        """与えられた <p:sp> 要素の cNvPr@name がこのオブジェクトの値と一致する場合に True を返します。
-
-        パラメータ:
-        - shape_elem: 図形要素（<p:sp>）。
-        - ns: 名前空間マップを提供する Namespaces。
-
-        戻り値:
-        - bool: 一致すれば True、そうでなければ False。
-        """
-        name_elem = shape_elem.find(".//p:cNvPr", namespaces=ns.mapping)
-        return name_elem is not None and name_elem.get("name") == self.value
 
 
 @dataclass(frozen=True)

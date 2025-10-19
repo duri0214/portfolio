@@ -11,7 +11,7 @@
 import unittest
 
 from lib.pptx_generator.valueobject import MarkdownSection
-from lib.pptx_generator.service import parse_markdown
+from lib.pptx_generator.service import PptxToxicService
 
 
 class TestMarkdownContent(unittest.TestCase):
@@ -34,12 +34,12 @@ class TestMarkdownContent(unittest.TestCase):
         ## 見出しと1つの段落をテストする
         これはテストです。
         """
-        section = parse_markdown(md)
-        self.assertIsInstance(section, MarkdownSection)
-        self.assertEqual(section.title, "見出しと1つの段落をテストする")
-        self.assertEqual(section.paragraphs, ["これはテストです。"])
-        self.assertIsNone(section.bullet_list)
-        self.assertIsNone(section.table)
+        parsed_md = PptxToxicService.parse_markdown(md)
+        self.assertIsInstance(parsed_md, MarkdownSection)
+        self.assertEqual(parsed_md.title, "見出しと1つの段落をテストする")
+        self.assertEqual(parsed_md.paragraphs, ["これはテストです。"])
+        self.assertIsNone(parsed_md.bullet_list)
+        self.assertIsNone(parsed_md.table)
 
     def test_list_extraction(self):
         """シナリオ:
@@ -53,19 +53,19 @@ class TestMarkdownContent(unittest.TestCase):
         - 東京: 350万円  
         - 大阪: 280万円
         """
-        section = parse_markdown(md)
-        self.assertEqual(section.title, "箇条書き3項目をテストする")
-        self.assertEqual(section.paragraphs, [])
-        self.assertIsNotNone(section.bullet_list)
+        parsed_md = PptxToxicService.parse_markdown(md)
+        self.assertEqual(parsed_md.title, "箇条書き3項目をテストする")
+        self.assertEqual(parsed_md.paragraphs, [])
+        self.assertIsNotNone(parsed_md.bullet_list)
         self.assertEqual(
-            section.bullet_list.items if section.bullet_list else [],
+            parsed_md.bullet_list.items if parsed_md.bullet_list else [],
             [
                 "北海道: 120万円",
                 "東京: 350万円",
                 "大阪: 280万円",
             ],
         )
-        self.assertIsNone(section.table)
+        self.assertIsNone(parsed_md.table)
 
     def test_table_extraction(self):
         md = """
@@ -76,14 +76,14 @@ class TestMarkdownContent(unittest.TestCase):
         | 東京 | 350 | +5% |
         | 大阪 | 280 | +8% |
         """
-        section = parse_markdown(md)
-        self.assertEqual(section.title, "表をテストする")
-        self.assertEqual(section.paragraphs, [])
-        self.assertIsNone(section.bullet_list)
+        parsed_md = PptxToxicService.parse_markdown(md)
+        self.assertEqual(parsed_md.title, "表をテストする")
+        self.assertEqual(parsed_md.paragraphs, [])
+        self.assertIsNone(parsed_md.bullet_list)
 
         # One table expected
-        self.assertIsNotNone(section.table)
-        table = section.table
+        self.assertIsNotNone(parsed_md.table)
+        table = parsed_md.table
 
         # Expect header + 3 rows
         self.assertIsNotNone(table)
