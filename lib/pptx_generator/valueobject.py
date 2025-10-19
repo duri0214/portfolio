@@ -143,6 +143,88 @@ class ShapeNameResolver:
     def available_names(self) -> list[str]:
         return [nm for _, nm in self._index if isinstance(nm, str)]
 
+    # 共通適用処理: 図形名で解決 → 対象抽出 → 適用（適用があれば True）
+    def apply_common(
+        self,
+        shape_name_value: str,
+        iter_targets,
+        apply_target,
+        build_notfound_msg,
+        empty_found_msg: str | None = None,
+    ) -> bool:
+        targets = self.resolve(shape_name_value)
+        if targets:
+            applied_any = False
+            for el in targets:
+                real_targets = list(iter_targets(el))
+                if not real_targets:
+                    continue
+                for rt in real_targets:
+                    apply_target(rt)
+                    applied_any = True
+            if not applied_any and empty_found_msg:
+                print(f"⚠️ 指定図形 '{shape_name_value}' は見つかったが、{empty_found_msg}")
+            return applied_any
+        else:
+            available_names = self.available_names()
+            preview = ", ".join(available_names[:10])
+            more = "" if len(available_names) <= 10 else f" 他 {len(available_names) - 10} 件"
+            print(build_notfound_msg(shape_name_value, preview, more))
+            return False
+
+    # 高頻度シナリオ用のラッパー: Text 適用（サービス側のクロージャを不要化）
+    def apply_text_op(
+        self,
+        shape_name_value: str,
+        txt: "TextContent",
+        ns: "Namespaces",
+        op_name_key: str,
+    ) -> bool:
+        def _iter_sp_targets(el):
+            return [el]
+
+        def _apply_text(sp):
+            txt.apply_to_shape(sp, ns)
+
+        def _build_text_notfound(name, preview, more):
+            return (
+                f"⚠️ 指定された図形 '{name}'（{op_name_key}）が見つかりませんでした。候補: {preview}{more}"
+            )
+
+        return self.apply_common(
+            shape_name_value,
+            _iter_sp_targets,
+            _apply_text,
+            _build_text_notfound,
+        )
+
+    # 高頻度シナリオ用のラッパー: Table 置換（サービス側のクロージャを不要化）
+    def apply_table_op(
+        self,
+        shape_name_value: str,
+        table_vo: "Table",
+        ns: "Namespaces",
+    ) -> bool:
+        def _iter_tbl_targets(el):
+            tbl_el = el.find(".//a:tbl", namespaces=ns.mapping)
+            if tbl_el is None:
+                tbl_el = el.find(".//p:tbl", namespaces=ns.mapping)
+            return [tbl_el] if tbl_el is not None else []
+
+        def _apply_tbl(tbl_el):
+            table_vo.replace_into(tbl_el, ns)
+
+        def _build_tbl_notfound(name, preview, more):
+            return f"⚠️ 指定された表図形 '{name}' が見つかりませんでした。候補: {preview}{more}"
+
+        return self.apply_common(
+            shape_name_value,
+            _iter_tbl_targets,
+            _apply_tbl,
+            _build_tbl_notfound,
+            "表 (a:tbl/p:tbl) が見つかりませんでした。",
+        )
+
 
 @dataclass(frozen=True)
 class BulletStyle:
@@ -207,6 +289,76 @@ class Table:
     """表全体を表す値オブジェクト（先頭にヘッダ行を含む）。"""
 
     records: list[TableRecord]
+
+    # PPTX テンプレート内の既存表 (a:tbl / p:tbl) を、この Table 内容で置換する
+    def replace_into(self, tbl_el: etree.ElementBase, ns: Namespaces) -> None:
+        # 既存行（a:tr）取得
+        tr_list = tbl_el.findall("./a:tr", namespaces=ns.mapping)
+        if not tr_list:
+            # 一部テンプレートでは名前空間上 p:tbl を使っている想定もあるためフォールバック
+            tr_list = tbl_el.findall(".//a:tr", namespaces=ns.mapping)
+        if not tr_list:
+            print("⚠️ テンプレート表に行 (a:tr) が見つかりませんでした。")
+            return
+
+        header_tr = tr_list[0]
+
+        # 内部ヘルパ: 表セルにテキストを書き込む（PowerPoint が期待する構造を保つ）
+        def _set_tbl_cell_text(cell_node: etree.ElementBase, text_value: str) -> None:
+            tx_body = cell_node.find("./a:txBody", namespaces=ns.mapping)
+            if tx_body is None:
+                tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
+                cell_node.insert(0, tx_body)
+            body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
+            if body_pr is None:
+                body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
+                tx_body.insert(0, body_pr)
+            lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
+            if lst_style is None:
+                lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
+                insert_idx = 1 if len(tx_body) >= 1 else 0
+                tx_body.insert(insert_idx, lst_style)
+            for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
+                tx_body.remove(p)
+            p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
+            r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
+            t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
+            t_el.text = text_value
+            r_el.append(t_el)
+            p_el.append(r_el)
+            tx_body.append(p_el)
+
+        # 先頭行（ヘッダ）を Markdown の先頭レコードで上書き
+        header_cells = header_tr.findall("./a:tc", namespaces=ns.mapping)
+        if self.records:
+            header_values = list(self.records[0].cells)
+            for cell_el, text in zip(header_cells, header_values):
+                _set_tbl_cell_text(cell_el, text)
+
+        # ヘッダ以外の行を削除
+        for tr in tr_list[1:]:
+            try:
+                tbl_el.remove(tr)
+            except ValueError:
+                # 念のため親子関係が違う場合は親から削除を試みる
+                parent = tr.getparent()
+                if parent is not None:
+                    parent.remove(tr)
+
+        # データ行を反映（先頭はヘッダ想定）
+        records = list(self.records)
+        if len(records) <= 1:
+            # ヘッダのみ、またはデータなしの場合は何もしない（ヘッダのみ残す）
+            return
+
+        for rec in records[1:]:  # 先頭はヘッダ想定
+            # ヘッダ行をコピーして新規行を作る
+            new_tr = etree.fromstring(etree.tostring(header_tr))
+            cells = new_tr.findall("./a:tc", namespaces=ns.mapping)
+            # セルテキストを流し込み（a:txBody/a:p/a:r/a:t が無ければ生成）
+            for cell_el, text in zip(cells, rec.cells):
+                _set_tbl_cell_text(cell_el, text)
+            tbl_el.append(new_tr)
 
 
 @dataclass(frozen=True)

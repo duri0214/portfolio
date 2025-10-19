@@ -92,13 +92,13 @@ class PptxToxicService:
         all_shapes = list(root.findall(".//p:sp", namespaces=ns.mapping))
         resolver = ShapeNameResolver(all_shapes, ns)
 
-        replaced_any = False
+        has_changed = False
 
         # Handle all operations in a single pass while preserving behavior for tables and texts
         # Prepare candidate resolvers
-        candidates = list(
-            root.findall(".//p:sp", namespaces=ns.mapping)
-        ) + list(root.findall(".//p:graphicFrame", namespaces=ns.mapping))
+        candidates = list(root.findall(".//p:sp", namespaces=ns.mapping)) + list(
+            root.findall(".//p:graphicFrame", namespaces=ns.mapping)
+        )
         resolver_tbl = ShapeNameResolver(candidates, ns)
 
         for op in operations:
@@ -107,32 +107,9 @@ class PptxToxicService:
                 continue
 
             if isinstance(op, TableOp):
-                targets: list[etree.ElementBase] = resolver_tbl.resolve(shape_name_value)
-                if targets:
-                    found_any_tbl = False
-                    for el in targets:
-                        tbl_el = el.find(".//a:tbl", namespaces=ns.mapping)
-                        if tbl_el is None:
-                            tbl_el = el.find(".//p:tbl", namespaces=ns.mapping)
-                        if tbl_el is not None:
-                            PptxToxicService.replace_table(tbl_el, op.table, ns)
-                            replaced_any = True
-                            found_any_tbl = True
-                    if not found_any_tbl:
-                        print(
-                            f"⚠️ 指定図形 '{shape_name_value}' は見つかったが、表 (a:tbl/p:tbl) が見つかりませんでした。"
-                        )
-                else:
-                    available_names = resolver_tbl.available_names()
-                    preview = ", ".join(available_names[:10])
-                    more = (
-                        ""
-                        if len(available_names) <= 10
-                        else f" 他 {len(available_names) - 10} 件"
-                    )
-                    print(
-                        f"⚠️ 指定された表図形 '{shape_name_value}' が見つかりませんでした。候補: {preview}{more}"
-                    )
+                table_vo = op.table
+                if resolver_tbl.apply_table_op(shape_name_value, table_vo, ns):
+                    has_changed = True
 
             elif isinstance(op, TextOp):
                 # render text; special handling for a bullet list to preserve original styling
@@ -145,25 +122,12 @@ class PptxToxicService:
                     bullets = BulletStyle()
                     text_value = bullets.render(source.bullet_list.items)
                 txt = TextContent(text_value)
-                targets = resolver.resolve(shape_name_value)
-                if targets:
-                    for sp in targets:
-                        txt.apply_to_shape(sp, ns)
-                        replaced_any = True
-                else:
-                    available_names = resolver.available_names()
-                    preview = ", ".join(available_names[:10])
-                    more = (
-                        ""
-                        if len(available_names) <= 10
-                        else f" 他 {len(available_names) - 10} 件"
-                    )
-                    print(
-                        f"⚠️ 指定された図形 '{shape_name_value}'（{op.name_key}）が見つかりませんでした。候補: {preview}{more}"
-                    )
+
+                if resolver.apply_text_op(shape_name_value, txt, ns, op.name_key):
+                    has_changed = True
 
         # Write back only if something changed
-        if replaced_any:
+        if has_changed:
             zip_contents[x_path] = etree.tostring(
                 root, xml_declaration=True, encoding="utf-8"
             )
@@ -173,86 +137,10 @@ class PptxToxicService:
             for filename, data in zip_contents.items():
                 output_zip.writestr(filename, data)
 
-        if not replaced_any:
+        if not has_changed:
             print("⚠️ 反映対象が無く、PPTX の内容は変更されませんでした。")
 
         return None
-
-    @staticmethod
-    def replace_table(tbl_el: etree.ElementBase, table: Table, ns: Namespaces) -> None:
-        """
-        既存の PPTX 表 (a:tbl / p:tbl) を Markdown の Table で置換する。
-        - 先頭行（ヘッダ行）はテンプレートのまま残し、以降の行は削除して Markdown レコードで再構築。
-        - 各データ行はヘッダ行のスタイルをコピーして作成。
-        - 列数が一致しない場合は、短い方に合わせて切り詰めます。
-        """
-        # 既存行（a:tr）取得
-        tr_list = tbl_el.findall("./a:tr", namespaces=ns.mapping)
-        if not tr_list:
-            # 一部テンプレートでは名前空間上 p:tbl を使っている想定もあるためフォールバック
-            tr_list = tbl_el.findall(".//a:tr", namespaces=ns.mapping)
-        if not tr_list:
-            print("⚠️ テンプレート表に行 (a:tr) が見つかりませんでした。")
-            return
-
-        header_tr = tr_list[0]
-
-        # 内部ヘルパ: 表セルにテキストを書き込む（PowerPoint が期待する構造を保つ）
-        def _set_tbl_cell_text(cell_node: etree.ElementBase, text_value: str) -> None:
-            tx_body = cell_node.find("./a:txBody", namespaces=ns.mapping)
-            if tx_body is None:
-                tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
-                cell_node.insert(0, tx_body)
-            body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
-            if body_pr is None:
-                body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
-                tx_body.insert(0, body_pr)
-            lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
-            if lst_style is None:
-                lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
-                insert_idx = 1 if len(tx_body) >= 1 else 0
-                tx_body.insert(insert_idx, lst_style)
-            for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
-                tx_body.remove(p)
-            p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
-            r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
-            t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
-            t_el.text = text_value
-            r_el.append(t_el)
-            p_el.append(r_el)
-            tx_body.append(p_el)
-
-        # 先頭行（ヘッダ）を Markdown の先頭レコードで上書き
-        header_cells = header_tr.findall("./a:tc", namespaces=ns.mapping)
-        if table.records:
-            header_values = list(table.records[0].cells)
-            for cell_el, text in zip(header_cells, header_values):
-                _set_tbl_cell_text(cell_el, text)
-
-        # ヘッダ以外の行を削除
-        for tr in tr_list[1:]:
-            try:
-                tbl_el.remove(tr)
-            except ValueError:
-                # 念のため親子関係が違う場合は親から削除を試みる
-                parent = tr.getparent()
-                if parent is not None:
-                    parent.remove(tr)
-
-        # Markdown のレコード（先頭はヘッダと想定）を反映
-        records = list(table.records)
-        if len(records) <= 1:
-            # ヘッダのみ、またはデータなしの場合は何もしない（ヘッダのみ残す）
-            return
-
-        for rec in records[1:]:  # 先頭はヘッダ想定
-            # ヘッダ行をコピーして新規行を作る
-            new_tr = etree.fromstring(etree.tostring(header_tr))
-            cells = new_tr.findall("./a:tc", namespaces=ns.mapping)
-            # セルテキストを流し込み（a:txBody/a:p/a:r/a:t が無ければ生成）
-            for cell_el, text in zip(cells, rec.cells):
-                _set_tbl_cell_text(cell_el, text)
-            tbl_el.append(new_tr)
 
     @staticmethod
     def _md_to_html(md_text: str) -> str:
