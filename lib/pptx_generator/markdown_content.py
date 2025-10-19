@@ -1,36 +1,16 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 import textwrap
+from bs4 import BeautifulSoup
+from markdown_it import MarkdownIt
 
 
 def _md_to_html(md_text: str) -> str:
     """Markdown 文字列を HTML に変換する。
 
-    優先順位:
-    1) markdown-it-py（table を有効化）
-    2) python-markdown（tables 拡張）
-    3) 最小フォールバック（テキストを <p> で包む）
+    実装: markdown-it-py を利用（table を有効化）。
     """
-    # 1) markdown-it-py
-    try:
-        from markdown_it import MarkdownIt  # type: ignore
-        parser = MarkdownIt("commonmark").enable("table")
-        return parser.render(md_text)
-    except ImportError:
-        pass
-
-    # 2) python-markdown
-    try:
-        import markdown  # type: ignore
-        return markdown.markdown(md_text, extensions=["tables"])  # type: ignore[arg-type]
-    except ImportError:
-        pass
-
-    # 3) Minimal fallback
-    from html import escape
-
-    return f"<p>{escape(md_text)}</p>"
+    parser = MarkdownIt("commonmark").enable("table")
+    return parser.render(md_text)
 
 
 @dataclass(frozen=True)
@@ -53,9 +33,6 @@ def parse_markdown(text: str) -> MarkdownSection:
     """Markdown 文字列を解析し、見出し・段落・箇条書き・表を抽出して返す。"""
     clean_text = textwrap.dedent(text).strip()
     html = _md_to_html(clean_text)
-
-    # Lazy import to avoid hard dependency if the function is unused
-    from bs4 import BeautifulSoup  # type: ignore
 
     soup = BeautifulSoup(html, "html.parser")
 
