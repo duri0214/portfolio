@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterable, cast
+from typing import Iterable, cast, Sequence
 from bs4.element import Tag, PageElement
 from lxml import etree
 
@@ -50,8 +50,6 @@ class SlideLocation:
         return f"ppt/slides/slide{self.page}.xml"
 
 
-
-
 @dataclass(frozen=True)
 class TextContent:
     """図形に適用するテキスト値を表す値オブジェクト。
@@ -66,7 +64,9 @@ class TextContent:
 
     text: str
 
-    def apply_to_shape(self, shape_elem: etree._Element, ns: Namespaces) -> str | None:
+    def apply_to_shape(
+        self, shape_elem: etree.ElementBase, ns: Namespaces
+    ) -> str | None:
         """図形内の最初のテキストラン（<a:t>）に text を設定します。
 
         パラメータ:
@@ -82,6 +82,76 @@ class TextContent:
         old = t_elem.text
         t_elem.text = self.text
         return old
+
+
+class ShapeNameResolver:
+    """Resolve shapes by their cNvPr@name with robust matching tiers.
+
+    - Exact match (case-sensitive), then exact (case-insensitive), then substring (case-insensitive).
+    - Exposes available names for diagnostics.
+    """
+
+    def __init__(self, elements: Iterable[etree.ElementBase], ns: Namespaces):
+        self._ns = ns
+        self._elements: list[etree.ElementBase] = list(elements)
+        self._index: list[tuple[etree.ElementBase, str | None]] = [
+            (el, self._name_of(el)) for el in self._elements
+        ]
+
+    def _name_of(self, el: etree.ElementBase) -> str | None:
+        nm = el.find(".//p:cNvPr", namespaces=self._ns.mapping)
+        return None if nm is None else nm.get("name")
+
+    def resolve(self, name_or_names: str | Sequence[str]) -> list[etree.ElementBase]:
+        # Normalize targets
+        if isinstance(name_or_names, (list, tuple, set)):
+            targets = [t for t in name_or_names if isinstance(t, str) and t]
+        else:
+            targets = (
+                [name_or_names]
+                if isinstance(name_or_names, str) and name_or_names
+                else []
+            )
+        if not targets:
+            return []
+
+        # Tier 1: exact (case-sensitive)
+        exact = [el for el, nm in self._index if nm in targets]
+        if exact:
+            return exact
+
+        # Tier 2: exact (case-insensitive)
+        tl = {t.lower() for t in targets}
+        exact_ci = [
+            el for el, nm in self._index if isinstance(nm, str) and nm.lower() in tl
+        ]
+        if exact_ci:
+            return exact_ci
+
+        # Tier 3: substring (case-insensitive)
+        subs: list[etree.ElementBase] = []
+        for el, nm in self._index:
+            if not isinstance(nm, str):
+                continue
+            nl = nm.lower()
+            for t in tl:
+                if t and t in nl:
+                    subs.append(el)
+                    break
+        return subs
+
+    def available_names(self) -> list[str]:
+        return [nm for _, nm in self._index if isinstance(nm, str)]
+
+
+@dataclass(frozen=True)
+class BulletStyle:
+    """Bullet list rendering policy as a value object."""
+
+    marker: str = "•"
+
+    def render(self, items: list[str]) -> str:
+        return "\n".join(f"{self.marker} {it}" for it in items)
 
 
 # ---------------- Markdown Value Objects ----------------

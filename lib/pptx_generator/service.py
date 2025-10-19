@@ -15,6 +15,8 @@ from lib.pptx_generator.valueobject import (
     TableRecord,
     Table,
     MarkdownSection,
+    BulletStyle,
+    ShapeNameResolver,
 )
 
 
@@ -89,60 +91,14 @@ class PptxToxicService:
         if source.paragraphs:
             rendered["paragraphs"] = "\n\n".join(source.paragraphs)
         if source.bullet_list and source.bullet_list.items:
-            rendered["bullet_list"] = "\n".join(
-                f"• {it}" for it in source.bullet_list.items
-            )
+            bullets = BulletStyle()
+            rendered["bullet_list"] = bullets.render(source.bullet_list.items)
         # テーブルはテキストではなく、本物の PPTX 表（a:tbl/p:tbl）を操作して反映するため、
         # rendered には追加しない。
 
-        # apply to shapes with robust matching
-        # - Build an index of all shapes with their cNvPr@name
-        def _shape_name(sp_el: etree.ElementBase) -> str | None:
-            name_el = sp_el.find(".//p:cNvPr", namespaces=ns.mapping)
-            return None if name_el is None else name_el.get("name")
-
+        # apply to shapes with robust matching via Value Object
         all_shapes = list(root.findall(".//p:sp", namespaces=ns.mapping))
-        indexed: list[tuple[etree.ElementBase, str | None]] = [
-            (sp, _shape_name(sp)) for sp in all_shapes
-        ]
-
-        def _resolve_targets(
-            name_or_names: str | list[str] | tuple[str, ...],
-        ) -> list[etree.ElementBase]:
-            # Normalize targets list
-            if isinstance(name_or_names, (list, tuple)):
-                target_names = [t for t in name_or_names if isinstance(t, str) and t]
-            else:
-                target_names = [name_or_names] if name_or_names else []
-            if not target_names:
-                return []
-
-            # Tier 1: exact match (case-sensitive)
-            exact_matches = [sp for sp, nm in indexed if nm in target_names]
-            if exact_matches:
-                return exact_matches
-
-            # Tier 2: exact match (case-insensitive)
-            targets_lower = {t.lower() for t in target_names}
-            exact_ci_matches = [
-                sp
-                for sp, nm in indexed
-                if isinstance(nm, str) and nm.lower() in targets_lower
-            ]
-            if exact_ci_matches:
-                return exact_ci_matches
-
-            # Tier 3: substring match (case-insensitive)
-            substr_matches = []
-            for sp, nm in indexed:
-                if not isinstance(nm, str):
-                    continue
-                nm_l = nm.lower()
-                for t in targets_lower:
-                    if t and t in nm_l:
-                        substr_matches.append(sp)
-                        break
-            return substr_matches
+        resolver = ShapeNameResolver(all_shapes, ns)
 
         replaced_any = False
 
@@ -155,46 +111,9 @@ class PptxToxicService:
                     root.findall(".//p:sp", namespaces=ns.mapping)
                 ) + list(root.findall(".//p:graphicFrame", namespaces=ns.mapping))
 
-                def _name_of(el: etree.ElementBase) -> str | None:
-                    nm = el.find(".//p:cNvPr", namespaces=ns.mapping)
-                    return None if nm is None else nm.get("name")
+                resolver_tbl = ShapeNameResolver(candidates, ns)
 
-                indexed_tbl: list[tuple[etree.ElementBase, str | None]] = [
-                    (el, _name_of(el)) for el in candidates
-                ]
-
-                # Resolve targets by name (exact, case-insensitive, then substring)
-                if isinstance(shape_name_value, (list, tuple)):
-                    targets_raw = [
-                        t for t in shape_name_value if isinstance(t, str) and t
-                    ]
-                else:
-                    targets_raw = [shape_name_value] if shape_name_value else []
-
-                targets: list[etree.ElementBase] = []
-                if targets_raw:
-                    exact = [el for el, nm in indexed_tbl if nm in targets_raw]
-                    targets = exact
-                    if not targets:
-                        t_lower = {t.lower() for t in targets_raw}
-                        exact_ci = [
-                            el
-                            for el, nm in indexed_tbl
-                            if isinstance(nm, str) and nm.lower() in t_lower
-                        ]
-                        targets = exact_ci
-                    if not targets:
-                        subs: list[etree.ElementBase] = []
-                        t_lower = {t.lower() for t in targets_raw}
-                        for el, nm in indexed_tbl:
-                            if not isinstance(nm, str):
-                                continue
-                            nl = nm.lower()
-                            for t in t_lower:
-                                if t and t in nl:
-                                    subs.append(el)
-                                    break
-                        targets = subs
+                targets: list[etree.ElementBase] = resolver_tbl.resolve(shape_name_value)
 
                 if targets:
                     found_any_tbl = False
@@ -212,9 +131,7 @@ class PptxToxicService:
                         )
                 else:
                     # diagnostics for available names
-                    available_names = [
-                        nm for _, nm in indexed_tbl if isinstance(nm, str)
-                    ]
+                    available_names = resolver_tbl.available_names()
                     preview = ", ".join(available_names[:10])
                     more = (
                         ""
@@ -230,14 +147,14 @@ class PptxToxicService:
             if not shape_name_value:
                 continue
             txt = TextContent(text)
-            targets = _resolve_targets(shape_name_value)
+            targets = resolver.resolve(shape_name_value)
             if targets:
                 for sp in targets:
                     txt.apply_to_shape(sp, ns)
                     replaced_any = True
             else:
                 # prepare available names for diagnostics
-                available_names = [nm for _, nm in indexed if isinstance(nm, str)]
+                available_names = resolver.available_names()
                 preview = ", ".join(available_names[:10])
                 more = (
                     ""
