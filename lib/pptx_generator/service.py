@@ -117,38 +117,38 @@ class PptxToxicService:
         ) -> list[etree._Element]:
             # Normalize targets list
             if isinstance(name_or_names, (list, tuple)):
-                targets = [t for t in name_or_names if isinstance(t, str) and t]
+                target_names = [t for t in name_or_names if isinstance(t, str) and t]
             else:
-                targets = [name_or_names] if name_or_names else []
-            if not targets:
+                target_names = [name_or_names] if name_or_names else []
+            if not target_names:
                 return []
 
             # Tier 1: exact match (case-sensitive)
-            exact = [sp for sp, nm in indexed if nm in targets]
-            if exact:
-                return exact
+            exact_matches = [sp for sp, nm in indexed if nm in target_names]
+            if exact_matches:
+                return exact_matches
 
             # Tier 2: exact match (case-insensitive)
-            t_lower = {t.lower() for t in targets}
-            exact_ci = [
+            targets_lower = {t.lower() for t in target_names}
+            exact_ci_matches = [
                 sp
                 for sp, nm in indexed
-                if isinstance(nm, str) and nm.lower() in t_lower
+                if isinstance(nm, str) and nm.lower() in targets_lower
             ]
-            if exact_ci:
-                return exact_ci
+            if exact_ci_matches:
+                return exact_ci_matches
 
             # Tier 3: substring match (case-insensitive)
-            subs = []
+            substr_matches = []
             for sp, nm in indexed:
                 if not isinstance(nm, str):
                     continue
                 nm_l = nm.lower()
-                for t in t_lower:
+                for t in targets_lower:
                     if t and t in nm_l:
-                        subs.append(sp)
+                        substr_matches.append(sp)
                         break
-            return subs
+            return substr_matches
 
         replaced_any = False
 
@@ -289,40 +289,43 @@ class PptxToxicService:
 
         header_tr = tr_list[0]
 
+        # 内部ヘルパ: 表セルにテキストを書き込む（PowerPoint が期待する構造を保つ）
+        def _set_tbl_cell_text(cell_node: etree._Element, text_value: str) -> None:
+            tx_body = cell_node.find("./a:txBody", namespaces=ns.mapping)
+            if tx_body is None:
+                tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
+                cell_node.insert(0, tx_body)
+            body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
+            if body_pr is None:
+                body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
+                tx_body.insert(0, body_pr)
+            lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
+            if lst_style is None:
+                lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
+                insert_idx = 1 if len(tx_body) >= 1 else 0
+                tx_body.insert(insert_idx, lst_style)
+            for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
+                tx_body.remove(p)
+            p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
+            r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
+            t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
+            t_el.text = text_value
+            r_el.append(t_el)
+            p_el.append(r_el)
+            tx_body.append(p_el)
+
         # 先頭行（ヘッダ）を Markdown の先頭レコードで上書き
         header_cells = header_tr.findall("./a:tc", namespaces=ns.mapping)
         if table.records:
             header_values = list(table.records[0].cells)
             for cell_el, text in zip(header_cells, header_values):
-                # a:txBody を確保
-                tx_body = cell_el.find("./a:txBody", namespaces=ns.mapping)
-                if tx_body is None:
-                    tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
-                    cell_el.insert(0, tx_body)
-                body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
-                if body_pr is None:
-                    body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
-                    tx_body.insert(0, body_pr)
-                lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
-                if lst_style is None:
-                    lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
-                    insert_idx = 1 if len(tx_body) >= 1 else 0
-                    tx_body.insert(insert_idx, lst_style)
-                for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
-                    tx_body.remove(p)
-                p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
-                r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
-                t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
-                t_el.text = text
-                r_el.append(t_el)
-                p_el.append(r_el)
-                tx_body.append(p_el)
+                _set_tbl_cell_text(cell_el, text)
 
         # ヘッダ以外の行を削除
         for tr in tr_list[1:]:
             try:
                 tbl_el.remove(tr)
-            except Exception:
+            except ValueError:
                 # 念のため親子関係が違う場合は親から削除を試みる
                 parent = tr.getparent()
                 if parent is not None:
@@ -340,33 +343,7 @@ class PptxToxicService:
             cells = new_tr.findall("./a:tc", namespaces=ns.mapping)
             # セルテキストを流し込み（a:txBody/a:p/a:r/a:t が無ければ生成）
             for cell_el, text in zip(cells, rec.cells):
-                # a:txBody を確保
-                tx_body = cell_el.find("./a:txBody", namespaces=ns.mapping)
-                if tx_body is None:
-                    tx_body = etree.Element(f"{{{ns.mapping['a']}}}txBody")
-                    cell_el.insert(0, tx_body)
-                # a:bodyPr, a:lstStyle を確保（PowerPoint が期待する構造）
-                body_pr = tx_body.find("./a:bodyPr", namespaces=ns.mapping)
-                if body_pr is None:
-                    body_pr = etree.Element(f"{{{ns.mapping['a']}}}bodyPr")
-                    tx_body.insert(0, body_pr)
-                lst_style = tx_body.find("./a:lstStyle", namespaces=ns.mapping)
-                if lst_style is None:
-                    lst_style = etree.Element(f"{{{ns.mapping['a']}}}lstStyle")
-                    # bodyPr の直後に置く
-                    insert_idx = 1 if len(tx_body) >= 1 else 0
-                    tx_body.insert(insert_idx, lst_style)
-                # 既存の段落は一旦クリア（空の endParaRPr のみ等で構造が壊れないように）
-                for p in list(tx_body.findall("./a:p", namespaces=ns.mapping)):
-                    tx_body.remove(p)
-                # a:p/a:r/a:t を生成
-                p_el = etree.Element(f"{{{ns.mapping['a']}}}p")
-                r_el = etree.Element(f"{{{ns.mapping['a']}}}r")
-                t_el = etree.Element(f"{{{ns.mapping['a']}}}t")
-                t_el.text = text
-                r_el.append(t_el)
-                p_el.append(r_el)
-                tx_body.append(p_el)
+                _set_tbl_cell_text(cell_el, text)
             tbl_el.append(new_tr)
 
     @staticmethod
