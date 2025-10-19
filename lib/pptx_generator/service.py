@@ -209,7 +209,7 @@ class PptxToxicService:
                         if tbl_el is None:
                             tbl_el = el.find(".//p:tbl", namespaces=ns.mapping)
                         if tbl_el is not None:
-                            PptxToxicService._replace_table(tbl_el, source.table, ns)
+                            PptxToxicService.replace_table(tbl_el, source.table, ns)
                             replaced_any = True
                             found_any_tbl = True
                     if not found_any_tbl:
@@ -271,7 +271,7 @@ class PptxToxicService:
         return None
 
     @staticmethod
-    def _replace_table(tbl_el: etree._Element, table: Table, ns: Namespaces) -> None:
+    def replace_table(tbl_el: etree._Element, table: Table, ns: Namespaces) -> None:
         """
         既存の PPTX 表 (a:tbl / p:tbl) を Markdown の Table で置換する。
         - 先頭行（ヘッダ行）はテンプレートのまま残し、以降の行は削除して Markdown レコードで再構築。
