@@ -14,7 +14,7 @@ from lib.pptx_generator.valueobject import MarkdownSection
 from lib.pptx_generator.service import PptxToxicService
 
 
-class TestMarkdownContent(unittest.TestCase):
+class TestParseMarkdown(unittest.TestCase):
     """parse_markdown の基本シナリオを網羅するテストクラス。
 
     検証観点:
