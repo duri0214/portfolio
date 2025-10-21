@@ -110,24 +110,29 @@ def get_chat_history(
     return chat_history
 
 
-class ChatService(ABC):
+class BaseChatService(ABC):
     @abstractmethod
     def generate(self, **kwargs):
         pass
 
 
-class GeminiChatService(ChatService):
-    def __init__(self):
-        super().__init__()
-        self.chat_history = []
-        self.config = GeminiConfig(
-            api_key=os.getenv("GEMINI_API_KEY"),
-            max_tokens=4000,
-            model="gemini-1.5-flash",
-        )
 
-    def generate(self, user_message: MessageDTO) -> MessageDTO:
-        self.chat_history = get_chat_history(user_message)
+
+
+
+class ChatService(BaseChatService):
+    """統合されたチャットサービス（GeminiとOpenAI両対応）"""
+
+    def __init__(self, config: OpenAIGptConfig | GeminiConfig):
+        super().__init__()
+        self.config = config
+        self.chat_history: list[MessageDTO] = []
+
+    def generate(
+        self, user_message: MessageDTO, gender: Gender | None = None
+    ) -> MessageDTO:
+        # なぞなぞモードはgenderが与えられた場合に初期プロンプトを入れる
+        self.chat_history = get_chat_history(user_message, gender)
 
         response = LlmCompletionService(self.config).retrieve_answer(
             [x.to_message() for x in self.chat_history]
@@ -140,33 +145,8 @@ class GeminiChatService(ChatService):
             invisible=False,
         )
 
-
-class OpenAIChatService(ChatService):
-    def __init__(self):
-        super().__init__()
-        self.chat_history = []
-        self.config = OpenAIGptConfig(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            max_tokens=4000,
-            model="gpt-5-mini",
-        )
-
-    def generate(self, user_message: MessageDTO, gender: Gender) -> MessageDTO:
-        self.chat_history = get_chat_history(user_message, gender)
-
-        response = LlmCompletionService(self.config).retrieve_answer(
-            [x.to_message() for x in self.chat_history]
-        )
-        assistant_message = MessageDTO(
-            user=user_message.user,
-            role=RoleType.ASSISTANT,
-            content=response.choices[0].message.content,
-            invisible=False,
-        )
-
-        return assistant_message
-
     def evaluate(self, login_user: User):
+        """評価機能（Gemini/OpenAI共通）"""
         invisible_user_message = MessageDTO(
             user=login_user,
             role=RoleType.USER,
@@ -189,7 +169,7 @@ class OpenAIChatService(ChatService):
         self.chat_history.append(invisible_user_message)
 
 
-class OpenAIChatStreamingService(ChatService):
+class OpenAIChatStreamingService(BaseChatService):
     def __init__(self):
         super().__init__()
         self.chat_history = []
@@ -209,7 +189,7 @@ class OpenAIChatStreamingService(ChatService):
         )
 
 
-class OpenAIDalleChatService(ChatService):
+class OpenAIDalleChatService(BaseChatService):
     def __init__(self):
         super().__init__()
         self.config = OpenAIGptConfig(
@@ -264,7 +244,7 @@ class OpenAIDalleChatService(ChatService):
         return f"llm_chat/images/{random_filename}"
 
 
-class OpenAITextToSpeechChatService(ChatService):
+class OpenAITextToSpeechChatService(BaseChatService):
     def __init__(self):
         super().__init__()
         self.config = OpenAIGptConfig(
@@ -304,7 +284,7 @@ class OpenAITextToSpeechChatService(ChatService):
         return f"llm_chat/audios/{random_filename}"
 
 
-class OpenAISpeechToTextChatService(ChatService):
+class OpenAISpeechToTextChatService(BaseChatService):
     def __init__(self):
         super().__init__()
         self.config = OpenAIGptConfig(
@@ -329,7 +309,7 @@ class OpenAISpeechToTextChatService(ChatService):
         raise Exception(f"音声ファイル {assistant_message.file_path} は存在しません")
 
 
-class OpenAIRagChatService(ChatService):
+class OpenAIRagChatService(BaseChatService):
     def __init__(self):
         super().__init__()
         self.config = OpenAIGptConfig(
