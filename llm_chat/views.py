@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Generator
 
 from django.contrib.auth.models import User
@@ -12,14 +13,14 @@ from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.usecase.chat import (
     UseCase,
-    GeminiUseCase,
-    OpenAIGptUseCase,
+    LlmChatUseCase,
     OpenAIGptStreamingUseCase,
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
     OpenAISpeechToTextUseCase,
     OpenAIRagUseCase,
 )
+from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.forms import UserTextForm
 
 # .env ファイルを読み込む
@@ -56,11 +57,21 @@ class SyncResponseView(View):
 
             # 使用するユースケースを切り替え TODO: Use-caseのFactoryにしたらよさそう issue229
             use_case: UseCase | None = None
-            if use_case_type == "Gemini":
+            if use_case_type in ("Gemini", "OpenAIGpt"):
                 # TODO: user_inputでそれぞれのUse-caseを初期化したほうがよさそう issue228
-                use_case = GeminiUseCase()
-            elif use_case_type == "OpenAIGpt":
-                use_case = OpenAIGptUseCase()
+                if use_case_type == "Gemini":
+                    config = GeminiConfig(
+                        api_key=os.getenv("GEMINI_API_KEY"),
+                        max_tokens=4000,
+                        model="gemini-1.5-flash",
+                    )
+                else:
+                    config = OpenAIGptConfig(
+                        api_key=os.getenv("OPENAI_API_KEY"),
+                        max_tokens=4000,
+                        model="gpt-5-mini",
+                    )
+                use_case = LlmChatUseCase(config)
             elif use_case_type == "OpenAIDalle":
                 use_case = OpenAIDalleUseCase()
             elif use_case_type == "OpenAITextToSpeech":
