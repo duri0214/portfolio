@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Generator
@@ -15,8 +16,10 @@ from llm_chat.domain.service.chat import (
     OpenAITextToSpeechChatService,
     OpenAISpeechToTextChatService,
     OpenAIRagChatService,
+    ChatService,
 )
 from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
+from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 
 
 class UseCase(ABC):
@@ -30,69 +33,51 @@ class UseCase(ABC):
         pass
 
 
-class GeminiUseCase(UseCase):
+class LlmChatUseCase(UseCase):
+    """統合されたLLMチャットユースケース（GeminiとOpenAI両対応）"""
+
+    def __init__(self, config: OpenAIGptConfig | GeminiConfig):
+        super().__init__()
+        self.config = config
+
     def execute(self, user: User, content: str | None) -> MessageDTO:
-        """
-        GeminiServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
-        contentパラメータはNoneではないこと。
-
-        Args:
-            user (User): DjangoのUserモデルのインスタンス
-            content (str | None): ユーザーからの入力テキスト
-
-        Raises:
-            ValueError: contentがNoneの場合
-
-        Returns:
-            テキスト生成の結果
-        """
         if content is None:
-            raise ValueError("content cannot be None for GeminiUseCase")
-        chat_service = GeminiChatService()
+            raise ValueError("content cannot be None for LlmChatUseCase")
+
+        chat_service = ChatService(self.config)
+
         user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             invisible=False,
         )
-        assistant_message = chat_service.generate(user_message)
+
+        # なぞなぞはOpenAI/Gemini共通機能として扱う
+        assistant_message = chat_service.generate(user_message, Gender(GenderType.MAN))
+
         self.repository.insert(assistant_message)
+
+        # なぞなぞの終端処理（共通機能）
+        if "本日はなぞなぞにご参加いただき" in assistant_message.content:
+            chat_service.evaluate(login_user=user_message.user)
+
         return assistant_message
 
 
 class OpenAIGptUseCase(UseCase):
     def execute(self, user: User, content: str | None) -> MessageDTO:
-        """
-        OpenAIGptServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
-        contentパラメータはNoneではないこと。
-
-        Args:
-            user (User): DjangoのUserモデルのインスタンス
-            content (str | None): ユーザーからの入力テキスト
-
-        Raises:
-            ValueError: contentがNoneの場合
-
-        Returns:
-            テキスト生成の結果
-        """
+        """後方互換のためのOpenAIユースケース。内部で統合版に委譲する。"""
         if content is None:
             raise ValueError("content cannot be None for OpenAIGptUseCase")
-        chat_service = OpenAIChatService()
-        user_message = MessageDTO(
-            user=user,
-            role=RoleType.USER,
-            content=content,
-            invisible=False,
+        use_case = LlmChatUseCase(
+            OpenAIGptConfig(
+                api_key=os.getenv("OPENAI_API_KEY"),
+                max_tokens=4000,
+                model="gpt-5-mini",
+            )
         )
-        assistant_message = chat_service.generate(user_message, Gender(GenderType.MAN))
-        self.repository.insert(assistant_message)
-
-        # なぞなぞの終端処理
-        if "本日はなぞなぞにご参加いただき" in assistant_message.content:
-            chat_service.evaluate(login_user=user_message.user)
-
-        return assistant_message
+        return use_case.execute(user=user, content=content)
 
 
 class OpenAIGptStreamingUseCase(UseCase):
