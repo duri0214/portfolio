@@ -65,34 +65,6 @@ class LlmChatUseCase(UseCase):
         return assistant_message
 
 
-class GeminiUseCase(UseCase):
-    def execute(self, user: User, content: str | None) -> MessageDTO:
-        """後方互換のためのGeminiユースケース。内部で統合版に委譲する。"""
-        if content is None:
-            raise ValueError("content cannot be None for GeminiUseCase")
-        use_case = LlmChatUseCase(
-            GeminiConfig(
-                api_key=os.getenv("GEMINI_API_KEY"),
-                max_tokens=4000,
-                model="gemini-1.5-flash",
-            )
-        )
-        return use_case.execute(user=user, content=content)
-
-
-class OpenAIGptUseCase(UseCase):
-    def execute(self, user: User, content: str | None) -> MessageDTO:
-        """後方互換のためのOpenAIユースケース。内部で統合版に委譲する。"""
-        if content is None:
-            raise ValueError("content cannot be None for OpenAIGptUseCase")
-        use_case = LlmChatUseCase(
-            OpenAIGptConfig(
-                api_key=os.getenv("OPENAI_API_KEY"),
-                max_tokens=4000,
-                model="gpt-5-mini",
-            )
-        )
-        return use_case.execute(user=user, content=content)
 
 
 class OpenAIGptStreamingUseCase(UseCase):
