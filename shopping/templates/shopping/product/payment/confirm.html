@@ -10,6 +10,29 @@
 
 {% block content %}
     <div class="container my-4">
+        <!-- メッセージ表示エリア -->
+        {% if messages %}
+            <div class="messages mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <strong>
+                            {% if message.tags == 'error' %}
+                                ⚠️ エラー
+                            {% elif message.tags == 'warning' %}
+                                ⚠️ 警告
+                            {% elif message.tags == 'success' %}
+                                ✓ 成功
+                            {% elif message.tags == 'info' %}
+                                ℹ️ 情報
+                            {% endif %}
+                        </strong>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h3 class="mb-0">決済確認</h3>

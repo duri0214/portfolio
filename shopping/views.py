@@ -312,18 +312,23 @@ class PaymentConfirmView(DetailView):
                     messages.error(
                         request, f"購入履歴の保存中にエラーが発生しました: {e}"
                     )
+                    # エラー時は確認画面に戻る
+                    context = self.get_context_data(object=self.object)
+                    return self.render_to_response(context)
             else:
                 logger.error(f"支払いエラー: {payment_result.error_message}")
                 messages.error(
                     request, f"支払いに失敗しました: {payment_result.error_message}"
                 )
+                # エラー時は確認画面に戻る
+                context = self.get_context_data(object=self.object)
+                return self.render_to_response(context)
         except Exception as e:
             logger.error(f"予期しないエラー: {e}")
             messages.error(request, f"予期しないエラーが発生しました: {e}")
-
-        return HttpResponseRedirect(
-            reverse("product_detail", kwargs={"pk": self.object.pk})
-        )
+            # エラー時は確認画面に戻る
+            context = self.get_context_data(object=self.object)
+            return self.render_to_response(context)
 
 
 class PaymentCompleteView(DetailView):
