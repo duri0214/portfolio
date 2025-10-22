@@ -2,10 +2,12 @@
   <dictionary name="project">
     <words>
       <w>amedas</w>
+      <w>csrftoken</w>
       <w>dalle</w>
       <w>gmarker</w>
       <w>henojiya</w>
       <w>issuetype</w>
+      <w>jetro</w>
       <w>jmaamedas</w>
       <w>jmawarning</w>
       <w>jmaweather</w>
@@ -14,6 +16,8 @@
       <w>loaddata</w>
       <w>makemigrations</w>
       <w>marketcap</w>
+      <w>murc</w>
+      <w>truncatechars</w>
       <w>vietkabu</w>
       <w>vnindex</w>
       <w>xarvio</w>
