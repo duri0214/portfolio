@@ -7,9 +7,12 @@
         <h1 class="display-4">QA with LLM</h1>
         <p class="lead">The system that forms the basis of work</p>
         <hr class="my-4">
-        <p>You can talk with Gemini, ChatGPT4, Dall-e-3, TextToSpeech, SpeechToText and RAG</p>
+        <p>You can talk with Gemini, ChatGPT, Dall-e-3, TextToSpeech, SpeechToText and RAG</p>
     </div>
     <div class="container">
+        <div class="d-flex justify-content-end mb-3">
+            <button id="clearChatLogsBtn" class="btn btn-danger">ChatLogs テーブルをクリアー</button>
+        </div>
         {% for chat_log in chat_history %}
             <div class="card mb-3">
                 <div class="card-body">
@@ -68,6 +71,35 @@
             const userInput = document.getElementById("id_question");
             const streamingCard = document.getElementById("streaming-card");
             const outputElement = document.getElementById("output");
+            const clearBtn = document.getElementById("clearChatLogsBtn");
+
+            // ChatLogs全削除ボタン
+            if (clearBtn) {
+                clearBtn.addEventListener("click", function () {
+                    if (!confirm("本当にChatLogsテーブルを全削除しますか？この操作は元に戻せません。")) {
+                        return;
+                    }
+                    fetch("/llm_chat/clear_chat_logs/", {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": Cookies.get("csrftoken"),
+                        },
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.status === "success") {
+                                alert(`削除しました。件数: ${data.deleted}`);
+                                location.reload();
+                            } else {
+                                alert("削除に失敗しました: " + (data.detail || "unknown"));
+                            }
+                        })
+                        .catch((err) => {
+                            console.error(err);
+                            alert("通信エラーが発生しました");
+                        });
+                });
+            }
 
             // 送信ボタンのクリックイベント設定
             sendButton.addEventListener("click", function () {

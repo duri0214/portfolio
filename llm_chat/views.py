@@ -22,6 +22,7 @@ from llm_chat.domain.usecase.chat import (
 )
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.forms import UserTextForm
+from llm_chat.models import ChatLogs
 
 # .env ファイルを読み込む
 load_dotenv()
@@ -170,4 +171,17 @@ class StreamResultSaveView(View):
         except Exception as e:
             return JsonResponse(
                 {"error": "Failed to save data", "detail": str(e)}, status=500
+            )
+
+
+class ClearChatLogsView(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        """ChatLogsテーブルを全削除する（誰でも実行可・CSRF保護あり）"""
+        try:
+            deleted_count, _ = ChatLogs.objects.all().delete()
+            return JsonResponse({"status": "success", "deleted": deleted_count})
+        except Exception as e:
+            return JsonResponse(
+                {"error": "Failed to clear", "detail": str(e)}, status=500
             )
