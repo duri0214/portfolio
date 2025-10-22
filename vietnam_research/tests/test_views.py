@@ -1,12 +1,26 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from datetime import datetime, timezone
+from unittest.mock import patch
 
 from vietnam_research.models import Articles, Likes, ExchangeRate
 
 
 class TestView(TestCase):
     def setUp(self):
+        # Patch external RSS access so tests never hit the network
+        self._rss_patcher = patch(
+            "vietnam_research.domain.service.market.MarketRetrievalService.get_rss_feed",
+            return_value={
+                "entries": [],
+                "feed": {
+                    "updated": datetime.now(timezone.utc).strftime("%Y/%m/%d %H:%M:%S %z")
+                },
+            },
+        )
+        self._rss_patcher.start()
+
         self.password_plane = "<PASSWORD>"
         self.user = User.objects.create_user(
             id=1, username="john_doe", email="user@example.com"
@@ -28,6 +42,10 @@ class TestView(TestCase):
         session["budget"] = 10000  # Or some sensible default
         session["unit_price"] = 5000  # Or some sensible default
         session.save()
+
+    def tearDown(self):
+        # stop patchers
+        self._rss_patcher.stop()
 
     def test_show_index_page_without_budget_and_unit_price(self):
         """
