@@ -132,11 +132,15 @@
         <div id="vietkabu-topics" class="mt-5">
             <h2 class="display-4">VIET-KABU TOPICS</h2>
             更新日時: {{ rss.updated }}
-            <ul>
-                {% for entry in rss.entries %}
-                    <li><a href="{{ entry.link }}" target="_blank">{{ entry.title }}</a></li>
-                {% endfor %}
-            </ul>
+            {% if rss.entries %}
+                <ul>
+                    {% for entry in rss.entries %}
+                        <li><a href="{{ entry.link }}" target="_blank">{{ entry.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">現在トピックスを取得できません。</p>
+            {% endif %}
         </div>
 
         <div id="macro-analysis-by-industry" class="mt-5">
