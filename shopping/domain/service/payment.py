@@ -40,32 +40,31 @@ class StripePaymentService(PaymentServiceBase):
 
     def create_payment(self, intent: PaymentIntent) -> PaymentResult:
         try:
+            # Payment Intents APIを使用（3DS対応）
+            payment_intent_params = {
+                "amount": intent.amount,
+                "currency": intent.currency,
+                "description": intent.description,
+                "automatic_payment_methods": {"enabled": True},
+            }
+
+            # payment_methodが指定されている場合は追加
             if intent.payment_method:
-                charge = stripe.Charge.create(
-                    amount=intent.amount,
-                    currency=intent.currency,
-                    description=intent.description,
-                    source=intent.payment_method,  # トークンをsourceとして使用
-                )
-                return PaymentResult(
-                    success=True,
-                    payment_id=charge.id,
-                )
-            else:
-                # 通常のPaymentIntentフロー（クライアントサイド決済用）
-                payment_intent = stripe.PaymentIntent.create(
-                    amount=intent.amount,
-                    currency=intent.currency,
-                    description=intent.description,
-                )
-                logger.info(
-                    f"PaymentIntent作成成功: ID={payment_intent.id}, 金額={intent.amount}{intent.currency}"
-                )
-                return PaymentResult(
-                    success=True,
-                    payment_id=payment_intent.id,
-                    client_secret=payment_intent.client_secret,
-                )
+                payment_intent_params["payment_method"] = intent.payment_method
+                payment_intent_params["confirm"] = True
+                payment_intent_params["return_url"] = "https://yourdomain.com/payment/return"  # 実際のドメインに変更してください
+
+            payment_intent = stripe.PaymentIntent.create(**payment_intent_params)
+
+            logger.info(
+                f"PaymentIntent作成成功: ID={payment_intent.id}, 金額={intent.amount}{intent.currency}, status={payment_intent.status}"
+            )
+
+            return PaymentResult(
+                success=True,
+                payment_id=payment_intent.id,
+                client_secret=payment_intent.client_secret,
+            )
         except stripe.error.CardError as e:
             error_message = f"カード決済エラー: {e.error.message}"
             logger.warning(error_message, extra={"error_code": e.error.code})
@@ -118,7 +117,39 @@ class StripePaymentService(PaymentServiceBase):
             )
 
     def confirm_payment(self, payment_id: str) -> PaymentResult:
-        pass
+        try:
+            payment_intent = stripe.PaymentIntent.retrieve(payment_id)
+
+            if payment_intent.status == "succeeded":
+                logger.info(f"PaymentIntent確認成功: ID={payment_id}")
+                return PaymentResult(
+                    success=True,
+                    payment_id=payment_id,
+                )
+            else:
+                error_message = f"決済が完了していません。ステータス: {payment_intent.status}"
+                logger.warning(error_message)
+                return PaymentResult(
+                    success=False,
+                    error_message=error_message,
+                    error_code="payment_incomplete",
+                )
+        except stripe.error.StripeError as e:
+            error_message = f"PaymentIntent確認エラー: {e.error.message}"
+            logger.error(error_message)
+            return PaymentResult(
+                success=False,
+                error_message=error_message,
+                error_code="stripe_error",
+            )
+        except Exception as e:
+            error_message = f"予期しないエラー: {e}"
+            logger.critical(error_message, exc_info=True)
+            return PaymentResult(
+                success=False,
+                error_message="システムエラーが発生しました。",
+                error_code="system_error",
+            )
 
     def refund_payment(
         self, payment_id: str, amount: int | None = None
