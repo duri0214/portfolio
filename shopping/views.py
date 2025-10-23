@@ -212,9 +212,11 @@ class PaymentConfirmView(DetailView):
         """
         コンテキストデータを取得し、Stripe決済に必要な情報を追加します。
 
-        public_key: StripeのAPIパブリックキー。テンプレート内でStripeチェックアウトを
-        初期化する際に必要です。これはStripeの決済フォームをクライアント側で
-        レンダリングするために不可欠です。
+        public_key: StripeのAPIパブリックキー。テンプレート内でStripe Elementsを
+        初期化する際に必要です。
+
+        client_secret: PaymentIntentのクライアントシークレット。フロントエンドで
+        決済を確認するために必要です。
 
         また、商品の価格計算や数量、税金などの決済に必要な情報も
         コンテキストに含めています。
@@ -230,15 +232,33 @@ class PaymentConfirmView(DetailView):
         if payment_info_dict:
             payment_info = PaymentInfo.from_dict(payment_info_dict)
 
-            context.update(
-                {
-                    "quantity": payment_info.quantity,
-                    "subtotal": payment_info.subtotal,
-                    "tax": payment_info.tax_amount,
-                    "total_price": payment_info.total_amount,
-                    "public_key": settings.STRIPE_PUBLIC_KEY,
-                }
+            # PaymentIntentを作成
+            amount_in_int = int(payment_info.total_amount)
+            payment_intent = PaymentIntent(
+                amount=amount_in_int,
+                currency="jpy",
+                description=f"{self.object.name} × {payment_info.quantity}",
             )
+
+            # PaymentIntentを作成してclient_secretを取得
+            payment_result = self.payment_service.create_payment(payment_intent)
+
+            if payment_result.success:
+                context.update(
+                    {
+                        "quantity": payment_info.quantity,
+                        "subtotal": payment_info.subtotal,
+                        "tax": payment_info.tax_amount,
+                        "total_price": payment_info.total_amount,
+                        "public_key": settings.STRIPE_PUBLIC_KEY,
+                        "client_secret": payment_result.client_secret,
+                        "payment_intent_id": payment_result.payment_id,
+                    }
+                )
+                # PaymentIntent IDをセッションに保存
+                self.request.session["payment_intent_id"] = payment_result.payment_id
+            else:
+                context["error"] = f"決済の準備に失敗しました: {payment_result.error_message}"
         else:
             context["error"] = "支払い情報が取得できませんでした。再度お試しください。"
 
@@ -246,20 +266,21 @@ class PaymentConfirmView(DetailView):
 
     def post(self, request, *args, **kwargs):
         """
-        Stripeからの決済完了後のPOSTリクエストを処理します。
+        Payment Intents APIによる決済完了後のPOSTリクエストを処理します。
 
-        このメソッドは、Stripeチェックアウトフォームが送信された後に呼び出され、
-        決済処理を行い、購入履歴を作成して決済完了ページにリダイレクトします。
+        フロントエンドでの3DS認証完了後、PaymentIntentのステータスを確認し、
+        購入履歴を作成して決済完了ページにリダイレクトします。
 
         Returns:
             HttpResponseRedirect: 決済完了ページへのリダイレクト
         """
         self.object = self.get_object()
 
-        # セッションから支払い情報を取得
+        # セッションから支払い情報とPaymentIntent IDを取得
         payment_info_dict = request.session.get("payment_info")
+        payment_intent_id = request.session.get("payment_intent_id")
 
-        if not payment_info_dict:
+        if not payment_info_dict or not payment_intent_id:
             messages.error(
                 request,
                 "支払い情報の取得に失敗しました。商品詳細ページからやり直してください。",
@@ -267,24 +288,16 @@ class PaymentConfirmView(DetailView):
             return HttpResponseRedirect(
                 reverse("shp:product_detail", kwargs={"pk": self.object.pk})
             )
+
         payment_info = PaymentInfo.from_dict(payment_info_dict)
 
         try:
-            # PaymentIntentオブジェクトの作成
-            amount_in_int = int(payment_info.total_amount)
-            payment_intent = PaymentIntent(
-                amount=amount_in_int,  # Stripe APIは整数を受け取る
-                currency="jpy",
-                description=f"{self.object.name} × {payment_info.quantity}",  # 商品名と数量を説明文に付加
-                payment_method=request.POST.get("stripeToken"),  # Stripeトークン
-            )
-
-            # 支払い処理の実行
-            payment_result = self.payment_service.create_payment(payment_intent)
+            # PaymentIntentのステータスを確認
+            payment_result = self.payment_service.confirm_payment(payment_intent_id)
 
             if payment_result.success:
                 logger.info(
-                    f"支払い成功: ID={payment_result.payment_id}, 金額={payment_info.formatted_total_amount}円"
+                    f"支払い成功: ID={payment_intent_id}, 金額={payment_info.formatted_total_amount}円"
                 )
 
                 # 購入履歴の保存
@@ -294,7 +307,7 @@ class PaymentConfirmView(DetailView):
                         product=self.object,
                         quantity=payment_info.quantity,
                         price=payment_info.price,  # 単価を保存
-                        stripe_id=payment_result.payment_id,
+                        stripe_id=payment_intent_id,
                         payment_status=BuyingHistory.COMPLETED,
                     )
                     history.save()
@@ -302,6 +315,8 @@ class PaymentConfirmView(DetailView):
                     # セッション削除
                     if "payment_info" in request.session:
                         del request.session["payment_info"]
+                    if "payment_intent_id" in request.session:
+                        del request.session["payment_intent_id"]
 
                     # 遷移先をshp:payment_completeに変更
                     return HttpResponseRedirect(
