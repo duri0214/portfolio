@@ -24,7 +24,7 @@ class MarketRetrievalService:
         Notes: feedparserはFeedParserDictを返すが辞書のように扱える。
         """
         url = "https://www.viet-kabu.com/rss/latest.rdf"
-        response = requests.get(url, timeout=5)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         parsed = feedparser.parse(response.content)
         entries = []
