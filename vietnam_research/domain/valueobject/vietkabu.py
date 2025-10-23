@@ -28,35 +28,71 @@ class MarketDataRowError(Exception):
 
 
 
+@dataclass(frozen=True)
+class RssEntryVO:
+    """
+    RSSの1件分のエントリを表す値オブジェクト。
+
+    - feedparser のエントリ辞書から必要なキーを安全に抽出する
+    - updated の整形は行わず、そのまま保持（Provider 側でのパースに委ねる）
+    """
+
+    title: str
+    summary: str
+    link: str
+    updated: str | None
+
+    @classmethod
+    def from_feedparser_entry(cls, e):
+        title = e.get("title", "")
+        summary = e.get("summary", e.get("description", ""))
+        link = e.get("link", "")
+        updated = e.get("updated") or e.get("published")
+        return cls(title=title, summary=summary, link=link, updated=updated)
+
+    def to_dict(self) -> dict:
+        return {
+            "title": self.title,
+            "summary": self.summary,
+            "link": self.link,
+            "updated": self.updated,
+        }
+
+
+@dataclass
+class NumericCellVO:
+    """
+    文字列の数値セルを表す値オブジェクト。
+
+    - カンマとパーセント記号を除去
+    - 空文字は 0.0
+    - "-" は None
+    - 上記以外は float 変換
+    """
+
+    raw: str
+
+    def to_float(self) -> float | None:
+        s = (self.raw or "").replace(",", "").replace("%", "").strip()
+        if s == "":
+            return 0.0
+        if s == "-":
+            return None
+        return float(s)
+
+
 @dataclass
 class Counting:
     """
-    計数を表すクラスです
-
-    属性:
-        raw_value (str): 整形前の数値
-        value (float | None): 整形後の数値。
-
-    注意点: tds[7] は前日比で 1.1% のように `%` が混ざり込んでいる。数値として扱うために、("%", "")に置換を行います。
-
-    また `raw_value` が ""（空文字）の場合、`value` は 0.0 とします。
-    `raw_value` が "-" の場合、`value` は None とします。
-    それ以外の場合は、`raw_value`をfloat型に変換して`value`に設定します。
-
-    Notes: tds[7] は前日比で 1.1% のように `%` が混ざり込んでいる。あくまで数字として扱うので置換をかける
+    計数を表すクラスです。実体のパースは NumericCellVO に委譲します。
     """
 
     raw_value: str
     value: float | None = field(init=False)
 
     def __init__(self, raw_value: str):
-        self.raw_value = raw_value.replace(",", "").replace("%", "")
-        if self.raw_value == "":
-            self.value = 0.0
-        elif self.raw_value == "-":
-            self.value = None
-        else:
-            self.value = float(self.raw_value)
+        self.raw_value = raw_value
+        self.value = NumericCellVO(raw_value).to_float()
 
 
 @dataclass
