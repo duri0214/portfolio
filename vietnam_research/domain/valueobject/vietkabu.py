@@ -28,6 +28,36 @@ class MarketDataRowError(Exception):
 
 
 
+@dataclass(frozen=True)
+class RssEntryVO:
+    """
+    RSSの1件分のエントリを表す値オブジェクト。
+
+    - feedparser のエントリ辞書から必要なキーを安全に抽出する
+    - updated の整形は行わず、そのまま保持（Provider 側でのパースに委ねる）
+    """
+
+    title: str
+    summary: str
+    link: str
+    updated: str | None
+
+    @classmethod
+    def from_feedparser_entry(cls, e):
+        title = e.get("title", "")
+        summary = e.get("summary", e.get("description", ""))
+        link = e.get("link", "")
+        updated = e.get("updated") or e.get("published")
+        return cls(title=title, summary=summary, link=link, updated=updated)
+
+    def to_dict(self) -> dict:
+        return {
+            "title": self.title,
+            "summary": self.summary,
+            "link": self.link,
+            "updated": self.updated,
+        }
+
 @dataclass
 class Counting:
     """
