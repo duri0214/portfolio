@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from soil_analysis.models import Land
 
@@ -13,7 +12,7 @@ class PhotoLandAssociation:
 
     photo_path: str
     nearest_land: Land
-    distance: Optional[float] = None
+    distance: float | None = None
 
     def __str__(self) -> str:
         """人間が読みやすい形式で紐づけ情報を返します。"""
