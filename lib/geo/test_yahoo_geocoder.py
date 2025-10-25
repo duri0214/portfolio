@@ -7,7 +7,7 @@ from lib.geo.valueobject.coord import GoogleMapsCoord
 from lib.geo.yahoo_geocoder import ReverseGeocoderService
 
 
-class TestGetYdfFromCoord(TestCase):
+class TestReverseGeocoderService(TestCase):
     """
     ReverseGeocoderService の逆ジオコーディング機能をテストする
 
