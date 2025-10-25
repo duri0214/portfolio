@@ -4,10 +4,10 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from lib.geo.valueobject.coord import GoogleMapsCoord
-from lib.geo.yahoo_geocoder import ReverseGeocoderService
+from lib.geo.yahoo_geocoder import ReverseGeocoderService, ForwardGeocoderService
 
 
-class TestGetYdfFromCoord(TestCase):
+class TestReverseGeocoderService(TestCase):
     """
     ReverseGeocoderService の逆ジオコーディング機能をテストする
 
@@ -135,3 +135,180 @@ class TestGetYdfFromCoord(TestCase):
         assert ydf.feature.detail.name == "赤坂９丁目７"
         assert ydf.feature.detail.kana == "あかさか９ちょうめ７"
         assert ydf.feature.detail.level == "detail"
+
+
+class TestForwardGeocoderService(TestCase):
+    """
+    Yahoo Geocoding API を使って住所から緯度経度を取得するテスト
+    """
+
+    @patch("requests.get")
+    def test_get_coord_from_address(self, mock_get):
+        """
+        【シナリオ】
+        Given: "東京都港区赤坂9-7-1" という住所
+        When: Yahoo Geocoding APIでジオコーディングを実行
+        Then: 緯度35.666前後、経度139.731前後の座標が取得できること
+        """
+        xml_response = """
+        <YDF xmlns="http://olp.yahooapis.jp/ydf/1.0">
+            <ResultInfo>
+                <Count>1</Count>
+                <Total>1</Total>
+                <Start>1</Start>
+                <Status>200</Status>
+                <Description>住所から緯度経度を検索する機能を提供します。</Description>
+                <Latency>0.020</Latency>
+            </ResultInfo>
+            <Feature>
+                <Id>1</Id>
+                <Name>東京都港区赤坂9-7-1</Name>
+                <Geometry>
+                    <Type>point</Type>
+                    <Coordinates>139.731342,35.666049</Coordinates>
+                </Geometry>
+                <Property>
+                    <Address>東京都港区赤坂９丁目７－１</Address>
+                    <AddressElement>
+                        <Name>東京都</Name>
+                        <Kana>とうきょうと</Kana>
+                        <Level>prefecture</Level>
+                        <Code>13</Code>
+                    </AddressElement>
+                    <AddressElement>
+                        <Name>港区</Name>
+                        <Kana>みなとく</Kana>
+                        <Level>city</Level>
+                        <Code>13103</Code>
+                    </AddressElement>
+                </Property>
+            </Feature>
+        </YDF>
+        """
+        mock_response = mock.Mock()
+        mock_response.text = xml_response
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        coord = ForwardGeocoderService.get_coord_from_address("東京都港区赤坂9-7-1")
+
+        self.assertAlmostEqual(coord.latitude, 35.666049, places=3)
+        self.assertAlmostEqual(coord.longitude, 139.731342, places=3)
+
+    @patch("requests.get")
+    def test_get_coord_from_city_level_address(self, mock_get):
+        """
+        【シナリオ】
+        Given: 「東京都港区」という市区町村レベルの住所文字列
+        When: Yahoo Geocoding API でジオコーディングを実行
+        Then: 港区の代表点（行政区の中心付近）の座標が返ること
+
+        【補足】
+        - 「東京都港区」などの地名レベルの入力に対しては、
+          実際の建物や地形の中心ではなく、
+          行政区画の代表座標（港区役所付近など）が返される。
+        - Yahoo Geocoding API の仕様上、この代表座標は
+          地形的な重心ではなく行政的な代表点。
+        """
+        xml_response = """
+        <YDF xmlns="http://olp.yahooapis.jp/ydf/1.0">
+            <ResultInfo>
+                <Count>1</Count>
+                <Total>1</Total>
+                <Start>1</Start>
+                <Status>200</Status>
+                <Description>住所から緯度経度を検索する機能を提供します。</Description>
+                <Latency>0.010</Latency>
+            </ResultInfo>
+            <Feature>
+                <Id>1</Id>
+                <Name>東京都港区</Name>
+                <Geometry>
+                    <Type>point</Type>
+                    <Coordinates>139.751599,35.643956</Coordinates>
+                </Geometry>
+                <Property>
+                    <Address>東京都港区</Address>
+                </Property>
+            </Feature>
+        </YDF>
+        """
+        mock_response = mock.Mock()
+        mock_response.text = xml_response
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        coord = ForwardGeocoderService.get_coord_from_address("東京都港区")
+
+        # 港区の代表点（港区役所付近）の座標に近いことを確認
+        self.assertAlmostEqual(coord.latitude, 35.6439, places=3)
+        self.assertAlmostEqual(coord.longitude, 139.7515, places=3)
+
+    @patch("requests.get")
+    def test_multiple_candidates_uses_first_feature(self, mock_get):
+        """
+        複数候補が返った場合、最初のFeatureを使用する
+        """
+        xml_response = """
+        <YDF xmlns="http://olp.yahooapis.jp/ydf/1.0">
+            <ResultInfo>
+                <Count>10</Count>
+                <Total>2</Total>
+                <Start>1</Start>
+                <Status>200</Status>
+                <Description>住所から緯度経度を検索する機能を提供します。</Description>
+                <Latency>0.012</Latency>
+            </ResultInfo>
+            <Feature>
+                <Id>1</Id>
+                <Name>候補1</Name>
+                <Geometry>
+                    <Type>point</Type>
+                    <Coordinates>139.7000,35.6000</Coordinates>
+                </Geometry>
+            </Feature>
+            <Feature>
+                <Id>2</Id>
+                <Name>候補2</Name>
+                <Geometry>
+                    <Type>point</Type>
+                    <Coordinates>140.0000,36.0000</Coordinates>
+                </Geometry>
+            </Feature>
+        </YDF>
+        """
+        mock_response = mock.Mock()
+        mock_response.text = xml_response
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        coord = ForwardGeocoderService.get_coord_from_address("曖昧な住所")
+
+        self.assertAlmostEqual(coord.latitude, 35.6000, places=4)
+        self.assertAlmostEqual(coord.longitude, 139.7000, places=4)
+
+    @patch("requests.get")
+    def test_no_results_raises_value_error(self, mock_get):
+        """
+        Total=0 の場合は ValueError("No results found") を送出する
+        """
+        xml_response = """
+        <YDF xmlns="http://olp.yahooapis.jp/ydf/1.0">
+            <ResultInfo>
+                <Count>0</Count>
+                <Total>0</Total>
+                <Start>1</Start>
+                <Status>200</Status>
+                <Description>住所から緯度経度を検索する機能を提供します。</Description>
+                <Latency>0.005</Latency>
+            </ResultInfo>
+        </YDF>
+        """
+        mock_response = mock.Mock()
+        mock_response.text = xml_response
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        with self.assertRaises(ValueError) as ctx:
+            ForwardGeocoderService.get_coord_from_address("存在しない住所")
+        self.assertEqual(str(ctx.exception), "No results found")

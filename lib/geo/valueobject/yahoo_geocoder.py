@@ -43,6 +43,7 @@ class YDF:
             geometry (Feature.Geometry): The geometry of the feature
             country (Feature.Country): The country where the feature is located
             address_full (str): The full address of the feature
+            name (Optional[str]): The display name of the feature (e.g., place or area name)
             prefecture (Optional[Feature.Prefecture]): The prefecture of the feature, if available
             city (Optional[Feature.City]): The city of the feature, if available
             detail (Optional[Feature.Detail]): The detail of the feature, if available
@@ -51,6 +52,7 @@ class YDF:
             geometry (Feature.Geometry): The geometry of the feature
             country (Feature.Country): The country where the feature is located
             address_full (str): The full address of the feature
+            name (Optional[str]): The display name of the feature
             prefecture (Optional[Feature.Prefecture]): The prefecture of the feature, if available
             city (Optional[Feature.City]): The city of the feature, if available
             detail (Optional[Feature.Detail]): The detail of the feature, if available
@@ -63,14 +65,22 @@ class YDF:
             Args:
                 type (str): The type of the geometric shape
                 coordinates (str): The coordinates of the shape
+                bounding_box (Optional[Geometry.BoundingBox]): Optional bounding box
 
             Attributes:
                 type (str): The type of the geometric shape
                 coordinates (str): The coordinates of the shape
+                bounding_box (Optional[Geometry.BoundingBox]): Optional bounding box
             """
+
+            @dataclass
+            class BoundingBox:
+                south_west: str
+                north_east: str
 
             type: str
             coordinates: str
+            bounding_box: BoundingBox | None = None
 
         @dataclass
         class Country:
@@ -98,35 +108,36 @@ class YDF:
             name: str
             kana: str
             level: str
-            code: str = None
+            code: str | None = None
 
         @dataclass
         class Prefecture(AddressElement):
             """a prefecture"""
 
-            def __init__(self, name: str, kana: str, code: str = None):
+            def __init__(self, name: str, kana: str, code: str | None = None):
                 super().__init__(name=name, kana=kana, level="prefecture", code=code)
 
         @dataclass
         class City(AddressElement):
             """a city"""
 
-            def __init__(self, name: str, kana: str, code: str = None):
+            def __init__(self, name: str, kana: str, code: str | None = None):
                 super().__init__(name=name, kana=kana, level="city", code=code)
 
         @dataclass
         class Detail(AddressElement):
             """address detail"""
 
-            def __init__(self, name: str, kana: str, code: str = None):
+            def __init__(self, name: str, kana: str, code: str | None = None):
                 super().__init__(name=name, kana=kana, level="detail", code=code)
 
         geometry: Geometry
         country: Country
-        address_full: str
-        prefecture: Prefecture
-        city: City
-        detail: Detail
+        address_full: str | None = None
+        name: str | None = None
+        prefecture: Prefecture | None = None
+        city: City | None = None
+        detail: Detail | None = None
 
     result_info: ResultInfo
     feature: Feature
