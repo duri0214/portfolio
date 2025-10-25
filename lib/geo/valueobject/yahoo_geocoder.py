@@ -63,14 +63,22 @@ class YDF:
             Args:
                 type (str): The type of the geometric shape
                 coordinates (str): The coordinates of the shape
+                bounding_box (Optional[Geometry.BoundingBox]): Optional bounding box
 
             Attributes:
                 type (str): The type of the geometric shape
                 coordinates (str): The coordinates of the shape
+                bounding_box (Optional[Geometry.BoundingBox]): Optional bounding box
             """
+
+            @dataclass
+            class BoundingBox:
+                south_west: str
+                north_east: str
 
             type: str
             coordinates: str
+            bounding_box: BoundingBox | None = None
 
         @dataclass
         class Country:
