@@ -7,6 +7,22 @@ from lib.geo.valueobject.coord import GoogleMapsCoord
 from lib.geo.valueobject.yahoo_geocoder import YDF
 
 
+def _parse_xml_and_result_info(xml_str: str) -> tuple:
+    ns = {"ns": "http://olp.yahooapis.jp/ydf/1.0"}
+    tree = et.ElementTree(et.fromstring(xml_str))
+    root = tree.getroot()
+    result_info_element = root.find("ns:ResultInfo", ns)
+    result_info = YDF.ResultInfo(
+        count=int(result_info_element.find("ns:Count", ns).text),
+        total=int(result_info_element.find("ns:Total", ns).text),
+        start=int(result_info_element.find("ns:Start", ns).text),
+        latency=float(result_info_element.find("ns:Latency", ns).text),
+        status=int(result_info_element.find("ns:Status", ns).text),
+        description=result_info_element.find("ns:Description", ns).text,
+    )
+    return root, ns, result_info
+
+
 class ReverseGeocoderService:
     @staticmethod
     def get_ydf_from_coord(coord: GoogleMapsCoord) -> YDF:
@@ -46,21 +62,7 @@ class ReverseGeocoderService:
         Returns:
             A YDF object containing the converted data.
         """
-        ns = {"ns": "http://olp.yahooapis.jp/ydf/1.0"}
-
-        tree = et.ElementTree(et.fromstring(xml_str))
-        root = tree.getroot()
-
-        result_info_element = root.find("ns:ResultInfo", ns)
-
-        result_info = YDF.ResultInfo(
-            count=int(result_info_element.find("ns:Count", ns).text),
-            total=int(result_info_element.find("ns:Total", ns).text),
-            start=int(result_info_element.find("ns:Start", ns).text),
-            latency=float(result_info_element.find("ns:Latency", ns).text),
-            status=int(result_info_element.find("ns:Status", ns).text),
-            description=result_info_element.find("ns:Description", ns).text,
-        )
+        root, ns, result_info = _parse_xml_and_result_info(xml_str)
 
         feature_element = root.find("ns:Feature", ns)
 
