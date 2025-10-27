@@ -14,7 +14,6 @@ class ZipFileService:
 
     提供機能:
     - アップロードされた ZIP の保存と安全な解凍（Zip Slip 対策）
-    - 日本語ファイル名の復元（UTF-8 フラグ優先、非 UTF-8 は CP932 優先で復号）
     - 任意フォルダを ZIP 化してダウンロードレスポンスを生成
 
     注意事項:
@@ -31,8 +30,7 @@ class ZipFileService:
         主なポイント:
         - 解凍先を作成: MEDIA_ROOT/{app_name}
         - ZIP を一旦 `uploaded.zip` として保存（ストリームチャンクで書き込み）
-        - `_safe_extract` により、エントリ名のデコード/サニタイズ/Zip Slip 対策を行って展開
-        - 日本語ファイル名は `_decode_zip_member_name` で UTF-8 フラグを優先、非 UTF-8 は CP932 優先で復元
+        - `_safe_extract` により、エントリ名のサニタイズ/Zip Slip 対策を行って展開
 
         Args:
             file: Django の `UploadedFile`。通常は `InMemoryUploadedFile` や `TemporaryUploadedFile`。
@@ -81,7 +79,7 @@ class ZipFileService:
             OSError: 展開時のファイル I/O エラーなど。
 
         Notes:
-            - 各エントリの展開は `_safe_extract` を使用し、Zip Slip 対策とファイル名の復元（日本語含む）を行います。
+            - 各エントリの展開は `_safe_extract` を使用し、Zip Slip 対策とサニタイズを行います。
             - グロブは `*.zip` のみを対象とします（再帰検索は行いません）。
         """
         source_dir_path = Path(source_dir)
@@ -136,39 +134,6 @@ class ZipFileService:
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         return response
-
-    @staticmethod
-    def _decode_zip_member_name(info: zipfile.ZipInfo) -> str:
-        """
-        Zip エントリ名（ファイル/ディレクトリ名）をできるだけ正確に復元する。
-
-        処理方針:
-        - ZIP の「一般目的ビット 11 (0x800)」（UTF-8 フラグ）が立っている場合は、`zipfile` が提供する
-          `info.filename` をそのまま信頼して返します（UTF-8 として正しい想定）。
-        - それ以外の場合は、歴史的に日本の Windows 環境で多い CP932 相当を優先して復号（CP437→CP932）。
-        - CP932 で復号に失敗した場合は、CP437→UTF-8(置換) で読める範囲だけ復元します。
-        - それでもうまくいかない場合の最後のフォールバックは `info.filename` をそのまま返します。
-
-        制限:
-        - エンコーディング情報が ZIP に保存されていない古いアーカイブの場合、完全に元のバイト列を再現
-          できないケースがあります（置換文字を含むなど）。
-        """
-        name = info.filename
-        # UTF-8 flag (bit 11) が立っている場合
-        if getattr(info, "flag_bits", 0) & 0x800:
-            return name
-        # CP437 → CP932（日本語 Windows 作成 Zip 対応）
-        try:
-            return name.encode("cp437").decode("cp932")
-        except UnicodeError:
-            pass
-        # CP437 → UTF-8（置換）
-        try:
-            return name.encode("cp437").decode("utf-8", errors="replace")
-        except UnicodeError:
-            pass
-        # 最後のフォールバック
-        return name
 
     @staticmethod
     def _sanitize_member_name(name: str) -> str:
@@ -226,24 +191,20 @@ class ZipFileService:
     @staticmethod
     def _safe_extract(z: zipfile.ZipFile, upload_folder: Path) -> None:
         """
-        エントリ名のデコード/サニタイズ/安全検証を行いながら、Zip を安全に手動抽出する。
+        エントリ名のサニタイズ/安全検証を行いながら、Zip を安全に手動抽出する。
 
         流れ:
         1) `z.infolist()` を走査
-        2) `_decode_zip_member_name` でエントリ名を復元（UTF-8 フラグ→CP932→UTF-8(置換)）
-        3) `_sanitize_member_name` で正規化・危険文字除去
-        4) ディレクトリかファイルかで分岐
-        5) `_is_safe_path` で Zip Slip を検出したらスキップ
-        6) 問題なければディレクトリ作成後、ファイルを書き出し
+        2) `info.filename` を取得し `_sanitize_member_name` で正規化・危険文字除去
+        3) ディレクトリかファイルかで分岐
+        4) `_is_safe_path` で Zip Slip を検出したらスキップ
+        5) 問題なければディレクトリ作成後、ファイルを書き出し
 
-        日本語ファイル名:
-        - UTF-8 フラグ付きのものはそのまま展開されます。
-        - フラグなしで CP932 由来と推定される場合でも、できる限りの復元を試みます。
-        - 復元不能な場合は置換文字を含む名前になる場合があります。
+        備考:
+        - ファイル名のデコードは Python 標準の `zipfile` 実装の挙動に従います（UTF-8 フラグ等）。
         """
         for info in z.infolist():
-            name = ZipFileService._decode_zip_member_name(info)
-            name = ZipFileService._sanitize_member_name(name)
+            name = ZipFileService._sanitize_member_name(info.filename)
 
             # ディレクトリエントリの扱い
             if name.endswith("/"):
@@ -262,23 +223,3 @@ class ZipFileService:
             with z.open(info) as src, open(dest_path, "wb") as out:
                 out.write(src.read())
 
-    @staticmethod
-    def _convert_to_cp932(folder_name: str) -> str:
-        """
-        互換ユーティリティ: CP437 ベースの文字列を CP932 として復元を試みる。
-
-        用途:
-        - 古い ZIP 等で、ファイル名が CP437 ベースで記録されている場合の暫定変換に使用できます。
-        - 現行の実装では `_decode_zip_member_name` に包括されているため、通常はそちらを利用してください。
-
-        Returns:
-            str: 復元できた場合は CP932 としてデコードした文字列。失敗時は入力をそのまま返します。
-
-        See Also:
-            https://qiita.com/tohka383/items/b72970b295cbc4baf5ab
-        """
-        try:
-            return folder_name.encode("cp437").decode("cp932")
-        except (UnicodeEncodeError, UnicodeDecodeError):
-            # エンコーディング変換に失敗した場合は元の文字列を返す
-            return folder_name

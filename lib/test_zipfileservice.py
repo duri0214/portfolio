@@ -18,7 +18,7 @@ class ZipFileServiceTestCase(TestCase):
     - ZIP“自体”のファイル名が日本語（例: 日本語.zip）でも処理できることを確認
     - ZIP 内の日本語ファイル名（UTF-8 フラグ付き）が正しく展開されることを確認
     補足:
-    - 現状、CP932 前提の古い ZIP はユニットテストでは網羅していません（復号はサービス側のフォールバックで対応）。
+    - 現状、CP932 前提の古い ZIP はユニットテストでは網羅していません（実装は標準 zipfile の挙動に委ねます）。
     """
     @staticmethod
     def create_temp_zip_file(dir_path: Path, filename: str, filedata: bytes) -> Path:
