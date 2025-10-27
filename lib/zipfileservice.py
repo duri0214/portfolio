@@ -219,7 +219,9 @@ class ZipFileService:
             candidate = (base / target.name) if not target.is_absolute() else target
             target_resolved = candidate.absolute()
         # 先頭一致よりも意図が明確な commonpath でベース配下を確認する
-        return os.path.commonpath([str(base_resolved), str(target_resolved)]) == str(base_resolved)
+        return os.path.commonpath([str(base_resolved), str(target_resolved)]) == str(
+            base_resolved
+        )
 
     @staticmethod
     def _safe_extract(z: zipfile.ZipFile, upload_folder: Path) -> None:
