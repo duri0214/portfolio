@@ -143,6 +143,7 @@ python manage.py clearsessions
 vi /var/log/apache2/error.log
 sudo -s
 chown -R ubuntu:www-data /var/www/html
+chown -R www-data:www-data /var/www/html/portfolio/media
 systemctl restart apache2
 ```
 
