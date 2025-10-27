@@ -211,10 +211,15 @@ class ZipFileService:
                 if not target.is_absolute()
                 else target.resolve(strict=False)
             )
-        except (OSError, RuntimeError):
-            base_resolved = base.resolve()
-            target_resolved = (base / target.name).resolve()
-        return str(target_resolved).startswith(str(base_resolved))
+        except (OSError, RuntimeError, UnicodeError):
+            # 一部の環境（POSIX でファイルシステムエンコーディングが ASCII 等）では、
+            # 非 ASCII を含むパスで resolve()/realpath 相当が UnicodeEncodeError を起こす場合がある。
+            # その場合はファイルシステムへ問い合わせずに absolute() ベースで判定する。
+            base_resolved = base.absolute()
+            candidate = (base / target.name) if not target.is_absolute() else target
+            target_resolved = candidate.absolute()
+        # 先頭一致よりも意図が明確な commonpath でベース配下を確認する
+        return os.path.commonpath([str(base_resolved), str(target_resolved)]) == str(base_resolved)
 
     @staticmethod
     def _safe_extract(z: zipfile.ZipFile, upload_folder: Path) -> None:
