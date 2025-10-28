@@ -132,14 +132,39 @@
 
     <div class="container">
         <div id="vietkabu-topics" class="mt-5">
-            <h2 class="display-4">VIET-KABU TOPICS</h2>
-            更新日時: {{ rss.updated }}
+            <h2 class="display-4 mb-3">VIET-KABU TOPICS</h2>
+            <p class="text-muted small mb-3">更新日時: <span class="fw-semibold">{{ rss.updated }}</span></p>
             {% if rss.entries %}
-                <ul>
+                <div class="row g-3">
                     {% for entry in rss.entries %}
-                        <li><a href="{{ entry.link }}" target="_blank">{{ entry.title }}</a></li>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-2">
+                                        <a href="{{ entry.link }}" target="_blank" rel="noopener" class="stretched-link text-decoration-none">
+                                            {{ entry.title }}
+                                        </a>
+                                    </h6>
+                                    {% if entry.summary %}
+                                        <p class="card-text text-muted small">{{ entry.summary|striptags|truncatechars:110 }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        {% if entry.published %}
+                                            公開: {{ entry.published }}
+                                        {% elif entry.updated %}
+                                            更新: {{ entry.updated }}
+                                        {% else %}
+                                            外部リンク
+                                        {% endif %}
+                                    </small>
+                                    <a href="{{ entry.link }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">読む</a>
+                                </div>
+                            </div>
+                        </div>
                     {% endfor %}
-                </ul>
+                </div>
             {% else %}
                 <p class="text-muted">現在トピックスを取得できません。</p>
             {% endif %}
