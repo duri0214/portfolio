@@ -9,7 +9,7 @@ from PIL import Image
 from django.core.management.base import BaseCommand
 from matplotlib import pyplot as plt
 
-from config.settings import BASE_DIR
+from config.settings import MEDIA_ROOT
 from lib.log_service import LogService
 from vietnam_research.domain.repository.vietkabu import IndustryRepository
 from vietnam_research.domain.valueobject.vietkabu import IndustryGraphVO
@@ -66,13 +66,10 @@ class Command(BaseCommand):
 
         matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
         plt.rcParams["font.family"] = ["IPAexGothic"]
-        # make a folder if not exists and delete old files and delete table data
-        out_folder = (
-            BASE_DIR.resolve() / "vietnam_research/static/vietnam_research/chart"
-        )
-        if not os.path.exists(out_folder):
-            os.makedirs(out_folder)
-        for filepath in glob(str(Path(out_folder) / "*.png")):
+        # フォルダ作成 - MEDIAディレクトリを掃除
+        out_folder = Path(MEDIA_ROOT) / "vietnam_research" / "charts"
+        out_folder.mkdir(parents=True, exist_ok=True)
+        for filepath in glob(str(out_folder / "*.png")):
             log_service.write(f"Removing file: {filepath}")
             os.remove(filepath)
         Uptrend.objects.all().delete()
@@ -153,11 +150,20 @@ class Command(BaseCommand):
                 except Symbol.DoesNotExist:
                     logging.critical(formatted_text(ticker, slopes, passed, price))
 
-                # save png as w640, h480
-                out_path = str(Path(out_folder) / f"{ticker}.png")
-                plt.savefig(out_path)
-                # resize png as w250, h200
-                Image.open(out_path).resize((250, 200), Image.LANCZOS).save(out_path)
+                # png save - MEDIAディレクトリに保存 w640, h480
+                out_path = Path(out_folder) / f"{ticker}.png"
+                try:
+                    plt.savefig(out_path)
+                    # resize png as w250, h200
+                    Image.open(out_path).resize((250, 200), Image.LANCZOS).save(
+                        out_path
+                    )
+                except Exception as e:
+                    plt.close()
+                    if out_path.exists():
+                        out_path.unlink()
+                    self.stdout.write(self.style.ERROR(f"Failed to save {ticker}: {e}"))
+                    raise
 
                 # Log detailed info to a file only (for charts generated)
                 spaces = "  "
