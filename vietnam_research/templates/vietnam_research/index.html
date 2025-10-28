@@ -117,7 +117,9 @@
                 <tr>
                     {% for column, value in row.items %}
                         {% if value == "Viet Nam" %}
-                            <td class="text-red-bold">{{ value }}</td>
+                            <td class="fw-bold text-danger">{{ value }}</td>
+                        {% elif value == "Japan" %}
+                            <td class="fw-bold text-primary">{{ value }}</td>
                         {% else %}
                             <td>{{ value }}</td>
                         {% endif %}
