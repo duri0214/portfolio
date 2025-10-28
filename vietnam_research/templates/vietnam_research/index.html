@@ -248,51 +248,119 @@
         </script>
 
         <div id="exchange" class="mt-5">
-            <h2>ドンから日本円へ</h2>
-            ドンを200で割ると、ざっくり日本円になります。1,000don -> 5円<br>
-            <a href="https://search.sbisec.co.jp/v2/popwin/info/stock/foreign_exp.pdf">外国株式取引に関する説明書</a>
-            <table>
-                <tbody>
-                <tr>
-                    <th>取引単位</th>
-                    <td>ホーチミン証券取引所（HOSE）：10 株単位<br>
-                        ハノイ証券取引所（HNX）:100 株単位<br>
-                    </td>
-                </tr>
-                <tr>
-                    <th>決済方法</th>
-                    <td>ベトナムドンによる｢外貨決済｣のみ ※前金制</td>
-                </tr>
-                <tr>
-                    <th>最低手数料</th>
-                    <td>約定代金の2%（税込2.2％）<br><a
-                            href="https://site3.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_DataStoreID=DSWPLETmgR001Control&burl=search_foreign&cat1=foreign&cat2=vn&dir=vn%2F&file=foreign_vn_01.html&getFlg=on#:~:text=%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3%83%88%E3%81%8A%E3%82%88%E3%81%B3%E3%81%8A%E9%9B%BB%E8%A9%B1%E3%81%8B%E3%82%89%E3%81%94%E6%B3%A8%E6%96%87%E5%8F%AF%E8%83%BD%EF%BC%81&text=%E2%80%BB%E5%A3%B2%E5%8D%B4%E4%BB%A3%E9%87%91%E3%81%8C%E6%9C%80%E4%BD%8E,%E3%81%A6%E6%89%8B%E6%95%B0%E6%96%99%E3%81%8C%E6%B1%BA%E3%81%BE%E3%82%8A%E3%81%BE%E3%81%99%E3%80%82"
-                            target="_blank">最低手数料：1,200,000ベトナムドン（税込1,320,000ベトナムドン）</a></td>
-                </tr>
-                </tbody>
-            </table>
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-row">
-                    <div class="form-group">
-                        {{ exchange_form.budget.label_tag }}
-                        {{ exchange_form.budget }}
-                    </div>
-                    <div class="form-group col-md-6">
-                        {{ exchange_form.unit_price.label_tag }}
-                        {{ exchange_form.unit_price }}
+            <h2 class="mb-4">為替・購入計算ツール</h2>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">取引情報</h5>
+                    <p class="text-muted mb-3">
+                        <small>目安：1,000 VND ≈ 5円</small>
+                        <a href="https://search.sbisec.co.jp/v2/popwin/info/stock/foreign_exp.pdf" class="ms-2" target="_blank">取引説明書 →</a>
+                    </p>
+
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th style="width: 30%;">取引単位</th>
+                                <td>HOSE：10株単位 / HNX：100株単位</td>
+                            </tr>
+                            <tr>
+                                <th>決済方法</th>
+                                <td>外貨決済（前金制）</td>
+                            </tr>
+                            <tr>
+                                <th>手数料</th>
+                                <td>
+                                    約定代金の2.2%（税込）
+                                    <a href="https://site3.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_DataStoreID=DSWPLETmgR001Control&burl=search_foreign&cat1=foreign&cat2=vn&dir=vn%2F&file=foreign_vn_01.html&getFlg=on#:~:text=%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3%83%88%E3%81%8A%E3%82%88%E3%81%B3%E3%81%8A%E9%9B%BB%E8%A9%B1%E3%81%8B%E3%82%89%E3%81%94%E6%B3%A8%E6%96%87%E5%8F%AF%E8%83%BD%EF%BC%81&text=%E2%80%BB%E5%A3%B2%E5%8D%B4%E4%BB%A3%E9%87%91%E3%81%8C%E6%9C%80%E4%BD%8E,%E3%81%A6%E6%89%8B%E6%95%B0%E6%96%99%E3%81%8C%E6%B1%BA%E3%81%BE%E3%82%8A%E3%81%BE%E3%81%99%E3%80%82" target="_blank" class="ms-2">
+                                        <small>最低手数料詳細 →</small>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">購入シミュレーション</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label small">{{ exchange_form.budget.label }}</label>
+                                {{ exchange_form.budget }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">{{ exchange_form.unit_price.label }}</label>
+                                {{ exchange_form.unit_price }}
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary w-100">計算する</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if exchanged.budget_jpy %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">計算結果</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row mb-2">
+                                <dt class="col-sm-5">予算</dt>
+                                <dd class="col-sm-7 text-end">
+                                    <span>{{ exchanged.budget_jpy | floatformat:2 | intcomma }}</span>
+                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">円</span>
+                                </dd>
+
+                                <dt class="col-sm-5">予算（VND）</dt>
+                                <dd class="col-sm-7 text-end">
+                                    <span>{{ exchanged.budget_in_target_currency | floatformat:2 | intcomma }}</span>
+                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">VND</span>
+                                </dd>
+
+                                <dt class="col-sm-5">レート</dt>
+                                <dd class="col-sm-7 text-end">
+                                    <span>{{ exchanged.rate | floatformat:2 }}</span>
+                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">JPY/VND</span>
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row mb-2">
+                                <dt class="col-sm-5">単価</dt>
+                                <dd class="col-sm-7 text-end">
+                                    <span>@{{ exchanged.unit_price | floatformat:2 | intcomma }}</span>
+                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">VND</span>
+                                </dd>
+
+                                <dt class="col-sm-5 text-primary">購入可能口数</dt>
+                                <dd class="col-sm-7 text-end text-primary fw-bold">
+                                    <span>{{ exchanged.purchasable_units | floatformat:2 | intcomma }}</span>
+                                    <span class="ms-1 d-inline-block" style="width: 70px; text-align: left;">口</span>
+                                </dd>
+
+                                <dt class="col-sm-5">手数料</dt>
+                                <dd class="col-sm-7 text-end">
+                                    <span>{{ exchanged.fee | floatformat:2 | intcomma }}</span>
+                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">VND</span>
+                                </dd>
+
+                                <dt class="col-sm-5 fw-bold">合計金額</dt>
+                                <dd class="col-sm-7 text-end fw-bold">
+                                    <span>{{ exchanged.price_in_fee | floatformat:2 | intcomma }}</span>
+                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">VND</span>
+                                </dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
-
-                <button type="submit" class="btn btn-primary">計算</button>
-            </form>
-            予算: {{ exchanged.budget_jpy | intcomma }}円（{{ exchanged.budget_in_target_currency | intcomma }}VND）<br>
-            レート: {{ exchanged.rate }} JPY/VND<br>
-            単価: @{{ exchanged.unit_price | intcomma }}VND<br>
-            購入可能口数: {{ exchanged.purchasable_units }}口<br>
-            金額（手数料なし）: {{ exchanged.price_no_fee | intcomma }}VND<br>
-            手数料: {{ exchanged.fee | intcomma }}VND<br>
-            金額（手数料あり）: {{ exchanged.price_in_fee | intcomma }} VND
+            </div>
+            {% endif %}
         </div>
 
         <div id="watchlist" class="mt-5">
