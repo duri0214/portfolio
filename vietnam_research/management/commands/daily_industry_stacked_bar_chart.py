@@ -9,7 +9,7 @@ from django.db.models import Sum, F, Min, Value, CharField
 from django.db.models.functions import Concat, ExtractYear, ExtractMonth
 from matplotlib import pyplot as plt
 
-from config.settings import BASE_DIR
+from config.settings import MEDIA_ROOT
 from lib.log_service import LogService
 from vietnam_research.models import Industry
 
@@ -65,7 +65,7 @@ class Command(BaseCommand):
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
 
-        matplotlib.use('Agg')  # GUIを使わないバックエンドを指定
+        matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
         plt.rcParams["font.family"] = get_font()
         df = get_data()
         n_rows, n_cols = df.shape
@@ -118,17 +118,21 @@ class Command(BaseCommand):
                 prop={"family": get_font()},
             )
 
-        # png save
+        # png save - MEDIAディレクトリに保存
         file_name = "daily_industry_stacked_bar_chart.png"
-        out_path = (
-            BASE_DIR.resolve()
-            / "vietnam_research/static/vietnam_research/chart"
-            / file_name
-        )
-        if not os.path.exists(out_path.parent):
-            os.makedirs(out_path.parent)
-        plt.savefig(out_path)
+        media_path = Path(MEDIA_ROOT) / "vietnam_research" / "charts" / file_name
 
+        # ディレクトリ作成
+        media_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # 保存
+        plt.savefig(media_path)
+        plt.close()
+
+        # 成功メッセージ
+        self.stdout.write(self.style.SUCCESS(f"Chart saved to: {media_path}"))
+
+        # ログに記録
         caller_file_name = Path(__file__).stem
         log_service = LogService("./result.log")
-        log_service.write(f"{caller_file_name} is done.")
+        log_service.write(f"{caller_file_name} is done. Saved to: {media_path}")
