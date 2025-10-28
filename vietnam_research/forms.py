@@ -21,7 +21,7 @@ class ExchangeForm(forms.Form):
     )
 
     unit_price = forms.FloatField(
-        label="単価",
+        label="単価（VND）",
         required=True,
         widget=forms.NumberInput(attrs={"tabindex": "2", "step": "0.01"}),
     )
