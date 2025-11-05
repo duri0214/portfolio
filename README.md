@@ -105,6 +105,8 @@ python manage.py loaddata .\taxonomy\fixtures\breed.json
 python manage.py loaddata .\taxonomy\fixtures\breedTags.json
 python manage.py loaddata .\taxonomy\fixtures\feedGroup.json
 python manage.py loaddata .\taxonomy\fixtures\henGroup.json
+# ここで taxonomy の master data バッチをまわす
+python manage.py loaddata .\taxonomy\fixtures\jma_weather_code.json
 python manage.py loaddata .\taxonomy\fixtures\eggLedger.json
 python manage.py loaddata .\hospital\fixtures\user.json
 python manage.py loaddata .\hospital\fixtures\ward.json
@@ -220,6 +222,10 @@ python manage.py monthly_cleanup_linebot_engine
 - [仕様書](docs/taxonomy/specification.md)
 - 興味のある動物の分類を関係図に表示
 - タグ付けをして分析のサポートができる
+
+### master data
+
+- `python manage.py weather_generate_code_fixture` のバッチをまわす（fixtureが変更されたときのみ実行）
 
 ## soil analysis
 

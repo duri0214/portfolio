@@ -1,6 +1,26 @@
 from django.db import models
 
-from soil_analysis.models import JmaWeatherCode
+
+class JmaWeatherCode(models.Model):
+    """
+    天気コードマスタ（taxonomy にローカライズ）
+
+    Attributes:
+        code (CharField): "123"
+        summary_code (CharField): "100"
+        image (CharField): "100.svg"
+        name (CharField): "晴"
+        name_en (CharField): "CLEAR, FREQUENT SNOW FLURRIES LATER"
+    """
+
+    code = models.CharField(unique=True, max_length=3)
+    summary_code = models.CharField(max_length=3)
+    image = models.CharField(max_length=7)
+    name = models.CharField(max_length=20)
+    name_en = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = "taxonomy_m_jma_weather_code"
 
 
 class Kingdom(models.Model):
