@@ -19,9 +19,6 @@ class JmaWeatherCode(models.Model):
     name = models.CharField(max_length=20)
     name_en = models.CharField(max_length=100)
 
-    class Meta:
-        db_table = "taxonomy_m_jma_weather_code"
-
 
 class Kingdom(models.Model):
     """
@@ -32,8 +29,8 @@ class Kingdom(models.Model):
     name_en = models.CharField(max_length=255)
     remark = models.CharField(max_length=255, null=True)
 
-    class Meta:
-        db_table = "taxonomy_m_kingdom"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class Phylum(models.Model):
@@ -46,8 +43,8 @@ class Phylum(models.Model):
     remark = models.CharField(max_length=255, null=True)
     kingdom = models.ForeignKey(Kingdom, on_delete=models.CASCADE)
 
-    class Meta:
-        db_table = "taxonomy_m_phylum"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class Classification(models.Model):
@@ -60,8 +57,8 @@ class Classification(models.Model):
     remark = models.CharField(max_length=255, null=True)
     phylum = models.ForeignKey(Phylum, on_delete=models.CASCADE)
 
-    class Meta:
-        db_table = "taxonomy_m_classification"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class Family(models.Model):
@@ -74,8 +71,8 @@ class Family(models.Model):
     remark = models.CharField(max_length=255, null=True)
     classification = models.ForeignKey(Classification, on_delete=models.CASCADE)
 
-    class Meta:
-        db_table = "taxonomy_m_family"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class Genus(models.Model):
@@ -88,8 +85,8 @@ class Genus(models.Model):
     remark = models.CharField(max_length=255, null=True)
     family = models.ForeignKey(Family, on_delete=models.CASCADE)
 
-    class Meta:
-        db_table = "taxonomy_m_genus"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class Species(models.Model):
@@ -102,8 +99,8 @@ class Species(models.Model):
     remark = models.CharField(max_length=255, null=True)
     genus = models.ForeignKey(Genus, on_delete=models.CASCADE)
 
-    class Meta:
-        db_table = "taxonomy_m_species"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class NaturalMonument(models.Model):
@@ -114,8 +111,8 @@ class NaturalMonument(models.Model):
     name = models.CharField(max_length=255)
     remark = models.CharField(max_length=255, null=True)
 
-    class Meta:
-        db_table = "taxonomy_m_natural_monument"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class Tag(models.Model):
@@ -126,8 +123,8 @@ class Tag(models.Model):
     name = models.CharField(max_length=20)
     remark = models.CharField(max_length=255, null=True)
 
-    class Meta:
-        db_table = "taxonomy_m_tag"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class Breed(models.Model):

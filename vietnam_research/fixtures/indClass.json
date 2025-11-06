@@ -4,7 +4,8 @@
     "fields": {
       "industry1": "農林水産業",
       "industry2": "天然ゴム",
-      "industry_class": 1
+      "industry_class": 1,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -12,7 +13,8 @@
     "fields": {
       "industry1": "農林水産業",
       "industry2": "水産業",
-      "industry_class": 1
+      "industry_class": 1,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -20,7 +22,8 @@
     "fields": {
       "industry1": "農林水産業",
       "industry2": "農林業",
-      "industry_class": 1
+      "industry_class": 1,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -28,7 +31,8 @@
     "fields": {
       "industry1": "建設業",
       "industry2": "インフラ建設",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -36,7 +40,8 @@
     "fields": {
       "industry1": "建設業",
       "industry2": "その他建設",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -44,7 +49,8 @@
     "fields": {
       "industry1": "建設業",
       "industry2": "各種建築物建設",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -52,7 +58,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "プラスチック製品",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -60,7 +67,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "セメント・コンクリート",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -68,7 +76,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "繊維・縫製製品",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -76,7 +85,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "食品・飲料",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -84,7 +94,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "肥料",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -92,7 +103,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "ゴム製品",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -100,7 +112,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "その他建設資材",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -108,7 +121,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "電気・電子・通信機器",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -116,7 +130,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "タバコ",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -124,7 +139,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "化学",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -132,7 +148,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "タイル・煉瓦・瓦",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -140,7 +157,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "医薬品",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -148,7 +166,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "パルプ・紙",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -156,7 +175,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "木材加工",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -164,7 +184,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "鉄鋼",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -172,7 +193,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "機械",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -180,7 +202,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "包装",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -188,7 +211,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "その他製品",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -196,7 +220,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "金属製品",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -204,7 +229,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "輸送機械",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -212,7 +238,8 @@
     "fields": {
       "industry1": "製造業",
       "industry2": "石油・石炭製品",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -220,7 +247,8 @@
     "fields": {
       "industry1": "鉱業",
       "industry2": "その他鉱業",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -228,7 +256,8 @@
     "fields": {
       "industry1": "鉱業",
       "industry2": "石炭",
-      "industry_class": 2
+      "industry_class": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -236,7 +265,8 @@
     "fields": {
       "industry1": "サービス業",
       "industry2": "その他サービス",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -244,7 +274,8 @@
     "fields": {
       "industry1": "サービス業",
       "industry2": "上下水道",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -252,7 +283,8 @@
     "fields": {
       "industry1": "サービス業",
       "industry2": "広告",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -260,7 +292,8 @@
     "fields": {
       "industry1": "サービス業",
       "industry2": "建築設計",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -268,7 +301,8 @@
     "fields": {
       "industry1": "サービス業",
       "industry2": "教育・医療",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -276,7 +310,8 @@
     "fields": {
       "industry1": "サービス業",
       "industry2": "法律・会計・人事",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -284,7 +319,8 @@
     "fields": {
       "industry1": "サービス業",
       "industry2": "観光・宿泊・飲食",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -292,7 +328,8 @@
     "fields": {
       "industry1": "不動産業",
       "industry2": "不動産業",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -300,7 +337,8 @@
     "fields": {
       "industry1": "商業",
       "industry2": "その他小売業",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -308,7 +346,8 @@
     "fields": {
       "industry1": "商業",
       "industry2": "卸売業",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -316,7 +355,8 @@
     "fields": {
       "industry1": "商業",
       "industry2": "燃料販売",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -324,7 +364,8 @@
     "fields": {
       "industry1": "商業",
       "industry2": "車両販売・修理",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -332,7 +373,8 @@
     "fields": {
       "industry1": "情報通信業",
       "industry2": "情報通信サービス",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -340,7 +382,8 @@
     "fields": {
       "industry1": "情報通信業",
       "industry2": "映像・音声・文字情報",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -348,7 +391,8 @@
     "fields": {
       "industry1": "運輸・物流業",
       "industry2": "倉庫・運輸関連",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -356,7 +400,8 @@
     "fields": {
       "industry1": "運輸・物流業",
       "industry2": "海運",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -364,7 +409,8 @@
     "fields": {
       "industry1": "運輸・物流業",
       "industry2": "空運",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -372,7 +418,8 @@
     "fields": {
       "industry1": "運輸・物流業",
       "industry2": "陸運",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -380,7 +427,8 @@
     "fields": {
       "industry1": "金融業",
       "industry2": "その他金融業",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -388,7 +436,8 @@
     "fields": {
       "industry1": "金融業",
       "industry2": "保険業",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -396,7 +445,8 @@
     "fields": {
       "industry1": "金融業",
       "industry2": "投資ファンド",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -404,7 +454,8 @@
     "fields": {
       "industry1": "金融業",
       "industry2": "証券業",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -412,7 +463,8 @@
     "fields": {
       "industry1": "金融業",
       "industry2": "銀行業",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -420,7 +472,8 @@
     "fields": {
       "industry1": "電気・ガス業",
       "industry2": "ガス",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -428,7 +481,8 @@
     "fields": {
       "industry1": "電気・ガス業",
       "industry2": "その他電力業",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -436,7 +490,8 @@
     "fields": {
       "industry1": "電気・ガス業",
       "industry2": "発電",
-      "industry_class": 3
+      "industry_class": 3,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   }
 ]

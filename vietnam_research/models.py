@@ -21,8 +21,8 @@ class Market(models.Model):
     name = models.CharField(max_length=50)
     url_file_name = models.CharField(max_length=10, null=True)
 
-    class Meta:
-        db_table = "vietnam_research_m_market"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class IndClass(models.Model):
@@ -40,8 +40,10 @@ class IndClass(models.Model):
     industry2 = models.CharField(max_length=20)
     industry_class = models.IntegerField()
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
+
     class Meta:
-        db_table = "vietnam_research_m_industry_class"
         unique_together = (("industry1", "industry2"),)
 
 
@@ -57,8 +59,10 @@ class Symbol(models.Model):
     market = models.ForeignKey(Market, on_delete=models.CASCADE)
     ind_class = models.ForeignKey(IndClass, on_delete=models.CASCADE, null=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
+
     class Meta:
-        db_table = "vietnam_research_m_symbol"
         constraints = [
             models.UniqueConstraint(
                 fields=["code", "market_id"], name="code_market_id_unique"
@@ -184,8 +188,8 @@ class Sbi(models.Model):
 
     symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
 
-    class Meta:
-        db_table = "vietnam_research_m_sbi"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class BasicInformation(models.Model):
@@ -245,8 +249,8 @@ class Unit(models.Model):
     def __str__(self):
         return self.name
 
-    class Meta:
-        db_table = "vietnam_research_m_unit"
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class FinancialResultWatch(models.Model):
