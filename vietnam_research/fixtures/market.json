@@ -5,7 +5,8 @@
       "id": 1,
       "code": "HOSE",
       "name": "ホーチミン証券取引所",
-      "url_file_name": "hcm"
+      "url_file_name": "hcm",
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -14,7 +15,8 @@
       "id": 2,
       "code": "HNX",
       "name": "ハノイ証券取引所",
-      "url_file_name": "hn"
+      "url_file_name": "hn",
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -23,7 +25,8 @@
       "id": 3,
       "code": "NASDAQ",
       "name": "ナスダック",
-      "url_file_name": ""
+      "url_file_name": "",
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -32,7 +35,8 @@
       "id": 4,
       "code": "NYSE",
       "name": "ニューヨーク証券取引所",
-      "url_file_name": ""
+      "url_file_name": "",
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -41,7 +45,8 @@
       "id": 5,
       "code": "NYSE American",
       "name": "旧アメリカン証券取引所",
-      "url_file_name": ""
+      "url_file_name": "",
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
@@ -50,7 +55,8 @@
       "id": 6,
       "code": "NYSE Arca",
       "name": "旧アーキペラーゴ",
-      "url_file_name": ""
+      "url_file_name": "",
+      "created_at": "2025-01-01T00:00:00Z"
     }
   }
 ]

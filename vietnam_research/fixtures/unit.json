@@ -3,14 +3,16 @@
     "model": "vietnam_research.unit",
     "fields": {
       "id": 1,
-      "name": "¢"
+      "name": "¢",
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
     "model": "vietnam_research.unit",
     "fields": {
       "id": 2,
-      "name": "100M$"
+      "name": "100M$",
+      "created_at": "2025-01-01T00:00:00Z"
     }
   }
 ]
