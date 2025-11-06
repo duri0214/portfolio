@@ -14,13 +14,6 @@ from lib.log_service import LogService
 from vietnam_research.models import Industry
 
 
-def get_font():
-    if os.name == "nt":  # For Windows
-        return "Yu Gothic"
-    else:  # For other OS (here, we assume Ubuntu)
-        return "IPAexGothic"
-
-
 def get_data() -> pd.DataFrame:
     """
     バッチに必要なデータを返します
@@ -66,12 +59,7 @@ class Command(BaseCommand):
         """
 
         matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
-        plt.rcParams["font.family"] = [
-            "DejaVu Sans",
-            "Liberation Sans",
-            "Noto Sans",
-            "sans-serif",
-        ]
+        plt.rcParams["font.family"] = "DejaVu Sans"
         df = get_data()
 
         # Translate industry (column) labels to English for legend
@@ -127,18 +115,8 @@ class Command(BaseCommand):
         plt.xticks(rotation=90)
         plt.subplots_adjust(left=0.05, right=0.95, top=0.95)
 
-        font_path = "/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf"
-        if Path.exists(Path(font_path).resolve()):
-            # Legend with translated English labels
-            plt.legend(
-                loc="upper left",
-                labels=translated_labels,
-            )
-        else:
-            plt.legend(
-                loc="upper left",
-                labels=translated_labels,
-            )
+        # Legend with translated English labels
+        plt.legend(loc="upper left", labels=translated_labels)
 
         # png save - MEDIAディレクトリに保存
         file_name = "daily_industry_stacked_bar_chart.png"

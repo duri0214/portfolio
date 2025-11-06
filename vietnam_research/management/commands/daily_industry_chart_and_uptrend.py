@@ -65,12 +65,7 @@ class Command(BaseCommand):
         log_service = LogService("./result.log")
 
         matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
-        plt.rcParams["font.family"] = [
-            "DejaVu Sans",
-            "Liberation Sans",
-            "Noto Sans",
-            "sans-serif",
-        ]
+        plt.rcParams["font.family"] = "DejaVu Sans"
         # フォルダ作成 - MEDIAディレクトリを掃除
         out_folder = Path(MEDIA_ROOT) / "vietnam_research" / "charts"
         out_folder.mkdir(parents=True, exist_ok=True)
