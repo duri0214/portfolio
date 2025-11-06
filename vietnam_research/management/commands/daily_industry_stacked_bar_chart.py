@@ -66,7 +66,7 @@ class Command(BaseCommand):
         """
 
         matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
-        plt.rcParams["font.family"] = get_font()
+        plt.rcParams["font.family"] = ["Arial", "sans-serif"]
         df = get_data()
         n_rows, n_cols = df.shape
         positions = np.arange(n_rows)

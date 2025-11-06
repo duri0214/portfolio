@@ -65,7 +65,7 @@ class Command(BaseCommand):
         log_service = LogService("./result.log")
 
         matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
-        plt.rcParams["font.family"] = ["IPAexGothic"]
+        plt.rcParams["font.family"] = ["Arial", "sans-serif"]
         # フォルダ作成 - MEDIAディレクトリを掃除
         out_folder = Path(MEDIA_ROOT) / "vietnam_research" / "charts"
         out_folder.mkdir(parents=True, exist_ok=True)
