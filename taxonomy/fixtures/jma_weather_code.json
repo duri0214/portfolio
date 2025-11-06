@@ -1,0 +1,1300 @@
+[
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 1,
+    "fields": {
+      "code": "100",
+      "image": "100.svg",
+      "summary_code": "100",
+      "name": "晴",
+      "name_en": "CLEAR"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 2,
+    "fields": {
+      "code": "101",
+      "image": "101.svg",
+      "summary_code": "100",
+      "name": "晴時々曇",
+      "name_en": "PARTLY CLOUDY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 3,
+    "fields": {
+      "code": "102",
+      "image": "102.svg",
+      "summary_code": "300",
+      "name": "晴一時雨",
+      "name_en": "CLEAR, OCCASIONAL SCATTERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 4,
+    "fields": {
+      "code": "103",
+      "image": "102.svg",
+      "summary_code": "300",
+      "name": "晴時々雨",
+      "name_en": "CLEAR, FREQUENT SCATTERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 5,
+    "fields": {
+      "code": "104",
+      "image": "104.svg",
+      "summary_code": "400",
+      "name": "晴一時雪",
+      "name_en": "CLEAR, SNOW FLURRIES"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 6,
+    "fields": {
+      "code": "105",
+      "image": "104.svg",
+      "summary_code": "400",
+      "name": "晴時々雪",
+      "name_en": "CLEAR, FREQUENT SNOW FLURRIES"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 7,
+    "fields": {
+      "code": "106",
+      "image": "102.svg",
+      "summary_code": "300",
+      "name": "晴一時雨か雪",
+      "name_en": "CLEAR, OCCASIONAL SCATTERED SHOWERS OR SNOW FLURRIES"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 8,
+    "fields": {
+      "code": "107",
+      "image": "102.svg",
+      "summary_code": "300",
+      "name": "晴時々雨か雪",
+      "name_en": "CLEAR, FREQUENT SCATTERED SHOWERS OR SNOW FLURRIES"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 9,
+    "fields": {
+      "code": "108",
+      "image": "102.svg",
+      "summary_code": "300",
+      "name": "晴一時雨か雷雨",
+      "name_en": "CLEAR, OCCASIONAL SCATTERED SHOWERS AND/OR THUNDER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 10,
+    "fields": {
+      "code": "110",
+      "image": "110.svg",
+      "summary_code": "100",
+      "name": "晴後時々曇",
+      "name_en": "CLEAR, PARTLY CLOUDY LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 11,
+    "fields": {
+      "code": "111",
+      "image": "110.svg",
+      "summary_code": "100",
+      "name": "晴後曇",
+      "name_en": "CLEAR, CLOUDY LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 12,
+    "fields": {
+      "code": "112",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴後一時雨",
+      "name_en": "CLEAR, OCCASIONAL SCATTERED SHOWERS LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 13,
+    "fields": {
+      "code": "113",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴後時々雨",
+      "name_en": "CLEAR, FREQUENT SCATTERED SHOWERS LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 14,
+    "fields": {
+      "code": "114",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴後雨",
+      "name_en": "CLEAR,RAIN LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 15,
+    "fields": {
+      "code": "115",
+      "image": "115.svg",
+      "summary_code": "400",
+      "name": "晴後一時雪",
+      "name_en": "CLEAR, OCCASIONAL SNOW FLURRIES LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 16,
+    "fields": {
+      "code": "116",
+      "image": "115.svg",
+      "summary_code": "400",
+      "name": "晴後時々雪",
+      "name_en": "CLEAR, FREQUENT SNOW FLURRIES LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 17,
+    "fields": {
+      "code": "117",
+      "image": "115.svg",
+      "summary_code": "400",
+      "name": "晴後雪",
+      "name_en": "CLEAR,SNOW LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 18,
+    "fields": {
+      "code": "118",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴後雨か雪",
+      "name_en": "CLEAR, RAIN OR SNOW LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 19,
+    "fields": {
+      "code": "119",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴後雨か雷雨",
+      "name_en": "CLEAR, RAIN AND/OR THUNDER LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 20,
+    "fields": {
+      "code": "120",
+      "image": "102.svg",
+      "summary_code": "300",
+      "name": "晴朝夕一時雨",
+      "name_en": "OCCASIONAL SCATTERED SHOWERS IN THE MORNING AND EVENING, CLEAR DURING THE DAY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 21,
+    "fields": {
+      "code": "121",
+      "image": "102.svg",
+      "summary_code": "300",
+      "name": "晴朝の内一時雨",
+      "name_en": "OCCASIONAL SCATTERED SHOWERS IN THE MORNING, CLEAR DURING THE DAY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 22,
+    "fields": {
+      "code": "122",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴夕方一時雨",
+      "name_en": "CLEAR, OCCASIONAL SCATTERED SHOWERS IN THE EVENING"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 23,
+    "fields": {
+      "code": "123",
+      "image": "100.svg",
+      "summary_code": "100",
+      "name": "晴山沿い雷雨",
+      "name_en": "CLEAR IN THE PLAINS, RAIN AND THUNDER NEAR MOUTAINOUS AREAS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 24,
+    "fields": {
+      "code": "124",
+      "image": "100.svg",
+      "summary_code": "100",
+      "name": "晴山沿い雪",
+      "name_en": "CLEAR IN THE PLAINS, SNOW NEAR MOUTAINOUS AREAS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 25,
+    "fields": {
+      "code": "125",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴午後は雷雨",
+      "name_en": "CLEAR, RAIN AND THUNDER IN THE AFTERNOON"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 26,
+    "fields": {
+      "code": "126",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴昼頃から雨",
+      "name_en": "CLEAR, RAIN IN THE AFTERNOON"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 27,
+    "fields": {
+      "code": "127",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴夕方から雨",
+      "name_en": "CLEAR, RAIN IN THE EVENING"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 28,
+    "fields": {
+      "code": "128",
+      "image": "112.svg",
+      "summary_code": "300",
+      "name": "晴夜は雨",
+      "name_en": "CLEAR, RAIN IN THE NIGHT"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 29,
+    "fields": {
+      "code": "130",
+      "image": "100.svg",
+      "summary_code": "100",
+      "name": "朝の内霧後晴",
+      "name_en": "FOG IN THE MORNING, CLEAR LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 30,
+    "fields": {
+      "code": "131",
+      "image": "100.svg",
+      "summary_code": "100",
+      "name": "晴明け方霧",
+      "name_en": "FOG AROUND DAWN, CLEAR LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 31,
+    "fields": {
+      "code": "132",
+      "image": "101.svg",
+      "summary_code": "100",
+      "name": "晴朝夕曇",
+      "name_en": "CLOUDY IN THE MORNING AND EVENING, CLEAR DURING THE DAY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 32,
+    "fields": {
+      "code": "140",
+      "image": "102.svg",
+      "summary_code": "300",
+      "name": "晴時々雨で雷を伴う",
+      "name_en": "CLEAR, FREQUENT SCATTERED SHOWERS AND THUNDER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 33,
+    "fields": {
+      "code": "160",
+      "image": "104.svg",
+      "summary_code": "400",
+      "name": "晴一時雪か雨",
+      "name_en": "CLEAR, SNOW FLURRIES OR OCCASIONAL SCATTERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 34,
+    "fields": {
+      "code": "170",
+      "image": "104.svg",
+      "summary_code": "400",
+      "name": "晴時々雪か雨",
+      "name_en": "CLEAR, FREQUENT SNOW FLURRIES OR SCATTERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 35,
+    "fields": {
+      "code": "181",
+      "image": "115.svg",
+      "summary_code": "400",
+      "name": "晴後雪か雨",
+      "name_en": "CLEAR, SNOW OR RAIN LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 36,
+    "fields": {
+      "code": "200",
+      "image": "200.svg",
+      "summary_code": "200",
+      "name": "曇",
+      "name_en": "CLOUDY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 37,
+    "fields": {
+      "code": "201",
+      "image": "201.svg",
+      "summary_code": "200",
+      "name": "曇時々晴",
+      "name_en": "MOSTLY CLOUDY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 38,
+    "fields": {
+      "code": "202",
+      "image": "202.svg",
+      "summary_code": "300",
+      "name": "曇一時雨",
+      "name_en": "CLOUDY, OCCASIONAL SCATTERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 39,
+    "fields": {
+      "code": "203",
+      "image": "202.svg",
+      "summary_code": "300",
+      "name": "曇時々雨",
+      "name_en": "CLOUDY, FREQUENT SCATTERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 40,
+    "fields": {
+      "code": "204",
+      "image": "204.svg",
+      "summary_code": "400",
+      "name": "曇一時雪",
+      "name_en": "CLOUDY, OCCASIONAL SNOW FLURRIES"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 41,
+    "fields": {
+      "code": "205",
+      "image": "204.svg",
+      "summary_code": "400",
+      "name": "曇時々雪",
+      "name_en": "CLOUDY FREQUENT SNOW FLURRIES"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 42,
+    "fields": {
+      "code": "206",
+      "image": "202.svg",
+      "summary_code": "300",
+      "name": "曇一時雨か雪",
+      "name_en": "CLOUDY, OCCASIONAL SCATTERED SHOWERS OR SNOW FLURRIES"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 43,
+    "fields": {
+      "code": "207",
+      "image": "202.svg",
+      "summary_code": "300",
+      "name": "曇時々雨か雪",
+      "name_en": "CLOUDY, FREQUENT SCCATERED SHOWERS OR SNOW FLURRIES"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 44,
+    "fields": {
+      "code": "208",
+      "image": "202.svg",
+      "summary_code": "300",
+      "name": "曇一時雨か雷雨",
+      "name_en": "CLOUDY, OCCASIONAL SCATTERED SHOWERS AND/OR THUNDER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 45,
+    "fields": {
+      "code": "209",
+      "image": "200.svg",
+      "summary_code": "200",
+      "name": "霧",
+      "name_en": "FOG"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 46,
+    "fields": {
+      "code": "210",
+      "image": "210.svg",
+      "summary_code": "200",
+      "name": "曇後時々晴",
+      "name_en": "CLOUDY, PARTLY CLOUDY LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 47,
+    "fields": {
+      "code": "211",
+      "image": "210.svg",
+      "summary_code": "200",
+      "name": "曇後晴",
+      "name_en": "CLOUDY, CLEAR LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 48,
+    "fields": {
+      "code": "212",
+      "image": "212.svg",
+      "summary_code": "300",
+      "name": "曇後一時雨",
+      "name_en": "CLOUDY, OCCASIONAL SCATTERED SHOWERS LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 49,
+    "fields": {
+      "code": "213",
+      "image": "212.svg",
+      "summary_code": "300",
+      "name": "曇後時々雨",
+      "name_en": "CLOUDY, FREQUENT SCATTERED SHOWERS LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 50,
+    "fields": {
+      "code": "214",
+      "image": "212.svg",
+      "summary_code": "300",
+      "name": "曇後雨",
+      "name_en": "CLOUDY, RAIN LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 51,
+    "fields": {
+      "code": "215",
+      "image": "215.svg",
+      "summary_code": "400",
+      "name": "曇後一時雪",
+      "name_en": "CLOUDY, SNOW FLURRIES LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 52,
+    "fields": {
+      "code": "216",
+      "image": "215.svg",
+      "summary_code": "400",
+      "name": "曇後時々雪",
+      "name_en": "CLOUDY, FREQUENT SNOW FLURRIES LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 53,
+    "fields": {
+      "code": "217",
+      "image": "215.svg",
+      "summary_code": "400",
+      "name": "曇後雪",
+      "name_en": "CLOUDY, SNOW LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 54,
+    "fields": {
+      "code": "218",
+      "image": "212.svg",
+      "summary_code": "300",
+      "name": "曇後雨か雪",
+      "name_en": "CLOUDY, RAIN OR SNOW LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 55,
+    "fields": {
+      "code": "219",
+      "image": "212.svg",
+      "summary_code": "300",
+      "name": "曇後雨か雷雨",
+      "name_en": "CLOUDY, RAIN AND/OR THUNDER LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 56,
+    "fields": {
+      "code": "220",
+      "image": "202.svg",
+      "summary_code": "300",
+      "name": "曇朝夕一時雨",
+      "name_en": "OCCASIONAL SCCATERED SHOWERS IN THE MORNING AND EVENING, CLOUDY DURING THE DAY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 57,
+    "fields": {
+      "code": "221",
+      "image": "202.svg",
+      "summary_code": "300",
+      "name": "曇朝の内一時雨",
+      "name_en": "CLOUDY OCCASIONAL SCCATERED SHOWERS IN THE MORNING"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 58,
+    "fields": {
+      "code": "222",
+      "image": "212.svg",
+      "summary_code": "300",
+      "name": "曇夕方一時雨",
+      "name_en": "CLOUDY, OCCASIONAL SCCATERED SHOWERS IN THE EVENING"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 59,
+    "fields": {
+      "code": "223",
+      "image": "201.svg",
+      "summary_code": "200",
+      "name": "曇日中時々晴",
+      "name_en": "CLOUDY IN THE MORNING AND EVENING, PARTLY CLOUDY DURING THE DAY,"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 60,
+    "fields": {
+      "code": "224",
+      "image": "212.svg",
+      "summary_code": "300",
+      "name": "曇昼頃から雨",
+      "name_en": "CLOUDY, RAIN IN THE AFTERNOON"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 61,
+    "fields": {
+      "code": "225",
+      "image": "212.svg",
+      "summary_code": "300",
+      "name": "曇夕方から雨",
+      "name_en": "CLOUDY, RAIN IN THE EVENING"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 62,
+    "fields": {
+      "code": "226",
+      "image": "212.svg",
+      "summary_code": "300",
+      "name": "曇夜は雨",
+      "name_en": "CLOUDY, RAIN IN THE NIGHT"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 63,
+    "fields": {
+      "code": "228",
+      "image": "215.svg",
+      "summary_code": "400",
+      "name": "曇昼頃から雪",
+      "name_en": "CLOUDY, SNOW IN THE AFTERNOON"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 64,
+    "fields": {
+      "code": "229",
+      "image": "215.svg",
+      "summary_code": "400",
+      "name": "曇夕方から雪",
+      "name_en": "CLOUDY, SNOW IN THE EVENING"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 65,
+    "fields": {
+      "code": "230",
+      "image": "215.svg",
+      "summary_code": "400",
+      "name": "曇夜は雪",
+      "name_en": "CLOUDY, SNOW IN THE NIGHT"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 66,
+    "fields": {
+      "code": "231",
+      "image": "200.svg",
+      "summary_code": "200",
+      "name": "曇海上海岸は霧か霧雨",
+      "name_en": "CLOUDY, FOG OR DRIZZLING ON THE SEA AND NEAR SEASHORE"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 67,
+    "fields": {
+      "code": "240",
+      "image": "202.svg",
+      "summary_code": "300",
+      "name": "曇時々雨で雷を伴う",
+      "name_en": "CLOUDY, FREQUENT SCCATERED SHOWERS AND THUNDER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 68,
+    "fields": {
+      "code": "250",
+      "image": "204.svg",
+      "summary_code": "400",
+      "name": "曇時々雪で雷を伴う",
+      "name_en": "CLOUDY, FREQUENT SNOW AND THUNDER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 69,
+    "fields": {
+      "code": "260",
+      "image": "204.svg",
+      "summary_code": "400",
+      "name": "曇一時雪か雨",
+      "name_en": "CLOUDY, SNOW FLURRIES OR OCCASIONAL SCATTERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 70,
+    "fields": {
+      "code": "270",
+      "image": "204.svg",
+      "summary_code": "400",
+      "name": "曇時々雪か雨",
+      "name_en": "CLOUDY, FREQUENT SNOW FLURRIES OR SCATTERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 71,
+    "fields": {
+      "code": "281",
+      "image": "215.svg",
+      "summary_code": "400",
+      "name": "曇後雪か雨",
+      "name_en": "CLOUDY, SNOW OR RAIN LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 72,
+    "fields": {
+      "code": "300",
+      "image": "300.svg",
+      "summary_code": "300",
+      "name": "雨",
+      "name_en": "RAIN"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 73,
+    "fields": {
+      "code": "301",
+      "image": "301.svg",
+      "summary_code": "300",
+      "name": "雨時々晴",
+      "name_en": "RAIN, PARTLY CLOUDY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 74,
+    "fields": {
+      "code": "302",
+      "image": "302.svg",
+      "summary_code": "300",
+      "name": "雨時々止む",
+      "name_en": "SHOWERS THROUGHOUT THE DAY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 75,
+    "fields": {
+      "code": "303",
+      "image": "303.svg",
+      "summary_code": "400",
+      "name": "雨時々雪",
+      "name_en": "RAIN,FREQUENT SNOW FLURRIES"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 76,
+    "fields": {
+      "code": "304",
+      "image": "300.svg",
+      "summary_code": "300",
+      "name": "雨か雪",
+      "name_en": "RAINORSNOW"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 77,
+    "fields": {
+      "code": "306",
+      "image": "300.svg",
+      "summary_code": "300",
+      "name": "大雨",
+      "name_en": "HEAVYRAIN"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 78,
+    "fields": {
+      "code": "308",
+      "image": "308.svg",
+      "summary_code": "300",
+      "name": "雨で暴風を伴う",
+      "name_en": "RAINSTORM"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 79,
+    "fields": {
+      "code": "309",
+      "image": "303.svg",
+      "summary_code": "400",
+      "name": "雨一時雪",
+      "name_en": "RAIN,OCCASIONAL SNOW"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 80,
+    "fields": {
+      "code": "311",
+      "image": "311.svg",
+      "summary_code": "300",
+      "name": "雨後晴",
+      "name_en": "RAIN,CLEAR LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 81,
+    "fields": {
+      "code": "313",
+      "image": "313.svg",
+      "summary_code": "300",
+      "name": "雨後曇",
+      "name_en": "RAIN,CLOUDY LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 82,
+    "fields": {
+      "code": "314",
+      "image": "314.svg",
+      "summary_code": "400",
+      "name": "雨後時々雪",
+      "name_en": "RAIN, FREQUENT SNOW FLURRIES LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 83,
+    "fields": {
+      "code": "315",
+      "image": "314.svg",
+      "summary_code": "400",
+      "name": "雨後雪",
+      "name_en": "RAIN,SNOW LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 84,
+    "fields": {
+      "code": "316",
+      "image": "311.svg",
+      "summary_code": "300",
+      "name": "雨か雪後晴",
+      "name_en": "RAIN OR SNOW, CLEAR LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 85,
+    "fields": {
+      "code": "317",
+      "image": "313.svg",
+      "summary_code": "300",
+      "name": "雨か雪後曇",
+      "name_en": "RAIN OR SNOW, CLOUDY LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 86,
+    "fields": {
+      "code": "320",
+      "image": "311.svg",
+      "summary_code": "300",
+      "name": "朝の内雨後晴",
+      "name_en": "RAIN IN THE MORNING, CLEAR LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 87,
+    "fields": {
+      "code": "321",
+      "image": "313.svg",
+      "summary_code": "300",
+      "name": "朝の内雨後曇",
+      "name_en": "RAIN IN THE MORNING, CLOUDY LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 88,
+    "fields": {
+      "code": "322",
+      "image": "303.svg",
+      "summary_code": "400",
+      "name": "雨朝晩一時雪",
+      "name_en": "OCCASIONAL SNOW IN THE MORNING AND EVENING, RAIN DURING THE DAY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 89,
+    "fields": {
+      "code": "323",
+      "image": "311.svg",
+      "summary_code": "300",
+      "name": "雨昼頃から晴",
+      "name_en": "RAIN, CLEAR IN THE AFTERNOON"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 90,
+    "fields": {
+      "code": "324",
+      "image": "311.svg",
+      "summary_code": "300",
+      "name": "雨夕方から晴",
+      "name_en": "RAIN, CLEAR IN THE EVENING"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 91,
+    "fields": {
+      "code": "325",
+      "image": "311.svg",
+      "summary_code": "300",
+      "name": "雨夜は晴",
+      "name_en": "RAIN, CLEAR IN THE NIGHT"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 92,
+    "fields": {
+      "code": "326",
+      "image": "314.svg",
+      "summary_code": "400",
+      "name": "雨夕方から雪",
+      "name_en": "RAIN, SNOW IN THE EVENING"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 93,
+    "fields": {
+      "code": "327",
+      "image": "314.svg",
+      "summary_code": "400",
+      "name": "雨夜は雪",
+      "name_en": "RAIN,SNOW IN THE NIGHT"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 94,
+    "fields": {
+      "code": "328",
+      "image": "300.svg",
+      "summary_code": "300",
+      "name": "雨一時強く降る",
+      "name_en": "RAIN, EXPECT OCCASIONAL HEAVY RAINFALL"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 95,
+    "fields": {
+      "code": "329",
+      "image": "300.svg",
+      "summary_code": "300",
+      "name": "雨一時みぞれ",
+      "name_en": "RAIN, OCCASIONAL SLEET"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 96,
+    "fields": {
+      "code": "340",
+      "image": "400.svg",
+      "summary_code": "400",
+      "name": "雪か雨",
+      "name_en": "SNOWORRAIN"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 97,
+    "fields": {
+      "code": "350",
+      "image": "300.svg",
+      "summary_code": "300",
+      "name": "雨で雷を伴う",
+      "name_en": "RAIN AND THUNDER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 98,
+    "fields": {
+      "code": "361",
+      "image": "411.svg",
+      "summary_code": "400",
+      "name": "雪か雨後晴",
+      "name_en": "SNOW OR RAIN, CLEAR LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 99,
+    "fields": {
+      "code": "371",
+      "image": "413.svg",
+      "summary_code": "400",
+      "name": "雪か雨後曇",
+      "name_en": "SNOW OR RAIN, CLOUDY LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 100,
+    "fields": {
+      "code": "400",
+      "image": "400.svg",
+      "summary_code": "400",
+      "name": "雪",
+      "name_en": "SNOW"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 101,
+    "fields": {
+      "code": "401",
+      "image": "401.svg",
+      "summary_code": "400",
+      "name": "雪時々晴",
+      "name_en": "SNOW, FREQUENT CLEAR"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 102,
+    "fields": {
+      "code": "402",
+      "image": "402.svg",
+      "summary_code": "400",
+      "name": "雪時々止む",
+      "name_en": "SNOWTHROUGHOUT THE DAY"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 103,
+    "fields": {
+      "code": "403",
+      "image": "403.svg",
+      "summary_code": "400",
+      "name": "雪時々雨",
+      "name_en": "SNOW,FREQUENT SCCATERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 104,
+    "fields": {
+      "code": "405",
+      "image": "400.svg",
+      "summary_code": "400",
+      "name": "大雪",
+      "name_en": "HEAVYSNOW"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 105,
+    "fields": {
+      "code": "406",
+      "image": "406.svg",
+      "summary_code": "400",
+      "name": "風雪強い",
+      "name_en": "SNOWSTORM"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 106,
+    "fields": {
+      "code": "407",
+      "image": "406.svg",
+      "summary_code": "400",
+      "name": "暴風雪",
+      "name_en": "HEAVYSNOWSTORM"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 107,
+    "fields": {
+      "code": "409",
+      "image": "403.svg",
+      "summary_code": "400",
+      "name": "雪一時雨",
+      "name_en": "SNOW, OCCASIONAL SCCATERED SHOWERS"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 108,
+    "fields": {
+      "code": "411",
+      "image": "411.svg",
+      "summary_code": "400",
+      "name": "雪後晴",
+      "name_en": "SNOW,CLEAR LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 109,
+    "fields": {
+      "code": "413",
+      "image": "413.svg",
+      "summary_code": "400",
+      "name": "雪後曇",
+      "name_en": "SNOW,CLOUDY LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 110,
+    "fields": {
+      "code": "414",
+      "image": "414.svg",
+      "summary_code": "400",
+      "name": "雪後雨",
+      "name_en": "SNOW,RAIN LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 111,
+    "fields": {
+      "code": "420",
+      "image": "411.svg",
+      "summary_code": "400",
+      "name": "朝の内雪後晴",
+      "name_en": "SNOW IN THE MORNING, CLEAR LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 112,
+    "fields": {
+      "code": "421",
+      "image": "413.svg",
+      "summary_code": "400",
+      "name": "朝の内雪後曇",
+      "name_en": "SNOW IN THE MORNING, CLOUDY LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 113,
+    "fields": {
+      "code": "422",
+      "image": "414.svg",
+      "summary_code": "400",
+      "name": "雪昼頃から雨",
+      "name_en": "SNOW, RAIN IN THE AFTERNOON"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 114,
+    "fields": {
+      "code": "423",
+      "image": "414.svg",
+      "summary_code": "400",
+      "name": "雪夕方から雨",
+      "name_en": "SNOW, RAIN IN THE EVENING"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 115,
+    "fields": {
+      "code": "425",
+      "image": "400.svg",
+      "summary_code": "400",
+      "name": "雪一時強く降る",
+      "name_en": "SNOW, EXPECT OCCASIONAL HEAVY SNOWFALL"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 116,
+    "fields": {
+      "code": "426",
+      "image": "400.svg",
+      "summary_code": "400",
+      "name": "雪後みぞれ",
+      "name_en": "SNOW, SLEET LATER"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 117,
+    "fields": {
+      "code": "427",
+      "image": "400.svg",
+      "summary_code": "400",
+      "name": "雪一時みぞれ",
+      "name_en": "SNOW, OCCASIONAL SLEET"
+    }
+  },
+  {
+    "model": "taxonomy.JmaWeatherCode",
+    "pk": 118,
+    "fields": {
+      "code": "450",
+      "image": "400.svg",
+      "summary_code": "400",
+      "name": "雪で雷を伴う",
+      "name_en": "SNOW AND THUNDER"
+    }
+  }
+]
