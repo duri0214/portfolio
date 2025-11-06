@@ -66,7 +66,12 @@ class Command(BaseCommand):
         """
 
         matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
-        plt.rcParams["font.family"] = ["Arial", "sans-serif"]
+        plt.rcParams["font.family"] = [
+            "DejaVu Sans",
+            "Liberation Sans",
+            "Noto Sans",
+            "sans-serif",
+        ]
         df = get_data()
 
         # Translate industry (column) labels to English for legend
@@ -128,13 +133,11 @@ class Command(BaseCommand):
             plt.legend(
                 loc="upper left",
                 labels=translated_labels,
-                prop={"family": "Arial"},
             )
         else:
             plt.legend(
                 loc="upper left",
                 labels=translated_labels,
-                prop={"family": "Arial"},
             )
 
         # png save - MEDIAディレクトリに保存
