@@ -68,6 +68,25 @@ class Command(BaseCommand):
         matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
         plt.rcParams["font.family"] = ["Arial", "sans-serif"]
         df = get_data()
+
+        # Translate industry (column) labels to English for legend
+        jp_to_en_industry = {
+            "サービス業": "Service Industry",
+            "不動産業": "Real Estate Industry",
+            "商業": "Commerce / Trade",
+            "建設業": "Construction Industry",
+            "情報通信業": "Information and Communications Industry",
+            "製造業": "Manufacturing Industry",
+            "農林水産業": "Agriculture, Forestry and Fisheries Industry",
+            "運輸・物流業": "Transportation and Logistics Industry",
+            "金融業": "Financial Industry",
+            "鉱業": "Mining Industry",
+            "電気・ガス業": "Electricity and Gas Industry",
+        }
+        translated_labels = [
+            jp_to_en_industry.get(str(col), str(col)) for col in df.columns
+        ]
+
         n_rows, n_cols = df.shape
         positions = np.arange(n_rows)
         offsets = np.zeros(n_rows, dtype=df.values.dtype)
@@ -105,17 +124,17 @@ class Command(BaseCommand):
 
         font_path = "/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf"
         if Path.exists(Path(font_path).resolve()):
-            # for ubuntu jp font
+            # Legend with translated English labels
             plt.legend(
                 loc="upper left",
-                labels=df.columns,
-                prop={"family": get_font()},
+                labels=translated_labels,
+                prop={"family": "Arial"},
             )
         else:
             plt.legend(
                 loc="upper left",
-                labels=df.columns,
-                prop={"family": get_font()},
+                labels=translated_labels,
+                prop={"family": "Arial"},
             )
 
         # png save - MEDIAディレクトリに保存
