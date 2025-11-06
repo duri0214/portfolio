@@ -1,20 +1,24 @@
 [
   {
     "model": "taxonomy.genus",
+    "pk": 1,
     "fields": {
       "name": "シマミミズ属",
       "name_en": "Eisenia",
       "remark": "ミミズ",
-      "family": 1
+      "family": 1,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
     "model": "taxonomy.genus",
+    "pk": 2,
     "fields": {
       "name": "ヤケイ属",
       "name_en": "Gallus",
       "remark": "ニワトリ",
-      "family": 2
+      "family": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   }
 ]

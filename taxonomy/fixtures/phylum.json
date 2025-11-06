@@ -1,20 +1,24 @@
 [
   {
     "model": "taxonomy.phylum",
+    "pk": 1,
     "fields": {
       "name": "環形動物門",
       "name_en": "Annelida",
       "remark": "ミミズ",
-      "kingdom": 1
+      "kingdom": 1,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
     "model": "taxonomy.phylum",
+    "pk": 2,
     "fields": {
       "name": "脊椎動物門",
       "name_en": "Chordate",
       "remark": "ニワトリ",
-      "kingdom": 1
+      "kingdom": 1,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   }
 ]

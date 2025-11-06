@@ -1,22 +1,24 @@
 [
   {
     "model": "taxonomy.classification",
+    "pk": 1,
     "fields": {
-      "id": 1,
       "name": "貧毛綱",
       "name_en": "Oligochaeta",
       "remark": "ミミズ",
-      "phylum": 1
+      "phylum": 1,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   },
   {
     "model": "taxonomy.classification",
+    "pk": 2,
     "fields": {
-      "id": 2,
       "name": "鳥綱",
       "name_en": "Aves",
       "remark": "ニワトリ",
-      "phylum": 2
+      "phylum": 2,
+      "created_at": "2025-01-01T00:00:00Z"
     }
   }
 ]
