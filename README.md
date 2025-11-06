@@ -225,14 +225,14 @@ python manage.py monthly_cleanup_linebot_engine
 
 ### master data
 
-- `python manage.py weather_generate_code_fixture` のバッチをまわす（fixtureが変更されたときのみ実行）
+- `python manage.py weather_generate_code_fixture_taxonomy` のバッチをまわす（fixtureが変更されたときのみ実行）
 
 ## soil analysis
 
 ### master data
 
 - `python manage.py weather_load_const_master` のバッチをまわす
-- `python manage.py weather_generate_code_fixture` のバッチをまわす（fixtureが変更されたときのみ実行）
+- `python manage.py weather_generate_code_fixture_soil` のバッチをまわす（fixtureが変更されたときのみ実行）
 - `python manage.py weather_download_code_icon` のバッチをまわす（svgが変更されたときのみ実行）
 
 ### weather data
