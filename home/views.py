@@ -17,6 +17,10 @@ class VietnamResearchIndexView(TemplateView):
     template_name = "home/vietnam_research/index.html"
 
 
+class UsaResearchIndexView(TemplateView):
+    template_name = "home/usa_research/index.html"
+
+
 class GmarkerIndexView(TemplateView):
     template_name = "home/gmarker/index.html"
 

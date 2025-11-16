@@ -1,0 +1,110 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">米国株を分析する</h1>
+                <p class="text-muted text-center">世界最大の市場である米国株を体系的に調査する研究プロジェクト</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <div class="text-center">
+                    <img src="{% static 'home/images/no-image.png' %}"
+                         alt="米国株分析"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    米国市場は世界の金融の中心であり、テクノロジーから消費、エネルギー、金融まで幅広いセクターが集まっています。
+                    本アプリケーションでは、米国の主要経済指標、株価指数、SBIレポート、NASDAQ100構成銘柄、
+                    さらにはRSSフィードを含むニュースまとめなど、米国株投資に役立つ情報を一覧・可視化します。
+                </p>
+                <p>
+                    また、日本市場に大きな影響を与える米国株の動向を常に追跡できるよう、
+                    景気指数（ISM）、長期金利、VIX、セクターローテーションなどのマクロ指標も整理して表示します。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="https://go.sbisec.co.jp/media/report/fo_america/" target="_blank">SBI - アメリカ NOW！</a></li>
+                    <li><a href="https://www.nasdaq.com/market-activity/index/ndx" target="_blank">NASDAQ100 構成銘柄</a></li>
+                    <li><a href="{% url 'usa:index' %}" target="_blank">USAリサーチ（Webアプリ）</a></li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>テーマ</h2>
+                <p>
+                    米国株研究を始めた理由は、世界市場全体の方向性は米国市場に強く依存しており、
+                    日本株の急落・急騰も米国の経済指標や金利動向に連動するためです。
+                </p>
+                <p>
+                    特に注目したのは、以下のポイントです：
+                </p>
+                <ul>
+                    <li>ISM製造業指数が悪化すると日本株も急落しやすい</li>
+                    <li>長期金利が下落すると株価は上昇しやすい</li>
+                    <li>VIXの急騰・沈静化は相場の転換点を示しやすい</li>
+                    <li>セクターローテーションによりどのセクターが買われているか可視化できる</li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>ギャラリー</h2>
+                <div id="galleryCarousel" class="carousel slide" data-ride="carousel">
+                    <!-- インジケータ -->
+                    <ol class="carousel-indicators">
+                        <li data-target="#galleryCarousel" data-slide-to="0" class="active"></li>
+                    </ol>
+
+                    <!-- カルーセル -->
+                    <div class="carousel-inner rounded shadow">
+                        <div class="carousel-item active">
+                            <img src="https://www.msci.com/documents/10199/178e6643-6ae6-47b9-82be-e1fc565ededb"
+                                 class="d-block w-50" alt="米国株研究のイメージ">
+                        </div>
+                    </div>
+
+                    <!-- 次/前 -->
+                    <a class="carousel-control-prev" href="#galleryCarousel" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">前へ</span>
+                    </a>
+                    <a class="carousel-control-next" href="#galleryCarousel" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">次へ</span>
+                    </a>
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>提案の背景</h2>
+                <p>
+                    この USA リサーチは、米国市場の動向を正確に追うことで、日本株や世界市場の変動要因を理解することを目的としています。
+                    また、Django・Scraping・API・RSS などの技術を統合し、より実践的なデータ収集・分析基盤を構築するためのプロジェクトでもあります。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>成果</h2>
+                <ul>
+                    <li>米国株向け Web アプリケーションの開発</li>
+                    <li>マクロ指標・株価データ・ニュースの一元管理</li>
+                    <li>投資判断に役立つ情報ダッシュボードの構築</li>
+                </ul>
+                <p>
+                    このプロジェクトによって、米国市場の構造理解と同時に、データ分析・API処理・Web開発スキルを高められました。
+                </p>
+            </section>
+        </article>
+    </div>
+{% endblock %}
