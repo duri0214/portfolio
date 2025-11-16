@@ -14,6 +14,7 @@ from home.views import (
     AiAgentIndexView,
     JpStocksIndexView,
     WelfareServicesIndexView,
+    UsaResearchIndexView,
 )
 
 app_name = "home"
@@ -29,6 +30,11 @@ urlpatterns = [
         "about/vietnam_research/",
         VietnamResearchIndexView.as_view(),
         name="about_vietnam_research",
+    ),
+    path(
+        "about/usa_research/",
+        UsaResearchIndexView.as_view(),
+        name="about_usa_research",
     ),
     path("about/gmarker/", GmarkerIndexView.as_view(), name="about_gmarker"),
     path("about/shopping/", ShoppingIndexView.as_view(), name="about_shopping"),

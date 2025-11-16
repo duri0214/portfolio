@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "vietnam_research",
+    "usa_research",
     "gmarker",
     "shopping",
     "linebot_engine",
