@@ -128,18 +128,25 @@ python manage.py runserver
 
 ## 本番サーバメンテナンスコマンド
 
-- `.env` は作成済み？
-- DB migrate は最新？
+- 実行ユーザーの役割（混乱しやすいので最小限に明記）
+  - ubuntu: Git 操作、`collectstatic` 実行（＝`static/` へ書き込み）
+  - www-data: Web 実行ユーザー（Apache）。`media/` と `media/logs/` へ書き込み
+  
+- 事前チェック: `.env` 作成済み・DB migrate 最新か
 
 ```commandline
 cd /var/www/html/portfolio
 sudo git fetch --prune origin
 sudo git reset --hard origin/master
 sudo git clean -fd
+sudo find . -name "*.log" -delete 
+sudo mkdir -p /var/www/html/portfolio/static
+sudo mkdir -p /var/www/html/portfolio/media/logs
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
-sudo chown -R www-data:www-data /var/www/html/portfolio/media
+sudo chown -R www-data:www-data /var/www/html/portfolio/media /var/www/html/portfolio/media/logs
 sudo chmod -R 755 /var/www/html/portfolio
-sudo chmod -R 775 /var/www/html/portfolio/media
+sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/media/logs /var/www/html/portfolio/static
+sudo chmod 775 /var/www/html/portfolio/ai_agent
 source /var/www/html/venv/bin/activate
 python manage.py collectstatic --noinput
 python manage.py clearsessions
