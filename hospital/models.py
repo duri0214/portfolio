@@ -101,12 +101,6 @@ class UserAttribute(models.Model):
     date_of_birth = models.DateField(verbose_name="生年月日")
 
 
-BILLING_METHOD_CHOICES = [
-    (1, "代理・直接"),
-    (2, "代理・郵便"),
-]
-
-
 class ElectionLedger(models.Model):
     """
     選挙事務用の請求者名簿と事務処理簿の入力項目をまとめた、事務処理台帳
@@ -135,6 +129,16 @@ class ElectionLedger(models.Model):
         - updated_at (DateTimeField): 更新日時
     """
 
+    class BillingMethod(models.IntegerChoices):
+        """
+        Note: 定義は (クラス属性名, DB保存値, 表示ラベル) の順。
+              コード内では ElectionLedger.BillingMethod.PROXY_DIRECT のように英語定数を使用。
+              DB には整数値が保存され、表示には get_billing_method_display() で日本語ラベルが返される。
+        """
+
+        PROXY_DIRECT = 1, "代理・直接"
+        PROXY_MAIL = 2, "代理・郵便"
+
     election = models.ForeignKey(
         Election, verbose_name="選挙名", on_delete=models.CASCADE
     )
@@ -153,7 +157,7 @@ class ElectionLedger(models.Model):
     )
     billing_method = models.IntegerField(
         verbose_name="投票用紙請求の方法",
-        choices=BILLING_METHOD_CHOICES,
+        choices=BillingMethod.choices,
         null=True,
         blank=True,
     )
