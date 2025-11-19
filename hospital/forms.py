@@ -44,7 +44,7 @@ class ElectionLedgerCreateForm(forms.ModelForm):
     )
 
     billing_method = forms.ChoiceField(
-        choices=BILLING_METHOD_CHOICES,
+        choices=ElectionLedger.BillingMethod.choices,
         label="投票用紙請求の方法*",
         initial=2,
         widget=forms.Select(attrs={"class": "form-control", "tabindex": "6"}),
