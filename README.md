@@ -128,36 +128,31 @@ python manage.py runserver
 
 ## 本番サーバメンテナンスコマンド
 
-- 環境変数 `.env` が作ってありますか？
-- migrate は最新ですか？
-
-`-R` は recursive
-`ubuntu:www-data` は ubuntuユーザ:apacheグループの所有者にする
+- `.env` は作成済み？
+- DB migrate は最新？
 
 ```commandline
 cd /var/www/html/portfolio
-git branch --show-current
-git fetch --prune origin
-git reset --hard origin/master
-git pull origin master
+sudo git fetch --prune origin
+sudo git reset --hard origin/master
+sudo git clean -fd
+sudo chown -R ubuntu:www-data /var/www/html/portfolio
+sudo chown -R www-data:www-data /var/www/html/portfolio/media
+sudo chmod -R 755 /var/www/html/portfolio
+sudo chmod -R 775 /var/www/html/portfolio/media
 source /var/www/html/venv/bin/activate
-python manage.py collectstatic --noinput 
+python manage.py collectstatic --noinput
 python manage.py clearsessions
-vi /var/log/apache2/error.log
-sudo -s
-chown -R ubuntu:www-data /var/www/html
-chown -R www-data:www-data /var/www/html/portfolio/media
-systemctl restart apache2
+sudo systemctl restart apache2
+sudo tail -n 200 /var/log/apache2/error.log
 ```
 
-主に securities がzipを保存するために必要な設定
-exists メソッドは file or directory
-が存在するか確認するがこれには該当のファイルまたはディレクトリへのアクセス権限（実行権限 (x) ）が必要
+メモ
+- `git clean -fd`: 未追跡を削除（f=強制, d=ディレクトリ）
+- `-R` は再帰、`ubuntu:www-data` は ubuntu ユーザー・www-data グループ
 
-```commandline
-chmod -R 774 /var/www/html/portfolio/media
-chmod 774 /var/www
-```
+主に securities が ZIP を保存するために必要な設定
+exists の確認には実行権限 (x) が必要なため、必要なら実施
 
 ## vietnam_research
 
