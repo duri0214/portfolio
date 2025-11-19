@@ -1,6 +1,5 @@
 ---
 apply: always
-title: KISS (Keep It Simple, Stupid)
 ---
 
 # KISS 原則
