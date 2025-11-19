@@ -94,7 +94,7 @@ class Command(BaseCommand):
                         market=m_market.get(code=market.code),
                     )
                     message = (
-                    f"{market_data_row.code} {market_data_row.name} を追加しました"
+                        f"{market_data_row.code} {market_data_row.name} を追加しました"
                     )
                     print(message)
                 else:

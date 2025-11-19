@@ -46,9 +46,7 @@ class Command(BaseCommand):
                 response = requests.get(url_scale.url)
                 response.raise_for_status()
             except HTTPError as http_err:
-                print(
-                    f"HTTPエラーが発生しました: {url_scale.url}, エラー: {http_err}"
-                )
+                print(f"HTTPエラーが発生しました: {url_scale.url}, エラー: {http_err}")
                 continue
             except Exception as err:
                 print(
@@ -70,9 +68,7 @@ class Command(BaseCommand):
                         rate = ExchangeService.get_rate(base_cur, dest_cur)
                     except ObjectDoesNotExist as e:
                         # 指定された通貨ペア（またはその逆）のレートがExchangeRateモデルに存在しない場合
-                        print(
-                            f"Rate for {base_cur} to {dest_cur} does not exist: {e}"
-                        )
+                        print(f"Rate for {base_cur} to {dest_cur} does not exist: {e}")
                         continue
                 else:
                     rate = float(soup_price.text.replace(",", "")) / url_scale.scale
