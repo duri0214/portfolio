@@ -149,7 +149,7 @@ class ElectionLedger(models.Model):
         Election, verbose_name="選挙名", on_delete=models.CASCADE
     )
     voter = models.ForeignKey(
-        User,
+        Member,
         verbose_name="選挙人氏名",
         on_delete=models.CASCADE,
         related_name="voter",
@@ -185,7 +185,7 @@ class ElectionLedger(models.Model):
         blank=True,
     )
     vote_observer = models.ForeignKey(
-        User,
+        Member,
         verbose_name="投票立会人",
         on_delete=models.CASCADE,
         related_name="voter_witness",
