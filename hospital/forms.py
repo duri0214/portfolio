@@ -5,7 +5,6 @@ from hospital.models import (
     Election,
     Ward,
     CitySector,
-    BILLING_METHOD_CHOICES,
     VotePlace,
     Member,
 )
