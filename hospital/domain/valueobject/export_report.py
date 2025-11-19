@@ -41,7 +41,7 @@ class BillingListRow(AbstractRow):
 
     @property
     def voter_name(self) -> str:
-        return self.ledger.voter.username
+        return self.ledger.voter.user.username
 
     @property
     def date_of_birth(self) -> str:
@@ -69,7 +69,7 @@ class VotingManagementListRow(AbstractRow):
 
     @property
     def voter_name(self) -> str:
-        return self.ledger.voter.username
+        return self.ledger.voter.user.username
 
     @property
     def billing_method(self) -> str:
