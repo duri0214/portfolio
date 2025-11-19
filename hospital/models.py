@@ -58,6 +58,42 @@ class VotePlace(models.Model):
         return self.name
 
 
+class Member(models.Model):
+    """
+    病院ドメイン専用のユーザラッパーモデル。
+
+    - Django 標準の auth.User と 1:1 で紐づく（認証や氏名・メール等は auth.User を参照）
+    - 病院ドメイン固有の情報だけを保持
+    """
+
+    class Role(models.TextChoices):
+        """
+        Note: 定義は (クラス属性名, DB保存値, 表示ラベル) の順。
+              コード内では Member.Role.STAFF のように英語定数を使用。
+              DB には "staff" が保存され、表示には get_role_display() で「病院スタッフ」が返される。
+        """
+        STAFF = "staff", "病院スタッフ"
+        PATIENT = "patient", "患者"
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="hospital_user",
+        verbose_name="ユーザ",
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=Role.choices,
+        verbose_name="ロール",
+    )
+    remark = models.TextField(verbose_name="備考", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    def __str__(self):
+        return self.user.get_full_name() or self.user.username
+
+
 class UserAttribute(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     address = models.TextField(verbose_name="住所")
