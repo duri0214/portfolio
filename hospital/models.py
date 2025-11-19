@@ -96,7 +96,13 @@ class Member(models.Model):
 
 
 class UserAttribute(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    """Member に 1:1 で紐づく住所・生年月日情報。例えば member.userAttribute.address でアクセスする"""
+
+    member = models.OneToOneField(
+        Member,
+        on_delete=models.CASCADE,
+        related_name="userAttribute",
+    )
     address = models.TextField(verbose_name="住所")
     date_of_birth = models.DateField(verbose_name="生年月日")
 
