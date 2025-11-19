@@ -1,0 +1,17 @@
+[
+  {"model": "hospital.Member", "pk": 6, "fields": {"user": 6, "role": "staff", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 7, "fields": {"user": 7, "role": "staff", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 8, "fields": {"user": 8, "role": "staff", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 9, "fields": {"user": 9, "role": "staff", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 10, "fields": {"user": 10, "role": "staff", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 11, "fields": {"user": 11, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 12, "fields": {"user": 12, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 13, "fields": {"user": 13, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 14, "fields": {"user": 14, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 15, "fields": {"user": 15, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 16, "fields": {"user": 16, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 17, "fields": {"user": 17, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 18, "fields": {"user": 18, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 19, "fields": {"user": 19, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.Member", "pk": 20, "fields": {"user": 20, "role": "patient", "created_at": "2024-09-23T10:00:00Z"}}
+]

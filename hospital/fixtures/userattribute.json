@@ -3,7 +3,7 @@
     "model": "hospital.UserAttribute",
     "pk": 1,
     "fields": {
-      "user": 10,
+      "member": 10,
       "address": "大阪府大阪市北区梅田1丁目1-1",
       "date_of_birth": "1980-01-01"
     }
@@ -12,7 +12,7 @@
     "model": "hospital.UserAttribute",
     "pk": 2,
     "fields": {
-      "user": 11,
+      "member": 11,
       "address": "大阪府堺市堺区築港八町1丁",
       "date_of_birth": "1982-02-02"
     }
@@ -21,7 +21,7 @@
     "model": "hospital.UserAttribute",
     "pk": 3,
     "fields": {
-      "user": 12,
+      "member": 12,
       "address": "大阪府大阪市中央区城見1丁目",
       "date_of_birth": "1975-03-03"
     }
@@ -30,7 +30,7 @@
     "model": "hospital.UserAttribute",
     "pk": 4,
     "fields": {
-      "user": 13,
+      "member": 13,
       "address": "大阪府大阪市東淀川区東淡路5丁目",
       "date_of_birth": "1985-04-04"
     }
@@ -39,7 +39,7 @@
     "model": "hospital.UserAttribute",
     "pk": 5,
     "fields": {
-      "user": 14,
+      "member": 14,
       "address": "大阪府堺市泉北区和泉野町",
       "date_of_birth": "1978-05-05"
     }
@@ -48,7 +48,7 @@
     "model": "hospital.UserAttribute",
     "pk": 6,
     "fields": {
-      "user": 15,
+      "member": 15,
       "address": "大阪府大阪市此花区逸津川町",
       "date_of_birth": "1972-06-06"
     }
@@ -57,7 +57,7 @@
     "model": "hospital.UserAttribute",
     "pk": 7,
     "fields": {
-      "user": 16,
+      "member": 16,
       "address": "大阪府大阪市西区江戸堀1丁目",
       "date_of_birth": "1962-07-07"
     }
@@ -66,7 +66,7 @@
     "model": "hospital.UserAttribute",
     "pk": 8,
     "fields": {
-      "user": 17,
+      "member": 17,
       "address": "大阪府大阪市西淀川区姫里3丁目",
       "date_of_birth": "1971-08-08"
     }
@@ -75,7 +75,7 @@
     "model": "hospital.UserAttribute",
     "pk": 9,
     "fields": {
-      "user": 18,
+      "member": 18,
       "address": "大阪府大阪市浪速区敷津東3丁目",
       "date_of_birth": "1988-09-09"
     }
@@ -84,7 +84,7 @@
     "model": "hospital.UserAttribute",
     "pk": 10,
     "fields": {
-      "user": 19,
+      "member": 19,
       "address": "大阪府大阪市東成区星ヶ町",
       "date_of_birth": "1987-10-10"
     }

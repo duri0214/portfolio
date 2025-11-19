@@ -58,16 +58,53 @@ class VotePlace(models.Model):
         return self.name
 
 
+class Member(models.Model):
+    """
+    病院ドメイン専用のユーザラッパーモデル。
+
+    - Django 標準の auth.User と 1:1 で紐づく（認証や氏名・メール等は auth.User を参照）
+    - 病院ドメイン固有の情報だけを保持
+    """
+
+    class Role(models.TextChoices):
+        """
+        Note: 定義は (クラス属性名, DB保存値, 表示ラベル) の順。
+              コード内では Member.Role.STAFF のように英語定数を使用。
+              DB には "staff" が保存され、表示には get_role_display() で「病院スタッフ」が返される。
+        """
+
+        STAFF = "staff", "病院スタッフ"
+        PATIENT = "patient", "患者"
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="hospital_user",
+        verbose_name="ユーザ",
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=Role.choices,
+        verbose_name="ロール",
+    )
+    remark = models.TextField(verbose_name="備考", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    def __str__(self):
+        return self.user.get_full_name() or self.user.username
+
+
 class UserAttribute(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    """Member に 1:1 で紐づく住所・生年月日情報。例えば member.userAttribute.address でアクセスする"""
+
+    member = models.OneToOneField(
+        Member,
+        on_delete=models.CASCADE,
+        related_name="userAttribute",
+    )
     address = models.TextField(verbose_name="住所")
     date_of_birth = models.DateField(verbose_name="生年月日")
-
-
-BILLING_METHOD_CHOICES = [
-    (1, "代理・直接"),
-    (2, "代理・郵便"),
-]
 
 
 class ElectionLedger(models.Model):
@@ -98,11 +135,21 @@ class ElectionLedger(models.Model):
         - updated_at (DateTimeField): 更新日時
     """
 
+    class BillingMethod(models.IntegerChoices):
+        """
+        Note: 定義は (クラス属性名, DB保存値, 表示ラベル) の順。
+              コード内では ElectionLedger.BillingMethod.PROXY_DIRECT のように英語定数を使用。
+              DB には整数値が保存され、表示には get_billing_method_display() で日本語ラベルが返される。
+        """
+
+        PROXY_DIRECT = 1, "代理・直接"
+        PROXY_MAIL = 2, "代理・郵便"
+
     election = models.ForeignKey(
         Election, verbose_name="選挙名", on_delete=models.CASCADE
     )
     voter = models.ForeignKey(
-        User,
+        Member,
         verbose_name="選挙人氏名",
         on_delete=models.CASCADE,
         related_name="voter",
@@ -116,7 +163,7 @@ class ElectionLedger(models.Model):
     )
     billing_method = models.IntegerField(
         verbose_name="投票用紙請求の方法",
-        choices=BILLING_METHOD_CHOICES,
+        choices=BillingMethod.choices,
         null=True,
         blank=True,
     )
@@ -138,7 +185,7 @@ class ElectionLedger(models.Model):
         blank=True,
     )
     vote_observer = models.ForeignKey(
-        User,
+        Member,
         verbose_name="投票立会人",
         on_delete=models.CASCADE,
         related_name="voter_witness",
