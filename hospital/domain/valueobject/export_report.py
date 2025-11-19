@@ -37,7 +37,7 @@ class BillingListRow(AbstractRow):
 
     @property
     def address(self) -> str:
-        return self.ledger.voter.userattribute.address
+        return self.ledger.voter.userAttribute.address
 
     @property
     def voter_name(self) -> str:
@@ -45,7 +45,7 @@ class BillingListRow(AbstractRow):
 
     @property
     def date_of_birth(self) -> str:
-        return convert_to_japanese_era(self.ledger.voter.userattribute.date_of_birth)
+        return convert_to_japanese_era(self.ledger.voter.userAttribute.date_of_birth)
 
     @property
     def ward_name(self) -> str:
@@ -65,7 +65,7 @@ class VotingManagementListRow(AbstractRow):
 
     @property
     def address(self) -> str:
-        return self.ledger.voter.userattribute.address
+        return self.ledger.voter.userAttribute.address
 
     @property
     def voter_name(self) -> str:
