@@ -10,7 +10,6 @@ from django.core.management.base import BaseCommand
 from matplotlib import pyplot as plt
 
 from config.settings import MEDIA_ROOT
-from lib.log_service import LogService
 from vietnam_research.domain.repository.vietkabu import IndustryRepository
 from vietnam_research.domain.valueobject.vietkabu import IndustryGraphVO
 from vietnam_research.models import Uptrend, Symbol, Market, Watchlist
@@ -62,7 +61,6 @@ class Command(BaseCommand):
         See Also: https://docs.djangoproject.com/en/4.2/howto/custom-management-commands/
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
-        log_service = LogService("./result.log")
 
         matplotlib.use("Agg")  # GUIを使わないバックエンドを指定
         plt.rcParams["font.family"] = "DejaVu Sans"
@@ -70,7 +68,7 @@ class Command(BaseCommand):
         out_folder = Path(MEDIA_ROOT) / "vietnam_research" / "charts"
         out_folder.mkdir(parents=True, exist_ok=True)
         for filepath in glob(str(out_folder / "*.png")):
-            log_service.write(f"Removing file: {filepath}")
+            print(f"Removing file: {filepath}")
             os.remove(filepath)
         Uptrend.objects.all().delete()
 
@@ -88,7 +86,7 @@ class Command(BaseCommand):
 
         days = [14, 7, 3]
         passed_records = []
-        log_service.write("\n🔍 Detecting uptrend stocks...")
+        print("\n🔍 Detecting uptrend stocks...")
         for ticker in tickers:
             closing_price = [
                 x["closing_price"]
@@ -170,7 +168,7 @@ class Command(BaseCommand):
                 watchlist_marker = (
                     " (in watchlist)" if ticker in watchlist_symbols else ""
                 )
-                log_service.write(
+                print(
                     f"{spaces}{formatted_text(ticker, slopes, passed, price)}{watchlist_marker}"
                 )
         Uptrend.objects.bulk_create(passed_records)
@@ -178,6 +176,6 @@ class Command(BaseCommand):
         caller_file_name = Path(__file__).stem
 
         # Console output: Summary
-        log_service.write(f"\n✅ {caller_file_name} completed successfully.")
-        log_service.write(f"   - Total tickers processed: {len(tickers)}")
-        log_service.write(f"   - Charts generated: {len(passed_records)}")
+        print(f"\n✅ {caller_file_name} completed successfully.")
+        print(f"   - Total tickers processed: {len(tickers)}")
+        print(f"   - Charts generated: {len(passed_records)}")

@@ -3,8 +3,6 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 from django.core.management import BaseCommand
-
-from lib.log_service import LogService
 from vietnam_research.models import Sbi, Symbol
 
 
@@ -34,8 +32,7 @@ class Command(BaseCommand):
                 continue
 
         caller_file_name = Path(__file__).stem
-        log_service = LogService("./result.log")
 
         # insert
         Sbi.objects.bulk_create(sbi_list)
-        log_service.write(f"{caller_file_name} is done.({len(sbi_list)})")
+        print(f"{caller_file_name} is done.({len(sbi_list)})")

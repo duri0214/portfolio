@@ -7,7 +7,6 @@ import pandas as pd
 import requests
 from django.core.management.base import BaseCommand
 
-from lib.log_service import LogService
 from vietnam_research.models import FaoFoodBalanceRankers
 
 
@@ -65,7 +64,4 @@ class Command(BaseCommand):
             )
 
         caller_file_name = Path(__file__).stem
-        log_service = LogService("result.log")
-        log_service.write(
-            f"{caller_file_name} is done.({len(fao_food_balance_rankers)})"
-        )
+        print(f"{caller_file_name} is done.({len(fao_food_balance_rankers)})")
