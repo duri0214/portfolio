@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now, localtime
 
-from lib.log_service import LogService
 from vietnam_research.models import Industry, Symbol
 
 
@@ -49,7 +48,6 @@ class Command(BaseCommand):
 
         See Also: https://docs.djangoproject.com/en/5.1/howto/custom-management-commands/
         """
-        log_service = LogService("./result.log")
 
         days = options["days"]
         start_date_str = options.get("start_date")
@@ -75,19 +73,19 @@ class Command(BaseCommand):
             deleted_count = Industry.objects.all().count()
             Industry.objects.all().delete()
             message = f"既存のIndustryデータを削除しました（{deleted_count}件）"
-            log_service.write(message)
+            print(message)
 
         # Symbolデータの取得
         symbols = Symbol.objects.select_related("market", "ind_class").all()
         if not symbols.exists():
             message = "Symbolデータが存在しません。先にSymbolデータを登録してください。"
-            log_service.write(message)
+            print(message)
             return
 
         message = (
             f"{symbols.count()}件のSymbolに対して{days}日分のダミーデータを生成します"
         )
-        log_service.write(message)
+        print(message)
 
         # ダミーデータの生成
         industry_records = []
@@ -162,4 +160,4 @@ class Command(BaseCommand):
             f"{len(industry_records)}件のIndustryレコードを作成しました。"
             f"（{symbols.count()}シンボル × {days}日）"
         )
-        log_service.write(final_message)
+        print(final_message)

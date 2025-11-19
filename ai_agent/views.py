@@ -10,9 +10,6 @@ from ai_agent.domain.service.input_processor import InputProcessor
 from ai_agent.domain.service.turn_management import TurnManagementService
 from ai_agent.forms import SendMessageForm
 from ai_agent.models import Message, Entity, ActionHistory
-from lib.log_service import LogService
-
-log_service = LogService("ai_agent_views.log")
 
 
 class IndexView(FormView):
@@ -128,11 +125,11 @@ class IndexView(FormView):
             messages.success(self.request, success_msg)
 
         except Entity.DoesNotExist:
-            log_service.write("User entity not found")
+            print("User entity not found")
             messages.error(self.request, "ユーザーエンティティが見つかりません")
             return super().form_invalid(form)
         except Exception as e:
-            log_service.write(f"Message processing error: {e}")
+            print(f"Message processing error: {e}")
             messages.error(self.request, "処理中にエラーが発生しました")
             return super().form_invalid(form)
 
@@ -229,7 +226,7 @@ class NextTurnView(View):
                 messages.success(request, success_msg)
 
         except Exception as e:
-            log_service.write(f"次のターン処理中にエラーが発生しました: {e}")
+            print(f"次のターン処理中にエラーが発生しました: {e}")
             messages.error(
                 request, "処理中にエラーが発生しました。管理者に連絡してください。"
             )

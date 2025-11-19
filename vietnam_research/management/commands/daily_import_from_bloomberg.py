@@ -7,7 +7,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 from requests import HTTPError
 
-from lib.log_service import LogService
 from vietnam_research.domain.service.exchange import ExchangeService
 from vietnam_research.domain.valueobject.exchange import UrlScale
 from vietnam_research.models import VnIndex, ExchangeRate
@@ -26,7 +25,6 @@ class Command(BaseCommand):
         See Also: https://docs.djangoproject.com/en/4.2/howto/custom-management-commands/
         See Also: https://docs.djangoproject.com/en/4.2/topics/testing/tools/#topics-testing-management-commands
         """
-        log_service = LogService("./result.log")
 
         url_scales = [
             UrlScale(url="https://www.bloomberg.co.jp/quote/VNDJPY:CUR", scale=100),
@@ -48,12 +46,10 @@ class Command(BaseCommand):
                 response = requests.get(url_scale.url)
                 response.raise_for_status()
             except HTTPError as http_err:
-                log_service.write(
-                    f"HTTPエラーが発生しました: {url_scale.url}, エラー: {http_err}"
-                )
+                print(f"HTTPエラーが発生しました: {url_scale.url}, エラー: {http_err}")
                 continue
             except Exception as err:
-                log_service.write(
+                print(
                     f"リクエストの送信時にエラーが発生しました: {url_scale.url}, エラー: {err}"
                 )
                 continue
@@ -72,9 +68,7 @@ class Command(BaseCommand):
                         rate = ExchangeService.get_rate(base_cur, dest_cur)
                     except ObjectDoesNotExist as e:
                         # 指定された通貨ペア（またはその逆）のレートがExchangeRateモデルに存在しない場合
-                        log_service.write(
-                            f"Rate for {base_cur} to {dest_cur} does not exist: {e}"
-                        )
+                        print(f"Rate for {base_cur} to {dest_cur} does not exist: {e}")
                         continue
                 else:
                     rate = float(soup_price.text.replace(",", "")) / url_scale.scale
@@ -96,4 +90,4 @@ class Command(BaseCommand):
                     defaults={"closing_price": closing_price},
                 )
 
-            log_service.write(f"データの取得に成功しました: {url_scale.url} {rate}")
+            print(f"データの取得に成功しました: {url_scale.url} {rate}")

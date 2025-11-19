@@ -10,7 +10,6 @@ from django.db.models.functions import Concat, ExtractYear, ExtractMonth
 from matplotlib import pyplot as plt
 
 from config.settings import MEDIA_ROOT
-from lib.log_service import LogService
 from vietnam_research.models import Industry
 
 
@@ -132,7 +131,6 @@ class Command(BaseCommand):
         # 成功メッセージ
         self.stdout.write(self.style.SUCCESS(f"Chart saved to: {media_path}"))
 
-        # ログに記録
+        # 標準出力に出力
         caller_file_name = Path(__file__).stem
-        log_service = LogService("./result.log")
-        log_service.write(f"{caller_file_name} is done. Saved to: {media_path}")
+        print(f"{caller_file_name} is done. Saved to: {media_path}")

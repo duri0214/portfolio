@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 from django.utils.timezone import now, localtime
-
-from lib.log_service import LogService
 from vietnam_research.domain.valueobject.vietkabu import (
     TransactionDate,
     MarketDataRow,
@@ -30,7 +28,6 @@ class Command(BaseCommand):
         See Also: https://docs.djangoproject.com/en/5.1/howto/custom-management-commands/
         See Also: https://docs.djangoproject.com/en/5.1/topics/testing/tools/#topics-testing-management-commands
         """
-        log_service = LogService("./result.log")
 
         m_market = Market.objects.filter(code__in=["HOSE", "HNX"])
         m_ind_class = IndClass.objects.all()
@@ -54,7 +51,7 @@ class Command(BaseCommand):
                 recorded_date=transaction_date, symbol__market__code=market.code
             ).exists():
                 message = f"{market.code}の当日データがあったので処理対象外になりました"
-                log_service.write(message)
+                print(message)
                 continue
 
             tag_trs = [
@@ -71,7 +68,7 @@ class Command(BaseCommand):
                 except MarketDataRowError as e:
                     skip_count += 1
                     debug_message = f"スキップした行 {i}: {str(e)} - データ: {e.get_simplified_html()}"
-                    log_service.write(debug_message)
+                    print(debug_message)
 
             processed_count = 0
             for market_data_row in market_data_rows:
@@ -84,7 +81,7 @@ class Command(BaseCommand):
                 except ObjectDoesNotExist:
                     # 新規業種が出てきたタイミングで登録できないのは m_symbol.industry_class を人間が決める必要があるからです
                     message = f"{market_data_row.industry_title} が業種マスタに存在しないため {market_data_row.code} が処理対象外になりました"
-                    log_service.write(message)
+                    print(message)
                     continue
 
                 # STEP2: Symbol table に存在チェック
@@ -99,7 +96,7 @@ class Command(BaseCommand):
                     message = (
                         f"{market_data_row.code} {market_data_row.name} を追加しました"
                     )
-                    log_service.write(message)
+                    print(message)
                 else:
                     # 既存先でも会社名が変わっていることがある
                     symbol = m_symbol_list.get(code=market_data_row.code)
@@ -124,4 +121,4 @@ class Command(BaseCommand):
 
             total_rows = len(market_data_rows) + skip_count
             final_message = f"{market.code}の処理が完了しました。全{total_rows}件中{processed_count}件が処理されました（スキップ{skip_count}件）"
-            log_service.write(final_message)
+            print(final_message)
