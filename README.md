@@ -109,6 +109,7 @@ python manage.py loaddata .\taxonomy\fixtures\henGroup.json
 python manage.py loaddata .\taxonomy\fixtures\jma_weather_code.json
 python manage.py loaddata .\taxonomy\fixtures\eggLedger.json
 python manage.py loaddata .\hospital\fixtures\user.json
+python manage.py loaddata .\hospital\fixtures\member.json
 python manage.py loaddata .\hospital\fixtures\ward.json
 python manage.py loaddata .\hospital\fixtures\city.json
 python manage.py loaddata .\hospital\fixtures\election.json
