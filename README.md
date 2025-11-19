@@ -144,7 +144,6 @@ sudo mkdir -p /var/www/html/portfolio/static
 sudo mkdir -p /var/www/html/portfolio/media/logs
 sudo mkdir -p /var/www/html/portfolio/media/vietnam_research/charts
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
-sudo chown -R www-data:www-data /var/www/html/portfolio/media
 sudo chmod -R 755 /var/www/html/portfolio
 sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
 sudo chmod 775 /var/www/html/portfolio/ai_agent
