@@ -136,10 +136,10 @@ python manage.py runserver
 
 ```commandline
 cd /var/www/html/portfolio
-sudo git fetch --prune origin
+git fetch --prune origin
+sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo git reset --hard origin/master
 sudo git clean -fd
-sudo find . -name "*.log" -delete 
 sudo mkdir -p /var/www/html/portfolio/static
 sudo mkdir -p /var/www/html/portfolio/media/logs
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
