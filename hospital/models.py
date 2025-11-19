@@ -72,6 +72,7 @@ class Member(models.Model):
               コード内では Member.Role.STAFF のように英語定数を使用。
               DB には "staff" が保存され、表示には get_role_display() で「病院スタッフ」が返される。
         """
+
         STAFF = "staff", "病院スタッフ"
         PATIENT = "patient", "患者"
 
