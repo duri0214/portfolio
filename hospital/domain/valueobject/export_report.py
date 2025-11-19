@@ -115,7 +115,7 @@ class VotingManagementListRow(AbstractRow):
         if self.ledger.vote_observer is None:
             return "（未記入）"
         else:
-            return self.ledger.vote_observer.username
+            return self.ledger.vote_observer.user.username
 
     @property
     def applied_for_proxy_voting(self) -> str:
