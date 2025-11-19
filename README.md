@@ -142,10 +142,11 @@ sudo git reset --hard origin/master
 sudo git clean -fd
 sudo mkdir -p /var/www/html/portfolio/static
 sudo mkdir -p /var/www/html/portfolio/media/logs
+sudo mkdir -p /var/www/html/portfolio/media/vietnam_research/charts
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
-sudo chown -R www-data:www-data /var/www/html/portfolio/media /var/www/html/portfolio/media/logs
+sudo chown -R www-data:www-data /var/www/html/portfolio/media
 sudo chmod -R 755 /var/www/html/portfolio
-sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/media/logs /var/www/html/portfolio/static
+sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
 sudo chmod 775 /var/www/html/portfolio/ai_agent
 source /var/www/html/venv/bin/activate
 python manage.py collectstatic --noinput
