@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.auth.models import User
 
 from hospital.models import (
     ElectionLedger,
@@ -8,6 +7,7 @@ from hospital.models import (
     CitySector,
     BILLING_METHOD_CHOICES,
     VotePlace,
+    Member,
 )
 
 
@@ -18,11 +18,8 @@ class ElectionLedgerCreateForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-control", "tabindex": "1"}),
     )
 
-    patient_ids = User.objects.filter(groups__name__in=["患者"]).values_list(
-        "id", flat=True
-    )
     voter = forms.ModelChoiceField(
-        queryset=User.objects.filter(id__in=patient_ids),
+        queryset=Member.objects.filter(role=Member.Role.PATIENT),
         label="選挙人氏名*",
         widget=forms.Select(attrs={"class": "form-control", "tabindex": "2"}),
     )
@@ -91,12 +88,8 @@ class ElectionLedgerCreateForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-control", "tabindex": "11"}),
     )
 
-    vote_observer_ids = User.objects.filter(groups__name__in=["看護師"]).values_list(
-        "id", flat=True
-    )
-
     vote_observer = forms.ModelChoiceField(
-        queryset=User.objects.filter(id__in=vote_observer_ids),
+        queryset=Member.objects.filter(role=Member.Role.STAFF),
         label="投票立会人",
         required=False,
         widget=forms.Select(attrs={"class": "form-control", "tabindex": "12"}),
