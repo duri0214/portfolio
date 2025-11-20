@@ -142,17 +142,19 @@ git fetch --prune origin
 sudo git reset --hard origin/master
 sudo git clean -fd
 
-# 権限整理 基本は書き込み禁止（755）にして、Web 実行ユーザー（www-data）が media/ と static/ に書き込める
+# ubuntu が collectstatic できるように、まず基本権限を整理
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo chmod -R 755 /var/www/html/portfolio
-sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
 
 # 仮想環境
 source /var/www/html/venv/bin/activate
 
-# Django メンテ処理
+# Django メンテ処理（ここで static/ が生成される）
 python manage.py collectstatic --noinput
 python manage.py clearsessions
+
+# static/ と media/ が確実に存在するタイミングで 775 を適用
+sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
 
 # Apache
 sudo systemctl restart apache2
