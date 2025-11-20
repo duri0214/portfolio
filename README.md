@@ -229,16 +229,6 @@ python manage.py monthly_cleanup_linebot_engine
 - 何段目の何列目にあるかも登録できる
 - 請求書をつくることもできる
 
-## taxonomy
-
-- [仕様書](docs/taxonomy/specification.md)
-- 興味のある動物の分類を関係図に表示
-- タグ付けをして分析のサポートができる
-
-### master data
-
-- `python manage.py weather_generate_code_fixture_taxonomy` のバッチをまわす（fixtureが変更されたときのみ実行）
-
 ## soil analysis
 
 ### master data
@@ -265,6 +255,16 @@ python manage.py hardness_generate_dummy_csv --num_fields 20
 #### 利用可能なオプション
 
 - `--num_fields` - 生成する圃場数（デフォルト: 1）
+
+## taxonomy
+
+- [仕様書](docs/taxonomy/specification.md)
+- 興味のある動物の分類を関係図に表示
+- タグ付けをして分析のサポートができる
+
+### master data
+
+- `python manage.py weather_generate_code_fixture_taxonomy` のバッチをまわす（fixtureが変更されたときのみ実行）
 
 ## securities
 
