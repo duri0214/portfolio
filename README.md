@@ -134,22 +134,27 @@ python manage.py runserver
   
 - 事前チェック: `.env` 作成済み・DB migrate 最新か
 
-```commandline
+```bash
 cd /var/www/html/portfolio
+
+# Git 更新
 git fetch --prune origin
-sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo git reset --hard origin/master
 sudo git clean -fd
-sudo mkdir -p /var/www/html/portfolio/static
-sudo mkdir -p /var/www/html/portfolio/media/logs
-sudo mkdir -p /var/www/html/portfolio/media/vietnam_research/charts
+
+# 権限整理 基本は書き込み禁止（755）にして、Web 実行ユーザー（www-data）が media/ と static/ に書き込める
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo chmod -R 755 /var/www/html/portfolio
 sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
-sudo chmod 775 /var/www/html/portfolio/ai_agent
+
+# 仮想環境
 source /var/www/html/venv/bin/activate
+
+# Django メンテ処理
 python manage.py collectstatic --noinput
 python manage.py clearsessions
+
+# Apache
 sudo systemctl restart apache2
 sudo tail -n 200 /var/log/apache2/error.log
 ```
@@ -157,6 +162,8 @@ sudo tail -n 200 /var/log/apache2/error.log
 メモ
 - `git clean -fd`: 未追跡を削除（f=強制, d=ディレクトリ）
 - `-R` は再帰、`ubuntu:www-data` は ubuntu ユーザー・www-data グループ
+- 755 … 所有者は読み書き実行、グループとその他は読み＋実行（＝ディレクトリ閲覧できるが書けない）
+- 775 … 所有者とグループは読み書き実行、その他は読み＋実行（＝www-data も書き込み可能にする）
 
 主に securities が ZIP を保存するために必要な設定
 exists の確認には実行権限 (x) が必要なため、必要なら実施
