@@ -4,11 +4,16 @@ from pathlib import Path
 from typing import Generator
 
 from dotenv import load_dotenv
-from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
-from langchain.prompts import ChatPromptTemplate
-from langchain_chroma import Chroma
-from langchain_openai import ChatOpenAI
-from langchain_openai import OpenAIEmbeddings
+
+# TODO(langchain-removal):
+# LangChain 依存は隔離ゾーン経由に限定。新規コードでの直接利用は禁止。
+from lib.rag_core.langchain_impl import (
+    RetrievalQAWithSourcesChain,
+    ChatPromptTemplate,
+    Chroma,
+    ChatOpenAI,
+    OpenAIEmbeddings,
+)
 from openai import OpenAI
 from openai.types import ImagesResponse
 from openai.types.chat import ChatCompletion
