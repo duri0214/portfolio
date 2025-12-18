@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 # TODO(langchain-removal):
 # LangChain 直接依存の隔離。新規コードは使用禁止。
 # 代わりに OpenAI-direct 実装へ段階的に移行予定。
-from lib.rag_core.langchain_impl import (
+from lib.llm.rag_core.langchain_impl import (
     Document,
     PyPDFLoader,
     RecursiveCharacterTextSplitter,

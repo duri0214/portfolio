@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 # TODO(langchain-removal):
 # LangChain 依存は隔離ゾーン経由に限定。新規コードでの直接利用は禁止。
-from lib.rag_core.langchain_impl import (
+from lib.llm.rag_core.langchain_impl import (
     RetrievalQAWithSourcesChain,
     ChatPromptTemplate,
     Chroma,
