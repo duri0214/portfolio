@@ -363,7 +363,7 @@ class OpenAILlmSpeechToText(LlmService):
             )
 
 
-class OpenAILlmRagService:
+class OpenAILlmRagService(LlmService):
     """OpenAI SDK 直接利用のシンプルな RAG 実装。
 
     - 埋め込み: OpenAI Embeddings API（デフォルト: text-embedding-3-small）
@@ -384,6 +384,7 @@ class OpenAILlmRagService:
         embedding_model: str = "text-embedding-3-small",
         system_template: str | None = None,
     ) -> None:
+        super().__init__()
         self.model = model
         self.api_key = api_key
         self.n_results = n_results
