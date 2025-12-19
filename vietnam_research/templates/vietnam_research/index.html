@@ -350,8 +350,13 @@
 
                                 <dt class="col-sm-5">レート</dt>
                                 <dd class="col-sm-7 text-end">
-                                    <span>{{ exchanged.rate | floatformat:2 }}</span>
-                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">JPY/VND</span>
+                                    {% if exchanged.rate %}
+                                        <span>{{ exchanged.rate | floatformat:2 }}</span>
+                                        <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">JPY/VND</span>
+                                    {% else %}
+                                        <span class="text-danger">取得失敗</span>
+                                        <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">JPY/VND</span>
+                                    {% endif %}
                                 </dd>
                             </dl>
                         </div>

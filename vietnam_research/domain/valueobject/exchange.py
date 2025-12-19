@@ -24,7 +24,7 @@ class ExchangeProcess:
     ):
         self.budget_jpy = budget_jpy
         self.rate = rate
-        self.budget_in_target_currency = budget_jpy * rate
+        self.budget_in_target_currency = budget_jpy * rate if rate else 0
         self.unit_price = unit_price
         self.purchasable_units = purchasable_units
         self.price_no_fee = unit_price * purchasable_units
