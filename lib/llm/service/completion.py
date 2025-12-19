@@ -4,14 +4,6 @@ from pathlib import Path
 from typing import Any, Generator, Iterable, Sequence
 
 from dotenv import load_dotenv
-
-# TODO(langchain-removal):
-# Replace LangChain-based logic with OpenAI-direct implementation.
-from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
-from langchain.prompts import ChatPromptTemplate
-from langchain_chroma import Chroma
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-
 from openai import OpenAI
 from openai.types import ImagesResponse
 from openai.types.chat import ChatCompletion
@@ -20,7 +12,6 @@ from openai.types.responses import EasyInputMessageParam
 from config.settings import MEDIA_ROOT
 from lib.llm.valueobject.completion import Message, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
-from lib.llm.valueobject.rag import PdfDataloader
 
 # .env ファイルを読み込む
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -372,104 +363,7 @@ class OpenAILlmSpeechToText(LlmService):
             )
 
 
-class OpenAILlmRagService(LlmService):
-    """
-    OpenAIモデルを使用した検索拡張生成（RAG）サービス。
-    PDFなどのドキュメントに基づいた質問応答を実現します。
-
-    See Also: https://python.langchain.com/docs/how_to/qa_sources/
-    """
-
-    def __init__(
-        self,
-        config: OpenAIGptConfig,
-        dataloader: PdfDataloader,
-        n_results: int = 3,
-        embedding_model: str = "text-embedding-3-large",
-    ):
-        super().__init__()
-        self.config = config
-        self.dataloader = dataloader
-        self.n_results = n_results
-        self.embedding_model = embedding_model
-
-        # プロンプトテンプレートの設定
-        self.system_template = """
-            以下の資料の注意点を念頭に置いて回答してください
-            ・ユーザの質問に対して、できる限り根拠を示してください
-            ・箇条書きで簡潔に回答してください。
-            ---下記は資料の内容です---
-            {summaries}
-
-            Answer in Japanese:
-        """
-        messages = [
-            ("system", self.system_template),
-            ("human", "{question}"),
-        ]
-        self.prompt_template = ChatPromptTemplate.from_messages(messages)
-
-    def _create_vectorstore(self) -> Chroma:
-        """
-        エンベディングとドキュメントを使用してベクトルストアを作成します。
-
-        Note:
-            ChromaDBのテレメトリー機能で "capture() takes 1 positional argument but 3 were given"
-            エラーが発生する既知のバグがあります。
-            docs: https://docs.trychroma.com/docs/overview/telemetry
-            関連issue: https://github.com/chroma-core/chroma/issues/2640
-
-        Returns:
-            Chroma: 作成されたベクトルストア
-        """
-        if not self.dataloader or not self.dataloader.data:
-            raise ValueError("Dataloader must contain valid documents")
-
-        embeddings = OpenAIEmbeddings(model=self.embedding_model)
-
-        return Chroma.from_documents(
-            documents=self.dataloader.data,
-            embedding=embeddings,
-            persist_directory="./chroma_db",  # 永続化ディレクトリを指定
-        )
-
-    def retrieve_answer(self, message: Message) -> dict:
-        """
-        与えられたメッセージに基づいて、ドキュメントから関連情報を検索し回答を生成します。
-
-        Args:
-            message (Message): 質問を含むメッセージ
-
-        Returns:
-            dict: 回答と使用されたソースドキュメントを含む辞書
-        """
-        if not message or not message.content:
-            raise ValueError("Message content cannot be empty for RAG query")
-
-        # ベクトルストアの作成または再利用
-        embeddings = OpenAIEmbeddings(model=self.embedding_model)
-        docsearch = Chroma.from_texts(
-            texts=[x.page_content for x in self.dataloader.data],
-            embedding=embeddings,
-            metadatas=[x.metadata for x in self.dataloader.data],
-        )
-
-        # LLMチェーンの作成
-        chain = RetrievalQAWithSourcesChain.from_chain_type(
-            llm=ChatOpenAI(model=self.config.model, api_key=self.config.api_key),
-            chain_type="stuff",
-            reduce_k_below_max_tokens=True,
-            return_source_documents=True,
-            retriever=docsearch.as_retriever(search_kwargs={"k": self.n_results}),
-            chain_type_kwargs={"prompt": self.prompt_template},
-        )
-
-        return chain.invoke({"question": message.content})
-
-
-# TODO(llm-service-integration):
-# OpenAIDirectRag will replace OpenAILlmRagService in a future update.
-class OpenAIDirectRag:
+class OpenAILlmRagService:
     """OpenAI SDK 直接利用のシンプルな RAG 実装。
 
     - 埋め込み: OpenAI Embeddings API（デフォルト: text-embedding-3-small）
@@ -496,7 +390,7 @@ class OpenAIDirectRag:
         self.embedding_model = embedding_model
         self._client = OpenAI(api_key=self.api_key)
 
-        # ドキュメントは LangChain の Document 互換（page_content, metadata）であることを想定。
+        # ドキュメントは page_content, metadata を持つことを想定。
         self._docs: list[Any] = list(documents or [])
         self._embeddings: list[list[float]] = []
 
