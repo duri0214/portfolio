@@ -14,7 +14,6 @@ class TestPdfDataloader(TestCase):
 
         dataloader = PdfDataloader(str(file_path))
         self.assertEqual(18, len(dataloader.pages))
-        print(dataloader.data)
 
     def test_this_pdf_has_pages_jp(self):
         file_path = (
@@ -23,4 +22,3 @@ class TestPdfDataloader(TestCase):
         )
         dataloader = PdfDataloader(str(file_path))
         self.assertEqual(6, len(dataloader.pages))
-        print(dataloader.data)

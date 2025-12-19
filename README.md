@@ -28,9 +28,8 @@ python manage.py makemigrations vietnam_research gmarker shopping linebot_engine
 CSV ファイルを Django フィクスチャ JSON 形式に変換します。
 このコマンドは `convert_csv_to_fixture.py` スクリプトが配置されているディレクトリ内のすべてのCSVファイルをフィクスチャに変換します。
 JSON の「model」フィールドはCSVファイル名によって決まります。
-- CSVファイル名のアンダースコアはドットに置き換えられます
-- CSVファイル名は2つのセクションに分ける必要があります
-- 例: `hospital_cityGroup.csv`
+- CSVファイル名は2つのセクションをアンダースコアで繋ぐ必要があります（アンダースコアはドットに変換されます）
+- 例: `hospital_cityGroup.csv`（`hospital.cityGroup` というモデル名になります）
 
 ```
 python manage.py convert_csv_to_fixture
@@ -172,20 +171,36 @@ exists の確認には実行権限 (x) が必要なため、必要なら実施
 
 ## vietnam_research
 
-`daily_industry_chart_and_uptrend` は 各期間（14日、7日、3日）を遡り、 すべての期間の株価が上昇傾向（斜度が正）であれば passed
-がインクリメントされる。つまり時系列データがないと画像は保存されない
+ベトナムの株価分析や統計データの可視化を行うアプリです。
 
-- ベトナムの株価を分析
-    - `python manage.py daily_import_from_bloomberg` のバッチをまわす
-    - `python manage.py daily_import_from_sbi` のバッチをまわす
-    - `python manage.py daily_import_from_vietkabu` のバッチをまわす
-    - `python manage.py generate_industry_dummy_data --clear`  のバッチをまわす
-    - `python manage.py daily_industry_chart_and_uptrend` のバッチをまわす
-    - `python manage.py daily_industry_stacked_bar_chart` のバッチをまわす
-- FAOから水産物供給量の推移グラフ
-    - `python manage.py monthly_fao_food_balance_chart` のバッチをまわす
-- ベトナムの統計局から経済指標
-    - `python manage.py monthly_vietnam_statistics` のバッチをまわす
+### 株価の上昇傾向判定 (`daily_industry_chart_and_uptrend`)
+各期間（14日、7日、3日）を遡り、すべての期間で株価が上昇傾向（回帰直線の傾きが正）であれば `passed` をインクリメントします。
+時系列データが存在しない場合は画像が保存されません。
+
+### 実行コマンド
+
+#### ベトナム株価分析
+```bash
+# 各種データインポート
+python manage.py daily_import_from_bloomberg
+python manage.py daily_import_from_sbi
+python manage.py daily_import_from_vietkabu
+
+# 分析用データ生成・チャート作成
+python manage.py generate_industry_dummy_data --clear
+python manage.py daily_industry_chart_and_uptrend
+python manage.py daily_industry_stacked_bar_chart
+```
+
+#### FAO 水産物供給量グラフ
+```bash
+python manage.py monthly_fao_food_balance_chart
+```
+
+#### ベトナム統計局 経済指標
+```bash
+python manage.py monthly_vietnam_statistics
+```
 
 ## gmarker
 
@@ -338,12 +353,12 @@ sequenceDiagram
 ### 機能
 
 - 福祉事務所の検索・閲覧
-- 空き状況の確認（信号機表示で直感的に把握）
-- 地図上での福祉事務所の場所確認
-- 空き状況の履歴表示による傾向把握
-- 月別の空き状況入力（バックデート対応）
+- 空き状況の確認（信号機表示による視覚的な把握）
+- 地図上での所在地確認
+- 過去の空き状況履歴による傾向把握
+- 月別空き状況の入力（過去データへの遡り入力に対応）
 - 施設情報の詳細表示
-- 東京都オープンデータAPIからの情報取得
+- 東京都オープンデータ API を活用した最新情報の取得
 
 ```bash
 # 初期データの取得（東京都APIから）

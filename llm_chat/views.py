@@ -64,7 +64,7 @@ class SyncResponseView(View):
                     config = GeminiConfig(
                         api_key=os.getenv("GEMINI_API_KEY"),
                         max_tokens=4000,
-                        model="gemini-1.5-flash",
+                        model="gemini-2.5-flash",
                     )
                 else:
                     config = OpenAIGptConfig(

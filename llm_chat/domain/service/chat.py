@@ -20,7 +20,7 @@ from lib.llm.service.completion import (
 )
 from lib.llm.valueobject.completion import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
-from lib.llm.valueobject.rag import PdfDataloader, RetrievalQAWithSourcesChainAnswer
+from lib.llm.valueobject.rag import PdfDataloader
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.valueobject.chat import MessageDTO, Gender
 
@@ -114,10 +114,6 @@ class BaseChatService(ABC):
     @abstractmethod
     def generate(self, **kwargs):
         pass
-
-
-
-
 
 
 class ChatService(BaseChatService):
@@ -322,16 +318,18 @@ class OpenAIRagChatService(BaseChatService):
         # Step1: User の質問を保存
         ChatLogRepository.insert(user_message)
 
-        # Step2: langchainからの回答を保存
+        # Step2: 回答を取得
         file_path = (
             Path(BASE_DIR)
             / "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
         )
+        dataloader = PdfDataloader(str(file_path))
         response_dict = OpenAILlmRagService(
-            config=self.config,
-            dataloader=PdfDataloader(str(file_path)),
+            model=self.config.model,
+            api_key=self.config.api_key,
+            documents=dataloader.data,
         ).retrieve_answer(user_message.to_message())
 
         user_message.role = RoleType.ASSISTANT
-        user_message.content = RetrievalQAWithSourcesChainAnswer(**response_dict).answer
+        user_message.content = response_dict["answer"]
         return user_message
