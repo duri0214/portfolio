@@ -51,7 +51,12 @@ class ExchangeService:
             unit_price: 単価
         """
         # Get exchange rates
-        rate = ExchangeService.get_rate(base_cur=budget.code, dest_cur=unit_price.code)
+        try:
+            rate = ExchangeService.get_rate(
+                base_cur=budget.code, dest_cur=unit_price.code
+            )
+        except ObjectDoesNotExist:
+            return 0
 
         # Convert budget to unit price currency
         budget_in_dest_cur = budget.amount * rate

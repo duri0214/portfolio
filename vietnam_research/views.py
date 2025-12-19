@@ -4,6 +4,7 @@ import logging
 from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Sum
 from django.http.response import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
@@ -67,9 +68,12 @@ class IndexView(TemplateView):
         # contextを用意
         context = super().get_context_data(**kwargs)
         exchange_service = ExchangeService()
-        rate = exchange_service.get_rate(
-            base_cur="JPY", dest_cur="VND"
-        )  # TODO: 例外処理
+        try:
+            rate = exchange_service.get_rate(base_cur="JPY", dest_cur="VND")
+        except ObjectDoesNotExist:
+            logging.warning("為替レート(JPY-VND)が取得できませんでした。")
+            rate = None
+
         purchasable_units = exchange_service.calc_purchase_units(
             budget=Currency(code="JPY", amount=budget),
             unit_price=Currency(code="VND", amount=unit_price),
