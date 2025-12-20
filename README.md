@@ -1,372 +1,241 @@
 # Portfolio
 
-![Static Badge](https://img.shields.io/badge/python-3.12-green)
-![Static Badge](https://img.shields.io/badge/django-5.1-green)
-![Static Badge](https://img.shields.io/badge/mysql-8.0-green)
+Django(Python)を用いた、各種データ分析・可視化ツールのポートフォリオです。
 
-## ライブラリをインストールする
+![Python 3.12](https://img.shields.io/badge/python-3.12-green)
+![Django 5.1](https://img.shields.io/badge/django-5.1-green)
+![MySQL 8.0](https://img.shields.io/badge/mysql-8.0-green)
 
+---
+
+## 1. セットアップ
+
+### ライブラリのインストール
 ```console
 pip install -r requirements.txt
-
--- ※開発時 現在のライブラリの状態でrequirementsを書き出す
-pip freeze > requirements.txt
 ```
 
-## migrate
-サーバにデプロイするときは makemigrations は基本的に必要ない
-
-```
+### データベースの構築 (Migration)
+```bash
+# データベースのマイグレーション
 python manage.py migrate
 
--- ※開発時 デプロイするときは必要ない
-python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks welfare_services
+# ※開発時（モデル変更時）のみ実行
+# python manage.py makemigrations vietnam_research gmarker shopping linebot_engine rental_shop taxonomy soil_analysis securities hospital llm_chat ai_agent jp_stocks welfare_services
 ```
 
-## fixture
-### `convert_csv_to_fixture` バッチ
-CSV ファイルを Django フィクスチャ JSON 形式に変換します。
-このコマンドは `convert_csv_to_fixture.py` スクリプトが配置されているディレクトリ内のすべてのCSVファイルをフィクスチャに変換します。
-JSON の「model」フィールドはCSVファイル名によって決まります。
-- CSVファイル名は2つのセクションをアンダースコアで繋ぐ必要があります（アンダースコアはドットに変換されます）
-- 例: `hospital_cityGroup.csv`（`hospital.cityGroup` というモデル名になります）
+---
 
-```
-python manage.py convert_csv_to_fixture
-```
+## 2. 初期データ投入 (Fixture & Initial Batches)
 
-### `loaddata` するにあたっての注意事項
-- createsuperuser を実行してください
-    - `1` のidを作らないと失敗するfixtureがある(vietnam_research)
-- `auth_user` の seeder はそれぞれのアプリごとにわけて作ってある
-- `auth_user` の初期パスワードは `test#1234`
+データの実行順序は重要です。以下の手順に従って投入してください。
 
-### 各種 `loaddata` コマンド
-```
--- portfolio_db をつくった直後はスーパーユーザーが作成する
+### スーパーユーザーの作成
+```bash
 python manage.py createsuperuser
+# ※ ID '1' のユーザーを作成してください
+# （vietnam_research や shopping 等の一部の fixture が、作成者/管理者として user_id: 1 に依存しています）
 ```
 
-```
--- サーバで実行するときはバッククォートを `/` に置換する
-
-python manage.py loaddata .\vietnam_research\fixtures\group.json
-python manage.py loaddata .\vietnam_research\fixtures\indClass.json
-python manage.py loaddata .\vietnam_research\fixtures\market.json
-python manage.py loaddata .\vietnam_research\fixtures\symbol.json
-python manage.py loaddata .\vietnam_research\fixtures\sbi.json
-python manage.py loaddata .\vietnam_research\fixtures\unit.json
-python manage.py loaddata .\vietnam_research\fixtures\vnIndex.json
-python manage.py loaddata .\vietnam_research\fixtures\articles.json
-python manage.py loaddata .\vietnam_research\fixtures\basicInformation.json
-python manage.py loaddata .\vietnam_research\fixtures\financialResultWatch.json
-python manage.py loaddata .\vietnam_research\fixtures\watchlist.json
-# ここで vietnam_research の バッチをひととおりまわす（具体的には1発industryバッチを回して新顔をマスタに取り入れる）
-python manage.py loaddata .\gmarker\fixtures\place.json
-python manage.py loaddata .\gmarker\fixtures\nearbyPlace.json
-python manage.py loaddata .\shopping\fixtures\store.json
-python manage.py loaddata .\shopping\fixtures\staff.json
-python manage.py loaddata .\shopping\fixtures\product.json
-python manage.py loaddata .\rental_shop\fixtures\warehouse.json
-python manage.py loaddata .\rental_shop\fixtures\staff.json
-python manage.py loaddata .\rental_shop\fixtures\rentalStatus.json
-python manage.py loaddata .\rental_shop\fixtures\company.json
-python manage.py loaddata .\rental_shop\fixtures\billingPerson.json
-python manage.py loaddata .\rental_shop\fixtures\billingStatus.json
-python manage.py loaddata .\rental_shop\fixtures\warehousestaff.json
-python manage.py loaddata .\rental_shop\fixtures\item.json
-python manage.py loaddata .\soil_analysis\fixtures\user.json
-python manage.py loaddata .\soil_analysis\fixtures\companycategory.json
-python manage.py loaddata .\soil_analysis\fixtures\company.json
-python manage.py loaddata .\soil_analysis\fixtures\crop.json
-python manage.py loaddata .\soil_analysis\fixtures\land_block.json
-python manage.py loaddata .\soil_analysis\fixtures\land_period.json
-python manage.py loaddata .\soil_analysis\fixtures\cultivationtype.json
-# ここで soil analysis の master data バッチをまわす
-python manage.py loaddata .\soil_analysis\fixtures\jma_weather_code.json
-python manage.py loaddata .\soil_analysis\fixtures\land.json
-# ここ以降で soil analysis の weather data バッチをまわす
-python manage.py loaddata .\soil_analysis\fixtures\samplingmethod.json
-python manage.py loaddata .\soil_analysis\fixtures\samplingorder.json
-python manage.py loaddata .\soil_analysis\fixtures\land_ledger.json
-python manage.py loaddata .\soil_analysis\fixtures\land_review.json
-python manage.py loaddata .\soil_analysis\fixtures\land_score_chemical.json
-python manage.py loaddata .\soil_analysis\fixtures\device.json
-python manage.py loaddata .\taxonomy\fixtures\kingdom.json
-python manage.py loaddata .\taxonomy\fixtures\phylum.json
-python manage.py loaddata .\taxonomy\fixtures\classification.json
-python manage.py loaddata .\taxonomy\fixtures\family.json
-python manage.py loaddata .\taxonomy\fixtures\genus.json
-python manage.py loaddata .\taxonomy\fixtures\species.json
-python manage.py loaddata .\taxonomy\fixtures\naturalMonument.json
-python manage.py loaddata .\taxonomy\fixtures\tag.json
-python manage.py loaddata .\taxonomy\fixtures\breed.json
-python manage.py loaddata .\taxonomy\fixtures\breedTags.json
-python manage.py loaddata .\taxonomy\fixtures\feedGroup.json
-python manage.py loaddata .\taxonomy\fixtures\henGroup.json
-# ここで taxonomy の master data バッチをまわす
-python manage.py loaddata .\taxonomy\fixtures\jma_weather_code.json
-python manage.py loaddata .\taxonomy\fixtures\eggLedger.json
-python manage.py loaddata .\hospital\fixtures\user.json
-python manage.py loaddata .\hospital\fixtures\member.json
-python manage.py loaddata .\hospital\fixtures\ward.json
-python manage.py loaddata .\hospital\fixtures\city.json
-python manage.py loaddata .\hospital\fixtures\election.json
-python manage.py loaddata .\hospital\fixtures\userattribute.json
-python manage.py loaddata .\hospital\fixtures\voteplace.json
-python manage.py loaddata .\ai_agent\fixtures\entity.json
-python manage.py loaddata .\ai_agent\fixtures\guardrail_config.json
-python manage.py loaddata .\ai_agent\fixtures\rag_material.json
-```
-
-## サーバを動かす
-
-```
-python manage.py runserver
-```
-
-## 本番サーバメンテナンスコマンド
-
-- 実行ユーザーの役割（混乱しやすいので最小限に明記）
-  - ubuntu: Git 操作、`collectstatic` 実行（＝`static/` へ書き込み）
-  - www-data: Web 実行ユーザー（Apache）。`media/` と `media/logs/` へ書き込み
-  
-- 事前チェック: `.env` 作成済み・DB migrate 最新か
+### データのインポート手順
+各アプリの Fixture と初期化バッチを、以下の順序で実行してください。
+※ 備忘録：配布用 fixture (*/user.json) のパスワード実体は test#1234 です
+※ サーバ（Ubuntu/Linux）で実行する場合は、パス区切り文字の `\` を `/` に置換して実行してください。
 
 ```bash
-cd /var/www/html/portfolio
+# --- Vietnam Research ---
+python manage.py loaddata vietnam_research\fixtures\group.json
+python manage.py loaddata vietnam_research\fixtures\indClass.json
+python manage.py loaddata vietnam_research\fixtures\market.json
+python manage.py loaddata vietnam_research\fixtures\symbol.json
+python manage.py loaddata vietnam_research\fixtures\sbi.json
+python manage.py loaddata vietnam_research\fixtures\unit.json
+python manage.py loaddata vietnam_research\fixtures\vnIndex.json
+python manage.py loaddata vietnam_research\fixtures\articles.json
+python manage.py loaddata vietnam_research\fixtures\basicInformation.json
+python manage.py loaddata vietnam_research\fixtures\financialResultWatch.json
+python manage.py loaddata vietnam_research\fixtures\watchlist.json
 
-# Git 更新
-git fetch --prune origin
-sudo git reset --hard origin/master
-sudo git clean -fd
-
-# ubuntu が collectstatic できるように、まず基本権限を整理
-sudo chown -R ubuntu:www-data /var/www/html/portfolio
-sudo chmod -R 755 /var/www/html/portfolio
-
-# 仮想環境
-source /var/www/html/venv/bin/activate
-
-# Django メンテ処理（ここで static/ が生成される）
-python manage.py collectstatic --noinput
-python manage.py clearsessions
-
-# static/ と media/ が確実に存在するタイミングで 775 を適用
-sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
-
-# Apache
-sudo systemctl restart apache2
-sudo tail -n 200 /var/log/apache2/error.log
-```
-
-メモ
-- `git clean -fd`: 未追跡を削除（f=強制, d=ディレクトリ）
-- `-R` は再帰、`ubuntu:www-data` は ubuntu ユーザー・www-data グループ
-- 755 … 所有者は読み書き実行、グループとその他は読み＋実行（＝ディレクトリ閲覧できるが書けない）
-- 775 … 所有者とグループは読み書き実行、その他は読み＋実行（＝www-data も書き込み可能にする）
-
-主に securities が ZIP を保存するために必要な設定
-exists の確認には実行権限 (x) が必要なため、必要なら実施
-
-## vietnam_research
-
-ベトナムの株価分析や統計データの可視化を行うアプリです。
-
-### 株価の上昇傾向判定 (`daily_industry_chart_and_uptrend`)
-各期間（14日、7日、3日）を遡り、すべての期間で株価が上昇傾向（回帰直線の傾きが正）であれば `passed` をインクリメントします。
-時系列データが存在しない場合は画像が保存されません。
-
-### 実行コマンド
-
-#### ベトナム株価分析
-```bash
-# 各種データインポート
+# ここで vietnam_research の 各種データインポートバッチをまわす
 python manage.py daily_import_from_bloomberg
 python manage.py daily_import_from_sbi
 python manage.py daily_import_from_vietkabu
 
 # 分析用データ生成・チャート作成
+# ※ --clear は初期データ用です。移行などで既にデータがある場合は実行不要です。
 python manage.py generate_industry_dummy_data --clear
 python manage.py daily_industry_chart_and_uptrend
 python manage.py daily_industry_stacked_bar_chart
-```
 
-#### FAO 水産物供給量グラフ
-```bash
+# FAO 水産物供給量グラフ / ベトナム統計局 経済指標
 python manage.py monthly_fao_food_balance_chart
-```
-
-#### ベトナム統計局 経済指標
-```bash
 python manage.py monthly_vietnam_statistics
+
+# --- GMarker ---
+python manage.py loaddata gmarker\fixtures\place.json
+python manage.py loaddata gmarker\fixtures\nearbyPlace.json
+
+# --- Shopping ---
+python manage.py loaddata shopping\fixtures\store.json
+python manage.py loaddata shopping\fixtures\staff.json
+python manage.py loaddata shopping\fixtures\product.json
+
+# --- Rental Shop (Warehouse) ---
+python manage.py loaddata rental_shop\fixtures\warehouse.json
+python manage.py loaddata rental_shop\fixtures\staff.json
+python manage.py loaddata rental_shop\fixtures\rentalStatus.json
+python manage.py loaddata rental_shop\fixtures\company.json
+python manage.py loaddata rental_shop\fixtures\billingPerson.json
+python manage.py loaddata rental_shop\fixtures\billingStatus.json
+python manage.py loaddata rental_shop\fixtures\warehousestaff.json
+python manage.py loaddata rental_shop\fixtures\item.json
+
+# --- Soil Analysis ---
+python manage.py loaddata soil_analysis\fixtures\user.json
+python manage.py loaddata soil_analysis\fixtures\companycategory.json
+python manage.py loaddata soil_analysis\fixtures\company.json
+python manage.py loaddata soil_analysis\fixtures\crop.json
+python manage.py loaddata soil_analysis\fixtures\land_block.json
+python manage.py loaddata soil_analysis\fixtures\land_period.json
+python manage.py loaddata soil_analysis\fixtures\cultivationtype.json
+
+# ここで soil analysis の master data バッチをまわす
+python manage.py weather_load_const_master
+python manage.py weather_generate_code_fixture_soil  # fixtureが変更されたときのみ実行
+python manage.py weather_download_code_icon         # svgが変更されたときのみ実行
+
+python manage.py loaddata soil_analysis\fixtures\jma_weather_code.json
+python manage.py loaddata soil_analysis\fixtures\land.json
+
+# ここ以降で soil analysis の 気象データ取得バッチをまわす
+python manage.py weather_fetch_forecast
+python manage.py weather_fetch_warning
+
+python manage.py loaddata soil_analysis\fixtures\samplingmethod.json
+python manage.py loaddata soil_analysis\fixtures\samplingorder.json
+python manage.py loaddata soil_analysis\fixtures\land_ledger.json
+python manage.py loaddata soil_analysis\fixtures\land_review.json
+python manage.py loaddata soil_analysis\fixtures\land_score_chemical.json
+python manage.py loaddata soil_analysis\fixtures\device.json
+
+# --- Taxonomy ---
+python manage.py loaddata taxonomy\fixtures\kingdom.json
+python manage.py loaddata taxonomy\fixtures\phylum.json
+python manage.py loaddata taxonomy\fixtures\classification.json
+python manage.py loaddata taxonomy\fixtures\family.json
+python manage.py loaddata taxonomy\fixtures\genus.json
+python manage.py loaddata taxonomy\fixtures\species.json
+python manage.py loaddata taxonomy\fixtures\naturalMonument.json
+python manage.py loaddata taxonomy\fixtures\tag.json
+python manage.py loaddata taxonomy\fixtures\breed.json
+python manage.py loaddata taxonomy\fixtures\breedTags.json
+python manage.py loaddata taxonomy\fixtures\feedGroup.json
+python manage.py loaddata taxonomy\fixtures\henGroup.json
+
+# ここで taxonomy の master data バッチ（気象コード等）をまわす
+python manage.py weather_generate_code_fixture_taxonomy
+
+python manage.py loaddata taxonomy\fixtures\jma_weather_code.json
+python manage.py loaddata taxonomy\fixtures\eggLedger.json
+
+# --- Hospital / AI Agent ---
+python manage.py loaddata hospital\fixtures\user.json
+python manage.py loaddata hospital\fixtures\member.json
+python manage.py loaddata hospital\fixtures\ward.json
+python manage.py loaddata hospital\fixtures\city.json
+python manage.py loaddata hospital\fixtures\election.json
+python manage.py loaddata hospital\fixtures\userattribute.json
+python manage.py loaddata hospital\fixtures\voteplace.json
+
+python manage.py loaddata ai_agent\fixtures\entity.json
+python manage.py loaddata ai_agent\fixtures\guardrail_config.json
+python manage.py loaddata ai_agent\fixtures\rag_material.json
 ```
 
-## gmarker
+---
 
-- google map api を使って、マーカーを操作できる
-- [Google Cloud Platform コンソール](https://console.cloud.google.com/)でAPIキーを設定する際の注意点:
-    - バックエンド用APIキー(`GOOGLE_MAPS_BE_API_KEY`)にIPアドレス制限を設定する場合、ローカル開発環境の`127.0.0.1`ではなく、
-      **グローバルIPアドレス(IPv6)**（例: `240d:1a:d9:YYYY:XXXX:eab:ZZZZ:42ab`）を設定してください
-    - お使いの開発用PCで、ブラウザを開き「what is my ip」などと検索してください。
-    - これは、ローカルのDjangoサーバー(`http://127.0.0.1:8000`)
-      からGoogleのAPIサーバーにリクエストを送信する際、Google側から見える送信元のIPアドレスはルーターに割り当てられたグローバルIPアドレスとなるためです
+## 3. 本番サーバ メンテナンス手順
 
-## shopping
+サーバ（Ubuntu + Apache）でのデプロイ・更新手順です。
+- 事前チェック: `.env` 作成済み・DB migrate 最新か
 
-- 在庫を登録し、値段・コメントなどの管理ができる
+### 権限構成
+- `ubuntu`: Git操作、`collectstatic` 実行（ソースコード管理・静的ファイル生成）
+- `www-data`: Webサーバ実行ユーザー（`media/`, `media/logs/` への書き込み権限が必要）
 
-## linebot_engine
-
-https://qiita.com/YoshitakaOkada/items/f51f52a8041439a1dbc9#line
-
-- [仕様書](docs/linebot_engine/specification.md)
-- 当時ヘルスチェックを作りたかったらしい
-    - LINE: （朝8時ごろに）元気？
-    - User: 元気です
-    - LINE: 朝ご飯食べた？
-    - User: 食べた
-
-Userが「食べた」と答えた回数を集計して、最近「食べた」と答えなかったらアラート、みたいな
-
-### Clean up バッチ
-LineBot Engine アプリ内の古いデータを月次でクリーンアップする処理
-
-具体的には、LineBotとのやり取りで蓄積されたメッセージログや一時的なユーザーデータなど、古くなった不要なデータを定期的に削除することで、データベースの容量を最適化し、システムのパフォーマンスを維持する目的があります。
-月次で実行することで、データの肥大化を防ぎ、LineBotエンジンが効率的に動作し続けるためのメンテナンス処理となっています。
-```
-python manage.py monthly_cleanup_linebot_engine
-```
-
-## warehouse
-
-- 倉庫とレンタル業務をイメージしたアプリ
-- 何段目の何列目にあるかも登録できる
-- 請求書をつくることもできる
-
-## soil analysis
-
-### master data
-
-- `python manage.py weather_load_const_master` のバッチをまわす
-- `python manage.py weather_generate_code_fixture_soil` のバッチをまわす（fixtureが変更されたときのみ実行）
-- `python manage.py weather_download_code_icon` のバッチをまわす（svgが変更されたときのみ実行）
-
-### weather data
-
-- `python manage.py weather_fetch_forecast` のバッチをまわす
-- `python manage.py weather_fetch_warning` のバッチをまわす
-
-### 土壌硬度計測データ生成
-
-土壌硬度計測器が出力するCSVファイルのテストデータを生成するコマンドです。実際の土壌硬度計（DIK-5531など）が出力するCSVファイルと同様の形式でテストデータを生成します。
-
+### 更新コマンド
 ```bash
-python manage.py hardness_generate_dummy_csv --num_fields 20
+cd /var/www/html/portfolio
+
+# 1. ソースコードの更新
+git fetch --prune origin
+sudo git reset --hard origin/master
+sudo git clean -fd
+
+# 2. 権限の一時調整（ubuntu ユーザーでの作業用）
+sudo chown -R ubuntu:www-data /var/www/html/portfolio
+sudo chmod -R 755 /var/www/html/portfolio
+
+# 3. Django メンテナンス
+source /var/www/html/venv/bin/activate
+python manage.py collectstatic --noinput
+python manage.py clearsessions
+python manage.py migrate
+
+# 4. 書き込みディレクトリの権限設定
+sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
+
+# 5. サービスの再起動
+sudo systemctl restart apache2
+sudo tail -n 200 /var/log/apache2/error.log
 ```
 
-生成したファイルは一時ディレクトリに保存され、パスが実行時に表示されます。
+---
 
-#### 利用可能なオプション
+## 4. 各アプリケーションの機能とバッチ
 
-- `--num_fields` - 生成する圃場数（デフォルト: 1）
+### [vietnam_research] ベトナム株価分析・統計
+ベトナムの株価データや統計指標（FAO、経済指標）の可視化を行います。
+各期間（14日、7日、3日）を遡り、すべての期間で株価が上昇傾向（回帰直線の傾きが正）であれば `passed` をインクリメントします。
+時系列データが存在しない場合は画像が保存されません。
 
-## taxonomy
+- **主要バッチ:**
+  - `daily_import_from_bloomberg / sbi / vietkabu`: 各種データインポート
+  - `generate_industry_dummy_data`: 分析用ダミーデータ生成
+  - `daily_industry_chart_and_uptrend`: 上昇トレンド判定とチャート生成
+  - `daily_industry_stacked_bar_chart`: 業種別積上棒グラフ生成
+  - `monthly_fao_food_balance_chart`: 水産物供給量グラフ生成
+  - `monthly_vietnam_statistics`: ベトナム統計局経済指標の取り込み
 
-- [仕様書](docs/taxonomy/specification.md)
-- 興味のある動物の分類を関係図に表示
-- タグ付けをして分析のサポートができる
+### [soil_analysis] 土壌分析・気象予報
+気象庁データに基づく予報と、土壌計測データの管理を行います。
 
-### master data
+- **テストデータ生成:**
+  ```bash
+  # 土壌硬度計測器のダミーCSV生成
+  python manage.py hardness_generate_dummy_csv --num_fields 20
+  ```
 
-- `python manage.py weather_generate_code_fixture_taxonomy` のバッチをまわす（fixtureが変更されたときのみ実行）
+### [linebot_engine] LINE Bot 基盤
+メッセージログの蓄積と健康チェック機能を備えたエンジン。
+- [qiita記事：LINEからChatGPTと会話し、絵も描く](https://qiita.com/YoshitakaOkada/items/f51f52a8041439a1dbc9)
 
-## securities
+- **メンテナンス:**
+  ```bash
+  # 月次ログクリーンアップ
+  python manage.py monthly_cleanup_linebot_engine
+  ```
 
-- edinet data を zip でダウンロードする
-    - `python manage.py daily_download_edinet` のバッチをまわす
+### [hospital] 不在者投票管理
+病院内での不在者投票事務（名簿作成、選管への請求等）をサポートします。
 
-## hospital
+### [jp_stocks] 日本株板シミュレータ
+`Order` モデルを用いた板情報の動的計算とマッチングシミュレーション。
 
-### 処理概要
+---
 
-```mermaid
-sequenceDiagram
-    participant 患者
-    participant 病院
-    participant 選管
-    病院 ->> 患者: 不在者投票の日程を決めて周知と貼り出し
-    患者 ->> 病院: 投票日前に病棟から投票用紙等の請求依頼
-    病院 ->> 病院: 住所チェック
-    病院 ->> 病院: 病棟名、投票区名、取込日、選挙人住所、選挙人氏名、選挙人生年月日を請求者名簿に入力
-    病院 ->> 選管: 請求者名簿の提出
-    選管 ->> 病院: 各市区選管から投票用紙を受け取る
-    病院 ->> 患者: 投票用紙を病棟ごとに仕分けし、交付
-    病院 ->> 病院: 請求の方法、代理請求依頼日、請求月日、受領日を事務処理簿に入力
-    患者 ->> 病院: （※アプリ業務の対象外）投票
-    病院 ->> 病院: 投票日、投票場所、立会人、代理投票申請有無を事務処理簿に入力
-    病院 ->> 選管: 送致用封筒で送致
-    病院 ->> 病院: 投票人数×727円を経費として請求書作成
-    病院 ->> 選管: 不在者投票事務処理簿、経費請求書の提出
-```
-
-## jp_stocks
-
-日本株に関するポータル
-
-### 板シミュレータ 処理概要
-
-- **モデル概要**  
-  本システムでは `Order` モデルを利用して取引注文（売買注文）を管理します。  
-  各注文は以下の属性を持ちます：
-    - `side`：取引区分（buy または sell）
-        - `price`：注文価格
-        - `quantity`：注文数量
-        - `created_at`：注文作成日時
-
-- **「板情報」の計算**  
-  現在の「板情報」は動的に計算され、以下のようにして求められます：
-    - 「売り注文」と「買い注文」を価格ごとにグループ化し、それぞれの注文の合計数量を集計。
-    - 同じ価格の売りと買いが存在する場合、以下の処理ルールに基づいて注文を相殺：
-        - 売り数量と買い数量が一致すれば完全にマッチし、双方がゼロになる。
-        - 売り数量が多ければ、買い数量を引いた残りの売り数量は引き続き有効。
-        - 買い数量が多ければ、売り数量を引いた残りの買い数量が有効。
-    - 売りと買いの価格がマッチしない場合、各注文は現在残存している数量として板に残ります。
-    - 「売り注文」「買い注文」はそれぞれ価格順（昇順）に並び替えて結果を出力します。
-
-- **主要機能**
-    - 注文の作成機能  
-      ユーザーは新しい取引注文（売買）を入力し登録できます。
-    - 板情報の表示機能  
-      現在の板情報（売り注文・買い注文の残存状態）を動的に計算し、わかりやすい形式で表示します。
-
-## 東京都福祉事務所情報ポータル
-
-### 概要
-
-東京都内の福祉事務所の情報を一元管理し、利用者に提供するポータルサイトです。
-空き状況や福祉事務所の詳細情報を簡単に検索でき、福祉サービスの利用を検討している方々の意思決定をサポートします。
-
-東京都が提供している「福祉事務所名」のオープンデータを活用しています。
-福祉事務所とは、生活保護や児童福祉、障害者福祉などの社会福祉サービスを提供する行政機関です。
-
-### 機能
-
-- 福祉事務所の検索・閲覧
-- 空き状況の確認（信号機表示による視覚的な把握）
-- 地図上での所在地確認
-- 過去の空き状況履歴による傾向把握
-- 月別空き状況の入力（過去データへの遡り入力に対応）
-- 施設情報の詳細表示
-- 東京都オープンデータ API を活用した最新情報の取得
-
-```bash
-# 初期データの取得（東京都APIから）
-python manage.py fetch_facilities
-
-# 施設の空き状況データを生成
-python manage.py create_availabilities_fixtures --months 6
-
-# レビューデータの生成
-python manage.py create_review_fixtures --count 100
-```
+## 開発メモ
+- **CSVからFixtureへの変換:** `python manage.py convert_csv_to_fixture` を実行。
+  - CSVファイルを `vietnam_research/management/commands/` 配下に配置します。
+  - ファイル名は `アプリ名_モデル名.csv`（例: `hospital_cityGroup.csv`）とする必要があります。
+- **GMarker IP制限:** `GOOGLE_MAPS_BE_API_KEY` の制限には、開発マシンのグローバルIPv6アドレス（例: `2001:db8::1`）を設定すること。
