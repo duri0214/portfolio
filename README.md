@@ -221,7 +221,7 @@ sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo chmod -R 755 /var/www/html/portfolio
 
 # 3. Django メンテナンス
-source /var/www/html/venv/bin/activate
+source /var/www/html/portfolio/venv/bin/activate
 python manage.py collectstatic --noinput
 python manage.py clearsessions
 python manage.py migrate
