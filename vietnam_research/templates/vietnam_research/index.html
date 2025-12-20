@@ -218,6 +218,9 @@
                 <h6>Indices of Industrial Production</h6>
                 <p>
                     IIPは2017年以降、全体的に右肩上がりの成長傾向を示しています。特に2020年以降の指数上昇は顕著であり、新型コロナウイルス感染症の影響からの回復が大きな要因と考えられます。ベトナムでは2月に鉱工業生産指数が減少する理由の一つとして、ベトナムの旧正月の影響があります。テトはベトナムで最も重要な祝祭であり、多くの企業や工場がこの期間に操業を停止し、従業員も長い休暇を取るため、生産活動が一時的に低下します。</p>
+                <div id="iip-alert" class="alert alert-info d-none" role="alert">
+                    現在、ベトナム統計局のサーバー状況によりデータを取得できないため、グラフを表示できません。詳細は<a href="https://github.com/duri0214/portfolio/issues/477" target="_blank">こちら</a>をご確認ください。
+                </div>
                 <canvas id="iipChart" style="display: inline-block; width: 1000px; height: 400px;"></canvas>
             </div>
         </div>
@@ -227,6 +230,9 @@
                 <h6>Consumer Price Index</h6>
                 <p>
                     全体的に上昇傾向。2月はCPIが一時的に急上昇する傾向が見られます（例：2021年2月104.84、2022年2月106.33、2023年2月110.91、2024年2月115.33）。これは、旧正月（テト）期間中の需要増加が影響している可能性があります。ベトナムのCPIは引き続き上昇が予想されますが、そのペースは安定しており、経済の成長と消費者の購買力の向上を反映しています。</p>
+                <div id="cpi-alert" class="alert alert-info d-none" role="alert">
+                    現在、ベトナム統計局のサーバー状況によりデータを取得できないため、グラフを表示できません。詳細は<a href="https://github.com/duri0214/portfolio/issues/477" target="_blank">こちら</a>をご確認ください。
+                </div>
                 <canvas id="cpiChart" style="display: inline-block; width: 1000px; height: 400px;"></canvas>
             </div>
         </div>
@@ -492,7 +498,21 @@
         RadarChart(".radarChart2", JSON.parse('{{ industry_cap|safe }}'), radarChartOptions);
         LineChart("vnChart", JSON.parse('{{ vnindex_timeline|safe }}'));
         LineChart("vnChart_layer", JSON.parse('{{ vnindex_layers|safe }}'));
-        LineChart("iipChart", JSON.parse('{{ iip_timeline|safe }}'));
-        LineChart("cpiChart", JSON.parse('{{ cpi_timeline|safe }}'));
+
+        const iipData = JSON.parse('{{ iip_timeline|safe }}');
+        if (iipData.labels.length === 0) {
+            document.getElementById('iip-alert').classList.remove('d-none');
+            document.getElementById('iipChart').style.display = 'none';
+        } else {
+            LineChart("iipChart", iipData);
+        }
+
+        const cpiData = JSON.parse('{{ cpi_timeline|safe }}');
+        if (cpiData.labels.length === 0) {
+            document.getElementById('cpi-alert').classList.remove('d-none');
+            document.getElementById('cpiChart').style.display = 'none';
+        } else {
+            LineChart("cpiChart", cpiData);
+        }
     </script>
 {% endblock %}
