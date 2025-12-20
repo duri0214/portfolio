@@ -101,7 +101,7 @@ python manage.py loaddata vietnam_research\fixtures\financialResultWatch.json
 python manage.py loaddata vietnam_research\fixtures\watchlist.json
 
 # ここで vietnam_research の 各種データインポートバッチをまわす
-python manage.py daily_import_from_bloomberg
+python manage.py daily_import_market_data
 python manage.py daily_import_from_sbi
 python manage.py daily_import_from_vietkabu
 
@@ -244,7 +244,7 @@ sudo tail -n 200 /var/log/apache2/error.log
 時系列データが存在しない場合は画像が保存されません。
 
 - **主要バッチ:**
-  - `daily_import_from_bloomberg / sbi / vietkabu`: 各種データインポート
+  - `daily_import_market_data / sbi / vietkabu`: 各種データインポート
   - `generate_industry_dummy_data`: 分析用ダミーデータ生成
   - `daily_industry_chart_and_uptrend`: 上昇トレンド判定とチャート生成
   - `daily_industry_stacked_bar_chart`: 業種別積上棒グラフ生成
