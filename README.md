@@ -53,7 +53,7 @@ python manage.py loaddata vietnam_research\fixtures\unit.json
 python manage.py loaddata vietnam_research\fixtures\vnIndex.json
 python manage.py loaddata vietnam_research\fixtures\articles.json
 python manage.py loaddata vietnam_research\fixtures\basicInformation.json
-python manage.py loaddata vietnam_research\fixtures\financialResults.json
+python manage.py loaddata vietnam_research\fixtures\financialResultWatch.json
 python manage.py loaddata vietnam_research\fixtures\watchlist.json
 
 # ここで vietnam_research の 各種データインポートバッチをまわす
