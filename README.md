@@ -10,8 +10,52 @@ Django(Python)を用いた、各種データ分析・可視化ツールのポー
 
 ## 1. セットアップ
 
-### ライブラリのインストール
-```console
+### 仮想環境 (venv) の構築
+
+**Linux**
+```bash
+# 作成
+python -m venv venv
+
+# 有効化
+source venv/bin/activate
+
+# 依存関係のインストール
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+```
+
+**Windows (PowerShell)**
+```powershell
+# 作成
+python -m venv venv
+
+# 有効化
+.\venv\Scripts\activate
+
+# 依存関係のインストール
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+```
+
+### venv の再構築 (リセット)
+ライブラリの更新などで環境を初期化したい場合。
+
+**Linux**
+```bash
+deactivate
+rm -rf venv
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Windows (PowerShell)**
+```powershell
+deactivate
+Remove-Item -Recurse -Force venv
+python -m venv venv
+.\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
