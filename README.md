@@ -201,7 +201,34 @@ python manage.py loaddata ai_agent\fixtures\rag_material.json
 ## 3. 本番サーバ メンテナンス手順
 
 サーバ（Ubuntu + Apache）でのデプロイ・更新手順です。
-- 事前チェック: `.env` 作成済み・DB migrate 最新か
+
+### .env 運用ルール
+本番環境における環境変数の管理は以下のルールを厳守してください。
+
+#### 1. .env の役割整理
+*   **.env.example**
+    *   環境変数キー定義のみのテンプレート。
+    *   Git 管理対象。
+*   **.env.production**
+    *   本番サーバ上で手動作成する。
+    *   **Git 管理しない。開発PCから FTP 等でアップロードしない。**
+
+#### 2. 本番サーバでの .env.production 作成手順
+`.env.example` をコピーして `.env.production` を作成し、環境に合わせて編集します。
+*   `APP_ENV=production` を必須設定とすること。
+*   Chroma の永続データパスなどは Linux 向けのパスを設定すること。
+    *   例: `CHROMA_DB_PATH=/var/lib/your_app/chroma`
+
+#### 3. 注意事項（事故防止）
+*   Windows パス（例：`C:\...`）を本番で使わない。
+*   開発用 `.env` を本番にアップロードしない。
+*   本番では「その環境で作った設定ファイル」のみを信頼する。
+
+#### 4. なぜこの運用なのか
+*   Chroma や DB 設定はコードではなく **環境の責務** であるため。
+*   OS 依存設定を Git / FTP 経由で共有すると、パス不整合による致命的な事故が起きやすいため。
+
+---
 
 ### 権限構成
 - `ubuntu`: Git操作、`collectstatic` 実行（ソースコード管理・静的ファイル生成）
