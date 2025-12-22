@@ -239,24 +239,31 @@ python manage.py loaddata ai_agent\fixtures\rag_material.json
 cd /var/www/html/portfolio
 
 # 1. ソースコードの更新
+# ※ git clean -fd により venv ディレクトリも削除されます
 git fetch --prune origin
 sudo git reset --hard origin/master
 sudo git clean -fd
 
-# 2. 権限の一時調整（ubuntu ユーザーでの作業用）
+# 2. venv の再構築 (リセット)
+# 依存関係の変更（requirements.txt の更新）に備え、venv を作り直します
+python3 -m venv venv
+source /var/www/html/portfolio/venv/bin/activate
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+
+# 3. 権限の一時調整（ubuntu ユーザーでの作業用）
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo chmod -R 755 /var/www/html/portfolio
 
-# 3. Django メンテナンス
-source /var/www/html/portfolio/venv/bin/activate
+# 4. Django メンテナンス
 python manage.py collectstatic --noinput
 python manage.py clearsessions
 python manage.py migrate
 
-# 4. 書き込みディレクトリの権限設定
+# 5. 書き込みディレクトリの権限設定
 sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
 
-# 5. サービスの再起動
+# 6. サービスの再起動
 sudo systemctl restart apache2
 sudo tail -n 200 /var/log/apache2/error.log
 ```
