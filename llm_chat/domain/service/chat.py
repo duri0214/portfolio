@@ -324,11 +324,12 @@ class OpenAIRagChatService(BaseChatService):
             / "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
         )
         dataloader = PdfDataloader(str(file_path))
-        response_dict = OpenAILlmRagService(
+        rag_service = OpenAILlmRagService(
             model=self.config.model,
             api_key=self.config.api_key,
-            documents=dataloader.data,
-        ).retrieve_answer(user_message.to_message())
+        )
+        rag_service.upsert_documents(dataloader.data)
+        response_dict = rag_service.retrieve_answer(user_message.to_message())
 
         user_message.role = RoleType.ASSISTANT
         user_message.content = response_dict["answer"]
