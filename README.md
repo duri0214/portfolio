@@ -206,15 +206,16 @@ python manage.py loaddata ai_agent\fixtures\rag_material.json
 環境変数の管理は以下のルールを厳守してください。
 
 #### 1. .env の役割整理
-*   **.env.example**
-    *   環境変数キー定義のみのテンプレート。Git 管理対象。
-    *   `lib/llm/.env.example` 内の `CHROMA_DB_PATH` は、環境ごとに設定変更が必要です。
-
-#### 2. 注意事項と運用理由
-*   **OS 依存のパスを避ける**: Windows パス（例：`C:\...`）を本番（Linux）に持ち込まないよう、相対パス（`./chroma_db`）を利用してください。
-*   **環境の責務**: Chroma や DB 設定はコードではなく環境の責務です。パス不整合による事故を防ぐため、各環境で適切に設定してください。
-
----
+*   **.env.example** (ルート)
+    *   Django本体や外部API（Google Maps, LINE, Stripe等）のキー定義。
+*   **lib/jira/.env.example**
+    *   Jira連携用の認証情報定義。
+*   **lib/llm/.env.example**
+    *   OpenAI/Gemini APIキー。
+    *   **CHROMA_DB_PATH**: ベクトルDBの保存先。
+        *   **注意事項**: 環境ごとに設定変更が必要です。本番（Linux）に Windows パス（`C:\...`）を持ち込まないよう、相対パス（`./chroma_db`）の使用を推奨します。パス設定は環境の責務であり、不整合を防ぐため各環境で適切に設定してください。
+*   **lib/slack/.env.example**
+    *   Slack通知用のWebhook URL等。
 
 ### 権限構成
 - `ubuntu`: Git操作、`collectstatic` 実行（ソースコード管理・静的ファイル生成）
