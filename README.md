@@ -207,26 +207,12 @@ python manage.py loaddata ai_agent\fixtures\rag_material.json
 
 #### 1. .env の役割整理
 *   **.env.example**
-    *   環境変数キー定義のみのテンプレート。
-    *   Git 管理対象。
-*   **.env.production**
-    *   本番サーバ上で手動作成する。
-    *   **Git 管理しない。開発PCから FTP 等でアップロードしない。**
+    *   環境変数キー定義のみのテンプレート。Git 管理対象。
+    *   `lib/llm/.env.example` 内の `CHROMA_DB_PATH` は、環境ごとに設定変更が必要です。
 
-#### 2. 本番サーバでの .env.production 作成手順
-`.env.example` をコピーして `.env.production` を作成し、環境に合わせて編集します。
-*   `APP_ENV=production` を必須設定とすること。
-*   Chroma の永続データパスなどは Linux 向けのパスを設定すること。
-    *   例: `CHROMA_DB_PATH=/var/lib/your_app/chroma`
-
-#### 3. 注意事項（事故防止）
-*   Windows パス（例：`C:\...`）を本番で使わない。
-*   開発用 `.env` を本番にアップロードしない。
-*   本番では「その環境で作った設定ファイル」のみを信頼する。
-
-#### 4. なぜこの運用なのか
-*   Chroma や DB 設定はコードではなく **環境の責務** であるため。
-*   OS 依存設定を Git / FTP 経由で共有すると、パス不整合による致命的な事故が起きやすいため。
+#### 2. 注意事項と運用理由
+*   **OS 依存のパスを避ける**: Windows パス（例：`C:\...`）を本番（Linux）に持ち込まないよう、相対パス（`./chroma_db`）を利用してください。
+*   **環境の責務**: Chroma や DB 設定はコードではなく環境の責務です。パス不整合による事故を防ぐため、各環境で適切に設定してください。
 
 ---
 

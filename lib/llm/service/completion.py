@@ -419,6 +419,19 @@ class OpenAILlmRagService(LlmService):
 
         # Chroma DB の設定
         persist_path = persist_directory or os.getenv("CHROMA_DB_PATH", "./chroma_db")
+        try:
+            # パスが有効か（書き込み可能か）を事前にチェック
+            test_path = Path(persist_path).resolve()
+            test_path.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            # 失敗した場合はデフォルトにフォールバック
+            import warnings
+            warnings.warn(
+                f"指定されたパス '{persist_path}' が無効またはアクセス不可能です ({e})。 "
+                "デフォルトの './chroma_db' を使用します。"
+            )
+            persist_path = "./chroma_db"
+
         self._client_db = chromadb.PersistentClient(
             path=persist_path, settings=Settings(allow_reset=True)
         )
