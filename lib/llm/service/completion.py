@@ -5,6 +5,7 @@ from typing import Any, Generator, Iterable, Sequence
 
 import chromadb
 from chromadb.config import Settings
+from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types import ImagesResponse
@@ -442,8 +443,11 @@ class OpenAILlmRagService(LlmService):
         self._client_db = chromadb.PersistentClient(
             path=persist_path, settings=Settings(allow_reset=True)
         )
+        self.openai_ef = OpenAIEmbeddingFunction(
+            api_key=self.api_key, model_name=self.embedding_model
+        )
         self._collection = self._client_db.get_or_create_collection(
-            name=collection_name
+            name=collection_name, embedding_function=self.openai_ef
         )
         self._client_openai = OpenAI(api_key=self.api_key)
 
