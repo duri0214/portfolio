@@ -203,7 +203,7 @@ python manage.py loaddata ai_agent\fixtures\rag_material.json
 サーバ（Ubuntu + Apache）でのデプロイ・更新手順です。
 
 ### .env 運用ルール
-本番環境における環境変数の管理は以下のルールを厳守してください。
+環境変数の管理は以下のルールを厳守してください。
 
 #### 1. .env の役割整理
 *   **.env.example**
