@@ -426,6 +426,7 @@ class OpenAILlmRagService(LlmService):
         except Exception as e:
             # 失敗した場合はデフォルトにフォールバック
             import warnings
+
             warnings.warn(
                 f"指定されたパス '{persist_path}' が無効またはアクセス不可能です ({e})。 "
                 "デフォルトの './chroma_db' を使用します。"
@@ -435,7 +436,9 @@ class OpenAILlmRagService(LlmService):
         self._client_db = chromadb.PersistentClient(
             path=persist_path, settings=Settings(allow_reset=True)
         )
-        self._collection = self._client_db.get_or_create_collection(name=collection_name)
+        self._collection = self._client_db.get_or_create_collection(
+            name=collection_name
+        )
         self._client_openai = OpenAI(api_key=self.api_key)
 
         # 既存のプロンプト文面を流用
@@ -579,7 +582,9 @@ class OpenAILlmRagService(LlmService):
         """
         warning = None
         if len(summaries) > max_chars:
-            warning = f"summaries length {len(summaries)} exceeds {max_chars} chars; trimmed."
+            warning = (
+                f"summaries length {len(summaries)} exceeds {max_chars} chars; trimmed."
+            )
             summaries = summaries[:max_chars]
         return summaries, warning
 
