@@ -20,6 +20,7 @@
       <w>makemigrations</w>
       <w>marketcap</w>
       <w>metadatas</w>
+      <w>mplconfigdir</w>
       <w>murc</w>
       <w>nfkc</w>
       <w>truncatechars</w>

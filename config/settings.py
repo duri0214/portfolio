@@ -154,6 +154,10 @@ STATIC_URL = "/static/"
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
+# Matplotlib キャッシュディレクトリの設定
+# 本番環境（Apache/WSGI）での権限エラーを回避するために環境変数を設定します
+os.environ["MPLCONFIGDIR"] = str(MEDIA_ROOT / "matplotlib_cache")
+
 STRIPE_PUBLIC_KEY = "pk_test_eiOWUzSaLn51lXt0POuRBskA009JsTTAb5"
 
 # 'django.contrib.humanize' 3桁カンマ

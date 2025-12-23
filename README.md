@@ -259,7 +259,13 @@ sudo mkdir -p /var/www/html/portfolio/chroma_db
 sudo chown -R www-data:www-data /var/www/html/portfolio/chroma_db
 sudo chmod -R 775 /var/www/html/portfolio/chroma_db
 
-# 7. サービスの再起動
+# 7. Matplotlib キャッシュディレクトリの設定
+# ※ 共有サーバー環境での権限エラーを回避するため、media配下の書き込み可能なパスを設定します
+sudo mkdir -p /var/www/html/portfolio/media/matplotlib_cache
+sudo chown -R www-data:www-data /var/www/html/portfolio/media/matplotlib_cache
+sudo chmod -R 775 /var/www/html/portfolio/media/matplotlib_cache
+
+# 8. サービスの再起動
 sudo systemctl restart apache2
 sudo tail -n 200 /var/log/apache2/error.log
 ```
