@@ -202,6 +202,10 @@ python manage.py loaddata ai_agent\fixtures\rag_material.json
 
 サーバ（Ubuntu + Apache）でのデプロイ・更新手順です。
 
+**事前チェック:**
+*   `.env` が作成済みであること（各アプリの `.env.example` を参考に作成）
+*   データベースのマイグレーション (`python manage.py migrate`) が完了していること
+
 ### .env 運用ルール
 
 #### 1. .env の役割整理
