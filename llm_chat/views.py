@@ -103,6 +103,12 @@ class SyncResponseView(View):
             )
 
         except Exception as e:
+            import traceback
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"SyncResponseView Error: {str(e)}")
+            logger.error(traceback.format_exc())
             return JsonResponse(
                 {"error": "An unexpected error occurred", "detail": str(e)}, status=500
             )
