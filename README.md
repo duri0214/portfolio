@@ -253,7 +253,13 @@ python manage.py migrate
 # 5. 書き込みディレクトリの権限設定
 sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
 
-# 6. サービスの再起動
+# 6. LLM/RAG 関連の権限設定 (ChromaDB)
+# ※ 暫定的にプロジェクトルート配下で運用しますが、将来的に適切な永続化パスを検討してください
+sudo mkdir -p /var/www/html/portfolio/chroma_db
+sudo chown -R www-data:www-data /var/www/html/portfolio/chroma_db
+sudo chmod -R 775 /var/www/html/portfolio/chroma_db
+
+# 7. サービスの再起動
 sudo systemctl restart apache2
 sudo tail -n 200 /var/log/apache2/error.log
 ```

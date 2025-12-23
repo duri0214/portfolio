@@ -419,6 +419,12 @@ class OpenAILlmRagService(LlmService):
 
         # Chroma DB の設定
         persist_path = persist_directory or os.getenv("CHROMA_DB_PATH", "./chroma_db")
+        # 相対パスの場合は BASE_DIR からの絶対パスに変換
+        if not os.path.isabs(persist_path):
+            from config.settings import BASE_DIR
+
+            persist_path = str(Path(BASE_DIR) / persist_path)
+
         try:
             # パスが有効か（書き込み可能か）を事前にチェック
             test_path = Path(persist_path).resolve()
