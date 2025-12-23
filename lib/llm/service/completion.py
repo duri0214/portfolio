@@ -402,7 +402,7 @@ class OpenAILlmRagService(LlmService):
             api_key (str): OpenAI API キー。
             persist_directory (str | None, optional): Chroma DBの保存先ディレクトリ。
                 未指定時は環境変数 `CHROMA_DB_PATH` の値を使用します。
-                環境変数も設定されていない場合は、デフォルトでカレントディレクトリに `"chroma_db"` フォルダが作成されます。
+                環境変数も設定されていない場合は、デフォルトでカレントディレクトリに `"./chroma_db"` フォルダが作成されます。
                 これにより、特別な設定なしですぐに動作し、かつ環境変数による柔軟なパス変更も可能です。
             collection_name (str, optional): Chroma 内でベクトルデータを管理するためのコレクション名。
                 同じDB内でプロジェクトや用途ごとにデータを分離したい場合に、異なる名称を指定します。
@@ -418,7 +418,7 @@ class OpenAILlmRagService(LlmService):
         self.embedding_model = embedding_model
 
         # Chroma DB の設定
-        persist_path = persist_directory or os.getenv("CHROMA_DB_PATH", "chroma_db")
+        persist_path = persist_directory or os.getenv("CHROMA_DB_PATH", "./chroma_db")
         self._client_db = chromadb.PersistentClient(
             path=persist_path, settings=Settings(allow_reset=True)
         )
