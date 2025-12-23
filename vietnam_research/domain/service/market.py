@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime, timezone
 
 import feedparser
@@ -21,12 +22,26 @@ class MarketRetrievalService:
         VietnamMarketDataProvider.rss() に渡せる辞書形式で返します。
         取得に失敗した場合は、例外を送出します（タイムアウトなど）。
 
-        Notes: feedparserはFeedParserDictを返すが辞書のように扱える。
+        Notes:
+            - feedparserはFeedParserDictを返すが辞書のように扱える。
+            - parsed.get("bozo") は、RSSがXMLとして正しく構成されていない場合にTrueとなります。
         """
         url = "https://www.viet-kabu.com/rss/latest.rdf"
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        parsed = feedparser.parse(response.content)
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            parsed = feedparser.parse(response.content)
+            if parsed.get("bozo"):
+                logging.warning(
+                    f"RSSのパース中に不完全なデータが検出されました: {parsed.bozo_exception}"
+                )
+        except requests.exceptions.RequestException as e:
+            logging.error(f"RSS取得時のネットワークエラー: {e}")
+            raise
+        except Exception as e:
+            logging.error(f"RSS取得時の予期せぬエラー: {e}")
+            raise
+
         entries = []
         for entry in parsed.get("entries", []):
             vo = RssEntryVO.from_feedparser_entry(entry)
@@ -41,7 +56,8 @@ class MarketRetrievalService:
         # RSSの準備（エラーハンドリング込み）
         try:
             rss_context = vietnam_market_data_provider.rss(self.get_rss_feed())
-        except requests.exceptions.Timeout:
+        except Exception as e:
+            logging.warning(f"RSSの取得に失敗しました: {e}")
             rss_context = {"entries": [], "updated": datetime.now(timezone.utc)}
 
         return {
