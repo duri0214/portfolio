@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from enum import Enum
-from typing import Literal
+from typing import Literal, Any
 
 
 class RoleType(Enum):
@@ -25,6 +25,39 @@ class Message:
 
     def to_dict(self):
         return {"role": self.role.value, "content": self.content}
+
+
+@dataclass
+class RagDocument:
+    """
+    RAGの検索結果ドキュメントを保持するVO。
+    """
+
+    page_content: str
+    metadata: dict[str, Any]
+
+
+@dataclass
+class RagResponse:
+    """
+    RAGの回答結果を保持するVO。
+    """
+
+    answer: str
+    sources: str
+    source_documents: list[RagDocument]
+    warning: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "answer": self.answer,
+            "sources": self.sources,
+            "source_documents": self.source_documents,
+            "warning": self.warning,
+        }
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
 
 FinishReason = Literal[

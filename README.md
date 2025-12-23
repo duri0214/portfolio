@@ -201,7 +201,24 @@ python manage.py loaddata ai_agent\fixtures\rag_material.json
 ## 3. 本番サーバ メンテナンス手順
 
 サーバ（Ubuntu + Apache）でのデプロイ・更新手順です。
-- 事前チェック: `.env` 作成済み・DB migrate 最新か
+
+**事前チェック:**
+*   `.env` が作成済みであること（各アプリの `.env.example` を参考に作成）
+*   データベースのマイグレーション (`python manage.py migrate`) が完了していること
+
+### .env 運用ルール
+
+#### 1. .env の役割整理
+*   **.env.example** (ルート)
+    *   Django本体や外部API（Google Maps, LINE, Stripe等）のキー定義。
+*   **lib/jira/.env.example**
+    *   Jira連携用の認証情報定義。
+*   **lib/llm/.env.example**
+    *   OpenAI/Gemini APIキー。
+    *   **CHROMA_DB_PATH**: ベクトルDBの保存先。
+        *   **注意事項**: 環境ごとに設定変更が必要です。本番（Linux）に Windows パス（`C:\...`）を持ち込まないよう、相対パス（`./chroma_db`）の使用を推奨します。パス設定は環境の責務であり、不整合を防ぐため各環境で適切に設定してください。
+*   **lib/slack/.env.example**
+    *   Slack通知用のWebhook URL等。
 
 ### 権限構成
 - `ubuntu`: Git操作、`collectstatic` 実行（ソースコード管理・静的ファイル生成）
@@ -212,24 +229,31 @@ python manage.py loaddata ai_agent\fixtures\rag_material.json
 cd /var/www/html/portfolio
 
 # 1. ソースコードの更新
+# ※ git clean -fd により venv ディレクトリも削除されます
 git fetch --prune origin
 sudo git reset --hard origin/master
 sudo git clean -fd
 
-# 2. 権限の一時調整（ubuntu ユーザーでの作業用）
+# 2. venv の再構築 (リセット)
+# 依存関係の変更（requirements.txt の更新）に備え、venv を作り直します
+python3 -m venv venv
+source /var/www/html/portfolio/venv/bin/activate
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+
+# 3. 権限の一時調整（ubuntu ユーザーでの作業用）
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo chmod -R 755 /var/www/html/portfolio
 
-# 3. Django メンテナンス
-source /var/www/html/portfolio/venv/bin/activate
+# 4. Django メンテナンス
 python manage.py collectstatic --noinput
 python manage.py clearsessions
 python manage.py migrate
 
-# 4. 書き込みディレクトリの権限設定
+# 5. 書き込みディレクトリの権限設定
 sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
 
-# 5. サービスの再起動
+# 6. サービスの再起動
 sudo systemctl restart apache2
 sudo tail -n 200 /var/log/apache2/error.log
 ```

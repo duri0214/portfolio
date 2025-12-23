@@ -3,14 +3,24 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Generator, Iterable, Sequence
 
+import chromadb
+from chromadb.config import Settings
 from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types import ImagesResponse
-from openai.types.chat import ChatCompletion
-from openai.types.responses import EasyInputMessageParam
+from openai.types.chat import (
+    ChatCompletion,
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+)
 
 from config.settings import MEDIA_ROOT
-from lib.llm.valueobject.completion import Message, StreamResponse
+from lib.llm.valueobject.completion import (
+    Message,
+    StreamResponse,
+    RagDocument,
+    RagResponse,
+)
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 
 # .env ファイルを読み込む
@@ -364,12 +374,11 @@ class OpenAILlmSpeechToText(LlmService):
 
 
 class OpenAILlmRagService(LlmService):
-    """OpenAI SDK 直接利用のシンプルな RAG 実装。
+    """
+    OpenAI SDK と Chroma DB を使用した RAG (Retrieval-Augmented Generation) サービス。
 
-    - 埋め込み: OpenAI Embeddings API（デフォルト: text-embedding-3-small）
-    - ベクトルストア: メモリ内（コサイン類似度）。
-      TODO(persistence): 需要が出たら Chroma 等に永続化する。
-    - 生成: OpenAI Chat Completions（`model` は呼び出し元設定を流用）。
+    ドキュメントの埋め込みベクトルを作成し、Chroma DB に保存・検索することで、
+    最新の知識や特定のコンテキストに基づいた回答を生成します。
     """
 
     MAX_CONTEXT_CHARS = 6000
@@ -379,21 +388,58 @@ class OpenAILlmRagService(LlmService):
         *,
         model: str,
         api_key: str,
-        documents: Sequence[Any] | None = None,
+        persist_directory: str | None = None,
+        collection_name: str = "portfolio_rag",
         n_results: int = 3,
         embedding_model: str = "text-embedding-3-small",
         system_template: str | None = None,
     ) -> None:
+        """
+        OpenAILlmRagService を初期化します。
+
+        Args:
+            model (str): 使用する OpenAI のチャットモデル名。
+            api_key (str): OpenAI API キー。
+            persist_directory (str | None, optional): Chroma DBの保存先ディレクトリ。
+                未指定時は環境変数 `CHROMA_DB_PATH` の値を使用します。
+                環境変数も設定されていない場合は、デフォルトでカレントディレクトリに `"./chroma_db"` フォルダが作成されます。
+                これにより、特別な設定なしですぐに動作し、かつ環境変数による柔軟なパス変更も可能です。
+            collection_name (str, optional): Chroma 内でベクトルデータを管理するためのコレクション名。
+                同じDB内でプロジェクトや用途ごとにデータを分離したい場合に、異なる名称を指定します。
+            n_results (int, optional): 検索時に取得する上位ドキュメント数。デフォルトは3。
+            embedding_model (str, optional): 埋め込みに使用するモデル名。デフォルトは "text-embedding-3-small"。
+            system_template (str | None, optional): システムプロンプトのテンプレート。
+                `{summaries}` プレースホルダを含む必要があります。
+        """
         super().__init__()
         self.model = model
         self.api_key = api_key
         self.n_results = n_results
         self.embedding_model = embedding_model
-        self._client = OpenAI(api_key=self.api_key)
 
-        # ドキュメントは page_content, metadata を持つことを想定。
-        self._docs: list[Any] = list(documents or [])
-        self._embeddings: list[list[float]] = []
+        # Chroma DB の設定
+        persist_path = persist_directory or os.getenv("CHROMA_DB_PATH", "./chroma_db")
+        try:
+            # パスが有効か（書き込み可能か）を事前にチェック
+            test_path = Path(persist_path).resolve()
+            test_path.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            # 失敗した場合はデフォルトにフォールバック
+            import warnings
+
+            warnings.warn(
+                f"指定されたパス '{persist_path}' が無効またはアクセス不可能です ({e})。 "
+                "デフォルトの './chroma_db' を使用します。"
+            )
+            persist_path = "./chroma_db"
+
+        self._client_db = chromadb.PersistentClient(
+            path=persist_path, settings=Settings(allow_reset=True)
+        )
+        self._collection = self._client_db.get_or_create_collection(
+            name=collection_name
+        )
+        self._client_openai = OpenAI(api_key=self.api_key)
 
         # 既存のプロンプト文面を流用
         self.system_template = (
@@ -409,118 +455,138 @@ class OpenAILlmRagService(LlmService):
             """
         ).strip()
 
-        if self._docs:
-            self._ensure_corpus_indexed()
-
     # --- public API ---
-    def retrieve_answer(self, message: Any) -> dict:
-        """質問に対する回答を返す。
+    def retrieve_answer(
+        self, message: Any, where_filter: dict | None = None
+    ) -> RagResponse:
+        """
+        質問に対する回答を RAG を用いて生成します。
 
         Args:
-            message: 質問文字列、または `content` 属性を持つ VO（例: Message）。
+            message: 質問内容。文字列または content 属性を持つオブジェクト。
+            where_filter (dict | None, optional): Chroma DB 検索時のフィルタ条件。
 
         Returns:
-            dict: {"answer": str, "sources": str, "source_documents": list, "warning": str|None}
+            RagResponse: 回答、ソース情報、参照ドキュメントを含むオブジェクト。
         """
         question = self._extract_text(message)
         if not question:
             raise ValueError("Message content cannot be empty for RAG query")
 
-        if not self._docs:
-            # 空のコーパスに対する問い合わせ
-            return {
-                "answer": "知識ベースが空です。ドキュメントを登録してから再度お試しください。",
-                "sources": "",
-                "source_documents": [],
-                "warning": None,
-            }
+        # Chroma から検索
+        results = self._collection.query(
+            query_texts=[question], n_results=self.n_results, where=where_filter
+        )
 
-        if not self._embeddings:
-            self._ensure_corpus_indexed()
+        # 検索結果を RagDocument VO のリストに変換
+        selected: list[RagDocument] = []
+        if results["documents"] and results["documents"][0]:
+            for i in range(len(results["documents"][0])):
+                doc = RagDocument(
+                    page_content=results["documents"][0][i],
+                    metadata=results["metadatas"][0][i] if results["metadatas"] else {},
+                )
+                selected.append(doc)
 
-        # 質問をベクトル化
-        q_vec = self._embed_texts([question])[0]
-
-        # Top-k 類似ドキュメントを取得
-        idxes = self._top_k_by_cosine(self._embeddings, q_vec, k=self.n_results)
-        selected = [self._docs[i] for i in idxes]
+        if not selected:
+            return RagResponse(
+                answer="該当する資料が見つかりませんでした。",
+                sources="",
+                source_documents=[],
+                warning=None,
+            )
 
         summaries = self._join_summaries(documents=selected)
-        warning = None
-        # 軽量な「長さアラート」: 文字数ベース。必要ならトークン化へ改良可。
-        if len(summaries) > self.MAX_CONTEXT_CHARS:
-            warning = f"summaries length {len(summaries)} exceeds {self.MAX_CONTEXT_CHARS} chars; trimmed."
-            summaries = summaries[: self.MAX_CONTEXT_CHARS]
+        summaries, warning = self._validate_and_trim_context(
+            summaries, self.MAX_CONTEXT_CHARS
+        )
 
         # プロンプト構築（system + user）
         system_text = self.system_template.format(summaries=summaries)
+        system_msg: ChatCompletionSystemMessageParam = {
+            "role": "system",
+            "content": system_text,
+        }
+        user_msg: ChatCompletionUserMessageParam = {
+            "role": "user",
+            "content": question,
+        }
 
-        # New SDK 推奨の Responses API を使用
-        # input には許可された型（Responses API の EasyInputMessageParam）で渡す
-        system_msg: EasyInputMessageParam = {"role": "system", "content": system_text}
-        user_msg: EasyInputMessageParam = {"role": "user", "content": question}
-
-        response = self._client.responses.create(
+        response = self._client_openai.chat.completions.create(
             model=self.model,
-            input=[system_msg, user_msg],
+            messages=[system_msg, user_msg],
         )
-
-        # output_text があればそれを優先
-        answer = getattr(response, "output_text", None) or ""
-        if not answer:
-            # 後方互換の保険: choices 等にメッセージがあれば拾う
-            try:
-                # 一部実装では `response.output[0].content[0].text` 等の構造になる
-                # 最低限の防御的パース（失敗しても空文字のまま）
-                output = getattr(response, "output", None)
-                if output and isinstance(output, list):
-                    first = output[0]
-                    content = getattr(first, "content", None)
-                    if content and isinstance(content, list):
-                        text = getattr(content[0], "text", None)
-                        value = getattr(text, "value", None)
-                        if isinstance(value, str):
-                            answer = value
-            except (AttributeError, TypeError, IndexError):
-                # 期待しないレスポンス構造だった場合のみ捕捉し、警告として返す
-                warning = (warning + " | " if warning else "") + "fallback_parse_error"
+        answer = response.choices[0].message.content or ""
 
         # sources を人間可読にまとめる
         sources_list = []
         for d in selected:
-            meta = getattr(d, "metadata", None) or {}
-            src = meta.get("source") or meta.get("file") or str(meta)
+            src = (
+                d.metadata.get("source")
+                or d.metadata.get("file")
+                or str(d.metadata)
+                or "unknown"
+            )
             sources_list.append(str(src))
-        sources = "\n".join(dict.fromkeys(sources_list))  # 重複排除を維持したまま
+        sources = "\n".join(dict.fromkeys(sources_list))
 
-        return {
-            "answer": answer,
-            "sources": sources,
-            "source_documents": selected,
-            "warning": warning,
-        }
+        return RagResponse(
+            answer=answer,
+            sources=sources,
+            source_documents=selected,
+            warning=warning,
+        )
 
     # --- corpus management ---
     def upsert_documents(self, documents: Iterable[Any]) -> None:
-        """コーパスにドキュメントを追加・更新し、必要なら再ベクトル化。"""
-        self._docs.extend(list(documents))
-        self._ensure_corpus_indexed(recompute=True)
+        """
+        ドキュメントを Chroma DB に追加または更新します。
+
+        Args:
+            documents (Iterable[Any]): page_content と metadata 属性を持つドキュメントのリスト。
+        """
+        docs_list = list(documents)
+        if not docs_list:
+            return
+
+        ids = []
+        metadatas = []
+        contents = []
+
+        for i, d in enumerate(docs_list):
+            content = getattr(d, "page_content", str(d))
+            metadata = getattr(d, "metadata", {})
+            # ID が指定されていない場合はメタデータの id またはインデックスを使用
+            doc_id = metadata.get("id") or f"doc_{i}_{hash(content)}"
+
+            ids.append(str(doc_id))
+            metadatas.append(metadata)
+            contents.append(content)
+
+        self._collection.upsert(ids=ids, metadatas=metadatas, documents=contents)
 
     # --- internals ---
-    def _ensure_corpus_indexed(self, *, recompute: bool = False) -> None:
-        if self._embeddings and not recompute:
-            return
-        texts = [getattr(d, "page_content", str(d)) for d in self._docs]
-        self._embeddings = self._embed_texts(texts)
+    @staticmethod
+    def _validate_and_trim_context(
+        summaries: str, max_chars: int
+    ) -> tuple[str, str | None]:
+        """
+        コンテキストの長さをチェックし、必要に応じて切り詰めます。
 
-    def _embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
-        """OpenAI Embeddings API でベクトル化。"""
-        if not texts:
-            return []
-        resp = self._client.embeddings.create(
-            model=self.embedding_model, input=list(texts)
-        )
-        return [d.embedding for d in resp.data]
+        Args:
+            summaries (str): 結合されたドキュメントの要約文字列。
+            max_chars (int): 許容される最大文字数。
+
+        Returns:
+            tuple[str, str | None]: 切り詰められた文字列と、切り詰めが発生した場合の警告メッセージ。
+        """
+        warning = None
+        if len(summaries) > max_chars:
+            warning = (
+                f"summaries length {len(summaries)} exceeds {max_chars} chars; trimmed."
+            )
+            summaries = summaries[:max_chars]
+        return summaries, warning
 
     @staticmethod
     def _extract_text(message: Any) -> str:
@@ -533,33 +599,11 @@ class OpenAILlmRagService(LlmService):
         return content if isinstance(content, str) else ""
 
     @staticmethod
-    def _dot(a: Sequence[float], b: Sequence[float]) -> float:
-        return sum(x * y for x, y in zip(a, b))
-
-    def _norm(self, a: Sequence[float]) -> float:
-        return (self._dot(a, a)) ** 0.5
-
-    def _cosine(self, a: Sequence[float], b: Sequence[float]) -> float:
-        na = self._norm(a)
-        nb = self._norm(b)
-        if na == 0 or nb == 0:
-            return 0.0
-        return self._dot(a, b) / (na * nb)
-
-    def _top_k_by_cosine(
-        self, matrix: Sequence[Sequence[float]], vec: Sequence[float], k: int
-    ) -> list[int]:
-        scored = [(i, self._cosine(row, vec)) for i, row in enumerate(matrix)]
-        scored.sort(key=lambda x: x[1], reverse=True)
-        return [i for i, _ in scored[: max(k, 0)]]
-
-    @staticmethod
-    def _join_summaries(documents: Sequence[Any]) -> str:
+    def _join_summaries(documents: Sequence[RagDocument]) -> str:
         parts: list[str] = []
         for d in documents:
-            text = getattr(d, "page_content", None)
-            meta = getattr(d, "metadata", None) or {}
-            source = meta.get("source") or ""
+            text = d.page_content
+            source = d.metadata.get("source") or d.metadata.get("file") or "unknown"
             if text:
                 parts.append(f"[source: {source}]\n{text}")
         return "\n\n".join(parts)

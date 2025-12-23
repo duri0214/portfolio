@@ -3,7 +3,8 @@
   <component name="Black">
     <option name="enabledOnReformat" value="true" />
     <option name="enabledOnSave" value="true" />
-    <option name="sdkName" value="Python 3.13 (portfolio)" />
+    <option name="pathToExecutable" value="C:\Users\yoshi\AppData\Local\Programs\Python\Python312\Scripts\black.exe" />
+    <option name="sdkName" value="Python 3.12 (portfolio)" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (portfolio)" project-jdk-type="Python SDK" />
   <component name="PyPackaging">
