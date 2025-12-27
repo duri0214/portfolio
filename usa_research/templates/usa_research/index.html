@@ -69,12 +69,14 @@
         </div>
     </section>
 
-    <!-- 2. セクターローテーション計数表 (gics) -->
+    <!-- 2. セクターローテーション計数表 (GICS) -->
     <section class="mb-5 border p-4 rounded shadow-sm bg-light">
         <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 2. セクターローテーション計数表 (gics)</h4>
+            <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 2. セクターローテーション計数表 (GICS)</h4>
             <p class="text-muted">
-                基準日: {{ sector_latest_date|date:"Y/m/d" }} | ベンチマーク: 
+                基準日: {{ sector_latest_date|date:"Y/m/d" }} | 
+                分類: <a href="https://www.msci.com/our-solutions/indexes/gics" target="_blank" rel="noopener noreferrer">GICS (11セクター) <i class="fas fa-external-link-alt"></i></a> |
+                ベンチマーク: 
                 <a href="https://finance.yahoo.com/quote/SPY/" target="_blank" rel="noopener noreferrer">
                     SPY (S&P500) <i class="fas fa-external-link-alt"></i>
                 </a> | <i class="fas fa-clock"></i> 日次更新
@@ -110,7 +112,21 @@
                                         <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-left">{{ snapshot.sector.name }}</td>
+                                <td class="text-left">
+                                    {% if snapshot.sector.name == 'Information Technology' %}<i class="fas fa-laptop-code fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Financials' %}<i class="fas fa-university fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Health Care' %}<i class="fas fa-stethoscope fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Consumer Discretionary' %}<i class="fas fa-shopping-cart fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Consumer Staples' %}<i class="fas fa-apple-alt fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Energy' %}<i class="fas fa-fire fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Industrials' %}<i class="fas fa-industry fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Materials' %}<i class="fas fa-mountain fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Utilities' %}<i class="fas fa-bolt fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Real Estate' %}<i class="fas fa-building fa-fw text-muted mr-1"></i>
+                                    {% elif snapshot.sector.name == 'Communication Services' %}<i class="fas fa-broadcast-tower fa-fw text-muted mr-1"></i>
+                                    {% endif %}
+                                    {{ snapshot.sector.name }}
+                                </td>
                                 <td><code class="text-primary">{{ snapshot.sector.symbol }}</code></td>
                                 <td><strong>{{ snapshot.rank }}</strong></td>
                                 <td>
