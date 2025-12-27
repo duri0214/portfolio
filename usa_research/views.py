@@ -2,7 +2,7 @@ import random
 from datetime import datetime
 from django.views.generic import TemplateView
 from usa_research.domain.constants.almanac import MONTHLY_ANOMALIES, THEME_ANOMALIES
-from usa_research.models import RssFeed, SectorDailySnapshot
+from usa_research.models import MacroIndicator, RssFeed, SectorDailySnapshot
 
 
 class IndexView(TemplateView):
@@ -10,6 +10,9 @@ class IndexView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # マクロ指標 (最新5日分)
+        context["macro_indicators"] = MacroIndicator.objects.order_by("-date")[:5]
 
         # セクターローテーション計数表 (最新の日付のデータを取得)
         latest_snapshot = SectorDailySnapshot.objects.order_by("-date").first()

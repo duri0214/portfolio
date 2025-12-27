@@ -54,3 +54,20 @@ class SectorDailySnapshot(models.Model):
 
     def __str__(self):
         return f"{self.date} - {self.sector.name} - Rank: {self.rank}"
+
+
+class MacroIndicator(models.Model):
+    date = models.DateField(unique=True)
+
+    ism_pmi = models.FloatField(null=True, blank=True)
+    us_10y_yield = models.FloatField(null=True, blank=True)
+    vix = models.FloatField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"{self.date} - PMI: {self.ism_pmi}, 10Y: {self.us_10y_yield}, VIX: {self.vix}"
