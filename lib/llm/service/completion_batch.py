@@ -140,7 +140,7 @@ if __name__ == "__main__":
     service = OpenAIBatchCompletionService(
         OpenAIGptConfig(
             api_key="your-api-key",
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             max_tokens=1000,
         )
     )
