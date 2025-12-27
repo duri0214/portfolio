@@ -2,7 +2,7 @@ import random
 from datetime import datetime
 from django.views.generic import TemplateView
 from usa_research.domain.constants.almanac import MONTHLY_ANOMALIES, THEME_ANOMALIES
-from usa_research.models import RssFeed
+from usa_research.models import RssFeed, SectorDailySnapshot
 
 
 class IndexView(TemplateView):
@@ -10,6 +10,19 @@ class IndexView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # セクターローテーション計数表 (最新の日付のデータを取得)
+        latest_snapshot = SectorDailySnapshot.objects.order_by("-date").first()
+        if latest_snapshot:
+            latest_date = latest_snapshot.date
+            context["sector_snapshots"] = (
+                SectorDailySnapshot.objects.filter(date=latest_date)
+                .select_related("sector")
+                .order_by("rank")
+            )
+            context["sector_latest_date"] = latest_date
+        else:
+            context["sector_snapshots"] = []
 
         # 季節系アノマリー
         context["monthly_anomalies"] = MONTHLY_ANOMALIES

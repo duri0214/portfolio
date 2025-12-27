@@ -27,3 +27,30 @@ class RssFeed(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Sector(models.Model):
+    name = models.CharField(max_length=100)
+    symbol = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"{self.name} ({self.symbol})"
+
+
+class SectorDailySnapshot(models.Model):
+    date = models.DateField()
+    sector = models.ForeignKey(
+        Sector, on_delete=models.CASCADE, related_name="snapshots"
+    )
+    rs_20d = models.FloatField()
+    rs_slope_5d = models.FloatField()
+    rank = models.IntegerField()
+    rank_delta_5d = models.IntegerField()
+    signal = models.CharField(max_length=10)
+
+    class Meta:
+        unique_together = ("date", "sector")
+        ordering = ["-date", "rank"]
+
+    def __str__(self):
+        return f"{self.date} - {self.sector.name} - Rank: {self.rank}"
