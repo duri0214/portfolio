@@ -3,9 +3,10 @@
 {% block content %}
 <div class="container mt-4">
     <h2>ストックトレーダーズ・ニュース</h2>
+    <!-- 1. ストックトレーダーズ・アルマナック -->
     <section class="mb-5 border p-4 rounded shadow-sm">
         <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-info-circle"></i> ストックトレーダーズ・アルマナック から取得できた情報</h4>
+            <h4 class="text-primary mb-3"><i class="fas fa-info-circle"></i> 1. ストックトレーダーズ・アルマナック から</h4>
             <p class="text-muted">
                 詳細な統計や最新情報は公式サイトをご確認ください：
                 <a href="https://www.stocktradersalmanac.com/" target="_blank" rel="noopener noreferrer">
@@ -14,8 +15,8 @@
             </p>
         </div>
 
-        <!-- 1. 季節系アノマリー（TABLE表示） -->
-        <h3 class="mb-3">季節系アノマリー</h3>
+        <!-- 1-1. 季節系アノマリー（TABLE表示） -->
+        <h5 class="mb-3">1-1. 季節系アノマリー（TABLE表示）</h5>
         <div class="card mb-4">
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -41,9 +42,9 @@
             </div>
         </div>
 
-        <!-- 2. 業種・テーマ系アノマリー（CARD表示） -->
+        <!-- 1-2. 業種・テーマ系アノマリー（CARD表示） -->
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>業種・テーマ系アノマリー</h3>
+            <h5>1-2. 業種・テーマ系アノマリー（CARD表示）</h5>
             <button onclick="location.reload();" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-sync-alt"></i> シャッフル
             </button>
@@ -68,11 +69,110 @@
         </div>
     </section>
 
+    <!-- 2. セクターローテーション計数表 (gics) -->
+    <section class="mb-5 border p-4 rounded shadow-sm bg-light">
+        <div class="mb-4">
+            <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 2. セクターローテーション計数表 (gics)</h4>
+            <p class="text-muted">
+                基準日: {{ sector_latest_date|date:"Y/m/d" }} | ベンチマーク: 
+                <a href="https://finance.yahoo.com/quote/SPY/" target="_blank" rel="noopener noreferrer">
+                    SPY (S&P500) <i class="fas fa-external-link-alt"></i>
+                </a> | <i class="fas fa-clock"></i> 日次更新
+            </p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Signal</th>
+                                <th class="text-left">Sector</th>
+                                <th>Symbol</th>
+                                <th>Rank</th>
+                                <th>ΔRank(5d)</th>
+                                <th>RS_20d(%)</th>
+                                <th>ΔRS_5d(%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for snapshot in sector_snapshots %}
+                            <tr>
+                                <td>
+                                    {% if snapshot.signal == 'Green' %}
+                                        <span class="badge badge-success" style="background-color: #28a745; color: white;">Green</span>
+                                    {% elif snapshot.signal == 'Yellow' %}
+                                        <span class="badge badge-warning" style="background-color: #ffc107; color: black;">Yellow</span>
+                                    {% elif snapshot.signal == 'Red' %}
+                                        <span class="badge badge-danger" style="background-color: #dc3545; color: white;">Red</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-left">{{ snapshot.sector.name }}</td>
+                                <td><code class="text-primary">{{ snapshot.sector.symbol }}</code></td>
+                                <td><strong>{{ snapshot.rank }}</strong></td>
+                                <td>
+                                    {% if snapshot.rank_delta_5d < 0 %}
+                                        <span class="text-success"><i class="fas fa-caret-up"></i> {{ snapshot.rank_delta_5d|floatformat:0|cut:"-" }}</span>
+                                    {% elif snapshot.rank_delta_5d > 0 %}
+                                        <span class="text-danger"><i class="fas fa-caret-down"></i> {{ snapshot.rank_delta_5d|floatformat:0 }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ snapshot.rs_20d|floatformat:2 }}%</td>
+                                <td>
+                                    {% if snapshot.rs_slope_5d > 0 %}
+                                        <span class="text-success">+{{ snapshot.rs_slope_5d|floatformat:2 }}%</span>
+                                    {% elif snapshot.rs_slope_5d < 0 %}
+                                        <span class="text-danger">{{ snapshot.rs_slope_5d|floatformat:2 }}%</span>
+                                    {% else %}
+                                        {{ snapshot.rs_slope_5d|floatformat:2 }}%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="p-4 text-muted">
+                                    データがありません。`python manage.py update_sector_rotation` を実行してください。
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="mt-2 text-muted small">
+            <h6>用語解説・計算ルール:</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="mb-2">
+                        <li><strong>RS_20d(%)</strong> (Relative Strength): セクターETFの20日リターンとSPY(S&P500)の20日リターンの差分。プラスなら市場平均より強く、マイナスなら弱いことを示します。</li>
+                        <li><strong>ΔRS_5d(%)</strong>: RS_20dの5営業日前からの変化幅。勢い（モメンタム）の変化を計ります。</li>
+                        <li><strong>Rank</strong>: RS_20dに基づく11セクター内の順位（1位が最強）。</li>
+                        <li><strong>ΔRank(5d)</strong>: 5営業日前と比較した順位の変動。数値がマイナス（例: -2）なら順位が2つ上がったことを意味します。</li>
+                    </ul>
+                </div>
+                <div class="col-md-6 border-left">
+                    <p class="mb-1"><strong>信号機ルール:</strong></p>
+                    <ul class="mb-0">
+                        <li><span class="badge badge-success" style="background-color: #28a745; color: white;">Green</span>: <strong>出遅れからの反発</strong> (RS_20d < 0 かつ ΔRS_5d > 0 かつ ΔRank_5d ≤ -2)</li>
+                        <li><span class="badge badge-warning" style="background-color: #ffc107; color: black;">Yellow</span>: <strong>勢い改善中</strong> (ΔRS_5d > 0)</li>
+                        <li><span class="badge badge-danger" style="background-color: #dc3545; color: white;">Red</span>: <strong>過熱からの失速</strong> (RS_20d > 0 かつ ΔRS_5d < 0 かつ ΔRank_5d ≥ 2)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- 3. RSS ニュースフィード -->
     <section class="mb-5 border p-4 rounded shadow-sm">
         <div class="mb-4">
             <h4 class="text-primary mb-3">
-                <i class="fas fa-rss"></i> 最新ニュース (RSS) から取得できた情報
+                <i class="fas fa-rss"></i> 3. RSS ニュースフィード
             </h4>
             <p class="text-muted">
                 <i class="fas fa-clock"></i> 日次更新
