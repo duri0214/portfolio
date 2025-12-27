@@ -1,6 +1,5 @@
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime
 
 from django.db.models import F, FloatField
@@ -9,25 +8,12 @@ from django.db.models.functions import Round
 
 from vietnam_research.domain.repository.market import MarketRepository
 from vietnam_research.domain.valueobject.line_chart import LineChartLayer
+from vietnam_research.domain.valueobject.market import Rss, RssEntry
 from vietnam_research.domain.valueobject.radar_chart import RadarChartLayer, Axis
 from vietnam_research.models import Industry
 
 MIN_FEE = 1200000
 FEE_RATE = 0.022
-
-
-@dataclass
-class RssEntry:
-    title: str
-    summary: str
-    link: str
-    updated: datetime
-
-
-@dataclass
-class Rss:
-    entries: list[RssEntry]
-    updated: datetime
 
 
 class MarketAbstract(ABC):
