@@ -3,6 +3,75 @@
 {% block content %}
 <div class="container mt-4">
     <h2>ストックトレーダーズ・ニュース</h2>
+
+    <!-- 0. 主要マクロ指標 -->
+    <section class="mb-5 border p-4 rounded shadow-sm bg-white">
+        <div class="mb-4">
+            <h4 class="text-primary mb-3"><i class="fas fa-globe-americas"></i> 0. 主要マクロ指標</h4>
+            <p class="text-muted"><i class="fas fa-clock"></i> 日次更新 (Yahoo Finance 経由)</p>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 text-center">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>日付</th>
+                                <th>ISM 製造業景気指数</th>
+                                <th>米国10年債利回り</th>
+                                <th>VIX 指数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for indicator in macro_indicators %}
+                            <tr>
+                                <td>{{ indicator.date|date:"Y/m/d" }}</td>
+                                <td>{{ indicator.ism_pmi|default_if_none:"-" }}</td>
+                                <td>{{ indicator.us_10y_yield|floatformat:3|default_if_none:"-" }}%</td>
+                                <td>{{ indicator.vix|floatformat:2|default_if_none:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="p-4 text-muted">
+                                    データがありません。`python manage.py update_macro_indicators` を実行してください。
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="mt-2 text-muted small">
+            <h6>用語解説・計算ルール:</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="mb-0">
+                        <li>
+                            <a href="https://finance.yahoo.com/quote/NAPM" target="_blank" rel="noopener noreferrer" class="text-dark">
+                                <strong>ISM 製造業景気指数</strong> <i class="fas fa-external-link-alt small"></i>
+                            </a>: 製造業の購買担当マネージャーへのアンケート調査に基づく景況感指数。50を上回ると景気拡大、下回ると景気後退の目安。
+                        </li>
+                        <li>
+                            <a href="https://finance.yahoo.com/quote/%5ETNX" target="_blank" rel="noopener noreferrer" class="text-dark">
+                                <strong>米国10年債利回り</strong> <i class="fas fa-external-link-alt small"></i>
+                            </a>: 米国政府が発行する償還期間10年の国債（10-Year Treasury Note）の利回り。長期金利の代表的な指標。
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6 border-left">
+                    <ul class="mb-0">
+                        <li>
+                            <a href="https://finance.yahoo.com/quote/%5EVIX" target="_blank" rel="noopener noreferrer" class="text-dark">
+                                <strong>VIX 指数</strong> <i class="fas fa-external-link-alt small"></i>
+                            </a>: シカゴ・オプション取引所（CBOE）が算出する「ボラティリティ・インデックス」。市場が予想する将来の変動率を示し、「恐怖指数」とも呼ばれる。
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- 1. ストックトレーダーズ・アルマナック -->
     <section class="mb-5 border p-4 rounded shadow-sm">
         <div class="mb-4">
