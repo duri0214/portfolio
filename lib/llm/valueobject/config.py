@@ -9,8 +9,8 @@ class ApiConfig(ABC):
     max_tokens: int
 
 
-OpenAiModel = Literal["gpt-4o", "gpt-4o-mini", "dall-e-3", "tts-1", "whisper-1"]
-GeminiModel = Literal["gemini-1.5-flash"]
+OpenAiModel = Literal["gpt-5", "gpt-5-mini", "dall-e-3", "tts-1", "whisper-1"]
+GeminiModel = Literal["gemini-2.0-flash", "gemini-2.5-flash"]
 
 
 @dataclass

@@ -172,7 +172,7 @@ class OpenAIChatStreamingService(BaseChatService):
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
             max_tokens=4000,
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
         )
 
     def generate(
@@ -311,7 +311,7 @@ class OpenAIRagChatService(BaseChatService):
         self.config = OpenAIGptConfig(
             api_key=os.getenv("OPENAI_API_KEY"),
             max_tokens=4000,
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
         )
 
     def generate(self, user_message: MessageDTO) -> MessageDTO:

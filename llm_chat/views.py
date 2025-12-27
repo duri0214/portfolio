@@ -64,13 +64,13 @@ class SyncResponseView(View):
                     config = GeminiConfig(
                         api_key=os.getenv("GEMINI_API_KEY"),
                         max_tokens=4000,
-                        model="gemini-1.5-flash",
+                        model="gemini-2.5-flash",
                     )
                 else:
                     config = OpenAIGptConfig(
                         api_key=os.getenv("OPENAI_API_KEY"),
                         max_tokens=4000,
-                        model="gpt-4o-mini",
+                        model="gpt-5-mini",
                     )
                 use_case = LlmChatUseCase(config)
             elif use_case_type == "OpenAIDalle":
