@@ -86,3 +86,16 @@ class MsciCountryWeightReport(models.Model):
 
     def __str__(self):
         return f"{self.report_date} - {self.source}"
+
+
+class AssetPrice(models.Model):
+    date = models.DateField()
+    symbol = models.CharField(max_length=10)
+    price = models.FloatField()  # 調整後終値 (Adjusted Close) を想定
+
+    class Meta:
+        unique_together = ("date", "symbol")
+        ordering = ["-date", "symbol"]
+
+    def __str__(self):
+        return f"{self.date} - {self.symbol}: {self.price}"

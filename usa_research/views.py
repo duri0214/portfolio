@@ -8,6 +8,7 @@ from usa_research.models import (
     RssFeed,
     SectorDailySnapshot,
     MsciCountryWeightReport,
+    AssetPrice,
 )
 
 
@@ -52,5 +53,24 @@ class IndexView(TemplateView):
                 latest_report.summary_md, extensions=["extra", "tables"]
             )
             context["msci_report"] = latest_report
+
+        # 資産クラスの長期推移
+        # グラフ表示用にデータを取得。
+        # 1950年からの日次データは膨大になるため、各月の月末データのみをサンプリングして取得する。
+        from django.db.models import Max
+        from django.db.models.functions import TruncMonth
+
+        # 各月ごとの最大日付（月末営業日）を取得
+        monthly_last_dates = (
+            AssetPrice.objects.annotate(month=TruncMonth("date"))
+            .values("month")
+            .annotate(last_date=Max("date"))
+            .values_list("last_date", flat=True)
+        )
+
+        # 月末データに絞って取得
+        context["asset_prices"] = AssetPrice.objects.filter(
+            date__in=monthly_last_dates
+        ).order_by("date", "symbol")
 
         return context
