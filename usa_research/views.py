@@ -9,6 +9,7 @@ from usa_research.models import (
     SectorDailySnapshot,
     MsciCountryWeightReport,
     AssetPrice,
+    Nasdaq100Company,
 )
 
 
@@ -72,5 +73,10 @@ class IndexView(TemplateView):
         context["asset_prices"] = AssetPrice.objects.filter(
             date__in=monthly_last_dates
         ).order_by("date", "symbol")
+
+        # NASDAQ100 銘柄リスト
+        context["nasdaq100_companies"] = Nasdaq100Company.objects.all().order_by(
+            "sector", "ticker"
+        )
 
         return context
