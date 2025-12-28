@@ -2,10 +2,24 @@
 {% load static %}
 {% block content %}
 <div class="container mt-4">
-    <h2>ストックトレーダーズ・ニュース</h2>
+    <h2 id="top">ストックトレーダーズ・ニュース</h2>
+
+    <!-- 目次 (Quick Links) -->
+    <nav class="mb-4 p-3 bg-light border rounded shadow-sm">
+        <h6 class="text-secondary mb-2"><i class="fas fa-list"></i> クイックリンク</h6>
+        <div class="d-flex flex-wrap">
+            <a href="#macro" class="btn btn-sm btn-outline-primary mr-2 mb-2">0. 主要マクロ指標</a>
+            <a href="#assets" class="btn btn-sm btn-outline-primary mr-2 mb-2">1. 資産リターン推移</a>
+            <a href="#msci" class="btn btn-sm btn-outline-primary mr-2 mb-2">2. MSCIレポート</a>
+            <a href="#almanac" class="btn btn-sm btn-outline-primary mr-2 mb-2">3. アルマナック</a>
+            <a href="#sectors" class="btn btn-sm btn-outline-primary mr-2 mb-2">4. セクターローテーション</a>
+            <a href="#nasdaq100" class="btn btn-sm btn-outline-primary mr-2 mb-2">5. NASDAQ100銘柄</a>
+            <a href="#rss" class="btn btn-sm btn-outline-primary mr-2 mb-2">6. RSSニュース</a>
+        </div>
+    </nav>
 
     <!-- 0. 主要マクロ指標 -->
-    <section class="mb-5 border p-4 rounded shadow-sm bg-white">
+    <section id="macro" class="mb-5 border p-4 rounded shadow-sm bg-white">
         <div class="mb-4">
             <h4 class="text-primary mb-3"><i class="fas fa-globe-americas"></i> 0. 主要マクロ指標</h4>
             <p class="text-muted"><i class="fas fa-clock"></i> 日次更新 (Yahoo Finance 経由)</p>
@@ -88,10 +102,13 @@
                 </div>
             </div>
         </div>
+        <div class="text-right mt-3">
+            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+        </div>
     </section>
 
     <!-- 1. 資産クラス別・長期リターン推移 (Quantitative Evidence) -->
-    <section class="mb-5 border p-4 rounded shadow-sm bg-white">
+    <section id="assets" class="mb-5 border p-4 rounded shadow-sm bg-white">
         <div class="mb-4">
             <h4 class="text-primary mb-3"><i class="fas fa-chart-area"></i> 1. 資産クラス別・長期リターン推移</h4>
             <p class="text-muted">「なぜ株（Stocks）は長期で見れば価値が上がり続けてきたのか」をデータで裏付ける</p>
@@ -109,7 +126,7 @@
                         グラフを見ると SPY（株式）の成長が圧倒的ですが、特定の時期に <strong>金（Gold）</strong> などの他の資産が注目されるのには理由があります。
                     </p>
                     <ul>
-                        <li><strong>インフレヘッジ:</strong> 金は「中央銀行が刷ることができない」ため、インフレ（物価上昇）局面で通貨価値が下がる際に価値が維持されやすい性質があります。</li>
+                        <li><strong>インフレヘッジ:</strong> 金は中央銀行が刷れないため、インフレ（物価上昇）局面で通貨価値が下がる際に価値が維持されやすい性質があります。</li>
                         <li><strong>逆相関の性質:</strong> 株式が暴落する「有事（戦争や金融危機）」において、金は「安全資産」として買われる傾向があり、ポートフォリオの損失を抑えるクッションになります。</li>
                         <li><strong>暗黒の10年:</strong> 例えば2000年代（ITバブル崩壊〜リーマンショック）のような「株式が停滞する10年間」においては、金が株式を大きくアウトパフォームした歴史があります。</li>
                     </ul>
@@ -139,6 +156,9 @@
                     </p>
                 </div>
             </div>
+        </div>
+        <div class="text-right mt-3">
+            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
         </div>
     </section>
 
@@ -311,7 +331,7 @@
     {% endblock %}
 
     <!-- 2. MSCIレポートの要約 -->
-    <section class="mb-5 border p-4 rounded shadow-sm bg-light">
+    <section id="msci" class="mb-5 border p-4 rounded shadow-sm bg-light">
         <div class="mb-4 d-flex justify-content-between align-items-center">
             <div>
                 <h4 class="text-primary mb-1"><i class="fas fa-chart-pie"></i> 2. MSCIレポートの要約</h4>
@@ -332,10 +352,13 @@
                 <p class="text-muted mb-0">データがありません。`python manage.py update_msci_weights` を実行してください。</p>
             {% endif %}
         </div>
+        <div class="text-right mt-3">
+            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+        </div>
     </section>
 
     <!-- 3. ストックトレーダーズ・アルマナック -->
-    <section class="mb-5 border p-4 rounded shadow-sm">
+    <section id="almanac" class="mb-5 border p-4 rounded shadow-sm">
         <div class="mb-4">
             <h4 class="text-primary mb-3"><i class="fas fa-info-circle"></i> 3. ストックトレーダーズ・アルマナック から</h4>
             <p class="text-muted">
@@ -398,10 +421,13 @@
         <div class="mt-4 text-muted small">
             <p>※ ストックトレーダーズ・アルマナックに基づくアノマリー。投資判断の思考補助としてご利用ください。</p>
         </div>
+        <div class="text-right mt-3">
+            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+        </div>
     </section>
 
     <!-- 4. セクターローテーション計数表 (GICS) -->
-    <section class="mb-5 border p-4 rounded shadow-sm bg-light">
+    <section id="sectors" class="mb-5 border p-4 rounded shadow-sm bg-light">
         <div class="mb-4">
             <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 4. セクターローテーション計数表 (GICS)</h4>
             <p class="text-muted">
@@ -540,10 +566,13 @@
                 </div>
             </div>
         </div>
+        <div class="text-right mt-3">
+            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+        </div>
     </section>
     
     <!-- 5. NASDAQ100 構成銘柄 (Bug's Eye View) -->
-    <section class="mb-5 border p-4 rounded shadow-sm bg-white">
+    <section id="nasdaq100" class="mb-5 border p-4 rounded shadow-sm bg-white">
         <div class="mb-4 d-flex justify-content-between align-items-center">
             <div>
                 <h4 class="text-primary mb-1"><i class="fas fa-bug"></i> 5. NASDAQ100 構成銘柄 (虫の目)</h4>
@@ -612,10 +641,13 @@
                 SPY (S&P500) と比較して景気敏感な金融セクターが含まれず、技術革新や高い成長性を期待される企業が集まっているため、強気相場では市場を牽引する役割を果たします。
             </p>
         </div>
+        <div class="text-right mt-3">
+            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+        </div>
     </section>
 
     <!-- 6. RSS ニュースフィード -->
-    <section class="mb-5 border p-4 rounded shadow-sm">
+    <section id="rss" class="mb-5 border p-4 rounded shadow-sm">
         <div class="mb-4">
             <h4 class="text-primary mb-3">
                 <i class="fas fa-rss"></i> 6. RSS ニュースフィード
@@ -644,6 +676,9 @@
                     {% endfor %}
                 </div>
             </div>
+        </div>
+        <div class="text-right mt-3">
+            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
         </div>
     </section>
 </div>
