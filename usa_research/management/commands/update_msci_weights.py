@@ -79,21 +79,21 @@ class Command(BaseCommand):
 
         # 3. LLMによる日付抽出と要約
         prompt = f"""
-            以下のMSCI Index의 レポート内容から、レポートの日付（Report Date）を抽出し、
-            その後「Country Weight（国別株式比率）」を中心に内容を要約してください。
+            以下のMSCI Indexのレポート内容から、レポートの日付（Report Date）を抽出し、
+            その後「Country Weight（国別株式比率）」を中心に内容を【日本語で】要約してください。
             
             【要約の観点】
             - 国別比率の概況
             - 前月比での大きな変化
             - 特筆すべき集中・分散の兆候
             
-            【出力フォーマット】
+            【出力フォーマット・スタイル】
             Report Date: YYYY-MM-DD
-            ---
-            # Summary
-            (ここにMarkdown形式で要約を記述)
             
-            ---
+            (ここにMarkdown形式で、日本語で要約を記述。各セクションの見出しには ##### を使用してください。)
+            
+            ※注意: 要約部分に 'Report Date' という文言を含めないでください。
+            
             【レポート内容】
             {text}
             """
@@ -141,11 +141,18 @@ class Command(BaseCommand):
         """
         LLMの応答から日付と要約を抽出する。
         """
+        # 日付の抽出
         date_match = re.search(r"Report Date:\s*(\d{4}-\d{2}-\d{2})", response)
         report_date = date_match.group(1) if date_match else None
 
-        # summary_mdは "---" 以降の部分とする
-        parts = response.split("---", 1)
-        summary_md = parts[1].strip() if len(parts) > 1 else response
+        # 要約の抽出 (Report Date の行を除去)
+        lines = response.strip().splitlines()
+        summary_lines = []
+        for line in lines:
+            if re.search(r"Report Date:\s*\d{4}-\d{2}-\d{2}", line):
+                continue
+            summary_lines.append(line)
+
+        summary_md = "\n".join(summary_lines).strip()
 
         return report_date, summary_md
