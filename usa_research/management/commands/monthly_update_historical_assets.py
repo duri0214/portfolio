@@ -5,21 +5,17 @@ from django.core.management.base import BaseCommand
 from usa_research.models import AssetPrice
 
 # 対象資産の定義
-# Stocks: SPY (S&P 500 ETF), ^GSPC (S&P 500 Index)
-# Bonds: TLT (米国長期国債 ETF), ^TYX (30年債利回り)
-# Bills: BIL (短期国債 ETF)
-# Gold: GLD (金 ETF), GC=F (金先物)
-# Dollar: UUP (米ドル指数 ETF), DX-Y.NYB (ドル指数)
+# Stocks: ^GSPC (S&P 500 Index) - 1927年〜の超長期データ用
+# Bonds: ^TYX (30Y Treasury Yield) - 1977年〜の利回りデータ
+# Bills: BIL (短期国債 ETF) - 2007年〜
+# Gold: GC=F (金先物) - 2000年〜
+# Dollar: DX-Y.NYB (ドル指数) - 1971年〜
 TICKERS = {
-    "Stocks_ETF": "SPY",
-    "Stocks_Index": "^GSPC",
-    "Bonds_ETF": "TLT",
-    "Bonds_Yield": "^TYX",
-    "Bills_ETF": "BIL",
-    "Gold_ETF": "GLD",
-    "Gold_Futures": "GC=F",
-    "Dollar_ETF": "UUP",
-    "Dollar_Index": "DX-Y.NYB",
+    "Stocks": "^GSPC",
+    "Bonds": "^TYX",
+    "Bills": "BIL",
+    "Gold": "GC=F",
+    "Dollar": "DX-Y.NYB",
 }
 
 
