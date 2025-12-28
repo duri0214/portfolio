@@ -577,7 +577,11 @@
                         <tbody>
                             {% for company in nasdaq100_companies %}
                             <tr>
-                                <td><code class="text-primary">{{ company.ticker }}</code></td>
+                                <td>
+                                    <a href="https://jp.tradingview.com/symbols/NASDAQ-{{ company.ticker }}/" target="_blank" rel="noopener noreferrer">
+                                        <code class="text-primary">{{ company.ticker }}</code>
+                                    </a>
+                                </td>
                                 <td class="small">{{ company.name }}</td>
                                 <td class="small">
                                     {% if company.sector %}
