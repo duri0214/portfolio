@@ -99,3 +99,20 @@ class AssetPrice(models.Model):
 
     def __str__(self):
         return f"{self.date} - {self.symbol}: {self.price}"
+
+
+class Nasdaq100Company(models.Model):
+    ticker = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=200)
+    sector = models.CharField(max_length=100)
+    industry = models.CharField(max_length=100, blank=True)
+    source = models.CharField(max_length=100)
+    as_of = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["ticker"]
+
+    def __str__(self):
+        return f"{self.ticker} - {self.name}"
