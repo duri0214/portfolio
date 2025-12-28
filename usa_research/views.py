@@ -1,8 +1,14 @@
 import random
+import markdown
 from datetime import datetime
 from django.views.generic import TemplateView
 from usa_research.domain.constants.almanac import MONTHLY_ANOMALIES, THEME_ANOMALIES
-from usa_research.models import MacroIndicator, RssFeed, SectorDailySnapshot
+from usa_research.models import (
+    MacroIndicator,
+    RssFeed,
+    SectorDailySnapshot,
+    MsciCountryWeightReport,
+)
 
 
 class IndexView(TemplateView):
@@ -38,5 +44,13 @@ class IndexView(TemplateView):
 
         # RSSフィードを取得 (最新20件)
         context["rss_feeds"] = RssFeed.objects.select_related("source").all()[:20]
+
+        # MSCIレポートを取得 (最新1件)
+        latest_report = MsciCountryWeightReport.objects.first()
+        if latest_report:
+            latest_report.summary_html = markdown.markdown(
+                latest_report.summary_md, extensions=["extra", "tables"]
+            )
+            context["msci_report"] = latest_report
 
         return context

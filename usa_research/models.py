@@ -71,3 +71,18 @@ class MacroIndicator(models.Model):
 
     def __str__(self):
         return f"{self.date} - PMI: {self.ism_pmi}, 10Y: {self.us_10y_yield}, VIX: {self.vix}"
+
+
+class MsciCountryWeightReport(models.Model):
+    source = models.CharField(max_length=100, default="MSCI")
+    report_date = models.DateField(unique=True)
+    summary_md = models.TextField()
+    pdf_url = models.URLField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-report_date"]
+
+    def __str__(self):
+        return f"{self.report_date} - {self.source}"

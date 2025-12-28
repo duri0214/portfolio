@@ -90,10 +90,34 @@
         </div>
     </section>
 
-    <!-- 1. ストックトレーダーズ・アルマナック -->
+    <!-- 1. MSCIレポートの要約 -->
+    <section class="mb-5 border p-4 rounded shadow-sm bg-light">
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-primary mb-1"><i class="fas fa-chart-pie"></i> 1. MSCIレポートの要約</h4>
+                {% if msci_report %}
+                <p class="text-muted mb-0 small"><i class="fas fa-calendar-alt"></i> Report Date: {{ msci_report.report_date|date:"Y/m/d" }}</p>
+                {% endif %}
+            </div>
+            {% if msci_report %}
+            <a href="{{ msci_report.pdf_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-file-pdf"></i> Original PDF
+            </a>
+            {% endif %}
+        </div>
+        <div class="bg-white p-3 border rounded">
+            {% if msci_report %}
+                {{ msci_report.summary_html|safe }}
+            {% else %}
+                <p class="text-muted mb-0">データがありません。`python manage.py update_msci_weights` を実行してください。</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- 2. ストックトレーダーズ・アルマナック -->
     <section class="mb-5 border p-4 rounded shadow-sm">
         <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-info-circle"></i> 1. ストックトレーダーズ・アルマナック から</h4>
+            <h4 class="text-primary mb-3"><i class="fas fa-info-circle"></i> 2. ストックトレーダーズ・アルマナック から</h4>
             <p class="text-muted">
                 詳細な統計や最新情報は公式サイトをご確認ください：
                 <a href="https://www.stocktradersalmanac.com/" target="_blank" rel="noopener noreferrer">
@@ -102,8 +126,8 @@
             </p>
         </div>
 
-        <!-- 1-1. 季節系アノマリー（TABLE表示） -->
-        <h5 class="mb-3">1-1. 季節系アノマリー（TABLE表示）</h5>
+        <!-- 2-1. 季節系アノマリー（TABLE表示） -->
+        <h5 class="mb-3">2-1. 季節系アノマリー（TABLE表示）</h5>
         <div class="card mb-4">
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -129,9 +153,9 @@
             </div>
         </div>
 
-        <!-- 1-2. 業種・テーマ系アノマリー（CARD表示） -->
+        <!-- 2-2. 業種・テーマ系アノマリー（CARD表示） -->
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5>1-2. 業種・テーマ系アノマリー（CARD表示）</h5>
+            <h5>2-2. 業種・テーマ系アノマリー（CARD表示）</h5>
             <button onclick="location.reload();" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-sync-alt"></i> シャッフル
             </button>
@@ -156,10 +180,10 @@
         </div>
     </section>
 
-    <!-- 2. セクターローテーション計数表 (GICS) -->
+    <!-- 3. セクターローテーション計数表 (GICS) -->
     <section class="mb-5 border p-4 rounded shadow-sm bg-light">
         <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 2. セクターローテーション計数表 (GICS)</h4>
+            <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 3. セクターローテーション計数表 (GICS)</h4>
             <p class="text-muted">
                 基準日: {{ sector_latest_date|date:"Y/m/d" }} | 
                 分類: <a href="https://www.msci.com/our-solutions/indexes/gics" target="_blank" rel="noopener noreferrer">GICS (11セクター) <i class="fas fa-external-link-alt"></i></a> |
@@ -298,11 +322,11 @@
         </div>
     </section>
 
-    <!-- 3. RSS ニュースフィード -->
+    <!-- 4. RSS ニュースフィード -->
     <section class="mb-5 border p-4 rounded shadow-sm">
         <div class="mb-4">
             <h4 class="text-primary mb-3">
-                <i class="fas fa-rss"></i> 3. RSS ニュースフィード
+                <i class="fas fa-rss"></i> 4. RSS ニュースフィード
             </h4>
             <p class="text-muted">
                 <i class="fas fa-clock"></i> 日次更新

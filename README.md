@@ -3,7 +3,7 @@
 Django(Python)を用いた、各種データ分析・可視化ツールのポートフォリオです。
 
 ![Python 3.12](https://img.shields.io/badge/python-3.12-green)
-![Django 5.1](https://img.shields.io/badge/django-5.1-green)
+![Django 6.0](https://img.shields.io/badge/django-6.0-green)
 ![MySQL 8.0](https://img.shields.io/badge/mysql-8.0-green)
 
 ---
