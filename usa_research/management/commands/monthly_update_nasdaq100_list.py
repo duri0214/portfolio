@@ -17,7 +17,15 @@ class Command(BaseCommand):
         1. Slickchartsから構成銘柄一覧を取得 (fetch_from_slickcharts)
         2. yfinance にてセクター・業界情報を取得 (英語表記への統一)
         3. 取得した全データをループしてDBに保存 (Nasdaq100Companyモデル)
-           - update_or_create を使用
+
+        実装上の注意点:
+        - yfinanceのメタデータ取得(info)について:
+            yfinanceの仕様上、セクター等のメタデータを一括で取得するAPIは存在せず、
+            内部的には1銘柄ごとにHTTPリクエストが発生します。
+            そのため、速度向上のための一括処理（yf.Tickers等）は採用せず、
+            以下の理由から1件ずつのループ処理を行っています。
+            1. 進捗の可視化: 100件超の取得には時間がかかるため、1件ずつログを出すことで実行状況を把握可能にする。
+            2. 堅牢性: 特定の銘柄で取得エラーが発生しても、他の銘柄の更新を阻害しない。
         """
         self.stdout.write("Fetching NASDAQ100 components from Slickcharts...")
 
