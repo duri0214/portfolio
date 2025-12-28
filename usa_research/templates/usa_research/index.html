@@ -90,11 +90,153 @@
         </div>
     </section>
 
-    <!-- 1. MSCIレポートの要約 -->
+    <!-- 1. 資産クラス別・長期リターン推移 (Quantitative Evidence) -->
+    <section class="mb-5 border p-4 rounded shadow-sm bg-white">
+        <div class="mb-4">
+            <h4 class="text-primary mb-3"><i class="fas fa-chart-area"></i> 1. 資産クラス別・長期リターン推移</h4>
+            <p class="text-muted">「なぜ株（Stocks）は長期で見れば価値が上がり続けてきたのか」をデータで裏付ける</p>
+        </div>
+
+        <div class="mb-4" style="height: 400px;">
+            <canvas id="assetReturnsChart"></canvas>
+        </div>
+
+        <div class="mt-2 text-muted small">
+            <h6>なぜ SPY (S&P 500) を株式の代表指標とするのか:</h6>
+            <div class="row">
+                <div class="col-md-12">
+                    <p class="mb-2">
+                        本データでは、株式の代表として <strong>SPY (S&P 500 ETF)</strong> を採用しています。これは単なる「成長株の寄せ集め」ではなく、以下の理由から <strong>「米国経済そのものへの投資結果」</strong> を示すのに最も適しているためです。
+                    </p>
+                    <ul>
+                        <li><strong>広範な網羅性:</strong> 米国の主要産業を網羅する大型企業500社で構成され、特定のセクターに偏らず米国経済全体を反映します。</li>
+                        <li><strong>代謝（サバイバル）機能:</strong> 構成銘柄は固定ではなく、時代の変化に合わせて常に新陳代謝が行われます。これにより「株価指数」は長期的に「生き残った強者の集合体」であり続けます。</li>
+                        <li><strong>配当再投資の視点:</strong> 個別株のような倒産リスクや、NASDAQのような極端なボラティリティを抑えつつ、経済成長の果実を最も効率的に享受できる指標です。</li>
+                    </ul>
+                    <p class="mb-0">
+                        「株は短期ではギャンブルのように上下するが、長期（数十年単位）では経済成長と企業の利益成長をダイレクトに反映し、他の資産クラスを凌駕してきた」という事実を、このデータは示しています。
+                    </p>
+                    <p class="mt-2 text-info">
+                        ※ グラフは各資産の価格を、取得開始時点を100として指数化したものです（累積リターンの比較）。<br>
+                        ※ SPY, TLT などの ETF はトータルリターン（配当込み）ですが、^GSPC, ^TYX, DX-Y.NYB などの指数（Index）は価格のみを反映しており、配当を含みません。1950年代からの超長期トレンドを確認する際は指数を参考にしてください。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rawData = [
+                {% for p in asset_prices %}
+                { date: "{{ p.date|date:'Y-m-d' }}", symbol: "{{ p.symbol }}", price: {{ p.price }} },
+                {% endfor %}
+            ];
+
+            if (rawData.length === 0) return;
+
+            // データを整形
+            const symbols = [...new Set(rawData.map(d => d.symbol))];
+            const dates = [...new Set(rawData.map(d => d.date))].sort();
+
+            // 検索を高速化するためにデータをマップ化する
+            // dataMap[date][symbol] = price
+            const dataMap = {};
+            rawData.forEach(d => {
+                if (!dataMap[d.date]) dataMap[d.date] = {};
+                dataMap[d.date][d.symbol] = d.price;
+            });
+
+            // 各シンボルの初期値を100として正規化
+            const firstPrices = {};
+            symbols.forEach(s => {
+                // 最初の有効な価格を探す
+                for (const d of dates) {
+                    if (dataMap[d] && dataMap[d][s]) {
+                        firstPrices[s] = dataMap[d][s];
+                        break;
+                    }
+                }
+            });
+
+            const datasets = symbols.map(s => {
+                const symbolData = dates.map(d => {
+                    const price = dataMap[d] ? dataMap[d][s] : null;
+                    if (price && firstPrices[s]) {
+                        return (price / firstPrices[s] * 100).toFixed(2);
+                    }
+                    return null;
+                });
+
+            const colors = {
+                'SPY': 'rgba(255, 99, 132, 1)',
+                '^GSPC': 'rgba(255, 99, 132, 0.5)',
+                'TLT': 'rgba(54, 162, 235, 1)',
+                '^TYX': 'rgba(54, 162, 235, 0.5)',
+                'BIL': 'rgba(75, 192, 192, 1)',
+                'GLD': 'rgba(255, 206, 86, 1)',
+                'GC=F': 'rgba(255, 206, 86, 0.5)',
+                'UUP': 'rgba(153, 102, 255, 1)',
+                'DX-Y.NYB': 'rgba(153, 102, 255, 0.5)'
+            };
+
+                return {
+                    label: s,
+                    data: symbolData,
+                    borderColor: colors[s] || 'rgba(200, 200, 200, 1)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.1
+                };
+            });
+
+            const ctx = document.getElementById('assetReturnsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: { display: true, text: 'Date' }
+                        },
+                        y: {
+                            display: true,
+                            title: { display: true, text: 'Index (Start = 100)' }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+    {% endblock %}
+
+    <!-- 2. MSCIレポートの要約 -->
     <section class="mb-5 border p-4 rounded shadow-sm bg-light">
         <div class="mb-4 d-flex justify-content-between align-items-center">
             <div>
-                <h4 class="text-primary mb-1"><i class="fas fa-chart-pie"></i> 1. MSCIレポートの要約</h4>
+                <h4 class="text-primary mb-1"><i class="fas fa-chart-pie"></i> 2. MSCIレポートの要約</h4>
                 {% if msci_report %}
                 <p class="text-muted mb-0 small"><i class="fas fa-calendar-alt"></i> Report Date: {{ msci_report.report_date|date:"Y/m/d" }}</p>
                 {% endif %}
@@ -114,10 +256,10 @@
         </div>
     </section>
 
-    <!-- 2. ストックトレーダーズ・アルマナック -->
+    <!-- 3. ストックトレーダーズ・アルマナック -->
     <section class="mb-5 border p-4 rounded shadow-sm">
         <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-info-circle"></i> 2. ストックトレーダーズ・アルマナック から</h4>
+            <h4 class="text-primary mb-3"><i class="fas fa-info-circle"></i> 3. ストックトレーダーズ・アルマナック から</h4>
             <p class="text-muted">
                 詳細な統計や最新情報は公式サイトをご確認ください：
                 <a href="https://www.stocktradersalmanac.com/" target="_blank" rel="noopener noreferrer">
@@ -126,8 +268,8 @@
             </p>
         </div>
 
-        <!-- 2-1. 季節系アノマリー（TABLE表示） -->
-        <h5 class="mb-3">2-1. 季節系アノマリー（TABLE表示）</h5>
+        <!-- 3-1. 季節系アノマリー（TABLE表示） -->
+        <h5 class="mb-3">3-1. 季節系アノマリー（TABLE表示）</h5>
         <div class="card mb-4">
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -153,9 +295,9 @@
             </div>
         </div>
 
-        <!-- 2-2. 業種・テーマ系アノマリー（CARD表示） -->
+        <!-- 3-2. 業種・テーマ系アノマリー（CARD表示） -->
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5>2-2. 業種・テーマ系アノマリー（CARD表示）</h5>
+            <h5>3-2. 業種・テーマ系アノマリー（CARD表示）</h5>
             <button onclick="location.reload();" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-sync-alt"></i> シャッフル
             </button>
@@ -180,10 +322,10 @@
         </div>
     </section>
 
-    <!-- 3. セクターローテーション計数表 (GICS) -->
+    <!-- 4. セクターローテーション計数表 (GICS) -->
     <section class="mb-5 border p-4 rounded shadow-sm bg-light">
         <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 3. セクターローテーション計数表 (GICS)</h4>
+            <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 4. セクターローテーション計数表 (GICS)</h4>
             <p class="text-muted">
                 基準日: {{ sector_latest_date|date:"Y/m/d" }} | 
                 分類: <a href="https://www.msci.com/our-solutions/indexes/gics" target="_blank" rel="noopener noreferrer">GICS (11セクター) <i class="fas fa-external-link-alt"></i></a> |
@@ -322,11 +464,11 @@
         </div>
     </section>
 
-    <!-- 4. RSS ニュースフィード -->
+    <!-- 5. RSS ニュースフィード -->
     <section class="mb-5 border p-4 rounded shadow-sm">
         <div class="mb-4">
             <h4 class="text-primary mb-3">
-                <i class="fas fa-rss"></i> 4. RSS ニュースフィード
+                <i class="fas fa-rss"></i> 5. RSS ニュースフィード
             </h4>
             <p class="text-muted">
                 <i class="fas fa-clock"></i> 日次更新

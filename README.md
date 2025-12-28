@@ -194,6 +194,10 @@ python manage.py loaddata hospital\fixtures\voteplace.json
 python manage.py loaddata ai_agent\fixtures\entity.json
 python manage.py loaddata ai_agent\fixtures\guardrail_config.json
 python manage.py loaddata ai_agent\fixtures\rag_material.json
+
+# --- USA Research ---
+# 資産クラスの長期推移データの初期取得（超長期: 指数を含めると1950年代〜取得可能）
+python manage.py monthly_update_historical_assets --start 1950-01-01
 ```
 
 ---
@@ -286,6 +290,16 @@ sudo tail -n 200 /var/log/apache2/error.log
   - `daily_industry_stacked_bar_chart`: 業種別積上棒グラフ生成
   - `monthly_fao_food_balance_chart`: 水産物供給量グラフ生成
   - `monthly_vietnam_statistics`: ベトナム統計局経済指標の取り込み
+
+### [usa_research] 米国株・マクロ指標分析
+米国市場のマクロ指標、セクターローテーション、資産クラスの長期推移を可視化します。
+
+- **主要バッチ:**
+  - `update_macro_indicators`: ISM, US10Y, VIX等の取得
+  - `update_sector_rotation`: セクター別騰落率とRS順位の計算
+  - `monthly_update_historical_assets`: 資産クラス別（SPY, TLT等）の長期価格推移の取得
+  - `monthly_update_msci_weights`: MSCI国別ウェイトレポートの要約取得
+  - `fetch_usa_rss`: 米国投資関連のRSSフィード取得
 
 ### [soil_analysis] 土壌分析・気象予報
 気象庁データに基づく予報と、土壌計測データの管理を行います。
