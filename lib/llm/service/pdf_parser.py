@@ -18,20 +18,13 @@ def print_elements(elements: list[PdfElement], indent: int = 0):
 
 
 def main():
-    # 引数があればそれを使用、なければデフォルトのパスを使用
-    if len(sys.argv) >= 2:
-        pdf_path = sys.argv[1]
-    else:
-        # デフォルトのファイルパス
-        script_dir = os.path.dirname(__file__)
-        pdf_path = os.path.abspath(
-            os.path.join(script_dir, "../pdf_sample/条立ての文書サンプル.pdf")
-        )
+    script_dir = os.path.dirname(__file__)
+    pdf_path = os.path.abspath(
+        os.path.join(script_dir, "../pdf_sample/条立ての文書サンプル.pdf")
+    )
 
     if not os.path.exists(pdf_path):
         print(f"Error: File not found: {pdf_path}")
-        if len(sys.argv) < 2:
-            print("Usage: python pdf_parser.py <pdf_file_path>")
         return
 
     try:
@@ -53,9 +46,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # プロジェクトルートをsys.pathに追加
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-    if project_root not in sys.path:
-        sys.path.insert(0, project_root)
-
     main()
