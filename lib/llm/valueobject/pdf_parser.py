@@ -1,33 +1,33 @@
+from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
 
 
 @dataclass
 class PdfElement:
     type: str
     title: str
-    content: List[str] = field(default_factory=list)
-    parent: Optional["PdfElement"] = field(default=None, repr=False)
-    children: List["PdfElement"] = field(default_factory=list)
+    content: list[str] = field(default_factory=list)
+    parent: PdfElement | None = field(default=None, repr=False)
+    children: list[PdfElement] = field(default_factory=list)
 
     def add_content(self, text: str):
         self.content.append(text)
 
-    def add_child(self, child: "PdfElement"):
+    def add_child(self, child: PdfElement):
         child.parent = self
         self.children.append(child)
 
 
 class PdfParserVO(ABC):
     def __init__(self):
-        self.patterns: List[tuple[str, re.Pattern]] = self._get_patterns()
+        self.patterns: list[tuple[str, re.Pattern]] = self._get_patterns()
         # 階層構造の定義（CHAPTER > SECTION > ARTICLE > PARAGRAPH > ITEM）
         self.hierarchy = [p[0] for p in self.patterns]
 
     @abstractmethod
-    def _get_patterns(self) -> List[tuple[str, re.Pattern]]:
+    def _get_patterns(self) -> list[tuple[str, re.Pattern]]:
         """正規表現パターンのリストを返す [(タイプ, コンパイル済みパターン), ...]
         リストの順序は階層の深さ順（浅いものから深いもの）にすること。
         """
@@ -42,7 +42,7 @@ class PdfParserVO(ABC):
         text = re.sub(r" +", " ", text)
         return text.strip()
 
-    def detect_type(self, line: str) -> Optional[tuple[str, str]]:
+    def detect_type(self, line: str) -> tuple[str, str] | None:
         """行がどのパターンにマッチするか判定する"""
         for element_type, pattern in self.patterns:
             match = pattern.match(line)
@@ -52,7 +52,7 @@ class PdfParserVO(ABC):
 
 
 class DefaultPdfParserVO(PdfParserVO):
-    def _get_patterns(self) -> List[tuple[str, re.Pattern]]:
+    def _get_patterns(self) -> list[tuple[str, re.Pattern]]:
         return [
             ("SUPPLEMENT", re.compile(r"^(附\s*則|別\s*表)")),
             ("CHAPTER", re.compile(r"^第[一二三四五六七八九十百\d０-９]+章")),
@@ -66,9 +66,9 @@ class DefaultPdfParserVO(PdfParserVO):
 
 class PdfParseUseCase:
     @staticmethod
-    def execute(parser: PdfParserVO, lines: List[str]) -> List[PdfElement]:
-        root_elements: List[PdfElement] = []
-        current_path: Dict[str, PdfElement] = {}
+    def execute(parser: PdfParserVO, lines: list[str]) -> list[PdfElement]:
+        root_elements: list[PdfElement] = []
+        current_path: dict[str, PdfElement] = {}
 
         for line in lines:
             normalized_line = parser.normalize(line)
