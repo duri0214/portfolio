@@ -33,7 +33,8 @@ class PdfParserVO(ABC):
         """
         pass
 
-    def normalize(self, text: str) -> str:
+    @staticmethod
+    def normalize(text: str) -> str:
         """テキストの正規化"""
         # 全角スペースを半角に、タブをスペースに置換
         text = text.replace("\u3000", " ").replace("\t", " ")
@@ -56,15 +57,16 @@ class DefaultPdfParserVO(PdfParserVO):
             ("SUPPLEMENT", re.compile(r"^(附\s*則|別\s*表)")),
             ("CHAPTER", re.compile(r"^第[一二三四五六七八九十百\d０-９]+章")),
             ("SECTION", re.compile(r"^第[一二三四五六七八九十百\d０-９]+節")),
-            ("HEADING", re.compile(r"^[（\(][^０-９\d].+[）\)]$")),
+            ("HEADING", re.compile(r"^[（(][^０-９\d].+[）)]$")),
             ("ARTICLE", re.compile(r"^第[\d０-９]+条")),
             ("PARAGRAPH", re.compile(r"^[０-９\d]+(?!\.)")),
-            ("ITEM", re.compile(r"^[（\(][\d０-９]+[）\)]")),
+            ("ITEM", re.compile(r"^[（(][\d０-９]+[）)]$")),
         ]
 
 
 class PdfParseUseCase:
-    def execute(self, parser: PdfParserVO, lines: List[str]) -> List[PdfElement]:
+    @staticmethod
+    def execute(parser: PdfParserVO, lines: List[str]) -> List[PdfElement]:
         root_elements: List[PdfElement] = []
         current_path: Dict[str, PdfElement] = {}
 
