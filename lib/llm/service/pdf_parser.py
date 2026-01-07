@@ -1,4 +1,3 @@
-import sys
 import os
 from pypdf import PdfReader
 from lib.llm.valueobject.pdf_parser import (
