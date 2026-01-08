@@ -16,8 +16,8 @@ class TestSemanticGuardService(unittest.TestCase):
     信号機モデル（GREEN, YELLOW, RED）に基づいたガードレールの挙動を、
     以下のシナリオに沿ってテストします：
     1. GREEN: RAG にヒットした場合（社内ナレッジに基づく安全な回答）
-    2. YELLOW: RAG 未ヒットだが、LLM の回答に禁止ブランドが含まれない場合
-    3. RED: LLM の回答に禁止ブランドが意味的に含まれる場合（例外発生）
+    2. YELLOW: RAG 未ヒットだが、LLM の回答に禁止ワードが含まれない場合
+    3. RED: LLM の回答に禁止ワードが意味的に含まれる場合（例外発生）
     """
 
     @patch("lib.llm.service.semantic_guard.chromadb.PersistentClient")
@@ -26,7 +26,7 @@ class TestSemanticGuardService(unittest.TestCase):
         """
         テスト環境のセットアップ。
         ChromaDB クライアントと埋め込み関数をモック化し、
-        禁止ブランド用と RAG 用のコレクションを切り分けて返却するように設定します。
+        禁止ワード用と RAG 用のコレクションを切り分けて返却するように設定します。
         """
         self.mock_chroma_client = mock_chroma.return_value
         self.mock_ef = mock_ef.return_value
@@ -36,7 +36,7 @@ class TestSemanticGuardService(unittest.TestCase):
         self.mock_rag_collection = MagicMock()
 
         def side_effect(name, **_):
-            if name == "forbidden_brands":
+            if name == "forbidden_words":
                 return self.mock_forbidden_collection
             return self.mock_rag_collection
 
@@ -62,13 +62,13 @@ class TestSemanticGuardService(unittest.TestCase):
         """
         シナリオ: RAG 未ヒットかつ安全な回答（🟡 YELLOW）
         - ユーザー入力が RAG にヒットしない場合
-        - 一般 LLM の回答が生成され、その内容に禁止ブランドが含まれない場合
+        - 一般 LLM の回答が生成され、その内容に禁止ワードが含まれない場合
         - YELLOW 信号が返り、正常に終了することを確認します。
         """
         # RAGヒットしない状況をシミュレート
         self.mock_rag_collection.query.return_value = {"documents": [[]]}
 
-        # ブランドチェックもパスする状況（距離が閾値 0.35 以上）
+        # ワードチェックもパスする状況（距離が閾値 0.35 以上）
         self.mock_forbidden_collection.query.return_value = {
             "distances": [[0.8]],  # 閾値より大きい＝似ていない
             "documents": [["競合他社"]],
@@ -82,17 +82,17 @@ class TestSemanticGuardService(unittest.TestCase):
         self.assertEqual(result.signal, GuardRailSignal.YELLOW)
         self.assertEqual(result.reason, "RAG_MISS")
 
-    def test_evaluate_red_on_forbidden_brand(self):
+    def test_evaluate_red_on_forbidden_word(self):
         """
-        シナリオ: 禁止ブランドの検知（🔴 RED）
+        シナリオ: 禁止ワードの検知（🔴 RED）
         - ユーザー入力が RAG にヒットせず、一般 LLM の回答が生成された場合
-        - 生成された回答に、禁止ブランド（例: 佐川急便）が意味的に含まれる場合
+        - 生成された回答に、禁止ワード（例: 佐川急便）が意味的に含まれる場合
         - SemanticGuardException が発生し、RED 信号が返ることを確認します。
         """
         # RAGヒットしない状況
         self.mock_rag_collection.query.return_value = {"documents": [[]]}
 
-        # ブランドチェックでヒットする状況（距離が閾値 0.35 未満）
+        # ワードチェックでヒットする状況（距離が閾値 0.35 未満）
         self.mock_forbidden_collection.query.return_value = {
             "distances": [[0.1]],  # 閾値より小さい＝極めて近い
             "documents": [["佐川急便"]],
@@ -105,15 +105,15 @@ class TestSemanticGuardService(unittest.TestCase):
             self.service.evaluate("質問", llm_response_provider=dummy_llm)
 
         self.assertEqual(cm.exception.result.signal, GuardRailSignal.RED)
-        self.assertEqual(cm.exception.result.reason, "FORBIDDEN_BRAND_DETECTED")
+        self.assertEqual(cm.exception.result.reason, "FORBIDDEN_WORD_DETECTED")
 
-    def test_wrapper_guardrail_blocks_forbidden_brand(self):
+    def test_wrapper_guardrail_blocks_forbidden_word(self):
         """
-        シナリオ: ラッパー経由でのブランドブロック
+        シナリオ: ラッパー経由でのワードブロック
         - SemanticGuardServiceWrapper を使用してガードレール関数を作成
-        - 禁止ブランドが含まれるテキストを渡した場合に、期待通り blocked: True が返ることを確認します。
+        - 禁止ワードが含まれるテキストを渡した場合に、期待通り blocked: True が返ることを確認します。
         """
-        # ブランドチェックでヒットする状況
+        # ワードチェックでヒットする状況
         self.mock_forbidden_collection.query.return_value = {
             "distances": [[0.1]],
             "documents": [["佐川急便"]],
@@ -126,14 +126,14 @@ class TestSemanticGuardService(unittest.TestCase):
         result = guardrail(None, None, "佐川急便で配送します")
 
         self.assertTrue(result["blocked"])
-        self.assertIn("禁止ブランド", result["message"])
+        self.assertIn("禁止ワード", result["message"])
 
     def test_wrapper_guardrail_allows_safe_text(self):
         """
         シナリオ: ラッパー経由での安全なテキスト許可
         - セーフなテキストを渡した場合に、blocked: False が返ることを確認します。
         """
-        # ブランドチェックでヒットしない状況
+        # ワードチェックでヒットしない状況
         self.mock_forbidden_collection.query.return_value = {
             "distances": [[0.8]],
             "documents": [["競合他社"]],

@@ -27,7 +27,7 @@ class SemanticGuardService:
         self,
         api_key: str | None = None,
         persist_directory: str | None = None,
-        forbidden_collection_name: str = "forbidden_brands",
+        forbidden_words_collection_name: str = "forbidden_words",
         rag_collection_name: str = "portfolio_rag",
         embedding_model: str = "text-embedding-3-small",
     ):
@@ -49,8 +49,8 @@ class SemanticGuardService:
         )
 
         # 禁止ブランド用コレクション
-        self._forbidden_collection = self._client_db.get_or_create_collection(
-            name=forbidden_collection_name, embedding_function=self.openai_ef
+        self._forbidden_words_collection = self._client_db.get_or_create_collection(
+            name=forbidden_words_collection_name, embedding_function=self.openai_ef
         )
 
         # RAG用コレクション（既存のものを参照）
@@ -58,21 +58,21 @@ class SemanticGuardService:
             name=rag_collection_name, embedding_function=self.openai_ef
         )
 
-    def setup_forbidden_brands(self, brands: list[str]):
+    def setup_forbidden_words(self, words: list[str]):
         """
-        禁止ブランドリストを embedding 化して Chroma に永続化する（初期化フェーズ用）
+        禁止ワードリストを embedding 化して Chroma に永続化する（初期化フェーズ用）
         """
-        logger.info(f"Setting up {len(brands)} forbidden brands...")
-        ids = [f"brand_{i}" for i in range(len(brands))]
-        metadatas = [{"brand": brand} for brand in brands]
+        logger.info(f"Setting up {len(words)} forbidden words...")
+        ids = [f"word_{i}" for i in range(len(words))]
+        metadatas = [{"word": word} for word in words]
 
         # 一旦全削除してから追加（簡易更新）
-        # self._forbidden_collection.delete(ids=ids) # 既存IDが不明な場合があるので全削除が望ましいが
+        # self._forbidden_words_collection.delete(ids=ids) # 既存IDが不明な場合があるので全削除が望ましいが
         # ここでは単純にupsert
-        self._forbidden_collection.upsert(
-            ids=ids, documents=brands, metadatas=metadatas
+        self._forbidden_words_collection.upsert(
+            ids=ids, documents=words, metadatas=metadatas
         )
-        logger.info("Forbidden brands setup completed.")
+        logger.info("Forbidden words setup completed.")
 
     def check_rag_hit(self, user_input: str) -> bool:
         """
@@ -82,9 +82,9 @@ class SemanticGuardService:
         # documents が空でなければヒットとみなす（距離の閾値は要検討だが、まずは存在確認）
         return bool(results and results.get("documents") and results["documents"][0])
 
-    def check_forbidden_brands(self, text: str):
+    def check_forbidden_words(self, text: str):
         """
-        禁止ブランドに意味的にヒットするか確認する
+        禁止ワードに意味的にヒットするか確認する
         ヒットした場合は SemanticGuardException を投げる
 
         ※このメソッドは embedding API を呼び出しますが、生成系LLMは呼び出しません。
@@ -93,23 +93,25 @@ class SemanticGuardService:
         # OpenAI embedding の場合、0.2~0.4 程度が「かなり近い」
         threshold = 0.35
 
-        results = self._forbidden_collection.query(query_texts=[text], n_results=1)
+        results = self._forbidden_words_collection.query(
+            query_texts=[text], n_results=1
+        )
 
         if results and results.get("distances") and results["distances"][0]:
             distance = results["distances"][0][0]
-            brand = results["documents"][0][0]
+            word = results["documents"][0][0]
 
-            logger.debug(f"Forbidden brand search: distance={distance}, brand={brand}")
+            logger.debug(f"Forbidden word search: distance={distance}, word={word}")
 
             if distance < threshold:
                 logger.warning(
-                    f"🔴 RED: Forbidden brand detected: {brand} (distance: {distance})"
+                    f"🔴 RED: Forbidden word detected: {word} (distance: {distance})"
                 )
                 raise SemanticGuardException(
                     SemanticGuardResult(
                         signal=GuardRailSignal.RED,
-                        reason="FORBIDDEN_BRAND_DETECTED",
-                        detail=f"禁止ブランド「{brand}」に意味的にヒットしました。",
+                        reason="FORBIDDEN_WORD_DETECTED",
+                        detail=f"禁止ワード「{word}」に意味的にヒットしました。",
                     )
                 )
 
@@ -122,7 +124,7 @@ class SemanticGuardService:
         1. RAG検索
         2. RAGヒットあり -> GREEN
         3. RAGヒットなし -> YELLOW -> 一般LLM問い合わせ
-        4. 一般LLM出力のブランド除外検査
+        4. 一般LLM出力の禁止ワード除外検査
         5. ヒットすれば RED (Exception)
         """
         logger.info(f"Evaluating user input: {user_input[:50]}...")
@@ -148,13 +150,13 @@ class SemanticGuardService:
         # 3. 一般LLM問い合わせ
         llm_response = llm_response_provider(user_input)
 
-        # 4. ブランド除外検査 (RED判定ならException)
-        self.check_forbidden_brands(llm_response)
+        # 4. 禁止ワード除外検査 (RED判定ならException)
+        self.check_forbidden_words(llm_response)
 
         return SemanticGuardResult(
             signal=GuardRailSignal.YELLOW,
             reason="RAG_MISS",
-            detail="一般LLM問い合わせルート（ブランドチェック通過）",
+            detail="一般LLM問い合わせルート（禁止ワードチェック通過）",
         )
 
 
@@ -170,18 +172,18 @@ class SemanticGuardServiceWrapper:
         """
         OpenAI Agents SDKで使用される入力・出力チェック用の関数を作成
         注: この実装では入力段階でRAGヒットを確認し、ヒットしない場合はYELLOWとして
-        LLM実行後にブランドチェックを行うフローを想定している。
+        LLM実行後に禁止ワードチェックを行うフローを想定している。
         """
 
         def semantic_check(_, __, text: str) -> dict[str, bool | str]:
             try:
-                # 簡易的に、テキストが渡された際にブランドチェックのみを行う単体ガードレールとしても機能させる
-                self.service.check_forbidden_brands(text)
+                # 簡易的に、テキストが渡された際に禁止ワードチェックのみを行う単体ガードレールとしても機能させる
+                self.service.check_forbidden_words(text)
                 return {"blocked": False}
-            except SemanticGuardException as e:
-                return {"blocked": True, "message": e.result.detail}
-            except Exception as e:
-                logger.warning(f"Semantic Guard error: {e}")
+            except SemanticGuardException as wrapper_sge:
+                return {"blocked": True, "message": wrapper_sge.result.detail}
+            except Exception as wrapper_ex:
+                logger.warning(f"Semantic Guard error: {wrapper_ex}")
                 return {"blocked": False}
 
         return semantic_check
@@ -194,12 +196,12 @@ if __name__ == "__main__":
     guard = SemanticGuardService()
 
     if mode == "setup":
-        forbidden_brands = [
+        forbidden_words = [
             "佐川急便",
             "Amazon Logistics",
             "日本郵便",
         ]
-        guard.setup_forbidden_brands(forbidden_brands)
+        guard.setup_forbidden_words(forbidden_words)
     elif mode == "run":
         # 簡易テスト
         test_input = "荷物の配送状況を教えてください"
@@ -210,7 +212,7 @@ if __name__ == "__main__":
 
             result = guard.evaluate(test_input, mock_llm_response)
             print(f"Result: {result}")
-        except SemanticGuardException as e:
-            print(f"GuardRail Triggered: {e.result}")
-        except Exception as e:
-            print(f"Error: {e}")
+        except SemanticGuardException as sge:
+            print(f"GuardRail Triggered: {sge.result}")
+        except Exception as ex:
+            print(f"Error: {ex}")
