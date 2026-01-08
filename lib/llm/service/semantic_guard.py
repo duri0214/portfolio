@@ -53,7 +53,7 @@ class SemanticGuardService:
             name=forbidden_words_collection_name, embedding_function=self.openai_ef
         )
 
-        # RAG用コレクション（既存のものを参照）
+        # ナレッジ検索用コレクション（既存のコレクションを参照することを想定）
         self._rag_collection = self._client_db.get_or_create_collection(
             name=rag_collection_name, embedding_function=self.openai_ef
         )
@@ -121,7 +121,7 @@ class SemanticGuardService:
         """
         意味差分検索パイプラインを実行する
 
-        1. RAG検索
+        1. ナレッジ検索（RAGヒット確認）
         2. RAGヒットあり -> GREEN
         3. RAGヒットなし -> YELLOW -> 一般LLM問い合わせ
         4. 一般LLM出力の禁止ワード除外検査
