@@ -98,11 +98,11 @@ class TestSemanticGuardService(unittest.TestCase):
             "documents": [["佐川急便"]],
         }
 
-        def dummy_llm(_):
+        def mock_llm_response(_):
             return "佐川急便で送ります"
 
         with self.assertRaises(SemanticGuardException) as cm:
-            self.service.evaluate("質問", llm_response_provider=dummy_llm)
+            self.service.evaluate("質問", llm_response_provider=mock_llm_response)
 
         self.assertEqual(cm.exception.result.signal, GuardRailSignal.RED)
         self.assertEqual(cm.exception.result.reason, "FORBIDDEN_WORD_DETECTED")
