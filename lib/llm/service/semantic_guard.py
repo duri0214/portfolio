@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class SemanticGuardService:
     """
     Chroma を用いた意味差分検索ガードレール
-    生成系LLMを呼ばず、embedding + ベクトル検索のみで禁止ブランド等を検知する
+    生成系LLMを呼ばず、embedding + ベクトル検索のみで禁止ワード等を検知する
     """
 
     def __init__(
@@ -48,7 +48,7 @@ class SemanticGuardService:
             api_key=self.api_key, model_name=self.embedding_model
         )
 
-        # 禁止ブランド用コレクション
+        # 禁止ワード用コレクション
         self._forbidden_words_collection = self._client_db.get_or_create_collection(
             name=forbidden_words_collection_name, embedding_function=self.openai_ef
         )
