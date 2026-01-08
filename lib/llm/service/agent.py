@@ -1,15 +1,40 @@
-import logging
+from abc import ABC, abstractmethod
 import os
+import logging
+from pathlib import Path
 from typing import Callable
 
+import chromadb
+from chromadb.config import Settings
+from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from openai import OpenAI
 
-from lib.llm.valueobject.agent import ModerationResult, ModerationCategory
+from lib.llm.valueobject.agent import (
+    ModerationResult,
+    ModerationCategory,
+    GuardRailSignal,
+    SemanticGuardResult,
+    SemanticGuardException,
+)
+from config.settings import BASE_DIR
 
 logger = logging.getLogger(__name__)
 
 
-class ModerationService:
+class ModerationServiceBase(ABC):
+    """
+    モデレーションサービスの基底クラス
+    """
+
+    @abstractmethod
+    def create_guardrail(self, *args, **kwargs) -> Callable:
+        """
+        OpenAI Agents SDKで使用されるガードレール関数を作成する
+        """
+        pass
+
+
+class ModerationService(ModerationServiceBase):
     """
     Moderation機能を提供するサービス
     OpenAI Moderation APIを使用した入力・出力のチェック機能
@@ -127,6 +152,20 @@ class ModerationService:
             )
         return response
 
+    def create_guardrail(self, entity_name: str, strict_mode: bool = False) -> Callable:
+        """
+        OpenAI Moderation APIを使用した入力ガードレール関数を作成
+        ModerationServiceBase のインターフェース実装
+
+        Args:
+            entity_name: エンティティ名
+            strict_mode: 厳格モードかどうか
+
+        Returns:
+            ガードレール関数 (context, agent, input_text) -> dict[str, bool | str]
+        """
+        return self.create_moderation_guardrail(entity_name, strict_mode)
+
     def create_moderation_guardrail(
         self, entity_name: str, strict_mode: bool = False
     ) -> Callable:
@@ -165,3 +204,172 @@ class ModerationService:
             return self._convert_moderation_result_to_dict(result)
 
         return output_moderation_check
+
+
+class SemanticGuardService(ModerationServiceBase):
+    """
+    Chroma を用いた意味差分検索ガードレール
+    生成系LLMを呼ばず、embedding + ベクトル検索のみで禁止ワード等を検知する
+    """
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        persist_directory: str | None = None,
+        forbidden_words_collection_name: str = "forbidden_words",
+        rag_collection_name: str = "portfolio_rag",
+        embedding_model: str = "text-embedding-3-small",
+    ):
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        if not self.api_key:
+            raise ValueError("OPENAI_API_KEY is required for SemanticGuardService")
+
+        self.embedding_model = embedding_model
+
+        persist_path = persist_directory or os.getenv("CHROMA_DB_PATH", "./chroma_db")
+        if not os.path.isabs(persist_path):
+            persist_path = str(Path(BASE_DIR) / persist_path)
+
+        self._client_db = chromadb.PersistentClient(
+            path=persist_path, settings=Settings(allow_reset=True)
+        )
+        self.openai_ef = OpenAIEmbeddingFunction(
+            api_key=self.api_key, model_name=self.embedding_model
+        )
+
+        # 禁止ワード用コレクション
+        self._forbidden_words_collection = self._client_db.get_or_create_collection(
+            name=forbidden_words_collection_name, embedding_function=self.openai_ef
+        )
+
+        # ナレッジ検索用コレクション（既存のコレクションを参照することを想定）
+        self._rag_collection = self._client_db.get_or_create_collection(
+            name=rag_collection_name, embedding_function=self.openai_ef
+        )
+
+    def setup_forbidden_words(self, words: list[str]):
+        """
+        禁止ワードリストを embedding 化して Chroma に永続化する（初期化フェーズ用）
+        既存の禁止ワードはすべて削除され、新しいリストで上書きされます。
+        """
+        logger.info(f"Setting up {len(words)} forbidden words...")
+
+        # 1. 既存の禁止ワードを取得して削除
+        existing_data = self._forbidden_words_collection.get()
+        if existing_data["ids"]:
+            self._forbidden_words_collection.delete(ids=existing_data["ids"])
+            logger.debug(
+                f"Cleared {len(existing_data['ids'])} existing forbidden words."
+            )
+
+        # 2. 新しいワードを登録
+        ids = [f"word_{i}" for i in range(len(words))]
+        metadatas = [{"word": word} for word in words]
+
+        self._forbidden_words_collection.upsert(
+            ids=ids, documents=words, metadatas=metadatas
+        )
+        logger.info("Forbidden words setup completed.")
+
+    def check_rag_hit(self, user_input: str) -> bool:
+        """
+        RAGにヒットするか確認する
+        documents が空でなければヒットとみなす（距離の閾値は要検討だが、まずは存在確認）
+        """
+        results = self._rag_collection.query(query_texts=[user_input], n_results=1)
+        return bool(results and results.get("documents") and results["documents"][0])
+
+    def check_forbidden_words(self, text: str):
+        """
+        禁止ワードに意味的にヒットするか確認する
+        ヒットした場合は SemanticGuardException を投げる
+
+        ※このメソッドは embedding API を呼び出しますが、生成系LLMは呼び出しません。
+        """
+        # 距離(distance)の閾値を設定。意味的に近いものを検知するため
+        # OpenAI embedding の場合、0.2~0.4 程度が「かなり近い」
+        threshold = 0.35
+
+        results = self._forbidden_words_collection.query(
+            query_texts=[text], n_results=1
+        )
+
+        if results and results.get("distances") and results["distances"][0]:
+            distance = results["distances"][0][0]
+            word = results["documents"][0][0]
+
+            logger.debug(f"Forbidden word search: distance={distance}, word={word}")
+
+            if distance < threshold:
+                logger.warning(
+                    f"🔴 RED: Forbidden word detected: {word} (distance: {distance})"
+                )
+                raise SemanticGuardException(
+                    SemanticGuardResult(
+                        signal=GuardRailSignal.RED,
+                        reason="FORBIDDEN_WORD_DETECTED",
+                        detail=f"禁止ワード「{word}」に意味的にヒットしました。",
+                    )
+                )
+
+    def evaluate(
+        self, user_input: str, llm_response_provider=None
+    ) -> SemanticGuardResult:
+        """
+        意味差分検索パイプラインを実行する
+
+        1. ナレッジ検索（RAGヒット確認）
+        2. RAGヒットあり -> GREEN
+        3. RAGヒットなし -> YELLOW -> 一般LLM問い合わせ
+        4. 一般LLM出力の禁止ワード除外検査
+        5. ヒットすれば RED (Exception)
+        """
+        logger.info(f"Evaluating user input: {user_input[:50]}...")
+
+        # 1. RAGヒット確認
+        if self.check_rag_hit(user_input):
+            logger.info("🟢 GREEN: RAG hit.")
+            return SemanticGuardResult(
+                signal=GuardRailSignal.GREEN,
+                reason="RAG_HIT",
+                detail="社内ナレッジに基づく回答が可能です。",
+            )
+
+        # 2. RAGヒットなし
+        logger.info("🟡 YELLOW: RAG miss. Proceeding to general LLM.")
+        if llm_response_provider is None:
+            return SemanticGuardResult(
+                signal=GuardRailSignal.YELLOW,
+                reason="RAG_MISS",
+                detail="RAGヒットなし。一般LLM問い合わせが必要です（レスポンスプロバイダ未指定）。",
+            )
+
+        # 3. 一般LLM問い合わせ
+        llm_response = llm_response_provider(user_input)
+
+        # 4. 禁止ワード除外検査 (RED判定ならException)
+        self.check_forbidden_words(llm_response)
+
+        return SemanticGuardResult(
+            signal=GuardRailSignal.YELLOW,
+            reason="RAG_MISS",
+            detail="一般LLM問い合わせルート（禁止ワードチェック通過）",
+        )
+
+    def create_guardrail(self, *args, **kwargs) -> Callable:
+        """
+        OpenAI Agents SDKで使用される入力・出力チェック用の関数を作成
+        ModerationServiceBase のインターフェース実装
+        """
+
+        def semantic_check(_, __, text: str) -> dict[str, bool | str]:
+            try:
+                self.check_forbidden_words(text)
+                return {"blocked": False}
+            except SemanticGuardException as sge:
+                return {"blocked": True, "message": sge.result.detail}
+            except Exception as e:
+                logger.warning(f"Semantic Guard error: {e}")
+                return {"blocked": False}
+
+        return semantic_check
