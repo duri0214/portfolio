@@ -506,7 +506,6 @@ class TestSemanticGuardService(TestCase):
         self.mock_chroma_client.get_or_create_collection.side_effect = side_effect
 
         self.service = SemanticGuardService(api_key="fake-key")
-        self.moderation_service = ModerationService()
 
     def test_evaluate_green_on_rag_hit(self):
         """
