@@ -85,9 +85,9 @@ class SemanticGuardService:
     def check_rag_hit(self, user_input: str) -> bool:
         """
         RAGにヒットするか確認する
+        documents が空でなければヒットとみなす（距離の閾値は要検討だが、まずは存在確認）
         """
         results = self._rag_collection.query(query_texts=[user_input], n_results=1)
-        # documents が空でなければヒットとみなす（距離の閾値は要検討だが、まずは存在確認）
         return bool(results and results.get("documents") and results["documents"][0])
 
     def check_forbidden_words(self, text: str):
