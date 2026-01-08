@@ -61,14 +61,22 @@ class SemanticGuardService:
     def setup_forbidden_words(self, words: list[str]):
         """
         禁止ワードリストを embedding 化して Chroma に永続化する（初期化フェーズ用）
+        既存の禁止ワードはすべて削除され、新しいリストで上書きされます。
         """
         logger.info(f"Setting up {len(words)} forbidden words...")
+
+        # 1. 既存の禁止ワードを取得して削除
+        existing_data = self._forbidden_words_collection.get()
+        if existing_data["ids"]:
+            self._forbidden_words_collection.delete(ids=existing_data["ids"])
+            logger.debug(
+                f"Cleared {len(existing_data['ids'])} existing forbidden words."
+            )
+
+        # 2. 新しいワードを登録
         ids = [f"word_{i}" for i in range(len(words))]
         metadatas = [{"word": word} for word in words]
 
-        # 一旦全削除してから追加（簡易更新）
-        # self._forbidden_words_collection.delete(ids=ids) # 既存IDが不明な場合があるので全削除が望ましいが
-        # ここでは単純にupsert
         self._forbidden_words_collection.upsert(
             ids=ids, documents=words, metadatas=metadatas
         )
