@@ -34,8 +34,26 @@ class BaseGuardRailService(ABC):
 
 class OpenAIModerationGuardService(BaseGuardRailService):
     """
-    Moderation機能を提供するサービス
-    OpenAI Moderation APIを使用した入力・出力のチェック機能
+    OpenAI Moderation API を使用して、ユーザー入力とモデル出力の両面から安全性をチェックするガードレールサービス。
+
+    本サービスの特徴:
+    - 二重のガードレール: 「ユーザーが悪意のある入力を送っていないか」と「モデルが不適切な回答を生成していないか」の双方向を独立してチェックできます。
+    - 最新モデルの利用: `omni-moderation-latest` を使用し、ヘイト、自傷行為、性的内容、暴力、ハラスメントなどの複数のカテゴリにわたる違反を詳細に検知します。
+    - 柔軟なエラーハンドリング: APIエラーやタイムアウト時に、安全性を優先してブロックするか（厳格モード）、処理を続行させるかを設定可能です。
+
+    注意点とトレードオフ:
+    - パフォーマンスと遅延: 各チェック（入力・出力）において OpenAI の外部 API を呼び出すため、`SemanticGuardService` のようなローカル/ベクトル検索ベースの判定と比較して、ネットワーク遅延が発生します。特に「入出力の両面」でチェックを行う場合は、合計2回の追加 API コールが発生し、全体のレスポンス時間に影響する可能性があります。
+    - 外部依存性: OpenAI API の稼働状況に依存します。
+
+    処理の概要:
+    1. テキスト（ユーザー入力またはモデル出力）を OpenAI Moderation API に送信します。
+    2. API からのレスポンスに基づき、ポリシー違反（flagged）があるか判定します。
+    3. 違反がある場合は、該当するカテゴリを特定し、サービス固有の拒否メッセージを伴う RED 信号を返します。
+    4. 違反がない場合は、正常を示す GREEN 信号を返します。
+
+    主な用途:
+    - 入力チェック: プロンプトインジェクションの試みや、公序良俗に反するユーザー入力の遮断。
+    - 出力チェック: AIモデルによる予期せぬ不適切な発言や、幻覚（ハルシネーション）に起因する有害情報の提供防止。
     """
 
     def __init__(self):
@@ -49,16 +67,26 @@ class OpenAIModerationGuardService(BaseGuardRailService):
         strict_mode: bool = False,
     ) -> SemanticGuardResult:
         """
-        OpenAI Moderation APIを使用したテキストのモデレーションチェック
+        OpenAI Moderation API を使用したテキストのモデレーションチェックの実装。
+
+        処理の順番:
+        1. OpenAI API を呼び出し、テキストのモデレーション判定を取得します。
+        2. `flagged` が true の場合:
+           - 違反カテゴリを抽出し、`blocked_message` と共に RED 信号を返します。
+        3. 正常な場合（違反なし）:
+           - GREEN 信号を返します。
+        4. 例外（APIエラー等）発生時:
+           - `strict_mode` が True の場合: 安全側に倒し、RED 信号を返します。
+           - `strict_mode` が False の場合: 警告をログ出力し、チェックをスルー（GREEN）させます。
 
         Args:
-            text: チェック対象のテキスト
-            entity_name: エンティティ名
-            blocked_message: ブロック時のメッセージ
-            strict_mode: 厳格モードかどうか
+            text: チェック対象のテキスト。
+            entity_name: ログやエラーメッセージに表示するエンティティ名（例: "User", "Assistant"）。
+            blocked_message: ブロック時にユーザーに表示する固定メッセージ。
+            strict_mode: True の場合、APIエラー時もブロックします。デフォルトは False。
 
         Returns:
-            SemanticGuardResult
+            SemanticGuardResult: 判定結果（GREEN または RED）。
         """
         try:
             response = self.openai_client.moderations.create(
@@ -93,7 +121,8 @@ class OpenAIModerationGuardService(BaseGuardRailService):
         self, input_text: str, entity_name: str, strict_mode: bool = False
     ) -> SemanticGuardResult:
         """
-        入力テキストのモデレーションチェック
+        入力テキストのモデレーションチェック。
+        テキストを OpenAI Moderation API (`omni-moderation-latest`) に送信します。
 
         Args:
             input_text: チェック対象の入力テキスト
@@ -114,7 +143,8 @@ class OpenAIModerationGuardService(BaseGuardRailService):
         self, output_text: str, entity_name: str
     ) -> SemanticGuardResult:
         """
-        出力テキストのモデレーションチェック
+        出力テキストのモデレーションチェック。
+        テキストを OpenAI Moderation API (`omni-moderation-latest`) に送信します。
 
         Args:
             output_text: チェック対象の出力テキスト
@@ -185,8 +215,26 @@ class OpenAIModerationGuardService(BaseGuardRailService):
 
 class SemanticGuardService(BaseGuardRailService):
     """
-    Chroma を用いた意味差分検索ガードレール
-    生成系LLMを呼ばず、embedding + ベクトル検索のみで禁止ワード等を検知する
+    ベクトル検索（ChromaDB）を活用した、意味ベースのガードレールサービス。
+    生成系LLMを通さずに、テキストの意味的な類似度（Embedding）に基づいて禁止ワードの検知やナレッジの適合性を判定します。
+
+    本サービスの本質的な仕組み:
+    - 「禁止ワード」をあらかじめベクトル空間上に配置しておき、入力テキストがそれらのベクトルと「近くない（距離が離れている）」ことをもって、安全（グリーン）であると判定します。
+    - 単なる文字列の一致ではなく、意味の近接性を数値化（Distance）して評価するため、言い換えや類似表現も検知可能です。
+
+    主な特徴とメリット:
+    - 超高速・低遅延: 判定に生成系LLM（推論）を使用せず、Embeddingとベクトル検索のみで完結するため、LLMへのAPIリクエストに比べて圧倒的に高速に動作します。
+    - 低コスト: トークン消費の激しい生成系LLMの呼び出し回数を削減して、ランニングコストを下げられます
+
+    主な機能:
+    1. 禁止ワード検知: 登録された禁止ワードリストと入力テキストの意味的な近さを判定。閾値より遠ければ安全とみなします。
+    2. RAG適合性判定: 特定のナレッジ（RAGコレクション）に回答が含まれているかを確認します。
+
+    アーキテクチャの概要:
+    - 2つの ChromaDB コレクションを使い分けます。
+        - `forbidden_words`: 意味的に不適切な単語やトピックを検知。
+        - `portfolio_rag`: 回答可能な知識範囲を特定。
+    - 生成系LLMのコストを抑えつつ、ベクトル空間上での幾何学的な位置関係に基づいた高度なフィルタリングを実現します。
     """
 
     def __init__(
@@ -226,8 +274,12 @@ class SemanticGuardService(BaseGuardRailService):
 
     def setup_forbidden_words(self, words: list[str]):
         """
-        禁止ワードリストを embedding 化して Chroma に永続化する（初期化フェーズ用）
-        既存の禁止ワードはすべて削除され、新しいリストで上書きされます。
+        禁止ワードリストを Embedding 化して ChromaDB に登録します（初期化・更新用）。
+
+        処理の流れ:
+        1. 指定された名前のコレクションから、既存のデータをすべて削除します。
+        2. 新しい禁止ワードのリストを受け取り、それぞれに対して Embedding を生成します。
+        3. ID, Document, Metadata をセットにして ChromaDB に永続化します。
         """
         logger.info(f"Setting up {len(words)} forbidden words...")
 
@@ -250,18 +302,31 @@ class SemanticGuardService(BaseGuardRailService):
 
     def check_rag_hit(self, user_input: str) -> bool:
         """
-        RAGにヒットするか確認する
-        documents が空でなければヒットとみなす（距離の閾値は要検討だが、まずは存在確認）
+        ユーザーの入力がナレッジ（RAG）の範囲内にあるかを確認します。
+
+        処理の詳細:
+        - 入力テキストをベクトル化し、RAG用コレクションに対して類似検索を実行します。
+        - 生成系LLMによる推論を行わないため、非常に高速に判定が可能です。
+        - 1件でもドキュメントが見つかれば「ナレッジあり」と判定します。
+        - 注意: 現時点では距離（Distance）による厳密なフィルタリングは行わず、存在確認のみを行います。
         """
         results = self._rag_collection.query(query_texts=[user_input], n_results=1)
         return bool(results and results.get("documents") and results["documents"][0])
 
     def check_forbidden_words(self, text: str):
         """
-        禁止ワードに意味的にヒットするか確認する
-        ヒットした場合は SemanticGuardException を投げる
+        テキストが禁止ワードに「意味的に」合致するかを判定します。
 
-        ※このメソッドは embedding API を呼び出しますが、生成系LLMは呼び出しません。
+        判定ロジック（近接性によるフィルタリング）:
+        1. あらかじめ用意された「禁止ワード」のベクトル群の中から、入力テキストに最も近いものを検索します。
+           - この検索はローカル（またはベクトルDB）でのベクトル演算のみで行われるため、生成系LLMへのアクセスが発生せず、極めて低遅延です。
+        2. 検索結果との距離（Distance）を測定します。
+        3. 判定の根拠:
+           - 距離が `threshold` (0.35) 以上であれば、禁止ワードと「近くない」ため、安全（グリーン）とみなします。
+           - 距離が `threshold` (0.35) 未満の場合、意味的に極めて近いと判断し、ブロック（レッド）します。
+
+        例外:
+            SemanticGuardException: 禁止ワードとの距離が近く、リスクがあると判定された場合に発生します。
         """
         # 距離(distance)の閾値を設定。意味的に近いものを検知するため
         # OpenAI embedding の場合、0.2~0.4 程度が「かなり近い」
@@ -293,13 +358,23 @@ class SemanticGuardService(BaseGuardRailService):
         self, user_input: str, llm_response_provider=None
     ) -> SemanticGuardResult:
         """
-        意味差分検索パイプラインを実行する
+        意味差分検索パイプラインを実行し、入力の安全性を評価します。
 
-        1. ナレッジ検索（RAGヒット確認）
-        2. RAGヒットあり -> GREEN
-        3. RAGヒットなし -> YELLOW -> 一般LLM問い合わせ
-        4. 一般LLM出力の禁止ワード除外検査
-        5. ヒットすれば RED (Exception)
+        パイプラインのステップ:
+        1. RAG確認: ユーザー入力がナレッジベースに存在するか確認します。
+           - ヒットした場合: GREEN 判定で終了（信頼できる回答が可能なため）。
+        2. RAGミス時: YELLOW 判定へ移行し、外部（一般LLM）への問い合わせを準備します。
+        3. レスポンス生成: `llm_response_provider` を通じて一般LLMから回答を取得します。
+        4. 出力検査: 一般LLMが生成した回答に対して、`check_forbidden_words` を実行します。
+           - 禁止ワードが含まれる場合: RED 判定（例外発生）。
+           - 含まれない場合: YELLOW 判定で回答を許可します。
+
+        Args:
+            user_input: ユーザーからの入力テキスト。
+            llm_response_provider: (text) -> str の形式の呼び出し可能オブジェクト。RAGミス時の回答生成に使用。
+
+        Returns:
+            SemanticGuardResult: 最終的な判定結果（GREEN または YELLOW）。
         """
         logger.info(f"Evaluating user input: {user_input[:50]}...")
 
@@ -335,8 +410,12 @@ class SemanticGuardService(BaseGuardRailService):
 
     def create_guardrail(self, *args, **kwargs) -> Callable:
         """
-        OpenAI Agents SDKで使用される入力・出力チェック用の関数を作成
-        BaseGuardRailService のインターフェース実装
+        OpenAI Agents SDKで使用される入力・出力チェック用の関数を作成します。
+        BaseGuardRailService のインターフェース実装です。
+
+        ガードレールの性質:
+        - 意味的な距離に基づくチェック: 入力・出力テキストが、あらかじめ登録された禁止ワードのベクトル群から「十分に離れている（近くない）」ことを検証します。
+        - 距離が閾値を超えていれば（遠ければ）ブロックせず、閾値未満（近ければ）ブロックします。
         """
 
         def semantic_check(_, __, text: str) -> dict[str, bool | str]:
