@@ -9,9 +9,7 @@ from chromadb.config import Settings
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from openai import OpenAI
 
-from lib.llm.valueobject.agent import (
-    ModerationResult,
-    ModerationCategory,
+from lib.llm.valueobject.guardrail import (
     GuardRailSignal,
     SemanticGuardResult,
     SemanticGuardException,
@@ -21,9 +19,9 @@ from config.settings import BASE_DIR
 logger = logging.getLogger(__name__)
 
 
-class ModerationServiceBase(ABC):
+class BaseGuardRailService(ABC):
     """
-    モデレーションサービスの基底クラス
+    ガードレールサービスの基底クラス
     """
 
     @abstractmethod
@@ -34,7 +32,7 @@ class ModerationServiceBase(ABC):
         pass
 
 
-class ModerationService(ModerationServiceBase):
+class OpenAIModerationGuardService(BaseGuardRailService):
     """
     Moderation機能を提供するサービス
     OpenAI Moderation APIを使用した入力・出力のチェック機能
@@ -49,7 +47,7 @@ class ModerationService(ModerationServiceBase):
         entity_name: str,
         blocked_message: str,
         strict_mode: bool = False,
-    ) -> ModerationResult:
+    ) -> SemanticGuardResult:
         """
         OpenAI Moderation APIを使用したテキストのモデレーションチェック
 
@@ -60,39 +58,40 @@ class ModerationService(ModerationServiceBase):
             strict_mode: 厳格モードかどうか
 
         Returns:
-            モデレーション結果
+            SemanticGuardResult
         """
         try:
             response = self.openai_client.moderations.create(
-                model="text-moderation-latest", input=text
+                model="omni-moderation-latest", input=text
             )
 
-            moderation_result = response.results[0]
-            if moderation_result.flagged:
+            guardrail_result = response.results[0]
+            if guardrail_result.flagged:
                 flagged_categories = [
-                    ModerationCategory(name=category)
-                    for category, flagged in moderation_result.categories.model_dump().items()
+                    category
+                    for category, flagged in guardrail_result.categories.model_dump().items()
                     if flagged
                 ]
-                return ModerationResult(
-                    blocked=True,
-                    message=f"{entity_name}: {blocked_message}",
-                    categories=flagged_categories,
+                return SemanticGuardResult(
+                    signal=GuardRailSignal.RED,
+                    reason="MODERATION_FLAGGED",
+                    detail=f"{entity_name}: {blocked_message} (カテゴリ: {', '.join(flagged_categories)})",
                 )
 
-            return ModerationResult(blocked=False)
+            return SemanticGuardResult(signal=GuardRailSignal.GREEN)
         except Exception as e:
             logger.warning(f"OpenAI Moderation API error: {e}")
             if strict_mode:
-                return ModerationResult(
-                    blocked=True,
-                    message=f"{entity_name}: 現在、安全性チェックが利用できません。しばらくしてから再度お試しください。",
+                return SemanticGuardResult(
+                    signal=GuardRailSignal.RED,
+                    reason="MODERATION_ERROR",
+                    detail=f"{entity_name}: 現在、安全性チェックが利用できません。しばらくしてから再度お試しください。",
                 )
-            return ModerationResult(blocked=False)
+            return SemanticGuardResult(signal=GuardRailSignal.GREEN)
 
     def check_input_moderation(
         self, input_text: str, entity_name: str, strict_mode: bool = False
-    ) -> ModerationResult:
+    ) -> SemanticGuardResult:
         """
         入力テキストのモデレーションチェック
 
@@ -102,7 +101,7 @@ class ModerationService(ModerationServiceBase):
             strict_mode: 厳格モードかどうか
 
         Returns:
-            モデレーション結果
+            SemanticGuardResult
         """
         return self._check_moderation(
             input_text,
@@ -113,7 +112,7 @@ class ModerationService(ModerationServiceBase):
 
     def check_output_moderation(
         self, output_text: str, entity_name: str
-    ) -> ModerationResult:
+    ) -> SemanticGuardResult:
         """
         出力テキストのモデレーションチェック
 
@@ -122,7 +121,7 @@ class ModerationService(ModerationServiceBase):
             entity_name: エンティティ名
 
         Returns:
-            モデレーション結果
+            SemanticGuardResult
         """
         return self._check_moderation(
             output_text,
@@ -131,31 +130,25 @@ class ModerationService(ModerationServiceBase):
         )
 
     @staticmethod
-    def _convert_moderation_result_to_dict(
-        result: ModerationResult,
+    def _convert_semantic_result_to_dict(
+        result: SemanticGuardResult,
     ) -> dict[str, bool | str]:
         """
-        ModerationResultをOpenAI Agents SDKが期待する形式に変換
+        SemanticGuardResultをOpenAI Agents SDKが期待する形式に変換
 
         Args:
-            result: モデレーション結果
+            result: セマンティックガード結果
 
         Returns:
             変換された辞書
         """
-        response = {"blocked": result.blocked, "message": result.message}
-        # categoriesがある場合はメッセージに含める
-        if result.categories:
-            category_names = [category.name for category in result.categories]
-            response["message"] = (
-                f"{result.message} (カテゴリ: {', '.join(category_names)})"
-            )
-        return response
+        blocked = result.signal == GuardRailSignal.RED
+        return {"blocked": blocked, "message": result.detail or ""}
 
     def create_guardrail(self, entity_name: str, strict_mode: bool = False) -> Callable:
         """
         OpenAI Moderation APIを使用した入力ガードレール関数を作成
-        ModerationServiceBase のインターフェース実装
+        BaseGuardRailService のインターフェース実装
 
         Args:
             entity_name: エンティティ名
@@ -163,27 +156,11 @@ class ModerationService(ModerationServiceBase):
 
         Returns:
             ガードレール関数 (context, agent, input_text) -> dict[str, bool | str]
-        """
-        return self.create_moderation_guardrail(entity_name, strict_mode)
-
-    def create_moderation_guardrail(
-        self, entity_name: str, strict_mode: bool = False
-    ) -> Callable:
-        """
-        OpenAI Moderation APIを使用した入力ガードレール関数を作成
-
-        Args:
-            entity_name: エンティティ名
-            strict_mode: 厳格モードかどうか
-
-        Returns:
-            ガードレール関数 (context, agent, input_text) -> dict[str, bool | str]
-            OpenAI Agents SDKで使用される入力チェック用の関数
         """
 
         def moderation_check(_, __, input_text: str) -> dict[str, bool | str]:
             result = self.check_input_moderation(input_text, entity_name, strict_mode)
-            return self._convert_moderation_result_to_dict(result)
+            return self._convert_semantic_result_to_dict(result)
 
         return moderation_check
 
@@ -201,12 +178,12 @@ class ModerationService(ModerationServiceBase):
 
         def output_moderation_check(_, __, output_text: str) -> dict[str, bool | str]:
             result = self.check_output_moderation(output_text, entity_name)
-            return self._convert_moderation_result_to_dict(result)
+            return self._convert_semantic_result_to_dict(result)
 
         return output_moderation_check
 
 
-class SemanticGuardService(ModerationServiceBase):
+class SemanticGuardService(BaseGuardRailService):
     """
     Chroma を用いた意味差分検索ガードレール
     生成系LLMを呼ばず、embedding + ベクトル検索のみで禁止ワード等を検知する
@@ -359,7 +336,7 @@ class SemanticGuardService(ModerationServiceBase):
     def create_guardrail(self, *args, **kwargs) -> Callable:
         """
         OpenAI Agents SDKで使用される入力・出力チェック用の関数を作成
-        ModerationServiceBase のインターフェース実装
+        BaseGuardRailService のインターフェース実装
         """
 
         def semantic_check(_, __, text: str) -> dict[str, bool | str]:

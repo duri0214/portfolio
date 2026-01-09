@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from ai_agent.domain.service.input_processor import InputProcessor
 from ai_agent.models import Entity
+from lib.llm.valueobject.guardrail import GuardRailSignal, SemanticGuardResult
 
 
 class TestInputProcessor(TestCase):
@@ -38,7 +39,7 @@ class TestInputProcessor(TestCase):
 
     fixtures = ["entity.json", "guardrail_config.json"]
 
-    @patch("ai_agent.domain.service.input_processor.ModerationService")
+    @patch("ai_agent.domain.service.input_processor.OpenAIModerationGuardService")
     @patch("ai_agent.domain.service.input_processor.LlmCompletionService")
     def setUp(self, mock_llm_service_class, mock_moderation_service_class):
         """
@@ -190,18 +191,19 @@ class TestInputProcessor(TestCase):
         - ブロック時は適切なメッセージを表示
         """
         # モデレーション結果のモック（ブロックあり）
-        moderation_result_mock = MagicMock()
-        moderation_result_mock.blocked = True
-        moderation_result_mock.message = "APIによってブロックされました"
-        moderation_result_mock.categories = [MagicMock(name="violence")]
+        guardrail_result_mock = SemanticGuardResult(
+            signal=GuardRailSignal.RED,
+            reason="MODERATION_FLAGGED",
+            detail="APIによってブロックされました",
+        )
 
         # setUp内で作成されたモックを使用
         self.mock_moderation_service.check_input_moderation.return_value = (
-            moderation_result_mock
+            guardrail_result_mock
         )
 
         # モックオブジェクトをプロセッサに直接設定
-        self.processor.moderation_service = self.mock_moderation_service
+        self.processor.guardrail_service = self.mock_moderation_service
 
         # 禁止ワードリストを一時的に空にして静的ガードレールをパスさせる
         original_forbidden_words = self.processor.config.forbidden_words
@@ -245,10 +247,9 @@ class TestInputProcessor(TestCase):
         - エンティティ名を含む応答が返される
         """
         # モデレーション結果のモック（ブロックなし）
-        moderation_result_mock = MagicMock()
-        moderation_result_mock.blocked = False
-        moderation_result_mock.message = ""
-        moderation_result_mock.categories = []
+        moderation_result_mock = SemanticGuardResult(
+            signal=GuardRailSignal.GREEN,
+        )
 
         # setUp内で作成されたモックを使用
         self.mock_moderation_service.check_input_moderation.return_value = (
@@ -344,10 +345,9 @@ class TestInputProcessor(TestCase):
         - 問題のある入力では blocked=True と適切な違反カテゴリ
         """
         # 動的ガードレールがテストで呼ばれた場合にブロックしないようにする
-        moderation_result_mock = MagicMock()
-        moderation_result_mock.blocked = False
-        moderation_result_mock.message = ""
-        moderation_result_mock.categories = []
+        moderation_result_mock = SemanticGuardResult(
+            signal=GuardRailSignal.GREEN,
+        )
         self.mock_moderation_service.check_input_moderation.return_value = (
             moderation_result_mock
         )

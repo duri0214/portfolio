@@ -2,8 +2,8 @@ from unittest.mock import Mock, patch, MagicMock
 
 from django.test import TestCase
 
-from lib.llm.service.agent import ModerationService, SemanticGuardService
-from lib.llm.valueobject.agent import GuardRailSignal, SemanticGuardException
+from lib.llm.service.guardrail import OpenAIModerationGuardService, SemanticGuardService
+from lib.llm.valueobject.guardrail import GuardRailSignal, SemanticGuardException
 
 
 def create_mock_safe_response() -> Mock:
@@ -80,7 +80,7 @@ def create_mock_unsafe_response() -> Mock:
 
 class TestModerationService(TestCase):
     """
-    ModerationService クラスのユニットテスト。
+    OpenAIModerationGuardService クラスのユニットテスト。
 
     本クラスでは、OpenAI Moderation API のモックレスポンスを用いて、
     コンテンツの安全性評価に関する各種機能を検証する。
@@ -88,7 +88,7 @@ class TestModerationService(TestCase):
     テスト対象のメソッド:
         - check_input_moderation: ユーザー入力に対するモデレーションチェック
         - check_output_moderation: AI出力に対するモデレーションチェック
-        - create_moderation_guardrail: 入力モデレーション用ガードレール関数の生成
+        - create_guardrail: 入力モデレーション用ガードレール関数の生成
         - create_output_moderation_guardrail: 出力モデレーション用ガードレール関数の生成
 
     主な検証観点:
@@ -102,23 +102,23 @@ class TestModerationService(TestCase):
             - 厳格モードでは安全側（blocked=True）に倒れるか
         4. ガードレール関数の動作検証:
             - callable であること
-            - 内部で適切に ModerationService が使われていること
+            - 内部で適切に OpenAIModerationGuardService が使われていること
 
     テスト設計上の特徴:
         - OpenAI Moderation API の仕様に従ったレスポンスモックを関数で共通化
-        - モデレーション結果は VO (ModerationResult) で表現
+        - モデレーション結果は VO (SemanticGuardResult) で表現
 
     参考: OpenAI Moderation API 仕様
     https://platform.openai.com/docs/guides/moderation
     """
 
-    @patch("lib.llm.service.agent.OpenAI")
+    @patch("lib.llm.service.guardrail.OpenAI")
     def setUp(self, mock_openai):
         # OpenAI APIクライアントの初期化をモック化
         self.mock_client = Mock()
         mock_openai.return_value = self.mock_client
 
-        self.service = ModerationService()
+        self.service = OpenAIModerationGuardService()
         self.entity_name = "テストエンティティ"
         self.safe_text = "こんにちは、お元気ですか？"
         self.unsafe_text = "暴力的な内容を含むテキスト"
@@ -152,13 +152,12 @@ class TestModerationService(TestCase):
         )
 
         # 結果検証
-        self.assertFalse(result.blocked)
-        self.assertEqual(result.message, "")
-        self.assertNotIn("violence", [c.name for c in result.categories])
+        self.assertEqual(result.signal, GuardRailSignal.GREEN)
+        self.assertEqual(result.detail, None)
 
         # API呼び出しの検証
         self.mock_client.moderations.create.assert_called_once_with(
-            model="text-moderation-latest", input=self.safe_text
+            model="omni-moderation-latest", input=self.safe_text
         )
 
     def test_check_input_moderation_unsafe_content(self):
@@ -187,14 +186,13 @@ class TestModerationService(TestCase):
         )
 
         # 結果検証
-        self.assertTrue(result.blocked)
+        self.assertEqual(result.signal, GuardRailSignal.RED)
         self.assertIn(
             "申し訳ありませんが、その内容は適切ではないため、お答えできません",
-            result.message,
+            result.detail,
         )
-        self.assertIn(self.entity_name, result.message)
-        self.assertIn("violence", [c.name for c in result.categories])
-        self.assertEqual(len(result.categories), 1)
+        self.assertIn(self.entity_name, result.detail)
+        self.assertIn("violence", result.detail)
 
     def test_check_input_moderation_api_error_non_strict(self):
         """
@@ -217,15 +215,15 @@ class TestModerationService(TestCase):
         self.mock_client.moderations.create.side_effect = Exception("API Error")
 
         # ログのモック
-        with patch("lib.llm.service.agent.logger") as mock_logger:
+        with patch("lib.llm.service.guardrail.logger") as mock_logger:
             # テスト実行
             result = self.service.check_input_moderation(
                 self.safe_text, self.entity_name, strict_mode=False
             )
 
             # 結果検証
-            self.assertFalse(result.blocked)
-            self.assertEqual(result.message, "")
+            self.assertEqual(result.signal, GuardRailSignal.GREEN)
+            self.assertIsNone(result.detail)
 
             # ログ出力の検証
             mock_logger.warning.assert_called_once()
@@ -258,9 +256,9 @@ class TestModerationService(TestCase):
         )
 
         # 結果検証
-        self.assertTrue(result.blocked)
-        self.assertIn("現在、安全性チェックが利用できません", result.message)
-        self.assertIn(self.entity_name, result.message)
+        self.assertEqual(result.signal, GuardRailSignal.RED)
+        self.assertIn("現在、安全性チェックが利用できません", result.detail)
+        self.assertIn(self.entity_name, result.detail)
 
     def test_check_output_moderation_safe_content(self):
         """
@@ -285,8 +283,8 @@ class TestModerationService(TestCase):
         result = self.service.check_output_moderation(self.safe_text, self.entity_name)
 
         # 結果検証
-        self.assertFalse(result.blocked)
-        self.assertEqual(result.message, "")
+        self.assertEqual(result.signal, GuardRailSignal.GREEN)
+        self.assertIsNone(result.detail)
 
     def test_check_output_moderation_unsafe_content(self):
         """
@@ -313,16 +311,16 @@ class TestModerationService(TestCase):
         )
 
         # 結果検証
-        self.assertTrue(result.blocked)
-        self.assertIn("適切な回答を生成できませんでした", result.message)
-        self.assertIn(self.entity_name, result.message)
+        self.assertEqual(result.signal, GuardRailSignal.RED)
+        self.assertIn("適切な回答を生成できませんでした", result.detail)
+        self.assertIn(self.entity_name, result.detail)
 
-    def test_create_moderation_guardrail(self):
+    def test_create_guardrail(self):
         """
         入力モデレーション用ガードレール関数の生成と動作確認を行う
 
         シナリオ:
-            - `create_moderation_guardrail` で関数生成
+            - `create_guardrail` で関数生成
             - 生成関数がモデレーションを呼び出し、正しくブロック判定を返すか検証
 
         期待結果:
@@ -336,7 +334,7 @@ class TestModerationService(TestCase):
         self.mock_client.moderations.create.return_value = self.mock_unsafe_response
 
         # ガードレール関数の生成
-        guardrail_func = self.service.create_moderation_guardrail(
+        guardrail_func = self.service.create_guardrail(
             self.entity_name, strict_mode=True
         )
 
@@ -382,10 +380,10 @@ class TestModerationService(TestCase):
         self.assertTrue(result["blocked"])
         self.assertIn(self.entity_name, result["message"])
 
-    @patch("lib.llm.service.agent.OpenAI")
+    @patch("lib.llm.service.guardrail.OpenAI")
     def test_service_initialization(self, mock_openai):
         """
-        ModerationService の初期化処理を検証する
+        OpenAIModerationGuardService の初期化処理を検証する
 
         シナリオ:
             - インスタンス化時に openai_client が正しく初期化されているか確認
@@ -400,17 +398,17 @@ class TestModerationService(TestCase):
         mock_client = Mock()
         mock_openai.return_value = mock_client
 
-        service = ModerationService()
+        service = OpenAIModerationGuardService()
         self.assertIsNotNone(service)
         self.assertIsNotNone(service.openai_client)
 
 
 class TestModerationServiceIntegration(TestCase):
     """
-    ModerationService の統合テストケース
+    OpenAIModerationGuardService の統合テストケース
 
     概要:
-        - このクラスでは、ModerationService の複数メソッドを連携させた「統合的な動作確認」を行う。
+        - このクラスでは、OpenAIModerationGuardService の複数メソッドを連携させた「統合的な動作確認」を行う。
         - 実運用に近いフローでモデレーションチェックが一貫して正しく行われることを保証する。
 
     特徴:
@@ -425,13 +423,13 @@ class TestModerationServiceIntegration(TestCase):
         - OpenAI Moderation API 仕様: https://platform.openai.com/docs/guides/moderation
     """
 
-    @patch("lib.llm.service.agent.OpenAI")
+    @patch("lib.llm.service.guardrail.OpenAI")
     def setUp(self, mock_openai):
         # OpenAI APIクライアントの初期化をモック化
         self.mock_client = Mock()
         mock_openai.return_value = self.mock_client
 
-        self.service = ModerationService()
+        self.service = OpenAIModerationGuardService()
         self.entity_name = "統合テスト用エンティティ"
 
         self.mock_safe_response = create_mock_safe_response()
@@ -460,13 +458,13 @@ class TestModerationServiceIntegration(TestCase):
         input_result = self.service.check_input_moderation(
             "こんにちは、今日はいい天気ですね", self.entity_name
         )
-        self.assertFalse(input_result.blocked)
+        self.assertEqual(input_result.signal, GuardRailSignal.GREEN)
 
         # 出力モデレーションのテスト
         output_result = self.service.check_output_moderation(
             "はい、とても良い天気です。お出かけ日和ですね", self.entity_name
         )
-        self.assertFalse(output_result.blocked)
+        self.assertEqual(output_result.signal, GuardRailSignal.GREEN)
 
         # API呼び出し回数の確認
         self.assertEqual(self.mock_client.moderations.create.call_count, 2)
@@ -483,8 +481,8 @@ class TestSemanticGuardService(TestCase):
     3. RED: LLM の回答に禁止ワードが意味的に含まれる場合（例外発生）
     """
 
-    @patch("lib.llm.service.agent.chromadb.PersistentClient")
-    @patch("lib.llm.service.agent.OpenAIEmbeddingFunction")
+    @patch("lib.llm.service.guardrail.chromadb.PersistentClient")
+    @patch("lib.llm.service.guardrail.OpenAIEmbeddingFunction")
     def setUp(self, mock_ef, mock_chroma):
         """
         テスト環境のセットアップ。
