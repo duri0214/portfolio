@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 from django.test import TestCase
 
-from lib.llm.service.guardrail import OpenAIModerationService, SemanticGuardService
+from lib.llm.service.guardrail import OpenAIModerationGuardService, SemanticGuardService
 from lib.llm.valueobject.guardrail import GuardRailSignal, SemanticGuardException
 
 
@@ -80,7 +80,7 @@ def create_mock_unsafe_response() -> Mock:
 
 class TestModerationService(TestCase):
     """
-    OpenAIModerationService クラスのユニットテスト。
+    OpenAIModerationGuardService クラスのユニットテスト。
 
     本クラスでは、OpenAI Moderation API のモックレスポンスを用いて、
     コンテンツの安全性評価に関する各種機能を検証する。
@@ -102,7 +102,7 @@ class TestModerationService(TestCase):
             - 厳格モードでは安全側（blocked=True）に倒れるか
         4. ガードレール関数の動作検証:
             - callable であること
-            - 内部で適切に OpenAIModerationService が使われていること
+            - 内部で適切に OpenAIModerationGuardService が使われていること
 
     テスト設計上の特徴:
         - OpenAI Moderation API の仕様に従ったレスポンスモックを関数で共通化
@@ -118,7 +118,7 @@ class TestModerationService(TestCase):
         self.mock_client = Mock()
         mock_openai.return_value = self.mock_client
 
-        self.service = OpenAIModerationService()
+        self.service = OpenAIModerationGuardService()
         self.entity_name = "テストエンティティ"
         self.safe_text = "こんにちは、お元気ですか？"
         self.unsafe_text = "暴力的な内容を含むテキスト"
@@ -383,7 +383,7 @@ class TestModerationService(TestCase):
     @patch("lib.llm.service.guardrail.OpenAI")
     def test_service_initialization(self, mock_openai):
         """
-        OpenAIModerationService の初期化処理を検証する
+        OpenAIModerationGuardService の初期化処理を検証する
 
         シナリオ:
             - インスタンス化時に openai_client が正しく初期化されているか確認
@@ -398,17 +398,17 @@ class TestModerationService(TestCase):
         mock_client = Mock()
         mock_openai.return_value = mock_client
 
-        service = OpenAIModerationService()
+        service = OpenAIModerationGuardService()
         self.assertIsNotNone(service)
         self.assertIsNotNone(service.openai_client)
 
 
 class TestModerationServiceIntegration(TestCase):
     """
-    OpenAIModerationService の統合テストケース
+    OpenAIModerationGuardService の統合テストケース
 
     概要:
-        - このクラスでは、OpenAIModerationService の複数メソッドを連携させた「統合的な動作確認」を行う。
+        - このクラスでは、OpenAIModerationGuardService の複数メソッドを連携させた「統合的な動作確認」を行う。
         - 実運用に近いフローでモデレーションチェックが一貫して正しく行われることを保証する。
 
     特徴:
@@ -429,7 +429,7 @@ class TestModerationServiceIntegration(TestCase):
         self.mock_client = Mock()
         mock_openai.return_value = self.mock_client
 
-        self.service = OpenAIModerationService()
+        self.service = OpenAIModerationGuardService()
         self.entity_name = "統合テスト用エンティティ"
 
         self.mock_safe_response = create_mock_safe_response()

@@ -32,7 +32,7 @@ class BaseGuardRailService(ABC):
         pass
 
 
-class OpenAIModerationService(BaseGuardRailService):
+class OpenAIModerationGuardService(BaseGuardRailService):
     """
     Moderation機能を提供するサービス
     OpenAI Moderation APIを使用した入力・出力のチェック機能

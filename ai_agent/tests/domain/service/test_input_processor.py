@@ -39,7 +39,7 @@ class TestInputProcessor(TestCase):
 
     fixtures = ["entity.json", "guardrail_config.json"]
 
-    @patch("ai_agent.domain.service.input_processor.OpenAIModerationService")
+    @patch("ai_agent.domain.service.input_processor.OpenAIModerationGuardService")
     @patch("ai_agent.domain.service.input_processor.LlmCompletionService")
     def setUp(self, mock_llm_service_class, mock_moderation_service_class):
         """

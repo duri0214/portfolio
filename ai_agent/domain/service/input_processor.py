@@ -8,7 +8,7 @@ from ai_agent.domain.valueobject.input_processor import (
     GuardrailResult,
     InputProcessorConfig,
 )
-from lib.llm.service.guardrail import OpenAIModerationService
+from lib.llm.service.guardrail import OpenAIModerationGuardService
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.config import OpenAIGptConfig
 from lib.llm.valueobject.guardrail import GuardRailSignal
@@ -23,7 +23,7 @@ class InputProcessor:
     def __init__(self, entity):
         self.entity = entity
         self.config = InputProcessorConfig.from_entity(entity)
-        self.moderation_service = OpenAIModerationService()
+        self.moderation_service = OpenAIModerationGuardService()
 
         # LlmCompletionServiceの初期化
         self.llm_config = OpenAIGptConfig(
@@ -106,7 +106,7 @@ class InputProcessor:
             InputGuardrail: OpenAI Moderation APIベースのガードレールオブジェクト
 
         Note:
-            - OpenAIModerationService.create_guardrailの詳細処理を参照
+            - OpenAIModerationGuardService.create_guardrailの詳細処理を参照
             - strict_modeがTrueの場合、より厳格な基準で判定
             - エンティティ名を含むパーソナライズされたエラーメッセージを生成
         """
@@ -180,7 +180,7 @@ class InputProcessor:
             OutputGuardrail: OpenAI Moderation APIベースの出力ガードレールオブジェクト
 
         Note:
-            - OpenAIModerationService.create_output_moderation_guardrailの詳細処理を参照
+            - OpenAIModerationGuardService.create_output_moderation_guardrailの詳細処理を参照
             - エージェントが生成したテキストの最終段階でのセーフティチェック
             - ユーザーに不適切な内容が表示されることを防止
         """
