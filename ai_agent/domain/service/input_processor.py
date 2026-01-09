@@ -8,9 +8,10 @@ from ai_agent.domain.valueobject.input_processor import (
     GuardrailResult,
     InputProcessorConfig,
 )
-from lib.llm.service.agent import ModerationService
+from lib.llm.service.guardrail import ModerationService
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.config import OpenAIGptConfig
+from lib.llm.valueobject.guardrail import GuardRailSignal
 
 
 class InputProcessor:
@@ -72,14 +73,14 @@ class InputProcessor:
         # 入力ガードレール設定
         self.input_guardrails: list[InputGuardrail] = []
         if self.config.use_openai_moderation:
-            self.input_guardrails.append(self._create_moderation_guardrail())
+            self.input_guardrails.append(self._create_input_guardrail())
 
         self.input_guardrails.append(self._create_custom_guardrail())
 
         # 出力ガードレール設定
         self.output_guardrails = []
         if self.config.use_openai_moderation:
-            self.output_guardrails.append(self._create_output_moderation_guardrail())
+            self.output_guardrails.append(self._create_output_guardrail())
 
         # ガードレールをエージェントに適用
         try:
@@ -93,7 +94,7 @@ class InputProcessor:
 
         print(f"OpenAI Agent初期化完了: {self.entity.name}")
 
-    def _create_moderation_guardrail(self):
+    def _create_input_guardrail(self):
         """
         OpenAI Moderation APIを使用した入力ガードレールを作成
 
@@ -105,11 +106,11 @@ class InputProcessor:
             InputGuardrail: OpenAI Moderation APIベースのガードレールオブジェクト
 
         Note:
-            - ModerationService.create_moderation_guardrailの詳細処理を参照
+            - ModerationService.create_guardrailの詳細処理を参照
             - strict_modeがTrueの場合、より厳格な基準で判定
             - エンティティ名を含むパーソナライズされたエラーメッセージを生成
         """
-        moderation_check = self.moderation_service.create_moderation_guardrail(
+        moderation_check = self.moderation_service.create_guardrail(
             self.entity.name, self.config.strict_mode
         )
 
@@ -167,7 +168,7 @@ class InputProcessor:
 
         return InputGuardrail(name="custom_guardrail", guardrail_function=custom_check)
 
-    def _create_output_moderation_guardrail(self):
+    def _create_output_guardrail(self):
         """
         OpenAI Moderation APIを使用した出力ガードレールを作成
 
@@ -320,19 +321,14 @@ class InputProcessor:
             user_input, self.entity.name, self.config.strict_mode
         )
 
-        if moderation_result.blocked:
-            # categoriesがある場合は取得、なければ空リスト
-            categories = moderation_result.categories
-            if not categories:
-                categories = ["moderation_error"] if self.config.strict_mode else []
-
-            # ModerationCategoryオブジェクトから名前を取得
-            category_names = [cat.name for cat in categories] if categories else []
-
+        if moderation_result.signal == GuardRailSignal.RED:
             return GuardrailResult(
                 blocked=True,
-                message=moderation_result.message,
-                violation_categories=category_names,
+                message=moderation_result.detail
+                or f"{self.entity.name}: その内容は適切ではないため、お答えできません。",
+                violation_categories=(
+                    [moderation_result.reason] if moderation_result.reason else []
+                ),
             )
 
         return GuardrailResult(blocked=False, message="")
