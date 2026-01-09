@@ -1,3 +1,11 @@
+"""
+このファイルは試作品（プロトタイプ）です。
+lib.llm に並ぶ他のライブラリとは品質や設計の意図が異なります。
+詳細は以下のリンクを参照してください：
+- https://github.com/duri0214/portfolio/issues/501
+- https://github.com/duri0214/portfolio/pull/502
+"""
+
 import os
 from pypdf import PdfReader
 from lib.llm.valueobject.pdf_parser import (
