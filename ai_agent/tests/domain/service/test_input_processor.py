@@ -191,7 +191,7 @@ class TestInputProcessor(TestCase):
         - ブロック時は適切なメッセージを表示
         """
         # モデレーション結果のモック（ブロックあり）
-        moderation_result_mock = SemanticGuardResult(
+        guardrail_result_mock = SemanticGuardResult(
             signal=GuardRailSignal.RED,
             reason="MODERATION_FLAGGED",
             detail="APIによってブロックされました",
@@ -199,11 +199,11 @@ class TestInputProcessor(TestCase):
 
         # setUp内で作成されたモックを使用
         self.mock_moderation_service.check_input_moderation.return_value = (
-            moderation_result_mock
+            guardrail_result_mock
         )
 
         # モックオブジェクトをプロセッサに直接設定
-        self.processor.moderation_service = self.mock_moderation_service
+        self.processor.guardrail_service = self.mock_moderation_service
 
         # 禁止ワードリストを一時的に空にして静的ガードレールをパスさせる
         original_forbidden_words = self.processor.config.forbidden_words

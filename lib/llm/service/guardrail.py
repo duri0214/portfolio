@@ -65,11 +65,11 @@ class OpenAIModerationGuardService(BaseGuardRailService):
                 model="omni-moderation-latest", input=text
             )
 
-            moderation_result = response.results[0]
-            if moderation_result.flagged:
+            guardrail_result = response.results[0]
+            if guardrail_result.flagged:
                 flagged_categories = [
                     category
-                    for category, flagged in moderation_result.categories.model_dump().items()
+                    for category, flagged in guardrail_result.categories.model_dump().items()
                     if flagged
                 ]
                 return SemanticGuardResult(

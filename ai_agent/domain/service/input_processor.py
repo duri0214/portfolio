@@ -23,7 +23,7 @@ class InputProcessor:
     def __init__(self, entity):
         self.entity = entity
         self.config = InputProcessorConfig.from_entity(entity)
-        self.moderation_service = OpenAIModerationGuardService()
+        self.guardrail_service = OpenAIModerationGuardService()
 
         # LlmCompletionServiceの初期化
         self.llm_config = OpenAIGptConfig(
@@ -110,12 +110,12 @@ class InputProcessor:
             - strict_modeがTrueの場合、より厳格な基準で判定
             - エンティティ名を含むパーソナライズされたエラーメッセージを生成
         """
-        moderation_check = self.moderation_service.create_guardrail(
+        input_guardrail_check = self.guardrail_service.create_guardrail(
             self.entity.name, self.config.strict_mode
         )
 
         return InputGuardrail(
-            name="moderation_guardrail", guardrail_function=moderation_check
+            name="moderation_guardrail", guardrail_function=input_guardrail_check
         )
 
     def _create_custom_guardrail(self):
@@ -184,13 +184,13 @@ class InputProcessor:
             - エージェントが生成したテキストの最終段階でのセーフティチェック
             - ユーザーに不適切な内容が表示されることを防止
         """
-        output_moderation_check = (
-            self.moderation_service.create_output_moderation_guardrail(self.entity.name)
+        output_guardrail_check = (
+            self.guardrail_service.create_output_moderation_guardrail(self.entity.name)
         )
 
         return OutputGuardrail(
             name="output_moderation_guardrail",
-            guardrail_function=output_moderation_check,
+            guardrail_function=output_guardrail_check,
         )
 
     @staticmethod
@@ -317,17 +317,17 @@ class InputProcessor:
         Returns:
             動的ガードレール処理結果
         """
-        moderation_result = self.moderation_service.check_input_moderation(
+        guardrail_result = self.guardrail_service.check_input_moderation(
             user_input, self.entity.name, self.config.strict_mode
         )
 
-        if moderation_result.signal == GuardRailSignal.RED:
+        if guardrail_result.signal == GuardRailSignal.RED:
             return GuardrailResult(
                 blocked=True,
-                message=moderation_result.detail
+                message=guardrail_result.detail
                 or f"{self.entity.name}: その内容は適切ではないため、お答えできません。",
                 violation_categories=(
-                    [moderation_result.reason] if moderation_result.reason else []
+                    [guardrail_result.reason] if guardrail_result.reason else []
                 ),
             )
 
