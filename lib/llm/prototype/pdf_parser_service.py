@@ -8,7 +8,7 @@ lib.llm に並ぶ他のライブラリとは品質や設計の意図が異なり
 
 import os
 from pypdf import PdfReader
-from lib.llm.valueobject.pdf_parser import (
+from lib.llm.prototype.pdf_parser_vo import (
     PdfParseUseCase,
     DefaultPdfParserVO,
     PdfElement,
