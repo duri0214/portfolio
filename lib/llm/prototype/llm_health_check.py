@@ -326,15 +326,17 @@ class LLMHealthCheck:
         target_models: List[str],
     ):
         """
-        モデルが使用可能かチェックする共通ロジック。
+        モデルの使用権限および利用可否をチェックする共通ロジック。
+        APIキー自体が有効でも、特定のモデル（gpt-4oなど）に対して利用権限がない場合や、
+        Azure OpenAIでデプロイされていない場合などを検知します。
 
         Args:
             name (str): サービス名 (OpenAI, Gemini など)。
             api_key (str | None): APIキー。
             base_url (str | None): ベースURL (Geminiなどの互換エンドポイント用)。
-            target_models (List[str]): 使用可能か確認したいモデル名のリスト。
+            target_models (List[str]): 使用権限を確認したいモデル名のリスト。
         """
-        display_name = f"Can use models with API Key ({name})"
+        display_name = f"Model Permission/Availability ({name})"
         if not api_key:
             self.add_result(
                 CheckResult(
@@ -383,7 +385,12 @@ class LLMHealthCheck:
 
     def check_model_compatibility(self):
         """
-        プロジェクトで使用するモデルが現在のAPIキーで利用可能か確認します。
+        プロジェクトで使用するモデルが現在のAPIキーで「利用権限」があるか確認します。
+
+        チェックの意義:
+        - OpenAI: アカウントのTier制限により最新モデルが使えないケースの検知。
+        - Azure OpenAI: 特定のモデルがデプロイ（配置）されていないケースの検知。
+        - Gemini: 正しいモデル指定名（接頭辞の有無など）の確認。
         """
         # プロジェクトで使用されている主要なモデルがリストに含まれているか確認
         # lib/llm/valueobject/config.py で定義されているものを基準にする

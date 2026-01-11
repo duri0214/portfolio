@@ -70,8 +70,8 @@ class TestLLMHealthCheck(unittest.TestCase):
     @patch.dict(
         os.environ,
         {
-            "OPENAI_API_KEY": "sk-proj-valid-length-abc-def-ghi-jkl-mno-pqr-stu-vwx-yz-123456",
-            "GEMINI_API_KEY": "AIzaSyValidLength-abc-def-ghi-jkl-mno-pqr-stu-vwx",
+            "OPENAI_API_KEY": "sk-proj-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE-1234567890",
+            "GEMINI_API_KEY": "AIzaSy-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE",
         },
         clear=True,
     )
@@ -98,7 +98,7 @@ class TestLLMHealthCheck(unittest.TestCase):
     @patch.dict(
         os.environ,
         {
-            "OPENAI_API_KEY": "sk-proj-valid-length-abc-def-ghi-jkl-mno-pqr-stu-vwx-yz-123456"
+            "OPENAI_API_KEY": "sk-proj-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE-1234567890"
         },
         clear=True,
     )
@@ -120,7 +120,7 @@ class TestLLMHealthCheck(unittest.TestCase):
         summary = self.checker.get_summary()
 
         openai_comp = self._assert_status(
-            summary, "Can use models with API Key (OpenAI)", Status.WARNING
+            summary, "Model Permission/Availability (OpenAI)", Status.WARNING
         )
         self.assertIn("Missing: gpt-4o", openai_comp["message"])
 
