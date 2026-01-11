@@ -368,12 +368,9 @@ class LLMHealthCheck:
             client = OpenAI(**client_params)
 
             available_models = [m.id for m in client.models.list()]
-            found = [m for m in target_models if m in available_models]
-            missing = [m for m in target_models if m not in available_models]
-
-            status = Status.OK if found else Status.WARNING
-            msg = f"Found: {', '.join(found)}. Missing: {', '.join(missing)}"
-            self.add_result(CheckResult(display_name, status, msg))
+            self._evaluate_and_add_model_result(
+                available_models, target_models, display_name
+            )
         except APIError as e:
             self.add_result(
                 CheckResult(
@@ -390,6 +387,86 @@ class LLMHealthCheck:
                     f"Could not check due to unexpected error: {e}",
                 )
             )
+
+    def _check_azure_compatibility(
+        self,
+        api_key: str | None,
+        endpoint: str | None,
+        target_models: List[str],
+    ):
+        """
+        Azure OpenAI のモデル利用可否（デプロイ状況）をチェックします。
+
+        Args:
+            api_key (str | None): Azure OpenAI APIキー。
+            endpoint (str | None): Azure OpenAI エンドポイント。
+            target_models (List[str]): 確認したいデプロイ名（モデル名）のリスト。
+        """
+        display_name = "Model Permission/Availability (AzureOpenAI)"
+        if not api_key or not endpoint:
+            self.add_result(
+                CheckResult(
+                    display_name,
+                    Status.SKIPPED,
+                    "API Key or Endpoint not provided.",
+                )
+            )
+            return
+
+        try:
+            from openai import AzureOpenAI, APIError
+        except ImportError:
+            return
+
+        try:
+            client = AzureOpenAI(
+                api_key=api_key,
+                api_version="2024-02-01",
+                azure_endpoint=endpoint,
+            )
+
+            # Azureでは models.list() で取得できる ID はデプロイ名に対応する
+            available_models = [m.id for m in client.models.list()]
+            self._evaluate_and_add_model_result(
+                available_models, target_models, display_name
+            )
+        except APIError as e:
+            self.add_result(
+                CheckResult(
+                    display_name,
+                    Status.SKIPPED,
+                    f"Could not check due to API error: {e}",
+                )
+            )
+        except Exception as e:
+            self.add_result(
+                CheckResult(
+                    display_name,
+                    Status.SKIPPED,
+                    f"Could not check due to unexpected error: {e}",
+                )
+            )
+
+    def _evaluate_and_add_model_result(
+        self,
+        available_models: List[str],
+        target_models: List[str],
+        display_name: str,
+    ):
+        """
+        取得したモデルリストと期待するモデルリストを比較し、結果を記録します。
+
+        Args:
+            available_models (List[str]): APIから取得した利用可能なモデルIDのリスト。
+            target_models (List[str]): チェック対象のモデルIDのリスト。
+            display_name (str): チェック項目の表示名。
+        """
+        found = [m for m in target_models if m in available_models]
+        missing = [m for m in target_models if m not in available_models]
+
+        status = Status.OK if found else Status.WARNING
+        msg = f"Found: {', '.join(found)}. Missing: {', '.join(missing)}"
+        self.add_result(CheckResult(display_name, status, msg))
 
     def check_model_compatibility(self):
         """
@@ -413,6 +490,10 @@ class LLMHealthCheck:
             "models/gemini-2.0-flash",
             "models/gemini-2.5-flash",
         ]
+        target_azure_models = [
+            "gpt-4o",
+            "gpt-35-turbo",
+        ]
 
         # OpenAI
         self._check_client_compatibility(
@@ -425,6 +506,13 @@ class LLMHealthCheck:
             os.getenv("GEMINI_API_KEY"),
             "https://generativelanguage.googleapis.com/v1beta/openai/",
             target_gemini_models,
+        )
+
+        # Azure OpenAI
+        self._check_azure_compatibility(
+            os.getenv("AZURE_OPENAI_API_KEY"),
+            os.getenv("AZURE_OPENAI_ENDPOINT"),
+            target_azure_models,
         )
 
     def print_formatted_summary(self):

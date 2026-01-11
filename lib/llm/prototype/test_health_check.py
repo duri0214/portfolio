@@ -69,16 +69,9 @@ class TestLLMHealthCheck(unittest.TestCase):
         self._assert_status(summary, "Env: GEMINI_API_KEY", Status.WARNING)
         self._assert_status(summary, "Env: AZURE_OPENAI_API_KEY", Status.WARNING)
 
-    @patch.dict(
-        os.environ,
-        {
-            "OPENAI_API_KEY": "sk-proj-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE-1234567890",
-            "GEMINI_API_KEY": "AIzaSy-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE",
-        },
-        clear=True,
-    )
     @patch("openai.OpenAI")
-    def test_endpoints_invalid_connection(self, mock_openai):
+    @patch("openai.AzureOpenAI")
+    def test_endpoints_invalid_connection(self, mock_azure, mock_openai):
         """
         エンドポイントへの接続が失敗する場合のテスト。
         APIサーバーからのエラーを適切にキャッチし、ERROR ステータスを返すことを確認します。
@@ -88,24 +81,47 @@ class TestLLMHealthCheck(unittest.TestCase):
         mock_instance = mock_openai.return_value
         mock_instance.models.list.side_effect = Exception("Connection refused")
 
-        self.checker.check_endpoints()
-        summary = self.checker.get_summary()
+        mock_azure_instance = mock_azure.return_value
+        mock_azure_instance.models.list.side_effect = Exception(
+            "Azure Connection refused"
+        )
 
-        openai_res = self._assert_status(summary, "Endpoint: OpenAI", Status.ERROR)
-        self.assertIn("Connection refused", openai_res["message"])
+        # Set env for Azure to avoid skipping
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "sk-proj-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE-1234567890",
+                "GEMINI_API_KEY": "AIzaSy-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE",
+                "AZURE_OPENAI_API_KEY": "abc-def-ghi-jkl-mno-pqr-stu-vwx-yz-12",
+                "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
+            },
+        ):
+            self.checker.check_endpoints()
+            summary = self.checker.get_summary()
 
-        gemini_res = self._assert_status(summary, "Endpoint: Gemini", Status.ERROR)
-        self.assertIn("Connection refused", gemini_res["message"])
+            openai_res = self._assert_status(summary, "Endpoint: OpenAI", Status.ERROR)
+            self.assertIn("Connection refused", openai_res["message"])
+
+            gemini_res = self._assert_status(summary, "Endpoint: Gemini", Status.ERROR)
+            self.assertIn("Connection refused", gemini_res["message"])
+
+            azure_res = self._assert_status(
+                summary, "Endpoint: AzureOpenAI", Status.ERROR
+            )
+            self.assertIn("Azure Connection refused", azure_res["message"])
 
     @patch.dict(
         os.environ,
         {
-            "OPENAI_API_KEY": "sk-proj-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE-1234567890"
+            "OPENAI_API_KEY": "sk-proj-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE-1234567890",
+            "AZURE_OPENAI_API_KEY": "abc-def-ghi-jkl-mno-pqr-stu-vwx-yz-12",
+            "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
         },
         clear=True,
     )
     @patch("openai.OpenAI")
-    def test_compatibility_missing_models(self, mock_openai):
+    @patch("openai.AzureOpenAI")
+    def test_compatibility_missing_models(self, mock_azure, mock_openai):
         """
         利用可能なモデルリストに必要なモデルが含まれていない場合のテスト。
         期待されるモデル（gpt-4oなど）が見つからない場合に WARNING ステータスを返すことを確認します。
@@ -118,6 +134,11 @@ class TestLLMHealthCheck(unittest.TestCase):
             MagicMock(id="whisper-1"),
         ]
 
+        mock_azure_instance = mock_azure.return_value
+        mock_azure_instance.models.list.return_value = [
+            MagicMock(id="gpt-35-turbo-dev"),
+        ]
+
         self.checker.check_model_compatibility()
         summary = self.checker.get_summary()
 
@@ -125,6 +146,11 @@ class TestLLMHealthCheck(unittest.TestCase):
             summary, "Model Permission/Availability (OpenAI)", Status.WARNING
         )
         self.assertIn("Missing: gpt-4o", openai_comp["message"])
+
+        azure_comp = self._assert_status(
+            summary, "Model Permission/Availability (AzureOpenAI)", Status.WARNING
+        )
+        self.assertIn("Missing: gpt-4o", azure_comp["message"])
 
     def test_json_output(self):
         """
