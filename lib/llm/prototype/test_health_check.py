@@ -37,16 +37,23 @@ class TestLLMHealthCheck(unittest.TestCase):
     def test_environment_variables_empty(self):
         """
         環境変数が空の場合のテスト。
-        必須のAPIキーが見つからない場合に ERROR ステータスが返ることを確認します。
+        必須のAPIキーが見つからない場合に ERROR ステータスが返り、
+        それ以降のエンドポイントチェックなどが SKIPPED になることを確認します。
         """
         self.checker.check_environment_variables()
+        self.checker.check_endpoints()
         summary = self.checker.get_summary()
 
-        # OpenAI, Gemini, Azure は必須なので ERROR になるはず
+        # Env check: OpenAI, Gemini, Azure は必須なので ERROR になるはず
         self._assert_status(summary, "Env: OPENAI_API_KEY", Status.ERROR)
         self._assert_status(summary, "Env: GEMINI_API_KEY", Status.ERROR)
         self._assert_status(summary, "Env: AZURE_OPENAI_API_KEY", Status.ERROR)
         self._assert_status(summary, "Env: AZURE_OPENAI_ENDPOINT", Status.ERROR)
+
+        # Endpoint check: 環境変数がないので SKIPPED になるはず
+        self._assert_status(summary, "Endpoint: OpenAI", Status.SKIPPED)
+        self._assert_status(summary, "Endpoint: Gemini", Status.SKIPPED)
+        self._assert_status(summary, "Endpoint: AzureOpenAI", Status.SKIPPED)
 
     @patch.dict(
         os.environ,

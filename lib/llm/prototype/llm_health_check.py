@@ -325,6 +325,14 @@ class LLMHealthCheck:
                         "Endpoint: AzureOpenAI", Status.ERROR, f"Unexpected error: {e}"
                     )
                 )
+        else:
+            self.add_result(
+                CheckResult(
+                    "Endpoint: AzureOpenAI",
+                    Status.SKIPPED,
+                    "API Key or Endpoint not provided.",
+                )
+            )
 
     def _check_client_compatibility(
         self,
