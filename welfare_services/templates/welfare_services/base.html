@@ -98,6 +98,10 @@
                                     {% if request.path == '/welfare_services/' %}selected{% endif %}>
                                 WELFARE SERVICES
                             </option>
+                            <option value="{% url 'kokkai:index' %}"
+                                    {% if request.path == '/kokkai/' %}selected{% endif %}>
+                                KOKKAI
+                            </option>
                         </select>
                     </li>
                 </ul>
@@ -178,7 +182,7 @@
         <hr class="bg-light">
         <div class="text-center">
             <p>&copy; 2025 東京都福祉事務所情報. All Rights Reserved. / © 2019 henojiya. / <a
-                    href="https://github.com/duri0214" target="_blank">github portfolio</a></p>
+                    href="https://github.com/duri0214" target="_blank">GitHub portfolio</a></p>
         </div>
     </div>
 </footer>
