@@ -1,0 +1,40 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">国会議事録検索・分析システム</h1>
+                <p class="text-muted text-center">国会の議事録をRAGやLLMを用いて検索・分析するプロジェクト</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    国会の膨大な議事録の中から必要な情報を効率的に検索し、AI（LLM）を用いて内容を要約・分析するシステムです。
+                    RAG（Retrieval-Augmented Generation）技術を活用し、正確な根拠に基づいた回答を生成することを目指しています。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="{% url 'kokkai:index' %}" target="_blank">KOKKAI（Webアプリ）</a></li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>主な機能</h2>
+                <ul>
+                    <li>議事録の全文検索</li>
+                    <li>LLMによる議事録の要約・解説</li>
+                    <li>RAGを用いた高度な質問応答</li>
+                    <li>特定の議員や委員会の発言抽出</li>
+                </ul>
+            </section>
+        </article>
+    </div>
+{% endblock %}

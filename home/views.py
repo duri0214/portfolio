@@ -55,3 +55,7 @@ class JpStocksIndexView(TemplateView):
 
 class WelfareServicesIndexView(TemplateView):
     template_name = "home/welfare_services/index.html"
+
+
+class KokkaiIndexView(TemplateView):
+    template_name = "home/kokkai/index.html"
