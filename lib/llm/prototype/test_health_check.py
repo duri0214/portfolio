@@ -42,9 +42,11 @@ class TestLLMHealthCheck(unittest.TestCase):
         self.checker.check_environment_variables()
         summary = self.checker.get_summary()
 
-        # OpenAI, Gemini は必須なので ERROR になるはず
+        # OpenAI, Gemini, Azure は必須なので ERROR になるはず
         self._assert_status(summary, "Env: OPENAI_API_KEY", Status.ERROR)
         self._assert_status(summary, "Env: GEMINI_API_KEY", Status.ERROR)
+        self._assert_status(summary, "Env: AZURE_OPENAI_API_KEY", Status.ERROR)
+        self._assert_status(summary, "Env: AZURE_OPENAI_ENDPOINT", Status.ERROR)
 
     @patch.dict(
         os.environ,

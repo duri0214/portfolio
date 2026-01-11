@@ -197,6 +197,10 @@ class LLMHealthCheck:
                         "Format might be invalid (should be 32 hex chars).",
                     )
                 )
+        else:
+            self.add_result(
+                CheckResult("Env: AZURE_OPENAI_API_KEY", Status.ERROR, "Not found.")
+            )
 
         if azure_open_ai_endpoint:
             if (
@@ -216,6 +220,10 @@ class LLMHealthCheck:
                         "Format might be invalid.",
                     )
                 )
+        else:
+            self.add_result(
+                CheckResult("Env: AZURE_OPENAI_ENDPOINT", Status.ERROR, "Not found.")
+            )
 
     def check_endpoints(self):
         """
