@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KOKKAI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+
+    <!-- favicon -->
+    <link rel="shortcut icon" href="{% static 'kokkai/s_k.ico' %}">
+</head>
+<body>
+<header>
+    <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid px-3">
+            <a class="navbar-brand" href="{% url 'home:index' %}">Henojiya</a>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <select class="form-select d-flex align-items-center" onChange="location.href=value;">
+                            <option value="{% url 'home:index' %}" {% if request.path == '/' %}selected{% endif %}>HOME</option>
+                            <option value="{% url 'vnm:index' %}" {% if request.path == '/vietnam_research/' %}selected{% endif %}>VIETNAM</option>
+                            <option value="{% url 'usa:index' %}" {% if request.path == '/usa_research/' %}selected{% endif %}>USA</option>
+                            <option value="{% url 'mrk:index' %}" {% if request.path == '/gmarker/' %}selected{% endif %}>GMARKER</option>
+                            <option value="{% url 'shp:index' %}" {% if request.path == '/shopping/' %}selected{% endif %}>SHOPPING</option>
+                            <option value="{% url 'ren:index' %}" {% if request.path == '/rental_shop/' %}selected{% endif %}>RENTAL SHOP</option>
+                            <option value="{% url 'txo:index' %}" {% if request.path == '/taxonomy/' %}selected{% endif %}>TAXONOMY</option>
+                            <option value="{% url 'soil:home' %}" {% if request.path == '/soil_analysis/' %}selected{% endif %}>SOIL ANALYSIS</option>
+                            <option value="{% url 'sec:index' %}" {% if request.path == '/securities/' %}selected{% endif %}>SECURITIES REPORT</option>
+                            <option value="{% url 'hsp:index' %}" {% if request.path == '/hospital/' %}selected{% endif %}>HOSPITAL</option>
+                            <option value="{% url 'llm:index' %}" {% if request.path == '/llm_chat/' %}selected{% endif %}>LLM CHAT</option>
+                            <option value="{% url 'agt:index' %}" {% if request.path == '/ai_agent/' %}selected{% endif %}>AI AGENT</option>
+                            <option value="{% url 'jpn:index' %}" {% if request.path == '/jp_stocks/' %}selected{% endif %}>JP STOCKS</option>
+                            <option value="{% url 'welf:index' %}" {% if request.path == '/welfare_services/' %}selected{% endif %}>WELFARE SERVICES</option>
+                            <option value="{% url 'kokkai:index' %}" {% if request.path == '/kokkai/' %}selected{% endif %}>KOKKAI</option>
+                        </select>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<div id="main" style="margin-top: 70px;">
+    {% block content %}{% endblock %}
+</div>
+
+<footer>
+    <p>© 2019 henojiya. / <a href="https://github.com/duri0214" target="_blank">GitHub portfolio</a></p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

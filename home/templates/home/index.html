@@ -326,18 +326,18 @@
             <div class="col-md-4">
                 <div class="card mb-4 shadow-sm">
                     <figure class="card-img-top">
-                        <img src="{% static 'home/images/no-image.png' %}" alt="未定義"
+                        <img src="{% static 'home/images/no-image.png' %}" alt="国会議事録検索・分析システム"
                              class="img-fluid rounded shadow">
-                        <figcaption class="cat-name bg-info text-white px-2 py-1">未定義</figcaption>
+                        <figcaption class="cat-name bg-info text-white px-2 py-1">政治</figcaption>
                     </figure>
                     <div class="card-body">
-                        <h5 class="card-title">未定義</h5>
+                        <h5 class="card-title">国会議事録を分析する</h5>
                         <div class="card-text">
-                            未定義
+                            2026年当時、国会の膨大な議事録から必要な情報を効率的に検索し、AI（LLM）を用いて内容を要約・分析するシステム。RAG技術を活用し、正確な根拠に基づいた回答生成を目指す。
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="#" class="btn btn-primary btn-sm" role="button">
+                        <a href="{% url 'home:about_kokkai' %}" class="btn btn-primary btn-sm" role="button">
                             詳細を見る
                         </a>
                     </div>
