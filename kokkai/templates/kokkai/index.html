@@ -2,7 +2,67 @@
 
 {% block content %}
 <div class="container">
-    <h2>国会議事録関連機能 (KOKKAI)</h2>
-    <p>ここに機能を追加していきます。</p>
+    <div class="bg-light p-5 rounded mb-4">
+        <h1 class="display-5">国会議事録 開催実績インデックス</h1>
+        <p class="lead">実際に議事録が存在する開催日を抽出します。</p>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">期間指定クロール</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label for="start_date" class="form-label">開始日</label>
+                        <input type="date" id="start_date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-5">
+                        <label for="end_date" class="form-label">終了日</label>
+                        <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">API実行</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>開催日一覧</h3>
+        <a href="{% url 'kokkai:download' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-outline-success">
+            Markdown形式 でダウンロード
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>件数</th>
+                    <th>更新日時</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for meeting in meetings %}
+                <tr>
+                    <td>
+                        <a href="https://kokkai.ndl.go.jp/#/result?from={{ meeting.date|date:'Y-m-d' }}&until={{ meeting.date|date:'Y-m-d' }}" target="_blank">
+                            {{ meeting.date }}
+                        </a>
+                    </td>
+                    <td>{{ meeting.count }}件</td>
+                    <td>{{ meeting.updated_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center">データがありません。期間を指定して実行してください。</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
