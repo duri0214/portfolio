@@ -90,9 +90,9 @@ class TestLLMHealthCheck(unittest.TestCase):
         with patch.dict(
             os.environ,
             {
-                "OPENAI_API_KEY": "sk-proj-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE-1234567890",
-                "GEMINI_API_KEY": "AIzaSy-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE",
-                "AZURE_OPENAI_API_KEY": "abc-def-ghi-jkl-mno-pqr-stu-vwx-yz-12",
+                "OPENAI_API_KEY": "sk-proj-DUMMY-KEY-FOR-TESTING-PURPOSES-WHICH-IS-LONG-ENOUGH",
+                "GEMINI_API_KEY": "AIza-DUMMY-KEY-FOR-TESTING-PURPOSES-31x",
+                "AZURE_OPENAI_API_KEY": "00001111222233334444555566667777",
                 "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
             },
         ):
@@ -113,8 +113,8 @@ class TestLLMHealthCheck(unittest.TestCase):
     @patch.dict(
         os.environ,
         {
-            "OPENAI_API_KEY": "sk-proj-TEST-DUMMY-KEY-REPLACE-ME-NOW-FOR-REAL-USE-1234567890",
-            "AZURE_OPENAI_API_KEY": "abc-def-ghi-jkl-mno-pqr-stu-vwx-yz-12",
+            "OPENAI_API_KEY": "sk-proj-DUMMY-KEY-FOR-TESTING-PURPOSES-WHICH-IS-LONG-ENOUGH",
+            "AZURE_OPENAI_API_KEY": "00001111222233334444555566667777",
             "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
         },
         clear=True,
