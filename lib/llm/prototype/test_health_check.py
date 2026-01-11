@@ -135,7 +135,7 @@ class TestLLMHealthCheck(unittest.TestCase):
         ※テストでは実際にAPIを呼び出さず、mockを使用して課金を完全に回避しています。
         """
         mock_instance = mock_openai.return_value
-        # 返回一个不包含期待モデルのリスト
+        # 期待されるモデルが含まれていないリストを返す
         mock_instance.models.list.return_value = [
             MagicMock(id="gpt-3.5-turbo"),
             MagicMock(id="whisper-1"),
