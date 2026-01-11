@@ -22,7 +22,7 @@
                         <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">API実行</button>
+                        <button type="submit" class="btn btn-primary w-100">実行</button>
                     </div>
                 </div>
             </form>
@@ -30,10 +30,28 @@
     </div>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>開催日一覧</h3>
+        <div>
+            <h3>開催日一覧</h3>
+            <div class="d-flex align-items-center">
+                <a href="https://kokkai.ndl.go.jp/#/result" target="_blank" class="btn btn-link p-0 me-2">
+                    会議録全量へのリンク（結果を表示）
+                </a>
+                <span class="badge rounded-pill bg-info text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="NDLシステムはURL引数での直接検索が制限されているため、こちらのリンクから手動で条件を入力してください。">
+                    ?
+                </span>
+            </div>
+        </div>
         <a href="{% url 'kokkai:download' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-outline-success">
             Markdown形式 でダウンロード
         </a>
+    </div>
+
+    <div class="alert alert-info py-3 mb-4">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <strong>お知らせ:</strong><br>
+        先方システムの都合上、日付別に直接検索結果を表示するリンクを貼ることができません。<br>
+        お手数ですが、上記の「会議録全量へのリンク」から、手動で検索条件を入力してください。<br>
+        なお、日付ごとの発言詳細や各件数の詳細については、後ほど実装予定です。
     </div>
 
     <div class="table-responsive">
@@ -49,9 +67,7 @@
                 {% for meeting in meetings %}
                 <tr>
                     <td>
-                        <a href="https://kokkai.ndl.go.jp/#/result?from={{ meeting.date|date:'Y-m-d' }}&until={{ meeting.date|date:'Y-m-d' }}" target="_blank">
-                            {{ meeting.date }}
-                        </a>
+                        {{ meeting.date }}
                     </td>
                     <td>{{ meeting.count }}件</td>
                     <td>{{ meeting.updated_at|date:"Y-m-d H:i" }}</td>

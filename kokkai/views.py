@@ -66,8 +66,7 @@ def download_markdown(request):
     content = ""
     for m in query:
         date_str = m.date.strftime("%Y-%m-%d")
-        url = f"https://kokkai.ndl.go.jp/#/result?from={date_str}&until={date_str}"
-        content += f"[{m.date}]({url}) : {m.count}件\n"
+        content += f"{date_str} : {m.count}件\n"
 
     response = HttpResponse(content, content_type="text/markdown")
     response["Content-Disposition"] = 'attachment; filename="meeting_index.md"'
