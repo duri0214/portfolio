@@ -114,7 +114,7 @@ class TestLLMHealthCheck(unittest.TestCase):
         os.environ,
         {
             "OPENAI_API_KEY": "sk-proj-DUMMY-KEY-FOR-TESTING-PURPOSES-WHICH-IS-LONG-ENOUGH",
-            "AZURE_OPENAI_API_KEY": "00001111222233334444555566667777",
+            "AZURE_OPENAI_API_KEY": "REPLACE-WITH-32-HEX-CHARS-DUMMY",
             "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
         },
         clear=True,
