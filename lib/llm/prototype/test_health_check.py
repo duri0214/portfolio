@@ -92,7 +92,7 @@ class TestLLMHealthCheck(unittest.TestCase):
             {
                 "OPENAI_API_KEY": "sk-proj-DUMMY-KEY-FOR-TESTING-PURPOSES-WHICH-IS-LONG-ENOUGH",
                 "GEMINI_API_KEY": "AIza-DUMMY-KEY-FOR-TESTING-PURPOSES-31x",
-                "AZURE_OPENAI_API_KEY": "00001111222233334444555566667777",
+                "AZURE_OPENAI_API_KEY": "REPLACE-WITH-32-HEX-CHARS-DUMMY",
                 "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
             },
         ):
