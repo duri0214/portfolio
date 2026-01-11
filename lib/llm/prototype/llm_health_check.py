@@ -363,11 +363,7 @@ class LLMHealthCheck:
             )
             return
 
-        try:
-            from openai import OpenAI, APIError
-        except ImportError:
-            # check_dependenciesでチェック済みだが念のため
-            return
+        from openai import OpenAI, APIError
 
         try:
             client_params = {"api_key": api_key}
@@ -421,10 +417,7 @@ class LLMHealthCheck:
             )
             return
 
-        try:
-            from openai import AzureOpenAI, APIError
-        except ImportError:
-            return
+        from openai import AzureOpenAI, APIError
 
         try:
             client = AzureOpenAI(
