@@ -61,14 +61,14 @@ class KokkaiPipeline:
             total = result.number_of_records
             print(f"Processing batch starting at {current_start} / {total}")
 
-            for record in result.meeting_records:
+            for a_meeting in result.meeting_records:
                 print(
-                    f"  Processing: {record.date} {record.name_of_meeting} {record.issue}"
+                    f"  Processing: {a_meeting.date} {a_meeting.name_of_meeting} {a_meeting.issue}"
                 )
                 try:
-                    self._process_meeting_record(record)
+                    self._process_meeting_record(a_meeting)
                 except Exception as e:
-                    print(f"    Error processing record {record.issue_id}: {e}")
+                    print(f"    Error processing a_meeting {a_meeting.issue_id}: {e}")
                     # 個別の失敗で全体を止めないようにするか検討の余地ありだが、
                     # 現状はデバッグしやすくするために継続
                     continue
@@ -81,7 +81,7 @@ class KokkaiPipeline:
             current_start = result.next_record_position
         print("Pipeline execution completed.")
 
-    def _process_meeting_record(self, record: MeetingRecord):
+    def _process_meeting_record(self, a_meeting: MeetingRecord):
         """
         [工程2-5: 会議 ─▶ 議題 ─▶ 発言 ─▶ 話題バッチ]
         1つの会議（会議粒度）を、議題・発言・話題（論点）というドメイン粒度に沿って分解・変換する。
@@ -95,19 +95,19 @@ class KokkaiPipeline:
         """
         with transaction.atomic():
             meeting_obj, created = Meeting.objects.update_or_create(
-                min_id=record.issue_id,
+                min_id=a_meeting.issue_id,
                 defaults={
-                    "meeting_date": record.date_obj,
-                    "session_number": record.session,
-                    "house": record.name_of_house,
-                    "committee": record.name_of_meeting,
-                    "meeting_number": record.issue,
-                    "url": record.meeting_url,
+                    "meeting_date": a_meeting.date_obj,
+                    "session_number": a_meeting.session,
+                    "house": a_meeting.name_of_house,
+                    "committee": a_meeting.name_of_meeting,
+                    "meeting_number": a_meeting.issue,
+                    "url": a_meeting.meeting_url,
                 },
             )
             if not created:
                 meeting_obj.speeches.all().delete()
-            agendas = self._split_by_agenda(record)
+            agendas = self._split_by_agenda(a_meeting)
             total_speech_order = 0
             rag_docs = []
             for agenda_order, (agenda_title, speeches) in enumerate(agendas, 1):
@@ -123,19 +123,19 @@ class KokkaiPipeline:
                         speech_order=total_speech_order,
                     )
                     if self.rag_service and s.speech:
-                        stable_id_prefix = f"{record.issue_id}_{total_speech_order}"
+                        stable_id_prefix = f"{a_meeting.issue_id}_{total_speech_order}"
                         doc = RagDocument(
                             page_content=s.speech,
                             metadata={
-                                "meeting_date": record.date,
-                                "session_number": record.session,
-                                "house": record.name_of_house,
-                                "committee": record.name_of_meeting,
-                                "meeting_number": record.issue,
+                                "meeting_date": a_meeting.date,
+                                "session_number": a_meeting.session,
+                                "house": a_meeting.name_of_house,
+                                "committee": a_meeting.name_of_meeting,
+                                "meeting_number": a_meeting.issue,
                                 "agenda_title": agenda_title,
                                 "speaker_name": s.speaker,
                                 "speaker_role": role or "",
-                                "url": record.meeting_url,
+                                "url": a_meeting.meeting_url,
                                 "id": stable_id_prefix,
                             },
                         )
@@ -144,7 +144,9 @@ class KokkaiPipeline:
                 self.rag_service.upsert_documents(rag_docs)
 
     @staticmethod
-    def _split_by_agenda(record: MeetingRecord) -> list[tuple[str, list[SpeechRecord]]]:
+    def _split_by_agenda(
+        a_meeting: MeetingRecord,
+    ) -> list[tuple[str, list[SpeechRecord]]]:
         """
         [工程3: 議題バッチ]
         会議録という巨大なテキストバッチを、議論の主題（ドメイン境界）に基づいて、
@@ -182,7 +184,7 @@ class KokkaiPipeline:
             r"○(?:.+委員長|.+議長|.+君|.+委員)　(.+(?:に関する件|について|の件|法律案（.+）)(?:について調査を進めます|を議題といたします|について質疑を行います|について伺います))"
         )
 
-        for s in record.speech_records:
+        for s in a_meeting.speech_records:
             if not s.speech:
                 current_speeches.append(s)
                 continue
