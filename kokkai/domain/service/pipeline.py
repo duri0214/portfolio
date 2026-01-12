@@ -118,7 +118,7 @@ class KokkaiPipeline:
             agendas = self._split_by_agenda(a_meeting)
             total_speech_order = 0
             rag_docs = []
-            for agenda_order, (agenda_title, speeches) in enumerate(agendas, 1):
+            for agenda_title, speeches in agendas:
                 for s in speeches:
                     total_speech_order += 1
                     role = s.speaker_role
