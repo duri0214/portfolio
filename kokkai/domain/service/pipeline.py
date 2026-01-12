@@ -185,12 +185,12 @@ class KokkaiPipeline:
                 current_speeches.append(s)
                 continue
 
-            match = agenda_pattern.match(s.speech.strip())
-            if match:
+            agenda_match = agenda_pattern.match(s.speech.strip())
+            if agenda_match:
                 # 新しい議題の開始
                 if current_speeches:
                     agendas.append((current_agenda_title, current_speeches))
-                current_agenda_title = match.group(1)
+                current_agenda_title = agenda_match.group(1)
                 current_speeches = [s]
             else:
                 current_speeches.append(s)
