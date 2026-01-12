@@ -59,22 +59,29 @@
             <thead>
                 <tr>
                     <th>日付</th>
-                    <th>件数</th>
-                    <th>更新日時</th>
+                    <th>委員会 / 議題</th>
                 </tr>
             </thead>
             <tbody>
-                {% for meeting in meetings %}
+                {% regroup meetings_by_date by meeting_date as date_list %}
+                {% for day in date_list %}
+                {% for meeting in day.list %}
                 <tr>
-                    <td>
-                        {{ meeting.date }}
+                    {% if forloop.first %}
+                    <td rowspan="{{ day.list|length }}">
+                        {{ day.grouper|date:"Y-m-d" }}({{ day.list|length }})
                     </td>
-                    <td>{{ meeting.count }}件</td>
-                    <td>{{ meeting.updated_at|date:"Y-m-d H:i" }}</td>
+                    {% endif %}
+                    <td>
+                        <a href="{% url 'kokkai:meeting_detail' meeting.pk %}">
+                            {{ meeting.committee }} {{ meeting.meeting_number }}
+                        </a>
+                    </td>
                 </tr>
+                {% endfor %}
                 {% empty %}
                 <tr>
-                    <td colspan="3" class="text-center">データがありません。期間を指定して実行してください。</td>
+                    <td colspan="2" class="text-center">データがありません。期間を指定して実行してください。</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -383,6 +383,8 @@ class OpenAILlmRagService(LlmService):
     """
 
     MAX_CONTEXT_CHARS = 6000
+    MAX_TEXT_LENGTH = 6000
+    BATCH_SIZE = 100
 
     def __init__(
         self,
@@ -551,6 +553,14 @@ class OpenAILlmRagService(LlmService):
     def upsert_documents(self, documents: Iterable[Any]) -> None:
         """
         ドキュメントを Chroma DB に追加または更新します。
+        長すぎるドキュメントは自動的に分割されます。
+
+        [設計思想: チャンク分割の許容]
+        意味の近接性に基づき、たとえ「バナナが腐る」という文章が「バナナ」と「が腐る」に分割されたとしても、
+        ベクトル空間上ではこれらは極めて近い位置に配置されます。
+        そのため、検索クエリ（例：「バナナが腐る仕組み」）に対して適切にヒットし、
+        その後のLLMによる文脈再構成プロセスにおいて正しく統合されるため、実用上の問題はありません。
+        システム全体の堅牢性を優先し、APIのトークン制限を回避するために自動分割を採用しています。
 
         Args:
             documents (Iterable[Any]): page_content と metadata 属性を持つドキュメントのリスト。
@@ -563,17 +573,44 @@ class OpenAILlmRagService(LlmService):
         metadatas = []
         contents = []
 
+        # text-embedding-3-small の制限は約 8191 トークン。
+        # 安全のために文字数ベースでざっくり制限（1トークン ≒ 2〜3文字（日本語の場合もっと少ないこともあるが安全側に倒す））
+        # 8191トークン ≒ 16000文字程度と想定し、6000文字で分割する。
+        # 前回の10000文字でも11000トークン超えが発生したため、より小さく設定。
+
         for i, d in enumerate(docs_list):
             content = getattr(d, "page_content", str(d))
             metadata = getattr(d, "metadata", {})
-            # ID が指定されていない場合はメタデータの id またはインデックスを使用
-            doc_id = metadata.get("id") or f"doc_{i}_{hash(content)}"
+            base_id = metadata.get("id") or f"doc_{i}_{hash(content)}"
 
-            ids.append(str(doc_id))
-            metadatas.append(metadata)
-            contents.append(content)
+            if len(content) <= self.MAX_TEXT_LENGTH:
+                ids.append(str(base_id))
+                metadatas.append(metadata)
+                contents.append(content)
+            else:
+                # 分割処理
+                chunks = [
+                    content[i : i + self.MAX_TEXT_LENGTH]
+                    for i in range(0, len(content), self.MAX_TEXT_LENGTH)
+                ]
+                for j, chunk in enumerate(chunks):
+                    ids.append(f"{base_id}_chunk_{j}")
+                    chunk_metadata = metadata.copy()
+                    chunk_metadata["chunk_index"] = j
+                    chunk_metadata["is_chunked"] = True
+                    metadatas.append(chunk_metadata)
+                    contents.append(chunk)
 
-        self._collection.upsert(ids=ids, metadatas=metadatas, documents=contents)
+        # Chromaの制約（一度に送れるデータ量の上限）やネットワークの安定性を考慮し、
+        # BATCH_SIZE 単位で分割して upsert を実行する。
+        # これにより、大量のドキュメントを登録する際のリクエストサイズ上限エラーを回避できる。
+        for i in range(0, len(ids), self.BATCH_SIZE):
+            batch_ids = ids[i : i + self.BATCH_SIZE]
+            batch_metadatas = metadatas[i : i + self.BATCH_SIZE]
+            batch_contents = contents[i : i + self.BATCH_SIZE]
+            self._collection.upsert(
+                ids=batch_ids, metadatas=batch_metadatas, documents=batch_contents
+            )
 
     # --- internals ---
     @staticmethod

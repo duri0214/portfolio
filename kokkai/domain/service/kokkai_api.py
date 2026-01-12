@@ -1,6 +1,5 @@
 import requests
 from datetime import date
-import time
 from ..valueobject.meeting import MeetingSearchResult, MeetingRecord, SpeechRecord
 
 
@@ -70,32 +69,3 @@ class KokkaiAPIClient:
             next_record_position=data.get("nextRecordPosition"),
             meeting_records=meeting_records,
         )
-
-    def get_meeting_counts_by_date(self, start_date: date, end_date: date):
-        """
-        日付ごとの会議件数を取得する。
-        """
-        results = {}
-        current_start = 1
-
-        while True:
-            result = self.search_meetings(
-                start_date, end_date, start_record=current_start
-            )
-
-            if not result.meeting_records:
-                break
-
-            for record in result.meeting_records:
-                d = record.date
-                results[d] = results.get(d, 0) + 1
-
-            if (
-                not result.next_record_position
-                or result.next_record_position > result.number_of_records
-            ):
-                break
-            current_start = result.next_record_position
-            time.sleep(1)  # API負荷軽減
-
-        return results

@@ -1,0 +1,37 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">開催日一覧</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ meeting.meeting_date|date:"Y-m-d" }} {{ meeting.committee }}</li>
+        </ol>
+    </nav>
+
+    <div class="bg-light p-4 rounded mb-4">
+        <h2>{{ meeting.committee }} {{ meeting.meeting_number }}</h2>
+        <p class="text-muted">
+            {{ meeting.meeting_date|date:"Y年m月d日" }} | {{ meeting.house }} | {{ meeting.committee }} | {{ meeting.meeting_number }}
+        </p>
+        <a href="{{ meeting.url }}" target="_blank" class="btn btn-sm btn-outline-primary">出典元（国会会議録検索システム）</a>
+    </div>
+
+    <div class="speeches">
+        {% for speech in speeches %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <div>
+                    <span class="badge bg-secondary me-2">{{ forloop.counter0|stringformat:"03d" }}</span>
+                    <strong>{{ speech.speaker_name }}</strong>
+                </div>
+                <span class="text-muted">{{ speech.speaker_role|default:"" }} {{ speech.speaker_affiliation|default:"" }}</span>
+            </div>
+            <div class="card-body">
+                <p class="card-text" style="white-space: pre-wrap;">{{ speech.speech_text }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
