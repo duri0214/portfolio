@@ -1,6 +1,5 @@
 import re
 from datetime import date
-from typing import List, Optional
 
 from django.db import transaction
 from ...models import Meeting, Speech
@@ -27,7 +26,7 @@ class KokkaiPipeline:
     最終的に市民がAIを通じて質問できる知識インフラへと昇華させます。
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         self.client = KokkaiAPIClient()
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
 
@@ -164,7 +163,7 @@ class KokkaiPipeline:
                     self.rag_service.upsert_documents(rag_docs)
 
     @staticmethod
-    def _split_by_agenda(record: MeetingRecord) -> List[tuple[str, List[SpeechRecord]]]:
+    def _split_by_agenda(record: MeetingRecord) -> list[tuple[str, list[SpeechRecord]]]:
         """
         [工程2: 議題分割]
         会議録を発言内容に基づいて議題（アジェンダ）ごとに分割する。
