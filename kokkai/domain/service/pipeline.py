@@ -69,8 +69,9 @@ class KokkaiPipeline:
                     self._process_meeting_record(a_meeting)
                 except Exception as e:
                     print(f"    Error processing a_meeting {a_meeting.issue_id}: {e}")
-                    # 個別の失敗で全体を止めないようにするか検討の余地ありだが、
-                    # 現状はデバッグしやすくするために継続
+                    # 1つの会議の失敗が、期間全体のバッチ処理を止めないように制御する。
+                    # エラーが発生した会議のDB/RAG変更は _process_meeting_record 内でロールバックされるが、
+                    # それ以前に完了した会議のデータは保持される。
                     continue
 
             if (
@@ -91,7 +92,12 @@ class KokkaiPipeline:
         - 工程2: 会議バッチ (DB保存): 会議の基本情報を永続化する。
         - 工程3: 議題バッチ (文脈化): 会議内を意味のある議題・論点セクションに分割する。
         - 工程4: 発言バッチ: 各発言を Speech レコードとして保存し、ベクトル化（Embedding）を行う。
-        - 工程5: 話題バッチ (RAG登録): 文脈情報を付与したベクトルデータを知識ベースに格納し、検索可能にする。
+        - 工程5: 話題バッチ (RAG登録): ベクトルデータを知識ベースに格納し、検索可能にする。
+
+        [エラーハンドリングと整合性]
+        transaction.atomic() により、このメソッド内（1つの会議単位）の処理はアトミックに保証されます。
+        途中でエラーが発生した場合は、その会議に関するDBおよびベクトルDBへの変更のみがロールバックされます。
+        呼び出し元のループ全体がロールバックされることはありません。
         """
         with transaction.atomic():
             meeting_obj, created = Meeting.objects.update_or_create(
