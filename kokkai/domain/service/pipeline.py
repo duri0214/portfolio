@@ -81,66 +81,47 @@ class KokkaiPipeline:
     def _process_meeting_record(self, record: MeetingRecord):
         """
         [工程2-5: 構造化・分解・Embedding・登録]
-        1つの会議録（1日・1委員会単位）を処理する中核工程。
+        1つの会議録（MeetingRecord）をDBに保存し、さらに議題単位で分割してベクトル化する。
 
-        1. 議題単位に分割（構造化）
-        2. DBへの保存（永続化）
-        3. 発言単位への細分化（分解）
-        4. ベクトル化（意味理解）
-        5. Chroma DBへの登録（検索可能化）
+        このメソッドは、APIから取得した1件の会議データを、以下の複数の工程を経て
+        「検索可能な知識」へと変換します：
 
-        この工程により、単なるテキストが「検索可能な構造データ」へと価値を変える。
+        - 工程2: 構造化 (DB保存): 会議の基本情報を Meeting レコードとして永続化する。
+        - 工程3: 議題分割 (文脈化): 会議録全体を意味のある議題・論点ごとに切り出す。
+        - 工程4: 発言分解 & Embedding: 各発言を Speech レコードとして保存し、ベクトル変換を行う。
+        - 工程5: Chroma登録: メタデータと共にベクトルデータを知識ベースに格納する。
         """
-        # 国会議事録のspeechRecordの中で、議題は通常 "○" で始まる。
-        # 例: "○議題１に関する件"
-
-        agendas = self._split_by_agenda(record)
-
-        for agenda_order, (agenda_title, speeches) in enumerate(agendas, 1):
-            with transaction.atomic():
-                # Meetingレコード作成 (既存があれば更新)
-                meeting_obj, created = Meeting.objects.update_or_create(
-                    min_id=record.issue_id,
-                    agenda_order=agenda_order,
-                    defaults={
-                        "meeting_date": record.date_obj,
-                        "session_number": record.session,
-                        "house": record.name_of_house,
-                        "committee": record.name_of_meeting,
-                        "meeting_number": record.issue,
-                        "agenda_title": agenda_title,
-                        "url": record.meeting_url,
-                    },
-                )
-
-                if not created:
-                    # 既存のSpeechレコードを削除（再投入するため）
-                    # 関連するChromaドキュメントも上書きされるので、DB側は一旦クリアするのが安全
-                    meeting_obj.speeches.all().delete()
-
-                # Speechレコード作成
-                speech_objs = []
-                rag_docs = []
-                for order, s in enumerate(speeches, 1):
-                    # speaker_role, speaker_affiliation の抽出（簡易的）
-                    # 本来は正規表現などで詳細に分けるべきだが、まずはシンプルに
+        with transaction.atomic():
+            meeting_obj, created = Meeting.objects.update_or_create(
+                min_id=record.issue_id,
+                defaults={
+                    "meeting_date": record.date_obj,
+                    "session_number": record.session,
+                    "house": record.name_of_house,
+                    "committee": record.name_of_meeting,
+                    "meeting_number": record.issue,
+                    "url": record.meeting_url,
+                },
+            )
+            if not created:
+                meeting_obj.speeches.all().delete()
+            agendas = self._split_by_agenda(record)
+            total_speech_order = 0
+            rag_docs = []
+            for agenda_order, (agenda_title, speeches) in enumerate(agendas, 1):
+                for s in speeches:
+                    total_speech_order += 1
                     role = s.speaker_role
-
-                    speech_obj = Speech.objects.create(
+                    Speech.objects.create(
                         meeting=meeting_obj,
                         speaker_name=s.speaker,
                         speaker_role=role,
                         speaker_affiliation=s.speaker_group,
                         speech_text=s.speech or "",
-                        speech_order=order,
+                        speech_order=total_speech_order,
                     )
-                    speech_objs.append(speech_obj)
-
-                    # ベクトル化用ドキュメント
                     if self.rag_service and s.speech:
-                        # 安定したIDを生成する (Speech.id は create ごとに変わるため)
-                        # min_id + agenda_order + speech_order + chunk_index で一意に特定可能にする
-                        stable_id_prefix = f"{record.issue_id}_{agenda_order}_{order}"
+                        stable_id_prefix = f"{record.issue_id}_{total_speech_order}"
                         doc = RagDocument(
                             page_content=s.speech,
                             metadata={
@@ -157,10 +138,8 @@ class KokkaiPipeline:
                             },
                         )
                         rag_docs.append(doc)
-
-                # Chroma DBへ登録
-                if self.rag_service and rag_docs:
-                    self.rag_service.upsert_documents(rag_docs)
+            if self.rag_service and rag_docs:
+                self.rag_service.upsert_documents(rag_docs)
 
     @staticmethod
     def _split_by_agenda(record: MeetingRecord) -> list[tuple[str, list[SpeechRecord]]]:

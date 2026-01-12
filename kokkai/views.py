@@ -15,7 +15,7 @@ class IndexView(ListView):
     def get_queryset(self):
         # 日付ごとのグループ化はテンプレートで行うか、ここで加工する
         # ここでは単純に全件取得してテンプレート側で調整しやすくする（本来は集計したいが、一旦全件）
-        return Meeting.objects.all().order_by("-meeting_date", "agenda_order")
+        return Meeting.objects.all().order_by("-meeting_date", "committee")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
