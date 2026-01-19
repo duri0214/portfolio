@@ -1,0 +1,12 @@
+[
+  {
+    "model": "bank.bank",
+    "pk": 1,
+    "fields": {
+      "name": "三菱UFJ銀行",
+      "financial_code": "0005",
+      "remark": "MUFG Eco通帳CSV対応",
+      "created_at": "2026-01-19T00:00:00Z"
+    }
+  }
+]
