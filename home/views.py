@@ -59,3 +59,7 @@ class WelfareServicesIndexView(TemplateView):
 
 class KokkaiIndexView(TemplateView):
     template_name = "home/kokkai/index.html"
+
+
+class BankIndexView(TemplateView):
+    template_name = "home/bank/index.html"

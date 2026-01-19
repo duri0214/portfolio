@@ -100,10 +100,8 @@
                                     {% if request.path == '/welfare_services/' %}selected{% endif %}>
                                 WELFARE SERVICES
                             </option>
-                            <option value="{% url 'kokkai:index' %}"
-                                    {% if request.path == '/kokkai/' %}selected{% endif %}>
-                                KOKKAI
-                            </option>
+                            <option value="{% url 'kokkai:index' %}" {% if request.path == '/kokkai/' %}selected{% endif %}>KOKKAI</option>
+                            <option value="{% url 'bank:index' %}" {% if request.path == '/bank/' %}selected{% endif %}>BANK</option>
                         </select>
                     </li>
                 </ul>

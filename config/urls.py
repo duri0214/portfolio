@@ -39,6 +39,7 @@ urlpatterns = [
     path("jp_stocks/", include("jp_stocks.urls")),
     path("welfare_services/", include("welfare_services.urls")),
     path("kokkai/", include("kokkai.urls")),
+    path("bank/", include("bank.urls")),
     path("admin/", admin.site.urls),
     path("accounts/login/", CustomLoginView.as_view(), name="login"),
     path("accounts/logout/", LogoutView.as_view(), name="logout"),
