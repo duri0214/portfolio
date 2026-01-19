@@ -1,0 +1,48 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">銀行CSV分析基盤</h1>
+                <p class="text-muted text-center">銀行ごとの月次CSVを取り込み資金分析を行う基盤構築</p>
+                <div class="d-flex justify-content-center my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    現在、銀行ごとに異なるCSVフォーマットで提供される取引明細を、毎月手動でExcelに取り込み加工して分析している。
+                    本プロジェクトでは、これらをDjangoベースのポートフォリオ基盤に移植し、長期的に拡張可能な資金分析基盤を構築することを目指している。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="{% url 'bank:index' %}" target="_blank">BANK（Webアプリ）</a></li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>設計方針</h2>
+                <ul>
+                    <li>銀行ドメイン単位でRaw CSVフォーマット準拠のテーブルを持つ</li>
+                    <li>中間変換テーブルは持たず、集計・分析は View / Query / VO で吸収する</li>
+                    <li>銀行マスタを持ち、銀行ごとのドメインを管理する</li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>対象ドメイン</h2>
+                <ul>
+                    <li>Bank（銀行マスタ）</li>
+                    <li>MufgDepositCsvRaw（MUFG 普通預金CSV Raw）</li>
+                    <li>MufgCardCsvRaw（MUFG VISA CSV Raw） ※予定</li>
+                </ul>
+            </section>
+        </article>
+    </div>
+{% endblock %}

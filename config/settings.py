@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "jp_stocks",
     "welfare_services",
     "kokkai",
+    "bank",
 ]
 
 MIDDLEWARE = [
