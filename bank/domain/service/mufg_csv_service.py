@@ -20,6 +20,8 @@ class MufgCsvService:
     ]
 
     def process_csv_content(self, content: str, filename: str = "") -> list[MufgCsvRow]:
+        # BOM削除
+        content = content.lstrip("\ufeff")
         lines = content.splitlines()
         header_index = self._find_header_index(lines, filename)
 

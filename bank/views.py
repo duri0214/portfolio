@@ -7,7 +7,6 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from .forms import UploadFileForm
-from .models import Bank
 from .domain.service.mufg_csv_service import MufgCsvService
 from .domain.repository.mufg_repository import MufgRepository
 
@@ -68,8 +67,8 @@ class MufgDepositUploadView(View):
                     if name.lower().endswith(".csv"):
                         logger.info(f"Processing file from ZIP: {name}")
                         with z.open(name) as f:
-                            # MUFG CSVは Shift-JIS
-                            content = f.read().decode("shift-jis")
+                            # MUFG CSVは CP932 (Shift-JIS)
+                            content = f.read().decode("cp932")
                             rows = self.csv_service.process_csv_content(
                                 content, filename=name
                             )
@@ -82,7 +81,7 @@ class MufgDepositUploadView(View):
         elif filename.endswith(".csv"):
             # 直接CSVがアップロードされた場合
             logger.info(f"Processing direct CSV: {uploaded_file.name}")
-            content = uploaded_file.read().decode("shift-jis")
+            content = uploaded_file.read().decode("cp932")
             rows = self.csv_service.process_csv_content(
                 content, filename=uploaded_file.name
             )
