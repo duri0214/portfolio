@@ -34,19 +34,24 @@ class MufgDepositUploadView(View):
             uploaded_file = request.FILES["file"]
             bank = form.cleaned_data["bank"]
             try:
-                processed_files, skipped_files = self.handle_uploaded_file(
-                    uploaded_file, bank
+                processed_files, skipped_files, total_created, total_duplicated = (
+                    self.handle_uploaded_file(uploaded_file, bank)
                 )
-                msg = f"取り込みが完了しました（処理: {len(processed_files)}件"
+                msg = f"取り込みが完了しました（新規: {total_created}件"
+                if total_duplicated > 0:
+                    msg += f", 重複スキップ: {total_duplicated}件"
                 if skipped_files:
-                    msg += f", スキップ: {len(skipped_files)}件"
+                    msg += f", 非対象スキップ: {len(skipped_files)}件"
                 msg += "）。"
                 messages.success(request, msg)
 
                 if processed_files:
+                    logger.info("-" * 40)
                     logger.info(f"Processed files: {', '.join(processed_files)}")
                 if skipped_files:
-                    logger.info(f"Skipped files: {', '.join(skipped_files)}")
+                    logger.info(f"Skipped non-CSV files: {', '.join(skipped_files)}")
+                if processed_files or skipped_files:
+                    logger.info("-" * 40)
 
             except Exception as e:
                 logger.error(f"Upload error: {str(e)}", exc_info=True)
@@ -59,9 +64,13 @@ class MufgDepositUploadView(View):
 
         processed_files = []
         skipped_files = []
+        total_created = 0
+        total_duplicated = 0
         repository = MufgRepository(bank)
 
         if filename.endswith(".zip"):
+            logger.info("=" * 40)
+            logger.info(f"Start processing ZIP file: {uploaded_file.name}")
             with zipfile.ZipFile(uploaded_file) as z:
                 for name in z.namelist():
                     if name.lower().endswith(".csv"):
@@ -73,22 +82,33 @@ class MufgDepositUploadView(View):
                                 content, filename=name
                             )
                             # 常に画面で選択された口座を使用する
-                            repository.save_rows(rows)
+                            created, duplicated = repository.save_rows(rows)
+                            total_created += created
+                            total_duplicated += duplicated
+                            logger.info(
+                                f"  -> {name}: New: {created}, Duplicated(skipped): {duplicated}"
+                            )
                             processed_files.append(name)
                     else:
                         logger.info(f"Skipping non-CSV file in ZIP: {name}")
                         skipped_files.append(name)
         elif filename.endswith(".csv"):
             # 直接CSVがアップロードされた場合
+            logger.info("=" * 40)
             logger.info(f"Processing direct CSV: {uploaded_file.name}")
             content = uploaded_file.read().decode("cp932")
             rows = self.csv_service.process_csv_content(
                 content, filename=uploaded_file.name
             )
             # 常に画面で選択された口座を使用する
-            repository.save_rows(rows)
+            created, duplicated = repository.save_rows(rows)
+            total_created += created
+            total_duplicated += duplicated
+            logger.info(
+                f"  -> {uploaded_file.name}: New: {created}, Duplicated(skipped): {duplicated}"
+            )
             processed_files.append(uploaded_file.name)
         else:
             raise ValueError("CSVまたはZIPファイルのみアップロード可能です。")
 
-        return processed_files, skipped_files
+        return processed_files, skipped_files, total_created, total_duplicated

@@ -15,7 +15,6 @@ class Bank(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "bank"
         verbose_name = "銀行マスタ"
         verbose_name_plural = "銀行マスタ"
         constraints = [
@@ -55,7 +54,6 @@ class MufgDepositCsvRaw(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "mufg_deposit_csv_raw"
         verbose_name = "MUFG普通預金CSV Raw"
         verbose_name_plural = "MUFG普通預金CSV Raw"
         constraints = [

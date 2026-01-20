@@ -7,10 +7,17 @@ class MufgRepository:
     def __init__(self, bank: Bank):
         self.bank = bank
 
-    def save_rows(self, rows: list[MufgCsvRow]):
+    def save_rows(self, rows: list[MufgCsvRow]) -> tuple[int, int]:
+        """
+        行を保存する。
+        :param rows: 保存する行リスト
+        :return: (新規作成件数, スキップ件数)
+        """
+        created_count = 0
+        skipped_count = 0
         with transaction.atomic():
             for row in rows:
-                MufgDepositCsvRaw.objects.get_or_create(
+                _, created = MufgDepositCsvRaw.objects.get_or_create(
                     bank=self.bank,
                     trade_date=row.trade_date,
                     summary=row.summary,
@@ -24,3 +31,8 @@ class MufgRepository:
                         "uncollected_flag": row.uncollected_flag,
                     },
                 )
+                if created:
+                    created_count += 1
+                else:
+                    skipped_count += 1
+        return created_count, skipped_count
