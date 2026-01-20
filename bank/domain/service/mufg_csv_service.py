@@ -26,16 +26,36 @@ class MufgCsvService:
         header_index = self._find_header_index(lines, filename)
 
         header_line = lines[header_index].strip()
-        actual_headers = [h.strip() for h in header_line.split(",")]
+
+        # カンマまたはタブで分割を試みる
+        if "\t" in header_line:
+            actual_headers = [h.strip().strip('"') for h in header_line.split("\t")]
+            delimiter = "\t"
+        else:
+            actual_headers = [h.strip().strip('"') for h in header_line.split(",")]
+            delimiter = ","
+
+        # 空の要素を除去（末尾のカンマなどで発生する）
+        actual_headers = [h for h in actual_headers if h]
 
         is_old_format = self._validate_headers(actual_headers, filename)
 
         csv_data = "\n".join(lines[header_index:])
-        reader = csv.DictReader(io.StringIO(csv_data))
+        reader = csv.DictReader(
+            io.StringIO(csv_data), delimiter=delimiter, skipinitialspace=True
+        )
 
         parsed_rows = []
         for row_num, row in enumerate(reader, start=header_index + 2):
-            parsed_rows.append(self._parse_row(row, row_num, is_old_format, filename))
+            # DictReaderのキーと値から引用符と空白を除去する
+            cleaned_row = {
+                k.strip().strip('"'): v.strip().strip('"') if v else v
+                for k, v in row.items()
+                if k
+            }
+            parsed_rows.append(
+                self._parse_row(cleaned_row, row_num, is_old_format, filename)
+            )
 
         return parsed_rows
 
@@ -49,12 +69,24 @@ class MufgCsvService:
         )
 
     def _validate_headers(self, actual_headers: list[str], filename: str) -> bool:
-        if actual_headers == self.OLD_HEADERS:
+        # 必要な列がすべて含まれているかを確認する（順序や余計な空列に依存しないようにする）
+        def contains_all(expected, actual):
+            return all(item in actual for item in expected) and len(actual) >= len(
+                expected
+            )
+
+        if contains_all(self.OLD_HEADERS, actual_headers) and len(
+            actual_headers
+        ) == len(self.OLD_HEADERS):
             return True
-        elif actual_headers == self.NEW_HEADERS:
+        elif contains_all(self.NEW_HEADERS, actual_headers) and len(
+            actual_headers
+        ) == len(self.NEW_HEADERS):
             return False
         else:
-            raise ValueError(f"ファイル '{filename}': 未知のヘッダー形式です。")
+            raise ValueError(
+                f"ファイル '{filename}': 未知のヘッダー形式です。実際のヘッダー: {actual_headers}"
+            )
 
     def _parse_row(
         self, row: dict, row_num: int, is_old_format: bool, filename: str
