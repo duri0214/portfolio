@@ -2,8 +2,14 @@ from django.db import models
 
 
 class Bank(models.Model):
-    name = models.CharField(max_length=100, unique=True, verbose_name="銀行名")
+    name = models.CharField(max_length=100, verbose_name="銀行名")
     financial_code = models.CharField(max_length=10, verbose_name="金融機関コード")
+    branch_code = models.CharField(
+        max_length=3, null=True, blank=True, verbose_name="店番"
+    )
+    account_number = models.CharField(
+        max_length=7, null=True, blank=True, verbose_name="口座番号"
+    )
     remark = models.TextField(null=True, blank=True, verbose_name="備考")
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -12,9 +18,15 @@ class Bank(models.Model):
         db_table = "bank"
         verbose_name = "銀行マスタ"
         verbose_name_plural = "銀行マスタ"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["financial_code", "branch_code", "account_number"],
+                name="unique_bank_account",
+            )
+        ]
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.branch_code}-{self.account_number})"
 
 
 class MufgDepositCsvRaw(models.Model):
