@@ -36,7 +36,9 @@ class MufgDepositCsvRaw(models.Model):
     uncollected_flag = models.CharField(
         max_length=10, null=True, blank=True, verbose_name="未資金化区分"
     )
-    inout_type = models.CharField(max_length=10, verbose_name="入払区分")
+    inout_type = models.CharField(
+        max_length=10, null=True, blank=True, verbose_name="入払区分"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
