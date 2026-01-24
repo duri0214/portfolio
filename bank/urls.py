@@ -9,4 +9,9 @@ urlpatterns = [
         views.MufgDepositUploadView.as_view(),
         name="mufg_deposit_upload",
     ),
+    path(
+        "upload/mufg-deposit/delete/",
+        views.MufgDepositDeleteView.as_view(),
+        name="mufg_deposit_delete",
+    ),
 ]

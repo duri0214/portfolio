@@ -1,13 +1,15 @@
 import logging
 import zipfile
+import markdown
 
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
 
 from django.db import transaction
 from .forms import UploadFileForm
+from .models import Bank
 from .domain.service.mufg_csv_service import MufgCsvService
 from .domain.repository.mufg_repository import MufgRepository
 
@@ -35,13 +37,19 @@ class MufgDepositUploadView(View):
             uploaded_file = request.FILES["file"]
             bank = form.cleaned_data["bank"]
             try:
-                processed_files, skipped_files, duplicated_files, total_created = (
+                processed_files, skipped_files, total_monthly_counts = (
                     self.handle_uploaded_file(uploaded_file, bank)
                 )
-                msg = (
-                    f"取り込みが完了しました（処理: {len(processed_files)}ファイル）。"
-                )
-                messages.success(request, msg)
+
+                total_count = sum(total_monthly_counts.values())
+                msg_md = f"取り込みが完了しました（合計: {total_count}件）。"
+                if total_monthly_counts:
+                    msg_md += "\n\n内訳:\n\n"
+                    for m, c in sorted(total_monthly_counts.items()):
+                        msg_md += f"- {m}: {c}件\n"
+
+                msg_html = markdown.markdown(msg_md)
+                messages.success(request, msg_html)
 
                 if processed_files:
                     logger.info("-" * 40)
@@ -62,8 +70,7 @@ class MufgDepositUploadView(View):
 
         processed_files = []
         skipped_files = []
-        duplicated_files = []
-        total_created = 0
+        total_monthly_counts = {}
         repository = MufgRepository(bank)
 
         with transaction.atomic():
@@ -82,9 +89,16 @@ class MufgDepositUploadView(View):
                                         content, filename=name
                                     )
                                     # 常に画面で選択された口座を使用する
-                                    created = repository.save_rows(rows)
-                                    total_created += created
-                                    logger.info(f"  -> {name}: New records: {created}")
+                                    monthly_counts = repository.save_rows(rows)
+                                    for m, c in monthly_counts.items():
+                                        total_monthly_counts[m] = (
+                                            total_monthly_counts.get(m, 0) + c
+                                        )
+
+                                    file_count = sum(monthly_counts.values())
+                                    logger.info(
+                                        f"  -> {name}: New records: {file_count}"
+                                    )
                                     processed_files.append(name)
                             except ValueError as e:
                                 if "重複" in str(e):
@@ -110,9 +124,12 @@ class MufgDepositUploadView(View):
                         content, filename=uploaded_file.name
                     )
                     # 常に画面で選択された口座を使用する
-                    created = repository.save_rows(rows)
-                    total_created += created
-                    logger.info(f"  -> {uploaded_file.name}: New records: {created}")
+                    monthly_counts = repository.save_rows(rows)
+                    for m, c in monthly_counts.items():
+                        total_monthly_counts[m] = total_monthly_counts.get(m, 0) + c
+
+                    file_count = sum(monthly_counts.values())
+                    logger.info(f"  -> {uploaded_file.name}: New records: {file_count}")
                     processed_files.append(uploaded_file.name)
                 except ValueError as e:
                     if "重複" in str(e):
@@ -127,4 +144,28 @@ class MufgDepositUploadView(View):
             else:
                 raise ValueError("CSVまたはZIPファイルのみアップロード可能です。")
 
-        return processed_files, skipped_files, duplicated_files, total_created
+        return processed_files, skipped_files, total_monthly_counts
+
+
+class MufgDepositDeleteView(View):
+    @staticmethod
+    def post(request):
+        bank_id = request.POST.get("bank")
+        if not bank_id:
+            messages.error(request, "口座を選択してください。")
+            return redirect("bank:mufg_deposit_upload")
+
+        bank = get_object_or_404(Bank, pk=bank_id)
+        repository = MufgRepository(bank)
+        monthly_counts = repository.delete_all_data()
+
+        total_count = sum(monthly_counts.values())
+        msg_md = f"{bank.name} のデータ {total_count} 件を削除しました。"
+        if monthly_counts:
+            msg_md += "\n\n内訳:\n\n"
+            for m, c in sorted(monthly_counts.items()):
+                msg_md += f"- {m}: {c}件\n"
+
+        msg_html = markdown.markdown(msg_md)
+        messages.success(request, msg_html)
+        return redirect("bank:mufg_deposit_upload")
