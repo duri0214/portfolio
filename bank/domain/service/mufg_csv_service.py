@@ -64,8 +64,13 @@ class MufgCsvService:
         for i, line in enumerate(lines):
             if "日付" in line and "摘要" in line:
                 return i
+
+        # ヘッダーが見つからなかった場合、比較のために最初の1行を取得してエラーに含める
+        first_line = lines[0] if lines else "空のファイル"
         raise ValueError(
-            f"ファイル '{filename}': CSVファイルに有効なヘッダーが見つかりませんでした。"
+            f"ファイル `{filename}`: CSVファイルに有効なヘッダーが見つかりませんでした。\n\n"
+            f"**期待される項目（例）**:\n`{', '.join(MufgCsvService.NEW_HEADERS[:6])}...` \n\n"
+            f"**実際の1行目**:\n`{first_line}`"
         )
 
     def _validate_headers(self, actual_headers: list[str], filename: str) -> bool:
@@ -75,17 +80,30 @@ class MufgCsvService:
                 expected
             )
 
-        if contains_all(self.OLD_HEADERS, actual_headers) and len(
+        is_old = contains_all(self.OLD_HEADERS, actual_headers) and len(
             actual_headers
-        ) == len(self.OLD_HEADERS):
+        ) == len(self.OLD_HEADERS)
+        is_new = contains_all(self.NEW_HEADERS, actual_headers) and len(
+            actual_headers
+        ) == len(self.NEW_HEADERS)
+
+        if is_old:
             return True
-        elif contains_all(self.NEW_HEADERS, actual_headers) and len(
-            actual_headers
-        ) == len(self.NEW_HEADERS):
+        elif is_new:
             return False
         else:
+            # 形式が一致しない場合、期待されるヘッダーを表示する
+            expected_new = ", ".join(self.NEW_HEADERS)
+            expected_old = ", ".join(self.OLD_HEADERS)
+            actual_headers_str = ", ".join(actual_headers)
+
             raise ValueError(
-                f"ファイル '{filename}': 未知のヘッダー形式です。実際のヘッダー: {actual_headers}"
+                f"ファイル `{filename}`: 未知のヘッダー形式です。\n\n"
+                f"**期待されるヘッダー**:\n"
+                f"- 新形式: `{expected_new}`\n"
+                f"- 旧形式: `{expected_old}`\n\n"
+                f"**実際のヘッダー**:\n"
+                f"`{actual_headers_str}`"
             )
 
     def _parse_row(

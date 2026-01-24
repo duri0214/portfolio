@@ -64,11 +64,10 @@ class MufgDepositUploadView(View):
 
             except Exception as e:
                 logger.error(f"Upload error: {str(e)}", exc_info=True)
-                # 全体がロールバックされたことを明示する
-                messages.error(
-                    request,
-                    f"エラーが発生しました（処理は中断され、データは保存されていません）: {str(e)}",
-                )
+                # 全体がロールバックされたことを明示する。Markdownの構造を保つため2つの改行を入れる
+                error_msg_md = f"**エラーが発生しました（処理は中断され、データは保存されていません）**\n\n{str(e)}"
+                error_msg_html = markdown.markdown(error_msg_md)
+                messages.error(request, error_msg_html)
             return redirect("bank:mufg_deposit_upload")
         return render(request, self.template_name, {"form": form})
 
