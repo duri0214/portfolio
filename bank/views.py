@@ -89,6 +89,7 @@ class MufgDepositUploadView(View):
                             logger.info(f"Processing file from ZIP: {name}")
                             try:
                                 with z.open(name) as f:
+                                    # TODO: 銀行（Bank）によってエンコーディングが異なる可能性があるため、将来的に可変にすることを検討
                                     # MUFG CSVは CP932 (Shift-JIS)
                                     content = f.read().decode("cp932")
                                     rows = self.csv_service.process_csv_content(
@@ -125,6 +126,7 @@ class MufgDepositUploadView(View):
                 logger.info("=" * 40)
                 logger.info(f"Processing direct CSV: {uploaded_file.name}")
                 try:
+                    # TODO: 銀行（Bank）によってエンコーディングが異なる可能性があるため、将来的に可変にすることを検討
                     content = uploaded_file.read().decode("cp932")
                     rows = self.csv_service.process_csv_content(
                         content, filename=uploaded_file.name
@@ -157,10 +159,6 @@ class MufgDepositDeleteView(View):
     @staticmethod
     def post(request):
         bank_id = request.POST.get("bank")
-        if not bank_id:
-            messages.error(request, "口座を選択してください。")
-            return redirect("bank:mufg_deposit_upload")
-
         start_time = time.time()
         bank = get_object_or_404(Bank, pk=bank_id)
         repository = MufgRepository(bank)
