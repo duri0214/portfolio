@@ -108,6 +108,7 @@ class MufgDepositUploadView(View):
                                     )
                                     processed_files.append(name)
                             except ValueError as e:
+                                # MufgRepository.save_rows は重複検知時に ValueError("...重複...") を投げる
                                 if "重複" in str(e):
                                     # ZIP内の1件でも重複があれば全体を例外で中断（ロールバック）
                                     logger.error(
@@ -116,8 +117,7 @@ class MufgDepositUploadView(View):
                                     raise ValueError(
                                         f"ファイル '{name}' で重複データが見つかったため、全体の取り込みを中止しました（1件も保存されていません）。"
                                     )
-                                else:
-                                    raise e
+                                raise e
                         else:
                             logger.info(f"Skipping non-CSV file in ZIP: {name}")
                             skipped_files.append(name)
@@ -140,6 +140,7 @@ class MufgDepositUploadView(View):
                     logger.info(f"  -> {uploaded_file.name}: New records: {file_count}")
                     processed_files.append(uploaded_file.name)
                 except ValueError as e:
+                    # MufgRepository.save_rows は重複検知時に ValueError("...重複...") を投げる
                     if "重複" in str(e):
                         logger.error(
                             f"  -> {uploaded_file.name}: Duplicate found. Aborting."
@@ -147,8 +148,7 @@ class MufgDepositUploadView(View):
                         raise ValueError(
                             f"ファイル '{uploaded_file.name}' で重複データが見つかったため、取り込みを中止しました（1件も保存されていません）。"
                         )
-                    else:
-                        raise e
+                    raise e
             else:
                 raise ValueError("CSVまたはZIPファイルのみアップロード可能です。")
 
