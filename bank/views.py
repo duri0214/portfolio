@@ -1,6 +1,7 @@
 import logging
 import zipfile
 import markdown
+import time
 
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
@@ -34,6 +35,7 @@ class MufgDepositUploadView(View):
     def post(self, request):
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
+            start_time = time.time()
             uploaded_file = request.FILES["file"]
             bank = form.cleaned_data["bank"]
             try:
@@ -41,8 +43,9 @@ class MufgDepositUploadView(View):
                     self.handle_uploaded_file(uploaded_file, bank)
                 )
 
+                elapsed_time = time.time() - start_time
                 total_count = sum(total_monthly_counts.values())
-                msg_md = f"取り込みが完了しました（合計: {total_count}件）。"
+                msg_md = f"取り込みが完了しました（合計: {total_count}件, 処理時間: {elapsed_time:.2f}秒）。"
                 if total_monthly_counts:
                     msg_md += "\n\n内訳:\n\n"
                     for m, c in sorted(total_monthly_counts.items()):
@@ -155,12 +158,14 @@ class MufgDepositDeleteView(View):
             messages.error(request, "口座を選択してください。")
             return redirect("bank:mufg_deposit_upload")
 
+        start_time = time.time()
         bank = get_object_or_404(Bank, pk=bank_id)
         repository = MufgRepository(bank)
         monthly_counts = repository.delete_all_data()
 
+        elapsed_time = time.time() - start_time
         total_count = sum(monthly_counts.values())
-        msg_md = f"{bank.name} のデータ {total_count} 件を削除しました。"
+        msg_md = f"{bank.name} のデータ {total_count} 件を削除しました（処理時間: {elapsed_time:.2f}秒）。"
         if monthly_counts:
             msg_md += "\n\n内訳:\n\n"
             for m, c in sorted(monthly_counts.items()):
