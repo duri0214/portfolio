@@ -17,9 +17,31 @@ class MufgRepository:
         :raises ValueError: 重複データが見つかった場合
         """
         monthly_counts = {}
+        seen_in_batch = set()
+
         with transaction.atomic():
             for row in rows:
-                # 重複チェック
+                # DBの制約(UniqueConstraint)に合わせたキーを作成
+                # bank, trade_date, summary, summary_detail, payment_amount, deposit_amount, balance, inout_type
+                row_key = (
+                    row.trade_date,
+                    row.summary,
+                    row.summary_detail,
+                    row.payment_amount,
+                    row.deposit_amount,
+                    row.balance,
+                    row.inout_type,
+                )
+
+                # 同一バッチ内での重複チェック
+                if row_key in seen_in_batch:
+                    raise ValueError(
+                        f"ファイル内で重複データが見つかりました（日付: {row.trade_date}, 摘要: {row.summary}, 摘要内容: {row.summary_detail}, 金額: {row.payment_amount or row.deposit_amount}, 残高: {row.balance}）。"
+                        "同一の取引が複数行含まれている可能性があります。"
+                    )
+                seen_in_batch.add(row_key)
+
+                # DB既存データとの重複チェック
                 exists = MufgDepositCsvRaw.objects.filter(
                     bank=self.bank,
                     trade_date=row.trade_date,
@@ -33,7 +55,7 @@ class MufgRepository:
 
                 if exists:
                     raise ValueError(
-                        f"重複データが見つかりました（日付: {row.trade_date}, 金額: {row.payment_amount or row.deposit_amount}）。"
+                        f"既に登録済みの重複データが見つかりました（日付: {row.trade_date}, 金額: {row.payment_amount or row.deposit_amount}）。"
                         "このファイルの取り込みを中止します。"
                     )
 

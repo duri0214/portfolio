@@ -64,7 +64,11 @@ class MufgDepositUploadView(View):
 
             except Exception as e:
                 logger.error(f"Upload error: {str(e)}", exc_info=True)
-                messages.error(request, f"エラーが発生しました: {str(e)}")
+                # 全体がロールバックされたことを明示する
+                messages.error(
+                    request,
+                    f"エラーが発生しました（処理は中断され、データは保存されていません）: {str(e)}",
+                )
             return redirect("bank:mufg_deposit_upload")
         return render(request, self.template_name, {"form": form})
 
@@ -110,7 +114,7 @@ class MufgDepositUploadView(View):
                                         f"  -> {name}: Duplicate found. Aborting entire batch."
                                     )
                                     raise ValueError(
-                                        f"ファイル '{name}' で重複データが見つかったため、全体の取り込みを中止しました。"
+                                        f"ファイル '{name}' で重複データが見つかったため、全体の取り込みを中止しました（1件も保存されていません）。"
                                     )
                                 else:
                                     raise e
@@ -140,7 +144,7 @@ class MufgDepositUploadView(View):
                             f"  -> {uploaded_file.name}: Duplicate found. Aborting."
                         )
                         raise ValueError(
-                            f"ファイル '{uploaded_file.name}' で重複データが見つかったため、取り込みを中止しました。"
+                            f"ファイル '{uploaded_file.name}' で重複データが見つかったため、取り込みを中止しました（1件も保存されていません）。"
                         )
                     else:
                         raise e

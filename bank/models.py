@@ -63,6 +63,8 @@ class MufgDepositCsvRaw(models.Model):
                     "trade_date",
                     "summary",
                     "summary_detail",
+                    "payment_amount",
+                    "deposit_amount",
                     "balance",
                     "inout_type",
                 ],
