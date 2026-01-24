@@ -323,6 +323,15 @@ sudo tail -n 200 /var/log/apache2/error.log
 ### [hospital] 不在者投票管理
 病院内での不在者投票事務（名簿作成、選管への請求等）をサポートします。
 
+### [bank] 銀行明細管理
+MUFG普通預金のCSV（Eco通帳）アップロードおよび明細の集計・管理を行います。
+
+- **テストデータ生成:**
+  ```bash
+  # MUFG普通預金のダミーデータ生成
+  python manage.py generate_mufg_dummy_data --count 100
+  ```
+
 ### [jp_stocks] 日本株板シミュレータ
 `Order` モデルを用いた板情報の動的計算とマッチングシミュレーション。
 
