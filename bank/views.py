@@ -21,6 +21,60 @@ class IndexView(TemplateView):
     template_name = "bank/index.html"
 
 
+class MufgLivingCostAnalysisView(TemplateView):
+    template_name = "bank/mufg_analysis_living_cost.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        bank_id = self.request.GET.get("bank")
+        only_40k = self.request.GET.get("only_40k") == "true"
+
+        if not bank_id:
+            context["error"] = "銀行を選択してください。"
+            context["banks"] = Bank.objects.all()
+            return context
+
+        bank = get_object_or_404(Bank, pk=bank_id)
+        repository = MufgRepository(bank)
+        transactions = list(repository.get_living_cost_transactions(only_40k=only_40k))
+
+        # 分析ロジック
+        monthly_counts = {}
+        dates = []
+        intervals = []
+        prev_date = None
+
+        for tx in transactions:
+            month = tx.trade_date.strftime("%Y-%m")
+            monthly_counts[month] = monthly_counts.get(month, 0) + 1
+            dates.append(tx.trade_date)
+
+            if prev_date:
+                diff = (tx.trade_date - prev_date).days
+                intervals.append(diff)
+            prev_date = tx.trade_date
+
+        stats = {}
+        if intervals:
+            stats["min_interval"] = min(intervals)
+            stats["max_interval"] = max(intervals)
+            stats["avg_interval"] = sum(intervals) / len(intervals)
+        else:
+            stats["min_interval"] = stats["max_interval"] = stats["avg_interval"] = 0
+
+        context.update(
+            {
+                "bank": bank,
+                "only_40k": only_40k,
+                "transactions": transactions,
+                "monthly_counts": sorted(monthly_counts.items()),
+                "stats": stats,
+                "banks": Bank.objects.all(),
+            }
+        )
+        return context
+
+
 class MufgDepositUploadView(View):
     template_name = "bank/mufg_deposit_upload.html"
 

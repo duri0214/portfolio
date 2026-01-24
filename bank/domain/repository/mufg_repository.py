@@ -9,6 +9,25 @@ class MufgRepository:
     def __init__(self, bank: Bank):
         self.bank = bank
 
+    def get_living_cost_transactions(self, only_40k: bool = False):
+        """
+        生活費取引を抽出する。
+        - 摘要に「カード」を含む
+        - 支払い金額（payment_amount）が数値として存在する
+        - 差引残高（balance） == 0
+        """
+        query = MufgDepositCsvRaw.objects.filter(
+            bank=self.bank,
+            summary__contains="カード",
+            payment_amount__isnull=False,
+            balance=0,
+        )
+
+        if only_40k:
+            query = query.filter(payment_amount=40000)
+
+        return query.order_by("trade_date")
+
     def save_rows(self, rows: list[MufgCsvRow]) -> dict:
         """
         行を保存する。1件でも重複があれば、そのファイル全体の保存を中止する。
