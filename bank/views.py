@@ -104,6 +104,68 @@ class MufgLivingCostAnalysisView(TemplateView):
         return context
 
 
+class MufgCategoryMonthlyAnalysisView(TemplateView):
+    template_name = "bank/mufg_analysis_category_monthly.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        bank_id = self.request.GET.get("bank")
+
+        if not bank_id:
+            context["error"] = "銀行を選択してください。"
+            context["banks"] = Bank.objects.all()
+            return context
+
+        bank = get_object_or_404(Bank, pk=bank_id)
+        repository = MufgRepository(bank)
+        data = repository.get_category_monthly_stats()
+
+        # クロス集計テーブルの構築
+        # 行: 月, 列: カテゴリ
+        pivot_table = []
+        # 合計値が0より大きいカテゴリのみ抽出
+        active_categories = []
+        for cat in data["categories"]:
+            cat_total = sum(
+                data["stats"].get((month, cat), {"payment": 0})["payment"]
+                for month in data["months"]
+            )
+            if cat_total > 0:
+                active_categories.append(cat)
+
+        for month in data["months"]:
+            row = {"month": month, "category_values": []}
+            total_payment = 0
+            for cat in active_categories:
+                val = data["stats"].get((month, cat), {"payment": 0, "deposit": 0})
+                payment = val["payment"]
+                row["category_values"].append(payment)
+                total_payment += payment
+            row["total"] = total_payment
+            pivot_table.append(row)
+
+        # 列ごとの合計（カテゴリごとの合計）を計算
+        category_totals = []
+        for cat in active_categories:
+            total = sum(
+                data["stats"].get((month, cat), {"payment": 0})["payment"]
+                for month in data["months"]
+            )
+            category_totals.append(total)
+
+        context.update(
+            {
+                "bank": bank,
+                "categories": active_categories,
+                "pivot_table": pivot_table,
+                "category_totals": category_totals,
+                "grand_total": sum(category_totals),
+                "banks": Bank.objects.all(),
+            }
+        )
+        return context
+
+
 class MufgDepositUploadView(View):
     template_name = "bank/mufg_deposit_upload.html"
 

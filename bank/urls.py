@@ -10,6 +10,11 @@ urlpatterns = [
         name="mufg_analysis_living_cost",
     ),
     path(
+        "analysis/mufg-category-monthly/",
+        views.MufgCategoryMonthlyAnalysisView.as_view(),
+        name="mufg_analysis_category_monthly",
+    ),
+    path(
         "upload/mufg-deposit/",
         views.MufgDepositUploadView.as_view(),
         name="mufg_deposit_upload",

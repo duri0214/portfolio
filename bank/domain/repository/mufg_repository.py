@@ -63,6 +63,51 @@ class MufgRepository:
         """
         return MufgDepositCsvRaw.objects.filter(bank=self.bank).order_by("trade_date")
 
+    def get_category_monthly_stats(self):
+        """
+        カテゴリ別・月別の統計情報を取得する。
+        """
+        from django.db.models import Sum
+        from django.db.models.functions import TruncMonth
+
+        # MufgDepositCsvRaw と DepositSummaryMaster を JOIN してカテゴリ情報を取得する
+        # Django ORM でリレーションがないため、一旦全件取得して Python 側でマッピングするか、
+        # あるいはサブクエリ等を利用する。ここでは効率のため、マスタを先に取得してマッピングする。
+
+        masters = DepositSummaryMaster.objects.select_related("category").all()
+        summary_to_category = {m.summary: m.category.name for m in masters}
+
+        # 取引データを月ごとに集計（一旦メモリに乗せるが、MUFGデータは数千件程度なので許容範囲）
+        transactions = (
+            MufgDepositCsvRaw.objects.filter(bank=self.bank)
+            .annotate(month=TruncMonth("trade_date"))
+            .values("month", "summary", "payment_amount", "deposit_amount")
+            .order_by("month")
+        )
+
+        stats = {}  # {(month, category): {'payment': sum, 'deposit': sum}}
+        all_months = set()
+        all_categories = set(summary_to_category.values())
+        all_categories.add("未分類")
+
+        for tx in transactions:
+            month = tx["month"].strftime("%Y-%m")
+            all_months.add(month)
+            category = summary_to_category.get(tx["summary"], "未分類")
+
+            key = (month, category)
+            if key not in stats:
+                stats[key] = {"payment": 0, "deposit": 0}
+
+            stats[key]["payment"] += tx["payment_amount"] or 0
+            stats[key]["deposit"] += tx["deposit_amount"] or 0
+
+        return {
+            "stats": stats,
+            "months": sorted(list(all_months)),
+            "categories": sorted(list(all_categories)),
+        }
+
     def save_rows(self, rows: list[MufgCsvRow]) -> dict:
         """
         行を保存する。1件でも重複があれば、そのファイル全体の保存を中止する。
