@@ -62,12 +62,41 @@ class MufgLivingCostAnalysisView(TemplateView):
         else:
             stats["min_interval"] = stats["max_interval"] = stats["avg_interval"] = 0
 
+        # 月別取引件数（時系列グラフ用）
+        chart_labels = []
+        chart_data = []
+        frequency_dist = {}
+        if monthly_counts:
+            # 度数分布（月ごとの取引件数の分布）
+            for count in monthly_counts.values():
+                frequency_dist[count] = frequency_dist.get(count, 0) + 1
+
+            # 最小の月から最大の月まで埋める
+            sorted_months = sorted(monthly_counts.keys())
+            start_month_str = sorted_months[0]
+            end_month_str = sorted_months[-1]
+
+            from datetime import datetime
+            from dateutil.relativedelta import relativedelta
+
+            curr = datetime.strptime(start_month_str, "%Y-%m")
+            end = datetime.strptime(end_month_str, "%Y-%m")
+
+            while curr <= end:
+                m_str = curr.strftime("%Y-%m")
+                chart_labels.append(m_str)
+                chart_data.append(monthly_counts.get(m_str, 0))
+                curr += relativedelta(months=1)
+
         context.update(
             {
                 "bank": bank,
                 "only_40k": only_40k,
                 "transactions": transactions,
                 "monthly_counts": sorted(monthly_counts.items()),
+                "frequency_dist": sorted(frequency_dist.items()),
+                "chart_labels": chart_labels,
+                "chart_data": chart_data,
                 "stats": stats,
                 "banks": Bank.objects.all(),
             }

@@ -1,4 +1,5 @@
 {% extends "bank/base.html" %}
+{% load humanize %}
 
 {% block content %}
 <div class="container">
@@ -41,8 +42,15 @@
     {% if error %}
         <div class="alert alert-warning">{{ error }}</div>
     {% elif bank %}
+        <div class="card mb-4">
+            <div class="card-header">月別利用頻度の推移</div>
+            <div class="card-body">
+                <canvas id="livingCostChart" style="width: 100%; height: 300px;"></canvas>
+            </div>
+        </div>
+
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card mb-4">
                     <div class="card-header">
                         分析結果サマリー ({% if only_40k %}40,000円使い切り{% else %}生活費全般{% endif %})
@@ -51,40 +59,63 @@
                         <table class="table table-sm">
                             <tr>
                                 <th>対象取引件数</th>
-                                <td>{{ transactions|length }} 件</td>
+                                <td class="text-end">{{ transactions|length }} 件</td>
                             </tr>
                             <tr>
                                 <th>最短取引間隔</th>
-                                <td>{{ stats.min_interval }} 日</td>
+                                <td class="text-end">{{ stats.min_interval }} 日</td>
                             </tr>
                             <tr>
                                 <th>平均取引間隔</th>
-                                <td>{{ stats.avg_interval|floatformat:1 }} 日</td>
+                                <td class="text-end">{{ stats.avg_interval|floatformat:1 }} 日</td>
                             </tr>
                             <tr>
                                 <th>最長取引間隔</th>
-                                <td>{{ stats.max_interval }} 日</td>
+                                <td class="text-end">{{ stats.max_interval }} 日</td>
                             </tr>
                         </table>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card mb-4">
-                    <div class="card-header">月別利用頻度</div>
+                    <div class="card-header">月別取引件数の度数分布</div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>月間取引件数</th>
+                                    <th class="text-end">該当月数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for count, freq in frequency_dist %}
+                                    <tr>
+                                        <td>{{ count }} 件</td>
+                                        <td class="text-end">{{ freq }} ヶ月</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">月別利用頻度（詳細）</div>
                     <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                         <table class="table table-sm">
                             <thead>
                                 <tr>
                                     <th>月</th>
-                                    <th>件数</th>
+                                    <th class="text-end">件数</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for month, count in monthly_counts %}
                                     <tr>
                                         <td>{{ month }}</td>
-                                        <td>{{ count }} 件</td>
+                                        <td class="text-end">{{ count }} 件</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -103,8 +134,8 @@
                             <tr>
                                 <th>日付</th>
                                 <th>摘要</th>
-                                <th>金額</th>
-                                <th>残高</th>
+                                <th class="text-end">金額</th>
+                                <th class="text-end">残高</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -112,8 +143,8 @@
                                 <tr>
                                     <td>{{ tx.trade_date }}</td>
                                     <td>{{ tx.summary }} {{ tx.summary_detail }}</td>
-                                    <td>{{ tx.payment_amount|default:0 }}</td>
-                                    <td>{{ tx.balance }}</td>
+                                    <td class="text-end">{{ tx.payment_amount|default:0|intcomma }}</td>
+                                    <td class="text-end">{{ tx.balance|intcomma }}</td>
                                 </tr>
                             {% empty %}
                                 <tr>
@@ -127,4 +158,38 @@
         </div>
     {% endif %}
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('livingCostChart');
+        if (!ctx) return;
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_labels|safe }},
+                datasets: [{
+                    label: '取引件数',
+                    data: {{ chart_data|safe }},
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}

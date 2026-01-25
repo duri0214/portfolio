@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from bank.models import Bank, MufgDepositCsvRaw
 from bank.domain.valueobject.mufg_csv_row import MufgCsvRow
@@ -12,15 +12,32 @@ class MufgRepository:
     def get_living_cost_transactions(self, only_40k: bool = False):
         """
         生活費取引を抽出する。
-        - 摘要に「カード」を含む
+        - 摘要に「カード」「ｶｰﾄﾞ」「カ－ド」「カ‐ド」のいずれかを含む
         - 支払い金額（payment_amount）が数値として存在する
-        - 差引残高（balance） == 0
+        - 2018年4月以降の取引については、差引残高（balance） == 0 であること
+          (2018年3月以前はメイン口座として利用していたため、残高0条件は不要)
         """
+        # 基底条件：摘要にカードを含み、支払い金額がある
+        # 「カ－ド」(全角ダッシュ)や「カ‐ド」(ハイフン)なども対象に含める
+        card_keywords = ["カード", "ｶｰﾄﾞ", "カ－ド", "カ‐ド"]
+        summary_filter = Q()
+        for kw in card_keywords:
+            summary_filter |= Q(summary__contains=kw)
+
+        base_filter = summary_filter
+        base_filter &= Q(bank=self.bank)
+        base_filter &= Q(payment_amount__isnull=False)
+
+        # 期間による条件分岐
+        # 1. 2018年3月以前: 残高条件なし
+        condition1 = Q(trade_date__lte="2018-03-31")
+
+        # 2. 2018年4月以降: 残高0または摘要が「ｶｰﾄﾞ」(半角)で残高0
+        # (Eco通帳の仕様変更により、支払即時引落の場合は残高0になる運用ルール)
+        condition2 = Q(trade_date__gte="2018-04-01") & Q(balance=0)
+
         query = MufgDepositCsvRaw.objects.filter(
-            bank=self.bank,
-            summary__contains="カード",
-            payment_amount__isnull=False,
-            balance=0,
+            base_filter & (condition1 | condition2)
         )
 
         if only_40k:
