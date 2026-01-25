@@ -1,0 +1,101 @@
+{% extends "bank/base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'bank:index' %}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">MUFG カテゴリ別月次集計</li>
+        </ol>
+    </nav>
+
+    <h1>MUFG カテゴリ別月次集計 (出金)</h1>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="bank" class="form-label">対象口座</label>
+                    <select name="bank" id="bank" class="form-select">
+                        <option value="">選択してください</option>
+                        {% for b in banks %}
+                            <option value="{{ b.id }}" {% if b.id|stringformat:"s" == request.GET.bank %}selected{% endif %}>{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">集計実行</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-warning">{{ error }}</div>
+    {% elif bank %}
+        <div class="card">
+            <div class="card-header">
+                カテゴリ別月次推移（出金合計）
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="position: sticky; left: 0; background-color: #f8f9fa; z-index: 1;">月</th>
+                                {% for cat in categories %}
+                                    <th class="text-end">{{ cat }}</th>
+                                {% endfor %}
+                                <th class="text-end table-secondary">合計</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in pivot_table %}
+                                <tr>
+                                    <th style="position: sticky; left: 0; background-color: #fff; z-index: 1;">{{ row.month }}</th>
+                                    {% for val in row.category_values %}
+                                        <td class="text-end">
+                                            {% if val > 0 %}
+                                                {{ val|intcomma }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                    <td class="text-end table-secondary fw-bold">{{ row.total|intcomma }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light" style="position: sticky; bottom: 0; z-index: 2;">
+                            <tr class="table-secondary fw-bold">
+                                <th style="position: sticky; left: 0; background-color: #f8f9fa; z-index: 1;">合計</th>
+                                {% for total in category_totals %}
+                                    <td class="text-end">{{ total|intcomma }}</td>
+                                {% endfor %}
+                                <td class="text-end">{{ grand_total|intcomma }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .table-responsive {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 2;
+    }
+    thead th:first-child {
+        z-index: 3;
+    }
+</style>
+{% endblock %}
