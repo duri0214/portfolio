@@ -28,11 +28,61 @@ class Bank(models.Model):
         return f"{self.name} ({self.branch_code}-{self.account_number})"
 
 
+class DepositSummaryCategory(models.Model):
+    """
+    摘要カテゴリマスタ
+    [通帳の明細ページの「摘要（お客様メモ）」欄の表示内容を教えてください。]
+    (https://faq01.bk.mufg.jp/faq/show/278?site_domain=default)
+    """
+
+    name = models.CharField(max_length=100, verbose_name="カテゴリ名")
+    description = models.TextField(null=True, blank=True, verbose_name="説明")
+    display_order = models.IntegerField(default=0, verbose_name="表示順")
+
+    class Meta:
+        verbose_name = "摘要カテゴリマスタ"
+        verbose_name_plural = "摘要カテゴリマスタ"
+
+    def __str__(self):
+        return self.name
+
+
+class DepositSummaryMaster(models.Model):
+    """
+    摘要マスタ
+    [通帳の明細ページの「摘要（お客様メモ）」欄の表示内容を教えてください。]
+    (https://faq01.bk.mufg.jp/faq/show/278?site_domain=default)
+    """
+
+    summary = models.CharField(
+        max_length=255, unique=True, verbose_name="摘要（CSV表記）"
+    )
+    category = models.ForeignKey(
+        DepositSummaryCategory, on_delete=models.PROTECT, verbose_name="カテゴリ"
+    )
+    remark = models.TextField(null=True, blank=True, verbose_name="説明文（公式）")
+
+    class Meta:
+        verbose_name = "摘要マスタ"
+        verbose_name_plural = "摘要マスタ"
+
+    def __str__(self):
+        return self.summary
+
+
 class MufgDepositCsvRaw(models.Model):
     bank = models.ForeignKey(Bank, on_delete=models.PROTECT)
 
     trade_date = models.DateField(verbose_name="日付")
     summary = models.CharField(max_length=255, verbose_name="摘要")
+
+    @property
+    def summary_master(self):
+        """
+        摘要文字列に完全一致する摘要マスタを返す。
+        """
+        return DepositSummaryMaster.objects.filter(summary=self.summary).first()
+
     summary_detail = models.CharField(max_length=255, verbose_name="摘要内容")
 
     payment_amount = models.IntegerField(

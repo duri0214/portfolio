@@ -198,6 +198,9 @@ python manage.py loaddata ai_agent\fixtures\rag_material.json
 # --- USA Research ---
 # 資産クラスの長期推移データの初期取得（超長期: 指数を含めると1950年代〜取得可能）
 python manage.py monthly_update_historical_assets --start 1950-01-01
+
+# --- Bank ---
+python manage.py loaddata bank\fixtures\mufg_summary_master.json
 ```
 
 ---
