@@ -45,6 +45,12 @@ class MufgRepository:
 
         return query.order_by("trade_date")
 
+    def get_all_transactions(self):
+        """
+        全取引を取得する。
+        """
+        return MufgDepositCsvRaw.objects.filter(bank=self.bank).order_by("trade_date")
+
     def save_rows(self, rows: list[MufgCsvRow]) -> dict:
         """
         行を保存する。1件でも重複があれば、そのファイル全体の保存を中止する。
