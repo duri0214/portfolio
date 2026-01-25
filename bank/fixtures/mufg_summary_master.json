@@ -1,0 +1,1604 @@
+[
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 1,
+        "fields": {
+            "name": "振込",
+            "description": "",
+            "display_order": 1
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 2,
+        "fields": {
+            "name": "カード",
+            "description": "",
+            "display_order": 2
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 3,
+        "fields": {
+            "name": "デビットカード",
+            "description": "",
+            "display_order": 3
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 4,
+        "fields": {
+            "name": "口座振替",
+            "description": "",
+            "display_order": 4
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 5,
+        "fields": {
+            "name": "公共料金等",
+            "description": "",
+            "display_order": 5
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 6,
+        "fields": {
+            "name": "手数料",
+            "description": "",
+            "display_order": 6
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 7,
+        "fields": {
+            "name": "利息",
+            "description": "",
+            "display_order": 7
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 8,
+        "fields": {
+            "name": "振替",
+            "description": "",
+            "display_order": 8
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 9,
+        "fields": {
+            "name": "電話投票",
+            "description": "",
+            "display_order": 9
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 10,
+        "fields": {
+            "name": "その他",
+            "description": "",
+            "display_order": 10
+        }
+    },
+    {
+        "model": "bank.depositsummarycategory",
+        "pk": 11,
+        "fields": {
+            "name": "ペイジー",
+            "description": "",
+            "display_order": 11
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 1,
+        "fields": {
+            "summary": "振込１",
+            "category": 1,
+            "remark": "お振り込み ※当行内部処理方法により、「振込1」「振込2」のいずれかが表示されます。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 2,
+        "fields": {
+            "summary": "振込1",
+            "category": 1,
+            "remark": "お振り込み ※当行内部処理方法により、「振込1」「振込2」のいずれかが表示されます。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 3,
+        "fields": {
+            "summary": "振込２",
+            "category": 1,
+            "remark": "お振り込み ※当行内部処理方法により、「振込1」「振込2」のいずれかが表示されます。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 4,
+        "fields": {
+            "summary": "振込2",
+            "category": 1,
+            "remark": "お振り込み ※当行内部処理方法により、「振込1」「振込2」のいずれかが表示されます。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 5,
+        "fields": {
+            "summary": "振込６",
+            "category": 1,
+            "remark": "ＡＴＭでの当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 6,
+        "fields": {
+            "summary": "振込6",
+            "category": 1,
+            "remark": "ＡＴＭでの当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 7,
+        "fields": {
+            "summary": "振込８",
+            "category": 1,
+            "remark": "ＡＴＭでの他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 8,
+        "fields": {
+            "summary": "振込8",
+            "category": 1,
+            "remark": "ＡＴＭでの他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 9,
+        "fields": {
+            "summary": "振込９",
+            "category": 1,
+            "remark": "ＡＴＭでの当行本支店あてお振り込み（現金）"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 10,
+        "fields": {
+            "summary": "振込9",
+            "category": 1,
+            "remark": "ＡＴＭでの当行本支店あてお振り込み（現金）"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 11,
+        "fields": {
+            "summary": "振込ＣＶ１",
+            "category": 1,
+            "remark": "コンビニＡＴＭでの当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 12,
+        "fields": {
+            "summary": "振込（CVA1）",
+            "category": 1,
+            "remark": "コンビニＡＴＭでの当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 13,
+        "fields": {
+            "summary": "振込ＣＶ２",
+            "category": 1,
+            "remark": "コンビニＡＴＭでの他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 14,
+        "fields": {
+            "summary": "振込（CVA2）",
+            "category": 1,
+            "remark": "コンビニＡＴＭでの他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 15,
+        "fields": {
+            "summary": "振込ＣＶ３",
+            "category": 1,
+            "remark": "コンビニＡＴＭでの当行本支店あて振込入金（翌営業日お取扱分）"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 16,
+        "fields": {
+            "summary": "振込（CVA3）",
+            "category": 1,
+            "remark": "コンビニＡＴＭでの当行本支店あて振込入金（翌営業日お取扱分）"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 17,
+        "fields": {
+            "summary": "振込ＩＢ１",
+            "category": 1,
+            "remark": "三菱ＵＦＪダイレクトでの当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 18,
+        "fields": {
+            "summary": "ﾌﾘｺﾐIB1",
+            "category": 1,
+            "remark": "三菱ＵＦＪダイレクトでの当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 19,
+        "fields": {
+            "summary": "振込ＩＢ２",
+            "category": 1,
+            "remark": "三菱ＵＦＪダイレクトでの他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 20,
+        "fields": {
+            "summary": "ﾌﾘｺﾐIB2",
+            "category": 1,
+            "remark": "三菱ＵＦＪダイレクトでの他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 21,
+        "fields": {
+            "summary": "振込ＴＢ１",
+            "category": 1,
+            "remark": "三菱ＵＦＪダイレクト（テレフォンバンキング）での当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 22,
+        "fields": {
+            "summary": "ﾌﾘｺﾐTB1",
+            "category": 1,
+            "remark": "三菱ＵＦＪダイレクト（テレフォンバンキング）での当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 23,
+        "fields": {
+            "summary": "振込ＴＢ２",
+            "category": 1,
+            "remark": "三菱ＵＦＪダイレクト（テレフォンバンキング）での他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 24,
+        "fields": {
+            "summary": "ﾌﾘｺﾐTB2",
+            "category": 1,
+            "remark": "三菱ＵＦＪダイレクト（テレフォンバンキング）での他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 25,
+        "fields": {
+            "summary": "振込ＢＺ１",
+            "category": 1,
+            "remark": "ＢｉｚＳＴＡＴＩＯＮでの当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 26,
+        "fields": {
+            "summary": "振込（BIZ1）",
+            "category": 1,
+            "remark": "ＢｉｚＳＴＡＴＩＯＮでの当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 27,
+        "fields": {
+            "summary": "振込ＢＺ２",
+            "category": 1,
+            "remark": "ＢｉｚＳＴＡＴＩＯＮでの他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 28,
+        "fields": {
+            "summary": "振込（BIZ2）",
+            "category": 1,
+            "remark": "ＢｉｚＳＴＡＴＩＯＮでの他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 29,
+        "fields": {
+            "summary": "振込ＥＢ１",
+            "category": 1,
+            "remark": "Ｕ-ＬＩＮＥ振込振替による当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 30,
+        "fields": {
+            "summary": "振込（EB1）",
+            "category": 1,
+            "remark": "Ｕ-ＬＩＮＥ振込振替による当行本支店あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 31,
+        "fields": {
+            "summary": "振込ＥＢ２",
+            "category": 1,
+            "remark": "Ｕ-ＬＩＮＥ振込振替による他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 32,
+        "fields": {
+            "summary": "振込（EB2）",
+            "category": 1,
+            "remark": "Ｕ-ＬＩＮＥ振込振替による他行あてお振り込み"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 33,
+        "fields": {
+            "summary": "総給振",
+            "category": 1,
+            "remark": "総合振込・給与振込のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 34,
+        "fields": {
+            "summary": "ｿｳｷﾕｳﾌﾘ",
+            "category": 1,
+            "remark": "総合振込・給与振込のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 35,
+        "fields": {
+            "summary": "給料",
+            "category": 1,
+            "remark": "給与振込のご入金　※振込依頼人名（ご依頼人名）は表示されません。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 36,
+        "fields": {
+            "summary": "賞与",
+            "category": 1,
+            "remark": "賞与振込のご入金　※振込依頼人名（ご依頼人名）は表示されません。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 37,
+        "fields": {
+            "summary": "ｼﾖｳﾖ",
+            "category": 1,
+            "remark": "賞与振込のご入金　※振込依頼人名（ご依頼人名）は表示されません。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 38,
+        "fields": {
+            "summary": "カード",
+            "category": 2,
+            "remark": "当行ＡＴＭでのキャッシュカードによるお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 39,
+        "fields": {
+            "summary": "ｶｰﾄﾞ",
+            "category": 2,
+            "remark": "当行ＡＴＭでのキャッシュカードによるお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 40,
+        "fields": {
+            "summary": "支払機",
+            "category": 2,
+            "remark": "当行ＡＴＭでのキャッシュカード・通帳によるお引き出し"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 41,
+        "fields": {
+            "summary": "ｼﾊﾗｲｷ",
+            "category": 2,
+            "remark": "当行ＡＴＭでのキャッシュカード・通帳によるお引き出し"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 42,
+        "fields": {
+            "summary": "預金機",
+            "category": 2,
+            "remark": "当行ＡＴＭでの通帳によるお預け入れ"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 43,
+        "fields": {
+            "summary": "ﾖｷﾝｷ",
+            "category": 2,
+            "remark": "当行ＡＴＭでの通帳によるお預け入れ"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 44,
+        "fields": {
+            "summary": "カードＣ１",
+            "category": 2,
+            "remark": "コンビニＡＴＭでのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 45,
+        "fields": {
+            "summary": "ｶｰﾄﾞ（CVA1）",
+            "category": 2,
+            "remark": "コンビニＡＴＭでのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 46,
+        "fields": {
+            "summary": "ＢＡＮＣＳ",
+            "category": 2,
+            "remark": "提携金融機関（ＢＡＮＣＳ）ＡＴＭでのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 47,
+        "fields": {
+            "summary": "ｶｰﾄﾞ／BANCS",
+            "category": 2,
+            "remark": "提携金融機関（ＢＡＮＣＳ）ＡＴＭでのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 48,
+        "fields": {
+            "summary": "ＭＩＣＳ",
+            "category": 2,
+            "remark": "提携金融機関（ＭＩＣＳ）ＡＴＭでのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 49,
+        "fields": {
+            "summary": "ｶｰﾄﾞ／MICS",
+            "category": 2,
+            "remark": "提携金融機関（ＭＩＣＳ）ＡＴＭでのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 50,
+        "fields": {
+            "summary": "カード郵貯",
+            "category": 2,
+            "remark": "ゆうちょ銀行ＡＴＭ（コンビニ等設置分含む）でのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 51,
+        "fields": {
+            "summary": "ｶｰﾄﾞ（ﾕｳﾁﾖ）",
+            "category": 2,
+            "remark": "ゆうちょ銀行ＡＴＭ（コンビニ等設置分含む）でのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 52,
+        "fields": {
+            "summary": "社内ＣＤ",
+            "category": 2,
+            "remark": "社内ＣＤでのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 53,
+        "fields": {
+            "summary": "ｼｬﾅｲCD",
+            "category": 2,
+            "remark": "社内ＣＤでのお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 54,
+        "fields": {
+            "summary": "カード店頭",
+            "category": 2,
+            "remark": "窓口でのキャッシュカードによるお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 55,
+        "fields": {
+            "summary": "ｶｰﾄﾞ(ﾃﾝﾄｳ)",
+            "category": 2,
+            "remark": "窓口でのキャッシュカードによるお取り引き"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 56,
+        "fields": {
+            "summary": "デビット１",
+            "category": 3,
+            "remark": "三菱ＵＦＪデビットでのお買い上げ金額のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 57,
+        "fields": {
+            "summary": "ﾃﾞﾋﾞﾂﾄ1",
+            "category": 3,
+            "remark": "三菱ＵＦＪデビットでのお買い上げ金額のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 58,
+        "fields": {
+            "summary": "デビット３",
+            "category": 3,
+            "remark": "三菱ＵＦＪデビットでのお買い上げ金額のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 59,
+        "fields": {
+            "summary": "ﾃﾞﾋﾞﾂﾄ3",
+            "category": 3,
+            "remark": "三菱ＵＦＪデビットでのお買い上げ金額のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 60,
+        "fields": {
+            "summary": "Ｄ現金還元",
+            "category": 3,
+            "remark": "三菱ＵＦＪデビットのキャッシュバック"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 61,
+        "fields": {
+            "summary": "Dｹﾞﾝｷﾝｶﾝｹﾞ",
+            "category": 3,
+            "remark": "三菱ＵＦＪデビットのキャッシュバック"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 62,
+        "fields": {
+            "summary": "ＪＤ支払",
+            "category": 3,
+            "remark": "デビットカードサービス（Ｊ-Ｄｅｂｉｔ）のお買い上げ金額のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 63,
+        "fields": {
+            "summary": "JDｼﾊﾗｲ",
+            "category": 3,
+            "remark": "デビットカードサービス（Ｊ-Ｄｅｂｉｔ）のお買い上げ金額のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 64,
+        "fields": {
+            "summary": "口座振替",
+            "category": 4,
+            "remark": "各種口座振替のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 65,
+        "fields": {
+            "summary": "ｺｳｻﾞ振替",
+            "category": 4,
+            "remark": "各種口座振替のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 66,
+        "fields": {
+            "summary": "口座振替２",
+            "category": 4,
+            "remark": "各種口座振替のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 67,
+        "fields": {
+            "summary": "ｺｳｻﾞ振替2",
+            "category": 4,
+            "remark": "各種口座振替のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 68,
+        "fields": {
+            "summary": "口座振替３",
+            "category": 4,
+            "remark": "各種口座振替のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 69,
+        "fields": {
+            "summary": "ｺｳｻﾞ振替3",
+            "category": 4,
+            "remark": "各種口座振替のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 70,
+        "fields": {
+            "summary": "口座振替４",
+            "category": 4,
+            "remark": "クレジットカード・損害保険・生命保険のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 71,
+        "fields": {
+            "summary": "ｺｳｻﾞ振替4",
+            "category": 4,
+            "remark": "クレジットカード・損害保険・生命保険のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 72,
+        "fields": {
+            "summary": "口座振替５",
+            "category": 4,
+            "remark": "三菱ＵＦＪニコスのクレジットカード（ＭＵＦＧ）のお引き落とし※ＭＵＦＧカード・プラチナ・アメリカン・エキスプレス®・カードを除く"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 73,
+        "fields": {
+            "summary": "ｺｳｻﾞ振替5",
+            "category": 4,
+            "remark": "三菱ＵＦＪニコスのクレジットカード（ＭＵＦＧ）のお引き落とし※ＭＵＦＧカード・プラチナ・アメリカン・エキスプレス®・カードを除く"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 74,
+        "fields": {
+            "summary": "口座振替７",
+            "category": 4,
+            "remark": "三菱ＵＦＪニコスのクレジットカード（ＤＣ、ＮＩＣＯＳ、ＵＦＪ－ＪＣＢ等）のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 75,
+        "fields": {
+            "summary": "ｺｳｻﾞ振替7",
+            "category": 4,
+            "remark": "三菱ＵＦＪニコスのクレジットカード（ＤＣ、ＮＩＣＯＳ、ＵＦＪ－ＪＣＢ等）のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 76,
+        "fields": {
+            "summary": "口座振替８",
+            "category": 4,
+            "remark": "ＭＵＦＧカード・プラチナ・アメリカン・エキスプレス®・カードのお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 77,
+        "fields": {
+            "summary": "ｺｳｻﾞ振替8",
+            "category": 4,
+            "remark": "ＭＵＦＧカード・プラチナ・アメリカン・エキスプレス®・カードのお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 78,
+        "fields": {
+            "summary": "クレジツト",
+            "category": 4,
+            "remark": "スーパーＩＣカード・ＩＣクレジットカードのお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 79,
+        "fields": {
+            "summary": "ｸﾚｼﾞｯﾄ",
+            "category": 4,
+            "remark": "スーパーＩＣカード・ＩＣクレジットカードのお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 80,
+        "fields": {
+            "summary": "社会保険料",
+            "category": 4,
+            "remark": "社会保険料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 81,
+        "fields": {
+            "summary": "ｼﾔｶｲﾎｹﾝﾘﾖｳ",
+            "category": 4,
+            "remark": "社会保険料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 82,
+        "fields": {
+            "summary": "電話",
+            "category": 5,
+            "remark": "電話料金のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 83,
+        "fields": {
+            "summary": "電気",
+            "category": 5,
+            "remark": "電気料金のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 84,
+        "fields": {
+            "summary": "水道",
+            "category": 5,
+            "remark": "水道料金のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 85,
+        "fields": {
+            "summary": "ガス",
+            "category": 5,
+            "remark": "ガス料金のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 86,
+        "fields": {
+            "summary": "ｶﾞｽ",
+            "category": 5,
+            "remark": "ガス料金のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 87,
+        "fields": {
+            "summary": "ＮＨＫ",
+            "category": 5,
+            "remark": "ＮＨＫ受信料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 88,
+        "fields": {
+            "summary": "NHK",
+            "category": 5,
+            "remark": "ＮＨＫ受信料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 89,
+        "fields": {
+            "summary": "手数料",
+            "category": 6,
+            "remark": "各種手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 90,
+        "fields": {
+            "summary": "ﾃｽｳﾘﾖｳ",
+            "category": 6,
+            "remark": "各種手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 91,
+        "fields": {
+            "summary": "為替手数料",
+            "category": 6,
+            "remark": "振込手数料・為替関係の手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 92,
+        "fields": {
+            "summary": "ｶﾜｾﾃｽｳﾘﾖｳ",
+            "category": 6,
+            "remark": "振込手数料・為替関係の手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 93,
+        "fields": {
+            "summary": "振込手数料",
+            "category": 6,
+            "remark": "振込手数料・定額自動送金振込手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 94,
+        "fields": {
+            "summary": "ﾌﾘｺﾐﾃｽｳﾘﾖｳ",
+            "category": 6,
+            "remark": "振込手数料・定額自動送金振込手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 95,
+        "fields": {
+            "summary": "チヤージ",
+            "category": 6,
+            "remark": "外為関係手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 96,
+        "fields": {
+            "summary": "ﾁﾔｰｼﾞ",
+            "category": 6,
+            "remark": "外為関係手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 97,
+        "fields": {
+            "summary": "ＢＺ手数料",
+            "category": 6,
+            "remark": "ＢｉｚＳＴＡＴＩＯＮ利用手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 98,
+        "fields": {
+            "summary": "BIZﾃｽｳﾘﾖｳ",
+            "category": 6,
+            "remark": "ＢｉｚＳＴＡＴＩＯＮ利用手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 99,
+        "fields": {
+            "summary": "取扱手数料",
+            "category": 6,
+            "remark": "貯蓄預金スイングサービス手数料・定額自動送金取扱手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 100,
+        "fields": {
+            "summary": "ﾄﾘｱﾂｶｲﾘﾖｳ",
+            "category": 6,
+            "remark": "貯蓄預金スイングサービス手数料・定額自動送金取扱手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 101,
+        "fields": {
+            "summary": "通帳手数料",
+            "category": 6,
+            "remark": "紙通帳利用手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 102,
+        "fields": {
+            "summary": "ﾂｳﾁﾖｳﾃｽｳﾘﾖｳ",
+            "category": 6,
+            "remark": "紙通帳利用手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 103,
+        "fields": {
+            "summary": "口座手数料",
+            "category": 6,
+            "remark": "未利用口座管理手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 104,
+        "fields": {
+            "summary": "ﾐﾘﾖｳｺｳｻﾞ",
+            "category": 6,
+            "remark": "未利用口座管理手数料のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 105,
+        "fields": {
+            "summary": "利息",
+            "category": 7,
+            "remark": "普通預金利息のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 106,
+        "fields": {
+            "summary": "利息／定期",
+            "category": 7,
+            "remark": "定期預金利息のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 107,
+        "fields": {
+            "summary": "利息/ﾃｲｷ",
+            "category": 7,
+            "remark": "定期預金利息のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 108,
+        "fields": {
+            "summary": "貸越利息",
+            "category": 7,
+            "remark": "総合口座貸越利息のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 109,
+        "fields": {
+            "summary": "ｶｼｺｼ利息",
+            "category": 7,
+            "remark": "総合口座貸越利息のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 110,
+        "fields": {
+            "summary": "利息／貸越",
+            "category": 7,
+            "remark": "貸越利息のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 111,
+        "fields": {
+            "summary": "利息/ｶｼｺｼ",
+            "category": 7,
+            "remark": "貸越利息のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 112,
+        "fields": {
+            "summary": "ご融資利息",
+            "category": 7,
+            "remark": "ご融資利息のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 113,
+        "fields": {
+            "summary": "ｺﾞﾕｳｼﾘｿｸ",
+            "category": 7,
+            "remark": "ご融資利息のお引き落とし"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 114,
+        "fields": {
+            "summary": "振替ＩＢ",
+            "category": 8,
+            "remark": "三菱ＵＦＪダイレクトでのお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 115,
+        "fields": {
+            "summary": "ﾌﾘｶｴIB",
+            "category": 8,
+            "remark": "三菱ＵＦＪダイレクトでのお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 116,
+        "fields": {
+            "summary": "振替／定期",
+            "category": 8,
+            "remark": "定期預金・自動つみたて定期預金・通知預金とのお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 117,
+        "fields": {
+            "summary": "振替/ﾃｲｷ",
+            "category": 8,
+            "remark": "定期預金・自動つみたて定期預金・通知預金とのお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 118,
+        "fields": {
+            "summary": "振替",
+            "category": 8,
+            "remark": "普通預金・貯蓄預金・当座預金・納税準備預金とのお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 119,
+        "fields": {
+            "summary": "振替ＨＢ",
+            "category": 8,
+            "remark": "ホームバンキング、テレバンクによるお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 120,
+        "fields": {
+            "summary": "振替（HB）",
+            "category": 8,
+            "remark": "ホームバンキング、テレバンクによるお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 121,
+        "fields": {
+            "summary": "振替ＴＢ",
+            "category": 8,
+            "remark": "三菱ＵＦＪダイレクト（テレフォンバンキング）でのお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 122,
+        "fields": {
+            "summary": "ﾌﾘｶｴTB",
+            "category": 8,
+            "remark": "三菱ＵＦＪダイレクト（テレフォンバンキング）でのお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 123,
+        "fields": {
+            "summary": "振替ＢＩＺ",
+            "category": 8,
+            "remark": "ＢｉｚＳＴＡＴＩＯＮでのお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 124,
+        "fields": {
+            "summary": "振替（BIZ）",
+            "category": 8,
+            "remark": "ＢｉｚＳＴＡＴＩＯＮでのお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 125,
+        "fields": {
+            "summary": "競輪",
+            "category": 9,
+            "remark": "競輪電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 126,
+        "fields": {
+            "summary": "ｹｲﾘﾝ",
+            "category": 9,
+            "remark": "競輪電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 127,
+        "fields": {
+            "summary": "競艇",
+            "category": 9,
+            "remark": "競艇電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 128,
+        "fields": {
+            "summary": "ｷﾖｳﾃｲ",
+            "category": 9,
+            "remark": "競艇電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 129,
+        "fields": {
+            "summary": "ＪＲＡ",
+            "category": 9,
+            "remark": "日本中央競馬会（ＪＲＡ）電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 130,
+        "fields": {
+            "summary": "JRA",
+            "category": 9,
+            "remark": "日本中央競馬会（ＪＲＡ）電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 131,
+        "fields": {
+            "summary": "地方競馬",
+            "category": 9,
+            "remark": "地方競馬電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 132,
+        "fields": {
+            "summary": "ﾁﾎｳｹｲﾊﾞ",
+            "category": 9,
+            "remark": "地方競馬電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 133,
+        "fields": {
+            "summary": "オート",
+            "category": 9,
+            "remark": "オートレース電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 134,
+        "fields": {
+            "summary": "ｵｰﾄﾚｰｽ",
+            "category": 9,
+            "remark": "オートレース電話投票の購入金のお引き落とし・配当金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 135,
+        "fields": {
+            "summary": "取立１",
+            "category": 10,
+            "remark": "代金取立手形代わり金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 136,
+        "fields": {
+            "summary": "取立1",
+            "category": 10,
+            "remark": "代金取立手形代わり金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 137,
+        "fields": {
+            "summary": "ローン",
+            "category": 10,
+            "remark": "ローンのご返済"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 138,
+        "fields": {
+            "summary": "ﾛｰﾝ",
+            "category": 10,
+            "remark": "ローンのご返済"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 139,
+        "fields": {
+            "summary": "ご返済",
+            "category": 10,
+            "remark": "ご融資返済・マイカード約定返済"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 140,
+        "fields": {
+            "summary": "ｺﾞﾍﾝｻｲ",
+            "category": 10,
+            "remark": "ご融資返済・マイカード約定返済"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 141,
+        "fields": {
+            "summary": "ご返済Ｊ",
+            "category": 10,
+            "remark": "自動融資型カードローンの約定返済"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 142,
+        "fields": {
+            "summary": "ｺﾞﾍﾝｻｲJ",
+            "category": 10,
+            "remark": "自動融資型カードローンの約定返済"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 143,
+        "fields": {
+            "summary": "自動融資",
+            "category": 10,
+            "remark": "自動融資によるお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 144,
+        "fields": {
+            "summary": "ｼﾞﾄﾞｳﾕｳｼ",
+            "category": 10,
+            "remark": "自動融資によるお振り替え"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 145,
+        "fields": {
+            "summary": "配当２",
+            "category": 10,
+            "remark": "配当金振込"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 146,
+        "fields": {
+            "summary": "配当2",
+            "category": 10,
+            "remark": "配当金振込"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 147,
+        "fields": {
+            "summary": "税金",
+            "category": 10,
+            "remark": "税金のお支払い"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 148,
+        "fields": {
+            "summary": "年金",
+            "category": 10,
+            "remark": "年金振込のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 149,
+        "fields": {
+            "summary": "ﾈﾝｷﾝ",
+            "category": 10,
+            "remark": "年金振込のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 150,
+        "fields": {
+            "summary": "宝くじ",
+            "category": 10,
+            "remark": "宝くじ購入のお引き落とし・当選金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 151,
+        "fields": {
+            "summary": "ﾀｶﾗｸｼﾞ",
+            "category": 10,
+            "remark": "宝くじ購入のお引き落とし・当選金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 152,
+        "fields": {
+            "summary": "ＰＥ／ＩＮ",
+            "category": 11,
+            "remark": "税金・各種料金の払い込み（ペイジー）"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 153,
+        "fields": {
+            "summary": "PE/IN",
+            "category": 11,
+            "remark": "税金・各種料金の払い込み（ペイジー）"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 154,
+        "fields": {
+            "summary": "ＱＲ／ＳＴ",
+            "category": 10,
+            "remark": "ＳＴＭでのＱＲコード付納付書による地方税の払い込み※ＱＲコードは株式会社デンソーウェーブの登録商標です。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 155,
+        "fields": {
+            "summary": "QR/STM",
+            "category": 10,
+            "remark": "ＳＴＭでのＱＲコード付納付書による地方税の払い込み※ＱＲコードは株式会社デンソーウェーブの登録商標です。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 156,
+        "fields": {
+            "summary": "外為送金",
+            "category": 10,
+            "remark": "外為仕向送金・被仕向送金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 157,
+        "fields": {
+            "summary": "ｶﾞｲﾀﾒｿｳｷﾝ",
+            "category": 10,
+            "remark": "外為仕向送金・被仕向送金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 158,
+        "fields": {
+            "summary": "投信分配",
+            "category": 10,
+            "remark": "投信分配金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 159,
+        "fields": {
+            "summary": "ﾄｳｼﾝﾌﾞﾝﾊﾟｲ",
+            "category": 10,
+            "remark": "投信分配金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 160,
+        "fields": {
+            "summary": "公共債償還",
+            "category": 10,
+            "remark": "公共債償還金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 161,
+        "fields": {
+            "summary": "ｺｳｷﾖｳｻｲ",
+            "category": 10,
+            "remark": "公共債償還金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 162,
+        "fields": {
+            "summary": "公共債利金",
+            "category": 10,
+            "remark": "公共債利金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 163,
+        "fields": {
+            "summary": "ｺｳｷﾖｳｻｲﾘｷﾝ",
+            "category": 10,
+            "remark": "公共債利金のご入金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 164,
+        "fields": {
+            "summary": "定自送",
+            "category": 10,
+            "remark": "定額自動送金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 165,
+        "fields": {
+            "summary": "ﾃｲｼﾞｿｳ",
+            "category": 10,
+            "remark": "定額自動送金"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 166,
+        "fields": {
+            "summary": "合計記帳",
+            "category": 10,
+            "remark": "未記帳となっている明細の合計記帳※普通預金・貯蓄預金のお取引明細を通帳にご記帳いただいていない場合、ご入金・ご出金の 件数・金額をまとめて記帳（合計記帳）させていただいています。"
+        }
+    },
+    {
+        "model": "bank.depositsummarymaster",
+        "pk": 167,
+        "fields": {
+            "summary": "ｺﾞｳｹｲｷﾁﾖｳ",
+            "category": 10,
+            "remark": "未記帳となっている明細の合計記帳※普通預金・貯蓄預金のお取引明細を通帳にご記帳いただいていない場合、ご入金・ご出金の 件数・金額をまとめて記帳（合計記帳）させていただいています。"
+        }
+    }
+]
