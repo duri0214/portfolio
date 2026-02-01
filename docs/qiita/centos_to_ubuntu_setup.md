@@ -122,6 +122,8 @@ vm.vfs_cache_pressure=50
 
 ## SSH（Windows/PowerShellからの接続）
 
+> SSH（Secure Shell）とは、暗号化された通信でリモートのUNIX/Linuxマシンに安全に接続するための仕組みです。ID/パスワードや公開鍵で認証し、コマンド実行やファイル転送（SFTP/scp）を安全に行えます。本手順では Windows の PowerShell（OpenSSH クライアント）からサーバへ接続します。
+
 ### ※Linuxの記号の意味
 
 Linux初心者は、コンソール上の「$」とか「\#」がよくわかんなかったりする
