@@ -25,32 +25,14 @@ Ubuntuでは、デフォルトの一般ユーザー（さくらのVPSでは `ubu
 - **スタートアップスクリプト**: `Setup and update` を選択。OSセットアップ時にパッケージの更新などを自動で行ってくれる便利なプリセットです。
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/1b2eccca-4556-3aa1-d364-60de6d56ef57.png)
 
-> **Warning:**
-> スワップをちょっと（今回は256MBで）作らないとなぜかMySQLがインストールできなくなるので注意。さくらのVPS限定のエラーかな、、時間溶かしたわ。。。
-> ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/bcaea9d9-b4ff-c338-0a4a-3e1f521e2903.png)
->
-> ん？まてよ？？もしかしていままでスーパーギリギリで動いてたってこと？？
-> ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/423b1c4d-ab24-4097-499d-7262576b0539.png)
->
-> ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/3001bac9-9e62-8939-cb31-550cfa5f1c3f.png)
->
-> ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/0e084183-c9b6-1ff7-4cd4-58b3cd181dbe.png)
->
-> ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/a3bf4c16-6072-b167-7555-30866822aa36.png)
+#### パケットフィルタの設定
 
+サーバーの安全のため、必要なポートのみを開放します。
 
-> **Warning:**
-> （削除予定）
->
-> #### font インストール
->
-> matplotlibを使っていて、日本語が文字化けするので対処する
->
-> ```
-> sudo apt-get update
-> sudo apt-get install -y fonts-ipaexfont-gothic fonts-ipaexfont-mincho
-> rm -rf ~/.cache/matplotlib/fontList*.json
-> ```
+- **SSH**: TCP 22（リモートログイン用）
+- **Web**: TCP 80/443（HTTP/HTTPS用）
+- **FTP**: TCP 20/21（ファイル転送用）
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/8385f7ec-e057-01fe-5a15-72578360473a.png)
 
 ### Swap 増設
 
