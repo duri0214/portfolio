@@ -18,7 +18,7 @@
 Ubuntuでは、デフォルトの一般ユーザー（さくらのVPSでは `ubuntu`）でログインし、必要に応じて `sudo -s` でroot権限に切り替えて操作するのが基本です。
 
 > **なぜ直接rootでログインしないのか？**
-> rootユーザーは何でもできてしまう強力な権限を持っているため、万が一パスワードが漏洩したり操作ミスをしたりした際のリスクが非常に大きいです。一般ユーザーでログインし、必要なときだけ `sudo` を使うことで、不用意な破壊操作を防ぎ、セキュリティを向上させることができます。
+> rootユーザーは何でもできてしまう強力な権限を持っているため、万が一パスワードが漏洩したり操作ミスをしたりした際のリスクが非常に大きいです。一般ユーザーでログインし、必要なときだけ `sudo` を使うことで、不用意な破壊操作を防ぎ、セキュリティを向上させられます。
 
 - **管理ユーザーのパスワード**: 「自分で入力したパスワードを使う」を選択し、任意のパスワード（例: `YOUR-COOL-PASSWORD`）を入力します。入力フォームの下に「パスワードの強さ：強力」と表示されるような、複雑なものを設定してください。
 - **SSHキー登録**: ここでは「追加済みの公開鍵を使ってインストールする」を選択し、事前にVPS側の管理画面で登録しておいた公開鍵（例: `main pc`）をセットしています。あらかじめ鍵をVPSに保存しておく必要があるため、初めての方や別の方法を取りたい方は、各自の環境に合わせて公開鍵をインストールしてください。
@@ -42,7 +42,7 @@ Ubuntuでは、デフォルトの一般ユーザー（さくらのVPSでは `ubu
 
 まず、現在スワップが設定されていないことを確認します。
 
-```console:console
+```bash:console
 $ sudo swapon --show
 （何も出力されなければスワップ領域はありません）
 
@@ -57,7 +57,7 @@ $ free -h
 
 スワップファイル（今回は5GB）を作成するための空き容量があるか確認します。
 
-```console:console
+```bash:console
 $ df -h
   Filesystem      Size  Used Avail Use% Mounted on
   /dev/vda2        50G  6.0G   41G  13% /
@@ -68,7 +68,7 @@ $ df -h
 
 今回は5GBのスワップファイルを作成します。
 
-```console:console
+```bash:console
 # 5GBのファイルを作成
 $ sudo fallocate -l 5G /swapfile
 
@@ -90,7 +90,7 @@ NAME      TYPE  SIZE USED PRIO
 
 サーバーを再起動してもスワップが有効になるように設定します。
 
-```console:console
+```bash:console
 # /etc/fstabのバックアップを作成
 $ sudo cp /etc/fstab /etc/fstab.bak
 
@@ -102,7 +102,7 @@ $ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
 Swappinessプロパティ（データをディスクにスワップする頻度）を調整します。標準は60ですが、サーバーの動作を安定させるために40程度に設定するのが一般的です。
 
-```console:console
+```bash:console
 # 現在の設定を確認
 $ cat /proc/sys/vm/swappiness
 60
@@ -141,28 +141,41 @@ Linux初心者は、コンソール上の「$」とか「\#」がよくわかん
 OK!（一般ユーザでログインした）
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/e1d53987-9940-19bc-e7c2-9ad6eb4ab475.png)
 
-### スーパーユーザーになる
+### スーパーユーザーへの切り替え（参考）
 
-（すぐexitするけどね）
+基本的には `sudo` を使ってコマンドを実行しますが、root権限に切り替えて作業したい場合は以下のコマンドを使います（すぐに `exit` で戻ることを推奨します）。
 
-```text:最初の設定
+```bash:console
+# root権限に切り替え
 $ sudo -s
-  [sudo] password for ubuntu:
+[sudo] password for ubuntu:
+
+# 一般ユーザーに戻る
 # exit
 ```
 
 ### 公開鍵でログインできるようにする
 
-```text:最初の設定
-作った公開鍵を置く（teratermにドラッグアンドドロップでOK）
-$ pwd
-  /home/ubuntu
-$ ls
-  id_rsa_henojiya.pub
+PCにある公開鍵（例：`id_rsa_henojiya.pub`）をサーバーにアップロードし、以下のコマンドで登録します。
 
-許可する鍵としてさっきの公開鍵を登録する（先頭にドットがつくのは隠しフォルダ）
+まず、公開鍵ファイルがカレントディレクトリにあることを確認します（この例では `/home/ubuntu` に置いた前提）。
+
+```bash:console
+# いまの作業場所を確認
+$ pwd
+/home/ubuntu
+
+# 公開鍵ファイルが存在するか確認
+$ ls -l *.pub
+-rw-r--r-- 1 ubuntu ubuntu   400 Feb  1 12:34 id_rsa_henojiya.pub
+```
+
+```bash:console
+# SSH設定ディレクトリの作成と権限設定
 $ mkdir ~/.ssh
 $ chmod 700 ~/.ssh
+
+# 公開鍵を `authorized_keys` に移動し、権限を設定
 $ mv id_rsa_henojiya.pub ~/.ssh/authorized_keys
 $ chmod 600 ~/.ssh/authorized_keys
 ```
@@ -172,16 +185,16 @@ $ chmod 600 ~/.ssh/authorized_keys
 
 #### ※SCPを使う場合（※慣れてから）
 
-```console:console
-C:\Users\yoshi\.ssh> scp .\id_rsa_henojiya.pub ubuntu@153.126.200.229:/home/ubuntu
-  ubuntu@153.126.200.229's password:
+```bash:console
+# クライアントPC（Windows）から実行
+C:\Users\yoshi\.ssh> scp .\id_rsa_henojiya.pub ubuntu@<Server-IP>:/home/ubuntu
 ```
 
 #### ※sshログインで怒られたら
 
 クライアントPC（今回はWin）からknown_hosts `C:\Users\yoshi\.ssh\known_hosts` を削除。サーバーのOS入れ直したんデショ？
 
-```console:console
+```bash:console
 $ ssh example.com
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
@@ -192,20 +205,22 @@ $ ssh example.com
 
 ### インストール
 
-```console:console
-$ sudo -s
-# cd ~
-# apt -y install apache2 apache2-dev
-```
+```bash:console
+# パッケージの更新を確認
+$ sudo apt update
 
-```console:console（確認）
-# systemctl status apache2
+# Apache2と開発用パッケージのインストール
+$ sudo apt -y install apache2 apache2-dev
+
+# 動作ステータスを確認
+$ sudo systemctl status apache2
 ```
 
 ### 設定
 
-```console:console
-# vi /etc/apache2/conf-enabled/security.conf
+```bash:console
+# セキュリティ設定ファイルを編集
+$ sudo vi /etc/apache2/conf-enabled/security.conf
 ```
 
 ```conf:security.conf
@@ -217,8 +232,9 @@ $ sudo -s
 + ServerTokens Prod
 ```
 
-```console:console
-# vi /etc/apache2/mods-enabled/dir.conf
+```bash:console
+# ディレクトリ設定ファイルを編集
+$ sudo vi /etc/apache2/mods-enabled/dir.conf
 ```
 
 ```diff:dir.conf(2行目)ディレクトリ名のみでアクセスできるファイル名を設定
@@ -226,20 +242,25 @@ $ sudo -s
 + DirectoryIndex index.html
 ```
 
-```console:console
-# vi /etc/apache2/sites-enabled/000-default.conf
+```bash:console
+# 設定ファイルの編集
+$ sudo vi /etc/apache2/sites-enabled/000-default.conf
 ```
 
-```diff:
-apache2.conf(9行目)サーバー名追記
+```diff:000-default.conf
+# サーバー名を追記
 - #ServerName www.example.com
 + ServerName www.henojiya.net
-+ # httpsの設定が済むまではコメントアウトしておく
-+ # Redirect permanent / https://www.henojiya.net
 ```
 
-```console:console
-# systemctl restart apache2
+```conf:000-default.conf
+# httpsの設定が済むまではコメントアウトしておく
+# Redirect permanent / https://www.henojiya.net
+```
+
+```bash:console
+# 設定を反映
+$ sudo systemctl restart apache2
 ```
 
 ### 確認
@@ -258,7 +279,7 @@ ZIP 展開やファイルアップロード時に日本語ファイル名で `Un
 
 Apache の環境変数で UTF-8 を明示
 
-```bash
+```bash:console
 echo 'export LANG=C.UTF-8' | sudo tee -a /etc/apache2/envvars
 echo 'export LC_ALL=C.UTF-8' | sudo tee -a /etc/apache2/envvars
 sudo systemctl restart apache2
@@ -266,7 +287,7 @@ sudo systemctl restart apache2
 
 確認（任意）: www-data 視点で UTF-8 になっているか
 
-```
+```bash:console
 sudo -u www-data -H bash -lc 'locale'
 ```
 
@@ -357,51 +378,43 @@ https://letsencrypt.org/ja/docs/rate-limits/
 
 ### certbot のインストール
 
-```
-# apt -y install certbot python3-certbot-apache
+```bash:console
+# インストール
+$ sudo apt -y install certbot python3-certbot-apache
 ```
 
 ### 証明書を取得
 
-```console:やりなおすときは証明書を削除してから
-# certbot delete --cert-name henojiya.net
-  Are you sure you want to delete the above certificate(s)?
-  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  (Y)es/(N)o: Y
-# certbot certificates
-  No certificates found.
+```bash:console
+# 証明書の取得と自動設定
+$ sudo certbot --apache -d www.henojiya.net
+```
+
+```bash:console
+# 証明書の削除（やり直す場合）
+$ sudo certbot delete --cert-name henojiya.net
+
+# 証明書の確認
+$ sudo certbot certificates
 ```
 
 https://www.server-world.info/query?os=Ubuntu_24.04&p=ssl&f=2
 
-```console:dry-runで練習する
-# cd ~
-# certbot certonly --apache --dry-run
-  IMPORTANT NOTES:
-   - The dry run was successful.
+```bash:console
+# 証明書の取得テスト（ドライラン）
+$ sudo certbot certonly --apache --dry-run
 ```
 
-```console:henojiya.netは取得したドメイン（サブドメインwwwまで厳密に照合されます）
-# cd ~
-# certbot certonly --apache
-  Enter email address: your_cool_email@gmail.com
-  (Y)es/(N)o: Y　←利用条件に同意する？
-  (Y)es/(N)o: N　←メーリングリストに登録する？
-
-  Which names would you like to activate HTTPS for?
-  We recommend selecting either all domains, or all domains in a VirtualHost/server block.
-  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  1: www.henojiya.net
-  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Select the appropriate numbers separated by commas and/or spaces, or leave input
-  blank to select all options shown (Enter 'c' to cancel): 1　←何番をhttps化するの？
+```bash:console
+# 証明書の取得（Apache設定は自動で行わない場合）
+$ sudo certbot certonly --apache -d www.henojiya.net
 ```
 
 ### FQDN をメモ
 
 `/etc/letsencrypt/live/www.henojiya.net` をメモする。`cert.pem` `privkey.pem` `chain.pem` も覚えとく
 
-```console:console
+```bash:console
 # ls /etc/letsencrypt/live/
   README  www.henojiya.net
 # ls /etc/letsencrypt/live/www.henojiya.net
@@ -413,7 +426,7 @@ https://www.server-world.info/query?os=Ubuntu_24.04&p=ssl&f=2
 
 ### エディタ のデフォルトをviに
 
-```console:console（使用エディタをワンショットでviに設定）
+```bash:console
 export EDITOR=vi
 ```
 
@@ -429,8 +442,9 @@ export EDITOR=vi
 
 ### https
 
-```console:console
-# vi /etc/apache2/sites-available/default-ssl.conf
+```bash:console
+# 設定ファイルの編集
+$ sudo vi /etc/apache2/sites-available/default-ssl.conf
 ```
 
 ```diff:
@@ -444,33 +458,22 @@ export EDITOR=vi
 + SSLCertificateChainFile /etc/letsencrypt/live/www.henojiya.net/chain.pem
 ```
 
-```terminal
-# systemctl restart apache2
+```bash:console
+$ sudo systemctl restart apache2
 ```
 
 ### 確認
 
-```console:console
-# certbot renew
-  Saving debug log to /var/log/letsencrypt/letsencrypt.log
-
-  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Processing /etc/letsencrypt/renewal/www.henojiya.net.conf
-  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Certificate not yet due for renewal
-
-  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  The following certificates are not due for renewal yet:
-  /etc/letsencrypt/live/www.henojiya.net/fullchain.pem expires on 2024-10-11 (skipped)
-No renewals were attempted.
-  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-root@ik1-336-28225:~#
+```bash:console
+# その時点で更新が必要かどうかを確認（必要なら実際に更新される）
+$ sudo certbot renew
 ```
 
+想定される出力の例：
+- 更新が不要な場合: `Certificate not yet due for renewal`
+- 更新が実行された場合: `Congratulations, all renewals succeeded` などのメッセージ
 
-> **Note:**
-> Certificate not yet due for renewal
-> は、まだ更新は必要ないよ、という意味
+注意: `--dry-run` は常にテスト用のステージングCAを使った模擬更新で、実際の証明書は更新されません。このセクションでは実際に更新の要否を判定したいので、`--dry-run` は付けません。
 
 ### 確認
 
@@ -503,151 +506,156 @@ IMPORTANT NOTES:
    making regular backups of this folder is ideal.
 ```
 
-### http からのhttpsリダイレクトの対応
+### http から https へリダイレクト（段階的に有効化）
 
-```console:console
-# vi /etc/apache2/sites-enabled/000-default.conf
+まずは HTTP での表示確認および Let’s Encrypt での証明書取得が完了するまでは、リダイレクトを有効化しないでください（コメントアウトのまま運用）。
+
+#### ステップ1｜HTTPS 設定「前」：コメントアウトのまま
+
+```bash:console
+# デフォルトの設定ファイルを編集
+$ sudo vi /etc/apache2/sites-enabled/000-default.conf
+```
+
+```conf:000-default.conf（HTTPS設定前はコメントアウトのまま）
+# Redirect permanent / https://www.henojiya.net
+```
+
+```bash:console
+# 設定を反映（HTTP でアクセス確認ができる状態を維持）
+$ sudo systemctl restart apache2
+```
+
+この状態で http://www.henojiya.net にアクセスし、Apache が表示されることを確認。その後、前章の手順で証明書を取得・https での表示確認まで完了させます。
+
+#### ステップ2｜HTTPS 動作確認「後」：リダイレクトを有効化
+
+```bash:console
+# 再度、設定ファイルを編集
+$ sudo vi /etc/apache2/sites-enabled/000-default.conf
 ```
 
 ```diff:000-default.conf
-# httpsの設定が済むまではコメントアウトしておく
+# httpsの設定が済んだらコメントアウトを外して有効化する
 - # Redirect permanent / https://www.henojiya.net
 + Redirect permanent / https://www.henojiya.net
 ```
 
-```console:console
-# systemctl restart apache2
+```bash:console
+# 設定を反映
+$ sudo systemctl restart apache2
 ```
+
+以後は HTTP でのアクセスをすべて HTTPS に恒久的に転送します。
 
 ### 定例更新化
 
-```console:console
-cd /root
-vi certbot.sh
+```bash:console
+# 作業ディレクトリ（root権限が必要な場合はsudo）
+$ cd ~
+$ vi certbot.sh
 ```
 
-```sh:certbot.sh
-# /bin/sh
-/usr/local/bin/certbot-auto renew
+```bash:certbot.sh
+#!/bin/bash
+# 証明書の更新
+sudo certbot renew
+
+# 更新ログの記録
 today=$(date "+%Y/%m/%d %H:%M:%S")
-echo ${today} certbot-auto >> result.log
+echo "${today} certbot renew" >> ~/certbot_result.log
 ```
 
-```console:console（使用エディタをワンショットでviに設定）
-export EDITOR=vi
-```
+```bash:console
+# スクリプトに実行権限を付与
+$ chmod 755 certbot.sh
 
-> **Note:**
-> `# vi /etc/environment`
->
-> ```vim:/etc/environment
-> VISUAL=/usr/bin/vim
-> EDITOR=/usr/bin/vim
-> ```
->
-> 保存してターミナルに入り直したら恒久的に viになった
-
-```console:console
-chmod 755 certbot.sh
-crontab -e
+# crontabの編集（使用エディタを一時的にviに指定）
+$ EDITOR=vi crontab -e
 ```
 
 ```vim:crontab
-0 0 1 * * /root/certbot.sh
+# 毎月1日の0:00に更新スクリプトを実行
+0 0 1 * * /home/ubuntu/certbot.sh
 ```
 
-```console:console
-crontab -l
+> **Note:**
+> デフォルトのエディタを `vi` に固定したい場合は、`~/.bashrc` などに `export EDITOR=vi` を追記しておくと便利です。
+
+```bash:console
+$ crontab -l
 ```
 
 ## MySQL8
 
-### mariadb の削除
+### 不要なパッケージの削除
 
-```console:console
-# apt purge mariadb-* mysql-*
+MariaDBなどがインストールされている場合は、事前に削除しておきます。
+
+```bash:console
+$ sudo apt purge mariadb-* mysql-*
 ```
 
 ### インストール
 
-```console:console
-# apt -y install mysql-server-8.0
-# mysql --version
-  mysql  Ver 8.0.37-0ubuntu0.24.04.1 for Linux on x86_64 ((Ubuntu))
+```bash:console
+# MySQLサーバーのインストール
+$ sudo apt -y install mysql-server-8.0
 
-# service mysql status
-  Active: active (running)
+# バージョンの確認
+$ mysql --version
+
+# 動作ステータスの確認
+$ sudo systemctl status mysql
 ```
 
 ### 初期設定
 
-```console:console
-# mysql_secure_installation
+```bash:console
+# セキュリティ設定ウィザードの実行
+$ sudo mysql_secure_installation
 ```
 
-```console:console
-# パスワード品質チェックを有効にするか否か
-Press y|Y for Yes, any other key for No: y
-# パスワード品質チェックを有効にした場合は強度を選択
-Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG: 0
-# 匿名ユーザーを削除するか否か
-Remove anonymous users? (Press y|Y for Yes, any other key for No) : y
-Disallow root login remotely? (Press y|Y for Yes, any other key for No) : y
-# テストデータベースを削除するか否か
-Remove test database and access to it? (Press y|Y for Yes, any other key for No) : y
-# 特権情報をリロードするか否か
-Reload privilege tables now? (Press y|Y for Yes, any other key for No) : y
+ウィザードでは以下の設定を行います。
 
-All done!
-```
+- **VALIDATE PASSWORD COMPONENT**: `y` (有効にする)
+- **Password Strength**: `0` (LOW) ※開発・個人用の場合。本番では適宜調整。
+- **Remove anonymous users?**: `y` (匿名ユーザーを削除)
+- **Disallow root login remotely?**: `y` (rootのリモートログインを禁止)
+- **Remove test database?**: `y` (テストDBを削除)
+- **Reload privilege tables?**: `y` (設定を即時反映)
 
 ### 確認
 
-```console:console
-# mysql -u root -p
-  Welcome to the MySQL monitor.
+Ubuntuのデフォルト設定では、rootユーザーは `sudo` を経由してのみログイン可能です。
 
-UTF8mb4がデフォルト文字コードみたいなのでそのままでよい
-mysql> status
-       Server characterset:    utf8mb4
-       Db     characterset:    utf8mb4
-       Client characterset:    utf8mb4
-       Conn.  characterset:    utf8mb4
+```bash:console
+$ sudo mysql -u root
 ```
 
-### データベースを作成
+MySQL内での確認：
 
-
-> **Note:**
-> Ubuntuをお使いの場合、デフォルトでrootユーザーはsudoを使ってのみアクセス可能となっています。これは、セキュリティを強化するための設定です
->
-> つまり mysql は root にしてから設定しろってことか。。？
-
-```console:console
-mysql> CREATE DATABASE portfolio_db DEFAULT CHARACTER SET utf8mb4;
-       Query OK, 1 row affected (0.01 sec)
-mysql> show databases;
+```sql
+-- 文字コードが utf8mb4 になっていることを確認
+mysql> status;
 ```
 
-### ユーザを作成
+### データベースとユーザーの作成
 
-`%` の権限にするとWindowsからのリモートログインができるようになる。本来はこの部分を `localhost` にして、セキュリティを高める。
+```sql
+-- データベース作成
+CREATE DATABASE portfolio_db DEFAULT CHARACTER SET utf8mb4;
 
-```console:pythonユーザを作成（重複して作らないようにね）
-mysql> SELECT User, Host FROM mysql.user;
-mysql> CREATE USER 'python'@'%' IDENTIFIED BY 'python123';
-```
+-- ユーザー作成
+-- ※ '%' はどこからでも接続可能。セキュリティを高めるなら 'localhost' に限定。
+CREATE USER 'python'@'%' IDENTIFIED BY 'python123';
 
-```console:pythonユーザには「portfolio_db」という名前のデータベースに9種の権限を与える
-mysql> grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on portfolio_db.* to 'python'@'%';
-```
+-- 権限の付与
+GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX ON portfolio_db.* TO 'python'@'%';
 
-
-> **Note:**
-> 特にローカルパソコンで手順をなぞるときは `'python'@'%'` でユーザ作ったのに `'python'@'localhost'` で権限を与えようとしてハマることがある（最初の1回しかやらないからパソコン買い替え時にハマった）。`'python'@'%'` でユーザ作ったら`'python'@'%'` で権限を与える。まぁローカルパソコンなら`'python'@'localhost'` でユーザ作ったらええか
-
-```console:console
-mysql> exit
+-- 設定の反映と終了
+FLUSH PRIVILEGES;
+EXIT;
 ```
 
 ## DBeaver
@@ -711,257 +719,239 @@ Test tunnel configuration を押して、サーバにつながったことを確
 
 ### 起動確認
 
-いままでは `python` ってコマンドでバージョンとか見てたけど `python3` ってバージョン付きコマンドでなれたほうがよさそう
+Ubuntu 24.04では標準で Python 3.12 がインストールされています。
 
-```console:console（標準でpython3.12入ってそうだな）
-# python3 -V
+```bash:console
+# バージョンの確認
+$ python3 -V
 Python 3.12.3
 ```
 
+### venv（仮想環境）の準備
 
-> **Warning:**
-> #### python 3.12
->
-> https://iohk.zendesk.com/hc/en-us/articles/16724475448473-Install-Python-3-11-on-ubuntu
->
-> ```console:console
-> # apt update && apt upgrade
-> # apt install wget build-essential libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev
-> # add-apt-repository ppa:deadsnakes/ppa
-> # apt install Python3.12 python3.12-dev
-> ```
+```bash:console
+# venvパッケージのインストール
+$ sudo apt -y install python3.12-venv
 
-### venv
+# プロジェクトディレクトリの作成（例）
+$ sudo mkdir -p /var/www/html/portfolio
+$ sudo chown ubuntu:ubuntu /var/www/html/portfolio
+$ cd /var/www/html/portfolio
 
-#### インストール
+# 仮想環境の作成
+$ python3 -m venv venv
 
-```console:console
-# apt -y install python3.12-venv
-```
+# 仮想環境の有効化
+$ source venv/bin/activate
 
-#### 仮想環境の作成
+# 仮想環境内での確認
+(venv) $ python -V
+Python 3.12.3
 
-```console:console
-# cd /var/www/html/portfolio
-# python3.12 -m venv venv (※ここに venv フォルダができて3.12がinstallされる）
-```
-
-#### activate
-
-```console:console
-# source /var/www/html/portfolio/venv/bin/activate
-# python -V
-  Python 3.12.4
-```
-
-#### deactivate
-
-```console:console
-# deactivate
+# 仮想環境の無効化
+(venv) $ deactivate
 ```
 
 ## Git
 
 ### バージョン確認
 
-そのままでいいと思うけどね
-
-```console:console
+```bash:console
 $ git --version
-  git version 2.43.0
+git version 2.43.0
 ```
 
-### 公開鍵の作成
+### GitHub 連携用の鍵作成
 
-VPSに公開鍵を作成して、それをgithubに登録することでpullができるようになる（windowsに作った公開鍵と混同しないように）
+サーバー上で公開鍵を作成し、GitHubに登録することで安全に `git pull` できるようになります。
 
+```bash:console
+# ユーザー情報を設定（初回のみ）
+$ git config --global user.name "<your-name>"
+$ git config --global user.email "<your-email@example.com>"
 
-> **Note:**
-> rootで `~/.ssh` のフォルダはない。詳しく調べてないけど root で ssh ログインはするな（＝公開鍵の作成は一般ユーザで行え）っていう理解にしておこう
-> ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/18307c94-f16d-99bd-3697-f64104a381ee.png)
+# SSHキー（Ed25519）の作成
+$ ssh-keygen -t ed25519 -C "<your-email@example.com>"
+# ※保存場所やパスフレーズを聞かれますが、基本はEnter連打（パスフレーズなし）でOKです。
 
-```console:console
-$ cd ~/.ssh
-$ ls
-  authorized_keys
-$ git config --global user.name "yoshi"
-$ git config --global user.email "your_cool_email@gmail.com"
-$ ssh-keygen -t ed25519 -C "your_cool_email@gmail.com"
-
-Enter file in which to save the key (/home/ubuntu/.ssh/id_ed25519):　←ここに作るよ？　←enter押す
-Enter passphrase (empty for no passphrase):　←カラでenter押す
-Enter same passphrase again:　←カラでenter押す
-
-$ ls
-  authorized_keys  id_ed25519  id_ed25519.pub
+# 公開鍵の中身を表示してコピーする
+$ cat ~/.ssh/id_ed25519.pub
 ```
 
-### 公開鍵 をgitHubにアップ
+コピーした内容を GitHub の `Settings > SSH and GPG keys > New SSH key` に登録します。
 
-```console:console
-$ cat id_ed25519.pub
-```
+### 接続確認
 
-```id_rsa.pub（この公開鍵をコピーしてgithubのSSHKeysに貼り付ける
-ssh-rsa AAAAB3N ...
-```
-
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/6c92d0ac-d59f-102a-f75b-c22f342e0be4.png)
-
-### 確認
-
-このコマンドを打つことで認証が済むのでこれをやらないと push できない。
-
-```
+```bash:console
 $ ssh -T git@github.com
-  Warning: Permanently added the RSA host key for IP address '13.114.40.48' to the list of known hosts.
-  Hi duri0214! You've successfully authenticated, but GitHub does not provide shell access.
+# 「Hi username! You've successfully authenticated...」と出れば成功です。
 ```
+
+> Note:
+> - このコマンドは「SSH鍵でGitHubに認証できるか」をテストする疎通確認です。push自体の必須手順ではありませんが、SSH方式（`git@github.com:owner/repo.git`）で `git clone/pull/push` を行う予定なら、事前に一度実行しておくと原因切り分けが容易になります。
+> - HTTPS方式（`https://github.com/owner/repo.git`）で運用する場合は不要です。その代わりにPersonal Access Token（PAT）の入力や認証ヘルパーの設定が必要です。
+> - 失敗する典型例と対処：
+>   - 公開鍵がGitHubに未登録 → GitHubの Settings > SSH and GPG keys に `~/.ssh/id_ed25519.pub` 等を登録
+>   - 別名の鍵を使っている → `~/.ssh/config` に `Host github.com` `IdentityFile ~/.ssh/<your_key>` を設定
+>   - パーミッション不備 → `chmod 700 ~/.ssh; chmod 600 ~/.ssh/*`
+>   - 22番ポートが閉じている → `~/.ssh/config` で `Hostname ssh.github.com` `Port 443` を指定
 
 ## Django4
 
+既存のプロジェクトを GitHub から Clone して構築する場合の手順です。
 
-> **Note:**
-> ※Cloneから始めるときの前提になっている。新規は下の方に書いた
+### プロジェクトの Clone
 
-### Clone する
+```bash:console
+# ディレクトリの所有権を変更（ubuntuユーザーで操作可能にする）
+$ sudo chown -R ubuntu:ubuntu /var/www/html
 
-```console:console
-# chown -R ubuntu:ubuntu /var/www/html
-# exit
-```
-
-```console:console
+# Cloneの実行
 $ cd /var/www/html
-$ git clone git@github.com:duri0214/portfolio.git
-$ service apache2 restart
-```
-
-```
+$ git clone git@github.com:<your-username>/portfolio.git
 $ cd portfolio
-$ sudo apt-get install libmysqlclient-dev pkg-config python3-dev
-$ source /var/www/html/portfolio/venv/bin/activate
-$ pip install -r requirements.txt
 ```
 
+### 依存パッケージのインストール
+
+```bash:console
+# MySQLクライアントのビルドに必要なライブラリをインストール
+$ sudo apt update
+$ sudo apt install -y libmysqlclient-dev pkg-config python3-dev
+
+# 仮想環境の有効化とパッケージインストール
+$ source venv/bin/activate
+(venv) $ pip install -r requirements.txt
+```
 
 > **Note:**
-> 自分メモ
-> `.env` を FTP で移すのを忘れずに
-
-#### ※Cloneできないときはこれをチェック
-
-- `ls ~/.ssh` に github 登録したカギがあるか（rootに `.ssh` フォルダはない。 `$`だとある）
-
-- gitに公開鍵を登録していない [対git用公開鍵の作成](https://qiita.com/YoshitakaOkada/items/d1e14776040e64cd1434#%E5%85%AC%E9%96%8B%E9%8D%B5%E3%81%AE%E4%BD%9C%E6%88%90)
+> `.env` などの環境設定ファイルは Git 管理外にしている場合が多いため、FTP 等で個別にアップロードするのを忘れないようにしてください。
 
 ## mod_wsgi
 
+Apache と Python を連携させるためのモジュール `mod_wsgi` を設定します。
+
 ### インストール
 
-`apache2-dev` が入ってないとだめみたいね
-
-```console:console
-$ source /var/www/html/portfolio/venv/bin/activate
-$ pip install mod_wsgi
-  Requirement already satisfied: mod_wsgi in /var/www/html/portfolio/venv/lib/python3.12/site-packages (5.0.0)
+```bash:console
+# 仮想環境内でインストール
+(venv) $ pip install mod_wsgi
 ```
 
-### LoadModule
+### 設定情報の確認
 
-> **Note:**
-> これをメモして次のステップで `000-default.conf` に書き込む
+後の手順で Apache の設定ファイルに記述するためのパスを確認します。
 
-```console:console
-# find / -name mod_wsgi*.so
-  /var/www/html/portfolio/venv/lib/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so
+```bash:console
+# 前提：プロジェクトのルートへ移動（例）
+$ cd /var/www/html/portfolio
+
+# mod_wsgi本体のパスを確認
+$ find venv -name "mod_wsgi*.so"
+# 例: /var/www/html/portfolio/venv/lib/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so
+
+# Python Home (仮想環境) のパスを確認（WSGIDaemonProcess の python-home に指定する値）
+# 方法A: find でプロジェクト配下から venv を特定（推奨）
+$ find /var/www/html/portfolio -maxdepth 2 -type d -name 'venv'
+# 期待値例: /var/www/html/portfolio/venv
+
+# 方法B: 仮想環境を有効化して Python 側で prefix を確認
+$ source venv/bin/activate
+(venv) $ python -c 'import sys; print(sys.prefix)'
+# 期待値例: /var/www/html/portfolio/venv
+(venv) $ deactivate
 ```
 
-### python-home
+### Apache 設定ファイルの編集（APT 方式に統一）
 
-> **Note:**
-> これをメモして次のステップで `000-default.conf` に書き込む
-
-```console:console
-# find /var/www/html/portfolio -name '*venv*'
-  /var/www/html/portfolio/venv
-```
-
-### httpd.conf
-
-```console:console
-# vi /etc/apache2/sites-available/000-default.conf
+```bash:console
+# 設定ファイルの編集
+$ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
 ```conf:000-default.conf
-# VirtualHostは変更しません
-<VirtualHost *:80>
-・・・省略・・・
-</VirtualHost>
+# 方針: APT 版 libapache2-mod-wsgi-py3 を使用する
+# 理由（重要）:
+# - 過去は VirtualHost の設定ファイル内に `LoadModule wsgi_module ...` を直書きしていたが、
+#   APT 方式では `a2enmod wsgi` により Apache 標準のモジュール管理
+#   （/etc/apache2/mods-available/ → /etc/apache2/mods-enabled/）で読み込みを一元化できる。
+# - サイト設定側にも `LoadModule` を書くと二重読み込みになり、
+#   `AH01574: module wsgi_module is already loaded, skipping` の警告や混乱の原因となる。
+# - したがって、本ファイルには `LoadModule` を書かない（mods-enabled/wsgi.load に任せる）。
 
-# 以下に書き込む
-LoadModule wsgi_module /usr/lib/apache2/modules/mod_wsgi.so
 WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
 WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
 WSGIProcessGroup wsgi_app
 WSGISocketPrefix /var/run/wsgi
 WSGIApplicationGroup %{GLOBAL}
 
-# css, javascript etc
+# 静的ファイル（CSS/JS/画像）の設定
 Alias /static/ /var/www/html/portfolio/static/
 <Directory /var/www/html/portfolio/static>
-  Require all granted
+    Require all granted
+    Options -Indexes
+</Directory>
+
+# プロジェクトディレクトリへのアクセス許可
+<Directory /var/www/html/portfolio/config>
+    <Files wsgi.py>
+        Require all granted
+    </Files>
 </Directory>
 ```
 
+```bash:console
+# 設定を反映
+$ sudo systemctl restart apache2
 ```
-# service apache2 restart
+
+> **各項目の意味:**
+> - **WSGIScriptAlias**: URL と `wsgi.py` の紐付け設定。
+> - **WSGIDaemonProcess**: Python 仮想環境のパスを指定し、デーモンモードで実行します（ここでは APT 版 mod_wsgi と venv を組み合わせています）。
+> - **WSGIProcessGroup**: デーモンプロセスをグループ化します。
+> - **WSGIApplicationGroup %{GLOBAL}**: numpy の `Interpreter change detected` 回避、拡張モジュールとの相性対策。
+
+#### APT 方式での前提と確認
+
+APT 方式では、`LoadModule` の記述は Apache 標準のモジュール管理に任せます（`/etc/apache2/mods-available/wsgi.load` → `a2enmod wsgi` → `/etc/apache2/mods-enabled/wsgi.load`）。
+
+確認コマンド:
+
+```bash:console
+$ dpkg -l | grep libapache2-mod-wsgi-py3
+$ ls -l /usr/lib/apache2/modules/mod_wsgi.so
+$ apache2ctl -M | grep wsgi
 ```
 
-> LoadModule: mod_wsgiの本体ファイルの位置。Apacheがwsgiを認識するために必要
-> WSGIScriptAlias: 1つめの引数のURLでアクセスされたら、2つめの引数のwsgiスクリプトに移動する
-> WSGIDaemonProcess: Linuxではデーモン（＝サービス）として動かすのが推奨されている
-> WSGIProcessGroup: 「サービス」に名前をつける
-> WSGISocketPrefix: 「※Socketの問題」を参照
+`apache2ctl -M` に `wsgi_module (shared)` が出ていれば有効です。`AH01574: module wsgi_module is already loaded, skipping` が出る場合は、`000-default.conf` に重複する `LoadModule` 行が無いか確認し、削除してください（APT 方式では不要）。
 
 
-> **Warning:**
-> （対応済み）
->
-> #### ※numpy: Interpreter change detected
->
-> こいつにトドメをさしたい。
-> ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/278adb45-6312-7927-a78a-66469716b98e.png)
->
-> どうもこの記事にたどり着いた。
-> 仮説
->
-> - numpyはインタープリタ（実行環境）の変化を許容しない
-> - wsgi はバーチャルホストの違いでインタープリタを分ける仕組みがある
->
-> https://tech-blog.monotaro.com/entry/2018/07/04/084733
->
-> ```console:console
-> # vi /etc/apache2/sites-enabled/000-default.conf
-> ```
->
-> ```diff_apache:000-default.conf
-> LoadModule wsgi_module /var/www/html/portfolio/venv/lib/python3.8/site-packages/mod_wsgi/server/mod_wsgi-py38.cpython-38-x86_64-linux-gnu.so
-> WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
-> WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
-> WSGIProcessGroup wsgi_app
-> + WSGIApplicationGroup %{GLOBAL}
-> WSGISocketPrefix /var/run/wsgi
-> ```
->
-> ```console:console
-> # service apache2 restart
-> ```
+### ※numpy: Interpreter change detected への対応
 
-### エラーが発生した場合は Apacheのログをみれば原因がわかります
+Djangoで `numpy` を使用している場合、mod_wsgi経由で `Interpreter change detected` エラーが発生することがあります。これは `WSGIApplicationGroup` を設定することで回避できます。
 
-```console:console
-# vi /var/log/apache2/error.log
+```bash:console
+# 設定ファイルの編集
+$ sudo vi /etc/apache2/sites-enabled/000-default.conf
+```
+
+```diff:000-default.conf
+  WSGIProcessGroup wsgi_app
++ WSGIApplicationGroup %{GLOBAL}
+  WSGISocketPrefix /var/run/wsgi
+```
+
+```bash:console
+# 反映
+$ sudo systemctl restart apache2
+```
+
+### エラーが発生した場合は
+
+Apacheのエラーログを確認することで、原因を特定できます。
+
+```bash:console
+$ sudo tail -f /var/log/apache2/error.log
 ```
 
 ## Cron（タスクスケジューラ）
@@ -971,12 +961,15 @@ CronはWindowsでいうタスクスケジューラだ。決まった時間に決
 
 ### 定期実行するプログラムの作成
 
-```console:console
-# cd /var/www/html
-# vi hello-cron.py
+```bash:console
+# 作業用ディレクトリに移動
+$ cd /var/www/html
+
+# テスト用スクリプトの作成
+$ vi hello-cron.py
 ```
 
-```py:/var/www/html/hello-cron.py
+```python:hello-cron.py
 import codecs
 from datetime import datetime
 
@@ -986,44 +979,32 @@ with codecs.open(log_file_path, 'a', 'utf-8') as f:
     f.writelines('\n' + txt)
 ```
 
-```console:console
-# python3 hello-cron.py
-# vi hello-cron.log
-```
+```bash:console
+# 実行テスト
+$ python3 hello-cron.py
 
-```vim:TEST：hello-cron.log（日本時間での時刻と書き込み元のプログラム名が記録された）
-2021/08/29 16:10:39 hello-cron.py
+# ログの確認
+$ cat hello-cron.log
 ```
 
 ### Cron の設定
 
-10分ごとに Hello-cron.py を実行するスケジュールを作成します。気をつける点は、pythonプログラムが書き込む場所の権限とpythonプログラム自体へのパス（フルパスなんよね）。あとは相対パスでプログラムを書いている場合の「カレントディレクトリ」に注意。windowsとlinuxのディレクトリ構造は違うことが多いし。
-
-```console:console（使用エディタをワンショットでviに設定）
-export EDITOR=vi
+```bash:console
+# crontabの編集
+$ crontab -e
 ```
 
-> **Note:**
-> `# vi /etc/environment`
->
-> ```vim:/etc/environment
-> VISUAL=/usr/bin/vim
-> EDITOR=/usr/bin/vim
-> ```
->
-> 保存してターミナルに入り直したら恒久的に viになった
+設定例：
+10分ごとに実行する場合は `*/10 * * * *` と記述します。仮想環境のPythonをフルパスで指定するのがポイントです。
 
-```diff:console（設定画面へ）
-# crontab -e
-```
+```vim:crontab
+# 10分ごとに実行
+*/10 * * * * /var/www/html/portfolio/venv/bin/python /var/www/html/hello-cron.py
 
-```console:crontab（10分ごとと毎時0分ごとと毎分。タスクスケジューラでも実行ファイルへのパスとプログラムのパスを併記するよね）
-*/10 * * * * root /var/www/html/portfolio/venv/bin/python /var/www/html/hello-cron.py
-0 * * * * root /var/www/html/portfolio/venv/bin/python /var/www/html/hello-cron.py
-* * * * * root /var/www/html/portfolio/venv/bin/python /var/www/html/hello-cron.py
-```
+# 毎月1日の0:00に証明書を更新
+0 0 1 * * /home/ubuntu/certbot.sh
 
-```vim:crontab（自分用メモ）
+# バッチ処理の例（自分用メモ）
 0 0 1 * * /root/certbot.sh
 0 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
 5 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_sbi
@@ -1043,11 +1024,13 @@ export EDITOR=vi
 25 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_update_historical_assets
 30 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_update_nasdaq100_list
 
-
-# ※相手先サーバの証明書がうまくなくて実行できない
+# ※相手先サーバ（ベトナム）の証明書がうまくなくて実行できない
 20 18 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_vietnam_statistics
-
 ```
+
+### その他
+
+ここから下は、必要に応じて参照してください。
 
 
 > **Warning:**
@@ -1207,9 +1190,24 @@ mysql> use portfolio_db
 mysql> source mysql_dump.sql
 ```
 
-## 権限 chown -R ubuntu:ubuntu /var/www/html
+## 権限（wsgi が読める権限を確保）
 
-さんざん `root` のままディレクトリとか作りまくってると `access denied` というか `permission error` になってることがあるので注意
+mod_wsgi（Apache の wsgi モジュール）がアプリを読み込めるよう、最低限の読み取り権限を付与しておく。所有者は `ubuntu:ubuntu` のままで構わないが、Apache 実行ユーザー（`www-data`）が以下を満たす必要がある。
+
+- `WSGIScriptAlias` で指定した `wsgi.py` を含むディレクトリに「実行 (x)」があり辿れること
+- `wsgi.py` 本体を「読み取り (r)」できること
+- `python-path` で指定したプロジェクト配下の `.py` も読めること
+- 静的ファイル配下（例: `/var/www/html/portfolio/static`）にも `x`/`r` があること
+
+典型的には、ディレクトリ 755、ファイル 644 にしておけば wsgi が読める。
+
+```bash:console
+# wsgi が読める最小権限（ディレクトリ=755, ファイル=644）を一括で付与
+$ sudo find /var/www/html/portfolio -type d -exec chmod 755 {} +
+$ sudo find /var/www/html/portfolio -type f -exec chmod 644 {} +
+```
+
+さんざん `root` のままディレクトリとか作りまくってると `access denied` や `permission error` になっていることがあるので注意。特に `/var/www/html/portfolio/config/wsgi.py` と、その親ディレクトリに `x` 権限が無いと mod_wsgi がアプリを読み込めず 500 になる。
 
 ## FTP
 
