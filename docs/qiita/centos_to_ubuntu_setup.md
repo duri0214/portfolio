@@ -223,11 +223,12 @@ $ sudo systemctl status apache2
 $ sudo vi /etc/apache2/conf-enabled/security.conf
 ```
 
-```conf:security.conf
-:set number
-```
+編集位置（行番号の目安・:set number 前提）
+- 対象: /etc/apache2/conf-enabled/security.conf
+- 12行目: ServerTokens の値を変更（例では12行目）
 
-```diff:security.conf(12行目)サーバーの情報（バージョン、OSなど）を表示しないように
+```diff
+# サーバーの情報（バージョン、OSなど）を表示しないように（security.conf の12行目を編集）
 - ServerTokens OS
 + ServerTokens Prod
 ```
@@ -237,7 +238,12 @@ $ sudo vi /etc/apache2/conf-enabled/security.conf
 $ sudo vi /etc/apache2/mods-enabled/dir.conf
 ```
 
-```diff:dir.conf(2行目)ディレクトリ名のみでアクセスできるファイル名を設定
+編集位置（行番号の目安・:set number 前提）
+- 対象: /etc/apache2/mods-enabled/dir.conf
+- 2行目: DirectoryIndex を単一指定に変更
+
+```diff
+# ディレクトリ名のみでアクセスできるファイル名を設定（dir.conf の2行目を編集）
 - DirectoryIndex index.html index.cgi index.pl index.php index.xhtml index.htm
 + DirectoryIndex index.html
 ```
@@ -247,14 +253,22 @@ $ sudo vi /etc/apache2/mods-enabled/dir.conf
 $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 ```
 
-```diff:000-default.conf
-# サーバー名を追記
+編集位置（行番号の目安・:set number 前提）
+- 対象: /etc/apache2/sites-enabled/000-default.conf
+- 13行目前後: コメントアウトされている ServerName 行を実値で追記
+
+```diff
+# サーバー名を追記（000-default.conf の13行目前後）
 - #ServerName www.example.com
 + ServerName www.henojiya.net
 ```
 
+追記位置（行番号の目安・:set number 前提）
+- 対象: /etc/apache2/sites-enabled/000-default.conf
+- 15〜16行目あたり（ServerName の直下）に以下をコメントのまま配置（HTTPS 設定が完了するまで）
+
 ```conf:000-default.conf
-# httpsの設定が済むまではコメントアウトしておく
+# httpsの設定が済むまではコメントアウトしておく（例: 15〜16行目）
 # Redirect permanent / https://www.henojiya.net
 ```
 
@@ -265,9 +279,29 @@ $ sudo systemctl restart apache2
 
 ### 確認
 
-http://www.henojiya.net でつながった！
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/6a030261-c075-0714-d201-472a66790d96.png)
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/9ff08833-f0f1-c3c1-9f53-97d529de6f4a.png)
+HTTP での応答をコマンドで確認します（スクショではなく機械的に判定できる方法に統一）。
+
+```bash:console
+# ヘッダのみ取得してステータスを確認（200 OK を期待）
+$ curl -I http://www.henojiya.net
+HTTP/1.1 200 OK
+Server: Apache/2.x
+Content-Type: text/html; charset=iso-8859-1
+```
+
+```bash:console
+# 本文の先頭を確認（デフォルトの It works! ページなどが返ってくる想定）
+$ curl -s http://www.henojiya.net | head -n 5
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html>
+<head>
+<title>It works!</title>
+```
+
+うまくいかない場合の切り分け（参考）
+- `sudo systemctl status apache2` で Apache が起動しているか
+- `sudo ufw status` で 80/TCP（Apache）が許可されているか
+- `/etc/apache2/sites-enabled/000-default.conf` に `ServerName www.henojiya.net` が入っているか
 
 ### ロケールの変更
 
