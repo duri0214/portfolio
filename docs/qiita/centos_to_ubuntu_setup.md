@@ -120,7 +120,7 @@ vm.swappiness=40
 vm.vfs_cache_pressure=50
 ```
 
-## TeraTerm
+## SSH（Windows/PowerShellからの接続）
 
 ### ※Linuxの記号の意味
 
@@ -131,15 +131,52 @@ Linux初心者は、コンソール上の「$」とか「\#」がよくわかん
 | $  | 一般ユーザ権限で操作中  |
 | #  | root権限権限で操作中 |
 
-### ログインチェック
+### ログインチェック（パスワード認証）
 
-まだ portは22
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/4aa64d7b-e148-3d46-ef05-88064b759474.png)
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/c7a65db6-59bb-abc9-61c8-152c1493cc84.png)
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/2e600364-b07a-8bd8-4ea5-4761738cc661.png)
+以後は Windows の PowerShell（PyCharm のターミナル等）から CUI ベースでログインします。
 
-OK!（一般ユーザでログインした）
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/e1d53987-9940-19bc-e7c2-9ad6eb4ab475.png)
+- 現時点では SSH のみ開放（TCP 22）。HTTP/HTTPS へのリダイレクトやUFW設定はこの後に行います。
+- 将来ポートを変更したら `ssh -p <port> ubuntu@<IP>` のように `-p` で指定できます（初期は22）。
+
+手順（PowerShell）
+
+```bash:console
+# （Windows）PowerShell から実行
+# 初回接続（既定ポート22でSSH）
+# ホスト名またはIPを指定（例ではさくらVPSのグローバルIP）
+PS C:\Users\yoshi> ssh ubuntu@153.127.13.226
+The authenticity of host '153.127.13.226 (153.127.13.226)' can't be established.
+ED25519 key fingerprint is SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '153.127.13.226' (ED25519) to the list of known hosts.
+ubuntu@153.127.13.226's password:  # さくらVPSの初期設定で指定した ubuntu のパスワードを入力
+```
+
+### 既知鍵の衝突（known_hosts）
+
+既に同一IPで鍵が変わっている場合（OS入れ直し等）は known_hosts の衝突で警告されます。その場合は次のどちらかで解決します。
+
+```bash:console
+# （Windows）PowerShell から実行
+# 衝突している既存のホストキーを削除（推奨）
+PS C:\Users\yoshi> ssh-keygen -R 153.127.13.226
+
+# もしくは known_hosts から該当行を手で削除
+PS C:\Users\yoshi> notepad $env:USERPROFILE\.ssh\known_hosts
+```
+
+ログイン後の確認（一般ユーザーで入れていることを確認）
+
+```bash:console
+$ whoami
+ubuntu
+$ hostname -I
+153.127.13.226
+$ pwd
+/home/ubuntu
+```
+
+これで「一般ユーザー ubuntu でログインできた」ことを PowerShell から機械的に確認できます。
 
 ### スーパーユーザーへの切り替え（参考）
 
@@ -156,7 +193,7 @@ $ sudo -s
 
 ### 公開鍵でログインできるようにする
 
-PCにある公開鍵（例：`id_rsa_henojiya.pub`）をサーバーにアップロードし、以下のコマンドで登録します。
+PCにある公開鍵（例：`id_rsa_henojiya.pub`）をサーバーにアップロードし、以下のコマンドで登録します（まずはパスワード認証で一度ログイン→公開鍵方式へ切り替える流れ）。
 
 まず、公開鍵ファイルがカレントディレクトリにあることを確認します（この例では `/home/ubuntu` に置いた前提）。
 
@@ -173,22 +210,46 @@ $ ls -l *.pub
 ```bash:console
 # SSH設定ディレクトリの作成と権限設定
 $ mkdir ~/.ssh
-$ chmod 700 ~/.ssh
+$ chmod 700 ~/.ssh  # ~/.ssh は 700 である必要あり
 
 # 公開鍵を `authorized_keys` に移動し、権限を設定
 $ mv id_rsa_henojiya.pub ~/.ssh/authorized_keys
-$ chmod 600 ~/.ssh/authorized_keys
+$ chmod 600 ~/.ssh/authorized_keys  # authorized_keys は 600 である必要あり
+
+> Note:
+> - Windows から SCP で転送する場合は PowerShell の `scp`（OpenSSH クライアント）を利用します。
+> - 以後は `ssh ubuntu@<IP>` でパスワード入力なしで接続できるはずです（鍵パスフレーズを設定していればその入力は必要）。
 ```
 
 ターミナルからログインできました！
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/314f4e41-58fc-87b9-de2d-5eb5ab362b47.png)
 
-#### ※SCPを使う場合（※慣れてから）
+#### ファイル転送の選択肢（Windows）
 
-```bash:console
-# クライアントPC（Windows）から実行
-C:\Users\yoshi\.ssh> scp .\id_rsa_henojiya.pub ubuntu@<Server-IP>:/home/ubuntu
-```
+> Note: 単発・少量の転送なら `scp` が最短です。GUIでまとめて行う場合は FileZilla（SFTP）が便利です。
+
+- CUI（最短手）：PowerShell の `scp`
+  ```bash:console
+  # Windows（PowerShell）から実行（鍵ファイル指定の例）
+  PS C:\Users\yoshi> scp -i ~/.ssh/<your_private_key> C:\path\to\localfile ubuntu@153.127.13.226:/home/ubuntu/
+
+  # ディレクトリごと転送する場合（-r）
+  PS C:\Users\yoshi> scp -r -i ~/.ssh/<your_private_key> C:\path\to\localdir\ ubuntu@153.127.13.226:/home/ubuntu/localdir/
+  ```
+
+- GUI：FileZilla（SFTP）
+  - 設定例（サイトマネージャー）
+    - ホスト: `153.126.200.229`（例）
+    - プロトコル: SFTP – SSH File Transfer Protocol
+    - ログオンの種類: 鍵ファイル
+    - ユーザー: `ubuntu`
+    - ポート: `22`
+  - 鍵の登録（初回のみ）
+    1. メニューバー: 編集 → 設定 → SFTP を開く
+    2. 「鍵ファイルの追加(A)」をクリックし、秘密鍵（例: `C:\Users\yoshi\.ssh\id_rsa` など）を選択
+    3. 「FileZilla用に変換して ppk にしますか？」と聞かれたら OK を選択し、例: `id_rsa_filezilla.ppk` のように保存
+  - サイトマネージャーで上記 ppk を指定して接続し、`/home/ubuntu` など転送先へドラッグ＆ドロップで配置
+  - 参考: もとの記事の FileZilla 手順（鍵の変換含む）: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
 
 #### ※sshログインで怒られたら
 
@@ -200,6 +261,12 @@ $ ssh example.com
 @    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 ```
+
+### よくあるエラーと対処（SSH）
+
+- Permission denied (publickey,password): 鍵が未登録、`authorized_keys` の権限が不正（600以外）や `~/.ssh` の権限が不正（700以外）。上記権限を確認。
+- 接続がタイムアウト: UFW やVPS側パケットフィルタで 22/TCP が閉じていないかを確認（`sudo ufw status`）。
+- ホスト鍵警告（REMOTE HOST IDENTIFICATION HAS CHANGED!）: OS入れ直し等で鍵が変わった。`ssh-keygen -R <IP>` で該当エントリを削除して再接続。
 
 ## Apache2
 
