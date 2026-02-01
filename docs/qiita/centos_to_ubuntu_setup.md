@@ -99,23 +99,24 @@ $ sudo cp /etc/fstab /etc/fstab.bak
 $ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
-#### ステップ6 – スワップ設定の調整
+#### ステップ5 – スワップ設定の最適化
 
-Swappinessプロパティの調整
-swappinessパラメーターは、システムがRAMからスワップ領域にデータをスワップする頻度を設定します。これは、パーセンテージを表す0～100の値です。
+Swappinessプロパティ（データをディスクにスワップする頻度）を調整します。標準は60ですが、サーバーの動作を安定させるために40程度に設定するのが一般的です。
 
-値が0に近い場合、カーネルは絶対に必要な場合を除いて、データをディスクにスワップしません。スワップにあまり依存しないようにシステムに指示すると、通常、システムの動作が高速になります。
-
-```console:console（頻度を40に設定する）
+```console:console
+# 現在の設定を確認
 $ cat /proc/sys/vm/swappiness
-  60
-$ sudo sysctl vm.swappiness=40
-  vm.swappiness = 40
+60
 
-$ sudo vi /etc/sysctl.conf
+# 一時的に変更
+$ sudo sysctl vm.swappiness=40
+vm.swappiness = 40
 ```
 
-```conf:/etc/sysctl.conf（設定の永続化）
+設定を永続化させるために、`/etc/sysctl.conf` を編集します。
+
+```conf:/etc/sysctl.conf
+# ファイルの末尾に追加
 vm.swappiness=40
 vm.vfs_cache_pressure=50
 ```
