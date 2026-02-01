@@ -87,16 +87,16 @@ $ sudo swapon --show
 NAME      TYPE  SIZE USED PRIO
 /swapfile file    5G   0B   -2
 ```
+#### ステップ4 – スワップファイルの永続化
 
-#### ステップ5 – スワップファイルの永続化
-
-現在のセッションのスワップファイルが有効になりました。しかし、再起動すると、サーバーはスワップ設定を自動的に保持しません。これを変更するには、スワップファイルを/etc/fstabファイルに追加します。
-※「/etc/fstab」ファイルは、マウントするファイルシステムの情報を記述するファイル
+サーバーを再起動してもスワップが有効になるように設定します。
 
 ```console:console
+# /etc/fstabのバックアップを作成
 $ sudo cp /etc/fstab /etc/fstab.bak
+
+# 設定を追加
 $ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-  /swapfile none swap sw 0 0
 ```
 
 #### ステップ6 – スワップ設定の調整
