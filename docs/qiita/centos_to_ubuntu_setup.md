@@ -32,7 +32,6 @@ Ubuntuでは、デフォルトの一般ユーザー（さくらのVPSでは `ubu
 - **SSH**: TCP 22（リモートログイン用）
 - **Web**: TCP 80/443（HTTP/HTTPS用）
 - **FTP**: TCP 20/21（ファイル転送用）
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/8385f7ec-e057-01fe-5a15-72578360473a.png)
 
 ### Swap 増設
 
