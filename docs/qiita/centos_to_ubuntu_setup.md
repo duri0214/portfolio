@@ -65,36 +65,27 @@ $ df -h
 ```
 `Mounted on` 列が `/` になっている行に注目します。これがルートディレクトリ（システム全体）の空き容量を示しています。`Avail`（空き容量）が5GB以上あることを確認してください。
 
-#### ステップ3 – スワップファイルの作成
+#### ステップ3 – スワップファイルの作成と有効化
+
+今回は5GBのスワップファイルを作成します。
 
 ```console:console
+# 5GBのファイルを作成
 $ sudo fallocate -l 5G /swapfile
-$ ls -lh /swapfile
-  -rw-r--r-- 1 root root 5.0G 12月 24 19:11 /swapfile
-```
 
-#### ステップ4 – スワップファイルの有効化
-
-適切なサイズのファイルが使用可能となったので、実際にこれをスワップ領域に変換する必要があります。
-まず、root権限を持つユーザーのみが内容を読み取れるように、ファイルのアクセス許可をロックする必要があります。これにより通常のユーザーがファイルにアクセスできなくなるため、セキュリティにとって重要な意味を持ちます。
-
-```console:console
+# 権限をrootのみに制限
 $ sudo chmod 600 /swapfile
+
+# スワップ領域としてセットアップ
 $ sudo mkswap /swapfile
-  スワップ空間バージョン 1 を設定します。サイズ = 5 GiB (5368705024 バイト)
-  ラベルはありません, UUID=bc058b64-2f02-47fa-86bc-b2843087cdee
-```
 
-```console:console
+# スワップを有効化
 $ sudo swapon /swapfile
-$ sudo swapon --show
-  NAME      TYPE SIZE USED PRIO
-  /swapfile file   5G   0B   -2
 
-$ free -h
-                 total        used        free      shared  buff/cache   available
-  Mem:           961Mi       883Mi        62Mi       1.5Mi       159Mi        78Mi
-  Swap:          5.0Gi          0B       5.0Gi
+# 設定が反映されたか確認
+$ sudo swapon --show
+NAME      TYPE  SIZE USED PRIO
+/swapfile file    5G   0B   -2
 ```
 
 #### ステップ5 – スワップファイルの永続化
