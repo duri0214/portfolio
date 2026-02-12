@@ -377,7 +377,7 @@ LANG=C.UTF-8 と表示されれば OK。
 いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#%E3%83%90%E3%83%BC%E3%83%81%E3%83%A3%E3%83%AB%E3%83%9B%E3%82%B9%E3%83%88)
 
 ```console:console
-# vi /etc/apache2/sites-available/virtual.host.conf
+$ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
 ```virtual.host.conf(新規)
@@ -403,8 +403,8 @@ LANG=C.UTF-8 と表示されれば OK。
 > ```
 
 ```
-# a2ensite virtual.host
-# systemctl restart apache2
+$ sudo a2ensite virtual.host
+$ sudo systemctl restart apache2
 ```
 
 ## ネームサーバーを設定
@@ -418,11 +418,11 @@ LANG=C.UTF-8 と表示されれば OK。
 ubuntuの443ポートを開け、ファイアウォールを起動する
 
 ```
-# ufw allow in "Apache Full"
-# ufw allow in "OpenSSH"
-# ufw enable
+$ sudo ufw allow in "Apache Full"
+$ sudo ufw allow in "OpenSSH"
+$ sudo ufw enable
   Command may disrupt existing ssh connections. Proceed with operation (y|n)? y
-# ufw status
+$ sudo ufw status
   Status: active
   To                         Action      From
   --                         ------      ----
@@ -435,11 +435,11 @@ ubuntuの443ポートを開け、ファイアウォールを起動する
 ### サイト設定を有効化する
 
 ```console:console
-# a2ensite default-ssl
+$ sudo a2ensite default-ssl
   Enabling site default-ssl. // 設定を読み込む
-# a2enmod ssl
+$ sudo a2enmod ssl
   Module setenvif already enabled // apache に SSL モジュールを読み込む
-# systemctl restart apache2 // Apache2 を再起動
+$ sudo systemctl restart apache2 // Apache2 を再起動
 ```
 
 ## SSL
@@ -1306,11 +1306,11 @@ https://qiita.com/YoshitakaOkada/items/2709dfb13dc209025480
 https://qiita.com/Atommy1999/items/db533fc8b69a5afe29d2
 
 ```console:console
-# sudo apt install -y fonts-ipafont
-# ls ~/.cache/matplotlib/
-# rm ~/.cache/matplotlib/fontlist-v330.json
-# fc-cache -fv
-# fc-list | grep -i ipa
+$ sudo apt install -y fonts-ipafont
+$ sudo ls ~/.cache/matplotlib/
+$ sudo rm ~/.cache/matplotlib/fontlist-v330.json
+$ sudo fc-cache -fv
+$ sudo fc-list | grep -i ipa
   /usr/share/fonts/opentype/ipafont-mincho/ipam.ttf: IPAMincho,IPA明朝:style=Regular
   /usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf: IPAPGothic,IPA Pゴシック:style=Regular
   /usr/share/fonts/opentype/ipafont-mincho/ipamp.ttf: IPAPMincho,IPA P明朝:style=Regular
