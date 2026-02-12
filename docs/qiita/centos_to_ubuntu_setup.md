@@ -256,39 +256,6 @@ $ sudo swapon --show
 NAME      TYPE  SIZE USED PRIO
 /swapfile file    5G   0B   -2
 ```
-### ステップ4 – スワップファイルの永続化
-
-サーバーを再起動してもスワップが有効になるように設定します。
-
-```bash:console
-# /etc/fstabのバックアップを作成
-$ sudo cp /etc/fstab /etc/fstab.bak
-
-# 設定を追加
-$ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-```
-
-### ステップ5 – スワップ設定の最適化
-
-Swappinessプロパティ（データをディスクにスワップする頻度）を調整します。標準は60ですが、サーバーの動作を安定させるために40程度に設定するのが一般的です。
-
-```bash:console
-# 現在の設定を確認
-$ cat /proc/sys/vm/swappiness
-60
-
-# 一時的に変更
-$ sudo sysctl vm.swappiness=40
-vm.swappiness = 40
-```
-
-設定を永続化させるために、`/etc/sysctl.conf` を編集します。
-
-```conf:/etc/sysctl.conf
-# ファイルの末尾に追加
-vm.swappiness=40
-vm.vfs_cache_pressure=50
-```
 
 ## Apache2
 
