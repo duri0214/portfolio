@@ -462,11 +462,46 @@ $ sudo apt -y install certbot python3-certbot-apache
 ```
 
 ### 証明書を取得
-
 ```bash:console
-# 証明書の取得と自動設定
+# メールアドレスの入力（例）
 $ sudo certbot --apache -d www.henojiya.net
+Enter email address (used for urgent renewal and security notices)
+ (Enter 'c' to cancel): your.name@example.com
+
+# 規約同意（Y の入力例）
+Please read the Terms of Service at
+https://letsencrypt.org/documents/LE-SA-v1.6-August-18-2025.pdf. You must agree
+in order to register with the ACME server. Do you agree?
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(Y)es/(N)o: Y
+
+# 任意のアンケート。不要なら N（証明書発行には無関係）
+Would you be willing to share your email address with the Electronic Frontier Foundation
+so they can send you EFF news, campaigns, and ways to support digital freedom?
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(Y)es/(N)o: N
+
+# 以降は発行〜デプロイの要約（典型的な出力例）
+Account registered.
+Requesting a certificate for www.henojiya.net
+
+Successfully received certificate.
+Certificate is saved at: /etc/letsencrypt/live/www.henojiya.net/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/www.henojiya.net/privkey.pem
+This certificate expires on 2026-05-13.
+These files will be updated when the certificate renews.
+Certbot has set up a scheduled task to automatically renew this certificate in the background.
+
+Deploying certificate
+Successfully deployed certificate for www.henojiya.net to /etc/apache2/sites-available/000-default-le-ssl.conf
+Congratulations! You have successfully enabled HTTPS on https://www.henojiya.net
 ```
+
+> Note:
+> - 入力したメールアドレスは証明書更新や重要なお知らせに使われます。後から変更する場合は `sudo certbot register --update-registration --email <new@example.com>`。
+> - 非対話で実行したい場合の例（自動化向け）:
+>   `sudo certbot --apache -d www.henojiya.net -m your.name@example.com --agree-tos -n`
+> - 事前検証はドライランで: `sudo certbot certonly --apache --dry-run`
 
 ```bash:console
 # 証明書の削除（やり直す場合）
@@ -476,11 +511,9 @@ $ sudo certbot delete --cert-name henojiya.net
 $ sudo certbot certificates
 ```
 
-https://www.server-world.info/query?os=Ubuntu_24.04&p=ssl&f=2
-
 ```bash:console
 # 証明書の取得テスト（ドライラン）
-$ sudo certbot certonly --apache --dry-run
+$ sudo certbot certonly --apache -d www.henojiya.net --dry-run
 ```
 
 ```bash:console
