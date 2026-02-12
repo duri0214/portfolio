@@ -39,94 +39,6 @@ Ubuntuでは、デフォルトの一般ユーザー（さくらのVPSでは `ubu
 - **Web**: TCP 80/443（HTTP/HTTPS用）
 - **FTP**: TCP 20/21（ファイル転送用）
 
-### Swap 増設
-
-> **Warning:**
-> Ubuntu 24.04の標準設定ではスワップ（Swap）が0MBになっています（参照：[さくらのVPSマニュアル](https://manual.sakura.ad.jp/vps/os-packages/ubuntu-24.04.html#swap)）。このままだとメモリ不足でMySQLのインストールに失敗したり、運用中に突然サービスが落ちたりすることがあります。特にメモリが少ないプランでは、スワップの作成は必須です。
->
-> 補足: さくらのVPSのスタートアップスクリプト「Setup and update」でも、スワップファイルを自動作成できる場合があります。すでにスワップが作成済みであれば、以下の手順はスキップ可能です。まず `sudo swapon --show` を実行し、`/swapfile` などのエントリが表示されるか確認してください。サイズの調整が必要な場合のみ、本セクションの手順で作り直してください（プランやスクリプト内容により作成サイズは異なることがあります）。
-
-#### ステップ1 – システムのスワップ情報を確認
-
-まず、現在スワップが設定されていないことを確認します。
-
-```bash:console
-$ sudo swapon --show
-（何も出力されなければスワップ領域はありません）
-
-$ free -h
-                 total        used        free      shared  buff/cache   available
-  Mem:           961Mi       889Mi        78Mi       1.5Mi       135Mi        71Mi
-  Swap:             0B          0B          0B
-```
-`Swap: 0B` となっていることがわかります。
-
-#### ステップ2 – ディスクの空き容量を確認
-
-スワップファイル（今回は5GB）を作成するための空き容量があるか確認します。
-
-```bash:console
-$ df -h
-  Filesystem      Size  Used Avail Use% Mounted on
-  /dev/vda2        50G  6.0G   41G  13% /
-```
-`Mounted on` 列が `/` になっている行に注目します。これがルートディレクトリ（システム全体）の空き容量を示しています。`Avail`（空き容量）が5GB以上あることを確認してください。
-
-#### ステップ3 – スワップファイルの作成と有効化
-
-今回は5GBのスワップファイルを作成します。
-
-```bash:console
-# 5GBのファイルを作成
-$ sudo fallocate -l 5G /swapfile
-
-# 権限をrootのみに制限
-$ sudo chmod 600 /swapfile
-
-# スワップ領域としてセットアップ
-$ sudo mkswap /swapfile
-
-# スワップを有効化
-$ sudo swapon /swapfile
-
-# 設定が反映されたか確認
-$ sudo swapon --show
-NAME      TYPE  SIZE USED PRIO
-/swapfile file    5G   0B   -2
-```
-#### ステップ4 – スワップファイルの永続化
-
-サーバーを再起動してもスワップが有効になるように設定します。
-
-```bash:console
-# /etc/fstabのバックアップを作成
-$ sudo cp /etc/fstab /etc/fstab.bak
-
-# 設定を追加
-$ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-```
-
-#### ステップ5 – スワップ設定の最適化
-
-Swappinessプロパティ（データをディスクにスワップする頻度）を調整します。標準は60ですが、サーバーの動作を安定させるために40程度に設定するのが一般的です。
-
-```bash:console
-# 現在の設定を確認
-$ cat /proc/sys/vm/swappiness
-60
-
-# 一時的に変更
-$ sudo sysctl vm.swappiness=40
-vm.swappiness = 40
-```
-
-設定を永続化させるために、`/etc/sysctl.conf` を編集します。
-
-```conf:/etc/sysctl.conf
-# ファイルの末尾に追加
-vm.swappiness=40
-vm.vfs_cache_pressure=50
-```
 
 ## SSH（Windows/PowerShellからの接続）
 
@@ -288,6 +200,95 @@ PS C:\Users\yoshi> notepad $env:USERPROFILE\.ssh\known_hosts  # 該当行が残�
 - Permission denied (publickey,password): 鍵が未登録、`authorized_keys` の権限が不正（600以外）や `~/.ssh` の権限が不正（700以外）。上記権限を確認。
 - 接続がタイムアウト: UFW やVPS側パケットフィルタで 22/TCP が閉じていないかを確認（`sudo ufw status`）。
 - ホスト鍵警告（REMOTE HOST IDENTIFICATION HAS CHANGED!）: OS入れ直し等で鍵が変わった。`ssh-keygen -R <IP>` で該当エントリを削除して再接続。
+
+## Swap 増設
+
+> **Warning:**
+> Ubuntu 24.04の標準設定ではスワップ（Swap）が0MBになっています（参照：[さくらのVPSマニュアル](https://manual.sakura.ad.jp/vps/os-packages/ubuntu-24.04.html#swap)）。このままだとメモリ不足でMySQLのインストールに失敗したり、運用中に突然サービスが落ちたりすることがあります。特にメモリが少ないプランでは、スワップの作成は必須です。
+>
+> 補足: さくらのVPSのスタートアップスクリプト「Setup and update」でも、スワップファイルを自動作成できる場合があります。すでにスワップが作成済みであれば、以下の手順はスキップ可能です。まず `sudo swapon --show` を実行し、`/swapfile` などのエントリが表示されるか確認してください。サイズの調整が必要な場合のみ、本セクションの手順で作り直してください（プランやスクリプト内容により作成サイズは異なることがあります）。
+
+### ステップ1 – システムのスワップ情報を確認
+
+まず、現在スワップが設定されていないことを確認します。
+
+```bash:console
+$ sudo swapon --show
+（何も出力されなければスワップ領域はありません）
+
+$ free -h
+                total        used        free      shared  buff/cache   available
+  Mem:           961Mi       889Mi        78Mi       1.5Mi       135Mi        71Mi
+  Swap:             0B          0B          0B
+```
+`Swap: 0B` となっていることがわかります。
+
+### ステップ2 – ディスクの空き容量を確認
+
+スワップファイル（今回は5GB）を作成するための空き容量があるか確認します。
+
+```bash:console
+$ df -h
+  Filesystem      Size  Used Avail Use% Mounted on
+  /dev/vda2        50G  6.0G   41G  13% /
+```
+`Mounted on` 列が `/` になっている行に注目します。これがルートディレクトリ（システム全体）の空き容量を示しています。`Avail`（空き容量）が5GB以上あることを確認してください。
+
+### ステップ3 – スワップファイルの作成と有効化
+
+今回は5GBのスワップファイルを作成します。
+
+```bash:console
+# 5GBのファイルを作成
+$ sudo fallocate -l 5G /swapfile
+
+# 権限をrootのみに制限
+$ sudo chmod 600 /swapfile
+
+# スワップ領域としてセットアップ
+$ sudo mkswap /swapfile
+
+# スワップを有効化
+$ sudo swapon /swapfile
+
+# 設定が反映されたか確認
+$ sudo swapon --show
+NAME      TYPE  SIZE USED PRIO
+/swapfile file    5G   0B   -2
+```
+### ステップ4 – スワップファイルの永続化
+
+サーバーを再起動してもスワップが有効になるように設定します。
+
+```bash:console
+# /etc/fstabのバックアップを作成
+$ sudo cp /etc/fstab /etc/fstab.bak
+
+# 設定を追加
+$ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+### ステップ5 – スワップ設定の最適化
+
+Swappinessプロパティ（データをディスクにスワップする頻度）を調整します。標準は60ですが、サーバーの動作を安定させるために40程度に設定するのが一般的です。
+
+```bash:console
+# 現在の設定を確認
+$ cat /proc/sys/vm/swappiness
+60
+
+# 一時的に変更
+$ sudo sysctl vm.swappiness=40
+vm.swappiness = 40
+```
+
+設定を永続化させるために、`/etc/sysctl.conf` を編集します。
+
+```conf:/etc/sysctl.conf
+# ファイルの末尾に追加
+vm.swappiness=40
+vm.vfs_cache_pressure=50
+```
 
 ## Apache2
 
