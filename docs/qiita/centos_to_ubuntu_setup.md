@@ -311,7 +311,7 @@ $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 
 編集位置（行番号の目安・:set number 前提）
 - 対象: /etc/apache2/sites-enabled/000-default.conf
-- 13行目前後: コメントアウトされている ServerName 行を実値で追記
+- 9行目前後: コメントアウトされている ServerName 行を実値で追記
 
 ```diff
 # サーバー名を追記（000-default.conf の13行目前後）
