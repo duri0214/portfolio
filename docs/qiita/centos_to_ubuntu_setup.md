@@ -343,11 +343,11 @@ Content-Type: text/html; charset=iso-8859-1
 
 ```bash:console
 # 本文の先頭を確認（デフォルトの It works! ページなどが返ってくる想定）
-$ curl -s http://www.henojiya.net | head -n 5
+$ curl -s http://www.henojiya.net | head -n 10
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html>
 <head>
-<title>It works!</title>
+<title>Apache2 Ubuntu Default Page: It works</title>
 ```
 
 うまくいかない場合の切り分け（参考）
