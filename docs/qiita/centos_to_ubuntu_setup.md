@@ -296,7 +296,7 @@ $ sudo vi /etc/apache2/mods-enabled/dir.conf
 
 編集位置（行番号の目安・:set number 前提）
 - 対象: /etc/apache2/mods-enabled/dir.conf
-- 2行目: DirectoryIndex を単一指定に変更
+- 1行目: DirectoryIndex を単一指定に変更
 
 ```diff
 # ディレクトリ名のみでアクセスできるファイル名を設定（dir.conf の2行目を編集）
