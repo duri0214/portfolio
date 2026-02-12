@@ -25,6 +25,10 @@ Ubuntuでは、デフォルトの一般ユーザー（さくらのVPSでは `ubu
 - **スタートアップスクリプト**: `Setup and update` を選択。OSセットアップ時にパッケージの更新などを自動で行ってくれる便利なプリセットです。
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/1b2eccca-4556-3aa1-d364-60de6d56ef57.png)
 
+> 注意（さくらのVPS固有の制約）
+> Ubuntu 24.04 を安定してインストール・運用するには、メモリ1GB以上のプランを選択してください。512MBプランではパッケージのインストール失敗やOut of Memory（メモリ不足）によるサービス停止が発生しやすく、実運用には不向きです。根拠: さくらのVPS マニュアル「OSの注意事項」
+> https://manual.sakura.ad.jp/vps/support/technical/os-attention.html
+
 #### パケットフィルタの設定
 
 サーバーの安全のため、必要なポートのみを開放します。
