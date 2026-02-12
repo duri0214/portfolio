@@ -314,17 +314,17 @@ $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 - 9行目前後: コメントアウトされている ServerName 行を実値で追記
 
 ```diff
-# サーバー名を追記（000-default.conf の13行目前後）
+# サーバー名を追記（000-default.conf の9行目前後）
 - #ServerName www.example.com
 + ServerName www.henojiya.net
 ```
 
 追記位置（行番号の目安・:set number 前提）
 - 対象: /etc/apache2/sites-enabled/000-default.conf
-- 15〜16行目あたり（ServerName の直下）に以下をコメントのまま配置（HTTPS 設定が完了するまで）
+- 9行目直後（ServerName の直下）に以下をコメントのまま配置（HTTPS 設定が完了するまで）
 
 ```conf:000-default.conf
-# httpsの設定が済むまではコメントアウトしておく（例: 15〜16行目）
+# httpsの設定が済むまではコメントアウトしておく
 # Redirect permanent / https://www.henojiya.net
 ```
 
