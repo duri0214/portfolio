@@ -273,14 +273,14 @@ $ sudo systemctl status apache2
 ```
 
 ### 設定
+#### security 設定ファイルを編集
+`:set number` 前提
 
 ```bash:console
-# セキュリティ設定ファイルを編集
 $ sudo vi /etc/apache2/conf-enabled/security.conf
 ```
 
-編集位置（行番号の目安・:set number 前提）
-- 対象: /etc/apache2/conf-enabled/security.conf
+編集位置（行番号の目安）
 - 12行目: ServerTokens の値を変更（例では12行目）
 
 ```diff
@@ -289,13 +289,14 @@ $ sudo vi /etc/apache2/conf-enabled/security.conf
 + ServerTokens Prod
 ```
 
+#### dir 設定ファイルを編集
+`:set number` 前提
+
 ```bash:console
-# ディレクトリ設定ファイルを編集
 $ sudo vi /etc/apache2/mods-enabled/dir.conf
 ```
 
-編集位置（行番号の目安・:set number 前提）
-- 対象: /etc/apache2/mods-enabled/dir.conf
+編集位置（行番号の目安）
 - 1行目: DirectoryIndex を単一指定に変更
 
 ```diff
@@ -304,24 +305,22 @@ $ sudo vi /etc/apache2/mods-enabled/dir.conf
 + DirectoryIndex index.html
 ```
 
+#### 000-default 設定ファイルの編集
+`:set number` 前提
+
 ```bash:console
-# 設定ファイルの編集
 $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 ```
 
-編集位置（行番号の目安・:set number 前提）
-- 対象: /etc/apache2/sites-enabled/000-default.conf
+編集位置（行番号の目安）
 - 9行目前後: コメントアウトされている ServerName 行を実値で追記
+- 9行目直後（ServerName の直下）に HTTPS へ恒久リダイレクトの行をコメントのまま配置（HTTPS 設定が完了するまで）
 
 ```diff
 # サーバー名を追記（000-default.conf の9行目前後）
 - #ServerName www.example.com
 + ServerName www.henojiya.net
 ```
-
-追記位置（行番号の目安・:set number 前提）
-- 対象: /etc/apache2/sites-enabled/000-default.conf
-- 9行目直後（ServerName の直下）に以下をコメントのまま配置（HTTPS 設定が完了するまで）
 
 ```conf:000-default.conf
 # httpsの設定が済むまではコメントアウトしておく
