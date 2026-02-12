@@ -274,13 +274,12 @@ $ sudo systemctl status apache2
 
 ### 設定
 #### security 設定ファイルを編集
-`:set number` 前提
-
 ```bash:console
 $ sudo vi /etc/apache2/conf-enabled/security.conf
 ```
 
 編集位置（行番号の目安）
+- `:set number` 前提
 - 12行目: ServerTokens の値を変更（例では12行目）
 
 ```diff
@@ -290,13 +289,12 @@ $ sudo vi /etc/apache2/conf-enabled/security.conf
 ```
 
 #### dir 設定ファイルを編集
-`:set number` 前提
-
 ```bash:console
 $ sudo vi /etc/apache2/mods-enabled/dir.conf
 ```
 
 編集位置（行番号の目安）
+- `:set number` 前提
 - 1行目: DirectoryIndex を単一指定に変更
 
 ```diff
@@ -306,13 +304,12 @@ $ sudo vi /etc/apache2/mods-enabled/dir.conf
 ```
 
 #### 000-default 設定ファイルの編集
-`:set number` 前提
-
 ```bash:console
 $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 ```
 
 編集位置（行番号の目安）
+- `:set number` 前提
 - 9行目前後: コメントアウトされている ServerName 行を実値で追記
 - 9行目直後（ServerName の直下）に HTTPS へ恒久リダイレクトの行をコメントのまま配置（HTTPS 設定が完了するまで）
 
