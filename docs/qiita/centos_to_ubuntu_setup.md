@@ -363,14 +363,6 @@ ZIP 展開やファイルアップロード時に日本語ファイル名で `Un
 そのため、Apache の環境変数で UTF-8（`C.UTF-8`）を明示しておくと安全です。  
 `C.UTF-8` は locale の生成が不要で、システムを汚さず簡潔に設定できます。
 
-Apache の環境変数で UTF-8 を明示
-
-```bash:console
-echo 'export LANG=C.UTF-8' | sudo tee -a /etc/apache2/envvars
-echo 'export LC_ALL=C.UTF-8' | sudo tee -a /etc/apache2/envvars
-sudo systemctl restart apache2
-```
-
 確認（任意）: www-data 視点で UTF-8 になっているか
 
 ```bash:console
