@@ -411,7 +411,9 @@ $ sudo systemctl restart apache2
 
 いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#%E3%83%8D%E3%83%BC%E3%83%A0%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E8%A8%AD%E5%AE%9A)
 
-## https
+## HTTPS の準備（443番ポート開放と Apache の SSL 有効化）
+
+このセクションでは、HTTPS 提供に必要な前提作業として UFW で 443/TCP を許可し、Apache 側で SSL サイトとモジュールを有効化します（証明書の取得は後述の「SSL」セクションで実施）。
 
 ### ポートをあける
 
@@ -609,10 +611,21 @@ $ sudo certbot renew
 
 ### 確認
 
-https://henojiya.net/ でつながった！
+HTTPS での応答をコマンドで確認します。
 
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/34da195c-7674-d9fd-5fda-c63b24e51866.png)
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/9ff08833-f0f1-c3c1-9f53-97d529de6f4a.png)
+```bash:console
+# ヘッダのみ取得してステータスを確認（実行例）
+$ curl -I https://www.henojiya.net
+HTTP/1.1 200 OK
+Server: Apache
+```
+
+```bash:console
+# 本文の先頭を確認（実行例）
+$ curl -s https://www.henojiya.net | head -n 10
+<title>Apache2 Ubuntu Default Page: It works</title>
+```
+
 
 ### ※httpsの設定をしたらApacheが止まる？？
 
