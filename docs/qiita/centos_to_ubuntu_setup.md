@@ -733,7 +733,7 @@ $ sudo mysql_secure_installation
 ウィザードでは以下の設定を行います。
 
 - **VALIDATE PASSWORD COMPONENT**: `y` (有効にする)
-- **Password Strength**: `0` (LOW) ※開発・個人用の場合。本番では適宜調整。
+- **Password Strength**: `2`（HIGH を選択）
 - **Remove anonymous users?**: `y` (匿名ユーザーを削除)
 - **Disallow root login remotely?**: `y` (rootのリモートログインを禁止)
 - **Remove test database?**: `y` (テストDBを削除)
@@ -762,6 +762,8 @@ CREATE DATABASE portfolio_db DEFAULT CHARACTER SET utf8mb4;
 
 -- ユーザー作成
 -- ※ '%' はどこからでも接続可能。セキュリティを高めるなら 'localhost' に限定。
+-- 補足: 直前に Password Strength=HIGH を選んだ場合、単純な例（例: 'python123'）は通りません。
+--       パスワードジェネレータ等で十分に強いパスワードを作成して指定してください。
 CREATE USER 'python'@'%' IDENTIFIED BY 'python123';
 
 -- 権限の付与
