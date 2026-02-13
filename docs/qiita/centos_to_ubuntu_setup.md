@@ -909,7 +909,6 @@ $ sudo chown -R ubuntu:ubuntu /var/www/html
 # Cloneの実行
 $ cd /var/www/html
 $ git clone git@github.com:<your-username>/portfolio.git
-$ cd portfolio
 ```
 
 ## venv（仮想環境）の準備
@@ -935,7 +934,7 @@ Python 3.12.3
 (venv) $ deactivate
 ```
 
-### 依存パッケージのインストール
+## 依存パッケージのインストール
 
 ```bash:console
 # MySQLクライアントのビルドに必要なライブラリをインストール
@@ -946,6 +945,25 @@ $ sudo apt install -y libmysqlclient-dev pkg-config python3-dev
 $ source venv/bin/activate
 (venv) $ pip install -r requirements.txt
 ```
+
+## 環境ファイル（.env）の配置を確認
+
+`/var/www/html/portfolio` 配下には、アプリごとに複数の `.env` が必要になる場合があります。どこに何を置くべきかを把握するため、ひな型の `*.env.example` を全検索して一覧表示します（このリストに基づいて、同じ場所へ `.env` をFTP/SCPで配置）。
+
+```bash:console
+$ cd /var/www/html/portfolio
+
+# ひな型を全検索して、サイズ・更新日時つきで一覧（改行やスペースを含むパスにも対応）
+$ find . -type f -name "*.env.example" -print0 | xargs -0 ls -l --time-style=long-iso
+
+# ついでに相対パスだけをシンプルに欲しい場合（配置先の把握用）
+$ find . -type f -name "*.env.example" | sort
+```
+
+> Note:
+> - 表示された `./<path>/.env.example` ごとに、同ディレクトリに `.env` を用意します（中身は `.env.example` を参考に必要な値へ編集）。
+> - `.env` は Git 管理外が前提のため、FTP/SCP でサーバへ配置してください。
+> - 機微情報（パスワード・APIキー）は必ず安全な手段で共有・保管します。
 
 > **Note:**
 > `.env` などの環境設定ファイルは Git 管理外にしている場合が多いため、FTP 等で個別にアップロードするのを忘れないようにしてください。
