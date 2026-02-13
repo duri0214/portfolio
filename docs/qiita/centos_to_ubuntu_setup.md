@@ -953,10 +953,7 @@ $ source venv/bin/activate
 ```bash:console
 $ cd /var/www/html/portfolio
 
-# ひな型を全検索して、サイズ・更新日時つきで一覧（改行やスペースを含むパスにも対応）
-$ find . -type f -name "*.env.example" -print0 | xargs -0 ls -l --time-style=long-iso
-
-# ついでに相対パスだけをシンプルに欲しい場合（配置先の把握用）
+# 相対パスの一覧（配置先の把握用）
 $ find . -type f -name "*.env.example" | sort
 ```
 
