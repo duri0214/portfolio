@@ -855,31 +855,6 @@ $ python3 -V
 Python 3.12.3
 ```
 
-### venv（仮想環境）の準備
-
-```bash:console
-# venvパッケージのインストール
-$ sudo apt -y install python3.12-venv
-
-# プロジェクトディレクトリの作成（例）
-$ sudo mkdir -p /var/www/html/portfolio
-$ sudo chown ubuntu:ubuntu /var/www/html/portfolio
-$ cd /var/www/html/portfolio
-
-# 仮想環境の作成
-$ python3 -m venv venv
-
-# 仮想環境の有効化
-$ source venv/bin/activate
-
-# 仮想環境内での確認
-(venv) $ python -V
-Python 3.12.3
-
-# 仮想環境の無効化
-(venv) $ deactivate
-```
-
 ## Git
 
 ### バージョン確認
@@ -891,7 +866,7 @@ git version 2.43.0
 
 ### GitHub 連携用の鍵作成
 
-サーバー上で公開鍵を作成し、GitHubに登録することで安全に `git pull` できるようになります。
+VPS（= 自分のサーバ。ここでは便宜上「me」）が GitHub に安全に接続するには、VPS 側でSSH鍵（秘密鍵/公開鍵ペア）を作成し、その「公開鍵」を GitHub に登録する必要があります。すると、VPS（me）は自分の「秘密鍵」で署名し、GitHub は事前登録された「公開鍵」で検証して、なりすましでないことを確認できます。これにより、パスワードを都度送らずに `git clone`/`git pull` が行えるようになります。
 
 ```bash:console
 # ユーザー情報を設定（初回のみ）
@@ -916,19 +891,16 @@ $ ssh -T git@github.com
 ```
 
 > Note:
-> - このコマンドは「SSH鍵でGitHubに認証できるか」をテストする疎通確認です。push自体の必須手順ではありませんが、SSH方式（`git@github.com:owner/repo.git`）で `git clone/pull/push` を行う予定なら、事前に一度実行しておくと原因切り分けが容易になります。
-> - HTTPS方式（`https://github.com/owner/repo.git`）で運用する場合は不要です。その代わりにPersonal Access Token（PAT）の入力や認証ヘルパーの設定が必要です。
+> - このコマンドは「SSH鍵でGitHubに認証できるか」をテストする疎通確認です。必須手順ではありませんが、SSH方式（例: `git@github.com:owner/repo.git`）で `git clone/pull/push` を行う予定なら、事前に一度実行しておくと原因切り分けが容易になります。
 > - 失敗する典型例と対処：
 >   - 公開鍵がGitHubに未登録 → GitHubの Settings > SSH and GPG keys に `~/.ssh/id_ed25519.pub` 等を登録
 >   - 別名の鍵を使っている → `~/.ssh/config` に `Host github.com` `IdentityFile ~/.ssh/<your_key>` を設定
 >   - パーミッション不備 → `chmod 700 ~/.ssh; chmod 600 ~/.ssh/*`
 >   - 22番ポートが閉じている → `~/.ssh/config` で `Hostname ssh.github.com` `Port 443` を指定
 
-## Django4
+## プロジェクトの Clone
 
 既存のプロジェクトを GitHub から Clone して構築する場合の手順です。
-
-### プロジェクトの Clone
 
 ```bash:console
 # ディレクトリの所有権を変更（ubuntuユーザーで操作可能にする）
@@ -938,6 +910,29 @@ $ sudo chown -R ubuntu:ubuntu /var/www/html
 $ cd /var/www/html
 $ git clone git@github.com:<your-username>/portfolio.git
 $ cd portfolio
+```
+
+## venv（仮想環境）の準備
+
+```bash:console
+# venvパッケージのインストール
+$ sudo apt -y install python3.12-venv
+
+# クローンしたプロジェクトのルートへ移動
+$ cd /var/www/html/portfolio
+
+# 仮想環境の作成
+$ python3 -m venv venv
+
+# 仮想環境の有効化
+$ source venv/bin/activate
+
+# 仮想環境内での確認
+(venv) $ python -V
+Python 3.12.3
+
+# 仮想環境の無効化（必要に応じて）
+(venv) $ deactivate
 ```
 
 ### 依存パッケージのインストール
