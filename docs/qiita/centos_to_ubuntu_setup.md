@@ -569,12 +569,15 @@ $ export EDITOR=vi
 > - 反映は新しいログインセッションから有効になります。設定後は一度ログアウトして再ログイン、または新しいターミナルを開いて確認してください（例: `echo $EDITOR $VISUAL`）。
 > - `sudo` 実行時に環境を引き継ぐかは `sudoers` の設定に依存します。必要なら `sudo -E` を使うか、`visudo` で `env_keep += "EDITOR VISUAL"` を検討してください。
 
-### https
+### HTTPS 化（Let’s Encrypt 証明書の適用と Apache の設定）
 
 ```bash:console
 # 設定ファイルの編集
 $ sudo vi /etc/apache2/sites-available/default-ssl.conf
 ```
+
+編集位置（行番号の目安）
+- `:set number` 前提
 
 ```diff:
 31,32行目：取得した証明書に変更
