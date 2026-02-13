@@ -776,8 +776,16 @@ EXIT;
 
 ## DBeaver
 
-最近MySQLWorkbenchよりDBeaver好きなのよ。FK逆追いできるから。
-かんたんにできるはず（失敗するとしたらportかぶり起こしてる）
+MySQL Workbench より DBeaver が好きな理由は「GUI で外部キー（FK）を逆追いできる」からです。関連テーブルの参照関係を辿る作業が直感的にできて便利。
+
+「クライアント」は“何かのサービスやサーバに接続して利用する側”の総称です。身近な例:
+- Webブラウザ（Chrome/Edge など）: Webサーバのクライアント
+- メールアプリ（Outlook/Thunderbird など）: メールサーバのクライアント
+- PowerShell や SSH クライアント（ssh.exe）: リモートホスト/SSHサーバのクライアント
+- Git クライアント（git コマンドやGUIツール）: Gitサーバ（GitHub/GitLab など）のクライアント
+- そして DBeaver は「データベースサーバのクライアント」（= DBクライアント）です。
+
+接続に失敗する場合は、ポートの競合が起きていないかをまず確認してください。
 [MySQLのPORTを変える理由](https://qiita.com/YoshitakaOkada/items/691cb598c55df9b6e581#mysql%E3%81%AEport%E3%82%92%E5%A4%89%E3%81%88%E3%82%8D)
 
 ### SSHタブ の設定
