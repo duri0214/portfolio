@@ -841,6 +841,8 @@ $ sudo vi /var/www/html/index.html
 <html xmlns="http://www.w3.org/1999/xhtml">
 ```
 
+> Note: vi から保存せずに抜けるときは `Shift + ZQ`、保存して抜けるときは `Shift + ZZ`。編集を反映させたくない場合は `Shift + ZQ` で終了しておきましょう。
+
 ## Python
 
 ### 起動確認
