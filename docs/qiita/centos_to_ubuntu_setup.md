@@ -548,18 +548,26 @@ $ sudo openssl x509 -in /etc/letsencrypt/live/www.henojiya.net/fullchain.pem -no
 ### エディタ のデフォルトをviに
 
 ```bash:console
-export EDITOR=vi
+$ export EDITOR=vi
 ```
 
 > **Note:**
-> `# vi /etc/environment`
+> `$ sudo vi /etc/environment`
 >
 > ```vim:/etc/environment
 > VISUAL=/usr/bin/vim
 > EDITOR=/usr/bin/vim
 > ```
 >
-> 保存してターミナルに入り直したら恒久的に viになった
+> 反映についての補足:
+> - `/etc/environment` はシステム全体の環境ファイルで、書式は `KEY=VALUE`（export は不要）。既存の `PATH="..."` の次の行に、以下の2行を追記すれば OK。
+>   ```vim:/etc/environment
+>   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+>   VISUAL="/usr/bin/vim"
+>   EDITOR="/usr/bin/vim"
+>   ```
+> - 反映は新しいログインセッションから有効になります。設定後は一度ログアウトして再ログイン、または新しいターミナルを開いて確認してください（例: `echo $EDITOR $VISUAL`）。
+> - `sudo` 実行時に環境を引き継ぐかは `sudoers` の設定に依存します。必要なら `sudo -E` を使うか、`visudo` で `env_keep += "EDITOR VISUAL"` を検討してください。
 
 ### https
 
