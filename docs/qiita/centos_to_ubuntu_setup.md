@@ -627,29 +627,25 @@ $ curl -s https://www.henojiya.net | head -n 10
 ```
 
 
-### ※httpsの設定をしたらApacheが止まる？？
+### ※httpsの設定をしたらApacheが止まる？（結論：Let’s Encrypt のレート制限）
 
-たくさんやり直したでしょ m9(^Д^)ﾌﾟｷﾞｬｰ
+要点だけ：短時間に証明書の取り直しを何度も行うと、Let’s Encrypt のレート制限に達して `certbot` が失敗します。その結果、SSL 設定が中途半端な状態になり、Apache が起動できない／止まったように見えることがあります。
 
-> 発行済の証明書が更新 (または複製) の対象とみなされるのは、全く同じホスト名の集合が指定されているときです (大文字・小文字、順序は区別しない)。たとえば、[www.example.com, example.com] というドメイン名に対する証明書をリクエストした場合、同じ週に [www.example.com, example.com] に対する証明書を重複して発行できるのは、追加で 4 つまでです。
-> レート制限に引っかかった場合、制限を一時的にリセットする方法はありません。レート制限が解消されるまで1週間後まで待つ必要があります。
+- 代表的なエラー（抜粋）
+  - `too many certificates already issued for exact set of domains` など。
+  - 公式ドキュメント: https://letsencrypt.org/ja/docs/rate-limits/
 
-参考）レート制限がかかると、以下のエラーメッセージが出るので1日待ってから行う。
+どうする？（シンプルな対処）
+- まずは待つ（週単位の制限。即時リセットは不可）。
+- 検証は本番 API で乱発せず、`--dry-run` による模擬発行で確認する（実ファイルは変更されず、本番のレート制限にも影響しない）。
+  - 例: `$ sudo certbot certonly --apache -d www.henojiya.net --dry-run`
+- 既存の証明書を再利用する（重複発行を避ける）。
+  - `sudo certbot certificates` で確認 → 可能なら `sudo certbot renew`。
+- Apache を一時的に HTTP のみで運用しておく（SSL サイトを無効化）。
+  - `sudo a2dissite default-ssl; sudo systemctl restart apache2`
+- ログで原因確認: `/var/log/letsencrypt/letsencrypt.log`
 
-```
-Obtaining a new certificate
-An unexpected error occurred:
-There were too many requests of a given type :: Error creating new order :: too many certificates already issued for exact set of domains: yoursite.com: see https://letsencrypt.org/docs/rate-limits/
-Please see the logfiles in /var/log/letsencrypt for more details.
-
-
-IMPORTANT NOTES:
- - Your account credentials have been saved in your Certbot
-   configuration directory at /etc/letsencrypt. You should make a
-   secure backup of this folder now. This configuration directory will
-   also contain certificates and private keys obtained by Certbot so
-   making regular backups of this folder is ideal.
-```
+ポイント：同じ FQDN セットでの短期間の再発行は特に制限にかかりやすいです。手戻り時は「ステージングで検証 → 本番で1回」の順にしましょう。
 
 ### http から https へリダイレクト（段階的に有効化）
 
