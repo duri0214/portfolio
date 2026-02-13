@@ -649,36 +649,16 @@ $ curl -s https://www.henojiya.net | head -n 10
 
 ### http から https へリダイレクト（段階的に有効化）
 
-まずは HTTP での表示確認および Let’s Encrypt での証明書取得が完了するまでは、リダイレクトを有効化しないでください（コメントアウトのまま運用）。
-
-#### ステップ1｜HTTPS 設定「前」：コメントアウトのまま
+まずは HTTP の表示確認・Let’s Encrypt の証明書取得・HTTPS の動作確認が終わるまで、リダイレクト行はコメントアウトのままにしておきます。準備が整ったら、次の1行だけをコメント解除（有効化）します。
 
 ```bash:console
-# デフォルトの設定ファイルを編集
-$ sudo vi /etc/apache2/sites-enabled/000-default.conf
-```
-
-```conf:000-default.conf（HTTPS設定前はコメントアウトのまま）
-# Redirect permanent / https://www.henojiya.net
-```
-
-```bash:console
-# 設定を反映（HTTP でアクセス確認ができる状態を維持）
-$ sudo systemctl restart apache2
-```
-
-この状態で http://www.henojiya.net にアクセスし、Apache が表示されることを確認。その後、前章の手順で証明書を取得・https での表示確認まで完了させます。
-
-#### ステップ2｜HTTPS 動作確認「後」：リダイレクトを有効化
-
-```bash:console
-# 再度、設定ファイルを編集
+# 設定ファイルを編集
 $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 ```
 
 ```diff:000-default.conf
-# httpsの設定が済んだらコメントアウトを外して有効化する
 - # Redirect permanent / https://www.henojiya.net
+// （HTTPS 動作確認後にコメントを外す）
 + Redirect permanent / https://www.henojiya.net
 ```
 
@@ -687,7 +667,7 @@ $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 $ sudo systemctl restart apache2
 ```
 
-以後は HTTP でのアクセスをすべて HTTPS に恒久的に転送します。
+以後は HTTP へのアクセスがすべて HTTPS に恒久的に転送されます。
 
 ### 定例更新化
 
