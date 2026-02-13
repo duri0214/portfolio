@@ -523,14 +523,24 @@ $ sudo certbot certonly --apache -d www.henojiya.net
 
 ### FQDN をメモ
 
-`/etc/letsencrypt/live/www.henojiya.net` をメモする。`cert.pem` `privkey.pem` `chain.pem` も覚えとく
+`/etc/letsencrypt/live/www.henojiya.net` をメモする（このパスは certbot 実行時に自動作成され、以後の更新でも同じ場所が使われる）。あわせて次のファイルの役割も把握しておく:
+
+- `cert.pem`: サーバ証明書（ドメイン用）
+- `privkey.pem`: 秘密鍵（権限は厳格。配布・編集しない）
+- `chain.pem`: 中間CA証明書
+- `fullchain.pem`: `cert.pem + chain.pem` の連結版（多くのクライアント/設定で推奨）
+
+補足:
+- `live` 配下は実体（`/etc/letsencrypt/archive/...`）へのシンボリックリンクで、Certbot が管理する。手動で置換・編集しない。
+- `--apache` で自動設定した場合も、`certonly` で証明書だけ取得した場合も、保存先は同じ `live/<FQDN>/`。
+- Apache 設定は、例のように `SSLCertificateFile cert.pem` と `SSLCertificateChainFile chain.pem` を分けてもよいし、`SSLCertificateFile fullchain.pem` として `ChainFile` 行を省略する方法でも可。
 
 ```bash:console
-# ls /etc/letsencrypt/live/
+$ sudo ls /etc/letsencrypt/live/
   README  www.henojiya.net
-# ls /etc/letsencrypt/live/www.henojiya.net
+$ sudo ls /etc/letsencrypt/live/www.henojiya.net
   README  cert.pem  chain.pem  fullchain.pem  privkey.pem
-# openssl x509 -in /etc/letsencrypt/live/www.henojiya.net/fullchain.pem -noout -dates
+$ sudo openssl x509 -in /etc/letsencrypt/live/www.henojiya.net/fullchain.pem -noout -dates
   notBefore=Aug 29 03:05:54 2021 GMT
   notAfter=Nov 27 03:05:53 2021 GMT
 ```
