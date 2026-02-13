@@ -694,6 +694,7 @@ echo "${today} certbot renew" >> /root/certbot_result.log
 #### 実行権限を付与（root のまま）
 ```bash:console
 # chmod 755 /root/certbot.sh
+# exit  # 作業が終わったら一般ユーザーに戻る
 ```
 
 > Note:
