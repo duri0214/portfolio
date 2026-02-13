@@ -823,9 +823,9 @@ Test tunnel configuration を押して、サーバにつながったことを確
 
 [DBeaver からローカルのMySQLに接続できない問題への対処法](https://qiita.com/ymzkjpx/items/449c505c50ee17b6e8f9)
 
-## サンプルの HTML を作ってみる
+## デフォルトページの場所を確認して中身を見てみる
 
-ここまでで「OS のインストール」「Web サーバ（Apache2）のセットアップ」「データベース（MySQL）のセットアップ」が一通り完了しました。次は実際に Web ページを 1 枚だけ置いて、HTTP/HTTPS で配信できていることを確認してみましょう。
+ここまでで「OS のインストール」「Web サーバ（Apache2）のセットアップ」「データベース（MySQL）のセットアップ」が一通り完了しました。Ubuntu では、デフォルトのインデックスページがすでに配置されています。まずはその場所を確認し、ついでに HTML の中身を目視で確認します。
 
 デフォルトの「ドキュメントルート」は `/var/www/html/` です（`/etc/apache2/sites-available/000-default.conf` などで確認できます）。
 
@@ -833,7 +833,7 @@ Test tunnel configuration を押して、サーバにつながったことを確
 $ sudo vi /var/www/html/index.html
 ```
 
-`index.html` を開くと、Ubuntu のスタートページが表示されることがわかります。
+`index.html` を開くと、Ubuntu のスタートページ（既定の案内ページ）の HTML が確認できます（CentOS では新規作成でしたが、Ubuntu では最初から用意されています）。
 
 ```index:index.html
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1
