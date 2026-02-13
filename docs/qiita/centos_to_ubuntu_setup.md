@@ -669,43 +669,35 @@ $ sudo systemctl restart apache2
 
 以後は HTTP へのアクセスがすべて HTTPS に恒久的に転送されます。
 
-### 定例更新化
+### Let’s Encrypt の証明書更新を自動化するためのスクリプト作成
 
+このセクションでは、Let’s Encrypt の証明書更新用スクリプトを root のホームディレクトリに作成するところまでを行います。定期実行（cron への登録）は後述の「Cron（タスクスケジューラ）」で設定します。
+
+#### スクリプトファイル新規作成
 ```bash:console
-# 作業ディレクトリ（root権限が必要な場合はsudo）
-$ cd ~
-$ vi certbot.sh
+$ sudo -s                  # root に切り替え
+# cd ~                     # root のホームに移動（/root と同義）
+# vi certbot.sh            # ここでスクリプトの内容を書いて保存
 ```
 
+#### 証明書の更新スクリプト（そのまま転記）
+root で実行するため sudo は不要
 ```bash:certbot.sh
 #!/bin/bash
-# 証明書の更新
-sudo certbot renew
+certbot renew
 
 # 更新ログの記録
 today=$(date "+%Y/%m/%d %H:%M:%S")
-echo "${today} certbot renew" >> ~/certbot_result.log
+echo "${today} certbot renew" >> /root/certbot_result.log
 ```
 
+#### 実行権限を付与（root のまま）
 ```bash:console
-# スクリプトに実行権限を付与
-$ chmod 755 certbot.sh
-
-# crontabの編集（使用エディタを一時的にviに指定）
-$ EDITOR=vi crontab -e
+# chmod 755 /root/certbot.sh
 ```
 
-```vim:crontab
-# 毎月1日の0:00に更新スクリプトを実行
-0 0 1 * * /home/ubuntu/certbot.sh
-```
-
-> **Note:**
-> デフォルトのエディタを `vi` に固定したい場合は、`~/.bashrc` などに `export EDITOR=vi` を追記しておくと便利です。
-
-```bash:console
-$ crontab -l
-```
+> Note:
+> 定期実行（cron への登録）は、下記の「Cron（タスクスケジューラ）」セクションで設定します。
 
 ## MySQL8
 
