@@ -764,13 +764,23 @@ CREATE DATABASE portfolio_db DEFAULT CHARACTER SET utf8mb4;
 --       パスワードジェネレータ等で十分に強いパスワードを作成して指定してください。
 CREATE USER 'python'@'%' IDENTIFIED BY 'python123';
 
--- 権限の付与
-GRANT CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX ON portfolio_db.* TO 'python'@'%';
+-- 権限の付与（シンプルにすべて）
+GRANT ALL PRIVILEGES ON portfolio_db.* TO 'python'@'%';
 
 -- 設定の反映と終了
 FLUSH PRIVILEGES;
 EXIT;
 ```
+
+> Note: settings.py は現在 `HOST='localhost'` で構成されています。
+> - そのため、`python@'localhost'` でも同じパスワードで作成しておくと安全です（ソケット接続時の認証不一致を避ける）。
+>   ```sql
+>   -- 追加で localhost 専用ユーザーも用意（パスワードは上と同一に）
+>   CREATE USER IF NOT EXISTS 'python'@'localhost' IDENTIFIED BY 'python123';
+>   GRANT ALL PRIVILEGES ON portfolio_db.* TO 'python'@'localhost';
+>   FLUSH PRIVILEGES;
+>   ```
+> - 逆に TCP に統一したい場合は、Django 側を `HOST='127.0.0.1'` に変更し、`python@'%'`（または `python@'127.0.0.1'`）で接続する構成でも動作します。
 
 ## DBeaver
 
@@ -1318,50 +1328,39 @@ $ sudo -u www-data test -r /var/www/html/portfolio/config/wsgi.py && echo OK_wsg
 
 いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp)
 
-## PdfMiner
+## 代替ルート: Django プロジェクトを新規作成する場合（クローンしない運用）
 
-- SBI topics で使用している
-- pdfminer.six へライブラリを変更したら解決した
+> Note: ここは「/var/www/html/portfolio を git clone せず、空の Django プロジェクトから始める」ための対になる手順です。重要度は低めの補足として最小構成のみ記載します。
 
-```console:console
-pip install pdfminer.six
+### 1) venv を有効化し、Django を導入
+```bash:console
+$ cd /var/www/html/portfolio
+$ source venv/bin/activate
+(venv) $ pip install --upgrade pip
+(venv) $ pip install django
+(venv) $ django-admin --version   # 例: 4.x
 ```
 
-## Django プロジェクトを新規で始める場合
-
-### Django インストール
-
-```console:console（venvをアクティベートしてからね）
-# source /var/www/html/portfolio/venv/bin/activate
-# pip3 install django
-# django-admin --version
-  4.0.2
+### 2) 雛形を作成（config を設定ディレクトリに）
+```bash:console
+(venv) $ mkdir -p mypage
+(venv) $ cd mypage
+(venv) $ django-admin startproject config .
+(venv) $ python manage.py startapp hoge
 ```
 
-### pip list
-
-```console:console
-# pip list
-  Package       Version
-  ------------- -------
-  asgiref       3.4.1
-  Django        4.0.2
-  mod-wsgi      4.9.0
-  pip           20.0.2
-  pkg-resources 0.0.0
-  pytz          2021.1
-  setuptools    44.0.0
-  sqlparse      0.4.1
+開発サーバの起動確認（ローカル確認用）
+```bash:console
+(venv) $ python manage.py runserver 0.0.0.0:8000
 ```
 
-### よく使うライブラリ
+### 3) settings.py の最小編集
+- ALLOWED_HOSTS（必要に応じて本番ドメインや 127.0.0.1 を追加）
+- ログをコンソールへ出す設定（任意）
 
-```console:console
-# pip3 install wheel numpy pandas sqlalchemy beautifulsoup4 matplotlib pillow lxml stripe
-```
-
-```console:console（権限をまとめてubuntu扱いに）
-# chown -R ubuntu:ubuntu /var/www/html
+```vim:/var/www/html/portfolio/mypage/config/settings.py
+# 例: 許可ホストを追加
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']  # 本番はドメインを追加
 ```
 
 ### わかりやすいプロジェクト構成
