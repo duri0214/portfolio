@@ -1212,20 +1212,6 @@ $ sudo chown -R ubuntu:ubuntu /var/www/html
 >   $ sudo chmod -R u+rwX,go+rX /var/www/html/portfolio/static
 >   ```
 
-
-> **Warning:**
-> cronを試し打ちしようとしたらこんなエラーが出たよ
->
-> ```bash:console
-> (venv) $ /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
-> Traceback (most recent call last): File "/var/www/html/portfolio/manage.py", line 15, in <module> ..."/var/www/html/portfolio/venv/lib/python3.12/site-packages/fastkml/__init__.py", line 28, in <module> from pkg_resources import
-> DistributionNotFound ModuleNotFoundError: No module named 'pkg_resources'
-> ```
->
-> ```bash:console
-> pip install -U setuptools
-> ```
-
 #### Reset（※必要に応じて）
 
 1. ~~まず各appディレクトリの `migrations` ディレクトリを消してまわります~~
