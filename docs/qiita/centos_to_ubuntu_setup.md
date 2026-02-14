@@ -319,7 +319,7 @@ $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 + ServerName www.henojiya.net
 ```
 
-```conf:000-default.conf
+```conf:/etc/apache2/sites-available/000-default.conf
 # httpsの設定が済むまではコメントアウトしておく
 # Redirect permanent / https://www.henojiya.net
 ```
@@ -380,7 +380,7 @@ LANG=C.UTF-8 と表示されれば OK。
 $ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
-```virtual.host.conf(新規)
+```conf:/etc/apache2/sites-available/virtual.host.conf
 <VirtualHost *:80>
     ServerName www.henojiya.net
     DocumentRoot /var/www/html
@@ -656,7 +656,7 @@ $ curl -s https://www.henojiya.net | head -n 10
 $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 ```
 
-```diff:000-default.conf
+```diff:/etc/apache2/sites-enabled/000-default.conf
 - # Redirect permanent / https://www.henojiya.net
 // （HTTPS 動作確認後にコメントを外す）
 + Redirect permanent / https://www.henojiya.net
@@ -1005,7 +1005,7 @@ $ source venv/bin/activate
 $ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
-```conf:000-default.conf
+```conf:/etc/apache2/sites-available/000-default.conf
 # 方針: APT 版 libapache2-mod-wsgi-py3 を使用する
 # 理由（重要）:
 # - 過去は VirtualHost の設定ファイル内に `LoadModule wsgi_module ...` を直書きしていたが、
@@ -1071,7 +1071,7 @@ Djangoで `numpy` を使用している場合、mod_wsgi経由で `Interpreter c
 $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 ```
 
-```diff:000-default.conf
+```diff:/etc/apache2/sites-enabled/000-default.conf
   WSGIProcessGroup wsgi_app
 + WSGIApplicationGroup %{GLOBAL}
   WSGISocketPrefix /var/run/wsgi
@@ -1172,7 +1172,7 @@ $ crontab -e
 > **Warning:**
 > バッチファイルには実行権限を忘れずに与える
 >
-> ```console:console
+> ```bash:console
 > cd /var/www/html/portfolio/vietnam_research/management/commands
 > chmod +x daily_import_from_vietkabu.py
 > chmod +x daily_import_from_sbi.py
@@ -1197,17 +1197,17 @@ $ crontab -e
 > ls -l
 > ```
 
-```console:console（仕掛けたらしばらくあとにログを見てみると）
-# vi hello-cron.log
+```bash:console
+$ vi hello-cron.log
 ```
 
-```console:確認：hello-cron.log（どんどん追記されている）
+```bash:console
 2020/03/28 02:18:26 hello-cron.py
 2020/03/28 02:28:26 hello-cron.py
 ```
 
-```console:console（権限をまとめてubuntu扱いに）
-# chown -R ubuntu:ubuntu /var/www/html
+```bash:console
+$ sudo chown -R ubuntu:ubuntu /var/www/html
 ```
 
 
@@ -1218,13 +1218,13 @@ $ crontab -e
 > **Warning:**
 > cronを試し打ちしようとしたらこんなエラーが出たよ
 >
-> ```console:console
-> (venv) root@ik1-336-28225:/var/www/html# /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
+> ```bash:console
+> (venv) $ /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
 > Traceback (most recent call last): File "/var/www/html/portfolio/manage.py", line 15, in <module> ..."/var/www/html/portfolio/venv/lib/python3.12/site-packages/fastkml/__init__.py", line 28, in <module> from pkg_resources import
 > DistributionNotFound ModuleNotFoundError: No module named 'pkg_resources'
 > ```
 >
-> ```console:console
+> ```bash:console
 > pip install -U setuptools
 > ```
 
@@ -1272,7 +1272,7 @@ $ crontab -e
 
 #### migrationとcreatesuperuser
 
-```console:Console
+```bash:console
 $ cd /var/www/html/portfolio
 $ python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
 $ python3 manage.py migrate
@@ -1467,14 +1467,14 @@ ALLOWED_HOSTS（許可するドメイン）を編集する
 # vi /var/www/html/portfolio/config/settings.py
 ```
 
-```diff:settings.py
+```diff:/var/www/html/portfolio/config/settings.py
 - ALLOWED_HOSTS = []
 + ALLOWED_HOSTS = ['.henojiya.net', '127.0.0.1', 'localhost', '153.126.200.229']
 ```
 
 loggerを有効にする（loggingモジュールでコンソールに情報が出せるようになる）
 
-```py:settings.py（一番下に追加）
+```py:/var/www/html/portfolio/config/settings.py（一番下に追加）
     :
 LOGGING = {
     "version": 1,
@@ -1500,7 +1500,7 @@ LOGGING = {
 
 ```
 
-```diff:settings.py
+```diff:/var/www/html/portfolio/config/settings.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -1927,7 +1927,7 @@ staticディレクトリ配下は開放。
 # vi /etc/apache2/sites-enabled/000-default.conf
 ```
 
-```diff:000-default.conf（あくまでDEBUG=False用の設定。collectstaticでこのフォルダにコピーされるから）
+```diff:/etc/apache2/sites-enabled/000-default.conf（あくまでDEBUG=False用の設定。collectstaticでこのフォルダにコピーされるから）
 + # css, javascript etc
 + Alias /static/ /var/www/html/portfolio/static/
 + <Directory /var/www/html/portfolio/static>
@@ -2074,7 +2074,7 @@ migrateは「実効」みたいなイメージ
 INSTALLED_APPS に設定を追加するんだが、、え？VietnamResearchConfigに覚えがないって？
 そうなんだよ、アプリケーションフォルダ（test_chartjs）配下にある、「apps.py」を開いてみると書いてあるんだよね。わかりにくいなぁこれ。
 
-```diff:config/settings.py
+```diff:/var/www/html/portfolio/config/settings.py
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
