@@ -1000,20 +1000,24 @@ $ source venv/bin/activate
 
 ### Apache 設定ファイルの編集（APT 方式に統一）
 
+> 方針の明確化（LoadModule 方式からの移行）
+> - かつては VirtualHost（サイト設定）内に `LoadModule wsgi_module ...` を直書きする「LoadModule 方式」で運用していたが、以後は Ubuntu/Debian 標準のパッケージ管理である APT を用いた「APT 方式」に統一する。
+> - 「APT 方式」とは、Apache および mod_wsgi を OS 公式パッケージ（例: `libapache2-mod-wsgi-py3`）で導入し、`a2enmod`/`a2dismod` と `/etc/apache2/mods-available/* → mods-enabled/*` による標準のモジュール管理に従う運用を指す。
+> - 対比: `pip install mod_wsgi` で仮想環境（venv）内に導入し、`LoadModule` をサイト設定に直書きして独自の `.so` を読み込む方法は、本ドキュメントでは「ソース/venv 方式」または「LoadModule 方式」と呼ぶ。
+> - なぜ移行するか（利点）: 依存関係と更新を APT に一元化できる／ディレクトリや設定レイアウトが標準に揃う／`LoadModule` の二重読み込み事故を避けやすい。
+> - 注意点: Apache や Python のバージョンは基本的に配布パッケージ提供版に合わせる前提（必要に応じてバックポートや PPA を検討）。
+
 ```bash:console
 # 設定ファイルの編集
 $ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
+開いたら、ファイルの最後に、以下の設定ブロック（WSGIScriptAlias〜最後の </Directory> まで）をそのまま追記してください。
+すでに同等設定がある場合は重複しないように調整します（順序や値は既存を優先）。
+
 ```conf:/etc/apache2/sites-available/000-default.conf
-# 方針: APT 版 libapache2-mod-wsgi-py3 を使用する
-# 理由（重要）:
-# - 過去は VirtualHost の設定ファイル内に `LoadModule wsgi_module ...` を直書きしていたが、
-#   APT 方式では `a2enmod wsgi` により Apache 標準のモジュール管理
-#   （/etc/apache2/mods-available/ → /etc/apache2/mods-enabled/）で読み込みを一元化できる。
-# - サイト設定側にも `LoadModule` を書くと二重読み込みになり、
-#   `AH01574: module wsgi_module is already loaded, skipping` の警告や混乱の原因となる。
-# - したがって、本ファイルには `LoadModule` を書かない（mods-enabled/wsgi.load に任せる）。
+# 方針: APT 方式（`libapache2-mod-wsgi-py3` + `a2enmod wsgi`）に従う。
+# LoadModule は mods-enabled/wsgi.load に任せ、このファイルには書かない。
 
 WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
 WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
