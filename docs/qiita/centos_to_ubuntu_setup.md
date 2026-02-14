@@ -1212,64 +1212,49 @@ $ sudo chown -R ubuntu:ubuntu /var/www/html
 >   $ sudo chmod -R u+rwX,go+rX /var/www/html/portfolio/static
 >   ```
 
-#### Reset（※必要に応じて）
+## Django（DB リセットの整理）
 
-1. ~~まず各appディレクトリの `migrations` ディレクトリを消してまわります~~
-2. `db` を消します（＝portfolio_db）
-3. `db` を作ります
+このセクションでは、Django のデータベースをリセットする代表的な2通りの手順をまとめます。運用状況に応じて使い分けます。
 
-##### ※migrationsは .gitignore に含めないで！
-
-上記1番に取り消し線を引いた理由
-なんかしらねーけどCIでのテストが通らなくて困っていた![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/63e47f99-d81e-80ce-1dbc-c1ba8045455b.png)
-
-
-> **Warning:**
-> ぼく「もしかしてだけど `migrations` フォルダを `.ignore` すると `python manage.py test` で影響ある？」
-> gpt「はい、`.gitignore` に `migrations` フォルダを含めていると、`python manage.py test` に影響を与える可能性があります。特に以下のような影響があります」
->
-> ###### 影響
->
-> マイグレーションファイルが存在しない:
-> `migrations` フォルダ内にはマイグレーションファイル（例えば `0001_initial.py` など）が含まれています。これらのファイルはデータベースのスキーマを管理し、Djangoが適用するマイグレーションの履歴を保持します。もしこのフォルダが `.gitignore` されていて、CI環境などでマイグレーションファイルが存在しない場合、テスト実行時にデータベーススキーマが適用されず、エラーになります。
->
-> テスト用データベースにスキーマが反映されない:
-> テスト用データベースは、マイグレーションを適用することでスキーマが反映されますが、マイグレーションファイルがないと、Djangoは適切にデータベーススキーマを作成できません。その結果、`auth_user` のようなテーブルが存在せず、`django.db.utils.OperationalError` が発生する可能性があります。
->
-> ###### 解決策
->
-> `migrations` フォルダを `.gitignore` から外す: 開発やテスト環境で正しく動作するために、`migrations` フォルダはバージョン管理システムに含めておくことが推奨されます。これにより、`CI/CD` 環境でも正しいマイグレーションが適用され、テスト用データベースが正しく構築されます。
->
-> ぼく「ほんとだ　解決したわ。。。」
-> ぼく「じゃあdjangoの `test` コマンドはマイグレーションファイルを作成せずに既存のマイグレーションファイルを利用するということね？（ローカルでうまくいくのは無視されるファイルが存在するから）」
->
-> gpt「はい、その通りです。`python manage.py test` コマンドは、**既存のマイグレーションファイルを利用してテスト環境にデータベースをセットアップします。**」
->
-> gpt「つまり、`migrations` フォルダにあるマイグレーションファイルがテストの際に使われるため、もしそのフォルダが `.gitignore` などで無視されていたり、CI環境で存在していないと、マイグレーションが実行されずにエラーが発生する可能性があります。」
->
-> gpt「一方で、ローカル環境では `.gitignore` によって無視されるファイルが存在しているので、マイグレーションが正常に動作しているため、問題なくテストが通るということですね。」
-
-
-> **Note:**
-> なんで `migrations` フォルダを `.gitignore` したの？
-> ぼく「モデルなんてゴロゴロ変わるからさ！」
-
-#### migrationとcreatesuperuser
+### 1) 大リセット（全体を作り直す）
+- 目的: 既存の履歴や不要なマイグレーションをすべて捨て、クリーンな状態に戻す。
+- 手順の概要:
+  1. 各アプリの `migrations` ディレクトリを一旦削除
+  2. 実データベースを削除（例: `DROP DATABASE portfolio_db;` など）
+  3. 空のデータベースを作成
+  4. マイグレーション適用のみ実行（`makemigrations` は不要）
 
 ```bash:console
 $ cd /var/www/html/portfolio
-$ python manage.py makemigrations vietnam_research gmarker shopping linebot_engine warehouse taxonomy soil_analysis securities
-$ python3 manage.py migrate
+# DB は MySQL クライアントや DBeaver で Drop → Create（事前にバックアップ推奨）
+$ source venv/bin/activate
+(venv) $ python manage.py migrate
 ```
 
+### 2) 小リセット（特定アプリだけ履歴を整理）
+- 目的: 一部アプリのマイグレーション履歴が肥大・錯綜したときに、そのアプリだけをスリム化。
+- 手順の概要:
+  1. 対象アプリの `app_name/migrations/` を削除
+  2. そのアプリの現行モデル定義をもとに `makemigrations app_name` を実行（新しい初期マイグレーションを生成）
+  3. `migrate` を実行
 
-> **Warning:**
-> なんか migrationで止まるケースがあって、そのときに root で実行すると通るみたいな状況が発生している　ほんとに root 権限が解決しているのかは不明。
->
-> いや、一般ユーザでmigrationできた。メモリでVPSが落ちているようだから止まったらサーバーを強制再起動だな
+```bash:console
+$ cd /var/www/html/portfolio
+$ source venv/bin/activate
+(venv) $ python manage.py makemigrations <app_name>
+(venv) $ python manage.py migrate
+```
 
-```console:Console（管理ユーザーも消えるので、必要な場合はもう一度作ります）
-$ python3 manage.py createsuperuser
+> Note:
+> - プロダクションDBで履歴の入れ替えを行う場合は、必ず事前にバックアップを取得してください。
+> - 既存データとの整合性（データ喪失/制約変更）に注意。安全な環境での検証を推奨します。
+
+### 管理ユーザーの作成（続き）
+
+```bash:console
+$ cd /var/www/html/portfolio
+$ source venv/bin/activate
+(venv) $ python manage.py createsuperuser
   Email address:
   Password:
   Password (again):
