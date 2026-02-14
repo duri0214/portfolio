@@ -986,7 +986,7 @@ $ cd /var/www/html/portfolio
 
 # mod_wsgi本体のパスを確認
 $ find venv -name "mod_wsgi*.so"
-# 例: /var/www/html/portfolio/venv/lib/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so
+# 期待値例: venv/lib/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so
 
 # Python Home (仮想環境) のパスを確認（WSGIDaemonProcess の python-home に指定する値）
 # 方法A: find でプロジェクト配下から venv を特定（推奨）
