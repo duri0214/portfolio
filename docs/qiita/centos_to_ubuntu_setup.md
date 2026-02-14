@@ -1126,7 +1126,6 @@ $ cat hello-cron.log
 ### Cron の設定
 
 ```bash:console
-# crontabの編集
 $ crontab -e
 ```
 
