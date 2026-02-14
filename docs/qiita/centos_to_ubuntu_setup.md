@@ -1311,6 +1311,9 @@ $ sudo -u www-data test -r /var/www/html/portfolio/config/wsgi.py && echo OK_wsg
 
 `root` のままディレクトリとか作りまくってると `access denied` や `permission error` になっていることがあるので注意。特に `/var/www/html/portfolio/config/wsgi.py` と、その親ディレクトリに `x` 権限が無いと mod_wsgi がアプリを読み込めず 500 になる。
 
+> 次のステップ
+> - ここまで完了したら、README の「2. 初期データ投入 → データのインポート手順」に従ってデータをセットアップし、Web ページが正常に表示されることを確認してください（curl/ブラウザで 200 応答を確認）。これで clone ベースのセットアップは完了です。
+
 ## FTP
 
 いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp)
