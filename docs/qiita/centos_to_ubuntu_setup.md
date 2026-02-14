@@ -376,7 +376,7 @@ LANG=C.UTF-8 と表示されれば OK。
 
 いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#%E3%83%90%E3%83%BC%E3%83%81%E3%83%A3%E3%83%AB%E3%83%9B%E3%82%B9%E3%83%88)
 
-```console:console
+```bash:console
 $ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
@@ -402,7 +402,7 @@ $ sudo vi /etc/apache2/sites-available/virtual.host.conf
 > </VirtualHost>
 > ```
 
-```
+```bash:console
 $ sudo a2ensite virtual.host
 $ sudo systemctl restart apache2
 ```
@@ -436,7 +436,7 @@ $ sudo ufw status
 
 ### サイト設定を有効化する
 
-```console:console
+```bash:console
 $ sudo a2ensite default-ssl
   Enabling site default-ssl. // 設定を読み込む
 $ sudo a2enmod ssl
@@ -675,13 +675,12 @@ $ sudo systemctl restart apache2
 
 #### スクリプトファイル新規作成
 ```bash:console
-$ sudo -s                  # root に切り替え
-# cd ~                     # root のホームに移動（/root と同義）
-# vi certbot.sh            # ここでスクリプトの内容を書いて保存
+# スクリプトを root のホームに直接作成
+$ sudo vi /root/certbot.sh            # ここでスクリプトの内容を書いて保存
 ```
 
 #### 証明書の更新スクリプト（そのまま転記）
-root で実行するため sudo は不要
+以下は root が実行する前提のスクリプト本文（cron で root 実行）。スクリプト内コマンドに sudo は記述しない。
 ```bash:certbot.sh
 #!/bin/bash
 certbot renew
@@ -691,10 +690,9 @@ today=$(date "+%Y/%m/%d %H:%M:%S")
 echo "${today} certbot renew" >> /root/certbot_result.log
 ```
 
-#### 実行権限を付与（root のまま）
+#### 実行権限を付与
 ```bash:console
-# chmod 755 /root/certbot.sh
-# exit  # 作業が終わったら一般ユーザーに戻る
+$ sudo chmod 755 /root/certbot.sh
 ```
 
 > Note:
