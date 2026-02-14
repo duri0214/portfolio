@@ -1315,47 +1315,6 @@ $ sudo -u www-data test -r /var/www/html/portfolio/config/wsgi.py && echo OK_wsg
 
 いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp)
 
-## Django のバッチをつくる
-
-https://qiita.com/YoshitakaOkada/items/3b5da2d77e54d833dac6
-
-## Django で自動テストをする
-
-バッチのテストもこっち
-
-https://qiita.com/YoshitakaOkada/items/2709dfb13dc209025480
-
-## Ubuntuのmatplotlib、日本語問題
-
-https://qiita.com/Atommy1999/items/db533fc8b69a5afe29d2
-
-```console:console
-$ sudo apt install -y fonts-ipafont
-$ sudo ls ~/.cache/matplotlib/
-$ sudo rm ~/.cache/matplotlib/fontlist-v330.json
-$ sudo fc-cache -fv
-$ sudo fc-list | grep -i ipa
-  /usr/share/fonts/opentype/ipafont-mincho/ipam.ttf: IPAMincho,IPA明朝:style=Regular
-  /usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf: IPAPGothic,IPA Pゴシック:style=Regular
-  /usr/share/fonts/opentype/ipafont-mincho/ipamp.ttf: IPAPMincho,IPA P明朝:style=Regular
-  /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf: IPAGothic,IPAゴシック:style=Regular
-  /usr/share/fonts/truetype/fonts-japanese-mincho.ttf: IPAMincho,IPA明朝:style=Regular
-  /usr/share/fonts/truetype/fonts-japanese-gothic.ttf: IPAGothic,IPAゴシック:style=Regular
-```
-
-```python:vietnam_research/management/commands/daily_industry_stacked_bar_chart.py
-font_path = '/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf'
-if Path.exists(Path(font_path).resolve()):
-    # for ubuntu jp font
-    plt.legend(loc='upper left', labels=df.columns, prop={"family": "IPAMincho"})
-else:
-    plt.legend(loc='upper left', labels=df.columns, prop={"family": "MS Gothic"})
-```
-
-windows にも入れちゃったほうがいいや
-
-https://qiita.com/Maron_T/items/1565449fbaccfddb1ec3
-
 ## PdfMiner
 
 - SBI topics で使用している
