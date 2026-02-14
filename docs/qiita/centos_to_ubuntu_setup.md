@@ -1288,7 +1288,7 @@ $ mysql -u <user> -p -h 127.0.0.1 portfolio_db < mysql_dump.sql
 ### 参考リンク
 - リストアの基本: https://qiita.com/YoshitakaOkada/items/45ebdc00cc923d970638
 
-## 権限（wsgi が読める権限を確保）
+## Apache/WSGI の実行権限チェック
 
 mod_wsgi（Apache の wsgi モジュール）がアプリを読み込めるよう、最低限の読み取り権限を付与しておく。所有者は `ubuntu:ubuntu` のままで構わないが、Apache 実行ユーザー（`www-data`）が以下を満たす必要がある。
 
@@ -1300,12 +1300,16 @@ mod_wsgi（Apache の wsgi モジュール）がアプリを読み込めるよ�
 典型的には、ディレクトリ 755、ファイル 644 にしておけば wsgi が読める。
 
 ```bash:console
-# wsgi が読める最小権限（ディレクトリ=755, ファイル=644）を一括で付与
-$ sudo find /var/www/html/portfolio -type d -exec chmod 755 {} +
-$ sudo find /var/www/html/portfolio -type f -exec chmod 644 {} +
+# 最短リカバリ（安全な既定値）: ディレクトリ=755, ファイル=644 を一括付与
+$ sudo find /var/www/html/portfolio -type d -print -exec chmod 755 {} +
+$ sudo find /var/www/html/portfolio -type f -print -exec chmod 644 {} +
+
+# 直後に www-data 視点で要点チェック（OK/NG が出る）
+$ sudo -u www-data test -x /var/www/html/portfolio/config && echo OK_dir || echo NG_dir
+$ sudo -u www-data test -r /var/www/html/portfolio/config/wsgi.py && echo OK_wsgi || echo NG_wsgi
 ```
 
-さんざん `root` のままディレクトリとか作りまくってると `access denied` や `permission error` になっていることがあるので注意。特に `/var/www/html/portfolio/config/wsgi.py` と、その親ディレクトリに `x` 権限が無いと mod_wsgi がアプリを読み込めず 500 になる。
+`root` のままディレクトリとか作りまくってると `access denied` や `permission error` になっていることがあるので注意。特に `/var/www/html/portfolio/config/wsgi.py` と、その親ディレクトリに `x` 権限が無いと mod_wsgi がアプリを読み込めず 500 になる。
 
 ## FTP
 
