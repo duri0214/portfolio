@@ -1137,7 +1137,7 @@ $ crontab -e
 */10 * * * * /var/www/html/portfolio/venv/bin/python /var/www/html/hello-cron.py
 
 # 毎月1日の0:00に証明書を更新
-0 0 1 * * /home/ubuntu/certbot.sh
+0 0 1 * * /root/certbot.sh
 
 # バッチ処理の例（自分用メモ）
 0 0 1 * * /root/certbot.sh
