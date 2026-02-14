@@ -1266,34 +1266,27 @@ $ source venv/bin/activate
 djangoがシステム的に作ったテーブルと、アプリケーションを作っていればアプリケーション名が先頭についたテーブルが作成される（赤枠）
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/a6915c45-1195-4801-691e-afb51d3353ca.png)
 
-## MySQLデータ のインポート
+## MySQLデータ のインポート（最小手順）
 
-https://qiita.com/YoshitakaOkada/items/45ebdc00cc923d970638
-リストアのみならこれ
-※自分メモ（ローカルからVPSのインポートは事故るから、マイグレーション済んだらsuperuserを手で追加したあと、ダンプからDrop・Create命令を除外したものを作って）
+> Note: 当時の事故メモ（本番とローカルの差異での失敗談）はノイズになるため省略します。ここでは“標準ケース”のみに絞ります。
 
-https://qiita.com/shy_azusa/items/9f6ba519cfda626db52b
+### 前提
+- すでに `portfolio_db` が存在し、スキーマは Django のマイグレーションで作成済み（`python manage.py migrate` 済み）
+- インポートしたいダンプは、必要に応じて `CREATE DATABASE` や `DROP DATABASE`、不要な `CREATE TABLE`/`DROP TABLE` を取り除いたものを用意（テーブル定義を上書きしないように調整）
 
-```console:console
-vi /etc/my.cnf
+### 手順
+```bash:console
+$ cd <dumpを置いたディレクトリ>
+$ mysql -u <user> -p -h 127.0.0.1 portfolio_db < mysql_dump.sql
 ```
 
-```text:/etc/my.cnf
-[mysqld]
-wait_timeout            = 86400
-max_allowed_packet      = 1G
-innodb_buffer_pool_size = 1G
-```
+### ポイント
+- dump は「SQL をそのまま実行」するだけです。開発環境に新しいテーブルがあっても、そのテーブルはそのまま残り、dump 側の INSERT/UPDATE が適用されます。
+- スキーマを壊したくない場合は、dump 側の `CREATE TABLE`/`DROP TABLE` を外した“データのみ”のファイルを用意してください（MySQL Workbench や `mysqldump --no-create-info` など）。
+- 必要なら事前にバックアップを取得してから適用してください。
 
-```console:console
-service mysql restart
-```
-
-```console:console(Ubuntu)SCPした場所にcdしてから
-# mysql -u root -p
-mysql> use portfolio_db
-mysql> source mysql_dump.sql
-```
+### 参考リンク
+- リストアの基本: https://qiita.com/YoshitakaOkada/items/45ebdc00cc923d970638
 
 ## 権限（wsgi が読める権限を確保）
 
