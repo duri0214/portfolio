@@ -1051,6 +1051,10 @@ $ sudo systemctl restart apache2
 > - **WSGIProcessGroup**: デーモンプロセスをグループ化します。
 > - **WSGIApplicationGroup %{GLOBAL}**: numpy の `Interpreter change detected` 回避、拡張モジュールとの相性対策。
 
+> Note: `numpy` 等で「Interpreter change detected」が出るケースの対策は、上記の
+> `WSGIApplicationGroup %{GLOBAL}` です。本ブロックに既に含めていますが、
+> 既存環境にこの行が無い場合のみ、同一行を1カ所だけ追記してください（重複不要）。
+
 #### APT 方式での前提と確認
 
 APT 方式では、`LoadModule` の記述は Apache 標準のモジュール管理に任せます（`/etc/apache2/mods-available/wsgi.load` → `a2enmod wsgi` → `/etc/apache2/mods-enabled/wsgi.load`）。
@@ -1066,25 +1070,11 @@ $ apache2ctl -M | grep wsgi
 `apache2ctl -M` に `wsgi_module (shared)` が出ていれば有効です。`AH01574: module wsgi_module is already loaded, skipping` が出る場合は、`000-default.conf` に重複する `LoadModule` 行が無いか確認し、削除してください（APT 方式では不要）。
 
 
-### ※numpy: Interpreter change detected への対応
+### ※numpy: Interpreter change detected への対応（補足）
 
-Djangoで `numpy` を使用している場合、mod_wsgi経由で `Interpreter change detected` エラーが発生することがあります。これは `WSGIApplicationGroup` を設定することで回避できます。
-
-```bash:console
-# 設定ファイルの編集
-$ sudo vi /etc/apache2/sites-enabled/000-default.conf
-```
-
-```diff:/etc/apache2/sites-enabled/000-default.conf
-  WSGIProcessGroup wsgi_app
-+ WSGIApplicationGroup %{GLOBAL}
-  WSGISocketPrefix /var/run/wsgi
-```
-
-```bash:console
-# 反映
-$ sudo systemctl restart apache2
-```
+Django で `numpy` を使う場合、`mod_wsgi` 経由で `Interpreter change detected` が発生することがあります。
+対策は「`WSGIApplicationGroup %{GLOBAL}` を有効にする」ことです。本対応は上の設定ブロック
+（上位セクション「Apache 設定ファイルの編集（APT 方式に統一）」の設定ブロック）に既に統合済みです。未導入の既存環境のみ、同一行を1カ所だけ追記してください。
 
 ### エラーが発生した場合は
 
@@ -1927,21 +1917,7 @@ INSTALLED_APPS = [
 staticディレクトリ配下は開放。
 ※あくまで DEBUG = True のときの設定です。慣れてきて DEBUG = False にするときは [こっち](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#debug%E3%82%92false%E3%81%AB%E3%81%97%E3%81%A6%E3%81%BF%E3%81%A6) を参照
 
-```console:console
-# vi /etc/apache2/sites-enabled/000-default.conf
-```
-
-```diff:/etc/apache2/sites-enabled/000-default.conf（あくまでDEBUG=False用の設定。collectstaticでこのフォルダにコピーされるから）
-+ # css, javascript etc
-+ Alias /static/ /var/www/html/portfolio/static/
-+ <Directory /var/www/html/portfolio/static>
-+   Require all granted
-+ </Directory>
-```
-
-```console:console
-# systemctl restart apache2
-```
+> Note: 上位セクション「Apache 設定ファイルの編集（APT 方式に統一）」の設定ブロックで `Alias /static/ ...` は既に設定済みです。以下は DEBUG=False 運用時の意味付けのみで、追加入力は不要です（重複設定は行わない）。
 
 ### vietnam_research/urls.py を編集
 
