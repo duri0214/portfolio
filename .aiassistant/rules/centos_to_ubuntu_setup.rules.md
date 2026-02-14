@@ -1,3 +1,7 @@
+---
+apply: always
+---
+
 # 編集ルール（スタイルガイド） v1 — 本ファイル専用ルール
 
 適用対象: docs/qiita/centos_to_ubuntu_setup.md（このファイル専用）
@@ -18,6 +22,7 @@
 
 2) コードブロックの表記
    - コンソール操作は言語タグを `bash:console` に統一する。
+   - ファイルの内容を示す場合は、言語タグのコロン右側に対象ファイル名を記す（例: `conf:/etc/apache2/sites-available/000-default.conf`, `bash:certbot.sh`, `python:hello-cron.py`）。
    - rootプロンプト `#` は使わず、一般ユーザー `$` で `sudo` を付与する表現に統一（例: `$ sudo systemctl restart apache2`）。
    - 設定ファイルや差分は用途に応じて `conf` / `diff` / `vim` などを用いる。
    - 実行結果ブロック（出力例）は内容を変えない。当時値は保持し、タグのみ統一する。
