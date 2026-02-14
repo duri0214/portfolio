@@ -1363,67 +1363,25 @@ $ source venv/bin/activate
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']  # 本番はドメインを追加
 ```
 
-### わかりやすいプロジェクト構成
-
-新規作成時のみ
-
-- ベースディレクトリ名と設定ディレクトリ名が同じでややこしい
-- テンプレートと静的ファイルがアプリケーションごとにバラバラに配置されてしまう
-
-これらを解決する。ベースディレクトリを作成したあとにベースディレクトリの下に移動し、設定ディレクトリ名と `.` を指定する
-
-```console:console
-$ mkdir mypage
-$ cd mypage
-$ django-admin startproject config .
-$ python manage.py startapp hoge
-$ python manage.py runserver
-```
-
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/02b75dc9-1055-b6e8-1140-71808801e460.png)
-
-### settings.py
-
-ALLOWED_HOSTS（許可するドメイン）を編集する
-
-```console:console
-# vi /var/www/html/portfolio/config/settings.py
-```
-
-```diff:/var/www/html/portfolio/config/settings.py
-- ALLOWED_HOSTS = []
-+ ALLOWED_HOSTS = ['.henojiya.net', '127.0.0.1', 'localhost', '153.126.200.229']
-```
-
-loggerを有効にする（loggingモジュールでコンソールに情報が出せるようになる）
-
-```py:/var/www/html/portfolio/config/settings.py（一番下に追加）
-    :
+```py:/var/www/html/portfolio/mypage/config/settings.py（任意: 末尾に追加）
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
-    },
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "INFO"},
 }
-
 ```
 
-### mysqlclient
+### 4) MySQL を使う場合（任意）
+- 依存ライブラリの apt 導入は、上位セクション「依存パッケージのインストール」を参照（`libmysqlclient-dev` など）。
+- venv で `mysqlclient` を導入。
 
+```bash:console
+(venv) $ pip install mysqlclient
 ```
-(venv)# apt -y install build-essential libssl1.1 libssl1.1=1.1.1f-1ubuntu2 libssl-dev libmysqlclient-dev
-(venv)# pip3 install mysqlclient environ
 
-```
-
-```diff:/var/www/html/portfolio/config/settings.py
+`DATABASES` を MySQL 用に変更（例）
+```diff:/var/www/html/portfolio/mypage/config/settings.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -1437,13 +1395,23 @@ DATABASES = {
 +       'ENGINE': 'django.db.backends.mysql',
 +       'NAME': 'portfolio_db',
 +       'USER': 'python',
-+       'PASSWORD': 'python123',
++       'PASSWORD': os.getenv('DJANGO_DB_PASSWORD', ''),
++       'HOST': '127.0.0.1',
++       'PORT': '3306',
     }
 }
 ```
 
-```console:console
-# service apache2 restart
+> Note: DB パスワードは `.env` から読む運用が安全です（`.env.example` の `DJANGO_DB_PASSWORD` を参照）。
+
+### 5) Apache 連携（本番運用時）
+- 上位セクション「Apache 設定ファイルの編集（APT 方式に統一）」の設定ブロック（`WSGIScriptAlias` ほか）に従い、対象パスを新規プロジェクトに合わせて置換して適用してください。
+- 設定後は `sudo apache2ctl configtest` → `sudo systemctl restart apache2`。
+
+### 補足（任意）：PdfMiner
+- SBI topics で使用。旧 pdfminer ではなく `pdfminer.six` を使用。
+```bash:console
+(venv) $ pip install pdfminer.six
 ```
 
 ## Django
