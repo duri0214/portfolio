@@ -1324,10 +1324,6 @@ $ sudo -u www-data test -r /var/www/html/portfolio/config/wsgi.py && echo OK_wsg
 pip install pdfminer.six
 ```
 
-## CI環境 を整える
-
-https://qiita.com/YoshitakaOkada/items/1dc5dd643ba84ebcc74f
-
 ## Django プロジェクトを新規で始める場合
 
 ### Django インストール
