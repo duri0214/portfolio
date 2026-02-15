@@ -496,9 +496,6 @@ Congratulations! You have successfully enabled HTTPS on https://www.henojiya.net
 > - 事前検証はドライランで: `sudo certbot certonly --apache --dry-run`
 
 ```bash:console
-# 証明書の削除（やり直す場合）
-$ sudo certbot delete --cert-name henojiya.net
-
 # 証明書の確認
 $ sudo certbot certificates
 ```
@@ -508,10 +505,6 @@ $ sudo certbot certificates
 $ sudo certbot certonly --apache -d www.henojiya.net --dry-run
 ```
 
-```bash:console
-# 証明書の取得（Apache設定は自動で行わない場合）
-$ sudo certbot certonly --apache -d www.henojiya.net
-```
 
 ### FQDN をメモ
 
