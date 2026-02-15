@@ -305,15 +305,13 @@ $ sudo vi /etc/apache2/sites-enabled/000-default.conf
 - 9行目前後: コメントアウトされている ServerName 行を実値で追記
 - 9行目直後（ServerName の直下）に HTTPS へ恒久リダイレクトの行をコメントのまま配置（HTTPS 設定が完了するまで）
 
-```diff
+```diff:/etc/apache2/sites-enabled/000-default.conf
 # サーバー名を追記（000-default.conf の9行目前後）
 - #ServerName www.example.com
 + ServerName www.henojiya.net
-```
 
-```conf:/etc/apache2/sites-available/000-default.conf
-# httpsの設定が済むまではコメントアウトしておく
-# Redirect permanent / https://www.henojiya.net
++ # httpsの設定が済むまではコメントアウトしておく
++ # Redirect permanent / https://www.henojiya.net
 ```
 
 ```bash:console
