@@ -989,7 +989,14 @@ $ source venv/bin/activate
 > - 注意点: Apache や Python のバージョンは基本的に配布パッケージ提供版に合わせる前提（必要に応じてバックポートや PPA を検討）。
 
 ```bash:console
-# 設定ファイルの編集
+# まず APT 版 mod_wsgi を導入・有効化し、読み込みを確認する
+$ sudo apt update
+$ sudo apt install -y libapache2-mod-wsgi-py3
+$ sudo a2enmod wsgi
+$ apache2ctl -M | grep -i wsgi   # 期待: wsgi_module (shared)
+$ sudo apache2ctl configtest     # 期待: Syntax OK
+
+# つづいて設定ファイルを編集
 $ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
