@@ -59,6 +59,7 @@ Linux初心者は、コンソール上の「$」とか「\#」がよくわかん
 
 - 現時点では SSH のみ開放（TCP 22）。HTTP/HTTPS へのリダイレクトやUFW設定はこの後に行います。
 - 将来ポートを変更したら `ssh -p <port> ubuntu@<IP>` のように `-p` で指定できます（初期は22）。
+- さくらのVPSのWebインターフェースで「登録済み公開鍵を使ってインストール」している場合、このセクション（パスワード認証チェック）はスキップ可能です。公開鍵でそのまま接続してください（例: `ssh ubuntu@<IP>`）。
 
 手順（PowerShell）
 
@@ -76,18 +77,37 @@ ubuntu@153.127.13.226's password:  # さくらVPSの初期設定で指定した 
 
 ### 既知鍵の衝突（known_hosts）
 
-既に同一IPで鍵が変わっている場合（OS入れ直し等）は known_hosts の衝突で警告されます。その場合は次のどちらかで解決します。
+OS を入れ直した直後など、サーバのホスト鍵が変わると次のような強烈な警告が出ます。これは“以前と異なるサーバ鍵になった”ことを示す安全装置です。
 
 ```bash:console
-# （Windows）PowerShell から実行
-# 衝突している既存のホストキーを削除（推奨）
-PS C:\Users\yoshi> ssh-keygen -R 153.127.13.226
+(venv) PS C:\Users\yoshi\OneDrive\dev\portfolio> ssh henojiya
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:s0c1XEu0wLLE40iYbYgLo37pNlsBOajTwirE6h9IJ4Q.
+Please contact your system administrator.
+Add correct host key in C:\\Users\\yoshi/.ssh/known_hosts to get rid of this message.
+Offending ECDSA key in C:\\Users\\yoshi/.ssh/known_hosts:6
+Host key for 153.126.200.229 has changed and you have requested strict checking.
+Host key verification failed.
+```
 
-# もしくは known_hosts から該当行を手で削除
+対処（どちらか一方）
+```bash:console
+# 1) 既存のホストキーを削除（推奨・自動）
+PS C:\Users\yoshi> ssh-keygen -R 153.126.200.229
+
+# 2) known_hosts を手動で開いて該当行（例: 6行目）を削除
 PS C:\Users\yoshi> notepad $env:USERPROFILE\.ssh\known_hosts
 ```
 
-ログイン後の確認（一般ユーザーで入れていることを確認）
+その後、改めて接続すると新しいホスト鍵が保存されます。
+
+> Note: 警告文の中に「Offending ... known_hosts:6」のように“該当行番号”も表示されます。手動で編集する場合は、その行を削除すれば解消します。
 
 ```bash:console
 $ whoami
