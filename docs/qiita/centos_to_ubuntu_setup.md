@@ -115,33 +115,25 @@ $ sudo -s
 
 ### 公開鍵でログインできるようにする
 
-PCにある公開鍵（例：`id_rsa_henojiya.pub`）をサーバーにアップロードし、以下のコマンドで登録します（まずはパスワード認証で一度ログイン→公開鍵方式へ切り替える流れ）。
-
-まず、公開鍵ファイルがカレントディレクトリにあることを確認します（この例では `/home/ubuntu` に置いた前提）。
+PCにある公開鍵（例：`id_rsa_henojiya.pub`）をサーバーにアップロードし、以下のコマンドで登録します（まずはパスワード認証で一度ログイン→公開鍵方式へ切り替える流れ）。さくらのVPSのWebインターフェースで鍵を事前登録する運用が基本ですが、手動で設定する場合の“要点だけ”を以下にまとめます。
 
 ```bash:console
-# いまの作業場所を確認
+# 最初の配置（例：Tera Term で /home/ubuntu にドラッグ＆ドロップでも可）
 $ pwd
 /home/ubuntu
+$ ls
+id_rsa_henojiya.pub
 
-# 公開鍵ファイルが存在するか確認
-$ ls -l *.pub
--rw-r--r-- 1 ubuntu ubuntu   400 Feb  1 12:34 id_rsa_henojiya.pub
-```
-
-```bash:console
-# SSH設定ディレクトリの作成と権限設定
+# 許可鍵の登録（.ssh は700、authorized_keys は600 必須）
 $ mkdir ~/.ssh
-$ chmod 700 ~/.ssh  # ~/.ssh は 700 である必要あり
-
-# 公開鍵を `authorized_keys` に移動し、権限を設定
+$ chmod 700 ~/.ssh
 $ mv id_rsa_henojiya.pub ~/.ssh/authorized_keys
-$ chmod 600 ~/.ssh/authorized_keys  # authorized_keys は 600 である必要あり
+$ chmod 600 ~/.ssh/authorized_keys
+```
 
 > Note:
-> - Windows から SCP で転送する場合は PowerShell の `scp`（OpenSSH クライアント）を利用します。
-> - 以後は `ssh ubuntu@<IP>` でパスワード入力なしで接続できるはずです（鍵パスフレーズを設定していればその入力は必要）。
-```
+> - Windows からの単発転送は PowerShell の `scp`（OpenSSH）でも可。
+> - 以後は `ssh ubuntu@<IP>` でパスワードなし接続（鍵パスフレーズがあればその入力のみ）。
 
 ターミナルからログインできました！
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/314f4e41-58fc-87b9-de2d-5eb5ab362b47.png)
