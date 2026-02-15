@@ -94,11 +94,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "portfolio_db",
-        "USER": "python",
+        "NAME": os.environ.get("DJANGO_DB_NAME", "portfolio_db"),
+        "USER": os.environ.get("DJANGO_DB_USER", "python"),
         "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD"),
-        "HOST": "localhost",
-        "PORT": "3306",
+        "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
+        "PORT": os.environ.get("DJANGO_DB_PORT", "3306"),
         "TEST": {
             "NAME": "test_portfolio_db",
         },

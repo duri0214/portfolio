@@ -758,29 +758,22 @@ mysql> status;
 -- データベース作成
 CREATE DATABASE portfolio_db DEFAULT CHARACTER SET utf8mb4;
 
--- ユーザー作成
--- ※ '%' はどこからでも接続可能。セキュリティを高めるなら 'localhost' に限定。
--- 補足: 直前に Password Strength=HIGH を選んだ場合、単純な例（例: 'python123'）は通りません。
---       パスワードジェネレータ等で十分に強いパスワードを作成して指定してください。
-CREATE USER 'python'@'%' IDENTIFIED BY 'python123';
+-- ユーザー作成（127.0.0.1 に一本化：サーバ自身/ローカル自身/SSHトンネル経由で統一運用）
+-- 補足: Password Strength=HIGH を選んだ場合、単純な例は通りません。十分に強いパスワードを指定してください。
+CREATE USER IF NOT EXISTS 'python'@'127.0.0.1' IDENTIFIED BY 'python123';
 
 -- 権限の付与（シンプルにすべて）
-GRANT ALL PRIVILEGES ON portfolio_db.* TO 'python'@'%';
+GRANT ALL PRIVILEGES ON portfolio_db.* TO 'python'@'127.0.0.1';
 
 -- 設定の反映と終了
 FLUSH PRIVILEGES;
 EXIT;
 ```
 
-> Note: settings.py は現在 `HOST='localhost'` で構成されています。
-> - そのため、`python@'localhost'` でも同じパスワードで作成しておくと安全です（ソケット接続時の認証不一致を避ける）。
->   ```sql
->   -- 追加で localhost 専用ユーザーも用意（パスワードは上と同一に）
->   CREATE USER IF NOT EXISTS 'python'@'localhost' IDENTIFIED BY 'python123';
->   GRANT ALL PRIVILEGES ON portfolio_db.* TO 'python'@'localhost';
->   FLUSH PRIVILEGES;
->   ```
-> - 逆に TCP に統一したい場合は、Django 側を `HOST='127.0.0.1'` に変更し、`python@'%'`（または `python@'127.0.0.1'`）で接続する構成でも動作します。
+> Note: クライアントからの運用メモ
+> - VPS上のDjango/ローカル開発のDjangoはいずれも `HOST=127.0.0.1` に統一。
+> - DBeaverなど外部クライアントは「SSHタブでトンネル接続」し、一般タブは `Host=localhost`, `Port=3306` のままでOK（DBeaverが内部でVPSの127.0.0.1:3306へフォワード）。
+> - OSコマンドで手動トンネルを張る場合は、ローカル側の任意の空きポート（例:3307）を使い、一般タブを `localhost:3307` にする運用でも可。
 
 ## DBeaver
 
