@@ -113,7 +113,8 @@ python manage.py daily_industry_stacked_bar_chart
 
 # FAO 水産物供給量グラフ / ベトナム統計局 経済指標
 python manage.py monthly_fao_food_balance_chart
-python manage.py monthly_vietnam_statistics
+# ※相手先サーバ（ベトナム）の証明書がうまくなくて実行できない
+# python manage.py monthly_vietnam_statistics
 
 # --- GMarker ---
 python manage.py loaddata gmarker\fixtures\place.json
