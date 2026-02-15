@@ -1043,26 +1043,6 @@ $ sudo systemctl restart apache2
 > `WSGIApplicationGroup %{GLOBAL}` です。本ブロックに既に含めていますが、
 > 既存環境にこの行が無い場合のみ、同一行を1カ所だけ追記してください（重複不要）。
 
-#### APT 方式での前提と確認
-
-APT 方式では、`LoadModule` の記述は Apache 標準のモジュール管理に任せます（`/etc/apache2/mods-available/wsgi.load` → `a2enmod wsgi` → `/etc/apache2/mods-enabled/wsgi.load`）。
-
-確認コマンド:
-
-```bash:console
-$ dpkg -l | grep libapache2-mod-wsgi-py3
-$ ls -l /usr/lib/apache2/modules/mod_wsgi.so
-$ apache2ctl -M | grep wsgi
-```
-
-`apache2ctl -M` に `wsgi_module (shared)` が出ていれば有効です。`AH01574: module wsgi_module is already loaded, skipping` が出る場合は、`000-default.conf` に重複する `LoadModule` 行が無いか確認し、削除してください（APT 方式では不要）。
-
-> 補足（何を確認するコマンドか）
-> - `$ apache2ctl -M | grep -i wsgi` … Apache に mod_wsgi が“読み込まれている（Enabled）”ことを確認する最小チェック。これで `wsgi_module (shared)` が見えれば mod_wsgi は有効です。
-> - `$ dpkg -l | grep libapache2-mod-wsgi-py3` … APT 版の mod_wsgi パッケージが“インストール済みか”を確認（入っていない場合は `a2enmod wsgi` 以前の問題）。
-> - `$ ls -l /usr/lib/apache2/modules/mod_wsgi.so` … `.so` の実体/リンク先を確認（壊れたリンクや想定外のバージョン差し替えを検知）。
-> まずは1行目（最小確認）だけで十分。問題がある場合に、下2行で導入状況や配置を深掘りします。
-
 
 ### ※numpy: Interpreter change detected への対応（補足）
 
