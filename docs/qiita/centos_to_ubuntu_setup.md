@@ -186,26 +186,6 @@ $ chmod 600 ~/.ssh/authorized_keys
   - サイトマネージャーで上記 ppk を指定して接続し、`/home/ubuntu` など転送先へドラッグ＆ドロップで配置
   - 参考: もとの記事の FileZilla 手順（鍵の変換含む）: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
 
-#### ※ssh 接続で警告が出た場合（known_hosts を更新）
-
-OS を入れ直した直後などは、サーバ側のホスト鍵が変わるため、クライアントに保存されている `known_hosts` と不一致になり、次のような警告が表示されます。これは“以前と別のサーバ鍵になっています”という通知です。
-
-```bash:console
-$ ssh example.com
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-```
-
-この場合は、古いホスト鍵の記録を削除してから再接続してください（Windows/PowerShell の例）。
-
-```bash:console
-# （Windows）PowerShell から実行
-PS C:\Users\yoshi> ssh-keygen -R example.com
-PS C:\Users\yoshi> notepad $env:USERPROFILE\.ssh\known_hosts  # 該当行が残っていないか確認・手動削除も可
-```
-
-サーバの正当性が確認できたら、再度 `ssh` で接続すると新しいホスト鍵が保存されます。
 
 ### よくあるエラーと対処（SSH）
 
