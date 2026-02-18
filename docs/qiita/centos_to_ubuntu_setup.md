@@ -1236,6 +1236,40 @@ $ source venv/bin/activate
 djangoがシステム的に作ったテーブルと、アプリケーションを作っていればアプリケーション名が先頭についたテーブルが作成される（赤枠）
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/a6915c45-1195-4801-691e-afb51d3353ca.png)
 
+## Django（Matplotlib のキャッシュ権限設定（Ubuntu/Apache/mod_wsgi））
+
+本番環境で Matplotlib を使用する場合、既定のキャッシュディレクトリが Web サーバーの実行ユーザー（Ubuntu では通常 `www-data`）に書き込み不可だと、`/tmp/matplotlib-...` に一時的なキャッシュが毎回作られ、読み込み遅延やプロセス間での非共有が起こり得ます。
+
+本プロジェクトでは `config/settings.py` で `MPLCONFIGDIR` を `MEDIA_ROOT/matplotlib_cache` に固定しています。したがって、以下の「権限整備」を行ってください。
+
+補足（目的と位置づけ）
+- リポジトリ内に `media/matplotlib_cache/.gitkeep` を配置しており、デプロイ直後から対象ディレクトリは存在します（手動での作成は不要）。
+- 以下のコマンドは「サーバ初期設定の一般論」ではなく、「アプリ設定（Djangoの `MPLCONFIGDIR`）に由来するサーバ側の権限調整」です。
+- つまり “作成” ではなく “書き込み権限を正す” のが主目的です。
+
+手順（Apache 上の Django サイト）
+
+```bash:console
+# 所有者を Apache の実行ユーザーに（Ubuntu 既定: www-data）
+sudo chown -R www-data:www-data /var/www/html/portfolio/media/matplotlib_cache
+
+# グループ書き込みを許可（運用に応じて 750/770 などでも可）
+sudo chmod 775 /var/www/html/portfolio/media/matplotlib_cache
+
+# 設定反映（必要に応じて）
+sudo systemctl reload apache2
+
+# 検証（警告が出ていないことを確認）
+sudo tail -n 200 /var/log/apache2/error.log | grep -i matplotlib || echo OK
+```
+
+参考: ログに次のようなメッセージが出ていた場合、この手順で解消されます。
+
+```
+/var/www/html/portfolio/media/matplotlib_cache is not a writable directory
+Matplotlib created a temporary cache directory at /tmp/matplotlib-...
+```
+
 ## MySQLデータ のインポート（最小手順）
 
 > Note: 当時の事故メモ（本番とローカルの差異での失敗談）はノイズになるため省略します。ここでは“標準ケース”のみに絞ります。
