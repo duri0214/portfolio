@@ -1236,7 +1236,7 @@ $ source venv/bin/activate
 djangoがシステム的に作ったテーブルと、アプリケーションを作っていればアプリケーション名が先頭についたテーブルが作成される（赤枠）
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/a6915c45-1195-4801-691e-afb51d3353ca.png)
 
-## Django（Matplotlib のキャッシュ権限設定（Ubuntu/Apache/mod_wsgi））
+## Matplotlib のキャッシュ権限設定
 
 本番環境で Matplotlib を使用する場合、既定のキャッシュディレクトリが Web サーバーの実行ユーザー（Ubuntu では通常 `www-data`）に書き込み不可だと、`/tmp/matplotlib-...` に一時的なキャッシュが毎回作られ、読み込み遅延やプロセス間での非共有が起こり得ます。
 
