@@ -1,5 +1,4 @@
-# 動的生成されるチャート画像を除外
-*.png
-
-# .gitkeepは追跡する
+# Ignore everything in this directory except control files
+*
+!.gitignore
 !.gitkeep

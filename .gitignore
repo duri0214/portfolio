@@ -4,4 +4,3 @@ chroma/
 db.sqlite3
 .env
 venv
-media/matplotlib_cache/
