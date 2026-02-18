@@ -239,43 +239,40 @@ cd /var/www/html/portfolio
 # 1. ソースコードの更新
 # ※ git clean -fd により venv ディレクトリも削除されます
 git fetch --prune origin
-sudo git reset --hard origin/master
-sudo git clean -fd
+git reset --hard origin/master
+git clean -fd
 
-# 2. venv の再構築 (リセット)
-# 依存関係の変更（requirements.txt の更新）に備え、venv を作り直します
+# 2. 所有権・権限の是正（最初に実施しておく）
+sudo chown -R ubuntu:www-data /var/www/html/portfolio
+sudo find /var/www/html/portfolio -type d -exec chmod 775 {} +
+sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
+
+# 3. venv の再構築 (リセット)
+rm -rf venv
 python3 -m venv venv
 source /var/www/html/portfolio/venv/bin/activate
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
-
-# 3. 権限の一時調整（ubuntu ユーザーでの作業用）
-sudo chown -R ubuntu:www-data /var/www/html/portfolio
-sudo chmod -R 755 /var/www/html/portfolio
 
 # 4. Django メンテナンス
 python manage.py collectstatic --noinput
 python manage.py clearsessions
 python manage.py migrate
 
-# 5. 書き込みディレクトリの権限設定
-sudo chmod -R 775 /var/www/html/portfolio/media /var/www/html/portfolio/static
-
-# 6. LLM/RAG 関連の権限設定 (ChromaDB)
-# ※ 暫定的にプロジェクトルート配下で運用しますが、将来的に適切な永続化パスを検討してください
+# 5. 書き込みディレクトリの権限設定（www-data が書けるように）
 sudo mkdir -p /var/www/html/portfolio/chroma_db
-sudo chown -R www-data:www-data /var/www/html/portfolio/chroma_db
-sudo chmod -R 775 /var/www/html/portfolio/chroma_db
+sudo chown -R www-data:www-data \
+  /var/www/html/portfolio/media \
+  /var/www/html/portfolio/chroma_db \
+  /var/www/html/portfolio/static
+sudo chmod -R 775 \
+  /var/www/html/portfolio/media \
+  /var/www/html/portfolio/chroma_db \
+  /var/www/html/portfolio/static
 
-# 7. Matplotlib キャッシュディレクトリの設定
-# ※ 共有サーバー環境での権限エラー（/var/www/.cache へのアクセス拒否）を回避するため、media配下に作成します
-sudo mkdir -p /var/www/html/portfolio/media/matplotlib_cache
-sudo chown -R www-data:www-data /var/www/html/portfolio/media/matplotlib_cache
-sudo chmod -R 775 /var/www/html/portfolio/media/matplotlib_cache
-
-# 8. サービスの再起動
+# 6. サービスの再起動
 sudo systemctl restart apache2
-sudo tail -n 200 /var/log/apache2/error.log
+sudo tail -n 200 /var/log/apache2/error.log | tail -n 50
 ```
 
 ---
