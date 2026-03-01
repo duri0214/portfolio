@@ -576,6 +576,54 @@ $ sudo vi /etc/apache2/sites-available/default-ssl.conf
 $ sudo systemctl restart apache2
 ```
 
+### HSTS（HTTP Strict Transport Security）の有効化（推奨）
+
+なぜ必要か（背景）
+- 外部診断サービス「ネットde診断」の指摘により、HTTPS 運用をより強固にする必要が判明。本手順でサーバを補強する（初回アクセスやダウングレード攻撃に対し、ブラウザ側で恒久的に HTTPS を強制させる HSTS を導入）。
+
+目的（適用前/適用後の違い）
+- 適用前: ユーザーが http:// でアクセスしたり、中間者攻撃で HTTP にダウングレードされると、平文通信が成立しうる。初回 HTTP アクセス時はブラウザ側に「今後もHTTPSを使う」記憶は残らない。
+- 適用後: 一度でも HTTPS 応答で HSTS を受け取ったブラウザは、以後そのドメイン（`includeSubDomains` 指定時はサブドメインも）へのアクセスを強制的に HTTPS 化。HTTP ダウングレード攻撃やクッキー漏洩のリスクを大幅に低減できる。
+
+HTTPS 応答時にブラウザへ「今後は常に HTTPS を使う」ことを指示します。まずは Apache の `headers` モジュールを有効化し、`default-ssl.conf` の `<VirtualHost *:443>` ブロック内にヘッダを追加します。
+
+```bash:console
+$ sudo a2enmod headers
+$ sudo systemctl reload apache2
+
+# HSTS ヘッダを 443 側の vhost に追加
+$ sudo vi /etc/apache2/sites-available/default-ssl.conf
+```
+
+```diff:/etc/apache2/sites-available/default-ssl.conf
+ <VirtualHost *:443>
+   ...
+   SSLEngine on
+   SSLCertificateFile      /etc/letsencrypt/live/www.henojiya.net/cert.pem
+   SSLCertificateKeyFile   /etc/letsencrypt/live/www.henojiya.net/privkey.pem
+   SSLCertificateChainFile /etc/letsencrypt/live/www.henojiya.net/chain.pem
+
+   # HSTS: 1年 + サブドメイン含む + preload（運用に応じて検討）
+ + Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+   ...
+ </VirtualHost>
+```
+
+```bash:console
+$ sudo apachectl -t               # 構文チェック（Syntax OK）
+$ sudo systemctl reload apache2   # 反映
+```
+
+> Note（preload について）
+> - `preload` を付けると、Chrome 系の HSTS Preload List 登録前提の強い宣言になります。全サブドメインで常時 HTTPS を維持できることが要件です。
+> - 迷う場合はまず `max-age=31536000; includeSubDomains` までで開始し、体制が整ってから `preload` を追加しても構いません。
+
+確認（サーバ上）:
+
+```bash:console
+$ curl -I https://www.henojiya.net/ | grep -i strict-transport-security || echo NG
+```
+
 ### 確認
 
 ```bash:console
