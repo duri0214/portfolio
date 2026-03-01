@@ -624,6 +624,57 @@ $ sudo systemctl reload apache2   # 反映
 $ curl -I https://www.henojiya.net/ | grep -i strict-transport-security || echo NG
 ```
 
+#### Let’s Encrypt 前提環境での vhost 確認と HSTS 追記（000-default-le-ssl.conf 版）
+
+Let’s Encrypt を `--apache` で導入している環境では、`/etc/apache2/sites-available/000-default-le-ssl.conf` が作成・有効化され、実際の HTTPS 応答はこの vhost が担う構成になっていることが多いです。`default-ssl.conf` に追記しても効かない場合は、こちらに HSTS を追加します。
+
+1) まず、対象ファイルが存在し有効化されているか確認
+
+```bash:console
+$ ls -l /etc/apache2/sites-enabled/
+$ sudo test -f /etc/apache2/sites-available/000-default-le-ssl.conf && echo OK || echo NG
+```
+
+2) 000-default-le-ssl.conf を開き、`<VirtualHost *:443>` ブロック内に HSTS を追加
+
+```bash:console
+$ sudo vi /etc/apache2/sites-available/000-default-le-ssl.conf
+```
+
+追記位置の例（Let’s Encrypt の推奨設定 `Include /etc/letsencrypt/options-ssl-apache.conf` の直後に入れると分かりやすい）:
+
+```diff:/etc/apache2/sites-available/000-default-le-ssl.conf
+ <IfModule mod_ssl.c>
+ <VirtualHost *:443>
+   ServerName www.henojiya.net
+   DocumentRoot /var/www/html
+   ...
+   SSLCertificateFile /etc/letsencrypt/live/www.henojiya.net/fullchain.pem
+   SSLCertificateKeyFile /etc/letsencrypt/live/www.henojiya.net/privkey.pem
+   Include /etc/letsencrypt/options-ssl-apache.conf
+
+ + Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+ </VirtualHost>
+ </IfModule>
+```
+
+3) 構文チェックと反映
+
+```bash:console
+$ sudo apachectl -t
+$ sudo systemctl reload apache2
+```
+
+4) 動作確認（SNI を固定してローカルの 443 を直接叩く）
+
+```bash:console
+$ curl -I --resolve www.henojiya.net:443:127.0.0.1 https://www.henojiya.net/ | grep -i strict-transport-security || echo NG
+```
+
+> メモ
+> - すでに `X-Frame-Options` など他のセキュリティヘッダが出ているのに HSTS だけ出ない場合、実応答している vhost が `000-default-le-ssl.conf` で、`default-ssl.conf` の設定が使われていない可能性が高いです。
+> - preload を当面外す場合は `; preload` を省いてください（`max-age=31536000; includeSubDomains` まで）。
+
 ### 確認
 
 ```bash:console
