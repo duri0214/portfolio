@@ -585,28 +585,11 @@ $ sudo systemctl restart apache2
 - 適用前: ユーザーが http:// でアクセスしたり、中間者攻撃で HTTP にダウングレードされると、平文通信が成立しうる。初回 HTTP アクセス時はブラウザ側に「今後もHTTPSを使う」記憶は残らない。
 - 適用後: 一度でも HTTPS 応答で HSTS を受け取ったブラウザは、以後そのドメイン（`includeSubDomains` 指定時はサブドメインも）へのアクセスを強制的に HTTPS 化。HTTP ダウングレード攻撃やクッキー漏洩のリスクを大幅に低減できる。
 
-HTTPS 応答時にブラウザへ「今後は常に HTTPS を使う」ことを指示します。まずは Apache の `headers` モジュールを有効化し、`default-ssl.conf` の `<VirtualHost *:443>` ブロック内にヘッダを追加します。
+HTTPS 応答時にブラウザへ「今後は常に HTTPS を使う」ことを指示します。まずは Apache の `headers` モジュールを有効化します。
 
 ```bash:console
 $ sudo a2enmod headers
 $ sudo systemctl reload apache2
-
-# HSTS ヘッダを 443 側の vhost に追加
-$ sudo vi /etc/apache2/sites-available/default-ssl.conf
-```
-
-```diff:/etc/apache2/sites-available/default-ssl.conf
- <VirtualHost *:443>
-   ...
-   SSLEngine on
-   SSLCertificateFile      /etc/letsencrypt/live/www.henojiya.net/cert.pem
-   SSLCertificateKeyFile   /etc/letsencrypt/live/www.henojiya.net/privkey.pem
-   SSLCertificateChainFile /etc/letsencrypt/live/www.henojiya.net/chain.pem
-
-   # HSTS: 1年 + サブドメイン含む + preload（運用に応じて検討）
- + Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-   ...
- </VirtualHost>
 ```
 
 ```bash:console
@@ -672,7 +655,7 @@ $ curl -I --resolve www.henojiya.net:443:127.0.0.1 https://www.henojiya.net/ | g
 ```
 
 > メモ
-> - すでに `X-Frame-Options` など他のセキュリティヘッダが出ているのに HSTS だけ出ない場合、実応答している vhost が `000-default-le-ssl.conf` で、`default-ssl.conf` の設定が使われていない可能性が高いです。
+> - すでに `X-Frame-Options` など他のセキュリティヘッダが出ているのに HSTS だけ出ない場合、実応答している vhost が `000-default-le-ssl.conf` で、他のSSL設定ファイル（例: default-ssl.conf）は使われていない可能性が高いです。
 > - preload を当面外す場合は `; preload` を省いてください（`max-age=31536000; includeSubDomains` まで）。
 
 ### 確認
