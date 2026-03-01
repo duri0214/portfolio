@@ -39,7 +39,7 @@ pip install -r requirements.txt
 ```
 
 ### venv の再構築 (リセット)
-ライブラリの更新などで環境を初期化したい場合。
+ライブラリの更新などで環境を初期化したい場合
 
 **Linux**
 ```bash
