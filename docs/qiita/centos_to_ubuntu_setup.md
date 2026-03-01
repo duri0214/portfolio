@@ -681,7 +681,7 @@ $ sudo chmod 755 /root/certbot.sh
 ### HSTS の設定（必ず HTTPS でアクセスさせる）
 
 なぜ必要か（背景）
-- 外部診断サービス「ネットde診断」の指摘により、HTTPS 運用をより強固にする必要が判明。本手順でサーバを補強する（初回アクセスやダウングレード攻撃に対し、ブラウザ側で恒久的に HTTPS を強制させる HSTS を導入）。
+- 外部診断サービス「ネットde診断」の指摘により、HTTPS 運用をより強固にする必要が判明。本手順でサーバを補強する（初回アクセスやダウングレード攻撃に対し、ブラウザ側で恒久的に HTTPS を強制させる HSTS を導入）（参照: [GitHub Issue #537](https://github.com/duri0214/portfolio/issues/537)）。
 
 目的（適用前/適用後の違い）
 - 適用前: ユーザーが http:// でアクセスしたり、中間者攻撃で HTTP にダウングレードされると、平文通信が成立しうる。初回 HTTP アクセス時はブラウザ側に「今後もHTTPSを使う」記憶は残らない。
@@ -750,6 +750,70 @@ $ curl -I --resolve www.henojiya.net:443:127.0.0.1 https://www.henojiya.net/ \
 > メモ
 > - すでに `X-Frame-Options` など他のセキュリティヘッダが出ているのに HSTS だけ出ない場合、実応答している vhost が `000-default-le-ssl.conf` で、他のSSL設定ファイル（例: default-ssl.conf）は使われていない可能性が高いです。
 > - preload を当面外す場合は `; preload` を省いてください（`max-age=31536000; includeSubDomains` まで）。
+
+### セキュリティヘッダ "X-Content-Type-Options" の設定（MIME スニッフィング無効化）
+
+なぜ必要か（背景）
+- 外部診断サービス「ネットde診断」の指摘により、ブラウザによる MIME スニッフィング（レスポンスの MIME タイプ推測）を無効化する必要が判明。本手順でサーバを補強する（参照: [GitHub Issue #538](https://github.com/duri0214/portfolio/issues/538)）。
+
+目的（適用前/適用後の違い）
+- 適用前: ブラウザが `Content-Type` を無視して内容からファイル種別を推測し、スクリプトとして実行するなど意図しない動作が起きうる。
+- 適用後: `X-Content-Type-Options: nosniff` を受け取ったブラウザは MIME スニッフィングを行わず、宣言された `Content-Type` のみに従ってコンテンツを処理する。
+
+前提: Let's Encrypt を `--apache` で導入済み。HTTPS 応答は `/etc/apache2/sites-available/000-default-le-ssl.conf` の vhost が担う想定。
+
+#### 0. `headers` モジュールを有効化（`Header` ディレクティブでHTTPヘッダを注入・変更するためのApache拡張）
+
+```bash:console
+$ sudo a2enmod headers
+$ sudo systemctl reload apache2
+```
+
+#### 1. まず、対象ファイルが存在し有効化されているか確認
+
+```bash:console
+$ ls -l /etc/apache2/sites-enabled/
+$ sudo test -f /etc/apache2/sites-available/000-default-le-ssl.conf && echo OK || echo NG
+```
+
+#### 2. `<VirtualHost *:443>` に `X-Content-Type-Options` を 1 行追加
+
+```bash:console
+$ sudo vi /etc/apache2/sites-available/000-default-le-ssl.conf
+```
+```diff:/etc/apache2/sites-available/000-default-le-ssl.conf
+ <IfModule mod_ssl.c>
+ <VirtualHost *:443>
+   ServerName www.henojiya.net
+   DocumentRoot /var/www/html
+   ...
+   SSLCertificateFile /etc/letsencrypt/live/www.henojiya.net/fullchain.pem
+   SSLCertificateKeyFile /etc/letsencrypt/live/www.henojiya.net/privkey.pem
+   Include /etc/letsencrypt/options-ssl-apache.conf
+
+   Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+ + Header always set X-Content-Type-Options "nosniff"
+ </VirtualHost>
+ </IfModule>
+```
+
+#### 3. 構文チェックと反映
+
+```bash:console
+$ sudo apachectl -t
+$ sudo systemctl reload apache2
+```
+
+#### 4. 動作確認（SNI 固定 + 色付きハイライト）
+
+```bash:console
+$ curl -I --resolve www.henojiya.net:443:127.0.0.1 https://www.henojiya.net/ \
+  | GREP_COLORS='ms=01;31' grep -i --color=always x-content-type-options || echo NG
+```
+- “X-Content-Type-Options” がハイライトされて表示されれば OK。
+
+> 備考
+> - `/etc/apache2/conf-available/security.conf` にデフォルトで `#Header set X-Content-Type-Options: "nosniff"` がコメントアウト状態で存在するが、有効化されていないため診断ツールには「未設定」と判定される。本手順で `000-default-le-ssl.conf` に明示的に追加することで初めて有効になる。
 
 ## MySQL8
 
