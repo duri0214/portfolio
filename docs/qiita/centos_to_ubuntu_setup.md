@@ -690,12 +690,9 @@ $ sudo chmod 755 /root/certbot.sh
 
 前提: Let’s Encrypt を `--apache` で導入済み。HTTPS 応答は `/etc/apache2/sites-available/000-default-le-ssl.conf` の vhost が担う想定。
 
-\0) `headers` モジュールを有効化（`Header` ディレクティブでHTTPヘッダを注入・変更するためのApache拡張）
+#### 0. `headers` モジュールを有効化（`Header` ディレクティブでHTTPヘッダを注入・変更するためのApache拡張）
 
 `mod_headers` は、Apache がやり取りする HTTP ヘッダをサーバ側で「注入（injection）/書き換え」できる仕組みです。たとえば、ブラウザにセキュリティ方針を伝える各種ヘッダ（HSTS/Content-Security-Policy/Referrer-Policy など）をサーバが付け足すのに使います。本手順では HSTS ヘッダ（`Strict-Transport-Security`）をレスポンスに付与するために必要です。無効のままだと `Header ...` 行が効きません。
-
-補足（“ヘッダに注入する”イメージ）
-- Webページの本文にトラッキングタグ（例: `<!-- Global site tag (gtag.js) - Google Analytics -->`）を埋め込むのと似た発想ですが、こちらは「本文（HTML）」ではなく「HTTPレスポンスのヘッダ」にポリシー情報をサーバ側で差し込むイメージです。ブラウザはヘッダを先に解釈するため、セキュリティ制御（HTTPS強制や参照ポリシーなど）を確実に適用できます。
 
 ```bash:console
 $ sudo a2enmod headers
