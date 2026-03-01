@@ -678,6 +678,79 @@ $ sudo chmod 755 /root/certbot.sh
 > Note:
 > 定期実行（cron への登録）は、下記の「Cron（タスクスケジューラ）」セクションで設定します。
 
+### HSTS の設定（必ず HTTPS でアクセスさせる）
+
+なぜ必要か（背景）
+- 外部診断サービス「ネットde診断」の指摘により、HTTPS 運用をより強固にする必要が判明。本手順でサーバを補強する（初回アクセスやダウングレード攻撃に対し、ブラウザ側で恒久的に HTTPS を強制させる HSTS を導入）。
+
+目的（適用前/適用後の違い）
+- 適用前: ユーザーが http:// でアクセスしたり、中間者攻撃で HTTP にダウングレードされると、平文通信が成立しうる。初回 HTTP アクセス時はブラウザ側に「今後もHTTPSを使う」記憶は残らない。
+- 適用後: 一度でも HTTPS 応答で HSTS を受け取ったブラウザは、以後そのドメイン（`includeSubDomains` 指定時はサブドメインも）へのアクセスを強制的に HTTPS 化。HTTP ダウングレード攻撃やクッキー漏洩のリスクを大幅に低減できる。
+
+前提: Let’s Encrypt を `--apache` で導入済み。HTTPS 応答は `/etc/apache2/sites-available/000-default-le-ssl.conf` の vhost が担う想定。
+
+#### 0. `headers` モジュールを有効化（`Header` ディレクティブでHTTPヘッダを注入・変更するためのApache拡張）
+
+`mod_headers` は、Apache がやり取りする HTTP ヘッダをサーバ側で「注入（injection）/書き換え」できる仕組みです。たとえば、ブラウザにセキュリティ方針を伝える各種ヘッダ（HSTS/Content-Security-Policy/Referrer-Policy など）をサーバが付け足すのに使います。本手順では HSTS ヘッダ（`Strict-Transport-Security`）をレスポンスに付与するために必要です。無効のままだと `Header ...` 行が効きません。
+
+```bash:console
+$ sudo a2enmod headers
+$ sudo systemctl reload apache2
+```
+
+Let’s Encrypt を `--apache` で導入している環境では、`/etc/apache2/sites-available/000-default-le-ssl.conf` が作成・有効化され、実際の HTTPS 応答はこの vhost が担う構成になっていることが多いです。`default-ssl.conf` に追記しても効かない場合は、こちらに HSTS を追加します。
+
+#### 1. まず、対象ファイルが存在し有効化されているか確認
+
+```bash:console
+$ ls -l /etc/apache2/sites-enabled/
+$ sudo test -f /etc/apache2/sites-available/000-default-le-ssl.conf && echo OK || echo NG
+```
+
+#### 2. 000-default-le-ssl.conf を開き、`<VirtualHost *:443>` ブロック内に HSTS を追加
+
+```bash:console
+$ sudo vi /etc/apache2/sites-available/000-default-le-ssl.conf
+```
+
+追記位置の例（Let’s Encrypt の推奨設定 `Include /etc/letsencrypt/options-ssl-apache.conf` の直後に入れると分かりやすい）:
+
+```diff:/etc/apache2/sites-available/000-default-le-ssl.conf
+ <IfModule mod_ssl.c>
+ <VirtualHost *:443>
+   ServerName www.henojiya.net
+   DocumentRoot /var/www/html
+   ...
+   SSLCertificateFile /etc/letsencrypt/live/www.henojiya.net/fullchain.pem
+   SSLCertificateKeyFile /etc/letsencrypt/live/www.henojiya.net/privkey.pem
+   Include /etc/letsencrypt/options-ssl-apache.conf
+
+ + Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+ </VirtualHost>
+ </IfModule>
+```
+
+#### 3. 構文チェックと反映
+
+```bash:console
+$ sudo apachectl -t
+$ sudo systemctl reload apache2
+```
+
+#### 4. 動作確認（SNI を固定してローカルの 443 を直接叩く）
+
+```bash:console
+$ curl -I --resolve www.henojiya.net:443:127.0.0.1 https://www.henojiya.net/ \
+  | GREP_COLORS='ms=01;31' grep -i --color=always strict-transport-security || echo NG
+```
+
+- “Strict-Transport-Security” の文字列が赤字でハイライト表示されたらOK（ヘッダ付与を検出）。
+- 文字色は環境により異なる場合がありますが、色付きでハイライトされれば検出されています。
+
+> メモ
+> - すでに `X-Frame-Options` など他のセキュリティヘッダが出ているのに HSTS だけ出ない場合、実応答している vhost が `000-default-le-ssl.conf` で、他のSSL設定ファイル（例: default-ssl.conf）は使われていない可能性が高いです。
+> - preload を当面外す場合は `; preload` を省いてください（`max-age=31536000; includeSubDomains` まで）。
+
 ## MySQL8
 
 ### 不要なパッケージの削除
