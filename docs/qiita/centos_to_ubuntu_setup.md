@@ -576,7 +576,6 @@ $ sudo vi /etc/apache2/sites-available/default-ssl.conf
 $ sudo systemctl restart apache2
 ```
 
-
 ### 確認
 
 ```bash:console
