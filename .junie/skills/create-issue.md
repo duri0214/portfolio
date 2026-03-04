@@ -41,6 +41,8 @@
         - `優先度: 高`
     - 自分をアサインします（`--assignee @me`）。
     - プロジェクトには `yoshi` を指定します（`--project yoshi`）。
+    - **親子関係（Relationships）の設定**:
+        - 親チケットや関連するチケットがある場合は、`gh issue edit <issue-no> --add-parent <parent-issue-no>` などを使用して関係を設定します（または本文の「備考」欄にリンクを記載します）。
 
     ```powershell
     # コマンド例（本文をファイルに保存して作成する場合）
