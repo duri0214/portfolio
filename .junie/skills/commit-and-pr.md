@@ -1,0 +1,50 @@
+# Commit and PR Creation Skill
+
+## 概要
+修正ごとにコミットを行い、リモートブランチへプッシュし、プルリクエスト（PR）を作成する一連のワークフローを定義します。
+
+## 実行ステップ
+
+1. **コミットの実行**
+    - 修正内容ごとにコミットを行います（大きな変更を一度にコミットせず、論理的な単位で分割します）。
+    - `git commit --amend` は使用せず、新しいコミットを追加していきます。
+    - コミットメッセージの形式：
+        - `feat: <description>` (新機能)
+        - `fix: <description>` (バグ修正)
+        - `docs: <description>` (ドキュメント)
+        - `chore: <description>` (雑務)
+        - `refactor: <description>` (リファクタリング)
+    - 必要に応じて Issue 番号を含めます（例: `fix: ログインエラーの修正 (#545)`）。
+
+2. **プッシュの実行**
+    - `git push origin <branch-name>` を実行してリモートブランチを更新します。
+
+3. **プルリクエスト（PR）の作成**
+    - `gh pr create` コマンドを使用してPRを作成します。
+    - タイトル：`[<branch-type>] <issue-title> (#<issue-no>)`
+    - 本文：
+        ```markdown
+        ## 概要
+        (今回の変更内容を簡潔に記述)
+
+        ## 変更内容
+        - (具体的な変更点1)
+        - (具体的な変更点2)
+
+        ## 関連Issue
+        - #<issue-no>
+        ```
+    - ベースブランチは `master` とします（`--base master`）。
+
+    ```powershell
+    # コマンド例
+    gh pr create --title "[feature] junie用のskill作成 (#556)" --body-file pr_body.txt --base master
+    ```
+
+4. **完了報告**
+    - 作成されたPRのURLを報告します。
+
+## 注意事項
+- 修正ごとにこまめにコミットしてください。
+- `gh` コマンドがインストールされ、ログインしている必要があります。
+- PRのタイトルや本文に文字化けが発生しないよう注意してください。

@@ -1,4 +1,4 @@
-# Issue-Based Branch Creation Skill
+# Create Branch From Issue Skill
 
 ## 概要
 GitHub Issueの内容を確認し、特定の命名規則に従って `master` ブランチから新しい作業ブランチを作成します。
