@@ -32,6 +32,9 @@
 3. **Issueの作成**
     - `gh issue create` コマンドを使用してIssueを作成します。
     - 必要に応じてラベル（`bug`, `feature`, `hotfix`, `chore`, `docs` など）を付与します。
+    - **特定の性質を持つラベルの付与**:
+        - 10分〜30分程度で簡単に終わりそうだと判断できたら、`爆速` ラベルを付与します。
+        - 調査が必要な内容であれば、`調査` ラベルを付与します。
     - **優先度の確認**：ユーザーに確認し、以下のラベルを付与します。
         - `優先度: 低`
         - `優先度: 中`
@@ -42,7 +45,7 @@
     ```powershell
     # コマンド例（本文をファイルに保存して作成する場合）
     # $body | Out-File -FilePath issue_body.txt -Encoding utf8
-    gh issue create --title "タイトル" --body-file issue_body.txt --label "feature","優先度: 中" --assignee @me --project yoshi
+    gh issue create --title "タイトル" --body-file issue_body.txt --label "feature","爆速","優先度: 中" --assignee @me --project yoshi
     ```
 
 4. **完了報告**
