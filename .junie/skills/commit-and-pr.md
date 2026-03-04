@@ -21,6 +21,8 @@
 
 3. **プルリクエスト（PR）の作成**
     - `gh pr create` コマンドを使用してPRを作成します。
+    - 担当者（Assignee）は自分 (`--assignee @me`) に設定します。
+    - ラベル（Labels）とプロジェクト（Projects）は、元となる Issue に設定されているものを指定します。
     - タイトル：`[<branch-type>] <issue-title> (#<issue-no>)`
     - 本文：
         ```markdown
@@ -38,7 +40,7 @@
 
     ```powershell
     # コマンド例
-    gh pr create --title "[feature] junie用のskill作成 (#556)" --body-file pr_body.txt --base master
+    gh pr create --title "[feature] junie用のskill作成 (#556)" --body-file pr_body.txt --base master --assignee @me --label "hotfix" --project "yoshi"
     ```
 
 4. **完了報告**
