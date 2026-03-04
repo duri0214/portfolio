@@ -57,5 +57,6 @@
 - `gh` コマンド（GitHub CLI）がインストールされ、ログインしている必要があります。
 - **日本語の文字化け対策**: 
     - 本文ファイルを一時的に作成する場合は、必ず **UTF-8（BOMなし）** エンコーディングで保存してください。
-    - PowerShell の場合、`Out-File -Encoding utf8` や `Set-Content -Encoding utf8` を使用して保存し、`gh issue create --body-file` で読み込ませてください。
+    - PowerShell の `Out-File -Encoding utf8` は **BOMあり** になるため使用せず、Python スクリプトで `encoding='utf-8'` を指定して書き出すか、環境に応じて BOM なしを保証する手段を講じてください。
+    - `gh issue create --body-file` で読み込ませる際、BOM があると GitHub 上で正しく表示されない場合があります。
 - 既存のIssueと重複していないか事前に確認してください。
