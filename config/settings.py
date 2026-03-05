@@ -162,6 +162,13 @@ os.environ["MPLCONFIGDIR"] = str(MEDIA_ROOT / "matplotlib_cache")
 
 STRIPE_PUBLIC_KEY = "pk_test_eiOWUzSaLn51lXt0POuRBskA009JsTTAb5"
 
+# HTTPS 前提の Cookie セキュリティ強化
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+# Django の CSRF 設計上、JavaScript 参照が必要なため明示的に無効
+CSRF_COOKIE_HTTPONLY = False
+
 # 'django.contrib.humanize' 3桁カンマ
 NUMBER_GROUPING = 3
 
