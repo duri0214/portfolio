@@ -21,7 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # .env ファイルを読み込む
 load_dotenv(BASE_DIR / ".env")
 
-DEBUG = os.getenv("DJANGO_DEBUG_MODE")
+# デバッグモードの判定
+_django_debug_mode = os.getenv("DJANGO_DEBUG_MODE", "False")
+DEBUG = _django_debug_mode.lower() == "true"
+import sys
+
+IS_TESTING = "test" in sys.argv
+print(
+    f"DEBUG status: {DEBUG} (from DJANGO_DEBUG_MODE={_django_debug_mode}, IS_TESTING={IS_TESTING})"
+)
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # Quick-start development settings - unsuitable for production
@@ -161,6 +169,19 @@ MEDIA_URL = "/media/"
 os.environ["MPLCONFIGDIR"] = str(MEDIA_ROOT / "matplotlib_cache")
 
 STRIPE_PUBLIC_KEY = "pk_test_eiOWUzSaLn51lXt0POuRBskA009JsTTAb5"
+
+# HTTPS 前提の Cookie セキュリティ強化
+# 開発環境（DEBUG=True）やテスト実行時（IS_TESTING=True）は Secure 属性を無効化する
+CSRF_COOKIE_SECURE = not (DEBUG or IS_TESTING)
+SESSION_COOKIE_SECURE = not (DEBUG or IS_TESTING)
+
+# Django の CSRF 設計上、JavaScript 参照が必要なため明示的に無効
+CSRF_COOKIE_HTTPONLY = False
+
+# プロキシ経由の HTTPS を認識するための設定
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# 開発環境（HTTP）やテスト実行時は HTTPS リダイレクトを無効にする
+SECURE_SSL_REDIRECT = not (DEBUG or IS_TESTING)
 
 # 'django.contrib.humanize' 3桁カンマ
 NUMBER_GROUPING = 3
