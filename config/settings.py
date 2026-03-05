@@ -163,15 +163,16 @@ os.environ["MPLCONFIGDIR"] = str(MEDIA_ROOT / "matplotlib_cache")
 STRIPE_PUBLIC_KEY = "pk_test_eiOWUzSaLn51lXt0POuRBskA009JsTTAb5"
 
 # HTTPS 前提の Cookie セキュリティ強化
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
 
 # Django の CSRF 設計上、JavaScript 参照が必要なため明示的に無効
 CSRF_COOKIE_HTTPONLY = False
 
 # プロキシ経由の HTTPS を認識するための設定
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = True
+# 開発環境（HTTP）では HTTPS リダイレクトを無効にし、本番環境（HTTPS）では有効にする
+SECURE_SSL_REDIRECT = not DEBUG
 
 # 'django.contrib.humanize' 3桁カンマ
 NUMBER_GROUPING = 3
