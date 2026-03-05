@@ -169,6 +169,10 @@ SESSION_COOKIE_SECURE = True
 # Django の CSRF 設計上、JavaScript 参照が必要なため明示的に無効
 CSRF_COOKIE_HTTPONLY = False
 
+# プロキシ経由の HTTPS を認識するための設定
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = True
+
 # 'django.contrib.humanize' 3桁カンマ
 NUMBER_GROUPING = 3
 
