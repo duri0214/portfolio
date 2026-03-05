@@ -21,7 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # .env ファイルを読み込む
 load_dotenv(BASE_DIR / ".env")
 
-DEBUG = os.getenv("DJANGO_DEBUG_MODE") == "True"
+# デバッグモードの判定
+_django_debug_mode = os.getenv("DJANGO_DEBUG_MODE", "False")
+DEBUG = _django_debug_mode.lower() == "true"
+print(f"DEBUG status: {DEBUG} (from DJANGO_DEBUG_MODE={_django_debug_mode})")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # Quick-start development settings - unsuitable for production
