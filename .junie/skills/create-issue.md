@@ -39,15 +39,15 @@
         - `優先度: 低`
         - `優先度: 中`
         - `優先度: 高`
-    - 自分をアサインします（`--assignee @me`）。
-    - プロジェクトには `yoshi` を指定します（`--project yoshi`）。
+    - 自分をアサインします（`--assignee "@me"`）。必ずダブルクォートで囲んでください。
+    - プロジェクトには `yoshi` を指定します（`--project "yoshi"`）。プロジェクト名はダブルクォートで囲んで指定します。
     - **親子関係（Relationships）の設定**:
         - 親チケットや関連するチケットがある場合は、`gh issue edit <issue-no> --add-parent <parent-issue-no>` などを使用して関係を設定します（または本文の「備考」欄にリンクを記載します）。
 
     ```powershell
     # コマンド例（本文をファイルに保存して作成する場合）
     # $body | Out-File -FilePath issue_body.txt -Encoding utf8
-    gh issue create --title "タイトル" --body-file issue_body.txt --label "feature","good first issue","優先度: 中" --assignee @me --project yoshi
+    gh issue create --title "タイトル" --body-file issue_body.txt --label "feature","good first issue","優先度: 中" --assignee "@me" --project "yoshi"
     ```
 
 4. **完了報告**
