@@ -27,7 +27,9 @@
     - 許可が得られた場合、`gh pr create` コマンドを使用してPRを作成します。
     - 担当者（Assignee）は自分 (`--assignee "@me"`) に設定します。必ずダブルクォートで囲んでください。
     - ラベル（Labels）とプロジェクト（Projects）は、元となる Issue に設定されているものを指定します。プロジェクト名はダブルクォートで囲んで指定します（`--project "yoshi"`）。
-    - タイトル：`[<branch-type>] <issue-title> (#<issue-no>)`
+    - タイトル：`[<branch-type>] <issue-title> (#<issue-no>)` または `<branch-type>: <issue-title> (#<issue-no>)`
+    - 原則として、元となる Issue のタイトルをベースにします。
+    - 日本語を基本とし、英単語（permission, placeholder など）を無理に日本語化する必要はありません。
     - 本文：
         ```markdown
         ## 概要
