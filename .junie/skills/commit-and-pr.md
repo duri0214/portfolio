@@ -15,6 +15,8 @@
         - `chore: <description>` (雑務)
         - `refactor: <description>` (リファクタリング)
     - 必要に応じて Issue 番号を含めます（例: `fix: ログインエラーの修正 (#545)`）。
+    - **ドキュメント修正の場合**:
+        - `docs/qiita/centos_to_ubuntu_setup.md` を修正した場合は、`qiita-review.md` に基づいて整合性を点検してください。
 
 2. **プッシュの実行**
     - ユーザにプッシュを行うかUIのボタンや選択肢（はい/いいえ）で確認します。プッシュしない場合は、そこで処理を終了します。
@@ -25,7 +27,9 @@
     - 許可が得られた場合、`gh pr create` コマンドを使用してPRを作成します。
     - 担当者（Assignee）は自分 (`--assignee "@me"`) に設定します。必ずダブルクォートで囲んでください。
     - ラベル（Labels）とプロジェクト（Projects）は、元となる Issue に設定されているものを指定します。プロジェクト名はダブルクォートで囲んで指定します（`--project "yoshi"`）。
-    - タイトル：`[<branch-type>] <issue-title> (#<issue-no>)`
+    - タイトル：`[<branch-type>] <issue-title> (#<issue-no>)` または `<branch-type>: <issue-title> (#<issue-no>)`
+    - 原則として、元となる Issue のタイトルをベースにします。
+    - 日本語を基本とし、英単語（permission, placeholder など）を無理に日本語化する必要はありません。
     - 本文：
         ```markdown
         ## 概要

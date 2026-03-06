@@ -1159,6 +1159,13 @@ Alias /static/ /var/www/html/portfolio/static/
     Options -Indexes
 </Directory>
 
+# メディアファイル（画像・チャート等）の設定
+Alias /media/ /var/www/html/portfolio/media/
+<Directory /var/www/html/portfolio/media>
+    Require all granted
+    Options -Indexes
+</Directory>
+
 # プロジェクトディレクトリへのアクセス許可
 <Directory /var/www/html/portfolio/config>
     <Files wsgi.py>
@@ -1429,25 +1436,45 @@ $ mysql -u <user> -p -h 127.0.0.1 portfolio_db < mysql_dump.sql
 ### 参考リンク
 - リストアの基本: https://qiita.com/YoshitakaOkada/items/45ebdc00cc923d970638
 
-## Apache/WSGI の実行権限チェック
+## Apache/WSGI の実行権限と ACL の設定
 
-mod_wsgi（Apache の wsgi モジュール）がアプリを読み込めるよう、最低限の読み取り権限を付与しておく。所有者は `ubuntu:ubuntu` のままで構わないが、Apache 実行ユーザー（`www-data`）が以下を満たす必要がある。
+mod_wsgi（Apache の wsgi モジュール）がアプリを読み込めるよう、またバッチ実行ユーザー（`ubuntu`）と Web サーバー実行ユーザー（`www-data`）が共存できるよう、適切な権限を設定します。
 
-- `WSGIScriptAlias` で指定した `wsgi.py` を含むディレクトリに「実行 (x)」があり辿れること
-- `wsgi.py` 本体を「読み取り (r)」できること
-- `python-path` で指定したプロジェクト配下の `.py` も読めること
-- 静的ファイル配下（例: `/var/www/html/portfolio/static`）にも `x`/`r` があること
+### 1. 所有権と基本権限の初期化
 
-典型的には、ディレクトリ 755、ファイル 644 にしておけば wsgi が読める。
+所有者は `ubuntu` にし、グループを `www-data` とします。これにより、`ubuntu` での Git 操作やバッチ実行をスムーズにしつつ、Apache からの読み書きも許可します。
 
 ```bash:console
-# 最短リカバリ（安全な既定値）: ディレクトリ=755, ファイル=644 を一括付与
-$ sudo find /var/www/html/portfolio -type d -print -exec chmod 755 {} +
-$ sudo find /var/www/html/portfolio -type f -print -exec chmod 644 {} +
+# 1. 所有権・権限の初期化
+$ sudo chown -R ubuntu:www-data /var/www/html/portfolio
+$ sudo find /var/www/html/portfolio -type d -exec chmod 775 {} +
+$ sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
+```
 
-# 直後に www-data 視点で要点チェック（OK/NG が出る）
+### 2. ACL (Access Control List) による権限継承
+
+`chmod` だけでは、その瞬間のファイルは直りますが、**新しく作られたファイル**には適用されません。
+`setfacl` を使用して、今後 `media/` 以下に作られるすべてのファイルに自動的に `ubuntu` と `www-data` 両方の権限を継承させます。
+
+```bash:console
+# ACL ツールのインストール
+$ sudo apt update && sudo apt install acl -y
+
+# media/ ディレクトリに対して、新規ファイルが ubuntu と www-data 両方の読み書きを継承するように設定
+$ sudo setfacl -R -d -m u:ubuntu:rwx /var/www/html/portfolio/media
+$ sudo setfacl -R -d -m g:www-data:rwx /var/www/html/portfolio/media
+$ sudo setfacl -R -d -m o::rx /var/www/html/portfolio/media
+```
+
+### 3. 権限チェック
+
+設定後、`www-data` 視点で必要なファイルにアクセスできるか確認します。
+
+```bash:console
+# www-data 視点で要点チェック（OK/NG が出る）
 $ sudo -u www-data test -x /var/www/html/portfolio/config && echo OK_dir || echo NG_dir
 $ sudo -u www-data test -r /var/www/html/portfolio/config/wsgi.py && echo OK_wsgi || echo NG_wsgi
+$ sudo -u www-data test -w /var/www/html/portfolio/media && echo OK_media_w || echo NG_media_w
 ```
 
 `root` のままディレクトリとか作りまくってると `access denied` や `permission error` になっていることがあるので注意。特に `/var/www/html/portfolio/config/wsgi.py` と、その親ディレクトリに `x` 権限が無いと mod_wsgi がアプリを読み込めず 500 になる。
@@ -2220,6 +2247,12 @@ def index(request):
 # これの追記で permissionerror 回避を確認ok
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+# ファイル・ディレクトリの書き込み権限設定
+# Apache(www-data)が生成したメディアファイルをubuntuユーザーが削除・上書き（バッチ実行等）できるように
+# グループ書き込み権限(664/775)を明示的に付与します。
+FILE_UPLOAD_PERMISSIONS = 0o664
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o775
 ```
 
 上記の settings.py の追記に加えて、下記のように models.py で upload_to='shopping/ にすると、[example.com]/media/shopping/xxx.jpg と保存されるようになる
