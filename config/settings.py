@@ -191,6 +191,12 @@ NUMBER_GROUPING = 3
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# ファイル・ディレクトリの書き込み権限設定
+# Apache(www-data)が生成したメディアファイルをubuntuユーザーが削除・上書き（バッチ実行等）できるように
+# グループ書き込み権限(664/775)を明示的に付与します。
+FILE_UPLOAD_PERMISSIONS = 0o664
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o775
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

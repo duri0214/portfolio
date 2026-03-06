@@ -232,48 +232,51 @@ python manage.py loaddata bank\fixtures\mufg_summary_master.json
 - `ubuntu`: Git操作、`collectstatic` 実行（ソースコード管理・静的ファイル生成）
 - `www-data`: Webサーバ実行ユーザー（`media/`, `media/logs/` への書き込み権限が必要）
 
-### 更新コマンド
-```bash
-cd /var/www/html/portfolio
+### 初回サーバーセットアップ (権限設定)
+サーバー構築時、または権限エラーが発生した際に一度だけ実行してください。
+これにより、以降に生成されるファイルも自動的に適切な権限（ACL）を継承します。
 
-# 1. 所有権・権限の是正（最初に実施する）
-# ※ www-data が生成したファイル (media, static 等) を ubuntu ユーザーが操作（git clean等）できるようにします
+```bash
+# 1. 所有権・権限の初期化
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo find /var/www/html/portfolio -type d -exec chmod 775 {} +
 sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
 
-# 2. ソースコードの更新
-# ※ git clean -fd により venv ディレクトリも削除されます
+# 2. 以降の新規ファイルに自動で権限を継承させる (ACL)
+sudo apt update && sudo apt install acl -y
+sudo setfacl -R -d -m u:ubuntu:rwx /var/www/html/portfolio/media
+sudo setfacl -R -d -m g:www-data:rwx /var/www/html/portfolio/media
+sudo setfacl -R -d -m o::rx /var/www/html/portfolio/media
+```
+
+### 日常の更新コマンド
+ソースコードを更新してデプロイする際の手順です。
+上記セットアップが済んでいれば、通常の権限変更コマンドは不要です。
+
+```bash
+cd /var/www/html/portfolio
+
+# 1. ソースコードの更新
 git fetch --prune origin
 git reset --hard origin/master
 git clean -fd
 
-# 3. venv の再構築 (リセット)
-rm -rf venv
-python3 -m venv venv
+# 2. venv の再構築 (リセット)
+# (ライブラリに変更がある場合のみでOK。通常は `pip install -r requirements.txt` のみ)
+# rm -rf venv
+# python3 -m venv venv
 source /var/www/html/portfolio/venv/bin/activate
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 
-# 4. Django メンテナンス
+# 3. Django メンテナンス
 python manage.py collectstatic --noinput
 python manage.py clearsessions
 python manage.py migrate
 
-# 5. 書き込みディレクトリの権限設定（www-data が書けるように）
-sudo mkdir -p /var/www/html/portfolio/chroma_db
-sudo chown -R www-data:www-data \
-  /var/www/html/portfolio/media \
-  /var/www/html/portfolio/chroma_db \
-  /var/www/html/portfolio/static
-sudo chmod -R 775 \
-  /var/www/html/portfolio/media \
-  /var/www/html/portfolio/chroma_db \
-  /var/www/html/portfolio/static
-
-# 6. サービスの再起動
+# 4. サービスの再起動
 sudo systemctl restart apache2
-sudo tail -n 200 /var/log/apache2/error.log | tail -n 50
+sudo tail -n 50 /var/log/apache2/error.log
 ```
 
 ---
