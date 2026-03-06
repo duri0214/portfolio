@@ -6,23 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('kokkai', '0003_meeting_unique_meeting_agenda'),
+        ("kokkai", "0003_meeting_unique_meeting_agenda"),
     ]
 
     operations = [
+        migrations.RemoveConstraint(
+            model_name="meeting",
+            name="unique_meeting_agenda",
+        ),
         migrations.AddConstraint(
-            model_name='meeting',
+            model_name="meeting",
             constraint=models.UniqueConstraint(
-                fields=('min_id',), name='unique_meeting_min_id'
+                fields=("min_id",), name="unique_meeting_min_id"
             ),
         ),
         migrations.RemoveField(
-            model_name='meeting',
-            name='agenda_order',
+            model_name="meeting",
+            name="agenda_order",
         ),
         migrations.RemoveField(
-            model_name='meeting',
-            name='agenda_title',
+            model_name="meeting",
+            name="agenda_title",
         ),
     ]
-
