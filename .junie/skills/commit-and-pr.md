@@ -7,7 +7,7 @@
 
 0. **本番環境のドキュメント・設定チェック (重要)**
     - 本番環境 (`ubuntu` ユーザー) でのデプロイやバッチ実行時に `PermissionError` が発生しないか設定を確認します。
-    - 特に `media/` 以下のファイル所有権 (`ubuntu:www-data`)、グループ書き込み権限 (`775/664`)、および ACL (`setfacl`) の手順が `README.md` や `docs/qiita/` に正しく記載されているかを確認し、問題があれば `server-setup-docs-review.md` に基づいてドキュメントや `settings.py` を修正してください。
+    - 特に `media/` 以下のファイル所有権 (`ubuntu:www-data`)、グループ書き込み権限 (`775/664`)、および ACL (`setfacl`) の手順が `README.md` や `docs/qiita/` に正しく記載されているかを確認し、問題があれば `qiita-review.md` に基づいてドキュメントや `settings.py` を修正してください。
 
 1. **コミットの実行**
     - 修正内容ごとにコミットを行います（大きな変更を一度にコミットせず、論理的な単位で分割します）。
