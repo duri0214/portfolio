@@ -236,16 +236,17 @@ python manage.py loaddata bank\fixtures\mufg_summary_master.json
 ```bash
 cd /var/www/html/portfolio
 
-# 1. ソースコードの更新
+# 1. 所有権・権限の是正（最初に実施する）
+# ※ www-data が生成したファイル (media, static 等) を ubuntu ユーザーが操作（git clean等）できるようにします
+sudo chown -R ubuntu:www-data /var/www/html/portfolio
+sudo find /var/www/html/portfolio -type d -exec chmod 775 {} +
+sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
+
+# 2. ソースコードの更新
 # ※ git clean -fd により venv ディレクトリも削除されます
 git fetch --prune origin
 git reset --hard origin/master
 git clean -fd
-
-# 2. 所有権・権限の是正（最初に実施しておく）
-sudo chown -R ubuntu:www-data /var/www/html/portfolio
-sudo find /var/www/html/portfolio -type d -exec chmod 775 {} +
-sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
 
 # 3. venv の再構築 (リセット)
 rm -rf venv
