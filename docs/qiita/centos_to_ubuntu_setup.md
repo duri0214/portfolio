@@ -2248,7 +2248,9 @@ def index(request):
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
-# ファイル・ディレクトリの書き込み権限設定 (Apache/www-data と ubuntu の共存用)
+# ファイル・ディレクトリの書き込み権限設定
+# Apache(www-data)が生成したメディアファイルをubuntuユーザーが削除・上書き（バッチ実行等）できるように
+# グループ書き込み権限(664/775)を明示的に付与します。
 FILE_UPLOAD_PERMISSIONS = 0o664
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o775
 ```
