@@ -82,7 +82,7 @@ class Gender:
 
 class RiddleEvaluation(BaseModel):
     """
-    なぞなぞの各スキル（論理的思考力、洞察力など）に対する個別の評価結果を表す「観点別評価」。
+    なぞなぞの各スキル（論理的思考力、洞察力など）に対する個別の評価結果を表す。
 
     RiddleResponse の evaluations リストの要素として使用される、最小単位の評価データ。
     """
