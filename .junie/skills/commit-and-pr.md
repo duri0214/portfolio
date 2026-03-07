@@ -26,7 +26,9 @@
     - ユーザにPRを作成するかUIのボタンや選択肢（はい/いいえ）で確認します。作成しない場合は、そこで処理を終了します。
     - 許可が得られた場合、`gh pr create` コマンドを使用してPRを作成します。
     - 担当者（Assignee）は自分 (`--assignee "@me"`) に設定します。必ずダブルクォートで囲んでください。
-    - ラベル（Labels）とプロジェクト（Projects）は、元となる Issue に設定されているものを指定します。プロジェクト名はダブルクォートで囲んで指定します（`--project "yoshi"`）。
+    - ラベル（Labels）は、元となる Issue に設定されているものを指定します。
+    - プロジェクト（Projects）は "yoshi" (`--project "yoshi"`) に設定します。必ずダブルクォートで囲んでください。
+    - Development (Linked Issues) は、ブランチ名の先頭の数字から特定される Issue 番号 (`Closes #<issue-no>`) に設定します。必ずダブルクォートで囲んでください。
     - タイトル：`[<branch-type>] <issue-title> (#<issue-no>)` または `<branch-type>: <issue-title> (#<issue-no>)`
     - 原則として、元となる Issue のタイトルをベースにします。
     - 日本語を基本とし、英単語（permission, placeholder など）を無理に日本語化する必要はありません。
@@ -46,14 +48,11 @@
         ## 関連Issue
         - Closes #<issue-no>
         ```
-    - **Development (Linked Issues) の設定**:
-        - `gh pr create` の `--body` または `--body-file` 内に、`Closes #<issue-no>` または `Fixes #<issue-no>` を含めることで、GitHub の「Development」セクションに Issue を自動的にリンクさせます。
-        - ブランチ名（例: `465-feature-llm-typed-response`）の先頭の数字から Issue 番号を特定し、必ず本文に含めてください。
-    - ベースブランチは `master` とします（`--base master`）。
+    - ベースブランチは "master" (`--base "master"`) に設定します。必ずダブルクォートで囲んでください。
 
     ```powershell
     # コマンド例
-    gh pr create --title "[feature] junie用のskill作成 (#556)" --body-file pr_body.txt --base master --assignee "@me" --project "yoshi"
+    gh pr create --title "[feature] junie用のskill作成 (#556)" --body-file pr_body.txt --base "master" --assignee "@me" --project "yoshi"
     ```
 
 4. **完了報告**
