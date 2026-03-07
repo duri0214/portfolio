@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types import ImagesResponse
 from openai.types.chat import (
-    ChatCompletion,
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
@@ -151,6 +150,7 @@ class LlmCompletionService(LlmService):
 
         return ChatResult(
             answer=content,
+            explanation=None,
             metadata={
                 "model": response.model,
                 "usage": response.usage.to_dict() if response.usage else {},
@@ -525,6 +525,7 @@ class OpenAILlmRagService(LlmService):
         if not selected:
             return RagResponse(
                 answer="該当する資料が見つかりませんでした。",
+                explanation=None,
                 sources="",
                 source_documents=[],
                 warning=None,
@@ -566,6 +567,7 @@ class OpenAILlmRagService(LlmService):
 
         return RagResponse(
             answer=answer,
+            explanation=None,
             sources=sources,
             source_documents=selected,
             warning=warning,
