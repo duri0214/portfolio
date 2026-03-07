@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types import ImagesResponse
 from openai.types.chat import (
-    ChatCompletion,
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
@@ -21,6 +20,7 @@ from lib.llm.valueobject.completion import (
     StreamResponse,
     RagDocument,
     RagResponse,
+    ChatResult,
 )
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 
@@ -77,6 +77,20 @@ class LlmService(ABC):
         pass
 
 
+class BaseLLMTask(ABC):
+    """
+    全てのLLMタスクが守るべきインターフェース。
+    特定の入力に対して構造化された ChatResult を返すことを強制します。
+    """
+
+    @abstractmethod
+    def execute(self, *args, **kwargs) -> ChatResult:
+        """
+        タスクを実行し、構造化されたレスポンスを返します。
+        """
+        pass
+
+
 class LlmCompletionService(LlmService):
     """
     OpenAIとGeminiの両方に対応した統合LLM完了サービス。
@@ -110,20 +124,16 @@ class LlmCompletionService(LlmService):
 
     def retrieve_answer(
         self, chat_history: list[Message], max_messages: int = 5
-    ) -> ChatCompletion:
+    ) -> ChatResult:
         """
-        チャット履歴から回答を取得します。
-
-        注意: この機能はトークン数ベースの制限から単純なメッセージ件数ベースの制限に移行したため、
-        内部処理が形骸化されました。現在はmax_messagesパラメータを使用して直近の指定件数のみを
-        保持する方式に置き換えられています。
+        チャット履歴から回答を取得し、構造化された ChatResult として返します。
 
         Args:
             chat_history (list[Message]): チャット履歴メッセージのリスト
             max_messages (int, optional): 保持する最大メッセージ件数。デフォルト値は5。
 
         Returns:
-            ChatCompletion: OpenAI形式のチャット完了レスポンス
+            ChatResult: 構造化されたチャット完了レスポンス
         """
         cut_down_history = cut_down_chat_history(chat_history, max_messages)
 
@@ -131,9 +141,21 @@ class LlmCompletionService(LlmService):
         if not cut_down_history:
             raise ValueError("Chat history cannot be empty")
 
-        return self.client.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=self.config.model,
             messages=[x.to_dict() for x in cut_down_history],
+        )
+
+        content = response.choices[0].message.content or ""
+
+        return ChatResult(
+            answer=content,
+            explanation=None,
+            metadata={
+                "model": response.model,
+                "usage": response.usage.to_dict() if response.usage else {},
+                "finish_reason": response.choices[0].finish_reason,
+            },
         )
 
 
@@ -503,6 +525,7 @@ class OpenAILlmRagService(LlmService):
         if not selected:
             return RagResponse(
                 answer="該当する資料が見つかりませんでした。",
+                explanation=None,
                 sources="",
                 source_documents=[],
                 warning=None,
@@ -544,6 +567,7 @@ class OpenAILlmRagService(LlmService):
 
         return RagResponse(
             answer=answer,
+            explanation=None,
             sources=sources,
             source_documents=selected,
             warning=warning,

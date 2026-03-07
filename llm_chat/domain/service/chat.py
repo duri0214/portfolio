@@ -1,4 +1,5 @@
 import os
+import json
 import secrets
 from abc import ABC, abstractmethod
 from io import BytesIO
@@ -17,12 +18,18 @@ from lib.llm.service.completion import (
     OpenAILlmTextToSpeech,
     OpenAILlmSpeechToText,
     OpenAILlmRagService,
+    BaseLLMTask,
 )
-from lib.llm.valueobject.completion import RoleType, StreamResponse
+from lib.llm.valueobject.completion import RoleType, StreamResponse, Message
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader
 from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.valueobject.chat import MessageDTO, Gender
+from llm_chat.domain.valueobject.chat import (
+    MessageDTO,
+    Gender,
+    RiddleResponse,
+    RiddleEvaluation,
+)
 
 
 def get_prompt(gender: Gender) -> str:
@@ -45,27 +52,32 @@ def get_prompt(gender: Gender) -> str:
         - 私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？
 
         #判定結果例
-        [{{"skill": "論理的思考力", "score": 50, "judge": "不合格"}},{{"skill": "洞察力", "score": 96, "judge": "合格"}}]
+        [{{"viewpoint": "論理的思考力", "score": 50, "judge": "不合格"}},{{"viewpoint": "洞察力", "score": 96, "judge": "合格"}}]
     """
 
 
 def create_initial_prompt(user_message: MessageDTO, gender: Gender) -> list[MessageDTO]:
-    chat_history = [
-        MessageDTO(
-            user=user_message.user,
-            role=RoleType.SYSTEM,
-            content=get_prompt(gender),
-            invisible=True,
-        ),
-        MessageDTO(
-            user=user_message.user,
-            role=RoleType.USER,
-            content=f"なぞなぞスタート（{user_message.content}）",
-            invisible=False,
-        ),
-    ]
-    ChatLogRepository.bulk_insert(chat_history)
-    return chat_history
+    """
+    初期プロンプト（システムメッセージと初回のユーザーメッセージ）を生成します。
+    システムメッセージはDBに保存せず、初回ユーザーメッセージのみ保存します。
+    """
+    system_message = MessageDTO(
+        user=user_message.user,
+        role=RoleType.SYSTEM,
+        content=get_prompt(gender),
+        invisible=True,
+    )
+    first_user_message = MessageDTO(
+        user=user_message.user,
+        role=RoleType.USER,
+        content=f"なぞなぞスタート（{user_message.content}）",
+        invisible=False,
+    )
+    # ユーザーメッセージのみDBに保存
+    ChatLogRepository.insert(first_user_message)
+
+    # システムメッセージを先頭に含めて返す
+    return [system_message, first_user_message]
 
 
 def get_chat_history(
@@ -80,10 +92,12 @@ def get_chat_history(
     2. チャット履歴が存在する場合、それを取得します。
     3. チャット履歴が空であり、`gender` が指定されている場合は、
        なぞなぞモード用の初期プロンプトを生成し挿入します。
-    4. 最新のユーザーメッセージを履歴に追加します。
+    4. 既存の履歴がある場合は、システムメッセージを先頭に動的に追加します。
+    5. 最新のユーザーメッセージを履歴に追加します。
 
     **特記事項**:
     初期プロンプト挿入は、なぞなぞモードの特別仕様です。このプロンプトには挨拶や、なぞなぞの開始案内が含まれます。
+    システムメッセージはDBには保存せず、LLMへのリクエスト時にのみ動的に追加されます。
 
     :param user_message: 現在処理対象のユーザーからの入力メッセージ (MessageDTO)
     :param gender: なぞなぞモード用初期プロンプト生成のためのユーザーの性別（オプション）
@@ -94,6 +108,7 @@ def get_chat_history(
     if user_message.content is None:
         raise Exception("content is None")
 
+    # DBから履歴を取得（roleがstrで返ってくることを想定してRoleTypeで変換）
     chat_history = [
         MessageDTO(
             user=x.user, role=RoleType(x.role), content=x.content, invisible=False
@@ -102,8 +117,22 @@ def get_chat_history(
     ]
 
     if not chat_history and gender is not None:
+        # 初回：システムメッセージ（非保存）と初回ユーザーメッセージ（保存）を生成
         chat_history = create_initial_prompt(user_message=user_message, gender=gender)
     else:
+        # 2回目以降：既存の履歴にシステムメッセージが含まれていない場合は動的に追加
+        if gender is not None:
+            has_system = any(m.role == RoleType.SYSTEM for m in chat_history)
+            if not has_system:
+                system_message = MessageDTO(
+                    user=user_message.user,
+                    role=RoleType.SYSTEM,
+                    content=get_prompt(gender),
+                    invisible=True,
+                )
+                chat_history.insert(0, system_message)
+
+        # 最新のユーザーメッセージをDBに保存し、履歴に追加
         ChatLogRepository.insert(user_message)
         chat_history.append(user_message)
 
@@ -130,39 +159,91 @@ class ChatService(BaseChatService):
         # なぞなぞモードはgenderが与えられた場合に初期プロンプトを入れる
         self.chat_history = get_chat_history(user_message, gender)
 
-        response = LlmCompletionService(self.config).retrieve_answer(
+        chat_result = LlmCompletionService(self.config).retrieve_answer(
             [x.to_message() for x in self.chat_history]
         )
 
         return MessageDTO(
             user=user_message.user,
             role=RoleType.ASSISTANT,
-            content=response.choices[0].message.content,
+            content=chat_result.answer,
             invisible=False,
         )
 
-    def evaluate(self, login_user: User):
-        """評価機能（Gemini/OpenAI共通）"""
-        invisible_user_message = MessageDTO(
-            user=login_user,
+    def evaluate(self, login_user: User) -> str:
+        """
+        評価機能（Gemini/OpenAI共通）。
+        評価結果を RiddleResponse として取得し、箇条書きテキストを返します。
+        """
+        # なぞなぞタスクを使用して構造化された評価結果を取得
+        task = RiddleTask(self.config, self.chat_history)
+        riddle_response = task.execute(login_user)
+
+        # 箇条書きテキストを生成して返す
+        return riddle_response.to_bullet_points()
+
+
+class RiddleTask(BaseLLMTask):
+    """
+    なぞなぞの評価タスク。
+    LLMからの評価結果（JSON）をパースし、RiddleResponse型で返します。
+    """
+
+    def __init__(
+        self,
+        config: OpenAIGptConfig | GeminiConfig,
+        chat_history: list[MessageDTO],
+    ):
+        self.config = config
+        self.chat_history = chat_history
+
+    def execute(self, login_user: User) -> RiddleResponse:
+        """
+        評価プロンプトを送信し、結果を RiddleResponse に変換します。
+        """
+        # 評価用のユーザーメッセージ（非表示）
+        eval_message = Message(
             role=RoleType.USER,
             content="評価結果をjsonで出力してください。フォーマットは判定結果例に従うこと",
-            invisible=True,
         )
-        ChatLogRepository.insert(invisible_user_message)
-        self.chat_history.append(invisible_user_message)
 
-        response = LlmCompletionService(self.config).retrieve_answer(
-            [x.to_message() for x in self.chat_history]
-        )
-        invisible_assistant_message = MessageDTO(
-            user=login_user,
-            role=RoleType.ASSISTANT,
-            content=response.choices[0].message.content,
-            invisible=True,
-        )
-        ChatLogRepository.insert(invisible_assistant_message)
-        self.chat_history.append(invisible_user_message)
+        # メッセージ履歴を準備
+        messages = [x.to_message() for x in self.chat_history]
+        messages.append(eval_message)
+
+        # LLM実行
+        chat_result = LlmCompletionService(self.config).retrieve_answer(messages)
+        raw_content = chat_result.answer
+
+        # パース処理
+        try:
+            # LLMが ```json ... ``` で囲んでくる場合を考慮
+            cleaned_content = raw_content.strip()
+            if cleaned_content.startswith("```"):
+                lines = cleaned_content.splitlines()
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines[-1].startswith("```"):
+                    lines = lines[:-1]
+                cleaned_content = "\n".join(lines).strip()
+
+            eval_data = json.loads(cleaned_content)
+            # eval_data はリスト形式 [{...}, {...}] と想定
+            evaluations = [RiddleEvaluation(**item) for item in eval_data]
+
+            return RiddleResponse(
+                answer=raw_content,
+                evaluations=evaluations,
+                explanation="なぞなぞの評価結果です。",
+            )
+        except (json.JSONDecodeError, ValueError) as e:
+            # パース失敗時のフォールバックまたはエラーハンドリング
+            # ここで「残心」を持ってエラーを処理
+            return RiddleResponse(
+                answer=raw_content,
+                evaluations=[],
+                explanation=f"評価結果のパースに失敗しました: {str(e)}",
+            )
 
 
 class OpenAIChatStreamingService(BaseChatService):
