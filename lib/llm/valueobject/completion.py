@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Literal, Any
 
+from pydantic import BaseModel, Field
+
 
 class RoleType(Enum):
     USER = "user"
@@ -78,3 +80,15 @@ class StreamResponse:
             "finish_reason": self.finish_reason,
         }
         return json.dumps(serialized_data)
+
+
+class ChatResult(BaseModel):
+    """
+    LLMからの構造化されたレスポンスを格納する共通のデータ構造。
+    """
+
+    answer: str = Field(..., description="LLMの回答メインコンテンツ")
+    explanation: str | None = Field(None, description="回答の根拠・解説")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="トークン数やステータスなどの付随情報"
+    )

@@ -21,6 +21,7 @@ from lib.llm.valueobject.completion import (
     StreamResponse,
     RagDocument,
     RagResponse,
+    ChatResult,
 )
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 
@@ -73,6 +74,20 @@ class LlmService(ABC):
 
         Returns:
             LLMからの応答
+        """
+        pass
+
+
+class BaseLLMTask(ABC):
+    """
+    全てのLLMタスクが守るべきインターフェース。
+    特定の入力に対して構造化された ChatResult を返すことを強制します。
+    """
+
+    @abstractmethod
+    def execute(self, *args, **kwargs) -> ChatResult:
+        """
+        タスクを実行し、構造化されたレスポンスを返します。
         """
         pass
 

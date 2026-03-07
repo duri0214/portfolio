@@ -1,4 +1,5 @@
 import os
+import json
 import secrets
 from abc import ABC, abstractmethod
 from io import BytesIO
@@ -17,12 +18,18 @@ from lib.llm.service.completion import (
     OpenAILlmTextToSpeech,
     OpenAILlmSpeechToText,
     OpenAILlmRagService,
+    BaseLLMTask,
 )
-from lib.llm.valueobject.completion import RoleType, StreamResponse
+from lib.llm.valueobject.completion import RoleType, StreamResponse, Message
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from lib.llm.valueobject.rag import PdfDataloader
 from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.valueobject.chat import MessageDTO, Gender
+from llm_chat.domain.valueobject.chat import (
+    MessageDTO,
+    Gender,
+    RiddleResponse,
+    RiddleEvaluation,
+)
 
 
 def get_prompt(gender: Gender) -> str:
@@ -143,26 +150,90 @@ class ChatService(BaseChatService):
 
     def evaluate(self, login_user: User):
         """評価機能（Gemini/OpenAI共通）"""
-        invisible_user_message = MessageDTO(
-            user=login_user,
-            role=RoleType.USER,
-            content="評価結果をjsonで出力してください。フォーマットは判定結果例に従うこと",
-            invisible=True,
-        )
-        ChatLogRepository.insert(invisible_user_message)
-        self.chat_history.append(invisible_user_message)
+        # なぞなぞタスクを使用して構造化された評価結果を取得
+        task = RiddleTask(self.config, self.chat_history)
+        riddle_response = task.execute(login_user)
 
-        response = LlmCompletionService(self.config).retrieve_answer(
-            [x.to_message() for x in self.chat_history]
-        )
+        # 評価結果を保存
         invisible_assistant_message = MessageDTO(
             user=login_user,
             role=RoleType.ASSISTANT,
-            content=response.choices[0].message.content,
+            content=riddle_response.model_dump_json(),
             invisible=True,
         )
         ChatLogRepository.insert(invisible_assistant_message)
-        self.chat_history.append(invisible_user_message)
+
+
+class RiddleTask(BaseLLMTask):
+    """
+    なぞなぞの評価タスク。
+    LLMからの評価結果（JSON）をパースし、RiddleResponse型で返します。
+    """
+
+    def __init__(
+        self,
+        config: OpenAIGptConfig | GeminiConfig,
+        chat_history: list[MessageDTO],
+    ):
+        self.config = config
+        self.chat_history = chat_history
+
+    def execute(self, login_user: User) -> RiddleResponse:
+        """
+        評価プロンプトを送信し、結果を RiddleResponse に変換します。
+        """
+        # 評価用のユーザーメッセージ（非表示）
+        eval_message = Message(
+            role=RoleType.USER,
+            content="評価結果をjsonで出力してください。フォーマットは判定結果例に従うこと",
+        )
+
+        # メッセージ履歴を準備
+        messages = [x.to_message() for x in self.chat_history]
+        messages.append(eval_message)
+
+        # LLM実行
+        response = LlmCompletionService(self.config).retrieve_answer(messages)
+        raw_content = response.choices[0].message.content
+
+        # 念のため、DBには非表示のユーザーメッセージを記録（履歴の整合性のため）
+        invisible_user_message = MessageDTO(
+            user=login_user,
+            role=RoleType.USER,
+            content=eval_message.content,
+            invisible=True,
+        )
+        ChatLogRepository.insert(invisible_user_message)
+
+        # パース処理
+        try:
+            # LLMが ```json ... ``` で囲んでくる場合を考慮
+            cleaned_content = raw_content.strip()
+            if cleaned_content.startswith("```"):
+                lines = cleaned_content.splitlines()
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines[-1].startswith("```"):
+                    lines = lines[:-1]
+                cleaned_content = "\n".join(lines).strip()
+
+            eval_data = json.loads(cleaned_content)
+            # eval_data はリスト形式 [{...}, {...}] と想定
+            evaluations = [RiddleEvaluation(**item) for item in eval_data]
+
+            return RiddleResponse(
+                answer=raw_content,
+                evaluations=evaluations,
+                explanation="なぞなぞの評価結果です。",
+            )
+        except (json.JSONDecodeError, ValueError) as e:
+            # パース失敗時のフォールバックまたはエラーハンドリング
+            # ここで「残心」を持ってエラーを処理
+            return RiddleResponse(
+                answer=raw_content,
+                evaluations=[],
+                explanation=f"評価結果のパースに失敗しました: {str(e)}",
+            )
 
 
 class OpenAIChatStreamingService(BaseChatService):

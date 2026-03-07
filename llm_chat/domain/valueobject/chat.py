@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from enum import Enum
 
 from django.contrib.auth.models import User
+from pydantic import BaseModel, Field
 
-from lib.llm.valueobject.completion import RoleType, Message
+from lib.llm.valueobject.completion import RoleType, Message, ChatResult
 from llm_chat.models import ChatLogs
 
 
@@ -77,3 +78,23 @@ class Gender:
     @property
     def name(self) -> str:
         return "男性" if self.gender == GenderType.MAN else "女性"
+
+
+class RiddleEvaluation(BaseModel):
+    """
+    なぞなぞの各スキルに対する評価結果。
+    """
+
+    skill: str = Field(..., description="評価スキル名（例: 論理的思考力、洞察力）")
+    score: int = Field(..., description="評価スコア（0-100）")
+    judge: str = Field(..., description="判定結果（例: 合格、不合格）")
+
+
+class RiddleResponse(ChatResult):
+    """
+    なぞなぞタスクの最終的な構造化レスポンス。
+    """
+
+    evaluations: list[RiddleEvaluation] = Field(
+        ..., description="各スキルごとの評価リスト"
+    )
