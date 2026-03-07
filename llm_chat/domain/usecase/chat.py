@@ -56,15 +56,14 @@ class LlmChatUseCase(UseCase):
         # なぞなぞはOpenAI/Gemini共通機能として扱う
         assistant_message = chat_service.generate(user_message, Gender(GenderType.MAN))
 
-        self.repository.insert(assistant_message)
-
         # なぞなぞの終端処理（共通機能）
         if "本日はなぞなぞにご参加いただき" in assistant_message.content:
-            chat_service.evaluate(login_user=user_message.user)
+            evaluation_text = chat_service.evaluate(login_user=user_message.user)
+            assistant_message.content += evaluation_text
+
+        self.repository.insert(assistant_message)
 
         return assistant_message
-
-
 
 
 class OpenAIGptStreamingUseCase(UseCase):

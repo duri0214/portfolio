@@ -115,3 +115,14 @@ class RiddleResponse(ChatResult):
     evaluations: list[RiddleEvaluation] = Field(
         ..., description="各評価観点ごとの評価リスト"
     )
+
+    def to_bullet_points(self) -> str:
+        """
+        評価結果を箇条書き形式のテキストに変換します。
+        """
+        lines = ["\n【評価結果】"]
+        for eval_item in self.evaluations:
+            lines.append(
+                f"- {eval_item.viewpoint}: {eval_item.score}点 ({eval_item.judge})"
+            )
+        return "\n".join(lines)

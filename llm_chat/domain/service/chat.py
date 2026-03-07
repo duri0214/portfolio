@@ -148,20 +148,17 @@ class ChatService(BaseChatService):
             invisible=False,
         )
 
-    def evaluate(self, login_user: User):
-        """評価機能（Gemini/OpenAI共通）"""
+    def evaluate(self, login_user: User) -> str:
+        """
+        評価機能（Gemini/OpenAI共通）。
+        評価結果を RiddleResponse として取得し、箇条書きテキストを返します。
+        """
         # なぞなぞタスクを使用して構造化された評価結果を取得
         task = RiddleTask(self.config, self.chat_history)
         riddle_response = task.execute(login_user)
 
-        # 評価結果を保存
-        invisible_assistant_message = MessageDTO(
-            user=login_user,
-            role=RoleType.ASSISTANT,
-            content=riddle_response.model_dump_json(),
-            invisible=True,
-        )
-        ChatLogRepository.insert(invisible_assistant_message)
+        # 箇条書きテキストを生成して返す
+        return riddle_response.to_bullet_points()
 
 
 class RiddleTask(BaseLLMTask):
@@ -195,15 +192,6 @@ class RiddleTask(BaseLLMTask):
         # LLM実行
         chat_result = LlmCompletionService(self.config).retrieve_answer(messages)
         raw_content = chat_result.answer
-
-        # 念のため、DBには非表示のユーザーメッセージを記録（履歴の整合性のため）
-        invisible_user_message = MessageDTO(
-            user=login_user,
-            role=RoleType.USER,
-            content=eval_message.content,
-            invisible=True,
-        )
-        ChatLogRepository.insert(invisible_user_message)
 
         # パース処理
         try:
