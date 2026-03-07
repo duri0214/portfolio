@@ -52,7 +52,7 @@ def get_prompt(gender: Gender) -> str:
         - 私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？
 
         #判定結果例
-        [{{"skill": "論理的思考力", "score": 50, "judge": "不合格"}},{{"skill": "洞察力", "score": 96, "judge": "合格"}}]
+        [{"viewpoint": "論理的思考力", "score": 50, "judge": "不合格"},{"viewpoint": "洞察力", "score": 96, "judge": "合格"}]
     """
 
 

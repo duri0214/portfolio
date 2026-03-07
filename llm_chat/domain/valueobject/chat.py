@@ -82,12 +82,12 @@ class Gender:
 
 class RiddleEvaluation(BaseModel):
     """
-    なぞなぞの各スキル（論理的思考力、洞察力など）に対する個別の評価結果を表す。
+    なぞなぞの各評価観点（論理的思考力、洞察力など）に対する個別の評価結果を表す。
 
     RiddleResponse の evaluations リストの要素として使用される、最小単位の評価データ。
     """
 
-    skill: str = Field(..., description="評価スキル名（例: 論理的思考力、洞察力）")
+    viewpoint: str = Field(..., description="評価観点名（例: 論理的思考力、洞察力）")
     score: int = Field(..., description="評価スコア（0-100）")
     judge: str = Field(..., description="判定結果（例: 合格、不合格）")
 
@@ -102,5 +102,5 @@ class RiddleResponse(ChatResult):
     """
 
     evaluations: list[RiddleEvaluation] = Field(
-        ..., description="各スキルごとの評価リスト"
+        ..., description="各評価観点ごとの評価リスト"
     )
