@@ -137,14 +137,14 @@ class ChatService(BaseChatService):
         # なぞなぞモードはgenderが与えられた場合に初期プロンプトを入れる
         self.chat_history = get_chat_history(user_message, gender)
 
-        response = LlmCompletionService(self.config).retrieve_answer(
+        chat_result = LlmCompletionService(self.config).retrieve_answer(
             [x.to_message() for x in self.chat_history]
         )
 
         return MessageDTO(
             user=user_message.user,
             role=RoleType.ASSISTANT,
-            content=response.choices[0].message.content,
+            content=chat_result.answer,
             invisible=False,
         )
 
@@ -193,8 +193,8 @@ class RiddleTask(BaseLLMTask):
         messages.append(eval_message)
 
         # LLM実行
-        response = LlmCompletionService(self.config).retrieve_answer(messages)
-        raw_content = response.choices[0].message.content
+        chat_result = LlmCompletionService(self.config).retrieve_answer(messages)
+        raw_content = chat_result.answer
 
         # 念のため、DBには非表示のユーザーメッセージを記録（履歴の整合性のため）
         invisible_user_message = MessageDTO(

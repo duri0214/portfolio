@@ -39,16 +39,28 @@ class RagDocument:
     metadata: dict[str, Any]
 
 
-@dataclass
-class RagResponse:
+class ChatResult(BaseModel):
+    """
+    LLMからの構造化されたレスポンスを格納する共通のデータ構造。
+    """
+
+    answer: str = Field(..., description="LLMの回答メインコンテンツ")
+    explanation: str | None = Field(None, description="回答の根拠・解説")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="トークン数やステータスなどの付随情報"
+    )
+
+
+class RagResponse(ChatResult):
     """
     RAGの回答結果を保持するVO。
     """
 
-    answer: str
-    sources: str
-    source_documents: list[RagDocument]
-    warning: str | None = None
+    sources: str = Field(..., description="回答のソース情報")
+    source_documents: list[RagDocument] = Field(
+        ..., description="参照したドキュメントのリスト"
+    )
+    warning: str | None = Field(None, description="警告メッセージ")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -80,15 +92,3 @@ class StreamResponse:
             "finish_reason": self.finish_reason,
         }
         return json.dumps(serialized_data)
-
-
-class ChatResult(BaseModel):
-    """
-    LLMからの構造化されたレスポンスを格納する共通のデータ構造。
-    """
-
-    answer: str = Field(..., description="LLMの回答メインコンテンツ")
-    explanation: str | None = Field(None, description="回答の根拠・解説")
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="トークン数やステータスなどの付随情報"
-    )
