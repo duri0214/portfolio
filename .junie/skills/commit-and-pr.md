@@ -46,6 +46,9 @@
         ## 関連Issue
         - Closes #<issue-no>
         ```
+    - **Development (Linked Issues) の設定**:
+        - `gh pr create` の `--body` または `--body-file` 内に、`Closes #<issue-no>` または `Fixes #<issue-no>` を含めることで、GitHub の「Development」セクションに Issue を自動的にリンクさせます。
+        - ブランチ名（例: `465-feature-llm-typed-response`）の先頭の数字から Issue 番号を特定し、必ず本文に含めてください。
     - ベースブランチは `master` とします（`--base master`）。
 
     ```powershell
