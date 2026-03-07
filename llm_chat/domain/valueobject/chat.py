@@ -84,7 +84,12 @@ class RiddleEvaluation(BaseModel):
     """
     なぞなぞの各評価観点（論理的思考力、洞察力など）に対する個別の評価結果を表す。
 
-    RiddleResponse の evaluations リストの要素として使用される、最小単位の評価データ。
+    RiddleResponse の evaluations リストの要素として使用される、最小単位の評価データ（観点別評価）。
+
+    Attributes:
+        viewpoint (str): 評価観点名（例: 論理的思考力、洞察力）。
+        score (int): 評価スコア（0-100）。
+        judge (str): 判定結果（例: 合格、不合格）。
     """
 
     viewpoint: str = Field(..., description="評価観点名（例: 論理的思考力、洞察力）")
@@ -99,6 +104,12 @@ class RiddleResponse(ChatResult):
     BaseModelである ChatResult を継承し、複数の RiddleEvaluation をリスト形式で保持する。
     処理の流れとして、LLMから返されたJSONをパースしてこのクラスにマッピングすることで、
     型安全な評価結果の提供を保証する。
+
+    Attributes:
+        answer (str): LLMから返された生の回答テキスト。
+        explanation (str | None): 評価に関する補足説明。
+        metadata (dict[str, Any]): トークン数やモデル名などの付随情報。
+        evaluations (list[RiddleEvaluation]): 各評価観点（viewpoint）ごとの評価詳細リスト。
     """
 
     evaluations: list[RiddleEvaluation] = Field(

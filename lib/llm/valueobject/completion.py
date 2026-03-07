@@ -19,7 +19,7 @@ class Message:
 
     Attributes:
         role (RoleType): メッセージを送信した役割（ユーザ、アシスタント、システム）。
-        content (str): メッセージ内容。
+        content (str): メッセージの内容。
     """
 
     role: RoleType
@@ -29,10 +29,13 @@ class Message:
         return {"role": self.role.value, "content": self.content}
 
 
-@dataclass
-class RagDocument:
+class RagDocument(BaseModel):
     """
     RAGの検索結果ドキュメントを保持するVO。
+
+    Attributes:
+        page_content (str): 抽出されたドキュメントの本文。
+        metadata (dict[str, Any]): ドキュメントの出典情報（source, fileなど）。
     """
 
     page_content: str
@@ -42,6 +45,11 @@ class RagDocument:
 class ChatResult(BaseModel):
     """
     LLMからの構造化されたレスポンスを格納する共通のデータ構造。
+
+    Attributes:
+        answer (str): LLMの回答メインコンテンツ。
+        explanation (str | None): 回答の根拠や補足説明。
+        metadata (dict[str, Any]): トークン数、モデル名、ステータスなどの付随情報。
     """
 
     answer: str = Field(..., description="LLMの回答メインコンテンツ")
@@ -54,6 +62,12 @@ class ChatResult(BaseModel):
 class RagResponse(ChatResult):
     """
     RAGの回答結果を保持するVO。
+
+    Attributes:
+        answer (str): 生成された回答。
+        sources (str): 出典情報（人間可読な形式）。
+        source_documents (list[RagDocument]): 検索によって取得されたソースドキュメントのリスト。
+        warning (str | None): 文字数超過などの警告メッセージ。
     """
 
     sources: str = Field(..., description="回答のソース情報")
@@ -81,7 +95,13 @@ FinishReason = Literal[
 
 @dataclass
 class StreamResponse:
-    """ストリームで返すレスポンスをラップするVO"""
+    """
+    ストリームで返すレスポンスをラップするVO。
+
+    Attributes:
+        content (str | None): 逐次生成される回答の一部（delta.content）。
+        finish_reason (FinishReason | None): 終了理由（stop, lengthなど）。
+    """
 
     content: str | None  # delta.content
     finish_reason: FinishReason | None  # 終了理由 (e.g., stop, length, etc.)
