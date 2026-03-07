@@ -82,7 +82,9 @@ class Gender:
 
 class RiddleEvaluation(BaseModel):
     """
-    なぞなぞの各スキルに対する評価結果。
+    なぞなぞの各スキル（論理的思考力、洞察力など）に対する個別の評価結果を表す。
+
+    RiddleResponse の evaluations リストの要素として使用される、最小単位の評価データ。
     """
 
     skill: str = Field(..., description="評価スキル名（例: 論理的思考力、洞察力）")
@@ -92,7 +94,11 @@ class RiddleEvaluation(BaseModel):
 
 class RiddleResponse(ChatResult):
     """
-    なぞなぞタスクの最終的な構造化レスポンス。
+    なぞなぞタスクの最終的な構造化レスポンス（集約ルート）。
+
+    BaseModelである ChatResult を継承し、複数の RiddleEvaluation をリスト形式で保持する。
+    処理の流れとして、LLMから返されたJSONをパースしてこのクラスにマッピングすることで、
+    型安全な評価結果の提供を保証する。
     """
 
     evaluations: list[RiddleEvaluation] = Field(
