@@ -14,7 +14,6 @@ class ChatLogRepository:
                 user=log.user,
                 role=RoleType(log.role),
                 content=log.content,
-                invisible=log.invisible,
                 file_path=log.file.url if log.file else None,
                 file_name=log.file.name if log.file else None,
             )
@@ -23,15 +22,12 @@ class ChatLogRepository:
 
     @staticmethod
     def find_visible_chat_history(user: User) -> list[MessageDTO]:
-        chat_logs = ChatLogs.objects.filter(user=user, invisible=False).order_by(
-            "created_at"
-        )
+        chat_logs = ChatLogs.objects.filter(user=user).order_by("created_at")
         return [
             MessageDTO(
                 user=log.user,
                 role=RoleType(log.role),
                 content=log.content,
-                invisible=log.invisible,
                 file_path=log.file.url if log.file else None,
                 file_name=log.file.name if log.file else None,
             )

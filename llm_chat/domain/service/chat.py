@@ -65,13 +65,11 @@ def create_initial_prompt(user_message: MessageDTO, gender: Gender) -> list[Mess
         user=user_message.user,
         role=RoleType.SYSTEM,
         content=get_prompt(gender),
-        invisible=True,
     )
     first_user_message = MessageDTO(
         user=user_message.user,
         role=RoleType.USER,
         content=f"なぞなぞスタート（{user_message.content}）",
-        invisible=False,
     )
     # ユーザーメッセージのみDBに保存
     ChatLogRepository.insert(first_user_message)
@@ -110,9 +108,7 @@ def get_chat_history(
 
     # DBから履歴を取得（roleがstrで返ってくることを想定してRoleTypeで変換）
     chat_history = [
-        MessageDTO(
-            user=x.user, role=RoleType(x.role), content=x.content, invisible=False
-        )
+        MessageDTO(user=x.user, role=RoleType(x.role), content=x.content)
         for x in ChatLogRepository.find_chat_history(user_message.user)
     ]
 
@@ -128,7 +124,6 @@ def get_chat_history(
                     user=user_message.user,
                     role=RoleType.SYSTEM,
                     content=get_prompt(gender),
-                    invisible=True,
                 )
                 chat_history.insert(0, system_message)
 
@@ -167,7 +162,6 @@ class ChatService(BaseChatService):
             user=user_message.user,
             role=RoleType.ASSISTANT,
             content=chat_result.answer,
-            invisible=False,
         )
 
     def evaluate(self, login_user: User) -> str:
