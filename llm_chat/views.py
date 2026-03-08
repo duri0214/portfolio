@@ -51,11 +51,9 @@ class IndexView(FormView):
         # 履歴が存在し、かつ最後のメッセージが終了メッセージを含んでいない場合に「なぞなぞ中」とみなす
         is_riddle_active = False
         if chat_history:
-            # 最新の履歴を取得
-            last_message = chat_history[-1]
-            # なぞなぞが開始されている（システムプロンプトの痕跡があるか、誰かがなぞなぞと言ったか、など）
-            # ここではシンプルに、最後のメッセージに終了の定型文が含まれていないことを確認
-            # かつ、履歴の中に「なぞなぞ」を開始した形跡がある場合
+            # 履歴の中になぞなぞを開始した形跡があるか確認
+            # システムメッセージに「なぞなぞ」が含まれている（RiddleUseCase経由）か、
+            # 誰かがメッセージで「なぞなぞ」に言及している場合を開始とみなす
             has_started = any("なぞなぞ" in (log.content or "") for log in chat_history)
             has_ended = any(
                 "本日はなぞなぞにご参加いただき" in (log.content or "")
