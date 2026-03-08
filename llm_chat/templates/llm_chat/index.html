@@ -130,30 +130,40 @@
             }
 
             // ChatLogs全削除ボタン
-            if (clearBtn) {
-                clearBtn.addEventListener("click", function () {
-                    if (!confirm("本当にChatLogsテーブルを全削除しますか？この操作は元に戻せません。")) {
-                        return;
-                    }
-                    fetch("/llm_chat/clear_chat_logs/", {
-                        method: "POST",
-                        headers: {
-                            "X-CSRFToken": Cookies.get("csrftoken"),
-                        },
-                    })
-                        .then((response) => response.json())
-                        .then((data) => {
-                            if (data.status === "success") {
+            function clearChatLogs(options = { showConfirm: true, showAlert: true }) {
+                if (options.showConfirm && !confirm("本当にChatLogsテーブルを全削除しますか？この操作は元に戻せません。")) {
+                    return;
+                }
+                fetch("/llm_chat/clear_chat_logs/", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": Cookies.get("csrftoken"),
+                    },
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.status === "success") {
+                            if (options.showAlert) {
                                 alert(`削除しました。件数: ${data.deleted}`);
-                                location.reload();
-                            } else {
+                            }
+                            location.reload();
+                        } else {
+                            if (options.showAlert) {
                                 alert("削除に失敗しました: " + (data.detail || "unknown"));
                             }
-                        })
-                        .catch((err) => {
-                            console.error(err);
+                        }
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                        if (options.showAlert) {
                             alert("通信エラーが発生しました");
-                        });
+                        }
+                    });
+            }
+
+            if (clearBtn) {
+                clearBtn.addEventListener("click", function () {
+                    clearChatLogs();
                 });
             }
 
@@ -169,10 +179,8 @@
                 riddleButton.addEventListener("click", function () {
                     const isRiddleActive = "{{ is_riddle_active|yesno:'true,false' }}" === "true";
                     if (isRiddleActive) {
-                        if (confirm("なぞなぞを中断してリセットしますか？")) {
-                            // チャットログをクリアしてリロード
-                            clearBtn.click();
-                        }
+                        // なぞなぞ中断時は確認ダイアログを出さず、完了通知も出さない
+                        clearChatLogs({ showConfirm: false, showAlert: false });
                         return;
                     }
                     const userMessage = userInput.value.trim() || "なぞなぞを始めてください。";
