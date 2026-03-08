@@ -10,6 +10,7 @@
         <hr class="my-4">
         <p>You can talk with Gemini, ChatGPT, Dall-e-3, TextToSpeech, SpeechToText, RAG and Riddle</p>
     </div>
+    <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;"></div>
     <div class="container">
         <div class="d-flex justify-content-end mb-3">
             <button id="clearChatLogsBtn" class="btn btn-danger">ChatLogs テーブルをクリアー</button>
@@ -146,14 +147,49 @@
             function handleDeletionResult(data, options) {
                 if (data.status === "success") {
                     if (options.showAlert) {
-                        alert(`削除しました。件数: ${data.deleted}`);
+                        showToast(`削除しました。件数: ${data.deleted}`, "success");
                     }
-                    location.reload();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
                 } else {
                     if (options.showAlert) {
-                        alert("削除に失敗しました: " + (data.detail || "unknown"));
+                        showToast("削除に失敗しました: " + (data.detail || "unknown"), "danger");
                     }
                 }
+            }
+
+            function showToast(message, type = "info") {
+                const toastContainer = document.getElementById("toast-container");
+                const toastId = "toast-" + Date.now();
+                const iconMap = {
+                    success: "fa-check-circle",
+                    danger: "fa-exclamation-circle",
+                    warning: "fa-exclamation-triangle",
+                    info: "fa-info-circle"
+                };
+                const icon = iconMap[type] || iconMap.info;
+
+                const toastHtml = `
+                    <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas ${icon} me-2"></i>
+                                ${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                toastContainer.insertAdjacentHTML("beforeend", toastHtml);
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+                toast.show();
+
+                toastElement.addEventListener("hidden.bs.toast", function () {
+                    toastElement.remove();
+                });
             }
 
             function clearChatLogs(options = { showConfirm: true, showAlert: true }) {
@@ -165,7 +201,7 @@
                     .catch((err) => {
                         console.error(err);
                         if (options.showAlert) {
-                            alert("通信エラーが発生しました");
+                            showToast("通信エラーが発生しました", "danger");
                         }
                     });
             }
