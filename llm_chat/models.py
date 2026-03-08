@@ -12,5 +12,4 @@ class ChatLogs(models.Model):
     )
     content = models.TextField()
     file = models.FileField(upload_to="llm_chat/audios/", null=True, blank=True)
-    invisible = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -50,7 +50,6 @@ class LlmChatUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            invisible=False,
         )
 
         # なぞなぞはOpenAI/Gemini共通機能として扱う
@@ -91,7 +90,6 @@ class OpenAIGptStreamingUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            invisible=False,
         )
         return chat_service.generate(user_message)
 
@@ -116,7 +114,6 @@ class OpenAIGptStreamingUseCase(UseCase):
                 user=user,
                 role=RoleType.ASSISTANT,
                 content=content,
-                invisible=False,
             )
         )
 
@@ -150,7 +147,6 @@ class OpenAIDalleUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            invisible=False,
         )
         user_message = chat_service.generate(user_message)
         self.repository.insert(user_message)
@@ -180,7 +176,6 @@ class OpenAITextToSpeechUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            invisible=False,
         )
         user_message = chat_service.generate(message)
         self.repository.insert(user_message)
@@ -244,7 +239,6 @@ class OpenAISpeechToTextUseCase(UseCase):
             role=RoleType.ASSISTANT,
             content=content,
             file_path=self.file_path,
-            invisible=False,
         )
 
         assistant_message = chat_service.generate(init_assistant_message)
@@ -276,7 +270,6 @@ class OpenAIRagUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            invisible=False,
         )
         user_message = chat_service.generate(user_message)
         self.repository.insert(user_message)

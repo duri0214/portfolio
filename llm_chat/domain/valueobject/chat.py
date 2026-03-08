@@ -18,7 +18,6 @@ class MessageDTO:
         user (User): メッセージを送信するユーザー。
         role (RoleType): メッセージを送信した役割（例: ユーザ、アシスタント、システム）。
         content (str): メッセージの内容。
-        invisible (bool): メッセージがユーザーに非表示であるかどうかを示すフラグ。
         file_path (str, optional): 添付ファイルのURLパス。デフォルトは None。
         file_name (str, optional): 添付ファイルの名前。デフォルトは None。
     """
@@ -26,7 +25,6 @@ class MessageDTO:
     user: User
     role: RoleType
     content: str
-    invisible: bool
     file_path: str | None = None
     file_name: str | None = None
 
@@ -44,7 +42,6 @@ class MessageDTO:
             user=self.user,
             role=self.role.value,
             content=self.content,
-            invisible=self.invisible,
         )
         if self.file_path:
             chat_log.file.name = self.file_path
