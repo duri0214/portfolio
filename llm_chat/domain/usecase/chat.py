@@ -52,10 +52,36 @@ class LlmChatUseCase(UseCase):
             content=content,
         )
 
-        # なぞなぞはOpenAI/Gemini共通機能として扱う
+        assistant_message = chat_service.generate(user_message)
+
+        self.repository.insert(assistant_message)
+
+        return assistant_message
+
+
+class RiddleUseCase(UseCase):
+    """なぞなぞユースケース"""
+
+    def __init__(self, config: OpenAIGptConfig | GeminiConfig):
+        super().__init__()
+        self.config = config
+
+    def execute(self, user: User, content: str | None) -> MessageDTO:
+        if content is None:
+            raise ValueError("content cannot be None for RiddleUseCase")
+
+        chat_service = ChatService(self.config)
+
+        user_message = MessageDTO(
+            user=user,
+            role=RoleType.USER,
+            content=content,
+        )
+
+        # なぞなぞはGender(MAN)固定で開始/継続
         assistant_message = chat_service.generate(user_message, Gender(GenderType.MAN))
 
-        # なぞなぞの終端処理（共通機能）
+        # なぞなぞの終端処理
         if "本日はなぞなぞにご参加いただき" in assistant_message.content:
             evaluation_text = chat_service.evaluate(login_user=user_message.user)
             assistant_message.content += evaluation_text
