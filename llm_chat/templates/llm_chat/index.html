@@ -179,8 +179,8 @@
                 riddleButton.addEventListener("click", function () {
                     const isRiddleActive = "{{ is_riddle_active|yesno:'true,false' }}" === "true";
                     if (isRiddleActive) {
-                        // なぞなぞ中断時は確認ダイアログを出さず、完了通知も出さない
-                        clearChatLogs({ showConfirm: false, showAlert: false });
+                        // なぞなぞ中断時は確認ダイアログを出す（ChatLogsテーブルをクリアーボタンと共通の挙動にする）
+                        clearChatLogs();
                         return;
                     }
                     const userMessage = userInput.value.trim() || "なぞなぞを始めてください。";
