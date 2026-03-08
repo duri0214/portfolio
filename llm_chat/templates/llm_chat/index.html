@@ -17,8 +17,8 @@
         {% for chat_log in chat_history %}
             <div class="card mb-3">
                 <div class="card-body">
-                    <h6 class="card-title">{{ chat_log.role }}</h6>
-                    <p class="card-subtitle mb-2 text-muted" style="font-size: 0.8rem;"> file: {{ chat_log.file_name }}</p>
+                    <div class="card-title text-muted" style="font-size: 0.8rem; font-weight: bold;">{{ chat_log.role }}</div>
+                    <p class="card-subtitle mb-2 text-muted" style="font-size: 0.7rem;"> file: {{ chat_log.file_name }}</p>
                     <div class="card-text">{{ chat_log.content|markdown }}</div>
                     {% if chat_log.file_name|split_ext == "jpg" %}
                         <img src="{{ chat_log.file_url }}" class="img-fluid" alt="Responsive image">
@@ -37,7 +37,7 @@
         {% endfor %}
         <div id="streaming-card" class="card mb-3" style="display: none;">
             <div class="card-body">
-                <h6 class="card-title">（ストリーミング中...）</h6>
+                <div class="card-title text-muted" style="font-size: 0.8rem; font-weight: bold;">（ストリーミング中...）</div>
                 <p id="output" class="card-text"></p>
             </div>
         </div>
