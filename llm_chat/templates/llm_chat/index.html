@@ -1,6 +1,7 @@
 {% extends 'llm_chat/base.html' %}
 {% load static %}
 {% load split_ext %}
+{% load markdown_extras %}
 
 {% block content %}
     <div class="custom-section bg-light p-5 rounded">
@@ -18,7 +19,7 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ chat_log.role }}</h5>
                     <h6 class="card-subtitle mb-2 text-muted"> file: {{ chat_log.file_name }}</h6>
-                    <p class="card-text">{{ chat_log.content }}</p>
+                    <div class="card-text">{{ chat_log.content|markdown }}</div>
                     {% if chat_log.file_name|split_ext == "jpg" %}
                         <img src="{{ chat_log.file_url }}" class="img-fluid" alt="Responsive image">
                     {% elif chat_log.file_name|split_ext == "mp3" %}
