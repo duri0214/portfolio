@@ -56,17 +56,12 @@
             </div>
             <div class="d-flex justify-content-end mt-3 gap-2">
                 {% if user.is_authenticated %}
-                    {% if is_superuser %}
-                        {% if is_riddle_active %}
+                    {% if is_riddle_active %}
                             <input id="riddleButton" class="btn btn-warning" type="button" value="なぞなぞをリセット">
                         {% else %}
                             <input id="riddleButton" class="btn btn-success" type="button" value="なぞなぞをスタート">
                         {% endif %}
                         <input id="sendButton" class="btn btn-primary" type="button" value="送信">
-                    {% else %}
-                        <input id="riddleButton" class="btn btn-outline-secondary" type="button" value="なぞなぞをスタート" disabled>
-                        <input id="sendButton" class="btn btn-outline-secondary" type="button" value="送信" disabled>
-                    {% endif %}
                 {% else %}
                     <input id="riddleButton" class="btn btn-outline-secondary" type="button" value="なぞなぞをスタート" disabled>
                     <input id="sendButton" class="btn btn-outline-secondary" type="button" value="送信" disabled>
