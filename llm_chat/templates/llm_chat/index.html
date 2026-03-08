@@ -1,6 +1,7 @@
 {% extends 'llm_chat/base.html' %}
 {% load static %}
 {% load split_ext %}
+{% load markdown_extras %}
 
 {% block content %}
     <div class="custom-section bg-light p-5 rounded">
@@ -9,6 +10,7 @@
         <hr class="my-4">
         <p>You can talk with Gemini, ChatGPT, Dall-e-3, TextToSpeech, SpeechToText, RAG and Riddle</p>
     </div>
+    <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;"></div>
     <div class="container">
         <div class="d-flex justify-content-end mb-3">
             <button id="clearChatLogsBtn" class="btn btn-danger">ChatLogs テーブルをクリアー</button>
@@ -16,9 +18,9 @@
         {% for chat_log in chat_history %}
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">{{ chat_log.role }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted"> file: {{ chat_log.file_name }}</h6>
-                    <p class="card-text">{{ chat_log.content }}</p>
+                    <div class="card-title text-muted" style="font-size: 0.8rem; font-weight: bold;">{{ chat_log.role }}</div>
+                    <p class="card-subtitle mb-2 text-muted" style="font-size: 0.7rem;"> file: {{ chat_log.file_name }}</p>
+                    <div class="card-text">{{ chat_log.content|markdown }}</div>
                     {% if chat_log.file_name|split_ext == "jpg" %}
                         <img src="{{ chat_log.file_url }}" class="img-fluid" alt="Responsive image">
                     {% elif chat_log.file_name|split_ext == "mp3" %}
@@ -36,7 +38,7 @@
         {% endfor %}
         <div id="streaming-card" class="card mb-3" style="display: none;">
             <div class="card-body">
-                <h5 class="card-title">（ストリーミング中...）</h5>
+                <div class="card-title text-muted" style="font-size: 0.8rem; font-weight: bold;">（ストリーミング中...）</div>
                 <p id="output" class="card-text"></p>
             </div>
         </div>
@@ -129,30 +131,84 @@
             }
 
             // ChatLogs全削除ボタン
+            async function deleteChatLogs() {
+                const response = await fetch("/llm_chat/clear_chat_logs/", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": Cookies.get("csrftoken"),
+                    },
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            }
+
+            function handleDeletionResult(data, options) {
+                if (data.status === "success") {
+                    if (options.showAlert) {
+                        showToast(`削除しました。件数: ${data.deleted}`, "success");
+                    }
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    if (options.showAlert) {
+                        showToast("削除に失敗しました: " + (data.detail || "unknown"), "danger");
+                    }
+                }
+            }
+
+            function showToast(message, type = "info") {
+                const toastContainer = document.getElementById("toast-container");
+                const toastId = "toast-" + Date.now();
+                const iconMap = {
+                    success: "fa-check-circle",
+                    danger: "fa-exclamation-circle",
+                    warning: "fa-exclamation-triangle",
+                    info: "fa-info-circle"
+                };
+                const icon = iconMap[type] || iconMap.info;
+
+                const toastHtml = `
+                    <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas ${icon} me-2"></i>
+                                ${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                toastContainer.insertAdjacentHTML("beforeend", toastHtml);
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+                toast.show();
+
+                toastElement.addEventListener("hidden.bs.toast", function () {
+                    toastElement.remove();
+                });
+            }
+
+            function clearChatLogs(options = { showConfirm: true, showAlert: true }) {
+                if (options.showConfirm && !confirm("本当にChatLogsテーブルを全削除しますか？この操作は元に戻せません。")) {
+                    return;
+                }
+                deleteChatLogs()
+                    .then((data) => handleDeletionResult(data, options))
+                    .catch((err) => {
+                        console.error(err);
+                        if (options.showAlert) {
+                            showToast("通信エラーが発生しました", "danger");
+                        }
+                    });
+            }
+
             if (clearBtn) {
                 clearBtn.addEventListener("click", function () {
-                    if (!confirm("本当にChatLogsテーブルを全削除しますか？この操作は元に戻せません。")) {
-                        return;
-                    }
-                    fetch("/llm_chat/clear_chat_logs/", {
-                        method: "POST",
-                        headers: {
-                            "X-CSRFToken": Cookies.get("csrftoken"),
-                        },
-                    })
-                        .then((response) => response.json())
-                        .then((data) => {
-                            if (data.status === "success") {
-                                alert(`削除しました。件数: ${data.deleted}`);
-                                location.reload();
-                            } else {
-                                alert("削除に失敗しました: " + (data.detail || "unknown"));
-                            }
-                        })
-                        .catch((err) => {
-                            console.error(err);
-                            alert("通信エラーが発生しました");
-                        });
+                    clearChatLogs();
                 });
             }
 
@@ -168,10 +224,8 @@
                 riddleButton.addEventListener("click", function () {
                     const isRiddleActive = "{{ is_riddle_active|yesno:'true,false' }}" === "true";
                     if (isRiddleActive) {
-                        if (confirm("なぞなぞを中断してリセットしますか？")) {
-                            // チャットログをクリアしてリロード
-                            clearBtn.click();
-                        }
+                        // なぞなぞ中断時は「ChatLogs テーブルをクリアー」ボタンのクリックを模倣する (KISS原則)
+                        clearBtn.click();
                         return;
                     }
                     const userMessage = userInput.value.trim() || "なぞなぞを始めてください。";
