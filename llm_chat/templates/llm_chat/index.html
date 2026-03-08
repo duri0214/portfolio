@@ -130,29 +130,38 @@
             }
 
             // ChatLogs全削除ボタン
-            function clearChatLogs(options = { showConfirm: true, showAlert: true }) {
-                if (options.showConfirm && !confirm("本当にChatLogsテーブルを全削除しますか？この操作は元に戻せません。")) {
-                    return;
-                }
-                fetch("/llm_chat/clear_chat_logs/", {
+            async function deleteChatLogs() {
+                const response = await fetch("/llm_chat/clear_chat_logs/", {
                     method: "POST",
                     headers: {
                         "X-CSRFToken": Cookies.get("csrftoken"),
                     },
-                })
-                    .then((response) => response.json())
-                    .then((data) => {
-                        if (data.status === "success") {
-                            if (options.showAlert) {
-                                alert(`削除しました。件数: ${data.deleted}`);
-                            }
-                            location.reload();
-                        } else {
-                            if (options.showAlert) {
-                                alert("削除に失敗しました: " + (data.detail || "unknown"));
-                            }
-                        }
-                    })
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            }
+
+            function handleDeletionResult(data, options) {
+                if (data.status === "success") {
+                    if (options.showAlert) {
+                        alert(`削除しました。件数: ${data.deleted}`);
+                    }
+                    location.reload();
+                } else {
+                    if (options.showAlert) {
+                        alert("削除に失敗しました: " + (data.detail || "unknown"));
+                    }
+                }
+            }
+
+            function clearChatLogs(options = { showConfirm: true, showAlert: true }) {
+                if (options.showConfirm && !confirm("本当にChatLogsテーブルを全削除しますか？この操作は元に戻せません。")) {
+                    return;
+                }
+                deleteChatLogs()
+                    .then((data) => handleDeletionResult(data, options))
                     .catch((err) => {
                         console.error(err);
                         if (options.showAlert) {
