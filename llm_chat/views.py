@@ -14,6 +14,7 @@ from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.usecase.chat import (
     UseCase,
     LlmChatUseCase,
+    RiddleUseCase,
     OpenAIGptStreamingUseCase,
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
@@ -35,12 +36,34 @@ class IndexView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        chat_history = ChatLogRepository.find_visible_chat_history(
-            user=User.objects.get(pk=1)  # TODO: request.user.id
+        login_user = (
+            self.request.user
+            if self.request.user.is_authenticated
+            else User.objects.get(pk=1)
         )
+        chat_history = ChatLogRepository.find_visible_chat_history(user=login_user)
+
         # JSON フォーマットデータをテンプレートに渡す
         context["chat_history"] = [log.to_display() for log in chat_history]
         context["is_superuser"] = self.request.user.is_superuser
+
+        # なぞなぞモードが進行中かどうかを判定
+        # 履歴が存在し、かつ最後のメッセージが終了メッセージを含んでいない場合に「なぞなぞ中」とみなす
+        is_riddle_active = False
+        if chat_history:
+            # 最新の履歴を取得
+            last_message = chat_history[-1]
+            # なぞなぞが開始されている（システムプロンプトの痕跡があるか、誰かがなぞなぞと言ったか、など）
+            # ここではシンプルに、最後のメッセージに終了の定型文が含まれていないことを確認
+            # かつ、履歴の中に「なぞなぞ」を開始した形跡がある場合
+            has_started = any("なぞなぞ" in (log.content or "") for log in chat_history)
+            has_ended = any(
+                "本日はなぞなぞにご参加いただき" in (log.content or "")
+                for log in chat_history
+            )
+            is_riddle_active = has_started and not has_ended
+
+        context["is_riddle_active"] = is_riddle_active
 
         return context
 
@@ -84,6 +107,14 @@ class SyncResponseView(View):
                 use_case = OpenAISpeechToTextUseCase(audio_file=audio_file)
             elif use_case_type == "OpenAIRag":
                 use_case = OpenAIRagUseCase()
+            elif use_case_type == "Riddle":
+                # RiddleはデフォルトでOpenAIを使用（必要に応じてGeminiに変更可）
+                config = OpenAIGptConfig(
+                    api_key=os.getenv("OPENAI_API_KEY"),
+                    max_tokens=4000,
+                    model="gpt-5-mini",
+                )
+                use_case = RiddleUseCase(config)
 
             if not use_case:
                 return JsonResponse(
