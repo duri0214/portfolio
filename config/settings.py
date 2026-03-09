@@ -99,19 +99,28 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get("DJANGO_DB_NAME", "portfolio_db"),
-        "USER": os.environ.get("DJANGO_DB_USER", "python"),
-        "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD"),
-        "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
-        "PORT": os.environ.get("DJANGO_DB_PORT", "3306"),
-        "TEST": {
-            "NAME": "test_portfolio_db",
-        },
+if IS_TESTING:
+    # テスト実行時は SQLite を使用して、実テーブルへの書き込みを防止する
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.environ.get("DJANGO_DB_NAME", "portfolio_db"),
+            "USER": os.environ.get("DJANGO_DB_USER", "python"),
+            "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD"),
+            "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
+            "PORT": os.environ.get("DJANGO_DB_PORT", "3306"),
+            "TEST": {
+                "NAME": "test_portfolio_db",
+            },
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
