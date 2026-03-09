@@ -117,7 +117,7 @@ def get_chat_history(
 
     :param user_message: 現在処理対象のユーザーからの入力メッセージ (MessageDTO)
     :param is_riddle: なぞなぞモードかどうか
-    :param gender: なぞなぞモード用初期プロンプト生成のためのユーザーの性別（オプション）
+    :param gender: なぞなぞモード用初期プロンプト生成のためのユーザーの性別（is_riddle=True の場合のみ使用）
     :raises Exception: メッセージが `content is None` の場合に例外をスロー
     :return: 過去の履歴や最新のユーザーメッセージを含むチャット履歴 (list[MessageDTO])
     """
@@ -190,11 +190,19 @@ class ChatService(BaseChatService):
         is_riddle: bool = False,
         gender: Gender | None = None,
     ) -> MessageDTO:
+        """
+        ユーザーメッセージを基に回答を生成します。
+
+        なぞなぞモードの場合は is_riddle=True と適切な gender を指定します。
+        通常チャットの場合は is_riddle=False（デフォルト）を指定します。
+        """
         # なぞなぞモードはis_riddleがTrueの場合に初期プロンプトを入れる
-        self.chat_history = get_chat_history(user_message, is_riddle, gender)
+        self.chat_history = get_chat_history(
+            user_message, is_riddle=is_riddle, gender=gender
+        )
 
         chat_result = LlmCompletionService(self.config).retrieve_answer(
-            [x.to_message() for x in self.chat_history]
+            [chat_log.to_message() for chat_log in self.chat_history]
         )
 
         return self._create_assistant_message(
