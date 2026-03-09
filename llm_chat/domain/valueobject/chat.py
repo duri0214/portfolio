@@ -6,10 +6,6 @@ from django.contrib.auth.models import User
 from pydantic import BaseModel, Field
 
 from lib.llm.valueobject.completion import RoleType, Message, ChatResult
-import typing
-
-if typing.TYPE_CHECKING:
-    from llm_chat.models import ChatLogs
 
 
 @dataclass
@@ -39,7 +35,7 @@ class MessageDTO:
         """
         return Message(role=self.role, content=self.content)
 
-    def to_entity(self) -> "ChatLogs":
+    def to_entity(self):
         """
         このDTOをデータベース格納用のChatLogsエンティティに変換します。
         """
