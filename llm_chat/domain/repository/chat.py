@@ -1,38 +1,23 @@
 from django.contrib.auth.models import User
 
-from lib.llm.valueobject.completion import RoleType
 from llm_chat.domain.valueobject.chat import MessageDTO
 from llm_chat.models import ChatLogs
 
 
 class ChatLogRepository:
     @staticmethod
-    def find_chat_history(user: User) -> list[MessageDTO]:
+    def _find_all_by_user(user: User) -> list[MessageDTO]:
         chat_logs = ChatLogs.objects.filter(user=user).order_by("created_at")
-        return [
-            MessageDTO(
-                user=log.user,
-                role=RoleType(log.role),
-                content=log.content,
-                file_path=log.file.url if log.file else None,
-                file_name=log.file.name if log.file else None,
-            )
-            for log in chat_logs
-        ]
+        return [log.to_message_dto() for log in chat_logs]
 
-    @staticmethod
-    def find_visible_chat_history(user: User) -> list[MessageDTO]:
-        chat_logs = ChatLogs.objects.filter(user=user).order_by("created_at")
-        return [
-            MessageDTO(
-                user=log.user,
-                role=RoleType(log.role),
-                content=log.content,
-                file_path=log.file.url if log.file else None,
-                file_name=log.file.name if log.file else None,
-            )
-            for log in chat_logs
-        ]
+    @classmethod
+    def find_chat_history(cls, user: User) -> list[MessageDTO]:
+        return cls._find_all_by_user(user)
+
+    @classmethod
+    def find_visible_chat_history(cls, user: User) -> list[MessageDTO]:
+        # 将来的に非表示フラグなどが導入されたらここでフィルタリングする
+        return cls._find_all_by_user(user)
 
     @staticmethod
     def insert(message: MessageDTO):
