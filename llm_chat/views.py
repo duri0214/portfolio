@@ -44,7 +44,7 @@ class IndexView(FormView):
             if self.request.user.is_authenticated
             else User.objects.get(pk=1)
         )
-        chat_history = ChatLogRepository.find_visible_chat_history(user=login_user)
+        chat_history = ChatLogRepository.find_chat_history(user=login_user)
 
         # JSON フォーマットデータをテンプレートに渡す
         context["chat_history"] = [log.to_display() for log in chat_history]

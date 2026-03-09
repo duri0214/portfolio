@@ -14,11 +14,6 @@ class ChatLogRepository:
     def find_chat_history(cls, user: User) -> list[MessageDTO]:
         return cls._find_all_by_user(user)
 
-    @classmethod
-    def find_visible_chat_history(cls, user: User) -> list[MessageDTO]:
-        # 将来的に非表示フラグなどが導入されたらここでフィルタリングする
-        return cls._find_all_by_user(user)
-
     @staticmethod
     def insert(message: MessageDTO):
         message.to_entity().save()
