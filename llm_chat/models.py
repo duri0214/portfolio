@@ -1,8 +1,11 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from typing import TYPE_CHECKING
 from lib.llm.valueobject.completion import RoleType
-from llm_chat.domain.valueobject.chat import MessageDTO
+
+if TYPE_CHECKING:
+    from llm_chat.domain.valueobject.chat import MessageDTO
 
 
 class ChatLogs(models.Model):
@@ -37,10 +40,11 @@ class ChatLogs(models.Model):
     file = models.FileField(upload_to="llm_chat/audios/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def to_message_dto(self):
+    def to_message_dto(self) -> "MessageDTO":
         """
         このエンティティを MessageDTO に変換します。
         """
+        from llm_chat.domain.valueobject.chat import MessageDTO
 
         return MessageDTO(
             user=self.user,
