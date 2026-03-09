@@ -100,12 +100,17 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 if IS_TESTING:
-    # テスト実行時は SQLite を使用して、実テーブルへの書き込みを防止する
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
         }
+    }
+    # Django ではテスト時にマイグレーションをスキップする仕組みはないため、
+    # MIGRATION_MODULES を使用して、テスト時のみ bank アプリのマイグレーションを無効化（None を指定）します
+    # これにより、SQLite で実行不可能な RunSQL を含む bank アプリのマイグレーションを回避します
+    MIGRATION_MODULES = {
+        "bank": None,
     }
 else:
     DATABASES = {
@@ -227,3 +232,4 @@ MESSAGE_TAGS = {
     messages.WARNING: "warning",
     messages.ERROR: "danger",
 }
+

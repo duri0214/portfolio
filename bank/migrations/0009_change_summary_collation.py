@@ -3,20 +3,6 @@
 from django.db import migrations
 
 
-def change_summary_collation(apps, schema_editor):
-    if schema_editor.connection.vendor == "mysql":
-        schema_editor.execute(
-            "ALTER TABLE bank_depositsummarymaster MODIFY summary VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL;"
-        )
-
-
-def reverse_change_summary_collation(apps, schema_editor):
-    if schema_editor.connection.vendor == "mysql":
-        schema_editor.execute(
-            "ALTER TABLE bank_depositsummarymaster MODIFY summary VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL;"
-        )
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -24,7 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(
-            change_summary_collation, reverse_code=reverse_change_summary_collation
+        migrations.RunSQL(
+            sql="ALTER TABLE bank_depositsummarymaster MODIFY summary VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL;",
+            reverse_sql="ALTER TABLE bank_depositsummarymaster MODIFY summary VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL;",
         ),
     ]
