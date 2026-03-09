@@ -6,13 +6,9 @@ from llm_chat.models import ChatLogs
 
 class ChatLogRepository:
     @staticmethod
-    def _find_all_by_user(user: User) -> list[MessageDTO]:
+    def find_chat_history(user: User) -> list[MessageDTO]:
         chat_logs = ChatLogs.objects.filter(user=user).order_by("created_at")
         return [log.to_message_dto() for log in chat_logs]
-
-    @classmethod
-    def find_chat_history(cls, user: User) -> list[MessageDTO]:
-        return cls._find_all_by_user(user)
 
     @staticmethod
     def insert(message: MessageDTO):
