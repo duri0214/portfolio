@@ -1,11 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from typing import TYPE_CHECKING
 from lib.llm.valueobject.completion import RoleType
-
-if TYPE_CHECKING:
-    from llm_chat.domain.valueobject.chat import MessageDTO
 
 
 class ChatLogs(models.Model):
