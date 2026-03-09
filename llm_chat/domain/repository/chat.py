@@ -8,7 +8,7 @@ class ChatLogRepository:
     @staticmethod
     def find_chat_history(user: User) -> list[MessageDTO]:
         chat_logs = ChatLogs.objects.filter(user=user).order_by("created_at")
-        return [log.to_message_dto() for log in chat_logs]
+        return [chat_log.to_message_dto() for chat_log in chat_logs]
 
     @staticmethod
     def insert(message: MessageDTO):
