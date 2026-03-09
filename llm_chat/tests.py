@@ -110,6 +110,36 @@ class ChatLogicTest(TestCase):
             self.assertIn("評価結果", result.content)
             self.assertTrue(result.is_riddle)
 
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_llm_chat_use_case_normal(self, mock_retrieve):
+        mock_retrieve.return_value = MagicMock(answer="AIの回答です")
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = LlmChatUseCase(config)
+        result = use_case.execute(self.user, "こんにちは")
+
+        self.assertEqual(result.content, "AIの回答です")
+        self.assertEqual(result.model_name, ModelName.GPT_5_MINI)
+        self.assertFalse(result.is_riddle)
+        self.assertEqual(
+            ChatLogs.objects.filter(user=self.user).count(), 2
+        )  # User + Assistant
+
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_riddle_use_case_normal(self, mock_retrieve):
+        mock_retrieve.return_value = MagicMock(answer="それは人間ですか？")
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+        result = use_case.execute(self.user, "スタート")
+
+        self.assertEqual(result.content, "それは人間ですか？")
+        self.assertTrue(result.is_riddle)
+        # 初回なぞなぞ：System(非保存), User, Assistant の計2通がDBへ
+        self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
+
 
 class ViewLogicTest(TestCase):
     def setUp(self):
