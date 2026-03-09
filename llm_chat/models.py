@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from lib.llm.valueobject.completion import RoleType
+from llm_chat.domain.valueobject.chat import MessageDTO
 
 
 class ChatLogs(models.Model):
@@ -40,8 +41,6 @@ class ChatLogs(models.Model):
         """
         このエンティティを MessageDTO に変換します。
         """
-        from lib.llm.valueobject.completion import RoleType
-        from llm_chat.domain.valueobject.chat import MessageDTO
 
         return MessageDTO(
             user=self.user,
