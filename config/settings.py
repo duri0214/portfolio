@@ -99,30 +99,16 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-if IS_TESTING:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.environ.get("DJANGO_DB_NAME", "portfolio_db"),
+        "USER": os.environ.get("DJANGO_DB_USER", "python"),
+        "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD"),
+        "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
+        "PORT": os.environ.get("DJANGO_DB_PORT", "3306"),
     }
-    # Django ではテスト時にマイグレーションをスキップする仕組みはないため、
-    # MIGRATION_MODULES を使用して、テスト時のみ bank アプリのマイグレーションを無効化（None を指定）します
-    # これにより、SQLite で実行不可能な RunSQL を含む bank アプリのマイグレーションを回避します
-    MIGRATION_MODULES = {
-        "bank": None,
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": os.environ.get("DJANGO_DB_NAME", "portfolio_db"),
-            "USER": os.environ.get("DJANGO_DB_USER", "python"),
-            "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD"),
-            "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
-            "PORT": os.environ.get("DJANGO_DB_PORT", "3306"),
-        }
-    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -232,4 +218,3 @@ MESSAGE_TAGS = {
     messages.WARNING: "warning",
     messages.ERROR: "danger",
 }
-
