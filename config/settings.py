@@ -116,9 +116,6 @@ else:
             "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD"),
             "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
             "PORT": os.environ.get("DJANGO_DB_PORT", "3306"),
-            "TEST": {
-                "NAME": "test_portfolio_db",
-            },
         }
     }
 
