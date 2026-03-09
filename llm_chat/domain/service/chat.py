@@ -125,19 +125,18 @@ def get_chat_history(
     if user_message.content is None:
         raise Exception("content is None")
 
+    if is_riddle and gender is None:
+        gender = Gender(GenderType.MAN)  # デフォルト
+
     # DBから履歴を取得（roleがstrで返ってくることを想定してRoleTypeで変換）
     chat_history = ChatLogRepository.find_chat_history(user_message.user)
 
     if not chat_history and is_riddle:
-        if gender is None:
-            gender = Gender(GenderType.MAN)  # デフォルト
         # 初回：システムメッセージ（非保存）と初回ユーザーメッセージ（保存）を生成
         chat_history = create_initial_prompt(user_message=user_message, gender=gender)
     else:
         # 2回目以降：既存の履歴にシステムメッセージが含まれていない場合は動的に追加
         if is_riddle:
-            if gender is None:
-                gender = Gender(GenderType.MAN)  # デフォルト
             has_system = any(m.role == RoleType.SYSTEM for m in chat_history)
             if not has_system:
                 system_message = MessageDTO(
