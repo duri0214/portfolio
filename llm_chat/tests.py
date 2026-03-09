@@ -7,7 +7,6 @@ from llm_chat.domain.valueobject.chat import MessageDTO, Gender, GenderType
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.chat import (
     get_chat_history,
-    ChatService,
     RIDDLE_END_MESSAGE,
 )
 from llm_chat.domain.usecase.chat import LlmChatUseCase, RiddleUseCase
@@ -19,6 +18,12 @@ class ChatModelAndRepositoryTest(TestCase):
         self.user = User.objects.create_user(username="testuser")
 
     def test_chat_logs_to_message_dto(self):
+        """
+        [シナリオ]
+        1. ChatLogs エンティティを作成 (role='user', content='Hello', is_riddle=False)
+        2. to_message_dto() を呼び出して MessageDTO に変換
+        3. 期待値: 各フィールドが正しくマッピングされ、is_riddle が False であること
+        """
         log = ChatLogs.objects.create(
             user=self.user,
             role=RoleType.USER.value,
@@ -32,6 +37,13 @@ class ChatModelAndRepositoryTest(TestCase):
         self.assertFalse(dto.is_riddle)
 
     def test_repository_insert_and_find(self):
+        """
+        [シナリオ]
+        1. ユーザーメッセージを模した MessageDTO を作成 (role='assistant', is_riddle=True)
+        2. ChatLogRepository.insert() を使用して DB に保存
+        3. find_chat_history() でそのユーザーの履歴を取得
+        4. 期待値: 取得した履歴が1件であり、内容と is_riddle フラグが一致すること
+        """
         dto = MessageDTO(
             user=self.user,
             role=RoleType.ASSISTANT,
@@ -52,6 +64,12 @@ class ChatLogicTest(TestCase):
         self.user = User.objects.create_user(username="logicuser")
 
     def test_get_chat_history_normal(self):
+        """
+        [シナリオ: 通常チャット]
+        1. 過去の履歴がない状態で、ユーザーメッセージ (is_riddle=False) を受け取る
+        2. get_chat_history() を実行
+        3. 期待値: 履歴リストにユーザーメッセージのみが含まれ、is_riddle が False であること
+        """
         user_message = MessageDTO(
             user=self.user,
             role=RoleType.USER,
@@ -66,6 +84,14 @@ class ChatLogicTest(TestCase):
         self.assertFalse(history[0].is_riddle)
 
     def test_get_chat_history_riddle_first(self):
+        """
+        [シナリオ: なぞなぞ初回開始]
+        1. 過去の履歴がない状態で、ユーザーメッセージ (is_riddle=True) を受け取る
+        2. get_chat_history(is_riddle=True) を実行
+        3. 期待値:
+           - 内部的にシステムメッセージが生成され、履歴リストの先頭に追加されること (計2通)
+           - ユーザーメッセージのみが DB に保存されること
+        """
         user_message = MessageDTO(
             user=self.user,
             role=RoleType.USER,
@@ -89,6 +115,15 @@ class ChatLogicTest(TestCase):
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_end_detection(self, mock_retrieve):
+        """
+        [シナリオ: なぞなぞ終了判定]
+        1. LLM の回答に終了キーワード (RIDDLE_END_MESSAGE) が含まれるケースを模倣
+        2. RiddleUseCase.execute() を実行
+        3. 期待値:
+           - 回答内容に終了メッセージが含まれていること
+           - 回答後の評価結果が含まれていること
+           - メッセージの is_riddle フラグが True であること
+        """
         # 終了メッセージを含む回答を模倣
         mock_retrieve.return_value = MagicMock(
             answer=f"正解です！ {RIDDLE_END_MESSAGE}"
@@ -112,6 +147,15 @@ class ChatLogicTest(TestCase):
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_llm_chat_use_case_normal(self, mock_retrieve):
+        """
+        [シナリオ: 通常チャットユースケース]
+        1. LlmChatUseCase を使用してユーザーメッセージを送信
+        2. 期待値:
+           - LLM の回答内容が正しく取得されること
+           - 使用モデル名が設定値と一致すること
+           - is_riddle フラグが False であること
+           - ユーザーとアシスタントの計2通が DB に保存されること
+        """
         mock_retrieve.return_value = MagicMock(answer="AIの回答です")
         config = OpenAIGptConfig(
             api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
@@ -128,6 +172,13 @@ class ChatLogicTest(TestCase):
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_normal(self, mock_retrieve):
+        """
+        [シナリオ: なぞなぞユースケース]
+        1. RiddleUseCase を使用してなぞなぞを開始
+        2. 期待値:
+           - 回答内容が取得され、is_riddle フラグが True であること
+           - ユーザーとアシスタントの計2通が DB に保存されること (システムメッセージは保存されない)
+        """
         mock_retrieve.return_value = MagicMock(answer="それは人間ですか？")
         config = OpenAIGptConfig(
             api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
@@ -148,6 +199,12 @@ class ViewLogicTest(TestCase):
         )
 
     def test_index_view_riddle_active_status(self):
+        """
+        [シナリオ: Viewにおけるなぞなぞ活性状態判定]
+        1. 履歴がない場合: is_riddle_active が False であることを確認
+        2. 最新履歴がなぞなぞメッセージ (終了なし) の場合: is_riddle_active が True になることを確認
+        3. 最新履歴になぞなぞ終了メッセージが含まれる場合: is_riddle_active が False に戻ることを確認
+        """
         from django.test import RequestFactory
         from llm_chat.views import IndexView
 
