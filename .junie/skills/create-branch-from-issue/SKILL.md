@@ -1,7 +1,7 @@
-# Create Branch From Issue Skill
-
-## 概要
-GitHub Issueの内容を確認し、特定の命名規則に従って `master` ブランチから新しい作業ブランチを作成します。
+---
+name: create-branch-from-issue
+description: GitHub Issueの内容を確認し、特定の命名規則に従って master ブランチから新しい作業ブランチを作成します。
+---
 
 ## 実行ステップ (日本語で対話してください)
 

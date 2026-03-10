@@ -1,8 +1,7 @@
-# Qiita Review Skill
-
-## 概要
-`docs/qiita/centos_to_ubuntu_setup.md`（CentOSからUbuntuへの移行手順）が、最新の本番環境のベストプラクティスに基づいているかをレビューするための基準を定義します。
-Junie はサーバーを直接操作できませんが、ドキュメント内のコマンドや設定値が正しいかをチェックし、ユーザーに提案することで、本番環境での PermissionError や表示トラブルを未然に防ぎます。
+---
+name: qiita-review
+description: docs/qiita/centos_to_ubuntu_setup.md（CentOSからUbuntuへの移行手順）が、最新の本番環境のベストプラクティスに基づいているかをレビューします。
+---
 
 ## レビューの観点 (チェックリスト)
 
