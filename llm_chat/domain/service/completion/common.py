@@ -14,7 +14,7 @@ from lib.llm.valueobject.config import (
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.message import MessageDTO
-from llm_chat.domain.valueobject.completion.gender import Gender
+from llm_chat.domain.valueobject.completion.riddle import Gender
 
 
 def get_chat_history(
@@ -43,7 +43,7 @@ def get_chat_history(
     :return: 過去の履歴や最新のユーザーメッセージを含むチャット履歴 (list[MessageDTO])
     """
     from llm_chat.domain.service.completion.riddle import create_initial_prompt, get_prompt
-    from llm_chat.domain.valueobject.completion.gender import GenderType
+    from llm_chat.domain.valueobject.completion.riddle import GenderType
 
     if user_message.content is None:
         raise Exception("content is None")

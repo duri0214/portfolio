@@ -7,8 +7,8 @@ from lib.llm.valueobject.completion import RoleType, Message
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.valueobject.completion.message import MessageDTO
-from llm_chat.domain.valueobject.completion.gender import Gender
 from llm_chat.domain.valueobject.completion.riddle import (
+    Gender,
     RiddleResponse,
     RiddleEvaluation,
 )

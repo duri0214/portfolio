@@ -1,6 +1,23 @@
+from dataclasses import dataclass
+from enum import Enum
+
 from pydantic import BaseModel, Field
 
 from lib.llm.valueobject.completion import ChatResult
+
+
+class GenderType(Enum):
+    MAN = "man"
+    WOMAN = "woman"
+
+
+@dataclass
+class Gender:
+    gender: GenderType
+
+    @property
+    def name(self) -> str:
+        return "男性" if self.gender == GenderType.MAN else "女性"
 
 
 class RiddleEvaluation(BaseModel):
