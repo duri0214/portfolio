@@ -11,10 +11,8 @@ from dotenv import load_dotenv
 
 from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.service.chat import (
-    RIDDLE_END_MESSAGE,
-)
-from llm_chat.domain.usecase.chat import (
+from llm_chat.domain.service import RIDDLE_END_MESSAGE
+from llm_chat.domain.usecase import (
     UseCase,
     LlmChatUseCase,
     RiddleUseCase,
