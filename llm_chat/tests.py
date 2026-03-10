@@ -1,8 +1,12 @@
-from django.test import TestCase
+import time
+from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 from llm_chat.models import ChatLogs
+from llm_chat.views import IndexView
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
@@ -283,7 +287,6 @@ class OpenAiUseCaseTest(TestCase):
         )
 
         # ダミーのアップロードファイルを作成
-        from django.core.files.uploadedfile import SimpleUploadedFile
 
         audio_file = SimpleUploadedFile(
             "test.mp3", b"dummy content", content_type="audio/mpeg"
@@ -320,8 +323,6 @@ class ViewLogicTest(TestCase):
         2. 最新履歴がなぞなぞメッセージ (終了なし) の場合: is_riddle_active が True になることを確認
         3. 最新履歴になぞなぞ終了メッセージが含まれる場合: is_riddle_active が False に戻ることを確認
         """
-        from django.test import RequestFactory
-        from llm_chat.views import IndexView
 
         factory = RequestFactory()
         request = factory.get("/")
@@ -362,8 +363,6 @@ class ViewLogicTest(TestCase):
         4. 直近の履歴が なぞなぞ (進行中) の場合: Riddle が返ることを確認
         5. 直近の履歴が なぞなぞ (終了) の場合: 直近の model_name に基づく値が返ることを確認
         """
-        from django.test import RequestFactory
-        from llm_chat.views import IndexView
 
         factory = RequestFactory()
         request = factory.get("/")
@@ -377,8 +376,6 @@ class ViewLogicTest(TestCase):
         self.assertEqual(initial.get("model_mode"), "OpenAIGpt")
 
         # 2. 直近が Gemini
-        from django.utils import timezone
-        import time
 
         ChatLogs.objects.create(
             user=self.user,
