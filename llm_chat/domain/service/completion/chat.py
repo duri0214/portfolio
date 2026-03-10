@@ -13,7 +13,7 @@ from lib.llm.valueobject.config import (
 )
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
-from llm_chat.domain.valueobject.completion.message import MessageDTO
+from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender
 
 

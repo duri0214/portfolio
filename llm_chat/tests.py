@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.models import ChatLogs
-from llm_chat.domain.valueobject.completion.message import MessageDTO
+from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import get_chat_history

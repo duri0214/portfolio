@@ -11,7 +11,7 @@ from llm_chat.domain.service.completion.multimedia import (
     OpenAISpeechToTextChatService,
 )
 from llm_chat.domain.usecase.completion.base import UseCase
-from llm_chat.domain.valueobject.completion.message import MessageDTO
+from llm_chat.domain.valueobject.completion.chat import MessageDTO
 
 
 class OpenAIDalleUseCase(UseCase):

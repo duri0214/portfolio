@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAiModel, GeminiModel
-from llm_chat.domain.valueobject.completion.message import MessageDTO
+from llm_chat.domain.valueobject.completion.chat import MessageDTO
 
 
 class BaseChatService(ABC):

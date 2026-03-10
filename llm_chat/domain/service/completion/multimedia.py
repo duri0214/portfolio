@@ -14,7 +14,7 @@ from lib.llm.service.completion import (
 )
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.domain.service.completion.base import BaseChatService
-from llm_chat.domain.valueobject.completion.message import MessageDTO
+from llm_chat.domain.valueobject.completion.chat import MessageDTO
 
 
 class OpenAIDalleChatService(BaseChatService):
