@@ -34,12 +34,12 @@ class ChatModelAndRepositoryTest(TestCase):
             user=self.user,
             role=RoleType.USER.value,
             content="Hello",
-            model_name=ModelName.GPT_5_MINI,
+            model_name="OpenAIGpt",
             is_riddle=False,
         )
         dto = log.to_message_dto()
         self.assertEqual(dto.content, "Hello")
-        self.assertEqual(dto.model_name, ModelName.GPT_5_MINI)
+        self.assertEqual(dto.model_name, "OpenAIGpt")
         self.assertFalse(dto.is_riddle)
 
     def test_repository_insert_and_find(self):
@@ -54,7 +54,7 @@ class ChatModelAndRepositoryTest(TestCase):
             user=self.user,
             role=RoleType.ASSISTANT,
             content="AI response",
-            model_name=ModelName.GPT_5_MINI,
+            model_name="OpenAIGpt",
             is_riddle=True,
         )
         ChatLogRepository.insert(dto)
@@ -80,7 +80,7 @@ class ChatLogicTest(TestCase):
             user=self.user,
             role=RoleType.USER,
             content="Normal message",
-            model_name=ModelName.GPT_5_MINI,
+            model_name="OpenAIGpt",
             is_riddle=False,
         )
         history = get_chat_history(user_message, is_riddle=False)
@@ -102,7 +102,7 @@ class ChatLogicTest(TestCase):
             user=self.user,
             role=RoleType.USER,
             content="なぞなぞスタート",
-            model_name=ModelName.GPT_5_MINI,
+            model_name="Riddle",
             is_riddle=True,
         )
         # 初回：システムメッセージ（非保存）と初回ユーザーメッセージ（保存）
@@ -170,7 +170,7 @@ class ChatLogicTest(TestCase):
         result = use_case.execute(self.user, "こんにちは")
 
         self.assertEqual(result.content, "AIの回答です")
-        self.assertEqual(result.model_name, ModelName.GPT_5_MINI)
+        self.assertEqual(result.model_name, "OpenAIGpt")
         self.assertFalse(result.is_riddle)
         self.assertEqual(
             ChatLogs.objects.filter(user=self.user).count(), 2
@@ -233,7 +233,7 @@ class OpenAiUseCaseTest(TestCase):
 
         # 結果の MessageDTO を検証
         self.assertIsNotNone(result.file_path)
-        self.assertEqual(result.model_name, ModelName.DALLE_3)
+        self.assertEqual(result.model_name, "OpenAIDalle")
 
         # DB への保存を検証
         last_log = ChatLogs.objects.filter(
@@ -241,7 +241,7 @@ class OpenAiUseCaseTest(TestCase):
         ).last()
         self.assertIsNotNone(last_log)
         self.assertIsNotNone(last_log.file.name)
-        self.assertEqual(last_log.model_name, ModelName.DALLE_3)
+        self.assertEqual(last_log.model_name, "OpenAIDalle")
 
     @patch("llm_chat.domain.service.chat.OpenAILlmTextToSpeech")
     def test_tts_usecase_saves_file_path(self, mock_tts_service):
@@ -262,7 +262,7 @@ class OpenAiUseCaseTest(TestCase):
 
         # 結果の MessageDTO を検証
         self.assertIsNotNone(result.file_path)
-        self.assertEqual(result.model_name, ModelName.TTS_1)
+        self.assertEqual(result.model_name, "OpenAITextToSpeech")
 
         # DB への保存を検証
         last_log = ChatLogs.objects.filter(
@@ -270,7 +270,7 @@ class OpenAiUseCaseTest(TestCase):
         ).last()
         self.assertIsNotNone(last_log)
         self.assertIsNotNone(last_log.file.name)
-        self.assertEqual(last_log.model_name, ModelName.TTS_1)
+        self.assertEqual(last_log.model_name, "OpenAITextToSpeech")
 
     @patch("llm_chat.domain.service.chat.OpenAILlmSpeechToText")
     @patch("llm_chat.domain.service.chat.Path.exists")
@@ -301,7 +301,7 @@ class OpenAiUseCaseTest(TestCase):
 
         # 結果の MessageDTO を検証
         self.assertEqual(result.file_path, "llm_chat/audios/test.mp3")
-        self.assertEqual(result.model_name, ModelName.WHISPER_1)
+        self.assertEqual(result.model_name, "OpenAISpeechToText")
 
         # DB への保存を検証
         last_log = ChatLogs.objects.filter(
@@ -309,7 +309,7 @@ class OpenAiUseCaseTest(TestCase):
         ).last()
         self.assertIsNotNone(last_log)
         self.assertEqual(last_log.file.name, "llm_chat/audios/test.mp3")
-        self.assertEqual(last_log.model_name, ModelName.WHISPER_1)
+        self.assertEqual(last_log.model_name, "OpenAISpeechToText")
 
 
 class ViewLogicTest(TestCase):
@@ -357,3 +357,135 @@ class ViewLogicTest(TestCase):
         )
         context = view.get_context_data()
         self.assertFalse(context["is_riddle_active"])
+
+    def test_index_view_initial_model_mode(self):
+        """
+        [シナリオ: IndexView の get_initial() による直近モデルの取得]
+        1. 履歴がない場合: デフォルト値が返ることを確認
+        2. 直近の履歴が Gemini の場合: Gemini が返ることを確認
+        3. 直近の履歴が Dall-e の場合: OpenAIDalle が返ることを確認
+        4. 直近の履歴が なぞなぞ (進行中) の場合: Riddle が返ることを確認
+        5. 直近の履歴が なぞなぞ (終了) の場合: 直近の model_name に基づく値が返ることを確認
+        """
+        from django.test import RequestFactory
+        from llm_chat.views import IndexView
+
+        factory = RequestFactory()
+        request = factory.get("/")
+        request.user = self.user
+
+        view = IndexView()
+        view.request = request
+
+        # 1. 履歴なし -> デフォルトで OpenAIGpt
+        initial = view.get_initial()
+        self.assertEqual(initial.get("model_mode"), "OpenAIGpt")
+
+        # 2. 直近が Gemini
+        from django.utils import timezone
+        import time
+
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.USER.value,
+            content="Hello",
+            model_name="Gemini",
+            created_at=timezone.now(),
+        )
+        time.sleep(0.01)
+        initial = view.get_initial()
+        self.assertEqual(initial.get("model_mode"), "Gemini")
+
+        # 3. 直近が Dall-e
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.ASSISTANT.value,
+            content="Image URL",
+            model_name="OpenAIDalle",
+            created_at=timezone.now(),
+        )
+        time.sleep(0.01)
+        initial = view.get_initial()
+        self.assertEqual(initial.get("model_mode"), "OpenAIDalle")
+
+        # 4. なぞなぞ (進行中)
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.ASSISTANT.value,
+            content="なぞなぞです",
+            model_name="OpenAIGpt",
+            is_riddle=True,
+            created_at=timezone.now(),
+        )
+        time.sleep(0.01)
+        initial = view.get_initial()
+        self.assertEqual(initial.get("model_mode"), "Riddle")
+
+        # 5. なぞなぞ (終了) -> 最新ログが Riddle 終了であれば、Riddle 活性は False となり、
+        # 最新ログ (Riddle 終了メッセージ) の model_mode は "Riddle" だが、
+        # get_initial のロジックにより model_name (GPT_5_MINI) に基づき "OpenAIGpt" が選択される
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.ASSISTANT.value,
+            content=f"正解です！ {RIDDLE_END_MESSAGE}",
+            model_name="Riddle",
+            is_riddle=True,
+            created_at=timezone.now(),
+        )
+        initial = view.get_initial()
+        # 最新ログが Riddle 終了であれば、Riddle 活性は False となり、
+        # 直近の model_name が "Riddle" であっても、終了後はデフォルトの "OpenAIGpt" に戻る
+        self.assertEqual(initial.get("model_mode"), "OpenAIGpt")
+
+        # 6. なぞなぞ進行中に別のチャットを挟む -> 判定は「最新のなぞなぞ」を見るため Riddle が維持される
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.ASSISTANT.value,
+            content="なぞなぞ再開",
+            model_name="Riddle",
+            is_riddle=True,
+            created_at=timezone.now(),
+        )
+        time.sleep(0.01)
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.USER.value,
+            content="横槍チャット",
+            model_name="Gemini",
+            is_riddle=False,
+            created_at=timezone.now(),
+        )
+        initial = view.get_initial()
+        self.assertEqual(initial.get("model_mode"), "Riddle")
+
+        # 明示的に、なぞなぞを終了させる
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.ASSISTANT.value,
+            content=f"お疲れ様でした。 {RIDDLE_END_MESSAGE}",
+            model_name="Riddle",
+            is_riddle=True,
+            created_at=timezone.now(),
+        )
+
+        # 7. ストリーミングモードの復元 (model_name にモード名が直接保存される)
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.USER.value,
+            content="Streaming request",
+            model_name="OpenAIGptStreaming",
+            created_at=timezone.now(),
+        )
+        initial = view.get_initial()
+        self.assertEqual(initial.get("model_mode"), "OpenAIGptStreaming")
+
+        # 8. RAGモードの復元
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.USER.value,
+            content="RAG query",
+            model_name="OpenAIRag",
+            created_at=timezone.now(),
+        )
+        initial = view.get_initial()
+        self.assertEqual(initial.get("model_mode"), "OpenAIRag")

@@ -315,11 +315,6 @@
                 audioFileContainer.style.display = "none";
             }
 
-            // なぞなぞが進行中の場合、デフォルトでRiddleを選択
-            if ("{{ is_riddle_active|yesno:'true,false' }}" === "true") {
-                modelMode.value = "Riddle";
-            }
-
             // Server-Sent Events を開始（ストリームデータを受信）
             function startStreaming(outputElement) {
                 console.log("Server-Sent Events の接続を開始しました");

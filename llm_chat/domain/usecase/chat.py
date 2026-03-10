@@ -36,7 +36,7 @@ class UseCase(ABC):
         self,
         user: User,
         content: str,
-        model: str,
+        model_name: str,
         is_riddle: bool = False,
         file_path: str | None = None,
     ) -> MessageDTO:
@@ -44,7 +44,7 @@ class UseCase(ABC):
             user=user,
             role=RoleType.ASSISTANT,
             content=content,
-            model_name=model,
+            model_name=model_name,
             is_riddle=is_riddle,
             file_path=file_path,
         )
@@ -65,11 +65,12 @@ class LlmChatUseCase(UseCase):
 
         chat_service = ChatService(self.config)
 
+        model_name = "Gemini" if isinstance(self.config, GeminiConfig) else "OpenAIGpt"
         user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name=self.config.model,
+            model_name=model_name,
             is_riddle=False,
         )
 
@@ -77,7 +78,7 @@ class LlmChatUseCase(UseCase):
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model=self.config.model,
+            model_name=model_name,
             is_riddle=False,
         )
 
@@ -99,7 +100,7 @@ class RiddleUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name=self.config.model,
+            model_name="Riddle",
             is_riddle=True,
         )
 
@@ -116,7 +117,7 @@ class RiddleUseCase(UseCase):
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model=self.config.model,
+            model_name="Riddle",
             is_riddle=True,
         )
 
@@ -146,7 +147,7 @@ class OpenAIGptStreamingUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name=chat_service.config.model,
+            model_name="OpenAIGptStreaming",
             is_riddle=False,
         )
         return chat_service.generate(user_message)
@@ -173,7 +174,7 @@ class OpenAIGptStreamingUseCase(UseCase):
                 user=user,
                 role=RoleType.ASSISTANT,
                 content=content,
-                model_name=chat_service.config.model,
+                model_name="OpenAIGptStreaming",
                 is_riddle=False,
             )
         )
@@ -208,14 +209,14 @@ class OpenAIDalleUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name=ModelName.DALLE_3,
+            model_name="OpenAIDalle",
             is_riddle=False,
         )
         assistant_message = chat_service.generate(user_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model=ModelName.DALLE_3,
+            model_name="OpenAIDalle",
             is_riddle=False,
             file_path=assistant_message.file_path,
         )
@@ -244,14 +245,14 @@ class OpenAITextToSpeechUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name=ModelName.TTS_1,
+            model_name="OpenAITextToSpeech",
             is_riddle=False,
         )
         assistant_message = chat_service.generate(user_input_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model=ModelName.TTS_1,
+            model_name="OpenAITextToSpeech",
             is_riddle=False,
             file_path=assistant_message.file_path,
         )
@@ -314,7 +315,7 @@ class OpenAISpeechToTextUseCase(UseCase):
             role=RoleType.ASSISTANT,
             content=content,
             file_path=self.file_path,
-            model_name=ModelName.WHISPER_1,
+            model_name="OpenAISpeechToText",
             is_riddle=False,
         )
 
@@ -322,7 +323,7 @@ class OpenAISpeechToTextUseCase(UseCase):
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model=ModelName.WHISPER_1,
+            model_name="OpenAISpeechToText",
             is_riddle=False,
             file_path=assistant_message.file_path,
         )
@@ -352,13 +353,13 @@ class OpenAIRagUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name=ModelName.GPT_5_MINI,
+            model_name="OpenAIRag",
             is_riddle=False,
         )
         assistant_message = chat_service.generate(user_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model=ModelName.GPT_5_MINI,
+            model_name="OpenAIRag",
             is_riddle=False,
         )

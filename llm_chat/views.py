@@ -37,38 +37,81 @@ class IndexView(FormView):
     form_class = UserTextForm
     success_url = reverse_lazy("llm:index")
 
+    def get_initial(self):
+        """
+        フォームの初期値を設定します。
+
+        以下の優先順位で `model_mode` を決定します：
+        1. なぞなぞが進行中の場合（最新のなぞなぞ履歴が未終了）："Riddle"
+        2. 過去のチャット履歴がある場合：最新のメッセージで使用されたモデル/モード
+        3. 履歴がない場合：デフォルトの "OpenAIGpt"
+        """
+        initial = super().get_initial()
+        login_user = self._get_login_user()
+        chat_history = ChatLogRepository.find_chat_history(user=login_user)
+
+        # 1. なぞなぞが進行中の場合は、Riddleモードを優先
+        if self._is_riddle_active(chat_history):
+            initial["model_mode"] = "Riddle"
+            return initial
+
+        last_log = chat_history[-1] if chat_history else None
+
+        if last_log:
+            # 2. 直近の model_name をそのまま初期値として採用
+            # Riddle は _is_riddle_active で判定済みのため、
+            # 終了している場合は Riddle 以外のデフォルトに戻す必要があるが、
+            # 履歴をクリアしない限り "Riddle" が入っている場合は 1 で return されるか、
+            # 終了していればここに来る。終了している場合は OpenAI に戻す。
+            if last_log.model_name == "Riddle":
+                initial["model_mode"] = "OpenAIGpt"
+            else:
+                initial["model_mode"] = last_log.model_name or "OpenAIGpt"
+        else:
+            initial["model_mode"] = "OpenAIGpt"
+
+        return initial
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        login_user = (
-            self.request.user
-            if self.request.user.is_authenticated
-            else User.objects.get(pk=1)
-        )
+        login_user = self._get_login_user()
         chat_history = ChatLogRepository.find_chat_history(user=login_user)
 
         # JSON フォーマットデータをテンプレートに渡す
         context["chat_history"] = [log.to_display() for log in chat_history]
         context["is_superuser"] = self.request.user.is_superuser
-
-        # なぞなぞモードの判定：最新の履歴がなぞなぞ（is_riddle=True）かどうか
-        is_riddle_active = False
-        if chat_history:
-            # 履歴の最後から見て、is_riddle が True のものを探す
-            # 終了メッセージが含まれている場合はアクティブではないとみなす
-            last_riddle_log = None
-            has_ended = False
-            for log in reversed(chat_history):
-                if log.is_riddle:
-                    last_riddle_log = log
-                    if RIDDLE_END_MESSAGE in (log.content or ""):
-                        has_ended = True
-                    break
-
-            is_riddle_active = last_riddle_log is not None and not has_ended
-
-        context["is_riddle_active"] = is_riddle_active
+        context["is_riddle_active"] = self._is_riddle_active(chat_history)
 
         return context
+
+    def _get_login_user(self):
+        """ログインユーザーまたはデフォルトユーザー（pk=1）を取得します。"""
+        return (
+            self.request.user
+            if self.request.user.is_authenticated
+            else User.objects.get(pk=1)
+        )
+
+    @staticmethod
+    def _is_riddle_active(chat_history):
+        """なぞなぞが進行中か判定します（最新の履歴がなぞなぞで未終了か）。"""
+        if not chat_history:
+            return False
+
+        last_riddle_log = None
+        has_ended = False
+        for log in reversed(chat_history):
+            if log.is_riddle:
+                last_riddle_log = log
+                if RIDDLE_END_MESSAGE in (log.content or ""):
+                    has_ended = True
+                break
+            # なぞなぞ以外のログが見つかったら、そこから遡ってなぞなぞを探す
+            # ただし、最新のログがなぞなぞ以外であれば、その時点でなぞなぞは中断されているとみなす
+            # (ただし、現在の仕様では最新のなぞなぞログの状態を見る)
+            pass
+
+        return last_riddle_log is not None and not has_ended
 
 
 class SyncResponseView(View):
