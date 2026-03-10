@@ -40,7 +40,7 @@ class ChatLogs(models.Model):
         """
         このエンティティを MessageDTO に変換します。
         """
-        from llm_chat.domain.valueobject.chat import MessageDTO
+        from llm_chat.domain.valueobject.completion.message import MessageDTO
 
         return MessageDTO(
             user=self.user,

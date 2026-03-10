@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 
 from lib.llm.valueobject.completion import RoleType, StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.valueobject.chat import MessageDTO
+from llm_chat.domain.valueobject.completion.message import MessageDTO
 
 
 class UseCase(ABC):

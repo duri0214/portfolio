@@ -3,16 +3,14 @@ from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.models import ChatLogs
-from llm_chat.domain.valueobject.chat import MessageDTO, Gender, GenderType
+from llm_chat.domain.valueobject.completion.message import MessageDTO
+from llm_chat.domain.valueobject.completion.gender import Gender, GenderType
 from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.service import get_chat_history, RIDDLE_END_MESSAGE
-from llm_chat.domain.usecase import (
-    LlmChatUseCase,
-    RiddleUseCase,
-    OpenAIDalleUseCase,
-    OpenAITextToSpeechUseCase,
-    OpenAISpeechToTextUseCase,
-)
+from llm_chat.domain.service.completion.common import get_chat_history
+from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
+from llm_chat.domain.usecase.completion.common import LlmChatUseCase, OpenAIGptStreamingUseCase
+from llm_chat.domain.usecase.completion.multimedia import OpenAIDalleUseCase, OpenAITextToSpeechUseCase, OpenAISpeechToTextUseCase
+from llm_chat.domain.usecase.completion.riddle import RiddleUseCase
 from unittest.mock import patch, MagicMock
 
 

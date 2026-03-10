@@ -5,7 +5,8 @@ from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.service.completion.common import ChatService
 from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
 from llm_chat.domain.usecase.completion.base import UseCase
-from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
+from llm_chat.domain.valueobject.completion.message import MessageDTO
+from llm_chat.domain.valueobject.completion.gender import GenderType, Gender
 
 
 class RiddleUseCase(UseCase):
