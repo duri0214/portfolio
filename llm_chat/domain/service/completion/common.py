@@ -12,7 +12,7 @@ from lib.llm.valueobject.config import (
     ModelName,
 )
 from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.service.base import BaseChatService
+from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.chat import MessageDTO, Gender
 
 
@@ -41,7 +41,7 @@ def get_chat_history(
     :raises Exception: メッセージが `content is None` の場合に例外をスロー
     :return: 過去の履歴や最新のユーザーメッセージを含むチャット履歴 (list[MessageDTO])
     """
-    from llm_chat.domain.service.riddle import create_initial_prompt, get_prompt
+    from llm_chat.domain.service.completion.riddle import create_initial_prompt, get_prompt
     from llm_chat.domain.valueobject.chat import GenderType
 
     if user_message.content is None:
@@ -117,7 +117,7 @@ class ChatService(BaseChatService):
         評価機能（Gemini/OpenAI共通）。
         評価結果を RiddleResponse として取得し、箇条書きテキストを返します。
         """
-        from llm_chat.domain.service.riddle import RiddleTask
+        from llm_chat.domain.service.completion.riddle import RiddleTask
 
         # なぞなぞタスクを使用して構造化された評価結果を取得
         task = RiddleTask(self.config, self.chat_history)

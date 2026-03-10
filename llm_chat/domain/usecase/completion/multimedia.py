@@ -5,12 +5,12 @@ from django.core.files.uploadedfile import UploadedFile
 
 from config.settings import MEDIA_ROOT
 from lib.llm.valueobject.completion import RoleType
-from llm_chat.domain.service.multimedia import (
+from llm_chat.domain.service.completion.multimedia import (
     OpenAIDalleChatService,
     OpenAITextToSpeechChatService,
     OpenAISpeechToTextChatService,
 )
-from llm_chat.domain.usecase.base import UseCase
+from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.chat import MessageDTO
 
 

@@ -13,7 +13,7 @@ from lib.llm.service.completion import (
     OpenAILlmSpeechToText,
 )
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
-from llm_chat.domain.service.base import BaseChatService
+from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.chat import MessageDTO
 
 

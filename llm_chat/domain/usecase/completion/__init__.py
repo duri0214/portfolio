@@ -1,13 +1,15 @@
-from llm_chat.domain.usecase.completion import (
-    UseCase,
+from llm_chat.domain.usecase.completion.base import UseCase
+from llm_chat.domain.usecase.completion.common import (
     LlmChatUseCase,
     OpenAIGptStreamingUseCase,
-    RiddleUseCase,
+)
+from llm_chat.domain.usecase.completion.riddle import RiddleUseCase
+from llm_chat.domain.usecase.completion.multimedia import (
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
     OpenAISpeechToTextUseCase,
-    OpenAIRagUseCase,
 )
+from llm_chat.domain.usecase.completion.rag import OpenAIRagUseCase
 
 __all__ = [
     "UseCase",

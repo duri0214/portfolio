@@ -1,8 +1,8 @@
 from django.contrib.auth.models import User
 
 from lib.llm.valueobject.completion import RoleType
-from llm_chat.domain.service.rag import OpenAIRagChatService
-from llm_chat.domain.usecase.base import UseCase
+from llm_chat.domain.service.completion.rag import OpenAIRagChatService
+from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.chat import MessageDTO
 
 

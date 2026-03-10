@@ -139,7 +139,7 @@ class ChatLogicTest(TestCase):
 
         # RiddleUseCase.execute は内部で evaluate を呼ぶ（さらに LLM 実行）
         # 簡単のため、evaluate もモック化するか、retrieve_answer を 2回返すように設定
-        with patch("llm_chat.domain.service.common.ChatService.evaluate") as mock_eval:
+        with patch("llm_chat.domain.service.completion.common.ChatService.evaluate") as mock_eval:
             mock_eval.return_value = "\n【評価結果】\n- 論理的思考力: 100点 (合格)"
 
             result = use_case.execute(self.user, "答えは人間です")
@@ -199,9 +199,9 @@ class OpenAiUseCaseTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="openaiuser", password="password")
 
-    @patch("llm_chat.domain.service.multimedia.OpenAILlmDalleService")
-    @patch("llm_chat.domain.service.multimedia.requests.get")
-    @patch("llm_chat.domain.service.multimedia.Image.open")
+    @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmDalleService")
+    @patch("llm_chat.domain.service.completion.multimedia.requests.get")
+    @patch("llm_chat.domain.service.completion.multimedia.Image.open")
     def test_dalle_usecase_saves_file_path(
         self, mock_image_open, mock_get, mock_dalle_service
     ):
@@ -240,7 +240,7 @@ class OpenAiUseCaseTest(TestCase):
         self.assertIsNotNone(last_log.file.name)
         self.assertEqual(last_log.model_name, "OpenAIDalle")
 
-    @patch("llm_chat.domain.service.multimedia.OpenAILlmTextToSpeech")
+    @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmTextToSpeech")
     def test_tts_usecase_saves_file_path(self, mock_tts_service):
         """
         [シナリオ: TTS音声生成]
@@ -269,8 +269,8 @@ class OpenAiUseCaseTest(TestCase):
         self.assertIsNotNone(last_log.file.name)
         self.assertEqual(last_log.model_name, "OpenAITextToSpeech")
 
-    @patch("llm_chat.domain.service.multimedia.OpenAILlmSpeechToText")
-    @patch("llm_chat.domain.service.multimedia.Path.exists")
+    @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmSpeechToText")
+    @patch("llm_chat.domain.service.completion.multimedia.Path.exists")
     def test_stt_usecase_saves_file_path(self, mock_exists, mock_stt_service):
         """
         [シナリオ: STT音声認識]
@@ -292,7 +292,7 @@ class OpenAiUseCaseTest(TestCase):
         )
 
         # UseCase 実行
-        with patch("llm_chat.domain.usecase.multimedia.open", create=True):
+        with patch("llm_chat.domain.usecase.completion.multimedia.open", create=True):
             usecase = OpenAISpeechToTextUseCase(audio_file)
             result = usecase.execute(self.user, "N/A")
 
