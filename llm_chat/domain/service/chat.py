@@ -336,10 +336,10 @@ class OpenAIDalleChatService(BaseChatService):
             response.raise_for_status()
             raw_picture = BytesIO(response.content)
             resized_picture = Image.open(raw_picture).resize((128, 128))
-            file_path = self.save_picture(resized_picture)
+            user_message.file_path = self.save_picture(resized_picture)
             return self._create_assistant_message(
                 user=user_message.user,
-                content=file_path,
+                content=user_message.content,
                 is_riddle=False,
             )
         except requests.exceptions.HTTPError as http_error:
@@ -386,10 +386,10 @@ class OpenAITextToSpeechChatService(BaseChatService):
         response = OpenAILlmTextToSpeech(self.config).retrieve_answer(
             user_message.to_message()
         )
-        file_path = self.save_audio(response)
+        user_message.file_path = self.save_audio(response)
         return self._create_assistant_message(
             user=user_message.user,
-            content=file_path,
+            content=user_message.content,
             is_riddle=False,
         )
 
