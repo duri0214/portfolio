@@ -33,7 +33,12 @@ class UseCase(ABC):
         pass
 
     def _insert_assistant_message(
-        self, user: User, content: str, model: str, is_riddle: bool = False
+        self,
+        user: User,
+        content: str,
+        model: str,
+        is_riddle: bool = False,
+        file_path: str | None = None,
     ) -> MessageDTO:
         assistant_message = MessageDTO(
             user=user,
@@ -41,6 +46,7 @@ class UseCase(ABC):
             content=content,
             model_name=model,
             is_riddle=is_riddle,
+            file_path=file_path,
         )
         self.repository.insert(assistant_message)
         return assistant_message
@@ -211,6 +217,7 @@ class OpenAIDalleUseCase(UseCase):
             content=assistant_message.content,
             model=ModelName.DALLE_3,
             is_riddle=False,
+            file_path=assistant_message.file_path,
         )
 
 
@@ -246,6 +253,7 @@ class OpenAITextToSpeechUseCase(UseCase):
             content=assistant_message.content,
             model=ModelName.TTS_1,
             is_riddle=False,
+            file_path=assistant_message.file_path,
         )
 
 
@@ -316,6 +324,7 @@ class OpenAISpeechToTextUseCase(UseCase):
             content=assistant_message.content,
             model=ModelName.WHISPER_1,
             is_riddle=False,
+            file_path=assistant_message.file_path,
         )
 
 
