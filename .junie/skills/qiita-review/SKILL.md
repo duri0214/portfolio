@@ -1,4 +1,6 @@
-# Qiita Review Skill
+# qiita-review
+
+CentOSからUbuntuへの移行手順ドキュメントが、最新の本番環境のベストプラクティスに基づいているかをレビューします。
 
 ## 概要
 `docs/qiita/centos_to_ubuntu_setup.md`（CentOSからUbuntuへの移行手順）が、最新の本番環境のベストプラクティスに基づいているかをレビューするための基準を定義します。

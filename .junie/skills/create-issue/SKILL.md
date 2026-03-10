@@ -1,4 +1,6 @@
-# Create Issue Skill
+# create-issue
+
+課題や新機能、バグ修正などのタスクを管理するために、GitHub Issueを新規作成します。
 
 ## 概要
 課題や新機能、バグ修正などのタスクを管理するために、GitHub Issueを新規作成します。
