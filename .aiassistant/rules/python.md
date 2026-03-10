@@ -33,7 +33,7 @@ Python 3.12 では、多くの型ヒントが組み込み型や `collections.abc
 - **例外**: 循環インポートが発生する場合のみ、関数内インポートを許可する。
 
 **良い例:**
-```python
+```
 from myapp.domain.valueobject import MyValueObject
 from myapp.domain.service import MyService
 
@@ -43,7 +43,7 @@ def my_function():
 ```
 
 **悪い例:**
-```python
+```
 def my_function():
     from myapp.domain.valueobject import MyValueObject  # 避ける
     from myapp.domain.service import MyService  # 避ける
@@ -52,7 +52,7 @@ def my_function():
 ```
 
 **循環インポートの例外:**
-```python
+```
 # models.py (循環インポート回避のため関数内インポートを使用)
 def to_dto(self):
     from myapp.domain.valueobject import MyDTO  # models.py と MyDTO が相互参照する場合
