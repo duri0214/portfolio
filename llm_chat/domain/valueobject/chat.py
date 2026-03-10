@@ -25,6 +25,8 @@ class MessageDTO:
     user: User
     role: RoleType
     content: str
+    model_name: str | None = None
+    is_riddle: bool = False
     file_path: str | None = None
     file_name: str | None = None
 
@@ -38,10 +40,13 @@ class MessageDTO:
         """
         このDTOをデータベース格納用のChatLogsエンティティに変換します。
         """
+
         chat_log = ChatLogs(
             user=self.user,
             role=self.role.value,
             content=self.content,
+            model_name=self.model_name,
+            is_riddle=self.is_riddle,
         )
         if self.file_path:
             chat_log.file.name = self.file_path
@@ -56,6 +61,8 @@ class MessageDTO:
             "role": self.role.name,
             "content": self.content,
             "username": self.user.username,
+            "model_name": self.model_name,
+            "is_riddle": self.is_riddle,
             "file_url": self.file_path if self.file_path else None,
             "file_name": (
                 os.path.basename(self.file_name) if self.file_name else "No File"

@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 
 from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
+from llm_chat.domain.service.chat import (
+    RIDDLE_END_MESSAGE,
+)
 from llm_chat.domain.usecase.chat import (
     UseCase,
     LlmChatUseCase,
@@ -21,7 +24,7 @@ from llm_chat.domain.usecase.chat import (
     OpenAISpeechToTextUseCase,
     OpenAIRagUseCase,
 )
-from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
+from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig, ModelName
 from llm_chat.forms import UserTextForm
 from llm_chat.models import ChatLogs
 
@@ -41,25 +44,27 @@ class IndexView(FormView):
             if self.request.user.is_authenticated
             else User.objects.get(pk=1)
         )
-        chat_history = ChatLogRepository.find_visible_chat_history(user=login_user)
+        chat_history = ChatLogRepository.find_chat_history(user=login_user)
 
         # JSON フォーマットデータをテンプレートに渡す
         context["chat_history"] = [log.to_display() for log in chat_history]
         context["is_superuser"] = self.request.user.is_superuser
 
-        # なぞなぞモードが進行中かどうかを判定
-        # 履歴が存在し、かつ最後のメッセージが終了メッセージを含んでいない場合に「なぞなぞ中」とみなす
+        # なぞなぞモードの判定：最新の履歴がなぞなぞ（is_riddle=True）かどうか
         is_riddle_active = False
         if chat_history:
-            # 履歴の中になぞなぞを開始した形跡があるか確認
-            # システムメッセージに「なぞなぞ」が含まれている（RiddleUseCase経由）か、
-            # 誰かがメッセージで「なぞなぞ」に言及している場合を開始とみなす
-            has_started = any("なぞなぞ" in (log.content or "") for log in chat_history)
-            has_ended = any(
-                "本日はなぞなぞにご参加いただき" in (log.content or "")
-                for log in chat_history
-            )
-            is_riddle_active = has_started and not has_ended
+            # 履歴の最後から見て、is_riddle が True のものを探す
+            # 終了メッセージが含まれている場合はアクティブではないとみなす
+            last_riddle_log = None
+            has_ended = False
+            for log in reversed(chat_history):
+                if log.is_riddle:
+                    last_riddle_log = log
+                    if RIDDLE_END_MESSAGE in (log.content or ""):
+                        has_ended = True
+                    break
+
+            is_riddle_active = last_riddle_log is not None and not has_ended
 
         context["is_riddle_active"] = is_riddle_active
 
@@ -85,13 +90,13 @@ class SyncResponseView(View):
                     config = GeminiConfig(
                         api_key=os.getenv("GEMINI_API_KEY"),
                         max_tokens=4000,
-                        model="gemini-2.5-flash",
+                        model=ModelName.GEMINI_2_5_FLASH,
                     )
                 else:
                     config = OpenAIGptConfig(
                         api_key=os.getenv("OPENAI_API_KEY"),
                         max_tokens=4000,
-                        model="gpt-5-mini",
+                        model=ModelName.GPT_5_MINI,
                     )
                 use_case = LlmChatUseCase(config)
             elif use_case_type == "OpenAIDalle":
@@ -110,7 +115,7 @@ class SyncResponseView(View):
                 config = OpenAIGptConfig(
                     api_key=os.getenv("OPENAI_API_KEY"),
                     max_tokens=4000,
-                    model="gpt-5-mini",
+                    model=ModelName.GPT_5_MINI,
                 )
                 use_case = RiddleUseCase(config)
 

@@ -13,6 +13,18 @@ OpenAiModel = Literal["gpt-4o", "gpt-5", "gpt-5-mini", "dall-e-3", "tts-1", "whi
 GeminiModel = Literal["gemini-2.0-flash", "gemini-2.5-flash"]
 
 
+@dataclass(frozen=True)
+class ModelName:
+    GPT_4O: OpenAiModel = "gpt-4o"
+    GPT_5: OpenAiModel = "gpt-5"
+    GPT_5_MINI: OpenAiModel = "gpt-5-mini"
+    DALLE_3: OpenAiModel = "dall-e-3"
+    TTS_1: OpenAiModel = "tts-1"
+    WHISPER_1: OpenAiModel = "whisper-1"
+    GEMINI_2_0_FLASH: GeminiModel = "gemini-2.0-flash"
+    GEMINI_2_5_FLASH: GeminiModel = "gemini-2.5-flash"
+
+
 @dataclass
 class OpenAIGptConfig(ApiConfig):
     model: OpenAiModel

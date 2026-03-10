@@ -1,4 +1,3 @@
-import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Generator
@@ -17,9 +16,10 @@ from llm_chat.domain.service.chat import (
     OpenAISpeechToTextChatService,
     OpenAIRagChatService,
     ChatService,
+    RIDDLE_END_MESSAGE,
 )
 from llm_chat.domain.valueobject.chat import MessageDTO, GenderType, Gender
-from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
+from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig, ModelName
 
 
 class UseCase(ABC):
@@ -31,6 +31,19 @@ class UseCase(ABC):
         self, user: User, content: str | None
     ) -> MessageDTO | Generator[StreamResponse, None, None]:
         pass
+
+    def _insert_assistant_message(
+        self, user: User, content: str, model: str, is_riddle: bool = False
+    ) -> MessageDTO:
+        assistant_message = MessageDTO(
+            user=user,
+            role=RoleType.ASSISTANT,
+            content=content,
+            model_name=model,
+            is_riddle=is_riddle,
+        )
+        self.repository.insert(assistant_message)
+        return assistant_message
 
 
 class LlmChatUseCase(UseCase):
@@ -50,13 +63,17 @@ class LlmChatUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
+            model_name=self.config.model,
+            is_riddle=False,
         )
 
         assistant_message = chat_service.generate(user_message)
-
-        self.repository.insert(assistant_message)
-
-        return assistant_message
+        return self._insert_assistant_message(
+            user=user,
+            content=assistant_message.content,
+            model=self.config.model,
+            is_riddle=False,
+        )
 
 
 class RiddleUseCase(UseCase):
@@ -76,19 +93,26 @@ class RiddleUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
+            model_name=self.config.model,
+            is_riddle=True,
         )
 
-        # なぞなぞはGender(MAN)固定で開始/継続
-        assistant_message = chat_service.generate(user_message, Gender(GenderType.MAN))
+        # なぞなぞは明示的に is_riddle=True を指定
+        assistant_message = chat_service.generate(
+            user_message, is_riddle=True, gender=Gender(GenderType.MAN)
+        )
 
         # なぞなぞの終端処理
-        if "本日はなぞなぞにご参加いただき" in assistant_message.content:
+        if RIDDLE_END_MESSAGE in assistant_message.content:
             evaluation_text = chat_service.evaluate(login_user=user_message.user)
             assistant_message.content += evaluation_text
 
-        self.repository.insert(assistant_message)
-
-        return assistant_message
+        return self._insert_assistant_message(
+            user=user,
+            content=assistant_message.content,
+            model=self.config.model,
+            is_riddle=True,
+        )
 
 
 class OpenAIGptStreamingUseCase(UseCase):
@@ -116,6 +140,8 @@ class OpenAIGptStreamingUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
+            model_name=chat_service.config.model,
+            is_riddle=False,
         )
         return chat_service.generate(user_message)
 
@@ -135,11 +161,14 @@ class OpenAIGptStreamingUseCase(UseCase):
         Returns:
             None
         """
+        chat_service = OpenAIChatStreamingService()
         self.repository.insert(
             MessageDTO(
                 user=user,
                 role=RoleType.ASSISTANT,
                 content=content,
+                model_name=chat_service.config.model,
+                is_riddle=False,
             )
         )
 
@@ -157,7 +186,7 @@ class OpenAIDalleUseCase(UseCase):
         contentパラメータはNoneではないこと。
 
         Args:
-            user (User): DjangoのUserモデルのインスタンス
+            user (User): DjangoのUserモデル of instance
             content (str | None): ユーザーからの入力テキスト
 
         Raises:
@@ -173,10 +202,16 @@ class OpenAIDalleUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
+            model_name=ModelName.DALLE_3,
+            is_riddle=False,
         )
-        user_message = chat_service.generate(user_message)
-        self.repository.insert(user_message)
-        return user_message
+        assistant_message = chat_service.generate(user_message)
+        return self._insert_assistant_message(
+            user=user,
+            content=assistant_message.content,
+            model=ModelName.DALLE_3,
+            is_riddle=False,
+        )
 
 
 class OpenAITextToSpeechUseCase(UseCase):
@@ -198,14 +233,20 @@ class OpenAITextToSpeechUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAITextToSpeechUseCase")
         chat_service = OpenAITextToSpeechChatService()
-        message = MessageDTO(
+        user_input_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
+            model_name=ModelName.TTS_1,
+            is_riddle=False,
         )
-        user_message = chat_service.generate(message)
-        self.repository.insert(user_message)
-        return user_message
+        assistant_message = chat_service.generate(user_input_message)
+        return self._insert_assistant_message(
+            user=user,
+            content=assistant_message.content,
+            model=ModelName.TTS_1,
+            is_riddle=False,
+        )
 
 
 class OpenAISpeechToTextUseCase(UseCase):
@@ -265,11 +306,17 @@ class OpenAISpeechToTextUseCase(UseCase):
             role=RoleType.ASSISTANT,
             content=content,
             file_path=self.file_path,
+            model_name=ModelName.WHISPER_1,
+            is_riddle=False,
         )
 
         assistant_message = chat_service.generate(init_assistant_message)
-        self.repository.insert(assistant_message)
-        return assistant_message
+        return self._insert_assistant_message(
+            user=user,
+            content=assistant_message.content,
+            model=ModelName.WHISPER_1,
+            is_riddle=False,
+        )
 
 
 class OpenAIRagUseCase(UseCase):
@@ -296,8 +343,13 @@ class OpenAIRagUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
+            model_name=ModelName.GPT_5_MINI,
+            is_riddle=False,
         )
-        user_message = chat_service.generate(user_message)
-        self.repository.insert(user_message)
-
-        return user_message
+        assistant_message = chat_service.generate(user_message)
+        return self._insert_assistant_message(
+            user=user,
+            content=assistant_message.content,
+            model=ModelName.GPT_5_MINI,
+            is_riddle=False,
+        )
