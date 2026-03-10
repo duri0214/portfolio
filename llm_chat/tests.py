@@ -437,7 +437,7 @@ class ViewLogicTest(TestCase):
         # 直近の model_name が "Riddle" であっても、終了後はデフォルトの "OpenAIGpt" に戻る
         self.assertEqual(initial.get("model_mode"), "OpenAIGpt")
 
-        # 6. なぞなぞ進行中に別のチャットを挟む -> 判定は「最新のなぞなぞ」を見るため Riddle が維持される
+        # 6. なぞなぞ進行中に別のチャットを挟む -> 最新のログがなぞなぞ以外であれば、その時点でなぞなぞは中断されているとみなす
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
@@ -456,7 +456,8 @@ class ViewLogicTest(TestCase):
             created_at=timezone.now(),
         )
         initial = view.get_initial()
-        self.assertEqual(initial.get("model_mode"), "Riddle")
+        # 最新が Gemini なので、Gemini が選択される
+        self.assertEqual(initial.get("model_mode"), "Gemini")
 
         # 明示的に、なぞなぞを終了させる
         ChatLogs.objects.create(

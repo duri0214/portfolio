@@ -98,20 +98,8 @@ class IndexView(FormView):
         if not chat_history:
             return False
 
-        last_riddle_log = None
-        has_ended = False
-        for log in reversed(chat_history):
-            if log.is_riddle:
-                last_riddle_log = log
-                if RIDDLE_END_MESSAGE in (log.content or ""):
-                    has_ended = True
-                break
-            # なぞなぞ以外のログが見つかったら、そこから遡ってなぞなぞを探す
-            # ただし、最新のログがなぞなぞ以外であれば、その時点でなぞなぞは中断されているとみなす
-            # (ただし、現在の仕様では最新のなぞなぞログの状態を見る)
-            pass
-
-        return last_riddle_log is not None and not has_ended
+        last_log = chat_history[-1]
+        return last_log.is_riddle and RIDDLE_END_MESSAGE not in (last_log.content or "")
 
 
 class SyncResponseView(View):
