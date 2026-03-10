@@ -9,7 +9,12 @@ from llm_chat.domain.service.chat import (
     get_chat_history,
     RIDDLE_END_MESSAGE,
 )
-from llm_chat.domain.usecase.chat import LlmChatUseCase, RiddleUseCase
+from llm_chat.domain.usecase.chat import (
+    LlmChatUseCase,
+    RiddleUseCase,
+    OpenAIDalleUseCase,
+    OpenAITextToSpeechUseCase,
+)
 from unittest.mock import patch, MagicMock
 
 
@@ -190,6 +195,81 @@ class ChatLogicTest(TestCase):
         self.assertTrue(result.is_riddle)
         # 初回なぞなぞ：System(非保存), User, Assistant の計2通がDBへ
         self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
+
+
+class OpenAiUseCaseTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="openaiuser", password="password")
+
+    @patch("llm_chat.domain.service.chat.OpenAILlmDalleService")
+    @patch("llm_chat.domain.service.chat.requests.get")
+    @patch("llm_chat.domain.service.chat.Image.open")
+    def test_dalle_usecase_saves_file_path(
+        self, mock_image_open, mock_get, mock_dalle_service
+    ):
+        """
+        [シナリオ: DALL-E 3画像生成]
+        1. OpenAIDalleUseCase を実行して画像を生成
+        2. 期待値:
+           - 返された MessageDTO に file_path が含まれていること
+           - DB (ChatLogs) にファイルパスとモデル名が正しく保存されていること
+        """
+        # DALL-E サービスと画像処理をモック化
+        mock_response = MagicMock()
+        mock_response.data = [MagicMock(url="http://example.com/image.jpg")]
+        mock_dalle_service.return_value.retrieve_answer.return_value = mock_response
+
+        mock_get_response = MagicMock()
+        mock_get_response.content = b"fake_image_content"
+        mock_get.return_value = mock_get_response
+
+        mock_img = MagicMock()
+        mock_image_open.return_value.resize.return_value = mock_img
+
+        # UseCase 実行
+        usecase = OpenAIDalleUseCase()
+        result = usecase.execute(self.user, "ねこの画像を生成して")
+
+        # 結果の MessageDTO を検証
+        self.assertIsNotNone(result.file_path)
+        self.assertEqual(result.model_name, ModelName.DALLE_3)
+
+        # DB への保存を検証
+        last_log = ChatLogs.objects.filter(
+            user=self.user, role=RoleType.ASSISTANT.value
+        ).last()
+        self.assertIsNotNone(last_log)
+        self.assertIsNotNone(last_log.file.name)
+        self.assertEqual(last_log.model_name, ModelName.DALLE_3)
+
+    @patch("llm_chat.domain.service.chat.OpenAILlmTextToSpeech")
+    def test_tts_usecase_saves_file_path(self, mock_tts_service):
+        """
+        [シナリオ: TTS音声生成]
+        1. OpenAITextToSpeechUseCase を実行して音声を生成
+        2. 期待値:
+           - 返された MessageDTO に file_path が含まれていること
+           - DB (ChatLogs) にファイルパスとモデル名が正しく保存されていること
+        """
+        # TTS サービスをモック化
+        mock_response = MagicMock()
+        mock_tts_service.return_value.retrieve_answer.return_value = mock_response
+
+        # UseCase 実行
+        usecase = OpenAITextToSpeechUseCase()
+        result = usecase.execute(self.user, "こんにちは")
+
+        # 結果の MessageDTO を検証
+        self.assertIsNotNone(result.file_path)
+        self.assertEqual(result.model_name, ModelName.TTS_1)
+
+        # DB への保存を検証
+        last_log = ChatLogs.objects.filter(
+            user=self.user, role=RoleType.ASSISTANT.value
+        ).last()
+        self.assertIsNotNone(last_log)
+        self.assertIsNotNone(last_log.file.name)
+        self.assertEqual(last_log.model_name, ModelName.TTS_1)
 
 
 class ViewLogicTest(TestCase):
