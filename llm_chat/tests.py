@@ -14,6 +14,7 @@ from llm_chat.domain.usecase.chat import (
     RiddleUseCase,
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
+    OpenAISpeechToTextUseCase,
 )
 from unittest.mock import patch, MagicMock
 
@@ -270,6 +271,45 @@ class OpenAiUseCaseTest(TestCase):
         self.assertIsNotNone(last_log)
         self.assertIsNotNone(last_log.file.name)
         self.assertEqual(last_log.model_name, ModelName.TTS_1)
+
+    @patch("llm_chat.domain.service.chat.OpenAILlmSpeechToText")
+    @patch("llm_chat.domain.service.chat.Path.exists")
+    def test_stt_usecase_saves_file_path(self, mock_exists, mock_stt_service):
+        """
+        [シナリオ: STT音声認識]
+        1. OpenAISpeechToTextUseCase を実行して音声をテキスト化
+        2. 期待値:
+           - DB (ChatLogs) にファイルパスとモデル名が正しく保存されていること
+        """
+        # 前準備
+        mock_exists.return_value = True
+        mock_stt_service.return_value.retrieve_answer.return_value = MagicMock(
+            text="テスト音声です"
+        )
+
+        # ダミーのアップロードファイルを作成
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        audio_file = SimpleUploadedFile(
+            "test.mp3", b"dummy content", content_type="audio/mpeg"
+        )
+
+        # UseCase 実行
+        with patch("llm_chat.domain.usecase.chat.open", create=True):
+            usecase = OpenAISpeechToTextUseCase(audio_file)
+            result = usecase.execute(self.user, "N/A")
+
+        # 結果の MessageDTO を検証
+        self.assertEqual(result.file_path, "llm_chat/audios/test.mp3")
+        self.assertEqual(result.model_name, ModelName.WHISPER_1)
+
+        # DB への保存を検証
+        last_log = ChatLogs.objects.filter(
+            user=self.user, role=RoleType.ASSISTANT.value
+        ).last()
+        self.assertIsNotNone(last_log)
+        self.assertEqual(last_log.file.name, "llm_chat/audios/test.mp3")
+        self.assertEqual(last_log.model_name, ModelName.WHISPER_1)
 
 
 class ViewLogicTest(TestCase):
