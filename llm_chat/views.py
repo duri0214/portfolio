@@ -13,7 +13,7 @@ from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.chat import ChatLogRepository
 from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
 from llm_chat.domain.usecase.completion.base import UseCase
-from llm_chat.domain.usecase.completion.common import LlmChatUseCase, OpenAIGptStreamingUseCase
+from llm_chat.domain.usecase.completion.chat import LlmChatUseCase, OpenAIGptStreamingUseCase
 from llm_chat.domain.usecase.completion.multimedia import OpenAIDalleUseCase, OpenAITextToSpeechUseCase, OpenAISpeechToTextUseCase
 from llm_chat.domain.usecase.completion.rag import OpenAIRagUseCase
 from llm_chat.domain.usecase.completion.riddle import RiddleUseCase

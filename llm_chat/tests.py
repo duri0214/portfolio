@@ -6,9 +6,9 @@ from llm_chat.models import ChatLogs
 from llm_chat.domain.valueobject.completion.message import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
 from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.service.completion.common import get_chat_history
+from llm_chat.domain.service.completion.chat import get_chat_history
 from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
-from llm_chat.domain.usecase.completion.common import LlmChatUseCase, OpenAIGptStreamingUseCase
+from llm_chat.domain.usecase.completion.chat import LlmChatUseCase, OpenAIGptStreamingUseCase
 from llm_chat.domain.usecase.completion.multimedia import OpenAIDalleUseCase, OpenAITextToSpeechUseCase, OpenAISpeechToTextUseCase
 from llm_chat.domain.usecase.completion.riddle import RiddleUseCase
 from unittest.mock import patch, MagicMock
@@ -137,7 +137,7 @@ class ChatLogicTest(TestCase):
 
         # RiddleUseCase.execute は内部で evaluate を呼ぶ（さらに LLM 実行）
         # 簡単のため、evaluate もモック化するか、retrieve_answer を 2回返すように設定
-        with patch("llm_chat.domain.service.completion.common.ChatService.evaluate") as mock_eval:
+        with patch("llm_chat.domain.service.completion.chat.ChatService.evaluate") as mock_eval:
             mock_eval.return_value = "\n【評価結果】\n- 論理的思考力: 100点 (合格)"
 
             result = use_case.execute(self.user, "答えは人間です")

@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from lib.llm.service.completion import LlmCompletionStreamingService
 from lib.llm.valueobject.completion import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
-from llm_chat.domain.service.completion.common import ChatService, OpenAIChatStreamingService
+from llm_chat.domain.service.completion.chat import ChatService, OpenAIChatStreamingService
 from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.message import MessageDTO
 
