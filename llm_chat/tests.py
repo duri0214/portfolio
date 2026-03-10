@@ -5,7 +5,7 @@ from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.models import ChatLogs
 from llm_chat.domain.valueobject.completion.message import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
-from llm_chat.domain.repository.chat import ChatLogRepository
+from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import get_chat_history
 from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
 from llm_chat.domain.usecase.completion.chat import LlmChatUseCase, OpenAIGptStreamingUseCase

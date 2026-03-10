@@ -10,7 +10,7 @@ from django.views.generic import FormView
 from dotenv import load_dotenv
 
 from lib.llm.valueobject.completion import StreamResponse
-from llm_chat.domain.repository.chat import ChatLogRepository
+from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
 from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.usecase.completion.chat import LlmChatUseCase, OpenAIGptStreamingUseCase
