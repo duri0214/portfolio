@@ -164,7 +164,11 @@ class BaseChatService(ABC):
         pass
 
     def _create_assistant_message(
-        self, user: User, content: str, is_riddle: bool = False
+        self,
+        user: User,
+        content: str,
+        is_riddle: bool = False,
+        file_path: str | None = None,
     ) -> MessageDTO:
         return MessageDTO(
             user=user,
@@ -172,6 +176,7 @@ class BaseChatService(ABC):
             content=content,
             model_name=self.model_name,
             is_riddle=is_riddle,
+            file_path=file_path,
         )
 
 
@@ -336,11 +341,12 @@ class OpenAIDalleChatService(BaseChatService):
             response.raise_for_status()
             raw_picture = BytesIO(response.content)
             resized_picture = Image.open(raw_picture).resize((128, 128))
-            user_message.file_path = self.save_picture(resized_picture)
+            file_path = self.save_picture(resized_picture)
             return self._create_assistant_message(
                 user=user_message.user,
                 content=user_message.content,
                 is_riddle=False,
+                file_path=file_path,
             )
         except requests.exceptions.HTTPError as http_error:
             raise Exception(http_error)
@@ -386,11 +392,12 @@ class OpenAITextToSpeechChatService(BaseChatService):
         response = OpenAILlmTextToSpeech(self.config).retrieve_answer(
             user_message.to_message()
         )
-        user_message.file_path = self.save_audio(response)
+        file_path = self.save_audio(response)
         return self._create_assistant_message(
             user=user_message.user,
             content=user_message.content,
             is_riddle=False,
+            file_path=file_path,
         )
 
     @staticmethod
@@ -438,6 +445,7 @@ class OpenAISpeechToTextChatService(BaseChatService):
                 user=assistant_message.user,
                 content=f"音声ファイルは「{response.text}」とテキスト化されました",
                 is_riddle=False,
+                file_path=assistant_message.file_path,
             )
 
         raise Exception(f"音声ファイル {assistant_message.file_path} は存在しません")
