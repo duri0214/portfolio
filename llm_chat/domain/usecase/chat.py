@@ -206,12 +206,8 @@ class OpenAIDalleUseCase(UseCase):
             is_riddle=False,
         )
         assistant_message = chat_service.generate(user_message)
-        return self._insert_assistant_message(
-            user=user,
-            content=assistant_message.content,
-            model=ModelName.DALLE_3,
-            is_riddle=False,
-        )
+        self.repository.insert(assistant_message)
+        return assistant_message
 
 
 class OpenAITextToSpeechUseCase(UseCase):
@@ -241,12 +237,8 @@ class OpenAITextToSpeechUseCase(UseCase):
             is_riddle=False,
         )
         assistant_message = chat_service.generate(user_input_message)
-        return self._insert_assistant_message(
-            user=user,
-            content=assistant_message.content,
-            model=ModelName.TTS_1,
-            is_riddle=False,
-        )
+        self.repository.insert(assistant_message)
+        return assistant_message
 
 
 class OpenAISpeechToTextUseCase(UseCase):
