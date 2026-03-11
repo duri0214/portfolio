@@ -392,12 +392,12 @@ class ViewLogicTest(TestCase):
         self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT)
 
         # 2. 直近が Gemini
-
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.USER.value,
             content="Hello",
             model_name=ModelName.GEMINI_2_0_FLASH,
+            use_case_type=UseCaseType.GEMINI,
             created_at=timezone.now(),
         )
         time.sleep(0.01)
@@ -410,6 +410,7 @@ class ViewLogicTest(TestCase):
             role=RoleType.ASSISTANT.value,
             content="Image URL",
             model_name=ModelName.DALLE_3,
+            use_case_type=UseCaseType.OPENAI_DALLE,
             created_at=timezone.now(),
         )
         time.sleep(0.01)
@@ -431,7 +432,9 @@ class ViewLogicTest(TestCase):
 
         # 5. なぞなぞ (終了) -> 最新ログが Riddle 終了であれば、Riddle 活性は False となり、
         # 最新ログ (Riddle 終了メッセージ) の use_case_type は UseCaseType.RIDDLE だが、
-        # get_initial のロジックにより model_name (GPT_5_MINI) に基づき UseCaseType.OPENAI_GPT が選択される
+        # 以前の仕様では model_name に基づき OpenAIGpt が選択されていたが、
+        # 新しい仕様では終了後も最後の use_case_type である Riddle が選択される
+        # （なぞなぞが終了していても、最後になぞなぞをしていたなら次もなぞなぞモードで開始するのが自然なため）
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
@@ -441,9 +444,7 @@ class ViewLogicTest(TestCase):
             created_at=timezone.now(),
         )
         initial = view.get_initial()
-        # 最新ログが Riddle 終了であれば、Riddle 活性は False となり、
-        # 直近の model_name が UseCaseType.RIDDLE であっても、終了後はデフォルトの UseCaseType.OPENAI_GPT に戻る
-        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT)
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
 
         # 6. なぞなぞ進行中に別のチャットを挟む -> 最新のログがなぞなぞ以外であれば、その時点でなぞなぞは中断されているとみなす
         ChatLogs.objects.create(
@@ -460,6 +461,7 @@ class ViewLogicTest(TestCase):
             role=RoleType.USER.value,
             content="横槍チャット",
             model_name=ModelName.GEMINI_2_0_FLASH,
+            use_case_type=UseCaseType.GEMINI,
             created_at=timezone.now(),
         )
         initial = view.get_initial()
@@ -477,27 +479,25 @@ class ViewLogicTest(TestCase):
         )
 
         # 7. ストリーミングモードの復元
-        # Note: model_name だけではストリーミングモードと通常モードを区別できないため、
-        # UseCaseType.OPENAI_GPT として扱われる（将来的には use_case_type フィールドの追加が必要）
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.USER.value,
             content="Streaming request",
             model_name=ModelName.GPT_5_MINI,
+            use_case_type=UseCaseType.OPENAI_GPT_STREAMING,
             created_at=timezone.now(),
         )
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT)
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT_STREAMING)
 
         # 8. RAGモードの復元
-        # Note: model_name だけでは RAG モードと通常モードを区別できないため、
-        # UseCaseType.OPENAI_GPT として扱われる（将来的には use_case_type フィールドの追加が必要）
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.USER.value,
             content="RAG query",
             model_name=ModelName.GPT_5_MINI,
+            use_case_type=UseCaseType.OPENAI_RAG,
             created_at=timezone.now(),
         )
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT)
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_RAG)

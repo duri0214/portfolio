@@ -59,18 +59,9 @@ class IndexView(FormView):
         last_log = chat_history[-1] if chat_history else None
 
         if last_log:
-            # 2. 直近の model_name から適切な use_case_type を推定
-            # model_name には実際のモデル名（gpt-4o, dall-e-3 など）が入っているため、
-            # それを use_case_type（OpenAIGpt, OpenAIDalle など）にマッピングする
-            model_name = last_log.model_name
-            if model_name == ModelName.DALLE_3:
-                initial["use_case_type"] = UseCaseType.OPENAI_DALLE
-            elif model_name in (ModelName.GEMINI_2_0_FLASH, ModelName.GEMINI_2_5_FLASH):
-                initial["use_case_type"] = UseCaseType.GEMINI
-            else:
-                # GPT系はデフォルトで OpenAIGpt とする
-                # （Streaming, RAG は区別できないため、デフォルトの通常チャットとする）
-                initial["use_case_type"] = UseCaseType.OPENAI_GPT
+            # 2. 直近の use_case_type を優先的に使用
+            # データベースに保存されている use_case_type を直接初期値として設定する
+            initial["use_case_type"] = last_log.use_case_type
         else:
             initial["use_case_type"] = UseCaseType.OPENAI_GPT
 
@@ -103,7 +94,10 @@ class IndexView(FormView):
             return False
 
         last_log = chat_history[-1]
-        return last_log.use_case_type == UseCaseType.RIDDLE and RiddleChatService.RIDDLE_END_MESSAGE not in (last_log.content or "")
+        return (
+            last_log.use_case_type == UseCaseType.RIDDLE
+            and RiddleChatService.RIDDLE_END_MESSAGE not in (last_log.content or "")
+        )
 
 
 class SyncResponseView(View):
