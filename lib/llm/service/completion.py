@@ -392,7 +392,7 @@ class OpenAILlmSpeechToText(LlmService):
 
         with open(full_path, "rb") as audio_file:
             return self.client.audio.transcriptions.create(
-                model=self.config.model, file=audio_file
+                model=self.config.model, file=audio_file, language="ja"
             )
 
 
