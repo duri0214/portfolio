@@ -7,6 +7,7 @@ from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import GenderType, Gender
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class RiddleUseCase(UseCase):
@@ -26,13 +27,13 @@ class RiddleUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name="Riddle",
-            is_riddle=True,
+            model_name=self.config.model,
+            use_case_type=UseCaseType.RIDDLE,
         )
 
-        # なぞなぞは明示的に is_riddle=True を指定
+        # なぞなぞは明示的に use_case_type="Riddle" を指定
         assistant_message = chat_service.generate(
-            user_message, is_riddle=True, gender=Gender(GenderType.MAN)
+            user_message, use_case_type="Riddle", gender=Gender(GenderType.MAN)
         )
 
         # なぞなぞの終端処理
@@ -43,6 +44,6 @@ class RiddleUseCase(UseCase):
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model_name="Riddle",
-            is_riddle=True,
+            model_name=self.config.model,
+            use_case_type=UseCaseType.RIDDLE,
         )

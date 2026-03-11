@@ -12,6 +12,7 @@ from llm_chat.domain.valueobject.completion.riddle import (
     RiddleResponse,
     RiddleEvaluation,
 )
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class RiddleChatService(BaseLLMTask):
@@ -70,13 +71,13 @@ class RiddleChatService(BaseLLMTask):
             user=user_message.user,
             role=RoleType.SYSTEM,
             content=RiddleChatService.get_prompt(gender),
-            is_riddle=True,
+            use_case_type=UseCaseType.RIDDLE,
         )
         first_user_message = MessageDTO(
             user=user_message.user,
             role=RoleType.USER,
             content=user_message.content,
-            is_riddle=True,
+            use_case_type=UseCaseType.RIDDLE,
         )
         # ユーザーメッセージのみDBに保存
         ChatLogRepository.insert(first_user_message)

@@ -1,24 +1,26 @@
 from django import forms
 
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+
 
 class UserTextForm(forms.Form):
     question = forms.CharField(widget=forms.Textarea)
 
-    MODEL_MODE_CHOICES = [
-        ("OpenAIGpt", "OpenAI GPT"),
-        ("OpenAIGptStreaming", "OpenAI GPT Streaming"),
-        ("Gemini", "Gemini"),
-        ("OpenAIDalle", "OpenAI Dall-e"),
-        ("OpenAITextToSpeech", "OpenAI Text to Speech"),
-        ("OpenAISpeechToText", "OpenAI Speech to Text"),
-        ("OpenAIRag", "OpenAI RAG"),
-        ("Riddle", "Riddle"),
+    USE_CASE_TYPE_CHOICES = [
+        (UseCaseType.OPENAI_GPT, "OpenAI GPT"),
+        (UseCaseType.OPENAI_GPT_STREAMING, "OpenAI GPT Streaming"),
+        (UseCaseType.GEMINI, "Gemini"),
+        (UseCaseType.OPENAI_DALLE, "OpenAI Dall-e"),
+        (UseCaseType.OPENAI_TEXT_TO_SPEECH, "OpenAI Text to Speech"),
+        (UseCaseType.OPENAI_SPEECH_TO_TEXT, "OpenAI Speech to Text"),
+        (UseCaseType.OPENAI_RAG, "OpenAI RAG"),
+        (UseCaseType.RIDDLE, "Riddle"),
     ]
 
-    model_mode = forms.ChoiceField(
-        choices=MODEL_MODE_CHOICES,
-        label="Model / Mode",
-        initial="OpenAIGpt",  # デフォルト値
+    use_case_type = forms.ChoiceField(
+        choices=USE_CASE_TYPE_CHOICES,
+        label="Use Case Type",
+        initial=UseCaseType.OPENAI_GPT,  # デフォルト値
         widget=forms.Select(attrs={"class": "form-control"}),
     )
 

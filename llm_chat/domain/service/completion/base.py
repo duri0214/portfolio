@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAiModel, GeminiModel
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class BaseChatService(ABC):
@@ -19,7 +20,7 @@ class BaseChatService(ABC):
         self,
         user: User,
         content: str,
-        is_riddle: bool = False,
+        use_case_type: str = UseCaseType.OPENAI_GPT,
         file_path: str | None = None,
     ) -> MessageDTO:
         return MessageDTO(
@@ -27,6 +28,6 @@ class BaseChatService(ABC):
             role=RoleType.ASSISTANT,
             content=content,
             model_name=self.model_name,
-            is_riddle=is_riddle,
+            use_case_type=use_case_type,
             file_path=file_path,
         )
