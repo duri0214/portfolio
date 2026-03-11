@@ -101,7 +101,7 @@ class OpenAITextToSpeechChatService(BaseChatService):
         return self._create_assistant_message(
             user=user_message.user,
             content=user_message.content,
-            use_case_type="OpenAIGpt",
+            use_case_type=UseCaseType.OPENAI_GPT,
             file_path=file_path,
         )
 
