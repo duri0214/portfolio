@@ -4,7 +4,7 @@ from django import forms
 class UserTextForm(forms.Form):
     question = forms.CharField(widget=forms.Textarea)
 
-    MODEL_MODE_CHOICES = [
+    USE_CASE_TYPE_CHOICES = [
         ("OpenAIGpt", "OpenAI GPT"),
         ("OpenAIGptStreaming", "OpenAI GPT Streaming"),
         ("Gemini", "Gemini"),
@@ -15,9 +15,9 @@ class UserTextForm(forms.Form):
         ("Riddle", "Riddle"),
     ]
 
-    model_mode = forms.ChoiceField(
-        choices=MODEL_MODE_CHOICES,
-        label="Model / Mode",
+    use_case_type = forms.ChoiceField(
+        choices=USE_CASE_TYPE_CHOICES,
+        label="Use Case Type",
         initial="OpenAIGpt",  # デフォルト値
         widget=forms.Select(attrs={"class": "form-control"}),
     )

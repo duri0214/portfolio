@@ -23,7 +23,7 @@ class UseCase(ABC):
         user: User,
         content: str,
         model_name: str,
-        is_riddle: bool = False,
+        use_case_type: str = "OpenAIGpt",
         file_path: str | None = None,
     ) -> MessageDTO:
         assistant_message = MessageDTO(
@@ -31,7 +31,7 @@ class UseCase(ABC):
             role=RoleType.ASSISTANT,
             content=content,
             model_name=model_name,
-            is_riddle=is_riddle,
+            use_case_type=use_case_type,
             file_path=file_path,
         )
         self.repository.insert(assistant_message)

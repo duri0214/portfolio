@@ -45,7 +45,7 @@
         <form>
             {{ form.question.label }} {{ form.question }}
             <br>
-            {{ form.model_mode.label }} {{ form.model_mode }}
+            {{ form.use_case_type.label }} {{ form.use_case_type }}
             <br>
             <div id="audio-file-container" style="display: none;">
                 <label for="audio_file">{{ form.audio_file.label }}</label>
@@ -78,7 +78,7 @@
         // TODO: templateのjsをextra_jsとして外に出す issue227
         // ドロップダウン選択肢の監視と音声ファイルフォームの表示／非表示
         document.addEventListener("DOMContentLoaded", function () {
-            const modelMode = document.querySelector('select[name="model_mode"]');
+            const useCaseType = document.querySelector('select[name="use_case_type"]');
             const audioFileInput = document.querySelector('input[name="audio_file"]');
             const audioFileContainer = document.getElementById("audio-file-container");
             const sendButton = document.getElementById("sendButton");
@@ -215,8 +215,8 @@
             // 送信ボタンのクリックイベント設定
             sendButton.addEventListener("click", function () {
                 const userMessage = userInput.value.trim();
-                const selectedModelMode = modelMode.value;
-                executeChat(selectedModelMode, userMessage);
+                const selectedUseCaseType = useCaseType.value;
+                executeChat(selectedUseCaseType, userMessage);
             });
 
             // なぞなぞボタンのクリックイベント設定
@@ -233,20 +233,20 @@
                 });
             }
 
-            function executeChat(selectedModelMode, userMessage) {
+            function executeChat(selectedUseCaseType, userMessage) {
                 // なぞなぞの場合は空文字でも（ボタンのデフォルトメッセージで）許可する
-                if (userMessage === "" && selectedModelMode !== "OpenAISpeechToText" && selectedModelMode !== "Riddle") {
+                if (userMessage === "" && selectedUseCaseType !== "OpenAISpeechToText" && selectedUseCaseType !== "Riddle") {
                     alert("メッセージを入力してください。");
                     return;
                 }
 
                 const requestData = new FormData();
-                requestData.append("use_case_type", selectedModelMode);
+                requestData.append("use_case_type", selectedUseCaseType);
                 requestData.append("user_input", userMessage);
 
                 // ユースケースごとのエンドポイントを指定
                 let endpointUrl;
-                if (selectedModelMode === "OpenAIGptStreaming") {
+                if (selectedUseCaseType === "OpenAIGptStreaming") {
                     endpointUrl = "/llm_chat/streaming/";
 
                     // Streaming の場合は streamingCard を表示
@@ -260,7 +260,7 @@
                 }
 
                 // 音声ファイルがある場合には追加
-                if (selectedModelMode === "OpenAISpeechToText" && audioFileInput.files.length > 0) {
+                if (selectedUseCaseType === "OpenAISpeechToText" && audioFileInput.files.length > 0) {
                     requestData.append("audio_file", audioFileInput.files[0]);
                 }
 
@@ -284,7 +284,7 @@
                     .then((data) => {
                         if (!data) return;
                         // ストリーミングの場合のみストリームの開始
-                        if (selectedModelMode === "OpenAIGptStreaming") {
+                        if (selectedUseCaseType === "OpenAIGptStreaming") {
                             startStreaming(outputElement);
                             // stopLoading はストリーミング完了時に呼ぶ
                         } else {
@@ -300,8 +300,8 @@
             }
 
             // ドロップダウン変更時のイベント処理
-            modelMode.addEventListener("change", function () {
-                if (modelMode.value === "OpenAISpeechToText") {
+            useCaseType.addEventListener("change", function () {
+                if (useCaseType.value === "OpenAISpeechToText") {
                     audioFileContainer.style.display = "block"; // フォームを表示
                 } else {
                     audioFileContainer.style.display = "none"; // フォームを非表示
@@ -309,7 +309,7 @@
             });
 
             // ページロード時にも選択状態に応じてフィールドを表示／非表示
-            if (modelMode.value === "OpenAISpeechToText") {
+            if (useCaseType.value === "OpenAISpeechToText") {
                 audioFileContainer.style.display = "block";
             } else {
                 audioFileContainer.style.display = "none";

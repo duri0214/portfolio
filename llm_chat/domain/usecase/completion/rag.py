@@ -30,13 +30,13 @@ class OpenAIRagUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name="OpenAIRag",
-            is_riddle=False,
+            model_name=chat_service.model_name,
+            use_case_type="OpenAIRag",
         )
         assistant_message = chat_service.generate(user_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model_name="OpenAIRag",
-            is_riddle=False,
+            model_name=chat_service.model_name,
+            use_case_type="OpenAIRag",
         )

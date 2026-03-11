@@ -70,13 +70,13 @@ class RiddleChatService(BaseLLMTask):
             user=user_message.user,
             role=RoleType.SYSTEM,
             content=RiddleChatService.get_prompt(gender),
-            is_riddle=True,
+            use_case_type="Riddle",
         )
         first_user_message = MessageDTO(
             user=user_message.user,
             role=RoleType.USER,
             content=user_message.content,
-            is_riddle=True,
+            use_case_type="Riddle",
         )
         # ユーザーメッセージのみDBに保存
         ChatLogRepository.insert(first_user_message)

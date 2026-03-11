@@ -26,13 +26,13 @@ class RiddleUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name="Riddle",
-            is_riddle=True,
+            model_name=self.config.model,
+            use_case_type="Riddle",
         )
 
-        # なぞなぞは明示的に is_riddle=True を指定
+        # なぞなぞは明示的に use_case_type="Riddle" を指定
         assistant_message = chat_service.generate(
-            user_message, is_riddle=True, gender=Gender(GenderType.MAN)
+            user_message, use_case_type="Riddle", gender=Gender(GenderType.MAN)
         )
 
         # なぞなぞの終端処理
@@ -43,6 +43,6 @@ class RiddleUseCase(UseCase):
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model_name="Riddle",
-            is_riddle=True,
+            model_name=self.config.model,
+            use_case_type="Riddle",
         )

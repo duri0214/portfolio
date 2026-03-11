@@ -37,15 +37,15 @@ class OpenAIDalleUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name="OpenAIDalle",
-            is_riddle=False,
+            model_name=chat_service.model_name,
+            use_case_type="OpenAIDalle",
         )
         assistant_message = chat_service.generate(user_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model_name="OpenAIDalle",
-            is_riddle=False,
+            model_name=chat_service.model_name,
+            use_case_type="OpenAIDalle",
             file_path=assistant_message.file_path,
         )
 
@@ -73,15 +73,15 @@ class OpenAITextToSpeechUseCase(UseCase):
             user=user,
             role=RoleType.USER,
             content=content,
-            model_name="OpenAITextToSpeech",
-            is_riddle=False,
+            model_name=chat_service.model_name,
+            use_case_type="OpenAITextToSpeech",
         )
         assistant_message = chat_service.generate(user_input_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model_name="OpenAITextToSpeech",
-            is_riddle=False,
+            model_name=chat_service.model_name,
+            use_case_type="OpenAITextToSpeech",
             file_path=assistant_message.file_path,
         )
 
@@ -143,15 +143,15 @@ class OpenAISpeechToTextUseCase(UseCase):
             role=RoleType.ASSISTANT,
             content=content,
             file_path=self.file_path,
-            model_name="OpenAISpeechToText",
-            is_riddle=False,
+            model_name=chat_service.model_name,
+            use_case_type="OpenAISpeechToText",
         )
 
         assistant_message = chat_service.generate(init_assistant_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
-            model_name="OpenAISpeechToText",
-            is_riddle=False,
+            model_name=chat_service.model_name,
+            use_case_type="OpenAISpeechToText",
             file_path=assistant_message.file_path,
         )

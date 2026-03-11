@@ -19,7 +19,7 @@ class BaseChatService(ABC):
         self,
         user: User,
         content: str,
-        is_riddle: bool = False,
+        use_case_type: str = "OpenAIGpt",
         file_path: str | None = None,
     ) -> MessageDTO:
         return MessageDTO(
@@ -27,6 +27,6 @@ class BaseChatService(ABC):
             role=RoleType.ASSISTANT,
             content=content,
             model_name=self.model_name,
-            is_riddle=is_riddle,
+            use_case_type=use_case_type,
             file_path=file_path,
         )

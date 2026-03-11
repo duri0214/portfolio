@@ -41,5 +41,5 @@ class OpenAIRagChatService(BaseChatService):
         return self._create_assistant_message(
             user=user_message.user,
             content=response_dict["answer"],
-            is_riddle=False,
+            use_case_type="OpenAIGpt",
         )

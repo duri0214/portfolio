@@ -41,9 +41,9 @@ class IndexView(FormView):
         """
         フォームの初期値を設定します。
 
-        以下の優先順位で `model_mode` を決定します：
+        以下の優先順位で `use_case_type` を決定します：
         1. なぞなぞが進行中の場合（最新のなぞなぞ履歴が未終了）："Riddle"
-        2. 過去のチャット履歴がある場合：最新のメッセージで使用されたモデル/モード
+        2. 過去のチャット履歴がある場合：最新のメッセージで使用されたモデルから推定
         3. 履歴がない場合：デフォルトの "OpenAIGpt"
         """
         initial = super().get_initial()
@@ -52,23 +52,26 @@ class IndexView(FormView):
 
         # 1. なぞなぞが進行中の場合は、Riddleモードを優先
         if self._is_riddle_active(chat_history):
-            initial["model_mode"] = "Riddle"
+            initial["use_case_type"] = "Riddle"
             return initial
 
         last_log = chat_history[-1] if chat_history else None
 
         if last_log:
-            # 2. 直近の model_name をそのまま初期値として採用
-            # Riddle は _is_riddle_active で判定済みのため、
-            # 終了している場合は Riddle 以外のデフォルトに戻す必要があるが、
-            # 履歴をクリアしない限り "Riddle" が入っている場合は 1 で return されるか、
-            # 終了していればここに来る。終了している場合は OpenAI に戻す。
-            if last_log.model_name == "Riddle":
-                initial["model_mode"] = "OpenAIGpt"
+            # 2. 直近の model_name から適切な use_case_type を推定
+            # model_name には実際のモデル名（gpt-4o, dall-e-3 など）が入っているため、
+            # それを use_case_type（OpenAIGpt, OpenAIDalle など）にマッピングする
+            model_name = last_log.model_name
+            if model_name == ModelName.DALLE_3:
+                initial["use_case_type"] = "OpenAIDalle"
+            elif model_name in (ModelName.GEMINI_2_0_FLASH, ModelName.GEMINI_2_5_FLASH):
+                initial["use_case_type"] = "Gemini"
             else:
-                initial["model_mode"] = last_log.model_name or "OpenAIGpt"
+                # GPT系はデフォルトで OpenAIGpt とする
+                # （Streaming, RAG は区別できないため、デフォルトの通常チャットとする）
+                initial["use_case_type"] = "OpenAIGpt"
         else:
-            initial["model_mode"] = "OpenAIGpt"
+            initial["use_case_type"] = "OpenAIGpt"
 
         return initial
 
@@ -99,7 +102,7 @@ class IndexView(FormView):
             return False
 
         last_log = chat_history[-1]
-        return last_log.is_riddle and RiddleChatService.RIDDLE_END_MESSAGE not in (last_log.content or "")
+        return last_log.use_case_type == "Riddle" and RiddleChatService.RIDDLE_END_MESSAGE not in (last_log.content or "")
 
 
 class SyncResponseView(View):

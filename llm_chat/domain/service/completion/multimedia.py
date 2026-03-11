@@ -49,7 +49,7 @@ class OpenAIDalleChatService(BaseChatService):
             return self._create_assistant_message(
                 user=user_message.user,
                 content=user_message.content,
-                is_riddle=False,
+                use_case_type="OpenAIGpt",
                 file_path=file_path,
             )
         except requests.exceptions.HTTPError as http_error:
@@ -100,7 +100,7 @@ class OpenAITextToSpeechChatService(BaseChatService):
         return self._create_assistant_message(
             user=user_message.user,
             content=user_message.content,
-            is_riddle=False,
+            use_case_type="OpenAIGpt",
             file_path=file_path,
         )
 
@@ -148,7 +148,7 @@ class OpenAISpeechToTextChatService(BaseChatService):
             return self._create_assistant_message(
                 user=assistant_message.user,
                 content=f"音声ファイルは「{response.text}」とテキスト化されました",
-                is_riddle=False,
+                use_case_type="OpenAIGpt",
                 file_path=assistant_message.file_path,
             )
 
