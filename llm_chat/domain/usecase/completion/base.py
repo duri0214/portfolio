@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType, StreamResponse
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class UseCase(ABC):
@@ -23,7 +24,7 @@ class UseCase(ABC):
         user: User,
         content: str,
         model_name: str,
-        use_case_type: str = "OpenAIGpt",
+        use_case_type: str = UseCaseType.OPENAI_GPT,
         file_path: str | None = None,
     ) -> MessageDTO:
         assistant_message = MessageDTO(
