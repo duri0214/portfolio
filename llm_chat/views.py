@@ -13,6 +13,7 @@ from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.usecase.completion.base import UseCase
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.usecase.completion.chat import (
     LlmChatUseCase,
     OpenAIGptStreamingUseCase,
@@ -52,7 +53,7 @@ class IndexView(FormView):
 
         # 1. なぞなぞが進行中の場合は、Riddleモードを優先
         if self._is_riddle_active(chat_history):
-            initial["use_case_type"] = "Riddle"
+            initial["use_case_type"] = UseCaseType.RIDDLE
             return initial
 
         last_log = chat_history[-1] if chat_history else None
@@ -63,15 +64,15 @@ class IndexView(FormView):
             # それを use_case_type（OpenAIGpt, OpenAIDalle など）にマッピングする
             model_name = last_log.model_name
             if model_name == ModelName.DALLE_3:
-                initial["use_case_type"] = "OpenAIDalle"
+                initial["use_case_type"] = UseCaseType.OPENAI_DALLE
             elif model_name in (ModelName.GEMINI_2_0_FLASH, ModelName.GEMINI_2_5_FLASH):
-                initial["use_case_type"] = "Gemini"
+                initial["use_case_type"] = UseCaseType.GEMINI
             else:
                 # GPT系はデフォルトで OpenAIGpt とする
                 # （Streaming, RAG は区別できないため、デフォルトの通常チャットとする）
-                initial["use_case_type"] = "OpenAIGpt"
+                initial["use_case_type"] = UseCaseType.OPENAI_GPT
         else:
-            initial["use_case_type"] = "OpenAIGpt"
+            initial["use_case_type"] = UseCaseType.OPENAI_GPT
 
         return initial
 
@@ -102,7 +103,7 @@ class IndexView(FormView):
             return False
 
         last_log = chat_history[-1]
-        return last_log.use_case_type == "Riddle" and RiddleChatService.RIDDLE_END_MESSAGE not in (last_log.content or "")
+        return last_log.use_case_type == UseCaseType.RIDDLE and RiddleChatService.RIDDLE_END_MESSAGE not in (last_log.content or "")
 
 
 class SyncResponseView(View):
@@ -120,7 +121,7 @@ class SyncResponseView(View):
             use_case: UseCase | None = None
             if use_case_type in ("Gemini", "OpenAIGpt"):
                 # TODO: user_inputでそれぞれのUse-caseを初期化したほうがよさそう issue228
-                if use_case_type == "Gemini":
+                if use_case_type == UseCaseType.GEMINI:
                     config = GeminiConfig(
                         api_key=os.getenv("GEMINI_API_KEY"),
                         max_tokens=4000,
@@ -133,18 +134,18 @@ class SyncResponseView(View):
                         model=ModelName.GPT_5_MINI,
                     )
                 use_case = LlmChatUseCase(config)
-            elif use_case_type == "OpenAIDalle":
+            elif use_case_type == UseCaseType.OPENAI_DALLE:
                 use_case = OpenAIDalleUseCase()
-            elif use_case_type == "OpenAITextToSpeech":
+            elif use_case_type == UseCaseType.OPENAI_TEXT_TO_SPEECH:
                 use_case = OpenAITextToSpeechUseCase()
-            elif use_case_type == "OpenAISpeechToText":
+            elif use_case_type == UseCaseType.OPENAI_SPEECH_TO_TEXT:
                 if not audio_file:
                     return JsonResponse({"error": "Audio file is required"}, status=400)
                 user_input = "N/A"
                 use_case = OpenAISpeechToTextUseCase(audio_file=audio_file)
-            elif use_case_type == "OpenAIRag":
+            elif use_case_type == UseCaseType.OPENAI_RAG:
                 use_case = OpenAIRagUseCase()
-            elif use_case_type == "Riddle":
+            elif use_case_type == UseCaseType.RIDDLE:
                 # RiddleはデフォルトでOpenAIを使用（必要に応じてGeminiに変更可）
                 config = OpenAIGptConfig(
                     api_key=os.getenv("OPENAI_API_KEY"),
@@ -190,7 +191,7 @@ class StreamingResponseView(View):
         use_case_type = request.POST.get("use_case_type")
         user_input = request.POST.get("user_input")
 
-        if use_case_type != "OpenAIGptStreaming":
+        if use_case_type != UseCaseType.OPENAI_GPT_STREAMING:
             return JsonResponse({"error": "Invalid use case for streaming"}, status=400)
 
         if not user_input:

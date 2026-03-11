@@ -12,6 +12,7 @@ from llm_chat.domain.service.completion.multimedia import (
 )
 from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class OpenAIDalleUseCase(UseCase):
@@ -38,14 +39,14 @@ class OpenAIDalleUseCase(UseCase):
             role=RoleType.USER,
             content=content,
             model_name=chat_service.model_name,
-            use_case_type="OpenAIDalle",
+            use_case_type=UseCaseType.OPENAI_DALLE,
         )
         assistant_message = chat_service.generate(user_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
             model_name=chat_service.model_name,
-            use_case_type="OpenAIDalle",
+            use_case_type=UseCaseType.OPENAI_DALLE,
             file_path=assistant_message.file_path,
         )
 
@@ -74,14 +75,14 @@ class OpenAITextToSpeechUseCase(UseCase):
             role=RoleType.USER,
             content=content,
             model_name=chat_service.model_name,
-            use_case_type="OpenAITextToSpeech",
+            use_case_type=UseCaseType.OPENAI_TEXT_TO_SPEECH,
         )
         assistant_message = chat_service.generate(user_input_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
             model_name=chat_service.model_name,
-            use_case_type="OpenAITextToSpeech",
+            use_case_type=UseCaseType.OPENAI_TEXT_TO_SPEECH,
             file_path=assistant_message.file_path,
         )
 
@@ -144,7 +145,7 @@ class OpenAISpeechToTextUseCase(UseCase):
             content=content,
             file_path=self.file_path,
             model_name=chat_service.model_name,
-            use_case_type="OpenAISpeechToText",
+            use_case_type=UseCaseType.OPENAI_SPEECH_TO_TEXT,
         )
 
         assistant_message = chat_service.generate(init_assistant_message)
@@ -152,6 +153,6 @@ class OpenAISpeechToTextUseCase(UseCase):
             user=user,
             content=assistant_message.content,
             model_name=chat_service.model_name,
-            use_case_type="OpenAISpeechToText",
+            use_case_type=UseCaseType.OPENAI_SPEECH_TO_TEXT,
             file_path=assistant_message.file_path,
         )

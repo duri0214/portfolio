@@ -8,6 +8,7 @@ from lib.llm.valueobject.rag import PdfDataloader
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class OpenAIRagChatService(BaseChatService):
@@ -41,5 +42,5 @@ class OpenAIRagChatService(BaseChatService):
         return self._create_assistant_message(
             user=user_message.user,
             content=response_dict["answer"],
-            use_case_type="OpenAIGpt",
+            use_case_type=UseCaseType.OPENAI_GPT,
         )

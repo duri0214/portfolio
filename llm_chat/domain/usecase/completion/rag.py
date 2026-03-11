@@ -4,6 +4,7 @@ from lib.llm.valueobject.completion import RoleType
 from llm_chat.domain.service.completion.rag import OpenAIRagChatService
 from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class OpenAIRagUseCase(UseCase):
@@ -31,12 +32,12 @@ class OpenAIRagUseCase(UseCase):
             role=RoleType.USER,
             content=content,
             model_name=chat_service.model_name,
-            use_case_type="OpenAIRag",
+            use_case_type=UseCaseType.OPENAI_RAG,
         )
         assistant_message = chat_service.generate(user_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
             model_name=chat_service.model_name,
-            use_case_type="OpenAIRag",
+            use_case_type=UseCaseType.OPENAI_RAG,
         )

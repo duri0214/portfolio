@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from lib.llm.valueobject.completion import RoleType
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class ChatLogs(models.Model):
@@ -26,14 +27,14 @@ class ChatLogs(models.Model):
     """
 
     USE_CASE_TYPE_CHOICES = [
-        ("OpenAIGpt", "OpenAI GPT"),
-        ("OpenAIGptStreaming", "OpenAI GPT Streaming"),
-        ("Gemini", "Gemini"),
-        ("OpenAIDalle", "OpenAI Dall-e"),
-        ("OpenAITextToSpeech", "OpenAI Text to Speech"),
-        ("OpenAISpeechToText", "OpenAI Speech to Text"),
-        ("OpenAIRag", "OpenAI RAG"),
-        ("Riddle", "Riddle"),
+        (UseCaseType.OPENAI_GPT, "OpenAI GPT"),
+        (UseCaseType.OPENAI_GPT_STREAMING, "OpenAI GPT Streaming"),
+        (UseCaseType.GEMINI, "Gemini"),
+        (UseCaseType.OPENAI_DALLE, "OpenAI Dall-e"),
+        (UseCaseType.OPENAI_TEXT_TO_SPEECH, "OpenAI Text to Speech"),
+        (UseCaseType.OPENAI_SPEECH_TO_TEXT, "OpenAI Speech to Text"),
+        (UseCaseType.OPENAI_RAG, "OpenAI RAG"),
+        (UseCaseType.RIDDLE, "Riddle"),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -46,7 +47,7 @@ class ChatLogs(models.Model):
     use_case_type = models.CharField(
         max_length=50,
         choices=USE_CASE_TYPE_CHOICES,
-        default="OpenAIGpt",
+        default=UseCaseType.OPENAI_GPT,
     )
     file = models.FileField(upload_to="llm_chat/audios/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -13,6 +13,7 @@ from lib.llm.valueobject.config import (
 )
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender
 from llm_chat.domain.service.completion.riddle import RiddleChatService
@@ -57,25 +58,25 @@ class ChatService(BaseChatService):
         if user_message.content is None:
             raise Exception("content is None")
 
-        if use_case_type == "Riddle" and gender is None:
+        if use_case_type == UseCaseType.RIDDLE and gender is None:
             gender = Gender(GenderType.MAN)  # デフォルト
 
         # DBから履歴を取得（roleがstrで返ってくることを想定してRoleTypeで変換）
         chat_history = ChatLogRepository.find_chat_history(user_message.user)
 
-        if not chat_history and use_case_type == "Riddle":
+        if not chat_history and use_case_type == UseCaseType.RIDDLE:
             # 初回：システムメッセージ（非保存）と初回ユーザーメッセージ（保存）を生成
             chat_history = RiddleChatService.create_initial_prompt(user_message=user_message, gender=gender)
         else:
             # 2回目以降：既存の履歴にシステムメッセージが含まれていない場合は動的に追加
-            if use_case_type == "Riddle":
+            if use_case_type == UseCaseType.RIDDLE:
                 has_system = any(m.role == RoleType.SYSTEM for m in chat_history)
                 if not has_system:
                     system_message = MessageDTO(
                         user=user_message.user,
                         role=RoleType.SYSTEM,
                         content=RiddleChatService.get_prompt(gender),
-                        use_case_type="Riddle",
+                        use_case_type=UseCaseType.RIDDLE,
                     )
                     chat_history.insert(0, system_message)
 
@@ -89,7 +90,7 @@ class ChatService(BaseChatService):
     def generate(
         self,
         user_message: MessageDTO,
-        use_case_type: str = "OpenAIGpt",
+        use_case_type: str = UseCaseType.OPENAI_GPT,
         gender: Gender | None = None,
     ) -> MessageDTO:
         """
@@ -140,7 +141,7 @@ class OpenAIChatStreamingService(BaseChatService):
     def generate(
         self, user_message: MessageDTO
     ) -> Generator[StreamResponse, None, None]:
-        self.chat_history = ChatService.get_chat_history(user_message, use_case_type="OpenAIGpt")
+        self.chat_history = ChatService.get_chat_history(user_message, use_case_type=UseCaseType.OPENAI_GPT)
 
         return LlmCompletionStreamingService(self.config).retrieve_answer(
             [x.to_message() for x in self.chat_history]
