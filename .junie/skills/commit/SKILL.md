@@ -1,5 +1,5 @@
 ---
-name: commit-and-pr
+name: commit
 description: 修正ごとにコミットを行い、リモートブランチへプッシュし、プルリクエスト（PR）を作成する一連のワークフローを実行します。
 ---
 
