@@ -10,8 +10,8 @@ from llm_chat.views import IndexView
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
-from llm_chat.domain.service.completion.chat import get_chat_history
-from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
+from llm_chat.domain.service.completion.chat import ChatService
+from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.usecase.completion.chat import LlmChatUseCase, OpenAIGptStreamingUseCase
 from llm_chat.domain.usecase.completion.multimedia import OpenAIDalleUseCase, OpenAITextToSpeechUseCase, OpenAISpeechToTextUseCase
 from llm_chat.domain.usecase.completion.riddle import RiddleUseCase
@@ -82,7 +82,7 @@ class ChatLogicTest(TestCase):
             model_name="OpenAIGpt",
             is_riddle=False,
         )
-        history = get_chat_history(user_message, is_riddle=False)
+        history = ChatService.get_chat_history(user_message, is_riddle=False)
         # 履歴が空なので、user_messageのみが保存される
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0].content, "Normal message")
@@ -105,7 +105,7 @@ class ChatLogicTest(TestCase):
             is_riddle=True,
         )
         # 初回：システムメッセージ（非保存）と初回ユーザーメッセージ（保存）
-        history = get_chat_history(
+        history = ChatService.get_chat_history(
             user_message, is_riddle=True, gender=Gender(GenderType.MAN)
         )
         self.assertEqual(len(history), 2)
@@ -131,7 +131,7 @@ class ChatLogicTest(TestCase):
         """
         # 終了メッセージを含む回答を模倣
         mock_retrieve.return_value = MagicMock(
-            answer=f"正解です！ {RIDDLE_END_MESSAGE}"
+            answer=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}"
         )
 
         config = OpenAIGptConfig(
@@ -146,7 +146,7 @@ class ChatLogicTest(TestCase):
 
             result = use_case.execute(self.user, "答えは人間です")
 
-            self.assertIn(RIDDLE_END_MESSAGE, result.content)
+            self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
             self.assertIn("評価結果", result.content)
             self.assertTrue(result.is_riddle)
 
@@ -348,7 +348,7 @@ class ViewLogicTest(TestCase):
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
-            content=f"お疲れ様でした。 {RIDDLE_END_MESSAGE}",
+            content=f"お疲れ様でした。 {RiddleChatService.RIDDLE_END_MESSAGE}",
             is_riddle=True,
         )
         context = view.get_context_data()
@@ -419,7 +419,7 @@ class ViewLogicTest(TestCase):
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
-            content=f"正解です！ {RIDDLE_END_MESSAGE}",
+            content=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}",
             model_name="Riddle",
             is_riddle=True,
             created_at=timezone.now(),
@@ -455,7 +455,7 @@ class ViewLogicTest(TestCase):
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
-            content=f"お疲れ様でした。 {RIDDLE_END_MESSAGE}",
+            content=f"お疲れ様でした。 {RiddleChatService.RIDDLE_END_MESSAGE}",
             model_name="Riddle",
             is_riddle=True,
             created_at=timezone.now(),

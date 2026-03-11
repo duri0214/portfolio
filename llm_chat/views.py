@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
-from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
+from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.usecase.completion.chat import (
     LlmChatUseCase,
@@ -99,7 +99,7 @@ class IndexView(FormView):
             return False
 
         last_log = chat_history[-1]
-        return last_log.is_riddle and RIDDLE_END_MESSAGE not in (last_log.content or "")
+        return last_log.is_riddle and RiddleChatService.RIDDLE_END_MESSAGE not in (last_log.content or "")
 
 
 class SyncResponseView(View):
