@@ -17,9 +17,14 @@ class RiddleUseCase(UseCase):
         super().__init__()
         self.config = config
 
-    def execute(self, user: User, content: str | None) -> MessageDTO:
+    def execute(
+        self, user: User, content: str | None, gender: Gender | None = None
+    ) -> MessageDTO:
         if content is None:
             raise ValueError("content cannot be None for RiddleUseCase")
+
+        if gender is None:
+            raise ValueError("gender is required for RiddleUseCase")
 
         chat_service = ChatService(self.config)
 
@@ -33,7 +38,7 @@ class RiddleUseCase(UseCase):
 
         # なぞなぞは明示的に use_case_type="Riddle" を指定
         assistant_message = chat_service.generate(
-            user_message, use_case_type="Riddle", gender=Gender(GenderType.MAN)
+            user_message, use_case_type="Riddle", gender=gender
         )
 
         # なぞなぞの終端処理

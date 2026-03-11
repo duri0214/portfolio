@@ -1,5 +1,6 @@
 from django import forms
 
+from llm_chat.domain.valueobject.completion.riddle import GenderType
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
@@ -30,6 +31,18 @@ class UserTextForm(forms.Form):
         widget=forms.ClearableFileInput(
             attrs={"class": "form-control", "accept": "audio/*"}
         ),
+    )
+
+    GENDER_CHOICES = [
+        (GenderType.MAN.value, "男性"),
+        (GenderType.WOMAN.value, "女性"),
+    ]
+
+    gender = forms.ChoiceField(
+        choices=GENDER_CHOICES,
+        label="Gender",
+        initial=GenderType.MAN.value,
+        widget=forms.Select(attrs={"class": "form-control"}),
     )
 
     def __init__(self, *args, **kwargs):

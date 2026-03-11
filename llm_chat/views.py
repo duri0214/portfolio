@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.riddle import RiddleChatService
+from llm_chat.domain.valueobject.completion.riddle import GenderType, Gender
 from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.usecase.completion.chat import (
@@ -107,9 +108,18 @@ class SyncResponseView(View):
             use_case_type = request.POST.get("use_case_type")
             user_input = request.POST.get("user_input")
             audio_file = request.FILES.get("audio_file")
+            gender_val = request.POST.get("gender")
 
             if not use_case_type:
                 return JsonResponse({"error": "No use case type provided"}, status=400)
+
+            # 性別のパース
+            gender = None
+            if gender_val:
+                try:
+                    gender = Gender(GenderType(gender_val))
+                except ValueError:
+                    pass
 
             # 使用するユースケースを切り替え TODO: Use-caseのFactoryにしたらよさそう issue229
             use_case: UseCase | None = None
@@ -154,7 +164,12 @@ class SyncResponseView(View):
                 )
 
             # ユースケースの実行
-            message = use_case.execute(user=request.user, content=user_input)
+            if isinstance(use_case, RiddleUseCase):
+                message = use_case.execute(
+                    user=request.user, content=user_input, gender=gender
+                )
+            else:
+                message = use_case.execute(user=request.user, content=user_input)
 
             # 成功レスポンスを返す
             return JsonResponse(

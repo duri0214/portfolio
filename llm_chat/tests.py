@@ -157,7 +157,9 @@ class ChatLogicTest(TestCase):
         ) as mock_eval:
             mock_eval.return_value = "\n【評価結果】\n- 論理的思考力: 100点 (合格)"
 
-            result = use_case.execute(self.user, "答えは人間です")
+            result = use_case.execute(
+                self.user, "答えは人間です", gender=Gender(GenderType.MAN)
+            )
 
             self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
             self.assertIn("評価結果", result.content)
@@ -202,12 +204,41 @@ class ChatLogicTest(TestCase):
             api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
         )
         use_case = RiddleUseCase(config)
-        result = use_case.execute(self.user, "スタート")
+        result = use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
 
         self.assertEqual(result.content, "それは人間ですか？")
         self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
         # 初回なぞなぞ：System(非保存), User, Assistant の計2通がDBへ
         self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
+
+    def test_get_chat_history_riddle_no_gender_raises_error(self):
+        """
+        [シナリオ] なぞなぞモードで性別を指定せずに get_chat_history を呼び出す
+        [期待値] ValueError が発生すること
+        """
+        user_message = MessageDTO(
+            user=self.user,
+            role=RoleType.USER,
+            content="なぞなぞスタート",
+            model_name=ModelName.GPT_5_MINI,
+            use_case_type=UseCaseType.RIDDLE,
+        )
+        with self.assertRaisesRegex(ValueError, "gender is required for RiddleUseCase"):
+            ChatService.get_chat_history(
+                user_message, use_case_type=UseCaseType.RIDDLE, gender=None
+            )
+
+    def test_riddle_usecase_no_gender_raises_error(self):
+        """
+        [シナリオ] RiddleUseCase.execute を性別指定なしで呼び出す
+        [期待値] ValueError が発生すること
+        """
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+        with self.assertRaisesRegex(ValueError, "gender is required for RiddleUseCase"):
+            use_case.execute(user=self.user, content="なぞなぞスタート", gender=None)
 
 
 class OpenAiUseCaseTest(TestCase):
