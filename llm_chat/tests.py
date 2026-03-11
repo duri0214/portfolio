@@ -9,6 +9,7 @@ from llm_chat.models import ChatLogs
 from llm_chat.views import IndexView
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleChatService
@@ -32,9 +33,9 @@ class ChatModelAndRepositoryTest(TestCase):
     def test_chat_logs_to_message_dto(self):
         """
         [シナリオ]
-        1. ChatLogs エンティティを作成 (role='user', content='Hello', use_case_type="OpenAIGpt")
+        1. ChatLogs エンティティを作成 (role='user', content='Hello', use_case_type=UseCaseType.OPENAI_GPT)
         2. to_message_dto() を呼び出して MessageDTO に変換
-        3. 期待値: 各フィールドが正しくマッピングされ、use_case_type が "OpenAIGpt" であること
+        3. 期待値: 各フィールドが正しくマッピングされ、use_case_type が UseCaseType.OPENAI_GPT であること
         """
         log = ChatLogs.objects.create(
             user=self.user,
@@ -45,12 +46,12 @@ class ChatModelAndRepositoryTest(TestCase):
         dto = log.to_message_dto()
         self.assertEqual(dto.content, "Hello")
         self.assertEqual(dto.model_name, ModelName.GPT_4O)
-        self.assertEqual(dto.use_case_type, "OpenAIGpt")
+        self.assertEqual(dto.use_case_type, UseCaseType.OPENAI_GPT)
 
     def test_repository_insert_and_find(self):
         """
         [シナリオ]
-        1. ユーザーメッセージを模した MessageDTO を作成 (role='assistant', use_case_type="Riddle")
+        1. ユーザーメッセージを模した MessageDTO を作成 (role='assistant', use_case_type=UseCaseType.RIDDLE)
         2. ChatLogRepository.insert() を使用して DB に保存
         3. find_chat_history() でそのユーザーの履歴を取得
         4. 期待値: 取得した履歴が1件であり、内容と use_case_type が一致すること
@@ -60,14 +61,14 @@ class ChatModelAndRepositoryTest(TestCase):
             role=RoleType.ASSISTANT,
             content="AI response",
             model_name=ModelName.GPT_4O,
-            use_case_type="Riddle",
+            use_case_type=UseCaseType.RIDDLE,
         )
         ChatLogRepository.insert(dto)
 
         history = ChatLogRepository.find_chat_history(self.user)
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0].content, "AI response")
-        self.assertEqual(history[0].use_case_type, "Riddle")
+        self.assertEqual(history[0].use_case_type, UseCaseType.RIDDLE)
 
 
 class ChatLogicTest(TestCase):
@@ -77,28 +78,30 @@ class ChatLogicTest(TestCase):
     def test_get_chat_history_normal(self):
         """
         [シナリオ: 通常チャット]
-        1. 過去の履歴がない状態で、ユーザーメッセージ (use_case_type="OpenAIGpt") を受け取る
+        1. 過去の履歴がない状態で、ユーザーメッセージ (use_case_type=UseCaseType.OPENAI_GPT) を受け取る
         2. get_chat_history() を実行
-        3. 期待値: 履歴リストにユーザーメッセージのみが含まれ、use_case_type が "OpenAIGpt" であること
+        3. 期待値: 履歴リストにユーザーメッセージのみが含まれ、use_case_type が UseCaseType.OPENAI_GPT であること
         """
         user_message = MessageDTO(
             user=self.user,
             role=RoleType.USER,
             content="Normal message",
             model_name=ModelName.GPT_4O,
-            use_case_type="OpenAIGpt",
+            use_case_type=UseCaseType.OPENAI_GPT,
         )
-        history = ChatService.get_chat_history(user_message, use_case_type="OpenAIGpt")
+        history = ChatService.get_chat_history(
+            user_message, use_case_type=UseCaseType.OPENAI_GPT
+        )
         # 履歴が空なので、user_messageのみが保存される
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0].content, "Normal message")
-        self.assertEqual(history[0].use_case_type, "OpenAIGpt")
+        self.assertEqual(history[0].use_case_type, UseCaseType.OPENAI_GPT)
 
     def test_get_chat_history_riddle_first(self):
         """
         [シナリオ: なぞなぞ初回開始]
-        1. 過去の履歴がない状態で、ユーザーメッセージ (use_case_type="Riddle") を受け取る
-        2. get_chat_history(use_case_type="Riddle") を実行
+        1. 過去の履歴がない状態で、ユーザーメッセージ (use_case_type=UseCaseType.RIDDLE) を受け取る
+        2. get_chat_history(use_case_type=UseCaseType.RIDDLE) を実行
         3. 期待値:
            - 内部的にシステムメッセージが生成され、履歴リストの先頭に追加されること (計2通)
            - ユーザーメッセージのみが DB に保存されること
@@ -108,16 +111,18 @@ class ChatLogicTest(TestCase):
             role=RoleType.USER,
             content="なぞなぞスタート",
             model_name=ModelName.GPT_5_MINI,
-            use_case_type="Riddle",
+            use_case_type=UseCaseType.RIDDLE,
         )
         # 初回：システムメッセージ（非保存）と初回ユーザーメッセージ（保存）
         history = ChatService.get_chat_history(
-            user_message, use_case_type="Riddle", gender=Gender(GenderType.MAN)
+            user_message,
+            use_case_type=UseCaseType.RIDDLE,
+            gender=Gender(GenderType.MAN),
         )
         self.assertEqual(len(history), 2)
         self.assertEqual(history[0].role, RoleType.SYSTEM)
         self.assertEqual(history[1].role, RoleType.USER)
-        self.assertEqual(history[1].use_case_type, "Riddle")
+        self.assertEqual(history[1].use_case_type, UseCaseType.RIDDLE)
 
         # DBにはユーザーメッセージのみ保存されているはず
         db_logs = ChatLogs.objects.filter(user=self.user)
@@ -133,7 +138,7 @@ class ChatLogicTest(TestCase):
         3. 期待値:
            - 回答内容に終了メッセージが含まれていること
            - 回答後の評価結果が含まれていること
-           - メッセージの use_case_type が "Riddle" であること
+           - メッセージの use_case_type が UseCaseType.RIDDLE であること
         """
         # 終了メッセージを含む回答を模倣
         mock_retrieve.return_value = MagicMock(
@@ -156,7 +161,7 @@ class ChatLogicTest(TestCase):
 
             self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
             self.assertIn("評価結果", result.content)
-            self.assertEqual(result.use_case_type, "Riddle")
+            self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_llm_chat_use_case_normal(self, mock_retrieve):
@@ -166,7 +171,7 @@ class ChatLogicTest(TestCase):
         2. 期待値:
            - LLM の回答内容が正しく取得されること
            - 使用モデル名が設定値と一致すること
-           - use_case_type が "OpenAIGpt" であること
+           - use_case_type が UseCaseType.OPENAI_GPT であること
            - ユーザーとアシスタントの計2通が DB に保存されること
         """
         mock_retrieve.return_value = MagicMock(answer="AIの回答です")
@@ -178,7 +183,7 @@ class ChatLogicTest(TestCase):
 
         self.assertEqual(result.content, "AIの回答です")
         self.assertEqual(result.model_name, ModelName.GPT_5_MINI)
-        self.assertEqual(result.use_case_type, "OpenAIGpt")
+        self.assertEqual(result.use_case_type, UseCaseType.OPENAI_GPT)
         self.assertEqual(
             ChatLogs.objects.filter(user=self.user).count(), 2
         )  # User + Assistant
@@ -189,7 +194,7 @@ class ChatLogicTest(TestCase):
         [シナリオ: なぞなぞユースケース]
         1. RiddleUseCase を使用してなぞなぞを開始
         2. 期待値:
-           - 回答内容が取得され、use_case_type が "Riddle" であること
+           - 回答内容が取得され、use_case_type が UseCaseType.RIDDLE であること
            - ユーザーとアシスタントの計2通が DB に保存されること (システムメッセージは保存されない)
         """
         mock_retrieve.return_value = MagicMock(answer="それは人間ですか？")
@@ -200,7 +205,7 @@ class ChatLogicTest(TestCase):
         result = use_case.execute(self.user, "スタート")
 
         self.assertEqual(result.content, "それは人間ですか？")
-        self.assertEqual(result.use_case_type, "Riddle")
+        self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
         # 初回なぞなぞ：System(非保存), User, Assistant の計2通がDBへ
         self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
 
@@ -249,7 +254,7 @@ class OpenAiUseCaseTest(TestCase):
         self.assertIsNotNone(last_log)
         self.assertIsNotNone(last_log.file.name)
         self.assertEqual(last_log.model_name, ModelName.DALLE_3)
-        self.assertEqual(last_log.use_case_type, "OpenAIDalle")
+        self.assertEqual(last_log.use_case_type, UseCaseType.OPENAI_DALLE)
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmTextToSpeech")
     def test_tts_usecase_saves_file_path(self, mock_tts_service):
@@ -279,7 +284,7 @@ class OpenAiUseCaseTest(TestCase):
         self.assertIsNotNone(last_log)
         self.assertIsNotNone(last_log.file.name)
         self.assertEqual(last_log.model_name, ModelName.TTS_1)
-        self.assertEqual(last_log.use_case_type, "OpenAITextToSpeech")
+        self.assertEqual(last_log.use_case_type, UseCaseType.OPENAI_TEXT_TO_SPEECH)
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmSpeechToText")
     @patch("llm_chat.domain.service.completion.multimedia.Path.exists")
@@ -318,7 +323,7 @@ class OpenAiUseCaseTest(TestCase):
         self.assertIsNotNone(last_log)
         self.assertEqual(last_log.file.name, "llm_chat/audios/test.mp3")
         self.assertEqual(last_log.model_name, ModelName.WHISPER_1)
-        self.assertEqual(last_log.use_case_type, "OpenAISpeechToText")
+        self.assertEqual(last_log.use_case_type, UseCaseType.OPENAI_SPEECH_TO_TEXT)
 
 
 class ViewLogicTest(TestCase):
@@ -350,7 +355,7 @@ class ViewLogicTest(TestCase):
             user=self.user,
             role=RoleType.ASSISTANT.value,
             content="なぞなぞを出題します",
-            use_case_type="Riddle",
+            use_case_type=UseCaseType.RIDDLE,
         )
         context = view.get_context_data()
         self.assertTrue(context["is_riddle_active"])
@@ -360,7 +365,7 @@ class ViewLogicTest(TestCase):
             user=self.user,
             role=RoleType.ASSISTANT.value,
             content=f"お疲れ様でした。 {RiddleChatService.RIDDLE_END_MESSAGE}",
-            use_case_type="Riddle",
+            use_case_type=UseCaseType.RIDDLE,
         )
         context = view.get_context_data()
         self.assertFalse(context["is_riddle_active"])
@@ -382,9 +387,9 @@ class ViewLogicTest(TestCase):
         view = IndexView()
         view.request = request
 
-        # 1. 履歴なし -> デフォルトで OpenAIGpt
+        # 1. 履歴なし -> デフォルトで UseCaseType.OPENAI_GPT
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), "OpenAIGpt")
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT)
 
         # 2. 直近が Gemini
 
@@ -397,7 +402,7 @@ class ViewLogicTest(TestCase):
         )
         time.sleep(0.01)
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), "Gemini")
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.GEMINI)
 
         # 3. 直近が Dall-e
         ChatLogs.objects.create(
@@ -409,7 +414,7 @@ class ViewLogicTest(TestCase):
         )
         time.sleep(0.01)
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), "OpenAIDalle")
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_DALLE)
 
         # 4. なぞなぞ (進行中)
         ChatLogs.objects.create(
@@ -417,28 +422,28 @@ class ViewLogicTest(TestCase):
             role=RoleType.ASSISTANT.value,
             content="なぞなぞです",
             model_name=ModelName.GPT_5_MINI,
-            use_case_type="Riddle",
+            use_case_type=UseCaseType.RIDDLE,
             created_at=timezone.now(),
         )
         time.sleep(0.01)
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), "Riddle")
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
 
         # 5. なぞなぞ (終了) -> 最新ログが Riddle 終了であれば、Riddle 活性は False となり、
-        # 最新ログ (Riddle 終了メッセージ) の use_case_type は "Riddle" だが、
-        # get_initial のロジックにより model_name (GPT_5_MINI) に基づき "OpenAIGpt" が選択される
+        # 最新ログ (Riddle 終了メッセージ) の use_case_type は UseCaseType.RIDDLE だが、
+        # get_initial のロジックにより model_name (GPT_5_MINI) に基づき UseCaseType.OPENAI_GPT が選択される
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
             content=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}",
             model_name=ModelName.GPT_5_MINI,
-            use_case_type="Riddle",
+            use_case_type=UseCaseType.RIDDLE,
             created_at=timezone.now(),
         )
         initial = view.get_initial()
         # 最新ログが Riddle 終了であれば、Riddle 活性は False となり、
-        # 直近の model_name が "Riddle" であっても、終了後はデフォルトの "OpenAIGpt" に戻る
-        self.assertEqual(initial.get("use_case_type"), "OpenAIGpt")
+        # 直近の model_name が UseCaseType.RIDDLE であっても、終了後はデフォルトの UseCaseType.OPENAI_GPT に戻る
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT)
 
         # 6. なぞなぞ進行中に別のチャットを挟む -> 最新のログがなぞなぞ以外であれば、その時点でなぞなぞは中断されているとみなす
         ChatLogs.objects.create(
@@ -446,7 +451,7 @@ class ViewLogicTest(TestCase):
             role=RoleType.ASSISTANT.value,
             content="なぞなぞ再開",
             model_name=ModelName.GPT_5_MINI,
-            use_case_type="Riddle",
+            use_case_type=UseCaseType.RIDDLE,
             created_at=timezone.now(),
         )
         time.sleep(0.01)
@@ -459,7 +464,7 @@ class ViewLogicTest(TestCase):
         )
         initial = view.get_initial()
         # 最新が Gemini なので、Gemini が選択される
-        self.assertEqual(initial.get("use_case_type"), "Gemini")
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.GEMINI)
 
         # 明示的に、なぞなぞを終了させる
         ChatLogs.objects.create(
@@ -467,13 +472,13 @@ class ViewLogicTest(TestCase):
             role=RoleType.ASSISTANT.value,
             content=f"お疲れ様でした。 {RiddleChatService.RIDDLE_END_MESSAGE}",
             model_name=ModelName.GPT_5_MINI,
-            use_case_type="Riddle",
+            use_case_type=UseCaseType.RIDDLE,
             created_at=timezone.now(),
         )
 
         # 7. ストリーミングモードの復元
         # Note: model_name だけではストリーミングモードと通常モードを区別できないため、
-        # OpenAIGpt として扱われる（将来的には use_case_type フィールドの追加が必要）
+        # UseCaseType.OPENAI_GPT として扱われる（将来的には use_case_type フィールドの追加が必要）
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.USER.value,
@@ -482,11 +487,11 @@ class ViewLogicTest(TestCase):
             created_at=timezone.now(),
         )
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), "OpenAIGpt")
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT)
 
         # 8. RAGモードの復元
         # Note: model_name だけでは RAG モードと通常モードを区別できないため、
-        # OpenAIGpt として扱われる（将来的には use_case_type フィールドの追加が必要）
+        # UseCaseType.OPENAI_GPT として扱われる（将来的には use_case_type フィールドの追加が必要）
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.USER.value,
@@ -495,4 +500,4 @@ class ViewLogicTest(TestCase):
             created_at=timezone.now(),
         )
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), "OpenAIGpt")
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT)
