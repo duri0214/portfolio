@@ -1,5 +1,5 @@
 ---
-name: create-issue
+name: ticket
 description: 課題や新機能、バグ修正などのタスクを管理するために、GitHub Issueを新規作成します。標準的なテンプレートに基づき、背景、目的、受け入れ条件などを整理して登録します。
 ---
 

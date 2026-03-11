@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.service.completion.chat import ChatService
-from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
+from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import GenderType, Gender
@@ -36,7 +36,7 @@ class RiddleUseCase(UseCase):
         )
 
         # なぞなぞの終端処理
-        if RIDDLE_END_MESSAGE in assistant_message.content:
+        if RiddleChatService.RIDDLE_END_MESSAGE in assistant_message.content:
             evaluation_text = chat_service.evaluate(login_user=user_message.user)
             assistant_message.content += evaluation_text
 

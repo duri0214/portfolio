@@ -1,5 +1,5 @@
 ---
-name: create-branch-from-issue
+name: branch
 description: GitHub Issueの内容を確認し、特定の命名規則に従って master ブランチから新しい作業ブランチを作成します。
 ---
 

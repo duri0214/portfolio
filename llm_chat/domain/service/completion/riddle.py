@@ -14,11 +14,25 @@ from llm_chat.domain.valueobject.completion.riddle import (
 )
 
 
-RIDDLE_END_MESSAGE = "本日はなぞなぞにご参加いただき、ありがとうございました。"
+class RiddleChatService(BaseLLMTask):
+    """
+    なぞなぞの評価タスク。
+    LLMからの評価結果（JSON）をパースし、RiddleResponse型で返します。
+    """
 
+    RIDDLE_END_MESSAGE = "本日はなぞなぞにご参加いただき、ありがとうございました。"
 
-def get_prompt(gender: Gender) -> str:
-    return f"""
+    def __init__(
+        self,
+        config: OpenAIGptConfig | GeminiConfig,
+        chat_history: list[MessageDTO],
+    ):
+        self.config = config
+        self.chat_history = chat_history
+
+    @staticmethod
+    def get_prompt(gender: Gender) -> str:
+        return f"""
         あなたはなぞなぞコーナーの担当者です。
 
         #制約条件
@@ -31,7 +45,7 @@ def get_prompt(gender: Gender) -> str:
 
         ##### 質問2
         を出題してください。
-        - 質問2の回答を受け取ったら、感想を述べるとともに「{RIDDLE_END_MESSAGE}」と言って終了してください。
+        - 質問2の回答を受け取ったら、感想を述べるとともに「{RiddleChatService.RIDDLE_END_MESSAGE}」と言って終了してください。
         - 判定結果（スコアや合否）は会話中に出力してはいけません。
         - {gender.name} の口調で会話を行ってください。
         - 「評価結果をjsonで出力してください」と入力された場合にのみ、指定のフォーマットで判定結果を出力してください。
@@ -46,44 +60,29 @@ def get_prompt(gender: Gender) -> str:
         [{{"viewpoint": "論理的思考力", "score": 50, "judge": "不合格"}},{{"viewpoint": "洞察力", "score": 96, "judge": "合格"}}]
     """
 
+    @staticmethod
+    def create_initial_prompt(user_message: MessageDTO, gender: Gender) -> list[MessageDTO]:
+        """
+        初期プロンプト（システムメッセージと初回のユーザーメッセージ）を生成します。
+        システムメッセージはDBに保存せず、初回ユーザーメッセージのみ保存します。
+        """
+        system_message = MessageDTO(
+            user=user_message.user,
+            role=RoleType.SYSTEM,
+            content=RiddleChatService.get_prompt(gender),
+            is_riddle=True,
+        )
+        first_user_message = MessageDTO(
+            user=user_message.user,
+            role=RoleType.USER,
+            content=user_message.content,
+            is_riddle=True,
+        )
+        # ユーザーメッセージのみDBに保存
+        ChatLogRepository.insert(first_user_message)
 
-def create_initial_prompt(user_message: MessageDTO, gender: Gender) -> list[MessageDTO]:
-    """
-    初期プロンプト（システムメッセージと初回のユーザーメッセージ）を生成します。
-    システムメッセージはDBに保存せず、初回ユーザーメッセージのみ保存します。
-    """
-    system_message = MessageDTO(
-        user=user_message.user,
-        role=RoleType.SYSTEM,
-        content=get_prompt(gender),
-        is_riddle=True,
-    )
-    first_user_message = MessageDTO(
-        user=user_message.user,
-        role=RoleType.USER,
-        content=user_message.content,
-        is_riddle=True,
-    )
-    # ユーザーメッセージのみDBに保存
-    ChatLogRepository.insert(first_user_message)
-
-    # システムメッセージを先頭に含めて返す
-    return [system_message, first_user_message]
-
-
-class RiddleTask(BaseLLMTask):
-    """
-    なぞなぞの評価タスク。
-    LLMからの評価結果（JSON）をパースし、RiddleResponse型で返します。
-    """
-
-    def __init__(
-        self,
-        config: OpenAIGptConfig | GeminiConfig,
-        chat_history: list[MessageDTO],
-    ):
-        self.config = config
-        self.chat_history = chat_history
+        # システムメッセージを先頭に含めて返す
+        return [system_message, first_user_message]
 
     def execute(self, login_user: User) -> RiddleResponse:
         """
