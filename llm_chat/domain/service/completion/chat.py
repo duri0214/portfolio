@@ -48,7 +48,7 @@ class ChatService(BaseChatService):
         システムメッセージはDBには保存せず、LLMへのリクエスト時にのみ動的に追加されます。
 
         :param user_message: 現在処理対象のユーザーからの入力メッセージ (MessageDTO)
-        :param use_case_type: ユースケースタイプ（"OpenAIGpt" または "Riddle"）
+        :param use_case_type: ユースケースタイプ（"OpenAIGpt" または "Gemini" または "Riddle"）
         :param gender: なぞなぞモード用初期プロンプト生成のためのユーザーの性別（use_case_type="Riddle" の場合のみ使用）
         :raises Exception: メッセージが `content is None` の場合に例外をスロー
         :return: 過去の履歴や最新のユーザーメッセージを含むチャット履歴 (list[MessageDTO])
@@ -96,7 +96,7 @@ class ChatService(BaseChatService):
         ユーザーメッセージを基に回答を生成します。
 
         なぞなぞモードの場合は use_case_type="Riddle" と適切な gender を指定します。
-        通常チャットの場合は use_case_type="OpenAIGpt"（デフォルト）を指定します。
+        通常チャットの場合は use_case_type="OpenAIGpt" または "Gemini"（デフォルトは "OpenAIGpt"）を指定します。
         """
         # なぞなぞモードはuse_case_typeが"Riddle"の場合に初期プロンプトを入れる
         self.chat_history = ChatService.get_chat_history(
