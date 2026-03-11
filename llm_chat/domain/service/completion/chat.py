@@ -30,7 +30,9 @@ class ChatService(BaseChatService):
 
     @staticmethod
     def get_chat_history(
-        user_message: MessageDTO, use_case_type: str = "OpenAIGpt", gender: Gender = None
+        user_message: MessageDTO,
+        use_case_type: str = UseCaseType.OPENAI_GPT,
+        gender: Gender = None,
     ) -> list[MessageDTO]:
         """
         チャット履歴を取得し必要に応じて初期プロンプトを追加する関数
@@ -66,7 +68,9 @@ class ChatService(BaseChatService):
 
         if not chat_history and use_case_type == UseCaseType.RIDDLE:
             # 初回：システムメッセージ（非保存）と初回ユーザーメッセージ（保存）を生成
-            chat_history = RiddleChatService.create_initial_prompt(user_message=user_message, gender=gender)
+            chat_history = RiddleChatService.create_initial_prompt(
+                user_message=user_message, gender=gender
+            )
         else:
             # 2回目以降：既存の履歴にシステムメッセージが含まれていない場合は動的に追加
             if use_case_type == UseCaseType.RIDDLE:
@@ -141,7 +145,9 @@ class OpenAIChatStreamingService(BaseChatService):
     def generate(
         self, user_message: MessageDTO
     ) -> Generator[StreamResponse, None, None]:
-        self.chat_history = ChatService.get_chat_history(user_message, use_case_type=UseCaseType.OPENAI_GPT)
+        self.chat_history = ChatService.get_chat_history(
+            user_message, use_case_type=UseCaseType.OPENAI_GPT
+        )
 
         return LlmCompletionStreamingService(self.config).retrieve_answer(
             [x.to_message() for x in self.chat_history]
