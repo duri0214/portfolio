@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 
-from llm_chat.domain.valueobject.chat import MessageDTO
+from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.models import ChatLogs
 
 

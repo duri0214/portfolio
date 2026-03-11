@@ -1,21 +1,20 @@
-from django.test import TestCase
+import time
+from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 from llm_chat.models import ChatLogs
-from llm_chat.domain.valueobject.chat import MessageDTO, Gender, GenderType
-from llm_chat.domain.repository.chat import ChatLogRepository
-from llm_chat.domain.service.chat import (
-    get_chat_history,
-    RIDDLE_END_MESSAGE,
-)
-from llm_chat.domain.usecase.chat import (
-    LlmChatUseCase,
-    RiddleUseCase,
-    OpenAIDalleUseCase,
-    OpenAITextToSpeechUseCase,
-    OpenAISpeechToTextUseCase,
-)
+from llm_chat.views import IndexView
+from llm_chat.domain.valueobject.completion.chat import MessageDTO
+from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
+from llm_chat.domain.repository.completion.chat import ChatLogRepository
+from llm_chat.domain.service.completion.chat import get_chat_history
+from llm_chat.domain.service.completion.riddle import RIDDLE_END_MESSAGE
+from llm_chat.domain.usecase.completion.chat import LlmChatUseCase, OpenAIGptStreamingUseCase
+from llm_chat.domain.usecase.completion.multimedia import OpenAIDalleUseCase, OpenAITextToSpeechUseCase, OpenAISpeechToTextUseCase
+from llm_chat.domain.usecase.completion.riddle import RiddleUseCase
 from unittest.mock import patch, MagicMock
 
 
@@ -142,7 +141,7 @@ class ChatLogicTest(TestCase):
 
         # RiddleUseCase.execute は内部で evaluate を呼ぶ（さらに LLM 実行）
         # 簡単のため、evaluate もモック化するか、retrieve_answer を 2回返すように設定
-        with patch("llm_chat.domain.service.chat.ChatService.evaluate") as mock_eval:
+        with patch("llm_chat.domain.service.completion.chat.ChatService.evaluate") as mock_eval:
             mock_eval.return_value = "\n【評価結果】\n- 論理的思考力: 100点 (合格)"
 
             result = use_case.execute(self.user, "答えは人間です")
@@ -202,9 +201,9 @@ class OpenAiUseCaseTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="openaiuser", password="password")
 
-    @patch("llm_chat.domain.service.chat.OpenAILlmDalleService")
-    @patch("llm_chat.domain.service.chat.requests.get")
-    @patch("llm_chat.domain.service.chat.Image.open")
+    @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmDalleService")
+    @patch("llm_chat.domain.service.completion.multimedia.requests.get")
+    @patch("llm_chat.domain.service.completion.multimedia.Image.open")
     def test_dalle_usecase_saves_file_path(
         self, mock_image_open, mock_get, mock_dalle_service
     ):
@@ -243,7 +242,7 @@ class OpenAiUseCaseTest(TestCase):
         self.assertIsNotNone(last_log.file.name)
         self.assertEqual(last_log.model_name, "OpenAIDalle")
 
-    @patch("llm_chat.domain.service.chat.OpenAILlmTextToSpeech")
+    @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmTextToSpeech")
     def test_tts_usecase_saves_file_path(self, mock_tts_service):
         """
         [シナリオ: TTS音声生成]
@@ -272,8 +271,8 @@ class OpenAiUseCaseTest(TestCase):
         self.assertIsNotNone(last_log.file.name)
         self.assertEqual(last_log.model_name, "OpenAITextToSpeech")
 
-    @patch("llm_chat.domain.service.chat.OpenAILlmSpeechToText")
-    @patch("llm_chat.domain.service.chat.Path.exists")
+    @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmSpeechToText")
+    @patch("llm_chat.domain.service.completion.multimedia.Path.exists")
     def test_stt_usecase_saves_file_path(self, mock_exists, mock_stt_service):
         """
         [シナリオ: STT音声認識]
@@ -288,14 +287,13 @@ class OpenAiUseCaseTest(TestCase):
         )
 
         # ダミーのアップロードファイルを作成
-        from django.core.files.uploadedfile import SimpleUploadedFile
 
         audio_file = SimpleUploadedFile(
             "test.mp3", b"dummy content", content_type="audio/mpeg"
         )
 
         # UseCase 実行
-        with patch("llm_chat.domain.usecase.chat.open", create=True):
+        with patch("llm_chat.domain.usecase.completion.multimedia.open", create=True):
             usecase = OpenAISpeechToTextUseCase(audio_file)
             result = usecase.execute(self.user, "N/A")
 
@@ -325,8 +323,6 @@ class ViewLogicTest(TestCase):
         2. 最新履歴がなぞなぞメッセージ (終了なし) の場合: is_riddle_active が True になることを確認
         3. 最新履歴になぞなぞ終了メッセージが含まれる場合: is_riddle_active が False に戻ることを確認
         """
-        from django.test import RequestFactory
-        from llm_chat.views import IndexView
 
         factory = RequestFactory()
         request = factory.get("/")
@@ -367,8 +363,6 @@ class ViewLogicTest(TestCase):
         4. 直近の履歴が なぞなぞ (進行中) の場合: Riddle が返ることを確認
         5. 直近の履歴が なぞなぞ (終了) の場合: 直近の model_name に基づく値が返ることを確認
         """
-        from django.test import RequestFactory
-        from llm_chat.views import IndexView
 
         factory = RequestFactory()
         request = factory.get("/")
@@ -382,8 +376,6 @@ class ViewLogicTest(TestCase):
         self.assertEqual(initial.get("model_mode"), "OpenAIGpt")
 
         # 2. 直近が Gemini
-        from django.utils import timezone
-        import time
 
         ChatLogs.objects.create(
             user=self.user,

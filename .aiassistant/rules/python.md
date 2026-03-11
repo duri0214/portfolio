@@ -26,6 +26,39 @@ Python 3.12 では、多くの型ヒントが組み込み型や `collections.abc
 - `Callable` は `collections.abc.Callable` からインポートする。
 - `Iterable`, `Sequence`, `Generator` なども `collections.abc` を優先する。
 
+## インポート
+### ファイル先頭でのインポート
+- すべてのインポートはファイルの先頭にまとめる。
+- 関数やメソッド内でのインポート（遅延インポート）は避ける。
+- **例外**: 循環インポートが発生する場合のみ、関数内インポートを許可する。
+
+**良い例:**
+```
+from myapp.domain.valueobject import MyValueObject
+from myapp.domain.service import MyService
+
+def my_function():
+    obj = MyValueObject()
+    return MyService().process(obj)
+```
+
+**悪い例:**
+```
+def my_function():
+    from myapp.domain.valueobject import MyValueObject  # 避ける
+    from myapp.domain.service import MyService  # 避ける
+    obj = MyValueObject()
+    return MyService().process(obj)
+```
+
+**循環インポートの例外:**
+```
+# models.py (循環インポート回避のため関数内インポートを使用)
+def to_dto(self):
+    from myapp.domain.valueobject import MyDTO  # models.py と MyDTO が相互参照する場合
+    return MyDTO(...)
+```
+
 ## 命名規則
 - ローカル変数は `snake_case` を徹底する。
 
