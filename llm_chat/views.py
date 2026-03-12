@@ -130,6 +130,7 @@ class SyncResponseView(View):
                     max_tokens=4000,
                     model=ModelName.GPT_5_MINI,
                 )
+                # 必要に応じて引数で max_turns を渡せるように構成
                 use_case = RiddleUseCase(config)
 
             if not use_case:
