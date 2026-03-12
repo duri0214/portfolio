@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
-from llm_chat.domain.service.completion.riddle import RiddleChatService
+from llm_chat.domain.service.chat import ChatDisplayService
 from llm_chat.domain.valueobject.completion.riddle import GenderType, Gender
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.use_case.completion.base import UseCase
@@ -40,48 +40,12 @@ class IndexView(FormView):
     success_url = reverse_lazy("llm:index")
 
     def get_initial(self):
-        """
-        フォームの初期値を設定します。
-
-        以下の優先順位で `use_case_type` を決定します：
-        1. なぞなぞが進行中の場合（最新のなぞなぞ履歴が未終了）："Riddle"
-        2. セッションに保存された use_case_type がある場合：それを優先
-        3. 過去のチャット履歴がある場合：最新のメッセージで使用されたモデルから推定
-        4. 履歴がない場合：デフォルトの "OpenAIGpt"
-        """
+        """フォームの初期値を設定します。"""
         initial = super().get_initial()
         login_user = self._get_login_user()
-        chat_history = ChatLogRepository.find_chat_history(user=login_user)
 
-        # 1. なぞなぞが進行中の場合は、Riddleモードを優先
-        if self._is_riddle_active(chat_history):
-            initial["use_case_type"] = UseCaseType.RIDDLE
-            # なぞなぞ進行中もセッションから性別を復元
-            riddle_gender = self.request.session.get("riddle_gender")
-            if riddle_gender:
-                initial["gender"] = riddle_gender
-            return initial
-
-        # 2. セッションから use_case_type を復元
-        session_use_case_type = self.request.session.get("use_case_type")
-        if session_use_case_type:
-            initial["use_case_type"] = session_use_case_type
-        else:
-            last_log = chat_history[-1] if chat_history else None
-
-            if last_log:
-                # 3. 直近の use_case_type を優先的に使用
-                # データベースに保存されている use_case_type を直接初期値として設定する
-                initial["use_case_type"] = last_log.use_case_type
-            else:
-                initial["use_case_type"] = UseCaseType.OPENAI_GPT
-
-        # 4. セッションから性別の初期値を取得
-        riddle_gender = self.request.session.get("riddle_gender")
-        if riddle_gender:
-            initial["gender"] = riddle_gender
-        else:
-            initial["gender"] = GenderType.MAN.value
+        initial_values = ChatDisplayService.get_initial_values(self.request, login_user)
+        initial.update(initial_values)
 
         return initial
 
@@ -93,7 +57,7 @@ class IndexView(FormView):
         # JSON フォーマットデータをテンプレートに渡す
         context["chat_history"] = [log.to_display() for log in chat_history]
         context["is_superuser"] = self.request.user.is_superuser
-        context["is_riddle_active"] = self._is_riddle_active(chat_history)
+        context["is_riddle_active"] = ChatDisplayService.is_riddle_active(chat_history)
 
         return context
 
@@ -103,18 +67,6 @@ class IndexView(FormView):
             self.request.user
             if self.request.user.is_authenticated
             else User.objects.get(pk=1)
-        )
-
-    @staticmethod
-    def _is_riddle_active(chat_history):
-        """なぞなぞが進行中か判定します（最新の履歴がなぞなぞで未終了か）。"""
-        if not chat_history:
-            return False
-
-        last_log = chat_history[-1]
-        return (
-            last_log.use_case_type == UseCaseType.RIDDLE
-            and RiddleChatService.RIDDLE_END_MESSAGE not in (last_log.content or "")
         )
 
 
