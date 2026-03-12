@@ -26,7 +26,7 @@ from unittest.mock import patch, MagicMock
 
 class ChatModelAndRepositoryTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser")
+        self.user = User.objects.create_user(username="test_user")
 
     def test_chat_logs_to_message_dto(self):
         """
@@ -71,7 +71,7 @@ class ChatModelAndRepositoryTest(TestCase):
 
 class ChatLogicTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="logicuser")
+        self.user = User.objects.create_user(username="logic_user")
 
     def test_get_chat_history_normal(self):
         """
@@ -241,7 +241,9 @@ class ChatLogicTest(TestCase):
 
 class OpenAiUseCaseTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="openaiuser", password="password")
+        self.user = User.objects.create_user(
+            username="openai_user", password="password"
+        )
 
     def _assert_chat_log_saved(self, model_name: ModelName, use_case_type: UseCaseType):
         """ChatLogs にファイルパスとモデル名、ユースケースタイプが正しく保存されていることを検証する共通ヘルパー"""

@@ -51,6 +51,10 @@
                 <label for="audio_file">{{ form.audio_file.label }}</label>
                 {{ form.audio_file }}
             </div>
+            <div id="gender-container" style="display: none;">
+                <label for="gender">{{ form.gender.label }}</label>
+                {{ form.gender }}
+            </div>
             <br>
             <div id="loading-indicator" class="align-items-center mt-2 d-none">
                 <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
@@ -81,6 +85,8 @@
             const useCaseType = document.querySelector('select[name="use_case_type"]');
             const audioFileInput = document.querySelector('input[name="audio_file"]');
             const audioFileContainer = document.getElementById("audio-file-container");
+            const genderInput = document.querySelector('select[name="gender"]');
+            const genderContainer = document.getElementById("gender-container");
             const sendButton = document.getElementById("sendButton");
             const riddleButton = document.getElementById("riddleButton");
             const userInput = document.getElementById("id_question");
@@ -243,6 +249,9 @@
                 const requestData = new FormData();
                 requestData.append("use_case_type", selectedUseCaseType);
                 requestData.append("user_input", userMessage);
+                if (genderInput) {
+                    requestData.append("gender", genderInput.value);
+                }
 
                 // ユースケースごとのエンドポイントを指定
                 let endpointUrl;
@@ -306,6 +315,12 @@
                 } else {
                     audioFileContainer.style.display = "none"; // フォームを非表示
                 }
+
+                if (useCaseType.value === "Riddle") {
+                    genderContainer.style.display = "block";
+                } else {
+                    genderContainer.style.display = "none";
+                }
             });
 
             // ページロード時にも選択状態に応じてフィールドを表示／非表示
@@ -313,6 +328,12 @@
                 audioFileContainer.style.display = "block";
             } else {
                 audioFileContainer.style.display = "none";
+            }
+
+            if (useCaseType.value === "Riddle") {
+                genderContainer.style.display = "block";
+            } else {
+                genderContainer.style.display = "none";
             }
 
             // Server-Sent Events を開始（ストリームデータを受信）

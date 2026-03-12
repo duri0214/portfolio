@@ -55,6 +55,10 @@ class IndexView(FormView):
         # 1. なぞなぞが進行中の場合は、Riddleモードを優先
         if self._is_riddle_active(chat_history):
             initial["use_case_type"] = UseCaseType.RIDDLE
+            # なぞなぞ進行中もセッションから性別を復元
+            riddle_gender = self.request.session.get("riddle_gender")
+            if riddle_gender:
+                initial["gender"] = riddle_gender
             return initial
 
         last_log = chat_history[-1] if chat_history else None
@@ -65,6 +69,13 @@ class IndexView(FormView):
             initial["use_case_type"] = last_log.use_case_type
         else:
             initial["use_case_type"] = UseCaseType.OPENAI_GPT
+
+        # 3. セッションから性別の初期値を取得
+        riddle_gender = self.request.session.get("riddle_gender")
+        if riddle_gender:
+            initial["gender"] = riddle_gender
+        else:
+            initial["gender"] = GenderType.MAN.value
 
         return initial
 
@@ -118,6 +129,8 @@ class SyncResponseView(View):
             if gender_val:
                 try:
                     gender = Gender(GenderType(gender_val))
+                    # セッションに性別を保存（モデル変更なしで記憶するため）
+                    request.session["riddle_gender"] = gender_val
                 except ValueError:
                     pass
 
