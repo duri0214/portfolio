@@ -10,7 +10,7 @@ from llm_chat.domain.service.completion.multimedia import (
     OpenAITextToSpeechChatService,
     OpenAISpeechToTextChatService,
 )
-from llm_chat.domain.usecase.completion.base import UseCase
+from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 

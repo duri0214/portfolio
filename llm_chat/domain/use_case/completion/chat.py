@@ -5,8 +5,11 @@ from django.contrib.auth.models import User
 from lib.llm.service.completion import LlmCompletionStreamingService
 from lib.llm.valueobject.completion import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
-from llm_chat.domain.service.completion.chat import ChatService, OpenAIChatStreamingService
-from llm_chat.domain.usecase.completion.base import UseCase
+from llm_chat.domain.service.completion.chat import (
+    ChatService,
+    OpenAIChatStreamingService,
+)
+from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
@@ -29,7 +32,11 @@ class LlmChatUseCase(UseCase):
             role=RoleType.USER,
             content=content,
             model_name=self.config.model,
-            use_case_type=UseCaseType.OPENAI_GPT if isinstance(self.config, OpenAIGptConfig) else UseCaseType.GEMINI,
+            use_case_type=(
+                UseCaseType.OPENAI_GPT
+                if isinstance(self.config, OpenAIGptConfig)
+                else UseCaseType.GEMINI
+            ),
         )
 
         assistant_message = chat_service.generate(user_message)
@@ -37,7 +44,11 @@ class LlmChatUseCase(UseCase):
             user=user,
             content=assistant_message.content,
             model_name=self.config.model,
-            use_case_type=UseCaseType.OPENAI_GPT if isinstance(self.config, OpenAIGptConfig) else UseCaseType.GEMINI,
+            use_case_type=(
+                UseCaseType.OPENAI_GPT
+                if isinstance(self.config, OpenAIGptConfig)
+                else UseCaseType.GEMINI
+            ),
         )
 
 
