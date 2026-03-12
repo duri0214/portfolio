@@ -2,7 +2,7 @@ import re
 import os
 import json
 from dataclasses import dataclass, field
-from typing import Dict, Any, List
+from typing import Any
 from enum import Enum
 from openai import OpenAI, AzureOpenAI, APIError
 
@@ -27,20 +27,20 @@ class CheckResult:
         name (str): チェック項目の名称。
         status (Status): チェック結果のステータス。
         message (str): ユーザー向けのメッセージ。
-        details (Dict[str, Any]): 補足情報やデバッグ用の詳細データ。
+        details (dict[str, Any]): 補足情報やデバッグ用の詳細データ。
     """
 
     name: str
     status: Status
     message: str
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         結果を辞書形式に変換します。JSON出力やサマリー作成に利用されます。
 
         Returns:
-            Dict[str, Any]: チェック結果の各属性を含む辞書。
+            dict[str, Any]: チェック結果の各属性を含む辞書。
         """
         return {
             "name": self.name,
@@ -265,7 +265,7 @@ class AvailabilityValidator(BaseValidator):
         self,
         name: str,
         client: OpenAI | AzureOpenAI | None,
-        target_models: List[str],
+        target_models: list[str],
         skip_msg: str = "API Key not provided.",
     ):
         """
@@ -351,7 +351,7 @@ class LLMHealthCheck:
         """
         LLMHealthCheck を初期化し、空の結果リストを作成します。
         """
-        self.results: List[CheckResult] = []
+        self.results: list[CheckResult] = []
         self._env_validator = EnvValidator(self)
         self._endpoint_validator = EndpointValidator(self)
         self._availability_validator = AvailabilityValidator(self)
@@ -365,12 +365,12 @@ class LLMHealthCheck:
         """
         self.results.append(result)
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """
         これまでの全チェック結果のサマリーを取得します。
 
         Returns:
-            Dict[str, Any]: 全体のステータスと個別のチェック結果を含む辞書。
+            dict[str, Any]: 全体のステータスと個別のチェック結果を含む辞書。
         """
         return {
             "overall_status": (
@@ -420,7 +420,7 @@ class LLMHealthCheck:
             print_summary (bool): 結果をコンソールに表示するかどうか。
 
         Returns:
-            Dict[str, Any]: 全体のチェック結果サマリー。
+            dict[str, Any]: 全体のチェック結果サマリー。
         """
         self._env_validator.validate_all()
         self._endpoint_validator.validate_all()
