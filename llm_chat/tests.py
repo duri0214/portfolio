@@ -165,6 +165,74 @@ class ChatLogicTest(TestCase):
             self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_riddle_use_case_forced_end(self, mock_retrieve):
+        """
+        [シナリオ: なぞなぞ強制終了]
+        1. LLM の回答に終了キーワードが含まれないが、3回目の発言（質問2への回答）である場合
+        2. RiddleUseCase.execute() を実行
+        3. 期待値:
+           - 回答内容に終了メッセージが強制的に追加されていること
+           - 評価結果が含まれていること
+        """
+        # 終了メッセージを含まない回答
+        mock_retrieve.return_value = MagicMock(
+            answer="それはたいまつですね。正解です！"
+        )
+
+        # 過去に2回ユーザー発言がある状態を作る（今回で3回目）
+        ChatLogRepository.insert(
+            MessageDTO(
+                user=self.user,
+                role=RoleType.USER,
+                content="スタート",
+                use_case_type=UseCaseType.RIDDLE,
+            )
+        )
+        ChatLogRepository.insert(
+            MessageDTO(
+                user=self.user,
+                role=RoleType.ASSISTANT,
+                content="質問1...",
+                use_case_type=UseCaseType.RIDDLE,
+            )
+        )
+        ChatLogRepository.insert(
+            MessageDTO(
+                user=self.user,
+                role=RoleType.USER,
+                content="答え1",
+                use_case_type=UseCaseType.RIDDLE,
+            )
+        )
+        ChatLogRepository.insert(
+            MessageDTO(
+                user=self.user,
+                role=RoleType.ASSISTANT,
+                content="質問2...",
+                use_case_type=UseCaseType.RIDDLE,
+            )
+        )
+
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+
+        with patch(
+            "llm_chat.domain.service.completion.chat.ChatService.evaluate"
+        ) as mock_eval:
+            mock_eval.return_value = "\n【評価結果】\n- 評価1: 100点"
+
+            # 3回目のユーザー発言
+            result = use_case.execute(
+                self.user, "それはたいまつです", gender=Gender(GenderType.MAN)
+            )
+
+            self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
+            self.assertIn("評価結果", result.content)
+            self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
+
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_llm_chat_use_case_normal(self, mock_retrieve):
         """
         [シナリオ: 通常チャットユースケース]

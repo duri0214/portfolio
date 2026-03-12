@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
+from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.use_case.completion.base import UseCase
@@ -41,8 +42,23 @@ class RiddleUseCase(UseCase):
             user_message, use_case_type="Riddle", gender=gender
         )
 
+        # ユーザーの発言回数をカウント（generate() により今回の発言もDBに保存済み）
+        chat_history = ChatLogRepository.find_chat_history(user)
+        user_turns = [m for m in chat_history if m.role == RoleType.USER]
+        turn_count = len(user_turns)
+
         # なぞなぞの終端処理
-        if RiddleChatService.RIDDLE_END_MESSAGE in assistant_message.content:
+        # 3回目の発言（質問2への回答）以降、または終了メッセージが含まれる場合
+        if (
+            turn_count >= 3
+            or RiddleChatService.RIDDLE_END_MESSAGE in assistant_message.content
+        ):
+            # 終了メッセージが含まれていない場合は強制的に付与
+            if RiddleChatService.RIDDLE_END_MESSAGE not in assistant_message.content:
+                assistant_message.content += (
+                    f"\n\n{RiddleChatService.RIDDLE_END_MESSAGE}"
+                )
+
             evaluation_text = chat_service.evaluate(login_user=user_message.user)
             assistant_message.content += evaluation_text
 

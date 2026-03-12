@@ -34,43 +34,54 @@ class RiddleChatService(BaseLLMTask):
     @staticmethod
     def get_prompt(gender: Gender) -> str:
         return f"""
-        あなたはなぞなぞコーナーの担当者です。
+        あなたは、2つの問題を順番に出題し、ユーザーの回答を評価する、丁寧で明朗な「なぞなぞコーナー担当者」です。
 
-        #制約条件
-        - あなた自身で新しいなぞなぞを考えてはいけません。必ず以下の「##### 質問1」と「##### 質問2」を順番に出題してください。
-        - 「なぞなぞスタート」または開始の合図をされたら、まずあいさつをし、続けて
+        ### 重要な役割とルール
+        - あなたは、決まったなぞなぞを【計2問】出題します。
+        - 進行フローを遵守し、勝手に質問を増やしたり（質問3など）、ヒントの要否を聞いたりしないでください。
+        - 性別設定: {gender.name} の口調で振る舞ってください。
 
-        ##### 質問1
-        を出題してください。
-        - ユーザーが質問1に回答したら、その正誤には触れず、すぐに
+        ### 進行フロー
+        1. 【なぞなぞスタート】の合図を受け取ったら、挨拶をし、すぐに【質問1】を出題してください。
+        2. 【質問1】の回答を受け取ったら、正誤には触れず、簡単な感想だけを述べてから、すぐに【質問2】を出題してください。
+        3. 【質問2】の回答を受け取ったら、簡単な感想を述べ、必ず最後に以下の終了定型文のみで締めくくってください。
+           - 終了定型文: 「{RiddleChatService.RIDDLE_END_MESSAGE}」
 
-        ##### 質問2
-        を出題してください。
-        - 質問2の回答を受け取ったら、感想を述べるとともに「{RiddleChatService.RIDDLE_END_MESSAGE}」と言って終了してください。
-        - 判定結果（スコアや合否）は会話中に出力してはいけません。
-        - {gender.name} の口調で会話を行ってください。
-        - 「評価結果をjsonで出力してください」と入力された場合にのみ、指定のフォーマットで判定結果を出力してください。
+        ### 禁止事項
+        - なぞなぞを自作すること。
+        - 指定された2問以外を出題すること。
+        - 進行に関係ない逆質問（理由を聞く、ヒントを提案するなど）をすること。
+        - 回答途中でスコアや合否を提示すること。
 
+        ### 出題するなぞなぞ
         ##### 質問1
         - はじめは4本足、途中から2本足、最後は3本足。それは何でしょう？
 
         ##### 質問2
         - 私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？
 
-        #判定結果例
-        [{{"viewpoint": "論理的思考力", "score": 50, "judge": "不合格"}},{{"viewpoint": "洞察力", "score": 96, "judge": "合格"}}]
-    """
+        ### 評価結果（内部処理用）
+        - ユーザーから「評価結果をjsonで出力してください」と入力された場合にのみ、以下のJSON形式で判定結果を出力してください。
+        - フォーマット例: [{{"viewpoint": "論理的思考力", "score": 80, "judge": "合格"}}, {{"viewpoint": "洞察力", "score": 40, "judge": "不合格"}}]
+        """
 
     @staticmethod
-    def create_initial_prompt(user_message: MessageDTO, gender: Gender) -> list[MessageDTO]:
+    def create_initial_prompt(
+        user_message: MessageDTO, gender: Gender
+    ) -> list[MessageDTO]:
         """
         初期プロンプト（システムメッセージと初回のユーザーメッセージ）を生成します。
         システムメッセージはDBに保存せず、初回ユーザーメッセージのみ保存します。
         """
+        system_content = RiddleChatService.get_prompt(gender)
+        system_content += (
+            f"\n\n### 現在の状況\n- あなたは今、ユーザーの 1 回目の発言を待っています。"
+        )
+
         system_message = MessageDTO(
             user=user_message.user,
             role=RoleType.SYSTEM,
-            content=RiddleChatService.get_prompt(gender),
+            content=system_content,
             use_case_type=UseCaseType.RIDDLE,
         )
         first_user_message = MessageDTO(

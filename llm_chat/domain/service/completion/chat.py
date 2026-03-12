@@ -76,10 +76,19 @@ class ChatService(BaseChatService):
             if use_case_type == UseCaseType.RIDDLE:
                 has_system = any(m.role == RoleType.SYSTEM for m in chat_history)
                 if not has_system:
+                    # 進行状況を計算（システムと直近のユーザーメッセージを除く以前の履歴から）
+                    user_turns = [m for m in chat_history if m.role == RoleType.USER]
+                    current_turn = (
+                        len(user_turns) + 1
+                    )  # 今回の入力を合わせると何回目の発言か
+
+                    system_content = RiddleChatService.get_prompt(gender)
+                    system_content += f"\n\n### 現在の状況\n- あなたは今、ユーザーの {current_turn} 回目の発言を待っています。"
+
                     system_message = MessageDTO(
                         user=user_message.user,
                         role=RoleType.SYSTEM,
-                        content=RiddleChatService.get_prompt(gender),
+                        content=system_content,
                         use_case_type=UseCaseType.RIDDLE,
                     )
                     chat_history.insert(0, system_message)
