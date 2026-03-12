@@ -532,3 +532,20 @@ class ViewLogicTest(TestCase):
         )
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_RAG)
+
+        # 9. セッションからの use_case_type 復元 (DB 履歴より優先)
+        request.session["use_case_type"] = UseCaseType.GEMINI
+        initial = view.get_initial()
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.GEMINI)
+
+        # 10. なぞなぞ進行中が最優先 (セッションより優先)
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.ASSISTANT.value,
+            content="なぞなぞです",
+            model_name=ModelName.GPT_5_MINI,
+            use_case_type=UseCaseType.RIDDLE,
+            created_at=timezone.now() + timezone.timedelta(seconds=1),
+        )
+        initial = view.get_initial()
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
