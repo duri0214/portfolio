@@ -1,5 +1,6 @@
 import time
 from django.test import TestCase, RequestFactory
+from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
@@ -13,10 +14,7 @@ from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleChatService
-from llm_chat.domain.usecase.completion.chat import (
-    LlmChatUseCase,
-    OpenAIGptStreamingUseCase,
-)
+from llm_chat.domain.usecase.completion.chat import LlmChatUseCase
 from llm_chat.domain.usecase.completion.multimedia import (
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
@@ -245,6 +243,16 @@ class OpenAiUseCaseTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="openaiuser", password="password")
 
+    def _assert_chat_log_saved(self, model_name: ModelName, use_case_type: UseCaseType):
+        """ChatLogs にファイルパスとモデル名、ユースケースタイプが正しく保存されていることを検証する共通ヘルパー"""
+        last_log = ChatLogs.objects.filter(
+            user=self.user, role=RoleType.ASSISTANT.value
+        ).last()
+        self.assertIsNotNone(last_log)
+        self.assertIsNotNone(last_log.file.name)
+        self.assertEqual(last_log.model_name, model_name)
+        self.assertEqual(last_log.use_case_type, use_case_type)
+
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmDalleService")
     @patch("llm_chat.domain.service.completion.multimedia.requests.get")
     @patch("llm_chat.domain.service.completion.multimedia.Image.open")
@@ -279,13 +287,7 @@ class OpenAiUseCaseTest(TestCase):
         self.assertEqual(result.model_name, ModelName.DALLE_3)
 
         # DB への保存を検証
-        last_log = ChatLogs.objects.filter(
-            user=self.user, role=RoleType.ASSISTANT.value
-        ).last()
-        self.assertIsNotNone(last_log)
-        self.assertIsNotNone(last_log.file.name)
-        self.assertEqual(last_log.model_name, ModelName.DALLE_3)
-        self.assertEqual(last_log.use_case_type, UseCaseType.OPENAI_DALLE)
+        self._assert_chat_log_saved(ModelName.DALLE_3, UseCaseType.OPENAI_DALLE)
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmTextToSpeech")
     def test_tts_usecase_saves_file_path(self, mock_tts_service):
@@ -309,13 +311,7 @@ class OpenAiUseCaseTest(TestCase):
         self.assertEqual(result.model_name, ModelName.TTS_1)
 
         # DB への保存を検証
-        last_log = ChatLogs.objects.filter(
-            user=self.user, role=RoleType.ASSISTANT.value
-        ).last()
-        self.assertIsNotNone(last_log)
-        self.assertIsNotNone(last_log.file.name)
-        self.assertEqual(last_log.model_name, ModelName.TTS_1)
-        self.assertEqual(last_log.use_case_type, UseCaseType.OPENAI_TEXT_TO_SPEECH)
+        self._assert_chat_log_saved(ModelName.TTS_1, UseCaseType.OPENAI_TEXT_TO_SPEECH)
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmSpeechToText")
     @patch("llm_chat.domain.service.completion.multimedia.Path.exists")
@@ -374,6 +370,7 @@ class ViewLogicTest(TestCase):
         factory = RequestFactory()
         request = factory.get("/")
         request.user = self.user
+        request.session = SessionStore()
 
         # 1. 履歴なし -> Riddle 非アクティブ
         view = IndexView()
@@ -414,6 +411,7 @@ class ViewLogicTest(TestCase):
         factory = RequestFactory()
         request = factory.get("/")
         request.user = self.user
+        request.session = SessionStore()
 
         view = IndexView()
         view.request = request
