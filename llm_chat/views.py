@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.riddle import RiddleChatService
+from llm_chat.domain.valueobject.completion.riddle import GenderType, Gender
 from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.usecase.completion.chat import (
@@ -44,8 +45,9 @@ class IndexView(FormView):
 
         以下の優先順位で `use_case_type` を決定します：
         1. なぞなぞが進行中の場合（最新のなぞなぞ履歴が未終了）："Riddle"
-        2. 過去のチャット履歴がある場合：最新のメッセージで使用されたモデルから推定
-        3. 履歴がない場合：デフォルトの "OpenAIGpt"
+        2. セッションに保存された use_case_type がある場合：それを優先
+        3. 過去のチャット履歴がある場合：最新のメッセージで使用されたモデルから推定
+        4. 履歴がない場合：デフォルトの "OpenAIGpt"
         """
         initial = super().get_initial()
         login_user = self._get_login_user()
@@ -54,16 +56,32 @@ class IndexView(FormView):
         # 1. なぞなぞが進行中の場合は、Riddleモードを優先
         if self._is_riddle_active(chat_history):
             initial["use_case_type"] = UseCaseType.RIDDLE
+            # なぞなぞ進行中もセッションから性別を復元
+            riddle_gender = self.request.session.get("riddle_gender")
+            if riddle_gender:
+                initial["gender"] = riddle_gender
             return initial
 
-        last_log = chat_history[-1] if chat_history else None
-
-        if last_log:
-            # 2. 直近の use_case_type を優先的に使用
-            # データベースに保存されている use_case_type を直接初期値として設定する
-            initial["use_case_type"] = last_log.use_case_type
+        # 2. セッションから use_case_type を復元
+        session_use_case_type = self.request.session.get("use_case_type")
+        if session_use_case_type:
+            initial["use_case_type"] = session_use_case_type
         else:
-            initial["use_case_type"] = UseCaseType.OPENAI_GPT
+            last_log = chat_history[-1] if chat_history else None
+
+            if last_log:
+                # 3. 直近の use_case_type を優先的に使用
+                # データベースに保存されている use_case_type を直接初期値として設定する
+                initial["use_case_type"] = last_log.use_case_type
+            else:
+                initial["use_case_type"] = UseCaseType.OPENAI_GPT
+
+        # 4. セッションから性別の初期値を取得
+        riddle_gender = self.request.session.get("riddle_gender")
+        if riddle_gender:
+            initial["gender"] = riddle_gender
+        else:
+            initial["gender"] = GenderType.MAN.value
 
         return initial
 
@@ -107,9 +125,23 @@ class SyncResponseView(View):
             use_case_type = request.POST.get("use_case_type")
             user_input = request.POST.get("user_input")
             audio_file = request.FILES.get("audio_file")
+            gender_val = request.POST.get("gender")
 
             if not use_case_type:
                 return JsonResponse({"error": "No use case type provided"}, status=400)
+
+            # セッションに use_case_type を保存（モデル変更なしで記憶するため）
+            request.session["use_case_type"] = use_case_type
+
+            # 性別のパース
+            gender = None
+            if gender_val:
+                try:
+                    gender = Gender(GenderType(gender_val))
+                    # セッションに性別を保存（モデル変更なしで記憶するため）
+                    request.session["riddle_gender"] = gender_val
+                except ValueError:
+                    pass
 
             # 使用するユースケースを切り替え TODO: Use-caseのFactoryにしたらよさそう issue229
             use_case: UseCase | None = None
@@ -154,7 +186,12 @@ class SyncResponseView(View):
                 )
 
             # ユースケースの実行
-            message = use_case.execute(user=request.user, content=user_input)
+            if isinstance(use_case, RiddleUseCase):
+                message = use_case.execute(
+                    user=request.user, content=user_input, gender=gender
+                )
+            else:
+                message = use_case.execute(user=request.user, content=user_input)
 
             # 成功レスポンスを返す
             return JsonResponse(
@@ -187,6 +224,9 @@ class StreamingResponseView(View):
 
         if use_case_type != UseCaseType.OPENAI_GPT_STREAMING:
             return JsonResponse({"error": "Invalid use case for streaming"}, status=400)
+
+        # セッションに use_case_type を保存
+        request.session["use_case_type"] = use_case_type
 
         if not user_input:
             return JsonResponse({"error": "No input provided"}, status=400)

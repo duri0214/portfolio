@@ -61,7 +61,7 @@ class ChatService(BaseChatService):
             raise Exception("content is None")
 
         if use_case_type == UseCaseType.RIDDLE and gender is None:
-            gender = Gender(GenderType.MAN)  # デフォルト
+            raise ValueError("gender is required for RiddleUseCase")
 
         # DBから履歴を取得（roleがstrで返ってくることを想定してRoleTypeで変換）
         chat_history = ChatLogRepository.find_chat_history(user_message.user)

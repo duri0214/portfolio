@@ -1,5 +1,6 @@
 import time
 from django.test import TestCase, RequestFactory
+from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
@@ -13,10 +14,7 @@ from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleChatService
-from llm_chat.domain.usecase.completion.chat import (
-    LlmChatUseCase,
-    OpenAIGptStreamingUseCase,
-)
+from llm_chat.domain.usecase.completion.chat import LlmChatUseCase
 from llm_chat.domain.usecase.completion.multimedia import (
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
@@ -28,7 +26,7 @@ from unittest.mock import patch, MagicMock
 
 class ChatModelAndRepositoryTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser")
+        self.user = User.objects.create_user(username="test_user")
 
     def test_chat_logs_to_message_dto(self):
         """
@@ -73,7 +71,7 @@ class ChatModelAndRepositoryTest(TestCase):
 
 class ChatLogicTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="logicuser")
+        self.user = User.objects.create_user(username="logic_user")
 
     def test_get_chat_history_normal(self):
         """
@@ -157,7 +155,9 @@ class ChatLogicTest(TestCase):
         ) as mock_eval:
             mock_eval.return_value = "\n【評価結果】\n- 論理的思考力: 100点 (合格)"
 
-            result = use_case.execute(self.user, "答えは人間です")
+            result = use_case.execute(
+                self.user, "答えは人間です", gender=Gender(GenderType.MAN)
+            )
 
             self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
             self.assertIn("評価結果", result.content)
@@ -202,17 +202,58 @@ class ChatLogicTest(TestCase):
             api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
         )
         use_case = RiddleUseCase(config)
-        result = use_case.execute(self.user, "スタート")
+        result = use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
 
         self.assertEqual(result.content, "それは人間ですか？")
         self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
         # 初回なぞなぞ：System(非保存), User, Assistant の計2通がDBへ
         self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
 
+    def test_get_chat_history_riddle_no_gender_raises_error(self):
+        """
+        [シナリオ] なぞなぞモードで性別を指定せずに get_chat_history を呼び出す
+        [期待値] ValueError が発生すること
+        """
+        user_message = MessageDTO(
+            user=self.user,
+            role=RoleType.USER,
+            content="なぞなぞスタート",
+            model_name=ModelName.GPT_5_MINI,
+            use_case_type=UseCaseType.RIDDLE,
+        )
+        with self.assertRaisesRegex(ValueError, "gender is required for RiddleUseCase"):
+            ChatService.get_chat_history(
+                user_message, use_case_type=UseCaseType.RIDDLE, gender=None
+            )
+
+    def test_riddle_usecase_no_gender_raises_error(self):
+        """
+        [シナリオ] RiddleUseCase.execute を性別指定なしで呼び出す
+        [期待値] ValueError が発生すること
+        """
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+        with self.assertRaisesRegex(ValueError, "gender is required for RiddleUseCase"):
+            use_case.execute(user=self.user, content="なぞなぞスタート", gender=None)
+
 
 class OpenAiUseCaseTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="openaiuser", password="password")
+        self.user = User.objects.create_user(
+            username="openai_user", password="password"
+        )
+
+    def _assert_chat_log_saved(self, model_name: ModelName, use_case_type: UseCaseType):
+        """ChatLogs にファイルパスとモデル名、ユースケースタイプが正しく保存されていることを検証する共通ヘルパー"""
+        last_log = ChatLogs.objects.filter(
+            user=self.user, role=RoleType.ASSISTANT.value
+        ).last()
+        self.assertIsNotNone(last_log)
+        self.assertIsNotNone(last_log.file.name)
+        self.assertEqual(last_log.model_name, model_name)
+        self.assertEqual(last_log.use_case_type, use_case_type)
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmDalleService")
     @patch("llm_chat.domain.service.completion.multimedia.requests.get")
@@ -248,13 +289,7 @@ class OpenAiUseCaseTest(TestCase):
         self.assertEqual(result.model_name, ModelName.DALLE_3)
 
         # DB への保存を検証
-        last_log = ChatLogs.objects.filter(
-            user=self.user, role=RoleType.ASSISTANT.value
-        ).last()
-        self.assertIsNotNone(last_log)
-        self.assertIsNotNone(last_log.file.name)
-        self.assertEqual(last_log.model_name, ModelName.DALLE_3)
-        self.assertEqual(last_log.use_case_type, UseCaseType.OPENAI_DALLE)
+        self._assert_chat_log_saved(ModelName.DALLE_3, UseCaseType.OPENAI_DALLE)
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmTextToSpeech")
     def test_tts_usecase_saves_file_path(self, mock_tts_service):
@@ -278,13 +313,7 @@ class OpenAiUseCaseTest(TestCase):
         self.assertEqual(result.model_name, ModelName.TTS_1)
 
         # DB への保存を検証
-        last_log = ChatLogs.objects.filter(
-            user=self.user, role=RoleType.ASSISTANT.value
-        ).last()
-        self.assertIsNotNone(last_log)
-        self.assertIsNotNone(last_log.file.name)
-        self.assertEqual(last_log.model_name, ModelName.TTS_1)
-        self.assertEqual(last_log.use_case_type, UseCaseType.OPENAI_TEXT_TO_SPEECH)
+        self._assert_chat_log_saved(ModelName.TTS_1, UseCaseType.OPENAI_TEXT_TO_SPEECH)
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmSpeechToText")
     @patch("llm_chat.domain.service.completion.multimedia.Path.exists")
@@ -343,6 +372,7 @@ class ViewLogicTest(TestCase):
         factory = RequestFactory()
         request = factory.get("/")
         request.user = self.user
+        request.session = SessionStore()
 
         # 1. 履歴なし -> Riddle 非アクティブ
         view = IndexView()
@@ -383,6 +413,7 @@ class ViewLogicTest(TestCase):
         factory = RequestFactory()
         request = factory.get("/")
         request.user = self.user
+        request.session = SessionStore()
 
         view = IndexView()
         view.request = request
@@ -501,3 +532,20 @@ class ViewLogicTest(TestCase):
         )
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_RAG)
+
+        # 9. セッションからの use_case_type 復元 (DB 履歴より優先)
+        request.session["use_case_type"] = UseCaseType.GEMINI
+        initial = view.get_initial()
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.GEMINI)
+
+        # 10. なぞなぞ進行中が最優先 (セッションより優先)
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.ASSISTANT.value,
+            content="なぞなぞです",
+            model_name=ModelName.GPT_5_MINI,
+            use_case_type=UseCaseType.RIDDLE,
+            created_at=timezone.now() + timezone.timedelta(seconds=1),
+        )
+        initial = view.get_initial()
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
