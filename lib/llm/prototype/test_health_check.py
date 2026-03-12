@@ -40,8 +40,8 @@ class TestLLMHealthCheck(unittest.TestCase):
         必須のAPIキーが見つからない場合に ERROR ステータスが返り、
         それ以降のエンドポイントチェックなどが SKIPPED になることを確認します。
         """
-        self.checker.check_environment_variables()
-        self.checker.check_endpoints()
+        self.checker._env_validator.validate_all()
+        self.checker._endpoint_validator.validate_all()
         summary = self.checker.get_summary()
 
         # Env check: OpenAI, Gemini, Azure は必須なので ERROR になるはず
@@ -69,15 +69,15 @@ class TestLLMHealthCheck(unittest.TestCase):
         環境変数の形式が不正な場合のテスト。
         正規表現にマッチしないキーが指定された場合に WARNING ステータスが返ることを確認します。
         """
-        self.checker.check_environment_variables()
+        self.checker._env_validator.validate_all()
         summary = self.checker.get_summary()
 
         self._assert_status(summary, "Env: OPENAI_API_KEY", Status.WARNING)
         self._assert_status(summary, "Env: GEMINI_API_KEY", Status.WARNING)
         self._assert_status(summary, "Env: AZURE_OPENAI_API_KEY", Status.WARNING)
 
-    @patch("openai.OpenAI")
-    @patch("openai.AzureOpenAI")
+    @patch("lib.llm.prototype.llm_health_check.OpenAI")
+    @patch("lib.llm.prototype.llm_health_check.AzureOpenAI")
     def test_endpoints_invalid_connection(self, mock_azure, mock_openai):
         """
         エンドポイントへの接続が失敗する場合のテスト。
@@ -99,11 +99,11 @@ class TestLLMHealthCheck(unittest.TestCase):
             {
                 "OPENAI_API_KEY": "sk-proj-DUMMY-KEY-FOR-TESTING-PURPOSES-WHICH-IS-LONG-ENOUGH",
                 "GEMINI_API_KEY": "AIza-DUMMY-KEY-FOR-TESTING-PURPOSES-31x",
-                "AZURE_OPENAI_API_KEY": "REPLACE-WITH-32-HEX-CHARS-DUMMY",
+                "AZURE_OPENAI_API_KEY": "0123456789abcdef0123456789abcdef",
                 "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
             },
         ):
-            self.checker.check_endpoints()
+            self.checker._endpoint_validator.validate_all()
             summary = self.checker.get_summary()
 
             openai_res = self._assert_status(summary, "Endpoint: OpenAI", Status.ERROR)
@@ -121,13 +121,13 @@ class TestLLMHealthCheck(unittest.TestCase):
         os.environ,
         {
             "OPENAI_API_KEY": "sk-proj-DUMMY-KEY-FOR-TESTING-PURPOSES-WHICH-IS-LONG-ENOUGH",
-            "AZURE_OPENAI_API_KEY": "REPLACE-WITH-32-HEX-CHARS-DUMMY",
+            "AZURE_OPENAI_API_KEY": "0123456789abcdef0123456789abcdef",
             "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
         },
         clear=True,
     )
-    @patch("openai.OpenAI")
-    @patch("openai.AzureOpenAI")
+    @patch("lib.llm.prototype.llm_health_check.OpenAI")
+    @patch("lib.llm.prototype.llm_health_check.AzureOpenAI")
     def test_compatibility_missing_models(self, mock_azure, mock_openai):
         """
         利用可能なモデルリストに必要なモデルが含まれていない場合のテスト。
@@ -146,7 +146,7 @@ class TestLLMHealthCheck(unittest.TestCase):
             MagicMock(id="gpt-35-turbo-dev"),
         ]
 
-        self.checker.check_model_compatibility()
+        self.checker._availability_validator.validate_all()
         summary = self.checker.get_summary()
 
         openai_comp = self._assert_status(
