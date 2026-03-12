@@ -13,19 +13,19 @@ from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.valueobject.completion.riddle import GenderType, Gender
-from llm_chat.domain.usecase.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.domain.usecase.completion.chat import (
+from llm_chat.domain.use_case.completion.base import UseCase
+from llm_chat.domain.use_case.completion.chat import (
     LlmChatUseCase,
     OpenAIGptStreamingUseCase,
 )
-from llm_chat.domain.usecase.completion.multimedia import (
+from llm_chat.domain.use_case.completion.multimedia import (
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
     OpenAISpeechToTextUseCase,
 )
-from llm_chat.domain.usecase.completion.rag import OpenAIRagUseCase
-from llm_chat.domain.usecase.completion.riddle import RiddleUseCase
+from llm_chat.domain.use_case.completion.rag import OpenAIRagUseCase
+from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig, ModelName
 from llm_chat.forms import UserTextForm
 from llm_chat.models import ChatLogs

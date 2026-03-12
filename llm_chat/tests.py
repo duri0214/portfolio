@@ -1,4 +1,5 @@
 import time
+from datetime import timedelta
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.auth.models import User
@@ -14,13 +15,13 @@ from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleChatService
-from llm_chat.domain.usecase.completion.chat import LlmChatUseCase
-from llm_chat.domain.usecase.completion.multimedia import (
+from llm_chat.domain.use_case.completion.chat import LlmChatUseCase
+from llm_chat.domain.use_case.completion.multimedia import (
     OpenAIDalleUseCase,
     OpenAITextToSpeechUseCase,
     OpenAISpeechToTextUseCase,
 )
-from llm_chat.domain.usecase.completion.riddle import RiddleUseCase
+from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
 from unittest.mock import patch, MagicMock
 
 
@@ -226,7 +227,7 @@ class ChatLogicTest(TestCase):
                 user_message, use_case_type=UseCaseType.RIDDLE, gender=None
             )
 
-    def test_riddle_usecase_no_gender_raises_error(self):
+    def test_riddle_use_case_no_gender_raises_error(self):
         """
         [シナリオ] RiddleUseCase.execute を性別指定なしで呼び出す
         [期待値] ValueError が発生すること
@@ -258,7 +259,7 @@ class OpenAiUseCaseTest(TestCase):
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmDalleService")
     @patch("llm_chat.domain.service.completion.multimedia.requests.get")
     @patch("llm_chat.domain.service.completion.multimedia.Image.open")
-    def test_dalle_usecase_saves_file_path(
+    def test_dalle_use_case_saves_file_path(
         self, mock_image_open, mock_get, mock_dalle_service
     ):
         """
@@ -292,7 +293,7 @@ class OpenAiUseCaseTest(TestCase):
         self._assert_chat_log_saved(ModelName.DALLE_3, UseCaseType.OPENAI_DALLE)
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmTextToSpeech")
-    def test_tts_usecase_saves_file_path(self, mock_tts_service):
+    def test_tts_use_case_saves_file_path(self, mock_tts_service):
         """
         [シナリオ: TTS音声生成]
         1. OpenAITextToSpeechUseCase を実行して音声を生成
@@ -317,7 +318,7 @@ class OpenAiUseCaseTest(TestCase):
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmSpeechToText")
     @patch("llm_chat.domain.service.completion.multimedia.Path.exists")
-    def test_stt_usecase_saves_file_path(self, mock_exists, mock_stt_service):
+    def test_stt_use_case_saves_file_path(self, mock_exists, mock_stt_service):
         """
         [シナリオ: STT音声認識]
         1. OpenAISpeechToTextUseCase を実行して音声をテキスト化
@@ -337,7 +338,7 @@ class OpenAiUseCaseTest(TestCase):
         )
 
         # UseCase 実行
-        with patch("llm_chat.domain.usecase.completion.multimedia.open", create=True):
+        with patch("llm_chat.domain.use_case.completion.multimedia.open", create=True):
             use_case = OpenAISpeechToTextUseCase(audio_file)
             result = use_case.execute(self.user, "N/A")
 
@@ -545,7 +546,7 @@ class ViewLogicTest(TestCase):
             content="なぞなぞです",
             model_name=ModelName.GPT_5_MINI,
             use_case_type=UseCaseType.RIDDLE,
-            created_at=timezone.now() + timezone.timedelta(seconds=1),
+            created_at=timezone.now() + timedelta(seconds=1),
         )
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
