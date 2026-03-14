@@ -45,14 +45,17 @@ class UseCaseFactoryTest(TestCase):
             "test.mp3", b"dummy content", content_type="audio/mpeg"
         )
         # SpeechToTextUseCaseは初期化時に実際にファイルを保存しようとするため、
-        # 保存パスをモック化するか、単に例外が発生しないことを確認。
-        # multimedia.py L105付近で MEDIA_ROOT を使用している。
+        # Path.exists() が True を返すようにモック化する。
         with patch("llm_chat.domain.use_case.completion.multimedia.open", create=True):
             with patch("llm_chat.domain.use_case.completion.multimedia.Path.mkdir"):
-                use_case = UseCaseFactory.create(
-                    UseCaseType.OPENAI_SPEECH_TO_TEXT, audio_file=audio_file
-                )
-                self.assertIsInstance(use_case, OpenAISpeechToTextUseCase)
+                with patch(
+                    "llm_chat.domain.use_case.completion.multimedia.Path.exists",
+                    return_value=True,
+                ):
+                    use_case = UseCaseFactory.create(
+                        UseCaseType.OPENAI_SPEECH_TO_TEXT, audio_file=audio_file
+                    )
+                    self.assertIsInstance(use_case, OpenAISpeechToTextUseCase)
 
     def test_create_openai_speech_to_text_no_file(self):
         with self.assertRaisesRegex(
