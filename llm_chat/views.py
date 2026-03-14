@@ -14,19 +14,11 @@ from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.chat import ChatDisplayService
 from llm_chat.domain.valueobject.completion.riddle import GenderType, Gender
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.domain.use_case.completion.base import UseCase
+from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.use_case.completion.chat import (
-    LlmChatUseCase,
     OpenAIGptStreamingUseCase,
 )
-from llm_chat.domain.use_case.completion.multimedia import (
-    OpenAIDalleUseCase,
-    OpenAITextToSpeechUseCase,
-    OpenAISpeechToTextUseCase,
-)
-from llm_chat.domain.use_case.completion.rag import OpenAIRagUseCase
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
-from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig, ModelName
 from llm_chat.forms import UserTextForm
 from llm_chat.models import ChatLogs
 
@@ -95,48 +87,15 @@ class SyncResponseView(View):
                 except ValueError:
                     pass
 
-            # 使用するユースケースを切り替え TODO: Use-caseのFactoryにしたらよさそう issue229
-            use_case: UseCase | None = None
-            if use_case_type in ("Gemini", "OpenAIGpt"):
-                # TODO: user_inputでそれぞれのUse-caseを初期化したほうがよさそう issue228
-                if use_case_type == UseCaseType.GEMINI:
-                    config = GeminiConfig(
-                        api_key=os.getenv("GEMINI_API_KEY"),
-                        max_tokens=4000,
-                        model=ModelName.GEMINI_2_5_FLASH,
-                    )
-                else:
-                    config = OpenAIGptConfig(
-                        api_key=os.getenv("OPENAI_API_KEY"),
-                        max_tokens=4000,
-                        model=ModelName.GPT_5_MINI,
-                    )
-                use_case = LlmChatUseCase(config)
-            elif use_case_type == UseCaseType.OPENAI_DALLE:
-                use_case = OpenAIDalleUseCase()
-            elif use_case_type == UseCaseType.OPENAI_TEXT_TO_SPEECH:
-                use_case = OpenAITextToSpeechUseCase()
-            elif use_case_type == UseCaseType.OPENAI_SPEECH_TO_TEXT:
-                if not audio_file:
-                    return JsonResponse({"error": "Audio file is required"}, status=400)
-                user_input = "N/A"
-                use_case = OpenAISpeechToTextUseCase(audio_file=audio_file)
-            elif use_case_type == UseCaseType.OPENAI_RAG:
-                use_case = OpenAIRagUseCase()
-            elif use_case_type == UseCaseType.RIDDLE:
-                # RiddleはデフォルトでOpenAIを使用（必要に応じてGeminiに変更可）
-                config = OpenAIGptConfig(
-                    api_key=os.getenv("OPENAI_API_KEY"),
-                    max_tokens=4000,
-                    model=ModelName.GPT_5_MINI,
+            # 使用するユースケースを切り替え
+            try:
+                if use_case_type == UseCaseType.OPENAI_SPEECH_TO_TEXT:
+                    user_input = "N/A"
+                use_case = UseCaseFactory.create(
+                    use_case_type=use_case_type, audio_file=audio_file
                 )
-                # 必要に応じて引数で max_turns を渡せるように構成
-                use_case = RiddleUseCase(config)
-
-            if not use_case:
-                return JsonResponse(
-                    {"error": "Invalid use case type provided"}, status=400
-                )
+            except ValueError as e:
+                return JsonResponse({"error": str(e)}, status=400)
 
             # ユースケースの実行
             if isinstance(use_case, RiddleUseCase):
@@ -181,10 +140,11 @@ class StreamingResponseView(View):
         # セッションに use_case_type を保存
         request.session["use_case_type"] = use_case_type
 
-        if not user_input:
-            return JsonResponse({"error": "No input provided"}, status=400)
-
-        use_case = OpenAIGptStreamingUseCase()
+        # 使用するユースケースを切り替え
+        try:
+            use_case = UseCaseFactory.create(use_case_type=use_case_type)
+        except ValueError as e:
+            return JsonResponse({"error": str(e)}, status=400)
         StreamingResponseView.stored_stream = use_case.execute(
             user=request.user, content=user_input
         )

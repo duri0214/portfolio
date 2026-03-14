@@ -268,8 +268,12 @@
                     streamingCard.style.display = "none";
                 }
 
-                // 音声ファイルがある場合には追加
-                if (selectedUseCaseType === "OpenAISpeechToText" && audioFileInput.files.length > 0) {
+                // 音声ファイルが必要なユースケースのバリデーション
+                if (selectedUseCaseType === "OpenAISpeechToText") {
+                    if (audioFileInput.files.length === 0) {
+                        alert("音声ファイルを選択してください。");
+                        return;
+                    }
                     requestData.append("audio_file", audioFileInput.files[0]);
                 }
 
@@ -284,9 +288,13 @@
                 })
                     .then((response) => {
                         if (!response.ok) {
-                            console.error("リクエスト失敗:", response.status);
-                            stopLoading();
-                            return;
+                            return response.json().then((errData) => {
+                                const errorMsg = errData.error || "リクエストに失敗しました。";
+                                alert("エラー: " + errorMsg);
+                                console.error("リクエスト失敗:", response.status, errData);
+                                stopLoading();
+                                throw new Error(errorMsg);
+                            });
                         }
                         return response.json();
                     })
