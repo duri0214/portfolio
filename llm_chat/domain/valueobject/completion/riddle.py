@@ -51,14 +51,18 @@ class Gender:
 
 class RiddleEvaluation(BaseModel):
     """
-    なぞなぞの評価結果
+    なぞなぞセッション全体の総合評価結果。
+
+    複数のなぞなぞの出題・回答セッションがすべて終了した後に、
+    それまでのユーザーの回答内容を多角的に分析・評価した結果を保持します。
+    単一の問題に対する評価ではなく、セッション全体を通じた総合的な能力判定です。
 
     Attributes:
         correctness (int): 正確性 (0-5)
         reasoning (int): 論理 (0-5)
         creativity (int): 独創性 (2-5)
         rebuttal (int): 反論 (0-3)
-        comment (str): コメント
+        comment (str): 全体を通じた講評
     """
 
     correctness: int = Field(..., ge=0, le=5, description="正確性 (0-5)")
@@ -77,15 +81,15 @@ class RiddleResponse(ChatResult):
     """
     なぞなぞタスクの最終的な構造化レスポンス（集約ルート）。
 
-    BaseModelである ChatResult を継承し、RiddleEvaluation を保持する。
-    処理の流れとして、LLMから返されたJSONをパースしてこのクラスにマッピングすることで、
-    型安全な評価結果の提供を保証する。
+    BaseModelである ChatResult を継承し、セッション全体の評価結果（RiddleEvaluation）を保持します。
+    処理の流れとして、全問終了後にLLMから返された評価JSONをパースしてこのクラスにマッピングすることで、
+    型安全な総合評価の提供を保証します。
 
     Attributes:
         answer (str): LLMから返された生の回答テキスト。
         explanation (str | None): 評価に関する補足説明。
         metadata (dict[str, Any]): トークン数やモデル名などの付随情報。
-        evaluation (RiddleEvaluation): 評価詳細。
+        evaluation (RiddleEvaluation): セッション全体の総合評価詳細。
     """
 
     evaluation: RiddleEvaluation | None = Field(None, description="評価詳細")
