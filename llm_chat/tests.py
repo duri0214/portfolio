@@ -831,3 +831,63 @@ class ViewLogicTest(TestCase):
         )
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
+
+    def test_sync_response_view_riddle_no_questions_error(self):
+        """
+        [シナリオ] なぞなぞの問題が登録されていない状態で SyncResponseView にリクエストを投げる
+        [期待値] 400エラーが返り、適切なメッセージが含まれていること
+        """
+        RiddleQuestion.objects.all().delete()
+        factory = RequestFactory()
+        request = factory.post(
+            "/llm_chat/sync/",
+            {
+                "use_case_type": UseCaseType.RIDDLE,
+                "user_input": "スタート",
+                "gender": "man",
+            },
+        )
+        request.user = self.user
+        # セッションのモック
+        request.session = SessionStore()
+
+        from llm_chat.views import SyncResponseView
+
+        response = SyncResponseView.post(request)
+        self.assertEqual(response.status_code, 400)
+
+        import json
+
+        data = json.loads(response.content)
+        self.assertEqual(
+            data["error"],
+            "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。",
+        )
+
+    def test_riddle_sample_csv_view(self):
+        """
+        [シナリオ] サンプルCSVダウンロードリンクにアクセスする
+        [期待値] 200 OK が返り、CSV形式で期待通りの内容が含まれていること
+        """
+        from django.urls import reverse
+        from llm_chat.views import RiddleSampleCSVView
+
+        factory = RequestFactory()
+        request = factory.get(reverse("llm:riddle_sample_csv"))
+        request.user = self.user
+
+        response = RiddleSampleCSVView.get(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn(
+            'attachment; filename="riddle_sample.csv"', response["Content-Disposition"]
+        )
+
+        content = response.content.decode("utf-8")
+        lines = content.strip().splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertIn("はじめは4本足", lines[0])
+        self.assertIn("人間", lines[0])
+        self.assertIn("私は黒い服を着て", lines[1])
+        self.assertIn("たいまつ", lines[1])

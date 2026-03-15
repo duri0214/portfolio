@@ -2,7 +2,7 @@ import json
 from typing import Generator
 
 from django.contrib.auth.models import User
-from django.http import StreamingHttpResponse, JsonResponse
+from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import FormView
@@ -101,12 +101,15 @@ class SyncResponseView(View):
                 return JsonResponse({"error": str(e)}, status=400)
 
             # ユースケースの実行
-            if isinstance(use_case, RiddleUseCase):
-                message = use_case.execute(
-                    user=request.user, content=user_input, gender=gender
-                )
-            else:
-                message = use_case.execute(user=request.user, content=user_input)
+            try:
+                if isinstance(use_case, RiddleUseCase):
+                    message = use_case.execute(
+                        user=request.user, content=user_input, gender=gender
+                    )
+                else:
+                    message = use_case.execute(user=request.user, content=user_input)
+            except ValueError as e:
+                return JsonResponse({"error": str(e)}, status=400)
 
             # 成功レスポンスを返す
             return JsonResponse(
@@ -262,3 +265,30 @@ class RiddleCSVUploadView(View):
             messages.error(request, "CSVファイルのアップロードに失敗しました。")
 
         return redirect("llm:riddle_admin")
+
+
+class RiddleSampleCSVView(View):
+    @staticmethod
+    def get(request, *args, **kwargs):
+        """サンプルCSVを出力する（以前のフォールバック2問）"""
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="riddle_sample.csv"'
+
+        writer = csv.writer(response)
+        # order, question_text, answer_text
+        writer.writerow(
+            [
+                1,
+                "はじめは4本足、途中から2本足、最後は3本足。それは何でしょう？",
+                "人間",
+            ]
+        )
+        writer.writerow(
+            [
+                2,
+                "私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？",
+                "たいまつ",
+            ]
+        )
+
+        return response

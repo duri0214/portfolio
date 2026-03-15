@@ -8,6 +8,7 @@ from .views import (
     ClearChatLogsView,
     RiddleAdminView,
     RiddleCSVUploadView,
+    RiddleSampleCSVView,
 )
 
 app_name = "llm"
@@ -18,6 +19,11 @@ urlpatterns = [
         "riddle_admin/upload/",
         RiddleCSVUploadView.as_view(),
         name="riddle_csv_upload",
+    ),
+    path(
+        "riddle_admin/sample_csv/",
+        RiddleSampleCSVView.as_view(),
+        name="riddle_sample_csv",
     ),
     path("streaming/", StreamingResponseView.as_view(), name="streaming_response"),
     path("sync/", SyncResponseView.as_view(), name="sync_response"),
