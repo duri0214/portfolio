@@ -208,8 +208,8 @@ class ClearChatLogsView(View):
     def post(request, *args, **kwargs):
         """ChatLogsテーブルを全削除する（誰でも実行可・CSRF保護あり）"""
         try:
-            ChatLogRepository.clear_all()
-            return JsonResponse({"status": "success"})
+            count = ChatLogRepository.clear_all()
+            return JsonResponse({"status": "success", "deleted": count})
         except Exception as e:
             return JsonResponse(
                 {"error": "Failed to clear", "detail": str(e)}, status=500

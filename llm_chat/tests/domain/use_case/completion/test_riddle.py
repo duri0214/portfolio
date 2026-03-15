@@ -270,6 +270,30 @@ class RiddleUseCaseTest(TestCase):
         self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_riddle_use_case_no_reset_on_answer(self, mock_retrieve):
+        """
+        [シナリオ: 2問目以降の回答で履歴がリセットされないことの検証]
+        1. なぞなぞを開始し、1問目の回答を送る。
+        2. 期待値: 履歴が保持され、ChatLogs が累積していくこと。
+        """
+        mock_retrieve.return_value = MagicMock(answer="正解です。次は2問目です。")
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+
+        # 1. なぞなぞ開始 (リセットされるはず)
+        use_case.execute(self.user, "なぞなぞを始めて", gender=Gender(GenderType.MAN))
+        self.assertEqual(
+            ChatLogs.objects.filter(user=self.user).count(), 2
+        )  # User, Assistant
+
+        # 2. 1問目の回答 (リセットされないはず)
+        use_case.execute(self.user, "答えは人間です", gender=Gender(GenderType.MAN))
+        # 履歴がリセットされなければ、User(初回), Assistant(初回), User(2回目), Assistant(2回目) で 4件になる
+        self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 4)
+
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_no_questions_raises_error(self, mock_retrieve):
         """
         [シナリオ: 問題が未登録の場合の挙動]

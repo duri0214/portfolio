@@ -333,6 +333,31 @@ class ViewLogicTest(TestCase):
         self.assertEqual(questions[1].order, 2)
         self.assertEqual(questions[1].question_text, "New Q2")
 
+    def test_clear_chat_logs_view(self):
+        """
+        [シナリオ: チャット履歴の全削除]
+        1. チャット履歴をいくつか作成する
+        2. ClearChatLogsView に POST リクエストを送信する
+        3. 期待値:
+           - レスポンスが 200 OK であること
+           - レスポンスに削除件数が含まれていること
+           - 実際にレコードが削除されていること
+        """
+        user = User.objects.create_user(username="testuser_clear")
+        from llm_chat.models import ChatLogs
+
+        ChatLogs.objects.create(user=user, role="USER", content="test1")
+        ChatLogs.objects.create(user=user, role="ASSISTANT", content="test2")
+
+        from django.urls import reverse
+
+        response = self.client.post(reverse("llm:clear_chat_logs"))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "success")
+        self.assertEqual(data["deleted"], 2)
+        self.assertEqual(ChatLogs.objects.count(), 0)
+
     @staticmethod
     def _create_messages_mock():
         from django.contrib.messages.storage.base import BaseStorage

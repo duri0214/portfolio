@@ -11,9 +11,15 @@ class ChatLogRepository:
         return [chat_log.to_message_dto() for chat_log in chat_logs]
 
     @staticmethod
-    def clear_all():
-        """すべてのチャット履歴を削除します。"""
-        ChatLogs.objects.all().delete()
+    def clear_all() -> int:
+        """
+        すべてのチャット履歴を削除します。
+
+        Returns:
+            int: 削除されたレコードの件数。
+        """
+        deleted_count, _ = ChatLogs.objects.all().delete()
+        return deleted_count
 
     @staticmethod
     def insert(message: MessageDTO):
