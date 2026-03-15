@@ -59,7 +59,14 @@ class ChatDisplayService:
 
     @staticmethod
     def is_riddle_active(chat_history: list) -> bool:
-        """なぞなぞが進行中か判定します（最新の履歴がなぞなぞで未終了か）。"""
+        """
+        なぞなぞが進行中か判定します。
+        最新の履歴がなぞなぞモード（UseCaseType.RIDDLE）であり、 かつ
+        AIからの終了定型文（RiddleChatService.RIDDLE_END_MESSAGE）が含まれていない場合に
+        「進行中（アクティブ）」とみなされます。
+
+        フロントエンドでは、この判定結果に基づきボタンの色（黄色＝進行中、緑色＝開始前）が変化します。
+        """
         if not chat_history:
             return False
 

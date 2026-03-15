@@ -11,7 +11,7 @@ from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
     RiddleResponse,
     RiddleEvaluation,
-    RiddleItem,
+    Riddle,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
@@ -36,7 +36,7 @@ class RiddleChatService(BaseLLMTask):
     @staticmethod
     def get_prompt(
         gender: Gender,
-        riddle_set: list[RiddleItem],
+        riddle_set: list[Riddle],
         current_index: int | None = None,
     ) -> str:
         riddle_count = len(riddle_set)
@@ -58,11 +58,13 @@ class RiddleChatService(BaseLLMTask):
         - あなたは、決まったなぞなぞを【計{riddle_count}問】出題します。
         - 進行フローを遵守し、勝手に質問を増やしたり、ヒントの要否を聞いたりしないでください。
         - 性別設定: {gender.name} の口調で振る舞ってください。
+        - **Markdown 形式で読みやすく出力してください。特に、感想と次の質問の間には必ず 2 つの改行（空行）を挿入してください。**
+        - **回答の冒頭に挨拶や「回答ありがとうございます」などの一文を入れる場合、その直後に段落（空行）を作らず、すぐに「##### 質問n」を開始してください。**
 
         ### 進行フロー
         1. 【なぞなぞスタート】の合図を受け取ったら、挨拶をし、すぐに【質問1】を出題してください。
         2. 【質問1】から【質問{riddle_count-1}】までの回答を受け取ったら、正誤には触れず、簡単な感想だけを述べてから、すぐに次の質問を出題してください。
-        3. 【質問{riddle_count}】（最後の質問）の回答を受け取ったら、簡単な感想を述べ、必ず最後に以下の終了定型文のみを出力して終了してください。これ以上の追加質問は絶対にしないでください。
+        3. 【質問{riddle_count}】（最後の質問）の回答を受け取ったら、簡単な感想を述べ、必ず最後に以下の終了定型文のみを出力して終了してください。これ以上の追加質問や、会話を継続するような提案（「別のなぞなぞを出しましょうか？」など）は絶対にしないでください。
            - 終了定型文: 「{RiddleChatService.RIDDLE_END_MESSAGE}」
 
         ### 禁止事項
@@ -86,7 +88,7 @@ class RiddleChatService(BaseLLMTask):
     def create_initial_prompt(
         user_message: MessageDTO,
         gender: Gender,
-        riddle_set: list[RiddleItem],
+        riddle_set: list[Riddle],
     ) -> list[MessageDTO]:
         """
         初期プロンプト（システムメッセージと初回のユーザーメッセージ）を生成します。
@@ -114,7 +116,7 @@ class RiddleChatService(BaseLLMTask):
         # システムメッセージを先頭に含めて返す
         return [system_message, first_user_message]
 
-    def execute(self, login_user: User, riddle_set: list[RiddleItem]) -> RiddleResponse:
+    def execute(self, login_user: User, riddle_set: list[Riddle]) -> RiddleResponse:
         """
         評価プロンプトを送信し、結果を RiddleResponse に変換します。
         """
@@ -133,11 +135,17 @@ class RiddleChatService(BaseLLMTask):
 
 ### 評価の指示
 - 挨拶、説明、前置きなどは一切不要です。
-- JSON配列（[...]）のみを返してください。
-- フォーマットは必ず以下の判定結果例に従ってください。
+- JSONオブジェクト（{{...}}）のみを返してください。
+- フォーマットは必ず以下のJSON構造に従ってください。
 
-判定結果例:
-[{{"viewpoint": "論理的思考力", "score": 80, "judge": "合格"}}, {{"viewpoint": "洞察力", "score": 40, "judge": "不合格"}}]
+JSON構造:
+{{
+  "correctness": 3,
+  "reasoning": 4,
+  "creativity": 2,
+  "rebuttal": 0,
+  "comment": "コメント"
+}}
 """.strip(),
         )
 
@@ -162,29 +170,22 @@ class RiddleChatService(BaseLLMTask):
                 cleaned_content = "\n".join(lines).strip()
 
             eval_data = json.loads(cleaned_content)
-            # eval_data はリスト形式 [{...}, {...}] と想定
-            if not isinstance(eval_data, list):
-                raise ValueError("LLM returned non-list format for evaluations")
+            # eval_data は辞書形式 {...} と想定
+            if not isinstance(eval_data, dict):
+                raise ValueError("LLM returned non-dict format for evaluation")
 
-            evaluations = []
-            for item in eval_data:
-                if isinstance(item, dict):
-                    evaluations.append(RiddleEvaluation(**item))
-                else:
-                    # item が辞書でない場合はスキップするか、ValueErrorを投げてパース失敗扱いにする
-                    raise ValueError(f"Evaluation item is not a dict: {type(item)}")
+            evaluation = RiddleEvaluation(**eval_data)
 
             return RiddleResponse(
                 answer=raw_content,
-                evaluations=evaluations,
+                evaluation=evaluation,
                 explanation="なぞなぞの評価結果です。",
             )
         except (json.JSONDecodeError, ValueError) as e:
             # パース失敗時のフォールバックまたはエラーハンドリング
-            # ここで「残心」を持ってエラーを処理
             return RiddleResponse(
                 answer=raw_content,
-                evaluations=[],
+                evaluation=None,
                 explanation=f"評価結果のパースに失敗しました: {str(e)}",
             )
 
@@ -195,6 +196,6 @@ class RiddleChatService(BaseLLMTask):
         パース失敗時は explanation を含めます。
         """
         text = response.to_bullet_points()
-        if not response.evaluations:
+        if not response.evaluation:
             text += f"\n- {response.explanation}"
         return text

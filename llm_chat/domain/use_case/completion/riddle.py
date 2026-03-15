@@ -8,7 +8,7 @@ from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
-from llm_chat.domain.valueobject.completion.riddle import Gender, RiddleItem
+from llm_chat.domain.valueobject.completion.riddle import Gender, Riddle
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.models import RiddleQuestion
 
@@ -34,11 +34,18 @@ class RiddleUseCase(UseCase):
         if gender is None:
             raise ValueError("gender is required for RiddleUseCase")
 
+        # フロントエンドの「なぞなぞスタート」ボタンなどが、ユーザーの代わりに「始めて」などの
+        # メッセージを自動送信してくる。この「開始の合図」を検知したときだけ履歴をクリアする。
+        # 判定なしで「履歴があれば消す」だけにすると、問題回答中（2回目以降の実行）に履歴が消えてしまう。
+        start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
+        if any(sig in content for sig in start_signals):
+            if ChatLogRepository.count() > 0:
+                ChatLogRepository.clear_all()
+
         # DBから問題を読み込む
         db_questions = RiddleQuestion.objects.all().order_by("order")
         riddle_set = [
-            RiddleItem(question=q.question_text, answer=q.answer_text)
-            for q in db_questions
+            Riddle(question=q.question_text, answer=q.answer_text) for q in db_questions
         ]
 
         # 問題が登録されていない場合は例外を投げる
@@ -90,22 +97,27 @@ class RiddleUseCase(UseCase):
                     f"\n\n{RiddleChatService.RIDDLE_END_MESSAGE}"
                 )
 
-            # 規定回数終了時に、もしLLMが指示を無視して「存在しない次の問題（質問N+1）」を出していたら除去を試みる。
+            # 規定回数終了時に、もしLLMが指示を無視して「存在しない次の問題」や「会話の継続」を提案していたら除去を試みる。
             # (リファクタリングによりプロンプトで制御しているが、モデルによっては出やすいため保険として残す)
             next_riddle_num = riddle_count + 1
-            extra_pattern = (
+            extra_patterns = [
                 rf"(?:(?:それでは|では)?(?:次の|第|第 )?問題です。?|"
                 rf"質問{next_riddle_num}[:：]?|"
                 rf"第{next_riddle_num}問[:：]?|"
                 rf"問{next_riddle_num}[:：]?|"
-                rf"問題{next_riddle_num}[:：]?)"
-            )
-            if re.search(extra_pattern, assistant_message.content):
+                rf"問題{next_riddle_num}[:：]?)",
+                r"続けて別のなぞなぞを出しましょうか？",
+                r"このまま答えをたくさん出しますか？",
+                r"別のなぞなぞを楽しみますか？",
+                r"もっと続けますか？",
+            ]
+            combined_pattern = "|".join(extra_patterns)
+            if re.search(combined_pattern, assistant_message.content):
                 end_msg = RiddleChatService.RIDDLE_END_MESSAGE
                 if end_msg in assistant_message.content:
                     parts = assistant_message.content.split(end_msg)
-                    # 余計な出題パターンで分割し、その前の部分（感想）を取得
-                    main_content = re.split(extra_pattern, parts[0])[0].strip()
+                    # 余計な出題パターンや継続提案で分割し、その前の部分（感想・解説）を取得
+                    main_content = re.split(combined_pattern, parts[0])[0].strip()
                     # 空行などを整理して再構成
                     assistant_message.content = main_content.rstrip() + "\n\n" + end_msg
 
@@ -115,7 +127,7 @@ class RiddleUseCase(UseCase):
             evaluation_text = chat_service.evaluate(
                 login_user=user_message.user, riddle_set=riddle_set
             )
-            assistant_message.content += evaluation_text
+            assistant_message.content += f"\n\n{evaluation_text}"
 
         return self._insert_assistant_message(
             user=user,

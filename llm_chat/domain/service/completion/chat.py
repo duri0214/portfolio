@@ -15,7 +15,7 @@ from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
-from llm_chat.domain.valueobject.completion.riddle import Gender, RiddleItem
+from llm_chat.domain.valueobject.completion.riddle import Gender, Riddle
 from llm_chat.domain.service.completion.riddle import RiddleChatService
 from django.contrib.auth.models import User
 
@@ -33,7 +33,7 @@ class ChatService(BaseChatService):
         user_message: MessageDTO,
         use_case_type: str = UseCaseType.OPENAI_GPT,
         gender: Gender = None,
-        riddle_set: list[RiddleItem] | None = None,
+        riddle_set: list[Riddle] | None = None,
     ) -> list[MessageDTO]:
         """
         チャット履歴を取得し必要に応じて初期プロンプトを追加する関数
@@ -89,7 +89,7 @@ class ChatService(BaseChatService):
         user_message: MessageDTO,
         use_case_type: str = UseCaseType.OPENAI_GPT,
         gender: Gender | None = None,
-        riddle_set: list[RiddleItem] | None = None,
+        riddle_set: list[Riddle] | None = None,
     ) -> MessageDTO:
         """
         ユーザーメッセージを基に回答を生成します。
@@ -112,7 +112,7 @@ class ChatService(BaseChatService):
             use_case_type=use_case_type,
         )
 
-    def evaluate(self, login_user: User, riddle_set: list[RiddleItem]):
+    def evaluate(self, login_user: User, riddle_set: list[Riddle]):
         """
         評価機能（Gemini/OpenAI共通）。
         評価結果を RiddleResponse として取得し、箇条書きテキストを返します。
