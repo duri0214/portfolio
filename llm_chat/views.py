@@ -24,6 +24,7 @@ import csv
 import io
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.db import transaction
 
 # .env ファイルを読み込む
 load_dotenv()
@@ -237,30 +238,34 @@ class RiddleCSVUploadView(View):
             io_string = io.StringIO(decoded_file)
             reader = csv.reader(io_string)
 
-            # ヘッダーをスキップしたい場合は next(reader) を入れる
-            # 今回はフォーマット固定 (order, question, answer) を想定
-            created_count = 0
-            updated_count = 0
-            for row in reader:
-                if len(row) < 3:
-                    continue
-                order, question_text, answer_text = row[0], row[1], row[2]
-                obj, created = RiddleQuestion.objects.update_or_create(
-                    question_text=question_text,
-                    defaults={
-                        "order": order,
-                        "answer_text": answer_text,
-                    },
-                )
-                if created:
-                    created_count += 1
-                else:
-                    updated_count += 1
+            # order も question_text もユニークなので、
+            # CSVでの一括更新を容易にするため、既存データを一度削除してから再投入する方式を検討
+            # (ただし、運用上、既存IDを維持したい場合はトランザクション内での処理が必要)
+            try:
+                with transaction.atomic():
+                    # 全削除
+                    RiddleQuestion.objects.all().delete()
 
-            messages.success(
-                request,
-                f"CSVアップロード完了: 新規 {created_count} 件, 更新 {updated_count} 件",
-            )
+                    created_count = 0
+                    for row in reader:
+                        if len(row) < 3:
+                            continue
+                        order, question_text, answer_text = row[0], row[1], row[2]
+                        RiddleQuestion.objects.create(
+                            order=order,
+                            question_text=question_text,
+                            answer_text=answer_text,
+                        )
+                        created_count += 1
+
+                    messages.success(
+                        request,
+                        f"CSVアップロード完了: {created_count} 件登録しました",
+                    )
+            except Exception as e:
+                messages.error(
+                    request, f"CSVアップロード中にエラーが発生しました: {str(e)}"
+                )
         else:
             messages.error(request, "CSVファイルのアップロードに失敗しました。")
 

@@ -892,31 +892,30 @@ class ViewLogicTest(TestCase):
         self.assertIn("私は黒い服を着て", lines[1])
         self.assertIn("たいまつ", lines[1])
 
-    def test_riddle_csv_upload_upsert(self):
+    def test_riddle_csv_upload_overwrite(self):
         """
-        [シナリオ] CSVをアップロードして、既存の問題を question_text ベースで更新(upsert)する。
+        [シナリオ] CSVをアップロードして、既存の問題を全削除して再投入する。
         [期待値]
-        - 同一 question_text の場合は order や answer_text が更新される。
-        - 新規 question_text の場合は新規登録される。
+        - 既存のデータは消え、CSVの内容が登録される。
+        - order や question_text が重複していても、トランザクションが効いて全削除されるため正常。
         """
         from django.urls import reverse
         from llm_chat.views import RiddleCSVUploadView
         import io
-        import csv
 
         # 1. 初期データ作成
         RiddleQuestion.objects.all().delete()
         RiddleQuestion.objects.create(
             order=1,
-            question_text="既存の問題",
+            question_text="古い問題",
             answer_text="答え1",
         )
 
-        # 2. CSVデータ準備 (既存の更新 1件 + 新規 1件)
+        # 2. CSVデータ準備 (既存とは全く異なるデータ 1件 + 既存を上書きする内容 1件)
         # order, question_text, answer_text
         csv_content = [
-            "10,既存の問題,新しい答え",  # orderを1->10に、answerを答え1->新しい答えに更新
-            "20,新しい問題,答え2",  # 新規
+            "1,上書き問題1,新しい答え",
+            "2,新規問題2,答え2",
         ]
         csv_file = io.BytesIO("\n".join(csv_content).encode("utf-8"))
         csv_file.name = "test.csv"
@@ -931,21 +930,92 @@ class ViewLogicTest(TestCase):
         request._messages = self._create_messages_mock()
 
         # 3. 実行
+        from llm_chat.views import RiddleCSVUploadView
+
         response = RiddleCSVUploadView.post(request)
 
         # 4. 検証
         self.assertEqual(response.status_code, 302)  # リダイレクト
         self.assertEqual(RiddleQuestion.objects.count(), 2)
 
-        # 既存の更新確認
-        q_updated = RiddleQuestion.objects.get(question_text="既存の問題")
-        self.assertEqual(q_updated.order, 10)
-        self.assertEqual(q_updated.answer_text, "新しい答え")
+        # 既存データ「古い問題」が消えていることを確認
+        self.assertFalse(
+            RiddleQuestion.objects.filter(question_text="古い問題").exists()
+        )
 
-        # 新規登録確認
-        q_new = RiddleQuestion.objects.get(question_text="新しい問題")
-        self.assertEqual(q_new.order, 20)
-        self.assertEqual(q_new.answer_text, "答え2")
+        # CSVの内容が登録されていることを確認
+        q1 = RiddleQuestion.objects.get(order=1)
+        self.assertEqual(q1.question_text, "上書き問題1")
+        self.assertEqual(q1.answer_text, "新しい答え")
+
+        q2 = RiddleQuestion.objects.get(order=2)
+        self.assertEqual(q2.question_text, "新規問題2")
+
+    def test_riddle_csv_upload_complex_reorder(self):
+        """
+        [シナリオ]
+        1. order 1, 2, 3 で登録する。
+        2. 既存の 2 を消し、新たに 2 と 4 を登録する（1, 2, 3 -> 1, 3, 2, 4 のような順序変更を伴うケース）。
+        [期待値]
+        - 全削除・再登録方式により、制約違反を起こさずに期待通りの順序で登録される。
+        """
+        from django.urls import reverse
+        from llm_chat.views import RiddleCSVUploadView
+        import io
+
+        # 1. 初期データ作成 (1, 2, 3)
+        RiddleQuestion.objects.all().delete()
+        RiddleQuestion.objects.create(order=1, question_text="Q1", answer_text="A1")
+        RiddleQuestion.objects.create(order=2, question_text="Q2", answer_text="A2")
+        RiddleQuestion.objects.create(order=3, question_text="Q3", answer_text="A3")
+
+        # 2. CSVデータ準備 (1, 3, 2, 4)
+        # ユーザーの意図: "2を消して、2と4を新しく入れる"
+        # これは CSV 上では 1, 3, 2(新), 4(新) という並びや、単純に 1, 2(新), 3, 4(新) という並びになる。
+        # ここでは順序の入れ替えが発生するケースをテストする。
+        csv_content = [
+            "1,Q1,A1",
+            "3,Q3,A3",
+            "2,New Q2,New A2",
+            "4,New Q4,New A4",
+        ]
+        csv_file = io.BytesIO("\n".join(csv_content).encode("utf-8"))
+        csv_file.name = "test_complex.csv"
+
+        factory = RequestFactory()
+        request = factory.post(
+            reverse("llm:riddle_csv_upload"),
+            {"csv_file": csv_file},
+        )
+        request.user = self.user
+        request.session = SessionStore()
+        request._messages = self._create_messages_mock()
+
+        # 3. 実行
+        from llm_chat.views import RiddleCSVUploadView
+
+        response = RiddleCSVUploadView.post(request)
+
+        # 4. 検証
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(RiddleQuestion.objects.count(), 4)
+
+        # 順序通りに並んでいるか確認
+        questions = RiddleQuestion.objects.all().order_by("order")
+        self.assertEqual(questions[0].order, 1)
+        self.assertEqual(questions[0].question_text, "Q1")
+
+        self.assertEqual(questions[1].order, 2)
+        self.assertEqual(questions[1].question_text, "New Q2")
+
+        self.assertEqual(questions[2].order, 3)
+        self.assertEqual(questions[2].question_text, "Q3")
+
+        self.assertEqual(questions[3].order, 4)
+        self.assertEqual(questions[3].question_text, "New Q4")
+
+        # Q2 が更新されている（古い Q2 は消えている）ことを確認
+        self.assertFalse(RiddleQuestion.objects.filter(question_text="Q2").exists())
 
     @staticmethod
     def _create_messages_mock():

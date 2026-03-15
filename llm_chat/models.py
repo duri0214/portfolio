@@ -76,7 +76,7 @@ class RiddleQuestion(models.Model):
 
     question_text = models.CharField(max_length=255, verbose_name="問題文", unique=True)
     answer_text = models.TextField(verbose_name="正解")
-    order = models.IntegerField(verbose_name="出題順序", default=0)
+    order = models.IntegerField(verbose_name="出題順序", default=0, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
