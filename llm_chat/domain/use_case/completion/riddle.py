@@ -8,7 +8,7 @@ from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
-from llm_chat.domain.valueobject.completion.riddle import Gender, RiddleItem
+from llm_chat.domain.valueobject.completion.riddle import Gender, Riddle
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.models import RiddleQuestion
 
@@ -37,8 +37,7 @@ class RiddleUseCase(UseCase):
         # DBから問題を読み込む
         db_questions = RiddleQuestion.objects.all().order_by("order")
         riddle_set = [
-            RiddleItem(question=q.question_text, answer=q.answer_text)
-            for q in db_questions
+            Riddle(question=q.question_text, answer=q.answer_text) for q in db_questions
         ]
 
         # 問題が登録されていない場合は例外を投げる
