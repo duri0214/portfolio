@@ -63,11 +63,11 @@ class RiddleUseCaseTest(TestCase):
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_extra_question_removal(self, mock_retrieve):
         """
-        [シナリオ: なぞなぞ終了時の余計な質問除去]
-        1. LLMが規定回数終了時に「第3問」を出題しようとするケースを模倣
+        [シナリオ: なぞなぞ終了時の余計な質問・継続提案の除去]
+        1. LLMが規定回数終了時に「第3問」や「続けて別のなぞなぞを...」を出そうとするケースを模倣
         2. RiddleUseCase.execute() を実行
         3. 期待値:
-           - 「第3問」以降が除去され、終了定型文で終わっていること
+           - 余計なパターンが除去され、終了定型文で終わっていること
         """
         # ユーザーの発言を蓄積（3回目の発言＝2問目への回答を想定）
         ChatLogRepository.insert(
@@ -103,12 +103,13 @@ class RiddleUseCaseTest(TestCase):
             )
         )
 
-        # LLMの回答を模倣（余計な第3問を含む）
+        # LLMの回答を模倣（余計な第3問と継続提案を含む）
         assistant_content = (
             "正解です！たいまつで合っています。\n"
             "では\n"
             "第3問です。\n"
             "僕は呼吸をするけど生きていない...\n"
+            "続けて別のなぞなぞを出しましょうか？\n"
             f"ご回答をどうぞ。\n\n"
             f"{RiddleChatService.RIDDLE_END_MESSAGE}"
         )
@@ -127,11 +128,11 @@ class RiddleUseCaseTest(TestCase):
 
         result = use_case.execute(self.user, "答え2", gender=Gender(GenderType.MAN))
 
-        # 「第3問」や「僕は呼吸をするけど...」が消えていることを確認
+        # 「第3問」や継続提案が消えていることを確認
         self.assertIn("正解です！たいまつで合っています。", result.content)
         self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
         self.assertNotIn("第3問", result.content)
-        self.assertNotIn("僕は呼吸をするけど", result.content)
+        self.assertNotIn("続けて別のなぞなぞを出しましょうか？", result.content)
         self.assertIn("**正確性**: 3/5", result.content)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")

@@ -89,22 +89,27 @@ class RiddleUseCase(UseCase):
                     f"\n\n{RiddleChatService.RIDDLE_END_MESSAGE}"
                 )
 
-            # 規定回数終了時に、もしLLMが指示を無視して「存在しない次の問題（質問N+1）」を出していたら除去を試みる。
+            # 規定回数終了時に、もしLLMが指示を無視して「存在しない次の問題」や「会話の継続」を提案していたら除去を試みる。
             # (リファクタリングによりプロンプトで制御しているが、モデルによっては出やすいため保険として残す)
             next_riddle_num = riddle_count + 1
-            extra_pattern = (
+            extra_patterns = [
                 rf"(?:(?:それでは|では)?(?:次の|第|第 )?問題です。?|"
                 rf"質問{next_riddle_num}[:：]?|"
                 rf"第{next_riddle_num}問[:：]?|"
                 rf"問{next_riddle_num}[:：]?|"
-                rf"問題{next_riddle_num}[:：]?)"
-            )
-            if re.search(extra_pattern, assistant_message.content):
+                rf"問題{next_riddle_num}[:：]?)",
+                r"続けて別のなぞなぞを出しましょうか？",
+                r"このまま答えをたくさん出しますか？",
+                r"別のなぞなぞを楽しみますか？",
+                r"もっと続けますか？",
+            ]
+            combined_pattern = "|".join(extra_patterns)
+            if re.search(combined_pattern, assistant_message.content):
                 end_msg = RiddleChatService.RIDDLE_END_MESSAGE
                 if end_msg in assistant_message.content:
                     parts = assistant_message.content.split(end_msg)
-                    # 余計な出題パターンで分割し、その前の部分（感想）を取得
-                    main_content = re.split(extra_pattern, parts[0])[0].strip()
+                    # 余計な出題パターンや継続提案で分割し、その前の部分（感想・解説）を取得
+                    main_content = re.split(combined_pattern, parts[0])[0].strip()
                     # 空行などを整理して再構成
                     assistant_message.content = main_content.rstrip() + "\n\n" + end_msg
 
