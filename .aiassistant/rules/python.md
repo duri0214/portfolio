@@ -64,6 +64,45 @@ def to_dto(self):
 - レビュアーがドメイン知識を持っていなかったり、特定のファイル順（ファイルツリーの上から順など）に読み進めていない場合でも、そのクラスやメソッドを見るだけで役割が完結して理解できるように記述する。
 - 特に、単一のエンティティに対する処理なのか、セッションやリスト全体の集合に対する処理（集計・総合評価・スコアの蓄積など）なのかを冒頭に明記し、前後の文脈を追わなくても役割が即座に判別できるようにする。
 - 属性（Attributes）や引数（Args）、戻り値（Returns）のセクションを適切に使い、IDEのホバー表示で内容が完結するように記述する。
+- **一般的なクラスや Enum の docstring には、必ず `Attributes` セクションを記述する。** これにより、呼び出し側や利用側で変数やプロパティにホバーした際、その役割や型、意味が即座に把握できるようにする。
+- Enum の場合、クラスレベルの `Attributes` セクションに詳細を記述することで、IDEのホバー時にその値の意味が把握できるようにする。
+
+**Enum の良い例:**
+```
+class SessionState(Enum):
+    """
+    なぞなぞセッションの状態管理。
+
+    Attributes:
+        ASK_QUESTION: 問題を出題している状態。
+        WAIT_ANSWER: ユーザーからの回答を待機している状態。
+        FINISHED: 全ての問題が終了し、最終評価が完了した状態。
+    """
+
+    ASK_QUESTION = "ASK_QUESTION"
+
+    WAIT_ANSWER = "WAIT_ANSWER"
+
+    FINISHED = "FINISHED"
+```
+
+**一般的なクラスの良い例:**
+```
+class UserProfile:
+    """
+    ユーザーのプロフィール情報を保持するクラス。
+
+    Attributes:
+        user_id: ユーザーの一意識別子。
+        nickname: 表示用の名前。
+        is_active: アカウントが有効かどうか。
+    """
+
+    def __init__(self, user_id: int, nickname: str, is_active: bool = True):
+        self.user_id = user_id
+        self.nickname = nickname
+        self.is_active = is_active
+```
 
 ## 例外設計
 - 例外クラスは適切なドメイン（Value Object層など）に配置し、責務を明確にする。
