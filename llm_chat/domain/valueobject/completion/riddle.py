@@ -104,16 +104,19 @@ class RiddleResponse(ChatResult):
 
     def to_bullet_points(self) -> str:
         """
-        評価結果を箇条書き形式のテキストに変換します。
+        評価結果を Markdown 形式の箇条書きテキストに変換します。
+
+        フロントエンドでの表示を考慮し、セクションの区切りに空行を挿入することで
+        Markdown パーサーが正しくリストとして解釈できるように構成します。
         """
-        lines = ["\n【評価結果】"]
+        lines = ["", "### 【評価結果】"]
         if self.evaluation:
-            lines.append(f"- 正確性: {self.evaluation.correctness}/5")
-            lines.append(f"- 論理性: {self.evaluation.reasoning}/5")
-            lines.append(f"- 独創性: {self.evaluation.creativity}/5")
-            lines.append(f"- 反論力: {self.evaluation.rebuttal}/3")
-            lines.append(f"- 合計スコア: {self.evaluation.total_score}")
-            lines.append(f"- コメント: {self.evaluation.comment}")
+            lines.append(f"- **正確性**: {self.evaluation.correctness}/5")
+            lines.append(f"- **論理性**: {self.evaluation.reasoning}/5")
+            lines.append(f"- **独創性**: {self.evaluation.creativity}/5")
+            lines.append(f"- **反論力**: {self.evaluation.rebuttal}/3")
+            lines.append(f"- **合計スコア**: {self.evaluation.total_score}")
+            lines.append(f"- **コメント**: {self.evaluation.comment}")
         else:
             lines.append("- 評価データがありません。")
         return "\n".join(lines)

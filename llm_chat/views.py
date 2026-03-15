@@ -19,7 +19,7 @@ from llm_chat.domain.use_case.completion.chat import (
 )
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
 from llm_chat.forms import UserTextForm, RiddleCSVUploadForm
-from llm_chat.models import ChatLogs, RiddleQuestion
+from llm_chat.models import RiddleQuestion
 import csv
 import io
 from django.shortcuts import render, redirect
@@ -208,8 +208,8 @@ class ClearChatLogsView(View):
     def post(request, *args, **kwargs):
         """ChatLogsテーブルを全削除する（誰でも実行可・CSRF保護あり）"""
         try:
-            deleted_count, _ = ChatLogs.objects.all().delete()
-            return JsonResponse({"status": "success", "deleted": deleted_count})
+            ChatLogRepository.clear_all()
+            return JsonResponse({"status": "success"})
         except Exception as e:
             return JsonResponse(
                 {"error": "Failed to clear", "detail": str(e)}, status=500

@@ -48,6 +48,15 @@ class ChatService(BaseChatService):
         # DBから履歴を取得
         chat_history = ChatLogRepository.find_chat_history(user_message.user)
 
+        # なぞなぞモードのセッションリセット判定
+        # なぞなぞが新しく開始される場合（過去にログがある状態で Riddle ユースケースが呼ばれた場合）、
+        # 過去の会話ログをすべて削除（ChatLogsテーブルをクリア）してセッションをリセットします。
+        # これにより、回答回数のカウントが正しくリセットされ、クリーンな状態で開始できます。
+        if use_case_type == UseCaseType.RIDDLE:
+            if chat_history:
+                ChatLogRepository.clear_all()
+                chat_history = []
+
         if not chat_history and use_case_type == UseCaseType.RIDDLE:
             # 初回
             chat_history = RiddleChatService.create_initial_prompt(
