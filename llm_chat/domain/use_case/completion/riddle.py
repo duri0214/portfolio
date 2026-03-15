@@ -60,7 +60,7 @@ class RiddleUseCase(UseCase):
             else None
         )
 
-        # 2. 開始判定と初期化 (KISS: YAGNIに基づき全削除)
+        # 2. 開始判定と初期化
         start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
         is_start = any(sig in content for sig in start_signals)
 
@@ -72,7 +72,7 @@ class RiddleUseCase(UseCase):
         riddle_set = self._get_riddle_set()
         riddle_count = len(riddle_set)
 
-        # 4. 状態遷移 (KISS: シンプルな分岐に整理)
+        # 4. 状態遷移
         next_state = self._get_next_state(current_state)
 
         # 5. メッセージの生成
@@ -94,7 +94,7 @@ class RiddleUseCase(UseCase):
             next_riddle_state=next_state.value if next_state else None,
         )
 
-        # 6. 終了判定と評価 (KISS: 責務を整理)
+        # 6. 終了判定と評価
         if self._is_session_finished(
             user, assistant_message, riddle_count, start_signals
         ):
@@ -108,7 +108,7 @@ class RiddleUseCase(UseCase):
             self._finalize_assistant_message(
                 assistant_message, riddle_count, chat_service, user, riddle_set
             )
-            # 全体として空行が多すぎる場合があるので調整（任意だが念のため）
+            # 全体として空行が多すぎる場合があるので調整
             assistant_message.content = assistant_message.content.strip()
 
         return self._insert_assistant_message(
