@@ -7,6 +7,7 @@ from lib.llm.service.completion import LlmCompletionService, BaseLLMTask
 from lib.llm.valueobject.completion import RoleType, Message
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
+from llm_chat.domain.repository.completion.riddle import RiddleQuestionRepository
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import (
@@ -16,7 +17,6 @@ from llm_chat.domain.valueobject.completion.riddle import (
     Riddle,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.models import RiddleQuestion
 
 
 class RiddleChatService(BaseLLMTask):
@@ -47,10 +47,7 @@ class RiddleChatService(BaseLLMTask):
         """
         DBからなぞなぞの問題セットを取得します。
         """
-        db_questions = RiddleQuestion.objects.all().order_by("order")
-        riddle_set = [
-            Riddle(question=q.question_text, answer=q.answer_text) for q in db_questions
-        ]
+        riddle_set = RiddleQuestionRepository.fetch_all()
         if not riddle_set:
             raise ValueError(
                 "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。"
