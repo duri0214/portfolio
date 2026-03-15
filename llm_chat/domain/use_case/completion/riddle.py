@@ -114,7 +114,7 @@ class RiddleUseCase(UseCase):
             evaluation_text = chat_service.evaluate(
                 login_user=user_message.user, riddle_set=riddle_set
             )
-            assistant_message.content += evaluation_text
+            assistant_message.content += f"\n\n{evaluation_text}"
 
         return self._insert_assistant_message(
             user=user,

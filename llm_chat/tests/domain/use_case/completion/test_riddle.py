@@ -106,7 +106,8 @@ class RiddleUseCaseTest(TestCase):
         # LLMの回答を模倣（余計な第3問を含む）
         assistant_content = (
             "正解です！たいまつで合っています。\n"
-            "では第3問です。\n"
+            "では\n"
+            "第3問です。\n"
             "僕は呼吸をするけど生きていない...\n"
             f"ご回答をどうぞ。\n\n"
             f"{RiddleChatService.RIDDLE_END_MESSAGE}"
@@ -131,7 +132,7 @@ class RiddleUseCaseTest(TestCase):
         self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
         self.assertNotIn("第3問", result.content)
         self.assertNotIn("僕は呼吸をするけど", result.content)
-        self.assertIn("正確性: 3/5", result.content)
+        self.assertIn("**正確性**: 3/5", result.content)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_end_detection_invalid_json(self, mock_retrieve):
@@ -143,48 +144,27 @@ class RiddleUseCaseTest(TestCase):
            - TypeError を起こさず、空の評価結果で終了すること
         """
         # 不正なJSON（リストの中に文字列）を模倣
-        mock_retrieve.return_value = MagicMock(answer='["invalid", "string", "items"]')
+        mock_retrieve.side_effect = [
+            MagicMock(answer="質問1..."),
+            MagicMock(answer="質問2..."),
+            MagicMock(
+                answer=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}"
+            ),  # 3回目: 正常な終了メッセージ
+            MagicMock(
+                answer='["invalid", "string", "items"]'
+            ),  # 4回目: 不正な評価用JSON
+        ]
 
         config = OpenAIGptConfig(
             api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
         )
         use_case = RiddleUseCase(config)
 
-        # 3回目のユーザー発言相当のコンテキストを作る
-        ChatLogRepository.insert(
-            MessageDTO(
-                user=self.user,
-                role=RoleType.USER,
-                content="スタート",
-                use_case_type=UseCaseType.RIDDLE,
-            )
-        )
-        ChatLogRepository.insert(
-            MessageDTO(
-                user=self.user,
-                role=RoleType.ASSISTANT,
-                content="質問1...",
-                use_case_type=UseCaseType.RIDDLE,
-            )
-        )
-        ChatLogRepository.insert(
-            MessageDTO(
-                user=self.user,
-                role=RoleType.USER,
-                content="答え1",
-                use_case_type=UseCaseType.RIDDLE,
-            )
-        )
-        ChatLogRepository.insert(
-            MessageDTO(
-                user=self.user,
-                role=RoleType.ASSISTANT,
-                content="質問2...",
-                use_case_type=UseCaseType.RIDDLE,
-            )
-        )
+        # 履歴を作る
+        use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
+        use_case.execute(self.user, "答え1", gender=Gender(GenderType.MAN))
 
-        # evaluate 内部での LLM 実行（評価 JSON 取得）がこの mock_retrieve を使う
+        # 3回目の実行（評価フェーズへ）
         result = use_case.execute(
             self.user, "答えはたいまつです", gender=Gender(GenderType.MAN)
         )
@@ -228,8 +208,9 @@ class RiddleUseCaseTest(TestCase):
             self.assertIn("評価結果", result.content)
             self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
 
+    @patch("llm_chat.domain.repository.completion.chat.ChatLogRepository.clear_all")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
-    def test_riddle_use_case_forced_end(self, mock_retrieve):
+    def test_riddle_use_case_forced_end(self, mock_retrieve, mock_clear):
         """
         [シナリオ: なぞなぞ強制終了]
         1. LLM の回答に終了キーワードが含まれないが、3回目の発言（質問2への回答）である場合
@@ -243,40 +224,6 @@ class RiddleUseCaseTest(TestCase):
             answer="それはたいまつですね。正解です！"
         )
 
-        # 過去に2回ユーザー発言がある状態を作る（今回で3回目）
-        ChatLogRepository.insert(
-            MessageDTO(
-                user=self.user,
-                role=RoleType.USER,
-                content="スタート",
-                use_case_type=UseCaseType.RIDDLE,
-            )
-        )
-        ChatLogRepository.insert(
-            MessageDTO(
-                user=self.user,
-                role=RoleType.ASSISTANT,
-                content="質問1...",
-                use_case_type=UseCaseType.RIDDLE,
-            )
-        )
-        ChatLogRepository.insert(
-            MessageDTO(
-                user=self.user,
-                role=RoleType.USER,
-                content="答え1",
-                use_case_type=UseCaseType.RIDDLE,
-            )
-        )
-        ChatLogRepository.insert(
-            MessageDTO(
-                user=self.user,
-                role=RoleType.ASSISTANT,
-                content="質問2...",
-                use_case_type=UseCaseType.RIDDLE,
-            )
-        )
-
         config = OpenAIGptConfig(
             api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
         )
@@ -287,7 +234,12 @@ class RiddleUseCaseTest(TestCase):
         ) as mock_eval:
             mock_eval.return_value = "\n【評価結果】\n- 評価1: 100点"
 
-            # 3回目のユーザー発言
+            # 1回目
+            use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
+            # 2回目
+            use_case.execute(self.user, "答え1", gender=Gender(GenderType.MAN))
+
+            # 3回目のユーザー発言（評価フェーズへ）
             result = use_case.execute(
                 self.user, "それはたいまつです", gender=Gender(GenderType.MAN)
             )
