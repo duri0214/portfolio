@@ -50,3 +50,13 @@ class UserTextForm(forms.Form):
             field.widget.attrs["class"] = "form-control"
             field.widget.attrs["rows"] = 3
         super().__init__(*args, **kwargs)
+
+
+class RiddleCSVUploadForm(forms.Form):
+    csv_file = forms.FileField(
+        label="CSVファイル",
+        help_text="フォーマット: order,question_text,answer_text",
+        widget=forms.ClearableFileInput(
+            attrs={"class": "form-control", "accept": ".csv"}
+        ),
+    )

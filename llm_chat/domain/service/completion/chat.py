@@ -15,9 +15,9 @@ from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
-from llm_chat.domain.valueobject.completion.riddle import Gender
+from llm_chat.domain.valueobject.completion.riddle import Gender, RiddleItem
 from llm_chat.domain.service.completion.riddle import RiddleChatService
-from llm_chat.domain.valueobject.completion.riddle import GenderType
+from django.contrib.auth.models import User
 
 
 class ChatService(BaseChatService):
@@ -33,30 +33,10 @@ class ChatService(BaseChatService):
         user_message: MessageDTO,
         use_case_type: str = UseCaseType.OPENAI_GPT,
         gender: Gender = None,
-        max_turns: int = RiddleChatService.DEFAULT_MAX_TURNS,
+        riddle_set: list[RiddleItem] | None = None,
     ) -> list[MessageDTO]:
         """
         チャット履歴を取得し必要に応じて初期プロンプトを追加する関数
-
-        この関数はユーザーの過去のチャット履歴を取得し、必要に応じて初期プロンプトを挿入します。
-        主に次の流れで処理を行います：
-        1. `message.content` が `None` の場合は例外をスローします。
-        2. チャット履歴が存在する場合、それを取得します。
-        3. チャット履歴が空であり、`use_case_type` が "Riddle" の場合は、
-           なぞなぞモード用の初期プロンプトを生成し挿入します。
-        4. 既存の履歴がある場合は、システムメッセージを先頭に動的に追加します。
-        5. 最新のユーザーメッセージを履歴に追加します。
-
-        **特記事項**:
-        初期プロンプト挿入は、なぞなぞモードの特別仕様です。このプロンプトには挨拶や、なぞなぞの開始案内が含まれます。
-        システムメッセージはDBには保存せず、LLMへのリクエスト時にのみ動的に追加されます。
-
-        :param user_message: 現在処理対象のユーザーからの入力メッセージ (MessageDTO)
-        :param use_case_type: ユースケースタイプ（"OpenAIGpt" または "Gemini" または "Riddle"）
-        :param gender: なぞなぞモード用初期プロンプト生成のためのユーザーの性別（use_case_type="Riddle" の場合のみ使用）
-        :param max_turns: なぞなぞモードの最大発言回数（use_case_type="Riddle" の場合のみ使用）
-        :raises Exception: メッセージが `content is None` の場合に例外をスロー
-        :return: 過去の履歴や最新のユーザーメッセージを含むチャット履歴 (list[MessageDTO])
         """
 
         if user_message.content is None:
@@ -65,31 +45,29 @@ class ChatService(BaseChatService):
         if use_case_type == UseCaseType.RIDDLE and gender is None:
             raise ValueError("gender is required for RiddleUseCase")
 
-        # DBから履歴を取得（roleがstrで返ってくることを想定してRoleTypeで変換）
+        # DBから履歴を取得
         chat_history = ChatLogRepository.find_chat_history(user_message.user)
 
         if not chat_history and use_case_type == UseCaseType.RIDDLE:
-            # 初回：システムメッセージ（非保存）と初回ユーザーメッセージ（保存）を生成
+            # 初回
             chat_history = RiddleChatService.create_initial_prompt(
-                user_message=user_message, gender=gender, max_turns=max_turns
+                user_message=user_message, gender=gender, riddle_set=riddle_set or []
             )
         else:
-            # 2回目以降：既存の履歴にシステムメッセージが含まれていない場合は動的に追加
+            # 2回目以降
             if use_case_type == UseCaseType.RIDDLE:
                 has_system = any(m.role == RoleType.SYSTEM for m in chat_history)
                 if not has_system:
-                    # 進行状況を計算（システムと直近のユーザーメッセージを除く以前の履歴から）
                     user_turns = [m for m in chat_history if m.role == RoleType.USER]
-                    current_turn = (
-                        len(user_turns) + 1
-                    )  # 今回の入力を合わせると何回目の発言か
+                    current_index = len(
+                        user_turns
+                    )  # 今回の入力を受ける前の、回答済みの問題数
 
                     system_content = RiddleChatService.get_prompt(
-                        gender, max_turns=max_turns
+                        gender=gender,
+                        riddle_set=riddle_set or [],
+                        current_index=current_index,
                     )
-                    system_content += f"\n\n### 現在の状況\n- あなたは今、ユーザーの {current_turn} 回目の発言を待っています。"
-                    if current_turn >= max_turns:
-                        system_content += f"\n- これは最後の回答です。これ以上の出題は絶対にせず、評価フェーズに移行するために終了定型文を出力してください。"
 
                     system_message = MessageDTO(
                         user=user_message.user,
@@ -111,20 +89,17 @@ class ChatService(BaseChatService):
         user_message: MessageDTO,
         use_case_type: str = UseCaseType.OPENAI_GPT,
         gender: Gender | None = None,
-        max_turns: int = RiddleChatService.DEFAULT_MAX_TURNS,
+        riddle_set: list[RiddleItem] | None = None,
     ) -> MessageDTO:
         """
         ユーザーメッセージを基に回答を生成します。
-
-        なぞなぞモードの場合は use_case_type="Riddle" と適切な gender を指定します。
-        通常チャットの場合は use_case_type="OpenAIGpt" または "Gemini"（デフォルトは "OpenAIGpt"）を指定します。
         """
         # なぞなぞモードはuse_case_typeが"Riddle"の場合に初期プロンプトを入れる
         self.chat_history = ChatService.get_chat_history(
             user_message,
             use_case_type=use_case_type,
             gender=gender,
-            max_turns=max_turns,
+            riddle_set=riddle_set,
         )
 
         chat_result = LlmCompletionService(self.config).retrieve_answer(
@@ -137,13 +112,13 @@ class ChatService(BaseChatService):
             use_case_type=use_case_type,
         )
 
-    def evaluate(self, login_user):
+    def evaluate(self, login_user: User, riddle_set: list[RiddleItem]):
         """
         評価機能（Gemini/OpenAI共通）。
         評価結果を RiddleResponse として取得し、箇条書きテキストを返します。
         """
         task = RiddleChatService(self.config, self.chat_history)
-        riddle_response = task.execute(login_user)
+        riddle_response = task.execute(login_user, riddle_set=riddle_set)
 
         # 箇条書きテキストを生成して返す
         return task.to_bullet_points(riddle_response)

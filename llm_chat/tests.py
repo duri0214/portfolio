@@ -7,7 +7,7 @@ from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
-from llm_chat.models import ChatLogs
+from llm_chat.models import ChatLogs, RiddleQuestion
 from llm_chat.views import IndexView
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
@@ -73,6 +73,17 @@ class ChatModelAndRepositoryTest(TestCase):
 class ChatLogicTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="logic_user")
+        # デフォルトの問題を登録
+        RiddleQuestion.objects.create(
+            question_text="はじめは4本足、途中から2本足、最後は3本足。それは何でしょう？",
+            answer_text="人間",
+            order=1,
+        )
+        RiddleQuestion.objects.create(
+            question_text="私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？",
+            answer_text="たいまつ",
+            order=2,
+        )
 
     def test_get_chat_history_normal(self):
         """
@@ -460,6 +471,26 @@ class ChatLogicTest(TestCase):
         # 初回なぞなぞ：System(非保存), User, Assistant の計2通がDBへ
         self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
 
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_riddle_use_case_no_questions_raises_error(self, mock_retrieve):
+        """
+        [シナリオ: 問題が未登録の場合の挙動]
+        1. RiddleQuestion をすべて削除
+        2. RiddleUseCase.execute() を実行
+        3. 期待値: ValueError が発生し、適切なメッセージが返されること
+        """
+        RiddleQuestion.objects.all().delete()
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。",
+        ):
+            use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
+
     def test_get_chat_history_riddle_no_gender_raises_error(self):
         """
         [シナリオ] なぞなぞモードで性別を指定せずに get_chat_history を呼び出す
@@ -800,3 +831,196 @@ class ViewLogicTest(TestCase):
         )
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
+
+    def test_sync_response_view_riddle_no_questions_error(self):
+        """
+        [シナリオ] なぞなぞの問題が登録されていない状態で SyncResponseView にリクエストを投げる
+        [期待値] 400エラーが返り、適切なメッセージが含まれていること
+        """
+        RiddleQuestion.objects.all().delete()
+        factory = RequestFactory()
+        request = factory.post(
+            "/llm_chat/sync/",
+            {
+                "use_case_type": UseCaseType.RIDDLE,
+                "user_input": "スタート",
+                "gender": "man",
+            },
+        )
+        request.user = self.user
+        # セッションのモック
+        request.session = SessionStore()
+
+        from llm_chat.views import SyncResponseView
+
+        response = SyncResponseView.post(request)
+        self.assertEqual(response.status_code, 400)
+
+        import json
+
+        data = json.loads(response.content)
+        self.assertEqual(
+            data["error"],
+            "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。",
+        )
+
+    def test_riddle_sample_csv_view(self):
+        """
+        [シナリオ] サンプルCSVダウンロードリンクにアクセスする
+        [期待値] 200 OK が返り、CSV形式で期待通りの内容が含まれていること
+        """
+        from django.urls import reverse
+        from llm_chat.views import RiddleSampleCSVView
+
+        factory = RequestFactory()
+        request = factory.get(reverse("llm:riddle_sample_csv"))
+        request.user = self.user
+
+        response = RiddleSampleCSVView.get(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn(
+            'attachment; filename="riddle_sample.csv"', response["Content-Disposition"]
+        )
+
+        content = response.content.decode("utf-8")
+        lines = content.strip().splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertIn("はじめは4本足", lines[0])
+        self.assertIn("人間", lines[0])
+        self.assertIn("私は黒い服を着て", lines[1])
+        self.assertIn("たいまつ", lines[1])
+
+    def test_riddle_csv_upload_overwrite(self):
+        """
+        [シナリオ] CSVをアップロードして、既存の問題を全削除して再投入する。
+        [期待値]
+        - 既存のデータは消え、CSVの内容が登録される。
+        - order や question_text が重複していても、トランザクションが効いて全削除されるため正常。
+        """
+        from django.urls import reverse
+        from llm_chat.views import RiddleCSVUploadView
+        import io
+
+        # 1. 初期データ作成
+        RiddleQuestion.objects.all().delete()
+        RiddleQuestion.objects.create(
+            order=1,
+            question_text="古い問題",
+            answer_text="答え1",
+        )
+
+        # 2. CSVデータ準備 (既存とは全く異なるデータ 1件 + 既存を上書きする内容 1件)
+        # order, question_text, answer_text
+        csv_content = [
+            "1,上書き問題1,新しい答え",
+            "2,新規問題2,答え2",
+        ]
+        csv_file = io.BytesIO("\n".join(csv_content).encode("utf-8"))
+        csv_file.name = "test.csv"
+
+        factory = RequestFactory()
+        request = factory.post(
+            reverse("llm:riddle_csv_upload"),
+            {"csv_file": csv_file},
+        )
+        request.user = self.user
+        request.session = SessionStore()
+        request._messages = self._create_messages_mock()
+
+        # 3. 実行
+        from llm_chat.views import RiddleCSVUploadView
+
+        response = RiddleCSVUploadView.post(request)
+
+        # 4. 検証
+        self.assertEqual(response.status_code, 302)  # リダイレクト
+        self.assertEqual(RiddleQuestion.objects.count(), 2)
+
+        # 既存データ「古い問題」が消えていることを確認（全上書き方式のため）
+        self.assertFalse(
+            RiddleQuestion.objects.filter(question_text="古い問題").exists()
+        )
+
+        # CSVの内容が登録されていることを確認
+        q1 = RiddleQuestion.objects.get(order=1)
+        self.assertEqual(q1.question_text, "上書き問題1")
+        self.assertEqual(q1.answer_text, "新しい答え")
+
+        q2 = RiddleQuestion.objects.get(order=2)
+        self.assertEqual(q2.question_text, "新規問題2")
+
+    def test_riddle_csv_upload_complex_reorder(self):
+        """
+        [シナリオ]
+        1. order 1, 2, 3 で登録する。
+        2. 既存の 2 を消し、新たに 2 と 4 を登録する（1, 2, 3 -> 1, 3, 2, 4 のような順序変更を伴うケース）。
+        [期待値]
+        - 全削除・再登録方式により、制約違反を起こさずに期待通りの順序で登録される。
+        """
+        from django.urls import reverse
+        from llm_chat.views import RiddleCSVUploadView
+        import io
+
+        # 1. 初期データ作成 (1, 2, 3)
+        RiddleQuestion.objects.all().delete()
+        RiddleQuestion.objects.create(order=1, question_text="Q1", answer_text="A1")
+        RiddleQuestion.objects.create(order=2, question_text="Q2", answer_text="A2")
+        RiddleQuestion.objects.create(order=3, question_text="Q3", answer_text="A3")
+
+        # 2. CSVデータ準備 (1, 3, 2, 4)
+        # ユーザーの意図: "2を消して、2と4を新しく入れる"
+        # これは CSV 上では 1, 3, 2(新), 4(新) という並びや、単純に 1, 2(新), 3, 4(新) という並びになる。
+        # ここでは順序の入れ替えが発生するケースをテストする。
+        csv_content = [
+            "1,Q1,A1",
+            "3,Q3,A3",
+            "2,New Q2,New A2",
+            "4,New Q4,New A4",
+        ]
+        csv_file = io.BytesIO("\n".join(csv_content).encode("utf-8"))
+        csv_file.name = "test_complex.csv"
+
+        factory = RequestFactory()
+        request = factory.post(
+            reverse("llm:riddle_csv_upload"),
+            {"csv_file": csv_file},
+        )
+        request.user = self.user
+        request.session = SessionStore()
+        request._messages = self._create_messages_mock()
+
+        # 3. 実行
+        from llm_chat.views import RiddleCSVUploadView
+
+        response = RiddleCSVUploadView.post(request)
+
+        # 4. 検証
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(RiddleQuestion.objects.count(), 4)
+
+        # 順序通りに並んでいるか確認
+        questions = RiddleQuestion.objects.all().order_by("order")
+        self.assertEqual(questions[0].order, 1)
+        self.assertEqual(questions[0].question_text, "Q1")
+
+        self.assertEqual(questions[1].order, 2)
+        self.assertEqual(questions[1].question_text, "New Q2")
+
+        self.assertEqual(questions[2].order, 3)
+        self.assertEqual(questions[2].question_text, "Q3")
+
+        self.assertEqual(questions[3].order, 4)
+        self.assertEqual(questions[3].question_text, "New Q4")
+
+        # Q2 が更新されている（古い Q2 は消えている）ことを確認
+        self.assertFalse(RiddleQuestion.objects.filter(question_text="Q2").exists())
+
+    @staticmethod
+    def _create_messages_mock():
+        from django.contrib.messages.storage.base import BaseStorage
+        from django.test import RequestFactory
+
+        request = RequestFactory().get("/")
+        return BaseStorage(request)

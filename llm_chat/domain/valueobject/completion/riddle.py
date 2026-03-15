@@ -6,6 +6,14 @@ from pydantic import BaseModel, Field
 from lib.llm.valueobject.completion import ChatResult
 
 
+@dataclass
+class RiddleItem:
+    """なぞなぞのQ&Aペア"""
+
+    question: str
+    answer: str
+
+
 class GenderType(Enum):
     MAN = "man"
     WOMAN = "woman"

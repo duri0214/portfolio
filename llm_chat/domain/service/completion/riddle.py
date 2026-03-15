@@ -1,6 +1,5 @@
 import json
 
-import re
 from django.contrib.auth.models import User
 
 from lib.llm.service.completion import LlmCompletionService, BaseLLMTask
@@ -12,6 +11,7 @@ from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
     RiddleResponse,
     RiddleEvaluation,
+    RiddleItem,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
@@ -34,9 +34,23 @@ class RiddleChatService(BaseLLMTask):
         self.chat_history = chat_history
 
     @staticmethod
-    def get_prompt(gender: Gender, max_turns: int = DEFAULT_MAX_TURNS) -> str:
-        # なぞなぞの数は max_turns - 1 (初回はスタート合図、その後各回答に対して次の質問、最後の回答で終了)
-        riddle_count = max_turns - 1
+    def get_prompt(
+        gender: Gender,
+        riddle_set: list[RiddleItem],
+        current_index: int | None = None,
+    ) -> str:
+        riddle_count = len(riddle_set)
+        riddle_list_str = ""
+        for i, item in enumerate(riddle_set):
+            riddle_list_str += f"##### 質問{i+1}\n- {item.question}\n\n"
+
+        status_str = ""
+        if current_index is not None:
+            if current_index < riddle_count:
+                status_str = f"現在は【質問{current_index + 1}】を出題する番、またはその回答を待っている状態です。"
+            else:
+                status_str = "全問出題済みです。終了処理を行ってください。"
+
         return f"""
         あなたは、{riddle_count}つの問題を順番に出題し、ユーザーの回答を評価する、丁寧で明朗な「なぞなぞコーナー担当者」です。
 
@@ -58,11 +72,10 @@ class RiddleChatService(BaseLLMTask):
         - 回答途中でスコアや合否を提示すること。
 
         ### 出題するなぞなぞ
-        ##### 質問1
-        - はじめは4本足、途中から2本足、最後は3本足。それは何でしょう？
+        {riddle_list_str}
 
-        ##### 質問2
-        - 私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？
+        ### 現在の状況
+        - {status_str}
 
         ### 評価結果（内部処理用）
         - ユーザーから「評価結果をjsonで出力してください」と入力された場合にのみ、以下のJSON形式で判定結果を出力してください。
@@ -71,15 +84,16 @@ class RiddleChatService(BaseLLMTask):
 
     @staticmethod
     def create_initial_prompt(
-        user_message: MessageDTO, gender: Gender, max_turns: int = DEFAULT_MAX_TURNS
+        user_message: MessageDTO,
+        gender: Gender,
+        riddle_set: list[RiddleItem],
     ) -> list[MessageDTO]:
         """
         初期プロンプト（システムメッセージと初回のユーザーメッセージ）を生成します。
         システムメッセージはDBに保存せず、初回ユーザーメッセージを保存します。
         """
-        system_content = RiddleChatService.get_prompt(gender, max_turns)
-        system_content += (
-            f"\n\n### 現在の状況\n- あなたは今、ユーザーの 1 回目の発言を待っています。"
+        system_content = RiddleChatService.get_prompt(
+            gender=gender, riddle_set=riddle_set, current_index=0
         )
 
         system_message = MessageDTO(
@@ -100,21 +114,30 @@ class RiddleChatService(BaseLLMTask):
         # システムメッセージを先頭に含めて返す
         return [system_message, first_user_message]
 
-    def execute(self, login_user: User) -> RiddleResponse:
+    def execute(self, login_user: User, riddle_set: list[RiddleItem]) -> RiddleResponse:
         """
         評価プロンプトを送信し、結果を RiddleResponse に変換します。
         """
+        riddle_qa_str = ""
+        for i, item in enumerate(riddle_set):
+            riddle_qa_str += f"問{i+1}: {item.question}\n正解: {item.answer}\n\n"
+
         # 評価用のユーザーメッセージ（非表示）
         eval_message = Message(
             role=RoleType.USER,
-            content="""
-評価結果をJSON形式で出力してください。
-挨拶、説明、前置きなどは一切不要です。
-JSON配列（[...]）のみを返してください。
-フォーマットは必ず以下の判定結果例に従ってください。
+            content=f"""
+以下のなぞなぞの正解データを参考に、ユーザーの回答を多角的に評価し、JSON形式で出力してください。
+
+### なぞなぞの正解データ
+{riddle_qa_str}
+
+### 評価の指示
+- 挨拶、説明、前置きなどは一切不要です。
+- JSON配列（[...]）のみを返してください。
+- フォーマットは必ず以下の判定結果例に従ってください。
 
 判定結果例:
-[{"viewpoint": "論理的思考力", "score": 80, "judge": "合格"}, {"viewpoint": "洞察力", "score": 40, "judge": "不合格"}]
+[{{"viewpoint": "論理的思考力", "score": 80, "judge": "合格"}}, {{"viewpoint": "洞察力", "score": 40, "judge": "不合格"}}]
 """.strip(),
         )
 
@@ -165,7 +188,8 @@ JSON配列（[...]）のみを返してください。
                 explanation=f"評価結果のパースに失敗しました: {str(e)}",
             )
 
-    def to_bullet_points(self, response: RiddleResponse) -> str:
+    @staticmethod
+    def to_bullet_points(response: RiddleResponse) -> str:
         """
         RiddleResponse を箇条書きテキストに変換します。
         パース失敗時は explanation を含めます。

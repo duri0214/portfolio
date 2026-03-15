@@ -1,9 +1,8 @@
 import json
-import os
 from typing import Generator
 
 from django.contrib.auth.models import User
-from django.http import StreamingHttpResponse, JsonResponse
+from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import FormView
@@ -19,8 +18,13 @@ from llm_chat.domain.use_case.completion.chat import (
     OpenAIGptStreamingUseCase,
 )
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
-from llm_chat.forms import UserTextForm
-from llm_chat.models import ChatLogs
+from llm_chat.forms import UserTextForm, RiddleCSVUploadForm
+from llm_chat.models import ChatLogs, RiddleQuestion
+import csv
+import io
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db import transaction
 
 # .env ファイルを読み込む
 load_dotenv()
@@ -98,12 +102,15 @@ class SyncResponseView(View):
                 return JsonResponse({"error": str(e)}, status=400)
 
             # ユースケースの実行
-            if isinstance(use_case, RiddleUseCase):
-                message = use_case.execute(
-                    user=request.user, content=user_input, gender=gender
-                )
-            else:
-                message = use_case.execute(user=request.user, content=user_input)
+            try:
+                if isinstance(use_case, RiddleUseCase):
+                    message = use_case.execute(
+                        user=request.user, content=user_input, gender=gender
+                    )
+                else:
+                    message = use_case.execute(user=request.user, content=user_input)
+            except ValueError as e:
+                return JsonResponse({"error": str(e)}, status=400)
 
             # 成功レスポンスを返す
             return JsonResponse(
@@ -207,3 +214,87 @@ class ClearChatLogsView(View):
             return JsonResponse(
                 {"error": "Failed to clear", "detail": str(e)}, status=500
             )
+
+
+class RiddleAdminView(View):
+    @staticmethod
+    def get(request, *args, **kwargs):
+        questions = RiddleQuestion.objects.all()
+        form = RiddleCSVUploadForm()
+        return render(
+            request,
+            "llm_chat/riddle_admin.html",
+            {"questions": questions, "form": form},
+        )
+
+
+class RiddleCSVUploadView(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        form = RiddleCSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = request.FILES["csv_file"]
+            decoded_file = csv_file.read().decode("utf-8")
+            io_string = io.StringIO(decoded_file)
+            reader = csv.reader(io_string)
+
+            # order も question_text もユニークなので、
+            # CSVでの一括更新を容易にするため、既存データを一度削除してから再投入する方式を採用。
+            # トランザクション内で処理することで、エラー時は全削除をロールバックする。
+            try:
+                with transaction.atomic():
+                    # 既存データを削除
+                    RiddleQuestion.objects.all().delete()
+
+                    created_count = 0
+                    for row in reader:
+                        if len(row) < 3:
+                            continue
+                        order, question_text, answer_text = row[0], row[1], row[2]
+                        # CSVの内容を新規登録
+                        RiddleQuestion.objects.create(
+                            order=order,
+                            question_text=question_text,
+                            answer_text=answer_text,
+                        )
+                        created_count += 1
+
+                    messages.success(
+                        request,
+                        f"CSVアップロード完了: {created_count} 件登録しました",
+                    )
+            except Exception as e:
+                messages.error(
+                    request, f"CSVアップロード中にエラーが発生しました: {str(e)}"
+                )
+        else:
+            messages.error(request, "CSVファイルのアップロードに失敗しました。")
+
+        return redirect("llm:riddle_admin")
+
+
+class RiddleSampleCSVView(View):
+    @staticmethod
+    def get(request, *args, **kwargs):
+        """サンプルCSVを出力する（以前のフォールバック2問）"""
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="riddle_sample.csv"'
+
+        writer = csv.writer(response)
+        # order, question_text, answer_text
+        writer.writerow(
+            [
+                1,
+                "はじめは4本足、途中から2本足、最後は3本足。それは何でしょう？",
+                "人間",
+            ]
+        )
+        writer.writerow(
+            [
+                2,
+                "私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？",
+                "たいまつ",
+            ]
+        )
+
+        return response
