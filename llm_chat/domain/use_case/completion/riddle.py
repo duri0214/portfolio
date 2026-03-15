@@ -34,6 +34,14 @@ class RiddleUseCase(UseCase):
         if gender is None:
             raise ValueError("gender is required for RiddleUseCase")
 
+        # フロントエンドの「なぞなぞスタート」ボタンなどが、ユーザーの代わりに「始めて」などの
+        # メッセージを自動送信してくる。この「開始の合図」を検知したときだけ履歴をクリアする。
+        # 判定なしで「履歴があれば消す」だけにすると、問題回答中（2回目以降の実行）に履歴が消えてしまう。
+        start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
+        if any(sig in content for sig in start_signals):
+            if ChatLogRepository.count() > 0:
+                ChatLogRepository.clear_all()
+
         # DBから問題を読み込む
         db_questions = RiddleQuestion.objects.all().order_by("order")
         riddle_set = [

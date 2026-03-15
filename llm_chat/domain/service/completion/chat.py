@@ -48,20 +48,6 @@ class ChatService(BaseChatService):
         # DBから履歴を取得
         chat_history = ChatLogRepository.find_chat_history(user_message.user)
 
-        # なぞなぞモードのセッションリセット判定
-        # 新しくなぞなぞが開始される場合（「なぞなぞを始めて」などの合図）、
-        # 過去の会話ログをすべて削除（ChatLogsテーブルをクリア）してセッションをリセットします。
-        # これにより、クリーンな状態で開始できます。
-        # 単に use_case_type == RIDDLE かつ履歴があるだけでは、2問目以降の回答時にもリセットされてしまうため、
-        # 入力内容が開始の合図である場合に限定してリセットを行います。
-        if use_case_type == UseCaseType.RIDDLE:
-            # 「始めて」「リセット」「スタート」などの開始キーワードが含まれる場合のみリセット
-            start_keywords = ["始めて", "リセット", "スタート", "開始"]
-            is_start_signal = any(kw in user_message.content for kw in start_keywords)
-            if is_start_signal and chat_history:
-                ChatLogRepository.clear_all()
-                chat_history = []
-
         if not chat_history and use_case_type == UseCaseType.RIDDLE:
             # 初回
             chat_history = RiddleChatService.create_initial_prompt(

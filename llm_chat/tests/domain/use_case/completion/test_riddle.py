@@ -271,9 +271,41 @@ class RiddleUseCaseTest(TestCase):
         self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_riddle_use_case_reset_on_start(self, mock_retrieve):
+        """
+        [シナリオ: なぞなぞ開始時に履歴がリセットされることの検証]
+        1. 既に履歴がある状態で「なぞなぞを始めて」と送る。
+        2. 期待値: 履歴が一旦クリアされ、新しいセッション（User, Assistant）の2件のみになること。
+        """
+        mock_retrieve.return_value = MagicMock(answer="なぞなぞを始めます。")
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+
+        # 1. 適当な履歴を作成
+        ChatLogRepository.insert(
+            MessageDTO(
+                user=self.user,
+                role=RoleType.USER,
+                content="古い会話",
+                use_case_type=UseCaseType.OPENAI_GPT,
+            )
+        )
+        self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 1)
+
+        # 2. なぞなぞ開始（リセットされるはず）
+        use_case.execute(self.user, "なぞなぞを始めて", gender=Gender(GenderType.MAN))
+
+        # 古い会話が消え、新しい User, Assistant の2件のみになっているはず
+        db_logs = ChatLogs.objects.filter(user=self.user)
+        self.assertEqual(db_logs.count(), 2)
+        self.assertEqual(db_logs[0].content, "なぞなぞを始めて")
+
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_no_reset_on_answer(self, mock_retrieve):
         """
-        [シナリオ: 2問目以降の回答で履歴がリセットされないことの検証]
+        [シナリオ: 2問目以降の回答で履歴が保持されることの検証]
         1. なぞなぞを開始し、1問目の回答を送る。
         2. 期待値: 履歴が保持され、ChatLogs が累積していくこと。
         """
@@ -283,13 +315,13 @@ class RiddleUseCaseTest(TestCase):
         )
         use_case = RiddleUseCase(config)
 
-        # 1. なぞなぞ開始 (リセットされるはず)
+        # 1. なぞなぞ開始
         use_case.execute(self.user, "なぞなぞを始めて", gender=Gender(GenderType.MAN))
         self.assertEqual(
             ChatLogs.objects.filter(user=self.user).count(), 2
         )  # User, Assistant
 
-        # 2. 1問目の回答 (リセットされないはず)
+        # 2. 1問目の回答 (ChatService側での暗黙のリセットがなくなったため、常に累積する)
         use_case.execute(self.user, "答えは人間です", gender=Gender(GenderType.MAN))
         # 履歴がリセットされなければ、User(初回), Assistant(初回), User(2回目), Assistant(2回目) で 4件になる
         self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 4)
