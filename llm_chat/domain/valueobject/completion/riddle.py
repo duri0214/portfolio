@@ -74,7 +74,12 @@ class RiddleEvaluation(BaseModel):
 
     @property
     def total_score(self) -> int:
-        """スコアの合計計算はコード側で行われる"""
+        """
+        セッションを通じた総合スコアを算出します。
+
+        このモデルでは固定の「満点（最大合計値）」は定義していません。
+        各項目の加算結果が最終的なスコアとして扱われます。
+        """
         return self.correctness + self.reasoning + self.creativity + self.rebuttal
 
 
