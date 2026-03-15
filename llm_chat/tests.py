@@ -7,7 +7,7 @@ from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
-from llm_chat.models import ChatLogs
+from llm_chat.models import ChatLogs, RiddleQuestion
 from llm_chat.views import IndexView
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
@@ -73,6 +73,17 @@ class ChatModelAndRepositoryTest(TestCase):
 class ChatLogicTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="logic_user")
+        # デフォルトの問題を登録
+        RiddleQuestion.objects.create(
+            question_text="はじめは4本足、途中から2本足、最後は3本足。それは何でしょう？",
+            answer_text="人間",
+            order=1,
+        )
+        RiddleQuestion.objects.create(
+            question_text="私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？",
+            answer_text="たいまつ",
+            order=2,
+        )
 
     def test_get_chat_history_normal(self):
         """
@@ -459,6 +470,26 @@ class ChatLogicTest(TestCase):
         self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
         # 初回なぞなぞ：System(非保存), User, Assistant の計2通がDBへ
         self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
+
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_riddle_use_case_no_questions_raises_error(self, mock_retrieve):
+        """
+        [シナリオ: 問題が未登録の場合の挙動]
+        1. RiddleQuestion をすべて削除
+        2. RiddleUseCase.execute() を実行
+        3. 期待値: ValueError が発生し、適切なメッセージが返されること
+        """
+        RiddleQuestion.objects.all().delete()
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。",
+        ):
+            use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
 
     def test_get_chat_history_riddle_no_gender_raises_error(self):
         """
