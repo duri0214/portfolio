@@ -44,16 +44,16 @@ class RiddleSessionStateTest(TestCase):
         # 1. スタート
         res1 = use_case.execute(self.user, "スタート", self.gender)
         # スタート時は ASK_QUESTION -> WAIT_ANSWER に遷移しているはず
-        self.assertEqual(res1.riddle_state, SessionState.WAIT_ANSWER.value)
+        self.assertEqual(res1.next_riddle_state, SessionState.WAIT_ANSWER.value)
 
         # 2. 回答1
         res2 = use_case.execute(self.user, "回答1", self.gender)
         # WAIT_ANSWER -> EVALUATE に遷移しているはず
-        self.assertEqual(res2.riddle_state, SessionState.EVALUATE.value)
+        self.assertEqual(res2.next_riddle_state, SessionState.EVALUATE.value)
 
         # 3. 反論（現在の簡易ロジックでは EVALUATE の次は WAIT_REBUTTAL になるはず）
         res3 = use_case.execute(self.user, "いや、違います", self.gender)
-        self.assertEqual(res3.riddle_state, SessionState.WAIT_REBUTTAL.value)
+        self.assertEqual(res3.next_riddle_state, SessionState.WAIT_REBUTTAL.value)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_session_finished_state(self, mock_retrieve):
@@ -61,7 +61,7 @@ class RiddleSessionStateTest(TestCase):
         シナリオ:
         - 入力: 終了定型文を含むLLMの回答。
         - 処理: RiddleUseCase.execute を呼び出し、セッション終了判定を確認する。
-        - 期待値: 最終的な riddle_state が FINISHED（終了）状態であること。
+        - 期待値: 最終的な next_riddle_state が FINISHED（終了）状態であること。
         """
         # 終了定型文を含む回答をモック
         from llm_chat.domain.service.completion.riddle import RiddleChatService
@@ -77,4 +77,4 @@ class RiddleSessionStateTest(TestCase):
         use_case.execute(self.user, "スタート", self.gender)
         res = use_case.execute(self.user, "フライパン", self.gender)
 
-        self.assertEqual(res.riddle_state, SessionState.FINISHED.value)
+        self.assertEqual(res.next_riddle_state, SessionState.FINISHED.value)

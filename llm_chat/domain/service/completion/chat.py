@@ -100,7 +100,7 @@ class ChatService(BaseChatService):
         use_case_type: str = UseCaseType.OPENAI_GPT,
         gender: Gender | None = None,
         riddle_set: list[Riddle] | None = None,
-        riddle_state: str | None = None,
+        next_riddle_state: str | None = None,
     ) -> MessageDTO:
         """
         ユーザーメッセージを基に回答を生成します。
@@ -121,7 +121,7 @@ class ChatService(BaseChatService):
             user=user_message.user,
             content=chat_result.answer,
             use_case_type=use_case_type,
-            riddle_state=riddle_state,
+            next_riddle_state=next_riddle_state,
         )
 
     def evaluate(self, login_user: User, riddle_set: list[Riddle]):

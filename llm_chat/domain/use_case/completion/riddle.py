@@ -51,8 +51,8 @@ class RiddleUseCase(UseCase):
         chat_history = ChatLogRepository.find_chat_history(user)
         last_message = chat_history[-1] if chat_history else None
         current_state = (
-            SessionState(last_message.riddle_state)
-            if last_message and last_message.riddle_state
+            SessionState(last_message.next_riddle_state)
+            if last_message and last_message.next_riddle_state
             else None
         )
 
@@ -78,7 +78,7 @@ class RiddleUseCase(UseCase):
             content=content,
             model_name=self.config.model,
             use_case_type=UseCaseType.RIDDLE,
-            riddle_state=next_state.value if next_state else None,
+            next_riddle_state=None,
         )
 
         chat_service = ChatService(self.config)
@@ -87,14 +87,14 @@ class RiddleUseCase(UseCase):
             use_case_type="Riddle",
             gender=gender,
             riddle_set=riddle_set,
-            riddle_state=next_state.value if next_state else None,
+            next_riddle_state=next_state.value if next_state else None,
         )
 
         # 6. 終了判定と評価 (KISS: 責務を整理)
         if self._is_session_finished(
             user, assistant_message, riddle_count, start_signals
         ):
-            assistant_message.riddle_state = SessionState.FINISHED.value
+            assistant_message.next_riddle_state = SessionState.FINISHED.value
             if RiddleChatService.RIDDLE_END_MESSAGE not in assistant_message.content:
                 assistant_message.content += (
                     f"\n\n{RiddleChatService.RIDDLE_END_MESSAGE}"
@@ -112,7 +112,7 @@ class RiddleUseCase(UseCase):
             content=assistant_message.content,
             model_name=self.config.model,
             use_case_type=UseCaseType.RIDDLE,
-            riddle_state=assistant_message.riddle_state,
+            next_riddle_state=assistant_message.next_riddle_state,
         )
 
     def _get_riddle_set(self) -> list[Riddle]:

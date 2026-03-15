@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="chatlogs",
-            name="riddle_state",
+            name="next_riddle_state",
             field=models.CharField(
                 blank=True,
                 help_text="なぞなぞセッションの状態管理用（ASK_QUESTION, WAIT_ANSWER, ...）",
