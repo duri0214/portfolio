@@ -246,9 +246,9 @@ class RiddleCSVUploadView(View):
                     continue
                 order, question_text, answer_text = row[0], row[1], row[2]
                 obj, created = RiddleQuestion.objects.update_or_create(
-                    order=order,
+                    question_text=question_text,
                     defaults={
-                        "question_text": question_text,
+                        "order": order,
                         "answer_text": answer_text,
                     },
                 )

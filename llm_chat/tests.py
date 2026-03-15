@@ -891,3 +891,66 @@ class ViewLogicTest(TestCase):
         self.assertIn("人間", lines[0])
         self.assertIn("私は黒い服を着て", lines[1])
         self.assertIn("たいまつ", lines[1])
+
+    def test_riddle_csv_upload_upsert(self):
+        """
+        [シナリオ] CSVをアップロードして、既存の問題を question_text ベースで更新(upsert)する。
+        [期待値]
+        - 同一 question_text の場合は order や answer_text が更新される。
+        - 新規 question_text の場合は新規登録される。
+        """
+        from django.urls import reverse
+        from llm_chat.views import RiddleCSVUploadView
+        import io
+        import csv
+
+        # 1. 初期データ作成
+        RiddleQuestion.objects.all().delete()
+        RiddleQuestion.objects.create(
+            order=1,
+            question_text="既存の問題",
+            answer_text="答え1",
+        )
+
+        # 2. CSVデータ準備 (既存の更新 1件 + 新規 1件)
+        # order, question_text, answer_text
+        csv_content = [
+            "10,既存の問題,新しい答え",  # orderを1->10に、answerを答え1->新しい答えに更新
+            "20,新しい問題,答え2",  # 新規
+        ]
+        csv_file = io.BytesIO("\n".join(csv_content).encode("utf-8"))
+        csv_file.name = "test.csv"
+
+        factory = RequestFactory()
+        request = factory.post(
+            reverse("llm:riddle_csv_upload"),
+            {"csv_file": csv_file},
+        )
+        request.user = self.user
+        request.session = SessionStore()
+        request._messages = self._create_messages_mock()
+
+        # 3. 実行
+        response = RiddleCSVUploadView.post(request)
+
+        # 4. 検証
+        self.assertEqual(response.status_code, 302)  # リダイレクト
+        self.assertEqual(RiddleQuestion.objects.count(), 2)
+
+        # 既存の更新確認
+        q_updated = RiddleQuestion.objects.get(question_text="既存の問題")
+        self.assertEqual(q_updated.order, 10)
+        self.assertEqual(q_updated.answer_text, "新しい答え")
+
+        # 新規登録確認
+        q_new = RiddleQuestion.objects.get(question_text="新しい問題")
+        self.assertEqual(q_new.order, 20)
+        self.assertEqual(q_new.answer_text, "答え2")
+
+    @staticmethod
+    def _create_messages_mock():
+        from django.contrib.messages.storage.base import BaseStorage
+        from django.test import RequestFactory
+
+        request = RequestFactory().get("/")
+        return BaseStorage(request)
