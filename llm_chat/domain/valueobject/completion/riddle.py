@@ -83,6 +83,19 @@ class SessionState(Enum):
     NEXT_QUESTION = "NEXT_QUESTION"
     FINISHED = "FINISHED"
 
+    def get_next_state(self) -> "SessionState":
+        """
+        現在の状態から次の遷移先の状態を取得します。
+        """
+        transitions = {
+            SessionState.ASK_QUESTION: SessionState.WAIT_ANSWER,
+            SessionState.WAIT_ANSWER: SessionState.EVALUATE,
+            SessionState.EVALUATE: SessionState.WAIT_REBUTTAL,
+            SessionState.WAIT_REBUTTAL: SessionState.REEVALUATE,
+            SessionState.REEVALUATE: SessionState.NEXT_QUESTION,
+        }
+        return transitions.get(self, self)
+
 
 @dataclass
 class RiddleSession:

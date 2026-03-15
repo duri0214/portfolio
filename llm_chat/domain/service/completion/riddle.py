@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.contrib.auth.models import User
 
@@ -6,6 +7,7 @@ from lib.llm.service.completion import LlmCompletionService, BaseLLMTask
 from lib.llm.valueobject.completion import RoleType, Message
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
+from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
@@ -14,6 +16,7 @@ from llm_chat.domain.valueobject.completion.riddle import (
     Riddle,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+from llm_chat.models import RiddleQuestion
 
 
 class RiddleChatService(BaseLLMTask):
@@ -38,6 +41,81 @@ class RiddleChatService(BaseLLMTask):
     ):
         self.config = config
         self.chat_history = chat_history
+
+    @staticmethod
+    def get_riddle_set(max_turns: int | None = None) -> list[Riddle]:
+        """
+        DBからなぞなぞの問題セットを取得します。
+        """
+        db_questions = RiddleQuestion.objects.all().order_by("order")
+        riddle_set = [
+            Riddle(question=q.question_text, answer=q.answer_text) for q in db_questions
+        ]
+        if not riddle_set:
+            raise ValueError(
+                "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。"
+            )
+        if max_turns is not None:
+            riddle_set = riddle_set[: max_turns - 1]
+        return riddle_set
+
+    @staticmethod
+    def is_session_finished(
+        user: User,
+        assistant_message: MessageDTO,
+        riddle_count: int,
+        start_signals: list[str],
+    ) -> bool:
+        """
+        セッションが終了したかどうかを判定します。
+        """
+        chat_history = ChatLogRepository.find_chat_history(user)
+        answer_turns = [
+            m
+            for m in chat_history
+            if m.role == RoleType.USER
+            and not any(sig in m.content for sig in start_signals)
+        ]
+        return (
+            len(answer_turns) >= riddle_count
+            or RiddleChatService.RIDDLE_END_MESSAGE in assistant_message.content
+        )
+
+    @staticmethod
+    def finalize_message(
+        assistant_message: MessageDTO,
+        riddle_count: int,
+        chat_service: BaseChatService,
+        user: User,
+        riddle_set: list[Riddle],
+    ) -> None:
+        """
+        メッセージのクリーニングと評価結果の付与を行います。
+        """
+        # 終了メッセージのクリーニング
+        next_riddle_num = riddle_count + 1
+        extra_patterns = [
+            rf"(?:(?:それでは|では)?(?:次の|第|第 )?問題です。?|質問{next_riddle_num}[:：]?|第{next_riddle_num}問[:：]?|問{next_riddle_num}[:：]?|問題{next_riddle_num}[:：]?)",
+            r"続けて別のなぞなぞを出しましょうか？",
+            r"このまま答えをたくさん出しますか？",
+            r"別のなぞなぞを楽しみますか？",
+            r"もっと続けますか？",
+        ]
+        combined_pattern = "|".join(extra_patterns)
+        if re.search(combined_pattern, assistant_message.content):
+            end_msg = RiddleChatService.RIDDLE_END_MESSAGE
+            if end_msg in assistant_message.content:
+                parts = assistant_message.content.split(end_msg)
+                main_content = re.split(combined_pattern, parts[0])[0].strip()
+                # 余計な見出し（#####）が残っている場合を削除
+                main_content = re.sub(r"#####\s*$", "", main_content).strip()
+                assistant_message.content = main_content.rstrip() + "\n\n" + end_msg
+
+        # 評価の実行と追記
+        chat_service.chat_history.append(assistant_message)
+        evaluation_text = chat_service.evaluate(login_user=user, riddle_set=riddle_set)
+        assistant_message.content += f"\n\n{evaluation_text}"
+        assistant_message.content = assistant_message.content.strip()
 
     @staticmethod
     def get_prompt(
