@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.contrib.auth.models import User
 
@@ -6,6 +7,8 @@ from lib.llm.service.completion import LlmCompletionService, BaseLLMTask
 from lib.llm.valueobject.completion import RoleType, Message
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
+from llm_chat.domain.repository.completion.riddle import RiddleQuestionRepository
+from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
@@ -18,8 +21,14 @@ from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 class RiddleChatService(BaseLLMTask):
     """
-    なぞなぞの評価タスク。
-    LLMからの評価結果（JSON）をパースし、RiddleResponse型で返します。
+    なぞなぞセッション専用のLLM対話サービス。
+
+    LLMへのプロンプト生成、メッセージの生成、およびセッション終了後の
+    最終評価（JSONパースと構造化）を担当します。
+
+    Attributes:
+        config (OpenAIGptConfig | GeminiConfig): LLMの設定。
+        chat_history (list[MessageDTO]): セッションの会話履歴。
     """
 
     RIDDLE_END_MESSAGE = "本日はなぞなぞにご参加いただき、ありがとうございました。"
@@ -32,6 +41,78 @@ class RiddleChatService(BaseLLMTask):
     ):
         self.config = config
         self.chat_history = chat_history
+
+    @staticmethod
+    def get_riddle_set(max_turns: int | None = None) -> list[Riddle]:
+        """
+        DBからなぞなぞの問題セットを取得します。
+        """
+        riddle_set = RiddleQuestionRepository.fetch_all()
+        if not riddle_set:
+            raise ValueError(
+                "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。"
+            )
+        if max_turns is not None:
+            riddle_set = riddle_set[: max_turns - 1]
+        return riddle_set
+
+    @staticmethod
+    def is_session_finished(
+        user: User,
+        assistant_message: MessageDTO,
+        riddle_count: int,
+        start_signals: list[str],
+    ) -> bool:
+        """
+        セッションが終了したかどうかを判定します。
+        """
+        chat_history = ChatLogRepository.find_chat_history(user)
+        answer_turns = [
+            m
+            for m in chat_history
+            if m.role == RoleType.USER
+            and not any(sig in m.content for sig in start_signals)
+        ]
+        return (
+            len(answer_turns) >= riddle_count
+            or RiddleChatService.RIDDLE_END_MESSAGE in assistant_message.content
+        )
+
+    @staticmethod
+    def finalize_message(
+        assistant_message: MessageDTO,
+        riddle_count: int,
+        chat_service: BaseChatService,
+        user: User,
+        riddle_set: list[Riddle],
+    ) -> None:
+        """
+        メッセージのクリーニングと評価結果の付与を行います。
+        """
+        # 終了メッセージのクリーニング
+        next_riddle_num = riddle_count + 1
+        extra_patterns = [
+            rf"(?:(?:それでは|では)?(?:次の|第|第 )?問題です。?|質問{next_riddle_num}[:：]?|第{next_riddle_num}問[:：]?|問{next_riddle_num}[:：]?|問題{next_riddle_num}[:：]?)",
+            r"続けて別のなぞなぞを出しましょうか？",
+            r"このまま答えをたくさん出しますか？",
+            r"別のなぞなぞを楽しみますか？",
+            r"もっと続けますか？",
+        ]
+        combined_pattern = "|".join(extra_patterns)
+        if re.search(combined_pattern, assistant_message.content):
+            end_msg = RiddleChatService.RIDDLE_END_MESSAGE
+            if end_msg in assistant_message.content:
+                parts = assistant_message.content.split(end_msg)
+                main_content = re.split(combined_pattern, parts[0])[0].strip()
+                # 余計な見出し（#####）が残っている場合を削除
+                main_content = re.sub(r"#####\s*$", "", main_content).strip()
+                assistant_message.content = main_content.rstrip() + "\n\n" + end_msg
+
+        # 評価の実行と追記
+        chat_service.chat_history.append(assistant_message)
+        evaluation_text = chat_service.evaluate(login_user=user, riddle_set=riddle_set)
+        assistant_message.content += f"\n\n{evaluation_text}"
+        assistant_message.content = assistant_message.content.strip()
 
     @staticmethod
     def get_prompt(
@@ -57,9 +138,11 @@ class RiddleChatService(BaseLLMTask):
         ### 重要な役割とルール
         - あなたは、決まったなぞなぞを【計{riddle_count}問】出題します。
         - 進行フローを遵守し、勝手に質問を増やしたり、ヒントの要否を聞いたりしないでください。
+        - ユーザーから、現在出題している問題の内容について質問や確認があった場合は、優しくその問題の内容を再提示し、回答を促してください。
+        - 回答が得られるまでは、次の問題に進まないでください。
         - 性別設定: {gender.name} の口調で振る舞ってください。
         - **Markdown 形式で読みやすく出力してください。特に、感想と次の質問の間には必ず 2 つの改行（空行）を挿入してください。**
-        - **回答の冒頭に挨拶や「回答ありがとうございます」などの一文を入れる場合、その直後に段落（空行）を作らず、すぐに「##### 質問n」を開始してください。**
+        - **回答の冒頭に挨拶や「回答ありがとうございます」などの一文を入れる場合、その直後に必ず 2 つの改行（空行）を挿入してから「##### 質問n」を開始してください。**
 
         ### 進行フロー
         1. 【なぞなぞスタート】の合図を受け取ったら、挨拶をし、すぐに【質問1】を出題してください。

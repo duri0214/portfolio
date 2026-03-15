@@ -231,7 +231,7 @@
                 riddleButton.addEventListener("click", function () {
                     const isRiddleActive = "{{ is_riddle_active|yesno:'true,false' }}" === "true";
                     if (isRiddleActive) {
-                        // なぞなぞ中断時は「ChatLogs テーブルをクリアー」ボタンのクリックを模倣する (KISS原則)
+                        // なぞなぞ中断時は「ChatLogs テーブルをクリアー」ボタンのクリックを模倣する
                         clearBtn.click();
                         return;
                     }

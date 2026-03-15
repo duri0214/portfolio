@@ -8,13 +8,29 @@ from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleChatService
 from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
-from llm_chat.domain.valueobject.completion.riddle import Gender, Riddle
+from llm_chat.domain.valueobject.completion.riddle import (
+    Gender,
+    Riddle,
+    SessionState,
+)
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.models import RiddleQuestion
 
 
 class RiddleUseCase(UseCase):
-    """なぞなぞユースケース"""
+    """
+    なぞなぞセッションの進行を管理するユースケース。
+
+    「問題の出題、回答の受取、評価、終了判定」という
+    一連のなぞなぞゲームのフロー（ステートマシン）を制御します。
+    ユーザーがメッセージを送信した際、現在の状態から「次の工程（フェーズ）」を計算し、
+    アシスタントの返信メッセージに `next_riddle_state` として付与して保存します。
+    ユーザーメッセージ側の `next_riddle_state` は常に `None` とし、
+    状態の提示責任を常にシステム（アシスタント）側に集約します。
+
+    Attributes:
+        config (OpenAIGptConfig | GeminiConfig): LLMの設定（モデル名、温度など）。
+        max_turns (int, optional): セッションの最大ターン数（問題数）。デフォルトは None。
+    """
 
     def __init__(
         self,
@@ -34,104 +50,68 @@ class RiddleUseCase(UseCase):
         if gender is None:
             raise ValueError("gender is required for RiddleUseCase")
 
-        # フロントエンドの「なぞなぞスタート」ボタンなどが、ユーザーの代わりに「始めて」などの
-        # メッセージを自動送信してくる。この「開始の合図」を検知したときだけ履歴をクリアする。
-        # 判定なしで「履歴があれば消す」だけにすると、問題回答中（2回目以降の実行）に履歴が消えてしまう。
+        # 1. 履歴を取得し、現在の状態を判定
+        chat_history = ChatLogRepository.find_chat_history(user)
+        last_message = chat_history[-1] if chat_history else None
+        current_state = (
+            SessionState(last_message.next_riddle_state)
+            if last_message and last_message.next_riddle_state
+            else None
+        )
+
+        # 2. 開始判定と初期化
         start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
-        if any(sig in content for sig in start_signals):
-            if ChatLogRepository.count() > 0:
-                ChatLogRepository.clear_all()
+        is_start = any(sig in content for sig in start_signals)
 
-        # DBから問題を読み込む
-        db_questions = RiddleQuestion.objects.all().order_by("order")
-        riddle_set = [
-            Riddle(question=q.question_text, answer=q.answer_text) for q in db_questions
-        ]
+        if is_start:
+            ChatLogRepository.clear_all()
+            current_state = SessionState.ASK_QUESTION
 
-        # 問題が登録されていない場合は例外を投げる
-        if not riddle_set:
-            raise ValueError(
-                "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。"
-            )
+        # 3. 問題セットの取得
+        riddle_set = RiddleChatService.get_riddle_set(self.max_turns)
+        riddle_count = len(riddle_set)
 
-        # テスト互換性：max_turns が指定されている場合は riddle_set を切り詰める
-        if self.max_turns is not None:
-            riddle_set = riddle_set[: self.max_turns - 1]
+        # 4. 状態遷移
+        next_state = current_state.get_next_state() if current_state else None
 
-        chat_service = ChatService(self.config)
-
+        # 5. メッセージの生成
         user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
             content=content,
             model_name=self.config.model,
             use_case_type=UseCaseType.RIDDLE,
+            next_riddle_state=None,
         )
 
-        # なぞなぞは明示的に use_case_type="Riddle" を指定
+        chat_service = ChatService(self.config)
         assistant_message = chat_service.generate(
             user_message,
             use_case_type="Riddle",
             gender=gender,
             riddle_set=riddle_set,
+            next_riddle_state=next_state.value if next_state else None,
         )
 
-        # ユーザーの発言回数をカウント（generate() により今回の発言もDBに保存済み）
-        chat_history = ChatLogRepository.find_chat_history(user)
-        user_turns = [m for m in chat_history if m.role == RoleType.USER]
-        turn_count = len(user_turns)
-        riddle_count = len(riddle_set)
-
-        # なぞなぞの終端処理
-        # ユーザーの発言回数（スタート合図 + 各問題への回答回数）が (問題数 + 1) に達した場合、
-        # またはAIのメッセージに終了定型文が含まれる場合に、評価フェーズへ移行する。
-        # 例: 2問の場合、1回目:スタート、2回目:問1回答、3回目:問2回答（ここで全問終了）
-        total_required_user_turns = riddle_count + 1
-        if (
-            turn_count >= total_required_user_turns
-            or RiddleChatService.RIDDLE_END_MESSAGE in assistant_message.content
+        # 6. 終了判定と評価
+        if RiddleChatService.is_session_finished(
+            user, assistant_message, riddle_count, start_signals
         ):
-            # 終了メッセージが含まれていない場合は強制的に付与
+            assistant_message.next_riddle_state = SessionState.FINISHED.value
             if RiddleChatService.RIDDLE_END_MESSAGE not in assistant_message.content:
                 assistant_message.content += (
                     f"\n\n{RiddleChatService.RIDDLE_END_MESSAGE}"
                 )
 
-            # 規定回数終了時に、もしLLMが指示を無視して「存在しない次の問題」や「会話の継続」を提案していたら除去を試みる。
-            # (リファクタリングによりプロンプトで制御しているが、モデルによっては出やすいため保険として残す)
-            next_riddle_num = riddle_count + 1
-            extra_patterns = [
-                rf"(?:(?:それでは|では)?(?:次の|第|第 )?問題です。?|"
-                rf"質問{next_riddle_num}[:：]?|"
-                rf"第{next_riddle_num}問[:：]?|"
-                rf"問{next_riddle_num}[:：]?|"
-                rf"問題{next_riddle_num}[:：]?)",
-                r"続けて別のなぞなぞを出しましょうか？",
-                r"このまま答えをたくさん出しますか？",
-                r"別のなぞなぞを楽しみますか？",
-                r"もっと続けますか？",
-            ]
-            combined_pattern = "|".join(extra_patterns)
-            if re.search(combined_pattern, assistant_message.content):
-                end_msg = RiddleChatService.RIDDLE_END_MESSAGE
-                if end_msg in assistant_message.content:
-                    parts = assistant_message.content.split(end_msg)
-                    # 余計な出題パターンや継続提案で分割し、その前の部分（感想・解説）を取得
-                    main_content = re.split(combined_pattern, parts[0])[0].strip()
-                    # 空行などを整理して再構成
-                    assistant_message.content = main_content.rstrip() + "\n\n" + end_msg
-
-            # 評価前に、今回のアシスタントメッセージを履歴に追加して文脈を完璧にする
-            chat_service.chat_history.append(assistant_message)
-
-            evaluation_text = chat_service.evaluate(
-                login_user=user_message.user, riddle_set=riddle_set
+            # クリーニングと評価の追加
+            RiddleChatService.finalize_message(
+                assistant_message, riddle_count, chat_service, user, riddle_set
             )
-            assistant_message.content += f"\n\n{evaluation_text}"
 
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
             model_name=self.config.model,
             use_case_type=UseCaseType.RIDDLE,
+            next_riddle_state=assistant_message.next_riddle_state,
         )

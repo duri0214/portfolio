@@ -25,6 +25,7 @@ class UseCase(ABC):
         content: str,
         model_name: str,
         use_case_type: str = UseCaseType.OPENAI_GPT,
+        next_riddle_state: str | None = None,
         file_path: str | None = None,
     ) -> MessageDTO:
         assistant_message = MessageDTO(
@@ -33,6 +34,7 @@ class UseCase(ABC):
             content=content,
             model_name=model_name,
             use_case_type=use_case_type,
+            next_riddle_state=next_riddle_state,
             file_path=file_path,
         )
         self.repository.insert(assistant_message)

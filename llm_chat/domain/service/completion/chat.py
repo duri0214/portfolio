@@ -21,7 +21,16 @@ from django.contrib.auth.models import User
 
 
 class ChatService(BaseChatService):
-    """統合されたチャットサービス（GeminiとOpenAI両対応）"""
+    """
+    統合されたチャットサービス。
+
+    OpenAI GPT や Google Gemini など、異なる LLM プロバイダーを統一された
+    インターフェースで操作し、メッセージの生成や履歴管理を行います。
+
+    Attributes:
+        config (OpenAIGptConfig | GeminiConfig): 使用する LLM の設定。
+        chat_history (list[MessageDTO]): 現在のセッションの会話履歴。
+    """
 
     def __init__(self, config: OpenAIGptConfig | GeminiConfig):
         super().__init__(model_name=config.model)
@@ -54,14 +63,20 @@ class ChatService(BaseChatService):
                 user_message=user_message, gender=gender, riddle_set=riddle_set or []
             )
         else:
+            # 最新のユーザーメッセージをDBに保存し、履歴に追加
+            user_message.use_case_type = use_case_type
+            ChatLogRepository.insert(user_message)
+            chat_history.append(user_message)
+
             # 2回目以降
             if use_case_type == UseCaseType.RIDDLE:
                 has_system = any(m.role == RoleType.SYSTEM for m in chat_history)
                 if not has_system:
-                    user_turns = [m for m in chat_history if m.role == RoleType.USER]
-                    current_index = len(
-                        user_turns
-                    )  # 今回の入力を受ける前の、回答済みの問題数
+                    # アシスタントのメッセージ数から、現在何問目かを判定する
+                    assistant_messages = [
+                        m for m in chat_history if m.role == RoleType.ASSISTANT
+                    ]
+                    current_index = len(assistant_messages)
 
                     system_content = RiddleChatService.get_prompt(
                         gender=gender,
@@ -77,11 +92,6 @@ class ChatService(BaseChatService):
                     )
                     chat_history.insert(0, system_message)
 
-            # 最新のユーザーメッセージをDBに保存し、履歴に追加
-            user_message.use_case_type = use_case_type
-            ChatLogRepository.insert(user_message)
-            chat_history.append(user_message)
-
         return chat_history
 
     def generate(
@@ -90,6 +100,7 @@ class ChatService(BaseChatService):
         use_case_type: str = UseCaseType.OPENAI_GPT,
         gender: Gender | None = None,
         riddle_set: list[Riddle] | None = None,
+        next_riddle_state: str | None = None,
     ) -> MessageDTO:
         """
         ユーザーメッセージを基に回答を生成します。
@@ -110,6 +121,7 @@ class ChatService(BaseChatService):
             user=user_message.user,
             content=chat_result.answer,
             use_case_type=use_case_type,
+            next_riddle_state=next_riddle_state,
         )
 
     def evaluate(self, login_user: User, riddle_set: list[Riddle]):
