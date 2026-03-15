@@ -21,6 +21,7 @@ class BaseChatService(ABC):
         user: User,
         content: str,
         use_case_type: str = UseCaseType.OPENAI_GPT,
+        riddle_state: str | None = None,
         file_path: str | None = None,
     ) -> MessageDTO:
         return MessageDTO(
@@ -29,5 +30,6 @@ class BaseChatService(ABC):
             content=content,
             model_name=self.model_name,
             use_case_type=use_case_type,
+            riddle_state=riddle_state,
             file_path=file_path,
         )

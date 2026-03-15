@@ -5,6 +5,13 @@ from llm_chat.models import ChatLogs
 
 
 class ChatLogRepository:
+    """
+    チャット履歴の永続化を担当するリポジトリ。
+
+    データベース（ChatLogsモデル）との間でのメッセージDTOの保存、
+    履歴の取得、および全削除などの操作をカプセル化します。
+    """
+
     @staticmethod
     def find_chat_history(user: User) -> list[MessageDTO]:
         chat_logs = ChatLogs.objects.filter(user=user).order_by("created_at")

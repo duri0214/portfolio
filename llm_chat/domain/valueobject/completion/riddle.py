@@ -25,30 +25,6 @@ class Riddle:
     evaluation_tags: list[str] = field(default_factory=list)
 
 
-class GenderType(Enum):
-    MAN = "man"
-    WOMAN = "woman"
-
-
-@dataclass
-class Gender:
-    """
-    ユーザーの性別を表現する値オブジェクト。
-
-    Attributes:
-        gender (GenderType): 性別の列挙型。
-    """
-
-    gender: GenderType
-
-    @property
-    def name(self) -> str:
-        """
-        性別の日本語名を返します。
-        """
-        return "男性" if self.gender == GenderType.MAN else "女性"
-
-
 class RiddleEvaluation(BaseModel):
     """
     なぞなぞセッション全体の総合評価結果（集約された最終評価）。
@@ -83,6 +59,85 @@ class RiddleEvaluation(BaseModel):
         各項目の加算結果が最終的なスコアとして扱われます。
         """
         return self.correctness + self.reasoning + self.creativity + self.rebuttal
+
+
+class SessionState(Enum):
+    """
+    なぞなぞセッションの状態。
+
+    Attributes:
+        ASK_QUESTION (str): 問題出題中
+        WAIT_ANSWER (str): 回答待ち
+        EVALUATE (str): 評価中（LLMによる評価）
+        WAIT_REBUTTAL (str): 反論待ち（任意）
+        REEVALUATE (str): 再評価中
+        NEXT_QUESTION (str): 次の問題へ
+        FINISHED (str): 終了
+    """
+
+    ASK_QUESTION = "ASK_QUESTION"
+    WAIT_ANSWER = "WAIT_ANSWER"
+    EVALUATE = "EVALUATE"
+    WAIT_REBUTTAL = "WAIT_REBUTTAL"
+    REEVALUATE = "REEVALUATE"
+    NEXT_QUESTION = "NEXT_QUESTION"
+    FINISHED = "FINISHED"
+
+
+@dataclass
+class RiddleSession:
+    """
+    なぞなぞセッションのドメインモデル。
+
+    「問題 → 回答 → 評価 → 反論 → 再評価」という一連の流れを管理します。
+
+    Attributes:
+        riddles (list[Riddle]): 出題されるなぞなぞのリスト。
+        answers (list[str]): ユーザーからの回答履歴。
+        evaluations (list[RiddleEvaluation]): 各ターンの評価結果。
+        rebuttals (list[str]): ユーザーからの反論履歴。
+        state (SessionState): セッションの現在状態。
+        current_index (int): 現在何問目か（0から開始）。
+    """
+
+    riddles: list[Riddle]
+    answers: list[str] = field(default_factory=list)
+    evaluations: list[RiddleEvaluation] = field(default_factory=list)
+    rebuttals: list[str] = field(default_factory=list)
+    state: SessionState = SessionState.ASK_QUESTION
+    current_index: int = 0
+
+
+class GenderType(Enum):
+    """
+    性別の列挙型。
+
+    Attributes:
+        MAN (str): 男性
+        WOMAN (str): 女性
+    """
+
+    MAN = "man"
+    WOMAN = "woman"
+
+
+@dataclass
+class Gender:
+    """
+    ユーザーの性別を表現する値オブジェクト。
+
+    Attributes:
+        gender (GenderType): 性別の列挙型。
+    """
+
+    gender: GenderType
+
+    @property
+    def name(self) -> str:
+        """
+        性別の日本語名を返します。
+        """
+        return "男性" if self.gender == GenderType.MAN else "女性"
 
 
 class RiddleResponse(ChatResult):

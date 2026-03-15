@@ -22,6 +22,7 @@ class ChatLogs(models.Model):
             「どのユースケースを使用したか」をサーバー側で確実かつ永続的に判定するために保持します。
             具体的には、最新の履歴が `use_case_type="Riddle"` かつ終了メッセージを含まない場合に
             「継続中」とみなすロジックの根拠データとなります。
+        riddle_state (CharField): なぞなぞセッションの状態管理用（ASK_QUESTION, WAIT_ANSWER, ...）。
         file (FileField): 生成された音声ファイルなどの保存先パス。
         created_at (DateTimeField): レコードの作成日時（自動設定）。
     """
@@ -49,6 +50,12 @@ class ChatLogs(models.Model):
         choices=USE_CASE_TYPE_CHOICES,
         default=UseCaseType.OPENAI_GPT,
     )
+    riddle_state = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text="なぞなぞセッションの状態管理用（ASK_QUESTION, WAIT_ANSWER, ...）",
+    )
     file = models.FileField(upload_to="llm_chat/audios/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -64,6 +71,7 @@ class ChatLogs(models.Model):
             content=self.content,
             model_name=self.model_name,
             use_case_type=self.use_case_type,
+            riddle_state=self.riddle_state,
             file_path=self.file.url if self.file else None,
             file_name=self.file.name if self.file else None,
         )
@@ -72,6 +80,12 @@ class ChatLogs(models.Model):
 class RiddleQuestion(models.Model):
     """
     なぞなぞの問題と正解を管理するモデル。
+
+    Attributes:
+        question_text (CharField): なぞなぞの問題文。
+        answer_text (TextField): なぞなぞの正解。
+        order (IntegerField): 出題順序。
+        created_at (DateTimeField): レコードの作成日時。
     """
 
     question_text = models.CharField(max_length=255, verbose_name="問題文", unique=True)
