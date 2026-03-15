@@ -938,7 +938,7 @@ class ViewLogicTest(TestCase):
         self.assertEqual(response.status_code, 302)  # リダイレクト
         self.assertEqual(RiddleQuestion.objects.count(), 2)
 
-        # 既存データ「古い問題」が消えていることを確認
+        # 既存データ「古い問題」が消えていることを確認（全上書き方式のため）
         self.assertFalse(
             RiddleQuestion.objects.filter(question_text="古い問題").exists()
         )

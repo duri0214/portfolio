@@ -239,11 +239,11 @@ class RiddleCSVUploadView(View):
             reader = csv.reader(io_string)
 
             # order も question_text もユニークなので、
-            # CSVでの一括更新を容易にするため、既存データを一度削除してから再投入する方式を検討
-            # (ただし、運用上、既存IDを維持したい場合はトランザクション内での処理が必要)
+            # CSVでの一括更新を容易にするため、既存データを一度削除してから再投入する方式を採用。
+            # トランザクション内で処理することで、エラー時は全削除をロールバックする。
             try:
                 with transaction.atomic():
-                    # 全削除
+                    # 既存データを削除
                     RiddleQuestion.objects.all().delete()
 
                     created_count = 0
@@ -251,6 +251,7 @@ class RiddleCSVUploadView(View):
                         if len(row) < 3:
                             continue
                         order, question_text, answer_text = row[0], row[1], row[2]
+                        # CSVの内容を新規登録
                         RiddleQuestion.objects.create(
                             order=order,
                             question_text=question_text,

@@ -25,7 +25,10 @@
                 <button type="submit" class="btn btn-primary">アップロード</button>
                 <a href="{% url 'llm:riddle_sample_csv' %}" class="btn btn-outline-secondary ms-2">サンプルCSVダウンロード</a>
             </form>
-            <p class="mt-2 small text-muted">CSVフォーマット: <code>順序(int),問題文(text),正解(text)</code></p>
+            <p class="mt-2 small text-muted">
+                CSVフォーマット: <code>順序(int),問題文(text),正解(text)</code><br>
+                <span class="text-danger fw-bold">※アップロード時、既存のデータはすべて削除され、CSVの内容で上書きされます。</span>
+            </p>
         </div>
     </div>
 
