@@ -12,7 +12,8 @@
     </div>
     <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;"></div>
     <div class="container">
-        <div class="d-flex justify-content-end mb-3">
+        <div class="d-flex justify-content-end mb-3 gap-2">
+            <a href="{% url 'llm:riddle_admin' %}" class="btn btn-outline-info">なぞなぞ管理</a>
             <button id="clearChatLogsBtn" class="btn btn-danger">ChatLogs テーブルをクリアー</button>
         </div>
         {% for chat_log in chat_history %}
@@ -97,7 +98,7 @@
             let isLoading = false;
 
             function isSuperuserButtonEnabled() {
-                // when not superuser, button is rendered disabled; keep it disabled
+                // when not superuser, a button is rendered disabled; keep it disabled
                 return !sendButton.hasAttribute("disabled") || sendButton.classList.contains("btn-primary");
             }
 

@@ -1,5 +1,4 @@
 import json
-import os
 from typing import Generator
 
 from django.contrib.auth.models import User
@@ -19,8 +18,12 @@ from llm_chat.domain.use_case.completion.chat import (
     OpenAIGptStreamingUseCase,
 )
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
-from llm_chat.forms import UserTextForm
-from llm_chat.models import ChatLogs
+from llm_chat.forms import UserTextForm, RiddleCSVUploadForm
+from llm_chat.models import ChatLogs, RiddleQuestion
+import csv
+import io
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
 # .env ファイルを読み込む
 load_dotenv()
@@ -207,3 +210,55 @@ class ClearChatLogsView(View):
             return JsonResponse(
                 {"error": "Failed to clear", "detail": str(e)}, status=500
             )
+
+
+class RiddleAdminView(View):
+    @staticmethod
+    def get(request, *args, **kwargs):
+        questions = RiddleQuestion.objects.all()
+        form = RiddleCSVUploadForm()
+        return render(
+            request,
+            "llm_chat/riddle_admin.html",
+            {"questions": questions, "form": form},
+        )
+
+
+class RiddleCSVUploadView(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        form = RiddleCSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = request.FILES["csv_file"]
+            decoded_file = csv_file.read().decode("utf-8")
+            io_string = io.StringIO(decoded_file)
+            reader = csv.reader(io_string)
+
+            # ヘッダーをスキップしたい場合は next(reader) を入れる
+            # 今回はフォーマット固定 (order, question, answer) を想定
+            created_count = 0
+            updated_count = 0
+            for row in reader:
+                if len(row) < 3:
+                    continue
+                order, question_text, answer_text = row[0], row[1], row[2]
+                obj, created = RiddleQuestion.objects.update_or_create(
+                    order=order,
+                    defaults={
+                        "question_text": question_text,
+                        "answer_text": answer_text,
+                    },
+                )
+                if created:
+                    created_count += 1
+                else:
+                    updated_count += 1
+
+            messages.success(
+                request,
+                f"CSVアップロード完了: 新規 {created_count} 件, 更新 {updated_count} 件",
+            )
+        else:
+            messages.error(request, "CSVファイルのアップロードに失敗しました。")
+
+        return redirect("llm:riddle_admin")
