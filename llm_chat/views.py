@@ -113,10 +113,27 @@ class SyncResponseView(View):
                 return JsonResponse({"error": str(e)}, status=400)
 
             # 成功レスポンスを返す
+            success_message = f"{use_case_type} 処理が完了しました"
+            if isinstance(use_case, RiddleUseCase) and message.next_riddle_state:
+                from llm_chat.domain.valueobject.completion.riddle import SessionState
+
+                state_map = {
+                    SessionState.WAIT_ANSWER.value: "回答をお待ちしています",
+                    SessionState.EVALUATE.value: "回答を評価しています...",
+                    SessionState.WAIT_REBUTTAL.value: "反論があればどうぞ",
+                    SessionState.REEVALUATE.value: "再評価しています...",
+                    SessionState.NEXT_QUESTION.value: "次の問題へ進みます",
+                    SessionState.START.value: "新しい問題を出題します",
+                    SessionState.FINISHED.value: "なぞなぞを終了しました",
+                }
+                # カンマ区切りの場合は最後の状態を代表メッセージとする（UI側で詳細は処理する）
+                last_state = message.next_riddle_state.split(",")[-1]
+                success_message = state_map.get(last_state, success_message)
+
             return JsonResponse(
                 {
                     "status": "success",
-                    "message": f"{use_case_type} 処理が完了しました",
+                    "message": success_message,
                     "result": message.to_display(),
                 }
             )
