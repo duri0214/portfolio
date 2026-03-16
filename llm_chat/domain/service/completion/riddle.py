@@ -53,7 +53,7 @@ class RiddleChatService(BaseLLMTask):
                 "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。"
             )
         if max_turns is not None:
-            riddle_set = riddle_set[: max_turns - 1]
+            riddle_set = riddle_set[:max_turns]
         return riddle_set
 
     @staticmethod
@@ -187,17 +187,11 @@ class RiddleChatService(BaseLLMTask):
             content=system_content,
             use_case_type=UseCaseType.RIDDLE,
         )
-        first_user_message = MessageDTO(
-            user=user_message.user,
-            role=RoleType.USER,
-            content=user_message.content,
-            use_case_type=UseCaseType.RIDDLE,
-        )
-        # 初回のユーザーメッセージをDBに保存
-        ChatLogRepository.insert(first_user_message)
+        # このメソッドを呼び出す際は、UseCaseType に拘わらずなぞなぞモード（RIDDLE）として振る舞うよう強制する
+        user_message.use_case_type = UseCaseType.RIDDLE
 
         # システムメッセージを先頭に含めて返す
-        return [system_message, first_user_message]
+        return [system_message, user_message]
 
     def execute(self, login_user: User, riddle_set: list[Riddle]) -> RiddleResponse:
         """
