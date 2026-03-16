@@ -66,7 +66,7 @@ class SessionState(Enum):
     なぞなぞセッションの状態。
 
     Attributes:
-        ASK_QUESTION (str): 問題出題中
+        START (str): 問題出題中
         WAIT_ANSWER (str): 回答待ち
         EVALUATE (str): 評価中（LLMによる評価）
         WAIT_REBUTTAL (str): 反論待ち（任意）
@@ -75,7 +75,7 @@ class SessionState(Enum):
         FINISHED (str): 終了
     """
 
-    ASK_QUESTION = "ASK_QUESTION"
+    START = "START"
     WAIT_ANSWER = "WAIT_ANSWER"
     EVALUATE = "EVALUATE"
     WAIT_REBUTTAL = "WAIT_REBUTTAL"
@@ -83,18 +83,47 @@ class SessionState(Enum):
     NEXT_QUESTION = "NEXT_QUESTION"
     FINISHED = "FINISHED"
 
-    def get_next_state(self) -> "SessionState":
+    @property
+    def next_state(self) -> "SessionState":
         """
-        現在の状態から次の遷移先の状態を取得します。
+        現在の状態から次に遷移すべき状態を定義するマッピング。
         """
-        transitions = {
-            SessionState.ASK_QUESTION: SessionState.WAIT_ANSWER,
+        transitions: dict["SessionState", "SessionState"] = {
+            SessionState.START: SessionState.WAIT_ANSWER,
             SessionState.WAIT_ANSWER: SessionState.EVALUATE,
             SessionState.EVALUATE: SessionState.WAIT_REBUTTAL,
             SessionState.WAIT_REBUTTAL: SessionState.REEVALUATE,
             SessionState.REEVALUATE: SessionState.NEXT_QUESTION,
+            SessionState.NEXT_QUESTION: SessionState.START,
         }
         return transitions.get(self, self)
+
+    @classmethod
+    def from_csv(cls, next_riddle_state: str) -> list["SessionState"]:
+        """
+        保存された next_riddle_state（カンマ区切りの履歴）から SessionState のリストを復元します。
+        """
+        if not next_riddle_state:
+            return []
+        states = []
+        for s in next_riddle_state.split(","):
+            s = s.strip()
+            if not s:
+                continue
+            try:
+                states.append(cls(s))
+            except ValueError:
+                continue
+        return states
+
+    @staticmethod
+    def to_csv(states: list["SessionState"] | None) -> str:
+        """
+        SessionState のリストをカンマ区切りの文字列に変換します。
+        """
+        if not states:
+            return ""
+        return ",".join(s.value for s in states)
 
 
 @dataclass
@@ -117,7 +146,7 @@ class RiddleSession:
     answers: list[str] = field(default_factory=list)
     evaluations: list[RiddleEvaluation] = field(default_factory=list)
     rebuttals: list[str] = field(default_factory=list)
-    state: SessionState = SessionState.ASK_QUESTION
+    state: SessionState = SessionState.START
     current_index: int = 0
 
 
