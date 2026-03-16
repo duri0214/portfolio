@@ -138,19 +138,18 @@ class OpenAISpeechToTextChatService(BaseChatService):
             model=self.model_name,
         )
 
-    def generate(self, assistant_message: MessageDTO) -> MessageDTO:
-        if assistant_message.file_path is None:
+    def generate(self, user_message: MessageDTO) -> MessageDTO:
+        if user_message.file_path is None:
             raise Exception("file_path is None")
-        full_path = Path(MEDIA_ROOT) / assistant_message.file_path
+        full_path = Path(MEDIA_ROOT) / user_message.file_path
         if full_path.exists():
             response = OpenAILlmSpeechToText(self.config).retrieve_answer(
-                file_path=assistant_message.file_path
+                file_path=user_message.file_path
             )
             return self._create_assistant_message(
-                user=assistant_message.user,
+                user=user_message.user,
                 content=f"音声ファイルは「{response.text}」とテキスト化されました",
                 use_case_type=UseCaseType.OPENAI_GPT,
-                file_path=assistant_message.file_path,
             )
 
-        raise Exception(f"音声ファイル {assistant_message.file_path} は存在しません")
+        raise Exception(f"音声ファイル {user_message.file_path} は存在しません")

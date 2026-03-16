@@ -63,9 +63,8 @@ class ChatService(BaseChatService):
                 user_message=user_message, gender=gender, riddle_set=riddle_set or []
             )
         else:
-            # 最新のユーザーメッセージをDBに保存し、履歴に追加
+            # 履歴に追加
             user_message.use_case_type = use_case_type
-            ChatLogRepository.insert(user_message)
             chat_history.append(user_message)
 
             # 2回目以降

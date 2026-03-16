@@ -27,9 +27,8 @@ class OpenAIRagUseCase(UseCase):
             raise ValueError("content cannot be None for OpenAIRagUseCase")
 
         chat_service = OpenAIRagChatService()
-        user_message = MessageDTO(
+        user_message = self._insert_user_message(
             user=user,
-            role=RoleType.USER,
             content=content,
             model_name=chat_service.model_name,
             use_case_type=UseCaseType.OPENAI_RAG,
