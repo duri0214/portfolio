@@ -31,7 +31,6 @@ class LlmChatUseCase(UseCase):
             user=user,
             content=content,
             model_name=self.config.model,
-            next_riddle_state=None,
             use_case_type=(
                 UseCaseType.OPENAI_GPT
                 if isinstance(self.config, OpenAIGptConfig)
@@ -44,7 +43,6 @@ class LlmChatUseCase(UseCase):
             user=user,
             content=assistant_message.content,
             model_name=self.config.model,
-            next_riddle_state=None,
             use_case_type=(
                 UseCaseType.OPENAI_GPT
                 if isinstance(self.config, OpenAIGptConfig)
@@ -78,7 +76,6 @@ class OpenAIGptStreamingUseCase(UseCase):
             user=user,
             content=content,
             model_name=chat_service.model_name,
-            next_riddle_state=None,
             use_case_type=UseCaseType.OPENAI_GPT_STREAMING,
         )
         return chat_service.generate(user_message)

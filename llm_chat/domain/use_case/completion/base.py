@@ -25,7 +25,7 @@ class UseCase(ABC):
         user: User,
         content: str,
         model_name: str,
-        next_riddle_state: list[SessionState] | None,
+        next_riddle_state: list[SessionState] | None = None,
         use_case_type: str = UseCaseType.OPENAI_GPT,
         file_path: str | None = None,
     ) -> MessageDTO:
@@ -46,7 +46,7 @@ class UseCase(ABC):
         user: User,
         content: str,
         model_name: str,
-        next_riddle_state: list[SessionState] | None,
+        next_riddle_state: list[SessionState] | None = None,
         use_case_type: str = UseCaseType.OPENAI_GPT,
         file_path: str | None = None,
     ) -> MessageDTO:
