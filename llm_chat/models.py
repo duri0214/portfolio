@@ -22,7 +22,7 @@ class ChatLogs(models.Model):
             「どのユースケースを使用したか」をサーバー側で確実かつ永続的に判定するために保持します。
             具体的には、最新の履歴が `use_case_type="Riddle"` かつ終了メッセージを含まない場合に
             「継続中」とみなすロジックの根拠データとなります。
-        next_riddle_state (CharField): なぞなぞセッションの状態管理用（ASK_QUESTION, WAIT_ANSWER, ...）。
+        next_riddle_state (CharField): なぞなぞセッションの状態管理用（START, WAIT_ANSWER, ...）。
         file (FileField): 生成された音声ファイルなどの保存先パス。
         created_at (DateTimeField): レコードの作成日時（自動設定）。
     """
@@ -51,10 +51,10 @@ class ChatLogs(models.Model):
         default=UseCaseType.OPENAI_GPT,
     )
     next_riddle_state = models.CharField(
-        max_length=20,
-        null=True,
+        max_length=100,
+        default="",
         blank=True,
-        help_text="なぞなぞセッションの状態管理用（ASK_QUESTION, WAIT_ANSWER, ...）",
+        help_text="なぞなぞセッションの状態管理用（START, WAIT_ANSWER, ...）",
     )
     file = models.FileField(upload_to="llm_chat/audios/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
