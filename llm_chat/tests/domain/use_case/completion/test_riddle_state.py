@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from unittest.mock import patch
 
-from lib.llm.valueobject.completion import ChatResult
+from lib.llm.valueobject.completion import ChatResult, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
 from llm_chat.domain.valueobject.completion.riddle import (
@@ -26,34 +26,114 @@ class RiddleSessionStateTest(TestCase):
             )
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_user_message_is_persisted(self, mock_retrieve):
+        """
+        USER メッセージが DB に保存され、next_riddle_state が正しく設定されていることを確認。
+        """
+        mock_retrieve.return_value = ChatResult(
+            answer="こんにちは！質問1です", explanation=""
+        )
+        use_case = RiddleUseCase(self.config)
+
+        # 1. 実行
+        use_case.execute(self.user, "スタート", self.gender)
+
+        # 2. DB を確認
+        from llm_chat.models import ChatLogs
+
+        logs = ChatLogs.objects.filter(user=self.user).order_by("created_at")
+
+        # スタート時は USER, ASSISTANT の 2 つのログができるはず
+        self.assertEqual(logs.count(), 2)
+
+        user_log = logs[0]
+        assistant_log = logs[1]
+
+        self.assertEqual(user_log.role, RoleType.USER.value)
+        self.assertEqual(assistant_log.role, RoleType.ASSISTANT.value)
+
+        # USER ログにも next_riddle_state が入っていること (START)
+        self.assertEqual(user_log.next_riddle_state, SessionState.START.value)
+        # ASSISTANT ログには START, WAIT_ANSWER が入っているはず
+        self.assertIn(SessionState.START.value, assistant_log.next_riddle_state)
+        self.assertIn(SessionState.WAIT_ANSWER.value, assistant_log.next_riddle_state)
+
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_session_state_transition(self, mock_retrieve):
         """
         シナリオ:
-        - 入力: ユーザーからの「スタート」、「回答1」、「反論」のメッセージ。
-        - 処理: RiddleUseCase.execute を順次呼び出し、セッション状態の遷移を確認する。
-        - 期待値:
-            1. 「スタート」後: WAIT_ANSWER（回答待ち）状態であること。
-            2. 「回答1」後: EVALUATE（評価中）状態であること。
-            3. 「反論」後: WAIT_REBUTTAL（反論待ち）状態であること。
+        - 入力: ユーザーからの「回答1」、「反論」、「次へ」などのメッセージ。
+        - 期待値: 適切な状態遷移が行われること。
         """
-        # LLMの回答をモック
+        # LLMの回答をモック（終了メッセージを含まない）
         mock_retrieve.return_value = ChatResult(answer="感想です", explanation="")
 
-        use_case = RiddleUseCase(self.config)
+        # テスト用の問題をたくさん登録（終了判定を回避するため）
+        for i in range(4, 20):
+            RiddleQuestion.objects.create(
+                question_text=f"問題{i}", answer_text=f"正解{i}", order=i
+            )
+
+        # max_turnsを大きくして終了しないようにする
+        use_case = RiddleUseCase(self.config, max_turns=15)
+
+        # 1. スタート (None/START -> WAIT_ANSWER)
+        res1 = use_case.execute(self.user, "スタート", self.gender)
+        # START, WAIT_ANSWER が含まれるはず
+        self.assertIn(SessionState.START.value, res1.next_riddle_state)
+        self.assertIn(SessionState.WAIT_ANSWER.value, res1.next_riddle_state)
+        # 内部でMessageDTOが保存されているため、この時点でのユーザーメッセージ数は1
+
+        # 2. 回答1 (WAIT_ANSWER -> EVALUATE)
+        # 実際にはプロンプト次第で EVALUATE の後に次問が出るため、インジケータは複数になる可能性がある
+        res2 = use_case.execute(self.user, "回答1", self.gender)
+        # 次問が出ない場合は単一の EVALUATE
+        self.assertIn(SessionState.EVALUATE.value, res2.next_riddle_state)
+
+        # 3. 反論 (EVALUATE -> WAIT_REBUTTAL)
+        res3 = use_case.execute(self.user, "違います", self.gender)
+        self.assertIn(SessionState.WAIT_REBUTTAL.value, res3.next_riddle_state)
+
+        # 4. 再評価 (WAIT_REBUTTAL -> REEVALUATE)
+        res4 = use_case.execute(self.user, "見直して", self.gender)
+        self.assertIn(SessionState.REEVALUATE.value, res4.next_riddle_state)
+
+        # 5. 次へ (REEVALUATE -> NEXT_QUESTION)
+        res5 = use_case.execute(self.user, "次", self.gender)
+        self.assertIn(SessionState.NEXT_QUESTION.value, res5.next_riddle_state)
+
+        # 6. ループ (NEXT_QUESTION -> START)
+        res6 = use_case.execute(self.user, "次の問題", self.gender)
+        self.assertIn(SessionState.START.value, res6.next_riddle_state)
+
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_question_2_wait_answer_transition(self, mock_retrieve):
+        """
+        質問2が出された直後の next_riddle_state は EVALUATE,WAIT_ANSWER であるべき。
+        """
+        # 回答1への感想と、質問2の出題。
+        mock_retrieve.return_value = ChatResult(
+            answer="回答ありがとうございます。素晴らしいですね。\n\n##### 質問2\n私は黒い服を着て、赤い手袋を持っている...",
+            explanation="",
+        )
+
+        use_case = RiddleUseCase(self.config, max_turns=3)
 
         # 1. スタート
         res1 = use_case.execute(self.user, "スタート", self.gender)
-        # スタート時は ASK_QUESTION -> WAIT_ANSWER に遷移しているはず
-        self.assertEqual(res1.next_riddle_state, SessionState.WAIT_ANSWER.value)
+        self.assertIn(SessionState.WAIT_ANSWER.value, res1.next_riddle_state)
 
-        # 2. 回答1
-        res2 = use_case.execute(self.user, "回答1", self.gender)
-        # WAIT_ANSWER -> EVALUATE に遷移しているはず
-        self.assertEqual(res2.next_riddle_state, SessionState.EVALUATE.value)
+        # 2. 回答1 -> 質問2出題
+        res2 = use_case.execute(self.user, "人間", self.gender)
 
-        # 3. 反論（現在の簡易ロジックでは EVALUATE の次は WAIT_REBUTTAL になるはず）
-        res3 = use_case.execute(self.user, "いや、違います", self.gender)
-        self.assertEqual(res3.next_riddle_state, SessionState.WAIT_REBUTTAL.value)
+        # インジケータとして EVALUATE と WAIT_ANSWER の両方が含まれていることを確認
+        states = res2.next_riddle_state.split(",")
+        self.assertIn(SessionState.EVALUATE.value, states)
+        self.assertIn(SessionState.WAIT_ANSWER.value, states)
+        # 順番も重要
+        self.assertEqual(
+            states, [SessionState.EVALUATE.value, SessionState.WAIT_ANSWER.value]
+        )
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_session_finished_state(self, mock_retrieve):
