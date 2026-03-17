@@ -162,6 +162,11 @@ class RiddleUseCase(UseCase):
                 assistant_message.content, riddle_count, chat_service, user, riddle_set
             )
 
+            # 終了状態を確定
+            # [EVALUATE, FINISHED] となるように履歴を構成する
+            target_states = [SessionState.EVALUATE, SessionState.FINISHED]
+            assistant_message.next_riddle_state = SessionState.to_csv(target_states)
+
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,

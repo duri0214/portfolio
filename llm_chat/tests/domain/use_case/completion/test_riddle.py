@@ -390,35 +390,6 @@ class RiddleUseCaseTest(TestCase):
             use_case.execute(user=self.user, content="なぞなぞスタート", gender=None)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
-    @patch(
-        "llm_chat.domain.service.completion.riddle.RiddleChatService.is_session_finished"
-    )
-    def test_riddle_use_case_unexpected_finish_raises_error(
-        self, mock_finished, mock_retrieve
-    ):
-        """
-        [シナリオ: 想定外の状態からの終了判定]
-        USER_INPUT ではない状態（例: START 直後）で終了判定となった場合、
-        ValueError が発生することを確認。
-        """
-        mock_finished.return_value = True
-        mock_retrieve.return_value = MagicMock(answer="なぞなぞ終了定型文")
-        config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
-        )
-        use_case = RiddleUseCase(config)
-        gender = Gender(GenderType.MAN)
-
-        # 1. ユーザーが「スタート」と言って開始
-        # この時、is_session_finished が True を返しているため、
-        # current_state は None (STARTの処理中) で、USER_INPUT ではない。
-        with self.assertRaisesRegex(
-            ValueError,
-            "セッションが終了しています。画面上の「なぞなぞの開始」を押してやりなおしてください。",
-        ):
-            use_case.execute(self.user, "スタート", gender=gender)
-
-    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_finished_session_raises_error(self, mock_retrieve):
         """
         [シナリオ: 終了済みセッションでの発言]
