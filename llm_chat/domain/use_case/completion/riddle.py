@@ -150,8 +150,8 @@ class RiddleUseCase(UseCase):
                     f"\n\n{RiddleChatService.RIDDLE_END_MESSAGE}"
                 )
 
-            # クリーニングと評価の追加
-            RiddleChatService.finalize_message(
+            # 最終評価
+            RiddleChatService.report(
                 assistant_message, riddle_count, chat_service, user, riddle_set
             )
 
