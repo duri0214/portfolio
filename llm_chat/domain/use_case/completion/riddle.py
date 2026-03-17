@@ -87,7 +87,7 @@ class RiddleUseCase(UseCase):
         # 4. 状態遷移（このターンの状態）の決定
         # target_state: 今回のユーザー入力が対応する「このターンの状態」
         # target_state.next_state: ユーザー入力を受けて進むべき「次の状態」
-        # 最終的にアシスタント側のメッセージには、
+        # 最終的にユーザーメッセージには、
         # [target_state, target_state.next_state] という 2段階の状態履歴が保存されます。
         target_state = current_state if current_state else SessionState.START
         if not current_state:
@@ -105,6 +105,20 @@ class RiddleUseCase(UseCase):
             next_riddle_state=target_states,
             use_case_type=UseCaseType.RIDDLE,
         )
+
+        # アシスタント側では、状態をさらに進めて提示する
+        # 開始時は、ユーザーが START をこなしたことを受けて [START, USER_INPUT] を提示する。
+        # それ以外（回答時など）は、ユーザーが到達させた「次の状態」を起点として、さらにその先を履歴に含める
+        # [target_state.next_state, target_state.next_state.next_state]
+        if not current_state:
+            target_states = [SessionState.START, SessionState.USER_INPUT]
+        else:
+            target_states = [
+                target_state.next_state,
+                target_state.next_state.next_state,
+            ]
+
+        next_state = target_state.next_state
 
         chat_service = ChatService(self.config)
         assistant_message = chat_service.generate(
