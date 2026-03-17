@@ -52,7 +52,7 @@ class ChatLogs(models.Model):
     )
     next_riddle_state = models.CharField(
         max_length=100,
-        default="",
+        null=True,
         blank=True,
         help_text="なぞなぞセッションの状態管理用（START, WAIT_ANSWER, ...）",
     )
