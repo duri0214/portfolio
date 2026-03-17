@@ -118,15 +118,13 @@ class RiddleUseCase(UseCase):
                 target_state.next_state.next_state,
             ]
 
-        next_state = target_state.next_state
-
         chat_service = ChatService(self.config)
         assistant_message = chat_service.generate(
             user_message,
             use_case_type="Riddle",
             gender=gender,
             riddle_set=riddle_set,
-            next_riddle_state=next_state.value if next_state else None,
+            next_riddle_state=target_states,
         )
 
         # 6. 終了判定と評価
