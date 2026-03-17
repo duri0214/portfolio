@@ -69,8 +69,9 @@ class RiddleUseCase(UseCase):
         riddle_set = RiddleChatService.get_riddle_set(self.max_turns)
         riddle_count = len(riddle_set)
 
-        # 4. 状態遷移（このターン終了後の予定状態）の決定
-        # target_state: 今回のユーザー入力が対応する「現在のフェーズ（こなすべきこと）」
+        # 4. 状態遷移（このターンの状態）の決定
+        # target_state: 今回のユーザー入力が対応する「このターンの状態」
+        # target_state.next_state: ユーザー入力を受けて進むべき「次の状態」
         # 最終的にアシスタント側のメッセージには、
         # [target_state, target_state.next_state] という 2段階の状態履歴が保存されます。
         target_state = current_state if current_state else SessionState.START
