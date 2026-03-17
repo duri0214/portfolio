@@ -70,11 +70,11 @@ class RiddleUseCase(UseCase):
         riddle_count = len(riddle_set)
 
         # 4. 状態遷移（このターン終了後の予定状態）の決定
+        # target_state: 今回のユーザー入力が対応する「現在のフェーズ（こなすべきこと）」
         # 最終的にアシスタント側のメッセージには、
-        # [current_state.next_state, current_state.next_state.next_state] という
-        # 2段階の状態履歴（states_history）が保存されます。
-        next_state = current_state.next_state if current_state else SessionState.START
-        states_history: list[SessionState] = [next_state]
+        # [target_state, target_state.next_state] という 2段階の状態履歴が保存されます。
+        target_state = current_state if current_state else SessionState.START
+        states_history: list[SessionState] = [target_state]
 
         # 5. メッセージの生成
         user_message = self._insert_user_message(
