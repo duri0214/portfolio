@@ -175,7 +175,7 @@
                 }
             }
 
-            function showToast(message, type = "info") {
+            function showToast(message, type = "success") {
                 const toastContainer = document.getElementById("toast-container");
                 const toastId = "toast-" + Date.now();
                 const iconMap = {
@@ -332,7 +332,7 @@
                                     };
                                     states.forEach((state, index) => {
                                         setTimeout(() => {
-                                            showToast(stateMap[state] || state, "info");
+                                            showToast(stateMap[state] || state, "success");
                                         }, index * 800); // 0.8秒間隔で表示
                                     });
                                 } else {
