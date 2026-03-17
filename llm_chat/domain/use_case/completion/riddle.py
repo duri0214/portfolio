@@ -160,5 +160,5 @@ class RiddleUseCase(UseCase):
             content=assistant_message.content,
             model_name=self.config.model,
             use_case_type=UseCaseType.RIDDLE,
-            next_riddle_state=assistant_message.next_riddle_state,
+            next_riddle_state=target_states,
         )
