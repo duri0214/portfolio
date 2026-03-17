@@ -14,7 +14,7 @@
     <div class="container">
         <div class="d-flex justify-content-end mb-3 gap-2">
             <a href="{% url 'llm:riddle_admin' %}" class="btn btn-outline-secondary">なぞなぞ管理</a>
-            <button id="clearChatLogsBtn" class="btn btn-danger">ChatLogs テーブルをクリアー</button>
+            <button id="clearChatLogsBtn" class="btn btn-danger">チャット履歴を削除</button>
         </div>
         {% for chat_log in chat_history %}
             <div class="card mb-3">
