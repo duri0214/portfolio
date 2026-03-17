@@ -80,27 +80,30 @@ class RiddleChatService(BaseLLMTask):
 
     @staticmethod
     def report(
-        assistant_message: MessageDTO,
+        content: str,
         riddle_count: int,
         chat_service: BaseChatService,
         user: User,
         riddle_set: list[Riddle],
-    ) -> None:
+    ) -> str:
         """
-        メッセージのクリーニングと評価結果の付与を行います。
+        メッセージのクリーニングと終了メッセージの付与、評価結果の追記を行います。
 
         アシスタントが生成したメッセージから不要なパターン（「次の質問です」など）を削除し、
-        ユーザーの回答に対する最終的な評価結果を追記します。
+        セッション終了の定型文およびユーザーの回答に対する最終的な評価結果を追記します。
         このメソッドは SessionState.FINISHED 状態に対応する処理を担います。
 
         Args:
-            assistant_message (MessageDTO): 評価結果を追記する対象のアシスタントメッセージ。
+            content (str): クリーニング対象のメッセージ本文。
             riddle_count (int): 現在のセッションでの回答数。
             chat_service (BaseChatService): 評価（LLM）を実行するためのチャットサービス。
             user (User): 評価対象のユーザー。
             riddle_set (list[Riddle]): 出題されたなぞなぞのセット。
+
+        Returns:
+            str: クリーニングおよび評価結果が追記されたメッセージ本文。
         """
-        # 終了メッセージのクリーニング
+        # 1. 不要なパターンのクリーニング
         next_riddle_num = riddle_count + 1
         extra_patterns = [
             rf"(?:(?:それでは|では)?(?:次の|第|第 )?問題です。?|質問{next_riddle_num}[:：]?|第{next_riddle_num}問[:：]?|問{next_riddle_num}[:：]?|問題{next_riddle_num}[:：]?)",
@@ -110,20 +113,23 @@ class RiddleChatService(BaseLLMTask):
             r"もっと続けますか？",
         ]
         combined_pattern = "|".join(extra_patterns)
-        if re.search(combined_pattern, assistant_message.content):
-            end_msg = RiddleChatService.RIDDLE_END_MESSAGE
-            if end_msg in assistant_message.content:
-                parts = assistant_message.content.split(end_msg)
-                main_content = re.split(combined_pattern, parts[0])[0].strip()
-                # 余計な見出し（#####）が残っている場合を削除
-                main_content = re.sub(r"#####\s*$", "", main_content).strip()
-                assistant_message.content = main_content.rstrip() + "\n\n" + end_msg
+        content = re.split(combined_pattern, content)[0].strip()
+        # 余計な見出し（#####）が残っている場合を削除
+        content = re.sub(r"#####\s*$", "", content).strip()
 
-        # 評価の実行と追記
-        chat_service.chat_history.append(assistant_message)
+        # 2. 終了メッセージ（定型文）の付与
+        end_msg = RiddleChatService.RIDDLE_END_MESSAGE
+        if end_msg not in content:
+            content = content.rstrip() + "\n\n" + end_msg
+
+        # 3. 評価の実行と追記
+        # chat_service に現在の回答内容を含めるためのダミーDTO
+        dummy_message = MessageDTO(user=user, role=RoleType.ASSISTANT, content=content)
+        chat_service.chat_history.append(dummy_message)
+
         evaluation_text = chat_service.evaluate(login_user=user, riddle_set=riddle_set)
-        assistant_message.content += f"\n\n{evaluation_text}"
-        assistant_message.content = assistant_message.content.strip()
+        content += f"\n\n{evaluation_text}"
+        return content.strip()
 
     @staticmethod
     def get_prompt(
