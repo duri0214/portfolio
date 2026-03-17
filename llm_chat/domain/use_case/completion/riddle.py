@@ -78,11 +78,12 @@ class RiddleUseCase(UseCase):
         target_states: list[SessionState] = [target_state, target_state.next_state]
 
         # 5. メッセージの生成
+        # ユーザーメッセージには、今回のアクション（開始や入力）を紐付ける
         user_message = self._insert_user_message(
             user=user,
             content=content,
             model_name=self.config.model,
-            next_riddle_state=states_history,
+            next_riddle_state=target_states,
             use_case_type=UseCaseType.RIDDLE,
         )
 
