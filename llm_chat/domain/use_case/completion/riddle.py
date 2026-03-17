@@ -58,7 +58,6 @@ class RiddleUseCase(UseCase):
                 - content が None の場合。
                 - gender が None の場合。
                 - セッションが既に終了している状態で、開始信号がないメッセージが送信された場合。
-                - 想定外の状態（USER_INPUT 以外）から終了判定となった場合（セッション不正）。
 
         Side Effects:
             - ユーザーメッセージとアシスタントメッセージを DB に保存します。
