@@ -118,11 +118,8 @@ class SyncResponseView(View):
                 from llm_chat.domain.valueobject.completion.riddle import SessionState
 
                 state_map = {
-                    SessionState.WAIT_ANSWER.value: "回答をお待ちしています",
+                    SessionState.USER_INPUT.value: "回答をお待ちしています",
                     SessionState.EVALUATE.value: "回答を評価しています...",
-                    SessionState.WAIT_REBUTTAL.value: "反論があればどうぞ",
-                    SessionState.REEVALUATE.value: "再評価しています...",
-                    SessionState.NEXT_QUESTION.value: "次の問題へ進みます",
                     SessionState.START.value: "新しい問題を出題します",
                     SessionState.FINISHED.value: "なぞなぞを終了しました",
                 }
