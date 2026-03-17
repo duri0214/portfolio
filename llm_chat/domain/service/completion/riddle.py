@@ -79,7 +79,7 @@ class RiddleChatService(BaseLLMTask):
         )
 
     @staticmethod
-    def finalize_message(
+    def report(
         assistant_message: MessageDTO,
         riddle_count: int,
         chat_service: BaseChatService,
@@ -88,6 +88,17 @@ class RiddleChatService(BaseLLMTask):
     ) -> None:
         """
         メッセージのクリーニングと評価結果の付与を行います。
+
+        アシスタントが生成したメッセージから不要なパターン（「次の質問です」など）を削除し、
+        ユーザーの回答に対する最終的な評価結果を追記します。
+        このメソッドは SessionState.FINISHED 状態に対応する処理を担います。
+
+        Args:
+            assistant_message (MessageDTO): 評価結果を追記する対象のアシスタントメッセージ。
+            riddle_count (int): 現在のセッションでの回答数。
+            chat_service (BaseChatService): 評価（LLM）を実行するためのチャットサービス。
+            user (User): 評価対象のユーザー。
+            riddle_set (list[Riddle]): 出題されたなぞなぞのセット。
         """
         # 終了メッセージのクリーニング
         next_riddle_num = riddle_count + 1
