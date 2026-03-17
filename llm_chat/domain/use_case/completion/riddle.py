@@ -73,13 +73,12 @@ class RiddleUseCase(UseCase):
         next_state = current_state.get_next_state() if current_state else None
 
         # 5. メッセージの生成
-        user_message = MessageDTO(
+        user_message = self._insert_user_message(
             user=user,
-            role=RoleType.USER,
             content=content,
             model_name=self.config.model,
+            next_riddle_state=[scheduled_state] if scheduled_state else None,
             use_case_type=UseCaseType.RIDDLE,
-            next_riddle_state=None,
         )
 
         chat_service = ChatService(self.config)
