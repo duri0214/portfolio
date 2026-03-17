@@ -144,15 +144,9 @@ class RiddleUseCase(UseCase):
         if RiddleChatService.is_session_finished(
             user, assistant_message, riddle_count, start_signals
         ):
-            # 終了定型文がなければ追加
-            if RiddleChatService.RIDDLE_END_MESSAGE not in assistant_message.content:
-                assistant_message.content += (
-                    f"\n\n{RiddleChatService.RIDDLE_END_MESSAGE}"
-                )
-
-            # 最終評価
-            RiddleChatService.report(
-                assistant_message, riddle_count, chat_service, user, riddle_set
+            # 終了処理（定型文付与、最終評価、メッセージクリーニング）
+            assistant_message.content = RiddleChatService.report(
+                assistant_message.content, riddle_count, chat_service, user, riddle_set
             )
 
         return self._insert_assistant_message(
