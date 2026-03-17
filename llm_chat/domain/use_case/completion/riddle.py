@@ -57,6 +57,7 @@ class RiddleUseCase(UseCase):
             ValueError:
                 - content が None の場合。
                 - gender が None の場合。
+                - セッションが既に終了している状態で、開始信号がないメッセージが送信された場合。
                 - 想定外の状態（USER_INPUT 以外）から終了判定となった場合（セッション不正）。
 
         Side Effects:
@@ -109,7 +110,7 @@ class RiddleUseCase(UseCase):
             target_states = [target_state, target_state.next_state]
 
         # 5. メッセージの生成
-        # ユーザーメッセージには、今回のアクション（開始や入力）を紐付ける
+        # ユーザーメッセージには、今回取り組むフェーズを紐付ける
         user_message = self._insert_user_message(
             user=user,
             content=content,
@@ -139,7 +140,7 @@ class RiddleUseCase(UseCase):
             next_riddle_state=target_states,
         )
 
-        # 5.5 出題判定による状態補正
+        # 6. 出題判定による状態補正
         # アシスタントが次の質問を出している場合、つぎの状態をUSER_INPUTにする
         if "##### 質問" in assistant_message.content:
             # 正規化された履歴を作成
@@ -152,7 +153,7 @@ class RiddleUseCase(UseCase):
 
             assistant_message.next_riddle_state = SessionState.to_csv(target_states)
 
-        # 6. 終了判定と評価
+        # 7. 終了判定と評価
         if RiddleChatService.is_session_finished(
             user, assistant_message, riddle_count, start_signals
         ):
@@ -160,7 +161,7 @@ class RiddleUseCase(UseCase):
                 # 開始時（None）や終了済み（FINISHED）ではないが、USER_INPUT 以外での終了判定は想定外。
                 # この場合、セッションの不正として例外を投げる。
                 raise ValueError(
-                    "セッションが不正でした。画面右上の「なぞなぞの開始」を押してやりなおしてください。"
+                    "セッションが終了しています。画面上の「なぞなぞの開始」を押してやりなおしてください。"
                 )
 
             # 終了処理（定型文付与、最終評価、メッセージクリーニング）
