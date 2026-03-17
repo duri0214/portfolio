@@ -81,7 +81,14 @@ class SessionState(Enum):
     def next_state(self) -> "SessionState":
         """
         現在のフェーズの「次」の状態を返します。
-        FINISHED 状態の場合は FINISHED を維持します。
+
+        このメソッドは、なぞなぞセッションの標準的な進行（START -> USER_INPUT -> EVALUATE -> USER_INPUT ...）
+        における論理的な次のステップを定義します。
+
+        Returns:
+            SessionState: 次に遷移すべき状態。
+                - FINISHED 状態の場合は FINISHED を維持します。
+                - 未定義の遷移（transitions にない場合）は自分自身を返します。
         """
         if self == SessionState.FINISHED:
             return SessionState.FINISHED
