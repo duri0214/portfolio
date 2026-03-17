@@ -51,6 +51,13 @@ class RiddleUseCase(UseCase):
 
         Returns:
             MessageDTO: 生成されたアシスタントのメッセージ。
+                セッションが正常に進行中であれば、適切な `next_riddle_state` が付与されます。
+
+        Raises:
+            ValueError:
+                - content が None の場合。
+                - gender が None の場合。
+                - 想定外の状態（USER_INPUT 以外）から終了判定となった場合（セッション不正）。
 
         Side Effects:
             - ユーザーメッセージとアシスタントメッセージを DB に保存します。
