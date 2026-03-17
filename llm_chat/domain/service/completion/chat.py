@@ -62,6 +62,8 @@ class ChatService(BaseChatService):
             chat_history = RiddleChatService.create_initial_prompt(
                 user_message=user_message, gender=gender, riddle_set=riddle_set or []
             )
+            # 初回ユーザーメッセージをDBに保存
+            ChatLogRepository.insert(user_message)
         else:
             # 履歴に追加
             user_message.use_case_type = use_case_type
