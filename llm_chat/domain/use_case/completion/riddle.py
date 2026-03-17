@@ -80,12 +80,17 @@ class RiddleUseCase(UseCase):
         )
         current_state = last_states[-1] if last_states else None
 
-        # 2. 開始判定と初期化
+        # 2. 状態の更新（開始・継続・終了チェック）
         start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
         is_start = any(sig in content for sig in start_signals)
+
         if is_start:
             ChatLogRepository.clear_all()
             current_state = None
+        elif current_state == SessionState.FINISHED:
+            raise ValueError(
+                "セッションが終了しています。画面上の「なぞなぞの開始」を押してやりなおしてください。"
+            )
 
         # 3. 問題セットの取得
         riddle_set = RiddleChatService.get_riddle_set(self.max_turns)

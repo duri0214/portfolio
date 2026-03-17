@@ -414,6 +414,43 @@ class RiddleUseCaseTest(TestCase):
         # current_state は None (STARTの処理中) で、USER_INPUT ではない。
         with self.assertRaisesRegex(
             ValueError,
-            "セッションが不正でした。画面右上の「なぞなぞの開始」を押してやりなおしてください。",
+            "セッションが終了しています。画面上の「なぞなぞの開始」を押してやりなおしてください。",
         ):
             use_case.execute(self.user, "スタート", gender=gender)
+
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_riddle_use_case_finished_session_raises_error(self, mock_retrieve):
+        """
+        [シナリオ: 終了済みセッションでの発言]
+        1. セッションが既に FINISHED 状態である。
+        2. 開始信号（スタート等）を含まないメッセージを送信する。
+        3. 期待値: ValueError が発生し、再開を促すメッセージが返されること。
+        """
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+        gender = Gender(GenderType.MAN)
+
+        # 1. 履歴に FINISHED 状態のメッセージを挿入
+        ChatLogRepository.insert(
+            MessageDTO(
+                user=self.user,
+                role=RoleType.ASSISTANT,
+                content="なぞなぞ終了です。",
+                use_case_type=UseCaseType.RIDDLE,
+                next_riddle_state=SessionState.to_csv([SessionState.FINISHED]),
+            )
+        )
+
+        # 2. 開始信号なしでメッセージ送信
+        with self.assertRaisesRegex(
+            ValueError,
+            "セッションが終了しています。画面上の「なぞなぞの開始」を押してやりなおしてください。",
+        ):
+            use_case.execute(self.user, "こんにちは", gender=gender)
+
+        # 3. 開始信号があれば通ること（リセットされること）を確認
+        mock_retrieve.return_value = MagicMock(answer="新しく始めます。")
+        use_case.execute(self.user, "スタート", gender=gender)
+        self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)
