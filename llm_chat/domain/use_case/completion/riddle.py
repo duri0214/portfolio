@@ -21,8 +21,8 @@ class RiddleUseCase(UseCase):
     一連のなぞなぞゲームのフロー（ステートマシン）を制御します。
     ユーザーがメッセージを送信した際、現在の状態から「次の工程（フェーズ）」を計算し、
     アシスタントの返信メッセージに `next_riddle_state` として付与して保存します。
-    ユーザーメッセージ側の `next_riddle_state` は常に `None` とし、
-    状態の提示責任を常にシステム（アシスタント）側に集約します。
+    ユーザーメッセージ側の `next_riddle_state` は、
+    開始時は `[START]`、継続時は `[USER_INPUT, EVALUATE]` となります。
 
     Attributes:
         config (OpenAIGptConfig | GeminiConfig): LLMの設定（モデル名、温度など）。
@@ -41,6 +41,21 @@ class RiddleUseCase(UseCase):
     def execute(
         self, user: User, content: str | None, gender: Gender | None = None
     ) -> MessageDTO:
+        """
+        なぞなぞの1ターン（ユーザー入力 -> アシスタント返信）を実行します。
+
+        Args:
+            user (User): 実行ユーザー。
+            content (str | None): ユーザーの入力内容。
+            gender (Gender | None, optional): ユーザーの性別（回答のトーン調整用）。
+
+        Returns:
+            MessageDTO: 生成されたアシスタントのメッセージ。
+
+        Side Effects:
+            - ユーザーメッセージとアシスタントメッセージを DB に保存します。
+            - セッション開始シグナルの場合、過去の履歴をクリアします。
+        """
         if content is None:
             raise ValueError("content cannot be None for RiddleUseCase")
 
