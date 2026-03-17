@@ -1,7 +1,5 @@
-import re
 from django.contrib.auth.models import User
 
-from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import ChatService
@@ -10,7 +8,6 @@ from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
-    Riddle,
     SessionState,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
@@ -53,16 +50,17 @@ class RiddleUseCase(UseCase):
         # 1. 履歴を取得し、現在の状態を判定
         chat_history = ChatLogRepository.find_chat_history(user)
         last_message = chat_history[-1] if chat_history else None
-        current_state = (
-            SessionState(last_message.next_riddle_state)
-            if last_message and last_message.next_riddle_state
-            else None
+
+        last_states = (
+            SessionState.from_csv(last_message.next_riddle_state)
+            if last_message
+            else []
         )
+        current_state = last_states[-1] if last_states else None
 
         # 2. 開始判定と初期化
         start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
         is_start = any(sig in content for sig in start_signals)
-
         if is_start:
             ChatLogRepository.clear_all()
             current_state = SessionState.ASK_QUESTION
