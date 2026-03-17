@@ -81,7 +81,7 @@ class RiddleUseCase(UseCase):
             user=user,
             content=content,
             model_name=self.config.model,
-            next_riddle_state=[scheduled_state] if scheduled_state else None,
+            next_riddle_state=states_history,
             use_case_type=UseCaseType.RIDDLE,
         )
 
