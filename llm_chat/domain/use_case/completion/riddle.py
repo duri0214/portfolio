@@ -63,7 +63,7 @@ class RiddleUseCase(UseCase):
         is_start = any(sig in content for sig in start_signals)
         if is_start:
             ChatLogRepository.clear_all()
-            current_state = SessionState.ASK_QUESTION
+            current_state = None
 
         # 3. 問題セットの取得
         riddle_set = RiddleChatService.get_riddle_set(self.max_turns)
