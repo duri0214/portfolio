@@ -66,21 +66,15 @@ class SessionState(Enum):
     なぞなぞセッションの状態。
 
     Attributes:
-        START (str): 問題出題中
-        WAIT_ANSWER (str): 回答待ち
-        EVALUATE (str): 評価中（LLMによる評価）
-        WAIT_REBUTTAL (str): 反論待ち（任意）
-        REEVALUATE (str): 再評価中
-        NEXT_QUESTION (str): 次の問題へ
+        START (str): 開始
+        USER_INPUT (str): 入力受領（回答待ち）
+        EVALUATE (str): 評価中
         FINISHED (str): 終了
     """
 
     START = "START"
-    WAIT_ANSWER = "WAIT_ANSWER"
+    USER_INPUT = "USER_INPUT"
     EVALUATE = "EVALUATE"
-    WAIT_REBUTTAL = "WAIT_REBUTTAL"
-    REEVALUATE = "REEVALUATE"
-    NEXT_QUESTION = "NEXT_QUESTION"
     FINISHED = "FINISHED"
 
     @property
@@ -93,12 +87,9 @@ class SessionState(Enum):
             return SessionState.FINISHED
 
         transitions: dict["SessionState", "SessionState"] = {
-            SessionState.START: SessionState.WAIT_ANSWER,
-            SessionState.WAIT_ANSWER: SessionState.EVALUATE,
-            SessionState.EVALUATE: SessionState.WAIT_REBUTTAL,
-            SessionState.WAIT_REBUTTAL: SessionState.REEVALUATE,
-            SessionState.REEVALUATE: SessionState.NEXT_QUESTION,
-            SessionState.NEXT_QUESTION: SessionState.START,
+            SessionState.START: SessionState.USER_INPUT,
+            SessionState.USER_INPUT: SessionState.EVALUATE,
+            SessionState.EVALUATE: SessionState.USER_INPUT,
         }
         return transitions.get(self, self)
 
@@ -115,6 +106,10 @@ class SessionState(Enum):
             if not s:
                 continue
             try:
+                # 削除された WAIT_ANSWER や古い UserInput を USER_INPUT にマッピングする
+                if s == "WAIT_ANSWER" or s == "UserInput":
+                    states.append(cls.USER_INPUT)
+                    continue
                 states.append(cls(s))
             except ValueError:
                 continue
