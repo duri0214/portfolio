@@ -144,7 +144,7 @@ class RiddleUseCase(UseCase):
         if RiddleChatService.is_session_finished(
             user, assistant_message, riddle_count, start_signals
         ):
-            assistant_message.next_riddle_state = SessionState.FINISHED.value
+            # 終了定型文がなければ追加
             if RiddleChatService.RIDDLE_END_MESSAGE not in assistant_message.content:
                 assistant_message.content += (
                     f"\n\n{RiddleChatService.RIDDLE_END_MESSAGE}"
