@@ -399,7 +399,6 @@
                     const statesStr = el.getAttribute("data-states") || "";
                     const states = statesStr.split(",");
                     const lastState = states[states.length - 1];
-                    const role = el.getAttribute("data-role");
                     const cardBody = el.closest(".card-body");
                     const content = cardBody.querySelector(".card-text").innerText;
 
@@ -417,26 +416,9 @@
                         }
                     }
 
-                    // メッセージ本文から「質問N」を探す
-                    const questionMatch = content.match(/##### 質問(\d+)/);
-                    const questionNum = questionMatch ? questionMatch[1] : null;
                     const isEvaluation = content.includes("【評価結果】");
                     
-                    let label = "";
-                    if (isEvaluation) {
-                        label = "【評価結果】";
-                    } else if (questionNum) {
-                        label = `質問 ${questionNum}`;
-                    } else if (role === "USER" && stepInSession === 1) {
-                        label = "開始";
-                    } else if (role === "USER") {
-                        label = `回答 ${Math.ceil((stepInSession - 1) / 2)}`;
-                    } else {
-                        label = "進行中";
-                    }
-
                     let html = `<div class="d-flex align-items-center gap-2 mt-2">`;
-                    html += `<span class="badge bg-secondary">${label}</span>`;
                     
                     const totalSteps = 6;
                     let currentStep = stepInSession;
