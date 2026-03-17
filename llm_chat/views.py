@@ -1,4 +1,8 @@
+import csv
+import io
 import json
+import logging
+import traceback
 from typing import Generator
 
 from django.contrib.auth.models import User
@@ -11,7 +15,11 @@ from dotenv import load_dotenv
 from lib.llm.valueobject.completion import StreamResponse
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.chat import ChatDisplayService
-from llm_chat.domain.valueobject.completion.riddle import GenderType, Gender
+from llm_chat.domain.valueobject.completion.riddle import (
+    GenderType,
+    Gender,
+    SessionState,
+)
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.use_case.completion.chat import (
@@ -20,14 +28,16 @@ from llm_chat.domain.use_case.completion.chat import (
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
 from llm_chat.forms import UserTextForm, RiddleCSVUploadForm
 from llm_chat.models import RiddleQuestion
-import csv
-import io
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db import transaction
 
 # .env ファイルを読み込む
 load_dotenv()
+
+
+# ロガーの設定
+logger = logging.getLogger(__name__)
 
 
 class IndexView(FormView):
@@ -67,8 +77,15 @@ class IndexView(FormView):
 
 
 class SyncResponseView(View):
+    """
+    同期的にLLMからのレスポンスを取得し、結果を返すビューです。
+    """
+
     @staticmethod
     def post(request, *args, **kwargs):
+        """
+        POSTリクエストを処理し、選択されたユースケースに基づいて同期処理を実行します。
+        """
         try:
             use_case_type = request.POST.get("use_case_type")
             user_input = request.POST.get("user_input")
@@ -115,8 +132,6 @@ class SyncResponseView(View):
             # 成功レスポンスを返す
             success_message = f"{use_case_type} 処理が完了しました"
             if isinstance(use_case, RiddleUseCase) and message.next_riddle_state:
-                from llm_chat.domain.valueobject.completion.riddle import SessionState
-
                 state_map = {
                     SessionState.USER_INPUT.value: "回答をお待ちしています",
                     SessionState.EVALUATE.value: "回答を評価しています...",
@@ -136,10 +151,6 @@ class SyncResponseView(View):
             )
 
         except Exception as e:
-            import traceback
-            import logging
-
-            logger = logging.getLogger(__name__)
             logger.error(f"SyncResponseView Error: {str(e)}")
             logger.error(traceback.format_exc())
             return JsonResponse(
@@ -148,10 +159,17 @@ class SyncResponseView(View):
 
 
 class StreamingResponseView(View):
+    """
+    LLMからのストリーミングレスポンスを制御するビューです。
+    """
+
     stored_stream: Generator[StreamResponse, None, None] = None
 
     @staticmethod
     def post(request, *args, **kwargs):
+        """
+        ストリームを初期化し、セッションに保存します。
+        """
         use_case_type = request.POST.get("use_case_type")
         user_input = request.POST.get("user_input")
 
@@ -174,6 +192,9 @@ class StreamingResponseView(View):
 
     @staticmethod
     def get(request, *args, **kwargs):
+        """
+        保存されたストリームからデータを取得し、SSE形式で返します。
+        """
         if not StreamingResponseView.stored_stream:
             return JsonResponse({"error": "No stream available"}, status=404)
 
@@ -190,10 +211,14 @@ class StreamingResponseView(View):
 
 
 class StreamResultSaveView(View):
+    """
+    ストリーミング結果を保存するビューです。
+    """
+
     @staticmethod
     def post(request, *args, **kwargs):
         """
-        保存処理を行うPOSTリクエストのエンドポイント
+        ストリームで受け取った最終的なコンテンツをデータベースに保存します。
         """
         try:
             body = json.loads(request.body)
@@ -218,9 +243,15 @@ class StreamResultSaveView(View):
 
 
 class ClearChatLogsView(View):
+    """
+    チャット履歴を削除するビューです。
+    """
+
     @staticmethod
     def post(request, *args, **kwargs):
-        """ChatLogsテーブルを全削除する（誰でも実行可・CSRF保護あり）"""
+        """
+        ChatLogsテーブルの全レコードを削除します。
+        """
         try:
             count = ChatLogRepository.clear_all()
             return JsonResponse({"status": "success", "deleted": count})
@@ -231,8 +262,15 @@ class ClearChatLogsView(View):
 
 
 class RiddleAdminView(View):
+    """
+    なぞなぞの管理画面を表示するビューです。
+    """
+
     @staticmethod
     def get(request, *args, **kwargs):
+        """
+        なぞなぞ一覧とアップロードフォームを表示します。
+        """
         questions = RiddleQuestion.objects.all()
         form = RiddleCSVUploadForm()
         return render(
@@ -243,8 +281,15 @@ class RiddleAdminView(View):
 
 
 class RiddleCSVUploadView(View):
+    """
+    なぞなぞのCSVファイルをアップロードし、登録するビューです。
+    """
+
     @staticmethod
     def post(request, *args, **kwargs):
+        """
+        CSVファイルを読み込み、なぞなぞデータを一括登録します。
+        """
         form = RiddleCSVUploadForm(request.POST, request.FILES)
         if form.is_valid():
             csv_file = request.FILES["csv_file"]
@@ -288,9 +333,15 @@ class RiddleCSVUploadView(View):
 
 
 class RiddleSampleCSVView(View):
+    """
+    サンプルCSVをダウンロードするためのビューです。
+    """
+
     @staticmethod
     def get(request, *args, **kwargs):
-        """サンプルCSVを出力する（以前のフォールバック2問）"""
+        """
+        サンプルのなぞなぞデータを含むCSVファイルを生成して返します。
+        """
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="riddle_sample.csv"'
 
