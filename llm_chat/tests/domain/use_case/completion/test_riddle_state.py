@@ -52,7 +52,7 @@ class RiddleSessionStateTest(TestCase):
         self.assertEqual(user_log.role, RoleType.USER.value)
         self.assertEqual(assistant_log.role, RoleType.ASSISTANT.value)
 
-        # USER ログにも next_riddle_state が入っていること (START)
+        # USER ログにも next_riddle_state が入っていること (START のみ)
         self.assertEqual(user_log.next_riddle_state, SessionState.START.value)
         # ASSISTANT ログには START, USER_INPUT が入っているはず
         self.assertIn(SessionState.START.value, assistant_log.next_riddle_state)
@@ -79,7 +79,7 @@ class RiddleSessionStateTest(TestCase):
 
         # 1. スタート (None/START -> USER_INPUT)
         res1 = use_case.execute(self.user, "スタート", self.gender)
-        # START, USER_INPUT が含まれるはず
+        # ユーザーログは START, アシスタントログは START, USER_INPUT が含まれるはず
         self.assertIn(SessionState.START.value, res1.next_riddle_state)
         self.assertIn(SessionState.USER_INPUT.value, res1.next_riddle_state)
 
@@ -128,10 +128,16 @@ class RiddleSessionStateTest(TestCase):
         # 終了定型文を含む回答をモック
         from llm_chat.domain.service.completion.riddle import RiddleChatService
 
-        mock_retrieve.return_value = ChatResult(
+        # 1回目の回答（開始時）
+        start_response = ChatResult(answer="こんにちは！質問1です", explanation="")
+        # 2回目の回答（終了時）
+        end_response = ChatResult(
             answer=f"正解です！\n\n{RiddleChatService.RIDDLE_END_MESSAGE}",
             explanation="",
         )
+        # 3回目の回答（評価用）
+        eval_response = ChatResult(answer="素晴らしい解答です。", explanation="")
+        mock_retrieve.side_effect = [start_response, end_response, eval_response]
 
         use_case = RiddleUseCase(self.config)
 
