@@ -86,8 +86,12 @@ class SessionState(Enum):
     @property
     def next_state(self) -> "SessionState":
         """
-        現在の状態から次に遷移すべき状態を定義するマッピング。
+        現在のフェーズの「次」の状態を返します。
+        FINISHED 状態の場合は FINISHED を維持します。
         """
+        if self == SessionState.FINISHED:
+            return SessionState.FINISHED
+
         transitions: dict["SessionState", "SessionState"] = {
             SessionState.START: SessionState.WAIT_ANSWER,
             SessionState.WAIT_ANSWER: SessionState.EVALUATE,
