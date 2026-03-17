@@ -144,6 +144,13 @@ class RiddleUseCase(UseCase):
         if RiddleChatService.is_session_finished(
             user, assistant_message, riddle_count, start_signals
         ):
+            if current_state != SessionState.USER_INPUT:
+                # 開始時（None）や終了済み（FINISHED）ではないが、USER_INPUT 以外での終了判定は想定外。
+                # この場合、セッションの不正として例外を投げる。
+                raise ValueError(
+                    "セッションが不正でした。画面右上の「なぞなぞの開始」を押してやりなおしてください。"
+                )
+
             # 終了処理（定型文付与、最終評価、メッセージクリーニング）
             assistant_message.content = RiddleChatService.report(
                 assistant_message.content, riddle_count, chat_service, user, riddle_set
