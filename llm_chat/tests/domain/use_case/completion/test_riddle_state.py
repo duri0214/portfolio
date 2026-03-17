@@ -54,15 +54,15 @@ class RiddleSessionStateTest(TestCase):
 
         # USER ログにも next_riddle_state が入っていること (START)
         self.assertEqual(user_log.next_riddle_state, SessionState.START.value)
-        # ASSISTANT ログには START, WAIT_ANSWER が入っているはず
+        # ASSISTANT ログには START, USER_INPUT が入っているはず
         self.assertIn(SessionState.START.value, assistant_log.next_riddle_state)
-        self.assertIn(SessionState.WAIT_ANSWER.value, assistant_log.next_riddle_state)
+        self.assertIn(SessionState.USER_INPUT.value, assistant_log.next_riddle_state)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_session_state_transition(self, mock_retrieve):
         """
         シナリオ:
-        - 入力: ユーザーからの「回答1」、「反論」、「次へ」などのメッセージ。
+        - 入力: ユーザーからの「回答1」などのメッセージ。
         - 期待値: 適切な状態遷移が行われること。
         """
         # LLMの回答をモック（終了メッセージを含まない）
@@ -77,39 +77,21 @@ class RiddleSessionStateTest(TestCase):
         # max_turnsを大きくして終了しないようにする
         use_case = RiddleUseCase(self.config, max_turns=15)
 
-        # 1. スタート (None/START -> WAIT_ANSWER)
+        # 1. スタート (None/START -> USER_INPUT)
         res1 = use_case.execute(self.user, "スタート", self.gender)
-        # START, WAIT_ANSWER が含まれるはず
+        # START, USER_INPUT が含まれるはず
         self.assertIn(SessionState.START.value, res1.next_riddle_state)
-        self.assertIn(SessionState.WAIT_ANSWER.value, res1.next_riddle_state)
-        # 内部でMessageDTOが保存されているため、この時点でのユーザーメッセージ数は1
+        self.assertIn(SessionState.USER_INPUT.value, res1.next_riddle_state)
 
-        # 2. 回答1 (WAIT_ANSWER -> EVALUATE)
-        # 実際にはプロンプト次第で EVALUATE の後に次問が出るため、インジケータは複数になる可能性がある
+        # 2. 回答1 (USER_INPUT -> [USER_INPUT, EVALUATE] -> EVALUATE -> USER_INPUT)
         res2 = use_case.execute(self.user, "回答1", self.gender)
-        # 次問が出ない場合は単一の EVALUATE
+        # ASSISTANT ログには EVALUATE が含まれるはず
         self.assertIn(SessionState.EVALUATE.value, res2.next_riddle_state)
 
-        # 3. 反論 (EVALUATE -> WAIT_REBUTTAL)
-        res3 = use_case.execute(self.user, "違います", self.gender)
-        self.assertIn(SessionState.WAIT_REBUTTAL.value, res3.next_riddle_state)
-
-        # 4. 再評価 (WAIT_REBUTTAL -> REEVALUATE)
-        res4 = use_case.execute(self.user, "見直して", self.gender)
-        self.assertIn(SessionState.REEVALUATE.value, res4.next_riddle_state)
-
-        # 5. 次へ (REEVALUATE -> NEXT_QUESTION)
-        res5 = use_case.execute(self.user, "次", self.gender)
-        self.assertIn(SessionState.NEXT_QUESTION.value, res5.next_riddle_state)
-
-        # 6. ループ (NEXT_QUESTION -> START)
-        res6 = use_case.execute(self.user, "次の問題", self.gender)
-        self.assertIn(SessionState.START.value, res6.next_riddle_state)
-
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
-    def test_question_2_wait_answer_transition(self, mock_retrieve):
+    def test_question_2_user_input_transition(self, mock_retrieve):
         """
-        質問2が出された直後の next_riddle_state は EVALUATE,WAIT_ANSWER であるべき。
+        質問2が出された直後の next_riddle_state は EVALUATE,USER_INPUT であるべき。
         """
         # 回答1への感想と、質問2の出題。
         mock_retrieve.return_value = ChatResult(
@@ -121,18 +103,18 @@ class RiddleSessionStateTest(TestCase):
 
         # 1. スタート
         res1 = use_case.execute(self.user, "スタート", self.gender)
-        self.assertIn(SessionState.WAIT_ANSWER.value, res1.next_riddle_state)
+        self.assertIn(SessionState.USER_INPUT.value, res1.next_riddle_state)
 
         # 2. 回答1 -> 質問2出題
         res2 = use_case.execute(self.user, "人間", self.gender)
 
-        # インジケータとして EVALUATE と WAIT_ANSWER の両方が含まれていることを確認
+        # インジケータとして EVALUATE と USER_INPUT の両方が含まれていることを確認
         states = res2.next_riddle_state.split(",")
         self.assertIn(SessionState.EVALUATE.value, states)
-        self.assertIn(SessionState.WAIT_ANSWER.value, states)
+        self.assertIn(SessionState.USER_INPUT.value, states)
         # 順番も重要
         self.assertEqual(
-            states, [SessionState.EVALUATE.value, SessionState.WAIT_ANSWER.value]
+            states, [SessionState.EVALUATE.value, SessionState.USER_INPUT.value]
         )
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
@@ -157,4 +139,5 @@ class RiddleSessionStateTest(TestCase):
         use_case.execute(self.user, "スタート", self.gender)
         res = use_case.execute(self.user, "フライパン", self.gender)
 
-        self.assertEqual(res.next_riddle_state, SessionState.FINISHED.value)
+        self.assertIn(SessionState.FINISHED.value, res.next_riddle_state)
+        self.assertIn(SessionState.EVALUATE.value, res.next_riddle_state)
