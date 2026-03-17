@@ -75,7 +75,11 @@ class RiddleUseCase(UseCase):
         # 最終的にアシスタント側のメッセージには、
         # [target_state, target_state.next_state] という 2段階の状態履歴が保存されます。
         target_state = current_state if current_state else SessionState.START
-        target_states: list[SessionState] = [target_state, target_state.next_state]
+        if not current_state:
+            # 開始時（START）のユーザーメッセージは START のみに制限
+            target_states = [target_state]
+        else:
+            target_states = [target_state, target_state.next_state]
 
         # 5. メッセージの生成
         # ユーザーメッセージには、今回のアクション（開始や入力）を紐付ける
