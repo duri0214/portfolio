@@ -69,8 +69,12 @@ class RiddleUseCase(UseCase):
         riddle_set = RiddleChatService.get_riddle_set(self.max_turns)
         riddle_count = len(riddle_set)
 
-        # 4. 状態遷移
-        next_state = current_state.get_next_state() if current_state else None
+        # 4. 状態遷移（このターン終了後の予定状態）の決定
+        # 最終的にアシスタント側のメッセージには、
+        # [current_state.next_state, current_state.next_state.next_state] という
+        # 2段階の状態履歴（states_history）が保存されます。
+        next_state = current_state.next_state if current_state else SessionState.START
+        states_history: list[SessionState] = [next_state]
 
         # 5. メッセージの生成
         user_message = self._insert_user_message(
