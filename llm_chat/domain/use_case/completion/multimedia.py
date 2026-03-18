@@ -34,9 +34,8 @@ class OpenAIDalleUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIDalleUseCase")
         chat_service = OpenAIDalleChatService()
-        user_message = MessageDTO(
+        user_message = self._insert_user_message(
             user=user,
-            role=RoleType.USER,
             content=content,
             model_name=chat_service.model_name,
             use_case_type=UseCaseType.OPENAI_DALLE,
@@ -70,9 +69,8 @@ class OpenAITextToSpeechUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAITextToSpeechUseCase")
         chat_service = OpenAITextToSpeechChatService()
-        user_input_message = MessageDTO(
+        user_input_message = self._insert_user_message(
             user=user,
-            role=RoleType.USER,
             content=content,
             model_name=chat_service.model_name,
             use_case_type=UseCaseType.OPENAI_TEXT_TO_SPEECH,
@@ -139,20 +137,18 @@ class OpenAISpeechToTextUseCase(UseCase):
             raise ValueError("content must be 'N/A' for OpenAISpeechToTextUseCase")
 
         chat_service = OpenAISpeechToTextChatService()
-        init_assistant_message = MessageDTO(
+        user_message = self._insert_user_message(
             user=user,
-            role=RoleType.ASSISTANT,
             content=content,
             file_path=self.file_path,
             model_name=chat_service.model_name,
             use_case_type=UseCaseType.OPENAI_SPEECH_TO_TEXT,
         )
 
-        assistant_message = chat_service.generate(init_assistant_message)
+        assistant_message = chat_service.generate(user_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
             model_name=chat_service.model_name,
             use_case_type=UseCaseType.OPENAI_SPEECH_TO_TEXT,
-            file_path=assistant_message.file_path,
         )

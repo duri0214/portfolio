@@ -27,9 +27,8 @@ class LlmChatUseCase(UseCase):
 
         chat_service = ChatService(self.config)
 
-        user_message = MessageDTO(
+        user_message = self._insert_user_message(
             user=user,
-            role=RoleType.USER,
             content=content,
             model_name=self.config.model,
             use_case_type=(
@@ -73,9 +72,8 @@ class OpenAIGptStreamingUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIGptStreamingUseCase")
         chat_service = OpenAIChatStreamingService()
-        user_message = MessageDTO(
+        user_message = self._insert_user_message(
             user=user,
-            role=RoleType.USER,
             content=content,
             model_name=chat_service.model_name,
             use_case_type=UseCaseType.OPENAI_GPT_STREAMING,
@@ -105,6 +103,7 @@ class OpenAIGptStreamingUseCase(UseCase):
                 role=RoleType.ASSISTANT,
                 content=content,
                 model_name=chat_service.model_name,
+                next_riddle_state=None,
                 use_case_type=UseCaseType.OPENAI_GPT_STREAMING,
             )
         )

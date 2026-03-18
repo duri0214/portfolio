@@ -14,14 +14,23 @@
     <div class="container">
         <div class="d-flex justify-content-end mb-3 gap-2">
             <a href="{% url 'llm:riddle_admin' %}" class="btn btn-outline-secondary">なぞなぞ管理</a>
-            <button id="clearChatLogsBtn" class="btn btn-danger">ChatLogs テーブルをクリアー</button>
+            <button id="clearChatLogsBtn" class="btn btn-danger">チャット履歴を削除</button>
         </div>
         {% for chat_log in chat_history %}
             <div class="card mb-3">
                 <div class="card-body">
                     <div class="card-title text-muted" style="font-size: 0.8rem; font-weight: bold;">{{ chat_log.role }}</div>
                     <p class="card-subtitle mb-2 text-muted" style="font-size: 0.7rem;"> file: {{ chat_log.file_name }}</p>
-                    <div class="card-text">{{ chat_log.content|markdown }}</div>
+                    <div class="card-text">
+                        {% if chat_log.content != "N/A" %}
+                            {{ chat_log.content|markdown }}
+                        {% endif %}
+                    </div>
+                    {% if chat_log.use_case_type == "Riddle" and chat_log.next_riddle_state %}
+                        <div class="riddle-indicator mb-2" data-states="{{ chat_log.next_riddle_state }}" data-role="{{ chat_log.role }}">
+                            {# JavaScriptで動的に生成される #}
+                        </div>
+                    {% endif %}
                     {% if chat_log.file_name|split_ext == "jpg" %}
                         <img src="{{ chat_log.file_url }}" class="img-fluid" alt="Responsive image">
                     {% elif chat_log.file_name|split_ext == "mp3" %}
@@ -166,7 +175,7 @@
                 }
             }
 
-            function showToast(message, type = "info") {
+            function showToast(message, type = "success") {
                 const toastContainer = document.getElementById("toast-container");
                 const toastId = "toast-" + Date.now();
                 const iconMap = {
@@ -191,7 +200,7 @@
 
                 toastContainer.insertAdjacentHTML("beforeend", toastHtml);
                 const toastElement = document.getElementById(toastId);
-                const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+                const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
                 toast.show();
 
                 toastElement.addEventListener("hidden.bs.toast", function () {
@@ -229,12 +238,17 @@
             // なぞなぞボタンのクリックイベント設定
             if (riddleButton) {
                 riddleButton.addEventListener("click", function () {
-                    const isRiddleActive = "{{ is_riddle_active|yesno:'true,false' }}" === "true";
+                    const isRiddleActive = riddleButton.classList.contains("btn-warning");
                     if (isRiddleActive) {
                         // なぞなぞ中断時は「ChatLogs テーブルをクリアー」ボタンのクリックを模倣する
                         clearBtn.click();
                         return;
                     }
+                    
+                    // なぞなぞ開始時にドロップダウンを Riddle に切り替えて性別を表示する
+                    useCaseType.value = "Riddle";
+                    useCaseType.dispatchEvent(new Event("change"));
+                    
                     const userMessage = userInput.value.trim() || "なぞなぞを始めてください。";
                     executeChat("Riddle", userMessage);
                 });
@@ -306,9 +320,32 @@
                             startStreaming(outputElement);
                             // stopLoading はストリーミング完了時に呼ぶ
                         } else {
-                            outputElement.innerText = "リクエストが成功しました: " + JSON.stringify(data);
+                            if (data.result && data.result.next_riddle_state) {
+                                const states = data.result.next_riddle_state.split(",");
+                                if (states.length > 1) {
+                                    // 状態が複数ある（進行インジケータ）場合は順次トーストを表示
+                                    const stateMap = {
+                                        "USER_INPUT": "回答をお待ちしています",
+                                        "EVALUATE": "回答を評価しています...",
+                                        "START": "新しい問題を出題します",
+                                        "FINISHED": "なぞなぞを終了しました"
+                                    };
+                                    states.forEach((state, index) => {
+                                        setTimeout(() => {
+                                            showToast(stateMap[state] || state, "success");
+                                        }, index * 800); // 0.8秒間隔で表示
+                                    });
+                                } else {
+                                    showToast(data.message || "リクエストが成功しました", "success");
+                                }
+                            } else {
+                                showToast(data.message || "リクエストが成功しました", "success");
+                            }
+                            
                             stopLoading();
-                            location.reload();
+                            setTimeout(() => {
+                                location.reload();
+                            }, Math.max(1500, (data.result && data.result.next_riddle_state ? data.result.next_riddle_state.split(",").length * 800 + 500 : 1500)));
                         }
                     })
                     .catch((error) => {
@@ -343,6 +380,92 @@
                 genderContainer.style.display = "block";
             } else {
                 genderContainer.style.display = "none";
+            }
+
+            // ページ下部へスクロール
+            function scrollToBottom() {
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: "smooth"
+                });
+            }
+
+            // なぞなぞの進行状況インジケータ（信号機）を描画する
+            function renderRiddleIndicators() {
+                const indicators = document.querySelectorAll(".riddle-indicator");
+                const allLogs = Array.from(document.querySelectorAll(".card.mb-3"));
+                
+                indicators.forEach((el) => {
+                    const statesStr = el.getAttribute("data-states") || "";
+                    const states = statesStr.split(",");
+                    const lastState = states[states.length - 1];
+                    const cardBody = el.closest(".card-body");
+                    const content = cardBody.querySelector(".card-text").innerText;
+
+                    // セッション開始からの順番を把握するために、全ログ中での位置を特定
+                    const currentCard = cardBody.closest(".card.mb-3");
+                    const logIndex = allLogs.indexOf(currentCard);
+                    
+                    // 履歴を遡って「なぞなぞセッション」内の順番を計算
+                    let stepInSession = 0;
+                    for (let i = 0; i <= logIndex; i++) {
+                        const logCard = allLogs[i];
+                        const logIndicator = logCard.querySelector(".riddle-indicator");
+                        if (logIndicator) {
+                            stepInSession++;
+                        }
+                    }
+
+                    const isEvaluation = content.includes("【評価結果】");
+                    
+                    let html = `<div class="d-flex align-items-center gap-2 mt-2">`;
+                    
+                    const totalSteps = 6;
+                    let currentStep = stepInSession;
+
+                    // FINISHED の場合は全ステップ完了
+                    if (lastState === "FINISHED") {
+                        currentStep = totalSteps;
+                    }
+
+                    for (let i = 1; i <= totalSteps; i++) {
+                        let iconClass = "";
+                        let style = "font-size: 0.8rem;";
+                        
+                        if (i <= currentStep) {
+                            // 完了
+                            iconClass = "fas fa-check text-success";
+                        } else if (i === currentStep + 1) {
+                            // 次のステップ (輪郭が黄色の丸)
+                            iconClass = "far fa-dot-circle text-warning";
+                            style = "font-size: 0.9rem;";
+                        } else {
+                            // 未完了
+                            iconClass = "far fa-circle text-muted";
+                        }
+                        
+                        html += `<i class="${iconClass}" style="${style}"></i>`;
+                        
+                        if (i < totalSteps) {
+                            html += `<div style="width: 8px; height: 2px; background-color: #dee2e6;"></div>`;
+                        }
+                    }
+                    
+                    if (lastState === "FINISHED" || isEvaluation) {
+                        html += `<span class="ms-2 badge bg-success">完了</span>`;
+                    }
+                    
+                    html += `</div>`;
+                    el.innerHTML = html;
+                });
+            }
+
+            // 初期表示時にインジケータを描画
+            renderRiddleIndicators();
+
+            // 履歴がある場合は最下部へスクロール（少し遅延させてレンダリング完了を待つ）
+            if (document.querySelectorAll(".card.mb-3").length > 0) {
+                setTimeout(scrollToBottom, 100);
             }
 
             // Server-Sent Events を開始（ストリームデータを受信）

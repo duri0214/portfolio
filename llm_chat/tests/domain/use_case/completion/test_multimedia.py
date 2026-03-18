@@ -91,12 +91,15 @@ class OpenAiMultimediaUseCaseTest(TestCase):
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmSpeechToText")
     @patch("llm_chat.domain.service.completion.multimedia.Path.exists")
-    def test_stt_use_case_saves_file_path(self, mock_exists, mock_stt_service):
+    def test_stt_use_case_saves_user_and_assistant_logs(
+        self, mock_exists, mock_stt_service
+    ):
         """
         [シナリオ: STT音声認識]
         1. OpenAISpeechToTextUseCase を実行して音声をテキスト化
         2. 期待値:
-           - DB (ChatLogs) にファイルパスとモデル名が正しく保存されていること
+           - USER メッセージがファイルパス付きで DB に保存されていること
+           - ASSISTANT メッセージが文字起こし結果付きで DB に保存されていること
         """
         # 前準備
         mock_exists.return_value = True
@@ -105,7 +108,6 @@ class OpenAiMultimediaUseCaseTest(TestCase):
         )
 
         # ダミーのアップロードファイルを作成
-
         audio_file = SimpleUploadedFile(
             "test.mp3", b"dummy content", content_type="audio/mpeg"
         )
@@ -115,15 +117,22 @@ class OpenAiMultimediaUseCaseTest(TestCase):
             use_case = OpenAISpeechToTextUseCase(audio_file)
             result = use_case.execute(self.user, "N/A")
 
-        # 結果の MessageDTO を検証
-        self.assertEqual(result.file_path, "llm_chat/audios/test.mp3")
-        self.assertEqual(result.model_name, ModelName.WHISPER_1)
+        # USER メッセージの検証
+        user_log = ChatLogs.objects.filter(
+            user=self.user, role=RoleType.USER.value
+        ).last()
+        self.assertIsNotNone(user_log)
+        self.assertEqual(user_log.file.name, "llm_chat/audios/test.mp3")
+        self.assertEqual(user_log.content, "N/A")
+        self.assertEqual(user_log.model_name, ModelName.WHISPER_1)
 
-        # DB への保存を検証
-        last_log = ChatLogs.objects.filter(
+        # ASSISTANT メッセージの検証
+        assistant_log = ChatLogs.objects.filter(
             user=self.user, role=RoleType.ASSISTANT.value
         ).last()
-        self.assertIsNotNone(last_log)
-        self.assertEqual(last_log.file.name, "llm_chat/audios/test.mp3")
-        self.assertEqual(last_log.model_name, ModelName.WHISPER_1)
-        self.assertEqual(last_log.use_case_type, UseCaseType.OPENAI_SPEECH_TO_TEXT)
+        self.assertIsNotNone(assistant_log)
+        # ASSISTANT側には音声ファイルを表示しない仕様に変更
+        self.assertEqual(assistant_log.file.name, "")
+        self.assertIn("テスト音声です", assistant_log.content)
+        self.assertEqual(assistant_log.model_name, ModelName.WHISPER_1)
+        self.assertEqual(assistant_log.use_case_type, UseCaseType.OPENAI_SPEECH_TO_TEXT)

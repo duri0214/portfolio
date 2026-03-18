@@ -94,12 +94,12 @@ class SessionState(Enum):
     なぞなぞセッションの状態管理。
 
     Attributes:
-        ASK_QUESTION: 問題を出題している状態。
+        RIDDLE_START: 問題を出題している状態。
         WAIT_ANSWER: ユーザーからの回答を待機している状態。
         FINISHED: 全ての問題が終了し、最終評価が完了した状態。
     """
 
-    ASK_QUESTION = "ASK_QUESTION"
+    RIDDLE_START = "RIDDLE_START"
 
     WAIT_ANSWER = "WAIT_ANSWER"
 

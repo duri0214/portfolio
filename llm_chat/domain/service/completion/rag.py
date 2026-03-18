@@ -23,10 +23,7 @@ class OpenAIRagChatService(BaseChatService):
         )
 
     def generate(self, user_message: MessageDTO) -> MessageDTO:
-        # Step1: User の質問を保存
-        ChatLogRepository.insert(user_message)
-
-        # Step2: 回答を取得
+        # 回答を取得
         file_path = (
             Path(BASE_DIR)
             / "lib/llm/pdf_sample/令和4年版少子化社会対策白書全体版（PDF版）.pdf"

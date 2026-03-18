@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             name="next_riddle_state",
             field=models.CharField(
                 blank=True,
-                help_text="なぞなぞセッションの状態管理用（ASK_QUESTION, WAIT_ANSWER, ...）",
+                help_text="なぞなぞセッションの状態管理用（START, WAIT_ANSWER, ...）",
                 max_length=20,
                 null=True,
             ),

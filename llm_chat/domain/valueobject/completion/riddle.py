@@ -66,35 +66,70 @@ class SessionState(Enum):
     なぞなぞセッションの状態。
 
     Attributes:
-        ASK_QUESTION (str): 問題出題中
-        WAIT_ANSWER (str): 回答待ち
-        EVALUATE (str): 評価中（LLMによる評価）
-        WAIT_REBUTTAL (str): 反論待ち（任意）
-        REEVALUATE (str): 再評価中
-        NEXT_QUESTION (str): 次の問題へ
+        START (str): 開始
+        USER_INPUT (str): 入力受領（回答待ち）
+        EVALUATE (str): 評価中
         FINISHED (str): 終了
     """
 
-    ASK_QUESTION = "ASK_QUESTION"
-    WAIT_ANSWER = "WAIT_ANSWER"
+    START = "START"
+    USER_INPUT = "USER_INPUT"
     EVALUATE = "EVALUATE"
-    WAIT_REBUTTAL = "WAIT_REBUTTAL"
-    REEVALUATE = "REEVALUATE"
-    NEXT_QUESTION = "NEXT_QUESTION"
     FINISHED = "FINISHED"
 
-    def get_next_state(self) -> "SessionState":
+    @property
+    def next_state(self) -> "SessionState":
         """
-        現在の状態から次の遷移先の状態を取得します。
+        現在のフェーズの「次」の状態を返します。
+
+        このメソッドは、なぞなぞセッションの標準的な進行（START -> USER_INPUT -> EVALUATE -> USER_INPUT ...）
+        における論理的な次のステップを定義します。
+
+        Returns:
+            SessionState: 次に遷移すべき状態。
+                - FINISHED 状態の場合は FINISHED を維持します。
+                - 未定義の遷移（transitions にない場合）は自分自身を返します。
         """
-        transitions = {
-            SessionState.ASK_QUESTION: SessionState.WAIT_ANSWER,
-            SessionState.WAIT_ANSWER: SessionState.EVALUATE,
-            SessionState.EVALUATE: SessionState.WAIT_REBUTTAL,
-            SessionState.WAIT_REBUTTAL: SessionState.REEVALUATE,
-            SessionState.REEVALUATE: SessionState.NEXT_QUESTION,
+        if self == SessionState.FINISHED:
+            return SessionState.FINISHED
+
+        transitions: dict["SessionState", "SessionState"] = {
+            SessionState.START: SessionState.USER_INPUT,
+            SessionState.USER_INPUT: SessionState.EVALUATE,
+            SessionState.EVALUATE: SessionState.USER_INPUT,
         }
         return transitions.get(self, self)
+
+    @classmethod
+    def from_csv(cls, next_riddle_state: str) -> list["SessionState"]:
+        """
+        保存された next_riddle_state（カンマ区切りの履歴）から SessionState のリストを復元します。
+        """
+        if not next_riddle_state:
+            return []
+        states = []
+        for s in next_riddle_state.split(","):
+            s = s.strip()
+            if not s:
+                continue
+            try:
+                # 削除された WAIT_ANSWER や古い UserInput を USER_INPUT にマッピングする
+                if s == "WAIT_ANSWER" or s == "UserInput":
+                    states.append(cls.USER_INPUT)
+                    continue
+                states.append(cls(s))
+            except ValueError:
+                continue
+        return states
+
+    @staticmethod
+    def to_csv(states: list["SessionState"] | None) -> str:
+        """
+        SessionState のリストをカンマ区切りの文字列に変換します。
+        """
+        if not states:
+            return ""
+        return ",".join(s.value for s in states)
 
 
 @dataclass
@@ -117,7 +152,7 @@ class RiddleSession:
     answers: list[str] = field(default_factory=list)
     evaluations: list[RiddleEvaluation] = field(default_factory=list)
     rebuttals: list[str] = field(default_factory=list)
-    state: SessionState = SessionState.ASK_QUESTION
+    state: SessionState = SessionState.START
     current_index: int = 0
 
 

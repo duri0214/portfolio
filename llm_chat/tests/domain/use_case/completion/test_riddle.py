@@ -5,7 +5,11 @@ from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.models import ChatLogs, RiddleQuestion
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
-from llm_chat.domain.valueobject.completion.riddle import Gender, GenderType
+from llm_chat.domain.valueobject.completion.riddle import (
+    Gender,
+    GenderType,
+    SessionState,
+)
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleChatService
@@ -92,6 +96,7 @@ class RiddleUseCaseTest(TestCase):
                 role=RoleType.USER,
                 content="答え1",
                 use_case_type=UseCaseType.RIDDLE,
+                next_riddle_state=SessionState.USER_INPUT.value,
             )
         )
         ChatLogRepository.insert(
@@ -100,6 +105,7 @@ class RiddleUseCaseTest(TestCase):
                 role=RoleType.ASSISTANT,
                 content="第2問...",
                 use_case_type=UseCaseType.RIDDLE,
+                next_riddle_state=SessionState.USER_INPUT.value,
             )
         )
 
@@ -161,11 +167,13 @@ class RiddleUseCaseTest(TestCase):
         )
         use_case = RiddleUseCase(config)
 
-        # 履歴を作る
+        # 1. スタート（ここで履歴がクリアされ、新しいセッションが始まる）
         use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
+
+        # 2. 1問目の回答（状態は USER_INPUT へ）
         use_case.execute(self.user, "答え1", gender=Gender(GenderType.MAN))
 
-        # 3回目の実行（評価フェーズへ）
+        # 3. 2問目の回答（ここで終了判定）
         result = use_case.execute(
             self.user, "答えはたいまつです", gender=Gender(GenderType.MAN)
         )
@@ -185,10 +193,11 @@ class RiddleUseCaseTest(TestCase):
            - 回答後の評価結果が含まれていること
            - メッセージの use_case_type が UseCaseType.RIDDLE であること
         """
-        # 終了メッセージを含む回答を模倣
-        mock_retrieve.return_value = MagicMock(
-            answer=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}"
-        )
+        # 1回目は普通の回答、2回目は終了メッセージを含む回答
+        mock_retrieve.side_effect = [
+            MagicMock(answer="こんにちは！質問1です。"),
+            MagicMock(answer=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}"),
+        ]
 
         config = OpenAIGptConfig(
             api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
@@ -201,6 +210,10 @@ class RiddleUseCaseTest(TestCase):
         ) as mock_eval:
             mock_eval.return_value = "\n【評価結果】\n- 正確性: 5/5"
 
+            # 1回目：スタート（ここで状態が USER_INPUT に遷移する）
+            use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
+
+            # 2回目：終了を模倣した回答
             result = use_case.execute(
                 self.user, "答えは人間です", gender=Gender(GenderType.MAN)
             )
@@ -235,12 +248,13 @@ class RiddleUseCaseTest(TestCase):
         ) as mock_eval:
             mock_eval.return_value = "\n【評価結果】\n- 評価1: 100点"
 
-            # 1回目
+            # 1回目：スタート（ここでのアシスタント回答の最後は USER_INPUT）
             use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
-            # 2回目
+
+            # 2回目：回答1（ここでのアシスタント回答の最後も USER_INPUT）
             use_case.execute(self.user, "答え1", gender=Gender(GenderType.MAN))
 
-            # 3回目のユーザー発言（評価フェーズへ）
+            # 3回目のユーザー発言（ここで終了判定）
             result = use_case.execute(
                 self.user, "それはたいまつです", gender=Gender(GenderType.MAN)
             )
@@ -374,3 +388,40 @@ class RiddleUseCaseTest(TestCase):
         use_case = RiddleUseCase(config)
         with self.assertRaisesRegex(ValueError, "gender is required for RiddleUseCase"):
             use_case.execute(user=self.user, content="なぞなぞスタート", gender=None)
+
+    @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
+    def test_riddle_use_case_finished_session_raises_error(self, mock_retrieve):
+        """
+        [シナリオ: 終了済みセッションでの発言]
+        1. セッションが既に FINISHED 状態である。
+        2. 開始信号（スタート等）を含まないメッセージを送信する。
+        3. 期待値: ValueError が発生し、再開を促すメッセージが返されること。
+        """
+        config = OpenAIGptConfig(
+            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+        )
+        use_case = RiddleUseCase(config)
+        gender = Gender(GenderType.MAN)
+
+        # 1. 履歴に FINISHED 状態のメッセージを挿入
+        ChatLogRepository.insert(
+            MessageDTO(
+                user=self.user,
+                role=RoleType.ASSISTANT,
+                content="なぞなぞ終了です。",
+                use_case_type=UseCaseType.RIDDLE,
+                next_riddle_state=SessionState.to_csv([SessionState.FINISHED]),
+            )
+        )
+
+        # 2. 開始信号なしでメッセージ送信
+        with self.assertRaisesRegex(
+            ValueError,
+            "セッションが終了しています。画面上の「なぞなぞの開始」を押してやりなおしてください。",
+        ):
+            use_case.execute(self.user, "こんにちは", gender=gender)
+
+        # 3. 開始信号があれば通ること（リセットされること）を確認
+        mock_retrieve.return_value = MagicMock(answer="新しく始めます。")
+        use_case.execute(self.user, "スタート", gender=gender)
+        self.assertEqual(ChatLogs.objects.filter(user=self.user).count(), 2)

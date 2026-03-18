@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 
+from lib.llm.valueobject.completion import RoleType
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.models import ChatLogs
 
@@ -45,3 +46,22 @@ class ChatLogRepository:
     @staticmethod
     def bulk_insert(message_list: list[MessageDTO]):
         ChatLogs.objects.bulk_create([x.to_entity() for x in message_list])
+
+    @staticmethod
+    def count_answered_questions(user: User) -> int:
+        """
+        ユーザーが回答済みの問題数をカウントします。
+
+        チャット履歴からユーザーのメッセージ数を取得し、
+        開始メッセージ（「なぞなぞを始めてください」）を除いた数を返します。
+
+        Args:
+            user (User): 対象ユーザー。
+
+        Returns:
+            int: 回答済みの問題数。
+        """
+        user_message_count = ChatLogs.objects.filter(
+            user=user, role=RoleType.USER
+        ).count()
+        return user_message_count - 1  # 開始メッセージを除く

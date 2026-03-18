@@ -15,7 +15,7 @@ from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
-from llm_chat.domain.valueobject.completion.riddle import Gender, Riddle
+from llm_chat.domain.valueobject.completion.riddle import Gender, Riddle, SessionState
 from llm_chat.domain.service.completion.riddle import RiddleChatService
 from django.contrib.auth.models import User
 
@@ -62,10 +62,11 @@ class ChatService(BaseChatService):
             chat_history = RiddleChatService.create_initial_prompt(
                 user_message=user_message, gender=gender, riddle_set=riddle_set or []
             )
-        else:
-            # 最新のユーザーメッセージをDBに保存し、履歴に追加
-            user_message.use_case_type = use_case_type
+            # 初回ユーザーメッセージをDBに保存
             ChatLogRepository.insert(user_message)
+        else:
+            # 履歴に追加
+            user_message.use_case_type = use_case_type
             chat_history.append(user_message)
 
             # 2回目以降
@@ -100,7 +101,7 @@ class ChatService(BaseChatService):
         use_case_type: str = UseCaseType.OPENAI_GPT,
         gender: Gender | None = None,
         riddle_set: list[Riddle] | None = None,
-        next_riddle_state: str | None = None,
+        next_riddle_state: list[SessionState] | None = None,
     ) -> MessageDTO:
         """
         ユーザーメッセージを基に回答を生成します。
@@ -121,7 +122,7 @@ class ChatService(BaseChatService):
             user=user_message.user,
             content=chat_result.answer,
             use_case_type=use_case_type,
-            next_riddle_state=next_riddle_state,
+            next_riddle_state=SessionState.to_csv(next_riddle_state),
         )
 
     def evaluate(self, login_user: User, riddle_set: list[Riddle]):
