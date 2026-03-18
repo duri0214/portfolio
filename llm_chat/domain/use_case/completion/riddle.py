@@ -140,16 +140,11 @@ class RiddleUseCase(UseCase):
         )
 
         # 6. 出題判定による状態補正
-        # アシスタントが次の質問を出している場合、つぎの状態をUSER_INPUTにする
-        if "##### 質問" in assistant_message.content:
-            # 正規化された履歴を作成
-            if not current_state:
-                # 開始時は [START, USER_INPUT]
-                target_states = [SessionState.START, SessionState.USER_INPUT]
-            else:
-                # 継続時は [EVALUATE, USER_INPUT]
-                target_states = [SessionState.EVALUATE, SessionState.USER_INPUT]
-
+        answered_count = ChatLogRepository.count_answered_questions(user)
+        if answered_count < riddle_count:
+            # 問題がまだ残っている場合、次の状態をUSER_INPUTにする
+            first_state = SessionState.START if not current_state else SessionState.EVALUATE
+            target_states = [first_state, SessionState.USER_INPUT]
             assistant_message.next_riddle_state = SessionState.to_csv(target_states)
 
         # 7. 終了判定と評価
