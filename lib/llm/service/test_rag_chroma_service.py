@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import MagicMock, patch
 from lib.llm.service.completion import OpenAILlmRagService
@@ -30,6 +31,10 @@ class TestOpenAILlmRagService(unittest.TestCase):
         self.patcher_ef = patch("lib.llm.service.completion.OpenAIEmbeddingFunction")
         self.mock_ef_class = self.patcher_ef.start()
 
+        # ディレクトリ作成を防ぐための Path.mkdir のモック
+        self.patcher_mkdir = patch("lib.llm.service.completion.Path.mkdir")
+        self.mock_mkdir = self.patcher_mkdir.start()
+
         # Chat Completions API のレスポンスをモック
         self.mock_client.chat.completions.create.return_value = MagicMock(
             choices=[
@@ -43,13 +48,16 @@ class TestOpenAILlmRagService(unittest.TestCase):
         self.patcher_openai.stop()
         self.patcher_chroma.stop()
         self.patcher_ef.stop()
+        self.patcher_mkdir.stop()
 
     def test_rag_flow_with_metadata_filter(self):
         """
         ドキュメント登録 -> フィルタ付き検索 -> 回答生成 の一連の流れをテスト。
         """
         service = OpenAILlmRagService(
-            model=self.model, api_key=self.api_key, persist_directory="dummy_path"
+            model=self.model,
+            api_key=self.api_key,
+            persist_directory="chroma_db/dummy_path",
         )
 
         # 1. ドキュメントの登録 (Upsert)
@@ -112,7 +120,7 @@ class TestOpenAILlmRagService(unittest.TestCase):
         初期化時に正しいパスで Client が作成されることをテスト。
         (モック化しているため、実際の永続化は Client の呼び出し引数で検証する)
         """
-        test_path = "custom_chroma_path"
+        test_path = "chroma_db/custom_chroma_path"
         service = OpenAILlmRagService(
             model=self.model, api_key=self.api_key, persist_directory=test_path
         )
@@ -120,7 +128,9 @@ class TestOpenAILlmRagService(unittest.TestCase):
         # chromadb.PersistentClient が正しいパスで呼ばれたか
         # Note: OpenAILlmRagService 内部で絶対パスに変換される可能性があるため、部分一致などで検証
         args, kwargs = self.mock_chroma_client_class.call_args
-        self.assertIn(test_path, kwargs["path"])
+        # OSのパス区切り文字に合わせる
+        expected_path_part = os.path.normpath(test_path)
+        self.assertIn(expected_path_part, kwargs["path"])
 
 
 if __name__ == "__main__":
