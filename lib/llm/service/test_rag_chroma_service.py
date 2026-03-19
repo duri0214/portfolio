@@ -121,7 +121,7 @@ class TestOpenAILlmRagService(unittest.TestCase):
         (モック化しているため、実際の永続化は Client の呼び出し引数で検証する)
         """
         test_path = "chroma_db/custom_chroma_path"
-        service = OpenAILlmRagService(
+        OpenAILlmRagService(
             model=self.model, api_key=self.api_key, persist_directory=test_path
         )
 
