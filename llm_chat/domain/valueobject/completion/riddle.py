@@ -61,6 +61,19 @@ class RiddleEvaluation(BaseModel):
         return self.correctness + self.reasoning + self.creativity + self.rebuttal
 
 
+class RiddleTurnEvaluation(BaseModel):
+    """
+    なぞなぞの単問評価結果。
+
+    1問ごとの回答内容に対して、各観点を数値化します。
+    """
+
+    correctness: int = Field(..., ge=0, le=5, description="正確性 (0-5)")
+    reasoning: int = Field(..., ge=0, le=5, description="論理 (0-5)")
+    creativity: int = Field(..., ge=0, le=5, description="独創性 (0-5)")
+    rebuttal: int = Field(..., ge=0, le=3, description="反論 (0-3)")
+
+
 class SessionState(Enum):
     """
     なぞなぞセッションの状態。

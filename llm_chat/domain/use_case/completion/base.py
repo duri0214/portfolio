@@ -38,7 +38,9 @@ class UseCase(ABC):
             next_riddle_state=SessionState.to_csv(next_riddle_state),
             file_path=file_path,
         )
-        self.repository.insert(user_message)
+        saved = self.repository.insert(user_message)
+        if saved:
+            user_message.id = saved.id
         return user_message
 
     def _insert_assistant_message(
@@ -59,5 +61,7 @@ class UseCase(ABC):
             next_riddle_state=SessionState.to_csv(next_riddle_state),
             file_path=file_path,
         )
-        self.repository.insert(assistant_message)
+        saved = self.repository.insert(assistant_message)
+        if saved:
+            assistant_message.id = saved.id
         return assistant_message

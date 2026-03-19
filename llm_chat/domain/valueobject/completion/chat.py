@@ -16,9 +16,11 @@ class MessageDTO:
         user (User): メッセージを送信するユーザー。
         role (RoleType): メッセージを送信した役割（例: ユーザ、アシスタント、システム）。
         content (str): メッセージの内容。
+        id (int, optional): DB保存後に付与されるメッセージID。デフォルトは None。
         model_name (str, optional): 使用されたモデル名（例: gpt-4o, gemini-2.0-flash）。デフォルトは None。
         use_case_type (str, optional): 使用されたユースケースタイプ（例: OpenAIGpt, Riddle）。デフォルトは UseCaseType.OPENAI_GPT。
         next_riddle_state (str, optional): なぞなぞセッションの現在の状態（例: WAIT_ANSWER）。デフォルトは None。
+        riddle_scores (dict, optional): なぞなぞの単問評価スコア。デフォルトは None。
         file_path (str, optional): 添付ファイルのURLパス。デフォルトは None。
         file_name (str, optional): 添付ファイルの名前。デフォルトは None。
     """
@@ -26,9 +28,11 @@ class MessageDTO:
     user: User
     role: RoleType
     content: str
+    id: int | None = None
     model_name: str | None = None
     use_case_type: str = UseCaseType.OPENAI_GPT
     next_riddle_state: str | None = None
+    riddle_scores: dict | None = None
     file_path: str | None = None
     file_name: str | None = None
 
@@ -50,6 +54,7 @@ class MessageDTO:
             model_name=self.model_name,
             use_case_type=self.use_case_type,
             next_riddle_state=self.next_riddle_state,
+            riddle_scores=self.riddle_scores,
         )
         if self.file_path:
             chat_log.file.name = self.file_path
@@ -67,6 +72,7 @@ class MessageDTO:
             "model_name": self.model_name,
             "use_case_type": self.use_case_type,
             "next_riddle_state": self.next_riddle_state,
+            "riddle_scores": self.riddle_scores,
             "file_url": self.file_path if self.file_path else None,
             "file_name": (
                 os.path.basename(self.file_name) if self.file_name else "No File"

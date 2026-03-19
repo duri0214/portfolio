@@ -14,6 +14,7 @@ from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
     RiddleResponse,
     RiddleEvaluation,
+    RiddleTurnEvaluation,
     Riddle,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
@@ -122,13 +123,11 @@ class RiddleChatService(BaseLLMTask):
         if end_msg not in content:
             content = content.rstrip() + "\n\n" + end_msg
 
-        # 3. 評価の実行と追記
-        # chat_service に現在の回答内容を含めるためのダミーDTO
-        dummy_message = MessageDTO(user=user, role=RoleType.ASSISTANT, content=content)
-        chat_service.chat_history.append(dummy_message)
-
-        evaluation_text = chat_service.evaluate(login_user=user, riddle_set=riddle_set)
-        content += f"\n\n{evaluation_text}"
+        # 3. 最終レポートの追記
+        report_text = RiddleChatService.build_profile_report(
+            user=user, riddle_count=riddle_count
+        )
+        content += f"\n\n{report_text}"
         return content.strip()
 
     @staticmethod
@@ -178,10 +177,6 @@ class RiddleChatService(BaseLLMTask):
 
         ### 現在の状況
         - {status_str}
-
-        ### 評価結果（内部処理用）
-        - ユーザーから「評価結果をjsonで出力してください」と入力された場合にのみ、以下のJSON形式で判定結果を出力してください。
-        - フォーマット例: [{{"viewpoint": "論理的思考力", "score": 80, "judge": "合格"}}, {{"viewpoint": "洞察力", "score": 40, "judge": "不合格"}}]
         """
 
     @staticmethod
@@ -293,3 +288,120 @@ JSON構造:
         if not response.evaluation:
             text += f"\n- {response.explanation}"
         return text
+
+    @staticmethod
+    def _clean_json_text(raw_content: str) -> str:
+        cleaned_content = raw_content.strip()
+        if cleaned_content.startswith("```"):
+            lines = cleaned_content.splitlines()
+            if lines and lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            cleaned_content = "\n".join(lines).strip()
+        return cleaned_content
+
+    @staticmethod
+    def evaluate_turn(
+        config: OpenAIGptConfig | GeminiConfig,
+        question: str,
+        answer: str,
+        user_answer: str,
+    ) -> RiddleTurnEvaluation | None:
+        """
+        単問の評価をLLMで算出し、数値スコアを返します。
+        """
+        eval_message = Message(
+            role=RoleType.USER,
+            content=f"""
+以下のなぞなぞについて、ユーザー回答を多角的に評価し、JSON形式で出力してください。
+
+### なぞなぞ
+問題: {question}
+正解: {answer}
+ユーザー回答: {user_answer}
+
+### 評価の指示
+- 挨拶、説明、前置きなどは一切不要です。
+- JSONオブジェクト（{{...}}）のみを返してください。
+- フォーマットは必ず以下のJSON構造に従ってください。
+
+JSON構造:
+{{
+  "correctness": 3,
+  "reasoning": 4,
+  "creativity": 2,
+  "rebuttal": 0
+}}
+""".strip(),
+        )
+
+        chat_result = LlmCompletionService(config).retrieve_answer([eval_message])
+        raw_content = chat_result.answer
+
+        try:
+            cleaned_content = RiddleChatService._clean_json_text(raw_content)
+            eval_data = json.loads(cleaned_content)
+            if not isinstance(eval_data, dict):
+                raise ValueError("LLM returned non-dict format for evaluation")
+            return RiddleTurnEvaluation(**eval_data)
+        except (json.JSONDecodeError, ValueError):
+            return None
+
+    @staticmethod
+    def format_turn_scores(evaluation: RiddleTurnEvaluation) -> str:
+        return (
+            f"正確性: {evaluation.correctness}｜"
+            f"論理性: {evaluation.reasoning}｜"
+            f"独創性: {evaluation.creativity}｜"
+            f"反論力: {evaluation.rebuttal}"
+        )
+
+    @staticmethod
+    def build_profile_report(user: User, riddle_count: int) -> str:
+        scores = ChatLogRepository.fetch_riddle_scores(user)
+        if not scores:
+            return "あなたの回答傾向\n\n論理力        0.0\n発想力        0.0\n正答率        0%\n\nコメント\n評価データがありません。"
+
+        total = len(scores)
+        reasoning_avg = sum(s.get("reasoning", 0) for s in scores) / total
+        creativity_avg = sum(s.get("creativity", 0) for s in scores) / total
+
+        total_questions = riddle_count if riddle_count > 0 else total
+        correct_count = sum(1 for s in scores if s.get("correctness", 0) >= 3)
+        accuracy_rate = (
+            round((correct_count / total_questions) * 100) if total_questions else 0
+        )
+
+        if creativity_avg >= reasoning_avg + 0.5:
+            comment_lines = [
+                "あなたは発想力が高く、直感型の思考傾向があります。",
+                "ただし論理説明を補強するとさらに説得力が増します。",
+            ]
+        elif reasoning_avg >= creativity_avg + 0.5:
+            comment_lines = [
+                "論理的に考える力が高く、筋道を立てるのが得意です。",
+                "発想の幅を少し広げると表現力がさらに増します。",
+            ]
+        else:
+            comment_lines = [
+                "発想力と論理力のバランスが良いです。",
+                "正答率を意識するとさらに安定します。",
+            ]
+
+        if accuracy_rate >= 60:
+            comment_lines.append("正答率は合格レンジです。")
+        else:
+            comment_lines.append("正答率を上げるには、問題文の前提整理が有効です。")
+
+        lines = [
+            "あなたの回答傾向",
+            "",
+            f"論理力        {reasoning_avg:.1f}",
+            f"発想力        {creativity_avg:.1f}",
+            f"正答率        {accuracy_rate}%",
+            "",
+            "コメント",
+            *comment_lines,
+        ]
+        return "\n".join(lines)
