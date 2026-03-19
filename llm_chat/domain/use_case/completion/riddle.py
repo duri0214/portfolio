@@ -172,7 +172,7 @@ class RiddleUseCase(UseCase):
         ):
             # 終了処理（定型文付与、最終評価、メッセージクリーニング）
             assistant_message.content = RiddleChatService.report(
-                assistant_message.content, riddle_count, chat_service, user, riddle_set
+                assistant_message.content, riddle_count, user
             )
 
             # 終了状態を確定

@@ -39,7 +39,7 @@ class RiddleEvaluationTest(TestCase):
                 correctness=5,
                 reasoning=5,
                 creativity=5,
-                rebuttal=3,
+                rebuttal=5,
                 comment="完璧な回答",
             )
         except ValidationError:
@@ -62,12 +62,12 @@ class RiddleEvaluationTest(TestCase):
     def test_validation_error_rebuttal_out_of_range(self):
         """
         シナリオ:
-        - 入力: rebuttal が 4 (許容範囲 0-3 を超える)。
+        - 入力: rebuttal が 6 (許容範囲 0-5 を超える)。
         - 処理: RiddleEvaluation インスタンスを作成する。
         - 期待値: ValidationError が発生すること。
         """
         # Given / When / Then
         with self.assertRaises(ValidationError):
             RiddleEvaluation(
-                correctness=0, reasoning=0, creativity=0, rebuttal=4, comment="error"
+                correctness=0, reasoning=0, creativity=0, rebuttal=6, comment="error"
             )

@@ -8,7 +8,6 @@ from lib.llm.valueobject.completion import RoleType, Message
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.repository.completion.riddle import RiddleQuestionRepository
-from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
@@ -83,9 +82,7 @@ class RiddleChatService(BaseLLMTask):
     def report(
         content: str,
         riddle_count: int,
-        chat_service: BaseChatService,
         user: User,
-        riddle_set: list[Riddle],
     ) -> str:
         """
         メッセージのクリーニングと終了メッセージの付与、評価結果の追記を行います。
@@ -97,9 +94,7 @@ class RiddleChatService(BaseLLMTask):
         Args:
             content (str): クリーニング対象のメッセージ本文。
             riddle_count (int): 現在のセッションでの回答数。
-            chat_service (BaseChatService): 評価（LLM）を実行するためのチャットサービス。
             user (User): 評価対象のユーザー。
-            riddle_set (list[Riddle]): 出題されたなぞなぞのセット。
 
         Returns:
             str: クリーニングおよび評価結果が追記されたメッセージ本文。
@@ -124,9 +119,7 @@ class RiddleChatService(BaseLLMTask):
             content = content.rstrip() + "\n\n" + end_msg
 
         # 3. 最終レポートの追記
-        report_text = RiddleChatService.build_profile_report(
-            user=user, riddle_count=riddle_count
-        )
+        report_text = RiddleChatService.build_profile_report(user=user)
         content += f"\n\n{report_text}"
         return content.strip()
 
@@ -222,10 +215,11 @@ class RiddleChatService(BaseLLMTask):
 ### なぞなぞの正解データ
 {riddle_qa_str}
 
-### 評価の指示
-- 挨拶、説明、前置きなどは一切不要です。
-- JSONオブジェクト（{{...}}）のみを返してください。
-- フォーマットは必ず以下のJSON構造に従ってください。
+        ### 評価の指示
+        - 挨拶、説明、前置きなどは一切不要です。
+        - JSONオブジェクト（{{...}}）のみを返してください。
+        - 各スコアは 0-5 の整数で返してください。
+        - フォーマットは必ず以下のJSON構造に従ってください。
 
 JSON構造:
 {{
@@ -302,6 +296,48 @@ JSON構造:
         return cleaned_content
 
     @staticmethod
+    def _extract_json_object(raw_content: str) -> str | None:
+        match = re.search(r"\{.*}", raw_content, re.DOTALL)
+        if not match:
+            return None
+        return match.group(0).strip()
+
+    @staticmethod
+    def _parse_json_dict(raw_content: str) -> dict:
+        cleaned_content = RiddleChatService._clean_json_text(raw_content)
+        try:
+            eval_data = json.loads(cleaned_content)
+        except json.JSONDecodeError:
+            extracted = RiddleChatService._extract_json_object(cleaned_content)
+            if not extracted:
+                extracted = RiddleChatService._extract_json_object(raw_content)
+            if not extracted:
+                raise
+            eval_data = json.loads(extracted)
+        if not isinstance(eval_data, dict):
+            raise ValueError("LLM returned non-dict format for evaluation")
+        return eval_data
+
+    @staticmethod
+    def _normalize_answer(text: str) -> str:
+        return re.sub(r"\s+", "", (text or "")).lower()
+
+    @staticmethod
+    def _fallback_turn_evaluation(answer: str, user_answer: str) -> RiddleTurnEvaluation:
+        answer_norm = RiddleChatService._normalize_answer(answer)
+        user_norm = RiddleChatService._normalize_answer(user_answer)
+        is_correct = bool(answer_norm) and (
+            answer_norm in user_norm or user_norm in answer_norm
+        )
+        correctness = 5 if is_correct else 0
+        return RiddleTurnEvaluation(
+            correctness=correctness,
+            reasoning=0,
+            creativity=0,
+            rebuttal=0,
+        )
+
+    @staticmethod
     def evaluate_turn(
         config: OpenAIGptConfig | GeminiConfig,
         question: str,
@@ -321,10 +357,11 @@ JSON構造:
 正解: {answer}
 ユーザー回答: {user_answer}
 
-### 評価の指示
-- 挨拶、説明、前置きなどは一切不要です。
-- JSONオブジェクト（{{...}}）のみを返してください。
-- フォーマットは必ず以下のJSON構造に従ってください。
+        ### 評価の指示
+        - 挨拶、説明、前置きなどは一切不要です。
+        - JSONオブジェクト（{{...}}）のみを返してください。
+        - 各スコアは 0-5 の整数で返してください。
+        - フォーマットは必ず以下のJSON構造に従ってください。
 
 JSON構造:
 {{
@@ -340,13 +377,10 @@ JSON構造:
         raw_content = chat_result.answer
 
         try:
-            cleaned_content = RiddleChatService._clean_json_text(raw_content)
-            eval_data = json.loads(cleaned_content)
-            if not isinstance(eval_data, dict):
-                raise ValueError("LLM returned non-dict format for evaluation")
+            eval_data = RiddleChatService._parse_json_dict(raw_content)
             return RiddleTurnEvaluation(**eval_data)
         except (json.JSONDecodeError, ValueError):
-            return None
+            return RiddleChatService._fallback_turn_evaluation(answer, user_answer)
 
     @staticmethod
     def format_turn_scores(evaluation: RiddleTurnEvaluation) -> str:
@@ -358,19 +392,44 @@ JSON構造:
         )
 
     @staticmethod
-    def build_profile_report(user: User, riddle_count: int) -> str:
+    def build_profile_report(user: User) -> str:
         scores = ChatLogRepository.fetch_riddle_scores(user)
         if not scores:
             return "あなたの回答傾向\n\n論理力        0.0\n発想力        0.0\n正答率        0%\n\nコメント\n評価データがありません。"
 
         total = len(scores)
-        reasoning_avg = sum(s.get("reasoning", 0) for s in scores) / total
-        creativity_avg = sum(s.get("creativity", 0) for s in scores) / total
+        correctness_sum = sum(s.get("correctness", 0) for s in scores)
+        reasoning_sum = sum(s.get("reasoning", 0) for s in scores)
+        creativity_sum = sum(s.get("creativity", 0) for s in scores)
+        rebuttal_sum = sum(s.get("rebuttal", 0) for s in scores)
 
-        total_questions = riddle_count if riddle_count > 0 else total
+        reasoning_avg = reasoning_sum / total
+        creativity_avg = creativity_sum / total
+
+        total_questions = total
         correct_count = sum(1 for s in scores if s.get("correctness", 0) >= 3)
         accuracy_rate = (
             round((correct_count / total_questions) * 100) if total_questions else 0
+        )
+
+        correctness_max = total_questions * 5
+        reasoning_max = total_questions * 5
+        creativity_max = total_questions * 5
+        rebuttal_max = total_questions * 5
+
+        correctness_rate = (
+            round((correctness_sum / correctness_max) * 100)
+            if correctness_max
+            else 0
+        )
+        reasoning_rate = (
+            round((reasoning_sum / reasoning_max) * 100) if reasoning_max else 0
+        )
+        creativity_rate = (
+            round((creativity_sum / creativity_max) * 100) if creativity_max else 0
+        )
+        rebuttal_rate = (
+            round((rebuttal_sum / rebuttal_max) * 100) if rebuttal_max else 0
         )
 
         if creativity_avg >= reasoning_avg + 0.5:
@@ -397,11 +456,16 @@ JSON構造:
         lines = [
             "あなたの回答傾向",
             "",
-            f"論理力        {reasoning_avg:.1f}",
-            f"発想力        {creativity_avg:.1f}",
-            f"正答率        {accuracy_rate}%",
+            f"正確性        {correctness_sum}/{correctness_max} ({correctness_rate}%)",
+            f"論理性        {reasoning_sum}/{reasoning_max} ({reasoning_rate}%)",
+            f"独創性        {creativity_sum}/{creativity_max} ({creativity_rate}%)",
+            f"反論力        {rebuttal_sum}/{rebuttal_max} ({rebuttal_rate}%)",
+            "---",
+            f"論理力        {reasoning_avg:.1f}（論理力=論理性平均）",
+            f"発想力        {creativity_avg:.1f}（発想力=独創性平均）",
+            f"正答率        {accuracy_rate}%（正答率=正確性>=3 の割合）",
             "",
             "コメント",
             *comment_lines,
         ]
-        return "\n".join(lines)
+        return "\n".join(line + "  " if line else "" for line in lines)

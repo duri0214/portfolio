@@ -65,7 +65,7 @@ class ChatLogRepository:
             int: 回答済みの問題数。
         """
         user_message_count = ChatLogs.objects.filter(
-            user=user, role=RoleType.USER
+            user=user, role=RoleType.USER.value
         ).count()
         return user_message_count - 1  # 開始メッセージを除く
 
@@ -103,7 +103,7 @@ class ChatLogRepository:
         logs = (
             ChatLogs.objects.filter(
                 user=user,
-                role=RoleType.USER,
+                role=RoleType.USER.value,
                 use_case_type=UseCaseType.RIDDLE,
                 riddle_scores__isnull=False,
             )

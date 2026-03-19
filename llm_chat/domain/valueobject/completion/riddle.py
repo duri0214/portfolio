@@ -40,14 +40,14 @@ class RiddleEvaluation(BaseModel):
         correctness (int): 正確性の評価観点 (0-5)。各問題の回答の正確さが蓄積・反映されます。
         reasoning (int): 論理的思考の評価観点 (0-5)。回答に至るプロセスや筋道の通りやすさを評価します。
         creativity (int): 独創性の評価観点 (0-5)。ユニークな視点や、型にはまらない発想を評価します。
-        rebuttal (int): 反論力の評価観点 (0-3)。AIからの指摘に対する反応や、自説の補強能力を評価します。
+        rebuttal (int): 反論力の評価観点 (0-5)。AIからの指摘に対する反応や、自説の補強能力を評価します。
         comment (str): 各観点の評価に基づいた、セッション全体の総評・アドバイス。
     """
 
     correctness: int = Field(..., ge=0, le=5, description="正確性 (0-5)")
     reasoning: int = Field(..., ge=0, le=5, description="論理 (0-5)")
     creativity: int = Field(..., ge=0, le=5, description="独創性 (0-5)")
-    rebuttal: int = Field(..., ge=0, le=3, description="反論 (0-3)")
+    rebuttal: int = Field(..., ge=0, le=5, description="反論 (0-5)")
     comment: str = Field(..., description="コメント")
 
     @property
@@ -71,7 +71,7 @@ class RiddleTurnEvaluation(BaseModel):
     correctness: int = Field(..., ge=0, le=5, description="正確性 (0-5)")
     reasoning: int = Field(..., ge=0, le=5, description="論理 (0-5)")
     creativity: int = Field(..., ge=0, le=5, description="独創性 (0-5)")
-    rebuttal: int = Field(..., ge=0, le=3, description="反論 (0-3)")
+    rebuttal: int = Field(..., ge=0, le=5, description="反論 (0-5)")
 
 
 class SessionState(Enum):
@@ -230,7 +230,7 @@ class RiddleResponse(ChatResult):
             lines.append(f"- **正確性**: {self.evaluation.correctness}/5")
             lines.append(f"- **論理性**: {self.evaluation.reasoning}/5")
             lines.append(f"- **独創性**: {self.evaluation.creativity}/5")
-            lines.append(f"- **反論力**: {self.evaluation.rebuttal}/3")
+            lines.append(f"- **反論力**: {self.evaluation.rebuttal}/5")
             lines.append(f"- **合計スコア**: {self.evaluation.total_score}")
             lines.append(f"- **コメント**: {self.evaluation.comment}")
         else:
