@@ -9,6 +9,7 @@ from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
     GenderType,
     SessionState,
+    RiddleTurnEvaluation,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.service.completion.chat import ChatService
@@ -64,8 +65,11 @@ class RiddleUseCaseTest(TestCase):
         self.assertEqual(db_logs.count(), 1)
         self.assertEqual(db_logs[0].role, RoleType.USER.value)
 
+    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
-    def test_riddle_use_case_extra_question_removal(self, mock_retrieve):
+    def test_riddle_use_case_extra_question_removal(
+        self, mock_retrieve, mock_turn_eval
+    ):
         """
         [シナリオ: なぞなぞ終了時の余計な質問・継続提案の除去]
         1. LLMが規定回数終了時に「第3問」や「続けて別のなぞなぞを...」を出そうとするケースを模倣
@@ -119,13 +123,10 @@ class RiddleUseCaseTest(TestCase):
             f"ご回答をどうぞ。\n\n"
             f"{RiddleChatService.RIDDLE_END_MESSAGE}"
         )
-        # 1回目の呼び出し（回答生成）と2回目の呼び出し（評価生成）
-        mock_retrieve.side_effect = [
-            MagicMock(answer=assistant_content),
-            MagicMock(
-                answer='{"correctness": 3, "reasoning": 4, "creativity": 2, "rebuttal": 0, "comment": "テスト"}'
-            ),
-        ]
+        mock_retrieve.return_value = MagicMock(answer=assistant_content)
+        mock_turn_eval.return_value = RiddleTurnEvaluation(
+            correctness=3, reasoning=4, creativity=2, rebuttal=0
+        )
 
         config = OpenAIGptConfig(
             api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
@@ -139,10 +140,13 @@ class RiddleUseCaseTest(TestCase):
         self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
         self.assertNotIn("第3問", result.content)
         self.assertNotIn("続けて別のなぞなぞを出しましょうか？", result.content)
-        self.assertIn("**正確性**: 3/5", result.content)
+        self.assertIn("あなたの回答傾向", result.content)
 
+    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
-    def test_riddle_use_case_end_detection_invalid_json(self, mock_retrieve):
+    def test_riddle_use_case_end_detection_invalid_json(
+        self, mock_retrieve, mock_turn_eval
+    ):
         """
         [シナリオ: なぞなぞ終了判定（不正なJSON）]
         1. LLM の回答がリスト形式だが中身が文字列であるケースを模倣
@@ -154,13 +158,11 @@ class RiddleUseCaseTest(TestCase):
         mock_retrieve.side_effect = [
             MagicMock(answer="質問1..."),
             MagicMock(answer="質問2..."),
-            MagicMock(
-                answer=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}"
-            ),  # 3回目: 正常な終了メッセージ
-            MagicMock(
-                answer='["invalid", "string", "items"]'
-            ),  # 4回目: 不正な評価用JSON
+            MagicMock(answer=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}"),
         ]
+        mock_turn_eval.return_value = RiddleTurnEvaluation(
+            correctness=3, reasoning=0, creativity=0, rebuttal=0
+        )
 
         config = OpenAIGptConfig(
             api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
@@ -179,11 +181,12 @@ class RiddleUseCaseTest(TestCase):
         )
 
         self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
-        self.assertIn("評価結果のパースに失敗しました", result.content)
+        self.assertIn("あなたの回答傾向", result.content)
         self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
 
+    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
-    def test_riddle_use_case_end_detection(self, mock_retrieve):
+    def test_riddle_use_case_end_detection(self, mock_retrieve, mock_turn_eval):
         """
         [シナリオ: なぞなぞ終了判定]
         1. LLM の回答に終了キーワード (RIDDLE_END_MESSAGE) が含まれるケースを模倣
@@ -204,27 +207,28 @@ class RiddleUseCaseTest(TestCase):
         )
         use_case = RiddleUseCase(config)
 
-        # RiddleUseCase.execute は内部で evaluate を呼ぶ（さらに LLM 実行）
-        with patch(
-            "llm_chat.domain.service.completion.chat.ChatService.evaluate"
-        ) as mock_eval:
-            mock_eval.return_value = "\n【評価結果】\n- 正確性: 5/5"
+        mock_turn_eval.return_value = RiddleTurnEvaluation(
+            correctness=3, reasoning=0, creativity=0, rebuttal=0
+        )
 
-            # 1回目：スタート（ここで状態が USER_INPUT に遷移する）
-            use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
+        # 1回目：スタート（ここで状態が USER_INPUT に遷移する）
+        use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
 
-            # 2回目：終了を模倣した回答
-            result = use_case.execute(
-                self.user, "答えは人間です", gender=Gender(GenderType.MAN)
-            )
+        # 2回目：終了を模倣した回答
+        result = use_case.execute(
+            self.user, "答えは人間です", gender=Gender(GenderType.MAN)
+        )
 
-            self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
-            self.assertIn("評価結果", result.content)
-            self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
+        self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
+        self.assertIn("あなたの回答傾向", result.content)
+        self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
 
     @patch("llm_chat.domain.repository.completion.chat.ChatLogRepository.clear_all")
+    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
-    def test_riddle_use_case_forced_end(self, mock_retrieve, mock_clear):
+    def test_riddle_use_case_forced_end(
+        self, mock_retrieve, mock_turn_eval, mock_clear
+    ):
         """
         [シナリオ: なぞなぞ強制終了]
         1. LLM の回答に終了キーワードが含まれないが、3回目の発言（質問2への回答）である場合
@@ -243,25 +247,24 @@ class RiddleUseCaseTest(TestCase):
         )
         use_case = RiddleUseCase(config)
 
-        with patch(
-            "llm_chat.domain.service.completion.chat.ChatService.evaluate"
-        ) as mock_eval:
-            mock_eval.return_value = "\n【評価結果】\n- 評価1: 100点"
+        mock_turn_eval.return_value = RiddleTurnEvaluation(
+            correctness=3, reasoning=0, creativity=0, rebuttal=0
+        )
 
-            # 1回目：スタート（ここでのアシスタント回答の最後は USER_INPUT）
-            use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
+        # 1回目：スタート（ここでのアシスタント回答の最後は USER_INPUT）
+        use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
 
-            # 2回目：回答1（ここでのアシスタント回答の最後も USER_INPUT）
-            use_case.execute(self.user, "答え1", gender=Gender(GenderType.MAN))
+        # 2回目：回答1（ここでのアシスタント回答の最後も USER_INPUT）
+        use_case.execute(self.user, "答え1", gender=Gender(GenderType.MAN))
 
-            # 3回目のユーザー発言（ここで終了判定）
-            result = use_case.execute(
-                self.user, "それはたいまつです", gender=Gender(GenderType.MAN)
-            )
+        # 3回目のユーザー発言（ここで終了判定）
+        result = use_case.execute(
+            self.user, "それはたいまつです", gender=Gender(GenderType.MAN)
+        )
 
-            self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
-            self.assertIn("評価結果", result.content)
-            self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
+        self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
+        self.assertIn("あなたの回答傾向", result.content)
+        self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
 
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_normal(self, mock_retrieve):
