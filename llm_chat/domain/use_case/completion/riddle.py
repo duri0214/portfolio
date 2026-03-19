@@ -118,6 +118,25 @@ class RiddleUseCase(UseCase):
             use_case_type=UseCaseType.RIDDLE,
         )
 
+        if not is_start:
+            answered_count = ChatLogRepository.count_answered_questions(user)
+            question_index = answered_count - 1
+            if 0 <= question_index < riddle_count:
+                riddle = riddle_set[question_index]
+                evaluation = RiddleChatService.evaluate_turn(
+                    config=self.config,
+                    question=riddle.question,
+                    answer=riddle.answer,
+                    user_answer=content,
+                )
+                if evaluation:
+                    score_line = RiddleChatService.format_turn_scores(evaluation)
+                    ChatLogRepository.update_riddle_scores(
+                        message_id=user_message.id,
+                        scores=evaluation.model_dump(),
+                        append_text=score_line,
+                    )
+
         # アシスタント側では、状態をさらに進めて提示する
         # 開始時は、ユーザーが START をこなしたことを受けて [START, USER_INPUT] を提示する。
         # それ以外（回答時など）は、ユーザーが到達させた「次の状態」を起点として、さらにその先を履歴に含める
@@ -153,7 +172,7 @@ class RiddleUseCase(UseCase):
         ):
             # 終了処理（定型文付与、最終評価、メッセージクリーニング）
             assistant_message.content = RiddleChatService.report(
-                assistant_message.content, riddle_count, chat_service, user, riddle_set
+                assistant_message.content, riddle_count, user
             )
 
             # 終了状態を確定

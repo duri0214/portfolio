@@ -9,6 +9,7 @@ from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
     GenderType,
     SessionState,
+    RiddleTurnEvaluation,
 )
 from llm_chat.models import RiddleQuestion
 
@@ -117,8 +118,9 @@ class RiddleSessionStateTest(TestCase):
             states, [SessionState.EVALUATE.value, SessionState.USER_INPUT.value]
         )
 
+    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
-    def test_session_finished_state(self, mock_retrieve):
+    def test_session_finished_state(self, mock_retrieve, mock_turn_eval):
         """
         シナリオ:
         - 入力: 終了定型文を含むLLMの回答。
@@ -135,9 +137,10 @@ class RiddleSessionStateTest(TestCase):
             answer=f"正解です！\n\n{RiddleChatService.RIDDLE_END_MESSAGE}",
             explanation="",
         )
-        # 3回目の回答（評価用）
-        eval_response = ChatResult(answer="素晴らしい解答です。", explanation="")
-        mock_retrieve.side_effect = [start_response, end_response, eval_response]
+        mock_retrieve.side_effect = [start_response, end_response]
+        mock_turn_eval.return_value = RiddleTurnEvaluation(
+            correctness=3, reasoning=0, creativity=0, rebuttal=0
+        )
 
         use_case = RiddleUseCase(self.config)
 

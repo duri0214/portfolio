@@ -50,6 +50,11 @@ class ChatLogs(models.Model):
         choices=USE_CASE_TYPE_CHOICES,
         default=UseCaseType.OPENAI_GPT,
     )
+    riddle_scores = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="なぞなぞの単問評価スコア（correctness, reasoning, creativity, rebuttal）",
+    )
     next_riddle_state = models.CharField(
         max_length=100,
         null=True,
@@ -72,6 +77,7 @@ class ChatLogs(models.Model):
             model_name=self.model_name,
             use_case_type=self.use_case_type,
             next_riddle_state=self.next_riddle_state,
+            riddle_scores=self.riddle_scores,
             file_path=self.file.url if self.file else None,
             file_name=self.file.name if self.file else None,
         )
