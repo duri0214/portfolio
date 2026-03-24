@@ -395,12 +395,16 @@
                 const indicators = document.querySelectorAll(".riddle-indicator");
                 const allLogs = Array.from(document.querySelectorAll(".card.mb-3"));
                 
-                indicators.forEach((el) => {
+                indicators.forEach((el, indicatorIndex) => {
                     const statesStr = el.getAttribute("data-states") || "";
                     const states = statesStr.split(",");
                     const lastState = states[states.length - 1];
                     const cardBody = el.closest(".card-body");
                     const content = cardBody.querySelector(".card-text").innerText;
+                    const role = (el.getAttribute("data-role") || "").toLowerCase();
+                    const isLatestIndicator = indicatorIndex === indicators.length - 1;
+                    const isWaitingForUser = lastState === "USER_INPUT";
+                    const showWaitingDot = isLatestIndicator && isWaitingForUser && role === "assistant";
 
                     // セッション開始からの順番を把握するために、全ログ中での位置を特定
                     const currentCard = cardBody.closest(".card.mb-3");
@@ -436,9 +440,13 @@
                             // 完了
                             iconClass = "fas fa-check text-success";
                         } else if (i === currentStep + 1) {
-                            // 次のステップ (輪郭が黄色の丸)
-                            iconClass = "far fa-dot-circle text-warning";
-                            style = "font-size: 0.9rem;";
+                            if (showWaitingDot) {
+                                // 次のステップ (回答待ち)
+                                iconClass = "far fa-dot-circle text-warning";
+                                style = "font-size: 0.9rem;";
+                            } else {
+                                iconClass = "far fa-circle text-muted";
+                            }
                         } else {
                             // 未完了
                             iconClass = "far fa-circle text-muted";
