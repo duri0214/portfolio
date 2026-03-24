@@ -1,0 +1,444 @@
+// ドロップダウン選択肢の監視と音声ファイルフォームの表示／非表示
+document.addEventListener("DOMContentLoaded", function () {
+    const useCaseType = document.querySelector('select[name="use_case_type"]');
+    const audioFileInput = document.querySelector('input[name="audio_file"]');
+    const audioFileContainer = document.getElementById("audio-file-container");
+    const genderInput = document.querySelector('select[name="gender"]');
+    const genderContainer = document.getElementById("gender-container");
+    const sendButton = document.getElementById("sendButton");
+    const riddleButton = document.getElementById("riddleButton");
+    const userInput = document.getElementById("id_question");
+    const streamingCard = document.getElementById("streaming-card");
+    const outputElement = document.getElementById("output");
+    const clearBtn = document.getElementById("clearChatLogsBtn");
+    const loadingIndicator = document.getElementById("loading-indicator");
+    let isLoading = false;
+
+    function isSuperuserButtonEnabled() {
+        // when not superuser, a button is rendered disabled; keep it disabled
+        return !sendButton.hasAttribute("disabled") || sendButton.classList.contains("btn-primary");
+    }
+
+    function startLoading() {
+        if (isLoading) return;
+        isLoading = true;
+        if (loadingIndicator) {
+            loadingIndicator.classList.remove("d-none");
+            loadingIndicator.classList.add("d-flex");
+        }
+        if (sendButton && !sendButton.disabled) {
+            sendButton.disabled = true;
+            sendButton.value = "送信中...";
+        }
+        if (riddleButton && !riddleButton.disabled) {
+            riddleButton.disabled = true;
+        }
+    }
+
+    function stopLoading() {
+        isLoading = false;
+        if (loadingIndicator) {
+            loadingIndicator.classList.add("d-none");
+            loadingIndicator.classList.remove("d-flex");
+        }
+        if (sendButton) {
+            sendButton.value = "送信";
+            if (isSuperuserButtonEnabled()) {
+                sendButton.disabled = false;
+            }
+        }
+        if (riddleButton) {
+            if (isSuperuserButtonEnabled()) {
+                riddleButton.disabled = false;
+            }
+        }
+    }
+
+    // ChatLogs全削除ボタン
+    async function deleteChatLogs() {
+        const response = await fetch("/llm_chat/clear_chat_logs/", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": Cookies.get("csrftoken"),
+            },
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    }
+
+    function handleDeletionResult(data, options) {
+        if (data.status === "success") {
+            if (options.showAlert) {
+                showToast(`削除しました。件数: ${data.deleted}`, "success");
+            }
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            if (options.showAlert) {
+                showToast("削除に失敗しました: " + (data.detail || "unknown"), "danger");
+            }
+        }
+    }
+
+    function showToast(message, type = "success") {
+        const toastContainer = document.getElementById("toast-container");
+        const toastId = "toast-" + Date.now();
+        const iconMap = {
+            success: "fa-check-circle",
+            danger: "fa-exclamation-circle",
+            warning: "fa-exclamation-triangle",
+            info: "fa-info-circle"
+        };
+        const icon = iconMap[type] || iconMap.info;
+
+        const toastHtml = `
+            <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas ${icon} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+
+        toastContainer.insertAdjacentHTML("beforeend", toastHtml);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+        toast.show();
+
+        toastElement.addEventListener("hidden.bs.toast", function () {
+            toastElement.remove();
+        });
+    }
+
+    function clearChatLogs(options = { showConfirm: true, showAlert: true }) {
+        if (options.showConfirm && !confirm("本当にChatLogsテーブルを全削除しますか？この操作は元に戻せません。")) {
+            return;
+        }
+        deleteChatLogs()
+            .then((data) => handleDeletionResult(data, options))
+            .catch((err) => {
+                console.error(err);
+                if (options.showAlert) {
+                    showToast("通信エラーが発生しました", "danger");
+                }
+            });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener("click", function () {
+            clearChatLogs();
+        });
+    }
+
+    // 送信ボタンのクリックイベント設定
+    sendButton.addEventListener("click", function () {
+        const userMessage = userInput.value.trim();
+        const selectedUseCaseType = useCaseType.value;
+        executeChat(selectedUseCaseType, userMessage);
+    });
+
+    // なぞなぞボタンのクリックイベント設定
+    if (riddleButton) {
+        riddleButton.addEventListener("click", function () {
+            const isRiddleActive = riddleButton.classList.contains("btn-warning");
+            if (isRiddleActive) {
+                // なぞなぞ中断時は「ChatLogs テーブルをクリアー」ボタンのクリックを模倣する
+                clearBtn.click();
+                return;
+            }
+
+            // なぞなぞ開始時にドロップダウンを Riddle に切り替えて性別を表示する
+            useCaseType.value = "Riddle";
+            useCaseType.dispatchEvent(new Event("change"));
+
+            const userMessage = userInput.value.trim() || "なぞなぞを始めてください。";
+            executeChat("Riddle", userMessage);
+        });
+    }
+
+    function executeChat(selectedUseCaseType, userMessage) {
+        // なぞなぞの場合は空文字でも（ボタンのデフォルトメッセージで）許可する
+        if (userMessage === "" && selectedUseCaseType !== "OpenAISpeechToText" && selectedUseCaseType !== "Riddle") {
+            alert("メッセージを入力してください。");
+            return;
+        }
+
+        const requestData = new FormData();
+        requestData.append("use_case_type", selectedUseCaseType);
+        requestData.append("user_input", userMessage);
+        if (genderInput) {
+            requestData.append("gender", genderInput.value);
+        }
+
+        // ユースケースごとのエンドポイントを指定
+        let endpointUrl;
+        if (
+            selectedUseCaseType === "OpenAIGptStreaming" ||
+            selectedUseCaseType === "Riddle"
+        ) {
+            endpointUrl = "/llm_chat/streaming/";
+
+            // Streaming の場合は streamingCard を表示
+            streamingCard.style.display = "block";
+            outputElement.innerText = ""; // 初期化しておく
+        } else {
+            endpointUrl = "/llm_chat/sync/";
+
+            // Sync の場合は streamingCard を非表示
+            streamingCard.style.display = "none";
+        }
+
+        // 音声ファイルが必要なユースケースのバリデーション
+        if (selectedUseCaseType === "OpenAISpeechToText") {
+            if (audioFileInput.files.length === 0) {
+                alert("音声ファイルを選択してください。");
+                return;
+            }
+            requestData.append("audio_file", audioFileInput.files[0]);
+        }
+
+        // リクエストの送信
+        startLoading();
+        fetch(endpointUrl, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": Cookies.get("csrftoken"),
+            },
+            body: requestData,
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    return response.json().then((errData) => {
+                        const errorMsg = errData.error || "リクエストに失敗しました。";
+                        alert("エラー: " + errorMsg);
+                        console.error("リクエスト失敗:", response.status, errData);
+                        stopLoading();
+                        throw new Error(errorMsg);
+                    });
+                }
+                return response.json();
+            })
+            .then((data) => {
+                if (!data) return;
+                // ストリーミングの場合のみストリームの開始
+                if (
+                    selectedUseCaseType === "OpenAIGptStreaming" ||
+                    selectedUseCaseType === "Riddle"
+                ) {
+                    startStreaming(outputElement);
+                    // stopLoading はストリーミング完了時に呼ぶ
+                } else {
+                    if (data.result && data.result.next_riddle_state) {
+                        const states = data.result.next_riddle_state.split(",");
+                        if (states.length > 1) {
+                            // 状態が複数ある（進行インジケータ）場合は順次トーストを表示
+                            const stateMap = {
+                                "USER_INPUT": "回答をお待ちしています",
+                                "EVALUATE": "回答を評価しています...",
+                                "START": "新しい問題を出題します",
+                                "FINISHED": "なぞなぞを終了しました"
+                            };
+                            states.forEach((state, index) => {
+                                setTimeout(() => {
+                                    showToast(stateMap[state] || state, "success");
+                                }, index * 800); // 0.8秒間隔で表示
+                            });
+                        } else {
+                            showToast(data.message || "リクエストが成功しました", "success");
+                        }
+                    } else {
+                        showToast(data.message || "リクエストが成功しました", "success");
+                    }
+
+                    stopLoading();
+                    setTimeout(() => {
+                        location.reload();
+                    }, Math.max(1500, (data.result && data.result.next_riddle_state ? data.result.next_riddle_state.split(",").length * 800 + 500 : 1500)));
+                }
+            })
+            .catch((error) => {
+                console.error("送信エラー:", error);
+                stopLoading();
+            });
+    }
+
+    // ドロップダウン変更時のイベント処理
+    useCaseType.addEventListener("change", function () {
+        if (useCaseType.value === "OpenAISpeechToText") {
+            audioFileContainer.style.display = "block"; // フォームを表示
+        } else {
+            audioFileContainer.style.display = "none"; // フォームを非表示
+        }
+
+        if (useCaseType.value === "Riddle") {
+            genderContainer.style.display = "block";
+        } else {
+            genderContainer.style.display = "none";
+        }
+    });
+
+    // ページロード時にも選択状態に応じてフィールドを表示／非表示
+    if (useCaseType.value === "OpenAISpeechToText") {
+        audioFileContainer.style.display = "block";
+    } else {
+        audioFileContainer.style.display = "none";
+    }
+
+    if (useCaseType.value === "Riddle") {
+        genderContainer.style.display = "block";
+    } else {
+        genderContainer.style.display = "none";
+    }
+
+    // ページ下部へスクロール
+    function scrollToBottom() {
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: "smooth"
+        });
+    }
+
+    // なぞなぞの進行状況インジケータ（信号機）を描画する
+    function renderRiddleIndicators() {
+        const indicators = document.querySelectorAll(".riddle-indicator");
+        const allLogs = Array.from(document.querySelectorAll(".card.mb-3"));
+
+        indicators.forEach((el, indicatorIndex) => {
+            const statesStr = el.getAttribute("data-states") || "";
+            const states = statesStr.split(",");
+            const lastState = states[states.length - 1];
+            const cardBody = el.closest(".card-body");
+            const content = cardBody.querySelector(".card-text").innerText;
+            const role = (el.getAttribute("data-role") || "").toLowerCase();
+            const isLatestIndicator = indicatorIndex === indicators.length - 1;
+            const isWaitingForUser = lastState === "USER_INPUT";
+            const showWaitingDot = isLatestIndicator && isWaitingForUser && role === "assistant";
+
+            // セッション開始からの順番を把握するために、全ログ中での位置を特定
+            const currentCard = cardBody.closest(".card.mb-3");
+            const logIndex = allLogs.indexOf(currentCard);
+
+            // 履歴を遡って「なぞなぞセッション」内の順番を計算
+            let stepInSession = 0;
+            for (let i = 0; i <= logIndex; i++) {
+                const logCard = allLogs[i];
+                const logIndicator = logCard.querySelector(".riddle-indicator");
+                if (logIndicator) {
+                    stepInSession++;
+                }
+            }
+
+            const isEvaluation = content.includes("【評価結果】");
+
+            let html = `<div class="d-flex align-items-center gap-2 mt-2">`;
+
+            const totalSteps = 6;
+            let currentStep = stepInSession;
+
+            // FINISHED の場合は全ステップ完了
+            if (lastState === "FINISHED") {
+                currentStep = totalSteps;
+            }
+
+            for (let i = 1; i <= totalSteps; i++) {
+                let iconClass = "";
+                let style = "font-size: 0.8rem;";
+
+                if (i <= currentStep) {
+                    // 完了
+                    iconClass = "fas fa-check text-success";
+                } else if (i === currentStep + 1) {
+                    if (showWaitingDot) {
+                        // 次のステップ (回答待ち)
+                        iconClass = "far fa-dot-circle text-warning";
+                        style = "font-size: 0.9rem;";
+                    } else {
+                        iconClass = "far fa-circle text-muted";
+                    }
+                } else {
+                    // 未完了
+                    iconClass = "far fa-circle text-muted";
+                }
+
+                html += `<i class="${iconClass}" style="${style}"></i>`;
+
+                if (i < totalSteps) {
+                    html += `<div style="width: 8px; height: 2px; background-color: #dee2e6;"></div>`;
+                }
+            }
+
+            if (lastState === "FINISHED" || isEvaluation) {
+                html += `<span class="ms-2 badge bg-success">完了</span>`;
+            }
+
+            html += `</div>`;
+            el.innerHTML = html;
+        });
+    }
+
+    // 初期表示時にインジケータを描画
+    renderRiddleIndicators();
+
+    // 履歴がある場合は最下部へスクロール（少し遅延させてレンダリング完了を待つ）
+    if (document.querySelectorAll(".card.mb-3").length > 0) {
+        setTimeout(scrollToBottom, 100);
+    }
+
+    // Server-Sent Events を開始（ストリームデータを受信）
+    function startStreaming(outputElement) {
+        console.log("Server-Sent Events の接続を開始しました");
+        const eventSource = new EventSource("/llm_chat/streaming/");
+
+        eventSource.onmessage = function (event) {
+            const parsedData = JSON.parse(event.data);
+            if (parsedData.finish_reason === "stop") {
+                eventSource.close();
+                console.log("Server-Sent Events の接続を終了しました");
+                stopLoading();
+                // 保存処理
+                saveStreamingData(outputElement.innerText);
+            }
+
+            if (parsedData.content != null) {
+                outputElement.innerText += parsedData.content;
+            }
+        };
+
+        eventSource.onerror = function (event) {
+            console.error("SSEエラー:", event);
+            stopLoading();
+            eventSource.close();
+        };
+    }
+
+    // ストリーム結果の保存
+    function saveStreamingData(content) {
+        fetch("/llm_chat/streaming/result_save/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": Cookies.get("csrftoken"),
+            },
+            body: JSON.stringify({content: content}),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("データ保存に失敗しました");
+                }
+                return response.json();
+            })
+            .then((data) => {
+                console.log("保存成功:", data);
+                location.reload();
+            })
+            .catch((error) => {
+                console.error("保存エラー:", error);
+            });
+    }
+});
