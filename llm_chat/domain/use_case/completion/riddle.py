@@ -1,5 +1,9 @@
+from typing import Generator
+
 from django.contrib.auth.models import User
 
+from lib.llm.service.completion import LlmCompletionStreamingService
+from lib.llm.valueobject.completion import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import ChatService
@@ -8,6 +12,7 @@ from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
+    Riddle,
     SessionState,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
@@ -63,79 +68,24 @@ class RiddleUseCase(UseCase):
             - ユーザーメッセージとアシスタントメッセージを DB に保存します。
             - セッション開始シグナルの場合、過去の履歴をクリアします。
         """
-        if content is None:
-            raise ValueError("content cannot be None for RiddleUseCase")
-
         if gender is None:
             raise ValueError("gender is required for RiddleUseCase")
 
-        # 1. 履歴を取得し、現在の状態を判定
-        chat_history = ChatLogRepository.find_chat_history(user)
-        last_message = chat_history[-1] if chat_history else None
-
-        last_states = (
-            SessionState.from_csv(last_message.next_riddle_state)
-            if last_message
-            else []
-        )
-        current_state = last_states[-1] if last_states else None
-
-        # 2. 状態の更新（開始・継続・終了チェック）
-        start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
-        is_start = any(sig in content for sig in start_signals)
-
-        if is_start:
-            ChatLogRepository.clear_all()
-            current_state = None
-        elif current_state == SessionState.FINISHED:
-            raise ValueError(
-                "セッションが終了しています。画面上の「なぞなぞの開始」を押してやりなおしてください。"
-            )
-
-        # 3. 問題セットの取得
-        riddle_set = RiddleChatService.get_riddle_set(self.max_turns)
-        riddle_count = len(riddle_set)
-
-        # 4. 状態遷移（このターンの状態）の決定
-        # target_state: 今回のユーザー入力が対応する「このターンの状態」
-        # target_state.next_state: ユーザー入力を受けて進むべき「次の状態」
-        # 最終的にユーザーメッセージには、
-        # [target_state, target_state.next_state] という 2段階の状態履歴が保存されます。
-        target_state = current_state if current_state else SessionState.START
-        if not current_state:
-            # 開始時（START）のユーザーメッセージは START のみに制限
-            target_states = [target_state]
-        else:
-            target_states = [target_state, target_state.next_state]
-
-        # 5. メッセージの生成
-        # ユーザーメッセージには、今回取り組むフェーズを紐付ける
-        user_message = self._insert_user_message(
+        (
+            user_message,
+            riddle_set,
+            riddle_count,
+            current_state,
+            target_state,
+            start_signals,
+            _is_start,
+        ) = _prepare_riddle_turn(
+            repository=self.repository,
+            config=self.config,
+            max_turns=self.max_turns,
             user=user,
             content=content,
-            model_name=self.config.model,
-            next_riddle_state=target_states,
-            use_case_type=UseCaseType.RIDDLE,
         )
-
-        if not is_start:
-            answered_count = ChatLogRepository.count_answered_questions(user)
-            question_index = answered_count - 1
-            if 0 <= question_index < riddle_count:
-                riddle = riddle_set[question_index]
-                evaluation = RiddleChatService.evaluate_turn(
-                    config=self.config,
-                    question=riddle.question,
-                    answer=riddle.answer,
-                    user_answer=content,
-                )
-                if evaluation:
-                    score_line = RiddleChatService.format_turn_scores(evaluation)
-                    ChatLogRepository.update_riddle_scores(
-                        message_id=user_message.id,
-                        scores=evaluation.model_dump(),
-                        append_text=score_line,
-                    )
 
         # アシスタント側では、状態をさらに進めて提示する
         # 開始時は、ユーザーが START をこなしたことを受けて [START, USER_INPUT] を提示する。
@@ -181,6 +131,192 @@ class RiddleUseCase(UseCase):
             assistant_message.next_riddle_state = SessionState.to_csv(target_states)
 
         return self._insert_assistant_message(
+            user=user,
+            content=assistant_message.content,
+            model_name=self.config.model,
+            use_case_type=UseCaseType.RIDDLE,
+            next_riddle_state=target_states,
+        )
+
+
+def _prepare_riddle_turn(
+    repository: ChatLogRepository,
+    config: OpenAIGptConfig | GeminiConfig,
+    max_turns: int | None,
+    user: User,
+    content: str | None,
+) -> tuple[MessageDTO, list[Riddle], int, SessionState | None, SessionState, list[str], bool]:
+    if content is None:
+        raise ValueError("content cannot be None for RiddleUseCase")
+
+    chat_history = ChatLogRepository.find_chat_history(user)
+    last_message = chat_history[-1] if chat_history else None
+
+    last_states = (
+        SessionState.from_csv(last_message.next_riddle_state)
+        if last_message
+        else []
+    )
+    current_state = last_states[-1] if last_states else None
+
+    start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
+    is_start = any(sig in content for sig in start_signals)
+
+    if is_start:
+        ChatLogRepository.clear_all()
+        current_state = None
+    elif current_state == SessionState.FINISHED:
+        raise ValueError(
+            "セッションが終了しています。画面上の「なぞなぞの開始」を押してやりなおしてください。"
+        )
+
+    riddle_set = RiddleChatService.get_riddle_set(max_turns)
+    riddle_count = len(riddle_set)
+
+    target_state = current_state if current_state else SessionState.START
+    if not current_state:
+        target_states = [target_state]
+    else:
+        target_states = [target_state, target_state.next_state]
+
+    user_message = MessageDTO(
+        user=user,
+        role=RoleType.USER,
+        content=content,
+        model_name=config.model,
+        use_case_type=UseCaseType.RIDDLE,
+        next_riddle_state=SessionState.to_csv(target_states),
+    )
+    saved = repository.insert(user_message)
+    if saved:
+        user_message.id = saved.id
+
+    if not is_start:
+        answered_count = ChatLogRepository.count_answered_questions(user)
+        question_index = answered_count - 1
+        if 0 <= question_index < riddle_count:
+            riddle = riddle_set[question_index]
+            evaluation = RiddleChatService.evaluate_turn(
+                config=config,
+                question=riddle.question,
+                answer=riddle.answer,
+                user_answer=content,
+            )
+            if evaluation:
+                score_line = RiddleChatService.format_turn_scores(evaluation)
+                ChatLogRepository.update_riddle_scores(
+                    message_id=user_message.id,
+                    scores=evaluation.model_dump(),
+                    append_text=score_line,
+                )
+
+    return (
+        user_message,
+        riddle_set,
+        riddle_count,
+        current_state,
+        target_state,
+        start_signals,
+        is_start,
+    )
+
+
+class RiddleStreamingUseCase(UseCase):
+    """
+    なぞなぞセッションのストリーミング版ユースケース。
+    """
+
+    def __init__(
+        self,
+        config: OpenAIGptConfig | GeminiConfig,
+        max_turns: int | None = None,
+    ):
+        super().__init__()
+        self.config = config
+        self.max_turns = max_turns
+
+    def execute(
+        self, user: User, content: str | None, gender: Gender | None = None
+    ) -> Generator[StreamResponse, None, None]:
+        if gender is None:
+            raise ValueError("gender is required for RiddleStreamingUseCase")
+        (
+            user_message,
+            riddle_set,
+            _riddle_count,
+            _current_state,
+            _target_state,
+            _start_signals,
+            _is_start,
+        ) = _prepare_riddle_turn(
+            repository=self.repository,
+            config=self.config,
+            max_turns=self.max_turns,
+            user=user,
+            content=content,
+        )
+
+        chat_history = ChatService.get_chat_history(
+            user_message,
+            use_case_type=UseCaseType.RIDDLE,
+            gender=gender,
+            riddle_set=riddle_set,
+        )
+
+        return LlmCompletionStreamingService(self.config).retrieve_answer(
+            [chat_log.to_message() for chat_log in chat_history]
+        )
+
+    def save(self, user: User, content: str) -> None:
+        if not content:
+            raise ValueError("content is required for RiddleStreamingUseCase")
+
+        chat_history = ChatLogRepository.find_chat_history(user)
+        last_message = chat_history[-1] if chat_history else None
+
+        if not last_message or last_message.role != RoleType.USER:
+            raise ValueError("No user message available for streaming save")
+
+        last_states = SessionState.from_csv(last_message.next_riddle_state) or []
+        current_state = last_states[0] if len(last_states) >= 2 else None
+
+        if current_state is None:
+            target_states = [SessionState.START, SessionState.USER_INPUT]
+        else:
+            target_states = [
+                current_state.next_state,
+                current_state.next_state.next_state,
+            ]
+
+        assistant_message = MessageDTO(
+            user=user,
+            role=RoleType.ASSISTANT,
+            content=content,
+            model_name=self.config.model,
+            use_case_type=UseCaseType.RIDDLE,
+            next_riddle_state=SessionState.to_csv(target_states),
+        )
+
+        riddle_set = RiddleChatService.get_riddle_set(self.max_turns)
+        riddle_count = len(riddle_set)
+
+        answered_count = ChatLogRepository.count_answered_questions(user)
+        if answered_count < riddle_count:
+            first_state = SessionState.START if current_state is None else SessionState.EVALUATE
+            target_states = [first_state, SessionState.USER_INPUT]
+            assistant_message.next_riddle_state = SessionState.to_csv(target_states)
+
+        start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
+        if RiddleChatService.is_session_finished(
+            user, assistant_message, riddle_count, start_signals
+        ):
+            assistant_message.content = RiddleChatService.report(
+                assistant_message.content, riddle_count, user
+            )
+            target_states = [SessionState.EVALUATE, SessionState.FINISHED]
+            assistant_message.next_riddle_state = SessionState.to_csv(target_states)
+
+        self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
             model_name=self.config.model,

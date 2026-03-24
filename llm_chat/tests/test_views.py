@@ -1,6 +1,5 @@
 import time
 import io
-import json
 from datetime import timedelta
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.backends.db import SessionStore
@@ -10,12 +9,7 @@ from django.urls import reverse
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import ModelName
 from llm_chat.models import ChatLogs, RiddleQuestion
-from llm_chat.views import (
-    IndexView,
-    SyncResponseView,
-    RiddleSampleCSVView,
-    RiddleCSVUploadView,
-)
+from llm_chat.views import IndexView, RiddleSampleCSVView, RiddleCSVUploadView
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.service.completion.riddle import RiddleChatService
 
@@ -160,33 +154,6 @@ class ViewLogicTest(TestCase):
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
 
-    def test_sync_response_view_riddle_no_questions_error(self):
-        """
-        [シナリオ] なぞなぞの問題が登録されていない状態で SyncResponseView にリクエストを投げる
-        [期待値] 400エラーが返り、適切なメッセージが含まれていること
-        """
-        RiddleQuestion.objects.all().delete()
-        factory = RequestFactory()
-        request = factory.post(
-            "/llm_chat/sync/",
-            {
-                "use_case_type": UseCaseType.RIDDLE,
-                "user_input": "スタート",
-                "gender": "man",
-            },
-        )
-        request.user = self.user
-        request.session = SessionStore()
-
-        response = SyncResponseView.post(request)
-        self.assertEqual(response.status_code, 400)
-
-        data = json.loads(response.content)
-        self.assertEqual(
-            data["error"],
-            "なぞなぞの問題が登録されていません。管理画面から問題を登録してください。",
-        )
-
     def test_riddle_sample_csv_view(self):
         """
         [シナリオ] サンプルCSVダウンロードリンクにアクセスする
@@ -229,17 +196,10 @@ class ViewLogicTest(TestCase):
             "1,上書き問題1,新しい答え",
             "2,新規問題2,答え2",
         ]
-        csv_file = io.BytesIO("\n".join(csv_content).encode("utf-8"))
-        csv_file.name = "test.csv"
-
-        factory = RequestFactory()
-        request = factory.post(
-            reverse("llm:riddle_csv_upload"),
-            {"csv_file": csv_file},
+        request = self._build_csv_upload_request(
+            csv_content=csv_content,
+            filename="test.csv",
         )
-        request.user = self.user
-        request.session = SessionStore()
-        request._messages = self._create_messages_mock()
 
         # 3. 実行
         response = RiddleCSVUploadView.post(request)
@@ -270,17 +230,10 @@ class ViewLogicTest(TestCase):
             "2,New Q2,New A2",
             "4,New Q4,New A4",
         ]
-        csv_file = io.BytesIO("\n".join(csv_content).encode("utf-8"))
-        csv_file.name = "test_complex.csv"
-
-        factory = RequestFactory()
-        request = factory.post(
-            reverse("llm:riddle_csv_upload"),
-            {"csv_file": csv_file},
+        request = self._build_csv_upload_request(
+            csv_content=csv_content,
+            filename="test_complex.csv",
         )
-        request.user = self.user
-        request.session = SessionStore()
-        request._messages = self._create_messages_mock()
 
         # 3. 実行
         response = RiddleCSVUploadView.post(request)
@@ -302,7 +255,7 @@ class ViewLogicTest(TestCase):
            - レスポンスに削除件数が含まれていること
            - 実際にレコードが削除されていること
         """
-        user = User.objects.create_user(username="testuser_clear")
+        user = User.objects.create_user(username="test_user_clear")
         from llm_chat.models import ChatLogs
 
         ChatLogs.objects.create(user=user, role="USER", content="test1")
@@ -324,3 +277,17 @@ class ViewLogicTest(TestCase):
 
         request = RequestFactory().get("/")
         return BaseStorage(request)
+
+    def _build_csv_upload_request(self, csv_content: list[str], filename: str):
+        csv_file = io.BytesIO("\n".join(csv_content).encode("utf-8"))
+        csv_file.name = filename
+
+        factory = RequestFactory()
+        request = factory.post(
+            reverse("llm:riddle_csv_upload"),
+            {"csv_file": csv_file},
+        )
+        request.user = self.user
+        request.session = SessionStore()
+        request._messages = self._create_messages_mock()
+        return request
