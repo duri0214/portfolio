@@ -8,9 +8,7 @@ class UserTextForm(forms.Form):
     question = forms.CharField(widget=forms.Textarea)
 
     USE_CASE_TYPE_CHOICES = [
-        (UseCaseType.OPENAI_GPT, "OpenAI GPT"),
         (UseCaseType.OPENAI_GPT_STREAMING, "OpenAI GPT Streaming"),
-        (UseCaseType.GEMINI, "Gemini"),
         (UseCaseType.OPENAI_DALLE, "OpenAI Dall-e"),
         (UseCaseType.OPENAI_TEXT_TO_SPEECH, "OpenAI Text to Speech"),
         (UseCaseType.OPENAI_SPEECH_TO_TEXT, "OpenAI Speech to Text"),
@@ -21,7 +19,7 @@ class UserTextForm(forms.Form):
     use_case_type = forms.ChoiceField(
         choices=USE_CASE_TYPE_CHOICES,
         label="Use Case Type",
-        initial=UseCaseType.OPENAI_GPT,  # デフォルト値
+        initial=UseCaseType.OPENAI_GPT_STREAMING,  # デフォルト値
         widget=forms.Select(attrs={"class": "form-control"}),
     )
 

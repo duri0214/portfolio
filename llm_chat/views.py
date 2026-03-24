@@ -1,4 +1,5 @@
 import csv
+import os
 import io
 import json
 import logging
@@ -13,6 +14,7 @@ from django.views.generic import FormView
 from dotenv import load_dotenv
 
 from lib.llm.valueobject.completion import StreamResponse
+from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.chat import ChatDisplayService
 from llm_chat.domain.valueobject.completion.riddle import (
@@ -25,7 +27,10 @@ from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.use_case.completion.chat import (
     OpenAIGptStreamingUseCase,
 )
-from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
+from llm_chat.domain.use_case.completion.riddle import (
+    RiddleUseCase,
+    RiddleStreamingUseCase,
+)
 from llm_chat.forms import UserTextForm, RiddleCSVUploadForm
 from llm_chat.models import RiddleQuestion
 from django.shortcuts import render, redirect
@@ -79,6 +84,9 @@ class IndexView(FormView):
 class SyncResponseView(View):
     """
     同期的にLLMからのレスポンスを取得し、結果を返すビューです。
+    画像/音声/RAG などの同期系ユースケース専用。
+    チャット系（OpenAI GPT / Gemini / Streaming）はストリーミング固定のため、
+    ここでは不正な use_case_type として 400 を返します。
     """
 
     @staticmethod
@@ -94,6 +102,14 @@ class SyncResponseView(View):
 
             if not use_case_type:
                 return JsonResponse({"error": "No use case type provided"}, status=400)
+            if use_case_type in (
+                UseCaseType.OPENAI_GPT,
+                UseCaseType.GEMINI,
+                UseCaseType.OPENAI_GPT_STREAMING,
+            ):
+                return JsonResponse(
+                    {"error": "Invalid use case for sync"}, status=400
+                )
 
             # セッションに use_case_type を保存（モデル変更なしで記憶するため）
             request.session["use_case_type"] = use_case_type
@@ -173,7 +189,10 @@ class StreamingResponseView(View):
         use_case_type = request.POST.get("use_case_type")
         user_input = request.POST.get("user_input")
 
-        if use_case_type != UseCaseType.OPENAI_GPT_STREAMING:
+        if use_case_type not in (
+            UseCaseType.OPENAI_GPT_STREAMING,
+            UseCaseType.RIDDLE,
+        ):
             return JsonResponse({"error": "Invalid use case for streaming"}, status=400)
 
         # セッションに use_case_type を保存
@@ -181,12 +200,34 @@ class StreamingResponseView(View):
 
         # 使用するユースケースを切り替え
         try:
-            use_case = UseCaseFactory.create(use_case_type=use_case_type)
+            if use_case_type == UseCaseType.RIDDLE:
+                use_case = RiddleStreamingUseCase(
+                    config=OpenAIGptConfig(
+                        api_key=os.getenv("OPENAI_API_KEY") or "",
+                        max_tokens=4000,
+                        model=ModelName.GPT_5_MINI,
+                    )
+                )
+            else:
+                use_case = UseCaseFactory.create(use_case_type=use_case_type)
         except ValueError as e:
             return JsonResponse({"error": str(e)}, status=400)
-        StreamingResponseView.stored_stream = use_case.execute(
-            user=request.user, content=user_input
-        )
+        if use_case_type == UseCaseType.RIDDLE:
+            gender_val = request.POST.get("gender")
+            gender = None
+            if gender_val:
+                try:
+                    gender = Gender(GenderType(gender_val))
+                    request.session["riddle_gender"] = gender_val
+                except ValueError:
+                    pass
+            StreamingResponseView.stored_stream = use_case.execute(
+                user=request.user, content=user_input, gender=gender
+            )
+        else:
+            StreamingResponseView.stored_stream = use_case.execute(
+                user=request.user, content=user_input
+            )
 
         return JsonResponse({"message": "ストリームが正常に初期化されました"})
 
@@ -227,8 +268,19 @@ class StreamResultSaveView(View):
             if not content:
                 return JsonResponse({"error": "Content is required"}, status=400)
 
-            use_case = OpenAIGptStreamingUseCase()
-            use_case.save(user=request.user, content=content)
+            use_case_type = request.session.get("use_case_type")
+            if use_case_type == UseCaseType.RIDDLE:
+                use_case = RiddleStreamingUseCase(
+                    config=OpenAIGptConfig(
+                        api_key=os.getenv("OPENAI_API_KEY") or "",
+                        max_tokens=4000,
+                        model=ModelName.GPT_5_MINI,
+                    )
+                )
+                use_case.save(user=request.user, content=content)
+            else:
+                use_case = OpenAIGptStreamingUseCase()
+                use_case.save(user=request.user, content=content)
 
             # 成功レスポンスを返す
             return JsonResponse(

@@ -38,7 +38,7 @@ class UseCaseFactory:
                 config = GeminiConfig(
                     api_key=os.getenv("GEMINI_API_KEY"),
                     max_tokens=4000,
-                    model=ModelName.GEMINI_2_5_FLASH,
+                    model=ModelName.GEMINI_2_0_FLASH,
                 )
             else:
                 config = OpenAIGptConfig(
