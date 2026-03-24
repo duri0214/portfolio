@@ -20,7 +20,7 @@ class ChatDisplayService:
         1. なぞなぞが進行中の場合（最新のなぞなぞ履歴が未終了）："Riddle"
         2. セッションに保存された use_case_type がある場合：それを優先
         3. 過去のチャット履歴がある場合：最新のメッセージで使用されたモデルから推定
-        4. 履歴がない場合：デフォルトの "OpenAIGpt"
+        4. 履歴がない場合：デフォルトの "OpenAIGptStreaming"
         """
         initial = {}
         chat_history = ChatLogRepository.find_chat_history(user=login_user)
@@ -46,7 +46,8 @@ class ChatDisplayService:
                 # データベースに保存されている use_case_type を直接初期値として設定する
                 initial["use_case_type"] = last_log.use_case_type
             else:
-                initial["use_case_type"] = UseCaseType.OPENAI_GPT
+                initial["use_case_type"] = UseCaseType.OPENAI_GPT_STREAMING
+
 
         # 4. セッションから性別の初期値を取得
         riddle_gender = request.session.get("riddle_gender")

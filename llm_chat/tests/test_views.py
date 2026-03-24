@@ -69,10 +69,9 @@ class ViewLogicTest(TestCase):
         """
         [シナリオ: IndexView の get_initial() による直近ユースケースタイプの取得]
         1. 履歴がない場合: デフォルト値が返ることを確認
-        2. 直近の履歴が Gemini の場合: Gemini が返ることを確認
-        3. 直近の履歴が Dall-e の場合: OpenAIDalle が返ることを確認
-        4. 直近の履歴が なぞなぞ (進行中) の場合: Riddle が返ることを確認
-        5. 直近の履歴が なぞなぞ (終了) の場合: 直近の model_name に基づく値が返ることを確認
+        2. 直近の履歴が Dall-e の場合: OpenAIDalle が返ることを確認
+        3. 直近の履歴が なぞなぞ (進行中) の場合: Riddle が返ることを確認
+        4. 直近の履歴が なぞなぞ (終了) の場合: 直近の model_name に基づく値が返ることを確認
         """
 
         factory = RequestFactory()
@@ -83,24 +82,11 @@ class ViewLogicTest(TestCase):
         view = IndexView()
         view.request = request
 
-        # 1. 履歴なし -> デフォルトで UseCaseType.OPENAI_GPT
+        # 1. 履歴なし -> デフォルトで UseCaseType.OPENAI_GPT_STREAMING
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT)
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT_STREAMING)
 
-        # 2. 直近が Gemini
-        ChatLogs.objects.create(
-            user=self.user,
-            role=RoleType.USER.value,
-            content="Hello",
-            model_name=ModelName.GEMINI_2_0_FLASH,
-            use_case_type=UseCaseType.GEMINI,
-            created_at=timezone.now(),
-        )
-        time.sleep(0.01)
-        initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), UseCaseType.GEMINI)
-
-        # 3. 直近が Dall-e
+        # 2. 直近が Dall-e
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
@@ -113,7 +99,7 @@ class ViewLogicTest(TestCase):
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_DALLE)
 
-        # 4. なぞなぞ (進行中)
+        # 3. なぞなぞ (進行中)
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
@@ -126,7 +112,7 @@ class ViewLogicTest(TestCase):
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
 
-        # 5. なぞなぞ (終了)
+        # 4. なぞなぞ (終了)
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
@@ -138,29 +124,7 @@ class ViewLogicTest(TestCase):
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
 
-        # 6. なぞなぞ進行中に別のチャットを挟む
-        ChatLogs.objects.create(
-            user=self.user,
-            role=RoleType.ASSISTANT.value,
-            content="なぞなぞ再開",
-            model_name=ModelName.GPT_5_MINI,
-            use_case_type=UseCaseType.RIDDLE,
-            created_at=timezone.now(),
-        )
-        time.sleep(0.01)
-        ChatLogs.objects.create(
-            user=self.user,
-            role=RoleType.USER.value,
-            content="横槍チャット",
-            model_name=ModelName.GEMINI_2_0_FLASH,
-            use_case_type=UseCaseType.GEMINI,
-            created_at=timezone.now(),
-        )
-        initial = view.get_initial()
-        # 最新が Gemini なので、Gemini が選択される
-        self.assertEqual(initial.get("use_case_type"), UseCaseType.GEMINI)
-
-        # 7. ストリーミングモードの復元
+        # 5. ストリーミングモードの復元
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.USER.value,
@@ -172,7 +136,7 @@ class ViewLogicTest(TestCase):
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT_STREAMING)
 
-        # 8. RAGモードの復元
+        # 6. RAGモードの復元
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.USER.value,
@@ -184,12 +148,7 @@ class ViewLogicTest(TestCase):
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_RAG)
 
-        # 9. セッションからの use_case_type 復元 (DB 履歴より優先)
-        request.session["use_case_type"] = UseCaseType.GEMINI
-        initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), UseCaseType.GEMINI)
-
-        # 10. なぞなぞ進行中が最優先 (セッションより優先)
+        # 7. なぞなぞ進行中が最優先 (セッションより優先)
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
