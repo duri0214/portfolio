@@ -270,7 +270,10 @@
 
                 // ユースケースごとのエンドポイントを指定
                 let endpointUrl;
-                if (selectedUseCaseType === "OpenAIGptStreaming") {
+                if (
+                    selectedUseCaseType === "OpenAIGptStreaming" ||
+                    selectedUseCaseType === "Riddle"
+                ) {
                     endpointUrl = "/llm_chat/streaming/";
 
                     // Streaming の場合は streamingCard を表示
@@ -316,7 +319,10 @@
                     .then((data) => {
                         if (!data) return;
                         // ストリーミングの場合のみストリームの開始
-                        if (selectedUseCaseType === "OpenAIGptStreaming") {
+                        if (
+                            selectedUseCaseType === "OpenAIGptStreaming" ||
+                            selectedUseCaseType === "Riddle"
+                        ) {
                             startStreaming(outputElement);
                             // stopLoading はストリーミング完了時に呼ぶ
                         } else {
