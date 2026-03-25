@@ -58,18 +58,27 @@ class VotePlace(models.Model):
         return self.name
 
 
-class Member(models.Model):
+class UserAttribute(models.Model):
     """
-    病院ドメイン専用のユーザラッパーモデル。
+    病院アプリケーション特有の属性。
 
     - Django 標準の auth.User と 1:1 で紐づく（認証や氏名・メール等は auth.User を参照）
-    - 病院ドメイン固有の情報だけを保持
+    - 病院ドメイン固有の情報を保持
+
+    Attributes:
+        - user (OneToOneField): ユーザ
+        - role (CharField): ロール (STAFF/PATIENT)
+        - address (TextField): 住所
+        - date_of_birth (DateField): 生年月日
+        - remark (TextField): 備考
+        - created_at (DateTimeField): 作成日時
+        - updated_at (DateTimeField): 更新日時
     """
 
     class Role(models.TextChoices):
         """
         Note: 定義は (クラス属性名, DB保存値, 表示ラベル) の順。
-              コード内では Member.Role.STAFF のように英語定数を使用。
+              コード内では UserAttribute.Role.STAFF のように英語定数を使用。
               DB には "staff" が保存され、表示には get_role_display() で「病院スタッフ」が返される。
         """
 
@@ -79,32 +88,22 @@ class Member(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name="hospital_user",
+        related_name="userAttribute",
         verbose_name="ユーザ",
     )
     role = models.CharField(
         max_length=20,
-        choices=Role.choices,
+        choices=Role,
         verbose_name="ロール",
     )
+    address = models.TextField(verbose_name="住所")
+    date_of_birth = models.DateField(verbose_name="生年月日")
     remark = models.TextField(verbose_name="備考", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username
-
-
-class UserAttribute(models.Model):
-    """Member に 1:1 で紐づく住所・生年月日情報。例えば member.userAttribute.address でアクセスする"""
-
-    member = models.OneToOneField(
-        Member,
-        on_delete=models.CASCADE,
-        related_name="userAttribute",
-    )
-    address = models.TextField(verbose_name="住所")
-    date_of_birth = models.DateField(verbose_name="生年月日")
 
 
 class ElectionLedger(models.Model):
@@ -122,13 +121,13 @@ class ElectionLedger(models.Model):
         - vote_ward (ForeignKey): 病棟名
         - vote_city_sector (ForeignKey): 投票区名
         - remark (CharField): 備考
-        - billing_method (CharField): 投票用紙の請求方法
+        - billing_method (IntegerField): 投票用紙の請求方法
         - proxy_billing_request_date (DateField): 代理請求依頼日
         - proxy_billing_date (DateField): 代理請求日
         - ballot_received_date (DateField): 投票用紙受領日
         - vote_date (DateField): 投票日（投票済みか否かを判断できる）
         - vote_place (ForeignKey): 投票場所
-        - voter_witness (ForeignKey): 投票立会人
+        - vote_observer (ForeignKey): 投票立会人
         - applied_for_proxy_voting (BooleanField): 代理投票申請の有無
         - delivery_date (DateField): 投票用紙送付日
         - created_at (DateTimeField): 取込日時
@@ -149,7 +148,7 @@ class ElectionLedger(models.Model):
         Election, verbose_name="選挙名", on_delete=models.CASCADE
     )
     voter = models.ForeignKey(
-        Member,
+        User,
         verbose_name="選挙人氏名",
         on_delete=models.CASCADE,
         related_name="voter",
@@ -163,7 +162,7 @@ class ElectionLedger(models.Model):
     )
     billing_method = models.IntegerField(
         verbose_name="投票用紙請求の方法",
-        choices=BillingMethod.choices,
+        choices=BillingMethod,
         null=True,
         blank=True,
     )
@@ -185,7 +184,7 @@ class ElectionLedger(models.Model):
         blank=True,
     )
     vote_observer = models.ForeignKey(
-        Member,
+        User,
         verbose_name="投票立会人",
         on_delete=models.CASCADE,
         related_name="voter_witness",

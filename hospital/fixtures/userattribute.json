@@ -1,92 +1,17 @@
 [
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 1,
-    "fields": {
-      "member": 10,
-      "address": "大阪府大阪市北区梅田1丁目1-1",
-      "date_of_birth": "1980-01-01"
-    }
-  },
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 2,
-    "fields": {
-      "member": 11,
-      "address": "大阪府堺市堺区築港八町1丁",
-      "date_of_birth": "1982-02-02"
-    }
-  },
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 3,
-    "fields": {
-      "member": 12,
-      "address": "大阪府大阪市中央区城見1丁目",
-      "date_of_birth": "1975-03-03"
-    }
-  },
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 4,
-    "fields": {
-      "member": 13,
-      "address": "大阪府大阪市東淀川区東淡路5丁目",
-      "date_of_birth": "1985-04-04"
-    }
-  },
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 5,
-    "fields": {
-      "member": 14,
-      "address": "大阪府堺市泉北区和泉野町",
-      "date_of_birth": "1978-05-05"
-    }
-  },
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 6,
-    "fields": {
-      "member": 15,
-      "address": "大阪府大阪市此花区逸津川町",
-      "date_of_birth": "1972-06-06"
-    }
-  },
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 7,
-    "fields": {
-      "member": 16,
-      "address": "大阪府大阪市西区江戸堀1丁目",
-      "date_of_birth": "1962-07-07"
-    }
-  },
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 8,
-    "fields": {
-      "member": 17,
-      "address": "大阪府大阪市西淀川区姫里3丁目",
-      "date_of_birth": "1971-08-08"
-    }
-  },
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 9,
-    "fields": {
-      "member": 18,
-      "address": "大阪府大阪市浪速区敷津東3丁目",
-      "date_of_birth": "1988-09-09"
-    }
-  },
-  {
-    "model": "hospital.UserAttribute",
-    "pk": 10,
-    "fields": {
-      "member": 19,
-      "address": "大阪府大阪市東成区星ヶ町",
-      "date_of_birth": "1987-10-10"
-    }
-  }
+  {"model": "hospital.UserAttribute", "pk": 1, "fields": {"user": 4, "role": "staff", "address": "（事務所等）", "date_of_birth": "1980-01-01", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 2, "fields": {"user": 5, "role": "staff", "address": "（事務所等）", "date_of_birth": "1980-01-01", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 3, "fields": {"user": 6, "role": "staff", "address": "（事務所等）", "date_of_birth": "1980-01-01", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 4, "fields": {"user": 7, "role": "staff", "address": "（事務所等）", "date_of_birth": "1980-01-01", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 5, "fields": {"user": 8, "role": "staff", "address": "大阪府大阪市北区梅田1丁目1-1", "date_of_birth": "1980-01-01", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 6, "fields": {"user": 9, "role": "patient", "address": "大阪府堺市堺区築港八町1丁", "date_of_birth": "1982-02-02", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 7, "fields": {"user": 10, "role": "patient", "address": "大阪府大阪市中央区城見1丁目", "date_of_birth": "1975-03-03", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 8, "fields": {"user": 11, "role": "patient", "address": "大阪府大阪市東淀川区東淡路5丁目", "date_of_birth": "1985-04-04", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 9, "fields": {"user": 12, "role": "patient", "address": "大阪府堺市泉北区和泉野町", "date_of_birth": "1978-05-05", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 10, "fields": {"user": 13, "role": "patient", "address": "大阪府大阪市此花区逸津川町", "date_of_birth": "1972-06-06", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 11, "fields": {"user": 14, "role": "patient", "address": "大阪府大阪市西区江戸堀1丁目", "date_of_birth": "1962-07-07", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 12, "fields": {"user": 15, "role": "patient", "address": "大阪府大阪市西淀川区姫里3丁目", "date_of_birth": "1971-08-08", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 13, "fields": {"user": 16, "role": "patient", "address": "大阪府大阪市浪速区敷津東3丁目", "date_of_birth": "1988-09-09", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 14, "fields": {"user": 17, "role": "patient", "address": "大阪府大阪市東成区星ヶ町", "date_of_birth": "1987-10-10", "created_at": "2024-09-23T10:00:00Z"}},
+  {"model": "hospital.UserAttribute", "pk": 15, "fields": {"user": 18, "role": "patient", "address": "（未登録）", "date_of_birth": "1990-01-01", "created_at": "2024-09-23T10:00:00Z"}}
 ]
