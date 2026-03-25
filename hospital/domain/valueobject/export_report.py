@@ -41,7 +41,7 @@ class BillingListRow(AbstractRow):
 
     @property
     def voter_name(self) -> str:
-        return self.ledger.voter.user.username
+        return self.ledger.voter.username
 
     @property
     def date_of_birth(self) -> str:
@@ -69,7 +69,7 @@ class VotingManagementListRow(AbstractRow):
 
     @property
     def voter_name(self) -> str:
-        return self.ledger.voter.user.username
+        return self.ledger.voter.username
 
     @property
     def billing_method(self) -> str:
@@ -115,7 +115,7 @@ class VotingManagementListRow(AbstractRow):
         if self.ledger.vote_observer is None:
             return "（未記入）"
         else:
-            return self.ledger.vote_observer.user.username
+            return self.ledger.vote_observer.username
 
     @property
     def applied_for_proxy_voting(self) -> str:

@@ -1,12 +1,14 @@
 from django import forms
 
+from django.contrib.auth.models import User
+
 from hospital.models import (
     ElectionLedger,
     Election,
     Ward,
     CitySector,
     VotePlace,
-    Member,
+    UserAttribute,
 )
 
 
@@ -18,7 +20,7 @@ class ElectionLedgerCreateForm(forms.ModelForm):
     )
 
     voter = forms.ModelChoiceField(
-        queryset=Member.objects.filter(role=Member.Role.PATIENT),
+        queryset=User.objects.filter(userAttribute__role=UserAttribute.Role.PATIENT),
         label="選挙人氏名*",
         widget=forms.Select(attrs={"class": "form-control", "tabindex": "2"}),
     )
@@ -88,7 +90,7 @@ class ElectionLedgerCreateForm(forms.ModelForm):
     )
 
     vote_observer = forms.ModelChoiceField(
-        queryset=Member.objects.filter(role=Member.Role.STAFF),
+        queryset=User.objects.filter(userAttribute__role=UserAttribute.Role.STAFF),
         label="投票立会人",
         required=False,
         widget=forms.Select(attrs={"class": "form-control", "tabindex": "12"}),
