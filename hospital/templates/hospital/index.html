@@ -64,8 +64,8 @@
                     <td>{{ ledger.vote_city_sector }}</td>
                     <td>{{ ledger.created_at|date:"Y-m-d" }}</td>
                     <td>{{ ledger.voter }}</td>
-                    <td>{{ ledger.voter.userattribute.address }}</td>
-                    <td>{{ ledger.voter.userattribute.date_of_birth|date:"Y-m-d" }}</td>
+                    <td>{{ ledger.voter.userAttribute.address }}</td>
+                    <td>{{ ledger.voter.userAttribute.date_of_birth|date:"Y-m-d" }}</td>
                     <td>
                         <a href="{% url 'hsp:election_ledger_detail' ledger.id %}" class="btn btn-outline-info">詳細</a>
                         <a href="{% url 'hsp:election_ledger_update' ledger.id %}"

@@ -13,6 +13,12 @@
             <dt class="col-sm-3">選挙人氏名</dt>
             <dd class="col-sm-9">{{ object.voter }}</dd>
 
+            <dt class="col-sm-3">選挙人住所</dt>
+            <dd class="col-sm-9">{{ object.voter.userAttribute.address|default:"-" }}</dd>
+
+            <dt class="col-sm-3">選挙人生年月日</dt>
+            <dd class="col-sm-9">{{ object.voter.userAttribute.date_of_birth|date:"Y-m-d"|default:"-" }}</dd>
+
             <dt class="col-sm-3">病棟</dt>
             <dd class="col-sm-9">{{ object.vote_ward }}</dd>
 
