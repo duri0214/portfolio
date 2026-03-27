@@ -4,13 +4,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView, CreateView, DetailView, ListView
 
-from rental_shop.domain.repository.warehouse import get_item_position_counts
-from rental_shop.domain.valueobject.warehouse import (
-    Shelf,
-    Warehouse,
-    ShelfRow,
-    ShelfCell,
-)
+from rental_shop.domain.repository.warehouse import WarehouseRepository
 from rental_shop.forms import ItemCreateForm, InvoiceCreateForm
 from rental_shop.models import (
     Item,
@@ -19,6 +13,8 @@ from rental_shop.models import (
     Staff,
     BillingStatus,
     BillingPerson,
+    Cart,
+    CartItem,
 )
 
 
@@ -28,48 +24,8 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         staff = Staff.objects.get(pk=1)
-        warehouse_list = staff.warehouses.all()
 
-        warehouse_vos = []
-        for warehouse in warehouse_list:
-            item_position_counts = get_item_position_counts(warehouse.id)
-
-            shelf_rows = []
-            for _ in range(warehouse.height):
-                # Create a ShelfRow with width number of ShelfCells, initialized with zero items.
-                shelf_row = ShelfRow(
-                    cells=[ShelfCell(item_count=0) for _ in range(warehouse.width)]
-                )
-                shelf_rows.append(shelf_row)
-
-            for item_position_count in item_position_counts:
-                """
-                Notes: データベースのポジション値は1から始まりますが、Pythonのリストのインデックスは0から始まります。
-                  そのため、データベースのポジション値から1を引くことで、リストの0ベースにしています。
-                  これらのポジションをテンプレートでユーザーに表示する際は、1を再度足して1ベースのインデックスに戻します
-                """
-                shelf_rows[item_position_count["pos_y"] - 1].cells[
-                    item_position_count["pos_x"] - 1
-                ].item_count += item_position_count["num_items"]
-
-            available_items = Item.objects.filter(
-                warehouse_id=warehouse.id, rental_status_id=RentalStatus.STOCK
-            )
-            # TODO: 請求発行していない、「カートなかのもの」まで含まれてしまう issue200
-            non_available_items = Item.objects.filter(
-                warehouse_id=warehouse.id
-            ).exclude(rental_status_id=RentalStatus.STOCK)
-
-            warehouse_vos.append(
-                Warehouse(
-                    instance=warehouse,
-                    shelves=[
-                        Shelf(rows=shelf_rows)
-                    ],  # TODO: いまは要素1しかない issue180
-                    available_items=available_items,
-                    non_available_items=non_available_items,
-                )
-            )
+        warehouse_vos = WarehouseRepository.find_by_staff(staff)
 
         context["warehouses"] = warehouse_vos
         context["current_warehouse"] = self.request.GET.get("warehouse_id") or (
@@ -84,12 +40,24 @@ class RentItemView(TemplateView):
 
     @staticmethod
     def post(request, item_id):
-        all_rental_statuses = RentalStatus.objects.in_bulk()
-
-        # rent an item
+        # アイテムを貸し出す（カートに追加）
         item = Item.objects.get(pk=item_id)
-        item.rental_status = all_rental_statuses[RentalStatus.RENTAL]
-        item.save()
+
+        # スタッフと倉庫に対応するカートを取得または作成
+        # IndexViewと同様、暫定的に staff pk=1 とする
+        staff = Staff.objects.get(pk=1)
+        cart, created = Cart.objects.get_or_create(
+            staff=staff, warehouse=item.warehouse
+        )
+
+        # カートにまだ存在しない場合は CartItem に追加
+        CartItem.objects.get_or_create(cart=cart, item=item)
+
+        # アイテムのステータスを「カート内」に更新
+        items = [item]
+        for item in items:
+            item.rental_status_id = RentalStatus.CART
+        Item.objects.bulk_update(items, ["rental_status"])
 
         return redirect(
             reverse("ren:index") + "?warehouse_id=" + str(item.warehouse_id)
@@ -101,15 +69,20 @@ class ResetRentalsView(TemplateView):
 
     @staticmethod
     def post(request, warehouse_id):
-        all_rental_statuses = RentalStatus.objects.in_bulk()
-        rental_status_stock = all_rental_statuses[RentalStatus.STOCK]
-        rental_status_rental = all_rental_statuses[RentalStatus.RENTAL]
-
-        # reset all rentals
-        items = Item.objects.filter(
-            warehouse_id=warehouse_id, rental_status=rental_status_rental
+        # すべての貸出中アイテムとカート内のアイテムを在庫に戻し、請求書との紐付けを解除
+        items = list(
+            Item.objects.filter(
+                warehouse_id=warehouse_id,
+                rental_status_id__in=[RentalStatus.RENTAL, RentalStatus.CART],
+            )
         )
-        items.update(rental_status=rental_status_stock)
+        for item in items:
+            item.rental_status_id = RentalStatus.STOCK
+            item.invoice = None
+        Item.objects.bulk_update(items, ["rental_status", "invoice"])
+
+        # この倉庫のカート内アイテムをクリア
+        CartItem.objects.filter(item__warehouse_id=warehouse_id).delete()
 
         return redirect(reverse("ren:index") + "?warehouse_id=" + str(warehouse_id))
 
@@ -126,12 +99,16 @@ class ItemCreateView(CreateView):
 
     def form_valid(self, form):
         form = form.save(commit=False)
-        form.rental_status = RentalStatus(id=1)  # available
-        form.save()
+        items = [form]
+        for item in items:
+            item.rental_status_id = RentalStatus.STOCK
+        # 新規作成時は save() が必要だが、一貫性のためにリスト化して扱う（新規は bulk_update 不可なので最終的に save）
+        item = items[0]
+        item.save()
         return redirect("ren:item_create")
 
     def form_invalid(self, form):
-        messages.add_message(self.request, messages.WARNING, form.errors)
+        messages.add_message(self.request, messages.WARNING, form.errors.as_text())
         return super().form_invalid(form)
 
 
@@ -146,11 +123,16 @@ class InvoiceCreateView(CreateView):
         return self.render_to_response(context)
 
     def get_success_url(self):
-        rental_status = RentalStatus.objects.get(pk=RentalStatus.RENTAL)
-        Item.objects.filter(
-            rental_status=rental_status,
-            invoice__isnull=True,
-        ).update(invoice=self.object.id)
+        # このスタッフのカート内のアイテムを確定させる（貸出中に変更し、請求書を紐付ける）
+        items = list(Item.objects.filter(cartitem__cart__staff=self.object.staff))
+        for item in items:
+            item.rental_status_id = RentalStatus.RENTAL
+            item.invoice = self.object
+        Item.objects.bulk_update(items, ["rental_status", "invoice"])
+
+        # このスタッフのカート内アイテム（関連）をクリア
+        CartItem.objects.filter(cart__staff=self.object.staff).delete()
+
         return reverse("ren:invoice_detail", kwargs={"pk": self.object.pk})
 
 

@@ -44,7 +44,6 @@
                              id="warehouse-{{ warehouse.instance.pk }}" role="tabpanel">
 
                             <h3 class="mt-4">{{ warehouse.instance.name }} の貸出中のアイテム</h3>
-                            {# TODO: 請求発行していない、「カートなかのもの」まで含まれてしまう issue200 #}
                             {% if warehouse.non_available_items|length > 0 %}
                                 {% for item in warehouse.non_available_items %}
                                     <ul>
@@ -54,6 +53,19 @@
                             {% else %}
                                 <div class="alert alert-warning" role="alert">
                                     貸し出しているアイテムはありません。
+                                </div>
+                            {% endif %}
+
+                            <h3 class="mt-4">{{ warehouse.instance.name }} のカート内のアイテム</h3>
+                            {% if warehouse.cart_items|length > 0 %}
+                                {% for item in warehouse.cart_items %}
+                                    <ul>
+                                        <li class="text-info">{{ item.name }} (請求未発行)</li>
+                                    </ul>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info" role="alert">
+                                    カートにアイテムはありません。
                                 </div>
                             {% endif %}
 

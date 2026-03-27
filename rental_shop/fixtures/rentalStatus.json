@@ -10,5 +10,11 @@
     "fields": {
       "name": "貸出中"
     }
+  },
+  {
+    "model": "rental_shop.rentalStatus",
+    "fields": {
+      "name": "カート内"
+    }
   }
 ]
