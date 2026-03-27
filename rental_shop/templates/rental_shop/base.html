@@ -34,12 +34,12 @@
 </head>
 
 <body>
-<h1></h1>
 <header>
     <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid px-3">
             <a class="navbar-brand" href="{% url 'home:index' %}">Henojiya</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent"
                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -96,8 +96,12 @@
                                     {% if request.path == '/welfare_services/' %}selected{% endif %}>
                                 WELFARE SERVICES
                             </option>
-                            <option value="{% url 'kokkai:index' %}" {% if request.path == '/kokkai/' %}selected{% endif %}>KOKKAI</option>
-                            <option value="{% url 'bank:index' %}" {% if request.path == '/bank/' %}selected{% endif %}>BANK</option>
+                            <option value="{% url 'kokkai:index' %}"
+                                    {% if request.path == '/kokkai/' %}selected{% endif %}>KOKKAI
+                            </option>
+                            <option value="{% url 'bank:index' %}" {% if request.path == '/bank/' %}selected{% endif %}>
+                                BANK
+                            </option>
                         </select>
                     </li>
                 </ul>

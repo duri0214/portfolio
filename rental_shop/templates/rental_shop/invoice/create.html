@@ -1,103 +1,136 @@
 {% extends 'rental_shop/base.html' %}
 {% load static %}
 
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'rental_shop/css/invoice/create.css' %}">
-{% endblock %}
-
 {% block content %}
 
-    <div class="container">
-        <h2>請求書の作成</h2>
-        <p>借りるアイテムを、新規請求書にまとめます</p>
-        <form method="post">
-            {% csrf_token %}
-            {% if form_errors %}
-                <div class="alert alert-danger">
-                    <ul>
-                        {% for field_name, error_list in form_errors.items %}
-                            {% for error in error_list %}
-                                <li>{{ field_name }}: {{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            {{ form.media }}
+    <div class="container mt-4">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'ren:index' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">請求書作成</li>
+            </ol>
+        </nav>
+        <h1 class="visually-hidden">請求書作成</h1>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0"><i class="fas fa-file-invoice me-2"></i>請求書の作成</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="text-muted">借りるアイテムを、新規請求書にまとめます。</p>
+                        <hr class="mb-4">
 
-            <div class="form-group row">
-                <label for="{{ form.rental_start_date.id_for_label }}"
-                       class="col-md-3 col-form-label">レンタル期間</label>
-                <div class="col-md-9">
-                    <div class="input-group">
-                        {{ form.rental_start_date }}
-                        <div class="input-group-prepend input-group-append">
-                            <span class="input-group-text">〜</span>
-                        </div>
-                        {{ form.rental_end_date }}
+                        <form method="post">
+                            {% csrf_token %}
+                            {% if form_errors %}
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0">
+                                        {% for field_name, error_list in form_errors.items %}
+                                            {% for error in error_list %}
+                                                <li>{{ field_name }}: {{ error }}</li>
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                            {{ form.media }}
+
+                            <div class="row mb-4">
+                                <label class="col-md-3 col-form-label fw-bold">レンタル期間</label>
+                                <div class="col-md-9">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                        {{ form.rental_start_date }}
+                                        <span class="input-group-text">〜</span>
+                                        {{ form.rental_end_date }}
+                                    </div>
+                                    <div class="form-text text-muted">開始日と終了日を選択してください。</div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <label for="{{ form.company.id_for_label }}"
+                                       class="col-md-3 col-form-label fw-bold">会社名</label>
+                                <div class="col-md-9">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                        {{ form.company }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <label for="{{ form.billing_person.id_for_label }}"
+                                       class="col-md-3 col-form-label fw-bold">請求担当者</label>
+                                <div class="col-md-9">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                                        {{ form.billing_person }}
+                                    </div>
+                                    <div class="form-text text-muted">会社を選択すると担当者が表示されます。</div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <label for="{{ form.staff.id_for_label }}"
+                                       class="col-md-3 col-form-label fw-bold">スタッフ</label>
+                                <div class="col-md-9">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user-edit"></i></span>
+                                        {{ form.staff }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="d-flex justify-content-between">
+                                <a class="btn btn-outline-secondary px-4" href="{% url 'ren:index' %}">
+                                    <i class="fas fa-arrow-left me-1"></i>戻る
+                                </a>
+                                <button type="submit" class="btn btn-primary px-5">
+                                    <i class="fas fa-paper-plane me-1"></i>送信
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
-
-            <div class="form-group row">
-                <label for="{{ form.company.id_for_label }}" class="col-md-3 col-form-label">会社名</label>
-                <div class="col-md-9">
-                    {{ form.company }}
-                </div>
-            </div>
-
-            <div class="form-group row">
-                <label for="{{ form.billing_person.id_for_label }}" class="col-md-3 col-form-label">請求担当者</label>
-                <div class="col-md-9">
-                    {{ form.billing_person }}
-                </div>
-            </div>
-
-            <div class="form-group row">
-                <label for="{{ form.staff.id_for_label }}" class="col-md-3 col-form-label">スタッフ</label>
-                <div class="col-md-9">
-                    {{ form.staff }}
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-between">
-                <a class="btn btn-outline-secondary" href="{% url 'ren:index' %}">戻る</a>
-                <button type="submit" class="btn btn-outline-primary">送信</button>
-            </div>
-        </form>
+        </div>
     </div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const companySelect = document.getElementById('{{ form.company.id_for_label }}');
-        const billingPersonSelect = document.getElementById('{{ form.billing_person.id_for_label }}');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const companySelect = document.getElementById('{{ form.company.id_for_label }}');
+            const billingPersonSelect = document.getElementById('{{ form.billing_person.id_for_label }}');
 
-        // 会社が選択されたときのイベントハンドラ
-        companySelect.addEventListener('change', function() {
-            const companyId = this.value;
+            // 会社が選択されたときのイベントハンドラ
+            companySelect.addEventListener('change', function () {
+                const companyId = this.value;
 
-            // 請求担当者のドロップダウンをクリア
-            billingPersonSelect.innerHTML = '<option value="">---------</option>';
+                // 請求担当者のドロップダウンをクリア
+                billingPersonSelect.innerHTML = '<option value="">---------</option>';
 
-            if (companyId) {
-                // Ajaxリクエストで請求担当者を取得
-                fetch('{% url "ren:ajax_load_billing_persons" %}?company_id=' + companyId)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.forEach(function(person) {
-                            const option = document.createElement('option');
-                            option.value = person.id;
-                            option.textContent = person.name;
-                            billingPersonSelect.appendChild(option);
+                if (companyId) {
+                    // Ajaxリクエストで請求担当者を取得
+                    fetch('{% url "ren:ajax_load_billing_persons" %}?company_id=' + companyId)
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(function (person) {
+                                const option = document.createElement('option');
+                                option.value = person.id;
+                                option.textContent = person.name;
+                                billingPersonSelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => {
+                            console.error('請求担当者の取得に失敗しました:', error);
                         });
-                    })
-                    .catch(error => {
-                        console.error('請求担当者の取得に失敗しました:', error);
-                    });
-            }
+                }
+            });
         });
-    });
-</script>
+    </script>
 {% endblock %}
