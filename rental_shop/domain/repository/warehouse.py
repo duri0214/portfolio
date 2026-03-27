@@ -97,6 +97,7 @@ class WarehouseRepository:
                     available_items=available_items,
                     non_available_items=non_available_items,
                     cart_items=cart_items,
+                    assigned_staffs=warehouse.userattribute_set.all(),
                 )
             )
 

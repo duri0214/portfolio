@@ -52,6 +52,7 @@ class Warehouse:
         available_items: この倉庫に現在在庫があるアイテムのクエリセット。
         non_available_items: この倉庫に現在在庫がないアイテムのクエリセット。
         cart_items: この倉庫のカート内にあるアイテムのクエリセット。
+        assigned_staffs: この倉庫を担当するスタッフのクエリセット。
     """
 
     instance: Warehouse
@@ -59,3 +60,4 @@ class Warehouse:
     available_items: QuerySet
     non_available_items: QuerySet
     cart_items: QuerySet
+    assigned_staffs: QuerySet
