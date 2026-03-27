@@ -1,0 +1,14 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 23,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "username": "倉庫番の佐藤",
+      "first_name": "佐藤",
+      "last_name": "倉庫番",
+      "email": "souko.sato@example.com",
+      "is_staff": 1
+    }
+  }
+]

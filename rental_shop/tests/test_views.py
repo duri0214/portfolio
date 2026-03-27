@@ -1,9 +1,10 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
 from rental_shop.models import (
     Warehouse,
-    Staff,
+    UserAttribute,
     WarehouseStaff,
     Item,
     RentalStatus,
@@ -41,9 +42,10 @@ class TestView(TestCase):
             depth=3,
             created_at="2023-02-12 00:00:00",
         )
-        # スタッフを作成
-        staff = Staff.objects.create(
-            id=1, name="スタッフ1", created_at="2023-02-12 00:00:00"
+        # スタッフ（UserAttribute）を作成
+        user = User.objects.create_user(username="staff1", id=1)
+        staff = UserAttribute.objects.create(
+            user=user, nickname="スタッフ1", created_at="2023-02-12 00:00:00"
         )
         # 倉庫とスタッフを関連付け
         WarehouseStaff.objects.create(warehouse=warehouse, staff=staff)
@@ -97,7 +99,7 @@ class TestView(TestCase):
 
     def test_invoice_create_updates_items(self):
         item = Item.objects.get(serial_number="SN001")
-        staff = Staff.objects.get(pk=1)
+        staff = UserAttribute.objects.get(pk=1)
         cart = Cart.objects.create(staff=staff, warehouse=item.warehouse)
         CartItem.objects.create(cart=cart, item=item)
         item.rental_status_id = RentalStatus.CART

@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 
 
@@ -58,8 +59,20 @@ class BillingStatus(models.Model):
         return self.name
 
 
-class Staff(models.Model):
-    name = models.CharField("表示名", max_length=50)
+class UserAttribute(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="rental_profile",
+        verbose_name="ユーザ",
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=[("staff", "店舗スタッフ"), ("customer", "一般購入者")],
+        verbose_name="ロール",
+        default="staff",
+    )
+    nickname = models.CharField("表示名", max_length=50)
     description = models.TextField(verbose_name="自己紹介", null=True, blank=True)
     image = models.ImageField(
         upload_to="rental_shop/staff",
@@ -72,13 +85,13 @@ class Staff(models.Model):
     updated_at = models.DateTimeField(null=True)
 
     def __str__(self):
-        return self.name
+        return self.nickname
 
 
 class Cart(models.Model):
     """ショッピングカート。スタッフと倉庫ごとに作成される。"""
 
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    staff = models.ForeignKey(UserAttribute, on_delete=models.CASCADE)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
@@ -99,7 +112,7 @@ class WarehouseStaff(models.Model):
     """中間テーブル: 倉庫とスタッフの関連を管理"""
 
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    staff = models.ForeignKey(UserAttribute, on_delete=models.CASCADE)
     assigned_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -116,7 +129,7 @@ class Invoice(models.Model):
     billing_status = models.ForeignKey(
         BillingStatus, default=1, on_delete=models.CASCADE
     )
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    staff = models.ForeignKey(UserAttribute, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
 
@@ -131,7 +144,7 @@ class Item(models.Model):
     pos_y = models.PositiveSmallIntegerField()
     pos_z = models.PositiveIntegerField()
     rental_status = models.ForeignKey(RentalStatus, on_delete=models.CASCADE)
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    staff = models.ForeignKey(UserAttribute, on_delete=models.CASCADE)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, null=True)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -8,7 +8,7 @@ from rental_shop.domain.valueobject.warehouse import (
     ShelfRow,
     ShelfCell,
 )
-from rental_shop.models import Item, RentalStatus, Staff
+from rental_shop.models import Item, RentalStatus, UserAttribute
 
 
 class WarehouseRepository:
@@ -52,7 +52,7 @@ class WarehouseRepository:
         )
 
     @classmethod
-    def find_by_staff(cls, staff: Staff) -> list[WarehouseVO]:
+    def find_by_staff(cls, staff: UserAttribute) -> list[WarehouseVO]:
         """
         指定されたスタッフが所属するすべての倉庫の情報を構築し、Warehouse VO のリストを返します。
 
@@ -63,7 +63,7 @@ class WarehouseRepository:
         4. 現在カートに入っているアイテム（CART）
 
         Args:
-            staff (Staff): スタッフのモデルインスタンス。
+            staff (UserAttribute): スタッフのモデルインスタンス。
 
         Returns:
             list[WarehouseVO]: 各倉庫の詳細情報を含む Warehouse 値オブジェクトのリスト。
