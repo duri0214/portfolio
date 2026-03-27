@@ -9,6 +9,7 @@ from .models import (
     JmaCity,
     LandLedger,
     SamplingMethod,
+    UserAttribute,
 )
 
 User = get_user_model()
@@ -119,6 +120,14 @@ class LandCreateForm(forms.ModelForm):
             "owner": "所有者",
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        owner_field = self.fields.get("owner")
+        if isinstance(owner_field, forms.ModelChoiceField):
+            owner_field.queryset = User.objects.filter(
+                soil_profile__role=UserAttribute.Role.OWNER
+            )
+
     def clean_name(self):
         name = self.cleaned_data.get("name")
         company_id = self.data.get("company-id")
@@ -213,6 +222,12 @@ class LandLedgerCreateForm(forms.ModelForm):
             field = self.fields[field_name]
             if field.required:
                 field.widget.attrs["required"] = True
+
+        sampling_staff_field = self.fields.get("sampling_staff")
+        if isinstance(sampling_staff_field, forms.ModelChoiceField):
+            sampling_staff_field.queryset = User.objects.filter(
+                soil_profile__role=UserAttribute.Role.STAFF
+            )
 
         # デフォルトで5点法を選択状態にする
         try:
