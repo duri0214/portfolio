@@ -1,20 +1,107 @@
 {% extends 'rental_shop/base.html' %}
 {% load static %}
 
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'rental_shop/css/item/create.css' %}">
-{% endblock %}
-
 {% block content %}
-    <div class="container">
-        <h2>アイテム新規登録</h2>
-        <form action="{% url 'ren:item_create' %}" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <div class="d-flex justify-content-between">
-                <a href="{% url 'ren:index' %}" class="btn btn-outline-secondary">戻る</a>
-                <button type="submit" class="btn btn-outline-primary">送信</button>
+    <div class="container mt-4">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'ren:index' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">アイテム登録</li>
+            </ol>
+        </nav>
+        <h1 class="visually-hidden">アイテム登録</h1>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0"><i class="fas fa-plus-circle me-2"></i>アイテム新規登録</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="{% url 'ren:item_create' %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <div class="row mb-3">
+                                <label for="{{ form.warehouse.id_for_label }}" class="col-md-3 col-form-label fw-bold">倉庫</label>
+                                <div class="col-md-9">
+                                    {{ form.warehouse }}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="{{ form.serial_number.id_for_label }}"
+                                       class="col-md-3 col-form-label fw-bold">シリアルナンバー</label>
+                                <div class="col-md-9">
+                                    {{ form.serial_number }}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="{{ form.name.id_for_label }}"
+                                       class="col-md-3 col-form-label fw-bold">名称</label>
+                                <div class="col-md-9">
+                                    {{ form.name }}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="{{ form.price.id_for_label }}"
+                                       class="col-md-3 col-form-label fw-bold">価格</label>
+                                <div class="col-md-9">
+                                    <div class="input-group">
+                                        {{ form.price }}
+                                        <span class="input-group-text">円</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label class="col-md-3 col-form-label fw-bold">棚の位置</label>
+                                <div class="col-md-9">
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <div class="input-group">
+                                                <span class="input-group-text">X</span>
+                                                {{ form.pos_x }}
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="input-group">
+                                                <span class="input-group-text">Y</span>
+                                                {{ form.pos_y }}
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="input-group">
+                                                <span class="input-group-text">Z</span>
+                                                {{ form.pos_z }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-text">棚の座標（列、段、奥行きなど）を入力してください。</div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <label for="{{ form.staff.id_for_label }}" class="col-md-3 col-form-label fw-bold">担当スタッフ</label>
+                                <div class="col-md-9">
+                                    {{ form.staff }}
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'ren:index' %}" class="btn btn-outline-secondary px-4">
+                                    <i class="fas fa-arrow-left me-1"></i>戻る
+                                </a>
+                                <button type="submit" class="btn btn-success px-5">
+                                    <i class="fas fa-save me-1"></i>登録する
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 {% endblock %}

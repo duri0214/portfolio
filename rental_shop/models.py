@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -124,8 +126,8 @@ class Invoice(models.Model):
 
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     billing_person = models.ForeignKey(BillingPerson, on_delete=models.CASCADE)
-    rental_start_date = models.DateField(null=True, blank=True)
-    rental_end_date = models.DateField(null=True, blank=True)
+    rental_start_date = models.DateField(default=datetime.date.today)
+    rental_end_date = models.DateField(default=datetime.date.today)
     billing_status = models.ForeignKey(
         BillingStatus, default=1, on_delete=models.CASCADE
     )

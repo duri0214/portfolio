@@ -45,10 +45,10 @@ class InvoiceCreateForm(forms.ModelForm):
         exclude = ["billing_status"]
         widgets = {
             "rental_start_date": forms.DateInput(
-                attrs={"tabindex": "1", "class": "form-control"}
+                attrs={"tabindex": "1", "class": "form-control", "type": "date"}
             ),
             "rental_end_date": forms.DateInput(
-                attrs={"tabindex": "2", "class": "form-control"}
+                attrs={"tabindex": "2", "class": "form-control", "type": "date"}
             ),
             "company": forms.Select(attrs={"tabindex": "3", "class": "form-control"}),
             "billing_person": forms.Select(
