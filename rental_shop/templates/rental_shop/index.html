@@ -32,7 +32,14 @@
                         <a class="nav-link {% if warehouse.instance.pk == current_warehouse.pk %}active{% endif %}"
                            id="warehouse-{{ warehouse.instance.pk }}-tab" data-toggle="tab"
                            href="#warehouse-{{ warehouse.instance.id }}"
-                           role="tab">{{ warehouse.instance.name }}</a>
+                           role="tab">{{ warehouse.instance.name }}
+                            {% if warehouse.assigned_staffs %}
+                                <small class="text-muted">
+                                    ({% for staff in warehouse.assigned_staffs %}{{ staff.nickname }}
+                                    {% if not forloop.last %}, {% endif %}{% endfor %})
+                                </small>
+                            {% endif %}
+                        </a>
                     </li>
                 {% endfor %}
             </ul>

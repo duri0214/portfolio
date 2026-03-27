@@ -10,7 +10,7 @@ from rental_shop.models import (
     Item,
     RentalStatus,
     Invoice,
-    Staff,
+    UserAttribute,
     BillingStatus,
     BillingPerson,
     Cart,
@@ -23,7 +23,11 @@ class IndexView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        staff = Staff.objects.get(pk=1)
+        # ログインしている場合はそのユーザのプロファイルを、そうでない場合はID 1を優先的に取得
+        staff = (
+            getattr(self.request.user, "rental_profile", None)
+            or UserAttribute.objects.first()
+        )
 
         warehouse_vos = WarehouseRepository.find_by_staff(staff)
 
@@ -44,8 +48,11 @@ class RentItemView(TemplateView):
         item = Item.objects.get(pk=item_id)
 
         # スタッフと倉庫に対応するカートを取得または作成
-        # IndexViewと同様、暫定的に staff pk=1 とする
-        staff = Staff.objects.get(pk=1)
+        # IndexViewと同様、ログインユーザを優先
+        staff = (
+            getattr(request.user, "rental_profile", None)
+            or UserAttribute.objects.first()
+        )
         cart, created = Cart.objects.get_or_create(
             staff=staff, warehouse=item.warehouse
         )
@@ -97,6 +104,16 @@ class ItemCreateView(CreateView):
     model = Item
     form_class = ItemCreateForm
 
+    def get_initial(self):
+        initial = super().get_initial()
+        staff = (
+            getattr(self.request.user, "rental_profile", None)
+            or UserAttribute.objects.first()
+        )
+        if staff:
+            initial["staff"] = staff
+        return initial
+
     def form_valid(self, form):
         form = form.save(commit=False)
         items = [form]
@@ -116,6 +133,16 @@ class InvoiceCreateView(CreateView):
     template_name = "rental_shop/invoice/create.html"
     model = Invoice
     form_class = InvoiceCreateForm
+
+    def get_initial(self):
+        initial = super().get_initial()
+        staff = (
+            getattr(self.request.user, "rental_profile", None)
+            or UserAttribute.objects.first()
+        )
+        if staff:
+            initial["staff"] = staff
+        return initial
 
     def form_invalid(self, form):
         context = self.get_context_data(form=form)
