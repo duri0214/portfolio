@@ -10,7 +10,7 @@ apply: always
 
 ## 生成フォーマット
 
-PRを作成する際は、必ず以下の Markdown フォーマットで記述すること。
+PRを作成する際は、**必ず以下の Markdown コードブロック（三重バッククォート）で囲んだ状態で記述すること。**
 
 ```markdown
 ## Summary
@@ -27,6 +27,7 @@ https://github.com/duri0214/portfolio/issues/[ブランチ名の先頭の数字]
 ```
 
 ## リンク生成のルール
+
 - 現在のブランチ名を確認し、その先頭にある数字を Issue 番号として使用すること。
 - （例：ブランチ名が `123-feature-name` の場合、Issueリンクは `https://github.com/duri0214/portfolio/issues/123` とする）
 - ブランチ名に数字が含まれていない場合は、この項目を除外するか、空欄にすること。
