@@ -9,7 +9,7 @@
       "area": 100,
       "cultivation_type": 1,
       "company": 1,
-      "owner": 3,
+      "owner": 20,
       "created_at": "2022-08-13T00:00:00+09:00",
       "remark": "備考"
     }
@@ -23,7 +23,7 @@
       "jma_city": 600,
       "cultivation_type": 2,
       "company": 1,
-      "owner": 3,
+      "owner": 20,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -36,7 +36,7 @@
       "jma_city": 600,
       "cultivation_type": 2,
       "company": 1,
-      "owner": 4,
+      "owner": 21,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -50,7 +50,7 @@
       "area": 100,
       "cultivation_type": 1,
       "company": 2,
-      "owner": 3,
+      "owner": 20,
       "created_at": "2022-08-13T00:00:00+09:00",
       "remark": "備考"
     }
@@ -64,7 +64,7 @@
       "jma_city": 971,
       "cultivation_type": 2,
       "company": 2,
-      "owner": 3,
+      "owner": 20,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -77,7 +77,7 @@
       "jma_city": 971,
       "cultivation_type": 2,
       "company": 2,
-      "owner": 4,
+      "owner": 21,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -90,7 +90,7 @@
       "jma_city": 971,
       "cultivation_type": 2,
       "company": 2,
-      "owner": 4,
+      "owner": 21,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -104,7 +104,7 @@
       "area": 100,
       "cultivation_type": 1,
       "company": 3,
-      "owner": 3,
+      "owner": 20,
       "created_at": "2022-08-13T00:00:00+09:00",
       "remark": "備考"
     }
@@ -118,7 +118,7 @@
       "jma_city": 1422,
       "cultivation_type": 2,
       "company": 3,
-      "owner": 3,
+      "owner": 20,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   },
@@ -131,7 +131,7 @@
       "jma_city": 1422,
       "cultivation_type": 2,
       "company": 3,
-      "owner": 4,
+      "owner": 21,
       "created_at": "2022-08-13T00:00:00+09:00"
     }
   }

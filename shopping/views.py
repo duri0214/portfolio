@@ -2,7 +2,6 @@ import logging
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     DetailView,
@@ -15,7 +14,7 @@ from django.views.generic import (
 from config import settings
 from .domain.repository.payment import StripePaymentRepository
 from .domain.repository.product import ProductRepository
-from .domain.repository.staff import StaffRepository
+from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
 from .domain.valueobject.payment import PaymentIntent, PaymentInfo
@@ -28,7 +27,7 @@ from .forms import (
     StaffCreateForm,
     PurchaseForm,
 )
-from .models import Product, Staff, BuyingHistory
+from .models import Product, UserAttribute, BuyingHistory
 
 # ロガーの取得
 logger = logging.getLogger(__name__)
@@ -51,9 +50,8 @@ class CreateSingleView(CreateView):
             return self.form_invalid(form)
 
     def form_invalid(self, form):
-        print(form.errors)
-        messages.add_message(self.request, messages.WARNING, form.errors)
-        return redirect("shp:index")
+        messages.warning(self.request, "フォームの入力に不備があります。")
+        return super().form_invalid(form)
 
     def get_success_url(self):
         """作成した商品の詳細ページにリダイレクトする"""
@@ -119,7 +117,8 @@ class IndexView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["staffs"] = StaffRepository.get_all_staff()
+        context["staffs"] = UserAttributeRepository.get_all_staff()
+        context["customers"] = UserAttributeRepository.get_all_customers()
         return context
 
 
@@ -258,7 +257,9 @@ class PaymentConfirmView(DetailView):
                 # PaymentIntent IDをセッションに保存
                 self.request.session["payment_intent_id"] = payment_result.payment_id
             else:
-                context["error"] = f"決済の準備に失敗しました: {payment_result.error_message}"
+                context["error"] = (
+                    f"決済の準備に失敗しました: {payment_result.error_message}"
+                )
         else:
             context["error"] = "支払い情報が取得できませんでした。再度お試しください。"
 
@@ -369,18 +370,18 @@ class ProductEditView(UpdateView):
 class StaffDetailView(DetailView):
     template_name = "shopping/staff/detail.html"
     form_class = StaffDetailForm
-    model = Staff
+    model = UserAttribute
 
 
 class StaffEditView(UpdateView):
     template_name = "shopping/staff/edit.html"
     form_class = StaffEditForm
     success_url = reverse_lazy("shp:index")
-    model = Staff
+    model = UserAttribute
 
 
 class StaffCreateView(CreateView):
     template_name = "shopping/staff/create.html"
     form_class = StaffCreateForm
     success_url = reverse_lazy("shp:index")
-    model = Staff
+    model = UserAttribute

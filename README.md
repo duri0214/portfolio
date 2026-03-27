@@ -121,8 +121,9 @@ python manage.py loaddata gmarker\fixtures\place.json
 python manage.py loaddata gmarker\fixtures\nearbyPlace.json
 
 # --- Shopping ---
+python manage.py loaddata shopping\fixtures\user.json
 python manage.py loaddata shopping\fixtures\store.json
-python manage.py loaddata shopping\fixtures\staff.json
+python manage.py loaddata shopping\fixtures\userattribute.json
 python manage.py loaddata shopping\fixtures\product.json
 
 # --- Rental Shop (Warehouse) ---
@@ -185,7 +186,6 @@ python manage.py loaddata taxonomy\fixtures\eggLedger.json
 
 # --- Hospital / AI Agent ---
 python manage.py loaddata hospital\fixtures\user.json
-python manage.py loaddata hospital\fixtures\member.json
 python manage.py loaddata hospital\fixtures\ward.json
 python manage.py loaddata hospital\fixtures\city.json
 python manage.py loaddata hospital\fixtures\election.json
