@@ -122,8 +122,8 @@ python manage.py loaddata gmarker\fixtures\nearbyPlace.json
 
 # --- Shopping ---
 python manage.py loaddata shopping\fixtures\user.json
-python manage.py loaddata shopping\fixtures\userattribute.json
 python manage.py loaddata shopping\fixtures\store.json
+python manage.py loaddata shopping\fixtures\userattribute.json
 python manage.py loaddata shopping\fixtures\product.json
 
 # --- Rental Shop (Warehouse) ---
