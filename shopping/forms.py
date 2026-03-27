@@ -1,6 +1,6 @@
 from django import forms
 
-from shopping.models import Product, Staff
+from shopping.models import Product, UserAttribute
 
 
 class ProductCreateFormSingle(forms.ModelForm):
@@ -57,64 +57,80 @@ class ProductEditForm(forms.ModelForm):
 
 
 class StaffCreateForm(forms.ModelForm):
+    """
+    スタッフ作成用フォーム。
+    UserAttribute モデルをベースにし、ロールを STAFF に固定して保存します。
+    """
+
     class Meta:
-        model = Staff
-        fields = ("name", "description", "image", "store", "user")
+        model = UserAttribute
+        fields = ("user", "store", "nickname", "description", "image")
         widgets = {
-            "name": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
-            "description": forms.Textarea(
-                attrs={"tabindex": "2", "class": "form-control", "rows": "5"}
+            "user": forms.Select(attrs={"tabindex": "1", "class": "form-control"}),
+            "store": forms.Select(attrs={"tabindex": "2", "class": "form-control"}),
+            "nickname": forms.TextInput(
+                attrs={"tabindex": "3", "class": "form-control"}
             ),
-            "image": forms.ClearableFileInput(attrs={"tabindex": "3"}),
-            "store": forms.Select(attrs={"tabindex": "4", "class": "form-control"}),
-            "user": forms.Select(attrs={"tabindex": "5", "class": "form-control"}),
+            "description": forms.Textarea(
+                attrs={"tabindex": "4", "class": "form-control", "rows": "5"}
+            ),
+            "image": forms.ClearableFileInput(attrs={"tabindex": "5"}),
         }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.role = UserAttribute.Role.STAFF
+        if commit:
+            instance.save()
+        return instance
 
 
 class StaffDetailForm(forms.ModelForm):
+    """
+    スタッフ詳細表示用フォーム。
+    すべてのフィールドを読み取り専用にします。
+    """
+
     class Meta:
-        model = Staff
-        fields = ("name", "description", "image", "store")
+        model = UserAttribute
+        fields = ("user", "store", "nickname", "description")
         widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "readonly": "readonly",
-                    "class": "form-control-plaintext",
-                    "id": "staticName",
-                }
+            "user": forms.Select(
+                attrs={"readonly": "readonly", "class": "form-control-plaintext"}
+            ),
+            "store": forms.Select(
+                attrs={"readonly": "readonly", "class": "form-control-plaintext"}
+            ),
+            "nickname": forms.TextInput(
+                attrs={"readonly": "readonly", "class": "form-control-plaintext"}
             ),
             "description": forms.Textarea(
                 attrs={
                     "readonly": "readonly",
                     "class": "form-control-plaintext",
-                    "id": "staticDescription",
                     "rows": "5",
-                }
-            ),
-            "image": forms.ClearableFileInput(attrs={"readonly": "readonly"}),
-            "store": forms.Select(
-                attrs={
-                    "readonly": "readonly",
-                    "class": "form-control-plaintext",
-                    "id": "staticStore",
                 }
             ),
         }
 
 
 class StaffEditForm(forms.ModelForm):
+    """
+    スタッフ編集用フォーム。
+    """
+
     class Meta:
-        model = Staff
-        fields = ("name", "description", "image", "store")
+        model = UserAttribute
+        fields = ("store", "nickname", "description", "image")
         widgets = {
-            "name": forms.TextInput(attrs={"tabindex": "1", "class": "form-control"}),
+            "store": forms.Select(attrs={"tabindex": "1", "class": "form-control"}),
+            "nickname": forms.TextInput(
+                attrs={"tabindex": "2", "class": "form-control"}
+            ),
             "description": forms.Textarea(
-                attrs={"tabindex": "2", "class": "form-control", "rows": "5"}
+                attrs={"tabindex": "3", "class": "form-control", "rows": "5"}
             ),
-            "image": forms.FileInput(
-                attrs={"tabindex": "3", "class": "form-control-file"}
-            ),
-            "store": forms.Select(attrs={"tabindex": "4", "class": "form-control"}),
+            "image": forms.ClearableFileInput(attrs={"tabindex": "4"}),
         }
 
 

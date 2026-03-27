@@ -1,0 +1,26 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "username": "スタッフ １",
+      "first_name": "１",
+      "last_name": "スタッフ",
+      "email": "staff1@example.com",
+      "is_staff": 1
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
+      "username": "太郎さん",
+      "first_name": "太郎",
+      "last_name": "さん",
+      "email": "taro@example.com",
+      "is_staff": 0
+    }
+  }
+]

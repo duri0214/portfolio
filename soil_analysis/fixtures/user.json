@@ -1,7 +1,7 @@
 [
   {
     "model": "auth.user",
-    "pk": 2,
+    "pk": 19,
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
       "username": "春香 森本",
@@ -13,7 +13,7 @@
   },
   {
     "model": "auth.user",
-    "pk": 3,
+    "pk": 20,
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
       "username": "太郎 山田",
@@ -25,7 +25,7 @@
   },
   {
     "model": "auth.user",
-    "pk": 4,
+    "pk": 21,
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
       "username": "生産者 Ａ",
@@ -36,7 +36,7 @@
   },
   {
     "model": "auth.user",
-    "pk": 5,
+    "pk": 22,
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
       "username": "生産者 Ｂ",

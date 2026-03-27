@@ -13,7 +13,7 @@
             <div class="profile-header">
                 <div class="profile-avatar">
                     {% if object.image %}
-                        <img src="{{ object.image.url }}" alt="{{ object.name }}"/>
+                        <img src="{{ object.image.url }}" alt="{{ object.nickname }}"/>
                     {% else %}
                         <i class="fas fa-user-circle"></i>
                     {% endif %}
@@ -21,7 +21,7 @@
             </div>
 
             <div class="profile-body">
-                <div class="profile-name">{{ object.name }}</div>
+                <div class="profile-name">{{ object.nickname }}</div>
                 <div class="profile-description">{{ object.description }}</div>
 
                 <div class="profile-action">

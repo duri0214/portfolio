@@ -71,18 +71,40 @@
             {% for staff in staffs %}
                 <div class="staff-item mb-3 d-flex align-items-center">
                     {% if staff.image %}
-                        <img src="{{ staff.image.url }}" class="rounded-circle me-3" width="80" alt="{{ staff.name }}">
+                        <img src="{{ staff.image.url }}" class="rounded-circle me-3" width="80" alt="{{ staff.nickname }}">
                     {% else %}
                         <i class="fas fa-user-circle" style="font-size: 80px; color: #6c757d; margin-right: 15px;"></i>
                     {% endif %}
                     <div>
-                        <div class="staff-name fw-bold">{{ staff.name }}</div>
+                        <div class="staff-name fw-bold">{{ staff.nickname }}</div>
                         <a class="text-secondary small" href="{% url 'shp:staff_detail' staff.pk %}">プロフィール</a>
                     </div>
                 </div>
             {% endfor %}
         {% else %}
             <p class="text-muted">店員がいません</p>
+        {% endif %}
+
+        <div class="section-header d-flex align-items-center mt-4 mb-3">
+            <i class="fas fa-user-friends text-info me-2" style="font-size: 1.5rem;"></i>
+            <h2 class="m-0">カスタマー一覧</h2>
+        </div>
+        {% if customers %}
+            {% for customer in customers %}
+                <div class="customer-item mb-3 d-flex align-items-center">
+                    {% if customer.image %}
+                        <img src="{{ customer.image.url }}" class="rounded-circle me-3" width="80" alt="{{ customer.nickname }}">
+                    {% else %}
+                        <i class="fas fa-user-circle" style="font-size: 80px; color: #17a2b8; margin-right: 15px;"></i>
+                    {% endif %}
+                    <div>
+                        <div class="customer-name fw-bold">{{ customer.nickname }}</div>
+                        <div class="text-secondary small">{{ customer.address }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">カスタマーがいません</p>
         {% endif %}
 
         <div class="section-header d-flex align-items-center mt-4 mb-3">

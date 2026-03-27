@@ -14,31 +14,70 @@ class Store(models.Model):
         return self.name
 
 
-class Staff(models.Model):
-    """店舗スタッフ"""
+class UserAttribute(models.Model):
+    """
+    ショッピングアプリ特有のユーザー属性。
 
-    name = models.CharField("表示名", max_length=50)
+    - Django 標準の auth.User と 1:1 で紐づく（認証や氏名・メール等は auth.User を参照）
+    - ショッピングドメイン固有の情報を保持（ロール、住所、ランクなど）
+
+    Attributes:
+        - user (OneToOneField): ユーザ
+        - role (CharField): ロール (STAFF/CUSTOMER)
+        - nickname (CharField): 表示名
+        - description (TextField): 自己紹介（スタッフ用）
+        - image (ImageField): プロフィール画像
+        - store (ForeignKey): 所属店舗（スタッフ用）
+        - address (TextField): 配送先等の住所情報
+        - remark (TextField): 備考
+        - created_at (DateTimeField): 作成日時
+        - updated_at (DateTimeField): 更新日時
+    """
+
+    class Role(models.TextChoices):
+        """
+        ロール定義:
+        - STAFF: 店舗スタッフ
+        - CUSTOMER: 一般購入者
+        """
+
+        STAFF = "staff", "店舗スタッフ"
+        CUSTOMER = "customer", "一般購入者"
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="shopping_profile",
+        verbose_name="ユーザ",
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=Role,
+        verbose_name="ロール",
+    )
+    nickname = models.CharField("表示名", max_length=50, null=True, blank=True)
     description = models.TextField(verbose_name="自己紹介", null=True, blank=True)
     image = models.ImageField(
-        upload_to="shopping/staff",
+        upload_to="shopping/profile",
         verbose_name="プロフィール画像",
         null=True,
         blank=True,
     )
-    store = models.ForeignKey(Store, verbose_name="店舗", on_delete=models.CASCADE)
-    user = models.ForeignKey(
-        User, verbose_name="ログインユーザー", on_delete=models.CASCADE
+    store = models.ForeignKey(
+        Store,
+        on_delete=models.SET_NULL,
+        verbose_name="所属店舗",
+        null=True,
+        blank=True,
+        related_name="staff_profiles",
     )
+    address = models.TextField(verbose_name="住所", null=True, blank=True)
+    remark = models.TextField(verbose_name="備考", null=True, blank=True)
     created_at = models.DateTimeField("作成日時", default=timezone.now)
     updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["user", "store"], name="unique_user_store"),
-        ]
-
     def __str__(self):
-        return f"{self.store.name} - {self.name}"
+        return self.nickname or self.user.username
 
 
 class Product(models.Model):
