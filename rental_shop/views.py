@@ -108,7 +108,7 @@ class ItemCreateView(CreateView):
         return redirect("ren:item_create")
 
     def form_invalid(self, form):
-        messages.add_message(self.request, messages.WARNING, form.errors)
+        messages.add_message(self.request, messages.WARNING, form.errors.as_text())
         return super().form_invalid(form)
 
 
