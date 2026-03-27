@@ -64,7 +64,7 @@
       "land_id": 2,
       "land_period_id": 4,
       "sampling_method_id": 1,
-      "sampling_staff_id": 1
+      "sampling_staff_id": 20
     }
   },
   {
@@ -81,7 +81,7 @@
       "land_id": 2,
       "land_period_id": 5,
       "sampling_method_id": 1,
-      "sampling_staff_id": 1
+      "sampling_staff_id": 20
     }
   }
 ]

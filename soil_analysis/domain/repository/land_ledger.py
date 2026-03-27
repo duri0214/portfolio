@@ -9,6 +9,7 @@ from soil_analysis.models import (
     Company,
     SoilHardnessMeasurement,
     SoilHardnessMeasurementImportErrors,
+    UserAttribute,
 )
 from soil_analysis.domain.repository.hardness_measurement import (
     SoilHardnessMeasurementRepository,
@@ -95,7 +96,9 @@ class LandLedgerRepository:
             ],
             "sampling_staff": [
                 {"id": user.id, "name": user.get_username()}
-                for user in get_user_model().objects.all()
+                for user in get_user_model()
+                .objects.filter(soil_profile__role=UserAttribute.Role.STAFF)
+                .order_by("username")
             ],
             "suggested_land_id": suggested_land.id if suggested_land else None,
             "suggested_sampling_date": (

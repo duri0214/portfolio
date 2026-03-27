@@ -157,6 +157,58 @@ class JmaWarning(models.Model):
         unique_together = ("jma_region",)
 
 
+class UserAttribute(models.Model):
+    """
+    土壌分析アプリ特有のユーザー属性。
+
+    - Django 標準の auth.User と 1:1 で紐づく（認証や氏名・メール等は auth.User を参照）
+    - 土壌分析ドメイン固有の情報を保持
+
+    Attributes:
+        - user (OneToOneField): ユーザ
+        - role (CharField): ロール (OWNER/STAFF)
+        - address (TextField): 住所
+        - organization (CharField): 所属
+        - area (CharField): 担当エリア
+        - remark (TextField): 備考
+        - created_at (DateTimeField): 作成日時
+        - updated_at (DateTimeField): 更新日時
+    """
+
+    class Role(models.TextChoices):
+        """
+        ロール定義:
+        - OWNER: 圃場オーナー
+        - STAFF: 採土スタッフ
+        """
+
+        OWNER = "owner", "圃場オーナー"
+        STAFF = "staff", "採土スタッフ"
+
+    user = models.OneToOneField(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="soil_profile",
+        verbose_name="ユーザ",
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=Role,
+        verbose_name="ロール",
+    )
+    address = models.TextField(verbose_name="住所", null=True, blank=True)
+    organization = models.CharField(
+        verbose_name="所属", max_length=255, null=True, blank=True
+    )
+    area = models.CharField(verbose_name="担当エリア", max_length=255, null=True, blank=True)
+    remark = models.TextField(verbose_name="備考", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    def __str__(self):
+        return self.user.get_full_name() or self.user.username
+
+
 class CompanyCategory(models.Model):
     """
     顧客カテゴリマスタ

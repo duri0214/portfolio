@@ -1,0 +1,58 @@
+[
+  {
+    "model": "soil_analysis.userattribute",
+    "pk": 1,
+    "fields": {
+      "user": 19,
+      "role": "staff",
+      "address": null,
+      "organization": "土掘りチーム",
+      "area": "成田",
+      "remark": null,
+      "created_at": "2022-06-30T15:00:00+09:00",
+      "updated_at": "2022-06-30T15:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.userattribute",
+    "pk": 2,
+    "fields": {
+      "user": 20,
+      "role": "staff",
+      "address": null,
+      "organization": "採土班",
+      "area": "静岡",
+      "remark": null,
+      "created_at": "2022-06-30T15:00:00+09:00",
+      "updated_at": "2022-06-30T15:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.userattribute",
+    "pk": 3,
+    "fields": {
+      "user": 21,
+      "role": "owner",
+      "address": "千葉県成田市",
+      "organization": "アグリファクトリー",
+      "area": "成田",
+      "remark": null,
+      "created_at": "2022-08-13T00:00:00+09:00",
+      "updated_at": "2022-08-13T00:00:00+09:00"
+    }
+  },
+  {
+    "model": "soil_analysis.userattribute",
+    "pk": 4,
+    "fields": {
+      "user": 22,
+      "role": "owner",
+      "address": "徳島県徳島市",
+      "organization": "農業法人三徳",
+      "area": "徳島",
+      "remark": null,
+      "created_at": "2022-08-13T00:00:00+09:00",
+      "updated_at": "2022-08-13T00:00:00+09:00"
+    }
+  }
+]
