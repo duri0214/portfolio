@@ -4,10 +4,10 @@
     "pk": 19,
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "春香 森本",
-      "first_name": "春香",
-      "last_name": "森本",
-      "email": "haruka.morimoto@example.com",
+      "username": "土掘り はるか",
+      "first_name": "はるか",
+      "last_name": "土掘り",
+      "email": "tsuchi.haruka@example.com",
       "is_staff": 1
     }
   },
@@ -16,10 +16,10 @@
     "pk": 20,
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "太郎 山田",
-      "first_name": "太郎",
-      "last_name": "山田",
-      "email": "taro.yamada@example.com",
+      "username": "採土 たろう",
+      "first_name": "たろう",
+      "last_name": "採土",
+      "email": "saido.taro@example.com",
       "is_staff": 1
     }
   },
@@ -28,10 +28,10 @@
     "pk": 21,
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "生産者 Ａ",
-      "first_name": "生産者",
-      "last_name": "Ａ",
-      "email": "john@example.com"
+      "username": "豊作じいさん",
+      "first_name": "じいさん",
+      "last_name": "豊作",
+      "email": "hosaku.jiisan@example.com"
     }
   },
   {
@@ -39,10 +39,10 @@
     "pk": 22,
     "fields": {
       "password": "pbkdf2_sha256$600000$NiX3Jh5L7Y1sHTQC6oeEoX$aBU1vr/tapHXcHO4UWVms48a8PIAFSvbsN8icgiFoGM=",
-      "username": "生産者 Ｂ",
-      "first_name": "生産者",
-      "last_name": "Ｂ",
-      "email": "jane@example.com"
+      "username": "野菜大好きおばさん",
+      "first_name": "おばさん",
+      "last_name": "野菜大好き",
+      "email": "yasai.daisuki@example.com"
     }
   }
 ]
