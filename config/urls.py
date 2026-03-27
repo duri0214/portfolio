@@ -18,11 +18,25 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
+from django.http import HttpResponse
 from django.urls import include, path
 
+from config.sitemap import sitemap_xml
 from vietnam_research.views import CustomLoginView
 
+
+def robots_txt(_request):
+    content = (
+        "User-agent: *\n"
+        "Disallow:\n"
+        f"Sitemap: {settings.SITE_URL.rstrip('/')}/sitemap.xml\n"
+    )
+    return HttpResponse(content, content_type="text/plain")
+
+
 urlpatterns = [
+    path("robots.txt", robots_txt, name="robots_txt"),
+    path("sitemap.xml", sitemap_xml, name="sitemap_xml"),
     path("", include("home.urls")),
     path("vietnam_research/", include("vietnam_research.urls")),
     path("usa_research/", include("usa_research.urls")),
