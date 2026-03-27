@@ -51,9 +51,11 @@ class Warehouse:
         shelves: この倉庫に含まれる棚のリスト。各棚は`Shelf`インスタンスで表される。
         available_items: この倉庫に現在在庫があるアイテムのクエリセット。
         non_available_items: この倉庫に現在在庫がないアイテムのクエリセット。
+        cart_items: この倉庫のカート内にあるアイテムのクエリセット。
     """
 
     instance: Warehouse
     shelves: list[Shelf]
     available_items: QuerySet
     non_available_items: QuerySet
+    cart_items: QuerySet

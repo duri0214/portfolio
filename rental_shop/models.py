@@ -41,6 +41,7 @@ class RentalStatus(models.Model):
 
     STOCK: int = 1
     RENTAL: int = 2
+    CART: int = 3
     name = models.TextField()
 
 
@@ -72,6 +73,26 @@ class Staff(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Cart(models.Model):
+    """ショッピングカート。スタッフと倉庫ごとに作成される。"""
+
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
+
+    class Meta:
+        unique_together = [["staff", "warehouse"]]
+
+
+class CartItem(models.Model):
+    """カート内のアイテム。"""
+
+    cart = models.ForeignKey(Cart, related_name="items", on_delete=models.CASCADE)
+    item = models.OneToOneField("Item", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class WarehouseStaff(models.Model):
