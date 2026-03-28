@@ -184,6 +184,13 @@ class Watchlist(models.Model):
         verbose_name="数量", blank=True, null=True, default=0
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "symbol"], name="user_symbol_unique"
+            )
+        ]
+
 
 class Uptrend(models.Model):
     """
