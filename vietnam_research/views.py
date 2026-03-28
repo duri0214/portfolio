@@ -274,7 +274,13 @@ class WatchlistRegister(CreateView):
     model = Watchlist
     template_name = "vietnam_research/watchlist/create.html"
     form_class = WatchlistForm
-    success_url = reverse_lazy("vnm:index")
+    success_url = reverse_lazy("vnm:watchlist")
+
+    def get_form_kwargs(self):
+        """フォームにログインユーザー情報を渡します。"""
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
         """登録ユーザーIDとデフォルトフラグをセットして保存します。"""
@@ -292,7 +298,7 @@ class WatchlistEdit(UpdateView):
     model = Watchlist
     template_name = "vietnam_research/watchlist/edit.html"
     form_class = WatchlistForm
-    success_url = reverse_lazy("vnm:index")
+    success_url = reverse_lazy("vnm:watchlist")
 
     def get_queryset(self, **kwargs):
         """対象のウォッチリスト項目を取得します。"""
