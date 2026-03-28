@@ -5,15 +5,22 @@ from vietnam_research.models import ExchangeRate
 
 
 class ExchangeService:
+    """
+    為替計算サービス。
+    通貨間のレート取得や、予算に基づいた購入可能口数の計算などを行います。
+    """
+
     @staticmethod
     def get_rate(base_cur: str, dest_cur: str) -> float:
         """
+        指定した通貨ペアの為替レートを取得します。
+
         Args:
-            base_cur (str): The 自分方 通貨コード
-            dest_cur (str): The 相手方 通貨コード
+            base_cur (str): 元の通貨コード (例: JPY)
+            dest_cur (str): 変換先の通貨コード (例: VND)
 
         Returns:
-            float: 通貨ペアの為替レート（baseとdestが同じ場合は 1）
+            float: 為替レート（baseとdestが同じ場合は 1）
         """
         if base_cur == dest_cur:
             return 1
