@@ -12,6 +12,7 @@ class ExchangeProcess:
     - price_no_fee (float): 単価 * 口数
     - fee (float): 手数料
     - price_in_fee (float): (単価 * 口数) + 手数料
+    - is_min_fee (bool): 最低手数料が適用されたか
     """
 
     def __init__(
@@ -21,6 +22,7 @@ class ExchangeProcess:
         rate: float,
         purchasable_units: float,
         fee: float,
+        is_min_fee: bool = False,
     ):
         self.budget_jpy = budget_jpy
         self.rate = rate
@@ -30,6 +32,7 @@ class ExchangeProcess:
         self.price_no_fee = unit_price * purchasable_units
         self.fee = fee
         self.price_in_fee = self.price_no_fee + self.fee
+        self.is_min_fee = is_min_fee
 
 
 @dataclass(frozen=True)
@@ -44,4 +47,3 @@ class Currency:
 
     code: str
     amount: float
-

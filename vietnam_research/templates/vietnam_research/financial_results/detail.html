@@ -2,42 +2,84 @@
 {% load static %}
 {% load humanize %}
 {% block content %}
-    <table class="table table-sm">
-        <thead>
-        <tr>
-            <td>note_date</td>
-            <td>Q</td>
-            <td>eps</td>
-            <td>売上</td>
-            <td>ガイダンス</td>
-            <td>eps予想</td>
-            <td>eps実績</td>
-            <td>売上予想</td>
-            <td>売上実績</td>
-            <td>前同成長率(%)</td>
-        </tr>
-        </thead>
-        <tbody>
-        {% for detail in object_list %}
-            <tr>
-                <td><a href="{{ detail.note_url }}" target="_blank">{{ detail.recorded_date }}</a></td>
-                <td><span class="badge badge-light">{{ detail.quarter }}</span></td>
-                <td><span
-                        class="badge {{ detail.eps_ok|yesno:'badge-success, badge-danger' }}">{{ detail.eps_ok|yesno:'OK, NG' }}</span>
-                </td>
-                <td><span
-                        class="badge {{ detail.sales_ok|yesno:'badge-success, badge-danger' }}">{{ detail.sales_ok|yesno:'OK, NG' }}</span>
-                </td>
-                <td><span
-                        class="badge {{ detail.guidance_ok|yesno:'badge-success, badge-danger, badge-secondary' }}">{{ detail.guidance_ok|yesno:'OK, NG, NONE' }}</span>
-                </td>
-                <td>{{ detail.eps_estimate }}</td>
-                <td>{{ detail.eps_actual }}</td>
-                <td>{{ detail.sales_estimate }}</td>
-                <td>{{ detail.sales_actual }}</td>
-                <td>{{ detail.y_over_y_growth_rate }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
+                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'vnm:financial_results' %}"
+                                               class="text-decoration-none text-muted">決算ウォッチ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">詳細</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <div class="col-12 d-flex justify-content-between align-items-center border-bottom pb-2">
+                <h2 class="h3 mb-0">決算詳細: <span class="text-primary">{{ object_list.0.symbol__code }}</span>
+                </h2>
+                <a href="{% url 'vnm:financial_results' %}" class="btn btn-outline-secondary btn-sm">一覧に戻る</a>
+            </div>
+
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle small text-center">
+                                <thead class="table-light">
+                                <tr>
+                                    <th class="text-start ps-3">Note公開日</th>
+                                    <th>四半期</th>
+                                    <th>EPS</th>
+                                    <th>売上</th>
+                                    <th>ガイダンス</th>
+                                    <th>EPS 予想</th>
+                                    <th>EPS 実績</th>
+                                    <th>売上 予想</th>
+                                    <th>売上 実績</th>
+                                    <th>前年同期比 (%)</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for detail in object_list %}
+                                    <tr>
+                                        <td class="text-start ps-3">
+                                            <span class="text-muted small"><i
+                                                    class="far fa-calendar-alt me-1"></i></span>{{ detail.recorded_date }}
+                                        </td>
+                                        <td><span class="badge bg-light text-dark border">{{ detail.quarter }}Q</span>
+                                        </td>
+                                        <td>
+                                        <span class="badge {% if detail.eps_ok %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ detail.eps_ok|yesno:'達成,未達' }}
+                                        </span>
+                                        </td>
+                                        <td>
+                                        <span class="badge {% if detail.sales_ok %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ detail.sales_ok|yesno:'達成,未達' }}
+                                        </span>
+                                        </td>
+                                        <td>
+                                        <span class="badge {% if detail.guidance_ok == True %}bg-success{% elif detail.guidance_ok == False %}bg-danger{% else %}bg-secondary{% endif %}">
+                                            {{ detail.guidance_ok|yesno:'達成,未達,非開示' }}
+                                        </span>
+                                        </td>
+                                        <td>{{ detail.eps_estimate|default:"-" }}</td>
+                                        <td class="fw-bold">{{ detail.eps_actual|default:"-" }}</td>
+                                        <td>{{ detail.sales_estimate|default:"-" }}</td>
+                                        <td class="fw-bold">{{ detail.sales_actual|default:"-" }}</td>
+                                        <td class="{% if detail.y_over_y_growth_rate >= 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+                                            {{ detail.y_over_y_growth_rate|default:"-" }}%
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

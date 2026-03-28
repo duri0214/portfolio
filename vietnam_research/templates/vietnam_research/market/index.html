@@ -1,0 +1,182 @@
+{% extends "vietnam_research/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
+                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">ベトナム市場分析</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <div class="col-12">
+                <h2 class="h3 mb-3 border-bottom pb-2">ベトナム市場分析</h2>
+            </div>
+
+            <!-- Radar Charts -->
+            <div class="col-lg-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-start mb-4">業種別マクロ分析</h5>
+                        <div class="row align-items-center">
+                            <div class="col-md-6 mb-4 mb-md-0">
+                                <h6 class="text-muted small mb-2">企業数</h6>
+                                <div class="radarChart1 d-inline-block"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted small mb-2">時価総額</h6>
+                                <div class="radarChart2 d-inline-block"></div>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-3 bg-light rounded text-start small">
+                            <p class="mb-0">
+                                ベトナム経済の現状: 足元の鉱業の不調は原油価格低迷が主因。一方で製造業は外資系企業（鉄鋼・電機等）の進出により伸びが加速しています。
+                                日系企業にとっては賃金上昇が課題となっています。
+                            </p>
+                            <p class="mt-2 mb-0 text-end">
+                                <a href="https://www.murc.jp/wp-content/uploads/2018/03/report_180316.pdf"
+                                   target="_blank"
+                                   class="text-muted x-small">Source: MURC Report (2018/03/16)</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Value -->
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">業種別売買代金</h5>
+                        <p class="text-muted small mb-4">単位: 10億VND (÷1,000,000,000)</p>
+                        <div class="text-center">
+                            <img src="{{ MEDIA_URL }}vietnam_research/charts/daily_industry_stacked_bar_chart.png"
+                                 class="img-fluid rounded" alt="Trading value by industry">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Indices -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-start mb-3">VN-INDEX 長期推移</h5>
+                        <p class="text-muted small text-start">長期時系列データ</p>
+                        <canvas id="vnChart" class="w-100" style="max-height: 400px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-start mb-3">VN-INDEX 季節性（層別表示）</h5>
+                        <p class="text-muted small text-start">年ごとの比較（季節要因の確認）</p>
+                        <canvas id="vnChart_layer" class="w-100" style="max-height: 400px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Uptrend Section -->
+            <div class="col-12">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">トレンド銘柄</h5>
+                        <p class="text-muted x-small mb-2">14日/7日/3日の傾きがプラスの銘柄（移動平均トレンド）</p>
+                        <div class="alert alert-info py-2 px-3 mb-4 x-small border-0 shadow-none bg-opacity-10"
+                             role="alert">
+                            <i class="fas fa-info-circle me-1"></i>
+                            表示されている騰落率は、<strong>14日前と直近価格</strong>の比較に基づいています。
+                        </div>
+                        <div id="uptrend_wrapper" class="overflow-y-auto overflow-x-hidden"
+                             style="max-height: 1200px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script lang="js">
+            const radarChartOptions = {
+                w: 290,
+                h: 350,
+                margin: {top: 50, right: 130, bottom: 50, left: 80},
+                levels: 5,
+                roundStrokes: true,
+                color: d3.scaleOrdinal().range(['rgb(255,89,0)']), // orange"#ff5900"
+                dotRadius: 3,
+                format: '.1f',
+                legend: {title: 'Industry Aggregate', translateX: 150, translateY: 40},
+                unit: '%'
+            };
+
+            // Initialize Charts
+            RadarChart(".radarChart1", JSON.parse('{{ industry_count|safe }}'), radarChartOptions);
+            RadarChart(".radarChart2", JSON.parse('{{ industry_cap|safe }}'), radarChartOptions);
+            LineChart("vnChart", JSON.parse('{{ vnindex_timeline|safe }}'));
+            LineChart("vnChart_layer", JSON.parse('{{ vnindex_layers|safe }}'));
+
+            // Uptrend data rendering
+            const data = {{ uptrend|safe }};
+            const uptrendWrapper = document.getElementById('uptrend_wrapper');
+
+            for (const industry in data) {
+                const section = document.createElement('div');
+                section.className = 'mb-5';
+
+                const h6 = document.createElement('h6');
+                h6.className = 'fw-bold border-bottom pb-2 mb-3';
+                h6.textContent = industry;
+                section.appendChild(h6);
+
+                const row = document.createElement('div');
+                row.className = 'row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-3';
+
+                for (const item of data[industry]) {
+                    const mkt = item['url_file_name'];
+                    const symbol = item['code'];
+                    const price_latest = item['stocks_price_latest'];
+                    const price_delta = item['stocks_price_delta'];
+                    const price_delta_sign = Math.sign(price_delta) < 0 ? "▲" : "＋";
+                    const delta_color = Math.sign(price_delta) < 0 ? "text-success" : "text-danger";
+
+                    const col = document.createElement('div');
+                    col.className = 'col';
+
+                    col.innerHTML = `
+                        <div class="card h-100 shadow-sm border-0 bg-white">
+                            <a href="https://www.viet-kabu.com/${mkt}/${symbol}.html" target="_blank">
+                                <img src="{{ MEDIA_URL }}vietnam_research/charts/${symbol}.png" 
+                                     class="card-img-top p-2 bg-light" alt="${symbol}">
+                            </a>
+                            <div class="card-body p-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold small text-primary">${symbol}</span>
+                                    <span class="badge bg-light text-dark border x-small">${mkt.toUpperCase()}</span>
+                                </div>
+                                <div class="bg-light p-2 rounded x-small">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted">現在値:</span>
+                                        <span class="fw-bold">${price_latest.toLocaleString()} VND</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">騰落(14日):</span>
+                                        <span class="fw-bold ${delta_color}">${price_delta_sign}${Math.abs(price_delta).toLocaleString()}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    row.appendChild(col);
+                }
+                section.appendChild(row);
+                uptrendWrapper.appendChild(section);
+            }
+        </script>
+    </div>
+{% endblock %}

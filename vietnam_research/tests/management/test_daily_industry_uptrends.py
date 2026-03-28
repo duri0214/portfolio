@@ -32,7 +32,7 @@ class Test(TestCase):
                 8.22,
             ]
         )
-        expected = 1.05
+        expected = 14.64
         self.assertEqual(calc_price(data)["delta"], expected)
 
     def test_formatted_text_has_value(self):

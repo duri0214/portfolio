@@ -17,17 +17,22 @@ from vietnam_research.models import Uptrend, Symbol, Market, Watchlist
 
 def calc_price(price_for_several_days: pd.Series) -> dict:
     """
-    数日間の価格のSeriesから、差を出す（例：14日前から直近までどちらにハネたか？）\n
+    数日間の価格のSeriesから、変化率(%)を算出する（例：14日前から直近までの上昇率）\n
     indexは0から始まるように下処理しておくこと
 
     Returns:
-        dict: {'initial': 7.17, 'latest': 8.22, 'delta': 1.05}
+        dict: {'initial': 7.17, 'latest': 8.22, 'delta': 14.64}
     """
-    initial_price = price_for_several_days.astype(float).iloc[0]
-    latest_price = price_for_several_days.astype(float).iloc[-1]
-    delta_price = round(latest_price - initial_price, 2)
+    initial_price = float(price_for_several_days.iloc[0])
+    latest_price = float(price_for_several_days.iloc[-1])
 
-    return {"initial": initial_price, "latest": latest_price, "delta": delta_price}
+    # 変化率(%) = (最新値 - 初期値) / 初期値 * 100
+    if initial_price != 0:
+        delta_pct = round((latest_price - initial_price) / initial_price * 100, 2)
+    else:
+        delta_pct = 0.0
+
+    return {"initial": initial_price, "latest": latest_price, "delta": delta_pct}
 
 
 def formatted_text(code: str, slopes: list, passed: int, price: dict) -> str:

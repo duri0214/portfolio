@@ -1,6 +1,6 @@
 import re
 from collections.abc import Iterable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
@@ -10,6 +10,7 @@ from bs4 import Tag
 
 class MarketDataRowError(Exception):
     """MarketDataRowの初期化に失敗した場合の例外"""
+
     def __init__(self, message: str, tag_tr: Tag):
         super().__init__(message)
         self.tag_tr = tag_tr
@@ -20,12 +21,11 @@ class MarketDataRowError(Exception):
         td_texts = []
         for td in tds:
             # tdの中身をテキストのみ抽出し、改行や余分な空白を除去
-            text = td.get_text(strip=True).replace('\n', ' ').replace('\t', ' ')
+            text = td.get_text(strip=True).replace("\n", " ").replace("\t", " ")
             # 連続する空白を1つにまとめる
-            text = ' '.join(text.split())
+            text = " ".join(text.split())
             td_texts.append(text)
         return ", ".join(td_texts)
-
 
 
 @dataclass(frozen=True)
@@ -33,8 +33,11 @@ class RssEntryVO:
     """
     RSSの1件分のエントリを表す値オブジェクト。
 
-    - feedparser のエントリ辞書から必要なキーを安全に抽出する
-    - updated の整形は行わず、そのまま保持（Provider 側でのパースに委ねる）
+    Attributes:
+        title: 記事のタイトル。
+        summary: 記事の要約または説明文。
+        link: 記事のURL。
+        updated: 記事の更新日時（文字列）。
     """
 
     title: str
@@ -59,15 +62,19 @@ class RssEntryVO:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
 class NumericCellVO:
     """
     文字列の数値セルを表す値オブジェクト。
 
+    数値変換の仕様:
     - カンマとパーセント記号を除去
     - 空文字は 0.0
     - "-" は None
     - 上記以外は float 変換
+
+    Attributes:
+        raw: パース対象の文字列（カンマ、%などを含む可能性がある）。
     """
 
     raw: str
@@ -81,21 +88,21 @@ class NumericCellVO:
         return float(s)
 
 
-@dataclass
 class Counting:
     """
-    計数を表すクラスです。実体のパースは NumericCellVO に委譲します。
-    """
+    ウェブページのセルから数値を抽出・保持する値オブジェクト。
 
-    raw_value: str
-    value: float | None = field(init=False)
+    Attributes:
+        raw_value: 抽出元の生文字列。
+        value: 数値に変換された値。
+    """
 
     def __init__(self, raw_value: str):
         self.raw_value = raw_value
         self.value = NumericCellVO(raw_value).to_float()
 
 
-@dataclass
+@dataclass(frozen=True)
 class TransactionDate:
     """
     ウェブページから日付情報を抽出し、標準のdatetime形式に変換する。
@@ -128,6 +135,24 @@ class TransactionDate:
 
 @dataclass
 class MarketDataRow:
+    """
+    ベトナム株式の市場データ（1銘柄分）を表す値オブジェクト。
+
+    Attributes:
+        code: 証券コード。
+        name: 銘柄名。
+        industry_title: 業界情報のフルタイトル（例：[銀行] 商業銀行）。
+        industry1: 業界大分類。
+        industry2: 業界小分類。
+        open_price: 始値。
+        high_price: 高値。
+        low_price: 安値。
+        closing_price: 終値。
+        volume: 出来高。
+        marketcap: 時価総額（単位：10億ドン）。
+        per: PER（株価収益率）。
+    """
+
     code: str
     name: str
     industry1: str
@@ -146,7 +171,9 @@ class MarketDataRow:
 
         # 業種情報の存在チェック
         if len(tag_tds_center) < 2:
-            raise MarketDataRowError("業種情報（table_list_centerが2つ未満）がありません", tr)
+            raise MarketDataRowError(
+                "業種情報（table_list_centerが2つ未満）がありません", tr
+            )
 
         # imgタグの存在チェック
         if not tag_tds_center[1].find("img"):
@@ -168,7 +195,9 @@ class MarketDataRow:
 
             # 計数データの存在チェック
             if len(tag_tds_right) < 11:
-                raise MarketDataRowError("計数データが不足しています（table_list_rightが11未満）", tr)
+                raise MarketDataRowError(
+                    "計数データが不足しています（table_list_rightが11未満）", tr
+                )
 
             self.open_price = tag_tds_right[2].value
             self.high_price = tag_tds_right[3].value
@@ -184,7 +213,11 @@ class MarketDataRow:
 
 class IndustryGraphVO:
     """
-    業界のグラフの生成に関連したデータとメソッドを保持するクラス
+    業界グラフの描画用データを保持し、計算ロジックを提供する値オブジェクト。
+
+    Attributes:
+        ticker: 銘柄コードまたは業界識別子。
+        closing_price: 時系列の終値データ。
     """
 
     def __init__(self, ticker: str, closing_price: pd.Series):

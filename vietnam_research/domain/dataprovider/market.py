@@ -12,11 +12,16 @@ from vietnam_research.domain.valueobject.market import Rss, RssEntry
 from vietnam_research.domain.valueobject.radar_chart import RadarChartLayer, Axis
 from vietnam_research.models import Industry
 
-MIN_FEE = 1200000
+MIN_FEE = 1320000
 FEE_RATE = 0.022
 
 
 class MarketAbstract(ABC):
+    """
+    マーケットデータプロバイダーの基底クラス。
+    各市場（ベトナム、米国など）のデータ取得・加工のインターフェースを定義します。
+    """
+
     def __init__(self):
         self.repository = MarketRepository()
 
@@ -41,6 +46,10 @@ class MarketAbstract(ABC):
 
 
 class NasdaqMarketDataProvider(MarketAbstract):
+    """
+    米国市場(Nasdaq)用のデータプロバイダー。
+    （現在はプレースホルダーとしての実装）
+    """
 
     def rss(self, json_data: dict) -> Rss:
         pass
@@ -54,8 +63,14 @@ class NasdaqMarketDataProvider(MarketAbstract):
 
 
 class VietnamMarketDataProvider(MarketAbstract):
+    """
+    ベトナム市場用のデータプロバイダー。
+    リポジトリから取得した生データを、グラフ表示用（Chart.js等）や
+    ビュー表示用のデータ構造に変換します。
+    """
 
     def rss(self, json_data: dict) -> Rss:
+        """RSSフィードの生データをRss値オブジェクトに変換します。"""
         entries = [
             RssEntry(
                 title=item["title"],
@@ -77,7 +92,7 @@ class VietnamMarketDataProvider(MarketAbstract):
         Returns:
             QuerySet: Watchlistをベースに換算額などの計算を組み合わせたもの
         """
-        return self.repository.get_watchlist()
+        return self.repository.watchlist()
 
     def vnindex_timeline(self) -> dict:
         """
@@ -87,7 +102,7 @@ class VietnamMarketDataProvider(MarketAbstract):
             dict: VN-Indexのタイムラインデータ
         See Also: https://www.chartjs.org/docs/latest/getting-started/
         """
-        records = self.repository.get_vnindex_timeline()
+        records = self.repository.vnindex_timeline()
         return {
             "labels": [record["Y"] + record["M"] for record in records],
             "datasets": [
@@ -99,9 +114,13 @@ class VietnamMarketDataProvider(MarketAbstract):
         }
 
     def vnindex_annual_layers(self) -> dict:
+        """
+        VN-INDEXの年ごとの推移をレイヤー化したデータセットを作成します。
+        季節性（アノマリー）の分析に使用します。
+        """
         datasets = []
-        for year in self.repository.get_distinct_values("Y"):
-            records = self.repository.get_vnindex_at_year(year)
+        for year in self.repository.distinct_values("Y"):
+            records = self.repository.vnindex_at_year(year)
             datasets.append(
                 LineChartLayer(
                     label=year,
@@ -109,7 +128,7 @@ class VietnamMarketDataProvider(MarketAbstract):
                 ).to_dict()
             )
         return {
-            "labels": self.repository.get_distinct_values("M"),
+            "labels": self.repository.distinct_values("M"),
             "datasets": datasets,
         }
 
@@ -121,7 +140,7 @@ class VietnamMarketDataProvider(MarketAbstract):
             dict: IIPのタイムラインデータです。
         参照先: https://www.chartjs.org/docs/latest/getting-started/
         """
-        records = self.repository.get_iip_timeline()
+        records = self.repository.iip_timeline()
         return {
             "labels": [record.period.strftime("%Y%m") for record in records],
             "datasets": [
@@ -140,7 +159,7 @@ class VietnamMarketDataProvider(MarketAbstract):
             dict: CPIのタイムラインデータです。
         参照先: https://www.chartjs.org/docs/latest/getting-started/
         """
-        records = self.repository.get_cpi_timeline()
+        records = self.repository.cpi_timeline()
         return {
             "labels": [record.period.strftime("%Y%m") for record in records],
             "datasets": [
@@ -175,16 +194,21 @@ class VietnamMarketDataProvider(MarketAbstract):
         aggregate_alias: str,
         denominator_field: str,
     ) -> list[RadarChartLayer]:
+        """
+        業種別の構成比（企業数や時価総額）を比較するためのレーダーチャート用データを生成します。
+        """
         layers: list[RadarChartLayer] = []
         for m in months_dating_back:
             try:
-                denominator = self.repository.get_denominator_for(m, denominator_field)
-                industry_records = self.repository.get_industry_records_for(
+                industry_field_sum = self.repository.sum_of_industry_field_for(
+                    m, denominator_field
+                )
+                industry_records = self.repository.industry_records_for(
                     m, aggregate_field, aggregate_alias
                 )
                 industry_records = industry_records.annotate(
                     percent=Round(
-                        F(aggregate_alias) / denominator * 100,
+                        F(aggregate_alias) / industry_field_sum * 100,
                         precision=2,
                         output_field=FloatField(),
                     )
@@ -212,10 +236,13 @@ class VietnamMarketDataProvider(MarketAbstract):
         return layers
 
     def uptrend(self) -> dict:
-        uptrend = self.repository.get_annotated_uptrend()
+        """
+        上昇トレンド銘柄を業種ごとにグルーピングしたデータを生成します。
+        """
+        uptrend = self.repository.annotated_uptrend()
 
         result = {}
-        ind_names = self.repository.get_industry_names()
+        ind_names = self.repository.industry_names()
         for ind_name in ind_names:
             result[ind_name] = [x for x in uptrend if x["ind_name"] == ind_name]
 

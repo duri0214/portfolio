@@ -20,18 +20,18 @@ class TestExchangeService(TestCase):
         )
 
     def test_get_rate(self):
-        actual = ExchangeService.get_rate("USD", "JPY")
+        actual = ExchangeService.rate("USD", "JPY")
         expected = 110.0
         self.assertEqual(expected, actual)
 
     def test_get_rate_inverted(self):
-        actual = ExchangeService.get_rate("JPY", "USD")
+        actual = ExchangeService.rate("JPY", "USD")
         expected = 1 / 110.0
         self.assertAlmostEqual(expected, actual)
 
     def test_get_rate_not_exist(self):
         with self.assertRaises(ObjectDoesNotExist):
-            ExchangeService.get_rate("EUR", "JPY")
+            ExchangeService.rate("EUR", "JPY")
 
     def test_calc_purchase_units_usd(self):
         """

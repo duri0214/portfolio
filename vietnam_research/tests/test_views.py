@@ -1,21 +1,33 @@
-from django.contrib.auth.models import User
-from django.test import TestCase
-from django.urls import reverse
 from datetime import datetime, timezone
 from unittest.mock import patch
 
-from vietnam_research.models import Articles, Likes, ExchangeRate
+from django.contrib.auth.models import User
+from django.test import TestCase
+from django.urls import reverse
+
+from vietnam_research.models import (
+    Articles,
+    Likes,
+    ExchangeRate,
+    FinancialResultWatch,
+    Symbol,
+    Market,
+    Unit,
+    Watchlist,
+)
 
 
 class TestView(TestCase):
     def setUp(self):
         # Patch external RSS access so tests never hit the network
         self._rss_patcher = patch(
-            "vietnam_research.domain.service.market.MarketRetrievalService.get_rss_feed",
+            "vietnam_research.domain.service.market.MarketRetrievalService.rss_feed",
             return_value={
                 "entries": [],
                 "feed": {
-                    "updated": datetime.now(timezone.utc).strftime("%Y/%m/%d %H:%M:%S %z")
+                    "updated": datetime.now(timezone.utc).strftime(
+                        "%Y/%m/%d %H:%M:%S %z"
+                    )
                 },
             },
         )
@@ -141,3 +153,387 @@ class TestView(TestCase):
         self.assertIn(
             "存在しない記事へのリクエストがありました", response.content.decode("utf-8")
         )
+
+    def test_cannot_create_likes_without_login(self):
+        """
+        ログインしていない場合、いいね！リクエストは 401 を返す
+        """
+        self.client.logout()
+        response = self.client.post(
+            reverse("vnm:likes", kwargs={"article_id": self.article.pk})
+        )
+        self.assertEqual(401, response.status_code)
+        self.assertJSONEqual(response.content, {"error": "login_required"})
+
+    def test_financial_results_create_view_get(self):
+        """
+        ログインしている場合、決算データ登録ページが表示される
+        """
+        import datetime
+
+        self.client.login(username=self.user.username, password=self.password_plane)
+        response = self.client.get(reverse("vnm:financial_results_create"))
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(
+            response, "vietnam_research/financial_results/create.html"
+        )
+        # 初期値が今日であることを検証
+        form = response.context["form"]
+        self.assertEqual(form.fields["recorded_date"].initial, datetime.date.today())
+        # 数値フィールドの初期値がない（Noneである）ことを検証
+        self.assertIsNone(form.fields["eps_estimate"].initial)
+        self.assertIsNone(form.fields["eps_actual"].initial)
+        self.assertIsNone(form.fields["sales_estimate"].initial)
+        self.assertIsNone(form.fields["sales_actual"].initial)
+        self.assertIsNone(form.fields["y_over_y_growth_rate"].initial)
+
+    def test_watchlist_create_view_get(self):
+        """
+        ログインしている場合、ウォッチリスト登録ページが表示される
+        """
+        import datetime
+
+        self.client.login(username=self.user.username, password=self.password_plane)
+        response = self.client.get(reverse("vnm:watchlist_create"))
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, "vietnam_research/watchlist/create.html")
+        # 初期値が今日であることを検証
+        form = response.context["form"]
+        self.assertEqual(form.fields["bought_day"].initial, datetime.date.today())
+
+    def test_financial_results_create_view_post(self):
+        """
+        ログインしている場合、決算データが正常に登録できる
+        """
+        from vietnam_research.models import Unit, Symbol, FinancialResultWatch, Market
+
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE")
+        unit = Unit.objects.create(name="10億VND")
+        symbol = Symbol.objects.create(
+            code="FPT", name="FPT Corporation", market=market
+        )
+
+        data = {
+            "recorded_date": "2024-03-28",
+            "symbol": symbol.pk,
+            "quarter": 1,
+            "eps_ok": True,
+            "sales_ok": True,
+            "guidance_ok": True,
+            "eps_unit": unit.pk,
+            "eps_estimate": 1000.0,
+            "eps_actual": 1100.0,
+            "sales_unit": unit.pk,
+            "sales_estimate": 5000.0,
+            "sales_actual": 5500.0,
+            "y_over_y_growth_rate": 20.0,
+            "note_url": "https://example.com",
+        }
+        response = self.client.post(reverse("vnm:financial_results_create"), data)
+        self.assertEqual(302, response.status_code)
+        self.assertTrue(FinancialResultWatch.objects.filter(symbol=symbol).exists())
+
+    def test_financial_results_create_view_post_without_note_url(self):
+        """
+        note_url が空でも決算データが正常に登録できる
+        """
+        from vietnam_research.models import Unit, Symbol, FinancialResultWatch, Market
+
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE")
+        unit = Unit.objects.create(name="10億VND")
+        symbol = Symbol.objects.create(
+            code="FPT", name="FPT Corporation", market=market
+        )
+
+        data = {
+            "recorded_date": "2024-03-28",
+            "symbol": symbol.pk,
+            "quarter": 1,
+            "eps_ok": True,
+            "sales_ok": True,
+            "guidance_ok": True,
+            "eps_unit": unit.pk,
+            "eps_estimate": 1000.0,
+            "eps_actual": 1100.0,
+            "sales_unit": unit.pk,
+            "sales_estimate": 5000.0,
+            "sales_actual": 5500.0,
+            "y_over_y_growth_rate": 20.0,
+            "note_url": "",  # 空
+        }
+        response = self.client.post(reverse("vnm:financial_results_create"), data)
+        self.assertEqual(302, response.status_code)
+        self.assertTrue(
+            FinancialResultWatch.objects.filter(symbol=symbol, note_url="").exists()
+            or FinancialResultWatch.objects.filter(
+                symbol=symbol, note_url=None
+            ).exists()
+        )
+
+    def test_financial_results_create_view_post_invalid_quarter(self):
+        """
+        1-4 以外の不正な四半期値を送信した場合、バリデーションエラーとなる
+        """
+        from vietnam_research.models import Unit, Symbol, Market
+
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE")
+        unit = Unit.objects.create(name="10億VND")
+        symbol = Symbol.objects.create(
+            code="FPT", name="FPT Corporation", market=market
+        )
+
+        data = {
+            "recorded_date": "2024-03-28",
+            "symbol": symbol.pk,
+            "quarter": 5,  # 不正な値
+            "eps_ok": True,
+            "sales_ok": True,
+            "guidance_ok": True,
+            "eps_unit": unit.pk,
+            "eps_estimate": 1000.0,
+            "eps_actual": 1100.0,
+            "sales_unit": unit.pk,
+            "sales_estimate": 5000.0,
+            "sales_actual": 5500.0,
+            "y_over_y_growth_rate": 20.0,
+            "note_url": "https://example.com",
+        }
+        response = self.client.post(reverse("vnm:financial_results_create"), data)
+        self.assertEqual(200, response.status_code)
+        form = response.context["form"]
+        self.assertIn("quarter", form.errors)
+
+    def test_financial_results_create_view_post_negative_values(self):
+        """
+        EPS予想、EPS実績、売上予想、売上実績に負の値を送信した場合、バリデーションエラーとなる
+        """
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE_NEG")
+        unit = Unit.objects.create(name="10億VND")
+        symbol = Symbol.objects.create(
+            code="FPT_NEG", name="FPT Corporation", market=market
+        )
+
+        # 数値フィールドに負の値を設定
+        data = {
+            "recorded_date": "2024-03-28",
+            "symbol": symbol.pk,
+            "quarter": 1,
+            "eps_ok": True,
+            "sales_ok": True,
+            "guidance_ok": True,
+            "eps_unit": unit.pk,
+            "eps_estimate": -100.0,
+            "eps_actual": -100.0,
+            "sales_unit": unit.pk,
+            "sales_estimate": -1000.0,
+            "sales_actual": -1000.0,
+            "y_over_y_growth_rate": 20.0,
+            "note_url": "https://example.com",
+        }
+        response = self.client.post(reverse("vnm:financial_results_create"), data)
+        self.assertEqual(200, response.status_code)
+        form = response.context["form"]
+
+        self.assertIn("eps_estimate", form.errors)
+        self.assertIn("eps_actual", form.errors)
+        self.assertIn("sales_estimate", form.errors)
+        self.assertIn("sales_actual", form.errors)
+
+    def test_financial_results_detail_view_display_quarter_with_q(self):
+        """決算詳細画面で四半期が 'Q' つきで表示されることを確認"""
+        # マスタデータの準備
+        market = Market.objects.create(
+            code="HOSE_DET", name="ホーチミン証券取引所詳細用"
+        )
+        symbol = Symbol.objects.create(
+            code="DETAIL_VNM", name="Vina-milk_DET", market=market
+        )
+        unit = Unit.objects.create(name="10億VND")
+
+        # 決算データの作成
+        FinancialResultWatch.objects.create(
+            recorded_date=datetime.now().date(),
+            symbol=symbol,
+            quarter=3,
+            eps_ok=True,
+            sales_ok=True,
+            guidance_ok=True,
+            eps_estimate=1000,
+            eps_actual=1100,
+            sales_estimate=50000,
+            sales_actual=55000,
+            y_over_y_growth_rate=10.5,
+            eps_unit=unit,
+            sales_unit=unit,
+        )
+
+        response = self.client.get(
+            reverse("vnm:financial_results_detail", kwargs={"ticker": "DETAIL_VNM"})
+        )
+        self.assertEqual(200, response.status_code)
+        # '3Q' が含まれていることを確認
+        self.assertContains(response, "3Q")
+        # エラーメッセージの内容は環境によって微妙に異なる可能性があるため、キーの存在確認を優先
+
+    def test_watchlist_register_redirects_to_watchlist(self):
+        """
+        ウォッチリスト登録後、ウォッチリストページにリダイレクトすることを検証
+        """
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE")
+        symbol = Symbol.objects.create(
+            code="VNM_REG", name="Vina-milk_REG", market=market
+        )
+        data = {
+            "symbol": symbol.id,
+            "bought_day": "2024-03-28",
+            "stocks_price": 70000,
+            "stocks_count": 100,
+        }
+        response = self.client.post(reverse("vnm:watchlist_create"), data=data)
+        self.assertRedirects(response, reverse("vnm:watchlist"))
+
+    def test_watchlist_edit_redirects_to_watchlist(self):
+        """
+        ウォッチリスト編集後、ウォッチリストページにリダイレクトすることを検証
+        """
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE_EDIT")
+        symbol = Symbol.objects.create(code="FPT_EDIT", name="FPT_EDIT", market=market)
+        watchlist = Watchlist.objects.create(
+            user=self.user,
+            symbol=symbol,
+            bought_day="2024-03-28",
+            stocks_price=90000,
+            stocks_count=100,
+        )
+        data = {
+            "symbol": symbol.id,
+            "bought_day": "2024-03-29",
+            "stocks_price": 95000,
+            "stocks_count": 100,
+        }
+        response = self.client.post(
+            reverse("vnm:watchlist_edit", kwargs={"pk": watchlist.pk}), data=data
+        )
+        self.assertRedirects(response, reverse("vnm:watchlist"))
+
+    def test_watchlist_duplicate_registration_fails(self):
+        """
+        同じ銘柄を二重に登録できないことを検証
+        """
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE_DUP")
+        symbol = Symbol.objects.create(
+            code="VNM_DUP", name="Vina-milk_DUP", market=market
+        )
+
+        # 1回目の登録
+        data = {
+            "symbol": symbol.id,
+            "bought_day": "2024-03-28",
+            "stocks_price": 70000,
+            "stocks_count": 100,
+        }
+        response = self.client.post(reverse("vnm:watchlist_create"), data=data)
+        self.assertRedirects(response, reverse("vnm:watchlist"))
+        self.assertEqual(
+            Watchlist.objects.filter(user=self.user, symbol=symbol).count(), 1
+        )
+
+        # 2回目の登録（重複）
+        response = self.client.post(reverse("vnm:watchlist_create"), data=data)
+
+        # 重複が許されないため、リダイレクトせずにフォーム再表示（エラーメッセージ付き）になることを検証
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, "この銘柄はすでにウォッチリストに登録されています。"
+        )
+
+    def test_stock_tools_min_fee_badge(self):
+        """
+        株式ツールのシミュレーターで最低手数料が適用された場合にバッジが表示されることを検証
+        """
+        # 1. 最低手数料が適用されるケース (少額)
+        # 予算 10,000円, 単価 50,000VND -> 購入口数少
+        # 2.2% が 1,320,000VND を下回るような設定
+        data = {"budget": 10000, "unit_price": 50000}
+        self.client.post(reverse("vnm:tools"), data=data)
+        response = self.client.get(reverse("vnm:tools"))
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "最低手数料適用")
+
+        # 2. 最低手数料が適用されないケース (高額)
+        # 予算 10,000,000円 -> 約定代金が大きくなり 2.2% > 1,320,000VND になる
+        data = {"budget": 10000000, "unit_price": 50000}
+        self.client.post(reverse("vnm:tools"), data=data)
+        response = self.client.get(reverse("vnm:tools"))
+        self.assertEqual(200, response.status_code)
+        self.assertNotContains(response, "最低手数料適用")
+
+    def test_watchlist_delete_view(self):
+        """
+        ウォッチリストの削除機能が正常に動作することを検証
+        """
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE_DEL")
+        symbol = Symbol.objects.create(code="FPT_DEL", name="FPT_DEL", market=market)
+        watchlist = Watchlist.objects.create(
+            user=self.user,
+            symbol=symbol,
+            bought_day="2024-03-28",
+            stocks_price=90000,
+            stocks_count=100,
+        )
+
+        # 削除確認ページの表示
+        response = self.client.get(
+            reverse("vnm:watchlist_delete", kwargs={"pk": watchlist.pk})
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(
+            response, "vietnam_research/watchlist/delete_confirm.html"
+        )
+        self.assertContains(response, "FPT_DEL")
+
+        # 削除実行
+        response = self.client.post(
+            reverse("vnm:watchlist_delete", kwargs={"pk": watchlist.pk})
+        )
+        self.assertRedirects(response, reverse("vnm:watchlist"))
+        self.assertFalse(Watchlist.objects.filter(pk=watchlist.pk).exists())
+
+    def test_watchlist_delete_permission(self):
+        """
+        他人のウォッチリストを削除できないことを検証
+        """
+        # 他人を作成
+        other_user = User.objects.create_user(username="other", password="password")
+        market = Market.objects.create(name="HOSE_P")
+        symbol = Symbol.objects.create(code="FPT_P", name="FPT_P", market=market)
+        watchlist = Watchlist.objects.create(
+            user=other_user,
+            symbol=symbol,
+            bought_day="2024-03-28",
+            stocks_price=90000,
+            stocks_count=100,
+        )
+
+        # 自分としてログイン
+        self.client.login(username=self.user.username, password=self.password_plane)
+
+        # 他人のウォッチリスト削除を試みる
+        response = self.client.get(
+            reverse("vnm:watchlist_delete", kwargs={"pk": watchlist.pk})
+        )
+        self.assertEqual(404, response.status_code)
+
+        response = self.client.post(
+            reverse("vnm:watchlist_delete", kwargs={"pk": watchlist.pk})
+        )
+        self.assertEqual(404, response.status_code)
+        self.assertTrue(Watchlist.objects.filter(pk=watchlist.pk).exists())

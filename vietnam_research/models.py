@@ -74,6 +74,8 @@ class Symbol(models.Model):
 
 
 class IndustryQuerySet(models.QuerySet):
+    """業種データのQuerySet拡張"""
+
     def slipped_month_end(
         self, month_shift: int, base_date=datetime.datetime.today()
     ) -> QuerySet:
@@ -137,7 +139,10 @@ class Industry(models.Model):
 
 
 class VnIndexQuerySet(models.QuerySet):
+    """VN-INDEXデータのQuerySet拡張"""
+
     def time_series_closing_price(self) -> QuerySet:
+        """時系列の終値データを取得します。"""
         return self.order_by("Y", "M").values("Y", "M", "closing_price").distinct()
 
 
@@ -159,18 +164,40 @@ class VnIndex(models.Model):
 
 
 class Watchlist(models.Model):
-    """ウォッチリスト"""
+    """
+    ウォッチリスト銘柄
+    ユーザーが注目している銘柄や保有している銘柄の情報を管理します。
+    """
 
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
-    already_has = models.BooleanField(blank=True, null=True, default=1)
-    bought_day = models.DateField(blank=True, null=True)
-    stocks_price = models.PositiveIntegerField(blank=True, null=True, default=0)
-    stocks_count = models.IntegerField(blank=True, null=True, default=0)
+    symbol = models.ForeignKey(
+        Symbol, on_delete=models.CASCADE, verbose_name="シンボル"
+    )
+    already_has = models.BooleanField(
+        verbose_name="保有済み", blank=True, null=True, default=1
+    )
+    bought_day = models.DateField(verbose_name="購入日", blank=True, null=True)
+    stocks_price = models.PositiveIntegerField(
+        verbose_name="購入価格", blank=True, null=True, default=0
+    )
+    stocks_count = models.IntegerField(
+        verbose_name="数量", blank=True, null=True, default=0
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "symbol"], name="user_symbol_unique"
+            )
+        ]
 
 
 class Uptrend(models.Model):
-    """日次バッチでUptrend（傾き計算考慮）を出します"""
+    """
+    トレンド銘柄（上昇傾向）
+    日次バッチで計算された銘柄ごとの価格変化情報を保持します。
+    stocks_price_delta: 14日前（またはデータのある最古の日）からの変化率(%)
+    """
 
     stocks_price_oldest = models.FloatField()
     stocks_price_latest = models.FloatField()
@@ -194,7 +221,8 @@ class Sbi(models.Model):
 
 class BasicInformation(models.Model):
     """
-    基本情報
+    ベトナム基本情報
+    面積、人口、GDPなどの基礎的な経済・社会指標を保持します。
 
     See Also: https://www.jetro.go.jp/world/asia/vn/basic_01.html
     """
@@ -204,7 +232,11 @@ class BasicInformation(models.Model):
 
 
 class Articles(models.Model):
-    """いいね！機能つきの記事"""
+    """
+    ユーザー投稿記事
+    市場分析や銘柄考察など、ユーザーが投稿したコンテンツを保持します。
+    いいね！機能に対応しています。
+    """
 
     title = models.CharField(verbose_name="タイトル", max_length=200)
     note = models.TextField(verbose_name="投稿内容")
@@ -213,6 +245,9 @@ class Articles(models.Model):
 
     @staticmethod
     def with_state(user_id: int) -> QuerySet:
+        """
+        指定したユーザーの「いいね！」状態を含めた記事一覧を取得します。
+        """
         return Articles.objects.annotate(
             likes_cnt=Count("likes"),
             liked_by_me=Case(
@@ -227,7 +262,10 @@ class Articles(models.Model):
 
 
 class Likes(models.Model):
-    """いいね"""
+    """
+    記事に対する「いいね！」
+    ユーザーと記事の紐付けを管理します。
+    """
 
     articles = models.ForeignKey("Articles", on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
@@ -256,31 +294,46 @@ class Unit(models.Model):
 class FinancialResultWatch(models.Model):
     """
     決算ウォッチ
+    各銘柄の四半期ごとの決算発表結果（予想 vs 実績）を保持します。
+    ※本機能は usa_research アプリ作成前の暫定的な配置であり、主な対象は NASDAQ などの米国株です。
 
-    recorded_date: 計上日
+    recorded_date: Note公開日
     """
 
-    recorded_date = models.DateField()
-    quarter = models.SmallIntegerField()
-    eps_ok = models.BooleanField(null=True)
-    sales_ok = models.BooleanField(null=True)
-    guidance_ok = models.BooleanField(null=True)
-    eps_estimate = models.FloatField()
-    eps_actual = models.FloatField()
-    sales_estimate = models.FloatField()
-    sales_actual = models.FloatField()
-    y_over_y_growth_rate = models.FloatField()
-    note_url = models.URLField(null=True)
-    symbol = models.ForeignKey(Symbol, on_delete=models.SET_NULL, null=True)
+    recorded_date = models.DateField(verbose_name="Note公開日")
+    quarter = models.SmallIntegerField(verbose_name="四半期")
+    eps_ok = models.BooleanField(verbose_name="EPS達成", null=True)
+    sales_ok = models.BooleanField(verbose_name="売上達成", null=True)
+    guidance_ok = models.BooleanField(verbose_name="ガイダンス達成", null=True)
+    eps_estimate = models.FloatField(verbose_name="EPS予想")
+    eps_actual = models.FloatField(verbose_name="EPS実績")
+    sales_estimate = models.FloatField(verbose_name="売上予想")
+    sales_actual = models.FloatField(verbose_name="売上実績")
+    y_over_y_growth_rate = models.FloatField(verbose_name="前年同期比(%)")
+    note_url = models.URLField(verbose_name="NoteURL", null=True, blank=True)
+    symbol = models.ForeignKey(
+        Symbol, on_delete=models.SET_NULL, null=True, verbose_name="シンボル"
+    )
     eps_unit = models.ForeignKey(
-        Unit, on_delete=models.CASCADE, related_name="r_eps_unit"
+        Unit,
+        on_delete=models.CASCADE,
+        related_name="r_eps_unit",
+        verbose_name="EPS単位",
     )
     sales_unit = models.ForeignKey(
-        Unit, on_delete=models.CASCADE, related_name="r_sales_unit"
+        Unit,
+        on_delete=models.CASCADE,
+        related_name="r_sales_unit",
+        verbose_name="売上単位",
     )
 
 
 class FaoFoodBalanceRankers(models.Model):
+    """
+    FAO食品バランス統計
+    国別の水産物などの供給量ランキングデータを保持します。
+    """
+
     year = models.PositiveIntegerField()
     rank = models.PositiveIntegerField()
     name = models.CharField(max_length=255)
@@ -291,12 +344,22 @@ class FaoFoodBalanceRankers(models.Model):
 
 
 class VietnamStatistics(models.Model):
+    """
+    ベトナム統計データ
+    IIP（鉱工業生産指数）やCPI（消費者物価指数）などの時系列統計を保持します。
+    """
+
     element = models.CharField(max_length=255)
     period = models.DateField()
     value = models.FloatField()
 
 
 class ExchangeRate(models.Model):
+    """
+    為替レート
+    通貨ペアごとの最新レートを保持します。
+    """
+
     base_cur_code = models.CharField(max_length=3)
     dest_cur_code = models.CharField(max_length=3)
     rate = models.FloatField()

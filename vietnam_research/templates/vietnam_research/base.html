@@ -23,7 +23,6 @@
     <!-- bootstrap and CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'vietnam_research/css/index.css' %}">
 
     <!-- chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
@@ -111,8 +110,12 @@
                                     {% if request.path == '/welfare_services/' %}selected{% endif %}>
                                 WELFARE SERVICES
                             </option>
-                            <option value="{% url 'kokkai:index' %}" {% if request.path == '/kokkai/' %}selected{% endif %}>KOKKAI</option>
-                            <option value="{% url 'bank:index' %}" {% if request.path == '/bank/' %}selected{% endif %}>BANK</option>
+                            <option value="{% url 'kokkai:index' %}"
+                                    {% if request.path == '/kokkai/' %}selected{% endif %}>KOKKAI
+                            </option>
+                            <option value="{% url 'bank:index' %}" {% if request.path == '/bank/' %}selected{% endif %}>
+                                BANK
+                            </option>
                         </select>
                     </li>
                     {% if user.is_authenticated %}
@@ -143,6 +146,19 @@
 
 <div id="main" style="margin-top: 70px;"> {# ナビバーの高さ #}
     {% block content %}{% endblock %}
+</div>
+
+<!-- Global Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-warning text-dark">
+            <strong class="me-auto">お知らせ</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            ここにメッセージが表示されます。
+        </div>
+    </div>
 </div>
 <footer>
     <p>© 2019 henojiya. / <a href="https://github.com/duri0214" target="_blank">GitHub portfolio</a></p>

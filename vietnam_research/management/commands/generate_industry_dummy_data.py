@@ -25,7 +25,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--clear",
             action="store_true",
-            help="既存のIndustryデータを削除してから生成",
+            help="既存のIndustryデータを削除してから生成（初期データ用。移行などで既にデータがある場合は実行注意）",
         )
 
     def handle(self, *args, **options):

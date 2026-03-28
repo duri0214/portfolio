@@ -121,8 +121,10 @@ python manage.py daily_industry_stacked_bar_chart
 
 # FAO 水産物供給量グラフ / ベトナム統計局 経済指標
 python manage.py monthly_fao_food_balance_chart
-# ※相手先サーバ（ベトナム）の証明書がうまくなくて実行できない
+# ※相手先サーバ（ベトナム）の証明書がうまくなくて実行できないので、ダミーデータ生成コマンドを用意
+# ※ --clear は初期データ用です。移行などで既にデータがある場合は実行不要です。
 # python manage.py monthly_vietnam_statistics
+python manage.py generate_vietnam_statistics_dummy_data --clear
 
 # --- GMarker ---
 python manage.py loaddata gmarker\fixtures\place.json
