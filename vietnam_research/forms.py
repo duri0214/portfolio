@@ -55,6 +55,7 @@ class WatchlistForm(forms.ModelForm):
     """
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if not self.instance.pk:
             import datetime
@@ -88,6 +89,20 @@ class WatchlistForm(forms.ModelForm):
                 attrs={"tabindex": "5", "class": "form-check-input"}
             ),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        symbol = cleaned_data.get("symbol")
+        user = getattr(self, "user", None)
+
+        if symbol and user:
+            # 新規登録（instance.pkがない）の場合に重複チェック
+            if not self.instance.pk:
+                if Watchlist.objects.filter(user=user, symbol=symbol).exists():
+                    self.add_error(
+                        "symbol", "この銘柄はすでにウォッチリストに登録されています。"
+                    )
+        return cleaned_data
 
 
 class ArticleForm(forms.ModelForm):
