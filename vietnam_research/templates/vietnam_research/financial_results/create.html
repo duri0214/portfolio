@@ -1,14 +1,165 @@
 {% extends "vietnam_research/base.html" %}
-{% load static %}
 {% block content %}
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'home:index' %}"
+                                               class="text-decoration-none text-muted">ホーム</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
+                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'vnm:financial_results' %}"
+                                               class="text-decoration-none text-muted">決算ウォッチ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">新規登録</li>
+            </ol>
+        </nav>
 
-    <div class="container">
-        <h1>決算情報登録</h1>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn-lg btn-primary" role="button">登録</button>
-        </form>
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h1 class="h5 mb-0 py-1">決算データの登録</h1>
+                    </div>
+                    <div class="card-body p-4 shadow-sm">
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.recorded_date.id_for_label }}"
+                                           class="form-label fw-bold small">
+                                        {{ form.recorded_date.label }}{% if form.recorded_date.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.recorded_date }}
+                                    {% if form.recorded_date.errors %}
+                                        <div class="text-danger x-small">{{ form.recorded_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.symbol.id_for_label }}"
+                                           class="form-label fw-bold small">
+                                        {{ form.symbol.label }}{% if form.symbol.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.symbol }}
+                                    {% if form.symbol.errors %}
+                                        <div class="text-danger x-small">{{ form.symbol.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold small">
+                                        {{ form.quarter.label }}{% if form.quarter.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    <div class="d-flex gap-3 pt-2">
+                                        {% for radio in form.quarter %}
+                                            <div class="form-check">
+                                                {{ radio.tag }}
+                                                <label class="form-check-label small" for="{{ radio.id_for_label }}">
+                                                    {{ radio.choice_label }}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if form.quarter.errors %}
+                                        <div class="text-danger x-small">{{ form.quarter.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3 d-flex flex-column justify-content-center pt-3">
+                                    <div class="form-check">
+                                        {{ form.eps_ok }}
+                                        <label class="form-check-label fw-bold small"
+                                               for="{{ form.eps_ok.id_for_label }}">
+                                            {{ form.eps_ok.label }}{% if form.eps_ok.field.required %}
+                                                <span class="text-danger">*</span>{% endif %}
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.sales_ok }}
+                                        <label class="form-check-label fw-bold small"
+                                               for="{{ form.sales_ok.id_for_label }}">
+                                            {{ form.sales_ok.label }}{% if form.sales_ok.field.required %}
+                                                <span class="text-danger">*</span>{% endif %}
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.guidance_ok }}
+                                        <label class="form-check-label fw-bold small"
+                                               for="{{ form.guidance_ok.id_for_label }}">
+                                            {{ form.guidance_ok.label }}{% if form.guidance_ok.field.required %}
+                                                <span class="text-danger">*</span>{% endif %}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.eps_unit.id_for_label }}"
+                                           class="form-label fw-bold small">
+                                        {{ form.eps_unit.label }}{% if form.eps_unit.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.eps_unit }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.eps_estimate.id_for_label }}"
+                                           class="form-label fw-bold small">
+                                        {{ form.eps_estimate.label }}{% if form.eps_estimate.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.eps_estimate }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.eps_actual.id_for_label }}"
+                                           class="form-label fw-bold small">
+                                        {{ form.eps_actual.label }}{% if form.eps_actual.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.eps_actual }}
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.sales_unit.id_for_label }}"
+                                           class="form-label fw-bold small">
+                                        {{ form.sales_unit.label }}{% if form.sales_unit.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.sales_unit }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.sales_estimate.id_for_label }}"
+                                           class="form-label fw-bold small">
+                                        {{ form.sales_estimate.label }}{% if form.sales_estimate.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.sales_estimate }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.sales_actual.id_for_label }}"
+                                           class="form-label fw-bold small">
+                                        {{ form.sales_actual.label }}{% if form.sales_actual.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.sales_actual }}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.y_over_y_growth_rate.id_for_label }}"
+                                           class="form-label fw-bold small">{{ form.y_over_y_growth_rate.label }}
+                                            {% if form.y_over_y_growth_rate.field.required %}
+                                                <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.y_over_y_growth_rate }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.note_url.id_for_label }}"
+                                           class="form-label fw-bold small">
+                                        {{ form.note_url.label }}{% if form.note_url.field.required %}
+                                            <span class="text-danger">*</span>{% endif %}</label>
+                                    {{ form.note_url }}
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-success">保存する</button>
+                                <a href="{% url 'vnm:financial_results' %}"
+                                   class="btn btn-outline-secondary">一覧に戻る</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
 {% endblock %}
