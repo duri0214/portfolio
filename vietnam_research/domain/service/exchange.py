@@ -11,7 +11,7 @@ class ExchangeService:
     """
 
     @staticmethod
-    def get_rate(base_cur: str, dest_cur: str) -> float:
+    def rate(base_cur: str, dest_cur: str) -> float:
         """
         指定した通貨ペアの為替レートを取得します。
 
@@ -59,9 +59,7 @@ class ExchangeService:
         """
         # Get exchange rates
         try:
-            rate = ExchangeService.get_rate(
-                base_cur=budget.code, dest_cur=unit_price.code
-            )
+            rate = ExchangeService.rate(base_cur=budget.code, dest_cur=unit_price.code)
         except ObjectDoesNotExist:
             return 0
 

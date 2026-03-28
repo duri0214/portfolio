@@ -11,7 +11,7 @@ class FaoRetrievalService:
     """
 
     @staticmethod
-    def get_ranked_items(item: str, element: str, rank_limit: int) -> QuerySet:
+    def ranked_items(item: str, element: str, rank_limit: int) -> QuerySet:
         """
         指定された項目・要素について、一定の順位以内のレコードを取得します。
         """
@@ -36,5 +36,5 @@ class FaoRetrievalService:
         """
         指定された条件のFAO統計データを整形した辞書を返します。
         """
-        df = pd.DataFrame(list(self.get_ranked_items(item, element, rank_limit)))
+        df = pd.DataFrame(list(self.ranked_items(item, element, rank_limit)))
         return {"fao_rank_trend": self.to_pivot(df)}

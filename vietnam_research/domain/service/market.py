@@ -14,14 +14,14 @@ from vietnam_research.forms import ExchangeForm
 class MarketRetrievalService:
     """
     マーケット情報取得サービス。
-    ダッシュボード、市場分析、経済指標などの各画面で表示するためのデータを集計・加工して提供します。
+    ダッシュボード、ベトナム市場分析、経済指標などの各画面で表示するためのデータを集計・加工して提供します。
     """
 
     def __init__(self):
         self.repository = MarketRepository()
 
     @staticmethod
-    def get_rss_feed() -> dict:
+    def rss_feed() -> dict:
         """
         viet-kabu のRSSをタイムアウト付きで取得し、
         VietnamMarketDataProvider.rss() に渡せる辞書形式で返します。
@@ -54,29 +54,29 @@ class MarketRetrievalService:
         feed_updated = parsed.get("feed", {}).get("updated") or parsed.get("updated")
         return {"entries": entries, "feed": {"updated": feed_updated or ""}}
 
-    def get_dashboard_data(self, login_id=None):
+    def dashboard_data(self, login_id=None):
         """
         ダッシュボード画面用のデータを取得します。
         ユーザー投稿（Articles）、ベトナム基本情報、および最新ニュース（RSS）を返します。
         """
         vietnam_market_data_provider = VietnamMarketDataProvider()
         try:
-            rss_context = vietnam_market_data_provider.rss(self.get_rss_feed())
+            rss_context = vietnam_market_data_provider.rss(self.rss_feed())
         except Exception as e:
             logging.warning(f"RSSの取得に失敗しました: {e}")
             rss_context = {"entries": [], "updated": datetime.now(timezone.utc)}
 
         return {
-            "articles": MarketRepository.get_articles(login_id),
-            "basic_info": self.repository.get_basic_info(),
+            "articles": MarketRepository.articles(login_id),
+            "basic_info": self.repository.basic_info(),
             "rss": rss_context,
         }
 
     @staticmethod
-    def get_market_analysis_data():
+    def market_analysis_data():
         """
-        市場分析画面用のデータを取得します。
-        業種別の企業数・時価総額構成、VN-INDEXの時系列・季節要因データを返します。
+        ベトナム市場分析画面用のデータを取得します。
+        業種別分析（レーダーチャート）、VN-INDEXの推移、および上昇トレンド銘柄データを返します。
         """
         vietnam_market_data_provider = VietnamMarketDataProvider()
         return {
@@ -110,10 +110,11 @@ class MarketRetrievalService:
             "vnindex_layers": json.dumps(
                 vietnam_market_data_provider.vnindex_annual_layers()
             ),
+            "uptrend": json.dumps(vietnam_market_data_provider.uptrend()),
         }
 
     @staticmethod
-    def get_economic_indicators_data():
+    def economic_indicators_data():
         """
         経済指標画面用のデータを取得します。
         IIP（鉱工業生産指数）およびCPI（消費者物価指数）の時系列データを返します。
@@ -125,18 +126,7 @@ class MarketRetrievalService:
         }
 
     @staticmethod
-    def get_stock_tools_data():
-        """
-        株式ツール画面用のデータを取得します。
-        上昇トレンド銘柄のリストを返します。
-        """
-        vietnam_market_data_provider = VietnamMarketDataProvider()
-        return {
-            "uptrend": json.dumps(vietnam_market_data_provider.uptrend()),
-        }
-
-    @staticmethod
-    def get_watchlist_data():
+    def watchlist_data():
         """
         ウォッチリスト画面用のデータを取得します。
         ユーザーが登録した銘柄の最新情報を返します。
@@ -156,7 +146,7 @@ class MarketRetrievalService:
 
         # RSSの準備（エラーハンドリング込み）
         try:
-            rss_context = vietnam_market_data_provider.rss(self.get_rss_feed())
+            rss_context = vietnam_market_data_provider.rss(self.rss_feed())
         except Exception as e:
             logging.warning(f"RSSの取得に失敗しました: {e}")
             rss_context = {"entries": [], "updated": datetime.now(timezone.utc)}
@@ -194,7 +184,7 @@ class MarketRetrievalService:
             ),
             "iip_timeline": json.dumps(vietnam_market_data_provider.iip_timeline()),
             "cpi_timeline": json.dumps(vietnam_market_data_provider.cpi_timeline()),
-            "basic_info": self.repository.get_basic_info(),
+            "basic_info": self.repository.basic_info(),
             "watchlist": vietnam_market_data_provider.watchlist(),
             "uptrend": json.dumps(vietnam_market_data_provider.uptrend()),
             "exchange_form": exchange_form,
