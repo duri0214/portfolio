@@ -92,7 +92,7 @@ class VietnamMarketDataProvider(MarketAbstract):
         Returns:
             QuerySet: Watchlistをベースに換算額などの計算を組み合わせたもの
         """
-        return self.repository.get_watchlist()
+        return self.repository.watchlist()
 
     def vnindex_timeline(self) -> dict:
         """
@@ -102,7 +102,7 @@ class VietnamMarketDataProvider(MarketAbstract):
             dict: VN-Indexのタイムラインデータ
         See Also: https://www.chartjs.org/docs/latest/getting-started/
         """
-        records = self.repository.get_vnindex_timeline()
+        records = self.repository.vnindex_timeline()
         return {
             "labels": [record["Y"] + record["M"] for record in records],
             "datasets": [
@@ -119,8 +119,8 @@ class VietnamMarketDataProvider(MarketAbstract):
         季節性（アノマリー）の分析に使用します。
         """
         datasets = []
-        for year in self.repository.get_distinct_values("Y"):
-            records = self.repository.get_vnindex_at_year(year)
+        for year in self.repository.distinct_values("Y"):
+            records = self.repository.vnindex_at_year(year)
             datasets.append(
                 LineChartLayer(
                     label=year,
@@ -128,7 +128,7 @@ class VietnamMarketDataProvider(MarketAbstract):
                 ).to_dict()
             )
         return {
-            "labels": self.repository.get_distinct_values("M"),
+            "labels": self.repository.distinct_values("M"),
             "datasets": datasets,
         }
 
@@ -140,7 +140,7 @@ class VietnamMarketDataProvider(MarketAbstract):
             dict: IIPのタイムラインデータです。
         参照先: https://www.chartjs.org/docs/latest/getting-started/
         """
-        records = self.repository.get_iip_timeline()
+        records = self.repository.iip_timeline()
         return {
             "labels": [record.period.strftime("%Y%m") for record in records],
             "datasets": [
@@ -159,7 +159,7 @@ class VietnamMarketDataProvider(MarketAbstract):
             dict: CPIのタイムラインデータです。
         参照先: https://www.chartjs.org/docs/latest/getting-started/
         """
-        records = self.repository.get_cpi_timeline()
+        records = self.repository.cpi_timeline()
         return {
             "labels": [record.period.strftime("%Y%m") for record in records],
             "datasets": [
@@ -200,13 +200,15 @@ class VietnamMarketDataProvider(MarketAbstract):
         layers: list[RadarChartLayer] = []
         for m in months_dating_back:
             try:
-                denominator = self.repository.get_denominator_for(m, denominator_field)
-                industry_records = self.repository.get_industry_records_for(
+                industry_field_sum = self.repository.sum_of_industry_field_for(
+                    m, denominator_field
+                )
+                industry_records = self.repository.industry_records_for(
                     m, aggregate_field, aggregate_alias
                 )
                 industry_records = industry_records.annotate(
                     percent=Round(
-                        F(aggregate_alias) / denominator * 100,
+                        F(aggregate_alias) / industry_field_sum * 100,
                         precision=2,
                         output_field=FloatField(),
                     )
@@ -237,10 +239,10 @@ class VietnamMarketDataProvider(MarketAbstract):
         """
         上昇トレンド銘柄を業種ごとにグルーピングしたデータを生成します。
         """
-        uptrend = self.repository.get_annotated_uptrend()
+        uptrend = self.repository.annotated_uptrend()
 
         result = {}
-        ind_names = self.repository.get_industry_names()
+        ind_names = self.repository.industry_names()
         for ind_name in ind_names:
             result[ind_name] = [x for x in uptrend if x["ind_name"] == ind_name]
 
