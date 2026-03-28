@@ -10,9 +10,11 @@ class TestMarketVietnam(TestCase):
     """
 
     def test_calc_fee(self):
+        # 60,000,000 * 0.022 = 1,320,000 (最低手数料に一致)
         self.assertEqual(
-            1210000, VietnamMarketDataProvider.calculate_transaction_fee(55000000)
-        )  # 55,000,000 VND の手数料は 1,210,000 VND
+            1320000, VietnamMarketDataProvider.calculate_transaction_fee(60000000)
+        )
+        # 50,000,000 * 0.022 = 1,100,000 < 1,320,000 (最低手数料が適用される)
         self.assertEqual(
-            1200000, VietnamMarketDataProvider.calculate_transaction_fee(50000000)
-        )  # 手数料が 1,200,000 VNDを下回ったときの手数料は 1,200,000 VND
+            1320000, VietnamMarketDataProvider.calculate_transaction_fee(50000000)
+        )
