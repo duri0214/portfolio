@@ -2,517 +2,223 @@
 {% load static %}
 {% load humanize %}
 {% block content %}
-    <div class="custom-section bg-light p-5 rounded">
-        <h1 class="display-4">Let's analyze Vietnam!</h1>
-        <p class="lead">it's interesting Vietnam</p>
-        <hr class="my-4">
-        <p>You can calculate the exchange</p>
-        <ul class="list-items">
-            <li><a class="btn btn-secondary btn-sm" href="#fao-stat-food-balance-trend" role="button">FAO STAT
-                food balance trend</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#vietkabu-topics" role="button">vietkabu TOPICS</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#macro-analysis-by-industry"
-                   role="button">業種別マクロ分析</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#trading-value-by-industry" role="button">業種別売買代金</a>
-            </li>
-            <li><a class="btn btn-secondary btn-sm" href="#iip-chart" role="button">鉱工業生産指数</a>
-            </li>
-            <li><a class="btn btn-secondary btn-sm" href="#cpi-chart" role="button">消費者物価指数</a>
-            </li>
-            <li><a class="btn btn-secondary btn-sm" href="#uptrend" role="button">移動平均線上昇トレンド銘柄</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#exchange" role="button">為替計算</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#watchlist" role="button">ウォッチリスト</a></li>
-            <li><a class="btn btn-secondary btn-sm" href="#what-is-per" role="button">What is PER?</a></li>
-            <li><a href="{% url 'vnm:financial_results' %}" class="btn btn-secondary btn-sm"
-                   role="button">決算ウォッチング</a></li>
-        </ul>
-    </div>
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'home:index' %}"
+                                               class="text-decoration-none text-muted">ホーム</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">ベトナム研究</li>
+            </ol>
+        </nav>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-sm">
-                <h2>いいね！機能</h2>
-                <h6>'like' function</h6>
-                {% for article in articles %}
-                    <div class="card" style="width: 18rem;">
-                        <div class="card-header">
-                            {{ article.title }}
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <p style="font-size: small">{{ article.note | truncatechars:80 }}</p>
-                                <p class="author text-right text-secondary" style="font-size: xx-small">
-                                    投稿者: {{ article.user_name | truncatechars:3 }} さん</p>
-                                <div class="card-body">
+        <div class="row g-4">
+            <!-- Hero Section -->
+            <div class="col-12">
+                <div class="bg-light p-5 rounded shadow-sm">
+                    <h1 class="display-4">ベトナムを分析しよう！</h1>
+                    <p class="lead">ベトナム市場の成長と可能性を探究します。</p>
+                    <hr class="my-4">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-primary" href="{% url 'vnm:market' %}">ベトナム市場分析</a>
+                        <a class="btn btn-outline-primary" href="{% url 'vnm:economy' %}">経済指標</a>
+                        <a class="btn btn-outline-primary" href="{% url 'vnm:tools' %}">株式ツール</a>
+                        <a class="btn btn-outline-primary" href="{% url 'vnm:watchlist' %}">ウォッチリスト</a>
+                        <a class="btn btn-outline-secondary" href="{% url 'vnm:financial_results' %}">決算情報</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Articles / Likes Section -->
+            <div class="col-lg-8">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h3 mb-0">みんなの意見</h2>
+                    <a href="{% url 'vnm:article_create' %}" class="btn btn-primary btn-sm">新規投稿</a>
+                </div>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                    {% for article in articles %}
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-header bg-white font-weight-bold border-bottom-0 pt-3">
+                                    {{ article.title }}
+                                </div>
+                                <div class="card-body py-2">
+                                    <p class="card-text small text-secondary">{{ article.note | truncatechars:100 }}</p>
+                                    <p class="text-end text-muted x-small mb-0">
+                                        投稿者: {{ article.user_name | truncatechars:15 }}
+                                    </p>
+                                </div>
+                                <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
                                     <button
                                             type="button"
-                                            class="like_toggle btn btn-outline-secondary {{ article.liked_by_me|yesno:'active,' }}"
+                                            class="like_toggle btn btn-outline-secondary btn-sm {{ article.liked_by_me|yesno:'active,' }} {% if not user.is_authenticated %}opacity-50{% endif %}"
                                             data-article-id="{{ article.id }}"
                                             data-liked-by-me="{{ article.liked_by_me }}"
-                                    >いいね！<span>({{ article.likes_cnt }})</span></button>
+                                            {% if not user.is_authenticated %}title="ログインが必要です"{% endif %}
+                                    >
+                                        <i class="{% if article.liked_by_me %}fas{% else %}far{% endif %} fa-thumbs-up me-1"></i>いいね！
+                                        <span>({{ article.likes_cnt }})</span>
+                                    </button>
                                 </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12">
+                            <div class="card bg-light border-0 py-5 text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-pen-nib fa-3x text-muted mb-3 opacity-25"></i>
+                                    <h4 class="text-muted mb-3">まだ投稿がありません</h4>
+                                    <p class="text-secondary small mb-4">最初の知見をコミュニティと共有しましょう！</p>
+                                    <a href="{% url 'vnm:article_create' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-1"></i>投稿を作成する
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Basic Info & Status -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h3 class="h5 card-title border-bottom pb-2">基本情報</h3>
+                        <table class="table table-sm table-borderless small mb-0">
+                            <tbody>
+                            {% for row in basic_info %}
+                                <tr>
+                                    <th class="text-muted fw-normal">{{ row.item }}</th>
+                                    <td class="text-end fw-bold">{{ row.description }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="mt-2 text-end">
+                            <a href="https://www.jetro.go.jp/world/asia/vn/stat_01.html" class="x-small text-muted"
+                               target="_blank">出典: JETRO / SBI</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm bg-light">
+                    <div class="card-body">
+                        <h3 class="h5 card-title border-bottom pb-2">ロードマップ</h3>
+                        <ul class="small mb-0 list-unstyled">
+                            <li><i class="fas fa-check-circle text-success me-2"></i>東南アジア他国とのグラフ切り替え
                             </li>
+                            <li><i class="fas fa-chart-line text-primary me-2"></i>業種別騰落率</li>
+                            <li><i class="fas fa-search-dollar text-primary me-2"></i>センチメント分析</li>
+                            <li><i class="fas fa-history text-muted me-2"></i>スクレイピング機能の強化</li>
                         </ul>
                     </div>
-                {% endfor %}
-                <a href="{% url 'vnm:article_create' %}" class="btn btn-default btn-sm" role="button">投稿</a>
+                </div>
             </div>
-            <div class="col-sm">
-                <h2>ベトナム基本情報</h2>
-                <h6>Vietnam basic information</h6>
-                <table>
-                    <tbody>
-                    {% for row in basic_info %}
-                        <tr>
-                            <th><p>{{ row.item }}</p></th>
-                            <td><p>{{ row.description }}</p></td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                <p class="note"><a href="https://www.jetro.go.jp/world/asia/vn/stat_01.html">基礎的経済指標（日本貿易振興機構
-                    jetro.go.jp）</a>※IMFデータをもとにSBI証券が作成を参考に</p>
-            </div>
-            <div class="col-sm">
-                <h2>改修予定</h2>
-                <h6>Scheduled to be repaired</h6>
-                <ul>
-                    <li>東南アジア各地のグラフで切り替えられるように</li>
-                    <li>国の成長期に金融が稼げる理由は？</li>
-                    <li>セクター別リターン</li>
-                    <li>個社利率</li>
-                    <li>配当性向</li>
-                    <li>50万円で大口株主になれる先リスト</li>
-                    <li>センチメント分析</li>
-                    <li>ニュース・有報から上方修正先を抽出</li>
-                    <li>スクレイピング: 上場日</li>
-                    <li>
-                        <del>この予算（＋手数料）であと何株買えるの？の計算式をフォームで</del>
-                    </li>
-                    <li>
-                        <del>FAOから水産物供給量の推移グラフ</del>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div id="fao-stat-food-balance-trend" class="custom-section bg-light p-5 rounded">
-        <h2 class="display-4">FAOSTAT FoodBalanceRanker Trend</h2>
-        <p><a href="https://www.fao.org/faostat/en/#data/FBS/visualize" target="_blank">Food Balances (2010-)</a>
-            から水産物供給量の推移 を使って推移グラフを作る</p>
-        <ul>
-            <li class="d-block"><b>Item:</b> Fish, Seafood</li>
-            <li class="d-block"><b>Element:</b> Food supply quantity (kg/capita/yr)</li>
-        </ul>
-        <table class="table table-striped table-bordered">
-            <thead>
-            <tr>
-                {% for header in fao_rank_trend.0.keys %}
-                    <th>{{ header }}</th>
-                {% endfor %}
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in fao_rank_trend %}
-                <tr>
-                    {% for column, value in row.items %}
-                        {% if value == "Viet Nam" %}
-                            <td class="fw-bold text-danger">{{ value }}</td>
-                        {% elif value == "Japan" %}
-                            <td class="fw-bold text-primary">{{ value }}</td>
-                        {% else %}
-                            <td>{{ value }}</td>
-                        {% endif %}
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
 
-    <div class="container">
-        <div id="vietkabu-topics" class="mt-5">
-            <h2 class="display-4 mb-3">VIET-KABU TOPICS</h2>
-            <p class="text-muted small mb-3">更新日時: <span class="fw-semibold">{{ rss.updated }}</span></p>
-            {% if rss.entries %}
-                <div class="row g-3">
-                    {% for entry in rss.entries %}
-                        <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card h-100 shadow-sm">
-                                <div class="card-body">
-                                    <h6 class="card-title mb-2">
-                                        <a href="{{ entry.link }}" target="_blank" rel="noopener" class="stretched-link text-decoration-none">
-                                            {{ entry.title }}
-                                        </a>
-                                    </h6>
-                                    {% if entry.summary %}
-                                        <p class="card-text text-muted small">{{ entry.summary|striptags|truncatechars:110 }}</p>
-                                    {% endif %}
+            <!-- RSS Feed -->
+            <div class="col-12">
+                <hr class="my-5">
+                <div id="vietkabu-topics">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h3 mb-0">VIET-KABU トピックス</h2>
+                        <span class="text-muted small">更新: {{ rss.updated }}</span>
+                    </div>
+                    {% if rss.entries %}
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                            {% for entry in rss.entries %}
+                                <div class="col">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <a href="{{ entry.link }}" target="_blank" rel="noopener"
+                                                   class="stretched-link text-decoration-none text-dark">
+                                                    {{ entry.title }}
+                                                </a>
+                                            </h6>
+                                            {% if entry.summary %}
+                                                <p class="card-text text-muted small">{{ entry.summary|striptags|truncatechars:100 }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="card-footer bg-transparent border-0 pt-0">
+                                            <small class="text-muted">
+                                                {% if entry.published %}
+                                                    {{ entry.published }}
+                                                {% elif entry.updated %}
+                                                    {{ entry.updated }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">
-                                        {% if entry.published %}
-                                            公開: {{ entry.published }}
-                                        {% elif entry.updated %}
-                                            更新: {{ entry.updated }}
-                                        {% else %}
-                                            外部リンク
-                                        {% endif %}
-                                    </small>
-                                    <a href="{{ entry.link }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">読む</a>
-                                </div>
-                            </div>
+                            {% endfor %}
                         </div>
-                    {% endfor %}
+                    {% else %}
+                        <div class="alert alert-warning">RSSフィードの取得に失敗しました。</div>
+                    {% endif %}
                 </div>
-            {% else %}
-                <p class="text-muted">現在トピックスを取得できません。</p>
-            {% endif %}
-        </div>
-
-        <div id="macro-analysis-by-industry" class="mt-5">
-            <h2>業種別マクロ分析</h2>
-            <p>これで3年分ぐらいを重ねてみたい</p>
-            <p>足元の鉱業の不調は、かつてベトナムの主力輸出品であった原油の生産量が原油価格低迷に伴い減少したことが主因と見られる。
-                他方、足元で製造業の伸び率が加速している点については、ベトナムに進出した外資系企業による鉄鋼や電機製品などの生産が
-                拡大したことに影響されたと見られる。中国やタイに比べて低いとされてきたベトナムの賃金は、近年、上昇が続いており、
-                ベトナムに進出した日系企業にとって悩みの種となっている。<BR>
-            </p>
-            <div class="row">
-                <div class="col-sm text-center">
-                    <div class="radarChart1 d-inline-block"></div>
-                </div>
-                <div class="col-sm text-center">
-                    <div class="radarChart2 d-inline-block"></div>
-                </div>
-                <p><a class="note" href="https://www.murc.jp/wp-content/uploads/2018/03/report_180316.pdf">MURCベトナム経済の現状と今後の展望(20180316)</a>
-                </p>
             </div>
         </div>
 
-        <div id="trading-value-by-industry" class="mt-5">
-            <h2>業種別売買代金</h2>
-            <h6>trading price by industry</h6>
-            <p>10億ドン[÷1,000,000,000]</p>
-            <img src="{{ MEDIA_URL }}vietnam_research/charts/daily_industry_stacked_bar_chart.png" class="img-fluid"
-                 alt="daily_industry_stacked_bar_chart">
-        </div>
-        <div class="row">
-            <div class="col-sm text-center">
-                <h2>National stock index</h2>
-                <h6>vn-index long-term time series</h6>
-                <p>超長期時系列</p>
-                <canvas id="vnChart" style="display: inline-block; width: 400px; height: 400px;"></canvas>
-            </div>
-            <div class="col-sm text-center">
-                <h2>National stock index</h2>
-                <h6>vn-index annual layer</h6>
-                <p>季節要因は特に感じられない</p>
-                <canvas id="vnChart_layer" style="display: inline-block; width: 400px; height: 400px;"></canvas>
-            </div>
-        </div>
+        <script lang="js">
+            const likeToggles = document.getElementsByClassName('like_toggle');
 
-        <div id="iip-chart" class="row">
-            <div class="col-sm text-center">
-                <h2>鉱工業生産指数(IIP)</h2>
-                <h6>Indices of Industrial Production</h6>
-                <p>
-                    IIPは2017年以降、全体的に右肩上がりの成長傾向を示しています。特に2020年以降の指数上昇は顕著であり、新型コロナウイルス感染症の影響からの回復が大きな要因と考えられます。ベトナムでは2月に鉱工業生産指数が減少する理由の一つとして、ベトナムの旧正月の影響があります。テトはベトナムで最も重要な祝祭であり、多くの企業や工場がこの期間に操業を停止し、従業員も長い休暇を取るため、生産活動が一時的に低下します。</p>
-                <div id="iip-alert" class="alert alert-info d-none" role="alert">
-                    現在、ベトナム統計局のサーバー状況によりデータを取得できないため、グラフを表示できません。詳細は<a href="https://github.com/duri0214/portfolio/issues/477" target="_blank">こちら</a>をご確認ください。
-                </div>
-                <canvas id="iipChart" style="display: inline-block; width: 1000px; height: 400px;"></canvas>
-            </div>
-        </div>
-        <div id="cpi-chart" class="row">
-            <div class="col-sm text-center">
-                <h2>消費者物価指数(CPI)</h2>
-                <h6>Consumer Price Index</h6>
-                <p>
-                    全体的に上昇傾向。2月はCPIが一時的に急上昇する傾向が見られます（例：2021年2月104.84、2022年2月106.33、2023年2月110.91、2024年2月115.33）。これは、旧正月（テト）期間中の需要増加が影響している可能性があります。ベトナムのCPIは引き続き上昇が予想されますが、そのペースは安定しており、経済の成長と消費者の購買力の向上を反映しています。</p>
-                <div id="cpi-alert" class="alert alert-info d-none" role="alert">
-                    現在、ベトナム統計局のサーバー状況によりデータを取得できないため、グラフを表示できません。詳細は<a href="https://github.com/duri0214/portfolio/issues/477" target="_blank">こちら</a>をご確認ください。
-                </div>
-                <canvas id="cpiChart" style="display: inline-block; width: 1000px; height: 400px;"></canvas>
-            </div>
-        </div>
+            function sendLikeRequest(event) {
+                const likeToggle = event.currentTarget;
+                const articleId = likeToggle.dataset.articleId;
 
-        <div id="uptrend" class="mt-5">
-            <h2>業種別直近上昇銘柄<span style="font-size: small">14日/7日/3日の傾きを出して（緑の点線）、すべてが0超の傾きを持っている銘柄 ※SBI証券取り扱い銘柄のみ</span>
-            </h2>
-            <div id="uptrend_wrapper"></div>
-        </div>
-        <script>
-            data = {{ uptrend|safe }};
-            const uptrend = document.getElementById('uptrend_wrapper');
-            let h6, ul, mkt, price_latest, symbol, price_delta, price_delta_sign, img, li, a, p;
-            for (const industry in data) {
-                h6 = document.createElement('h6');
-                h6.textContent = industry;
-                ul = document.createElement("ul");
-                for (const i in data[industry]) {
-                    mkt = data[industry][i]['url_file_name'];
-                    symbol = data[industry][i]['code'];
-                    price_latest = data[industry][i]['stocks_price_latest'];
-                    price_delta = data[industry][i]['stocks_price_delta'];
-                    price_delta_sign = Math.sign(price_delta) < 0 ? "▲" : "＋";
-                    price_delta = Math.abs(price_delta);
-                    img = document.createElement('img');
-                    img.src = "{{ MEDIA_URL }}vietnam_research/charts/" + symbol + ".png";
-                    img.alt = symbol;
-                    a = document.createElement('a');
-                    a.href = `https://www.viet-kabu.com/${mkt}/${symbol}.html`;
-                    a.target = "_blank";
-                    p = document.createElement('p');
-                    p.className = 'badge bg-secondary';
-                    p.textContent = `${symbol}: ${price_latest}（${price_delta_sign}${price_delta}）`;
-                    li = document.createElement("li");
-                    li.className = 'uptrend';
-                    a.appendChild(img);
-                    li.appendChild(a);
-                    li.appendChild(p);
-                    ul.appendChild(li);
-                }
-                uptrend.appendChild(h6);
-                uptrend.appendChild(ul);
+                fetch(`${myUrl.base}likes/${articleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "X-CSRFToken": '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({"status": "requested from front with javascript."})
+                })
+                    .then(response => {
+                        if (response.status === 401) {
+                            const toastElement = document.getElementById('liveToast');
+                            const toastMessage = document.getElementById('toastMessage');
+                            toastMessage.innerText = "ログインが必要です。";
+                            const toast = new bootstrap.Toast(toastElement);
+                            toast.show();
+
+                            // Redirect after a short delay so user can see the message
+                            setTimeout(() => {
+                                window.location.href = "{% url 'login' %}?next=" + encodeURIComponent(window.location.pathname);
+                            }, 2000);
+                            return;
+                        }
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!data) return;
+                        const spanItem = likeToggle.getElementsByTagName('span')[0];
+                        spanItem.innerHTML = `(${data.likes_cnt})`;
+                        likeToggle.dataset.likedByMe = data.liked_by_me;
+
+                        const iconItem = likeToggle.getElementsByTagName('i')[0];
+                        likeToggle.classList.remove('active');
+                        if (data.liked_by_me) {
+                            likeToggle.classList.add('active');
+                            iconItem.classList.remove('far');
+                            iconItem.classList.add('fas');
+                        } else {
+                            iconItem.classList.remove('fas');
+                            iconItem.classList.add('far');
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Oops!! There has been a problem with your fetch operation:', error);
+                    });
+            }
+
+            for (let i = 0; i < likeToggles.length; i++) {
+                likeToggles[i].addEventListener('click', sendLikeRequest)
             }
         </script>
-
-        <div id="exchange" class="mt-5">
-            <h2 class="mb-4">為替・購入計算ツール</h2>
-
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">取引情報</h5>
-                    <p class="text-muted mb-3">
-                        <small>目安：1,000 VND ≈ 5円</small>
-                        <a href="https://search.sbisec.co.jp/v2/popwin/info/stock/foreign_exp.pdf" class="ms-2" target="_blank">取引説明書 →</a>
-                    </p>
-
-                    <table class="table table-sm">
-                        <tbody>
-                            <tr>
-                                <th style="width: 30%;">取引単位</th>
-                                <td>HOSE：10株単位 / HNX：100株単位</td>
-                            </tr>
-                            <tr>
-                                <th>決済方法</th>
-                                <td>外貨決済（前金制）</td>
-                            </tr>
-                            <tr>
-                                <th>手数料</th>
-                                <td>
-                                    約定代金の2.2%（税込）
-                                    <a href="https://site3.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_DataStoreID=DSWPLETmgR001Control&burl=search_foreign&cat1=foreign&cat2=vn&dir=vn%2F&file=foreign_vn_01.html&getFlg=on#:~:text=%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3%83%88%E3%81%8A%E3%82%88%E3%81%B3%E3%81%8A%E9%9B%BB%E8%A9%B1%E3%81%8B%E3%82%89%E3%81%94%E6%B3%A8%E6%96%87%E5%8F%AF%E8%83%BD%EF%BC%81&text=%E2%80%BB%E5%A3%B2%E5%8D%B4%E4%BB%A3%E9%87%91%E3%81%8C%E6%9C%80%E4%BD%8E,%E3%81%A6%E6%89%8B%E6%95%B0%E6%96%99%E3%81%8C%E6%B1%BA%E3%81%BE%E3%82%8A%E3%81%BE%E3%81%99%E3%80%82" target="_blank" class="ms-2">
-                                        <small>最低手数料詳細 →</small>
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">購入シミュレーション</h5>
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-4">
-                                <label class="form-label small">{{ exchange_form.budget.label }}</label>
-                                {{ exchange_form.budget }}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">{{ exchange_form.unit_price.label }}</label>
-                                {{ exchange_form.unit_price }}
-                            </div>
-                            <div class="col-md-4">
-                                <button type="submit" class="btn btn-primary w-100">計算する</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            {% if exchanged.budget_jpy %}
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">計算結果</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <dl class="row mb-2">
-                                <dt class="col-sm-5">予算</dt>
-                                <dd class="col-sm-7 text-end">
-                                    <span>{{ exchanged.budget_jpy | floatformat:2 | intcomma }}</span>
-                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">円</span>
-                                </dd>
-
-                                <dt class="col-sm-5">予算（VND）</dt>
-                                <dd class="col-sm-7 text-end">
-                                    <span>{{ exchanged.budget_in_target_currency | floatformat:2 | intcomma }}</span>
-                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">VND</span>
-                                </dd>
-
-                                <dt class="col-sm-5">レート</dt>
-                                <dd class="col-sm-7 text-end">
-                                    {% if exchanged.rate %}
-                                        <span>{{ exchanged.rate | floatformat:2 }}</span>
-                                        <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">JPY/VND</span>
-                                    {% else %}
-                                        <span class="text-danger">取得失敗</span>
-                                        <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">JPY/VND</span>
-                                    {% endif %}
-                                </dd>
-                            </dl>
-                        </div>
-                        <div class="col-md-6">
-                            <dl class="row mb-2">
-                                <dt class="col-sm-5">単価</dt>
-                                <dd class="col-sm-7 text-end">
-                                    <span>@{{ exchanged.unit_price | floatformat:2 | intcomma }}</span>
-                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">VND</span>
-                                </dd>
-
-                                <dt class="col-sm-5 text-primary">購入可能口数</dt>
-                                <dd class="col-sm-7 text-end text-primary fw-bold">
-                                    <span>{{ exchanged.purchasable_units | floatformat:2 | intcomma }}</span>
-                                    <span class="ms-1 d-inline-block" style="width: 70px; text-align: left;">口</span>
-                                </dd>
-
-                                <dt class="col-sm-5">手数料</dt>
-                                <dd class="col-sm-7 text-end">
-                                    <span>{{ exchanged.fee | floatformat:2 | intcomma }}</span>
-                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">VND</span>
-                                </dd>
-
-                                <dt class="col-sm-5 fw-bold">合計金額</dt>
-                                <dd class="col-sm-7 text-end fw-bold">
-                                    <span>{{ exchanged.price_in_fee | floatformat:2 | intcomma }}</span>
-                                    <span class="ms-1 text-muted d-inline-block" style="width: 70px; text-align: left;">VND</span>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <div id="watchlist" class="mt-5">
-            <h2>ウォッチリスト</h2>
-        </div>
-        <ul class="watchlist">
-            {% if user.is_superuser or user.is_staff %}
-                <li><a href="{% url 'vnm:watchlist_register' %}" class="btn btn-primary btn-sm" role="button">登録</a>
-                </li>
-            {% else %}
-                <li><a href="#" class="btn btn-secondary btn-sm disabled" role="button">登録</a></li>
-            {% endif %}
-        </ul>
-
-        <div class="card-group">
-            {% for row in watchlist %}
-                <div class="col">
-                    <div class="card" style="width: 15rem; height: 30rem">
-                        <img src="{{ MEDIA_URL }}vietnam_research/charts/{{ row.symbol.code }}.png" class="card-img-top"
-                             alt="{{ row.symbol.code }}">
-                        <div class="card-body">
-                            <h6 class="card-title">{{ row.symbol.name | truncatechars:12 }}</h6>
-                            <p class="card-text" style="font-size: small;">
-                                symbol: {{ row.symbol.code }}<br>
-                                purchase date: {{ row.bought_day }}<br>
-                                purchase price: @{{ row.stocks_price | intcomma }}
-                                VND（@{{ row.stocks_price_yen | intcomma }} 円）<br>
-                                purchase count: {{ row.stocks_count | intcomma }}株<br>
-                                purchase price×count：{{ row.buy_price_yen | intcomma }}円<br>
-                                now price: @{{ row.closing_price | intcomma }} VND<br>
-                                Rate of change: @{{ row.stocks_price_delta | intcomma }}%<br>
-                            </p>
-                        </div>
-                        <div class="card-footer text-muted">
-                            <a href="{% url 'vnm:watchlist_edit' row.id %}">編集</a>
-                            <a href="https://www.viet-kabu.com/{{ row.symbol.market.url_file_name }}/{{ row.symbol.code }}.html"
-                               target="_blank">VIET-KABUで見る</a>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-
-        <div id="what-is-per" class="mt-5">
-            <h2>PERとは</h2>
-            <img src="{% static 'vietnam_research/images/PER.png' %}" alt="PER">
-        </div>
     </div>
-
-    <script lang="js">
-        const likeToggles = document.getElementsByClassName('like_toggle');
-
-        function sendLikeRequest(event) {
-            const likeToggle = event.target;
-            const articleId = likeToggle.dataset.articleId;
-
-            fetch(`${myUrl.base}likes/${articleId}/`, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "X-CSRFToken": Cookies.get('csrftoken')
-                },
-                body: JSON.stringify({"status": "requested from front with javascript."})
-            })
-                .then(response => response.json())
-                .then(data => {
-                    const spanItem = likeToggle.getElementsByTagName('span')[0];
-                    spanItem.innerHTML = `(${data.likes_cnt})`;
-                    likeToggle.dataset.likedByMe = data.liked_by_me;
-                    likeToggle.classList.remove('active');
-                    if (data.liked_by_me) {
-                        likeToggle.classList.add('active');
-                    }
-                })
-                .catch((error) => {
-                    console.error('Oops!! There has been a problem with your fetch operation:', error);
-                });
-        }
-
-        for (let i = 0; i < likeToggles.length; i++) {
-            likeToggles[i].addEventListener('click', sendLikeRequest)
-        }
-    </script>
-    <script lang="js">
-        const radarChartOptions = {
-            w: 290,
-            h: 350,
-            margin: {top: 50, right: 130, bottom: 50, left: 80},
-            levels: 5,
-            roundStrokes: true,
-            color: d3.scaleOrdinal().range(['rgb(255,89,0)']), // orange"#ff5900"
-            dotRadius: 3,
-            format: '.1f',
-            legend: {title: '業種別集計', translateX: 150, translateY: 40},
-            unit: '%'
-        };
-
-        RadarChart(".radarChart1", JSON.parse('{{ industry_count|safe }}'), radarChartOptions);
-        RadarChart(".radarChart2", JSON.parse('{{ industry_cap|safe }}'), radarChartOptions);
-        LineChart("vnChart", JSON.parse('{{ vnindex_timeline|safe }}'));
-        LineChart("vnChart_layer", JSON.parse('{{ vnindex_layers|safe }}'));
-
-        const iipData = JSON.parse('{{ iip_timeline|safe }}');
-        if (iipData.labels.length === 0) {
-            document.getElementById('iip-alert').classList.remove('d-none');
-            document.getElementById('iipChart').style.display = 'none';
-        } else {
-            LineChart("iipChart", iipData);
-        }
-
-        const cpiData = JSON.parse('{{ cpi_timeline|safe }}');
-        if (cpiData.labels.length === 0) {
-            document.getElementById('cpi-alert').classList.remove('d-none');
-            document.getElementById('cpiChart').style.display = 'none';
-        } else {
-            LineChart("cpiChart", cpiData);
-        }
-    </script>
 {% endblock %}
