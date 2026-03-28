@@ -17,6 +17,11 @@ FEE_RATE = 0.022
 
 
 class MarketAbstract(ABC):
+    """
+    マーケットデータプロバイダーの基底クラス。
+    各市場（ベトナム、米国など）のデータ取得・加工のインターフェースを定義します。
+    """
+
     def __init__(self):
         self.repository = MarketRepository()
 
@@ -41,6 +46,10 @@ class MarketAbstract(ABC):
 
 
 class NasdaqMarketDataProvider(MarketAbstract):
+    """
+    米国市場(Nasdaq)用のデータプロバイダー。
+    （現在はプレースホルダーとしての実装）
+    """
 
     def rss(self, json_data: dict) -> Rss:
         pass
@@ -54,8 +63,14 @@ class NasdaqMarketDataProvider(MarketAbstract):
 
 
 class VietnamMarketDataProvider(MarketAbstract):
+    """
+    ベトナム市場用のデータプロバイダー。
+    リポジトリから取得した生データを、グラフ表示用（Chart.js等）や
+    ビュー表示用のデータ構造に変換します。
+    """
 
     def rss(self, json_data: dict) -> Rss:
+        """RSSフィードの生データをRss値オブジェクトに変換します。"""
         entries = [
             RssEntry(
                 title=item["title"],
@@ -99,6 +114,10 @@ class VietnamMarketDataProvider(MarketAbstract):
         }
 
     def vnindex_annual_layers(self) -> dict:
+        """
+        VN-INDEXの年ごとの推移をレイヤー化したデータセットを作成します。
+        季節性（アノマリー）の分析に使用します。
+        """
         datasets = []
         for year in self.repository.get_distinct_values("Y"):
             records = self.repository.get_vnindex_at_year(year)
@@ -175,6 +194,9 @@ class VietnamMarketDataProvider(MarketAbstract):
         aggregate_alias: str,
         denominator_field: str,
     ) -> list[RadarChartLayer]:
+        """
+        業種別の構成比（企業数や時価総額）を比較するためのレーダーチャート用データを生成します。
+        """
         layers: list[RadarChartLayer] = []
         for m in months_dating_back:
             try:
@@ -212,6 +234,9 @@ class VietnamMarketDataProvider(MarketAbstract):
         return layers
 
     def uptrend(self) -> dict:
+        """
+        上昇トレンド銘柄を業種ごとにグルーピングしたデータを生成します。
+        """
         uptrend = self.repository.get_annotated_uptrend()
 
         result = {}
