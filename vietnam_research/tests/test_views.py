@@ -1,8 +1,9 @@
+from datetime import datetime, timezone
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
-from datetime import datetime, timezone
-from unittest.mock import patch
 
 from vietnam_research.models import Articles, Likes, ExchangeRate
 
@@ -15,7 +16,9 @@ class TestView(TestCase):
             return_value={
                 "entries": [],
                 "feed": {
-                    "updated": datetime.now(timezone.utc).strftime("%Y/%m/%d %H:%M:%S %z")
+                    "updated": datetime.now(timezone.utc).strftime(
+                        "%Y/%m/%d %H:%M:%S %z"
+                    )
                 },
             },
         )
@@ -141,3 +144,14 @@ class TestView(TestCase):
         self.assertIn(
             "存在しない記事へのリクエストがありました", response.content.decode("utf-8")
         )
+
+    def test_cannot_create_likes_without_login(self):
+        """
+        ログインしていない場合、いいね！リクエストは 401 を返す
+        """
+        self.client.logout()
+        response = self.client.post(
+            reverse("vnm:likes", kwargs={"article_id": self.article.pk})
+        )
+        self.assertEqual(401, response.status_code)
+        self.assertJSONEqual(response.content, {"error": "login_required"})
