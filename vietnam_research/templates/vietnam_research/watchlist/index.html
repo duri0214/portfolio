@@ -1,0 +1,107 @@
+{% extends "vietnam_research/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'home:index' %}"
+                                               class="text-decoration-none text-muted">ホーム</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
+                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">ウォッチリスト</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <div class="col-12 d-flex justify-content-between align-items-center border-bottom pb-2">
+                <h2 class="h3 mb-0">マイウォッチリスト</h2>
+                <div>
+                    {% if user.is_superuser or user.is_staff %}
+                        <a href="{% url 'vnm:watchlist_create' %}" class="btn btn-primary btn-sm">銘柄追加</a>
+                    {% else %}
+                        <button class="btn btn-secondary btn-sm" disabled>銘柄追加</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Watchlist Cards -->
+            <div class="col-12">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+                    {% for row in watchlist %}
+                        <div class="col">
+                            <div class="card h-100 shadow-sm">
+                                <img src="{{ MEDIA_URL }}vietnam_research/charts/{{ row.symbol.code }}.png"
+                                     class="card-img-top p-2 bg-light"
+                                     alt="{{ row.symbol.code }}">
+                                <div class="card-body">
+                                    <h6 class="card-title fw-bold mb-1">{{ row.symbol.name | truncatechars:20 }}</h6>
+                                    <div class="text-muted small mb-3">銘柄コード: <span
+                                            class="fw-bold">{{ row.symbol.code }}</span></div>
+
+                                    <div class="bg-light p-2 rounded small mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>購入単価:</span>
+                                            <span class="fw-bold">@{{ row.stocks_price | intcomma }} VND</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>現在値:</span>
+                                            <span class="fw-bold text-primary">@{{ row.closing_price | intcomma }} VND</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>騰落率:</span>
+                                            <span class="fw-bold {% if row.stocks_price_delta >= 0 %}text-danger{% else %}text-success{% endif %}">
+                                            {{ row.stocks_price_delta | intcomma }}%
+                                        </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="x-small text-muted">
+                                        購入日: {{ row.bought_day }} ({{ row.stocks_count | intcomma }} 株)
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+                                    <a href="{% url 'vnm:watchlist_edit' row.id %}"
+                                       class="btn btn-link btn-sm p-0 text-decoration-none">編集</a>
+                                    <a href="https://www.viet-kabu.com/{{ row.symbol.market.url_file_name }}/{{ row.symbol.code }}.html"
+                                       target="_blank"
+                                       class="btn btn-outline-secondary btn-sm py-0 x-small">VIET-KABU</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-info">ウォッチリストに銘柄が登録されていません。</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Educational Section -->
+            <div class="col-12 mt-5">
+                <div class="card bg-light border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">PER（株価収益率）の基礎知識</h5>
+                        <div class="row align-items-center">
+                            <div class="col-md-7">
+                                <p class="small text-muted">
+                                    PER（株価収益率）は、現在の株価が1株当たりの純利益の何倍かを示す指標です。
+                                    ベトナム市場のような成長市場では、将来の利益成長を見込んでPERが高くなる傾向がありますが、
+                                    割安・割高を判断する重要な指標の一つです。
+                                </p>
+                            </div>
+                            <div class="col-md-5 text-center">
+                                <img src="{% static 'vietnam_research/images/PER.png' %}"
+                                     class="img-fluid rounded shadow-sm" alt="PER explanation"
+                                     style="max-height: 200px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
