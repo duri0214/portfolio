@@ -1,0 +1,91 @@
+{% extends "vietnam_research/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'home:index' %}"
+                                               class="text-decoration-none text-muted">ホーム</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
+                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">株式ツール</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <div class="col-12">
+                <h2 class="h3 mb-3 border-bottom pb-2">株式ツール</h2>
+            </div>
+
+            <!-- Exchange Calculator -->
+            <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">為替・購入計算シミュレーター</h5>
+                        <p class="text-muted small mb-4">目安：1,000 VND ≈ 5円 | <a
+                                href="https://search.sbisec.co.jp/v2/popwin/info/stock/foreign_exp.pdf" target="_blank">取引説明書</a>
+                        </p>
+
+                        <form method="post" class="row g-3">
+                            {% csrf_token %}
+                            <div class="col-md-5">
+                                <label class="form-label small fw-bold">{{ exchange_form.budget.label }}</label>
+                                <div class="input-group">
+                                    {{ exchange_form.budget }}
+                                    <span class="input-group-text">JPY</span>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-bold">{{ exchange_form.unit_price.label }}</label>
+                                <div class="input-group">
+                                    {{ exchange_form.unit_price }}
+                                    <span class="input-group-text">VND</span>
+                                </div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">計算</button>
+                            </div>
+                        </form>
+
+                        {% if exchanged.budget_jpy %}
+                            <div class="mt-4 p-3 bg-light border rounded">
+                                <h6 class="fw-bold border-bottom pb-2 mb-3">計算結果</h6>
+                                <div class="row g-3 small">
+                                    <div class="col-6 col-sm-4">
+                                        <div class="text-muted">予算 (VND)</div>
+                                        <div class="fw-bold">{{ exchanged.budget_in_target_currency | floatformat:0 | intcomma }}
+                                            VND
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4">
+                                        <div class="text-muted">為替レート</div>
+                                        <div class="fw-bold">{{ exchanged.rate | floatformat:4 }} JPY/VND</div>
+                                    </div>
+                                    <div class="col-12 col-sm-4 border-start-sm">
+                                        <div class="text-primary fw-bold">購入可能口数</div>
+                                        <div class="h4 text-primary fw-bold mb-0">{{ exchanged.purchasable_units | floatformat:0 | intcomma }}
+                                            <small>口</small></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted">合計 (手数料込)</div>
+                                        <div class="fw-bold text-danger">{{ exchanged.price_in_fee | floatformat:0 | intcomma }}
+                                            VND
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted">手数料 (2.2%)</div>
+                                        <div class="fw-bold">{{ exchanged.fee | floatformat:0 | intcomma }} VND</div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
