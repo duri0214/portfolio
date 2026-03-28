@@ -14,17 +14,26 @@ from vietnam_research.models import Industry, Watchlist
 
 
 class MarketRepository:
+    """
+    マーケット情報のリポジトリクラス。
+    記事、基本情報、ウォッチリスト、VN-INDEX、統計データなどのDB操作・集計を担当します。
+    """
+
     @staticmethod
     def get_articles(login_id):
-        # デザインの都合上「投稿」は3つしか取得しない
+        """
+        ダッシュボード表示用の記事を取得します。
+        最新の6件を、ログインユーザーのいいね状態を含めて返します。
+        """
         return (
             Articles.with_state(login_id)
             .annotate(user_name=F("user__email"))
-            .order_by("-created_at")[:3]
+            .order_by("-created_at")[:6]
         )
 
     @staticmethod
     def get_basic_info() -> QuerySet:
+        """ベトナムの基本情報をID順に取得します。"""
         return BasicInformation.objects.order_by("id").values("item", "description")
 
     @staticmethod
@@ -59,6 +68,7 @@ class MarketRepository:
 
     @staticmethod
     def get_distinct_values(distinct_field: str) -> list:
+        """指定されたフィールドの重複しない値の一覧を取得します。"""
         return [
             record[distinct_field]
             for record in VnIndex.objects.time_series_closing_price()
@@ -69,10 +79,12 @@ class MarketRepository:
 
     @staticmethod
     def get_vnindex_timeline() -> QuerySet:
+        """VN-INDEXの時系列データを取得します。"""
         return VnIndex.objects.time_series_closing_price().order_by("Y", "M")
 
     @staticmethod
     def get_vnindex_at_year(year: str) -> list:
+        """指定された年のVN-INDEX時系列データを取得します。"""
         return (
             VnIndex.objects.time_series_closing_price()
             .filter(Y=year)
@@ -82,12 +94,14 @@ class MarketRepository:
 
     @staticmethod
     def get_iip_timeline() -> QuerySet:
+        """IIP（鉱工業生産指数）の時系列データを取得します。"""
         return VietnamStatistics.objects.filter(
             element="industrial production index"
         ).order_by("period")
 
     @staticmethod
     def get_cpi_timeline() -> QuerySet:
+        """CPI（消費者物価指数）の時系列データを取得します。"""
         return VietnamStatistics.objects.filter(
             element="consumer price index"
         ).order_by("period")
@@ -96,6 +110,9 @@ class MarketRepository:
     def get_industry_records_for(
         month: int, aggregate_field: str, aggregate_alias: str
     ) -> QuerySet:
+        """
+        指定された月（現在からXヶ月前）の業種別集計データを取得します。
+        """
         return (
             Industry.objects.filter(
                 recorded_date=Industry.objects.slipped_month_end(
@@ -117,6 +134,10 @@ class MarketRepository:
 
     @staticmethod
     def get_denominator_for(month: int, denominator_field: str) -> float:
+        """
+        指定された月（現在からXヶ月前）の全業種合計値を算出します。
+        構成比を計算する際の分母として使用します。
+        """
         end_of_month = Industry.objects.slipped_month_end(
             month
         ).formatted_recorded_date()
@@ -127,6 +148,10 @@ class MarketRepository:
 
     @staticmethod
     def get_annotated_uptrend():
+        """
+        上昇トレンド銘柄の一覧を取得します。
+        業種名や市場コードなどの関連情報を付与し、変化率の降順でソートします。
+        """
         return (
             Uptrend.objects.prefetch_related("symbol", "ind_class")
             .annotate(
@@ -158,6 +183,9 @@ class MarketRepository:
 
     @staticmethod
     def get_industry_names():
+        """
+        上昇トレンド銘柄が存在する業種名の一覧を重複なく取得します。
+        """
         return (
             Uptrend.objects.annotate(
                 ind_name=Concat(
