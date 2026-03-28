@@ -195,7 +195,8 @@ class Watchlist(models.Model):
 class Uptrend(models.Model):
     """
     トレンド銘柄（上昇傾向）
-    日次バッチで計算された銘柄ごとの傾き（価格変化）情報を保持します。
+    日次バッチで計算された銘柄ごとの価格変化情報を保持します。
+    stocks_price_delta: 14日前（またはデータのある最古の日）からの変化率(%)
     """
 
     stocks_price_oldest = models.FloatField()
