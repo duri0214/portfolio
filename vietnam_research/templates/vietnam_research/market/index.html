@@ -1,0 +1,110 @@
+{% extends "vietnam_research/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'home:index' %}"
+                                               class="text-decoration-none text-muted">ホーム</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
+                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">市場分析</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <div class="col-12">
+                <h2 class="h3 mb-3 border-bottom pb-2">市場分析</h2>
+            </div>
+
+            <!-- Radar Charts -->
+            <div class="col-lg-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-start mb-4">業種別マクロ分析</h5>
+                        <div class="row align-items-center">
+                            <div class="col-md-6 mb-4 mb-md-0">
+                                <h6 class="text-muted small mb-2">企業数</h6>
+                                <div class="radarChart1 d-inline-block"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted small mb-2">時価総額</h6>
+                                <div class="radarChart2 d-inline-block"></div>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-3 bg-light rounded text-start small">
+                            <p class="mb-0">
+                                ベトナム経済の現状: 足元の鉱業の不調は原油価格低迷が主因。一方で製造業は外資系企業（鉄鋼・電機等）の進出により伸びが加速しています。
+                                日系企業にとっては賃金上昇が課題となっています。
+                            </p>
+                            <p class="mt-2 mb-0 text-end">
+                                <a href="https://www.murc.jp/wp-content/uploads/2018/03/report_180316.pdf"
+                                   target="_blank"
+                                   class="text-muted x-small">Source: MURC Report (2018/03/16)</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Value -->
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">業種別売買代金</h5>
+                        <p class="text-muted small mb-4">単位: 10億VND (÷1,000,000,000)</p>
+                        <div class="text-center">
+                            <img src="{{ MEDIA_URL }}vietnam_research/charts/daily_industry_stacked_bar_chart.png"
+                                 class="img-fluid rounded" alt="Trading value by industry">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Indices -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-start mb-3">VN-INDEX 長期推移</h5>
+                        <p class="text-muted small text-start">長期時系列データ</p>
+                        <canvas id="vnChart" class="w-100" style="max-height: 400px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-start mb-3">VN-INDEX 季節性（層別表示）</h5>
+                        <p class="text-muted small text-start">年ごとの比較（季節要因の確認）</p>
+                        <canvas id="vnChart_layer" class="w-100" style="max-height: 400px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script lang="js">
+            const radarChartOptions = {
+                w: 290,
+                h: 350,
+                margin: {top: 50, right: 130, bottom: 50, left: 80},
+                levels: 5,
+                roundStrokes: true,
+                color: d3.scaleOrdinal().range(['rgb(255,89,0)']), // orange"#ff5900"
+                dotRadius: 3,
+                format: '.1f',
+                legend: {title: 'Industry Aggregate', translateX: 150, translateY: 40},
+                unit: '%'
+            };
+
+            // Initialize Charts
+            RadarChart(".radarChart1", JSON.parse('{{ industry_count|safe }}'), radarChartOptions);
+            RadarChart(".radarChart2", JSON.parse('{{ industry_cap|safe }}'), radarChartOptions);
+            LineChart("vnChart", JSON.parse('{{ vnindex_timeline|safe }}'));
+            LineChart("vnChart_layer", JSON.parse('{{ vnindex_layers|safe }}'));
+        </script>
+    </div>
+{% endblock %}
