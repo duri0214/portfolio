@@ -13,6 +13,7 @@ from vietnam_research.models import (
     Symbol,
     Market,
     Unit,
+    Watchlist,
 )
 
 
@@ -349,7 +350,7 @@ class TestView(TestCase):
             code="HOSE_DET", name="ホーチミン証券取引所詳細用"
         )
         symbol = Symbol.objects.create(
-            code="DETAIL_VNM", name="Vinamilk_DET", market=market
+            code="DETAIL_VNM", name="Vina-milk_DET", market=market
         )
         unit = Unit.objects.create(name="10億VND")
 
@@ -377,3 +378,78 @@ class TestView(TestCase):
         # '3Q' が含まれていることを確認
         self.assertContains(response, "3Q")
         # エラーメッセージの内容は環境によって微妙に異なる可能性があるため、キーの存在確認を優先
+
+    def test_watchlist_register_redirects_to_watchlist(self):
+        """
+        ウォッチリスト登録後、ウォッチリストページにリダイレクトすることを検証
+        """
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE")
+        symbol = Symbol.objects.create(
+            code="VNM_REG", name="Vina-milk_REG", market=market
+        )
+        data = {
+            "symbol": symbol.id,
+            "bought_day": "2024-03-28",
+            "stocks_price": 70000,
+            "stocks_count": 100,
+        }
+        response = self.client.post(reverse("vnm:watchlist_create"), data=data)
+        self.assertRedirects(response, reverse("vnm:watchlist"))
+
+    def test_watchlist_edit_redirects_to_watchlist(self):
+        """
+        ウォッチリスト編集後、ウォッチリストページにリダイレクトすることを検証
+        """
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE_EDIT")
+        symbol = Symbol.objects.create(code="FPT_EDIT", name="FPT_EDIT", market=market)
+        watchlist = Watchlist.objects.create(
+            user=self.user,
+            symbol=symbol,
+            bought_day="2024-03-28",
+            stocks_price=90000,
+            stocks_count=100,
+        )
+        data = {
+            "symbol": symbol.id,
+            "bought_day": "2024-03-29",
+            "stocks_price": 95000,
+            "stocks_count": 100,
+        }
+        response = self.client.post(
+            reverse("vnm:watchlist_edit", kwargs={"pk": watchlist.pk}), data=data
+        )
+        self.assertRedirects(response, reverse("vnm:watchlist"))
+
+    def test_watchlist_duplicate_registration_fails(self):
+        """
+        同じ銘柄を二重に登録できないことを検証
+        """
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE_DUP")
+        symbol = Symbol.objects.create(
+            code="VNM_DUP", name="Vina-milk_DUP", market=market
+        )
+
+        # 1回目の登録
+        data = {
+            "symbol": symbol.id,
+            "bought_day": "2024-03-28",
+            "stocks_price": 70000,
+            "stocks_count": 100,
+        }
+        response = self.client.post(reverse("vnm:watchlist_create"), data=data)
+        self.assertRedirects(response, reverse("vnm:watchlist"))
+        self.assertEqual(
+            Watchlist.objects.filter(user=self.user, symbol=symbol).count(), 1
+        )
+
+        # 2回目の登録（重複）
+        response = self.client.post(reverse("vnm:watchlist_create"), data=data)
+
+        # 重複が許されないため、リダイレクトせずにフォーム再表示（エラーメッセージ付き）になることを検証
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, "この銘柄はすでにウォッチリストに登録されています。"
+        )
