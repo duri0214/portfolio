@@ -1,8 +1,8 @@
 from django.test import TestCase
 from django.utils.timezone import now
 
-from vietnam_research.forms import WatchlistCreateForm
-from vietnam_research.models import Symbol, IndClass, Market, Industry, ExchangeRate
+from vietnam_research.forms import WatchlistForm
+from vietnam_research.models import Symbol, IndClass, Market, ExchangeRate
 
 
 class FormTests(TestCase):
@@ -28,13 +28,13 @@ class FormTests(TestCase):
         params = dict(
             symbol=symbol, bought_day=now(), stocks_price=1000, stocks_count=500
         )
-        form = WatchlistCreateForm(params, instance=Industry())
+        form = WatchlistForm(params)
         self.assertTrue(form.is_valid())
 
     def test_watchlist_form_invalid(self):
         """test No.2: 何も入力しなければエラーになることを検証"""
         params = dict()
-        form = WatchlistCreateForm(params, instance=Industry())
+        form = WatchlistForm(params)
         self.assertFalse(form.is_valid())
 
     def test_exchange_calc(self):
