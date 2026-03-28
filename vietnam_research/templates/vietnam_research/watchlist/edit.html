@@ -44,6 +44,8 @@
                             {% endfor %}
                             <div class="d-grid gap-2 mt-4">
                                 <button type="submit" class="btn btn-primary">更新する</button>
+                                <a href="{% url 'vnm:watchlist_delete' object.pk %}"
+                                   class="btn btn-danger">この銘柄を削除する</a>
                                 <a href="{% url 'vnm:watchlist' %}" class="btn btn-outline-secondary">キャンセル</a>
                             </div>
                         </form>

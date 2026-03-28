@@ -1,0 +1,38 @@
+{% extends "vietnam_research/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
+                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'vnm:watchlist' %}"
+                                               class="text-decoration-none text-muted">ウォッチリスト</a></li>
+                <li class="breadcrumb-item active" aria-current="page">削除確認</li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-danger text-white p-3">
+                        <h1 class="h5 mb-0"><i class="fas fa-trash-alt me-2"></i>ウォッチリスト削除確認</h1>
+                    </div>
+                    <div class="card-body p-4 bg-light text-center">
+                        <p class="mb-4">
+                            銘柄「<strong>{{ object.symbol }}</strong>」をウォッチリストから削除してもよろしいですか？
+                        </p>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger">削除する</button>
+                                <a href="{% url 'vnm:watchlist_edit' object.pk %}" class="btn btn-outline-secondary">キャンセル</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

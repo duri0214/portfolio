@@ -14,6 +14,7 @@ from django.views.generic import (
     CreateView,
     ListView,
     UpdateView,
+    DeleteView,
     TemplateView,
     RedirectView,
 )
@@ -308,6 +309,21 @@ class WatchlistEdit(UpdateView):
     def get_queryset(self, **kwargs):
         """対象のウォッチリスト項目を取得します。"""
         return Watchlist.objects.filter(pk=self.kwargs["pk"])
+
+
+class WatchlistDelete(DeleteView):
+    """
+    ウォッチリスト銘柄削除ビュー。
+    登録済みの銘柄をウォッチリストから削除します。
+    """
+
+    model = Watchlist
+    template_name = "vietnam_research/watchlist/delete_confirm.html"
+    success_url = reverse_lazy("vnm:watchlist")
+
+    def get_queryset(self, **kwargs):
+        """対象のウォッチリスト項目を取得します。"""
+        return Watchlist.objects.filter(pk=self.kwargs["pk"], user=self.request.user)
 
 
 class FinancialResultsListView(ListView):

@@ -474,3 +474,66 @@ class TestView(TestCase):
         response = self.client.get(reverse("vnm:tools"))
         self.assertEqual(200, response.status_code)
         self.assertNotContains(response, "最低手数料適用")
+
+    def test_watchlist_delete_view(self):
+        """
+        ウォッチリストの削除機能が正常に動作することを検証
+        """
+        self.client.login(username=self.user.username, password=self.password_plane)
+        market = Market.objects.create(name="HOSE_DEL")
+        symbol = Symbol.objects.create(code="FPT_DEL", name="FPT_DEL", market=market)
+        watchlist = Watchlist.objects.create(
+            user=self.user,
+            symbol=symbol,
+            bought_day="2024-03-28",
+            stocks_price=90000,
+            stocks_count=100,
+        )
+
+        # 削除確認ページの表示
+        response = self.client.get(
+            reverse("vnm:watchlist_delete", kwargs={"pk": watchlist.pk})
+        )
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(
+            response, "vietnam_research/watchlist/delete_confirm.html"
+        )
+        self.assertContains(response, "FPT_DEL")
+
+        # 削除実行
+        response = self.client.post(
+            reverse("vnm:watchlist_delete", kwargs={"pk": watchlist.pk})
+        )
+        self.assertRedirects(response, reverse("vnm:watchlist"))
+        self.assertFalse(Watchlist.objects.filter(pk=watchlist.pk).exists())
+
+    def test_watchlist_delete_permission(self):
+        """
+        他人のウォッチリストを削除できないことを検証
+        """
+        # 他人を作成
+        other_user = User.objects.create_user(username="other", password="password")
+        market = Market.objects.create(name="HOSE_P")
+        symbol = Symbol.objects.create(code="FPT_P", name="FPT_P", market=market)
+        watchlist = Watchlist.objects.create(
+            user=other_user,
+            symbol=symbol,
+            bought_day="2024-03-28",
+            stocks_price=90000,
+            stocks_count=100,
+        )
+
+        # 自分としてログイン
+        self.client.login(username=self.user.username, password=self.password_plane)
+
+        # 他人のウォッチリスト削除を試みる
+        response = self.client.get(
+            reverse("vnm:watchlist_delete", kwargs={"pk": watchlist.pk})
+        )
+        self.assertEqual(404, response.status_code)
+
+        response = self.client.post(
+            reverse("vnm:watchlist_delete", kwargs={"pk": watchlist.pk})
+        )
+        self.assertEqual(404, response.status_code)
+        self.assertTrue(Watchlist.objects.filter(pk=watchlist.pk).exists())
