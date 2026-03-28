@@ -161,6 +161,10 @@ class StockToolsView(TemplateView):
         fee = VietnamMarketDataProvider.calculate_transaction_fee(
             price_without_fees=unit_price * purchasable_units
         )
+        # 最低手数料が適用されたか判定
+        from vietnam_research.domain.dataprovider.market import MIN_FEE
+
+        is_min_fee = fee == MIN_FEE
 
         context.update(
             {
@@ -170,6 +174,7 @@ class StockToolsView(TemplateView):
                     rate=rate,
                     purchasable_units=purchasable_units,
                     fee=fee,
+                    is_min_fee=is_min_fee,
                 ),
                 "exchange_form": ExchangeForm(
                     initial={"budget": budget, "unit_price": unit_price}

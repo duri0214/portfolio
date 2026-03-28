@@ -453,3 +453,24 @@ class TestView(TestCase):
         self.assertContains(
             response, "この銘柄はすでにウォッチリストに登録されています。"
         )
+
+    def test_stock_tools_min_fee_badge(self):
+        """
+        株式ツールのシミュレーターで最低手数料が適用された場合にバッジが表示されることを検証
+        """
+        # 1. 最低手数料が適用されるケース (少額)
+        # 予算 10,000円, 単価 50,000VND -> 購入口数少
+        # 2.2% が 1,320,000VND を下回るような設定
+        data = {"budget": 10000, "unit_price": 50000}
+        self.client.post(reverse("vnm:tools"), data=data)
+        response = self.client.get(reverse("vnm:tools"))
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "最低手数料適用")
+
+        # 2. 最低手数料が適用されないケース (高額)
+        # 予算 10,000,000円 -> 約定代金が大きくなり 2.2% > 1,320,000VND になる
+        data = {"budget": 10000000, "unit_price": 50000}
+        self.client.post(reverse("vnm:tools"), data=data)
+        response = self.client.get(reverse("vnm:tools"))
+        self.assertEqual(200, response.status_code)
+        self.assertNotContains(response, "最低手数料適用")

@@ -12,7 +12,7 @@ from vietnam_research.domain.valueobject.market import Rss, RssEntry
 from vietnam_research.domain.valueobject.radar_chart import RadarChartLayer, Axis
 from vietnam_research.models import Industry
 
-MIN_FEE = 1200000
+MIN_FEE = 1320000
 FEE_RATE = 0.022
 
 

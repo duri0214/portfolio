@@ -27,7 +27,7 @@
                             <ul class="list-inline mb-0 small text-muted">
                                 <li class="list-inline-item">売買単位: HOSE (100株) / HNX (100株)</li>
                                 <li class="list-inline-item ms-3">決済通貨: 外貨決済 (VND)</li>
-                                <li class="list-inline-item ms-3">委託手数料: 2.2% (税込)</li>
+                                <li class="list-inline-item ms-3">委託手数料: 2.2% (最低 1,320,000 VND)</li>
                             </ul>
                         </div>
                     </div>
@@ -42,6 +42,13 @@
                         <p class="text-muted small mb-4">目安：1,000 VND ≈ 5円 | <a
                                 href="https://search.sbisec.co.jp/v2/popwin/info/stock/foreign_exp.pdf" target="_blank">取引説明書</a>
                         </p>
+                        <div class="alert alert-info py-2 px-3 mb-4 x-small border-0 shadow-none bg-opacity-10"
+                             role="alert">
+                            <i class="fas fa-info-circle me-1"></i>
+                            SBI証券の手数料は<strong>約定代金の2.2%（税込）</strong>ですが、最低手数料は<strong>1,320,000
+                            VND（税込）</strong>です。
+                            少額取引の場合、手数料率が高くなる可能性があるためご注意ください。
+                        </div>
 
                         <form method="post" class="row g-3">
                             {% csrf_token %}
@@ -90,8 +97,16 @@
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <div class="text-muted">手数料 (2.2%)</div>
-                                        <div class="fw-bold">{{ exchanged.fee | floatformat:0 | intcomma }} VND</div>
+                                        <div class="text-muted">手数料 (2.2%) *</div>
+                                        <div class="fw-bold">
+                                            {{ exchanged.fee | floatformat:0 | intcomma }} VND
+                                            {% if exchanged.is_min_fee %}
+                                                <span class="badge rounded-pill bg-warning text-dark small ms-1">最低手数料適用</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-2 x-small text-muted text-end">
+                                        * 最低手数料 1,320,000 VND (税込)
                                     </div>
                                 </div>
                             </div>
