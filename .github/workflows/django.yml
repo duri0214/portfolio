@@ -13,26 +13,35 @@ jobs:
       max-parallel: 1
       matrix:
         python-version: [ 3.12 ]
+    env:
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'ci-django-secret-key' }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: requirements.txt
 
-      - name: Set up
+      - name: Set up (MySQL起動待ち + requirements.txtの詳細ログ)
         run: |
           sudo systemctl start mysql
+          for i in {1..30}; do
+            if mysqladmin ping -u root -proot --silent; then
+              break
+            fi
+            sleep 1
+          done
           mysql -u root -proot -e "CREATE USER 'python'@'localhost';"
           mysql -u root -proot -e "GRANT ALL ON test_portfolio_db.* TO 'python'@'localhost';"
           
           python -m pip install setuptools
-          python -m pip install -r requirements.txt
+          python -m pip install -r requirements.txt --verbose
 
-      - name: Run tests
+      - name: Run tests (詳細ログ)
         run: |
-          export DJANGO_SECRET_KEY="$(base64 <<< "$RANDOM|TeStiNg|$RANDOM" | tr -d '\n')"
-          python manage.py test
+          python manage.py test --verbosity 2
