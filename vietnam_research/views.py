@@ -5,14 +5,12 @@ from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, Sum
 from django.http.response import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import (
     CreateView,
-    ListView,
     UpdateView,
     DeleteView,
     TemplateView,
@@ -31,13 +29,11 @@ from vietnam_research.forms import (
     ArticleForm,
     WatchlistForm,
     ExchangeForm,
-    FinancialResultsForm,
     CustomAuthenticationForm,
 )
 from vietnam_research.models import (
     Watchlist,
     Articles,
-    FinancialResultWatch,
 )
 
 
@@ -324,66 +320,3 @@ class WatchlistDelete(DeleteView):
     def get_queryset(self, **kwargs):
         """対象のウォッチリスト項目を取得します。"""
         return Watchlist.objects.filter(pk=self.kwargs["pk"], user=self.request.user)
-
-
-class FinancialResultsListView(ListView):
-    """
-    決算データ一覧ビュー。
-    主要企業（NASDAQなどの米国株）の銘柄ごとの決算クリア状況をサマリー表示します。
-    ※本機能は usa_research アプリ作成前の暫定的な配置です。
-    """
-
-    template_name = "vietnam_research/financial_results/index.html"
-    model = FinancialResultWatch
-
-    def get_queryset(self, **kwargs):
-        """銘柄コードごとに集計された決算データを取得します。"""
-        return (
-            FinancialResultWatch.objects.values("symbol__code")
-            .annotate(
-                Count("symbol__code"),
-                Sum("eps_ok"),
-                Sum("sales_ok"),
-                Sum("guidance_ok"),
-            )
-            .order_by(
-                "-symbol__code__count",
-                "-eps_ok__sum",
-                "-sales_ok__sum",
-                "-guidance_ok__sum",
-            )
-        )
-
-
-class FinancialResultsDetailListView(ListView):
-    """
-    決算データ詳細ビュー。
-    特定の主要企業（米国株など）に関する時系列の決算発表結果を表示します。
-    """
-
-    template_name = "vietnam_research/financial_results/detail.html"
-    model = FinancialResultWatch
-
-    def get_queryset(self):
-        """指定されたティッカー銘柄の決算履歴を取得します。"""
-        ticker = self.kwargs["ticker"]
-        return FinancialResultWatch.objects.filter(symbol__code=ticker).order_by(
-            "recorded_date"
-        )
-
-
-class FinancialResultsCreateView(LoginRequiredMixin, CreateView):
-    """
-    決算データ登録ビュー。
-    ログインユーザーが特定の銘柄の決算発表結果（EPS, 売上, ガイダンスの成否など）を登録します。
-    """
-
-    model = FinancialResultWatch
-    template_name = "vietnam_research/financial_results/create.html"
-    form_class = FinancialResultsForm
-    success_url = reverse_lazy("vnm:financial_results")
-
-    def form_valid(self, form):
-        """登録ユーザーIDをセットして保存します。"""
-        form.instance.user_id = self.request.user.id
-        return super().form_valid(form)

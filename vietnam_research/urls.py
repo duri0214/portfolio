@@ -15,9 +15,6 @@ from vietnam_research.views import (
     WatchlistRegister,
     WatchlistEdit,
     WatchlistDelete,
-    FinancialResultsListView,
-    FinancialResultsDetailListView,
-    FinancialResultsCreateView,
     LikesView,
 )
 
@@ -36,20 +33,5 @@ urlpatterns = [
         "watchlist/delete/<int:pk>/",
         WatchlistDelete.as_view(),
         name="watchlist_delete",
-    ),
-    path(
-        "financial_results/",
-        FinancialResultsListView.as_view(),
-        name="financial_results",
-    ),
-    path(
-        "financial_results/detail/<str:ticker>/",
-        FinancialResultsDetailListView.as_view(),
-        name="financial_results_detail",
-    ),
-    path(
-        "financial_results/create/",
-        FinancialResultsCreateView.as_view(),
-        name="financial_results_create",
     ),
 ]
