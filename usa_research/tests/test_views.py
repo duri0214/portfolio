@@ -8,9 +8,9 @@ from usa_research.models import Unit, FinancialResultWatch
 class FinancialResultsViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_superuser(
-            username="testuser", email="test@example.com", password="password"
+            username="test-user", email="test@example.com", password="password"
         )
-        self.client.login(username="testuser", password="password")
+        self.client.login(username="test-user", password="password")
         self.unit_cents, _ = Unit.objects.get_or_create(
             id=1, defaults={"name": "セント(¢)"}
         )
@@ -20,7 +20,7 @@ class FinancialResultsViewTests(TestCase):
 
     def test_financial_results_list_view(self):
         FinancialResultWatch.objects.create(
-            ticker="AAPL",
+            ticker="AMD",
             recorded_date="2023-01-01",
             quarter=1,
             eps_estimate=1.0,
@@ -29,15 +29,16 @@ class FinancialResultsViewTests(TestCase):
             sales_estimate=100.0,
             sales_actual=110.0,
             sales_unit=self.unit_dollars,
+            y_over_y_growth_rate=10.0,
             user=self.user,
         )
         response = self.client.get(reverse("usa:financial_results"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "AAPL")
+        self.assertContains(response, "AMD")
 
     def test_financial_results_detail_view(self):
         FinancialResultWatch.objects.create(
-            ticker="AAPL",
+            ticker="AMD",
             recorded_date="2023-01-01",
             quarter=1,
             eps_estimate=1.0,
@@ -46,13 +47,14 @@ class FinancialResultsViewTests(TestCase):
             sales_estimate=100.0,
             sales_actual=110.0,
             sales_unit=self.unit_dollars,
+            y_over_y_growth_rate=10.0,
             user=self.user,
         )
         response = self.client.get(
-            reverse("usa:financial_results_detail", kwargs={"ticker": "AAPL"})
+            reverse("usa:financial_results_detail", kwargs={"ticker": "AMD"})
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "AAPL")
+        self.assertContains(response, "AMD")
         self.assertContains(response, "1Q")
 
     def test_financial_results_create_view_get(self):
@@ -62,7 +64,7 @@ class FinancialResultsViewTests(TestCase):
 
     def test_financial_results_create_view_post(self):
         data = {
-            "ticker": "MSFT",
+            "ticker": "SNOW",
             "recorded_date": "2023-01-01",
             "quarter": 1,
             "eps_estimate": 2.0,
@@ -71,10 +73,11 @@ class FinancialResultsViewTests(TestCase):
             "sales_estimate": 200.0,
             "sales_actual": 210.0,
             "sales_unit": self.unit_dollars.id,
+            "y_over_y_growth_rate": 15.0,
             "eps_ok": True,
             "sales_ok": True,
             "guidance_ok": True,
         }
         response = self.client.post(reverse("usa:financial_results_create"), data)
         self.assertRedirects(response, reverse("usa:financial_results"))
-        self.assertTrue(FinancialResultWatch.objects.filter(ticker="MSFT").exists())
+        self.assertTrue(FinancialResultWatch.objects.filter(ticker="SNOW").exists())

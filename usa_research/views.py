@@ -3,7 +3,8 @@ from datetime import datetime
 
 import markdown
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Max
+from django.db.models.functions import TruncMonth
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView
 
@@ -65,8 +66,6 @@ class IndexView(TemplateView):
         # 資産クラスの長期推移
         # グラフ表示用にデータを取得。
         # 1950年からの日次データは膨大になるため、各月の月末データのみをサンプリングして取得する。
-        from django.db.models import Max
-        from django.db.models.functions import TruncMonth
 
         # 各月ごとの最大日付（月末営業日）を取得
         monthly_last_dates = (

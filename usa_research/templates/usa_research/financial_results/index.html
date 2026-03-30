@@ -48,10 +48,9 @@
                                 <thead class="table-light">
                                 <tr>
                                     <th class="text-center ps-3">ティッカー</th>
-                                    <th class="text-center">件数</th>
-                                    <th class="text-center">EPS OK</th>
-                                    <th class="text-center">売上 OK</th>
-                                    <th class="text-center">ガイダンス OK</th>
+                                    <th class="text-center">EPS OK (回 / 総数)</th>
+                                    <th class="text-center">売上 OK (回 / 総数)</th>
+                                    <th class="text-center">ガイダンス OK (回 / 総数)</th>
                                     <th class="text-end pe-3">操作</th>
                                 </tr>
                                 </thead>
@@ -61,20 +60,19 @@
                                         <td class="text-center ps-3">
                                             <span class="fw-bold">{{ financial_result.ticker }}</span>
                                         </td>
-                                        <td class="text-center">{{ financial_result.ticker__count }}</td>
                                         <td class="text-center">
                                         <span class="badge {% if financial_result.eps_ok__sum > 0 %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {{ financial_result.eps_ok__sum|add:"0" }}
+                                            {{ financial_result.eps_ok__sum|add:"0" }} / {{ financial_result.ticker__count }}
                                         </span>
                                         </td>
                                         <td class="text-center">
                                         <span class="badge {% if financial_result.sales_ok__sum > 0 %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {{ financial_result.sales_ok__sum|add:"0" }}
+                                            {{ financial_result.sales_ok__sum|add:"0" }} / {{ financial_result.ticker__count }}
                                         </span>
                                         </td>
                                         <td class="text-center">
                                         <span class="badge {% if financial_result.guidance_ok__sum > 0 %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {{ financial_result.guidance_ok__sum|add:"0" }}
+                                            {{ financial_result.guidance_ok__sum|add:"0" }} / {{ financial_result.ticker__count }}
                                         </span>
                                         </td>
                                         <td class="text-end pe-3">
@@ -84,7 +82,7 @@
                                     </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="6" class="text-center py-4 text-muted">
+                                        <td colspan="5" class="text-center py-4 text-muted">
                                             決算データがまだ登録されていません。
                                         </td>
                                     </tr>
