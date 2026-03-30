@@ -1,7 +1,13 @@
 import random
-import markdown
 from datetime import datetime
-from django.views.generic import TemplateView
+
+import markdown
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count, Sum, Max
+from django.db.models.functions import TruncMonth
+from django.urls import reverse_lazy
+from django.views.generic import TemplateView, ListView, CreateView
+
 from usa_research.domain.constants.almanac import MONTHLY_ANOMALIES, THEME_ANOMALIES
 from usa_research.models import (
     MacroIndicator,
@@ -10,7 +16,9 @@ from usa_research.models import (
     MsciCountryWeightReport,
     AssetPrice,
     Nasdaq100Company,
+    FinancialResultWatch,
 )
+from .forms import FinancialResultsForm
 
 
 class IndexView(TemplateView):
@@ -58,8 +66,6 @@ class IndexView(TemplateView):
         # 資産クラスの長期推移
         # グラフ表示用にデータを取得。
         # 1950年からの日次データは膨大になるため、各月の月末データのみをサンプリングして取得する。
-        from django.db.models import Max
-        from django.db.models.functions import TruncMonth
 
         # 各月ごとの最大日付（月末営業日）を取得
         monthly_last_dates = (
@@ -80,3 +86,65 @@ class IndexView(TemplateView):
         )
 
         return context
+
+
+class FinancialResultsListView(ListView):
+    """
+    決算データ一覧ビュー。
+    主要企業（NASDAQなどの米国株）の銘柄ごとの決算クリア状況をサマリー表示します。
+    """
+
+    template_name = "usa_research/financial_results/index.html"
+    model = FinancialResultWatch
+
+    def get_queryset(self, **kwargs):
+        """銘柄コードごとに集計された決算データを取得します。"""
+        return (
+            FinancialResultWatch.objects.values("ticker")
+            .annotate(
+                Count("ticker"),
+                Sum("eps_ok"),
+                Sum("sales_ok"),
+                Sum("guidance_ok"),
+            )
+            .order_by(
+                "-ticker__count",
+                "-eps_ok__sum",
+                "-sales_ok__sum",
+                "-guidance_ok__sum",
+            )
+        )
+
+
+class FinancialResultsDetailListView(ListView):
+    """
+    決算データ詳細ビュー。
+    特定の主要企業（米国株など）に関する時系列の決算発表結果を表示します。
+    """
+
+    template_name = "usa_research/financial_results/detail.html"
+    model = FinancialResultWatch
+
+    def get_queryset(self):
+        """指定されたティッカー銘柄の決算履歴を取得します。"""
+        ticker = self.kwargs["ticker"]
+        return FinancialResultWatch.objects.filter(ticker=ticker).order_by(
+            "recorded_date"
+        )
+
+
+class FinancialResultsCreateView(LoginRequiredMixin, CreateView):
+    """
+    決算データ登録ビュー。
+    ログインユーザーが特定の銘柄の決算発表結果（EPS, 売上, ガイダンスの成否など）を登録します。
+    """
+
+    model = FinancialResultWatch
+    template_name = "usa_research/financial_results/create.html"
+    form_class = FinancialResultsForm
+    success_url = reverse_lazy("usa:financial_results")
+
+    def form_valid(self, form):
+        """登録ユーザーをセットして保存します。"""
+        form.instance.user = self.request.user
+        return super().form_valid(form)

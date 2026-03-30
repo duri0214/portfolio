@@ -1,13 +1,13 @@
-{% extends "vietnam_research/base.html" %}
+{% extends "usa_research/base.html" %}
 {% block content %}
     <div class="container mt-4">
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
             <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
-                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                <li class="breadcrumb-item"><a href="{% url 'usa:index' %}"
+                                               class="text-decoration-none text-muted">USA研究</a>
                 </li>
-                <li class="breadcrumb-item"><a href="{% url 'vnm:financial_results' %}"
+                <li class="breadcrumb-item"><a href="{% url 'usa:financial_results' %}"
                                                class="text-decoration-none text-muted">決算ウォッチ</a></li>
                 <li class="breadcrumb-item active" aria-current="page">新規登録</li>
             </ol>
@@ -34,13 +34,13 @@
                                     {% endif %}
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="{{ form.symbol.id_for_label }}"
+                                    <label for="{{ form.ticker.id_for_label }}"
                                            class="form-label fw-bold small">
-                                        {{ form.symbol.label }}{% if form.symbol.field.required %}
+                                        {{ form.ticker.label }}{% if form.ticker.field.required %}
                                             <span class="text-danger">*</span>{% endif %}</label>
-                                    {{ form.symbol }}
-                                    {% if form.symbol.errors %}
-                                        <div class="text-danger x-small">{{ form.symbol.errors }}</div>
+                                    {{ form.ticker }}
+                                    {% if form.ticker.errors %}
+                                        <div class="text-danger x-small">{{ form.ticker.errors }}</div>
                                     {% endif %}
                                 </div>
 
@@ -150,7 +150,7 @@
                             </div>
                             <div class="d-grid gap-2 mt-4">
                                 <button type="submit" class="btn btn-success">保存する</button>
-                                <a href="{% url 'vnm:financial_results' %}"
+                                <a href="{% url 'usa:financial_results' %}"
                                    class="btn btn-outline-secondary">一覧に戻る</a>
                             </div>
                         </form>

@@ -116,3 +116,74 @@ class Nasdaq100Company(models.Model):
 
     def __str__(self):
         return f"{self.ticker} - {self.name}"
+
+
+class Market(models.Model):
+    """
+    マーケットマスタ
+    """
+
+    code = models.CharField(max_length=20)
+    name = models.CharField(max_length=50)
+    url_file_name = models.CharField(max_length=10, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Unit(models.Model):
+    """財務単位"""
+
+    name = models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.name
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
+
+
+class FinancialResultWatch(models.Model):
+    """
+    決算ウォッチ
+    各銘柄の四半期ごとの決算発表結果（予想 vs 実績）を保持します。
+    NASDAQ などの米国株が主な対象です。
+
+    recorded_date: Note公開日
+    """
+
+    recorded_date = models.DateField(verbose_name="Note公開日")
+    quarter = models.SmallIntegerField(verbose_name="四半期")
+    eps_ok = models.BooleanField(verbose_name="EPS達成", null=True)
+    sales_ok = models.BooleanField(verbose_name="売上達成", null=True)
+    guidance_ok = models.BooleanField(verbose_name="ガイダンス達成", null=True)
+    eps_estimate = models.FloatField(verbose_name="EPS予想")
+    eps_actual = models.FloatField(verbose_name="EPS実績")
+    sales_estimate = models.FloatField(verbose_name="売上予想")
+    sales_actual = models.FloatField(verbose_name="売上実績")
+    y_over_y_growth_rate = models.FloatField(verbose_name="前年同期比(%)")
+    note_url = models.URLField(verbose_name="NoteURL", null=True, blank=True)
+    ticker = models.CharField(max_length=10, verbose_name="ティッカー")
+    eps_unit = models.ForeignKey(
+        Unit,
+        on_delete=models.CASCADE,
+        related_name="r_eps_unit",
+        verbose_name="EPS単位",
+    )
+    sales_unit = models.ForeignKey(
+        Unit,
+        on_delete=models.CASCADE,
+        related_name="r_sales_unit",
+        verbose_name="売上単位",
+    )
+    user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.CASCADE,
+        verbose_name="登録ユーザー",
+    )
+
+    class Meta:
+        ordering = ["-recorded_date", "ticker"]

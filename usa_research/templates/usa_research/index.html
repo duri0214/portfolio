@@ -1,450 +1,476 @@
 {% extends "usa_research/base.html" %}
 {% load static %}
 {% block content %}
-<div class="container mt-4">
-    <h2 id="top">ストックトレーダーズ・ニュース</h2>
+    <div class="container mt-4">
+        <h2 id="top">ストックトレーダーズ・ニュース</h2>
 
-    <!-- 目次 (Quick Links) -->
-    <nav class="mb-4 p-3 bg-light border rounded shadow-sm">
-        <h6 class="text-secondary mb-2"><i class="fas fa-list"></i> クイックリンク</h6>
-        <div class="d-flex flex-wrap">
-            <a href="#macro" class="btn btn-sm btn-outline-primary mr-2 mb-2">0. 主要マクロ指標</a>
-            <a href="#assets" class="btn btn-sm btn-outline-primary mr-2 mb-2">1. 資産リターン推移</a>
-            <a href="#msci" class="btn btn-sm btn-outline-primary mr-2 mb-2">2. MSCIレポート</a>
-            <a href="#almanac" class="btn btn-sm btn-outline-primary mr-2 mb-2">3. アルマナック</a>
-            <a href="#sectors" class="btn btn-sm btn-outline-primary mr-2 mb-2">4. セクターローテーション</a>
-            <a href="#nasdaq100" class="btn btn-sm btn-outline-primary mr-2 mb-2">5. NASDAQ100銘柄</a>
-            <a href="#rss" class="btn btn-sm btn-outline-primary mr-2 mb-2">6. RSSニュース</a>
-        </div>
-    </nav>
+        <!-- 目次 (Quick Links) -->
+        <nav class="mb-4 p-3 bg-light border rounded shadow-sm">
+            <h6 class="text-secondary mb-2"><i class="fas fa-list"></i> クイックリンク</h6>
+            <div class="d-flex flex-wrap">
+                <a href="#macro" class="btn btn-sm btn-outline-primary mr-2 mb-2">0. 主要マクロ指標</a>
+                <a href="#assets" class="btn btn-sm btn-outline-primary mr-2 mb-2">1. 資産リターン推移</a>
+                <a href="#msci" class="btn btn-sm btn-outline-primary mr-2 mb-2">2. MSCIレポート</a>
+                <a href="#almanac" class="btn btn-sm btn-outline-primary mr-2 mb-2">3. アルマナック</a>
+                <a href="#sectors" class="btn btn-sm btn-outline-primary mr-2 mb-2">4. セクターローテーション</a>
+                <a href="#nasdaq100" class="btn btn-sm btn-outline-primary mr-2 mb-2">5. NASDAQ100銘柄</a>
+                <a href="#rss" class="btn btn-sm btn-outline-primary mr-2 mb-2">6. RSSニュース</a>
+                <a href="{% url 'usa:financial_results' %}" class="btn btn-sm btn-outline-success mr-2 mb-2"><i
+                        class="fas fa-check-circle"></i> 7. 決算ウォッチ</a>
+            </div>
+        </nav>
 
-    <!-- 0. 主要マクロ指標 -->
-    <section id="macro" class="mb-5 border p-4 rounded shadow-sm bg-white">
-        <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-globe-americas"></i> 0. 主要マクロ指標</h4>
-            <p class="text-muted"><i class="fas fa-clock"></i> 日次更新 (Yahoo Finance 経由)</p>
-        </div>
-        <div class="card mb-4">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 text-center">
-                        <thead class="table-secondary">
+        <!-- 0. 主要マクロ指標 -->
+        <section id="macro" class="mb-5 border p-4 rounded shadow-sm bg-white">
+            <div class="mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-globe-americas"></i> 0. 主要マクロ指標</h4>
+                <p class="text-muted"><i class="fas fa-clock"></i> 日次更新 (Yahoo Finance 経由)</p>
+            </div>
+            <div class="card mb-4">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 text-center">
+                            <thead class="table-secondary">
                             <tr>
                                 <th>日付</th>
                                 <th>ISM 製造業景気指数</th>
                                 <th>米国10年債利回り</th>
                                 <th>VIX 指数</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                             {% for indicator in macro_indicators %}
-                            <tr>
-                                <td>{{ indicator.date|date:"Y/m/d" }}</td>
-                                <td>{{ indicator.ism_pmi|default_if_none:"-" }}</td>
-                                <td>{{ indicator.us_10y_yield|floatformat:3|default_if_none:"-" }}%</td>
-                                <td>{{ indicator.vix|floatformat:2|default_if_none:"-" }}</td>
-                            </tr>
+                                <tr>
+                                    <td>{{ indicator.date|date:"Y/m/d" }}</td>
+                                    <td>{{ indicator.ism_pmi|default_if_none:"-" }}</td>
+                                    <td>{{ indicator.us_10y_yield|floatformat:3|default_if_none:"-" }}%</td>
+                                    <td>{{ indicator.vix|floatformat:2|default_if_none:"-" }}</td>
+                                </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="4" class="p-4 text-muted">
-                                    データがありません。`python manage.py update_macro_indicators` を実行してください。
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td colspan="4" class="p-4 text-muted">
+                                        データがありません。`python manage.py update_macro_indicators` を実行してください。
+                                    </td>
+                                </tr>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="mt-2 text-muted small">
-            <h6>用語解説・計算ルール:</h6>
-            <div class="row">
-                <div class="col-md-6">
-                    <ul class="mb-0">
-                        <li>
-                            <a href="https://finance.yahoo.com/quote/NAPM" target="_blank" rel="noopener noreferrer" class="text-dark">
-                                <strong>ISM 製造業景気指数</strong> <i class="fas fa-external-link-alt small"></i>
-                            </a>: 製造業の購買担当マネージャーへのアンケート調査に基づく景況感指数。50を上回ると景気拡大、下回ると景気後退の目安。
-                        </li>
-                        <li>
-                            <a href="https://finance.yahoo.com/quote/%5ETNX" target="_blank" rel="noopener noreferrer" class="text-dark">
-                                <strong>米国10年債利回り</strong> <i class="fas fa-external-link-alt small"></i>
-                            </a>: 米国政府が発行する償還期間10年の国債（10-Year Treasury Note）の利回り。長期金利の代表的な指標。
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-md-6 border-left">
-                    <ul class="mb-0">
-                        <li>
-                            <a href="https://finance.yahoo.com/quote/%5EVIX" target="_blank" rel="noopener noreferrer" class="text-dark">
-                                <strong>VIX 指数</strong> <i class="fas fa-external-link-alt small"></i>
-                            </a>: シカゴ・オプション取引所（CBOE）が算出する「ボラティリティ・インデックス」。市場が予想する将来の変動率を示し、「恐怖指数」とも呼ばれる。
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-md-12 mt-3 border-top pt-2">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0"><i class="fas fa-lightbulb text-warning"></i> マクロ指標の格言:</h6>
-                        <small class="text-muted">
-                            出典: <a href="https://note.com/gityamatome/n/nc51b4ae65409" target="_blank" rel="noopener noreferrer">gityamatome (note) <i class="fas fa-external-link-alt"></i></a>
-                        </small>
+                            </tbody>
+                        </table>
                     </div>
-                    <ul class="mb-0">
-                        <li>長期金利が下落すると株価は上がりやすくなります（👴「株は長期金利で70％、業績で30％決まる」）</li>
-                        <li>
-                            <strong>相場が底入れするパターン:</strong>
-                            <ol class="mb-0">
-                                <li>債券利回りが下がる</li>
-                                <li>VIXが非常に高くなった後で、ゆっくり下がり始める</li>
-                            </ol>
-                        </li>
-                    </ul>
                 </div>
             </div>
-        </div>
-        <div class="text-right mt-3">
-            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
-        </div>
-    </section>
-
-    <!-- 1. 資産クラス別・長期リターン推移 (Quantitative Evidence) -->
-    <section id="assets" class="mb-5 border p-4 rounded shadow-sm bg-white">
-        <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-chart-area"></i> 1. 資産クラス別・長期リターン推移</h4>
-            <p class="text-muted">「なぜ株（Stocks）は長期で見れば価値が上がり続けてきたのか」をデータで裏付ける</p>
-        </div>
-
-        <div class="mb-4" style="height: 400px;">
-            <canvas id="assetReturnsChart"></canvas>
-        </div>
-
-        <div class="mt-2 text-muted small">
-            <h6>資産クラスの特性と「金（Gold）」の役割:</h6>
-            <div class="row">
-                <div class="col-md-12">
-                    <p class="mb-2">
-                        グラフを見ると SPY（株式）の成長が圧倒的ですが、特定の時期に <strong>金（Gold）</strong> などの他の資産が注目されるのには理由があります。
-                    </p>
-                    <ul>
-                        <li><strong>インフレヘッジ:</strong> 金は中央銀行が刷れないため、インフレ（物価上昇）局面で通貨価値が下がる際に価値が維持されやすい性質があります。</li>
-                        <li><strong>逆相関の性質:</strong> 株式が暴落する「有事（戦争や金融危機）」において、金は「安全資産」として買われる傾向があり、ポートフォリオの損失を抑えるクッションになります。</li>
-                        <li><strong>暗黒の10年:</strong> 例えば2000年代（ITバブル崩壊〜リーマンショック）のような「株式が停滞する10年間」においては、金が株式を大きくアウトパフォームした歴史があります。</li>
-                    </ul>
-                    <p class="mb-0">
-                        長期では株式が最強ですが、**「いつ、どの資産が強いか」**を見極めるために、これらの比較データが役立ちます。
-                    </p>
+            <div class="mt-2 text-muted small">
+                <h6>用語解説・計算ルール:</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li>
+                                <a href="https://finance.yahoo.com/quote/NAPM" target="_blank" rel="noopener noreferrer"
+                                   class="text-dark">
+                                    <strong>ISM 製造業景気指数</strong> <i class="fas fa-external-link-alt small"></i>
+                                </a>: 製造業の購買担当マネージャーへのアンケート調査に基づく景況感指数。50を上回ると景気拡大、下回ると景気後退の目安。
+                            </li>
+                            <li>
+                                <a href="https://finance.yahoo.com/quote/%5ETNX" target="_blank"
+                                   rel="noopener noreferrer" class="text-dark">
+                                    <strong>米国10年債利回り</strong> <i class="fas fa-external-link-alt small"></i>
+                                </a>: 米国政府が発行する償還期間10年の国債（10-Year Treasury Note）の利回り。長期金利の代表的な指標。
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 border-left">
+                        <ul class="mb-0">
+                            <li>
+                                <a href="https://finance.yahoo.com/quote/%5EVIX" target="_blank"
+                                   rel="noopener noreferrer" class="text-dark">
+                                    <strong>VIX 指数</strong> <i class="fas fa-external-link-alt small"></i>
+                                </a>: シカゴ・オプション取引所（CBOE）が算出する「ボラティリティ・インデックス」。市場が予想する将来の変動率を示し、「恐怖指数」とも呼ばれる。
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-12 mt-3 border-top pt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0"><i class="fas fa-lightbulb text-warning"></i> マクロ指標の格言:</h6>
+                            <small class="text-muted">
+                                出典: <a href="https://note.com/gityamatome/n/nc51b4ae65409" target="_blank"
+                                         rel="noopener noreferrer">gityamatome (note) <i
+                                    class="fas fa-external-link-alt"></i></a>
+                            </small>
+                        </div>
+                        <ul class="mb-0">
+                            <li>長期金利が下落すると株価は上がりやすくなります（👴「株は長期金利で70％、業績で30％決まる」）
+                            </li>
+                            <li>
+                                <strong>相場が底入れするパターン:</strong>
+                                <ol class="mb-0">
+                                    <li>債券利回りが下がる</li>
+                                    <li>VIXが非常に高くなった後で、ゆっくり下がり始める</li>
+                                </ol>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
+            <div class="text-right mt-3">
+                <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+            </div>
+        </section>
 
-            <h6 class="mt-4">なぜ ^GSPC (S&P 500) を株式の代表指標とするのか:</h6>
-            <div class="row">
-                <div class="col-md-12">
-                    <p class="mb-2">
-                        本データでは、株式の代表として <strong>^GSPC (S&P 500 指数)</strong> を採用しています。これはETFよりも遥かに長い歴史を持ち、1950年代からの米国経済の成長をダイレクトに示すのに最も適しているためです。
-                    </p>
-                    <ul>
-                        <li><strong>広範な網羅性:</strong> 米国の主要産業を網羅する大型企業500社で構成され、特定のセクターに偏らず米国経済全体を反映します。</li>
-                        <li><strong>長期的な信頼性:</strong> 1920年代からデータが存在するため、数十年単位の「超長期」での比較（なぜ株が他の資産を凌駕するのかの説明）に必須の指標です。</li>
-                        <li><strong>代謝（サバイバル）機能:</strong> 構成銘柄は固定ではなく、時代の変化に合わせて常に新陳代謝が行われます。これにより指数は常に「生き残った強者の集合体」であり続けます。</li>
-                    </ul>
-                    <p class="mb-0">
-                        「株は短期ではギャンブルのように上下するが、長期（数十年単位）では経済成長と企業の利益成長をダイレクトに反映し、他の資産クラスを凌駕してきた」という事実を、このデータは示しています。
-                    </p>
-                    <p class="mt-2 text-info">
-                        ※ グラフは各資産の価格を、取得開始時点を100として指数化したものです（累積リターンの比較）。<br>
-                        ※ ^GSPC, ^TYX, DX-Y.NYB などの指数（Index）は価格のみを反映しており、原則として配当を含みません。1950年代からの超長期トレンドを確認するための代表値として指数を採用しています。
-                    </p>
+        <!-- 1. 資産クラス別・長期リターン推移 (Quantitative Evidence) -->
+        <section id="assets" class="mb-5 border p-4 rounded shadow-sm bg-white">
+            <div class="mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chart-area"></i> 1. 資産クラス別・長期リターン推移</h4>
+                <p class="text-muted">「なぜ株（Stocks）は長期で見れば価値が上がり続けてきたのか」をデータで裏付ける</p>
+            </div>
+
+            <div class="mb-4" style="height: 400px;">
+                <canvas id="assetReturnsChart"></canvas>
+            </div>
+
+            <div class="mt-2 text-muted small">
+                <h6>資産クラスの特性と「金（Gold）」の役割:</h6>
+                <div class="row">
+                    <div class="col-md-12">
+                        <p class="mb-2">
+                            グラフを見ると SPY（株式）の成長が圧倒的ですが、特定の時期に <strong>金（Gold）</strong>
+                            などの他の資産が注目されるのには理由があります。
+                        </p>
+                        <ul>
+                            <li><strong>インフレヘッジ:</strong> 金は中央銀行が刷れないため、インフレ（物価上昇）局面で通貨価値が下がる際に価値が維持されやすい性質があります。
+                            </li>
+                            <li><strong>逆相関の性質:</strong>
+                                株式が暴落する「有事（戦争や金融危機）」において、金は「安全資産」として買われる傾向があり、ポートフォリオの損失を抑えるクッションになります。
+                            </li>
+                            <li><strong>暗黒の10年:</strong>
+                                例えば2000年代（ITバブル崩壊〜リーマンショック）のような「株式が停滞する10年間」においては、金が株式を大きくアウトパフォームした歴史があります。
+                            </li>
+                        </ul>
+                        <p class="mb-0">
+                            長期では株式が最強ですが、**「いつ、どの資産が強いか」**を見極めるために、これらの比較データが役立ちます。
+                        </p>
+                    </div>
+                </div>
+
+                <h6 class="mt-4">なぜ ^GSPC (S&P 500) を株式の代表指標とするのか:</h6>
+                <div class="row">
+                    <div class="col-md-12">
+                        <p class="mb-2">
+                            本データでは、株式の代表として <strong>^GSPC (S&P 500 指数)</strong>
+                            を採用しています。これはETFよりも遥かに長い歴史を持ち、1950年代からの米国経済の成長をダイレクトに示すのに最も適しているためです。
+                        </p>
+                        <ul>
+                            <li><strong>広範な網羅性:</strong> 米国の主要産業を網羅する大型企業500社で構成され、特定のセクターに偏らず米国経済全体を反映します。
+                            </li>
+                            <li><strong>長期的な信頼性:</strong>
+                                1920年代からデータが存在するため、数十年単位の「超長期」での比較（なぜ株が他の資産を凌駕するのかの説明）に必須の指標です。
+                            </li>
+                            <li><strong>代謝（サバイバル）機能:</strong>
+                                構成銘柄は固定ではなく、時代の変化に合わせて常に新陳代謝が行われます。これにより指数は常に「生き残った強者の集合体」であり続けます。
+                            </li>
+                        </ul>
+                        <p class="mb-0">
+                            「株は短期ではギャンブルのように上下するが、長期（数十年単位）では経済成長と企業の利益成長をダイレクトに反映し、他の資産クラスを凌駕してきた」という事実を、このデータは示しています。
+                        </p>
+                        <p class="mt-2 text-info">
+                            ※ グラフは各資産の価格を、取得開始時点を100として指数化したものです（累積リターンの比較）。<br>
+                            ※ ^GSPC, ^TYX, DX-Y.NYB
+                            などの指数（Index）は価格のみを反映しており、原則として配当を含みません。1950年代からの超長期トレンドを確認するための代表値として指数を採用しています。
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="text-right mt-3">
-            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
-        </div>
-    </section>
+            <div class="text-right mt-3">
+                <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+            </div>
+        </section>
 
-    {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const rawData = [
-                {% for p in asset_prices %}
-                { date: "{{ p.date|date:'Y-m-d' }}", symbol: "{{ p.symbol }}", price: {{ p.price }} },
-                {% endfor %}
-            ];
+        {% block extra_js %}
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const rawData = [
+                        {% for p in asset_prices %}
+                            {date: "{{ p.date|date:'Y-m-d' }}", symbol: "{{ p.symbol }}", price: {{ p.price }}},
+                        {% endfor %}
+                    ];
 
-            if (rawData.length === 0) return;
+                    if (rawData.length === 0) return;
 
-            // データを整形
-            const symbols = [...new Set(rawData.map(d => d.symbol))];
-            const dates = [...new Set(rawData.map(d => d.date))].sort();
+                    // データを整形
+                    const symbols = [...new Set(rawData.map(d => d.symbol))];
+                    const dates = [...new Set(rawData.map(d => d.date))].sort();
 
-            // 検索を高速化するためにデータをマップ化する
-            // dataMap[date][symbol] = price
-            const dataMap = {};
-            rawData.forEach(d => {
-                if (!dataMap[d.date]) dataMap[d.date] = {};
-                dataMap[d.date][d.symbol] = d.price;
-            });
+                    // 検索を高速化するためにデータをマップ化する
+                    // dataMap[date][symbol] = price
+                    const dataMap = {};
+                    rawData.forEach(d => {
+                        if (!dataMap[d.date]) dataMap[d.date] = {};
+                        dataMap[d.date][d.symbol] = d.price;
+                    });
 
-            // 各シンボルの初期値を100として正規化
-            const firstPrices = {};
-            symbols.forEach(s => {
-                // 最初の有効な価格を探す
-                for (const d of dates) {
-                    if (dataMap[d] && dataMap[d][s]) {
-                        firstPrices[s] = dataMap[d][s];
-                        break;
-                    }
-                }
-            });
-
-            // シンボルと表示名のマッピング
-            const symbolLabels = {
-                '^GSPC': '株式 (S&P 500)',
-                '^TYX': '債券 (30Y Yield)',
-                'BIL': '短期国債 (BIL)',
-                'GC=F': '金 (Gold)',
-                'DX-Y.NYB': 'ドル指数 (DXY)'
-            };
-
-            const datasets = symbols.map(s => {
-                const symbolData = dates.map(d => {
-                    const price = dataMap[d] ? dataMap[d][s] : null;
-                    if (price && firstPrices[s]) {
-                        return (price / firstPrices[s] * 100).toFixed(2);
-                    }
-                    return null;
-                });
-
-            const colors = {
-                '^GSPC': 'rgba(255, 99, 132, 1)',
-                '^TYX': 'rgba(54, 162, 235, 1)',
-                'BIL': 'rgba(75, 192, 192, 1)',
-                'GC=F': 'rgba(255, 206, 86, 1)',
-                'DX-Y.NYB': 'rgba(153, 102, 255, 1)'
-            };
-
-            return {
-                label: symbolLabels[s] || s,
-                data: symbolData,
-                borderColor: colors[s] || 'rgba(200, 200, 200, 1)',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0.1
-                };
-            });
-
-            const ctx = document.getElementById('assetReturnsChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            title: { display: true, text: 'Date' }
-                        },
-                        y: {
-                            display: true,
-                            title: { display: true, text: 'Index (Start = 100)' }
+                    // 各シンボルの初期値を100として正規化
+                    const firstPrices = {};
+                    symbols.forEach(s => {
+                        // 最初の有効な価格を探す
+                        for (const d of dates) {
+                            if (dataMap[d] && dataMap[d][s]) {
+                                firstPrices[s] = dataMap[d][s];
+                                break;
+                            }
                         }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + context.parsed.y;
+                    });
+
+                    // シンボルと表示名のマッピング
+                    const symbolLabels = {
+                        '^GSPC': '株式 (S&P 500)',
+                        '^TYX': '債券 (30Y Yield)',
+                        'BIL': '短期国債 (BIL)',
+                        'GC=F': '金 (Gold)',
+                        'DX-Y.NYB': 'ドル指数 (DXY)'
+                    };
+
+                    const datasets = symbols.map(s => {
+                        const symbolData = dates.map(d => {
+                            const price = dataMap[d] ? dataMap[d][s] : null;
+                            if (price && firstPrices[s]) {
+                                return (price / firstPrices[s] * 100).toFixed(2);
+                            }
+                            return null;
+                        });
+
+                        const colors = {
+                            '^GSPC': 'rgba(255, 99, 132, 1)',
+                            '^TYX': 'rgba(54, 162, 235, 1)',
+                            'BIL': 'rgba(75, 192, 192, 1)',
+                            'GC=F': 'rgba(255, 206, 86, 1)',
+                            'DX-Y.NYB': 'rgba(153, 102, 255, 1)'
+                        };
+
+                        return {
+                            label: symbolLabels[s] || s,
+                            data: symbolData,
+                            borderColor: colors[s] || 'rgba(200, 200, 200, 1)',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        };
+                    });
+
+                    const ctx = document.getElementById('assetReturnsChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: dates,
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                            scales: {
+                                x: {
+                                    display: true,
+                                    title: {display: true, text: 'Date'}
+                                },
+                                y: {
+                                    display: true,
+                                    title: {display: true, text: 'Index (Start = 100)'}
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            return context.dataset.label + ': ' + context.parsed.y;
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-            });
-        });
+                    });
+                });
 
-        // NASDAQ100 業種別チャート
-        document.addEventListener('DOMContentLoaded', function() {
-            const companyData = [
-                {% for company in nasdaq100_companies %}
-                { ticker: "{{ company.ticker }}", sector: "{{ company.sector|default:'Unknown' }}" },
-                {% endfor %}
-            ];
+                // NASDAQ100 業種別チャート
+                document.addEventListener('DOMContentLoaded', function () {
+                    const companyData = [
+                        {% for company in nasdaq100_companies %}
+                            {ticker: "{{ company.ticker }}", sector: "{{ company.sector|default:'Unknown' }}"},
+                        {% endfor %}
+                    ];
 
-            if (companyData.length === 0) return;
+                    if (companyData.length === 0) return;
 
-            // 業種ごとのカウント
-            const sectorCounts = {};
-            companyData.forEach(d => {
-                sectorCounts[d.sector] = (sectorCounts[d.sector] || 0) + 1;
-            });
+                    // 業種ごとのカウント
+                    const sectorCounts = {};
+                    companyData.forEach(d => {
+                        sectorCounts[d.sector] = (sectorCounts[d.sector] || 0) + 1;
+                    });
 
-            const labels = Object.keys(sectorCounts).sort((a, b) => sectorCounts[b] - sectorCounts[a]);
-            const data = labels.map(l => sectorCounts[l]);
+                    const labels = Object.keys(sectorCounts).sort((a, b) => sectorCounts[b] - sectorCounts[a]);
+                    const data = labels.map(l => sectorCounts[l]);
 
-            const ctx = document.getElementById('nasdaqSectorChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.8)',
-                            'rgba(54, 162, 235, 0.8)',
-                            'rgba(255, 206, 86, 0.8)',
-                            'rgba(75, 192, 192, 0.8)',
-                            'rgba(153, 102, 255, 0.8)',
-                            'rgba(255, 159, 64, 0.8)',
-                            'rgba(201, 203, 207, 0.8)',
-                            'rgba(54, 162, 235, 0.8)',
-                            'rgba(153, 102, 255, 0.8)',
-                            'rgba(255, 99, 132, 0.8)',
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                boxWidth: 12,
-                                font: { size: 10 }
+                    const ctx = document.getElementById('nasdaqSectorChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: data,
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.8)',
+                                    'rgba(54, 162, 235, 0.8)',
+                                    'rgba(255, 206, 86, 0.8)',
+                                    'rgba(75, 192, 192, 0.8)',
+                                    'rgba(153, 102, 255, 0.8)',
+                                    'rgba(255, 159, 64, 0.8)',
+                                    'rgba(201, 203, 207, 0.8)',
+                                    'rgba(54, 162, 235, 0.8)',
+                                    'rgba(153, 102, 255, 0.8)',
+                                    'rgba(255, 99, 132, 0.8)',
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 12,
+                                        font: {size: 10}
+                                    }
+                                }
                             }
                         }
-                    }
-                }
-            });
-        });
-    </script>
-    {% endblock %}
+                    });
+                });
+            </script>
+        {% endblock %}
 
-    <!-- 2. MSCIレポートの要約 -->
-    <section id="msci" class="mb-5 border p-4 rounded shadow-sm bg-light">
-        <div class="mb-4 d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="text-primary mb-1"><i class="fas fa-chart-pie"></i> 2. MSCIレポートの要約</h4>
+        <!-- 2. MSCIレポートの要約 -->
+        <section id="msci" class="mb-5 border p-4 rounded shadow-sm bg-light">
+            <div class="mb-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="text-primary mb-1"><i class="fas fa-chart-pie"></i> 2. MSCIレポートの要約</h4>
+                    {% if msci_report %}
+                        <p class="text-muted mb-0 small"><i class="fas fa-calendar-alt"></i> Report
+                            Date: {{ msci_report.report_date|date:"Y/m/d" }}</p>
+                    {% endif %}
+                </div>
                 {% if msci_report %}
-                <p class="text-muted mb-0 small"><i class="fas fa-calendar-alt"></i> Report Date: {{ msci_report.report_date|date:"Y/m/d" }}</p>
+                    <a href="{{ msci_report.pdf_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-file-pdf"></i> Original PDF
+                    </a>
                 {% endif %}
             </div>
-            {% if msci_report %}
-            <a href="{{ msci_report.pdf_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-file-pdf"></i> Original PDF
-            </a>
-            {% endif %}
-        </div>
-        <div class="bg-white p-3 border rounded">
-            {% if msci_report %}
-                {{ msci_report.summary_html|safe }}
-            {% else %}
-                <p class="text-muted mb-0">データがありません。`python manage.py update_msci_weights` を実行してください。</p>
-            {% endif %}
-        </div>
-        <div class="text-right mt-3">
-            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
-        </div>
-    </section>
+            <div class="bg-white p-3 border rounded">
+                {% if msci_report %}
+                    {{ msci_report.summary_html|safe }}
+                {% else %}
+                    <p class="text-muted mb-0">データがありません。`python manage.py update_msci_weights`
+                        を実行してください。</p>
+                {% endif %}
+            </div>
+            <div class="text-right mt-3">
+                <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+            </div>
+        </section>
 
-    <!-- 3. ストックトレーダーズ・アルマナック -->
-    <section id="almanac" class="mb-5 border p-4 rounded shadow-sm">
-        <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-info-circle"></i> 3. ストックトレーダーズ・アルマナック から</h4>
-            <p class="text-muted">
-                詳細な統計や最新情報は公式サイトをご確認ください：
-                <a href="https://www.stocktradersalmanac.com/" target="_blank" rel="noopener noreferrer">
-                    Stock Trader's Almanac Official Site <i class="fas fa-external-link-alt"></i>
-                </a>
-            </p>
-        </div>
+        <!-- 3. ストックトレーダーズ・アルマナック -->
+        <section id="almanac" class="mb-5 border p-4 rounded shadow-sm">
+            <div class="mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-info-circle"></i> 3. ストックトレーダーズ・アルマナック
+                    から</h4>
+                <p class="text-muted">
+                    詳細な統計や最新情報は公式サイトをご確認ください：
+                    <a href="https://www.stocktradersalmanac.com/" target="_blank" rel="noopener noreferrer">
+                        Stock Trader's Almanac Official Site <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </p>
+            </div>
 
-        <!-- 3-1. 季節系アノマリー（TABLE表示） -->
-        <h5 class="mb-3">3-1. 季節系アノマリー（TABLE表示）</h5>
-        <div class="card mb-4">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+            <!-- 3-1. 季節系アノマリー（TABLE表示） -->
+            <h5 class="mb-3">3-1. 季節系アノマリー（TABLE表示）</h5>
+            <div class="card mb-4">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
                             <tr>
                                 <th style="width: 100px;">月</th>
                                 <th style="width: 200px;">タイトル</th>
                                 <th>概要</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                             {% for item in monthly_anomalies %}
-                            <tr {% if item.month == current_month %}class="table-warning font-weight-bold"{% endif %}>
-                                <td>{{ item.month }}月</td>
-                                <td>{{ item.title }}</td>
-                                <td>{{ item.description }}</td>
-                            </tr>
+                                <tr {% if item.month == current_month %}class="table-warning font-weight-bold"{% endif %}>
+                                    <td>{{ item.month }}月</td>
+                                    <td>{{ item.title }}</td>
+                                    <td>{{ item.description }}</td>
+                                </tr>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3-2. 業種・テーマ系アノマリー（CARD表示） -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5>3-2. 業種・テーマ系アノマリー（CARD表示）</h5>
-            <button onclick="location.reload();" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-sync-alt"></i> シャッフル
-            </button>
-        </div>
-        <div class="row">
-            {% for item in theme_anomalies %}
-            <div class="col-md-4 mb-3">
-                <div class="card h-100 shadow-sm border-info">
-                    <div class="card-header bg-info text-white py-1">
-                        <small>{{ item.category }}</small>
-                    </div>
-                    <div class="card-body d-flex align-items-center justify-content-center text-center">
-                        <p class="card-text mb-0">{{ item.content }}</p>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        </div>
 
-        <div class="mt-4 text-muted small">
-            <p>※ ストックトレーダーズ・アルマナックに基づくアノマリー。投資判断の思考補助としてご利用ください。</p>
-        </div>
-        <div class="text-right mt-3">
-            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
-        </div>
-    </section>
+            <!-- 3-2. 業種・テーマ系アノマリー（CARD表示） -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>3-2. 業種・テーマ系アノマリー（CARD表示）</h5>
+                <button onclick="location.reload();" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-sync-alt"></i> シャッフル
+                </button>
+            </div>
+            <div class="row">
+                {% for item in theme_anomalies %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 shadow-sm border-info">
+                            <div class="card-header bg-info text-white py-1">
+                                <small>{{ item.category }}</small>
+                            </div>
+                            <div class="card-body d-flex align-items-center justify-content-center text-center">
+                                <p class="card-text mb-0">{{ item.content }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
 
-    <!-- 4. セクターローテーション計数表 (GICS) -->
-    <section id="sectors" class="mb-5 border p-4 rounded shadow-sm bg-light">
-        <div class="mb-4">
-            <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 4. セクターローテーション計数表 (GICS)</h4>
-            <p class="text-muted">
-                基準日: {{ sector_latest_date|date:"Y/m/d" }} | 
-                分類: <a href="https://www.msci.com/our-solutions/indexes/gics" target="_blank" rel="noopener noreferrer">GICS (11セクター) <i class="fas fa-external-link-alt"></i></a> |
-                ベンチマーク: 
-                <a href="https://finance.yahoo.com/quote/SPY/" target="_blank" rel="noopener noreferrer">
-                    SPY (S&P500) <i class="fas fa-external-link-alt"></i>
-                </a> | <i class="fas fa-clock"></i> 日次更新
-            </p>
-        </div>
+            <div class="mt-4 text-muted small">
+                <p>※ ストックトレーダーズ・アルマナックに基づくアノマリー。投資判断の思考補助としてご利用ください。</p>
+            </div>
+            <div class="text-right mt-3">
+                <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+            </div>
+        </section>
 
-        <div class="card mb-4">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 text-center">
-                        <thead class="table-dark">
+        <!-- 4. セクターローテーション計数表 (GICS) -->
+        <section id="sectors" class="mb-5 border p-4 rounded shadow-sm bg-light">
+            <div class="mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chart-line"></i> 4. セクターローテーション計数表 (GICS)
+                </h4>
+                <p class="text-muted">
+                    基準日: {{ sector_latest_date|date:"Y/m/d" }} |
+                    分類: <a href="https://www.msci.com/our-solutions/indexes/gics" target="_blank"
+                             rel="noopener noreferrer">GICS (11セクター) <i class="fas fa-external-link-alt"></i></a> |
+                    ベンチマーク:
+                    <a href="https://finance.yahoo.com/quote/SPY/" target="_blank" rel="noopener noreferrer">
+                        SPY (S&P500) <i class="fas fa-external-link-alt"></i>
+                    </a> | <i class="fas fa-clock"></i> 日次更新
+                </p>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 text-center">
+                            <thead class="table-dark">
                             <tr>
                                 <th>Signal</th>
                                 <th class="text-left">Sector</th>
@@ -454,232 +480,266 @@
                                 <th>RS_20d(%)</th>
                                 <th>ΔRS_5d(%)</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                             {% for snapshot in sector_snapshots %}
-                            <tr>
-                                <td>
-                                    {% if snapshot.signal == 'Green' %}
-                                        <span class="badge badge-success" style="background-color: #28a745; color: white;">Green</span>
-                                    {% elif snapshot.signal == 'Yellow' %}
-                                        <span class="badge badge-warning" style="background-color: #ffc107; color: black;">Yellow</span>
-                                    {% elif snapshot.signal == 'Red' %}
-                                        <span class="badge badge-danger" style="background-color: #dc3545; color: white;">Red</span>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-left">
-                                    {% if snapshot.sector.name == 'Information Technology' %}<i class="fas fa-laptop-code fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Financials' %}<i class="fas fa-university fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Health Care' %}<i class="fas fa-stethoscope fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Consumer Discretionary' %}<i class="fas fa-shopping-cart fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Consumer Staples' %}<i class="fas fa-apple-alt fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Energy' %}<i class="fas fa-fire fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Industrials' %}<i class="fas fa-industry fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Materials' %}<i class="fas fa-mountain fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Utilities' %}<i class="fas fa-bolt fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Real Estate' %}<i class="fas fa-building fa-fw text-muted mr-1"></i>
-                                    {% elif snapshot.sector.name == 'Communication Services' %}<i class="fas fa-broadcast-tower fa-fw text-muted mr-1"></i>
-                                    {% endif %}
-                                    {{ snapshot.sector.name }}
-                                </td>
-                                <td><code class="text-primary">{{ snapshot.sector.symbol }}</code></td>
-                                <td><strong>{{ snapshot.rank }}</strong></td>
-                                <td>
-                                    {% if snapshot.rank_delta_5d < 0 %}
-                                        <span class="text-success"><i class="fas fa-caret-up"></i> {{ snapshot.rank_delta_5d|floatformat:0|cut:"-" }}</span>
-                                    {% elif snapshot.rank_delta_5d > 0 %}
-                                        <span class="text-danger"><i class="fas fa-caret-down"></i> {{ snapshot.rank_delta_5d|floatformat:0 }}</span>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ snapshot.rs_20d|floatformat:2 }}%</td>
-                                <td>
-                                    {% if snapshot.rs_slope_5d > 0 %}
-                                        <span class="text-success">+{{ snapshot.rs_slope_5d|floatformat:2 }}%</span>
-                                    {% elif snapshot.rs_slope_5d < 0 %}
-                                        <span class="text-danger">{{ snapshot.rs_slope_5d|floatformat:2 }}%</span>
-                                    {% else %}
-                                        {{ snapshot.rs_slope_5d|floatformat:2 }}%
-                                    {% endif %}
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td>
+                                        {% if snapshot.signal == 'Green' %}
+                                            <span class="badge badge-success"
+                                                  style="background-color: #28a745; color: white;">Green</span>
+                                        {% elif snapshot.signal == 'Yellow' %}
+                                            <span class="badge badge-warning"
+                                                  style="background-color: #ffc107; color: black;">Yellow</span>
+                                        {% elif snapshot.signal == 'Red' %}
+                                            <span class="badge badge-danger"
+                                                  style="background-color: #dc3545; color: white;">Red</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-left">
+                                        {% if snapshot.sector.name == 'Information Technology' %}
+                                            <i class="fas fa-laptop-code fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Financials' %}
+                                            <i class="fas fa-university fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Health Care' %}
+                                            <i class="fas fa-stethoscope fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Consumer Discretionary' %}
+                                            <i class="fas fa-shopping-cart fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Consumer Staples' %}
+                                            <i class="fas fa-apple-alt fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Energy' %}
+                                            <i class="fas fa-fire fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Industrials' %}
+                                            <i class="fas fa-industry fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Materials' %}
+                                            <i class="fas fa-mountain fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Utilities' %}
+                                            <i class="fas fa-bolt fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Real Estate' %}
+                                            <i class="fas fa-building fa-fw text-muted mr-1"></i>
+                                        {% elif snapshot.sector.name == 'Communication Services' %}
+                                            <i class="fas fa-broadcast-tower fa-fw text-muted mr-1"></i>
+                                        {% endif %}
+                                        {{ snapshot.sector.name }}
+                                    </td>
+                                    <td><code class="text-primary">{{ snapshot.sector.symbol }}</code></td>
+                                    <td><strong>{{ snapshot.rank }}</strong></td>
+                                    <td>
+                                        {% if snapshot.rank_delta_5d < 0 %}
+                                            <span class="text-success"><i
+                                                    class="fas fa-caret-up"></i> {{ snapshot.rank_delta_5d|floatformat:0|cut:"-" }}</span>
+                                        {% elif snapshot.rank_delta_5d > 0 %}
+                                            <span class="text-danger"><i
+                                                    class="fas fa-caret-down"></i> {{ snapshot.rank_delta_5d|floatformat:0 }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ snapshot.rs_20d|floatformat:2 }}%</td>
+                                    <td>
+                                        {% if snapshot.rs_slope_5d > 0 %}
+                                            <span class="text-success">+{{ snapshot.rs_slope_5d|floatformat:2 }}%</span>
+                                        {% elif snapshot.rs_slope_5d < 0 %}
+                                            <span class="text-danger">{{ snapshot.rs_slope_5d|floatformat:2 }}%</span>
+                                        {% else %}
+                                            {{ snapshot.rs_slope_5d|floatformat:2 }}%
+                                        {% endif %}
+                                    </td>
+                                </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="7" class="p-4 text-muted">
-                                    データがありません。`python manage.py update_sector_rotation` を実行してください。
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td colspan="7" class="p-4 text-muted">
+                                        データがありません。`python manage.py update_sector_rotation` を実行してください。
+                                    </td>
+                                </tr>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="mt-2 text-muted small">
-            <h6>用語解説・計算ルール:</h6>
-            <div class="row">
-                <div class="col-md-6">
-                    <ul class="mb-2">
-                        <li><strong>RS_20d(%)</strong> (Relative Strength): セクターETFの20日リターンとSPY(S&P500)の20日リターンの差分。プラスなら市場平均より強く、マイナスなら弱いことを示します。</li>
-                        <li><strong>ΔRS_5d(%)</strong>: RS_20dの5営業日前からの変化幅。勢い（モメンタム）の変化を計ります。</li>
-                        <li><strong>Rank</strong>: RS_20dに基づく11セクター内の順位（1位が最強）。</li>
-                        <li><strong>ΔRank(5d)</strong>: 5営業日前と比較した順位の変動。数値がマイナス（例: -2）なら順位が2つ上がったことを意味します。</li>
-                    </ul>
-                </div>
-                <div class="col-md-6 border-left">
-                    <p class="mb-1"><strong>信号機ルール:</strong></p>
-                    <ul class="mb-0">
-                        <li><span class="badge badge-success" style="background-color: #28a745; color: white;">Green</span>: <strong>出遅れからの反発</strong> (RS_20d < 0 かつ ΔRS_5d > 0 かつ ΔRank_5d ≤ -2)</li>
-                        <li><span class="badge badge-warning" style="background-color: #ffc107; color: black;">Yellow</span>: <strong>勢い改善中</strong> (ΔRS_5d > 0)</li>
-                        <li><span class="badge badge-danger" style="background-color: #dc3545; color: white;">Red</span>: <strong>過熱からの失速</strong> (RS_20d > 0 かつ ΔRS_5d < 0 かつ ΔRank_5d ≥ 2)</li>
-                    </ul>
-                </div>
-                <div class="col-md-12 mt-3 border-top pt-2">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0"><i class="fas fa-sync"></i> 景気サイクルとセクターの一般的法則:</h6>
-                        <small class="text-muted">
-                            解説・詳細: 
-                            <a href="https://www.investopedia.com/articles/trading/05/020305.asp" target="_blank" rel="noopener noreferrer">Investopedia <i class="fas fa-external-link-alt"></i></a>
-                        </small>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3 border-right">
-                            <small class="font-weight-bold text-success">【拡大期】景気＋ / 金利ー</small><br>
-                            <small>Information Technology, Financials</small>
-                        </div>
-                        <div class="col-md-3 border-right">
-                            <small class="font-weight-bold text-primary">【成熟期】景気＋ / 金利＋</small><br>
-                            <small>Industrials, Materials, Consumer Discretionary</small>
-                        </div>
-                        <div class="col-md-3 border-right">
-                            <small class="font-weight-bold text-danger">【後退期】景気ー / 金利＋</small><br>
-                            <small>Energy</small>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="font-weight-bold text-secondary">【停滞期】景気ー / 金利ー</small><br>
-                            <small>Communication Services, Health Care, Consumer Staples, Utilities</small>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="text-right mt-3">
-            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
-        </div>
-    </section>
-    
-    <!-- 5. NASDAQ100 構成銘柄 (Bug's Eye View) -->
-    <section id="nasdaq100" class="mb-5 border p-4 rounded shadow-sm bg-white">
-        <div class="mb-4 d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="text-primary mb-1"><i class="fas fa-bug"></i> 5. NASDAQ100 構成銘柄 (虫の目)</h4>
-                <p class="text-muted mb-0">NASDAQ100 指数の正体を業種分布から理解する</p>
+            <div class="mt-2 text-muted small">
+                <h6>用語解説・計算ルール:</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-2">
+                            <li><strong>RS_20d(%)</strong> (Relative Strength):
+                                セクターETFの20日リターンとSPY(S&P500)の20日リターンの差分。プラスなら市場平均より強く、マイナスなら弱いことを示します。
+                            </li>
+                            <li><strong>ΔRS_5d(%)</strong>: RS_20dの5営業日前からの変化幅。勢い（モメンタム）の変化を計ります。
+                            </li>
+                            <li><strong>Rank</strong>: RS_20dに基づく11セクター内の順位（1位が最強）。</li>
+                            <li><strong>ΔRank(5d)</strong>: 5営業日前と比較した順位の変動。数値がマイナス（例:
+                                -2）なら順位が2つ上がったことを意味します。
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 border-left">
+                        <p class="mb-1"><strong>信号機ルール:</strong></p>
+                        <ul class="mb-0">
+                            <li><span class="badge badge-success"
+                                      style="background-color: #28a745; color: white;">Green</span>:
+                                <strong>出遅れからの反発</strong> (RS_20d < 0 かつ ΔRS_5d > 0 かつ ΔRank_5d ≤ -2)
+                            </li>
+                            <li><span class="badge badge-warning" style="background-color: #ffc107; color: black;">Yellow</span>:
+                                <strong>勢い改善中</strong> (ΔRS_5d > 0)
+                            </li>
+                            <li><span class="badge badge-danger"
+                                      style="background-color: #dc3545; color: white;">Red</span>:
+                                <strong>過熱からの失速</strong> (RS_20d > 0 かつ ΔRS_5d < 0 かつ ΔRank_5d ≥ 2)
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-12 mt-3 border-top pt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0"><i class="fas fa-sync"></i> 景気サイクルとセクターの一般的法則:</h6>
+                            <small class="text-muted">
+                                解説・詳細:
+                                <a href="https://www.investopedia.com/articles/trading/05/020305.asp" target="_blank"
+                                   rel="noopener noreferrer">Investopedia <i class="fas fa-external-link-alt"></i></a>
+                            </small>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 border-right">
+                                <small class="font-weight-bold text-success">【拡大期】景気＋ / 金利ー</small><br>
+                                <small>Information Technology, Financials</small>
+                            </div>
+                            <div class="col-md-3 border-right">
+                                <small class="font-weight-bold text-primary">【成熟期】景気＋ / 金利＋</small><br>
+                                <small>Industrials, Materials, Consumer Discretionary</small>
+                            </div>
+                            <div class="col-md-3 border-right">
+                                <small class="font-weight-bold text-danger">【後退期】景気ー / 金利＋</small><br>
+                                <small>Energy</small>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="font-weight-bold text-secondary">【停滞期】景気ー / 金利ー</small><br>
+                                <small>Communication Services, Health Care, Consumer Staples, Utilities</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="text-right">
-                <a href="https://jp.tradingview.com/symbols/NASDAQ-NDX/components/" target="_blank" class="btn btn-sm btn-outline-info">
-                    TradingView <i class="fas fa-external-link-alt"></i>
-                </a>
+            <div class="text-right mt-3">
+                <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
             </div>
-        </div>
+        </section>
 
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <h6 class="text-secondary mb-3"><i class="fas fa-chart-pie"></i> 業種別分布</h6>
-                <div style="height: 300px;">
-                    <canvas id="nasdaqSectorChart"></canvas>
+        <!-- 5. NASDAQ100 構成銘柄 (Bug's Eye View) -->
+        <section id="nasdaq100" class="mb-5 border p-4 rounded shadow-sm bg-white">
+            <div class="mb-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="text-primary mb-1"><i class="fas fa-bug"></i> 5. NASDAQ100 構成銘柄 (虫の目)</h4>
+                    <p class="text-muted mb-0">NASDAQ100 指数の正体を業種分布から理解する</p>
+                </div>
+                <div class="text-right">
+                    <a href="https://jp.tradingview.com/symbols/NASDAQ-NDX/components/" target="_blank"
+                       class="btn btn-sm btn-outline-info">
+                        TradingView <i class="fas fa-external-link-alt"></i>
+                    </a>
                 </div>
             </div>
-            <div class="col-md-6">
-                <h6 class="text-secondary mb-3"><i class="fas fa-list-ul"></i> 銘柄一覧 (業種別: Sector昇順)</h6>
-                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-sm table-hover border">
-                        <thead class="table-light sticky-top">
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6 class="text-secondary mb-3"><i class="fas fa-chart-pie"></i> 業種別分布</h6>
+                    <div style="height: 300px;">
+                        <canvas id="nasdaqSectorChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-secondary mb-3"><i class="fas fa-list-ul"></i> 銘柄一覧 (業種別: Sector昇順)</h6>
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-sm table-hover border">
+                            <thead class="table-light sticky-top">
                             <tr>
                                 <th>Ticker</th>
                                 <th>Name</th>
                                 <th>Sector</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                             {% for company in nasdaq100_companies %}
-                            <tr>
-                                <td>
-                                    <a href="https://jp.tradingview.com/symbols/NASDAQ-{{ company.ticker }}/" target="_blank" rel="noopener noreferrer">
-                                        <code class="text-primary">{{ company.ticker }}</code>
-                                    </a>
-                                </td>
-                                <td class="small">{{ company.name }}</td>
-                                <td class="small">
-                                    {% if company.sector %}
-                                        {{ company.sector }}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td>
+                                        <a href="https://jp.tradingview.com/symbols/NASDAQ-{{ company.ticker }}/"
+                                           target="_blank" rel="noopener noreferrer">
+                                            <code class="text-primary">{{ company.ticker }}</code>
+                                        </a>
+                                    </td>
+                                    <td class="small">{{ company.name }}</td>
+                                    <td class="small">
+                                        {% if company.sector %}
+                                            {{ company.sector }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center p-3 text-muted">
-                                    データがありません。`python manage.py update_nasdaq100_list` を実行してください。
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td colspan="3" class="text-center p-3 text-muted">
+                                        データがありません。`python manage.py update_nasdaq100_list` を実行してください。
+                                    </td>
+                                </tr>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-2 text-muted small border-top pt-3">
-            <h6>なぜ NASDAQ100 は「成長株・テクノロジー指数」と呼ばれるのか:</h6>
-            <p>
-                NASDAQ100 は、NASDAQ市場に上場している時価総額上位100社（金融を除く）で構成される指数です。
-                上のグラフからも分かる通り、<strong>Information Technology（電子テクノロジー・テクノロジーサービス等）</strong>が大きな割合を占めているのが特徴です。
-                SPY (S&P500) と比較して景気敏感な金融セクターが含まれず、技術革新や高い成長性を期待される企業が集まっているため、強気相場では市場を牽引する役割を果たします。
-            </p>
-        </div>
-        <div class="text-right mt-3">
-            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
-        </div>
-    </section>
-
-    <!-- 6. RSS ニュースフィード -->
-    <section id="rss" class="mb-5 border p-4 rounded shadow-sm">
-        <div class="mb-4">
-            <h4 class="text-primary mb-3">
-                <i class="fas fa-rss"></i> 6. RSS ニュースフィード
-            </h4>
-            <p class="text-muted">
-                <i class="fas fa-clock"></i> 日次更新
-            </p>
-        </div>
-        <div class="card shadow-sm">
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    {% for feed in rss_feeds %}
-                    <a href="{{ feed.link }}" target="_blank" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1 text-primary">{{ feed.title }}</h6>
-                            <small class="text-muted">{{ feed.published_at|date:"Y/m/d H:i" }}</small>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-secondary">{{ feed.source.name }} - {{ feed.source.category }}</small>
-                        </div>
-                    </a>
-                    {% empty %}
-                    <div class="p-4 text-center text-muted">
-                        表示するニュースがありません。コマンドを実行してデータを取得してください。
+                            </tbody>
+                        </table>
                     </div>
-                    {% endfor %}
                 </div>
             </div>
-        </div>
-        <div class="text-right mt-3">
-            <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
-        </div>
-    </section>
-</div>
+
+            <div class="mt-2 text-muted small border-top pt-3">
+                <h6>なぜ NASDAQ100 は「成長株・テクノロジー指数」と呼ばれるのか:</h6>
+                <p>
+                    NASDAQ100 は、NASDAQ市場に上場している時価総額上位100社（金融を除く）で構成される指数です。
+                    上のグラフからも分かる通り、<strong>Information
+                    Technology（電子テクノロジー・テクノロジーサービス等）</strong>が大きな割合を占めているのが特徴です。
+                    SPY (S&P500) と比較して景気敏感な金融セクターが含まれず、技術革新や高い成長性を期待される企業が集まっているため、強気相場では市場を牽引する役割を果たします。
+                </p>
+            </div>
+            <div class="text-right mt-3">
+                <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+            </div>
+        </section>
+
+        <!-- 6. RSS ニュースフィード -->
+        <section id="rss" class="mb-5 border p-4 rounded shadow-sm">
+            <div class="mb-4">
+                <h4 class="text-primary mb-3">
+                    <i class="fas fa-rss"></i> 6. RSS ニュースフィード
+                </h4>
+                <p class="text-muted">
+                    <i class="fas fa-clock"></i> 日次更新
+                </p>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for feed in rss_feeds %}
+                            <a href="{{ feed.link }}" target="_blank" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1 text-primary">{{ feed.title }}</h6>
+                                    <small class="text-muted">{{ feed.published_at|date:"Y/m/d H:i" }}</small>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-secondary">{{ feed.source.name }}
+                                        - {{ feed.source.category }}</small>
+                                </div>
+                            </a>
+                        {% empty %}
+                            <div class="p-4 text-center text-muted">
+                                表示するニュースがありません。コマンドを実行してデータを取得してください。
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="text-right mt-3">
+                <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
+            </div>
+        </section>
+    </div>
 {% endblock %}

@@ -1,4 +1,4 @@
-{% extends "vietnam_research/base.html" %}
+{% extends "usa_research/base.html" %}
 {% load static %}
 {% load humanize %}
 {% block content %}
@@ -6,10 +6,10 @@
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
             <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
-                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                <li class="breadcrumb-item"><a href="{% url 'usa:index' %}"
+                                               class="text-decoration-none text-muted">USA研究</a>
                 </li>
-                <li class="breadcrumb-item"><a href="{% url 'vnm:financial_results' %}"
+                <li class="breadcrumb-item"><a href="{% url 'usa:financial_results' %}"
                                                class="text-decoration-none text-muted">決算ウォッチ</a></li>
                 <li class="breadcrumb-item active" aria-current="page">詳細</li>
             </ol>
@@ -17,9 +17,9 @@
 
         <div class="row g-4">
             <div class="col-12 d-flex justify-content-between align-items-center border-bottom pb-2">
-                <h2 class="h3 mb-0">決算詳細: <span class="text-primary">{{ object_list.0.symbol__code }}</span>
+                <h2 class="h3 mb-0">決算詳細: <span class="text-primary">{{ object_list.0.ticker }}</span>
                 </h2>
-                <a href="{% url 'vnm:financial_results' %}" class="btn btn-outline-secondary btn-sm">一覧に戻る</a>
+                <a href="{% url 'usa:financial_results' %}" class="btn btn-outline-secondary btn-sm">一覧に戻る</a>
             </div>
 
             <div class="col-12">
@@ -65,10 +65,14 @@
                                             {{ detail.guidance_ok|yesno:'達成,未達,非開示' }}
                                         </span>
                                         </td>
-                                        <td>{{ detail.eps_estimate|default:"-" }}</td>
-                                        <td class="fw-bold">{{ detail.eps_actual|default:"-" }}</td>
-                                        <td>{{ detail.sales_estimate|default:"-" }}</td>
-                                        <td class="fw-bold">{{ detail.sales_actual|default:"-" }}</td>
+                                        <td>{{ detail.eps_estimate|default:"-" }} {{ detail.eps_unit.name }}</td>
+                                        <td class="fw-bold">{{ detail.eps_actual|default:"-" }}
+                                            {{ detail.eps_unit.name }}
+                                        </td>
+                                        <td>{{ detail.sales_estimate|default:"-" }} {{ detail.sales_unit.name }}</td>
+                                        <td class="fw-bold">{{ detail.sales_actual|default:"-" }}
+                                            {{ detail.sales_unit.name }}
+                                        </td>
                                         <td class="{% if detail.y_over_y_growth_rate >= 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
                                             {{ detail.y_over_y_growth_rate|default:"-" }}%
                                         </td>

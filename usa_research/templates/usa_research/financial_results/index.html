@@ -1,4 +1,4 @@
-{% extends "vietnam_research/base.html" %}
+{% extends "usa_research/base.html" %}
 {% load static %}
 {% load humanize %}
 {% block content %}
@@ -6,8 +6,8 @@
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
             <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item"><a href="{% url 'vnm:index' %}"
-                                               class="text-decoration-none text-muted">ベトナム研究</a>
+                <li class="breadcrumb-item"><a href="{% url 'usa:index' %}"
+                                               class="text-decoration-none text-muted">USA研究</a>
                 </li>
                 <li class="breadcrumb-item active" aria-current="page">決算ウォッチ</li>
             </ol>
@@ -18,10 +18,10 @@
                 <div class="bg-light p-4 rounded shadow-sm mb-4">
                     <h1 class="h3">決算ウォッチ</h1>
                     <p class="text-muted">
-                        主要企業（NASDAQなどの米国株）の四半期業績を分析します。USAアプリ作成前の暫定的な機能です。</p>
+                        主要企業（NASDAQなどの米国株）の四半期業績を分析します。</p>
                     <div class="alert alert-info border-0 shadow-sm small py-2 mb-0">
                         <i class="fas fa-comment-dots me-2 text-primary"></i>
-                        もともとこの「決算ウォッチ」は、広瀬隆雄氏（じっちゃま）の決算分析手法（EPS・売上・ガイダンスの3条件）を参考に計数を抜き出して分析するために作成されました。しかし、いまでは購読していません。
+                        もともとこの「決算ウォッチ」は、広瀬隆雄氏（じっちゃま）の決算分析手法（EPS・売上・ガイダンスの3条件）を参考に計数を抜き出して分析するために作成されました。
                         <a href="https://note.com/hirosetakao/n/na0e7328821d8" target="_blank"
                            class="alert-link ms-2 text-decoration-none">
                             参考記事 <i class="fas fa-external-link-alt x-small"></i>
@@ -31,7 +31,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <p class="mb-0 small">EPS、売上、ガイダンスの達成状況を追跡します。</p>
                         {% if user.is_superuser or user.is_staff %}
-                            <a href="{% url 'vnm:financial_results_create' %}"
+                            <a href="{% url 'usa:financial_results_create' %}"
                                class="btn btn-primary btn-sm">決算登録</a>
                         {% else %}
                             <button class="btn btn-secondary btn-sm" disabled>決算登録</button>
@@ -48,10 +48,9 @@
                                 <thead class="table-light">
                                 <tr>
                                     <th class="text-center ps-3">ティッカー</th>
-                                    <th class="text-center">件数</th>
-                                    <th class="text-center">EPS OK</th>
-                                    <th class="text-center">売上 OK</th>
-                                    <th class="text-center">ガイダンス OK</th>
+                                    <th class="text-center">EPS OK (回 / 総数)</th>
+                                    <th class="text-center">売上 OK (回 / 総数)</th>
+                                    <th class="text-center">ガイダンス OK (回 / 総数)</th>
                                     <th class="text-end pe-3">操作</th>
                                 </tr>
                                 </thead>
@@ -59,32 +58,31 @@
                                 {% for financial_result in object_list %}
                                     <tr>
                                         <td class="text-center ps-3">
-                                            <span class="fw-bold">{{ financial_result.symbol__code }}</span>
+                                            <span class="fw-bold">{{ financial_result.ticker }}</span>
                                         </td>
-                                        <td class="text-center">{{ financial_result.symbol__code__count }}</td>
                                         <td class="text-center">
                                         <span class="badge {% if financial_result.eps_ok__sum > 0 %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {{ financial_result.eps_ok__sum|add:"0" }}
+                                            {{ financial_result.eps_ok__sum|add:"0" }} / {{ financial_result.ticker__count }}
                                         </span>
                                         </td>
                                         <td class="text-center">
                                         <span class="badge {% if financial_result.sales_ok__sum > 0 %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {{ financial_result.sales_ok__sum|add:"0" }}
+                                            {{ financial_result.sales_ok__sum|add:"0" }} / {{ financial_result.ticker__count }}
                                         </span>
                                         </td>
                                         <td class="text-center">
                                         <span class="badge {% if financial_result.guidance_ok__sum > 0 %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {{ financial_result.guidance_ok__sum|add:"0" }}
+                                            {{ financial_result.guidance_ok__sum|add:"0" }} / {{ financial_result.ticker__count }}
                                         </span>
                                         </td>
                                         <td class="text-end pe-3">
-                                            <a href="{% url 'vnm:financial_results_detail' financial_result.symbol__code %}"
+                                            <a href="{% url 'usa:financial_results_detail' financial_result.ticker %}"
                                                class="btn btn-outline-secondary btn-sm">詳細を見る</a>
                                         </td>
                                     </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="6" class="text-center py-4 text-muted">
+                                        <td colspan="5" class="text-center py-4 text-muted">
                                             決算データがまだ登録されていません。
                                         </td>
                                     </tr>
