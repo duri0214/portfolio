@@ -101,11 +101,9 @@ python manage.py loaddata vietnam_research\fixtures\indClass.json
 python manage.py loaddata vietnam_research\fixtures\market.json
 python manage.py loaddata vietnam_research\fixtures\symbol.json
 python manage.py loaddata vietnam_research\fixtures\sbi.json
-python manage.py loaddata vietnam_research\fixtures\unit.json
 python manage.py loaddata vietnam_research\fixtures\vnIndex.json
 python manage.py loaddata vietnam_research\fixtures\articles.json
 python manage.py loaddata vietnam_research\fixtures\basicInformation.json
-python manage.py loaddata vietnam_research\fixtures\financialResultWatch.json
 python manage.py loaddata vietnam_research\fixtures\watchlist.json
 
 # ここで vietnam_research の 各種データインポートバッチをまわす
@@ -208,6 +206,10 @@ python manage.py loaddata ai_agent\fixtures\guardrail_config.json
 python manage.py loaddata ai_agent\fixtures\rag_material.json
 
 # --- USA Research ---
+python manage.py loaddata usa_research\fixtures\market.json
+python manage.py loaddata usa_research\fixtures\unit.json
+python manage.py loaddata usa_research\fixtures\financial_results.json
+
 # 資産クラスの長期推移データの初期取得（超長期: 指数を含めると1950年代〜取得可能）
 python manage.py monthly_update_historical_assets --start 1950-01-01
 
@@ -316,7 +318,7 @@ sudo tail -n 50 /var/log/apache2/error.log
 
 ### [usa_research] 米国株・マクロ指標分析
 
-米国市場のマクロ指標、セクターローテーション、資産クラスの長期推移を可視化します。
+米国市場のマクロ指標、セクターローテーション、資産クラスの長期推移を可視化し、広瀬隆雄氏の手法に基づく「決算ウォッチ」機能を備えています。
 
 - **主要バッチ:**
     - `update_macro_indicators`: ISM, US10Y, VIX等の取得

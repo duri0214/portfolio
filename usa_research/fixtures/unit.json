@@ -1,0 +1,18 @@
+[
+  {
+    "model": "usa_research.unit",
+    "pk": 1,
+    "fields": {
+      "name": "セント(¢)",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "usa_research.unit",
+    "pk": 2,
+    "fields": {
+      "name": "ドル(100M$)",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  }
+]

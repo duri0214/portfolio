@@ -65,13 +65,13 @@
                                             {{ detail.guidance_ok|yesno:'達成,未達,非開示' }}
                                         </span>
                                         </td>
-                                        <td>{{ detail.eps_estimate|default:"-" }} ({{ detail.eps_unit.name }})</td>
+                                        <td>{{ detail.eps_estimate|default:"-" }} {{ detail.eps_unit.name }}</td>
                                         <td class="fw-bold">{{ detail.eps_actual|default:"-" }}
-                                            ({{ detail.eps_unit.name }})
+                                            {{ detail.eps_unit.name }}
                                         </td>
-                                        <td>{{ detail.sales_estimate|default:"-" }} ({{ detail.sales_unit.name }})</td>
+                                        <td>{{ detail.sales_estimate|default:"-" }} {{ detail.sales_unit.name }}</td>
                                         <td class="fw-bold">{{ detail.sales_actual|default:"-" }}
-                                            ({{ detail.sales_unit.name }})
+                                            {{ detail.sales_unit.name }}
                                         </td>
                                         <td class="{% if detail.y_over_y_growth_rate >= 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
                                             {{ detail.y_over_y_growth_rate|default:"-" }}%

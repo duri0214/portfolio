@@ -1,0 +1,42 @@
+[
+  {
+    "model": "usa_research.market",
+    "pk": 3,
+    "fields": {
+      "code": "NASDAQ",
+      "name": "ナスダック",
+      "url_file_name": "",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "usa_research.market",
+    "pk": 4,
+    "fields": {
+      "code": "NYSE",
+      "name": "ニューヨーク証券取引所",
+      "url_file_name": "",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "usa_research.market",
+    "pk": 5,
+    "fields": {
+      "code": "NYSE American",
+      "name": "旧アメリカン証券取引所",
+      "url_file_name": "",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "usa_research.market",
+    "pk": 6,
+    "fields": {
+      "code": "NYSE Arca",
+      "name": "旧アーキペラーゴ",
+      "url_file_name": "",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  }
+]

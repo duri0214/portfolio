@@ -118,6 +118,22 @@ class Nasdaq100Company(models.Model):
         return f"{self.ticker} - {self.name}"
 
 
+class Market(models.Model):
+    """
+    マーケットマスタ
+    """
+
+    code = models.CharField(max_length=20)
+    name = models.CharField(max_length=50)
+    url_file_name = models.CharField(max_length=10, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Unit(models.Model):
     """財務単位"""
 
@@ -162,6 +178,11 @@ class FinancialResultWatch(models.Model):
         on_delete=models.CASCADE,
         related_name="r_sales_unit",
         verbose_name="売上単位",
+    )
+    user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.CASCADE,
+        verbose_name="登録ユーザー",
     )
 
     class Meta:

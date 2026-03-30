@@ -146,6 +146,6 @@ class FinancialResultsCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy("usa:financial_results")
 
     def form_valid(self, form):
-        """登録ユーザーIDをセットして保存します。"""
-        form.instance.user_id = self.request.user.id
+        """登録ユーザーをセットして保存します。"""
+        form.instance.user = self.request.user
         return super().form_valid(form)
