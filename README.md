@@ -93,6 +93,22 @@ python manage.py createsuperuser
 各アプリの Fixture と初期化バッチを、以下の順序で実行してください。
 ※ 備忘録：配布用 fixture (*/user.json) のパスワード実体は test#1234 です
 ※ サーバ（Ubuntu/Linux）で実行する場合は、パス区切り文字の `\` を `/` に置換して実行してください。
+※ DBを削除して初期化する場合、Linux環境の `vnm.industry` テーブルは日次の現地データが積み上がっているため、事前にバックアップ取得・復元が必要です。
+
+手動実行の代わりに、以下のスクリプトで一括実行できます。
+
+**Windows (PowerShell)**
+
+```powershell
+.\scripts\step2_import_data.ps1
+```
+
+**Linux (bash)**
+
+```bash
+chmod +x scripts/step2_import_data.sh
+./scripts/step2_import_data.sh
+```
 
 ```bash
 # --- Vietnam Research ---
