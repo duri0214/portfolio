@@ -25,6 +25,7 @@ done
 # --- USA Research (Masters) ---
 # Note: Load usa_research/market.json first because vietnam_research/symbol.json depends on it (market_id 3, 4, etc.)
 python manage.py loaddata usa_research/fixtures/market.json
+python manage.py loaddata usa_research/fixtures/symbol.json
 python manage.py loaddata usa_research/fixtures/unit.json
 
 # --- Vietnam Research ---
@@ -41,6 +42,7 @@ python manage.py loaddata vietnam_research/fixtures/watchlist.json
 # ここで vietnam_research の 各種データインポートバッチをまわす
 python manage.py daily_import_market_data
 python manage.py daily_import_from_sbi
+python manage.py daily_import_usa_from_sbi
 python manage.py daily_import_from_vietkabu
 
 # 分析用データ生成・チャート作成

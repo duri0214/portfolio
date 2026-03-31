@@ -134,6 +134,44 @@ class Market(models.Model):
         return self.name
 
 
+class Symbol(models.Model):
+    """
+    シンボルマスタ
+    """
+
+    code = models.CharField(max_length=10)
+    name = models.CharField(max_length=255)
+    market = models.ForeignKey(Market, on_delete=models.CASCADE)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["code", "market_id"], name="usa_code_market_id_unique"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.market.name}｜{self.code}｜{self.name}"
+
+
+class SbiSymbol(models.Model):
+    """
+    SBI証券取り扱い銘柄（米国株）
+    """
+
+    symbol = models.ForeignKey(
+        Symbol, on_delete=models.CASCADE, related_name="sbi_symbols"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
+
+    def __str__(self):
+        return f"SBI: {self.symbol}"
+
+
 class Unit(models.Model):
     """財務単位"""
 
@@ -166,7 +204,17 @@ class FinancialResultWatch(models.Model):
     sales_actual = models.FloatField(verbose_name="売上実績")
     y_over_y_growth_rate = models.FloatField(verbose_name="前年同期比(%)")
     note_url = models.URLField(verbose_name="NoteURL", null=True, blank=True)
-    ticker = models.CharField(max_length=10, verbose_name="ティッカー")
+    ticker = models.CharField(
+        max_length=10, verbose_name="ティッカー", null=True, blank=True
+    )
+    symbol = models.ForeignKey(
+        Symbol,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="financial_results",
+        verbose_name="シンボル",
+    )
     eps_unit = models.ForeignKey(
         Unit,
         on_delete=models.CASCADE,
