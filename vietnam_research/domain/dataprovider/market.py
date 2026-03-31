@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F, FloatField
 from django.db.models import QuerySet
 from django.db.models.functions import Round
@@ -227,7 +228,7 @@ class VietnamMarketDataProvider(MarketAbstract):
                     )
                 )
 
-            except Industry.DoesNotExist:
+            except (Industry.DoesNotExist, ObjectDoesNotExist):
                 logging.warning(
                     f"market_vietnam.py radar_chart() の{m}ヶ月は存在しないため、無視されました"
                 )

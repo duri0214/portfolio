@@ -85,7 +85,7 @@ class MarketRetrievalService:
                     x.to_dict()
                     for x in vietnam_market_data_provider.radar_chart(
                         rec_type="企業数",
-                        months_dating_back=[-1, -4, -7],
+                        months_dating_back=[0, -1, -4, -7],
                         aggregate_field="id",
                         aggregate_alias="count",
                         denominator_field="id",
@@ -97,7 +97,7 @@ class MarketRetrievalService:
                     x.to_dict()
                     for x in vietnam_market_data_provider.radar_chart(
                         rec_type="時価総額",
-                        months_dating_back=[-1, -4, -7],
+                        months_dating_back=[0, -1, -4, -7],
                         aggregate_field="marketcap",
                         aggregate_alias="marketcap_sum",
                         denominator_field="marketcap",
@@ -157,7 +157,7 @@ class MarketRetrievalService:
                     x.to_dict()
                     for x in vietnam_market_data_provider.radar_chart(
                         rec_type="企業数",
-                        months_dating_back=[-1, -4, -7],
+                        months_dating_back=[0, -1, -4, -7],
                         aggregate_field="id",
                         aggregate_alias="count",
                         denominator_field="id",
@@ -169,7 +169,7 @@ class MarketRetrievalService:
                     x.to_dict()
                     for x in vietnam_market_data_provider.radar_chart(
                         rec_type="時価総額",
-                        months_dating_back=[-1, -4, -7],
+                        months_dating_back=[0, -1, -4, -7],
                         aggregate_field="marketcap",
                         aggregate_alias="marketcap_sum",
                         denominator_field="marketcap",
