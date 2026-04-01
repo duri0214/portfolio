@@ -119,8 +119,6 @@ python manage.py loaddata taxonomy/fixtures/feedGroup.json
 python manage.py loaddata taxonomy/fixtures/henGroup.json
 
 # ここで taxonomy の master data バッチ（気象コード等）をまわす
-python manage.py weather_generate_code_fixture_taxonomy
-
 python manage.py loaddata taxonomy/fixtures/jma_weather_code.json
 python manage.py loaddata taxonomy/fixtures/eggLedger.json
 
