@@ -1,7 +1,9 @@
-import yfinance as yf
-import pandas as pd
 from datetime import datetime, timedelta
+
+import pandas as pd
+import yfinance as yf
 from django.core.management.base import BaseCommand
+
 from usa_research.models import AssetPrice
 
 # 対象資産の定義
@@ -126,6 +128,10 @@ class Command(BaseCommand):
 
             for asset_name, ticker in TICKERS.items():
                 try:
+                    # ティッカーが存在し、かつ None でないことを確認
+                    if ticker not in data or data[ticker] is None:
+                        continue
+
                     # 調整後終値を取得
                     # Yahoo Financeのデータ構造を確認
                     # Adj Close が無い場合は Close を使用
@@ -142,7 +148,7 @@ class Command(BaseCommand):
                         )
                         if created:
                             count += 1
-                except (KeyError, IndexError):
+                except (KeyError, IndexError, TypeError):
                     continue
 
         self.stdout.write(

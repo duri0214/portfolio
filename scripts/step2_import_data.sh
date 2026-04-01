@@ -89,8 +89,6 @@ python manage.py loaddata soil_analysis/fixtures/cultivationtype.json
 
 # ここで soil analysis の master data バッチをまわす
 python manage.py weather_load_const_master
-python manage.py weather_generate_code_fixture_soil  # fixtureが変更されたときのみ実行
-python manage.py weather_download_code_icon         # svgが変更されたときのみ実行
 
 python manage.py loaddata soil_analysis/fixtures/jma_weather_code.json
 python manage.py loaddata soil_analysis/fixtures/land.json

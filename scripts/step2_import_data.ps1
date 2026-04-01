@@ -85,8 +85,6 @@ python manage.py loaddata soil_analysis\fixtures\cultivationtype.json
 
 # Batches for Soil Analysis master data
 python manage.py weather_load_const_master
-python manage.py weather_generate_code_fixture_soil
-python manage.py weather_download_code_icon
 
 python manage.py loaddata soil_analysis\fixtures\jma_weather_code.json
 python manage.py loaddata soil_analysis\fixtures\land.json
