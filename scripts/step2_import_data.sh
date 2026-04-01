@@ -23,7 +23,6 @@ while true; do
 done
 
 # --- USA Research (Masters) ---
-# Note: Load usa_research/market.json first because vietnam_research/symbol.json depends on it (market_id 3, 4, etc.)
 python manage.py loaddata usa_research/fixtures/market.json
 python manage.py loaddata usa_research/fixtures/symbol.json
 python manage.py loaddata usa_research/fixtures/unit.json

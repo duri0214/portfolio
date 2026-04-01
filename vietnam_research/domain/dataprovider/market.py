@@ -233,6 +233,11 @@ class VietnamMarketDataProvider(MarketAbstract):
                     f"market_vietnam.py radar_chart() の{m}ヶ月は存在しないため、無視されました"
                 )
                 continue
+            except ZeroDivisionError:
+                logging.warning(
+                    f"market_vietnam.py radar_chart() の{m}ヶ月は分母が0のため、無視されました"
+                )
+                continue
 
         return layers
 
