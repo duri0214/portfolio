@@ -75,7 +75,7 @@ class ContextAnalyzerService:
                     ),
                 ]
             )
-            keywords = extraction_response.choices[0].message.content.strip()
+            keywords = extraction_response.answer.strip()
             return f"{thinking_type_disp}に関連する重要キーワード: {keywords}"
         except Exception as e:
             print(f"キーワード抽出中にエラーが発生: {e}")
@@ -152,7 +152,7 @@ class ContextAnalyzerService:
                 ]
             )
             # 5. リフレーミング結果を返却（エラー時は元のコンテキストを返却）
-            reframed_context = response.choices[0].message.content.strip()
+            reframed_context = response.answer.strip()
             return reframed_context
         except Exception as e:
             print(f"コンテキストリフレーミング中にエラーが発生: {e}")

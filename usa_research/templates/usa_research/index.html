@@ -49,7 +49,7 @@
                             {% empty %}
                                 <tr>
                                     <td colspan="4" class="p-4 text-muted">
-                                        データがありません。`python manage.py update_macro_indicators` を実行してください。
+                                        データがありません。`update_macro_indicators` を実行してください。
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -371,7 +371,7 @@
                 {% if msci_report %}
                     {{ msci_report.summary_html|safe }}
                 {% else %}
-                    <p class="text-muted mb-0">データがありません。`python manage.py update_msci_weights`
+                    <p class="text-muted mb-0">データがありません。`monthly_update_msci_weights`
                         を実行してください。</p>
                 {% endif %}
             </div>
@@ -551,7 +551,7 @@
                             {% empty %}
                                 <tr>
                                     <td colspan="7" class="p-4 text-muted">
-                                        データがありません。`python manage.py update_sector_rotation` を実行してください。
+                                        データがありません。`update_sector_rotation` を実行してください。
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -681,7 +681,8 @@
                             {% empty %}
                                 <tr>
                                     <td colspan="3" class="text-center p-3 text-muted">
-                                        データがありません。`python manage.py update_nasdaq100_list` を実行してください。
+                                        データがありません。`monthly_update_nasdaq100_list`
+                                        を実行してください。
                                     </td>
                                 </tr>
                             {% endfor %}

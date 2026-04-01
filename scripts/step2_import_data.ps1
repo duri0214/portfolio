@@ -21,7 +21,6 @@ while ($true) {
 }
 
 # --- USA Research (Masters) ---
-# Note: Load usa_research/market.json first because vietnam_research/symbol.json depends on it (market_id 3, 4, etc.)
 python manage.py loaddata usa_research\fixtures\market.json
 python manage.py loaddata usa_research\fixtures\symbol.json
 python manage.py loaddata usa_research\fixtures\unit.json
@@ -86,8 +85,6 @@ python manage.py loaddata soil_analysis\fixtures\cultivationtype.json
 
 # Batches for Soil Analysis master data
 python manage.py weather_load_const_master
-python manage.py weather_generate_code_fixture_soil
-python manage.py weather_download_code_icon
 
 python manage.py loaddata soil_analysis\fixtures\jma_weather_code.json
 python manage.py loaddata soil_analysis\fixtures\land.json
@@ -118,8 +115,6 @@ python manage.py loaddata taxonomy\fixtures\feedGroup.json
 python manage.py loaddata taxonomy\fixtures\henGroup.json
 
 # Batches for Taxonomy master data
-python manage.py weather_generate_code_fixture_taxonomy
-
 python manage.py loaddata taxonomy\fixtures\jma_weather_code.json
 python manage.py loaddata taxonomy\fixtures\eggLedger.json
 

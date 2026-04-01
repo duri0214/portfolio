@@ -39,17 +39,6 @@ class Command(BaseCommand):
         clear_data = options["clear"]
 
         if clear_data:
-            # ユーザーへの確認
-            self.stdout.write(
-                self.style.WARNING(
-                    "警告: --clear オプションが指定されました。既存のすべての VietnamStatistics データを削除します。"
-                )
-            )
-            confirm = input("本当によろしいですか？ [y/N]: ")
-            if confirm.lower() != "y":
-                self.stdout.write(self.style.ERROR("処理を中断しました。"))
-                return
-
             deleted_count = VietnamStatistics.objects.all().count()
             VietnamStatistics.objects.all().delete()
             self.stdout.write(

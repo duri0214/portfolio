@@ -23,7 +23,6 @@ while true; do
 done
 
 # --- USA Research (Masters) ---
-# Note: Load usa_research/market.json first because vietnam_research/symbol.json depends on it (market_id 3, 4, etc.)
 python manage.py loaddata usa_research/fixtures/market.json
 python manage.py loaddata usa_research/fixtures/symbol.json
 python manage.py loaddata usa_research/fixtures/unit.json
@@ -90,8 +89,6 @@ python manage.py loaddata soil_analysis/fixtures/cultivationtype.json
 
 # ここで soil analysis の master data バッチをまわす
 python manage.py weather_load_const_master
-python manage.py weather_generate_code_fixture_soil  # fixtureが変更されたときのみ実行
-python manage.py weather_download_code_icon         # svgが変更されたときのみ実行
 
 python manage.py loaddata soil_analysis/fixtures/jma_weather_code.json
 python manage.py loaddata soil_analysis/fixtures/land.json
@@ -122,8 +119,6 @@ python manage.py loaddata taxonomy/fixtures/feedGroup.json
 python manage.py loaddata taxonomy/fixtures/henGroup.json
 
 # ここで taxonomy の master data バッチ（気象コード等）をまわす
-python manage.py weather_generate_code_fixture_taxonomy
-
 python manage.py loaddata taxonomy/fixtures/jma_weather_code.json
 python manage.py loaddata taxonomy/fixtures/eggLedger.json
 

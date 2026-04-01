@@ -1,17 +1,18 @@
-import os
-import requests
-import re
 import io
+import os
+import re
 from datetime import datetime
 from typing import Optional, Tuple
-from pypdf import PdfReader
-from django.core.management.base import BaseCommand
 
-from usa_research.models import MsciCountryWeightReport
-from usa_research.domain.valueobject.msci import MsciUpdateResult
+import requests
+from django.core.management.base import BaseCommand
+from pypdf import PdfReader
+
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
+from usa_research.domain.valueobject.msci import MsciUpdateResult
+from usa_research.models import MsciCountryWeightReport
 
 
 class Command(BaseCommand):
@@ -107,7 +108,7 @@ class Command(BaseCommand):
 
         try:
             completion = llm_service.retrieve_answer(messages, max_messages=2)
-            llm_response = completion.choices[0].message.content
+            llm_response = completion.answer
         except Exception as e:
             return MsciUpdateResult(False, f"LLM要約失敗: {str(e)}")
 
