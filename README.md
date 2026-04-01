@@ -163,6 +163,7 @@ python manage.py loaddata rental_shop\fixtures\item.json
 
 # --- Soil Analysis ---
 python manage.py loaddata soil_analysis\fixtures\user.json
+python manage.py loaddata soil_analysis\fixtures\userattribute.json
 python manage.py loaddata soil_analysis\fixtures\companycategory.json
 python manage.py loaddata soil_analysis\fixtures\company.json
 python manage.py loaddata soil_analysis\fixtures\crop.json
@@ -276,7 +277,10 @@ sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo find /var/www/html/portfolio -type d -exec chmod 775 {} +
 sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
 
-# 2. 以降の新規ファイルに自動で権限を継承させる (ACL)
+# 2. スクリプト（.sh）に実行権限を付与
+chmod +x /var/www/html/portfolio/scripts/*.sh
+
+# 3. 以降の新規ファイルに自動で権限を継承させる (ACL)
 sudo apt update && sudo apt install acl -y
 sudo setfacl -R -d -m u:ubuntu:rwx /var/www/html/portfolio/media
 sudo setfacl -R -d -m g:www-data:rwx /var/www/html/portfolio/media

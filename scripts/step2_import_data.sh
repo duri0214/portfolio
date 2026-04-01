@@ -80,6 +80,7 @@ python manage.py loaddata rental_shop/fixtures/item.json
 
 # --- Soil Analysis ---
 python manage.py loaddata soil_analysis/fixtures/user.json
+python manage.py loaddata soil_analysis/fixtures/userattribute.json
 python manage.py loaddata soil_analysis/fixtures/companycategory.json
 python manage.py loaddata soil_analysis/fixtures/company.json
 python manage.py loaddata soil_analysis/fixtures/crop.json
