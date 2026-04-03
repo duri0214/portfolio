@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(ls C:/Users/yoshi/OneDrive/dev/portfolio/*.md)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(del:*)",
+      "Bash(rm:*)"
     ]
   }
 }
