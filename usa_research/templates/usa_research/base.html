@@ -33,8 +33,6 @@
     <!-- favicon -->
     <link rel="shortcut icon" href="{% static 'usa_research/s_u.ico' %}">
 
-    <!-- for ajax -->
-    <script>let myUrl = {"base": "{% url 'vnm:index' %}", "login": "{% url 'login' %}"};</script>
 </head>
 <body>
 <h1></h1>
@@ -42,7 +40,7 @@
     <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid px-3">
             <a class="navbar-brand" href="{% url 'home:index' %}">Henojiya</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -104,7 +102,7 @@
                         </select>
                     </li>
                     {% if user.is_authenticated %}
-                        <li class="nav-item small mr-3">
+                        <li class="nav-item small me-3">
 
                             <span class="nav-link"><i class="fas fa-user"></i> {{ user.username }}さん</span>
                         </li>
