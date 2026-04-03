@@ -17,7 +17,7 @@ class ItemCreateForm(forms.ModelForm):
             "staff",
         )
         widgets = {
-            "warehouse": forms.Select(attrs={"tabindex": "1", "class": "form-control"}),
+            "warehouse": forms.Select(attrs={"tabindex": "1", "class": "form-select"}),
             "serial_number": forms.TextInput(
                 attrs={"tabindex": "2", "class": "form-control"}
             ),
@@ -28,7 +28,7 @@ class ItemCreateForm(forms.ModelForm):
             "pos_x": forms.TextInput(attrs={"tabindex": "5", "class": "form-control"}),
             "pos_y": forms.TextInput(attrs={"tabindex": "6", "class": "form-control"}),
             "pos_z": forms.TextInput(attrs={"tabindex": "7", "class": "form-control"}),
-            "staff": forms.Select(attrs={"tabindex": "8", "class": "form-control"}),
+            "staff": forms.Select(attrs={"tabindex": "8", "class": "form-select"}),
         }
 
 
@@ -50,11 +50,11 @@ class InvoiceCreateForm(forms.ModelForm):
             "rental_end_date": forms.DateInput(
                 attrs={"tabindex": "2", "class": "form-control", "type": "date"}
             ),
-            "company": forms.Select(attrs={"tabindex": "3", "class": "form-control"}),
+            "company": forms.Select(attrs={"tabindex": "3", "class": "form-select"}),
             "billing_person": forms.Select(
-                attrs={"tabindex": "4", "class": "form-control"}
+                attrs={"tabindex": "4", "class": "form-select"}
             ),
-            "staff": forms.Select(attrs={"tabindex": "5", "class": "form-control"}),
+            "staff": forms.Select(attrs={"tabindex": "5", "class": "form-select"}),
         }
 
     def __init__(self, *args, **kwargs):

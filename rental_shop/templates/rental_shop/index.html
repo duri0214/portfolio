@@ -4,49 +4,44 @@
 
 {% block content %}
     <div class="container mt-4">
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-            <ol class="breadcrumb">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
                 <li class="breadcrumb-item active" aria-current="page">Home</li>
             </ol>
         </nav>
-        <h1 class="visually-hidden">Rental Shop</h1>
 
-        <div class="custom-section bg-light p-5 rounded mb-4">
-            <div class="display-4">Let's issue an invoice.</div>
-            <p class="lead">The system that forms the basis of work</p>
-            <hr class="my-4">
-            <p>You can issue an invoice.</p>
-        </div>
-
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <h3 class="mb-3">Menu</h3>
-                <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-primary" href="{% url 'ren:item_create' %}" role="button">
-                        <i class="fas fa-plus-circle me-1"></i>アイテム登録
-                    </a>
-                    <a class="btn btn-outline-primary" href="{% url 'ren:invoice_create' %}" role="button">
-                        <i class="fas fa-file-invoice me-1"></i>請求書作成
-                    </a>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-search me-1"></i>請求書照会
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="{% url 'ren:invoice_list' 1 %}">請求中 の請求書</a></li>
-                            <li><a class="dropdown-item" href="{% url 'ren:invoice_list' 2 %}">請求完了 の請求書</a>
-                            </li>
-                            <li><a class="dropdown-item" href="{% url 'ren:invoice_list' 3 %}">請求無効 の請求書</a>
-                            </li>
-                        </ul>
+        <div class="row g-4">
+            <!-- Hero Section -->
+            <div class="col-12">
+                <div class="bg-light p-5 rounded shadow-sm">
+                    <h1 class="display-4">Let's issue an invoice.</h1>
+                    <p class="lead">The system that forms the basis of work</p>
+                    <hr class="my-4">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-primary" href="{% url 'ren:item_create' %}" role="button">
+                            <i class="fas fa-plus-circle me-1"></i>アイテム登録
+                        </a>
+                        <a class="btn btn-outline-primary" href="{% url 'ren:invoice_create' %}" role="button">
+                            <i class="fas fa-file-invoice me-1"></i>請求書作成
+                        </a>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                    id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-search me-1"></i>請求書照会
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <li><a class="dropdown-item" href="{% url 'ren:invoice_list' 1 %}">請求中 の請求書</a></li>
+                                <li><a class="dropdown-item" href="{% url 'ren:invoice_list' 2 %}">請求完了 の請求書</a></li>
+                                <li><a class="dropdown-item" href="{% url 'ren:invoice_list' 3 %}">請求無効 の請求書</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Start Tabs -->
-        <div class="mt-4">
+            <!-- Warehouse Tabs -->
+            <div class="col-12">
             <ul class="nav nav-tabs" role="tablist">
                 {% for warehouse in warehouses %}
                     <li class="nav-item" role="presentation">
@@ -229,6 +224,8 @@
                         倉庫はありません。
                     </div>
                 {% endif %}
+        </div>
+            </div>
         </div>
         <!-- End Tabs -->
     </div>
