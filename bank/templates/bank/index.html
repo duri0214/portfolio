@@ -1,13 +1,52 @@
 {% extends "bank/base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>銀行CSV分析基盤</h2>
-    <p>銀行ごとの月次CSVを取り込み資金分析を行う基盤です。</p>
-    <ul>
-        <li><a href="{% url 'bank:mufg_deposit_upload' %}">MUFG 普通預金（Eco通帳CSV）アップロード</a></li>
-        <li><a href="{% url 'bank:mufg_analysis_living_cost' %}">MUFG 生活費取引分析（個人ルール）</a></li>
-        <li><a href="{% url 'bank:mufg_analysis_category_monthly' %}">MUFG カテゴリ別月次集計（クロス集計）</a></li>
-    </ul>
-</div>
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item active" aria-current="page">Bank</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <!-- Hero -->
+            <div class="col-12">
+                <div class="bg-light p-5 rounded shadow-sm">
+                    <h1 class="display-4">銀行CSV分析基盤</h1>
+                    <p class="lead">銀行ごとの月次CSVを取り込み資金分析を行う基盤です。</p>
+                </div>
+            </div>
+
+            <!-- Menu Cards -->
+            <div class="col-12">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                                <span class="small text-muted">MUFG 普通預金（Eco通帳CSV）アップロード</span>
+                                <a href="{% url 'bank:mufg_deposit_upload' %}" class="btn btn-outline-primary btn-sm">開く</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                                <span class="small text-muted">MUFG 生活費取引分析（個人ルール）</span>
+                                <a href="{% url 'bank:mufg_analysis_living_cost' %}" class="btn btn-outline-primary btn-sm">開く</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                                <span class="small text-muted">MUFG カテゴリ別月次集計（クロス集計）</span>
+                                <a href="{% url 'bank:mufg_analysis_category_monthly' %}" class="btn btn-outline-primary btn-sm">開く</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
