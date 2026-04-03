@@ -1,0 +1,54 @@
+<header>
+    <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid px-3">
+            <a class="navbar-brand" href="{% url 'home:index' %}">Henojiya</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item me-3">
+                        <select class="form-select d-flex align-items-center" onChange="location.href=value;">
+                            <option value="{% url 'home:index' %}" {% if request.path == '/' or '/about/' in request.path %}selected{% endif %}>HOME</option>
+                            <option value="{% url 'vnm:index' %}" {% if '/vietnam_research/' in request.path and '/about/' not in request.path %}selected{% endif %}>VIETNAM</option>
+                            <option value="{% url 'usa:index' %}" {% if '/usa_research/' in request.path and '/about/' not in request.path %}selected{% endif %}>USA</option>
+                            <option value="{% url 'mrk:index' %}" {% if '/gmarker/' in request.path and '/about/' not in request.path %}selected{% endif %}>GMARKER</option>
+                            <option value="{% url 'shp:index' %}" {% if '/shopping/' in request.path and '/about/' not in request.path %}selected{% endif %}>SHOPPING</option>
+                            <option value="{% url 'ren:index' %}" {% if '/rental_shop/' in request.path and '/about/' not in request.path %}selected{% endif %}>RENTAL SHOP</option>
+                            <option value="{% url 'txo:index' %}" {% if '/taxonomy/' in request.path and '/about/' not in request.path %}selected{% endif %}>TAXONOMY</option>
+                            <option value="{% url 'soil:home' %}" {% if '/soil_analysis/' in request.path and '/about/' not in request.path %}selected{% endif %}>SOIL ANALYSIS</option>
+                            <option value="{% url 'sec:index' %}" {% if '/securities/' in request.path and '/about/' not in request.path %}selected{% endif %}>SECURITIES REPORT</option>
+                            <option value="{% url 'hsp:index' %}" {% if '/hospital/' in request.path and '/about/' not in request.path %}selected{% endif %}>HOSPITAL</option>
+                            <option value="{% url 'llm:index' %}" {% if '/llm_chat/' in request.path and '/about/' not in request.path %}selected{% endif %}>LLM CHAT</option>
+                            <option value="{% url 'agt:index' %}" {% if '/ai_agent/' in request.path and '/about/' not in request.path %}selected{% endif %}>AI AGENT</option>
+                            <option value="{% url 'jpn:index' %}" {% if '/jp_stocks/' in request.path and '/about/' not in request.path %}selected{% endif %}>JP STOCKS</option>
+                            <option value="{% url 'welf:index' %}" {% if '/welfare_services/' in request.path and '/about/' not in request.path %}selected{% endif %}>WELFARE SERVICES</option>
+                            <option value="{% url 'kokkai:index' %}" {% if '/kokkai/' in request.path and '/about/' not in request.path %}selected{% endif %}>KOKKAI</option>
+                            <option value="{% url 'bank:index' %}" {% if '/bank/' in request.path and '/about/' not in request.path %}selected{% endif %}>BANK</option>
+                        </select>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item small mr-3">
+                            <span class="nav-link"><i class="fas fa-user"></i> {{ user.username }}さん</span>
+                        </li>
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger">LOGOUT</button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a href="{% url 'login' %}" class="btn btn-outline-primary">LOGIN</a>
+                        </li>
+                    {% endif %}
+                </ul>
+                <form class="d-flex my-2">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+</header>

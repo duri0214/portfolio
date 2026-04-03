@@ -1,10 +1,12 @@
-from django.views.generic import ListView, DetailView
+from datetime import datetime, timedelta
+
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.http import HttpResponse
-from datetime import datetime, timedelta
-from .models import Meeting
+from django.views.generic import ListView, DetailView
+
 from .domain.service.pipeline import KokkaiPipeline
+from .models import Meeting
 
 
 class IndexView(ListView):
@@ -20,7 +22,7 @@ class IndexView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=90)
+        start_date = end_date - timedelta(days=30)
 
         # クエリパラメータがあればそれを使用
         start_date_str = self.request.GET.get("start_date")

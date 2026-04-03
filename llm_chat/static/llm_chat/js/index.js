@@ -214,10 +214,16 @@ document.addEventListener("DOMContentLoaded", function () {
         })
             .then((response) => {
                 if (!response.ok) {
-                    return response.json().then((errData) => {
-                        const errorMsg = errData.error || "リクエストに失敗しました。";
+                    return response.text().then((text) => {
+                        let errorMsg = "リクエストに失敗しました。";
+                        try {
+                            const errData = JSON.parse(text);
+                            errorMsg = errData.error || errorMsg;
+                            console.error("リクエスト失敗:", response.status, errData);
+                        } catch {
+                            console.error("リクエスト失敗 (non-JSON):", response.status, text.slice(0, 200));
+                        }
                         alert("エラー: " + errorMsg);
-                        console.error("リクエスト失敗:", response.status, errData);
                         stopLoading();
                         throw new Error(errorMsg);
                     });

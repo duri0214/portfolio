@@ -186,50 +186,61 @@ class StreamingResponseView(View):
         """
         ストリームを初期化し、セッションに保存します。
         """
-        use_case_type = request.POST.get("use_case_type")
-        user_input = request.POST.get("user_input")
-
-        if use_case_type not in (
-            UseCaseType.OPENAI_GPT_STREAMING,
-            UseCaseType.RIDDLE,
-        ):
-            return JsonResponse({"error": "Invalid use case for streaming"}, status=400)
-
-        # セッションに use_case_type を保存
-        request.session["use_case_type"] = use_case_type
-
-        # 使用するユースケースを切り替え
         try:
-            if use_case_type == UseCaseType.RIDDLE:
-                use_case = RiddleStreamingUseCase(
-                    config=OpenAIGptConfig(
-                        api_key=os.getenv("OPENAI_API_KEY") or "",
-                        max_tokens=4000,
-                        model=ModelName.GPT_5_MINI,
-                    )
-                )
-            else:
-                use_case = UseCaseFactory.create(use_case_type=use_case_type)
-        except ValueError as e:
-            return JsonResponse({"error": str(e)}, status=400)
-        if use_case_type == UseCaseType.RIDDLE:
-            gender_val = request.POST.get("gender")
-            gender = None
-            if gender_val:
-                try:
-                    gender = Gender(GenderType(gender_val))
-                    request.session["riddle_gender"] = gender_val
-                except ValueError:
-                    pass
-            StreamingResponseView.stored_stream = use_case.execute(
-                user=request.user, content=user_input, gender=gender
-            )
-        else:
-            StreamingResponseView.stored_stream = use_case.execute(
-                user=request.user, content=user_input
-            )
+            use_case_type = request.POST.get("use_case_type")
+            user_input = request.POST.get("user_input")
 
-        return JsonResponse({"message": "ストリームが正常に初期化されました"})
+            if use_case_type not in (
+                UseCaseType.OPENAI_GPT_STREAMING,
+                UseCaseType.RIDDLE,
+            ):
+                return JsonResponse({"error": "Invalid use case for streaming"}, status=400)
+
+            # セッションに use_case_type を保存
+            request.session["use_case_type"] = use_case_type
+
+            # 使用するユースケースを切り替え
+            try:
+                if use_case_type == UseCaseType.RIDDLE:
+                    use_case = RiddleStreamingUseCase(
+                        config=OpenAIGptConfig(
+                            api_key=os.getenv("OPENAI_API_KEY") or "",
+                            max_tokens=4000,
+                            model=ModelName.GPT_5_MINI,
+                        )
+                    )
+                else:
+                    use_case = UseCaseFactory.create(use_case_type=use_case_type)
+            except ValueError as e:
+                return JsonResponse({"error": str(e)}, status=400)
+            try:
+                if use_case_type == UseCaseType.RIDDLE:
+                    gender_val = request.POST.get("gender")
+                    gender = None
+                    if gender_val:
+                        try:
+                            gender = Gender(GenderType(gender_val))
+                            request.session["riddle_gender"] = gender_val
+                        except ValueError:
+                            pass
+                    StreamingResponseView.stored_stream = use_case.execute(
+                        user=request.user, content=user_input, gender=gender
+                    )
+                else:
+                    StreamingResponseView.stored_stream = use_case.execute(
+                        user=request.user, content=user_input
+                    )
+            except ValueError as e:
+                return JsonResponse({"error": str(e)}, status=400)
+
+            return JsonResponse({"message": "ストリームが正常に初期化されました"})
+
+        except Exception as e:
+            logger.error(f"StreamingResponseView.post Error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return JsonResponse(
+                {"error": "An unexpected error occurred", "detail": str(e)}, status=500
+            )
 
     @staticmethod
     def get(request, *args, **kwargs):
