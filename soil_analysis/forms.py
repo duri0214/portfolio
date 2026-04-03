@@ -49,9 +49,13 @@ class LandCreateForm(forms.ModelForm):
         queryset=JmaPrefecture.objects.all(),
         empty_label="選択してください",
         label="都道府県",
+        widget=forms.Select(attrs={"class": "form-select", "tabindex": "2"}),
     )
     jma_city = forms.ModelChoiceField(
-        queryset=JmaCity.objects.all(), empty_label="選択してください", label="市区町村"
+        queryset=JmaCity.objects.all(),
+        empty_label="選択してください",
+        label="市区町村",
+        widget=forms.Select(attrs={"class": "form-select", "tabindex": "3"}),
     )
 
     class Meta:
@@ -69,20 +73,6 @@ class LandCreateForm(forms.ModelForm):
         )
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control", "tabindex": "1"}),
-            "jma_prefecture": forms.Select(
-                attrs={
-                    "class": "form-select",
-                    "tabindex": "2",
-                    "placeholder": "都道府県を選択してください",
-                }
-            ),
-            "jma_city": forms.Select(
-                attrs={
-                    "class": "form-select",
-                    "tabindex": "3",
-                    "placeholder": "市区町村を選択してください",
-                }
-            ),
             "center": forms.TextInput(
                 attrs={
                     "class": "form-control",
