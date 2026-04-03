@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect
@@ -142,6 +144,8 @@ class InvoiceCreateView(CreateView):
         )
         if staff:
             initial["staff"] = staff
+        initial["rental_start_date"] = date.today()
+        initial["rental_end_date"] = date.today() + timedelta(days=7)
         return initial
 
     def form_invalid(self, form):
@@ -170,7 +174,9 @@ class InvoiceDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["items"] = Item.objects.filter(invoice=self.object)
+        items = Item.objects.filter(invoice=self.object)
+        context["items"] = items
+        context["total"] = sum(item.price for item in items)
         return context
 
 

@@ -42,12 +42,11 @@
     <link rel="shortcut icon" href="{% static 'taxonomy/s_t.ico' %}">
 </head>
 <body>
-<h1></h1>
 <header>
     <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid px-3">
             <a class="navbar-brand" href="{% url 'home:index' %}">Henojiya</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -120,6 +119,19 @@
 
 <div id="main" style="margin-top: 70px;"> {# ナビバーの高さ #}
     {% block content %}{% endblock %}
+</div>
+
+<!-- Global Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-warning text-dark">
+            <strong class="me-auto">お知らせ</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            ここにメッセージが表示されます。
+        </div>
+    </div>
 </div>
 <footer>
     <p>© 2019 henojiya. / <a href="https://github.com/duri0214" target="_blank">GitHub portfolio</a></p>

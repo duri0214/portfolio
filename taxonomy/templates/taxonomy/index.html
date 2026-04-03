@@ -1,49 +1,138 @@
 {% extends "taxonomy/base.html" %}
 {% load static %}
 {% block content %}
-    <div class="custom-section bg-light p-5 rounded">
-        <h1 class="display-4">Let's analyze Taxonomy!</h1>
-        <p class="lead">it's interesting Taxonomy</p>
-        <hr class="my-4">
-        <p>You can understand taxonomies</p>
-        <ul class="list-items">
-            <li><a class="btn btn-secondary btn-sm disabled" href="#" role="button">界(kingdom)のメンテナンス</a>
-            </li>
-            <li><a class="btn btn-secondary btn-sm disabled" href="#"
-                   role="button">門(phylum)のメンテナンス</a></li>
-            <li><a class="btn btn-secondary btn-sm disabled" href="#" role="button">綱(classification)のメンテナンス</a>
-            </li>
-            <li><a class="btn btn-secondary btn-sm disabled" href="#"
-                   role="button">科(family)のメンテナンス</a></li>
-            <li><a class="btn btn-secondary btn-sm disabled" href="#"
-                   role="button">属(genus)のメンテナンス</a></li>
-            <li><a class="btn btn-secondary btn-sm disabled" href="#" role="button">種(species)のメンテナンス</a>
-            </li>
-            <li><a class="btn btn-secondary btn-sm disabled" href="#"
-                   role="button">品種(breed)のメンテナンス</a></li>
-            <li><a class="btn btn-secondary btn-sm disabled" href="#"
-                   role="button">タグ(tag)のメンテナンス</a></li>
-            <li><a class="btn btn-secondary btn-sm disabled" href="#"
-                   role="button">品種とタグの紐づけ</a></li>
-        </ul>
-        <ul class="list-items">
-            <li><a class="btn btn-outline-primary" href="{% url 'txo:observation' %}"
-                   role="button">鶏の観察グラフ</a>
-            </li>
-        </ul>
-    </div>
-    <section class="container">
-        <h3>分類グラフ</h3>
-        <div id="chicken-classification-chart">
-            <div class="text">See one-liners for each transition</div>
-            <script>
-                const dataSpec = {
-                    source: JSON.parse('{{ data|safe }}'),
-                    key: "name",
-                };
-                const myChart = d3.indentedTree(dataSpec);
-                d3.select("#chicken-classification-chart").append("div").attr("class", "chart").call(myChart);
-            </script>
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item active" aria-current="page">分類学</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <!-- Hero Section -->
+            <div class="col-12">
+                <div class="bg-light p-5 rounded shadow-sm">
+                    <h1 class="display-4">Let's analyze Taxonomy!</h1>
+                    <p class="lead">生き物の分類体系を探究します。</p>
+                    <hr class="my-4">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-primary" href="{% url 'txo:observation' %}">鶏の観察グラフ</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Menu -->
+            <div class="col-12">
+                <h2 class="h4 mb-3">メンテナンスメニュー</h2>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                    {% for item in menu_items %}
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">{{ item.label }}</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">界(kingdom)のメンテナンス</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">門(phylum)のメンテナンス</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">綱(classification)のメンテナンス</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">科(family)のメンテナンス</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">属(genus)のメンテナンス</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">種(species)のメンテナンス</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">品種(breed)のメンテナンス</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">タグ(tag)のメンテナンス</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">品種とタグの紐づけ</span>
+                                    <a class="btn btn-outline-secondary btn-sm disabled" href="#" role="button">開く</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Classification Chart -->
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom-0 pt-3">
+                        <h2 class="h5 mb-0">分類グラフ</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="chicken-classification-chart">
+                            <div class="text">See one-liners for each transition</div>
+                            <script>
+                                const dataSpec = {
+                                    source: JSON.parse('{{ data|safe }}'),
+                                    key: "name",
+                                };
+                                const myChart = d3.indentedTree(dataSpec);
+                                d3.select("#chicken-classification-chart").append("div").attr("class", "chart").call(myChart);
+                            </script>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
 {% endblock %}

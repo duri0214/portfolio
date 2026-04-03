@@ -57,8 +57,7 @@
                                     <tr>
                                         <th class="text-muted">合計金額</th>
                                         <td class="fs-5 fw-bold text-danger">
-                                            {# 金額計算が必要な場合はモデルにメソッドがあるか確認すべきだが、ここでは表示のみ #}
-                                            <i class="fas fa-coins me-2 text-secondary"></i>--- 円
+                                            <i class="fas fa-coins me-2 text-secondary"></i>{{ total|intcomma }}円
                                         </td>
                                     </tr>
                                 </table>
