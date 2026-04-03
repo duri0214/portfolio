@@ -1,3 +1,8 @@
+---
+name: portfolio
+description: ポートフォリオ共通業務ルール（ユーザー管理・UserAttributeパターンなど）を参照・適用する。
+---
+
 # ポートフォリオ共通業務ルール (Portfolio Common Rules)
 
 ## ユーザー管理の設計パターンの統一

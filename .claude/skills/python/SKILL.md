@@ -1,3 +1,8 @@
+---
+name: python
+description: Python 3.12+ コーディング規約（型ヒント・Repository パターン・docstring・VO設計など）を参照・適用する。
+---
+
 # Python コーディング規約 (Python 3.12+)
 
 Python 3.12 以降の機能を最大限活用し、モダンで簡潔なコードを記述する。

@@ -1,3 +1,8 @@
+---
+name: centos_to_ubuntu_setup
+description: docs/qiita/centos_to_ubuntu_setup.md の編集ルール（コードブロック表記・プレースホルダー・最小差分原則）を参照・適用する。
+---
+
 # 編集ルール（スタイルガイド） — CentOS to Ubuntu Setup
 
 適用対象: docs/qiita/centos_to_ubuntu_setup.md（このファイル専用）
