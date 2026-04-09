@@ -32,25 +32,26 @@ class OpenAIImageService(BaseChatService):
     def generate(self, user_message: MessageDTO) -> MessageDTO:
         """
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
-        gpt-image-1-mini: 1024x1024, 512x512, 256x256, 1792x1024, 1024x1792 のいずれかしか生成できない
+        gpt-image-1-mini: 1024x1024, 1024x1536, 1536x1024, auto のいずれかしか生成できない
         """
         if user_message.content is None:
             raise Exception("content is None")
 
-        # API側で小さいサイズ(256x256)を指定して生成
+        # API側で推奨サイズ(auto)を指定して生成
         answer = OpenAILlmImageService(self.config).retrieve_answer(
-            user_message.to_message(), size="256x256"
+            user_message.to_message(), size="auto"
         )
         image_url = answer.data[0].url
         try:
             response = requests.get(image_url)
             response.raise_for_status()
             raw_picture = BytesIO(response.content)
+            resized_picture = Image.open(raw_picture).resize((256, 256))
             return self._create_assistant_message(
                 user=user_message.user,
                 content=user_message.content,
                 use_case_type=UseCaseType.OPENAI_GPT,
-                file_path=self.save(Image.open(raw_picture)),
+                file_path=self.save(resized_picture),
             )
         except requests.exceptions.HTTPError as http_error:
             raise Exception(http_error)
