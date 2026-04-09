@@ -7,7 +7,7 @@ from lib.llm.valueobject.completion import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import ChatService
-from llm_chat.domain.service.completion.riddle import RiddleChatService
+from llm_chat.domain.service.completion.riddle import RiddleService
 from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import (
@@ -112,16 +112,18 @@ class RiddleUseCase(UseCase):
         answered_count = ChatLogRepository.count_answered_questions(user)
         if answered_count < riddle_count:
             # 問題がまだ残っている場合、次の状態をUSER_INPUTにする
-            first_state = SessionState.START if not current_state else SessionState.EVALUATE
+            first_state = (
+                SessionState.START if not current_state else SessionState.EVALUATE
+            )
             target_states = [first_state, SessionState.USER_INPUT]
             assistant_message.next_riddle_state = SessionState.to_csv(target_states)
 
         # 7. 終了判定と評価
-        if RiddleChatService.is_session_finished(
+        if RiddleService.is_session_finished(
             user, assistant_message, riddle_count, start_signals
         ):
             # 終了処理（定型文付与、最終評価、メッセージクリーニング）
-            assistant_message.content = RiddleChatService.report(
+            assistant_message.content = RiddleService.report(
                 assistant_message.content, riddle_count, user
             )
 
@@ -145,7 +147,9 @@ def _prepare_riddle_turn(
     max_turns: int | None,
     user: User,
     content: str | None,
-) -> tuple[MessageDTO, list[Riddle], int, SessionState | None, SessionState, list[str], bool]:
+) -> tuple[
+    MessageDTO, list[Riddle], int, SessionState | None, SessionState, list[str], bool
+]:
     if content is None:
         raise ValueError("content cannot be None for RiddleUseCase")
 
@@ -153,9 +157,7 @@ def _prepare_riddle_turn(
     last_message = chat_history[-1] if chat_history else None
 
     last_states = (
-        SessionState.from_csv(last_message.next_riddle_state)
-        if last_message
-        else []
+        SessionState.from_csv(last_message.next_riddle_state) if last_message else []
     )
     current_state = last_states[-1] if last_states else None
 
@@ -170,7 +172,7 @@ def _prepare_riddle_turn(
             "セッションが終了しています。画面上の「なぞなぞの開始」を押してやりなおしてください。"
         )
 
-    riddle_set = RiddleChatService.get_riddle_set(max_turns)
+    riddle_set = RiddleService.get_riddle_set(max_turns)
     riddle_count = len(riddle_set)
 
     target_state = current_state if current_state else SessionState.START
@@ -196,14 +198,14 @@ def _prepare_riddle_turn(
         question_index = answered_count - 1
         if 0 <= question_index < riddle_count:
             riddle = riddle_set[question_index]
-            evaluation = RiddleChatService.evaluate_turn(
+            evaluation = RiddleService.evaluate_turn(
                 config=config,
                 question=riddle.question,
                 answer=riddle.answer,
                 user_answer=content,
             )
             if evaluation:
-                score_line = RiddleChatService.format_turn_scores(evaluation)
+                score_line = RiddleService.format_turn_scores(evaluation)
                 ChatLogRepository.update_riddle_scores(
                     message_id=user_message.id,
                     scores=evaluation.model_dump(),
@@ -297,20 +299,22 @@ class RiddleStreamingUseCase(UseCase):
             next_riddle_state=SessionState.to_csv(target_states),
         )
 
-        riddle_set = RiddleChatService.get_riddle_set(self.max_turns)
+        riddle_set = RiddleService.get_riddle_set(self.max_turns)
         riddle_count = len(riddle_set)
 
         answered_count = ChatLogRepository.count_answered_questions(user)
         if answered_count < riddle_count:
-            first_state = SessionState.START if current_state is None else SessionState.EVALUATE
+            first_state = (
+                SessionState.START if current_state is None else SessionState.EVALUATE
+            )
             target_states = [first_state, SessionState.USER_INPUT]
             assistant_message.next_riddle_state = SessionState.to_csv(target_states)
 
         start_signals = ["始めて", "はじめて", "スタート", "開始", "start"]
-        if RiddleChatService.is_session_finished(
+        if RiddleService.is_session_finished(
             user, assistant_message, riddle_count, start_signals
         ):
-            assistant_message.content = RiddleChatService.report(
+            assistant_message.content = RiddleService.report(
                 assistant_message.content, riddle_count, user
             )
             target_states = [SessionState.EVALUATE, SessionState.FINISHED]

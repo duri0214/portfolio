@@ -1,9 +1,14 @@
-from django.test import TestCase
-from django.contrib.auth.models import User
 from unittest.mock import patch, MagicMock
+
+from django.contrib.auth.models import User
+from django.test import TestCase
+
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
-from llm_chat.models import ChatLogs, RiddleQuestion
+from llm_chat.domain.repository.completion.chat import ChatLogRepository
+from llm_chat.domain.service.completion.chat import ChatService
+from llm_chat.domain.service.completion.riddle import RiddleService
+from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
@@ -12,10 +17,7 @@ from llm_chat.domain.valueobject.completion.riddle import (
     RiddleTurnEvaluation,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.domain.service.completion.chat import ChatService
-from llm_chat.domain.service.completion.riddle import RiddleChatService
-from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
-from llm_chat.domain.repository.completion.chat import ChatLogRepository
+from llm_chat.models import ChatLogs, RiddleQuestion
 
 
 class RiddleUseCaseTest(TestCase):
@@ -65,7 +67,7 @@ class RiddleUseCaseTest(TestCase):
         self.assertEqual(db_logs.count(), 1)
         self.assertEqual(db_logs[0].role, RoleType.USER.value)
 
-    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
+    @patch("llm_chat.domain.service.completion.riddle.RiddleService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_extra_question_removal(
         self, mock_retrieve, mock_turn_eval
@@ -121,7 +123,7 @@ class RiddleUseCaseTest(TestCase):
             "僕は呼吸をするけど生きていない...\n"
             "続けて別のなぞなぞを出しましょうか？\n"
             f"ご回答をどうぞ。\n\n"
-            f"{RiddleChatService.RIDDLE_END_MESSAGE}"
+            f"{RiddleService.RIDDLE_END_MESSAGE}"
         )
         mock_retrieve.return_value = MagicMock(answer=assistant_content)
         mock_turn_eval.return_value = RiddleTurnEvaluation(
@@ -137,12 +139,12 @@ class RiddleUseCaseTest(TestCase):
 
         # 「第3問」や継続提案が消えていることを確認
         self.assertIn("正解です！たいまつで合っています。", result.content)
-        self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
+        self.assertIn(RiddleService.RIDDLE_END_MESSAGE, result.content)
         self.assertNotIn("第3問", result.content)
         self.assertNotIn("続けて別のなぞなぞを出しましょうか？", result.content)
         self.assertIn("あなたの回答傾向", result.content)
 
-    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
+    @patch("llm_chat.domain.service.completion.riddle.RiddleService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_end_detection_invalid_json(
         self, mock_retrieve, mock_turn_eval
@@ -158,7 +160,7 @@ class RiddleUseCaseTest(TestCase):
         mock_retrieve.side_effect = [
             MagicMock(answer="質問1..."),
             MagicMock(answer="質問2..."),
-            MagicMock(answer=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}"),
+            MagicMock(answer=f"正解です！ {RiddleService.RIDDLE_END_MESSAGE}"),
         ]
         mock_turn_eval.return_value = RiddleTurnEvaluation(
             correctness=3, reasoning=0, creativity=0, rebuttal=0
@@ -180,11 +182,11 @@ class RiddleUseCaseTest(TestCase):
             self.user, "答えはたいまつです", gender=Gender(GenderType.MAN)
         )
 
-        self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
+        self.assertIn(RiddleService.RIDDLE_END_MESSAGE, result.content)
         self.assertIn("あなたの回答傾向", result.content)
         self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
 
-    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
+    @patch("llm_chat.domain.service.completion.riddle.RiddleService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_end_detection(self, mock_retrieve, mock_turn_eval):
         """
@@ -199,7 +201,7 @@ class RiddleUseCaseTest(TestCase):
         # 1回目は普通の回答、2回目は終了メッセージを含む回答
         mock_retrieve.side_effect = [
             MagicMock(answer="こんにちは！質問1です。"),
-            MagicMock(answer=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}"),
+            MagicMock(answer=f"正解です！ {RiddleService.RIDDLE_END_MESSAGE}"),
         ]
 
         config = OpenAIGptConfig(
@@ -219,12 +221,12 @@ class RiddleUseCaseTest(TestCase):
             self.user, "答えは人間です", gender=Gender(GenderType.MAN)
         )
 
-        self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
+        self.assertIn(RiddleService.RIDDLE_END_MESSAGE, result.content)
         self.assertIn("あなたの回答傾向", result.content)
         self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
 
     @patch("llm_chat.domain.repository.completion.chat.ChatLogRepository.clear_all")
-    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
+    @patch("llm_chat.domain.service.completion.riddle.RiddleService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_riddle_use_case_forced_end(
         self, mock_retrieve, mock_turn_eval, mock_clear
@@ -262,7 +264,7 @@ class RiddleUseCaseTest(TestCase):
             self.user, "それはたいまつです", gender=Gender(GenderType.MAN)
         )
 
-        self.assertIn(RiddleChatService.RIDDLE_END_MESSAGE, result.content)
+        self.assertIn(RiddleService.RIDDLE_END_MESSAGE, result.content)
         self.assertIn("あなたの回答傾向", result.content)
         self.assertEqual(result.use_case_type, UseCaseType.RIDDLE)
 

@@ -1,20 +1,22 @@
 from unittest.mock import patch
-from django.test import TestCase
+
 from django.core.files.uploadedfile import SimpleUploadedFile
-from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+from django.test import TestCase
+
+from lib.llm.valueobject.config import GeminiConfig, OpenAIGptConfig
 from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.use_case.completion.chat import (
     LlmChatUseCase,
     OpenAIGptStreamingUseCase,
 )
 from llm_chat.domain.use_case.completion.multimedia import (
-    OpenAIDalleUseCase,
+    OpenAIImageUseCase,
     OpenAITextToSpeechUseCase,
     OpenAISpeechToTextUseCase,
 )
 from llm_chat.domain.use_case.completion.rag import OpenAIRagUseCase
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
-from lib.llm.valueobject.config import GeminiConfig, OpenAIGptConfig
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class UseCaseFactoryTest(TestCase):
@@ -32,9 +34,9 @@ class UseCaseFactoryTest(TestCase):
         use_case = UseCaseFactory.create(UseCaseType.OPENAI_GPT_STREAMING)
         self.assertIsInstance(use_case, OpenAIGptStreamingUseCase)
 
-    def test_create_openai_dalle(self):
-        use_case = UseCaseFactory.create(UseCaseType.OPENAI_DALLE)
-        self.assertIsInstance(use_case, OpenAIDalleUseCase)
+    def test_create_openai_image(self):
+        use_case = UseCaseFactory.create(UseCaseType.OPENAI_IMAGE)
+        self.assertIsInstance(use_case, OpenAIImageUseCase)
 
     def test_create_openai_text_to_speech(self):
         use_case = UseCaseFactory.create(UseCaseType.OPENAI_TEXT_TO_SPEECH)

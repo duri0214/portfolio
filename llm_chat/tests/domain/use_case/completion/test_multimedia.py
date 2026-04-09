@@ -1,16 +1,18 @@
-from django.test import TestCase
+from unittest.mock import patch, MagicMock
+
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock
+from django.test import TestCase
+
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import ModelName
-from llm_chat.models import ChatLogs
-from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.use_case.completion.multimedia import (
-    OpenAIDalleUseCase,
+    OpenAIImageUseCase,
     OpenAITextToSpeechUseCase,
     OpenAISpeechToTextUseCase,
 )
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+from llm_chat.models import ChatLogs
 
 
 class OpenAiMultimediaUseCaseTest(TestCase):
@@ -29,41 +31,50 @@ class OpenAiMultimediaUseCaseTest(TestCase):
         self.assertEqual(last_log.model_name, model_name)
         self.assertEqual(last_log.use_case_type, use_case_type)
 
-    @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmDalleService")
+    @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmImageService")
     @patch("llm_chat.domain.service.completion.multimedia.requests.get")
     @patch("llm_chat.domain.service.completion.multimedia.Image.open")
-    def test_dalle_use_case_saves_file_path(
-        self, mock_image_open, mock_get, mock_dalle_service
+    def test_image_use_case_saves_file_path(
+        self, mock_image_open, mock_get, mock_image_service
     ):
         """
-        [シナリオ: DALL-E 3画像生成]
-        1. OpenAIDalleUseCase を実行して画像を生成
+        [シナリオ: OpenAI画像生成]
+        1. OpenAIImageUseCase を実行して画像を生成
         2. 期待値:
            - 返された MessageDTO に file_path が含まれていること
            - DB (ChatLogs) にファイルパスとモデル名が正しく保存されていること
         """
-        # DALL-E サービスと画像処理をモック化
+        # 画像生成サービスと画像処理をモック化
         mock_response = MagicMock()
-        mock_response.data = [MagicMock(url="http://example.com/image.jpg")]
-        mock_dalle_service.return_value.retrieve_answer.return_value = mock_response
+        # gpt-image-1-mini の仕様に合わせて b64_json を設定
+        mock_image_data = MagicMock()
+        mock_image_data.b64_json = (
+            "ZmFrZV9pbWFnZV9jb250ZW50"  # "fake_image_content" の base64
+        )
+        mock_image_data.url = None
+        mock_response.data = [mock_image_data]
+        mock_image_service.return_value.retrieve_answer.return_value = mock_response
 
-        mock_get_response = MagicMock()
-        mock_get_response.content = b"fake_image_content"
-        mock_get.return_value = mock_get_response
-
+        # Image.open のモック化とリサイズの検証用
         mock_img = MagicMock()
-        mock_image_open.return_value.resize.return_value = mock_img
+        mock_image_open.return_value = mock_img
+        mock_img.resize.return_value = mock_img
 
         # UseCase 実行
-        use_case = OpenAIDalleUseCase()
+        use_case = OpenAIImageUseCase()
         result = use_case.execute(self.user, "ねこの画像を生成して")
 
         # 結果の MessageDTO を検証
         self.assertIsNotNone(result.file_path)
-        self.assertEqual(result.model_name, ModelName.DALLE_3)
+        self.assertEqual(result.model_name, ModelName.GPT_IMAGE_1_MINI)
+
+        # リサイズ処理が 128x128 で呼ばれたことを確認
+        mock_img.resize.assert_called_once_with((128, 128))
 
         # DB への保存を検証
-        self._assert_chat_log_saved(ModelName.DALLE_3, UseCaseType.OPENAI_DALLE)
+        self._assert_chat_log_saved(
+            ModelName.GPT_IMAGE_1_MINI, UseCaseType.OPENAI_IMAGE
+        )
 
     @patch("llm_chat.domain.service.completion.multimedia.OpenAILlmTextToSpeech")
     def test_tts_use_case_saves_file_path(self, mock_tts_service):

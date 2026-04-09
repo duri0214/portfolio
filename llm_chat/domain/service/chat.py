@@ -1,9 +1,10 @@
 from typing import Any
+
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
-from llm_chat.domain.service.completion.riddle import RiddleChatService
+from llm_chat.domain.service.completion.riddle import RiddleService
 from llm_chat.domain.valueobject.completion.riddle import GenderType
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
@@ -48,7 +49,6 @@ class ChatDisplayService:
             else:
                 initial["use_case_type"] = UseCaseType.OPENAI_GPT_STREAMING
 
-
         # 4. セッションから性別の初期値を取得
         riddle_gender = request.session.get("riddle_gender")
         if riddle_gender:
@@ -63,7 +63,7 @@ class ChatDisplayService:
         """
         なぞなぞが進行中か判定します。
         最新の履歴がなぞなぞモード（UseCaseType.RIDDLE）であり、 かつ
-        AIからの終了定型文（RiddleChatService.RIDDLE_END_MESSAGE）が含まれていない場合に
+        AIからの終了定型文（RiddleService.RIDDLE_END_MESSAGE）が含まれていない場合に
         「進行中（アクティブ）」とみなされます。
 
         フロントエンドでは、この判定結果に基づきボタンの色（黄色＝進行中、緑色＝開始前）が変化します。
@@ -74,5 +74,5 @@ class ChatDisplayService:
         last_log = chat_history[-1]
         return (
             last_log.use_case_type == UseCaseType.RIDDLE
-            and RiddleChatService.RIDDLE_END_MESSAGE not in (last_log.content or "")
+            and RiddleService.RIDDLE_END_MESSAGE not in (last_log.content or "")
         )

@@ -17,7 +17,8 @@
             <div class="col-12">
                 <div class="bg-light p-5 rounded shadow-sm">
                     <h1 class="display-4">QA with LLM</h1>
-                    <p class="lead">ChatGPT (Streaming), Dall-e-3, TextToSpeech, SpeechToText, RAG and Riddle</p>
+                    <p class="lead">ChatGPT (Streaming), gpt-image-1-mini, TextToSpeech, SpeechToText, RAG and
+                        Riddle</p>
                 </div>
             </div>
 
@@ -41,7 +42,8 @@
                                 {% endif %}
                             </div>
                             {% if chat_log.use_case_type == "Riddle" and chat_log.next_riddle_state %}
-                                <div class="riddle-indicator mb-2" data-states="{{ chat_log.next_riddle_state }}" data-role="{{ chat_log.role }}"></div>
+                                <div class="riddle-indicator mb-2" data-states="{{ chat_log.next_riddle_state }}"
+                                     data-role="{{ chat_log.role }}"></div>
                             {% endif %}
                             {% if chat_log.file_name|split_ext == "jpg" %}
                                 <img src="{{ chat_log.file_url }}" class="img-fluid mt-2" alt="Responsive image">
@@ -76,24 +78,31 @@
                                 {{ form.gender }}
                             </div>
                             <div id="loading-indicator" class="align-items-center mt-2 d-none">
-                                <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                                <div class="spinner-border spinner-border-sm me-2" role="status"
+                                     aria-hidden="true"></div>
                                 <span class="small">処理中です。少々お待ちください…</span>
                             </div>
                             <div class="d-flex justify-content-end mt-3 gap-2">
                                 {% if user.is_authenticated %}
                                     {% if is_riddle_active %}
-                                        <input id="riddleButton" class="btn btn-warning" type="button" value="なぞなぞをリセット">
+                                        <input id="riddleButton" class="btn btn-warning" type="button"
+                                               value="なぞなぞをリセット">
                                     {% else %}
-                                        <input id="riddleButton" class="btn btn-success" type="button" value="なぞなぞをスタート">
+                                        <input id="riddleButton" class="btn btn-success" type="button"
+                                               value="なぞなぞをスタート">
                                     {% endif %}
                                     <input id="sendButton" class="btn btn-primary" type="button" value="送信">
                                 {% else %}
-                                    <input id="riddleButton" class="btn btn-outline-secondary" type="button" value="なぞなぞをスタート" disabled>
-                                    <input id="sendButton" class="btn btn-outline-secondary" type="button" value="送信" disabled>
+                                    <input id="riddleButton" class="btn btn-outline-secondary" type="button"
+                                           value="なぞなぞをスタート" disabled>
+                                    <input id="sendButton" class="btn btn-outline-secondary" type="button" value="送信"
+                                           disabled>
                                 {% endif %}
                             </div>
                             {% if not user.is_authenticated %}
-                                <div class="d-flex justify-content-end mt-2 text-muted small">ログインしないと送信できません</div>
+                                <div class="d-flex justify-content-end mt-2 text-muted small">
+                                    ログインしないと送信できません
+                                </div>
                             {% endif %}
                         </form>
                     </div>

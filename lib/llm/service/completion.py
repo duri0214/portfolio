@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Generator, Iterable, Sequence
+from typing import Any, Generator, Iterable, Sequence, Literal
 
 import chromadb
 from chromadb.config import Settings
@@ -27,6 +27,9 @@ from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 # .env ファイルを読み込む
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
+
+
+ImageSize = Literal["1024x1024", "1024x1536", "1536x1024", "auto"]
 
 
 def cut_down_chat_history(
@@ -296,9 +299,9 @@ class LlmCompletionStreamingService(LlmService):
             yield f"data: {chunk.to_json()}\n\n"
 
 
-class OpenAILlmDalleService(LlmService):
+class OpenAILlmImageService(LlmService):
     """
-    OpenAIのDALL-Eモデルを使用して画像生成を行うサービス。
+    OpenAIの画像生成モデルを使用して画像生成を行うサービス。
     """
 
     def __init__(self, config: OpenAIGptConfig):
@@ -306,12 +309,15 @@ class OpenAILlmDalleService(LlmService):
         self.config = config
         self.client = OpenAI(api_key=self.config.api_key)
 
-    def retrieve_answer(self, message: Message) -> ImagesResponse:
+    def retrieve_answer(
+        self, message: Message, size: ImageSize = "auto"
+    ) -> ImagesResponse:
         """
         メッセージの内容に基づいて画像を生成します。
 
         Args:
             message (Message): 画像生成プロンプトを含むメッセージ
+            size (ImageSize): 画像のサイズ (例: "1024x1024", "1024x1536", "1536x1024", "auto")
 
         Returns:
             ImagesResponse: 生成された画像のレスポンス
@@ -322,8 +328,7 @@ class OpenAILlmDalleService(LlmService):
         return self.client.images.generate(
             model=self.config.model,
             prompt=message.content,
-            size="1024x1024",
-            quality="standard",
+            size=size,
             n=1,
         )
 

@@ -7,7 +7,7 @@ from lib.llm.valueobject.completion import RoleType, StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
 from llm_chat.domain.service.completion.chat import (
     ChatService,
-    OpenAIChatStreamingService,
+    OpenAIStreamingService,
 )
 from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
@@ -71,7 +71,7 @@ class OpenAIGptStreamingUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for OpenAIGptStreamingUseCase")
-        chat_service = OpenAIChatStreamingService()
+        chat_service = OpenAIStreamingService()
         user_message = self._insert_user_message(
             user=user,
             content=content,
@@ -87,7 +87,7 @@ class OpenAIGptStreamingUseCase(UseCase):
         このメソッドはストリーミング処理終了後に呼び出され、生成されたコンテンツを
         アシスタント役のメッセージとして加工した上でデータベースに保存します。
         メッセージにはユーザー情報と生成コンテンツを付加し、
-        OpenAIChatStreamingService の `save` メソッドを使用します。
+        OpenAIStreamingService の `save` メソッドを使用します。
 
         Args:
             user (User): Django の User モデルのインスタンス
@@ -96,7 +96,7 @@ class OpenAIGptStreamingUseCase(UseCase):
         Returns:
             None
         """
-        chat_service = OpenAIChatStreamingService()
+        chat_service = OpenAIStreamingService()
         self.repository.insert(
             MessageDTO(
                 user=user,

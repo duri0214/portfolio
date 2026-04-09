@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 
-from lib.llm.valueobject.completion import RoleType
-from llm_chat.domain.service.completion.rag import OpenAIRagChatService
+from llm_chat.domain.service.completion.rag import OpenAIRagService
 from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
@@ -26,7 +25,7 @@ class OpenAIRagUseCase(UseCase):
         if content is None:
             raise ValueError("content cannot be None for OpenAIRagUseCase")
 
-        chat_service = OpenAIRagChatService()
+        chat_service = OpenAIRagService()
         user_message = self._insert_user_message(
             user=user,
             content=content,

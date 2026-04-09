@@ -1,6 +1,8 @@
 import os
 from typing import Generator
 
+from django.contrib.auth.models import User
+
 from lib.llm.service.completion import (
     LlmCompletionService,
     LlmCompletionStreamingService,
@@ -13,11 +15,10 @@ from lib.llm.valueobject.config import (
 )
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
-from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+from llm_chat.domain.service.completion.riddle import RiddleService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import Gender, Riddle, SessionState
-from llm_chat.domain.service.completion.riddle import RiddleChatService
-from django.contrib.auth.models import User
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class ChatService(BaseChatService):
@@ -59,7 +60,7 @@ class ChatService(BaseChatService):
 
         if not chat_history and use_case_type == UseCaseType.RIDDLE:
             # 初回
-            chat_history = RiddleChatService.create_initial_prompt(
+            chat_history = RiddleService.create_initial_prompt(
                 user_message=user_message, gender=gender, riddle_set=riddle_set or []
             )
             # 初回ユーザーメッセージをDBに保存
@@ -79,7 +80,7 @@ class ChatService(BaseChatService):
                     ]
                     current_index = len(assistant_messages)
 
-                    system_content = RiddleChatService.get_prompt(
+                    system_content = RiddleService.get_prompt(
                         gender=gender,
                         riddle_set=riddle_set or [],
                         current_index=current_index,
@@ -130,14 +131,14 @@ class ChatService(BaseChatService):
         評価機能（Gemini/OpenAI共通）。
         評価結果を RiddleResponse として取得し、箇条書きテキストを返します。
         """
-        task = RiddleChatService(self.config, self.chat_history)
+        task = RiddleService(self.config, self.chat_history)
         riddle_response = task.execute(login_user, riddle_set=riddle_set)
 
         # 箇条書きテキストを生成して返す
         return task.to_bullet_points(riddle_response)
 
 
-class OpenAIChatStreamingService(BaseChatService):
+class OpenAIStreamingService(BaseChatService):
     model_name = ModelName.GPT_5_MINI
 
     def __init__(self):

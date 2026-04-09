@@ -1,9 +1,10 @@
-import re
-import os
 import json
+import os
+import re
 from dataclasses import dataclass, field
-from typing import Any
 from enum import Enum
+from typing import Any
+
 from openai import OpenAI, AzureOpenAI, APIError
 
 
@@ -309,7 +310,7 @@ class AvailabilityValidator(BaseValidator):
         self._validate(
             "OpenAI",
             self.get_client("OpenAI", os.getenv("OPENAI_API_KEY")),
-            ["gpt-4o", "gpt-4o-mini", "dall-e-3"],
+            ["gpt-4o", "gpt-4o-mini", "gpt-image-1-mini"],
         )
 
         # Gemini

@@ -1,17 +1,18 @@
 import os
+
 from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig, ModelName
-from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.use_case.completion.chat import (
     LlmChatUseCase,
     OpenAIGptStreamingUseCase,
 )
 from llm_chat.domain.use_case.completion.multimedia import (
-    OpenAIDalleUseCase,
+    OpenAIImageUseCase,
     OpenAITextToSpeechUseCase,
     OpenAISpeechToTextUseCase,
 )
 from llm_chat.domain.use_case.completion.rag import OpenAIRagUseCase
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class UseCaseFactory:
@@ -51,8 +52,8 @@ class UseCaseFactory:
         if use_case_type == UseCaseType.OPENAI_GPT_STREAMING:
             return OpenAIGptStreamingUseCase()
 
-        if use_case_type == UseCaseType.OPENAI_DALLE:
-            return OpenAIDalleUseCase()
+        if use_case_type == UseCaseType.OPENAI_IMAGE:
+            return OpenAIImageUseCase()
 
         if use_case_type == UseCaseType.OPENAI_TEXT_TO_SPEECH:
             return OpenAITextToSpeechUseCase()
