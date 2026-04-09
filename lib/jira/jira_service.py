@@ -234,10 +234,10 @@ if __name__ == "__main__":
 
     必要な環境変数:
     - JIRA_YOUR_DOMAIN: JIRAのドメイン名
-    - EMAIL_HOST_USER: JIRA認証用のメールアドレス
+    - JIRA_USER_EMAIL: JIRA認証用のメールアドレス
     - JIRA_API_KEY: JIRA API キー
 
-    注意: 
+    注意:
     このスクリプトと同じディレクトリ（lib/jira/）の.envファイルから環境変数を読み込みます。
 
     PyCharmで実行する場合:
@@ -249,7 +249,7 @@ if __name__ == "__main__":
 
     # JIRA configuration: Replace with actual values or environment variables
     YOUR_DOMAIN = os.getenv("JIRA_YOUR_DOMAIN")
-    EMAIL = os.getenv("EMAIL_HOST_USER")
+    EMAIL = os.getenv("JIRA_USER_EMAIL")
     API_TOKEN = os.getenv("JIRA_API_KEY")
 
     jira_service = JiraService(domain=YOUR_DOMAIN, email=EMAIL, api_token=API_TOKEN)
