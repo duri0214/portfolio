@@ -38,7 +38,7 @@ class XbrlService:
             params = {
                 "date": day,
                 "type": request_data.SECURITIES_REPORT_AND_META_DATA,
-                "Subscription-Key": os.environ.get("EDINET_API_KEY"),
+                "Subscription-Key": os.getenv("EDINET_API_KEY"),
             }
             res = requests.get(url, params=params)
             res.raise_for_status()
@@ -99,7 +99,7 @@ class XbrlService:
         url = f"https://api.edinet-fsa.go.jp/api/v2/documents/{report_doc.doc_id}"
         params = {
             "type": SUBMITTED_MAIN_DOCUMENTS_AND_AUDIT_REPORT,
-            "Subscription-Key": os.environ.get("EDINET_API_KEY"),
+            "Subscription-Key": os.getenv("EDINET_API_KEY"),
         }
         filename = work_dir / f"{report_doc.doc_id}.zip"
         res = requests.get(url, params=params, stream=True)

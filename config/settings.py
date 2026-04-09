@@ -102,11 +102,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get("DJANGO_DB_NAME", "portfolio_db"),
-        "USER": os.environ.get("DJANGO_DB_USER", "python"),
-        "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD"),
-        "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
-        "PORT": os.environ.get("DJANGO_DB_PORT", "3306"),
+        "NAME": os.getenv("DJANGO_DB_NAME", "portfolio_db"),
+        "USER": os.getenv("DJANGO_DB_USER", "python"),
+        "PASSWORD": os.getenv("DJANGO_DB_PASSWORD"),
+        "HOST": os.getenv("DJANGO_DB_HOST", "127.0.0.1"),
+        "PORT": os.getenv("DJANGO_DB_PORT", "3306"),
         "TEST": {
             "NAME": "test_portfolio_db",
         },
@@ -149,11 +149,11 @@ LOGIN_REDIRECT_URL = "vnm:index"
 LOGOUT_REDIRECT_URL = "vnm:index"
 
 # mail
-EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND")
-EMAIL_HOST = os.environ.get("EMAIL_HOST")
-EMAIL_PORT = os.environ.get("EMAIL_PORT")
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = os.getenv("EMAIL_PORT")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = True
 
 # Static files (CSS, JavaScript, Images)

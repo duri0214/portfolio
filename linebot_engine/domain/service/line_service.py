@@ -16,14 +16,14 @@ from linebot_engine.models import UserProfile, Message
 
 
 class LineService:
-    """A service class to encapsulate LINE related business logic."""
+    """A service class to encapsulate LINE-related business logic."""
 
     @staticmethod
     def is_valid_signature(request: HttpRequest) -> bool:
         """Check LINE webhook request signature."""
         body = request.body.decode("utf-8")
         _hash = hmac.new(
-            os.environ.get("LINE_CHANNEL_SECRET").encode("utf-8"),
+            os.getenv("LINE_CHANNEL_SECRET").encode("utf-8"),
             body.encode("utf-8"),
             hashlib.sha256,
         ).digest()
@@ -55,7 +55,7 @@ class LineService:
             event: イベントの情報を含むLineのイベントオブジェクト
             line_user_id: イベントに関連付けられたLineのユーザーID
         """
-        line_bot_api = LineBotApi(os.environ.get("LINE_CHANNEL_ACCESS_TOKEN"))
+        line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
         if event.is_follow():
             profile = line_bot_api.get_profile(event.source.user_id)

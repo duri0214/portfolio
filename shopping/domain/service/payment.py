@@ -35,7 +35,7 @@ class StripePaymentService(PaymentServiceBase):
     """Stripe APIを使った支払いサービスの実装"""
 
     def __init__(self):
-        self.api_key = os.environ.get("STRIPE_API_KEY")
+        self.api_key = os.getenv("STRIPE_API_KEY")
         stripe.api_key = self.api_key
 
     def create_payment(self, intent: PaymentIntent) -> PaymentResult:
@@ -52,7 +52,9 @@ class StripePaymentService(PaymentServiceBase):
             if intent.payment_method:
                 payment_intent_params["payment_method"] = intent.payment_method
                 payment_intent_params["confirm"] = True
-                payment_intent_params["return_url"] = "https://yourdomain.com/payment/return"  # 実際のドメインに変更してください
+                payment_intent_params["return_url"] = (
+                    "https://yourdomain.com/payment/return"  # 実際のドメインに変更してください
+                )
 
             payment_intent = stripe.PaymentIntent.create(**payment_intent_params)
 
@@ -127,7 +129,9 @@ class StripePaymentService(PaymentServiceBase):
                     payment_id=payment_id,
                 )
             else:
-                error_message = f"決済が完了していません。ステータス: {payment_intent.status}"
+                error_message = (
+                    f"決済が完了していません。ステータス: {payment_intent.status}"
+                )
                 logger.warning(error_message)
                 return PaymentResult(
                     success=False,
