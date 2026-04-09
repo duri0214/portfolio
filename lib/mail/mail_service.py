@@ -1,3 +1,4 @@
+import logging
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -9,6 +10,17 @@ from dotenv import load_dotenv
 # .env ファイルを読み込む
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
+
+# ロガーの設定
+logger = logging.getLogger(__name__)
+
+
+class MailSendError(Exception):
+    """
+    メール送信に失敗した際に発生する例外。
+    """
+
+    pass
 
 
 class MailService:
@@ -86,8 +98,8 @@ class MailService:
             server.quit()
             return True
         except Exception as e:
-            print(f"Failed to send email: {e}")
-            return False
+            logger.error("Failed to send email", exc_info=True)
+            raise MailSendError(f"Failed to send email: {e}") from e
 
 
 if __name__ == "__main__":
@@ -106,8 +118,9 @@ if __name__ == "__main__":
     test_subject = "Test Mail from MailService"
     test_body = "This is a test email sent from the standalone MailService."
 
-    success = service.send_mail(test_to, test_subject, test_body)
-    if success:
-        print(f"Test email sent successfully to {test_to}")
-    else:
-        print("Failed to send test email.")
+    try:
+        success = service.send_mail(test_to, test_subject, test_body)
+        if success:
+            print(f"Test email sent successfully to {test_to}")
+    except MailSendError as e:
+        print(f"Failed to send test email: {e}")

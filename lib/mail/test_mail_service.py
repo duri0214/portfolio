@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
-from lib.mail.mail_service import MailService
+from lib.mail.mail_service import MailService, MailSendError
 
 
 class TestMailService(unittest.TestCase):
@@ -51,13 +51,14 @@ class TestMailService(unittest.TestCase):
         # SMTPサーバーのモック（エラーを発生させる）
         mock_smtp.side_effect = Exception("SMTP Error")
 
-        # メール送信
-        success = self.service.send_mail(
-            to="to@example.com", subject="Test Subject", body="Test Body"
-        )
-
-        # 検証
-        self.assertFalse(success)
+        # メール送信（例外が発生することを確認）
+        with self.assertLogs("lib.mail.mail_service", level="ERROR") as cm:
+            with self.assertRaises(MailSendError):
+                self.service.send_mail(
+                    to="to@example.com", subject="Test Subject", body="Test Body"
+                )
+        # ログが出力されていることを確認
+        self.assertIn("Failed to send email", cm.output[0])
 
     @patch("smtplib.SMTP")
     def test_send_mail_missing_config(self, mock_smtp):
