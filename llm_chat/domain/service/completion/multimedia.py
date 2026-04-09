@@ -1,3 +1,4 @@
+import base64
 import os
 import secrets
 from io import BytesIO
@@ -31,8 +32,9 @@ class OpenAIImageService(BaseChatService):
 
     def generate(self, user_message: MessageDTO) -> MessageDTO:
         """
-        画像urlの有効期限は1時間。それ以上使いたいときは保存する。
-        gpt-image-1-mini: 1024x1024, 1024x1536, 1536x1024, auto のいずれかしか生成できない
+        画像生成を行い、結果を保存してMessageDTOを返します。
+        gpt-image-1-mini: 1024x1024, 1024x1536, 1536x1024, auto のいずれかしか生成できない。
+        また、主に b64_json 形式でデータを返します。
         """
         if user_message.content is None:
             raise Exception("content is None")
@@ -41,12 +43,23 @@ class OpenAIImageService(BaseChatService):
         answer = OpenAILlmImageService(self.config).retrieve_answer(
             user_message.to_message(), size="auto"
         )
-        image_url = answer.data[0].url
+
+        image_data = answer.data[0]
         try:
-            response = requests.get(image_url)
-            response.raise_for_status()
-            raw_picture = BytesIO(response.content)
-            resized_picture = Image.open(raw_picture).resize((256, 256))
+            if hasattr(image_data, "b64_json") and image_data.b64_json:
+                # base64形式の場合
+                raw_picture = BytesIO(base64.b64decode(image_data.b64_json))
+            elif hasattr(image_data, "url") and image_data.url:
+                # URL形式の場合
+                response = requests.get(image_data.url)
+                response.raise_for_status()
+                raw_picture = BytesIO(response.content)
+            else:
+                raise Exception(
+                    "画像データの取得に失敗しました（b64_jsonもurlも空です）"
+                )
+
+            resized_picture = Image.open(raw_picture).resize((128, 128))
             return self._create_assistant_message(
                 user=user_message.user,
                 content=user_message.content,

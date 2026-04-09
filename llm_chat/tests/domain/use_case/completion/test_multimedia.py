@@ -46,12 +46,19 @@ class OpenAiMultimediaUseCaseTest(TestCase):
         """
         # 画像生成サービスと画像処理をモック化
         mock_response = MagicMock()
-        mock_response.data = [MagicMock(url="http://example.com/image.jpg")]
+        # gpt-image-1-mini の仕様に合わせて b64_json を設定
+        mock_image_data = MagicMock()
+        mock_image_data.b64_json = (
+            "ZmFrZV9pbWFnZV9jb250ZW50"  # "fake_image_content" の base64
+        )
+        mock_image_data.url = None
+        mock_response.data = [mock_image_data]
         mock_image_service.return_value.retrieve_answer.return_value = mock_response
 
-        mock_get_response = MagicMock()
-        mock_get_response.content = b"fake_image_content"
-        mock_get.return_value = mock_get_response
+        # Image.open のモック化とリサイズの検証用
+        mock_img = MagicMock()
+        mock_image_open.return_value = mock_img
+        mock_img.resize.return_value = mock_img
 
         # UseCase 実行
         use_case = OpenAIImageUseCase()
@@ -60,6 +67,9 @@ class OpenAiMultimediaUseCaseTest(TestCase):
         # 結果の MessageDTO を検証
         self.assertIsNotNone(result.file_path)
         self.assertEqual(result.model_name, ModelName.GPT_IMAGE_1_MINI)
+
+        # リサイズ処理が 128x128 で呼ばれたことを確認
+        mock_img.resize.assert_called_once_with((128, 128))
 
         # DB への保存を検証
         self._assert_chat_log_saved(
