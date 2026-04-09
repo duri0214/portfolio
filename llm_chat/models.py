@@ -16,8 +16,8 @@ class ChatLogs(models.Model):
         user (ForeignKey): メッセージに関連付けられた Django の User インスタンス。
         role (CharField): メッセージの役割（SYSTEM, USER, ASSISTANT）。
         content (TextField): メッセージの本文（テキストまたは生成物のURL）。
-        model_name (CharField): 使用された LLM のモデル名（例: gpt-4o, gemini-2.0-flash）。
-        use_case_type (CharField): 使用されたユースケースタイプ（例: OpenAIGpt, Riddle, OpenAIDalle）。
+        model_name (CharField): 使用された LLM のモデル名（例: gpt-4o, gpt-image-1-mini）。
+        use_case_type (CharField): 使用されたユースケースタイプ（例: OpenAIGpt, Riddle, OpenAIImage）。
             ステートレスなHTTP通信において、過去の履歴から「なぞなぞ継続中か」や
             「どのユースケースを使用したか」をサーバー側で確実かつ永続的に判定するために保持します。
             具体的には、最新の履歴が `use_case_type="Riddle"` かつ終了メッセージを含まない場合に
@@ -31,7 +31,7 @@ class ChatLogs(models.Model):
         (UseCaseType.OPENAI_GPT, "OpenAI GPT"),
         (UseCaseType.OPENAI_GPT_STREAMING, "OpenAI GPT Streaming"),
         (UseCaseType.GEMINI, "Gemini"),
-        (UseCaseType.OPENAI_DALLE, "OpenAI Dall-e"),
+        (UseCaseType.OPENAI_IMAGE, "OpenAI Image Generation"),
         (UseCaseType.OPENAI_TEXT_TO_SPEECH, "OpenAI Text to Speech"),
         (UseCaseType.OPENAI_SPEECH_TO_TEXT, "OpenAI Speech to Text"),
         (UseCaseType.OPENAI_RAG, "OpenAI RAG"),
@@ -49,6 +49,7 @@ class ChatLogs(models.Model):
         max_length=50,
         choices=USE_CASE_TYPE_CHOICES,
         default=UseCaseType.OPENAI_GPT,
+        help_text="使用されたユースケースタイプ（例: OpenAIGpt, Riddle, OpenAIImage）",
     )
     riddle_scores = models.JSONField(
         null=True,

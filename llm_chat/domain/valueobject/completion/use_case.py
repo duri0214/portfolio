@@ -13,7 +13,7 @@ class UseCaseType:
     OPENAI_GPT = "OpenAIGpt"
     OPENAI_GPT_STREAMING = "OpenAIGptStreaming"
     GEMINI = "Gemini"
-    OPENAI_DALLE = "OpenAIDalle"
+    OPENAI_IMAGE = "OpenAIImage"
     OPENAI_TEXT_TO_SPEECH = "OpenAITextToSpeech"
     OPENAI_SPEECH_TO_TEXT = "OpenAISpeechToText"
     OPENAI_RAG = "OpenAIRag"

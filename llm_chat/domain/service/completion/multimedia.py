@@ -8,7 +8,7 @@ from PIL import Image
 
 from config.settings import MEDIA_ROOT
 from lib.llm.service.completion import (
-    OpenAILlmDalleService,
+    OpenAILlmImageService,
     OpenAILlmTextToSpeech,
     OpenAILlmSpeechToText,
 )
@@ -18,8 +18,8 @@ from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
-class OpenAIDalleChatService(BaseChatService):
-    model_name = ModelName.DALLE_3
+class OpenAIImageService(BaseChatService):
+    model_name = ModelName.GPT_IMAGE_1_MINI
 
     def __init__(self):
         super().__init__(model_name=self.model_name)
@@ -32,26 +32,25 @@ class OpenAIDalleChatService(BaseChatService):
     def generate(self, user_message: MessageDTO) -> MessageDTO:
         """
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
-        dall-e-3: 1024x1024, 1792x1024, 1024x1792 のいずれかしか生成できない
+        gpt-image-1-mini: 1024x1024, 512x512, 256x256, 1792x1024, 1024x1792 のいずれかしか生成できない
         """
         if user_message.content is None:
             raise Exception("content is None")
 
-        answer = OpenAILlmDalleService(self.config).retrieve_answer(
-            user_message.to_message()
+        # API側で小さいサイズ(256x256)を指定して生成
+        answer = OpenAILlmImageService(self.config).retrieve_answer(
+            user_message.to_message(), size="256x256"
         )
         image_url = answer.data[0].url
         try:
             response = requests.get(image_url)
             response.raise_for_status()
             raw_picture = BytesIO(response.content)
-            resized_picture = Image.open(raw_picture).resize((128, 128))
-            file_path = self.save_picture(resized_picture)
             return self._create_assistant_message(
                 user=user_message.user,
                 content=user_message.content,
                 use_case_type=UseCaseType.OPENAI_GPT,
-                file_path=file_path,
+                file_path=self.save(Image.open(raw_picture)),
             )
         except requests.exceptions.HTTPError as http_error:
             raise Exception(http_error)
@@ -61,7 +60,7 @@ class OpenAIDalleChatService(BaseChatService):
             raise Exception(e)
 
     @staticmethod
-    def save_picture(resized_picture) -> str:
+    def save(image: Image.Image) -> str:
         """
         画像を保存してファイルパスを返すメソッド
         """
@@ -74,13 +73,13 @@ class OpenAIDalleChatService(BaseChatService):
         full_path = folder_path / random_filename
 
         # 画像を保存
-        resized_picture.save(str(full_path))
+        image.save(str(full_path))
 
         # 相対パスを返す
         return f"llm_chat/images/{random_filename}"
 
 
-class OpenAITextToSpeechChatService(BaseChatService):
+class OpenAITextToSpeechService(BaseChatService):
     model_name = ModelName.TTS_1
 
     def __init__(self):
@@ -97,16 +96,15 @@ class OpenAITextToSpeechChatService(BaseChatService):
         response = OpenAILlmTextToSpeech(self.config).retrieve_answer(
             user_message.to_message()
         )
-        file_path = self.save_audio(response)
         return self._create_assistant_message(
             user=user_message.user,
             content=user_message.content,
             use_case_type=UseCaseType.OPENAI_GPT,
-            file_path=file_path,
+            file_path=self.save(response),
         )
 
     @staticmethod
-    def save_audio(response) -> str:
+    def save(response) -> str:
         """
         音声ファイルを保存してファイルパスを返すメソッド
         :param response: 音声データのレスポンス
@@ -127,7 +125,7 @@ class OpenAITextToSpeechChatService(BaseChatService):
         return f"llm_chat/audios/{random_filename}"
 
 
-class OpenAISpeechToTextChatService(BaseChatService):
+class OpenAISpeechToTextService(BaseChatService):
     model_name = ModelName.WHISPER_1
 
     def __init__(self):

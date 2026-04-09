@@ -4,21 +4,20 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import UploadedFile
 
 from config.settings import MEDIA_ROOT
-from lib.llm.valueobject.completion import RoleType
 from llm_chat.domain.service.completion.multimedia import (
-    OpenAIDalleChatService,
-    OpenAITextToSpeechChatService,
-    OpenAISpeechToTextChatService,
+    OpenAIImageService,
+    OpenAITextToSpeechService,
+    OpenAISpeechToTextService,
 )
 from llm_chat.domain.use_case.completion.base import UseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
-class OpenAIDalleUseCase(UseCase):
+class OpenAIImageUseCase(UseCase):
     def execute(self, user: User, content: str | None) -> MessageDTO:
         """
-        OpenAIDalleServiceを利用し、ユーザーからの入力テキスト（content）を基に画像を生成します。
+        OpenAIImageServiceを利用し、ユーザーからの入力テキスト（content）を基に画像を生成します。
         contentパラメータはNoneではないこと。
 
         Args:
@@ -32,20 +31,20 @@ class OpenAIDalleUseCase(UseCase):
             画像生成の結果
         """
         if content is None:
-            raise ValueError("content cannot be None for OpenAIDalleUseCase")
-        chat_service = OpenAIDalleChatService()
+            raise ValueError("content cannot be None for OpenAIImageUseCase")
+        chat_service = OpenAIImageService()
         user_message = self._insert_user_message(
             user=user,
             content=content,
             model_name=chat_service.model_name,
-            use_case_type=UseCaseType.OPENAI_DALLE,
+            use_case_type=UseCaseType.OPENAI_IMAGE,
         )
         assistant_message = chat_service.generate(user_message)
         return self._insert_assistant_message(
             user=user,
             content=assistant_message.content,
             model_name=chat_service.model_name,
-            use_case_type=UseCaseType.OPENAI_DALLE,
+            use_case_type=UseCaseType.OPENAI_IMAGE,
             file_path=assistant_message.file_path,
         )
 
@@ -68,7 +67,7 @@ class OpenAITextToSpeechUseCase(UseCase):
         """
         if content is None:
             raise ValueError("content cannot be None for OpenAITextToSpeechUseCase")
-        chat_service = OpenAITextToSpeechChatService()
+        chat_service = OpenAITextToSpeechService()
         user_input_message = self._insert_user_message(
             user=user,
             content=content,
@@ -136,7 +135,7 @@ class OpenAISpeechToTextUseCase(UseCase):
         if content != "N/A":
             raise ValueError("content must be 'N/A' for OpenAISpeechToTextUseCase")
 
-        chat_service = OpenAISpeechToTextChatService()
+        chat_service = OpenAISpeechToTextService()
         user_message = self._insert_user_message(
             user=user,
             content=content,

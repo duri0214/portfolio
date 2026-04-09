@@ -1,17 +1,19 @@
-import time
 import io
+import time
 from datetime import timedelta
-from django.test import TestCase, RequestFactory
-from django.contrib.sessions.backends.db import SessionStore
+
 from django.contrib.auth.models import User
-from django.utils import timezone
+from django.contrib.sessions.backends.db import SessionStore
+from django.test import TestCase, RequestFactory
 from django.urls import reverse
+from django.utils import timezone
+
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import ModelName
+from llm_chat.domain.service.completion.riddle import RiddleService
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.models import ChatLogs, RiddleQuestion
 from llm_chat.views import IndexView, RiddleSampleCSVView, RiddleCSVUploadView
-from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.domain.service.completion.riddle import RiddleChatService
 
 
 class ViewLogicTest(TestCase):
@@ -53,7 +55,7 @@ class ViewLogicTest(TestCase):
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
-            content=f"お疲れ様でした。 {RiddleChatService.RIDDLE_END_MESSAGE}",
+            content=f"お疲れ様でした。 {RiddleService.RIDDLE_END_MESSAGE}",
             use_case_type=UseCaseType.RIDDLE,
         )
         context = view.get_context_data()
@@ -63,7 +65,7 @@ class ViewLogicTest(TestCase):
         """
         [シナリオ: IndexView の get_initial() による直近ユースケースタイプの取得]
         1. 履歴がない場合: デフォルト値が返ることを確認
-        2. 直近の履歴が Dall-e の場合: OpenAIDalle が返ることを確認
+        2. 直近の履歴が OpenAI Image の場合: OpenAIImage が返ることを確認
         3. 直近の履歴が なぞなぞ (進行中) の場合: Riddle が返ることを確認
         4. 直近の履歴が なぞなぞ (終了) の場合: 直近の model_name に基づく値が返ることを確認
         """
@@ -80,18 +82,18 @@ class ViewLogicTest(TestCase):
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT_STREAMING)
 
-        # 2. 直近が Dall-e
+        # 2. 直近が OpenAI Image
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
             content="Image URL",
-            model_name=ModelName.DALLE_3,
-            use_case_type=UseCaseType.OPENAI_DALLE,
+            model_name=ModelName.GPT_IMAGE_1_MINI,
+            use_case_type=UseCaseType.OPENAI_IMAGE,
             created_at=timezone.now(),
         )
         time.sleep(0.01)
         initial = view.get_initial()
-        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_DALLE)
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_IMAGE)
 
         # 3. なぞなぞ (進行中)
         ChatLogs.objects.create(
@@ -110,7 +112,7 @@ class ViewLogicTest(TestCase):
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.ASSISTANT.value,
-            content=f"正解です！ {RiddleChatService.RIDDLE_END_MESSAGE}",
+            content=f"正解です！ {RiddleService.RIDDLE_END_MESSAGE}",
             model_name=ModelName.GPT_5_MINI,
             use_case_type=UseCaseType.RIDDLE,
             created_at=timezone.now(),

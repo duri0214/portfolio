@@ -19,7 +19,7 @@ from llm_chat.domain.valueobject.completion.riddle import (
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
-class RiddleChatService(BaseLLMTask):
+class RiddleService(BaseLLMTask):
     """
     なぞなぞセッション専用のLLM対話サービス。
 
@@ -75,7 +75,7 @@ class RiddleChatService(BaseLLMTask):
         ]
         return (
             len(answer_turns) >= riddle_count
-            or RiddleChatService.RIDDLE_END_MESSAGE in assistant_message.content
+            or RiddleService.RIDDLE_END_MESSAGE in assistant_message.content
         )
 
     @staticmethod
@@ -114,12 +114,12 @@ class RiddleChatService(BaseLLMTask):
         content = re.sub(r"#####\s*$", "", content).strip()
 
         # 2. 終了メッセージ（定型文）の付与
-        end_msg = RiddleChatService.RIDDLE_END_MESSAGE
+        end_msg = RiddleService.RIDDLE_END_MESSAGE
         if end_msg not in content:
             content = content.rstrip() + "\n\n" + end_msg
 
         # 3. 最終レポートの追記
-        report_text = RiddleChatService.build_profile_report(user=user)
+        report_text = RiddleService.build_profile_report(user=user)
         content += f"\n\n{report_text}"
         return content.strip()
 
@@ -157,7 +157,7 @@ class RiddleChatService(BaseLLMTask):
         1. 【なぞなぞスタート】の合図を受け取ったら、挨拶をし、すぐに【質問1】を出題してください。
         2. 【質問1】から【質問{riddle_count-1}】までの回答を受け取ったら、正誤には触れず、簡単な感想だけを述べてから、すぐに次の質問を出題してください。
         3. 【質問{riddle_count}】（最後の質問）の回答を受け取ったら、簡単な感想を述べ、必ず最後に以下の終了定型文のみを出力して終了してください。これ以上の追加質問や、会話を継続するような提案（「別のなぞなぞを出しましょうか？」など）は絶対にしないでください。
-           - 終了定型文: 「{RiddleChatService.RIDDLE_END_MESSAGE}」
+           - 終了定型文: 「{RiddleService.RIDDLE_END_MESSAGE}」
 
         ### 禁止事項
         - なぞなぞを自作すること。
@@ -182,7 +182,7 @@ class RiddleChatService(BaseLLMTask):
         初期プロンプト（システムメッセージと初回のユーザーメッセージ）を生成します。
         システムメッセージはDBに保存せず、初回ユーザーメッセージを保存します。
         """
-        system_content = RiddleChatService.get_prompt(
+        system_content = RiddleService.get_prompt(
             gender=gender, riddle_set=riddle_set, current_index=0
         )
 
@@ -304,13 +304,13 @@ JSON構造:
 
     @staticmethod
     def _parse_json_dict(raw_content: str) -> dict:
-        cleaned_content = RiddleChatService._clean_json_text(raw_content)
+        cleaned_content = RiddleService._clean_json_text(raw_content)
         try:
             eval_data = json.loads(cleaned_content)
         except json.JSONDecodeError:
-            extracted = RiddleChatService._extract_json_object(cleaned_content)
+            extracted = RiddleService._extract_json_object(cleaned_content)
             if not extracted:
-                extracted = RiddleChatService._extract_json_object(raw_content)
+                extracted = RiddleService._extract_json_object(raw_content)
             if not extracted:
                 raise
             eval_data = json.loads(extracted)
@@ -323,9 +323,11 @@ JSON構造:
         return re.sub(r"\s+", "", (text or "")).lower()
 
     @staticmethod
-    def _fallback_turn_evaluation(answer: str, user_answer: str) -> RiddleTurnEvaluation:
-        answer_norm = RiddleChatService._normalize_answer(answer)
-        user_norm = RiddleChatService._normalize_answer(user_answer)
+    def _fallback_turn_evaluation(
+        answer: str, user_answer: str
+    ) -> RiddleTurnEvaluation:
+        answer_norm = RiddleService._normalize_answer(answer)
+        user_norm = RiddleService._normalize_answer(user_answer)
         is_correct = bool(answer_norm) and (
             answer_norm in user_norm or user_norm in answer_norm
         )
@@ -377,10 +379,10 @@ JSON構造:
         raw_content = chat_result.answer
 
         try:
-            eval_data = RiddleChatService._parse_json_dict(raw_content)
+            eval_data = RiddleService._parse_json_dict(raw_content)
             return RiddleTurnEvaluation(**eval_data)
         except (json.JSONDecodeError, ValueError):
-            return RiddleChatService._fallback_turn_evaluation(answer, user_answer)
+            return RiddleService._fallback_turn_evaluation(answer, user_answer)
 
     @staticmethod
     def format_turn_scores(evaluation: RiddleTurnEvaluation) -> str:
@@ -418,9 +420,7 @@ JSON構造:
         rebuttal_max = total_questions * 5
 
         correctness_rate = (
-            round((correctness_sum / correctness_max) * 100)
-            if correctness_max
-            else 0
+            round((correctness_sum / correctness_max) * 100) if correctness_max else 0
         )
         reasoning_rate = (
             round((reasoning_sum / reasoning_max) * 100) if reasoning_max else 0

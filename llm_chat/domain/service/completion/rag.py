@@ -5,13 +5,12 @@ from config.settings import BASE_DIR
 from lib.llm.service.completion import OpenAILlmRagService
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from lib.llm.valueobject.rag import PdfDataloader
-from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
-class OpenAIRagChatService(BaseChatService):
+class OpenAIRagService(BaseChatService):
     model_name = ModelName.GPT_5_MINI
 
     def __init__(self):

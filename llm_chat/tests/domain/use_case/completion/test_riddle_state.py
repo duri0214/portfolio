@@ -1,6 +1,7 @@
-from django.test import TestCase
-from django.contrib.auth.models import User
 from unittest.mock import patch
+
+from django.contrib.auth.models import User
+from django.test import TestCase
 
 from lib.llm.valueobject.completion import ChatResult, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
@@ -118,7 +119,7 @@ class RiddleSessionStateTest(TestCase):
             states, [SessionState.EVALUATE.value, SessionState.USER_INPUT.value]
         )
 
-    @patch("llm_chat.domain.service.completion.riddle.RiddleChatService.evaluate_turn")
+    @patch("llm_chat.domain.service.completion.riddle.RiddleService.evaluate_turn")
     @patch("lib.llm.service.completion.LlmCompletionService.retrieve_answer")
     def test_session_finished_state(self, mock_retrieve, mock_turn_eval):
         """
@@ -128,13 +129,13 @@ class RiddleSessionStateTest(TestCase):
         - 期待値: 最終的な next_riddle_state が FINISHED（終了）状態であること。
         """
         # 終了定型文を含む回答をモック
-        from llm_chat.domain.service.completion.riddle import RiddleChatService
+        from llm_chat.domain.service.completion.riddle import RiddleService
 
         # 1回目の回答（開始時）
         start_response = ChatResult(answer="こんにちは！質問1です", explanation="")
         # 2回目の回答（終了時）
         end_response = ChatResult(
-            answer=f"正解です！\n\n{RiddleChatService.RIDDLE_END_MESSAGE}",
+            answer=f"正解です！\n\n{RiddleService.RIDDLE_END_MESSAGE}",
             explanation="",
         )
         mock_retrieve.side_effect = [start_response, end_response]

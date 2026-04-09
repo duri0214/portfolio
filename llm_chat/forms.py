@@ -9,7 +9,7 @@ class UserTextForm(forms.Form):
 
     USE_CASE_TYPE_CHOICES = [
         (UseCaseType.OPENAI_GPT_STREAMING, "OpenAI GPT Streaming"),
-        (UseCaseType.OPENAI_DALLE, "OpenAI Dall-e"),
+        (UseCaseType.OPENAI_IMAGE, "OpenAI Image Generation"),
         (UseCaseType.OPENAI_TEXT_TO_SPEECH, "OpenAI Text to Speech"),
         (UseCaseType.OPENAI_SPEECH_TO_TEXT, "OpenAI Speech to Text"),
         (UseCaseType.OPENAI_RAG, "OpenAI RAG"),
