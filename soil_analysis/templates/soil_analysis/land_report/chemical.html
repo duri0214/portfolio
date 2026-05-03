@@ -1,5 +1,5 @@
 {% extends "soil_analysis/base.html" %}
-{% load static %}
+{% load static custom_filters %}
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'soil_analysis/css/landreport/chemical.css' %}">
 {% endblock %}
@@ -8,7 +8,8 @@
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:land_list' company.id %}">Land list</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:land_detail' company.id land.id %}">Land Detail</a>
+                </li>
                 <li class="breadcrumb-item active" aria-current="page">Land report chemical</li>
             </ol>
         </nav>
@@ -77,52 +78,64 @@
             </tbody>
         </table>
 
-        <div class="card-group justify-content-center">
-            {% for land_score in land_scores %}
-                {% if forloop.first %}
-                    <div class="row mb-4">
-                {% endif %}
-            <div class="col-sm-4">
-                <div class="card">
-                    <svg class="bd-placeholder-img card-img-top" width="100%" height="180"
-                         xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false"
-                         role="img" aria-label="Placeholder: Image cap"><title>Placeholder</title>
-                        <rect fill="#868e96" width="100%" height="100%"/>
-                        <text fill="#dee2e6" dy=".3em" x="38%" y="50%">Image cap</text>
-                    </svg>
-                    <div class="card-body">
-                        <h5 class="card-title">{{ land_score.land_block.name }}</h5>
-                        <ul class="card-text">
-                            <li>電気伝導率: {{ land_score.ec }}</li>
-                            <li>アンモニア態窒素: {{ land_score.nh4n }}</li>
-                            <li>硝酸態窒素: {{ land_score.no3n }}</li>
-                            <li>無機態窒素: {{ land_score.total_nitrogen }}</li>
-                            <li>アンモニア態窒素比: {{ land_score.nh4_per_nitrogen }}</li>
-                            <li>水素イオン濃度: {{ land_score.ph }}</li>
-                            <li>交換性石灰: {{ land_score.cao }}</li>
-                            <li>交換性苦土: {{ land_score.mgo }}</li>
-                            <li>交換性加里: {{ land_score.k2o }}</li>
-                            <li>塩基飽和度: {{ land_score.base_saturation }}</li>
-                            <li>交換性石灰/交換性苦土: {{ land_score.cao_per_mgo }}</li>
-                            <li>交換性苦土/交換性加里: {{ land_score.mgo_per_k2o }}</li>
-                            <li>リン酸吸収係数: {{ land_score.phosphorus_absorption }}</li>
-                            <li>可給態リン酸: {{ land_score.p2o5 }}</li>
-                            <li>塩基置換容量: {{ land_score.cec }}</li>
-                            <li>腐植: {{ land_score.humus }}</li>
-                            <li>仮比重: {{ land_score.bulk_density }}</li>
-                            <li>備考: {{ land_score.remark|default:"-" }}</li>
-                        </ul>
+        <div class="land-grid mb-4">
+            {% for block in ordered_blocks %}
+                {% with land_score=land_scores_dict|get_item:block.name %}
+                    <div class="card grid-square {% if land_score %}has-data{% else %}no-data{% endif %}"
+                            {% if land_score %}
+                         data-bs-toggle="tooltip"
+                         data-bs-html="true"
+                         data-bs-title="#tooltip-{{ block.name }}"
+                            {% endif %}>
+                        <div class="card-body p-0 d-flex align-items-center justify-content-center">
+                            <h5 class="card-title mb-0 border-0 fw-bold text-center"
+                                style="font-size: 1.2rem;">{{ block.name }}</h5>
+                        </div>
                     </div>
-                </div>
-            </div>
-            {% if forloop.counter|divisibleby:"3" and not forloop.last %}
-                </div>
-                <div class="row mb-4">
-            {% endif %}
-            {% if forloop.last %}
-                </div>
-            {% endif %}
+
+                    {% if land_score %}
+                        <div id="tooltip-{{ block.name }}" style="display: none;">
+                            <div class='text-start small'>
+                                <div class='fw-bold border-bottom mb-1 text-center'>{{ block.name }}</div>
+                                <ul class='list-unstyled mb-0' style='column-count: 2; column-gap: 15px;'>
+                                    <li><span style="color: #adb5bd;">EC:</span> {{ land_score.ec }}</li>
+                                    <li><span style="color: #adb5bd;">NH4-N:</span> {{ land_score.nh4n }}</li>
+                                    <li><span style="color: #adb5bd;">NO3-N:</span> {{ land_score.no3n }}</li>
+                                    <li><span style="color: #adb5bd;">無機態N:</span> {{ land_score.total_nitrogen }}
+                                    </li>
+                                    <li><span style="color: #adb5bd;">NH4/N比:</span> {{ land_score.nh4_per_nitrogen }}
+                                    </li>
+                                    <li><span style="color: #adb5bd;">pH:</span> {{ land_score.ph }}</li>
+                                    <li><span style="color: #adb5bd;">CaO:</span> {{ land_score.cao }}</li>
+                                    <li><span style="color: #adb5bd;">MgO:</span> {{ land_score.mgo }}</li>
+                                    <li><span style="color: #adb5bd;">K2O:</span> {{ land_score.k2o }}</li>
+                                    <li><span
+                                            style="color: #adb5bd;">塩基飽和度:</span> {{ land_score.base_saturation }}
+                                    </li>
+                                    <li><span style="color: #adb5bd;">CaO/MgO:</span> {{ land_score.cao_per_mgo }}</li>
+                                    <li><span style="color: #adb5bd;">MgO/K2O:</span> {{ land_score.mgo_per_k2o }}</li>
+                                    <li><span
+                                            style="color: #adb5bd;">リン酸吸:</span> {{ land_score.phosphorus_absorption }}
+                                    </li>
+                                    <li><span style="color: #adb5bd;">P2O5:</span> {{ land_score.p2o5 }}</li>
+                                    <li><span style="color: #adb5bd;">CEC:</span> {{ land_score.cec }}</li>
+                                    <li><span style="color: #adb5bd;">腐植:</span> {{ land_score.humus }}</li>
+                                    <li><span style="color: #adb5bd;">仮比重:</span> {{ land_score.bulk_density }}</li>
+                                </ul>
+                                {% if land_score.remark %}
+                                    <div class='border-top mt-1 pt-1'>
+                                        <small style="color: #adb5bd;">備考:</small> {{ land_score.remark }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
             {% endfor %}
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'soil_analysis/js/land_report/chemical.js' %}"></script>
 {% endblock %}

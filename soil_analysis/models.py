@@ -200,7 +200,9 @@ class UserAttribute(models.Model):
     organization = models.CharField(
         verbose_name="所属", max_length=255, null=True, blank=True
     )
-    area = models.CharField(verbose_name="担当エリア", max_length=255, null=True, blank=True)
+    area = models.CharField(
+        verbose_name="担当エリア", max_length=255, null=True, blank=True
+    )
     remark = models.TextField(verbose_name="備考", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
@@ -253,7 +255,22 @@ class Crop(models.Model):
 class LandBlock(models.Model):
     """
     圃場ブロックマスタ
-    name        エリア名    e.g. A1
+
+    圃場は3x3の9ブロックに分かれる。
+    計測器（土壌硬度計測器など）の仕様および配置関係は以下の通り：
+
+    ┌────┬────┬────┐
+    │ C3 │ B3 │ A3 │  (Row 3)
+    ├────┼────┼────┤
+    │ C2 │ B2 │ A2 │  (Row 2)
+    ├────┼────┼────┤
+    │ C1 │ B1 │ A1 │  (Row 1)
+    └────┴────┴────┘
+     (Col C) (Col B) (Col A)
+
+    - 行（Row）: 1, 2, 3
+    - 列 (Col) : A, B, C
+    - 実際の計測シナリオでは、5ブロック（C1, C3, B2, A1, A3）のみを計測する場合がある。
     """
 
     name = models.CharField(max_length=256)
