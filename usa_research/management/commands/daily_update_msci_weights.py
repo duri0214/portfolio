@@ -59,28 +59,29 @@ class Command(BaseCommand):
         latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
 
         # 1. 判断 (HTTP HEAD による鮮度チェック)
-        report_date = None
         try:
             head_resp = requests.head(pdf_url, timeout=10)
-            if head_resp.status_code == 200:
-                last_modified_str = head_resp.headers.get("Last-Modified")
-                if last_modified_str:
-                    last_modified = datetime.strptime(
-                        last_modified_str, "%a, %d %b %Y %H:%M:%S %Z"
-                    )
-                    report_date = last_modified.date()
-                    if latest_record and report_date <= latest_record.report_date:
-                        return MsciUpdateResult(
-                            True,
-                            f"HTTP Head indicates no update since {latest_record.report_date}. Standing by.",
-                        )
+            if head_resp.status_code != 200:
+                return MsciUpdateResult(
+                    False, f"HEAD request failed with status: {head_resp.status_code}"
+                )
+
+            last_modified_str = head_resp.headers.get("Last-Modified")
+            if not last_modified_str:
+                return MsciUpdateResult(False, "Last-Modified header missing.")
+
+            last_modified = datetime.strptime(
+                last_modified_str, "%a, %d %b %Y %H:%M:%S %Z"
+            )
+            report_date = last_modified.date()
+
+            if latest_record and report_date <= latest_record.report_date:
+                return MsciUpdateResult(
+                    True,
+                    f"HTTP Head indicates no update since {latest_record.report_date}. Standing by.",
+                )
         except Exception as e:
             return MsciUpdateResult(False, f"HEAD request failed: {e}")
-
-        if not report_date:
-            return MsciUpdateResult(
-                False, "レポートの日付（Last-Modified）を特定できませんでした。"
-            )
 
         # API設定
         api_key = os.getenv("OPENAI_API_KEY")
