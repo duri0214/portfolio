@@ -1,8 +1,6 @@
 import io
 import os
-import re
 from datetime import datetime
-from typing import Optional, Tuple
 
 import requests
 from django.core.management.base import BaseCommand
@@ -54,24 +52,24 @@ class Command(BaseCommand):
         1. HTTP HEADリクエストを送り、Last-Modifiedヘッダで鮮度を確認。
            - ヘッダの日付がDB内の最新レコードの日付以前であれば、早期リターンする。
         2. 更新があれば（またはHEAD失敗時）、PDFをダウンロードし、pypdfでテキストを抽出。
-        3. 抽出されたテキストをOpenAI GPT-4oに渡し、LLMが「Report Date (YYYY-MM-DD)」と「Country Weightsの要約」を特定。
-        4. LLMから得られた日付と、DBの最新レコードの日付を最終比較し、新しい場合のみ保存（冪等性の担保）。
+        3. 抽出されたテキストをOpenAI GPT-4oに渡し、LLMが「Country Weightsの要約」を生成。
+        4. HTTPヘッダの Last-Modified をレポート日付として採用し、DBの最新レコードの日付と比較して新しい場合のみ保存。
         """
         # 0. 観察（最新レコードの取得）
         latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
 
         # 1. 判断 (HTTP HEAD による鮮度チェック)
+        report_date = None
         try:
             head_resp = requests.head(pdf_url, timeout=10)
             if head_resp.status_code == 200:
                 last_modified_str = head_resp.headers.get("Last-Modified")
-                if last_modified_str and latest_record:
+                if last_modified_str:
                     last_modified = datetime.strptime(
                         last_modified_str, "%a, %d %b %Y %H:%M:%S %Z"
                     )
-                    # DBの更新日時（または報告日）と比較
-                    # report_dateはDate型なので、updated_at（DateTime型）と比較するのが適切
-                    if last_modified.date() <= latest_record.report_date:
+                    report_date = last_modified.date()
+                    if latest_record and report_date <= latest_record.report_date:
                         return MsciUpdateResult(
                             True,
                             f"HTTP Head indicates no update since {latest_record.report_date}. Standing by.",
@@ -98,8 +96,22 @@ class Command(BaseCommand):
             response = requests.get(pdf_url, timeout=30)
             response.raise_for_status()
             pdf_content = response.content
+
+            # HEADで取れなかった場合、GETのヘッダから取得試行
+            if not report_date:
+                last_modified_str = response.headers.get("Last-Modified")
+                if last_modified_str:
+                    last_modified = datetime.strptime(
+                        last_modified_str, "%a, %d %b %Y %H:%M:%S %Z"
+                    )
+                    report_date = last_modified.date()
         except Exception as e:
             return MsciUpdateResult(False, f"PDFダウンロード失敗: {str(e)}")
+
+        if not report_date:
+            return MsciUpdateResult(
+                False, "レポートの日付（Last-Modified）を特定できませんでした。"
+            )
 
         # 2. PDFからテキスト抽出
         try:
@@ -110,22 +122,16 @@ class Command(BaseCommand):
         except Exception as e:
             return MsciUpdateResult(False, f"PDFテキスト抽出失敗: {str(e)}")
 
-        # 3. LLMによる日付抽出と要約
+        # 3. LLMによる要約
         prompt = f"""
-            以下のMSCI Indexのレポート内容から、レポートの日付（Report Date）を抽出し、
-            その後「Country Weight（国別株式比率）」を中心に内容を【日本語で】要約してください。
+            以下のMSCI Indexのレポート内容から、「Country Weight（国別株式比率）」を中心に内容を【日本語で】要約してください。
             
             【要約の観点】
             - 国別比率の概況
             - 前月比での大きな変化
             - 特筆すべき集中・分散の状況
             
-            【出力フォーマット】
-            Report Date: YYYY-MM-DD
-            
-            (ここにMarkdown形式で、日本語で要約を記述。各セクションの見出しには ##### を使用してください)
-            
-            ※注意: 要約の部分に 'Report Date' という文字列を含めないでください。
+            (Markdown形式で、日本語で要約を記述。各セクションの見出しには ##### を使用してください)
             
             【レポート内容】
             {text}
@@ -140,21 +146,9 @@ class Command(BaseCommand):
 
         try:
             completion = llm_service.retrieve_answer(messages, max_messages=2)
-            llm_response = completion.answer
+            summary_md = completion.answer
         except Exception as e:
             return MsciUpdateResult(False, f"LLM要約失敗: {str(e)}")
-
-        # 4. LLM応答のパース
-        report_date_str, summary_md = self._parse_llm_response(llm_response)
-        if not report_date_str:
-            return MsciUpdateResult(
-                False, "LLM応答からレポート日付を抽出できませんでした。"
-            )
-
-        try:
-            report_date = datetime.strptime(report_date_str, "%Y-%m-%d").date()
-        except ValueError:
-            return MsciUpdateResult(False, f"不適切な日付形式です: {report_date_str}")
 
         # 5. 観察（最新レコードの取得）と判断
         # latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
@@ -178,24 +172,3 @@ class Command(BaseCommand):
         return MsciUpdateResult(
             True, f"Successfully processed report for {report_date}."
         )
-
-    @staticmethod
-    def _parse_llm_response(response: str) -> Tuple[Optional[str], str]:
-        """
-        LLMの応答から日付と要約を抽出する。
-        """
-        # 日付の抽出
-        date_match = re.search(r"Report Date:\s*(\d{4}-\d{2}-\d{2})", response)
-        report_date = date_match.group(1) if date_match else None
-
-        # 要約の抽出 (Report Date の行を除去)
-        lines = response.strip().splitlines()
-        summary_lines = []
-        for line in lines:
-            if re.search(r"Report Date:\s*\d{4}-\d{2}-\d{2}", line):
-                continue
-            summary_lines.append(line)
-
-        summary_md = "\n".join(summary_lines).strip()
-
-        return report_date, summary_md
