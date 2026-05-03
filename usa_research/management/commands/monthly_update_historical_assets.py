@@ -1,7 +1,9 @@
+import os
 from datetime import datetime, timedelta
 
 import pandas as pd
 import yfinance as yf
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from usa_research.models import AssetPrice
@@ -23,6 +25,15 @@ TICKERS = {
 
 class Command(BaseCommand):
     help = "Fetch historical asset prices (ETF and Indices) from Yahoo Finance and save to AssetPrice model"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # yfinanceのタイムゾーンキャッシュディレクトリに関するエラー(Issue #545)を回避するため、
+        # プロジェクト内のディレクトリをキャッシュ先として指定する。
+        # matplotlibの例に倣い、MEDIA_ROOT 内に配置する。
+        cache_dir = os.path.join(settings.MEDIA_ROOT, "yfinance_cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        yf.set_tz_cache_location(cache_dir)
 
     def add_arguments(self, parser):
         parser.add_argument(
