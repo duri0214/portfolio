@@ -34,7 +34,8 @@
                         <span class="badge bg-primary me-3">2</span>
                         <div>
                             <strong>アップロードデータ確認</strong>
-                            <br><small class="text-muted">取り込みデータ数を確認し、必要に応じて不足している圃場の新規登録を行う</small>
+                            <br><small
+                                class="text-muted">取り込みデータ数を確認し、必要に応じて不足している圃場の新規登録を行う</small>
                         </div>
                     </div>
                 </div>
@@ -46,8 +47,10 @@
                         <span class="badge bg-primary me-3">3</span>
                         <div>
                             <strong>硬度データの関連付け</strong>
-                            <br><small class="text-muted">各圃場グループごとに適切な帳簿を選択・関連付け（必要に応じて新規帳簿作成）</small>
-                            <br><small class="text-muted">※すべてのグループの処理完了まで次のステップに進めません</small>
+                            <br><small
+                                class="text-muted">各圃場グループごとに適切な帳簿を選択・関連付け（必要に応じて新規帳簿作成）</small>
+                            <br><small
+                                class="text-muted">※すべてのグループの処理完了まで次のステップに進めません</small>
                         </div>
                     </div>
                 </div>
@@ -59,8 +62,10 @@
                         <span class="badge bg-primary me-3">4</span>
                         <div>
                             <strong>関連付けデータ確認</strong>
-                            <br><small class="text-muted">関連付けデータ集計（フォルダ別・圃場のブロック別・計測帳簿別）を確認</small>
-                            <br><small class="text-muted">必要に応じて「3Dプロット画像を生成して圃場に紐づける」ボタンを押下</small>
+                            <br><small
+                                class="text-muted">関連付けデータ集計（フォルダ別・圃場のブロック別・計測帳簿別）を確認</small>
+                            <br><small
+                                class="text-muted">必要に応じて「3Dプロット画像を生成して圃場に紐づける」ボタンを押下</small>
                         </div>
                     </div>
                 </div>
@@ -72,7 +77,8 @@
                         <span class="badge bg-primary me-3">5</span>
                         <div>
                             <strong>グラフ確認</strong>
-                            <br><small class="text-muted">任意の <a href="{% url 'soil:home' %}">圃場の詳細ページ</a> で、生成された3Dプロット画像を確認</small>
+                            <br><small class="text-muted">任意の <a href="{% url 'soil:home' %}">圃場の詳細ページ</a>
+                            で、生成された3Dプロット画像を確認</small>
                         </div>
                     </div>
                 </div>
@@ -183,10 +189,7 @@
         </div>
     </div>
 
-    <script>
-        function confirmDeleteAll() {
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
-            deleteModal.show();
-        }
-    </script>
+    {% block extra_js %}
+        <script src="{% static 'soil_analysis/js/hardness/form.js' %}"></script>
+    {% endblock %}
 {% endblock %}

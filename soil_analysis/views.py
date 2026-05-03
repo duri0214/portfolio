@@ -20,10 +20,6 @@ from django.views.generic import (
     FormView,
 )
 
-from soil_analysis.domain.service.hardness_plot_generation import (
-    HardnessPlotGenerationService,
-)
-
 from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.company import CompanyRepository
@@ -32,6 +28,9 @@ from soil_analysis.domain.repository.hardness_measurement import (
 )
 from soil_analysis.domain.repository.land import LandRepository
 from soil_analysis.domain.repository.land_ledger import LandLedgerRepository
+from soil_analysis.domain.service.hardness_plot_generation import (
+    HardnessPlotGenerationService,
+)
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
@@ -49,6 +48,7 @@ from soil_analysis.models import (
     LandScoreChemical,
     LandReview,
     LandLedger,
+    LandBlock,
     SoilHardnessMeasurementImportErrors,
     SoilHardnessMeasurement,
     SamplingOrder,
@@ -186,17 +186,34 @@ class LandDetailView(DetailView):
             queryset=JmaWarning.objects.all(),
             to_attr="warnings",
         )
+        land_ledger_prefetch = Prefetch(
+            "landledger_set",
+            queryset=LandLedger.objects.select_related("land_period", "crop"),
+            to_attr="ledgers",
+        )
         return (
-            super().get_queryset().prefetch_related(weather_prefetch, warning_prefetch)
+            super()
+            .get_queryset()
+            .prefetch_related(weather_prefetch, warning_prefetch, land_ledger_prefetch)
         )
 
 
 class LandReportChemicalListView(ListView):
+    """
+    化学分析レポート（通知表）の一覧表示
+
+    圃場の9ブロック（A1〜C3）のデータを3x3のグリッド形式で表示する。
+    グリッドの配置（上から下、左から右）は以下の通り：
+    C3, B3, A3
+    C2, B2, A2
+    C1, B1, A1
+    """
+
     model = LandScoreChemical
     template_name = "soil_analysis/land_report/chemical.html"
 
     def get_queryset(self):
-        land_ledger = LandLedger(self.kwargs["land_ledger_id"])
+        land_ledger = LandLedger.objects.get(id=self.kwargs["land_ledger_id"])
         return super().get_queryset().filter(land_ledger=land_ledger)
 
     def get_context_data(self, **kwargs):
@@ -204,12 +221,33 @@ class LandReportChemicalListView(ListView):
         land_ledger = LandLedger.objects.get(id=self.kwargs["land_ledger_id"])
 
         context["charts"] = ReportLayout1(land_ledger).publish()
-        context["company"] = Company(self.kwargs["company_id"])
+        context["company"] = Company.objects.get(id=self.kwargs["company_id"])
+        context["land"] = land_ledger.land
         context["land_ledger"] = land_ledger
-        context["land_scores"] = LandScoreChemical.objects.filter(
-            land_ledger=land_ledger
+        context["land_scores"] = (
+            LandScoreChemical.objects.filter(land_ledger=land_ledger)
+            .select_related("land_block")
+            .order_by("land_block__name")
         )
         context["land_review"] = LandReview.objects.filter(land_ledger=land_ledger)
+        context["land_scores_dict"] = {
+            score.land_block.name: score for score in context["land_scores"]
+        }
+        context["land_blocks"] = LandBlock.objects.all()
+        # グリッドの順序:
+        # C3, B3, A3
+        # C2, B2, A2
+        # C1, B1, A1
+        blocks = []
+        for row in ["3", "2", "1"]:
+            for col in ["C", "B", "A"]:
+                name = f"{col}{row}"
+                block = next(
+                    (b for b in context["land_blocks"] if b.name == name), None
+                )
+                if block:
+                    blocks.append(block)
+        context["ordered_blocks"] = blocks
 
         return context
 

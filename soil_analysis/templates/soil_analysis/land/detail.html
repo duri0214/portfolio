@@ -151,15 +151,19 @@
                             {% for weather in object.jma_city.jma_region.weathers %}
                                 <div class="weather-item">
                                     <p><strong>{{ weather.reporting_date|date:"m/d" }}</strong></p>
-                                    <img src="{% static 'soil_analysis/images/weather/svg/' %}{{ weather.jma_weather_code.image }}"
-                                         alt="{{ weather.jma_weather_code.name }}"
-                                         style="width: 50px; height: 50px;">
+                                    {% with 'soil_analysis/images/weather/svg/'|add:weather.jma_weather_code.image as weather_icon_path %}
+                                        <img src="{% static weather_icon_path %}"
+                                             alt="{{ weather.jma_weather_code.name }}"
+                                             style="width: 50px; height: 50px;">
+                                    {% endwith %}
                                     <p>{{ weather.jma_weather_code.name }}</p>
                                     {% if weather.avg_rain_probability %}
                                         <p><i class="fas fa-tint"></i> {{ weather.avg_rain_probability }}%</p>
                                     {% endif %}
                                     {% if weather.avg_max_temperature and weather.avg_min_temperature %}
-                                        <p><i class="fas fa-temperature-high"></i> 最高 {{ weather.avg_max_temperature }}℃ / 最低 {{ weather.avg_min_temperature }}℃</p>
+                                        <p><i class="fas fa-temperature-high"></i>
+                                            最高 {{ weather.avg_max_temperature }}℃ /
+                                            最低 {{ weather.avg_min_temperature }}℃</p>
                                     {% endif %}
                                 </div>
                             {% endfor %}
@@ -179,6 +183,48 @@
                 </div>
             </div>
         {% endif %}
+
+        <!-- 土壌分析データ（帳簿）一覧 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-file-invoice"></i> 土壌分析データ（通知表）</h6>
+            </div>
+            <div class="card-body">
+                {% if object.ledgers %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                            <tr>
+                                <th>時期</th>
+                                <th>作物</th>
+                                <th>採土日</th>
+                                <th>分析番号</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for ledger in object.ledgers %}
+                                <tr>
+                                    <td>{{ ledger.land_period.year }} {{ ledger.land_period.name }}</td>
+                                    <td>{{ ledger.crop.name|default:"-" }}</td>
+                                    <td>{{ ledger.sampling_date|default:"-" }}</td>
+                                    <td>{{ ledger.analysis_number|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'soil:land_report_chemical' object.company.id ledger.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-chart-bar"></i> 通知表を表示
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">土壌分析データが登録されていません。</p>
+                {% endif %}
+            </div>
+        </div>
 
         <!-- アクションボタン -->
         <div class="d-flex justify-content-between">
