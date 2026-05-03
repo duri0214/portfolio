@@ -55,13 +55,30 @@ class IndexView(TemplateView):
         # RSSフィードを取得 (最新20件)
         context["rss_feeds"] = RssFeed.objects.select_related("source").all()[:20]
 
-        # MSCIレポートを取得 (最新1件)
-        latest_report = MsciCountryWeightReport.objects.first()
-        if latest_report:
-            latest_report.summary_html = markdown.markdown(
-                latest_report.summary_md, extensions=["extra", "tables"]
+        # MSCIレポートを取得 (過去分も含めて取得可能にする)
+        report_date_param = self.request.GET.get("report_date")
+        if report_date_param:
+            msci_report = MsciCountryWeightReport.objects.filter(
+                report_date=report_date_param
+            ).first()
+        else:
+            msci_report = MsciCountryWeightReport.objects.first()
+
+        if msci_report:
+            msci_report.summary_html = markdown.markdown(
+                msci_report.summary_md, extensions=["extra", "tables"]
             )
-            context["msci_report"] = latest_report
+            context["msci_report"] = msci_report
+
+        # 過去のレポート日付リストを取得 (ドロップダウン用)
+        context["msci_report_dates"] = MsciCountryWeightReport.objects.values_list(
+            "report_date", flat=True
+        )
+        # 表示中のレポートが最新かどうか
+        latest_report = MsciCountryWeightReport.objects.first()
+        context["is_latest_report"] = (
+            msci_report == latest_report if msci_report and latest_report else True
+        )
 
         # 資産クラスの長期推移
         # グラフ表示用にデータを取得。

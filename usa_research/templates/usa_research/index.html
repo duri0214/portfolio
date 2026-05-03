@@ -361,15 +361,29 @@
         <!-- 2. MSCIレポートの要約 -->
         <section id="msci" class="mb-5 border p-4 rounded shadow-sm bg-light">
             <div class="mb-4 d-flex justify-content-between align-items-center">
-                <div>
+                <div class="d-flex flex-column">
                     <h4 class="text-primary mb-1"><i class="fas fa-chart-pie"></i> 2. MSCIレポートの要約</h4>
-                    {% if msci_report %}
-                        <p class="text-muted mb-0 small"><i class="fas fa-calendar-alt"></i> Report
-                            Date: {{ msci_report.report_date|date:"Y/m/d" }}</p>
-                    {% endif %}
+                    <div class="d-flex align-items-center">
+                        {% if msci_report %}
+                            <p class="text-muted mb-0 small me-3"><i class="fas fa-calendar-alt"></i> Report
+                                Date: {{ msci_report.report_date|date:"Y/m/d" }}</p>
+                        {% endif %}
+                        {% if msci_report_dates %}
+                            <select id="report-date-select" class="form-select form-select-sm" style="width: auto;">
+                                {% for r_date in msci_report_dates %}
+                                    <option value="{{ r_date|date:"Y-m-d" }}"
+                                            {% if msci_report.report_date == r_date %}selected{% endif %}>
+                                        {{ r_date|date:"Y/m/d" }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                    </div>
                 </div>
                 {% if msci_report %}
-                    <a href="{{ msci_report.pdf_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <a href="{{ msci_report.pdf_url }}" target="_blank"
+                       class="btn btn-outline-secondary btn-sm {% if not is_latest_report %}disabled{% endif %}"
+                       {% if not is_latest_report %}aria-disabled="true" tabindex="-1"{% endif %}>
                         <i class="fas fa-file-pdf"></i> Original PDF
                     </a>
                 {% endif %}
@@ -750,5 +764,20 @@
                 <a href="#top" class="text-muted small"><i class="fas fa-chevron-up"></i> TOPに戻る</a>
             </div>
         </section>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const select = document.getElementById('report-date-select');
+                if (select) {
+                    select.addEventListener('change', function () {
+                        const date = this.value;
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('report_date', date);
+                        // アンカーを維持しつつリロード
+                        url.hash = 'msci';
+                        window.location.href = url.toString();
+                    });
+                }
+            });
+        </script>
     </div>
 {% endblock %}
