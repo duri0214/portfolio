@@ -77,6 +77,11 @@ class Command(BaseCommand):
         except Exception as e:
             return MsciUpdateResult(False, f"HEAD request failed: {e}")
 
+        if not report_date:
+            return MsciUpdateResult(
+                False, "レポートの日付（Last-Modified）を特定できませんでした。"
+            )
+
         # API設定
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -96,11 +101,6 @@ class Command(BaseCommand):
             pdf_content = response.content
         except Exception as e:
             return MsciUpdateResult(False, f"PDFダウンロード失敗: {str(e)}")
-
-        if not report_date:
-            return MsciUpdateResult(
-                False, "レポートの日付（Last-Modified）を特定できませんでした。"
-            )
 
         # 2. PDFからテキスト抽出
         try:
