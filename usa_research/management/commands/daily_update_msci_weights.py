@@ -29,6 +29,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """
+        処理フロー:
+        1. 解析: 指定されたURLからPDFをダウンロードし、テキストを抽出。LLMでReport Dateと要約を特定する。
+        2. 観察: DBから既存の最新レコードを取得する。
+        3. 判断: 取得したReport Dateが既存レコードの日付より新しければ本処理へ。同じか古ければ終了（残心）。
+        4. 本処理: 新規レコードをDBに保存する。
+        """
         url = options["url"]
         self.stdout.write(f"Processing MSCI report from: {url}")
 
@@ -41,7 +48,13 @@ class Command(BaseCommand):
 
     def update_report(self, pdf_url: str) -> MsciUpdateResult:
         """
-        MSCIのPDFレポートを処理し、DBを更新します。
+        MSCIのPDFレポートをダウンロード・解析し、必要に応じてDBを更新します。
+
+        シナリオ:
+        - 指定された MSCI PDF URL からデータを取得。
+        - pypdf を使用してテキストを抽出し、OpenAI GPT-4o に渡す。
+        - LLMが「Report Date (YYYY-MM-DD)」と「Country Weightsの要約」を抽出。
+        - DB内の最新レコードと日付を比較し、新しい場合のみ新規保存を行う（冪等性の担保）。
         """
         # API設定
         api_key = os.getenv("OPENAI_API_KEY")
