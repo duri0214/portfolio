@@ -75,9 +75,7 @@ class Command(BaseCommand):
                             f"HTTP Head indicates no update since {latest_record.report_date}. Standing by.",
                         )
         except Exception as e:
-            self.stdout.write(
-                f"HEAD request failed, falling back to full download: {e}"
-            )
+            return MsciUpdateResult(False, f"HEAD request failed: {e}")
 
         # API設定
         api_key = os.getenv("OPENAI_API_KEY")
@@ -96,15 +94,6 @@ class Command(BaseCommand):
             response = requests.get(pdf_url, timeout=30)
             response.raise_for_status()
             pdf_content = response.content
-
-            # HEADで取れなかった場合、GETのヘッダから取得試行
-            if not report_date:
-                last_modified_str = response.headers.get("Last-Modified")
-                if last_modified_str:
-                    last_modified = datetime.strptime(
-                        last_modified_str, "%a, %d %b %Y %H:%M:%S %Z"
-                    )
-                    report_date = last_modified.date()
         except Exception as e:
             return MsciUpdateResult(False, f"PDFダウンロード失敗: {str(e)}")
 

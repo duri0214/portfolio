@@ -156,7 +156,7 @@ class MsciUpdateIdempotencyTest(TestCase):
         "usa_research.management.commands.daily_update_msci_weights.LlmCompletionService"
     )
     @patch.dict("os.environ", {"OPENAI_API_KEY": "fake_key"})
-    def test_scenario_4_fallback_to_get_header(
+    def test_scenario_4_head_failure_aborts(
         self,
         mock_llm_service,
         mock_pdf_reader,
@@ -164,32 +164,16 @@ class MsciUpdateIdempotencyTest(TestCase):
         mock_requests_head,
     ):
         """
-        シナリオ4: フォールバック（HEAD失敗時にGETのヘッダで判定）
-        - HEADリクエストが失敗しても、GETリクエストのヘッダから日付を特定して処理を継続する。
+        シナリオ4: HEAD失敗による中断
+        - HEADリクエストが失敗した場合、KISS原則に基づき深追いせずエラーで終了することを確認。
         """
         # HEADは失敗させる
         mock_requests_head.side_effect = Exception("HEAD Fail")
 
-        # GETリクエストのヘッダで日付を返す
-        new_date = datetime.date(2024, 6, 1)
-        mock_response = MagicMock()
-        mock_response.content = b"fake pdf content"
-        mock_response.status_code = 200
-        mock_response.headers = {"Last-Modified": "Sat, 01 Jun 2024 10:00:00 GMT"}
-        mock_requests_get.return_value = mock_response
-
-        mock_reader_inst = MagicMock()
-        mock_reader_inst.pages = [MagicMock()]
-        mock_pdf_reader.return_value = mock_reader_inst
-
-        mock_llm_inst = mock_llm_service.return_value
-        mock_completion = MagicMock()
-        mock_completion.answer = "Fallback Summary"
-        mock_llm_inst.retrieve_answer.return_value = mock_completion
-
         # Execute command
         call_command("daily_update_msci_weights", url=self.pdf_url, stdout=self.out)
 
-        # 検証
-        self.assertEqual(MsciCountryWeightReport.objects.count(), 1)
-        self.assertEqual(MsciCountryWeightReport.objects.first().report_date, new_date)
+        # 検証：レコードが作成されておらず、GETリクエストも行われていないこと
+        self.assertEqual(MsciCountryWeightReport.objects.count(), 0)
+        self.assertIn("HEAD request failed", self.out.getvalue())
+        mock_requests_get.assert_not_called()
