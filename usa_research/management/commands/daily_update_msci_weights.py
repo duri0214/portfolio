@@ -150,21 +150,7 @@ class Command(BaseCommand):
         except Exception as e:
             return MsciUpdateResult(False, f"LLM要約失敗: {str(e)}")
 
-        # 5. 観察（最新レコードの取得）と判断
-        # latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
-        # メソッド冒頭で取得済みの latest_record を使用する
-
-        if latest_record is not None:
-            # 既にレコードがある場合：日付を比較
-            if report_date <= latest_record.report_date:
-                return MsciUpdateResult(
-                    True, f"Already updated for {report_date}. Standing by."
-                )
-        else:
-            # レコードがゼロの場合
-            self.stdout.write("Initial data migration or empty DB detected.")
-
-        # 6. 本処理：新規作成
+        # 5. 保存（冪等性は上流の判定で担保）
         MsciCountryWeightReport.objects.create(
             report_date=report_date, summary_md=summary_md, pdf_url=pdf_url
         )
