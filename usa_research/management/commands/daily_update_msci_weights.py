@@ -31,7 +31,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """
         処理フロー:
-        1. 解析: 指定されたURLからPDFをダウンロードし、テキストを抽出。LLMでReport Dateと要約を特定する。
+        1. 解析: 指定されたURLからHTTP HEADリクエストを送り、Last-Modifiedヘッダで鮮度を確認。更新があればPDFをダウンロードし、テキストを抽出。LLMでReport Dateと要約を特定する。
         2. 観察: DBから既存の最新レコードを取得する。
         3. 判断: 取得したReport Dateが既存レコードの日付より新しければ本処理へ。同じか古ければ終了（残心）。
         4. 本処理: 新規レコードをDBに保存する。
@@ -52,9 +52,10 @@ class Command(BaseCommand):
 
         シナリオ:
         1. HTTP HEADリクエストを送り、Last-Modifiedヘッダで鮮度を確認。
-        2. 更新があればPDFをダウンロードし、pypdfでテキストを抽出。
-        3. LLMが「Report Date (YYYY-MM-DD)」と「Country Weightsの要約」を特定。
-        4. DBの最新レコードと日付を比較し、新しい場合のみ保存（冪等性の担保）。
+           - ヘッダの日付がDB内の最新レコードの日付以前であれば、早期リターンする。
+        2. 更新があれば（またはHEAD失敗時）、PDFをダウンロードし、pypdfでテキストを抽出。
+        3. 抽出されたテキストをOpenAI GPT-4oに渡し、LLMが「Report Date (YYYY-MM-DD)」と「Country Weightsの要約」を特定。
+        4. LLMから得られた日付と、DBの最新レコードの日付を最終比較し、新しい場合のみ保存（冪等性の担保）。
         """
         # 0. 観察（最新レコードの取得）
         latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
