@@ -19,19 +19,24 @@ class MsciUpdateIdempotencyTest(TestCase):
         self.out = StringIO()
         self.pdf_url = "https://example.com/msci.pdf"
 
+    @patch("usa_research.management.commands.daily_update_msci_weights.requests.head")
     @patch("usa_research.management.commands.daily_update_msci_weights.requests.get")
     @patch("usa_research.management.commands.daily_update_msci_weights.PdfReader")
     @patch(
         "usa_research.management.commands.daily_update_msci_weights.LlmCompletionService"
     )
     @patch.dict("os.environ", {"OPENAI_API_KEY": "fake_key"})
-    def test_initial_run(self, mock_llm_service, mock_pdf_reader, mock_requests_get):
+    def test_initial_run(
+        self, mock_llm_service, mock_pdf_reader, mock_requests_get, mock_requests_head
+    ):
         """
         シナリオ1: 初回実行（DB空状態）
         - DBにレコードが1件もない状態でコマンドを実行する。
         - PDFから抽出された日付で新規レコードが作成されることを確認する。
         """
         # Setup mocks
+        mock_requests_head.return_value = MagicMock(status_code=200, headers={})
+
         mock_response = MagicMock()
         mock_response.content = b"fake pdf content"
         mock_requests_get.return_value = mock_response
@@ -56,6 +61,7 @@ class MsciUpdateIdempotencyTest(TestCase):
         self.assertIn("Successfully processed", self.out.getvalue())
         self.assertIn("Initial data migration", self.out.getvalue())
 
+    @patch("usa_research.management.commands.daily_update_msci_weights.requests.head")
     @patch("usa_research.management.commands.daily_update_msci_weights.requests.get")
     @patch("usa_research.management.commands.daily_update_msci_weights.PdfReader")
     @patch(
@@ -63,7 +69,11 @@ class MsciUpdateIdempotencyTest(TestCase):
     )
     @patch.dict("os.environ", {"OPENAI_API_KEY": "fake_key"})
     def test_idempotency_same_date(
-        self, mock_llm_service, mock_pdf_reader, mock_requests_get
+        self,
+        mock_llm_service,
+        mock_pdf_reader,
+        mock_requests_get,
+        mock_requests_head,
     ):
         """
         シナリオ2: 同一データによる重複実行（冪等性の担保）
@@ -76,7 +86,9 @@ class MsciUpdateIdempotencyTest(TestCase):
             report_date=report_date, summary_md="Existing summary", pdf_url=self.pdf_url
         )
 
-        # Setup mocks to return the same date
+        # Setup mocks to return the same date in LLM (HEAD skip not triggered yet)
+        mock_requests_head.return_value = MagicMock(status_code=200, headers={})
+
         mock_response = MagicMock()
         mock_response.content = b"fake pdf content"
         mock_requests_get.return_value = mock_response
@@ -96,6 +108,47 @@ class MsciUpdateIdempotencyTest(TestCase):
         # Verify no new record created and no update (based on logic, it skips)
         self.assertEqual(MsciCountryWeightReport.objects.count(), 1)
         self.assertIn(f"Already updated for {report_date}", self.out.getvalue())
+
+    @patch("usa_research.management.commands.daily_update_msci_weights.requests.head")
+    @patch("usa_research.management.commands.daily_update_msci_weights.requests.get")
+    @patch("usa_research.management.commands.daily_update_msci_weights.PdfReader")
+    @patch(
+        "usa_research.management.commands.daily_update_msci_weights.LlmCompletionService"
+    )
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "fake_key"})
+    def test_head_skip(
+        self,
+        mock_llm_service,
+        mock_pdf_reader,
+        mock_requests_get,
+        mock_requests_head,
+    ):
+        """
+        シナリオ5: HTTP HEADリクエストによる早期スキップ
+        - HTTP HEADで取得した Last-Modified が、DBの最新レコードの日付以前であれば
+        - PDFのダウンロードやLLM解析を行わずに終了することを確認する。
+        """
+        # 最新レコードが 2026-04-03
+        latest_date = datetime.date(2026, 4, 3)
+        MsciCountryWeightReport.objects.create(
+            report_date=latest_date, summary_md="Latest summary", pdf_url=self.pdf_url
+        )
+
+        # HEADリクエストで返ってくる日付が 2026-04-03 (同日) の場合
+        mock_requests_head.return_value = MagicMock(
+            status_code=200,
+            headers={"Last-Modified": "Fri, 03 Apr 2026 11:43:06 GMT"},
+        )
+
+        # Execute command
+        call_command("daily_update_msci_weights", url=self.pdf_url, stdout=self.out)
+
+        # 検証
+        self.assertEqual(MsciCountryWeightReport.objects.count(), 1)
+        self.assertIn("HTTP Head indicates no update", self.out.getvalue())
+        # GETリクエストやLLMが呼ばれていないことを確認
+        mock_requests_get.assert_not_called()
+        mock_llm_service.assert_not_called()
 
     @patch("usa_research.management.commands.daily_update_msci_weights.requests.get")
     @patch("usa_research.management.commands.daily_update_msci_weights.PdfReader")

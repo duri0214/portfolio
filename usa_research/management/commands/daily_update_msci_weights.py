@@ -51,11 +51,35 @@ class Command(BaseCommand):
         MSCIのPDFレポートをダウンロード・解析し、必要に応じてDBを更新します。
 
         シナリオ:
-        - 指定された MSCI PDF URL からデータを取得。
-        - pypdf を使用してテキストを抽出し、OpenAI GPT-4o に渡す。
-        - LLMが「Report Date (YYYY-MM-DD)」と「Country Weightsの要約」を抽出。
-        - DB内の最新レコードと日付を比較し、新しい場合のみ新規保存を行う（冪等性の担保）。
+        1. HTTP HEADリクエストを送り、Last-Modifiedヘッダで鮮度を確認。
+        2. 更新があればPDFをダウンロードし、pypdfでテキストを抽出。
+        3. LLMが「Report Date (YYYY-MM-DD)」と「Country Weightsの要約」を特定。
+        4. DBの最新レコードと日付を比較し、新しい場合のみ保存（冪等性の担保）。
         """
+        # 0. 観察（最新レコードの取得）
+        latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
+
+        # 1. 判断 (HTTP HEAD による鮮度チェック)
+        try:
+            head_resp = requests.head(pdf_url, timeout=10)
+            if head_resp.status_code == 200:
+                last_modified_str = head_resp.headers.get("Last-Modified")
+                if last_modified_str and latest_record:
+                    last_modified = datetime.strptime(
+                        last_modified_str, "%a, %d %b %Y %H:%M:%S %Z"
+                    )
+                    # DBの更新日時（または報告日）と比較
+                    # report_dateはDate型なので、updated_at（DateTime型）と比較するのが適切
+                    if last_modified.date() <= latest_record.report_date:
+                        return MsciUpdateResult(
+                            True,
+                            f"HTTP Head indicates no update since {latest_record.report_date}. Standing by.",
+                        )
+        except Exception as e:
+            self.stdout.write(
+                f"HEAD request failed, falling back to full download: {e}"
+            )
+
         # API設定
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -68,7 +92,7 @@ class Command(BaseCommand):
         )
         llm_service = LlmCompletionService(config)
 
-        # 1. PDFダウンロード
+        # 2. PDFダウンロード
         try:
             response = requests.get(pdf_url, timeout=30)
             response.raise_for_status()
@@ -132,7 +156,8 @@ class Command(BaseCommand):
             return MsciUpdateResult(False, f"不適切な日付形式です: {report_date_str}")
 
         # 5. 観察（最新レコードの取得）と判断
-        latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
+        # latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
+        # メソッド冒頭で取得済みの latest_record を使用する
 
         if latest_record is not None:
             # 既にレコードがある場合：日付を比較
