@@ -51,9 +51,9 @@ class Command(BaseCommand):
         シナリオ:
         1. HTTP HEADリクエストを送り、Last-Modifiedヘッダで鮮度を確認。
            - ヘッダの日付がDB内の最新レコードの日付以前であれば、早期リターンする。
-        2. 更新があれば（またはHEAD失敗時）、PDFをダウンロードし、pypdfでテキストを抽出。
+        2. 更新があれば、PDFをダウンロードし、pypdfでテキストを抽出。
         3. 抽出されたテキストをOpenAI GPT-4oに渡し、LLMが「Country Weightsの要約」を生成。
-        4. HTTPヘッダの Last-Modified をレポート日付として採用し、DBの最新レコードの日付と比較して新しい場合のみ保存。
+        4. HTTPヘッダの Last-Modified をレポート日付として採用し、DBを更新。
         """
         # 0. 観察（最新レコードの取得）
         latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
