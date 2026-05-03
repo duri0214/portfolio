@@ -1,20 +1,23 @@
+from datetime import datetime
+from io import StringIO
+
+import pandas as pd
 import requests
 import yfinance as yf
-from bs4 import BeautifulSoup
-from datetime import datetime
 from django.core.management.base import BaseCommand
+
 from usa_research.models import Nasdaq100Company
 
 
 class Command(BaseCommand):
-    help = "Fetch NASDAQ100 components from Slickcharts"
+    help = "Fetch NASDAQ100 components from Wikipedia"
 
     def handle(self, *args, **options):
         """
         NASDAQ100の構成銘柄とその業種情報を取得し、DBを更新します。
 
         処理の流れ:
-        1. Slickchartsから構成銘柄一覧を取得 (fetch_from_slickcharts)
+        1. Wikipediaから構成銘柄一覧を取得 (fetch_from_wikipedia)
         2. yfinance にてセクター・業界情報を取得 (英語表記への統一)
         3. 取得した全データをループしてDBに保存 (Nasdaq100Companyモデル)
 
@@ -27,9 +30,9 @@ class Command(BaseCommand):
             1. 進捗の可視化: 100件超の取得には時間がかかるため、1件ずつログを出すことで実行状況を把握可能にする。
             2. 堅牢性: 特定の銘柄で取得エラーが発生しても、他の銘柄の更新を阻害しない。
         """
-        self.stdout.write("Fetching NASDAQ100 components from Slickcharts...")
+        self.stdout.write("Fetching NASDAQ100 components from Wikipedia...")
 
-        companies = self.fetch_from_slickcharts()
+        companies = self.fetch_from_wikipedia()
 
         if not companies:
             self.stderr.write("No companies found.")
@@ -73,47 +76,39 @@ class Command(BaseCommand):
             )
         )
 
-    def fetch_from_slickcharts(self):
-        url = "https://www.slickcharts.com/nasdaq100"
+    def fetch_from_wikipedia(self):
+        """
+        WikipediaのNasdaq-100ページから構成銘柄を取得します。
+        """
+        url = "https://en.wikipedia.org/wiki/Nasdaq-100"
         headers = {"User-Agent": "Mozilla/5.0"}
 
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
+
+            # Wikipediaの constituents テーブルを取得
+            dfs = pd.read_html(StringIO(response.text), attrs={"id": "constituents"})
+            if not dfs:
+                return []
+
+            df = dfs[0]
+            companies = []
+            for _, row in df.iterrows():
+                # Ticker, Company
+                ticker = str(row["Ticker"]).strip()
+                name = str(row["Company"]).strip()
+
+                companies.append(
+                    {
+                        "ticker": ticker,
+                        "name": name,
+                        "sector": "",
+                        "industry": "",
+                        "source": "Wikipedia",
+                    }
+                )
+            return companies
         except Exception as e:
-            self.stderr.write(f"Failed to fetch data from Slickcharts: {e}")
+            self.stderr.write(f"Failed to fetch data from Wikipedia: {e}")
             return []
-
-        soup = BeautifulSoup(response.content, "html.parser")
-        table = soup.find("table")
-
-        if not table:
-            return []
-
-        rows = table.find_all("tr")[1:]
-        companies = []
-
-        for row in rows:
-            cols = row.find_all("td")
-            if len(cols) < 3:
-                continue
-
-            # Slickcharts structure:
-            # 0: Rank
-            # 1: Company Name
-            # 2: Symbol (Ticker)
-            # 3: Weight
-
-            name = cols[1].text.strip()
-            ticker = cols[2].text.strip()
-
-            companies.append(
-                {
-                    "ticker": ticker,
-                    "name": name,
-                    "sector": "",  # Slickcharts has no sector info
-                    "industry": "",
-                    "source": "Slickcharts",
-                }
-            )
-        return companies
