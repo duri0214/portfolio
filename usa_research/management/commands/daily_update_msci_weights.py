@@ -29,9 +29,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """
         処理フロー:
-        1. 解析: 指定されたURLからHTTP HEADリクエストを送り、Last-Modifiedヘッダで鮮度を確認。更新があればPDFをダウンロードし、テキストを抽出。LLMでReport Dateと要約を特定する。
+        1. 解析: 指定されたURLからHTTP HEADリクエストを送り、Last-Modifiedヘッダで鮮度を確認。更新があればPDFをダウンロードし、テキストを抽出。LLMで要約を生成する。
         2. 観察: DBから既存の最新レコードを取得する。
-        3. 判断: 取得したReport Dateが既存レコードの日付より新しければ本処理へ。同じか古ければ終了（残心）。
+        3. 判断: HTTPヘッダの日付が既存レコードの日付より新しければ本処理へ。同じか古ければ終了（残心）。
         4. 本処理: 新規レコードをDBに保存する。
         """
         url = options["url"]
