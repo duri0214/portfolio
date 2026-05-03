@@ -1,5 +1,7 @@
 from datetime import datetime
+from io import StringIO
 
+import pandas as pd
 import requests
 import yfinance as yf
 from django.core.management.base import BaseCommand
@@ -84,9 +86,6 @@ class Command(BaseCommand):
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
-
-            import pandas as pd
-            from io import StringIO
 
             # Wikipediaの constituents テーブルを取得
             dfs = pd.read_html(StringIO(response.text), attrs={"id": "constituents"})
