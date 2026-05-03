@@ -378,7 +378,7 @@
                 {% if msci_report %}
                     {{ msci_report.summary_html|safe }}
                 {% else %}
-                    <p class="text-muted mb-0">データがありません。`monthly_update_msci_weights`
+                    <p class="text-muted mb-0">データがありません。`daily_update_msci_weights`
                         を実行してください。</p>
                 {% endif %}
             </div>
@@ -590,7 +590,8 @@
                                       style="background-color: #28a745; color: white;">Green</span>:
                                 <strong>出遅れからの反発</strong> (RS_20d < 0 かつ ΔRS_5d > 0 かつ ΔRank_5d ≤ -2)
                             </li>
-                            <li><span class="badge bg-warning text-dark" style="background-color: #ffc107; color: black;">Yellow</span>:
+                            <li><span class="badge bg-warning text-dark"
+                                      style="background-color: #ffc107; color: black;">Yellow</span>:
                                 <strong>勢い改善中</strong> (ΔRS_5d > 0)
                             </li>
                             <li><span class="badge bg-danger text-white"

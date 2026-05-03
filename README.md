@@ -344,7 +344,7 @@ sudo tail -n 50 /var/log/apache2/error.log
     - `update_macro_indicators`: ISM, US10Y, VIX等の取得
     - `update_sector_rotation`: セクター別騰落率とRS順位の計算
     - `monthly_update_historical_assets`: 資産クラス別（SPY, TLT等）の長期価格推移の取得
-    - `monthly_update_msci_weights`: MSCI国別ウェイトレポートの要約取得
+    - `daily_update_msci_weights`: MSCI国別ウェイトレポートの要約取得
     - `fetch_usa_rss`: 米国投資関連のRSSフィード取得
 
 ### [soil_analysis] 土壌分析・気象予報
