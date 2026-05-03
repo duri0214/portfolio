@@ -6,7 +6,7 @@
 2021年の初出から更新を重ねていますが、ここで紹介している構成は現在も本番サーバーで安定稼働しており、実用的なオペレーションマニュアルとして活用しています。
 かつてのCentOS環境からのスムーズな移行と、現代的なPython 3.12 + Django 4環境の構築を目指しています。
 
-2026年版からは、この記事群を Git
+2026年版からは、この記事を Git
 で管理し、AIアシスタントをベースに執筆する運用に切り替えました。誤字脱字はもちろん、これまでの勘違いの是正や重複箇所のMECE化にも大いに助けられています。今後の細かな修正も容易になるため、おすすめです。
 
 ## Ubuntu 24.04LTS
@@ -71,6 +71,7 @@ Linux初心者は、コンソール上の「$」とか「\#」がよくわかん
 - 現時点では SSH のみ開放（TCP 22）。HTTP/HTTPS へのリダイレクトやUFW設定はこの後に行います。
 - 将来ポートを変更したら `ssh -p <port> ubuntu@<IP>` のように `-p` で指定できます（初期は22）。
 -
+
 さくらのVPSのWebインターフェースで「登録済み公開鍵を使ってインストール」している場合、このセクション（パスワード認証チェック）はスキップ可能です。公開鍵でそのまま接続してください（例:
 `ssh ubuntu@<IP>`）。
 
@@ -215,7 +216,8 @@ $ chmod 600 ~/.ssh/authorized_keys
 
 > **Warning:**
 > Ubuntu
-> 24.04の標準設定ではスワップ（Swap）が0MBになっています（参照：[さくらのVPSマニュアル](https://manual.sakura.ad.jp/vps/os-packages/ubuntu-24.04.html#swap)
+>
+24.04の標準設定ではスワップ（Swap）が0MBになっています（参照：[さくらのVPSマニュアル](https://manual.sakura.ad.jp/vps/os-packages/ubuntu-24.04.html#swap)
 > ）。このままだとメモリ不足でMySQLのインストールに失敗したり、運用中に突然サービスが落ちたりすることがあります。特にメモリが少ないプランでは、スワップの作成は必須です。
 >
 > 補足: さくらのVPSのスタートアップスクリプト「Setup and
@@ -1096,8 +1098,10 @@ $ ssh -T git@github.com
     `git@github.com:owner/repo.git`）で `git clone/pull/push` を行う予定なら、事前に一度実行しておくと原因切り分けが容易になります。
 > - 失敗する典型例と対処：
     >
+
 - 公開鍵がGitHubに未登録 → GitHubの Settings > SSH and GPG keys に `~/.ssh/id_ed25519.pub` 等を登録
->   - 別名の鍵を使っている → `~/.ssh/config` に `Host github.com` `IdentityFile ~/.ssh/<your_key>` を設定
+
+> - 別名の鍵を使っている → `~/.ssh/config` に `Host github.com` `IdentityFile ~/.ssh/<your_key>` を設定
 >   - パーミッション不備 → `chmod 700 ~/.ssh; chmod 600 ~/.ssh/*`
 >   - 22番ポートが閉じている → `~/.ssh/config` で `Hostname ssh.github.com` `Port 443` を指定
 
@@ -1379,22 +1383,26 @@ $ crontab -e
 >
 > - 直接実行（本書の基本方針）: crontab では以下のように Python で呼びます（chmod 不要）
     >   ```bash:console
->   */10 * * * * /var/www/html/portfolio/venv/bin/python /var/www/html/hello-cron.py
->   0 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
->   ```
+    > */10 * * * * /var/www/html/portfolio/venv/bin/python /var/www/html/hello-cron.py
+    > 0 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
+    >   ```
 > - シェル化（任意・まとめたい場合）: 複数ジョブを1つの .sh にまとめ、`.sh` にだけ実行権限を付与します
     >   ```bash:console
->   $ sudo mkdir -p /var/www/html/portfolio/bin
->   $ sudo vi /var/www/html/portfolio/bin/daily_jobs.sh
->   ```
+    > $ sudo mkdir -p /var/www/html/portfolio/bin
+    > $ sudo vi /var/www/html/portfolio/bin/daily_jobs.sh
+    >   ```
+
     >   ```bash:/var/www/html/portfolio/bin/daily_jobs.sh
->   #!/bin/bash
->   /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
->   /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_sbi
+
+> #!/bin/bash
+> /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
+> /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_sbi
 >   # ほかのジョブもここに追記
 >   ```
+
     >   ```bash:console
->   $ sudo chmod 755 /var/www/html/portfolio/bin/daily_jobs.sh
+
+> $ sudo chmod 755 /var/www/html/portfolio/bin/daily_jobs.sh
 >   # crontab では .sh を呼ぶだけ
 >   */10 * * * * /var/www/html/portfolio/bin/daily_jobs.sh
 >   ```
@@ -1408,14 +1416,15 @@ $ sudo chown -R ubuntu:ubuntu /var/www/html
 > - 対策: 所有者は運用ユーザー（例: ubuntu）に統一し、Apache 実行ユーザー（www-data）が少なくとも読み取れる権限に整える。
 > - チェック（読める/書けるか）:
     >   ```bash:console
->   $ sudo -u www-data test -r /var/www/html/portfolio/static || echo "www-data が static を読めません"
->   $ sudo -u www-data test -w /var/www/html/portfolio/static || echo "www-data が static に書けません（collectstatic で書込が必要）"
->   ```
+    > $ sudo -u www-data test -r /var/www/html/portfolio/static || echo "www-data が static を読めません"
+    > $ sudo -u www-data test -w /var/www/html/portfolio/static || echo "www-data が static に書けません（collectstatic
+    で書込が必要）"
+    >   ```
 > - 例（所有者/権限の整備。上の `$ sudo chown -R ubuntu:ubuntu /var/www/html` でも可）:
     >   ```bash:console
->   $ sudo chown -R ubuntu:ubuntu /var/www/html/portfolio/static
->   $ sudo chmod -R u+rwX,go+rX /var/www/html/portfolio/static
->   ```
+    > $ sudo chown -R ubuntu:ubuntu /var/www/html/portfolio/static
+    > $ sudo chmod -R u+rwX,go+rX /var/www/html/portfolio/static
+    >   ```
 
 ## Django（DB リセットの整理）
 
