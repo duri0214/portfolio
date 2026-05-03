@@ -55,13 +55,16 @@ class IndexView(TemplateView):
         # RSSフィードを取得 (最新20件)
         context["rss_feeds"] = RssFeed.objects.select_related("source").all()[:20]
 
-        # MSCIレポートを取得 (過去分も含めて取得可能にする)
+        # MSCIレポートを取得
         report_date_param = self.request.GET.get("report_date")
         if report_date_param:
+            # 【A】ドロップダウンで過去の日付が選択された場合
+            # filter() は複数の可能性を返すため、.first() で1つのオブジェクトに確定させる
             msci_report = MsciCountryWeightReport.objects.filter(
                 report_date=report_date_param
             ).first()
         else:
+            # 【B】初期表示。最新のレポートを1件取得する
             msci_report = MsciCountryWeightReport.objects.first()
 
         if msci_report:
