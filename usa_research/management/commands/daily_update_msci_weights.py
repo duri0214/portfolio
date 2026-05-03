@@ -16,7 +16,9 @@ from usa_research.models import MsciCountryWeightReport
 
 
 class Command(BaseCommand):
-    help = "MSCIのPDFレポートからCountry Weightを抽出し、LLMで要約してDBに保存します。"
+    help = (
+        "MSCIのPDFレポートからCountry Weightを抽出し、DBを更新します（日次実行対応）。"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -40,20 +42,12 @@ class Command(BaseCommand):
     def update_report(self, pdf_url: str) -> MsciUpdateResult:
         """
         MSCIのPDFレポートを処理し、DBを更新します。
-
-        処理フロー:
-        1. PDFのダウンロード: 指定されたURLからPDFバイナリを取得。
-        2. テキスト抽出: pypdfを使用してPDFから全テキストを抽出（LLMの入力用）。
-        3. LLMによる解析:
-           - 抽出テキストから「レポートの日付」を特定。
-           - 「Country Weights」を中心に内容を要約。
-        4. レスポンスのパース: LLMの出力から日付とMarkdown形式の要約を分離。
-        5. 重複チェック: 特定された日付が既にDB（report_date）に存在するか確認。
-           - 既に存在する場合は、API消費を抑えるため要約の保存を行わずスキップ。
-        6. DB保存: 新規日付の場合のみ、要約とURLを保存。
         """
         # API設定
         api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            return MsciUpdateResult(False, "OPENAI_API_KEY is not set.")
+
         config = OpenAIGptConfig(
             api_key=api_key,
             model="gpt-4o",
@@ -69,7 +63,7 @@ class Command(BaseCommand):
         except Exception as e:
             return MsciUpdateResult(False, f"PDFダウンロード失敗: {str(e)}")
 
-        # 2. PDFからテキスト抽出 (LLMに渡すため)
+        # 2. PDFからテキスト抽出
         try:
             reader = PdfReader(io.BytesIO(pdf_content))
             text = ""
@@ -86,14 +80,14 @@ class Command(BaseCommand):
             【要約の観点】
             - 国別比率の概況
             - 前月比での大きな変化
-            - 特筆すべき集中・分散の兆候
+            - 特筆すべき集中・分散の状況
             
-            【出力フォーマット・スタイル】
+            【出力フォーマット】
             Report Date: YYYY-MM-DD
             
-            (ここにMarkdown形式で、日本語で要約を記述。各セクションの見出しには ##### を使用してください。)
+            (ここにMarkdown形式で、日本語で要約を記述。各セクションの見出しには ##### を使用してください)
             
-            ※注意: 要約部分に 'Report Date' という文言を含めないでください。
+            ※注意: 要約の部分に 'Report Date' という文字列を含めないでください。
             
             【レポート内容】
             {text}
@@ -124,18 +118,27 @@ class Command(BaseCommand):
         except ValueError:
             return MsciUpdateResult(False, f"不適切な日付形式です: {report_date_str}")
 
-        # 5. DB保存済みの最新日付と比較
-        if MsciCountryWeightReport.objects.filter(report_date=report_date).exists():
-            return MsciUpdateResult(
-                False, f"日付 {report_date} のレポートは既に保存済みです。"
-            )
+        # 5. 観察（最新レコードの取得）と判断
+        latest_record = MsciCountryWeightReport.objects.order_by("-report_date").first()
 
-        # 6. 保存
+        if latest_record is not None:
+            # 既にレコードがある場合：日付を比較
+            if report_date <= latest_record.report_date:
+                return MsciUpdateResult(
+                    True, f"Already updated for {report_date}. Standing by."
+                )
+        else:
+            # レコードがゼロの場合
+            self.stdout.write("Initial data migration or empty DB detected.")
+
+        # 6. 本処理：新規作成
         MsciCountryWeightReport.objects.create(
             report_date=report_date, summary_md=summary_md, pdf_url=pdf_url
         )
 
-        return MsciUpdateResult(True, f"日付 {report_date} のレポートを保存しました。")
+        return MsciUpdateResult(
+            True, f"Successfully processed report for {report_date}."
+        )
 
     @staticmethod
     def _parse_llm_response(response: str) -> Tuple[Optional[str], str]:
