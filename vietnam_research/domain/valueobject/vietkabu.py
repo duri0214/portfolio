@@ -47,19 +47,33 @@ class MarketDataRowError(Exception):
 
 
 class MarketDataHeaderError(Exception):
-    """viet-kabuの株価テーブルヘッダーが期待と異なる場合の例外"""
+    """
+    viet-kabuの株価テーブルヘッダーが期待と異なる場合の例外。
+
+    ヘッダー不一致だけを呼び出し側で明示的にハンドリングするための専用例外。
+    `ValueError` などの汎用例外にすると、想定外の不具合まで同じ扱いで
+    握ってしまうリスクがあるため分離している。
+    """
 
 
 @dataclass(frozen=True)
 class MarketDataTableHeader:
     """
-    viet-kabuの株価テーブルヘッダーを検証し、列名からセル位置を引けるようにする。
+    viet-kabuの株価テーブルヘッダー定義を表す値オブジェクト。
+
+    `validate_from_soup` は以下を実行する:
+    - `th` から株価テーブルのヘッダー行を検出する
+    - ヘッダー文字列を正規化する（空白揺れ・全角括弧の揺れを吸収）
+    - 期待ヘッダー（列名 + 順序）と完全一致することを検証する
+
+    検証に成功した場合、列名からセル位置を引ける `column_indexes` を保持して返す。
+    検証に失敗した場合は `MarketDataHeaderError` を送出する。
     """
 
     column_indexes: dict[str, int]
 
     @classmethod
-    def from_soup(cls, soup) -> "MarketDataTableHeader":
+    def validate_from_soup(cls, soup) -> "MarketDataTableHeader":
         expected_columns = tuple(
             cls._normalize_text(c) for c in MARKET_DATA_EXPECTED_COLUMNS
         )

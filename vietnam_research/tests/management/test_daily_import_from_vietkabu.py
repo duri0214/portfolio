@@ -138,9 +138,9 @@ class TestMarketDataRow(TestCase):
         """
         )
         soup = BeautifulSoup(html, "html.parser")
-        table_header = MarketDataTableHeader.from_soup(soup)
+        validated_table_header = MarketDataTableHeader.validate_from_soup(soup)
         tr = soup.find("tr", id="APG")
-        row = MarketDataRow(tr, table_header)
+        row = MarketDataRow(tr, validated_table_header)
         # These values are checked using the html snippet above.
         self.assertEqual(row.code, "APG")
         self.assertEqual(row.name, "APG証券")
@@ -157,12 +157,12 @@ class TestMarketDataRow(TestCase):
 
     def test_market_data_header_from_html(self):
         soup = BeautifulSoup(self.header_html, "html.parser")
-        table_header = MarketDataTableHeader.from_soup(soup)
+        validated_table_header = MarketDataTableHeader.validate_from_soup(soup)
 
-        self.assertEqual(table_header.index("銘柄"), 0)
-        self.assertEqual(table_header.index("取引値 (終値)"), 2)
-        self.assertEqual(table_header.index("時価総額 (億円)"), 10)
-        self.assertEqual(table_header.index("業種"), 14)
+        self.assertEqual(validated_table_header.index("銘柄"), 0)
+        self.assertEqual(validated_table_header.index("取引値 (終値)"), 2)
+        self.assertEqual(validated_table_header.index("時価総額 (億円)"), 10)
+        self.assertEqual(validated_table_header.index("業種"), 14)
 
     def test_market_data_header_invalid_order(self):
         invalid_header_html = self.header_html.replace(
@@ -175,4 +175,4 @@ class TestMarketDataRow(TestCase):
         soup = BeautifulSoup(invalid_header_html, "html.parser")
 
         with self.assertRaises(MarketDataHeaderError):
-            MarketDataTableHeader.from_soup(soup)
+            MarketDataTableHeader.validate_from_soup(soup)

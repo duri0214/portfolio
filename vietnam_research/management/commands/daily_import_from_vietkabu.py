@@ -7,6 +7,7 @@ from django.utils.timezone import now, localtime
 from vietnam_research.domain.valueobject.vietkabu import (
     TransactionDate,
     MarketDataTableHeader,
+    MarketDataHeaderError,
     MarketDataRow,
     MarketDataRowError,
 )
@@ -46,7 +47,17 @@ class Command(BaseCommand):
             transaction_date = TransactionDate(
                 th_tag=soup.find("th", class_="table_list_left")
             ).to_date()
-            table_header = MarketDataTableHeader.from_soup(soup)
+
+            # 列ズレ防止のため、株価テーブルのヘッダー（列名・順序）を検証する
+            try:
+                validated_table_header = MarketDataTableHeader.validate_from_soup(soup)
+            except MarketDataHeaderError as e:
+                message = (
+                    f"{market.code} のヘッダー検証に失敗したため処理対象外になりました: "
+                    f"{str(e)}"
+                )
+                print(message)
+                continue
 
             # 当日データがあったら処理しない
             if Industry.objects.filter(
@@ -65,7 +76,7 @@ class Command(BaseCommand):
             skip_count = 0
             for i, tag_tr in enumerate(tag_trs):
                 try:
-                    market_data_row = MarketDataRow(tag_tr, table_header)
+                    market_data_row = MarketDataRow(tag_tr, validated_table_header)
                     market_data_rows.append(market_data_row)
                 except MarketDataRowError as e:
                     skip_count += 1
