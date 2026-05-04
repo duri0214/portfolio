@@ -77,7 +77,8 @@ class MarketDataTableHeader:
     @classmethod
     def validate_from_soup(cls, soup) -> "MarketDataTableHeader":
         """
-        `soup` から株価テーブルのヘッダー行を検出し、期待ヘッダーと照合して検証する。
+        soupからtrを抽出した集まりの中で、`th` を持つ行を走査し、
+        株価テーブルのヘッダー行を検出して期待ヘッダーと照合する。
 
         処理の流れ:
         1. `th` を持つ行を走査し、`_looks_like_market_data_header` で候補行を絞る
