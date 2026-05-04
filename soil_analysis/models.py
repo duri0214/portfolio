@@ -395,6 +395,9 @@ class LandLedger(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f"{self.land.company.name} - {self.land.name} ({self.land_period.year} {self.land_period.name})"
+
 
 class SamplingOrder(models.Model):
     """
