@@ -68,6 +68,8 @@ class MarketDataTableHeader:
 
     検証に成功した場合、列名からセル位置を引ける `column_indexes` を保持して返す。
     検証に失敗した場合は `MarketDataHeaderError` を送出する。
+
+    See Also: https://www.viet-kabu.com/stock/hcm.html
     """
 
     column_indexes: dict[str, int]
@@ -104,6 +106,13 @@ class MarketDataTableHeader:
 
     @classmethod
     def _looks_like_market_data_header(cls, columns: tuple[str, ...]) -> bool:
+        """
+        与えられたヘッダー列が「株価データ本体のヘッダー行らしいか」を判定する。
+
+        この判定は完全一致チェックの前段で使う粗いフィルタで、ページ内の他テーブルや
+        装飾用ヘッダー行を除外する目的を持つ。
+        現在は株価テーブルに必須の `銘柄` と `業種` が同時に含まれることを条件にしている。
+        """
         return "銘柄" in columns and "業種" in columns
 
     @classmethod
