@@ -1,9 +1,10 @@
 from django.test import SimpleTestCase
 
 from soil_analysis.domain.valueobject.chemical_report.fields import (
+    CHEMICAL_FIELD_ALIAS_TO_KEY,
     CHEMICAL_FIELD_DEFINITIONS,
     CHEMICAL_FIELD_KEYS,
-    resolve_chemical_field_key,
+    normalize_text,
 )
 from soil_analysis.models import LandScoreChemical
 
@@ -19,11 +20,11 @@ class ChemicalFieldDefinitionTests(SimpleTestCase):
             self.assertIn(key, model_field_names)
 
     def test_alias_resolution_returns_expected_keys(self):
-        self.assertEqual(resolve_chemical_field_key("NH4-N"), "nh4n")
-        self.assertEqual(resolve_chemical_field_key("no3n"), "no3n")
-        self.assertEqual(resolve_chemical_field_key(" P2O5 "), "p2o5")
-        self.assertEqual(resolve_chemical_field_key("リン酸吸収係数"), "phosphorus_absorption")
-        self.assertIsNone(resolve_chemical_field_key("unknown-column"))
+        self.assertEqual(CHEMICAL_FIELD_ALIAS_TO_KEY.get(normalize_text("NH4-N")), "nh4n")
+        self.assertEqual(CHEMICAL_FIELD_ALIAS_TO_KEY.get(normalize_text("no3n")), "no3n")
+        self.assertEqual(CHEMICAL_FIELD_ALIAS_TO_KEY.get(normalize_text(" P2O5 ")), "p2o5")
+        self.assertEqual(CHEMICAL_FIELD_ALIAS_TO_KEY.get(normalize_text("リン酸吸収係数")), "phosphorus_absorption")
+        self.assertIsNone(CHEMICAL_FIELD_ALIAS_TO_KEY.get(normalize_text("unknown-column")))
 
     def test_major_display_labels_and_units(self):
         by_key = {field.key: field for field in CHEMICAL_FIELD_DEFINITIONS}

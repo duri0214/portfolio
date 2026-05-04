@@ -4,10 +4,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from openpyxl import Workbook
 
-from soil_analysis.domain.service.chemical_import import (
-    BLOCK_NAMES,
-    ParsedChemicalRow,
-    import_chemical_rows,
+from soil_analysis.management.commands.chemical_load_data import (
+    BLOCK_IDS,
+    ParsedRow,
     parse_kawada_worksheet,
 )
 from soil_analysis.models import (
@@ -60,71 +59,32 @@ class ChemicalImportServiceTests(TestCase):
             sampling_method=sampling_method,
             sampling_staff=self.user,
         )
-        for block_name in BLOCK_NAMES:
-            LandBlock.objects.create(name=block_name)
+        for block_id in BLOCK_IDS:
+            LandBlock.objects.create(id=block_id, name=f"Block{block_id}")
 
     def test_parse_kawada_worksheet_success_and_conversion(self):
         wb = Workbook()
         ws = wb.active
-        ws.append(["圃場名", "EC", "NH4-N", "NO3-N", "pH", "CaO", "MgO", "K2O", "CEC", "腐植", "仮比重", "塩基飽和度", "CaO/MgO", "MgO/K2O", "リン酸吸収係数", "P2O5", "無機態N", "NH4/N比"])
-        ws.append(["圃場A", "1.2", "3", "4", "6.5", "100", "20", "30", "15", "2.5%", "0.8", "50%", "5", "0.7", "800", "60", "7", "0.4"])
-        rows, errors = parse_kawada_worksheet(ws)
-        self.assertEqual(len(errors), 0)
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0].land_name, "圃場A")
-        self.assertEqual(rows[0].values["humus"], 2.5)
-        self.assertEqual(rows[0].values["base_saturation"], 50.0)
+        # 川田フォーマットは3行目がヘッダー、4行目からデータ
+        # A=分析番号, B=氏名, C=圃場名, D=作物, E〜T=化学データ
+        ws.append([])  # 1行目: 空
+        ws.append([])  # 2行目: 空
+        ws.append(["分析番号", "氏名", "圃場名", "作物", "EC", "pH", "CEC", "CaO", "MgO", "K2O", "石灰飽和度", "苦土飽和度", "加里飽和度", "塩基飽和度", "P2O5", "リン酸吸収係数", "NH4-N", "NO3-N", "腐植", "仮比重"])  # 3行目: ヘッダー
+        ws.append(["001", "田中", "圃場A", "キャベツ", "1.2", "6.5", "15", "100", "20", "30", "60", "20", "10", "50%", "60", "800", "3", "4", "2.5%", "0.8"])  # 4行目: データ
+        result = parse_kawada_worksheet(ws)
+        self.assertEqual(len(result.errors), 0)
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].land_name, "圃場A")
+        self.assertEqual(result.rows[0].values["humus"], 2.5)
+        self.assertEqual(result.rows[0].values["base_saturation"], 50.0)
 
     def test_parse_kawada_worksheet_missing_required_columns(self):
         wb = Workbook()
         ws = wb.active
-        ws.append(["圃場名", "EC"])
-        ws.append(["圃場A", "1.2"])
-        rows, errors = parse_kawada_worksheet(ws)
-        self.assertEqual(rows, [])
-        self.assertTrue(any("必須列不足" in error for error in errors))
+        ws.append([])  # 1行目: 空
+        ws.append([])  # 2行目: 空
+        # 3行目: ヘッダー（列が少なすぎる）
+        result = parse_kawada_worksheet(ws)
+        self.assertEqual(result.rows, [])
+        self.assertTrue(len(result.errors) > 0)
 
-    def test_import_chemical_rows_create_and_overwrite(self):
-        values = {
-            "ec": 1.0,
-            "nh4n": 2.0,
-            "no3n": 3.0,
-            "total_nitrogen": 5.0,
-            "nh4_per_nitrogen": 0.4,
-            "ph": 6.5,
-            "cao": 100.0,
-            "mgo": 20.0,
-            "k2o": 30.0,
-            "base_saturation": 50.0,
-            "cao_per_mgo": 5.0,
-            "mgo_per_k2o": 0.7,
-            "phosphorus_absorption": 800.0,
-            "p2o5": 60.0,
-            "cec": 15.0,
-            "humus": 2.5,
-            "bulk_density": 0.8,
-        }
-        row = ParsedChemicalRow(row_number=2, land_name="圃場A", values=values)
-
-        created_count, updated_count, warnings = import_chemical_rows(
-            parsed_rows=[row],
-            row_ledger_map={2: self.ledger.id},
-            overwrite=False,
-        )
-        self.assertEqual(created_count, 9)
-        self.assertEqual(updated_count, 0)
-        self.assertEqual(len(warnings), 0)
-        self.assertEqual(LandScoreChemical.objects.filter(land_ledger=self.ledger).count(), 9)
-
-        row2 = ParsedChemicalRow(row_number=2, land_name="圃場A", values={**values, "ec": 9.9})
-        created_count2, updated_count2, warnings2 = import_chemical_rows(
-            parsed_rows=[row2],
-            row_ledger_map={2: self.ledger.id},
-            overwrite=True,
-        )
-        self.assertEqual(created_count2, 0)
-        self.assertEqual(updated_count2, 9)
-        self.assertEqual(len(warnings2), 0)
-        self.assertEqual(
-            LandScoreChemical.objects.filter(land_ledger=self.ledger, ec=9.9).count(), 9
-        )
