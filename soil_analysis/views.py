@@ -3,6 +3,7 @@ import re
 import shutil
 from pathlib import Path
 
+from openpyxl import load_workbook
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
@@ -42,6 +43,7 @@ from soil_analysis.forms import (
     CompanyCreateForm,
     LandCreateForm,
     UploadForm,
+    ChemicalUploadForm,
     CsvGenerateForm,
     LandLedgerCreateForm,
 )
@@ -360,6 +362,75 @@ class HardnessUploadView(FormView):
                 pass
 
         return super().form_valid(form)
+
+
+class ChemicalUploadView(FormView):
+    template_name = "soil_analysis/chemical/form.html"
+    form_class = ChemicalUploadForm
+    success_url = reverse_lazy("soil:chemical_success")
+
+    def form_valid(self, form):
+        upload_file = self.request.FILES["file"]
+        if not upload_file.name.lower().endswith(".xlsx"):
+            messages.error(self.request, "xlsxファイルを指定してください。")
+            return self.form_invalid(form)
+
+        land_ledger_id = form.cleaned_data.get("land_ledger_id").id
+        overwrite = form.cleaned_data.get("overwrite", False)
+
+        # 一時ファイルに保存
+        from django.conf import settings
+        temp_dir = Path(settings.MEDIA_ROOT) / "temp" / "chemical"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        temp_file = temp_dir / f"chemical_{timezone.now().strftime('%Y%m%d%H%M%S')}.xlsx"
+        
+        with open(temp_file, "wb+") as destination:
+            for chunk in upload_file.chunks():
+                destination.write(chunk)
+
+        try:
+            call_command(
+                "chemical_load_data",
+                str(temp_file),
+                land_ledger_id=land_ledger_id,
+                overwrite=overwrite,
+            )
+            self.request.session["chemical_import_ledger_id"] = land_ledger_id
+        except Exception as e:
+            messages.error(self.request, f"取り込み中にエラーが発生しました: {str(e)}")
+            return self.form_invalid(form)
+        finally:
+            if temp_file.exists():
+                temp_file.unlink()
+
+        return super().form_valid(form)
+
+
+class ChemicalSuccessView(TemplateView):
+    template_name = "soil_analysis/chemical/success.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        land_ledger_id = self.request.session.get("chemical_import_ledger_id")
+        if land_ledger_id:
+            try:
+                land_ledger = LandLedger.objects.select_related(
+                    "land__company", "land_period"
+                ).get(id=land_ledger_id)
+                chemical_data = LandScoreChemical.objects.filter(
+                    land_ledger=land_ledger,
+                    remark="import_mode=field_level_copied_to_9_blocks"
+                )
+                context["land_ledger"] = land_ledger
+                context["created_count"] = chemical_data.count()
+                context["updated_count"] = 0
+                context["warnings"] = []
+                context["import_datetime"] = timezone.now()
+            except LandLedger.DoesNotExist:
+                pass
+        return context
+
+
 
 
 class HardnessDeleteAllView(View):
