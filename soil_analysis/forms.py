@@ -140,6 +140,15 @@ class UploadForm(forms.Form):
     )
 
 
+class ChemicalUploadForm(forms.Form):
+    file = forms.FileField(
+        label="川田研究所 XLSX",
+        widget=ClearableFileInput(
+            attrs={"class": "form-control", "tabindex": "1", "accept": ".xlsx"}
+        ),
+    )
+
+
 class CsvGenerateForm(forms.Form):
     num_fields = forms.IntegerField(
         label="生成する圃場数",
