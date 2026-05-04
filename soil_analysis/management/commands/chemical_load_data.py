@@ -13,17 +13,92 @@ LandScoreChemicalテーブルにデータを一括登録する。
 
 from decimal import Decimal, InvalidOperation
 
+import attrs
 import unicodedata
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from openpyxl import load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
-from soil_analysis.domain.valueobject.chemical_report.fields import (
-    CHEMICAL_FIELD_ALIAS_TO_KEY,
-    CHEMICAL_FIELD_KEYS,
-    normalize_text,
-)
 from soil_analysis.models import LandBlock, LandLedger, LandScoreChemical
+
+
+@attrs.frozen
+class KawadaRow:
+    """川田研究所フォーマット1行分のデータ
+
+    Attributes:
+        analysis_number: 分析番号（A列）
+        person_name: 氏名（B列）
+        land_name: 圃場名（C列）
+        crop: 栽培作物（D列）
+        ec: EC（E列）
+        ph: pH（F列）
+        cec: CEC（G列、meq/100g）
+        cao: CaO（H列）
+        mgo: MgO（I列）
+        k2o: K2O（J列）
+        lime_saturation: 石灰飽和度（K列、%）
+        magnesia_saturation: 苦土飽和度（L列、%）
+        potash_saturation: 加里飽和度（M列、%）
+        base_saturation: 塩基飽和度（N列、%）
+        p2o5: P2O5（O列）
+        phosphorus_absorption: リン酸吸収係数（P列）
+        nh4n: NH4-N（Q列）
+        no3n: NO3-N（R列）
+        humus: 腐植（S列）
+        bulk_density: 仮比重（T列）
+    """
+
+    analysis_number: str
+    person_name: str | None
+    land_name: str
+    crop: str | None
+    ec: float | None
+    ph: float | None
+    cec: float | None
+    cao: float | None
+    mgo: float | None
+    k2o: float | None
+    lime_saturation: float | None
+    magnesia_saturation: float | None
+    potash_saturation: float | None
+    base_saturation: float | None
+    p2o5: float | None
+    phosphorus_absorption: float | None
+    nh4n: float | None
+    no3n: float | None
+    humus: float | None
+    bulk_density: float | None
+
+
+@attrs.frozen
+class ParsedRow:
+    """パース済みデータ行（LandScoreChemical用）
+
+    Attributes:
+        row_number: Excel行番号（1始まり）
+        land_name: 圃場名
+        values: フィールド名 -> 数値のマッピング（CHEMICAL_FIELD_KEYSの全17項目）
+    """
+
+    row_number: int
+    land_name: str
+    values: dict[str, float | None]
+
+
+@attrs.frozen
+class ParseResult:
+    """Excelパース結果
+
+    Attributes:
+        rows: パース済みデータ行のリスト
+        errors: エラーメッセージのリスト
+    """
+
+    rows: list[ParsedRow]
+    errors: list[str]
+
 
 # 取り込み対象のブロック名（9ブロック固定）
 BLOCK_NAMES = ("A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3")
@@ -31,11 +106,23 @@ BLOCK_NAMES = ("A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3")
 # 取り込みモードを示すremark文字列（圃場レベルのデータを9ブロックにコピーしたことを示す）
 REMARK_IMPORT_MODE = "import_mode=field_level_copied_to_9_blocks"
 
-# Excelで圃場名列として使われる可能性のある列名
-LAND_NAME_ALIASES = ("圃場名", "圃場", "ほ場名", "ほ場")
+# 川田研究所フォーマットの前提条件（フォーマット変更時はここを修正）
+# 行定義（0-based: Pythonのリストインデックス）
+KAWADA_FORMAT_HEADER_ROW_INDEX = 2  # 3行目（ヘッダー行）
+KAWADA_FORMAT_DATA_START_ROW_INDEX = 3  # 4行目（データ開始行）
 
-# 正規化済み圃場名エイリアス（列名マッチング用）
-NORMALIZED_LAND_NAME_ALIASES = {normalize_text(name) for name in LAND_NAME_ALIASES}
+# 列定義（0-based: Pythonのリストインデックス）
+KAWADA_COLUMN_ANALYSIS_NUMBER = 0  # A列: 分析番号
+KAWADA_COLUMN_PERSON_NAME = 1  # B列: 氏名
+KAWADA_COLUMN_LAND_NAME = 2  # C列: 圃場名
+KAWADA_COLUMN_CROP = 3  # D列: 栽培作物
+# E列: 化学分析データ開始（CHEMICAL_FIELD_DEFINITIONSの順序で17項目）
+KAWADA_COLUMN_CHEMICAL_START = 4
+
+# セル参照（1-based: Excelのセル記法）
+KAWADA_CELL_ANALYSIS_DATE = (
+    "G1"  # 分析日（将来的に LandLedger.reporting_date に取り込み予定）
+)
 
 
 def parse_numeric_value(
@@ -91,119 +178,158 @@ def parse_numeric_value(
         ) from exc
 
 
-def parse_kawada_worksheet(worksheet):
+def _parse_kawada_row(row: tuple) -> KawadaRow:
+    """川田フォーマットの1行をパースしてVOを構築
+
+    Args:
+        row: Excelの行データ（タプル）
+
+    Returns:
+        KawadaRow: 川田フォーマット1行分のVO
+
+    Raises:
+        ValueError: 数値変換に失敗した場合（行番号なし、呼び出し側で追加すること）
+    """
+
+    def get_cell(col_idx: int) -> str:
+        """セル値を文字列として取得"""
+        return str(row[col_idx] if col_idx < len(row) else "").strip()
+
+    def get_numeric(col_idx: int, field_name: str) -> float | None:
+        """セル値を数値として取得"""
+        raw_value = row[col_idx] if col_idx < len(row) else None
+        # row_numberなしでパース（エラーメッセージには列名と値のみ）
+        return parse_numeric_value(raw_value, 0, field_name)
+
+    return KawadaRow(
+        analysis_number=get_cell(KAWADA_COLUMN_ANALYSIS_NUMBER),
+        person_name=get_cell(KAWADA_COLUMN_PERSON_NAME) or None,
+        land_name=get_cell(KAWADA_COLUMN_LAND_NAME),
+        crop=get_cell(KAWADA_COLUMN_CROP) or None,
+        ec=get_numeric(4, "ec"),
+        ph=get_numeric(5, "ph"),
+        cec=get_numeric(6, "cec"),
+        cao=get_numeric(7, "cao"),
+        mgo=get_numeric(8, "mgo"),
+        k2o=get_numeric(9, "k2o"),
+        lime_saturation=get_numeric(10, "lime_saturation"),
+        magnesia_saturation=get_numeric(11, "magnesia_saturation"),
+        potash_saturation=get_numeric(12, "potash_saturation"),
+        base_saturation=get_numeric(13, "base_saturation"),
+        p2o5=get_numeric(14, "p2o5"),
+        phosphorus_absorption=get_numeric(15, "phosphorus_absorption"),
+        nh4n=get_numeric(16, "nh4n"),
+        no3n=get_numeric(17, "no3n"),
+        humus=get_numeric(18, "humus"),
+        bulk_density=get_numeric(19, "bulk_density"),
+    )
+
+
+def parse_kawada_worksheet(worksheet: Worksheet) -> ParseResult:
     """川田研究所フォーマットのExcelシートをパースして化学分析データを抽出する
 
-    Excelシート全体をスキャンして以下の処理を行う:
-        1. ヘッダ行を自動検出（圃場名列 + 分析項目列が揃った行）
-        2. 列名を正規化してフィールドにマッピング
-        3. 必須列の存在チェック（全17項目）
-        4. データ行を1行ずつパースして数値変換
+    川田研究所フォーマットの前提条件:
+        - ヘッダ行: 3行目固定
+        - 分析日: G1セル
+        - 必須列: 圃場名 + 17項目の化学分析項目
 
-    川田研究所フォーマットの特徴:
-        - ヘッダ行の位置が固定されていない（自動検出が必要）
-        - 列名に全角・半角の表記ゆれがある
-        - 圃場名列が必須（"圃場名", "圃場", "ほ場名", "ほ場"など）
+    処理の流れ:
+        1. 3行目のヘッダー行から列マッピングを構築
+        2. 圃場名列と必須17項目の存在をチェック
+        3. 4行目以降のデータ行をパースして数値変換
 
     Args:
         worksheet: openpyxlのワークシートオブジェクト
 
     Returns:
-        tuple[list[dict], list[str]]: (パース結果, エラーリスト)
-
-        パース結果の各要素:
-            {
-                "row_number": int,        # Excel行番号（1始まり）
-                "land_name": str,         # 圃場名
-                "values": {               # フィールド名 -> 数値のマッピング
-                    "ec": float | None,
-                    "ph": float | None,
-                    ...
-                }
-            }
-
-        エラーリスト:
-            - ヘッダ行が見つからない場合
-            - 必須列が不足している場合
-            - 数値変換エラーが発生した場合
+        ParseResult: パース結果とエラーリストを含むVO
 
     Examples:
         >>> from openpyxl import load_workbook
         >>> wb = load_workbook("kawada_data.xlsx", data_only=True)
-        >>> parsed_rows, errors = parse_kawada_worksheet(wb.active)
-        >>> len(parsed_rows)
+        >>> result = parse_kawada_worksheet(wb.active)
+        >>> len(result.rows)
         5
-        >>> parsed_rows[0]["land_name"]
+        >>> result.rows[0].land_name
         '静岡ススムA1'
-        >>> parsed_rows[0]["values"]["ec"]
+        >>> result.rows[0].values["ec"]
         0.15
     """
+    # Excelシートのすべての行を取得（空行も含む）
+    # rows[0] = 1行目, rows[1] = 2行目（空行）, rows[2] = 3行目（ヘッダー）, ...
     rows = list(worksheet.iter_rows(values_only=True))
     if not rows:
-        return [], ["シートにデータがありません。"]
+        return ParseResult(rows=[], errors=["シートにデータがありません。"])
 
-    header_index = None
-    header_map = {}
-    land_name_column_index = None
+    # ヘッダー行の存在チェック
+    if len(rows) <= KAWADA_FORMAT_HEADER_ROW_INDEX:
+        return ParseResult(
+            rows=[],
+            errors=[
+                f"ヘッダー行に満たない行数でした（{len(rows)}行、ヘッダーは{KAWADA_FORMAT_HEADER_ROW_INDEX + 1}行目）。"
+            ],
+        )
 
-    for idx, row in enumerate(rows):
-        candidate_map = {}
-        candidate_land_index = None
-        for col_idx, cell in enumerate(row):
-            cell_text = normalize_text(cell or "")
-            if not cell_text:
-                continue
-            if cell_text in NORMALIZED_LAND_NAME_ALIASES:
-                candidate_land_index = col_idx
-            column_key = CHEMICAL_FIELD_ALIAS_TO_KEY.get(cell_text)
-            if not column_key:
-                for alias, key in CHEMICAL_FIELD_ALIAS_TO_KEY.items():
-                    if alias and alias in cell_text:
-                        column_key = key
-                        break
-            if column_key:
-                candidate_map[column_key] = col_idx
-        if candidate_land_index is not None and len(candidate_map) >= 1:
-            header_index = idx
-            header_map = candidate_map
-            land_name_column_index = candidate_land_index
-            break
-
-    if header_index is None or land_name_column_index is None:
-        return [], [
-            "ヘッダ行を特定できませんでした。圃場名列と分析項目列を確認してください。"
-        ]
-
-    missing = [field for field in CHEMICAL_FIELD_KEYS if field not in header_map]
-    if missing:
-        return [], [f"必須列不足: {', '.join(missing)}"]
-
+    # データ行のパース（4行目以降）
+    # 各行から以下を抽出:
+    #   1. 分析番号（A列）- 空行はスキップ（川田研究所側のID）
+    #   2. 圃場名（C列）
+    #   3. 化学分析データ（E列〜T列の16項目）- 川田フォーマットの列位置に基づいて取得
+    #   4. 数値変換エラーがあればエラーリストに追加して次の行へ
     parsed_rows = []
     parse_errors = []
 
-    for idx in range(header_index + 1, len(rows)):
-        row = rows[idx]
-        row_number = idx + 1
-        land_name_raw = (
-            row[land_name_column_index] if land_name_column_index < len(row) else ""
+    for i in range(KAWADA_FORMAT_DATA_START_ROW_INDEX, len(rows)):
+        row = rows[i]
+        row_number = i + 1  # Excelの行番号（1始まり、ユーザー向け表示用）
+
+        # 分析番号（A列）の取得
+        analysis_number_raw = (
+            row[KAWADA_COLUMN_ANALYSIS_NUMBER]
+            if KAWADA_COLUMN_ANALYSIS_NUMBER < len(row)
+            else ""
         )
-        land_name = str(land_name_raw or "").strip()
-        if not land_name:
-            continue
+        analysis_number = str(analysis_number_raw or "").strip()
+        if not analysis_number:
+            continue  # 分析番号が空の行はスキップ（空行または非データ行）
+
         try:
-            values = {}
-            for field_name, col_idx in header_map.items():
-                raw_value = row[col_idx] if col_idx < len(row) else None
-                values[field_name] = parse_numeric_value(
-                    raw_value, row_number, field_name
-                )
+            # 川田フォーマット1行分をVOとして構築
+            kawada_row = _parse_kawada_row(row)
+
+            # LandScoreChemical用に変換（ticket7まで暫定対応）
+            # 川田にあってLandScoreChemicalにない項目: lime_saturation, magnesia_saturation, potash_saturation → 無視
+            # 川田にないLandScoreChemicalの項目: total_nitrogen, nh4_per_nitrogen, cao_per_mgo, mgo_per_k2o → None
+            values = {
+                "ec": kawada_row.ec,
+                "nh4n": kawada_row.nh4n,
+                "no3n": kawada_row.no3n,
+                "total_nitrogen": None,  # TODO: ticket7で削除
+                "nh4_per_nitrogen": None,  # TODO: ticket7で削除
+                "ph": kawada_row.ph,
+                "cao": kawada_row.cao,
+                "mgo": kawada_row.mgo,
+                "k2o": kawada_row.k2o,
+                "base_saturation": kawada_row.base_saturation,
+                "cao_per_mgo": None,  # TODO: ticket7で削除
+                "mgo_per_k2o": None,  # TODO: ticket7で削除
+                "phosphorus_absorption": kawada_row.phosphorus_absorption,
+                "p2o5": kawada_row.p2o5,
+                "cec": kawada_row.cec,
+                "humus": kawada_row.humus,
+                "bulk_density": kawada_row.bulk_density,
+            }
+
             parsed_rows.append(
-                {"row_number": row_number, "land_name": land_name, "values": values}
+                ParsedRow(
+                    row_number=row_number, land_name=kawada_row.land_name, values=values
+                )
             )
         except ValueError as exc:
-            parse_errors.append(str(exc))
+            # 数値変換エラー: 行番号を追加してエラーリストに記録
+            parse_errors.append(f"row={row_number}: {exc}")
 
-    return parsed_rows, parse_errors
+    return ParseResult(rows=parsed_rows, errors=parse_errors)
 
 
 class Command(BaseCommand):
@@ -259,21 +385,28 @@ class Command(BaseCommand):
 
         try:
             workbook = load_workbook(file_path, data_only=True)
-            worksheet = workbook.active
-            parsed_rows, parse_errors = parse_kawada_worksheet(worksheet)
 
-            # パースエラーが存在する場合は処理を中断
-            if parse_errors:
-                for error in parse_errors:
+            # シート数が1であることを確認
+            if len(workbook.sheetnames) != 1:
+                self.stderr.write(
+                    self.style.ERROR(
+                        f"Excelファイルのシート数が1ではありません（{len(workbook.sheetnames)}枚）。"
+                        f"シートは1枚にしてください。"
+                    )
+                )
+                return
+            worksheet = workbook.active
+            parse_result = parse_kawada_worksheet(worksheet)
+
+            if parse_result.errors:
+                for error in parse_result.errors:
                     self.stderr.write(self.style.ERROR(error))
                 return
 
-            # 取り込み対象行が存在しない場合は処理を中断
-            if not parsed_rows:
+            if not parse_result.rows:
                 self.stderr.write(self.style.WARNING("取り込み対象行がありません。"))
                 return
 
-            # LandLedgerの存在確認
             try:
                 ledger = LandLedger.objects.get(id=land_ledger_id)
             except LandLedger.DoesNotExist:
@@ -302,10 +435,10 @@ class Command(BaseCommand):
                 return
 
             with transaction.atomic():
-                for row in parsed_rows:
+                for row in parse_result.rows:
                     for block_name in BLOCK_NAMES:
                         block = blocks_by_name[block_name]
-                        defaults = {**row["values"], "remark": REMARK_IMPORT_MODE}
+                        defaults = {**row.values, "remark": REMARK_IMPORT_MODE}
                         existing = LandScoreChemical.objects.filter(
                             land_ledger=ledger,
                             land_block=block,
@@ -314,7 +447,7 @@ class Command(BaseCommand):
                         if existing:
                             if not overwrite:
                                 warnings.append(
-                                    f"既存データありスキップ row={row['row_number']}, ledger_id={ledger.id}, block={block_name}"
+                                    f"既存データありスキップ row={row.row_number}, ledger_id={ledger.id}, block={block_name}"
                                 )
                                 continue
                             for field_name, field_value in defaults.items():
