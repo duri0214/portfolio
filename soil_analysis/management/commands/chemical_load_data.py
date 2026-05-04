@@ -398,15 +398,18 @@ class Command(BaseCommand):
             worksheet = workbook.active
             parse_result = parse_kawada_worksheet(worksheet)
 
+            # パースエラーが存在する場合は処理を中断
             if parse_result.errors:
                 for error in parse_result.errors:
                     self.stderr.write(self.style.ERROR(error))
                 return
 
+            # 取り込み対象行が存在しない場合は処理を中断
             if not parse_result.rows:
                 self.stderr.write(self.style.WARNING("取り込み対象行がありません。"))
                 return
 
+            # LandLedgerの存在確認
             try:
                 ledger = LandLedger.objects.get(id=land_ledger_id)
             except LandLedger.DoesNotExist:
