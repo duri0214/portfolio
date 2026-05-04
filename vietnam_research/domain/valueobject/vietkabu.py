@@ -133,11 +133,24 @@ class MarketDataTableHeader:
 
     @classmethod
     def _normalize_text(cls, value: str) -> str:
+        """
+        ヘッダー比較用に文字列を正規化する。
+
+        - ノーブレークスペースを通常スペースへ置換
+        - 全角括弧を半角括弧へ統一
+        - 連続空白を1つに圧縮
+        """
         text = value.replace("\xa0", " ")
         text = text.replace("（", "(").replace("）", ")")
         return " ".join(text.split())
 
     def index(self, column: str) -> int:
+        """
+        列名から株価テーブル内のセル位置（0始まり）を返す。
+
+        `column` はヘッダー名（例: `始値`, `業種`）を受け取り、
+        検証済みの `column_indexes` から対応するインデックスを返す。
+        """
         normalized_column = self._normalize_text(column)
         return self.column_indexes[normalized_column]
 
