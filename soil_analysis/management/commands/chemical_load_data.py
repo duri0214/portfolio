@@ -20,7 +20,7 @@ from django.db import transaction
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from soil_analysis.models import LandBlock, LandLedger, LandScoreChemical
+from soil_analysis.models import LandLedger, LandScoreChemical
 
 
 @attrs.frozen
@@ -100,11 +100,11 @@ class ParseResult:
     errors: list[str]
 
 
-# 取り込み対象のブロック名（9ブロック固定）
-BLOCK_NAMES = ("A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3")
+# 取り込み対象のブロックID（5点測量: 四隅+中央）
+BLOCK_IDS = (1, 3, 5, 7, 9)
 
-# 取り込みモードを示すremark文字列（圃場レベルのデータを9ブロックにコピーしたことを示す）
-REMARK_IMPORT_MODE = "import_mode=field_level_copied_to_9_blocks"
+# 取り込みモードを示すremark文字列（圃場レベルのデータを5ブロックにコピーしたことを示す）
+REMARK_IMPORT_MODE = "import_mode=field_level_copied_to_5_blocks"
 
 # 川田研究所フォーマットの前提条件（フォーマット変更時はここを修正）
 # 行定義（0-based: Pythonのリストインデックス）
@@ -424,33 +424,24 @@ class Command(BaseCommand):
             updated_count = 0
             warnings = []
 
-            blocks_by_name = {
-                b.name: b for b in LandBlock.objects.filter(name__in=BLOCK_NAMES)
-            }
-            missing_blocks = [
-                name for name in BLOCK_NAMES if name not in blocks_by_name
-            ]
-
-            if missing_blocks:
-                self.stderr.write(
-                    self.style.ERROR(f"ブロック不足: {','.join(missing_blocks)}")
-                )
-                return
+            # TODO(ticket7): LandScoreChemicalのland_block FK削除後、このブロック展開処理は不要になる
+            # 暫定対応: 圃場単位データ（1レコード）を5ブロック（1,3,5,7,9）に展開して保存
+            # - 現行モデルはland_blockが必須のため、5ブロック分のレコードを作成（5点法）
+            # - remarkに"import_mode=field_level_copied_to_5_blocks"を付与して識別
 
             with transaction.atomic():
                 for row in parse_result.rows:
-                    for block_name in BLOCK_NAMES:
-                        block = blocks_by_name[block_name]
+                    for block_id in BLOCK_IDS:
                         defaults = {**row.values, "remark": REMARK_IMPORT_MODE}
                         existing = LandScoreChemical.objects.filter(
                             land_ledger=ledger,
-                            land_block=block,
+                            land_block_id=block_id,
                         ).first()
 
                         if existing:
                             if not overwrite:
                                 warnings.append(
-                                    f"既存データありスキップ row={row.row_number}, ledger_id={ledger.id}, block={block_name}"
+                                    f"既存データありスキップ row={row.row_number}, ledger_id={ledger.id}, block_id={block_id}"
                                 )
                                 continue
                             for field_name, field_value in defaults.items():
@@ -461,7 +452,7 @@ class Command(BaseCommand):
 
                         LandScoreChemical.objects.create(
                             land_ledger=ledger,
-                            land_block=block,
+                            land_block_id=block_id,
                             **defaults,
                         )
                         created_count += 1
