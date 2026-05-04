@@ -98,29 +98,14 @@
                             <div class='text-start small'>
                                 <div class='fw-bold border-bottom mb-1 text-center'>{{ block.name }}</div>
                                 <ul class='list-unstyled mb-0' style='column-count: 2; column-gap: 15px;'>
-                                    <li><span style="color: #adb5bd;">EC:</span> {{ land_score.ec }}</li>
-                                    <li><span style="color: #adb5bd;">NH4-N:</span> {{ land_score.nh4n }}</li>
-                                    <li><span style="color: #adb5bd;">NO3-N:</span> {{ land_score.no3n }}</li>
-                                    <li><span style="color: #adb5bd;">無機態N:</span> {{ land_score.total_nitrogen }}
-                                    </li>
-                                    <li><span style="color: #adb5bd;">NH4/N比:</span> {{ land_score.nh4_per_nitrogen }}
-                                    </li>
-                                    <li><span style="color: #adb5bd;">pH:</span> {{ land_score.ph }}</li>
-                                    <li><span style="color: #adb5bd;">CaO:</span> {{ land_score.cao }}</li>
-                                    <li><span style="color: #adb5bd;">MgO:</span> {{ land_score.mgo }}</li>
-                                    <li><span style="color: #adb5bd;">K2O:</span> {{ land_score.k2o }}</li>
-                                    <li><span
-                                            style="color: #adb5bd;">塩基飽和度:</span> {{ land_score.base_saturation }}
-                                    </li>
-                                    <li><span style="color: #adb5bd;">CaO/MgO:</span> {{ land_score.cao_per_mgo }}</li>
-                                    <li><span style="color: #adb5bd;">MgO/K2O:</span> {{ land_score.mgo_per_k2o }}</li>
-                                    <li><span
-                                            style="color: #adb5bd;">リン酸吸:</span> {{ land_score.phosphorus_absorption }}
-                                    </li>
-                                    <li><span style="color: #adb5bd;">P2O5:</span> {{ land_score.p2o5 }}</li>
-                                    <li><span style="color: #adb5bd;">CEC:</span> {{ land_score.cec }}</li>
-                                    <li><span style="color: #adb5bd;">腐植:</span> {{ land_score.humus }}</li>
-                                    <li><span style="color: #adb5bd;">仮比重:</span> {{ land_score.bulk_density }}</li>
+                                    {% for field in chemical_fields %}
+                                        <li>
+                                            <span style="color: #adb5bd;">
+                                                {{ field.label }}{% if field.unit %}({{ field.unit }}){% endif %}:
+                                            </span>
+                                            {{ land_score|get_attr:field.key }}
+                                        </li>
+                                    {% endfor %}
                                 </ul>
                                 {% if land_score.remark %}
                                     <div class='border-top mt-1 pt-1'>
