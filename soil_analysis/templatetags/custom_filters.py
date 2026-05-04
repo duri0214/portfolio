@@ -14,3 +14,8 @@ def get_value(value, key):
         return value[key]
     else:
         return None
+
+
+@register.filter
+def get_attr(obj, attr_name):
+    return getattr(obj, attr_name, None)

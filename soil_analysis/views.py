@@ -35,6 +35,9 @@ from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
+from soil_analysis.domain.valueobject.chemical_report.fields import (
+    CHEMICAL_FIELD_DEFINITIONS,
+)
 from soil_analysis.forms import (
     CompanyCreateForm,
     LandCreateForm,
@@ -234,6 +237,7 @@ class LandReportChemicalListView(ListView):
             score.land_block.name: score for score in context["land_scores"]
         }
         context["land_blocks"] = LandBlock.objects.all()
+        context["chemical_fields"] = CHEMICAL_FIELD_DEFINITIONS
         # グリッドの順序:
         # C3, B3, A3
         # C2, B2, A2
