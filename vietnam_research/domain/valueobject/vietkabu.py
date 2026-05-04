@@ -76,6 +76,21 @@ class MarketDataTableHeader:
 
     @classmethod
     def validate_from_soup(cls, soup) -> "MarketDataTableHeader":
+        """
+        `soup` から株価テーブルのヘッダー行を検出し、期待ヘッダーと照合して検証する。
+
+        処理の流れ:
+        1. `th` を持つ行を走査し、`_looks_like_market_data_header` で候補行を絞る
+        2. 候補行のヘッダー文字列を正規化する
+        3. `MARKET_DATA_EXPECTED_COLUMNS`（列名 + 順序）との完全一致を検証する
+
+        Returns:
+            検証済みヘッダーの `column_indexes` を保持した `MarketDataTableHeader`。
+
+        Raises:
+            MarketDataHeaderError:
+                株価テーブルのヘッダー行が見つからない、または期待ヘッダーと不一致の場合。
+        """
         expected_columns = tuple(
             cls._normalize_text(c) for c in MARKET_DATA_EXPECTED_COLUMNS
         )
