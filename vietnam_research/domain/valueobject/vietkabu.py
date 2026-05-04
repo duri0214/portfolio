@@ -7,6 +7,24 @@ import numpy as np
 import pandas as pd
 from bs4 import Tag
 
+MARKET_DATA_EXPECTED_COLUMNS = (
+    "銘柄",
+    "前日 終値",
+    "取引値 (終値)",
+    "始値",
+    "高値",
+    "安値",
+    "前日比",
+    "前日比 (%)",
+    "売買高 (株)",
+    "時価総額 (百万ドン)",
+    "時価総額 (億円)",
+    "PER (倍)",
+    "外国人 [買]成立",
+    "外国人 [売]成立",
+    "業種",
+)
+
 
 class MarketDataRowError(Exception):
     """MarketDataRowの初期化に失敗した場合の例外"""
@@ -26,6 +44,115 @@ class MarketDataRowError(Exception):
             text = " ".join(text.split())
             td_texts.append(text)
         return ", ".join(td_texts)
+
+
+class MarketDataHeaderError(Exception):
+    """
+    viet-kabuの株価テーブルヘッダーが期待と異なる場合の例外。
+
+    ヘッダー不一致だけを呼び出し側で明示的にハンドリングするための専用例外。
+    `ValueError` などの汎用例外にすると、想定外の不具合まで同じ扱いで
+    握ってしまうリスクがあるため分離している。
+    """
+
+
+@dataclass(frozen=True)
+class MarketDataTableHeader:
+    """
+    viet-kabuの株価テーブルヘッダー定義を表す値オブジェクト。
+
+    `validate_from_soup` は以下を実行する:
+    - `th` から株価テーブルのヘッダー行を検出する
+    - ヘッダー文字列を正規化する（空白揺れ・全角括弧の揺れを吸収）
+    - 期待ヘッダー（列名 + 順序）と完全一致することを検証する
+
+    検証に成功した場合、列名からセル位置を引ける `column_indexes` を保持して返す。
+    検証に失敗した場合は `MarketDataHeaderError` を送出する。
+
+    See Also: https://www.viet-kabu.com/stock/hcm.html
+    """
+
+    column_indexes: dict[str, int]
+
+    @classmethod
+    def validate_from_soup(cls, soup) -> "MarketDataTableHeader":
+        """
+        soupからtrを抽出した集まりの中で、`th` を持つ行を走査し、
+        株価テーブルのヘッダー行を検出して期待ヘッダーと照合する。
+
+        処理の流れ:
+        1. `th` を持つ行を走査し、`_looks_like_market_data_header` で候補行を絞る
+        2. 候補行のヘッダー文字列を正規化する
+        3. `MARKET_DATA_EXPECTED_COLUMNS`（列名 + 順序）との完全一致を検証する
+
+        Returns:
+            検証済みヘッダーの `column_indexes` を保持した `MarketDataTableHeader`。
+
+        Raises:
+            MarketDataHeaderError:
+                株価テーブルのヘッダー行が見つからない、または期待ヘッダーと不一致の場合。
+        """
+        expected_columns = tuple(
+            cls._normalize_text(c) for c in MARKET_DATA_EXPECTED_COLUMNS
+        )
+
+        for tr in soup.find_all("tr"):
+            th_tags = tr.find_all("th")
+            if not th_tags:
+                continue
+
+            columns = tuple(
+                cls._normalize_text(th.get_text(" ", strip=True)) for th in th_tags
+            )
+            if not cls._looks_like_market_data_header(columns):
+                continue
+
+            if columns != expected_columns:
+                raise MarketDataHeaderError(
+                    "viet-kabuの株価テーブルヘッダーが期待と異なります。"
+                    f" expected={expected_columns}, actual={columns}"
+                )
+
+            return cls({column: i for i, column in enumerate(columns)})
+
+        raise MarketDataHeaderError(
+            "viet-kabuの株価テーブルヘッダーが見つかりません。"
+            f" expected={expected_columns}"
+        )
+
+    @classmethod
+    def _looks_like_market_data_header(cls, columns: tuple[str, ...]) -> bool:
+        """
+        与えられたヘッダー列が「株価データ本体のヘッダー行らしいか」を判定する。
+
+        この判定は完全一致チェックの前段で使う粗いフィルタで、ページ内の他テーブルや
+        装飾用ヘッダー行を除外する目的を持つ。
+        現在は株価テーブルに必須の `銘柄` と `業種` が同時に含まれることを条件にしている。
+        """
+        return "銘柄" in columns and "業種" in columns
+
+    @classmethod
+    def _normalize_text(cls, value: str) -> str:
+        """
+        ヘッダー比較用に文字列を正規化する。
+
+        - ノーブレークスペースを通常スペースへ置換
+        - 全角括弧を半角括弧へ統一
+        - 連続空白を1つに圧縮
+        """
+        text = value.replace("\xa0", " ")
+        text = text.replace("（", "(").replace("）", ")")
+        return " ".join(text.split())
+
+    def index(self, column: str) -> int:
+        """
+        列名から株価テーブル内のセル位置（0始まり）を返す。
+
+        `column` はヘッダー名（例: `始値`, `業種`）を受け取り、
+        検証済みの `column_indexes` から対応するインデックスを返す。
+        """
+        normalized_column = self._normalize_text(column)
+        return self.column_indexes[normalized_column]
 
 
 @dataclass(frozen=True)
@@ -165,50 +292,59 @@ class MarketDataRow:
     marketcap: float
     per: float
 
-    def __init__(self, tr: Tag):
+    def __init__(self, tr: Tag, table_header: MarketDataTableHeader):
         super().__init__()
-        tag_tds_center = tr.find_all("td", class_="table_list_center")
+        tag_tds = [
+            td
+            for td in tr.find_all("td")
+            if "table_list_center" in td.get_attribute_list("class")
+            or "table_list_right" in td.get_attribute_list("class")
+        ]
 
         # 業種情報の存在チェック
-        if len(tag_tds_center) < 2:
+        if len(tag_tds) != len(MARKET_DATA_EXPECTED_COLUMNS):
             raise MarketDataRowError(
-                "業種情報（table_list_centerが2つ未満）がありません", tr
+                "データ列数がヘッダー列数と一致しません"
+                f"（expected={len(MARKET_DATA_EXPECTED_COLUMNS)}, actual={len(tag_tds)}）",
+                tr,
             )
 
+        ticker_cell = tag_tds[table_header.index("銘柄")]
+        industry_cell = tag_tds[table_header.index("業種")]
+
         # imgタグの存在チェック
-        if not tag_tds_center[1].find("img"):
+        if not industry_cell.find("img"):
             raise MarketDataRowError("業種画像（imgタグ）がありません", tr)
 
         try:
-            self.code = re.sub("＊", "", tag_tds_center[0].text.strip())
-            self.name = tag_tds_center[0].a.get("title")
-            self.industry_title = tag_tds_center[1].img.get("title")
+            self.code = re.sub("＊", "", ticker_cell.text.strip())
+            self.name = ticker_cell.a.get("title")
+            self.industry_title = industry_cell.img.get("title")
             self.industry1 = re.sub(r"\[(.+)]", "", self.industry_title)
             self.industry2 = re.search(
-                r"(?<=\[).*?(?=])", tag_tds_center[1].img.get("title")
+                r"(?<=\[).*?(?=])", industry_cell.img.get("title")
             ).group()
 
-            tag_tds_right = [
-                Counting(td.text.strip())
-                for td in tr.find_all("td", class_="table_list_right")
-            ]
-
-            # 計数データの存在チェック
-            if len(tag_tds_right) < 11:
-                raise MarketDataRowError(
-                    "計数データが不足しています（table_list_rightが11未満）", tr
-                )
-
-            self.open_price = tag_tds_right[2].value
-            self.high_price = tag_tds_right[3].value
-            self.low_price = tag_tds_right[4].value
-            self.closing_price = tag_tds_right[1].value
-            self.volume = tag_tds_right[7].value
-            self.marketcap = tag_tds_right[9].value
-            self.per = tag_tds_right[10].value
+            self.open_price = self._counting_value(tag_tds, table_header, "始値")
+            self.high_price = self._counting_value(tag_tds, table_header, "高値")
+            self.low_price = self._counting_value(tag_tds, table_header, "安値")
+            self.closing_price = self._counting_value(
+                tag_tds, table_header, "取引値 (終値)"
+            )
+            self.volume = self._counting_value(tag_tds, table_header, "売買高 (株)")
+            self.marketcap = self._counting_value(
+                tag_tds, table_header, "時価総額 (億円)"
+            )
+            self.per = self._counting_value(tag_tds, table_header, "PER (倍)")
 
         except (AttributeError, IndexError, TypeError) as e:
             raise MarketDataRowError(f"データ解析でエラーが発生しました: {str(e)}", tr)
+
+    @classmethod
+    def _counting_value(
+        cls, tag_tds: list[Tag], table_header: MarketDataTableHeader, column: str
+    ) -> float | None:
+        return Counting(tag_tds[table_header.index(column)].text.strip()).value
 
 
 class IndustryGraphVO:
