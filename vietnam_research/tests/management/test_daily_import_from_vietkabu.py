@@ -16,16 +16,18 @@ from vietnam_research.models import Symbol, IndClass, Market
 
 
 class TestCounting(TestCase):
-
     def test_valid_value(self):
+        """カンマと%を含む文字列を数値として解釈できる。"""
         c = Counting("1,000%")
         self.assertEqual(c.value, 1000.0)
 
     def test_empty_string(self):
+        """空文字は0.0として扱う。"""
         c = Counting("")
         self.assertEqual(c.value, 0.0)
 
     def test_invalid_value(self):
+        """ハイフンは欠損値としてNoneを返す。"""
         c = Counting("-")
         self.assertEqual(c.value, None)
 
@@ -66,12 +68,14 @@ class TestTransactionDate(TestCase):
         self.invalid_th_tag = BeautifulSoup(invalid_html, "html.parser").th
 
     def test_to_date(self):
+        """更新日時を含むthからdatetimeへ変換できる。"""
         self.assertEqual(
             TransactionDate(self.valid_th_tag).to_date(),
             datetime(2019, 8, 16, 17, 0, 0),
         )
 
     def test_to_date_invalid_value(self):
+        """更新日時フォーマットが崩れている場合はValueErrorにする。"""
         with self.assertRaises(ValueError):
             self.assertEqual(
                 TransactionDate(self.invalid_th_tag).to_date(),
@@ -101,6 +105,7 @@ class TestMarketDataRow(TestCase):
     """
 
     def test_market_data_row_from_html(self):
+        """検証済みヘッダーを使って1行分の株価データを正しく抽出できる。"""
         html = (
             self.header_html
             + """
@@ -141,7 +146,7 @@ class TestMarketDataRow(TestCase):
         validated_table_header = MarketDataTableHeader.validate_from_soup(soup)
         tr = soup.find("tr", id="APG")
         row = MarketDataRow(tr, validated_table_header)
-        # These values are checked using the html snippet above.
+        # These values are checked using the HTML snippet above.
         self.assertEqual(row.code, "APG")
         self.assertEqual(row.name, "APG証券")
         self.assertEqual(row.industry_title, "金融業[証券業]")
@@ -156,6 +161,7 @@ class TestMarketDataRow(TestCase):
         self.assertEqual(row.per, 11.11)
 
     def test_market_data_header_from_html(self):
+        """期待どおりのヘッダーから列名とインデックスの対応を作れる。"""
         soup = BeautifulSoup(self.header_html, "html.parser")
         validated_table_header = MarketDataTableHeader.validate_from_soup(soup)
 
@@ -165,6 +171,7 @@ class TestMarketDataRow(TestCase):
         self.assertEqual(validated_table_header.index("業種"), 14)
 
     def test_market_data_header_invalid_order(self):
+        """ヘッダーの順序が入れ替わっている場合は専用例外で検知する。"""
         invalid_header_html = self.header_html.replace(
             """<th class="table_list_right">始値</th>
         <th class="table_list_right">高値</th>""",
