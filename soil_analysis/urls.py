@@ -40,6 +40,16 @@ urlpatterns = [
         name="hardness_upload",
     ),
     path(
+        "chemical/upload",
+        views.ChemicalUploadView.as_view(),
+        name="chemical_upload",
+    ),
+    path(
+        "chemical/success",
+        views.ChemicalSuccessView.as_view(),
+        name="chemical_success",
+    ),
+    path(
         "hardness/delete_all",
         views.HardnessDeleteAllView.as_view(),
         name="hardness_delete_all",

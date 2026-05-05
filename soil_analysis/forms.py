@@ -140,6 +140,25 @@ class UploadForm(forms.Form):
     )
 
 
+class ChemicalUploadForm(forms.Form):
+    file = forms.FileField(
+        label="川田研究所 XLSX",
+        widget=ClearableFileInput(
+            attrs={"class": "form-control", "tabindex": "1", "accept": ".xlsx"}
+        ),
+    )
+    land_ledger_id = forms.ModelChoiceField(
+        queryset=LandLedger.objects.all().order_by("-id"),
+        label="取り込み先帳簿",
+        widget=forms.Select(attrs={"class": "form-select", "tabindex": "2"}),
+    )
+    overwrite = forms.BooleanField(
+        label="既存データを上書き",
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input", "tabindex": "3"}),
+    )
+
+
 class CsvGenerateForm(forms.Form):
     num_fields = forms.IntegerField(
         label="生成する圃場数",
