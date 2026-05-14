@@ -1,0 +1,88 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1 class="h3 mb-3">六戸の登記簿一覧</h1>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>帳簿種別</th>
+                        <th>住所</th>
+                        <th>座標</th>
+                        <th>登記地目</th>
+                        <th>現況地目</th>
+                        <th>登記面積</th>
+                        <th>現況面積</th>
+                        <th>備考</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in registries %}
+                        <tr>
+                            <td>{{ row.ledger_type }}</td>
+                            <td>{{ row.address }}</td>
+                            <td>
+                                <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener noreferrer">{{ row.coordinate }}</a>
+                            </td>
+                            <td>{{ row.registered_land_category }}</td>
+                            <td>{{ row.current_land_category }}</td>
+                            <td>{{ row.registered_area }} ㎡</td>
+                            <td>{{ row.current_area }} ㎡</td>
+                            <td>{{ row.remarks }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-muted">データがありません。</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row mt-4 g-4">
+            <div class="col-12 col-lg-6">
+                <h2 class="h5 mb-2">登記地目ごとの集計</h2>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>地目</th>
+                            <th>合計(㎡)</th>
+                            <th>町反畝</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in registered_totals %}
+                            <tr>
+                                <td>{{ row.category }}</td>
+                                <td>{{ row.total_m2 }}</td>
+                                <td>{{ row.total_chobu }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h2 class="h5 mb-2">現況地目ごとの集計</h2>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>地目</th>
+                            <th>合計(㎡)</th>
+                            <th>町反畝</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in current_totals %}
+                            <tr>
+                                <td>{{ row.category }}</td>
+                                <td>{{ row.total_m2 }}</td>
+                                <td>{{ row.total_chobu }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

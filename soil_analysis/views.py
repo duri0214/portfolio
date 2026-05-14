@@ -3,11 +3,10 @@ import re
 import shutil
 from pathlib import Path
 
-from openpyxl import load_workbook
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Sum
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -35,10 +34,10 @@ from soil_analysis.domain.service.hardness_plot_generation import (
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
-from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.domain.valueobject.chemical_report.fields import (
     CHEMICAL_FIELD_DEFINITIONS,
 )
+from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.forms import (
     CompanyCreateForm,
     LandCreateForm,
@@ -58,6 +57,7 @@ from soil_analysis.models import (
     SoilHardnessMeasurement,
     SamplingOrder,
     RouteSuggestImport,
+    RokunoheLandRegistry,
     JmaCity,
     JmaRegion,
     JmaPrefecture,
@@ -380,10 +380,13 @@ class ChemicalUploadView(FormView):
 
         # 一時ファイルに保存
         from django.conf import settings
+
         temp_dir = Path(settings.MEDIA_ROOT) / "temp" / "chemical"
         temp_dir.mkdir(parents=True, exist_ok=True)
-        temp_file = temp_dir / f"chemical_{timezone.now().strftime('%Y%m%d%H%M%S')}.xlsx"
-        
+        temp_file = (
+            temp_dir / f"chemical_{timezone.now().strftime('%Y%m%d%H%M%S')}.xlsx"
+        )
+
         with open(temp_file, "wb+") as destination:
             for chunk in upload_file.chunks():
                 destination.write(chunk)
@@ -419,7 +422,7 @@ class ChemicalSuccessView(TemplateView):
                 ).get(id=land_ledger_id)
                 chemical_data = LandScoreChemical.objects.filter(
                     land_ledger=land_ledger,
-                    remark="import_mode=field_level_copied_to_9_blocks"
+                    remark="import_mode=field_level_copied_to_9_blocks",
                 )
                 context["land_ledger"] = land_ledger
                 context["created_count"] = chemical_data.count()
@@ -429,8 +432,6 @@ class ChemicalSuccessView(TemplateView):
             except LandLedger.DoesNotExist:
                 pass
         return context
-
-
 
 
 class HardnessDeleteAllView(View):
@@ -798,7 +799,7 @@ class RouteSuggestOrderingView(ListView):
                     route_suggest.save()
 
             messages.success(request, "Data updated successfully")
-            return redirect(reverse_lazy("soil:route_suggest_success"))
+            return redirect(reverse("soil:route_suggest_success"))
 
         except RouteSuggestImport.DoesNotExist:
             messages.error(request, "Invalid order data provided.")
@@ -915,4 +916,54 @@ class AssociatePictureAndLandResultView(TemplateView):
             }
             context["photo_spot_coord"] = photo_spot_coord
 
+        return context
+
+
+class RokunoheLandRegistryListView(ListView):
+    model = RokunoheLandRegistry
+    template_name = "soil_analysis/rokunohe_land_registry/list.html"
+    context_object_name = "registries"
+
+    def get_queryset(self):
+        return RokunoheLandRegistry.objects.all().order_by("id")
+
+    @staticmethod
+    def _to_chobu(area_m2: int) -> str:
+        one_tan = 991.736
+        one_se = one_tan / 10
+        town = int(area_m2 // (one_tan * 10))
+        remain_after_town = area_m2 - int(town * one_tan * 10)
+        tan = int(remain_after_town // one_tan)
+        remain_after_tan = remain_after_town - int(tan * one_tan)
+        se = remain_after_tan / one_se
+        return f"{town}町 {tan}反 {se:.1f}畝"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        registered_totals = (
+            RokunoheLandRegistry.objects.values("registered_land_category")
+            .annotate(total_m2=Sum("registered_area"))
+            .order_by("registered_land_category")
+        )
+        current_totals = (
+            RokunoheLandRegistry.objects.values("current_land_category")
+            .annotate(total_m2=Sum("current_area"))
+            .order_by("current_land_category")
+        )
+        context["registered_totals"] = [
+            {
+                "category": row["registered_land_category"],
+                "total_m2": row["total_m2"] or 0,
+                "total_chobu": self._to_chobu(int(row["total_m2"] or 0)),
+            }
+            for row in registered_totals
+        ]
+        context["current_totals"] = [
+            {
+                "category": row["current_land_category"],
+                "total_m2": row["total_m2"] or 0,
+                "total_chobu": self._to_chobu(int(row["total_m2"] or 0)),
+            }
+            for row in current_totals
+        ]
         return context
