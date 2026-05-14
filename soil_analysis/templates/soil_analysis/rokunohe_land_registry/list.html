@@ -22,10 +22,10 @@
                             <th>帳簿種別</th>
                             <th>住所</th>
                             <th>座標</th>
-                            <th>登記地目</th>
-                            <th>現況地目</th>
-                            <th>登記面積</th>
-                            <th>現況面積</th>
+                            <th class="text-center">登記地目</th>
+                            <th class="text-center">現況地目</th>
+                            <th class="text-end">登記面積</th>
+                            <th class="text-end">現況面積</th>
                             <th>備考</th>
                         </tr>
                     </thead>
@@ -37,10 +37,10 @@
                                 <td>
                                     <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener noreferrer">{{ row.coordinate }}</a>
                                 </td>
-                                <td>{{ row.registered_land_category }}</td>
-                                <td>{{ row.current_land_category }}</td>
-                                <td>{{ row.registered_area|intcomma }} ㎡</td>
-                                <td>{{ row.current_area|intcomma }} ㎡</td>
+                                <td class="text-center">{{ row.registered_land_category }}</td>
+                                <td class="text-center">{{ row.current_land_category }}</td>
+                                <td class="text-end">{{ row.registered_area|intcomma }} ㎡</td>
+                                <td class="text-end">{{ row.current_area|intcomma }} ㎡</td>
                                 <td>{{ row.remarks }}</td>
                             </tr>
                         {% empty %}
