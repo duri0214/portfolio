@@ -958,6 +958,7 @@ class RokunoheLandRegistryListView(ListView):
             {
                 "category": row["registered_land_category"],
                 "total_m2": row["total_m2"] or 0,
+                "total_ha": (row["total_m2"] or 0) / 10000,
                 "total_chobu": self._to_chobu(int(row["total_m2"] or 0)),
             }
             for row in registered_totals
@@ -966,6 +967,7 @@ class RokunoheLandRegistryListView(ListView):
             {
                 "category": row["current_land_category"],
                 "total_m2": row["total_m2"] or 0,
+                "total_ha": (row["total_m2"] or 0) / 10000,
                 "total_chobu": self._to_chobu(int(row["total_m2"] or 0)),
             }
             for row in current_totals

@@ -5,7 +5,7 @@
     <div class="container mt-4">
         <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
             <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">HOME</a></li>
                 <li class="breadcrumb-item active" aria-current="page">六戸の登記簿一覧</li>
             </ol>
         </nav>
@@ -61,6 +61,7 @@
                         <tr>
                             <th class="text-center">地目</th>
                             <th class="text-end">合計(㎡)</th>
+                            <th class="text-end">合計(ha)</th>
                             <th>町反畝</th>
                         </tr>
                     </thead>
@@ -69,6 +70,7 @@
                             <tr>
                                 <td class="text-center">{{ row.category }}</td>
                                 <td class="text-end">{{ row.total_m2|intcomma }} ㎡</td>
+                                <td class="text-end">{{ row.total_ha|floatformat:3|intcomma }} ha</td>
                                 <td>{{ row.total_chobu }}</td>
                             </tr>
                         {% endfor %}
@@ -82,6 +84,7 @@
                         <tr>
                             <th class="text-center">地目</th>
                             <th class="text-end">合計(㎡)</th>
+                            <th class="text-end">合計(ha)</th>
                             <th>町反畝</th>
                         </tr>
                     </thead>
@@ -90,6 +93,7 @@
                             <tr>
                                 <td class="text-center">{{ row.category }}</td>
                                 <td class="text-end">{{ row.total_m2|intcomma }} ㎡</td>
+                                <td class="text-end">{{ row.total_ha|floatformat:3|intcomma }} ha</td>
                                 <td>{{ row.total_chobu }}</td>
                             </tr>
                         {% endfor %}
