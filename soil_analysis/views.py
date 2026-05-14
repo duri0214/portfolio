@@ -941,12 +941,16 @@ class RokunoheLandRegistryListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         registered_totals = (
-            RokunoheLandRegistry.objects.values("registered_land_category")
+            RokunoheLandRegistry.objects.exclude(registered_land_category__isnull=True)
+            .exclude(registered_land_category__exact="")
+            .values("registered_land_category")
             .annotate(total_m2=Sum("registered_area"))
             .order_by("registered_land_category")
         )
         current_totals = (
-            RokunoheLandRegistry.objects.values("current_land_category")
+            RokunoheLandRegistry.objects.exclude(current_land_category__isnull=True)
+            .exclude(current_land_category__exact="")
+            .values("current_land_category")
             .annotate(total_m2=Sum("current_area"))
             .order_by("current_land_category")
         )

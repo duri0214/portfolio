@@ -1,4 +1,5 @@
 {% extends "soil_analysis/base.html" %}
+{% load humanize %}
 
 {% block content %}
     <div class="container mt-4">
@@ -46,16 +47,16 @@
                 <table class="table table-sm table-bordered">
                     <thead class="table-light">
                         <tr>
-                            <th>地目</th>
-                            <th>合計(㎡)</th>
+                            <th class="text-center">地目</th>
+                            <th class="text-end">合計(㎡)</th>
                             <th>町反畝</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in registered_totals %}
                             <tr>
-                                <td>{{ row.category }}</td>
-                                <td>{{ row.total_m2 }}</td>
+                                <td class="text-center">{{ row.category }}</td>
+                                <td class="text-end">{{ row.total_m2|intcomma }} ㎡</td>
                                 <td>{{ row.total_chobu }}</td>
                             </tr>
                         {% endfor %}
@@ -67,16 +68,16 @@
                 <table class="table table-sm table-bordered">
                     <thead class="table-light">
                         <tr>
-                            <th>地目</th>
-                            <th>合計(㎡)</th>
+                            <th class="text-center">地目</th>
+                            <th class="text-end">合計(㎡)</th>
                             <th>町反畝</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in current_totals %}
                             <tr>
-                                <td>{{ row.category }}</td>
-                                <td>{{ row.total_m2 }}</td>
+                                <td class="text-center">{{ row.category }}</td>
+                                <td class="text-end">{{ row.total_m2|intcomma }} ㎡</td>
                                 <td>{{ row.total_chobu }}</td>
                             </tr>
                         {% endfor %}
