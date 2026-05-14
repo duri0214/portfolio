@@ -1,0 +1,296 @@
+[
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 1,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保166-3",
+      "coordinate": "40.61988, 141.3131",
+      "registered_land_category": "田",
+      "current_land_category": "山林",
+      "registered_area": 362,
+      "current_area": 362,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 2,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保166-29",
+      "coordinate": "40.6221, 141.30982",
+      "registered_land_category": "山林",
+      "current_land_category": "山林",
+      "registered_area": 3106,
+      "current_area": 3106,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 3,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保166-43",
+      "coordinate": "40.62227, 141.30841",
+      "registered_land_category": "畑",
+      "current_land_category": "山林",
+      "registered_area": 2909,
+      "current_area": 2909,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 4,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保166-142",
+      "coordinate": "40.61979, 141.31217",
+      "registered_land_category": "田",
+      "current_land_category": "田",
+      "registered_area": 1603,
+      "current_area": 1603,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 5,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保166-143",
+      "coordinate": "40.61996, 141.31225",
+      "registered_land_category": "田",
+      "current_land_category": "田",
+      "registered_area": 1995,
+      "current_area": 1995,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 6,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保166-215",
+      "coordinate": "40.62227, 141.31046",
+      "registered_land_category": "山林",
+      "current_land_category": "山林",
+      "registered_area": 166,
+      "current_area": 166,
+      "remarks": "ただの道（生コンのとこ）"
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 7,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保172-25",
+      "coordinate": "",
+      "registered_land_category": "田",
+      "current_land_category": "田",
+      "registered_area": 599,
+      "current_area": 599,
+      "remarks": "14号地図になし。登記情報のみ。おそらく売った農地"
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 8,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保172-26",
+      "coordinate": "",
+      "registered_land_category": "田",
+      "current_land_category": "田",
+      "registered_area": 546,
+      "current_area": 546,
+      "remarks": "14号地図になし。登記情報のみ。おそらく売った農地"
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 9,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保174-55",
+      "coordinate": "40.61962, 141.31532",
+      "registered_land_category": "畑",
+      "current_land_category": "山林",
+      "registered_area": 3069,
+      "current_area": 3069,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 10,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字下久保174-406",
+      "coordinate": "40.62584, 141.31384",
+      "registered_land_category": "山林",
+      "current_land_category": "山林",
+      "registered_area": 4624,
+      "current_area": 4624,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 11,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字高館62-8",
+      "coordinate": "",
+      "registered_land_category": "木造",
+      "current_land_category": "居宅",
+      "registered_area": 0,
+      "current_area": 18015,
+      "remarks": "高舘の家の目の前の畑なんだが、なぜか家が建っている？？"
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 12,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字高館62-8",
+      "coordinate": "40.61139, 141.31911",
+      "registered_land_category": "畑",
+      "current_land_category": "畑",
+      "registered_area": 886,
+      "current_area": 886,
+      "remarks": "高舘の家の目の前の畑"
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 13,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字高館62-21",
+      "coordinate": "40.61112, 141.31942",
+      "registered_land_category": "畑",
+      "current_land_category": "山林",
+      "registered_area": 479,
+      "current_area": 479,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 14,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字高館62-22",
+      "coordinate": "40.61115, 141.3196",
+      "registered_land_category": "山林",
+      "current_land_category": "山林",
+      "registered_area": 75,
+      "current_area": 75,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 15,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字高館62-44",
+      "coordinate": "40.61107, 141.31917",
+      "registered_land_category": "宅地",
+      "current_land_category": "山林",
+      "registered_area": 635,
+      "current_area": 635,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 16,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字高館62-46",
+      "coordinate": "40.61143, 141.31953",
+      "registered_land_category": "原野",
+      "current_land_category": "原野",
+      "registered_area": 34,
+      "current_area": 34,
+      "remarks": ""
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 17,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字高館62-129",
+      "coordinate": "40.61133, 141.31858",
+      "registered_land_category": "畑",
+      "current_land_category": "宅地",
+      "registered_area": 381,
+      "current_area": 381,
+      "remarks": "高舘の家"
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 18,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字前谷地81-1",
+      "coordinate": "",
+      "registered_land_category": "田",
+      "current_land_category": "田",
+      "registered_area": 2266,
+      "current_area": 2266,
+      "remarks": "役場の近くの田んぼ"
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 19,
+      "ledger_type": "土地・家屋課税台帳",
+      "address": "青森県上北郡六戸町大字犬落瀬字前谷地82",
+      "coordinate": "",
+      "registered_land_category": "田",
+      "current_land_category": "田",
+      "registered_area": 3523,
+      "current_area": 3523,
+      "remarks": "14号地図になし。登記情報のみ。役場の近くの田んぼ"
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 20,
+      "ledger_type": "14号地図",
+      "address": "青森県上北郡六戸町大字犬落瀬字高館62-135",
+      "coordinate": "40.61167, 141.31866",
+      "registered_land_category": "",
+      "current_land_category": "",
+      "registered_area": 0,
+      "current_area": 0,
+      "remarks": "14号地図になし。登記情報のみ。台帳登録なし。トラクターがある小屋"
+    }
+  },
+  {
+    "model": "soil_analysis.RokunoheLandRegistry",
+    "fields": {
+      "id": 21,
+      "ledger_type": "14号地図",
+      "address": "青森県上北郡六戸町大字犬落瀬字高館62-99",
+      "coordinate": "40.61155, 141.31851",
+      "registered_land_category": "",
+      "current_land_category": "",
+      "registered_area": 0,
+      "current_area": 0,
+      "remarks": "台帳登録なし。トラクターがある小屋横の畑"
+    }
+  }
+]

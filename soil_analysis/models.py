@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from urllib.parse import quote
 
 from lib.geo.valueobject.coord import GoogleMapsCoord
 
@@ -541,3 +542,32 @@ class RouteSuggestImport(models.Model):
     ordering = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
+
+
+class RokunoheLandRegistry(models.Model):
+    """
+    六戸の登記簿固定データ。
+    CSVの日本語列を英語フィールドとして保持する。
+    """
+
+    ledger_type = models.CharField(max_length=100, verbose_name="帳簿種別")
+    address = models.CharField(max_length=255, verbose_name="住所")
+    coordinate = models.CharField(max_length=100, verbose_name="座標")
+    registered_land_category = models.CharField(
+        max_length=50, verbose_name="登記地目"
+    )
+    current_land_category = models.CharField(max_length=50, verbose_name="現況地目")
+    registered_area = models.PositiveIntegerField(verbose_name="登記面積(㎡)")
+    current_area = models.PositiveIntegerField(verbose_name="現況面積(㎡)")
+    remarks = models.TextField(blank=True, default="", verbose_name="備考")
+
+    class Meta:
+        db_table = "rokunohe_land_registry"
+        verbose_name = "六戸登記簿"
+        verbose_name_plural = "六戸登記簿"
+
+    def __str__(self):
+        return f"{self.address} ({self.coordinate})"
+
+    def google_maps_url(self) -> str:
+        return f"https://www.google.com/maps?q={quote(self.coordinate)}"

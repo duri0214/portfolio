@@ -178,6 +178,7 @@ python manage.py weather_download_code_icon         # svgが変更されたと�
 
 python manage.py loaddata soil_analysis\fixtures\jma_weather_code.json
 python manage.py loaddata soil_analysis\fixtures\land.json
+python manage.py loaddata soil_analysis\fixtures\rokunohe_land_registry.json
 
 # ここ以降で soil analysis の 気象データ取得バッチをまわす
 python manage.py weather_fetch_forecast

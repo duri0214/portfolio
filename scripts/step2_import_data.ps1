@@ -89,6 +89,7 @@ python manage.py weather_load_const_master
 
 python manage.py loaddata soil_analysis\fixtures\jma_weather_code.json
 python manage.py loaddata soil_analysis\fixtures\land.json
+python manage.py loaddata soil_analysis\fixtures\rokunohe_land_registry.json
 
 # Weather data fetch
 python manage.py weather_fetch_forecast

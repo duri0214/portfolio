@@ -105,6 +105,11 @@ urlpatterns = [
         name="associate_picture_and_land_result",
     ),
     path(
+        "rokunohe/land-registry",
+        views.RokunoheLandRegistryListView.as_view(),
+        name="rokunohe_land_registry",
+    ),
+    path(
         "land-ledger/create-ajax/",
         views.LandLedgerCreateAjaxView.as_view(),
         name="land_ledger_create_ajax",
