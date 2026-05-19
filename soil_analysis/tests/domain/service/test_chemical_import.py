@@ -6,7 +6,6 @@ from openpyxl import Workbook
 
 from soil_analysis.management.commands.chemical_load_data import (
     BLOCK_IDS,
-    ParsedRow,
     parse_kawada_worksheet,
 )
 from soil_analysis.models import (
@@ -22,7 +21,6 @@ from soil_analysis.models import (
     LandBlock,
     LandLedger,
     LandPeriod,
-    LandScoreChemical,
     SamplingMethod,
 )
 
@@ -36,9 +34,15 @@ class ChemicalImportServiceTests(TestCase):
         crop = Crop.objects.create(name="キャベツ")
         cultivation = CultivationType.objects.create(name="露地")
         jma_area = JmaArea.objects.create(code="123456", name="test")
-        jma_pref = JmaPrefecture.objects.create(code="654321", jma_area=jma_area, name="静岡")
-        jma_region = JmaRegion.objects.create(code="111111", jma_prefecture=jma_pref, name="西部")
-        jma_city = JmaCity.objects.create(code="2222222", jma_region=jma_region, name="浜松")
+        jma_pref = JmaPrefecture.objects.create(
+            code="654321", jma_area=jma_area, name="静岡"
+        )
+        jma_region = JmaRegion.objects.create(
+            code="111111", jma_prefecture=jma_pref, name="西部"
+        )
+        jma_city = JmaCity.objects.create(
+            code="2222222", jma_region=jma_region, name="浜松"
+        )
         land = Land.objects.create(
             name="圃場A",
             jma_city=jma_city,
@@ -69,14 +73,60 @@ class ChemicalImportServiceTests(TestCase):
         # A=分析番号, B=氏名, C=圃場名, D=作物, E〜T=化学データ
         ws.append([])  # 1行目: 空
         ws.append([])  # 2行目: 空
-        ws.append(["分析番号", "氏名", "圃場名", "作物", "EC", "pH", "CEC", "CaO", "MgO", "K2O", "石灰飽和度", "苦土飽和度", "加里飽和度", "塩基飽和度", "P2O5", "リン酸吸収係数", "NH4-N", "NO3-N", "腐植", "仮比重"])  # 3行目: ヘッダー
-        ws.append(["001", "田中", "圃場A", "キャベツ", "1.2", "6.5", "15", "100", "20", "30", "60", "20", "10", "50%", "60", "800", "3", "4", "2.5%", "0.8"])  # 4行目: データ
+        ws.append(
+            [
+                "分析番号",
+                "氏名",
+                "圃場名",
+                "作物",
+                "EC",
+                "pH",
+                "CEC",
+                "CaO",
+                "MgO",
+                "K2O",
+                "石灰飽和度",
+                "苦土飽和度",
+                "加里飽和度",
+                "塩基飽和度",
+                "P2O5",
+                "リン酸吸収係数",
+                "NH4-N",
+                "NO3-N",
+                "腐植",
+                "仮比重",
+            ]
+        )  # 3行目: ヘッダー
+        ws.append(
+            [
+                "001",
+                "田中",
+                "圃場A",
+                "キャベツ",
+                "1.2",
+                "6.5",
+                "15",
+                "100",
+                "20",
+                "30",
+                "60",
+                "20",
+                "10",
+                "50%",
+                "60",
+                "800",
+                "3",
+                "4",
+                "2.5%",
+                "0.8",
+            ]
+        )  # 4行目: データ
         result = parse_kawada_worksheet(ws)
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.rows), 1)
         self.assertEqual(result.rows[0].land_name, "圃場A")
-        self.assertEqual(result.rows[0].values["humus"], 2.5)
-        self.assertEqual(result.rows[0].values["base_saturation"], 50.0)
+        self.assertEqual(result.rows[0].humus, 2.5)
+        self.assertEqual(result.rows[0].base_saturation, 50.0)
 
     def test_parse_kawada_worksheet_missing_required_columns(self):
         wb = Workbook()
@@ -87,4 +137,3 @@ class ChemicalImportServiceTests(TestCase):
         result = parse_kawada_worksheet(ws)
         self.assertEqual(result.rows, [])
         self.assertTrue(len(result.errors) > 0)
-

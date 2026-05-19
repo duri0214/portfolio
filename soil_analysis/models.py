@@ -1,6 +1,7 @@
+from urllib.parse import quote
+
 from django.contrib.auth import get_user_model
 from django.db import models
-from urllib.parse import quote
 
 from lib.geo.valueobject.coord import GoogleMapsCoord
 
@@ -457,7 +458,7 @@ class LandScoreChemical(models.Model):
     bulk_density = models.FloatField(null=True)
     remark = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
     land_block = models.ForeignKey(LandBlock, on_delete=models.CASCADE)
     land_ledger = models.ForeignKey(LandLedger, on_delete=models.CASCADE)
 
@@ -553,9 +554,7 @@ class RokunoheLandRegistry(models.Model):
     ledger_type = models.CharField(max_length=100, verbose_name="帳簿種別")
     address = models.CharField(max_length=255, verbose_name="住所")
     coordinate = models.CharField(max_length=100, verbose_name="座標")
-    registered_land_category = models.CharField(
-        max_length=50, verbose_name="登記地目"
-    )
+    registered_land_category = models.CharField(max_length=50, verbose_name="登記地目")
     current_land_category = models.CharField(max_length=50, verbose_name="現況地目")
     registered_area = models.PositiveIntegerField(verbose_name="登記面積(㎡)")
     current_area = models.PositiveIntegerField(verbose_name="現況面積(㎡)")

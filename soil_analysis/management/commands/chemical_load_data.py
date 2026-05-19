@@ -11,9 +11,10 @@ LandScoreChemicalテーブルにデータを一括登録する。
     python manage.py chemical_load_data data.xlsx --land-ledger-id=123 --overwrite
 """
 
+import os
+from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
-import attrs
 import unicodedata
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -23,11 +24,14 @@ from openpyxl.worksheet.worksheet import Worksheet
 from soil_analysis.models import LandLedger, LandScoreChemical
 
 
-@attrs.frozen
+@dataclass(frozen=True)
 class KawadaRow:
-    """川田研究所フォーマット1行分のデータ
+    """川田フォーマットをパースしたデータ行
 
     Attributes:
+        row_number: データ行のExcel行番号（警告・エラー表示用）
+            本コマンドではヘッダーが3行目・データ開始が4行目のため、
+            通常の最小値は4になる。
         analysis_number: 分析番号（A列）
         person_name: 氏名（B列）
         land_name: 圃場名（C列）
@@ -50,6 +54,7 @@ class KawadaRow:
         bulk_density: 仮比重（T列）
     """
 
+    row_number: int
     analysis_number: str
     person_name: str | None
     land_name: str
@@ -71,23 +76,85 @@ class KawadaRow:
     humus: float | None
     bulk_density: float | None
 
+    @staticmethod
+    def to_float(raw_value: object, row_number: int, column_name: str) -> float | None:
+        """Excelセルの値を数値（float）に変換する。"""
+        if raw_value is None:
+            return None
+        text = unicodedata.normalize("NFKC", str(raw_value)).strip()
+        if text in ("", "-", "ー", "―"):
+            return None
+        text = text.replace(",", "")
+        if text.endswith("%"):
+            text = text[:-1].strip()
+        try:
+            return float(Decimal(text))
+        except (InvalidOperation, ValueError) as exc:
+            raise ValueError(
+                f"数値変換失敗 row={row_number}, column={column_name}, value={raw_value}"
+            ) from exc
 
-@attrs.frozen
-class ParsedRow:
-    """パース済みデータ行（LandScoreChemical用）
+    @classmethod
+    def from_excel_row(cls, row: tuple, row_number: int) -> "KawadaRow":
+        """Excelの1行データからKawadaRowを構築する。"""
 
-    Attributes:
-        row_number: Excel行番号（1始まり）
-        land_name: 圃場名
-        values: フィールド名 -> 数値のマッピング（CHEMICAL_FIELD_KEYSの全17項目）
-    """
+        def to_str(col_idx: int) -> str:
+            """指定列のセル値を文字列として取得する。"""
+            return str(row[col_idx] if col_idx < len(row) else "").strip()
 
-    row_number: int
-    land_name: str
-    values: dict[str, float | None]
+        def to_numeric(col_idx: int, field_name: str) -> float | None:
+            """指定列のセル値を数値として取得する。"""
+            raw_value = row[col_idx] if col_idx < len(row) else None
+            return cls.to_float(raw_value, row_number, field_name)
+
+        return cls(
+            row_number=row_number,
+            analysis_number=to_str(KAWADA_COLUMN_ANALYSIS_NUMBER),
+            person_name=to_str(KAWADA_COLUMN_PERSON_NAME) or None,
+            land_name=to_str(KAWADA_COLUMN_LAND_NAME),
+            crop=to_str(KAWADA_COLUMN_CROP) or None,
+            ec=to_numeric(4, "ec"),
+            ph=to_numeric(5, "ph"),
+            cec=to_numeric(6, "cec"),
+            cao=to_numeric(7, "cao"),
+            mgo=to_numeric(8, "mgo"),
+            k2o=to_numeric(9, "k2o"),
+            lime_saturation=to_numeric(10, "lime_saturation"),
+            magnesia_saturation=to_numeric(11, "magnesia_saturation"),
+            potash_saturation=to_numeric(12, "potash_saturation"),
+            base_saturation=to_numeric(13, "base_saturation"),
+            p2o5=to_numeric(14, "p2o5"),
+            phosphorus_absorption=to_numeric(15, "phosphorus_absorption"),
+            nh4n=to_numeric(16, "nh4n"),
+            no3n=to_numeric(17, "no3n"),
+            humus=to_numeric(18, "humus"),
+            bulk_density=to_numeric(19, "bulk_density"),
+        )
+
+    def to_dict(self) -> dict[str, float | None]:
+        """LandScoreChemical投入用の化学分析値dictを返す。"""
+        return {
+            "ec": self.ec,
+            "nh4n": self.nh4n,
+            "no3n": self.no3n,
+            "total_nitrogen": None,  # TODO: ticket7で削除
+            "nh4_per_nitrogen": None,  # TODO: ticket7で削除
+            "ph": self.ph,
+            "cao": self.cao,
+            "mgo": self.mgo,
+            "k2o": self.k2o,
+            "base_saturation": self.base_saturation,
+            "cao_per_mgo": None,  # TODO: ticket7で削除
+            "mgo_per_k2o": None,  # TODO: ticket7で削除
+            "phosphorus_absorption": self.phosphorus_absorption,
+            "p2o5": self.p2o5,
+            "cec": self.cec,
+            "humus": self.humus,
+            "bulk_density": self.bulk_density,
+        }
 
 
-@attrs.frozen
+@dataclass(frozen=True)
 class ParseResult:
     """Excelパース結果
 
@@ -96,7 +163,7 @@ class ParseResult:
         errors: エラーメッセージのリスト
     """
 
-    rows: list[ParsedRow]
+    rows: list[KawadaRow]
     errors: list[str]
 
 
@@ -123,106 +190,6 @@ KAWADA_COLUMN_CHEMICAL_START = 4
 KAWADA_CELL_ANALYSIS_DATE = (
     "G1"  # 分析日（将来的に LandLedger.reporting_date に取り込み予定）
 )
-
-
-def parse_numeric_value(
-    raw_value: object, row_number: int, column_name: str
-) -> float | None:
-    """Excelセルの値を数値（float）に変換する
-
-    Excelシートから読み取った生の値を、化学分析データとして使用できる
-    float型に変換する。空値やハイフン（欠測値）、パーセント記号付き数値などに対応。
-
-    変換処理:
-        1. None/空文字/ハイフン類 → None（欠測値）
-        2. カンマ除去（例: "1,234" → "1234"）
-        3. パーセント記号除去（例: "50%" → "50"）
-        4. Decimal経由でfloatに変換（精度保持のため）
-
-    Args:
-        raw_value: Excelセルの生の値（文字列、数値、Noneなど）
-        row_number: 行番号（エラーメッセージ用）
-        column_name: 列名（エラーメッセージ用）
-
-    Returns:
-        変換後のfloat値、または欠測値の場合はNone
-
-    Raises:
-        ValueError: 数値変換に失敗した場合（行番号・列名・値を含むメッセージ）
-
-    Examples:
-        >>> parse_numeric_value("123", 1, "ec")
-        123.0
-        >>> parse_numeric_value("1,234.5", 1, "ec")
-        1234.5
-        >>> parse_numeric_value("50%", 1, "base_saturation")
-        50.0
-        >>> parse_numeric_value("-", 1, "ec")
-        None
-        >>> parse_numeric_value(None, 1, "ec")
-        None
-    """
-    if raw_value is None:
-        return None
-    text = unicodedata.normalize("NFKC", str(raw_value)).strip()
-    if text in ("", "-", "ー", "―"):
-        return None
-    text = text.replace(",", "")
-    if text.endswith("%"):
-        text = text[:-1].strip()
-    try:
-        return float(Decimal(text))
-    except (InvalidOperation, ValueError) as exc:
-        raise ValueError(
-            f"数値変換失敗 row={row_number}, column={column_name}, value={raw_value}"
-        ) from exc
-
-
-def _parse_kawada_row(row: tuple) -> KawadaRow:
-    """川田フォーマットの1行をパースしてVOを構築
-
-    Args:
-        row: Excelの行データ（タプル）
-
-    Returns:
-        KawadaRow: 川田フォーマット1行分のVO
-
-    Raises:
-        ValueError: 数値変換に失敗した場合（行番号なし、呼び出し側で追加すること）
-    """
-
-    def get_cell(col_idx: int) -> str:
-        """セル値を文字列として取得"""
-        return str(row[col_idx] if col_idx < len(row) else "").strip()
-
-    def get_numeric(col_idx: int, field_name: str) -> float | None:
-        """セル値を数値として取得"""
-        raw_value = row[col_idx] if col_idx < len(row) else None
-        # row_numberなしでパース（エラーメッセージには列名と値のみ）
-        return parse_numeric_value(raw_value, 0, field_name)
-
-    return KawadaRow(
-        analysis_number=get_cell(KAWADA_COLUMN_ANALYSIS_NUMBER),
-        person_name=get_cell(KAWADA_COLUMN_PERSON_NAME) or None,
-        land_name=get_cell(KAWADA_COLUMN_LAND_NAME),
-        crop=get_cell(KAWADA_COLUMN_CROP) or None,
-        ec=get_numeric(4, "ec"),
-        ph=get_numeric(5, "ph"),
-        cec=get_numeric(6, "cec"),
-        cao=get_numeric(7, "cao"),
-        mgo=get_numeric(8, "mgo"),
-        k2o=get_numeric(9, "k2o"),
-        lime_saturation=get_numeric(10, "lime_saturation"),
-        magnesia_saturation=get_numeric(11, "magnesia_saturation"),
-        potash_saturation=get_numeric(12, "potash_saturation"),
-        base_saturation=get_numeric(13, "base_saturation"),
-        p2o5=get_numeric(14, "p2o5"),
-        phosphorus_absorption=get_numeric(15, "phosphorus_absorption"),
-        nh4n=get_numeric(16, "nh4n"),
-        no3n=get_numeric(17, "no3n"),
-        humus=get_numeric(18, "humus"),
-        bulk_density=get_numeric(19, "bulk_density"),
-    )
 
 
 def parse_kawada_worksheet(worksheet: Worksheet) -> ParseResult:
@@ -252,7 +219,7 @@ def parse_kawada_worksheet(worksheet: Worksheet) -> ParseResult:
         5
         >>> result.rows[0].land_name
         '静岡ススムA1'
-        >>> result.rows[0].values["ec"]
+        >>> result.rows[0].ec
         0.15
     """
     # Excelシートのすべての行を取得（空行も含む）
@@ -294,37 +261,7 @@ def parse_kawada_worksheet(worksheet: Worksheet) -> ParseResult:
             continue  # 分析番号が空の行はスキップ（空行または非データ行）
 
         try:
-            # 川田フォーマット1行分をVOとして構築
-            kawada_row = _parse_kawada_row(row)
-
-            # LandScoreChemical用に変換（ticket7まで暫定対応）
-            # 川田にあってLandScoreChemicalにない項目: lime_saturation, magnesia_saturation, potash_saturation → 無視
-            # 川田にないLandScoreChemicalの項目: total_nitrogen, nh4_per_nitrogen, cao_per_mgo, mgo_per_k2o → None
-            values = {
-                "ec": kawada_row.ec,
-                "nh4n": kawada_row.nh4n,
-                "no3n": kawada_row.no3n,
-                "total_nitrogen": None,  # TODO: ticket7で削除
-                "nh4_per_nitrogen": None,  # TODO: ticket7で削除
-                "ph": kawada_row.ph,
-                "cao": kawada_row.cao,
-                "mgo": kawada_row.mgo,
-                "k2o": kawada_row.k2o,
-                "base_saturation": kawada_row.base_saturation,
-                "cao_per_mgo": None,  # TODO: ticket7で削除
-                "mgo_per_k2o": None,  # TODO: ticket7で削除
-                "phosphorus_absorption": kawada_row.phosphorus_absorption,
-                "p2o5": kawada_row.p2o5,
-                "cec": kawada_row.cec,
-                "humus": kawada_row.humus,
-                "bulk_density": kawada_row.bulk_density,
-            }
-
-            parsed_rows.append(
-                ParsedRow(
-                    row_number=row_number, land_name=kawada_row.land_name, values=values
-                )
-            )
+            parsed_rows.append(KawadaRow.from_excel_row(row, row_number))
         except ValueError as exc:
             # 数値変換エラー: 行番号を追加してエラーリストに記録
             parse_errors.append(f"row={row_number}: {exc}")
@@ -383,9 +320,27 @@ class Command(BaseCommand):
         land_ledger_id = options["land_ledger_id"]
         overwrite = options.get("overwrite", False)
 
+        if not os.path.exists(file_path):
+            self.stderr.write(
+                self.style.ERROR(f"エラー: ファイル '{file_path}' が見つかりません。")
+            )
+            return
+
         try:
             workbook = load_workbook(file_path, data_only=True)
+        except PermissionError:
+            self.stderr.write(
+                self.style.ERROR(
+                    f"エラー: ファイル '{file_path}' へのアクセスが拒否されました。\n"
+                    f"Excel でファイルを開いている場合は、閉じてから再試行してください。"
+                )
+            )
+            return
+        except Exception as e:
+            self.stderr.write(self.style.ERROR(f"エラー: {str(e)}"))
+            return
 
+        try:
             # シート数が1であることを確認
             if len(workbook.sheetnames) != 1:
                 self.stderr.write(
@@ -432,7 +387,10 @@ class Command(BaseCommand):
             with transaction.atomic():
                 for row in parse_result.rows:
                     for block_id in BLOCK_IDS:
-                        defaults = {**row.values, "remark": REMARK_IMPORT_MODE}
+                        record_values = {
+                            **row.to_dict(),
+                            "remark": REMARK_IMPORT_MODE,
+                        }
                         existing = LandScoreChemical.objects.filter(
                             land_ledger=ledger,
                             land_block_id=block_id,
@@ -444,7 +402,9 @@ class Command(BaseCommand):
                                     f"既存データありスキップ row={row.row_number}, ledger_id={ledger.id}, block_id={block_id}"
                                 )
                                 continue
-                            for field_name, field_value in defaults.items():
+                            # 既存レコードに値を上書きして更新する
+                            # 例: field_name="ec", field_value=0.15
+                            for field_name, field_value in record_values.items():
                                 setattr(existing, field_name, field_value)
                             existing.save()
                             updated_count += 1
@@ -453,7 +413,7 @@ class Command(BaseCommand):
                         LandScoreChemical.objects.create(
                             land_ledger=ledger,
                             land_block_id=block_id,
-                            **defaults,
+                            **record_values,
                         )
                         created_count += 1
 
@@ -467,4 +427,3 @@ class Command(BaseCommand):
 
         except Exception as e:
             self.stderr.write(self.style.ERROR(f"エラー: {str(e)}"))
-            raise
