@@ -34,7 +34,7 @@ class FieldDefinitionTests(SimpleTestCase):
         )
 
     def test_major_display_labels_and_units(self):
-        by_key = {field.key: field for field in REPORT_FIELDS}
+        by_key = {report_field.key: report_field for report_field in REPORT_FIELDS}
         self.assertEqual(by_key["ec"].label, "EC")
         self.assertEqual(by_key["ec"].unit, "mS/cm")
         self.assertEqual(by_key["cec"].label, "CEC")

@@ -56,7 +56,9 @@ REPORT_FIELDS: tuple[ReportField, ...] = (
     ReportField("bulk_density", "仮比重", "", "仮比重", ("bulk_density", "仮比重")),
 )
 
-REPORT_FIELD_KEYS: tuple[str, ...] = tuple(defn.key for defn in REPORT_FIELDS)
+REPORT_FIELD_KEYS: tuple[str, ...] = tuple(
+    report_field.key for report_field in REPORT_FIELDS
+)
 
 
 def normalize_text(value: str) -> str:
@@ -121,9 +123,9 @@ def build_alias_to_field_key_map() -> dict[str, str]:
         'total_nitrogen'
     """
     alias_map: dict[str, str] = {}
-    for defn in REPORT_FIELDS:
-        for alias in (defn.key, *defn.aliases):
-            alias_map[normalize_text(alias)] = defn.key
+    for report_field in REPORT_FIELDS:
+        for alias in (report_field.key, *report_field.aliases):
+            alias_map[normalize_text(alias)] = report_field.key
     return alias_map
 
 
