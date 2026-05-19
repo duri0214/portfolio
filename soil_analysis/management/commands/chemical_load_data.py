@@ -183,7 +183,7 @@ KAWADA_COLUMN_ANALYSIS_NUMBER = 0  # A列: 分析番号
 KAWADA_COLUMN_PERSON_NAME = 1  # B列: 氏名
 KAWADA_COLUMN_LAND_NAME = 2  # C列: 圃場名
 KAWADA_COLUMN_CROP = 3  # D列: 栽培作物
-# E列: 化学分析データ開始（CHEMICAL_FIELD_DEFINITIONSの順序で17項目）
+# E列: 化学分析データ開始（REPORT_FIELDSの順序で17項目）
 KAWADA_COLUMN_CHEMICAL_START = 4
 
 # セル参照（1-based: Excelのセル記法）
