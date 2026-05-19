@@ -196,7 +196,7 @@ def parse_kawada_worksheet(worksheet: Worksheet) -> ParseResult:
         5
         >>> result.rows[0].land_name
         '静岡ススムA1'
-        >>> result.rows[0].values["ec"]
+        >>> result.rows[0].ec
         0.15
     """
     # Excelシートのすべての行を取得（空行も含む）
