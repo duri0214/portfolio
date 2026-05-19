@@ -4,7 +4,7 @@ import unicodedata
 
 
 @dataclass(frozen=True)
-class FieldDefinition:
+class ReportFieldDefinition:
     key: str
     label: str
     unit: str
@@ -12,52 +12,56 @@ class FieldDefinition:
     aliases: tuple[str, ...] = ()
 
 
-REPORT_FIELD_DEFINITIONS: tuple[FieldDefinition, ...] = (
-    FieldDefinition("ec", "EC", "mS/cm", "電気伝導率", ("ec", "EC")),
-    FieldDefinition("nh4n", "NH4-N", "mg/100g", "アンモニア態窒素", ("nh4n", "NH4-N")),
-    FieldDefinition("no3n", "NO3-N", "mg/100g", "硝酸態窒素", ("no3n", "NO3-N")),
-    FieldDefinition(
+REPORT_FIELD_DEFINITIONS: tuple[ReportFieldDefinition, ...] = (
+    ReportFieldDefinition("ec", "EC", "mS/cm", "電気伝導率", ("ec", "EC")),
+    ReportFieldDefinition(
+        "nh4n", "NH4-N", "mg/100g", "アンモニア態窒素", ("nh4n", "NH4-N")
+    ),
+    ReportFieldDefinition("no3n", "NO3-N", "mg/100g", "硝酸態窒素", ("no3n", "NO3-N")),
+    ReportFieldDefinition(
         "total_nitrogen",
         "無機態N",
         "mg/100g",
         "無機態窒素（NH4+NO3）",
         ("total_nitrogen", "無機態N", "無機態窒素", "無機態窒素(NH4+NO3)"),
     ),
-    FieldDefinition(
+    ReportFieldDefinition(
         "nh4_per_nitrogen",
         "NH4/N比",
         "",
         "アンモニア態窒素比",
         ("nh4_per_nitrogen", "NH4/N比", "アンモニア態窒素比"),
     ),
-    FieldDefinition("ph", "pH", "", "水素イオン濃度", ("ph", "pH")),
-    FieldDefinition("cao", "CaO", "mg/100g", "交換性石灰", ("cao", "CaO")),
-    FieldDefinition("mgo", "MgO", "mg/100g", "交換性苦土", ("mgo", "MgO")),
-    FieldDefinition("k2o", "K2O", "mg/100g", "交換性加里", ("k2o", "K2O")),
-    FieldDefinition(
+    ReportFieldDefinition("ph", "pH", "", "水素イオン濃度", ("ph", "pH")),
+    ReportFieldDefinition("cao", "CaO", "mg/100g", "交換性石灰", ("cao", "CaO")),
+    ReportFieldDefinition("mgo", "MgO", "mg/100g", "交換性苦土", ("mgo", "MgO")),
+    ReportFieldDefinition("k2o", "K2O", "mg/100g", "交換性加里", ("k2o", "K2O")),
+    ReportFieldDefinition(
         "base_saturation",
         "塩基飽和度",
         "%",
         "塩基飽和度",
         ("base_saturation", "塩基飽和度"),
     ),
-    FieldDefinition(
+    ReportFieldDefinition(
         "cao_per_mgo", "CaO/MgO", "", "CaO/MgO比", ("cao_per_mgo", "CaO/MgO")
     ),
-    FieldDefinition(
+    ReportFieldDefinition(
         "mgo_per_k2o", "MgO/K2O", "", "MgO/K2O比", ("mgo_per_k2o", "MgO/K2O")
     ),
-    FieldDefinition(
+    ReportFieldDefinition(
         "phosphorus_absorption",
         "リン酸吸",
         "mg/100g",
         "リン酸吸収係数",
         ("phosphorus_absorption", "リン酸吸収係数", "リン酸吸"),
     ),
-    FieldDefinition("p2o5", "P2O5", "mg/100g", "可給態リン酸", ("p2o5", "P2O5")),
-    FieldDefinition("cec", "CEC", "meq/100g", "塩基置換容量", ("cec", "CEC")),
-    FieldDefinition("humus", "腐植", "%", "腐植", ("humus", "腐植")),
-    FieldDefinition("bulk_density", "仮比重", "", "仮比重", ("bulk_density", "仮比重")),
+    ReportFieldDefinition("p2o5", "P2O5", "mg/100g", "可給態リン酸", ("p2o5", "P2O5")),
+    ReportFieldDefinition("cec", "CEC", "meq/100g", "塩基置換容量", ("cec", "CEC")),
+    ReportFieldDefinition("humus", "腐植", "%", "腐植", ("humus", "腐植")),
+    ReportFieldDefinition(
+        "bulk_density", "仮比重", "", "仮比重", ("bulk_density", "仮比重")
+    ),
 )
 
 FIELD_KEYS: tuple[str, ...] = tuple(defn.key for defn in REPORT_FIELD_DEFINITIONS)
