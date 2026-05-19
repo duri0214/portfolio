@@ -11,8 +11,9 @@ LandScoreChemicalテーブルにデータを一括登録する。
     python manage.py chemical_load_data data.xlsx --land-ledger-id=123 --overwrite
 """
 
-from decimal import Decimal, InvalidOperation
+import os
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 
 import unicodedata
 from django.core.management.base import BaseCommand
@@ -104,7 +105,7 @@ class KawadaRow:
         def to_numeric(col_idx: int, field_name: str) -> float | None:
             """指定列のセル値を数値として取得する。"""
             raw_value = row[col_idx] if col_idx < len(row) else None
-            return cls.to_float(raw_value, 0, field_name)
+            return cls.to_float(raw_value, row_number, field_name)
 
         return cls(
             row_number=row_number,
@@ -319,9 +320,27 @@ class Command(BaseCommand):
         land_ledger_id = options["land_ledger_id"]
         overwrite = options.get("overwrite", False)
 
+        if not os.path.exists(file_path):
+            self.stderr.write(
+                self.style.ERROR(f"エラー: ファイル '{file_path}' が見つかりません。")
+            )
+            return
+
         try:
             workbook = load_workbook(file_path, data_only=True)
+        except PermissionError:
+            self.stderr.write(
+                self.style.ERROR(
+                    f"エラー: ファイル '{file_path}' へのアクセスが拒否されました。\n"
+                    f"Excel でファイルを開いている場合は、閉じてから再試行してください。"
+                )
+            )
+            return
+        except Exception as e:
+            self.stderr.write(self.style.ERROR(f"エラー: {str(e)}"))
+            return
 
+        try:
             # シート数が1であることを確認
             if len(workbook.sheetnames) != 1:
                 self.stderr.write(
@@ -408,4 +427,3 @@ class Command(BaseCommand):
 
         except Exception as e:
             self.stderr.write(self.style.ERROR(f"エラー: {str(e)}"))
-            raise
