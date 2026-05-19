@@ -130,6 +130,28 @@ class KawadaRow:
             bulk_density=to_numeric(19, "bulk_density"),
         )
 
+    def to_dict(self) -> dict[str, float | None]:
+        """LandScoreChemical投入用の化学分析値dictを返す。"""
+        return {
+            "ec": self.ec,
+            "nh4n": self.nh4n,
+            "no3n": self.no3n,
+            "total_nitrogen": None,  # TODO: ticket7で削除
+            "nh4_per_nitrogen": None,  # TODO: ticket7で削除
+            "ph": self.ph,
+            "cao": self.cao,
+            "mgo": self.mgo,
+            "k2o": self.k2o,
+            "base_saturation": self.base_saturation,
+            "cao_per_mgo": None,  # TODO: ticket7で削除
+            "mgo_per_k2o": None,  # TODO: ticket7で削除
+            "phosphorus_absorption": self.phosphorus_absorption,
+            "p2o5": self.p2o5,
+            "cec": self.cec,
+            "humus": self.humus,
+            "bulk_density": self.bulk_density,
+        }
+
 
 @dataclass(frozen=True)
 class ParseResult:
