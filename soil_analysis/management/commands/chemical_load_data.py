@@ -131,7 +131,7 @@ class KawadaRow:
         )
 
 
-@attrs.frozen
+@dataclass(frozen=True)
 class ParseResult:
     """Excelパース結果
 
@@ -140,7 +140,7 @@ class ParseResult:
         errors: エラーメッセージのリスト
     """
 
-    rows: list[ParsedRow]
+    rows: list[KawadaRow]
     errors: list[str]
 
 
