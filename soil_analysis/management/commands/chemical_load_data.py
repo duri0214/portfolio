@@ -260,37 +260,7 @@ def parse_kawada_worksheet(worksheet: Worksheet) -> ParseResult:
             continue  # 分析番号が空の行はスキップ（空行または非データ行）
 
         try:
-            # 川田フォーマット1行分をVOとして構築
-            kawada_row = _parse_kawada_row(row)
-
-            # LandScoreChemical用に変換（ticket7まで暫定対応）
-            # 川田にあってLandScoreChemicalにない項目: lime_saturation, magnesia_saturation, potash_saturation → 無視
-            # 川田にないLandScoreChemicalの項目: total_nitrogen, nh4_per_nitrogen, cao_per_mgo, mgo_per_k2o → None
-            values = {
-                "ec": kawada_row.ec,
-                "nh4n": kawada_row.nh4n,
-                "no3n": kawada_row.no3n,
-                "total_nitrogen": None,  # TODO: ticket7で削除
-                "nh4_per_nitrogen": None,  # TODO: ticket7で削除
-                "ph": kawada_row.ph,
-                "cao": kawada_row.cao,
-                "mgo": kawada_row.mgo,
-                "k2o": kawada_row.k2o,
-                "base_saturation": kawada_row.base_saturation,
-                "cao_per_mgo": None,  # TODO: ticket7で削除
-                "mgo_per_k2o": None,  # TODO: ticket7で削除
-                "phosphorus_absorption": kawada_row.phosphorus_absorption,
-                "p2o5": kawada_row.p2o5,
-                "cec": kawada_row.cec,
-                "humus": kawada_row.humus,
-                "bulk_density": kawada_row.bulk_density,
-            }
-
-            parsed_rows.append(
-                ParsedRow(
-                    row_number=row_number, land_name=kawada_row.land_name, values=values
-                )
-            )
+            parsed_rows.append(KawadaRow.from_excel_row(row, row_number))
         except ValueError as exc:
             # 数値変換エラー: 行番号を追加してエラーリストに記録
             parse_errors.append(f"row={row_number}: {exc}")
