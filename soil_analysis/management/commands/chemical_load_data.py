@@ -376,7 +376,10 @@ class Command(BaseCommand):
             with transaction.atomic():
                 for row in parse_result.rows:
                     for block_id in BLOCK_IDS:
-                        defaults = {**row.values, "remark": REMARK_IMPORT_MODE}
+                        record_values = {
+                            **row.to_dict(),
+                            "remark": REMARK_IMPORT_MODE,
+                        }
                         existing = LandScoreChemical.objects.filter(
                             land_ledger=ledger,
                             land_block_id=block_id,
@@ -388,7 +391,9 @@ class Command(BaseCommand):
                                     f"既存データありスキップ row={row.row_number}, ledger_id={ledger.id}, block_id={block_id}"
                                 )
                                 continue
-                            for field_name, field_value in defaults.items():
+                            # 既存レコードに値を上書きして更新する
+                            # 例: field_name="ec", field_value=0.15
+                            for field_name, field_value in record_values.items():
                                 setattr(existing, field_name, field_value)
                             existing.save()
                             updated_count += 1
@@ -397,7 +402,7 @@ class Command(BaseCommand):
                         LandScoreChemical.objects.create(
                             land_ledger=ledger,
                             land_block_id=block_id,
-                            **defaults,
+                            **record_values,
                         )
                         created_count += 1
 
