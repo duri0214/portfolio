@@ -25,9 +25,12 @@ from soil_analysis.models import LandLedger, LandScoreChemical
 
 @attrs.frozen
 class KawadaRow:
-    """川田研究所フォーマット1行分のデータ
+    """川田フォーマットをパースしたデータ行
 
     Attributes:
+        row_number: データ行のExcel行番号（警告・エラー表示用）
+            本コマンドではヘッダーが3行目・データ開始が4行目のため、
+            通常の最小値は4になる。
         analysis_number: 分析番号（A列）
         person_name: 氏名（B列）
         land_name: 圃場名（C列）
@@ -50,6 +53,7 @@ class KawadaRow:
         bulk_density: 仮比重（T列）
     """
 
+    row_number: int
     analysis_number: str
     person_name: str | None
     land_name: str
@@ -71,20 +75,60 @@ class KawadaRow:
     humus: float | None
     bulk_density: float | None
 
+    @staticmethod
+    def to_float(raw_value: object, row_number: int, column_name: str) -> float | None:
+        """Excelセルの値を数値（float）に変換する。"""
+        if raw_value is None:
+            return None
+        text = unicodedata.normalize("NFKC", str(raw_value)).strip()
+        if text in ("", "-", "ー", "―"):
+            return None
+        text = text.replace(",", "")
+        if text.endswith("%"):
+            text = text[:-1].strip()
+        try:
+            return float(Decimal(text))
+        except (InvalidOperation, ValueError) as exc:
+            raise ValueError(
+                f"数値変換失敗 row={row_number}, column={column_name}, value={raw_value}"
+            ) from exc
 
-@attrs.frozen
-class ParsedRow:
-    """パース済みデータ行（LandScoreChemical用）
+    @classmethod
+    def from_excel_row(cls, row: tuple, row_number: int) -> "KawadaRow":
+        """Excelの1行データからKawadaRowを構築する。"""
 
-    Attributes:
-        row_number: Excel行番号（1始まり）
-        land_name: 圃場名
-        values: フィールド名 -> 数値のマッピング（CHEMICAL_FIELD_KEYSの全17項目）
-    """
+        def to_str(col_idx: int) -> str:
+            """指定列のセル値を文字列として取得する。"""
+            return str(row[col_idx] if col_idx < len(row) else "").strip()
 
-    row_number: int
-    land_name: str
-    values: dict[str, float | None]
+        def to_numeric(col_idx: int, field_name: str) -> float | None:
+            """指定列のセル値を数値として取得する。"""
+            raw_value = row[col_idx] if col_idx < len(row) else None
+            return cls.to_float(raw_value, 0, field_name)
+
+        return cls(
+            row_number=row_number,
+            analysis_number=to_str(KAWADA_COLUMN_ANALYSIS_NUMBER),
+            person_name=to_str(KAWADA_COLUMN_PERSON_NAME) or None,
+            land_name=to_str(KAWADA_COLUMN_LAND_NAME),
+            crop=to_str(KAWADA_COLUMN_CROP) or None,
+            ec=to_numeric(4, "ec"),
+            ph=to_numeric(5, "ph"),
+            cec=to_numeric(6, "cec"),
+            cao=to_numeric(7, "cao"),
+            mgo=to_numeric(8, "mgo"),
+            k2o=to_numeric(9, "k2o"),
+            lime_saturation=to_numeric(10, "lime_saturation"),
+            magnesia_saturation=to_numeric(11, "magnesia_saturation"),
+            potash_saturation=to_numeric(12, "potash_saturation"),
+            base_saturation=to_numeric(13, "base_saturation"),
+            p2o5=to_numeric(14, "p2o5"),
+            phosphorus_absorption=to_numeric(15, "phosphorus_absorption"),
+            nh4n=to_numeric(16, "nh4n"),
+            no3n=to_numeric(17, "no3n"),
+            humus=to_numeric(18, "humus"),
+            bulk_density=to_numeric(19, "bulk_density"),
+        )
 
 
 @attrs.frozen
