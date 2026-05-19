@@ -98,7 +98,7 @@
                             <div class='text-start small'>
                                 <div class='fw-bold border-bottom mb-1 text-center'>{{ block.name }}</div>
                                 <ul class='list-unstyled mb-0' style='column-count: 2; column-gap: 15px;'>
-                                    {% for field in chemical_fields %}
+                                    {% for field in report_fields %}
                                         <li>
                                             <span style="color: #adb5bd;">
                                                 {{ field.label }}{% if field.unit %}({{ field.unit }}){% endif %}:
