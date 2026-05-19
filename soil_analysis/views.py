@@ -422,7 +422,7 @@ class ChemicalSuccessView(TemplateView):
                 ).get(id=land_ledger_id)
                 chemical_data = LandScoreChemical.objects.filter(
                     land_ledger=land_ledger,
-                    remark="import_mode=field_level_copied_to_9_blocks",
+                    remark="import_mode=field_level_copied_to_5_blocks",
                 )
                 context["land_ledger"] = land_ledger
                 context["created_count"] = chemical_data.count()

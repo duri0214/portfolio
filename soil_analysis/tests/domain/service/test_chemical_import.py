@@ -6,6 +6,7 @@ from openpyxl import Workbook
 
 from soil_analysis.management.commands.chemical_load_data import (
     BLOCK_IDS,
+    Command,
     ParsedRow,
     parse_kawada_worksheet,
 )
@@ -59,6 +60,24 @@ class ChemicalImportServiceTests(TestCase):
             sampling_method=sampling_method,
             sampling_staff=self.user,
         )
+        land_b = Land.objects.create(
+            name="圃場B",
+            jma_city=jma_city,
+            center="35.2,139.2",
+            area=120,
+            company=company,
+            cultivation_type=cultivation,
+            owner=self.user,
+        )
+        self.ledger_b = LandLedger.objects.create(
+            sampling_date=date(2026, 5, 2),
+            analytical_agency=company,
+            crop=crop,
+            land=land_b,
+            land_period=period,
+            sampling_method=sampling_method,
+            sampling_staff=self.user,
+        )
         for block_id in BLOCK_IDS:
             LandBlock.objects.create(id=block_id, name=f"Block{block_id}")
 
@@ -88,3 +107,14 @@ class ChemicalImportServiceTests(TestCase):
         self.assertEqual(result.rows, [])
         self.assertTrue(len(result.errors) > 0)
 
+    def test_resolve_target_ledger_by_land_name_and_period(self):
+        row_a = ParsedRow(row_number=4, land_name="圃場A", values={})
+        row_b = ParsedRow(row_number=5, land_name="圃場B", values={})
+
+        ledger_a, warning_a = Command._resolve_target_ledger(row_a, self.ledger)
+        ledger_b, warning_b = Command._resolve_target_ledger(row_b, self.ledger)
+
+        self.assertEqual(warning_a, None)
+        self.assertEqual(warning_b, None)
+        self.assertEqual(ledger_a.id, self.ledger.id)
+        self.assertEqual(ledger_b.id, self.ledger_b.id)

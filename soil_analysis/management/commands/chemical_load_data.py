@@ -338,7 +338,7 @@ class Command(BaseCommand):
     川田研究所が提供する化学分析結果Excel(.xlsx)を読み込み、
     指定されたLandLedgerに紐づけてLandScoreChemicalテーブルにデータを一括登録する。
 
-    1つの圃場データを9ブロック（A1-C3）すべてにコピーする仕様。
+    1つの圃場データを5ブロック（1,3,5,7,9）にコピーする仕様。
 
     使用方法:
         python manage.py chemical_load_data <excel_path> --land-ledger-id=<id> [--overwrite]
@@ -365,6 +365,42 @@ class Command(BaseCommand):
     """
 
     help = "Import chemical analysis data from Excel (Kawada format)"
+
+    @staticmethod
+    def _resolve_target_ledger(
+        row: ParsedRow, default_ledger: LandLedger
+    ) -> tuple[LandLedger | None, str | None]:
+        """行データに対応する取り込み先帳簿を解決する。
+
+        優先順位:
+        1. 画面選択された帳簿と同一時期(land_period)かつ land.name 一致
+        2. land.name 一致のみ
+        """
+        same_period_ledgers = LandLedger.objects.select_related("land").filter(
+            land__name=row.land_name,
+            land_period=default_ledger.land_period,
+        )
+        same_period_count = same_period_ledgers.count()
+        if same_period_count == 1:
+            return same_period_ledgers.first(), None
+        if same_period_count > 1:
+            return (
+                None,
+                f"帳簿特定不可(同名圃場が同一時期に複数) row={row.row_number}, land_name={row.land_name}",
+            )
+
+        name_only_ledgers = LandLedger.objects.select_related("land").filter(
+            land__name=row.land_name
+        )
+        name_only_count = name_only_ledgers.count()
+        if name_only_count == 1:
+            return name_only_ledgers.first(), None
+        if name_only_count > 1:
+            return (
+                None,
+                f"帳簿特定不可(同名圃場の帳簿が複数) row={row.row_number}, land_name={row.land_name}",
+            )
+        return None, f"帳簿未検出 row={row.row_number}, land_name={row.land_name}"
 
     def add_arguments(self, parser):
         parser.add_argument("file_path", type=str, help="Path to Excel file (.xlsx)")
@@ -409,9 +445,9 @@ class Command(BaseCommand):
                 self.stderr.write(self.style.WARNING("取り込み対象行がありません。"))
                 return
 
-            # LandLedgerの存在確認
+            # 画面で選択した帳簿をアンカーとして使用（時期判定の基準）
             try:
-                ledger = LandLedger.objects.get(id=land_ledger_id)
+                default_ledger = LandLedger.objects.get(id=land_ledger_id)
             except LandLedger.DoesNotExist:
                 self.stderr.write(
                     self.style.ERROR(
@@ -431,6 +467,13 @@ class Command(BaseCommand):
 
             with transaction.atomic():
                 for row in parse_result.rows:
+                    ledger, resolve_warning = self._resolve_target_ledger(
+                        row=row, default_ledger=default_ledger
+                    )
+                    if resolve_warning:
+                        warnings.append(resolve_warning)
+                        continue
+
                     for block_id in BLOCK_IDS:
                         defaults = {**row.values, "remark": REMARK_IMPORT_MODE}
                         existing = LandScoreChemical.objects.filter(
