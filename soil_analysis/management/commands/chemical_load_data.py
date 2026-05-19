@@ -12,8 +12,8 @@ LandScoreChemicalテーブルにデータを一括登録する。
 """
 
 from decimal import Decimal, InvalidOperation
+from dataclasses import dataclass
 
-import attrs
 import unicodedata
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -23,7 +23,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from soil_analysis.models import LandLedger, LandScoreChemical
 
 
-@attrs.frozen
+@dataclass(frozen=True)
 class KawadaRow:
     """川田フォーマットをパースしたデータ行
 
