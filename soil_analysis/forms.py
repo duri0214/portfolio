@@ -147,11 +147,6 @@ class ChemicalUploadForm(forms.Form):
             attrs={"class": "form-control", "tabindex": "1", "accept": ".xlsx"}
         ),
     )
-    overwrite = forms.BooleanField(
-        label="既存データを上書き",
-        required=False,
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input", "tabindex": "2"}),
-    )
 
 
 class CsvGenerateForm(forms.Form):

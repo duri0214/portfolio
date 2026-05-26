@@ -11,29 +11,40 @@
             </ol>
         </nav>
         <h1>Association Successful</h1>
-
-        <div class="alert alert-success">
-            <h5><i class="fas fa-check-circle"></i> 関連付けデータに異常はありませんでした！</h5>
-            <p>
-                総 <strong>{{ display_record_count }}</strong> レコードをland_ledgerとland_blockに正常に関連付けしました。
-            </p>
-            <p class="mb-0">
-                新規: <strong>{{ created_count }}</strong> / 更新: <strong>{{ updated_count }}</strong> / スキップ: <strong>{{ skipped_count }}</strong>
-            </p>
-        </div>
-
-        {% if warnings %}
-            <div class="alert alert-warning">
-                <h6><i class="fas fa-exclamation-triangle"></i> 警告</h6>
-                <ul class="mb-0">
-                    {% for warning in warnings %}
-                        <li>{{ warning }}</li>
-                    {% endfor %}
-                </ul>
+        {% if import_errors %}
+            <p>処理は成功しましたが、エラーが発生したデータがあります。詳細は以下のテーブルをご確認ください。</p>
+            <table class="table table-bordered table-gray table-striped">
+                <thead>
+                <tr>
+                    <th>Excel Row</th>
+                    <th>Land Name</th>
+                    <th>Message</th>
+                    <th>Created At</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for error in import_errors %}
+                    <tr>
+                        <td>{{ error.row_number }}</td>
+                        <td>{{ error.land_name }}</td>
+                        <td>{{ error.message }}</td>
+                        <td>{{ error.created_at }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-success">
+                <h5><i class="fas fa-check-circle"></i> 関連付けデータに異常はありませんでした！</h5>
+                <p>
+                    総 <strong>{{ display_record_count }}</strong> レコードをland_ledgerとland_blockに正常に関連付けしました。
+                </p>
+                <p class="mb-0">
+                    新規: <strong>{{ created_count }}</strong> / 更新: <strong>{{ updated_count }}</strong>
+                </p>
             </div>
-        {% endif %}
 
-        <div class="card mb-4">
+            <div class="card mb-4">
             <div class="card-header">
                 <h6 class="mb-0"><i class="fas fa-chart-bar"></i> 関連付けデータ集計</h6>
             </div>
@@ -84,6 +95,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <div class="text-center">
             <a class="btn btn-primary btn-lg" href="{% url 'soil:home' %}">

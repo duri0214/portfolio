@@ -6,7 +6,12 @@ import unicodedata
 from django.db import transaction
 from openpyxl.worksheet.worksheet import Worksheet
 
-from soil_analysis.models import LandLedger, LandScoreChemical, Land
+from soil_analysis.models import (
+    LandLedger,
+    SoilChemicalMeasurement,
+    Land,
+    SoilChemicalMeasurementImportErrors,
+)
 
 
 @dataclass(frozen=True)
@@ -183,9 +188,7 @@ class ChemicalImportService:
         return ledgers[:10]  # とりあえず上位10件
 
     @classmethod
-    def save_import_data(
-        cls, rows_data: List[Dict[str, Any]], overwrite: bool = False
-    ) -> Dict[str, Any]:
+    def save_import_data(cls, rows_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         確定済みデータを保存する
         rows_data: [
@@ -193,16 +196,42 @@ class ChemicalImportService:
                 "row_data": {...}, # KawadaRow を dict にしたもの
                 "land_ledger_id": 123
             },
-            ...
         ]
         """
         created_count = 0
         updated_count = 0
-        skipped_count = 0
         ledger_stats: Dict[int, Dict[str, Any]] = {}
+        error_count = 0
+
+        SoilChemicalMeasurementImportErrors.objects.all().delete()
+
+        # 同一取り込み内で同じ帳簿が複数行に割り当たるのは重複として扱う
+        ledger_to_rows: Dict[int, List[Dict[str, Any]]] = {}
+        for entry in rows_data:
+            ledger_id = entry.get("land_ledger_id")
+            if not ledger_id:
+                continue
+            ledger_to_rows.setdefault(ledger_id, []).append(entry)
+
+        duplicate_entries: set[int] = set()
+        for entries in ledger_to_rows.values():
+            if len(entries) <= 1:
+                continue
+            for e in entries:
+                duplicate_entries.add(id(e))
+                row_data = e.get("row_data", {})
+                SoilChemicalMeasurementImportErrors.objects.create(
+                    row_number=row_data.get("row_number"),
+                    land_name=row_data.get("land_name"),
+                    message="同一帳簿への重複割り当て",
+                    remark="duplicate_ledger_assignment",
+                )
+                error_count += 1
 
         with transaction.atomic():
             for entry in rows_data:
+                if id(entry) in duplicate_entries:
+                    continue
                 ledger_id = entry.get("land_ledger_id")
                 if not ledger_id:
                     continue
@@ -226,15 +255,12 @@ class ChemicalImportService:
                 }
 
                 for block_id in cls.BLOCK_IDS:
-                    existing = LandScoreChemical.objects.filter(
+                    existing = SoilChemicalMeasurement.objects.filter(
                         land_ledger=ledger,
                         land_block_id=block_id,
                     ).first()
 
                     if existing:
-                        if not overwrite:
-                            skipped_count += 1
-                            continue
                         for field_name, field_value in record_values.items():
                             setattr(existing, field_name, field_value)
                         existing.save()
@@ -242,7 +268,7 @@ class ChemicalImportService:
                         ledger_stats[ledger.id]["updated"] += 1
                         continue
 
-                    LandScoreChemical.objects.create(
+                    SoilChemicalMeasurement.objects.create(
                         land_ledger=ledger,
                         land_block_id=block_id,
                         **record_values,
@@ -258,9 +284,11 @@ class ChemicalImportService:
                     "company_name": ledger.land.company.name,
                     "land_name": ledger.land.name,
                     "period_name": ledger.land_period.name,
-                    "sampling_date": ledger.sampling_date.isoformat()
-                    if ledger.sampling_date
-                    else None,
+                    "sampling_date": (
+                        ledger.sampling_date.isoformat()
+                        if ledger.sampling_date
+                        else None
+                    ),
                     "created": stat["created"],
                     "updated": stat["updated"],
                     "total": stat["created"] + stat["updated"],
@@ -270,7 +298,7 @@ class ChemicalImportService:
         return {
             "created": created_count,
             "updated": updated_count,
-            "skipped": skipped_count,
             "ledger_summary": summary,
             "ledger_ids": list(ledger_stats.keys()),
+            "error_count": error_count,
         }

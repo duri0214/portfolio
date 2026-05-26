@@ -12,17 +12,17 @@ class Command(BaseCommand):
     """川田研究所フォーマットのExcelから化学分析データを取り込むDjangoコマンド
 
     川田研究所が提供する化学分析結果Excel(.xlsx)を読み込み、
-    指定されたLandLedgerに紐づけてLandScoreChemicalテーブルにデータを一括登録する。
+    指定されたLandLedgerに紐づけてSoilChemicalMeasurementテーブルにデータを一括登録する。
 
     1つの圃場データを5ブロック（1,3,5,7,9）にコピーする仕様。
 
     使用方法:
-        python manage.py chemical_load_data <excel_path> --land-ledger-id=<id> [--overwrite]
+        python manage.py chemical_load_data <excel_path> --land-ledger-id=<id>
 
     引数:
         excel_path: 川田研究所のExcelファイルパス（.xlsx）
         --land-ledger-id: 取り込み先のLandLedger ID（必須）
-        --overwrite: 既存データを上書きする場合に指定
+        既存データは常に更新されます（upsert）。
     """
 
     help = "Import chemical analysis data from Excel (Kawada format)"
@@ -35,14 +35,10 @@ class Command(BaseCommand):
             required=True,
             help="LandLedger ID to associate",
         )
-        parser.add_argument(
-            "--overwrite", action="store_true", help="Overwrite existing data"
-        )
 
     def handle(self, *args, **options):
         file_path = options["file_path"]
         land_ledger_id = options["land_ledger_id"]
-        overwrite = options.get("overwrite", False)
 
         if not os.path.exists(file_path):
             self.stderr.write(
@@ -109,9 +105,7 @@ class Command(BaseCommand):
                     }
                 )
 
-            result = ChemicalImportService.save_import_data(
-                save_data, overwrite=overwrite
-            )
+            result = ChemicalImportService.save_import_data(save_data)
 
             self.stdout.write(
                 self.style.SUCCESS(

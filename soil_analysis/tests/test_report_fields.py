@@ -6,14 +6,14 @@ from soil_analysis.domain.valueobject.report.fields import (
     REPORT_FIELD_KEYS,
     normalize_text,
 )
-from soil_analysis.models import LandScoreChemical
+from soil_analysis.models import SoilChemicalMeasurement
 
 
 class FieldDefinitionTests(SimpleTestCase):
-    def test_all_field_keys_exist_in_land_score_chemical_model(self):
+    def test_all_field_keys_exist_in_soil_chemical_measurement_model(self):
         model_field_names = {
             field.name
-            for field in LandScoreChemical._meta.get_fields()
+            for field in SoilChemicalMeasurement._meta.get_fields()
             if getattr(field, "attname", None)
         }
         for key in REPORT_FIELD_KEYS:

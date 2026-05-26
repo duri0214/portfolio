@@ -50,11 +50,12 @@ from soil_analysis.forms import (
 from soil_analysis.models import (
     Company,
     Land,
-    LandScoreChemical,
+    SoilChemicalMeasurement,
     LandReview,
     LandLedger,
     LandBlock,
     SoilHardnessMeasurementImportErrors,
+    SoilChemicalMeasurementImportErrors,
     SoilHardnessMeasurement,
     SamplingOrder,
     RouteSuggestImport,
@@ -215,7 +216,7 @@ class LandReportChemicalListView(ListView):
     C1, B1, A1
     """
 
-    model = LandScoreChemical
+    model = SoilChemicalMeasurement
     template_name = "soil_analysis/land_report/chemical.html"
 
     def get_queryset(self):
@@ -231,7 +232,7 @@ class LandReportChemicalListView(ListView):
         context["land"] = land_ledger.land
         context["land_ledger"] = land_ledger
         context["land_scores"] = (
-            LandScoreChemical.objects.filter(land_ledger=land_ledger)
+            SoilChemicalMeasurement.objects.filter(land_ledger=land_ledger)
             .select_related("land_block")
             .order_by("land_block__name")
         )
@@ -375,8 +376,6 @@ class ChemicalUploadView(FormView):
             messages.error(self.request, "xlsxファイルを指定してください。")
             return self.form_invalid(form)
 
-        overwrite = form.cleaned_data.get("overwrite", False)
-
         from openpyxl import load_workbook
 
         try:
@@ -414,7 +413,6 @@ class ChemicalUploadView(FormView):
 
             self.request.session["chemical_import_session"] = {
                 "rows": rows_data,
-                "overwrite": overwrite,
                 "total_rows": len(rows_data),
             }
 
@@ -502,9 +500,7 @@ class ChemicalAssociationView(TemplateView):
                 )
 
             try:
-                result = ChemicalImportService.save_import_data(
-                    save_data, overwrite=import_session.get("overwrite", False)
-                )
+                result = ChemicalImportService.save_import_data(save_data)
                 request.session["chemical_import_result"] = result
                 # セッションクリア
                 del request.session["chemical_import_session"]
@@ -609,10 +605,12 @@ class ChemicalSuccessView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         result = self.request.session.get("chemical_import_result")
+        context["import_errors"] = (
+            SoilChemicalMeasurementImportErrors.objects.all().order_by("-created_at")
+        )
         if result:
             context["created_count"] = result.get("created", 0)
             context["updated_count"] = result.get("updated", 0)
-            context["skipped_count"] = result.get("skipped", 0)
             context["total_count"] = context["created_count"] + context["updated_count"]
             context["display_record_count"] = context["total_count"]
             ledger_ids = result.get("ledger_ids", [])
@@ -620,7 +618,7 @@ class ChemicalSuccessView(TemplateView):
             if ledger_ids:
                 count_by_ledger = {
                     row["land_ledger_id"]: row["total"]
-                    for row in LandScoreChemical.objects.filter(
+                    for row in SoilChemicalMeasurement.objects.filter(
                         land_ledger_id__in=ledger_ids
                     )
                     .values("land_ledger_id")
@@ -633,7 +631,7 @@ class ChemicalSuccessView(TemplateView):
 
                 for ledger in ledgers:
                     block_names = list(
-                        LandScoreChemical.objects.filter(land_ledger=ledger)
+                        SoilChemicalMeasurement.objects.filter(land_ledger=ledger)
                         .select_related("land_block")
                         .values_list("land_block__name", flat=True)
                         .distinct()

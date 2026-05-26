@@ -23,14 +23,6 @@
                         <div class="form-text">川田研究所のExcelファイル（.xlsx）を選択してください</div>
                     </div>
 
-                    <div class="form-check mb-3">
-                        {{ form.overwrite }}
-                        <label class="form-check-label" for="{{ form.overwrite.id_for_label }}">
-                            {{ form.overwrite.label }}
-                        </label>
-                        <div class="form-text">既存のデータを上書きする場合はチェックしてください</div>
-                    </div>
-
                     <button class="btn btn-primary" type="submit">
                         <i class="fas fa-upload me-1"></i>取り込み実行
                     </button>

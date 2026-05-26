@@ -138,9 +138,9 @@ class ChemicalImportServiceTest(TestCase):
         result = ChemicalImportService.save_import_data(rows_data)
         self.assertEqual(result["created"], 5)  # 5ブロック分作成されるはず
 
-        from soil_analysis.models import LandScoreChemical
+        from soil_analysis.models import SoilChemicalMeasurement
 
-        chemicals = LandScoreChemical.objects.filter(land_ledger=self.ledger)
+        chemicals = SoilChemicalMeasurement.objects.filter(land_ledger=self.ledger)
         self.assertEqual(chemicals.count(), 5)
         self.assertEqual(chemicals.first().ph, 6.5)
         self.assertEqual(

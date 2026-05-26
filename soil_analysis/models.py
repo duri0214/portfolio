@@ -416,7 +416,7 @@ class SamplingOrder(models.Model):
     updated_at = models.DateTimeField(null=True)
 
 
-class LandScoreChemical(models.Model):
+class SoilChemicalMeasurement(models.Model):
     """
     顧客が持つ圃場をエリア単位で１レコードに収録します
     圃場ひとつは９つのエリアに分かれるが計測は5エリア✕5箇所で、1圃場あたり25箇所計測
@@ -461,6 +461,19 @@ class LandScoreChemical(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
     land_block = models.ForeignKey(LandBlock, on_delete=models.CASCADE)
     land_ledger = models.ForeignKey(LandLedger, on_delete=models.CASCADE)
+
+
+class SoilChemicalMeasurementImportErrors(models.Model):
+    """
+    化学分析取り込み時のエラーリスト
+    """
+
+    row_number = models.IntegerField(null=True)
+    land_name = models.CharField(max_length=256, null=True)
+    message = models.TextField()
+    remark = models.TextField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True)
 
 
 class LandReview(models.Model):
