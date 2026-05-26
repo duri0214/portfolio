@@ -143,11 +143,7 @@ class SoilHardnessMeasurementRepository:
                 ]
         """
         # フォルダ単位でグループ化されたデータを取得
-        folder_groups = (
-            SoilHardnessMeasurement.objects.filter(land_block__isnull=True)
-            .values("folder")
-            .distinct()
-        )
+        folder_groups = SoilHardnessMeasurement.objects.values("folder").distinct()
 
         # テンプレート用に構造を変換
         result = []
@@ -155,15 +151,11 @@ class SoilHardnessMeasurementRepository:
             folder_name = folder_group["folder"]
 
             # 該当フォルダのレコード数を取得
-            total_count = SoilHardnessMeasurement.objects.filter(
-                folder=folder_name, land_block__isnull=True
-            ).count()
+            total_count = SoilHardnessMeasurement.objects.filter(folder=folder_name).count()
 
             # 代表データとして最初の1レコードのみを取得
             representative_measurement = (
-                SoilHardnessMeasurement.objects.filter(
-                    folder=folder_name, land_block__isnull=True
-                )
+                SoilHardnessMeasurement.objects.filter(folder=folder_name)
                 .order_by("set_memory", "depth")
                 .first()
             )
@@ -171,9 +163,7 @@ class SoilHardnessMeasurementRepository:
             if representative_measurement:
                 # メモリー番号の範囲を計算
                 memory_numbers = list(
-                    SoilHardnessMeasurement.objects.filter(
-                        folder=folder_name, land_block__isnull=True
-                    )
+                    SoilHardnessMeasurement.objects.filter(folder=folder_name)
                     .values_list("set_memory", flat=True)
                     .distinct()
                 )

@@ -46,8 +46,23 @@ urlpatterns = [
     ),
     path(
         "chemical/success",
-        views.ChemicalSuccessView.as_view(),
+        views.ChemicalUploadSuccessView.as_view(),
         name="chemical_success",
+    ),
+    path(
+        "chemical/association",
+        views.ChemicalAssociationView.as_view(),
+        name="chemical_association",
+    ),
+    path(
+        "chemical/association/field_row/<int:row_index>",
+        views.ChemicalAssociationRowView.as_view(),
+        name="chemical_association_field_row",
+    ),
+    path(
+        "chemical/association/success",
+        views.ChemicalSuccessView.as_view(),
+        name="chemical_association_success",
     ),
     path(
         "hardness/delete_all",

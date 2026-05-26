@@ -1,0 +1,94 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_upload' %}">Upload chemical</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Upload success</li>
+            </ol>
+        </nav>
+        <h1>Association Successful</h1>
+
+        <div class="alert alert-success">
+            <h5><i class="fas fa-check-circle"></i> 関連付けデータに異常はありませんでした！</h5>
+            <p>
+                総 <strong>{{ display_record_count }}</strong> レコードをland_ledgerとland_blockに正常に関連付けしました。
+            </p>
+        </div>
+
+        {% if warnings %}
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-triangle"></i> 警告</h6>
+                <ul class="mb-0">
+                    {% for warning in warnings %}
+                        <li>{{ warning }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> 関連付けデータ集計</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>会社名</th>
+                            <th>圃場名</th>
+                            <th>時期</th>
+                            <th>関連付けland_block</th>
+                            <th>合計</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for row in ledger_summary %}
+                            <tr>
+                                <td>{{ row.company_name }}</td>
+                                <td><strong>{{ row.land_name }}</strong></td>
+                                <td>{{ row.period_name }}</td>
+                                <td>
+                                    {% for block_name in row.block_names %}
+                                        <span class="badge bg-info me-1">{{ block_name }}</span>
+                                    {% empty %}
+                                        <span class="text-muted">未関連付け</span>
+                                    {% endfor %}
+                                </td>
+                                <td><span class="badge bg-success">{{ row.total }}</span></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-muted text-center">集計データがありません</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <h6><i class="fas fa-info-circle"></i> 関連付けデータ確認のポイント</h6>
+                    <ul class="mb-0">
+                        <li>各行のレコードが適切なland_blockに関連付けられているか確認してください</li>
+                        <li>land_ledgerとの関連付けが正しい圃場・時期と一致しているか確認してください</li>
+                        <li>各圃場の合計件数が想定どおりか確認してください</li>
+                        <li>合計件数が対象の圃場数と整合するか確認してください</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <a class="btn btn-primary btn-lg" href="{% url 'soil:home' %}">
+                <i class="fas fa-home"></i> ホームに戻る
+            </a>
+            <a class="btn btn-outline-secondary btn-lg ms-2" href="{% url 'soil:chemical_upload' %}">
+                <i class="fas fa-upload"></i> 新しいデータをアップロード
+            </a>
+        </div>
+    </div>
+{% endblock %}
