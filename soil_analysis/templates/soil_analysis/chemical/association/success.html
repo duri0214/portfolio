@@ -17,6 +17,9 @@
             <p>
                 総 <strong>{{ display_record_count }}</strong> レコードをland_ledgerとland_blockに正常に関連付けしました。
             </p>
+            <p class="mb-0">
+                新規: <strong>{{ created_count }}</strong> / 更新: <strong>{{ updated_count }}</strong> / スキップ: <strong>{{ skipped_count }}</strong>
+            </p>
         </div>
 
         {% if warnings %}

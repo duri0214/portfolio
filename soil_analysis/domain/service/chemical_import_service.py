@@ -198,6 +198,7 @@ class ChemicalImportService:
         """
         created_count = 0
         updated_count = 0
+        skipped_count = 0
         ledger_stats: Dict[int, Dict[str, Any]] = {}
 
         with transaction.atomic():
@@ -232,6 +233,7 @@ class ChemicalImportService:
 
                     if existing:
                         if not overwrite:
+                            skipped_count += 1
                             continue
                         for field_name, field_value in record_values.items():
                             setattr(existing, field_name, field_value)
@@ -268,6 +270,7 @@ class ChemicalImportService:
         return {
             "created": created_count,
             "updated": updated_count,
+            "skipped": skipped_count,
             "ledger_summary": summary,
             "ledger_ids": list(ledger_stats.keys()),
         }

@@ -612,8 +612,9 @@ class ChemicalSuccessView(TemplateView):
         if result:
             context["created_count"] = result.get("created", 0)
             context["updated_count"] = result.get("updated", 0)
+            context["skipped_count"] = result.get("skipped", 0)
             context["total_count"] = context["created_count"] + context["updated_count"]
-            context["display_record_count"] = len(ChemicalImportService.BLOCK_IDS)
+            context["display_record_count"] = context["total_count"]
             ledger_ids = result.get("ledger_ids", [])
             ledger_summary = []
             if ledger_ids:
