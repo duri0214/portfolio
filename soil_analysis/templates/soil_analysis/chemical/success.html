@@ -2,66 +2,54 @@
 {% load static %}
 
 {% block content %}
-    <div class="container mt-4">
-        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
-            <ol class="breadcrumb mb-0 small">
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_upload' %}">化学分析データ取り込み</a></li>
-                <li class="breadcrumb-item active" aria-current="page">取り込み完了</li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_upload' %}">Upload chemical</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Upload success</li>
             </ol>
         </nav>
-
-        <h1 class="mb-4"><i class="fas fa-check-circle text-success"></i> 取り込み完了</h1>
+        <h1>Upload Successful</h1>
 
         <div class="alert alert-success">
-            <h5><i class="fas fa-check-circle"></i> 化学分析データを正常に取り込みました！</h5>
-            <p class="mb-0">
-                新規作成: <strong>{{ created_count }}</strong> レコード
-                {% if updated_count > 0 %}
-                    / 更新: <strong>{{ updated_count }}</strong> レコード
-                {% endif %}
-            </p>
+            <h5><i class="fas fa-check-circle"></i> アップロードデータに異常はありませんでした！</h5>
+            <p class="mb-0">総 <strong>{{ total_records }}</strong> レコードを正常に取り込みました。</p>
         </div>
-
-        {% if warnings %}
-            <div class="alert alert-warning">
-                <h6><i class="fas fa-exclamation-triangle"></i> 警告</h6>
-                <ul class="mb-0">
-                    {% for warning in warnings %}
-                        <li>{{ warning }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
 
         <div class="card mb-4">
             <div class="card-header">
-                <h6 class="mb-0"><i class="fas fa-info-circle"></i> 取り込み情報</h6>
+                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> 取り込みデータ集計</h6>
             </div>
             <div class="card-body">
-                <dl class="row">
-                    <dt class="col-sm-3">取り込み日時</dt>
-                    <dd class="col-sm-9">{{ import_datetime|date:"Y-m-d H:i:s" }}</dd>
-                    
-                    <dt class="col-sm-3">対象帳簿</dt>
-                    <dd class="col-sm-9">
-                        <a href="{% url 'soil:land_detail' land_ledger.land.company.id land_ledger.land.id %}">
-                            {{ land_ledger.land.company.name }} / {{ land_ledger.land.name }}
-                        </a>
-                    </dd>
-                    
-                    <dt class="col-sm-3">サンプリング日</dt>
-                    <dd class="col-sm-9">{{ land_ledger.sampling_date|date:"Y-m-d" }}</dd>
-                </dl>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>圃場名 (Excel)</th>
+                            <th>行数</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for row in row_summary %}
+                            <tr>
+                                <td><strong>{{ row.land_name }}</strong></td>
+                                <td><span class="badge bg-primary">{{ row.count }}</span> 行</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-muted text-center">集計データがありません</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div class="text-center">
-            <a class="btn btn-primary" href="{% url 'soil:land_detail' land_ledger.land.company.id land_ledger.land.id %}">
-                <i class="fas fa-arrow-left"></i> 圃場詳細に戻る
-            </a>
-            <a class="btn btn-outline-primary" href="{% url 'soil:chemical_upload' %}">
-                <i class="fas fa-upload"></i> 続けて取り込む
+            <a class="btn btn-primary btn-lg" href="{% url 'soil:chemical_association' %}" role="button">
+                <i class="fas fa-arrow-right"></i> 取り込みデータのアサインへ進む
             </a>
         </div>
     </div>

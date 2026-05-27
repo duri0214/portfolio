@@ -1,0 +1,122 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_upload' %}">Upload chemical</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_association' %}">Association</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Field Row {{ row_data.row_number }}</li>
+            </ol>
+        </nav>
+
+        <h1>帳簿の選択 (行: {{ row_data.row_number }})</h1>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-file-excel"></i> Excelデータ情報</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <th>分析番号</th>
+                                <td>{{ row_data.analysis_number|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>氏名</th>
+                                <td>{{ row_data.person_name|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>圃場名</th>
+                                <td><strong>{{ row_data.land_name|default_if_none:"" }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>栽培作物</th>
+                                <td>{{ row_data.crop|default_if_none:"" }}</td>
+                            </tr>
+                            <tr><th>EC (mS/cm)</th><td>{{ row_data.ec|default_if_none:"" }}</td></tr>
+                            <tr><th>pH</th><td>{{ row_data.ph|default_if_none:"" }}</td></tr>
+                            <tr><th>meq/100g</th><td>{{ row_data.cec|default_if_none:"" }}</td></tr>
+                            <tr><th>CaO (mg/100g)</th><td>{{ row_data.cao|default_if_none:"" }}</td></tr>
+                            <tr><th>MgO (mg/100g)</th><td>{{ row_data.mgo|default_if_none:"" }}</td></tr>
+                            <tr><th>K2O (mg/100g)</th><td>{{ row_data.k2o|default_if_none:"" }}</td></tr>
+                            <tr><th>石灰飽和度 %</th><td>{{ row_data.lime_saturation|default_if_none:"" }}</td></tr>
+                            <tr><th>苦土飽和度 %</th><td>{{ row_data.magnesia_saturation|default_if_none:"" }}</td></tr>
+                            <tr><th>加里飽和度 %</th><td>{{ row_data.potash_saturation|default_if_none:"" }}</td></tr>
+                            <tr><th>塩基飽和度 %</th><td>{{ row_data.base_saturation|default_if_none:"" }}</td></tr>
+                            <tr><th>P2O5 (mg/100g)</th><td>{{ row_data.p2o5|default_if_none:"" }}</td></tr>
+                            <tr><th>リン吸 (mg/100g)</th><td>{{ row_data.phosphorus_absorption|default_if_none:"" }}</td></tr>
+                            <tr><th>NH4-N (mg/100g)</th><td>{{ row_data.nh4n|default_if_none:"" }}</td></tr>
+                            <tr><th>NO3-N (mg/100g)</th><td>{{ row_data.no3n|default_if_none:"" }}</td></tr>
+                            <tr><th>腐植 %</th><td>{{ row_data.humus|default_if_none:"" }}</td></tr>
+                            <tr><th>仮比重</th><td>{{ row_data.bulk_density|default_if_none:"" }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0"><i class="fas fa-book"></i> 帳簿の関連付け</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="land_ledger" class="form-label">候補帳簿</label>
+                                <select class="form-select" name="land_ledger" id="land_ledger" required size="10">
+                                    {% if suggested_ledgers %}
+                                        <optgroup label="候補帳簿">
+                                            {% for ledger in suggested_ledgers %}
+                                                <option value="{{ ledger.pk }}"
+                                                        {% if ledger.pk == selected_ledger_id %}selected{% endif %}>
+                                                    {{ ledger.land.company.name }} - {{ ledger.land.name }}
+                                                    ({{ ledger.land_period.name }})
+                                                </option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endif %}
+                                    <optgroup label="全帳簿から選択">
+                                        {% for ledger in fallback_ledgers %}
+                                            <option value="{{ ledger.pk }}"
+                                                    {% if ledger.pk == selected_ledger_id %}selected{% endif %}>
+                                                {{ ledger.land.company.name }} - {{ ledger.land.name }}
+                                                ({{ ledger.land_period.name }})
+                                            </option>
+                                        {% endfor %}
+                                    </optgroup>
+                                </select>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-info-circle"></i>
+                                    圃場名「{{ row_data.land_name }}」の候補を上段に表示しています。候補がない場合は全帳簿から選択してください。
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'soil:chemical_association' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> 一覧に戻る
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    確定して次へ <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="mt-3 text-end">
+                    <button type="button" class="btn btn-outline-success btn-sm" id="btn_create_ledger"
+                            data-bs-toggle="modal" data-bs-target="#landLedgerCreateModal">
+                        <i class="fas fa-plus"></i> 帳簿が見つからない場合は新規作成
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'soil_analysis/modals/land_ledger_create.html' %}
+{% endblock %}

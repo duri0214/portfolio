@@ -2,13 +2,15 @@ from django.db.models import Avg
 
 from soil_analysis.domain.service.reports.basereportlayout import BaseReportLayout
 from soil_analysis.domain.valueobject.graph.matplotlib import Matplotlib
-from soil_analysis.models import LandLedger, LandScoreChemical
+from soil_analysis.models import LandLedger, SoilChemicalMeasurement
 
 
 class ReportLayout1(BaseReportLayout):
     def __init__(self, land_ledger: LandLedger):
         self._land_ledger = land_ledger
-        self._land_scores = LandScoreChemical.objects.filter(land_ledger=land_ledger)
+        self._land_scores = SoilChemicalMeasurement.objects.filter(
+            land_ledger=land_ledger
+        )
         self._land_scores_agg = self._land_scores_aggregate()
 
     def _land_scores_aggregate(self):

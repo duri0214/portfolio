@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import re
 import shutil
@@ -6,7 +7,7 @@ from pathlib import Path
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
-from django.db.models import Prefetch, Sum
+from django.db.models import Prefetch, Sum, Count
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -19,6 +20,7 @@ from django.views.generic import (
     TemplateView,
     FormView,
 )
+from openpyxl import load_workbook
 
 from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
@@ -28,6 +30,9 @@ from soil_analysis.domain.repository.hardness_measurement import (
 )
 from soil_analysis.domain.repository.land import LandRepository
 from soil_analysis.domain.repository.land_ledger import LandLedgerRepository
+from soil_analysis.domain.service.chemical_import_service import (
+    ChemicalImportService,
+)
 from soil_analysis.domain.service.hardness_plot_generation import (
     HardnessPlotGenerationService,
 )
@@ -47,11 +52,12 @@ from soil_analysis.forms import (
 from soil_analysis.models import (
     Company,
     Land,
-    LandScoreChemical,
+    SoilChemicalMeasurement,
     LandReview,
     LandLedger,
     LandBlock,
     SoilHardnessMeasurementImportErrors,
+    SoilChemicalMeasurementImportErrors,
     SoilHardnessMeasurement,
     SamplingOrder,
     RouteSuggestImport,
@@ -212,7 +218,7 @@ class LandReportChemicalListView(ListView):
     C1, B1, A1
     """
 
-    model = LandScoreChemical
+    model = SoilChemicalMeasurement
     template_name = "soil_analysis/land_report/chemical.html"
 
     def get_queryset(self):
@@ -228,7 +234,7 @@ class LandReportChemicalListView(ListView):
         context["land"] = land_ledger.land
         context["land_ledger"] = land_ledger
         context["land_scores"] = (
-            LandScoreChemical.objects.filter(land_ledger=land_ledger)
+            SoilChemicalMeasurement.objects.filter(land_ledger=land_ledger)
             .select_related("land_block")
             .order_by("land_block__name")
         )
@@ -365,7 +371,6 @@ class HardnessUploadView(FormView):
 class ChemicalUploadView(FormView):
     template_name = "soil_analysis/chemical/form.html"
     form_class = ChemicalUploadForm
-    success_url = reverse_lazy("soil:chemical_success")
 
     def form_valid(self, form):
         upload_file = self.request.FILES["file"]
@@ -373,62 +378,298 @@ class ChemicalUploadView(FormView):
             messages.error(self.request, "xlsxファイルを指定してください。")
             return self.form_invalid(form)
 
-        land_ledger_id = form.cleaned_data.get("land_ledger_id").id
-        overwrite = form.cleaned_data.get("overwrite", False)
-
-        # 一時ファイルに保存
-        from django.conf import settings
-
-        temp_dir = Path(settings.MEDIA_ROOT) / "temp" / "chemical"
-        temp_dir.mkdir(parents=True, exist_ok=True)
-        temp_file = (
-            temp_dir / f"chemical_{timezone.now().strftime('%Y%m%d%H%M%S')}.xlsx"
-        )
-
-        with open(temp_file, "wb+") as destination:
-            for chunk in upload_file.chunks():
-                destination.write(chunk)
-
         try:
-            call_command(
-                "chemical_load_data",
-                str(temp_file),
-                land_ledger_id=land_ledger_id,
-                overwrite=overwrite,
-            )
-            self.request.session["chemical_import_ledger_id"] = land_ledger_id
+            workbook = load_workbook(upload_file, data_only=True)
+            if len(workbook.sheetnames) != 1:
+                messages.error(
+                    self.request, "Excelファイルのシート数は1枚にしてください。"
+                )
+                return self.form_invalid(form)
+
+            worksheet = workbook.active
+            parse_result = ChemicalImportService.parse_kawada_worksheet(worksheet)
+
+            if parse_result.errors:
+                for error in parse_result.errors:
+                    messages.error(self.request, error)
+                return self.form_invalid(form)
+
+            if not parse_result.rows:
+                messages.error(self.request, "取り込み対象行がありません。")
+                return self.form_invalid(form)
+
+            # セッションに保存
+            rows_data = []
+            for row in parse_result.rows:
+                rows_data.append(
+                    {
+                        "row_data": dataclasses.asdict(row),
+                        "selected_ledger_id": None,
+                        "status": "pending",
+                    }
+                )
+
+            self.request.session["chemical_import_session"] = {
+                "rows": rows_data,
+                "total_rows": len(rows_data),
+            }
+
+            return redirect("soil:chemical_success")
+
         except Exception as e:
             messages.error(self.request, f"取り込み中にエラーが発生しました: {str(e)}")
             return self.form_invalid(form)
-        finally:
-            if temp_file.exists():
-                temp_file.unlink()
-
-        return super().form_valid(form)
 
 
-class ChemicalSuccessView(TemplateView):
+class ChemicalAssociationView(TemplateView):
+    template_name = "soil_analysis/chemical/association/list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        import_session = self.request.session.get("chemical_import_session")
+        if not import_session:
+            return context
+
+        rows = import_session.get("rows", [])
+        confirmed_count = sum(1 for r in rows if r["status"] == "confirmed")
+
+        # 圃場名から候補帳簿を一括取得
+        land_names = [row["row_data"]["land_name"] for row in rows]
+        suggested_map = ChemicalImportService.get_suggested_ledgers_for_names(
+            land_names, base_ledger_id=import_session.get("base_ledger_id")
+        )
+
+        # 選択済み帳簿を一括取得してキャッシュ
+        selected_ledger_ids = [
+            row["selected_ledger_id"] for row in rows if row["selected_ledger_id"]
+        ]
+        selected_ledgers_map = {}
+        if selected_ledger_ids:
+            selected_ledgers_map = {
+                l.id: l
+                for l in LandLedger.objects.select_related(
+                    "land", "land__company", "land_period"
+                ).filter(id__in=selected_ledger_ids)
+            }
+
+        # 表示用に各行の候補帳簿などを付与（セッションは汚さない）
+        display_rows = []
+        for i, row in enumerate(rows):
+            land_name = row["row_data"]["land_name"]
+            suggested_ledgers = suggested_map.get(land_name, [])
+
+            # 選択済み帳簿の情報を取得
+            selected_ledger = selected_ledgers_map.get(row["selected_ledger_id"])
+
+            display_rows.append(
+                {
+                    "index": i,
+                    "row_number": row["row_data"]["row_number"],
+                    "land_name": land_name,
+                    "status": row["status"],
+                    "suggested_count": len(suggested_ledgers),
+                    "selected_ledger": selected_ledger,
+                }
+            )
+
+        context.update(
+            {
+                "rows": display_rows,
+                "total_rows": import_session.get("total_rows"),
+                "confirmed_count": confirmed_count,
+                "all_confirmed": confirmed_count == import_session.get("total_rows"),
+            }
+        )
+        return context
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        if "btn_save_all" in request.POST:
+            import_session = request.session.get("chemical_import_session")
+            if not import_session:
+                messages.error(
+                    request, "セッションが期限切れです。最初からやり直してください。"
+                )
+                return redirect("soil:chemical_upload")
+
+            rows = import_session.get("rows", [])
+            if any(r["status"] != "confirmed" for r in rows):
+                messages.error(request, "未確定の行があります。")
+                return redirect("soil:chemical_association")
+
+            # 保存実行
+            save_data = []
+            for r in rows:
+                save_data.append(
+                    {
+                        "row_data": r["row_data"],
+                        "land_ledger_id": r["selected_ledger_id"],
+                    }
+                )
+
+            try:
+                result = ChemicalImportService.save_import_data(save_data)
+                request.session["chemical_import_result"] = result
+                # セッションクリア
+                del request.session["chemical_import_session"]
+                return redirect("soil:chemical_association_success")
+            except Exception as e:
+                messages.error(request, f"保存中にエラーが発生しました: {str(e)}")
+                return redirect("soil:chemical_association")
+
+        return redirect("soil:chemical_association")
+
+
+class ChemicalUploadSuccessView(TemplateView):
     template_name = "soil_analysis/chemical/success.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        land_ledger_id = self.request.session.get("chemical_import_ledger_id")
-        if land_ledger_id:
-            try:
-                land_ledger = LandLedger.objects.select_related(
-                    "land__company", "land_period"
-                ).get(id=land_ledger_id)
-                chemical_data = LandScoreChemical.objects.filter(
-                    land_ledger=land_ledger,
-                    remark="import_mode=field_level_copied_to_9_blocks",
+        import_session = self.request.session.get("chemical_import_session")
+        if not import_session:
+            return context
+
+        rows = import_session.get("rows", [])
+        context["total_records"] = len(rows)
+
+        summary_map = {}
+        for row in rows:
+            land_name = row["row_data"].get("land_name") or ""
+            if land_name not in summary_map:
+                summary_map[land_name] = 0
+            summary_map[land_name] += 1
+
+        context["row_summary"] = [
+            {"land_name": key, "count": value} for key, value in summary_map.items()
+        ]
+        return context
+
+
+class ChemicalAssociationRowView(TemplateView):
+    template_name = "soil_analysis/chemical/association/field_row.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        row_index = self.kwargs.get("row_index")
+        import_session = self.request.session.get("chemical_import_session")
+
+        if not import_session or row_index >= len(import_session["rows"]):
+            raise Http404("Invalid row index")
+
+        row = import_session["rows"][row_index]
+        land_name = row["row_data"]["land_name"]
+
+        suggested_ledgers = ChemicalImportService.get_suggested_ledgers(
+            land_name, base_ledger_id=import_session.get("base_ledger_id")
+        )
+        all_ledgers = LandLedger.objects.select_related(
+            "land", "land__company", "land_period"
+        ).order_by("-id")[:200]
+        suggested_ids = {ledger.id for ledger in suggested_ledgers}
+        fallback_ledgers = [
+            ledger for ledger in all_ledgers if ledger.id not in suggested_ids
+        ]
+
+        context.update(
+            {
+                "row_index": row_index,
+                "row_data": row["row_data"],
+                "selected_ledger_id": row["selected_ledger_id"],
+                "suggested_ledgers": suggested_ledgers,
+                "fallback_ledgers": fallback_ledgers,
+                "total_rows": import_session.get("total_rows"),
+            }
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        row_index = self.kwargs.get("row_index")
+        import_session = request.session.get("chemical_import_session")
+
+        if not import_session or row_index >= len(import_session["rows"]):
+            return redirect("soil:chemical_association")
+
+        ledger_id = request.POST.get("land_ledger")
+        if ledger_id:
+            import_session["rows"][row_index]["selected_ledger_id"] = int(ledger_id)
+            import_session["rows"][row_index]["status"] = "confirmed"
+            request.session.modified = True
+
+            # 次の未確定行へ
+            next_row_index = row_index + 1
+            if next_row_index < len(import_session["rows"]):
+                return redirect(
+                    "soil:chemical_association_field_row", row_index=next_row_index
                 )
-                context["land_ledger"] = land_ledger
-                context["created_count"] = chemical_data.count()
-                context["updated_count"] = 0
-                context["warnings"] = []
-                context["import_datetime"] = timezone.now()
-            except LandLedger.DoesNotExist:
-                pass
+            else:
+                return redirect("soil:chemical_association")
+
+        return redirect("soil:chemical_association_field_row", row_index=row_index)
+
+
+class ChemicalSuccessView(TemplateView):
+    template_name = "soil_analysis/chemical/association/success.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        result = self.request.session.get("chemical_import_result")
+        context["import_errors"] = (
+            SoilChemicalMeasurementImportErrors.objects.all().order_by("-created_at")
+        )
+        if result:
+            context["created_count"] = result.get("created", 0)
+            context["updated_count"] = result.get("updated", 0)
+            context["total_count"] = context["created_count"] + context["updated_count"]
+            context["display_record_count"] = context["total_count"]
+            ledger_ids = result.get("ledger_ids", [])
+            ledger_summary = []
+            if ledger_ids:
+                count_by_ledger = {
+                    row["land_ledger_id"]: row["total"]
+                    for row in SoilChemicalMeasurement.objects.filter(
+                        land_ledger_id__in=ledger_ids
+                    )
+                    .values("land_ledger_id")
+                    .annotate(total=Count("id"))
+                }
+
+                ledgers = (
+                    LandLedger.objects.select_related(
+                        "land", "land__company", "land_period"
+                    )
+                    .prefetch_related(
+                        Prefetch(
+                            "soilchemicalmeasurement_set",
+                            queryset=SoilChemicalMeasurement.objects.select_related(
+                                "land_block"
+                            ),
+                            to_attr="measurements",
+                        )
+                    )
+                    .filter(id__in=ledger_ids)
+                )
+
+                for ledger in ledgers:
+                    block_names = sorted(
+                        list(
+                            set(
+                                m.land_block.name
+                                for m in ledger.measurements
+                                if m.land_block
+                            )
+                        )
+                    )
+                    ledger_summary.append(
+                        {
+                            "company_name": ledger.land.company.name,
+                            "land_name": ledger.land.name,
+                            "period_name": ledger.land_period.name,
+                            "block_names": block_names,
+                            "total": count_by_ledger.get(ledger.id, 0),
+                        }
+                    )
+            context["ledger_summary"] = ledger_summary
+            context["import_datetime"] = timezone.now()
         return context
 
 
@@ -565,7 +806,6 @@ class HardnessAssociationView(ListView):
         context = super().get_context_data(**kwargs)
         context["land_ledgers"] = LandLedger.objects.all().order_by("pk")
 
-        # 進捗情報を追加
         context["total_groups"] = (
             SoilHardnessMeasurementRepository.get_total_groups_count()
         )
@@ -626,9 +866,9 @@ class HardnessAssociationFieldGroupView(ListView):
 
         if sample_measurement:
             folder_name = sample_measurement.folder
-            return SoilHardnessMeasurement.objects.filter(
-                folder=folder_name, land_block__isnull=True
-            ).order_by("set_memory", "depth")
+            return SoilHardnessMeasurement.objects.filter(folder=folder_name).order_by(
+                "set_memory", "depth"
+            )
 
         return SoilHardnessMeasurement.objects.none()
 

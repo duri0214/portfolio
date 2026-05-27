@@ -4,9 +4,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from openpyxl import Workbook
 
-from soil_analysis.management.commands.chemical_load_data import (
-    BLOCK_IDS,
-    parse_kawada_worksheet,
+from soil_analysis.domain.service.chemical_import_service import (
+    ChemicalImportService,
 )
 from soil_analysis.models import (
     Company,
@@ -63,8 +62,8 @@ class ChemicalImportServiceTests(TestCase):
             sampling_method=sampling_method,
             sampling_staff=self.user,
         )
-        for block_id in BLOCK_IDS:
-            LandBlock.objects.create(id=block_id, name=f"Block{block_id}")
+        for block_name in ["A1", "A3", "B2", "C1", "C3"]:
+            LandBlock.objects.get_or_create(name=block_name)
 
     def test_parse_kawada_worksheet_success_and_conversion(self):
         wb = Workbook()
@@ -121,7 +120,7 @@ class ChemicalImportServiceTests(TestCase):
                 "0.8",
             ]
         )  # 4行目: データ
-        result = parse_kawada_worksheet(ws)
+        result = ChemicalImportService.parse_kawada_worksheet(ws)
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.rows), 1)
         self.assertEqual(result.rows[0].land_name, "圃場A")
@@ -134,6 +133,6 @@ class ChemicalImportServiceTests(TestCase):
         ws.append([])  # 1行目: 空
         ws.append([])  # 2行目: 空
         # 3行目: ヘッダー（列が少なすぎる）
-        result = parse_kawada_worksheet(ws)
+        result = ChemicalImportService.parse_kawada_worksheet(ws)
         self.assertEqual(result.rows, [])
         self.assertTrue(len(result.errors) > 0)
