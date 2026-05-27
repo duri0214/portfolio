@@ -116,7 +116,12 @@ class SoilHardnessMeasurementRepository:
 
     @staticmethod
     def get_folder_groups_for_association():
-        """関連付け用のフォルダグループを取得
+        """
+        関連付け用のフォルダグループを取得します。
+
+        このメソッドは、未処理のデータだけでなく、既に関連付け済みのデータも含めて
+        フォルダ単位でグループ化して返します。これは、一度紐付けが完了したデータに対しても
+        後から再編集（紐付け先の変更など）を可能にするための意図的な仕様です。
 
         各フォルダの代表データと統計情報を含む構造化されたデータを返します。
         HardnessAssociationViewで使用するためのメソッドです。
@@ -151,7 +156,9 @@ class SoilHardnessMeasurementRepository:
             folder_name = folder_group["folder"]
 
             # 該当フォルダのレコード数を取得
-            total_count = SoilHardnessMeasurement.objects.filter(folder=folder_name).count()
+            total_count = SoilHardnessMeasurement.objects.filter(
+                folder=folder_name
+            ).count()
 
             # 代表データとして最初の1レコードのみを取得
             representative_measurement = (
