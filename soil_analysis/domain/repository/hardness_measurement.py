@@ -116,12 +116,7 @@ class SoilHardnessMeasurementRepository:
 
     @staticmethod
     def get_folder_groups_for_association():
-        """
-        関連付け用のフォルダグループを取得します。
-
-        このメソッドは、未処理のデータだけでなく、既に関連付け済みのデータも含めて
-        フォルダ単位でグループ化して返します。これは、一度紐付けが完了したデータに対しても
-        後から再編集（紐付け先の変更など）を可能にするための意図的な仕様です。
+        """関連付け用のフォルダグループを取得
 
         各フォルダの代表データと統計情報を含む構造化されたデータを返します。
         HardnessAssociationViewで使用するためのメソッドです。
@@ -148,7 +143,11 @@ class SoilHardnessMeasurementRepository:
                 ]
         """
         # フォルダ単位でグループ化されたデータを取得
-        folder_groups = SoilHardnessMeasurement.objects.values("folder").distinct()
+        folder_groups = (
+            SoilHardnessMeasurement.objects.filter(land_block__isnull=True)
+            .values("folder")
+            .distinct()
+        )
 
         # テンプレート用に構造を変換
         result = []
@@ -157,12 +156,14 @@ class SoilHardnessMeasurementRepository:
 
             # 該当フォルダのレコード数を取得
             total_count = SoilHardnessMeasurement.objects.filter(
-                folder=folder_name
+                folder=folder_name, land_block__isnull=True
             ).count()
 
             # 代表データとして最初の1レコードのみを取得
             representative_measurement = (
-                SoilHardnessMeasurement.objects.filter(folder=folder_name)
+                SoilHardnessMeasurement.objects.filter(
+                    folder=folder_name, land_block__isnull=True
+                )
                 .order_by("set_memory", "depth")
                 .first()
             )
@@ -170,7 +171,9 @@ class SoilHardnessMeasurementRepository:
             if representative_measurement:
                 # メモリー番号の範囲を計算
                 memory_numbers = list(
-                    SoilHardnessMeasurement.objects.filter(folder=folder_name)
+                    SoilHardnessMeasurement.objects.filter(
+                        folder=folder_name, land_block__isnull=True
+                    )
                     .values_list("set_memory", flat=True)
                     .distinct()
                 )

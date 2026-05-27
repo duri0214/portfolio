@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pytz
 from django.core.management.base import BaseCommand
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 from soil_analysis.models import (
     SoilHardnessMeasurement,
@@ -102,33 +102,34 @@ class Command(BaseCommand):
 
                     # 11行目以降のデータを保存
                     for row in reader:
-                        SoilHardnessMeasurement.objects.create(
-                            set_device=set_device,
-                            set_memory=set_memory,
-                            set_datetime=set_datetime,
-                            set_depth=set_depth,
-                            set_spring=set_spring,
-                            set_cone=set_cone,
-                            depth=int(row[0]),
-                            pressure=int(row[1]),
-                            folder=parent_folder,
-                        )
-
-            except IntegrityError as e:
-                if "duplicate entry" in str(e).lower():
-                    SoilHardnessMeasurementImportErrors.objects.create(
-                        file=os.path.basename(csv_file),
-                        folder=parent_folder,
-                        message="取り込み済み",
-                    )
-                    self.stderr.write(
-                        self.style.WARNING(
-                            f"Duplicate entry detected: {parent_folder}/{os.path.basename(csv_file)}. "
-                            f"Skipping import."
-                        )
-                    )
-                else:
-                    raise e
+                        try:
+                            with transaction.atomic():
+                                SoilHardnessMeasurement.objects.create(
+                                    set_device=set_device,
+                                    set_memory=set_memory,
+                                    set_datetime=set_datetime,
+                                    set_depth=set_depth,
+                                    set_spring=set_spring,
+                                    set_cone=set_cone,
+                                    depth=int(row[0]),
+                                    pressure=int(row[1]),
+                                    folder=parent_folder,
+                                )
+                        except IntegrityError as e:
+                            if "duplicate entry" in str(e).lower():
+                                SoilHardnessMeasurementImportErrors.objects.create(
+                                    file=os.path.basename(csv_file),
+                                    folder=parent_folder,
+                                    message="取り込み済み",
+                                )
+                                self.stderr.write(
+                                    self.style.WARNING(
+                                        f"Duplicate entry detected: {parent_folder}/{os.path.basename(csv_file)}. "
+                                        f"Skipping import."
+                                    )
+                                )
+                            else:
+                                raise e
 
             except Exception as e:
                 SoilHardnessMeasurementImportErrors.objects.create(

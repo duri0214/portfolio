@@ -806,7 +806,6 @@ class HardnessAssociationView(ListView):
         context = super().get_context_data(**kwargs)
         context["land_ledgers"] = LandLedger.objects.all().order_by("pk")
 
-        # 進捗情報を追加
         context["total_groups"] = (
             SoilHardnessMeasurementRepository.get_total_groups_count()
         )
