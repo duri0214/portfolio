@@ -1,4 +1,4 @@
-from soil_analysis.models import Land, LandLedger
+from soil_analysis.models import Land
 
 
 class LandRepository:
@@ -7,14 +7,14 @@ class LandRepository:
         return Land.objects.get(pk=land_id)
 
     @staticmethod
-    def get_land_to_ledgers_map(land_list: list[Land]):
+    def exists_by_name(name: str) -> bool:
         """
-        Landオブジェクトをキー、その圃場の台帳のQuerySetを値とする辞書を返す
+        名前を指定して圃場が存在するか確認します
+
+        Args:
+            name: 圃場名
+
+        Returns:
+            bool: 存在する場合はTrue
         """
-        land_ledger_map = {}
-        land_ledgers = LandLedger.objects.filter(land__in=land_list)
-
-        for land in land_list:
-            land_ledger_map[land] = land_ledgers.filter(land=land)
-
-        return land_ledger_map
+        return Land.objects.filter(name=name).exists()

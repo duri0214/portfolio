@@ -5,11 +5,21 @@ import pytz
 from django.core.management import call_command
 from django.test import TestCase
 
-from soil_analysis.management.commands.hardness_load_data import (
-    extract_device,
-    extract_datetime,
-    extract_numeric_value,
+from soil_analysis.domain.service.hardness_import_service import (
+    HardnessImportService,
 )
+
+
+def extract_device(line: list) -> str:
+    return HardnessImportService.extract_device(line)
+
+
+def extract_datetime(line: list) -> datetime:
+    return HardnessImportService.extract_datetime(line)
+
+
+def extract_numeric_value(line: list) -> int:
+    return HardnessImportService.extract_numeric_value(line)
 
 
 class TestImportSoilHardness(TestCase):
