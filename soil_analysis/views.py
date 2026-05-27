@@ -1,4 +1,5 @@
 import dataclasses
+import glob
 import os
 import re
 import shutil
@@ -359,8 +360,6 @@ class HardnessUploadView(FormView):
             self.request.FILES["file"], app_name
         )
         if os.path.exists(upload_folder):
-            import glob
-
             csv_files = glob.glob(
                 os.path.join(upload_folder, "**/*.csv"), recursive=True
             )
