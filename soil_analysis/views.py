@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import re
 import shutil
@@ -19,6 +20,7 @@ from django.views.generic import (
     TemplateView,
     FormView,
 )
+from openpyxl import load_workbook
 
 from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
@@ -376,8 +378,6 @@ class ChemicalUploadView(FormView):
             messages.error(self.request, "xlsxファイルを指定してください。")
             return self.form_invalid(form)
 
-        from openpyxl import load_workbook
-
         try:
             workbook = load_workbook(upload_file, data_only=True)
             if len(workbook.sheetnames) != 1:
@@ -399,8 +399,6 @@ class ChemicalUploadView(FormView):
                 return self.form_invalid(form)
 
             # セッションに保存
-            import dataclasses
-
             rows_data = []
             for row in parse_result.rows:
                 rows_data.append(

@@ -45,9 +45,9 @@ class ChemicalImportServiceTest(TestCase):
         self.crop = Crop.objects.create(name="キャベツ")
         self.sampling_method = SamplingMethod.objects.create(name="5点法", times=5)
 
-        # ブロックの作成 (ChemicalImportService.BLOCK_IDS = (1, 3, 5, 7, 9))
-        for i in [1, 3, 5, 7, 9]:
-            LandBlock.objects.get_or_create(id=i, defaults={"name": f"Block{i}"})
+        # ブロックの作成
+        for name in ChemicalImportService.BLOCK_NAMES:
+            LandBlock.objects.get_or_create(name=name)
 
         self.period = LandPeriod.objects.create(name="2024年春", year=2024)
         self.land = Land.objects.create(
@@ -146,6 +146,23 @@ class ChemicalImportServiceTest(TestCase):
         self.assertEqual(
             chemicals.first().remark, ChemicalImportService.REMARK_IMPORT_MODE
         )
+
+    def test_to_float_error_message_japanese(self):
+        """数値変換失敗時のエラーメッセージに日本語カラム名が含まれること"""
+        with self.assertRaises(ValueError) as cm:
+            KawadaRow.to_float("invalid", 10, "交換性石灰")
+
+        self.assertIn("交換性石灰", str(cm.exception))
+        self.assertIn("数値変換失敗", str(cm.exception))
+
+    def test_from_excel_row_error_propagation(self):
+        """Excelからのパース時に日本語カラム名が伝播すること"""
+        # row index 7 is cao (交換性石灰)
+        bad_row = [None] * 20
+        bad_row[7] = "不適切な値"
+
+        with self.assertRaises(ValueError) as cm:
+            KawadaRow.from_excel_row(tuple(bad_row), 10)
 
     def test_save_import_data_with_duplicate_ledger(self):
         """同一取り込み内で同じ帳簿が指定された場合、後のデータで更新されること"""

@@ -64,9 +64,9 @@ class KawadaRow:
         def to_str(col_idx: int) -> str:
             return str(row[col_idx] if col_idx < len(row) else "").strip()
 
-        def to_numeric(col_idx: int, field_name: str) -> Optional[float]:
+        def to_numeric(col_idx: int, display_name: str) -> Optional[float]:
             raw_value = row[col_idx] if col_idx < len(row) else None
-            return cls.to_float(raw_value, row_number, field_name)
+            return cls.to_float(raw_value, row_number, display_name)
 
         return cls(
             row_number=row_number,
@@ -74,22 +74,22 @@ class KawadaRow:
             person_name=to_str(1) or None,
             land_name=to_str(2),
             crop=to_str(3) or None,
-            ec=to_numeric(4, "ec"),
-            ph=to_numeric(5, "ph"),
-            cec=to_numeric(6, "cec"),
-            cao=to_numeric(7, "cao"),
-            mgo=to_numeric(8, "mgo"),
-            k2o=to_numeric(9, "k2o"),
-            lime_saturation=to_numeric(10, "lime_saturation"),
-            magnesia_saturation=to_numeric(11, "magnesia_saturation"),
-            potash_saturation=to_numeric(12, "potash_saturation"),
-            base_saturation=to_numeric(13, "base_saturation"),
-            p2o5=to_numeric(14, "p2o5"),
-            phosphorus_absorption=to_numeric(15, "phosphorus_absorption"),
-            nh4n=to_numeric(16, "nh4n"),
-            no3n=to_numeric(17, "no3n"),
-            humus=to_numeric(18, "humus"),
-            bulk_density=to_numeric(19, "bulk_density"),
+            ec=to_numeric(4, "EC"),
+            ph=to_numeric(5, "pH"),
+            cec=to_numeric(6, "CEC"),
+            cao=to_numeric(7, "交換性石灰"),
+            mgo=to_numeric(8, "交換性苦土"),
+            k2o=to_numeric(9, "交換性加里"),
+            lime_saturation=to_numeric(10, "石灰飽和度"),
+            magnesia_saturation=to_numeric(11, "苦土飽和度"),
+            potash_saturation=to_numeric(12, "加里飽和度"),
+            base_saturation=to_numeric(13, "塩基飽和度"),
+            p2o5=to_numeric(14, "可給態リン酸"),
+            phosphorus_absorption=to_numeric(15, "リン酸吸収係数"),
+            nh4n=to_numeric(16, "アンモニア態窒素"),
+            no3n=to_numeric(17, "硝酸態窒素"),
+            humus=to_numeric(18, "腐植"),
+            bulk_density=to_numeric(19, "仮比重"),
         )
 
     def to_dict(self) -> Dict[str, Optional[float]]:
@@ -121,7 +121,7 @@ class ParseResult:
 
 
 class ChemicalImportService:
-    BLOCK_IDS = (1, 3, 5, 7, 9)
+    BLOCK_NAMES = ("A1", "A3", "B2", "C1", "C3")
     REMARK_IMPORT_MODE = "import_mode=field_level_copied_to_5_blocks"
     KAWADA_FORMAT_DATA_START_ROW_INDEX = 3
 
@@ -239,6 +239,21 @@ class ChemicalImportService:
         return result
 
     @classmethod
+    def _get_block_ids(cls) -> List[int]:
+        """
+        BLOCK_NAMES に合致する LandBlock の ID リストを取得する。
+        """
+        from soil_analysis.models import LandBlock
+
+        blocks = LandBlock.objects.filter(name__in=cls.BLOCK_NAMES).values_list(
+            "id", flat=True
+        )
+        if not blocks:
+            # 万が一マスタが存在しない場合は、従来のハードコードされた ID をフォールバックとして返す（後方互換性のため）
+            return [1, 3, 5, 7, 9]
+        return list(blocks)
+
+    @classmethod
     def save_import_data(cls, rows_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         確定済みデータを保存する
@@ -277,9 +292,10 @@ class ChemicalImportService:
             }
 
         # 既存レコードを一括取得
+        block_ids = cls._get_block_ids()
         existing_measurements = SoilChemicalMeasurement.objects.filter(
             land_ledger_id__in=ledger_ids,
-            land_block_id__in=cls.BLOCK_IDS,
+            land_block_id__in=block_ids,
         )
         # (ledger_id, block_id) -> record
         existing_map = {
@@ -317,7 +333,7 @@ class ChemicalImportService:
                     "remark": cls.REMARK_IMPORT_MODE,
                 }
 
-                for block_id in cls.BLOCK_IDS:
+                for block_id in block_ids:
                     existing = existing_map.get((ledger_id, block_id))
 
                     if existing:
