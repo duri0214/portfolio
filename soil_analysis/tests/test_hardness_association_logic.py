@@ -8,8 +8,8 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
 
-from soil_analysis.domain.repository.hardness_measurement import (
-    SoilHardnessMeasurementRepository,
+from soil_analysis.domain.service.hardness_import_service import (
+    HardnessImportService,
 )
 from soil_analysis.models import (
     SoilHardnessMeasurement,
@@ -115,14 +115,14 @@ class HardnessAssociationLogicTest(TestCase):
         call_command("hardness_load_data", self.temp_dir)
 
         # 4. 検証: get_folder_groups_for_association が Folder2 のみを返すこと
-        groups = SoilHardnessMeasurementRepository.get_folder_groups_for_association()
+        groups = HardnessImportService.get_folder_groups_for_association()
 
         # Folder1 は land_block が入っているので除外され、Folder2 のみとなる
         self.assertEqual(len(groups), 1)
         self.assertEqual(groups[0]["folder_name"], "Folder2")
 
         # 5. 進捗カウントの検証 (こちらは全件対象のロジックを期待)
-        total = SoilHardnessMeasurementRepository.get_total_groups_count()
-        processed = SoilHardnessMeasurementRepository.get_processed_groups_count()
+        total = HardnessImportService.get_total_groups_count()
+        processed = HardnessImportService.get_processed_groups_count()
         self.assertEqual(total, 2)
         self.assertEqual(processed, 1)
