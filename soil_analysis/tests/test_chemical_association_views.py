@@ -17,6 +17,7 @@ from soil_analysis.models import (
     LandLedger,
     LandPeriod,
     SamplingMethod,
+    LandBlock,
 )
 
 
@@ -31,12 +32,18 @@ class ChemicalAssociationViewsTest(TestCase):
         region = JmaRegion.objects.create(
             code="010101", name="テスト地域", jma_prefecture=pref
         )
-        city = JmaCity.objects.create(code="0101011", name="テスト市", jma_region=region)
+        city = JmaCity.objects.create(
+            code="0101011", name="テスト市", jma_region=region
+        )
 
         cultivation_type = CultivationType.objects.create(name="露地")
         crop = Crop.objects.create(name="キャベツ")
         sampling_method = SamplingMethod.objects.create(name="5点法", times=5)
         period = LandPeriod.objects.create(name="2024年春", year=2024)
+
+        # LandBlockを作成 (ChemicalImportService.BLOCK_NAMESに対応)
+        for name in ["A1", "A3", "B2", "C1", "C3"]:
+            LandBlock.objects.create(name=name)
 
         land = Land.objects.create(
             name="圃場A",
@@ -111,3 +118,50 @@ class ChemicalAssociationViewsTest(TestCase):
         updated_session = self.client.session["chemical_import_session"]["rows"][0]
         self.assertEqual(updated_session["status"], "confirmed")
         self.assertEqual(updated_session["selected_ledger_id"], self.ledger.id)
+
+    def test_save_all_redirects_to_success(self):
+        session = self.client.session
+        session["chemical_import_session"] = {
+            "rows": [
+                {
+                    "row_data": {
+                        "row_number": 4,
+                        "analysis_number": "A001",
+                        "person_name": "テスト太郎",
+                        "land_name": "圃場A",
+                        "crop": "キャベツ",
+                        "ec": 0.1,
+                        "ph": 6.5,
+                        "cec": 10.0,
+                        "cao": 100.0,
+                        "mgo": 50.0,
+                        "k2o": 30.0,
+                        "lime_saturation": 80.0,
+                        "magnesia_saturation": 15.0,
+                        "potash_saturation": 5.0,
+                        "base_saturation": 100.0,
+                        "p2o5": 20.0,
+                        "phosphorus_absorption": 1000.0,
+                        "nh4n": 1.0,
+                        "no3n": 2.0,
+                        "humus": 3.0,
+                        "bulk_density": 1.0,
+                    },
+                    "selected_ledger_id": self.ledger.id,
+                    "status": "confirmed",
+                }
+            ],
+            "total_rows": 1,
+        }
+        session.save()
+
+        url = reverse("soil:chemical_association")
+        # btn_save_all を含めて POST
+        response = self.client.post(url, {"btn_save_all": "1"})
+
+        # 成功画面へのリダイレクトを期待
+        self.assertRedirects(response, reverse("soil:chemical_association_success"))
+
+        # セッションがクリアされていることを確認
+        self.assertNotIn("chemical_import_session", self.client.session)
+        self.assertIn("chemical_import_result", self.client.session)
