@@ -1,5 +1,6 @@
 from django.db.models import Count, Min, Max
 
+from soil_analysis.domain.valueobject.hardness import FolderStats
 from soil_analysis.models import SoilHardnessMeasurement, LandLedger, Land
 
 
@@ -9,7 +10,7 @@ class SoilHardnessMeasurementRepository:
     """
 
     @staticmethod
-    def get_folder_stats(associated_only: bool = False) -> list[dict]:
+    def get_folder_stats(associated_only: bool = False) -> list[FolderStats]:
         """
         フォルダ別の統計情報を取得します
 
@@ -19,7 +20,19 @@ class SoilHardnessMeasurementRepository:
                            True:  圃場関連付け完了後のデータが対象
 
         Returns:
-            list[dict]: フォルダ別統計情報のリスト
+            list[FolderStats]: フォルダ別統計情報のリスト
+
+        Examples:
+            [
+                FolderStats(
+                    folder='20230601_FieldA',
+                    device_name='DIK-5531',
+                    count=50,
+                    min_memory=1,
+                    max_memory=50,
+                    min_datetime=datetime(2023, 6, 1, 10, 0),
+                    max_datetime=datetime(2023, 6, 1, 11, 0)),
+            ]
         """
         # 基本クエリを構築
         queryset = SoilHardnessMeasurement.objects.select_related("set_device")
@@ -51,7 +64,18 @@ class SoilHardnessMeasurementRepository:
             .order_by("folder")
         )
 
-        return list(folder_stats)
+        return [
+            FolderStats(
+                folder=stat["folder"],
+                device_name=stat["set_device__name"],
+                count=stat["count"],
+                min_memory=stat["min_memory"],
+                max_memory=stat["max_memory"],
+                min_datetime=stat["min_datetime"],
+                max_datetime=stat["max_datetime"],
+            )
+            for stat in folder_stats
+        ]
 
     @staticmethod
     def create(measurement: SoilHardnessMeasurement) -> SoilHardnessMeasurement:

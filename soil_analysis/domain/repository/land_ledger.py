@@ -218,9 +218,9 @@ class LandLedgerRepository:
         # folder_statsに関連付け情報を追加
         folder_stats_with_details = []
         for stats in folder_stats:
-            stats["device_names"] = folder_devices.get(stats["folder"], [])
-            stats["land_block_names"] = folder_blocks.get(stats["folder"], [])
-            stats["land_ledger_info"] = folder_ledgers.get(stats["folder"], [])
+            stats.device_names = folder_devices.get(stats.folder, [])
+            stats.land_block_names = folder_blocks.get(stats.folder, [])
+            stats.land_ledger_info = folder_ledgers.get(stats.folder, [])
             folder_stats_with_details.append(stats)
 
         # Land Block別集計

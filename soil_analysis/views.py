@@ -773,7 +773,7 @@ class HardnessSuccessView(TemplateView):
         # フォルダ名に基づいて新規登録が必要な圃場を特定
         missing_lands = []
         for stats in folder_stats:
-            folder_name = stats["folder"]
+            folder_name = stats.folder
             land_name = self._extract_land_name_from_folder(folder_name)
 
             if land_name and not LandRepository.exists_by_name(land_name):
