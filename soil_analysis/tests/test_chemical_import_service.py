@@ -146,3 +146,46 @@ class ChemicalImportServiceTest(TestCase):
         self.assertEqual(
             chemicals.first().remark, ChemicalImportService.REMARK_IMPORT_MODE
         )
+
+    def test_save_import_data_with_duplicate_ledger(self):
+        """同一取り込み内で同じ帳簿が指定された場合、後のデータで更新されること"""
+        import dataclasses
+
+        row1 = KawadaRow(
+            row_number=4,
+            analysis_number="A001",
+            person_name="テスト太郎",
+            land_name="圃場A",
+            crop="キャベツ",
+            ph=6.0,
+            ec=0.1,
+        )
+        row2 = KawadaRow(
+            row_number=5,
+            analysis_number="A002",
+            person_name="テスト太郎",
+            land_name="圃場A (修正)",
+            crop="キャベツ",
+            ph=7.0,
+            ec=0.2,
+        )
+
+        rows_data = [
+            {"row_data": dataclasses.asdict(row1), "land_ledger_id": self.ledger.id},
+            {"row_data": dataclasses.asdict(row2), "land_ledger_id": self.ledger.id},
+        ]
+
+        result = ChemicalImportService.save_import_data(rows_data)
+
+        # 重複チェックが削除されたため、エラーは出ず、1件（5ブロック）として処理される
+        # (すでに1件目の時点で ledger_to_latest_entry により上書きされている)
+        self.assertEqual(result["created"], 5)
+        self.assertEqual(result["error_count"], 0)
+
+        from soil_analysis.models import SoilChemicalMeasurement
+
+        chemicals = SoilChemicalMeasurement.objects.filter(land_ledger=self.ledger)
+        self.assertEqual(chemicals.count(), 5)
+        # 後の方のデータ(row2)のph=7.0が反映されているはず
+        for c in chemicals:
+            self.assertEqual(c.ph, 7.0)

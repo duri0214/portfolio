@@ -20,25 +20,25 @@ class KawadaRow:
 
     row_number: int
     analysis_number: str
-    person_name: Optional[str]
-    land_name: str
-    crop: Optional[str]
-    ec: Optional[float]
-    ph: Optional[float]
-    cec: Optional[float]
-    cao: Optional[float]
-    mgo: Optional[float]
-    k2o: Optional[float]
-    lime_saturation: Optional[float]
-    magnesia_saturation: Optional[float]
-    potash_saturation: Optional[float]
-    base_saturation: Optional[float]
-    p2o5: Optional[float]
-    phosphorus_absorption: Optional[float]
-    nh4n: Optional[float]
-    no3n: Optional[float]
-    humus: Optional[float]
-    bulk_density: Optional[float]
+    person_name: Optional[str] = None
+    land_name: str = ""
+    crop: Optional[str] = None
+    ec: Optional[float] = None
+    ph: Optional[float] = None
+    cec: Optional[float] = None
+    cao: Optional[float] = None
+    mgo: Optional[float] = None
+    k2o: Optional[float] = None
+    lime_saturation: Optional[float] = None
+    magnesia_saturation: Optional[float] = None
+    potash_saturation: Optional[float] = None
+    base_saturation: Optional[float] = None
+    p2o5: Optional[float] = None
+    phosphorus_absorption: Optional[float] = None
+    nh4n: Optional[float] = None
+    no3n: Optional[float] = None
+    humus: Optional[float] = None
+    bulk_density: Optional[float] = None
 
     @staticmethod
     def to_float(
@@ -173,8 +173,7 @@ class ChemicalImportService:
             try:
                 base_ledger = LandLedger.objects.get(id=base_ledger_id)
 
-                # 同じ period のものを優先的に並び替える（本当はもっと複雑なロジックが必要かもしれないが、まずは単純に）
-                # ここでは Django の並び替えではなく Python 側で行う
+                # 同じ period のものを優先的に並び替える
                 def sort_key(l):
                     return (
                         0 if l.land_period_id == base_ledger.land_period_id else 1,
@@ -185,7 +184,59 @@ class ChemicalImportService:
             except LandLedger.DoesNotExist:
                 pass
 
-        return ledgers[:10]  # とりあえず上位10件
+        return list(ledgers[:10])  # とりあえず上位10件
+
+    @classmethod
+    def get_suggested_ledgers_for_names(
+        cls, land_names: List[str], base_ledger_id: Optional[int] = None
+    ) -> Dict[str, List[LandLedger]]:
+        """
+        複数の圃場名に対して候補となる帳簿を一括取得する。
+        """
+        from django.db.models import Q
+
+        if not land_names:
+            return {}
+
+        query = Q()
+        for name in set(land_names):
+            if name:
+                query |= Q(name__icontains=name)
+
+        if not query:
+            return {name: [] for name in land_names}
+
+        lands = Land.objects.filter(query)
+        all_ledgers = list(
+            LandLedger.objects.filter(land__in=lands)
+            .select_related("land", "land__company", "land_period")
+            .order_by("-id")
+        )
+
+        base_period_id = None
+        if base_ledger_id:
+            try:
+                base_period_id = LandLedger.objects.values_list(
+                    "land_period_id", flat=True
+                ).get(id=base_ledger_id)
+            except LandLedger.DoesNotExist:
+                pass
+
+        result = {}
+        for name in land_names:
+            # 各名称に合致するものを抽出（メモリ上でフィルタリング）
+            suggested = [l for l in all_ledgers if name.lower() in l.land.name.lower()]
+
+            if base_period_id:
+
+                def sort_key(l):
+                    return 0 if l.land_period_id == base_period_id else 1
+
+                suggested.sort(key=sort_key)
+
+            result[name] = suggested[:10]
+
+        return result
 
     @classmethod
     def save_import_data(cls, rows_data: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -205,49 +256,61 @@ class ChemicalImportService:
 
         SoilChemicalMeasurementImportErrors.objects.all().delete()
 
-        # 同一取り込み内で同じ帳簿が複数行に割り当たるのは重複として扱う
-        ledger_to_rows: Dict[int, List[Dict[str, Any]]] = {}
+        # 同一取り込み内で同じ帳簿が複数行に割り当たっている場合は、後のものを優先する（上書き許容）
+        ledger_to_latest_entry: Dict[int, Dict[str, Any]] = {}
         for entry in rows_data:
             ledger_id = entry.get("land_ledger_id")
             if not ledger_id:
                 continue
-            ledger_to_rows.setdefault(ledger_id, []).append(entry)
+            ledger_to_latest_entry[ledger_id] = entry
 
-        duplicate_entries: set[int] = set()
-        for entries in ledger_to_rows.values():
-            if len(entries) <= 1:
-                continue
-            for e in entries:
-                duplicate_entries.add(id(e))
-                row_data = e.get("row_data", {})
-                SoilChemicalMeasurementImportErrors.objects.create(
-                    row_number=row_data.get("row_number"),
-                    land_name=row_data.get("land_name"),
-                    message="同一帳簿への重複割り当て",
-                    remark="duplicate_ledger_assignment",
-                )
-                error_count += 1
+        valid_entries = list(ledger_to_latest_entry.values())
+        ledger_ids = [e["land_ledger_id"] for e in valid_entries]
+
+        if not ledger_ids:
+            return {
+                "created": 0,
+                "updated": 0,
+                "ledger_summary": [],
+                "ledger_ids": [],
+                "error_count": error_count,
+            }
+
+        # 既存レコードを一括取得
+        existing_measurements = SoilChemicalMeasurement.objects.filter(
+            land_ledger_id__in=ledger_ids,
+            land_block_id__in=cls.BLOCK_IDS,
+        )
+        # (ledger_id, block_id) -> record
+        existing_map = {
+            (m.land_ledger_id, m.land_block_id): m for m in existing_measurements
+        }
+
+        ledgers_map = {
+            l.id: l
+            for l in LandLedger.objects.filter(id__in=ledger_ids).select_related(
+                "land", "land__company", "land_period"
+            )
+        }
+
+        to_create = []
+        to_update = []
 
         with transaction.atomic():
-            for entry in rows_data:
-                if id(entry) in duplicate_entries:
-                    continue
-                ledger_id = entry.get("land_ledger_id")
-                if not ledger_id:
+            for entry in valid_entries:
+                ledger_id = entry["land_ledger_id"]
+                ledger = ledgers_map.get(ledger_id)
+                if not ledger:
                     continue
 
-                ledger = LandLedger.objects.get(id=ledger_id)
                 row_dict = entry["row_data"]
-                if ledger.id not in ledger_stats:
-                    ledger_stats[ledger.id] = {
+                if ledger_id not in ledger_stats:
+                    ledger_stats[ledger_id] = {
                         "ledger": ledger,
                         "created": 0,
                         "updated": 0,
                     }
 
-                # KawadaRow.to_dict 相当のデータを作成
-                # ただし row_dict は KawadaRow 全体の dict なので、分析値の部分だけ抽出が必要
-                # 簡略化のため、KawadaRow インスタンスを再構成して to_dict を呼ぶ
                 kawada_row = KawadaRow(**row_dict)
                 record_values = {
                     **kawada_row.to_dict(),
@@ -255,26 +318,32 @@ class ChemicalImportService:
                 }
 
                 for block_id in cls.BLOCK_IDS:
-                    existing = SoilChemicalMeasurement.objects.filter(
-                        land_ledger=ledger,
-                        land_block_id=block_id,
-                    ).first()
+                    existing = existing_map.get((ledger_id, block_id))
 
                     if existing:
                         for field_name, field_value in record_values.items():
                             setattr(existing, field_name, field_value)
-                        existing.save()
+                        to_update.append(existing)
                         updated_count += 1
-                        ledger_stats[ledger.id]["updated"] += 1
-                        continue
+                        ledger_stats[ledger_id]["updated"] += 1
+                    else:
+                        new_record = SoilChemicalMeasurement(
+                            land_ledger_id=ledger_id,
+                            land_block_id=block_id,
+                            **record_values,
+                        )
+                        to_create.append(new_record)
+                        created_count += 1
+                        ledger_stats[ledger_id]["created"] += 1
 
-                    SoilChemicalMeasurement.objects.create(
-                        land_ledger=ledger,
-                        land_block_id=block_id,
-                        **record_values,
-                    )
-                    created_count += 1
-                    ledger_stats[ledger.id]["created"] += 1
+            if to_create:
+                SoilChemicalMeasurement.objects.bulk_create(to_create)
+            if to_update:
+                # 更新対象のフィールドを動的に取得（to_dict のキー + remark）
+                update_fields = list(
+                    KawadaRow(**valid_entries[0]["row_data"]).to_dict().keys()
+                ) + ["remark"]
+                SoilChemicalMeasurement.objects.bulk_update(to_update, update_fields)
 
         summary = []
         for stat in ledger_stats.values():

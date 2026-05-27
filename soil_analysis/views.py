@@ -435,23 +435,33 @@ class ChemicalAssociationView(TemplateView):
         rows = import_session.get("rows", [])
         confirmed_count = sum(1 for r in rows if r["status"] == "confirmed")
 
+        # 圃場名から候補帳簿を一括取得
+        land_names = [row["row_data"]["land_name"] for row in rows]
+        suggested_map = ChemicalImportService.get_suggested_ledgers_for_names(
+            land_names, base_ledger_id=import_session.get("base_ledger_id")
+        )
+
+        # 選択済み帳簿を一括取得してキャッシュ
+        selected_ledger_ids = [
+            row["selected_ledger_id"] for row in rows if row["selected_ledger_id"]
+        ]
+        selected_ledgers_map = {}
+        if selected_ledger_ids:
+            selected_ledgers_map = {
+                l.id: l
+                for l in LandLedger.objects.select_related(
+                    "land", "land__company", "land_period"
+                ).filter(id__in=selected_ledger_ids)
+            }
+
         # 表示用に各行の候補帳簿などを付与（セッションは汚さない）
         display_rows = []
         for i, row in enumerate(rows):
             land_name = row["row_data"]["land_name"]
-            suggested_ledgers = ChemicalImportService.get_suggested_ledgers(
-                land_name, base_ledger_id=import_session.get("base_ledger_id")
-            )
+            suggested_ledgers = suggested_map.get(land_name, [])
 
             # 選択済み帳簿の情報を取得
-            selected_ledger = None
-            if row["selected_ledger_id"]:
-                try:
-                    selected_ledger = LandLedger.objects.select_related(
-                        "land", "land__company", "land_period"
-                    ).get(id=row["selected_ledger_id"])
-                except LandLedger.DoesNotExist:
-                    pass
+            selected_ledger = selected_ledgers_map.get(row["selected_ledger_id"])
 
             display_rows.append(
                 {
@@ -625,16 +635,31 @@ class ChemicalSuccessView(TemplateView):
                     .annotate(total=Count("id"))
                 }
 
-                ledgers = LandLedger.objects.select_related(
-                    "land", "land__company", "land_period"
-                ).filter(id__in=ledger_ids)
+                ledgers = (
+                    LandLedger.objects.select_related(
+                        "land", "land__company", "land_period"
+                    )
+                    .prefetch_related(
+                        Prefetch(
+                            "soilchemicalmeasurement_set",
+                            queryset=SoilChemicalMeasurement.objects.select_related(
+                                "land_block"
+                            ),
+                            to_attr="measurements",
+                        )
+                    )
+                    .filter(id__in=ledger_ids)
+                )
 
                 for ledger in ledgers:
-                    block_names = list(
-                        SoilChemicalMeasurement.objects.filter(land_ledger=ledger)
-                        .select_related("land_block")
-                        .values_list("land_block__name", flat=True)
-                        .distinct()
+                    block_names = sorted(
+                        list(
+                            set(
+                                m.land_block.name
+                                for m in ledger.measurements
+                                if m.land_block
+                            )
+                        )
                     )
                     ledger_summary.append(
                         {
