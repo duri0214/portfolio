@@ -1,18 +1,19 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Min, Max
 
+from soil_analysis.domain.repository.hardness_measurement import (
+    SoilHardnessMeasurementRepository,
+)
 from soil_analysis.models import (
     Land,
     Crop,
     LandPeriod,
     SamplingMethod,
     Company,
+    LandLedger,
     SoilHardnessMeasurement,
     SoilHardnessMeasurementImportErrors,
     UserAttribute,
-)
-from soil_analysis.domain.repository.hardness_measurement import (
-    SoilHardnessMeasurementRepository,
 )
 
 
@@ -20,6 +21,29 @@ class LandLedgerRepository:
     """
     LandLedger関連のデータアクセスを担当するRepository
     """
+
+    @staticmethod
+    def get_all() -> list[LandLedger]:
+        """
+        全ての帳簿を取得します
+
+        Returns:
+            list[LandLedger]: 帳簿のリスト
+        """
+        return list(LandLedger.objects.all().order_by("pk"))
+
+    @staticmethod
+    def get_by_id(ledger_id: int) -> LandLedger | None:
+        """
+        IDを指定して帳簿を取得します
+
+        Args:
+            ledger_id: 帳簿ID
+
+        Returns:
+            LandLedger | None: 帳簿インスタンス、存在しない場合はNone
+        """
+        return LandLedger.objects.filter(pk=ledger_id).first()
 
     @staticmethod
     def get_form_data_for_ajax(folder_name: str) -> dict:

@@ -3,10 +3,10 @@ import os
 
 from django.core.management.base import BaseCommand
 
-from soil_analysis.domain.service.hardness_import_service import HardnessImportService
-from soil_analysis.models import (
-    SoilHardnessMeasurementImportErrors,
+from soil_analysis.domain.repository.hardness_import_error import (
+    HardnessImportErrorRepository,
 )
+from soil_analysis.domain.service.hardness_import_service import HardnessImportService
 
 
 class Command(BaseCommand):
@@ -26,7 +26,7 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR(str(e)))
             return
 
-        SoilHardnessMeasurementImportErrors.objects.all().delete()
+        HardnessImportErrorRepository.delete_all()
         csv_files = glob.glob(
             os.path.join(options["folder_path"], "**/*.csv"), recursive=True
         )
@@ -43,7 +43,7 @@ class Command(BaseCommand):
                     )
             except Exception as e:
                 parent_folder = os.path.basename(os.path.dirname(csv_file))
-                SoilHardnessMeasurementImportErrors.objects.create(
+                HardnessImportErrorRepository.create(
                     file=os.path.basename(csv_file),
                     folder=parent_folder,
                     message=str(e),

@@ -26,6 +26,9 @@ from openpyxl import load_workbook
 from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.company import CompanyRepository
+from soil_analysis.domain.repository.hardness_import_error import (
+    HardnessImportErrorRepository,
+)
 from soil_analysis.domain.repository.hardness_measurement import (
     SoilHardnessMeasurementRepository,
 )
@@ -60,7 +63,6 @@ from soil_analysis.models import (
     LandReview,
     LandLedger,
     LandBlock,
-    SoilHardnessMeasurementImportErrors,
     SoilChemicalMeasurementImportErrors,
     SoilHardnessMeasurement,
     RouteSuggestImport,
@@ -360,6 +362,9 @@ class HardnessUploadView(FormView):
             self.request.FILES["file"], app_name
         )
         if os.path.exists(upload_folder):
+            # エラーログのクリア
+            HardnessImportErrorRepository.delete_all()
+
             csv_files = glob.glob(
                 os.path.join(upload_folder, "**/*.csv"), recursive=True
             )
@@ -369,7 +374,7 @@ class HardnessUploadView(FormView):
                     HardnessImportService.save_import_data(rows)
                 except Exception as e:
                     parent_folder = os.path.basename(os.path.dirname(csv_file))
-                    SoilHardnessMeasurementImportErrors.objects.create(
+                    HardnessImportErrorRepository.create(
                         file=os.path.basename(csv_file),
                         folder=parent_folder,
                         message=str(e),
@@ -758,7 +763,7 @@ class HardnessSuccessView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["import_errors"] = SoilHardnessMeasurementImportErrors.objects.all()
+        context["import_errors"] = HardnessImportErrorRepository.get_all()
 
         # CSVインポートされた硬度測定データをフォルダ名でグループ化し、各フォルダの統計情報を取得
         folder_stats = SoilHardnessMeasurementRepository.get_folder_stats(
@@ -771,20 +776,20 @@ class HardnessSuccessView(TemplateView):
             folder_name = stats["folder"]
             land_name = self._extract_land_name_from_folder(folder_name)
 
-            if land_name and not Land.objects.filter(name=land_name).exists():
+            if land_name and not LandRepository.exists_by_name(land_name):
                 missing_lands.append(
                     {"folder_name": folder_name, "suggested_land_name": land_name}
                 )
 
         context["folder_stats"] = folder_stats
-        context["total_records"] = SoilHardnessMeasurement.objects.count()
+        context["total_records"] = len(
+            SoilHardnessMeasurementRepository.get_folder_stats()
+        )
         context["missing_lands"] = missing_lands
 
         # 圃場作成用の会社一覧を追加（農業法人のみ）
         if missing_lands:
-            context["companies"] = Company.objects.filter(category_id=1).order_by(
-                "name"
-            )
+            context["companies"] = CompanyRepository.get_by_category(1)
 
         return context
 
@@ -821,7 +826,7 @@ class HardnessAssociationView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["land_ledgers"] = LandLedger.objects.all().order_by("pk")
+        context["land_ledgers"] = LandLedgerRepository.get_all()
 
         context["total_groups"] = HardnessImportService.get_total_groups_count()
         context["processed_groups"] = HardnessImportService.get_processed_groups_count()
@@ -873,17 +878,14 @@ class HardnessAssociationFieldGroupView(ListView):
     def get_queryset(self, **kwargs):
         memory_anchor = self.kwargs.get("memory_anchor")
         # メモリー番号からフォルダを特定し、そのフォルダの全データを取得
-        sample_measurement = SoilHardnessMeasurement.objects.filter(
-            set_memory=memory_anchor
-        ).first()
+        sample_measurement = (
+            SoilHardnessMeasurementRepository.get_first_by_memory_anchor(memory_anchor)
+        )
 
         if sample_measurement:
             folder_name = sample_measurement.folder
-            return SoilHardnessMeasurement.objects.filter(folder=folder_name).order_by(
-                "set_memory", "depth"
-            )
-
-        return SoilHardnessMeasurement.objects.none()
+            return SoilHardnessMeasurementRepository.get_all_by_folder(folder_name)
+        return []
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -895,9 +897,7 @@ class HardnessAssociationFieldGroupView(ListView):
 
         # メモリー番号の範囲を計算
         if measurements:
-            memory_numbers = list(
-                measurements.values_list("set_memory", flat=True).distinct()
-            )
+            memory_numbers = list(set(m.set_memory for m in measurements))
             min_memory = min(memory_numbers)
             max_memory = max(memory_numbers)
         else:
@@ -925,9 +925,9 @@ class HardnessAssociationFieldGroupView(ListView):
 
         # 処理対象のフォルダを特定
         memory_anchor = self.kwargs.get("memory_anchor")
-        sample_measurement = SoilHardnessMeasurement.objects.filter(
-            set_memory=memory_anchor
-        ).first()
+        sample_measurement = (
+            SoilHardnessMeasurementRepository.get_first_by_memory_anchor(memory_anchor)
+        )
 
         if not sample_measurement:
             messages.error(request, "処理対象のデータが見つかりません")

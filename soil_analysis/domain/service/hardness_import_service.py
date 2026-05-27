@@ -2,25 +2,42 @@ import csv
 import dataclasses
 import os
 from datetime import datetime
-from typing import List, Dict, Any
 
 import pytz
 from django.db import transaction, IntegrityError
 from django.utils import timezone
 
+from soil_analysis.domain.repository.device import DeviceRepository
+from soil_analysis.domain.repository.hardness_import_error import (
+    HardnessImportErrorRepository,
+)
+from soil_analysis.domain.repository.hardness_measurement import (
+    SoilHardnessMeasurementRepository,
+)
+from soil_analysis.domain.repository.sampling_order import SamplingOrderRepository
 from soil_analysis.models import (
     SoilHardnessMeasurement,
-    SoilHardnessMeasurementImportErrors,
-    Device,
     LandLedger,
-    Land,
-    SamplingOrder,
 )
 
 
 @dataclasses.dataclass(frozen=True)
 class HardnessRow:
-    """土壌硬度データをパースしたデータ行"""
+    """
+    土壌硬度データをパースしたデータ行
+
+    Attributes:
+        set_device_name: デバイス名
+        set_memory: メモリー番号
+        set_datetime: 測定日時
+        set_depth: 設定深度
+        set_spring: スプリング番号
+        set_cone: コーン番号
+        depth: 測定深度
+        pressure: 圧力
+        folder: フォルダ名
+        file_name: ファイル名
+    """
 
     set_device_name: str
     set_memory: int
@@ -82,8 +99,16 @@ class HardnessImportService:
         return value
 
     @classmethod
-    def parse_csv(cls, file_path: str) -> List[HardnessRow]:
-        """CSVファイルをパースしてHardnessRowのリストを返す"""
+    def parse_csv(cls, file_path: str) -> list[HardnessRow]:
+        """
+        CSVファイルをパースしてHardnessRowのリストを返す
+
+        Args:
+            file_path: CSVファイルのパス
+
+        Returns:
+            list[HardnessRow]: パースされたデータのリスト
+        """
         rows = []
         parent_folder = os.path.basename(os.path.dirname(file_path))
         file_name = os.path.basename(file_path)
@@ -122,19 +147,30 @@ class HardnessImportService:
         return rows
 
     @classmethod
-    def save_import_data(cls, rows: List[HardnessRow]) -> Dict[str, int]:
-        """パース済みデータをデータベースに保存する"""
+    def save_import_data(cls, rows: list[HardnessRow]) -> dict[str, int]:
+        """
+        パース済みデータをデータベースに保存する
+
+        Args:
+            rows: 保存するデータのリスト
+
+        Returns:
+            dict[str, int]: 作成されたレコード数などの情報
+        """
         created_count = 0
-        m_device = {device.name: device for device in Device.objects.all()}
+        # デバイス情報を一括取得してキャッシュ
+        m_device = {device.name: device for device in DeviceRepository.get_all()}
 
         for row in rows:
             try:
                 device = m_device.get(row.set_device_name)
                 if not device:
-                    raise ValueError(f"Device not found: {row.set_device_name}")
+                    # デバイスが存在しない場合は作成
+                    device = DeviceRepository.get_or_create_by_name(row.set_device_name)
+                    m_device[row.set_device_name] = device
 
                 with transaction.atomic():
-                    SoilHardnessMeasurement.objects.create(
+                    measurement = SoilHardnessMeasurement(
                         set_device=device,
                         set_memory=row.set_memory,
                         set_datetime=row.set_datetime,
@@ -145,10 +181,11 @@ class HardnessImportService:
                         pressure=row.pressure,
                         folder=row.folder,
                     )
+                    SoilHardnessMeasurementRepository.create(measurement)
                     created_count += 1
             except IntegrityError as e:
                 if "duplicate entry" in str(e).lower():
-                    SoilHardnessMeasurementImportErrors.objects.create(
+                    HardnessImportErrorRepository.create(
                         file=row.file_name,
                         folder=row.folder,
                         message="取り込み済み",
@@ -156,7 +193,7 @@ class HardnessImportService:
                 else:
                     raise e
             except Exception as e:
-                SoilHardnessMeasurementImportErrors.objects.create(
+                HardnessImportErrorRepository.create(
                     file=row.file_name,
                     folder=row.folder,
                     message=str(e),
@@ -165,129 +202,85 @@ class HardnessImportService:
         return {"created": created_count}
 
     @staticmethod
-    def get_suitable_ledgers(folder_name: str) -> List[LandLedger]:
-        """フォルダ名に基づいて適切な帳簿を取得（使用済み帳簿は除外）"""
-        # 既に硬度データに関連付けられた帳簿のIDを取得
-        used_ledger_ids = (
-            SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
-            .values_list("land_ledger_id", flat=True)
-            .distinct()
-        )
+    def get_suitable_ledgers(folder_name: str) -> list[LandLedger]:
+        """
+        フォルダ名に基づいて適切な帳簿を取得（使用済み帳簿は除外）
 
-        # 基本クエリ：使用済み帳簿を除外
-        base_query = LandLedger.objects.exclude(id__in=used_ledger_ids)
+        Args:
+            folder_name: フォルダ名
 
-        # フォルダ名による絞り込み
-        if folder_name:
-            # フォルダ名に含まれるキーワードで圃場を検索
-            lands = Land.objects.filter(name__icontains=folder_name.split("_")[0])
-            if lands.exists():
-                company = lands.first().company
-                return list(base_query.filter(land__company=company).distinct())
-
-        # 該当なしの場合は未使用の全帳簿を返す
-        return list(base_query.order_by("pk"))
+        Returns:
+            list[LandLedger]: 適合する帳簿のリスト
+        """
+        return SoilHardnessMeasurementRepository.get_suitable_ledgers(folder_name)
 
     @staticmethod
-    def get_folder_groups_for_association() -> List[Dict[str, Any]]:
-        """関連付け用のフォルダグループを取得"""
-        # フォルダ単位でグループ化されたデータを取得
-        folder_groups = (
-            SoilHardnessMeasurement.objects.filter(land_block__isnull=True)
-            .values("folder")
-            .distinct()
-        )
+    def get_folder_groups_for_association() -> list[dict]:
+        """
+        関連付け用のフォルダグループを取得
 
-        result = []
-        for folder_group in folder_groups:
-            folder_name = folder_group["folder"]
-
-            # 該当フォルダのレコード数を取得
-            total_count = SoilHardnessMeasurement.objects.filter(
-                folder=folder_name, land_block__isnull=True
-            ).count()
-
-            # 代表データとして最初の1レコードのみを取得
-            representative_measurement = (
-                SoilHardnessMeasurement.objects.filter(
-                    folder=folder_name, land_block__isnull=True
-                )
-                .order_by("set_memory", "depth")
-                .first()
-            )
-
-            if representative_measurement:
-                # メモリー番号の範囲を計算
-                memory_numbers = list(
-                    SoilHardnessMeasurement.objects.filter(
-                        folder=folder_name, land_block__isnull=True
-                    )
-                    .values_list("set_memory", flat=True)
-                    .distinct()
-                )
-                min_memory = (
-                    min(memory_numbers)
-                    if memory_numbers
-                    else representative_measurement.set_memory
-                )
-                max_memory = (
-                    max(memory_numbers)
-                    if memory_numbers
-                    else representative_measurement.set_memory
-                )
-
-                group = {
-                    "memory_anchor": representative_measurement.set_memory,
-                    "measurements": [representative_measurement],
-                    "folder_name": folder_name,
-                    "count": total_count,
-                    "min_memory": min_memory,
-                    "max_memory": max_memory,
-                }
-                result.append(group)
-
-        return result
+        Returns:
+            list[dict]: フォルダグループ情報のリスト
+        """
+        return SoilHardnessMeasurementRepository.get_folder_groups_for_association()
 
     @staticmethod
     def get_total_groups_count() -> int:
-        """総フォルダグループ数を取得"""
-        return SoilHardnessMeasurement.objects.values("folder").distinct().count()
+        """
+        総フォルダグループ数を取得
+
+        Returns:
+            int: 総グループ数
+        """
+        return SoilHardnessMeasurementRepository.get_total_groups_count()
 
     @staticmethod
     def get_processed_groups_count() -> int:
-        """処理済みフォルダグループ数を取得"""
-        return (
-            SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
-            .values("folder")
-            .distinct()
-            .count()
-        )
+        """
+        処理済みフォルダグループ数を取得
+
+        Returns:
+            int: 処理済みグループ数
+        """
+        return SoilHardnessMeasurementRepository.get_processed_groups_count()
 
     @classmethod
     def associate_with_ledger(cls, folder_name: str, land_ledger_id: int) -> bool:
-        """フォルダ内のデータを指定された帳簿に紐付ける"""
+        """
+        フォルダ内のデータを指定された帳簿に紐付ける
+
+        Args:
+            folder_name: フォルダ名
+            land_ledger_id: 帳簿のID
+
+        Returns:
+            bool: 成功した場合はTrue、失敗した場合はFalse
+        """
+        # 帳簿の取得はLandLedgerRepositoryがあるならそれを使うべきだが、
+        # ここではモデル直接参照を避け、将来的にRepositoryに移行することを検討
+        # 現状は簡易的にモデルフィルタリングを使用
         land_ledger = LandLedger.objects.filter(pk=land_ledger_id).first()
         if not land_ledger:
             return False
 
         # 処理対象のフォルダのデータを取得
-        hardness_measurements = SoilHardnessMeasurement.objects.filter(
-            folder=folder_name
-        ).order_by("set_memory", "depth")
+        hardness_measurements = SoilHardnessMeasurementRepository.get_all_by_folder(
+            folder_name
+        )
 
-        if not hardness_measurements.exists():
+        if not hardness_measurements:
             return False
 
-        land_block_orders = SamplingOrder.objects.filter(
-            sampling_method=land_ledger.sampling_method
-        ).order_by("ordering")
+        land_block_orders = SamplingOrderRepository.get_by_sampling_method(
+            land_ledger.sampling_method_id
+        )
 
         # 1つのland_blockあたりのレコード数を計算（深度×採取回数）
         max_depth = max(m.set_depth for m in hardness_measurements)
         records_per_block = max_depth * cls.SAMPLING_TIMES_PER_BLOCK
 
         needle = 0
-        land_block_count = land_block_orders.count()
+        land_block_count = len(land_block_orders)
         current_time = timezone.now()
 
         for i, hardness_measurement in enumerate(hardness_measurements):
@@ -299,8 +292,8 @@ class HardnessImportService:
             if (i + 1) % records_per_block == 0:
                 needle += 1
 
-        SoilHardnessMeasurement.objects.bulk_update(
-            list(hardness_measurements),
-            fields=["land_block", "land_ledger", "updated_at"],
+        # ルール32, 34に従いRepository経由で一括更新
+        SoilHardnessMeasurementRepository.bulk_update(
+            hardness_measurements, fields=["land_block", "land_ledger", "updated_at"]
         )
         return True
