@@ -1,0 +1,188 @@
+{% extends "soil_analysis/base.html" %}
+{% load static custom_filters %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/landreport/standard_report.css' %}">
+{% endblock %}
+{% block content %}
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:land_detail' company.id land.id %}">Land Detail</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">土壌診断通知表</li>
+            </ol>
+        </nav>
+
+        {% if land.image %}
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h6 class="text-muted small">土壌硬度分布</h6>
+                    <img src="{{ land.image.url }}" alt="土壌硬度分布" class="img-fluid rounded shadow-sm"
+                         style="max-height: 400px;">
+                    <hr>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tbody>
+                    <tr>
+                        <td class="bg-light w-25">圃場</td>
+                        <td>{{ land_ledger.land.name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light">作物</td>
+                        <td>{{ land_ledger.crop.name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light">時期</td>
+                        <td>{{ land_ledger.land_period.name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light">採土日</td>
+                        <td>{{ land_ledger.sampling_date|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light">採土法</td>
+                        <td>{{ land_ledger.sampling_method.name|default:"-" }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tbody>
+                    <tr>
+                        <td class="bg-light w-25">採土者</td>
+                        <td>{{ land_ledger.sampling_staff|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light">分析依頼日</td>
+                        <td>{{ land_ledger.analysis_request_date|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light">報告日</td>
+                        <td>{{ land_ledger.reporting_date|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light">分析機関</td>
+                        <td>{{ land_ledger.analytical_agency.name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light">分析番号</td>
+                        <td>{{ land_ledger.analysis_number|default:"-" }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">化学性の判定結果</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text fw-bold">{{ chemical_assessment.get_summary }}</p>
+                {% with warnings=chemical_assessment.get_warnings %}
+                    {% if warnings %}
+                        <div class="mt-2">
+                            {% for warning in warnings %}
+                                <div class="text-danger small"><i
+                                        class="bi bi-exclamation-triangle-fill"></i> {{ warning }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <hr>
+                {% for category, results in chemical_assessment.categorized_results.items %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold border-bottom pb-1 small text-primary">{{ category }}</h6>
+                        <div class="row row-cols-2 row-cols-md-4 g-2">
+                            {% for result in results %}
+                                <div class="col">
+                                    <div class="border rounded p-2 text-center h-100 bg-light">
+                                        <div class="small text-muted"
+                                             style="font-size: 0.7rem; height: 2.4rem; overflow: hidden;">{{ result.name }}</div>
+                                        <div class="fw-bold text-{{ result.level }}">{{ result.label }}</div>
+                                        <div class="fw-bold">{{ result.value|floatformat:2|default:"-" }}</div>
+                                        <div class="text-muted pt-1 mt-1 border-top" style="font-size: 0.65rem;">
+                                            {% if result.min_threshold and result.max_threshold %}
+                                                {{ result.min_threshold }}〜{{ result.max_threshold }}
+                                            {% elif result.min_threshold %}
+                                                {{ result.min_threshold }}以上
+                                            {% elif result.max_threshold %}
+                                                {{ result.max_threshold }}以下
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="mt-2 text-end">
+                    <small class="text-muted">※帳簿平均値による暫定判定です</small>
+                </div>
+            </div>
+        </div>
+
+        {% if land_review.first.comment %}
+            <div class="alert alert-secondary mb-4 shadow-sm" role="alert">
+                <h6 class="alert-heading small fw-bold">専門家コメント</h6>
+                {{ land_review.first.comment }}
+            </div>
+        {% endif %}
+
+        <div class="land-grid mb-4">
+            {% for block in ordered_blocks %}
+                {% with land_score=land_scores_dict|get_item:block.name %}
+                    <div class="card grid-square {% if land_score %}has-data{% else %}no-data{% endif %}"
+                            {% if land_score %}
+                         data-bs-toggle="tooltip"
+                         data-bs-html="true"
+                         data-bs-title="#tooltip-{{ block.name }}"
+                            {% endif %}>
+                        <div class="card-body p-0 d-flex align-items-center justify-content-center">
+                            <h5 class="card-title mb-0 border-0 fw-bold text-center"
+                                style="font-size: 1.2rem;">{{ block.name }}</h5>
+                        </div>
+                    </div>
+
+                    {% if land_score %}
+                        <div id="tooltip-{{ block.name }}" style="display: none;">
+                            <div class='text-start small'>
+                                <div class='fw-bold border-bottom mb-1 text-center'>{{ block.name }}</div>
+                                <ul class='list-unstyled mb-0' style='column-count: 2; column-gap: 15px;'>
+                                    {% for field in report_fields %}
+                                        <li>
+                                            <span style="color: #adb5bd;">
+                                                {{ field.label }}{% if field.unit %}({{ field.unit }}){% endif %}:
+                                            </span>
+                                            {{ land_score|get_attr:field.key }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                {% if land_score.remark %}
+                                    <div class='border-top mt-1 pt-1'>
+                                        <small style="color: #adb5bd;">備考:</small> {{ land_score.remark }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'soil_analysis/js/land_report/standard_report.js' %}"></script>
+{% endblock %}
