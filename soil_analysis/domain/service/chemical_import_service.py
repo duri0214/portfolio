@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
-from typing import List, Dict, Optional, Any
+from typing import Any
 
 import unicodedata
 from django.db import transaction
@@ -16,34 +16,57 @@ from soil_analysis.models import (
 
 @dataclass(frozen=True)
 class KawadaRow:
-    """川田フォーマットをパースしたデータ行"""
+    """
+    川田フォーマットをパースしたデータ行
+
+    Attributes:
+        row_number: Excelの行番号
+        analysis_number: 分析番号
+        person_name: 氏名
+        land_name: 圃場名
+        crop: 作物
+        ec: EC
+        ph: pH
+        cec: CEC
+        cao: 交換性石灰
+        mgo: 交換性苦土
+        k2o: 交換性加里
+        lime_saturation: 石灰飽和度
+        magnesia_saturation: 苦土飽和度
+        potash_saturation: 加里飽和度
+        base_saturation: 塩基飽和度
+        p2o5: 可給態リン酸
+        phosphorus_absorption: リン酸吸収係数
+        nh4n: アンモニア態窒素
+        no3n: 硝酸態窒素
+        humus: 腐植
+        bulk_density: 仮比重
+    """
 
     row_number: int
     analysis_number: str
-    person_name: Optional[str] = None
+    person_name: str | None = None
     land_name: str = ""
-    crop: Optional[str] = None
-    ec: Optional[float] = None
-    ph: Optional[float] = None
-    cec: Optional[float] = None
-    cao: Optional[float] = None
-    mgo: Optional[float] = None
-    k2o: Optional[float] = None
-    lime_saturation: Optional[float] = None
-    magnesia_saturation: Optional[float] = None
-    potash_saturation: Optional[float] = None
-    base_saturation: Optional[float] = None
-    p2o5: Optional[float] = None
-    phosphorus_absorption: Optional[float] = None
-    nh4n: Optional[float] = None
-    no3n: Optional[float] = None
-    humus: Optional[float] = None
-    bulk_density: Optional[float] = None
+    crop: str | None = None
+    ec: float | None = None
+    ph: float | None = None
+    cec: float | None = None
+    cao: float | None = None
+    mgo: float | None = None
+    k2o: float | None = None
+    lime_saturation: float | None = None
+    magnesia_saturation: float | None = None
+    potash_saturation: float | None = None
+    base_saturation: float | None = None
+    p2o5: float | None = None
+    phosphorus_absorption: float | None = None
+    nh4n: float | None = None
+    no3n: float | None = None
+    humus: float | None = None
+    bulk_density: float | None = None
 
     @staticmethod
-    def to_float(
-        raw_value: object, row_number: int, column_name: str
-    ) -> Optional[float]:
+    def to_float(raw_value: object, row_number: int, column_name: str) -> float | None:
         if raw_value is None:
             return None
         text = unicodedata.normalize("NFKC", str(raw_value)).strip()
@@ -64,7 +87,7 @@ class KawadaRow:
         def to_str(col_idx: int) -> str:
             return str(row[col_idx] if col_idx < len(row) else "").strip()
 
-        def to_numeric(col_idx: int, display_name: str) -> Optional[float]:
+        def to_numeric(col_idx: int, display_name: str) -> float | None:
             raw_value = row[col_idx] if col_idx < len(row) else None
             return cls.to_float(raw_value, row_number, display_name)
 
@@ -92,7 +115,7 @@ class KawadaRow:
             bulk_density=to_numeric(19, "仮比重"),
         )
 
-    def to_dict(self) -> Dict[str, Optional[float]]:
+    def to_dict(self) -> dict[str, float | None]:
         return {
             "ec": self.ec,
             "nh4n": self.nh4n,
@@ -116,8 +139,16 @@ class KawadaRow:
 
 @dataclass(frozen=True)
 class ParseResult:
-    rows: List[KawadaRow]
-    errors: List[str]
+    """
+    Excelパース結果を保持するクラス
+
+    Attributes:
+        rows: パースされた KawadaRow のリスト
+        errors: パース中に発生したエラーメッセージのリスト
+    """
+
+    rows: list[KawadaRow]
+    errors: list[str]
 
 
 class ChemicalImportService:
@@ -155,8 +186,8 @@ class ChemicalImportService:
 
     @classmethod
     def get_suggested_ledgers(
-        cls, land_name: str, base_ledger_id: Optional[int] = None
-    ) -> List[LandLedger]:
+        cls, land_name: str, base_ledger_id: int | None = None
+    ) -> list[LandLedger]:
         """
         圃場名から候補となる帳簿を検索する。
         base_ledger_id が指定されている場合、その帳簿と同じ period を持つものを優先する。
@@ -188,8 +219,8 @@ class ChemicalImportService:
 
     @classmethod
     def get_suggested_ledgers_for_names(
-        cls, land_names: List[str], base_ledger_id: Optional[int] = None
-    ) -> Dict[str, List[LandLedger]]:
+        cls, land_names: list[str], base_ledger_id: int | None = None
+    ) -> dict[str, list[LandLedger]]:
         """
         複数の圃場名に対して候補となる帳簿を一括取得する。
         """
@@ -239,7 +270,7 @@ class ChemicalImportService:
         return result
 
     @classmethod
-    def _get_block_ids(cls) -> List[int]:
+    def _get_block_ids(cls) -> list[int]:
         """
         BLOCK_NAMES に合致する LandBlock の ID リストを取得する。
         """
@@ -254,7 +285,7 @@ class ChemicalImportService:
         return list(blocks)
 
     @classmethod
-    def save_import_data(cls, rows_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def save_import_data(cls, rows_data: list[dict[str, Any]]) -> dict[str, Any]:
         """
         確定済みデータを保存する
         rows_data: [
@@ -266,13 +297,13 @@ class ChemicalImportService:
         """
         created_count = 0
         updated_count = 0
-        ledger_stats: Dict[int, Dict[str, Any]] = {}
+        ledger_stats: dict[int, dict[str, Any]] = {}
         error_count = 0
 
         SoilChemicalMeasurementImportErrors.objects.all().delete()
 
         # 同一取り込み内で同じ帳簿が複数行に割り当たっている場合は、後のものを優先する（上書き許容）
-        ledger_to_latest_entry: Dict[int, Dict[str, Any]] = {}
+        ledger_to_latest_entry: dict[int, dict[str, Any]] = {}
         for entry in rows_data:
             ledger_id = entry.get("land_ledger_id")
             if not ledger_id:
