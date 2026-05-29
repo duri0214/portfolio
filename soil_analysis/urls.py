@@ -30,9 +30,9 @@ urlpatterns = [
         name="land_detail",
     ),
     path(
-        "company/<int:company_id>/land_ledger/<int:land_ledger_id>/land_report_chemical",
-        views.LandReportChemicalListView.as_view(),
-        name="land_report_chemical",
+        "company/<int:company_id>/land_ledger/<int:land_ledger_id>/standard_report",
+        views.StandardReportView.as_view(),
+        name="standard_report",
     ),
     path(
         "hardness/upload",
