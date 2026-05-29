@@ -51,6 +51,9 @@ class ChemicalAssessmentVO:
         base_saturation: Base Saturation(塩基飽和度)
         p2o5: P2O5(可給態リン酸)
         humus: Humus(腐植)
+        cao: CaO(交換性石灰)
+        mgo: MgO(交換性苦土)
+        k2o: K2O(交換性加里)
     """
 
     ph: float | None = None
@@ -61,6 +64,9 @@ class ChemicalAssessmentVO:
     base_saturation: float | None = None
     p2o5: float | None = None
     humus: float | None = None
+    cao: float | None = None
+    mgo: float | None = None
+    k2o: float | None = None
 
     @classmethod
     def from_measurements(cls, measurements: list[Any]) -> "ChemicalAssessmentVO":
@@ -88,6 +94,9 @@ class ChemicalAssessmentVO:
             base_saturation=avg("base_saturation"),
             p2o5=avg("p2o5"),
             humus=avg("humus"),
+            cao=avg("cao"),
+            mgo=avg("mgo"),
+            k2o=avg("k2o"),
         )
 
     def assess_ph(self) -> ItemAssessment:
@@ -205,6 +214,15 @@ class ChemicalAssessmentVO:
             level_low="danger",
         )
 
+    def assess_cao(self) -> ItemAssessment:
+        return self._assess_reference(self.cao, _get_item_name("cao"))
+
+    def assess_mgo(self) -> ItemAssessment:
+        return self._assess_reference(self.mgo, _get_item_name("mgo"))
+
+    def assess_k2o(self) -> ItemAssessment:
+        return self._assess_reference(self.k2o, _get_item_name("k2o"))
+
     def get_combination_comments(self) -> list[str]:
         comments = []
         if self.ph is not None and self.ec is not None:
@@ -295,6 +313,9 @@ class ChemicalAssessmentVO:
             "塩基類関連": [
                 self.assess_ph(),
                 self.assess_base_saturation(),
+                self.assess_cao(),
+                self.assess_mgo(),
+                self.assess_k2o(),
             ],
             "リン酸関連": [
                 self.assess_p2o5(),
@@ -304,6 +325,18 @@ class ChemicalAssessmentVO:
                 self.assess_humus(),
             ],
         }
+
+    @staticmethod
+    def _assess_reference(value: float | None, name: str) -> ItemAssessment:
+        if value is None:
+            return ItemAssessment(name, None, "不明", "データがありません", "secondary")
+        return ItemAssessment(
+            name,
+            value,
+            "参照",
+            "判定基準が未設定のため、参照値として表示しています",
+            "secondary",
+        )
 
     @staticmethod
     def _assess_range(
