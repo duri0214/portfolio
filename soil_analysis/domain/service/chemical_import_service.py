@@ -4,6 +4,7 @@ from typing import Any
 
 import unicodedata
 from django.db import transaction
+from django.db.models import Q
 from openpyxl.worksheet.worksheet import Worksheet
 
 from soil_analysis.models import (
@@ -11,6 +12,7 @@ from soil_analysis.models import (
     SoilChemicalMeasurement,
     Land,
     SoilChemicalMeasurementImportErrors,
+    LandBlock,
 )
 
 
@@ -224,8 +226,6 @@ class ChemicalImportService:
         """
         複数の圃場名に対して候補となる帳簿を一括取得する。
         """
-        from django.db.models import Q
-
         if not land_names:
             return {}
 
@@ -274,8 +274,6 @@ class ChemicalImportService:
         """
         BLOCK_NAMES に合致する LandBlock の ID リストを取得する。
         """
-        from soil_analysis.models import LandBlock
-
         blocks = LandBlock.objects.filter(name__in=cls.BLOCK_NAMES).values_list(
             "id", flat=True
         )
