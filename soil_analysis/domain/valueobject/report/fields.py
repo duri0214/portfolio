@@ -5,6 +5,17 @@ import unicodedata
 
 @dataclass(frozen=True)
 class ReportField:
+    """
+    レポート項目の定義情報を保持するクラス。
+
+    Attributes:
+        key: フィールドのキー名（DBのカラム名に相当）
+        label: 表示用のラベル名（アルファベット略称など）
+        unit: 単位
+        description: 項目名の日本語解説
+        aliases: Excel列名とのマッチングに使用する別名のタプル
+    """
+
     key: str
     label: str
     unit: str
@@ -36,7 +47,7 @@ REPORT_FIELDS: tuple[ReportField, ...] = (
     ReportField("k2o", "K2O", "mg/100g", "交換性加里", ("k2o", "K2O")),
     ReportField(
         "base_saturation",
-        "塩基飽和度",
+        "Base Saturation",
         "%",
         "塩基飽和度",
         ("base_saturation", "塩基飽和度"),
@@ -51,8 +62,8 @@ REPORT_FIELDS: tuple[ReportField, ...] = (
         ("phosphorus_absorption", "リン酸吸収係数", "リン酸吸"),
     ),
     ReportField("p2o5", "P2O5", "mg/100g", "可給態リン酸", ("p2o5", "P2O5")),
-    ReportField("cec", "CEC", "meq/100g", "塩基置換容量", ("cec", "CEC")),
-    ReportField("humus", "腐植", "%", "腐植", ("humus", "腐植")),
+    ReportField("cec", "CEC", "meq/100g", "保肥力", ("cec", "CEC")),
+    ReportField("humus", "Humus", "%", "腐植", ("humus", "腐植")),
     ReportField("bulk_density", "仮比重", "", "仮比重", ("bulk_density", "仮比重")),
 )
 
@@ -130,3 +141,4 @@ def build_alias_to_field_key_map() -> dict[str, str]:
 
 
 REPORT_FIELD_ALIAS_TO_KEY: dict[str, str] = build_alias_to_field_key_map()
+REPORT_FIELD_BY_KEY: dict[str, ReportField] = {f.key: f for f in REPORT_FIELDS}
