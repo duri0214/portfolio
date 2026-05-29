@@ -48,13 +48,14 @@ class TestChemicalAssessmentVO(unittest.TestCase):
         vo = ChemicalAssessmentVO(ec=0.6)
         res = vo.assess_ec()
         self.assertEqual(res.label, "過剰")
+        self.assertEqual(res.level, "danger")
 
     def test_nh4n_assessment(self):
         vo = ChemicalAssessmentVO(nh4n=6.0)
         res = vo.assess_nh4n()
         self.assertEqual(res.name, "NH4-N(アンモニア態窒素)")
         self.assertEqual(res.label, "過剰")
-        self.assertEqual(res.level, "warning")
+        self.assertEqual(res.level, "danger")
         self.assertIsNone(res.min_threshold)
         self.assertEqual(res.max_threshold, 5.0)
 
@@ -69,6 +70,7 @@ class TestChemicalAssessmentVO(unittest.TestCase):
         res = vo.assess_no3n()
         self.assertEqual(res.name, "NO3-N(硝酸態窒素)")
         self.assertEqual(res.label, "過剰")
+        self.assertEqual(res.level, "danger")
 
         vo = ChemicalAssessmentVO(no3n=10.0)
         res = vo.assess_no3n()
@@ -94,6 +96,7 @@ class TestChemicalAssessmentVO(unittest.TestCase):
         vo = ChemicalAssessmentVO(base_saturation=90.0)
         res = vo.assess_base_saturation()
         self.assertEqual(res.label, "過剰")
+        self.assertEqual(res.level, "danger")
 
         vo = ChemicalAssessmentVO(base_saturation=70.0)
         res = vo.assess_base_saturation()
@@ -112,6 +115,7 @@ class TestChemicalAssessmentVO(unittest.TestCase):
         vo = ChemicalAssessmentVO(p2o5=40.0)
         res = vo.assess_p2o5()
         self.assertEqual(res.label, "過剰")
+        self.assertEqual(res.level, "danger")
 
     def test_humus_assessment(self):
         vo = ChemicalAssessmentVO(humus=2.5)
