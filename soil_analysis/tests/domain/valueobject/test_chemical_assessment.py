@@ -124,6 +124,26 @@ class TestChemicalAssessmentVO(unittest.TestCase):
         self.assertEqual(res.label, "低")
         self.assertEqual(res.level, "danger")
 
+    def test_individual_salt_assessments(self):
+        # CaO
+        vo = ChemicalAssessmentVO(cao=100.0)
+        res = vo.assess_cao()
+        self.assertEqual(res.name, "CaO(交換性石灰)")
+        self.assertEqual(res.label, "参照")
+        self.assertEqual(res.level, "secondary")
+
+        # MgO
+        vo = ChemicalAssessmentVO(mgo=50.0)
+        res = vo.assess_mgo()
+        self.assertEqual(res.name, "MgO(交換性苦土)")
+        self.assertEqual(res.label, "参照")
+
+        # K2O
+        vo = ChemicalAssessmentVO(k2o=20.0)
+        res = vo.assess_k2o()
+        self.assertEqual(res.name, "K2O(交換性加里)")
+        self.assertEqual(res.label, "参照")
+
     def test_combination_logic(self):
         # 高pH低EC
         vo = ChemicalAssessmentVO(ph=7.5, ec=0.05)
@@ -156,16 +176,20 @@ class TestChemicalAssessmentVO(unittest.TestCase):
                 self.base_saturation = kwargs.get("base_saturation")
                 self.p2o5 = kwargs.get("p2o5")
                 self.humus = kwargs.get("humus")
+                self.cao = kwargs.get("cao")
+                self.mgo = kwargs.get("mgo")
+                self.k2o = kwargs.get("k2o")
 
         measurements = [
-            MockMeasurement(ph=6.0, ec=0.2),
-            MockMeasurement(ph=7.0, ec=0.4),
-            MockMeasurement(ph=None, ec=0.6),
+            MockMeasurement(ph=6.0, ec=0.2, cao=100.0),
+            MockMeasurement(ph=7.0, ec=0.4, cao=200.0),
+            MockMeasurement(ph=None, ec=0.6, cao=None),
         ]
 
         vo = ChemicalAssessmentVO.from_measurements(measurements)
         self.assertAlmostEqual(vo.ph, 6.5)
         self.assertAlmostEqual(vo.ec, 0.4)
+        self.assertAlmostEqual(vo.cao, 150.0)
 
     def test_missing_data_summary(self):
         vo = ChemicalAssessmentVO()
@@ -185,8 +209,11 @@ class TestChemicalAssessmentVO(unittest.TestCase):
         self.assertIn("塩基類関連", categorized)
         self.assertIn("リン酸関連", categorized)
         self.assertIn("土壌ポテンシャル関連", categorized)
+        self.assertNotIn("その他", categorized)
 
         self.assertEqual(len(categorized["窒素・EC関連"]), 3)  # EC, NH4, NO3
-        self.assertEqual(len(categorized["塩基類関連"]), 2)  # pH, Base Saturation
+        self.assertEqual(
+            len(categorized["塩基類関連"]), 5
+        )  # pH, Base Saturation, CaO, MgO, K2O
         self.assertEqual(len(categorized["リン酸関連"]), 1)  # P2O5
         self.assertEqual(len(categorized["土壌ポテンシャル関連"]), 2)  # CEC, Humus
