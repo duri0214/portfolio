@@ -1,7 +1,7 @@
 {% extends "soil_analysis/base.html" %}
 {% load static custom_filters %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'soil_analysis/css/landreport/standard_report.css' %}">
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/land_report/standard_report.css' %}">
 {% endblock %}
 {% block content %}
     <div class="container">
@@ -143,7 +143,7 @@
         <div class="land-grid mb-4">
             {% for block in ordered_blocks %}
                 {% with land_score=land_scores_dict|get_item:block.name %}
-                    <div class="card grid-square {% if land_score %}has-data{% else %}no-data{% endif %}"
+                    <div class="card grid-square shadow-sm {% if land_score %}bg-success-subtle text-success-emphasis border-success-subtle{% else %}bg-light text-muted{% endif %}"
                             {% if land_score %}
                          data-bs-toggle="tooltip"
                          data-bs-html="true"
