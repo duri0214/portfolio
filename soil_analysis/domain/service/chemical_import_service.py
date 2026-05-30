@@ -153,8 +153,6 @@ class KawadaRow:
             "ec": self.ec,
             "nh4n": self.nh4n,
             "no3n": self.no3n,
-            "total_nitrogen": None,
-            "nh4_per_nitrogen": None,
             "ph": self.ph,
             "cao": self.cao,
             "mgo": self.mgo,
@@ -163,8 +161,6 @@ class KawadaRow:
             "magnesia_saturation": self.magnesia_saturation,
             "potash_saturation": self.potash_saturation,
             "base_saturation": self.base_saturation,
-            "cao_per_mgo": None,
-            "mgo_per_k2o": None,
             "phosphorus_absorption": self.phosphorus_absorption,
             "p2o5": self.p2o5,
             "cec": self.cec,
@@ -333,13 +329,16 @@ class ChemicalImportService:
         return list(blocks)
 
     @classmethod
-    def save_import_data(cls, rows_data: list[dict[str, Any]]) -> dict[str, Any]:
+    def save_import_data(
+        cls, rows_data: list[dict[str, Any]], source_file: str | None = None
+    ) -> dict[str, Any]:
         """
         確定済みデータを保存する。
         既存のデータがある場合は上書きし、ない場合は新規作成する。
 
         Args:
             rows_data: 保存対象のデータリスト（row_data と land_ledger_id を含む）
+            source_file: データ元ファイル名
 
         Returns:
             作成/更新件数やサマリーを含む結果
@@ -411,12 +410,15 @@ class ChemicalImportService:
                 if existing:
                     for field_name, field_value in record_values.items():
                         setattr(existing, field_name, field_value)
+                    if source_file:
+                        existing.source_file = source_file
                     to_update.append(existing)
                     updated_count += 1
                     ledger_stats[ledger_id]["updated"] += 1
                 else:
                     new_record = SoilChemicalMeasurement(
                         land_ledger_id=ledger_id,
+                        source_file=source_file,
                         **record_values,
                     )
                     to_create.append(new_record)
@@ -430,6 +432,8 @@ class ChemicalImportService:
                 update_fields = list(
                     KawadaRow(**valid_entries[0]["row_data"]).to_dict().keys()
                 )
+                if source_file:
+                    update_fields.append("source_file")
                 SoilChemicalMeasurement.objects.bulk_update(to_update, update_fields)
 
         summary = []
