@@ -22,3 +22,23 @@
     text-align: left;
     padding: 10px;
 }
+
+.sub-section-title {
+    border-left: 5px solid #007bff;
+    padding-left: 10px;
+    margin-bottom: 15px;
+}
+
+.analysis-table thead th {
+    border-bottom: 1px solid #dee2e6 !important;
+    color: #495057;
+    font-weight: 600;
+}
+
+.analysis-table tbody td {
+    border-bottom: 1px dashed #e9ecef;
+}
+
+.analysis-table tbody tr:last-child td {
+    border-bottom: none;
+}

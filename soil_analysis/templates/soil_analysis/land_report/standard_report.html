@@ -157,7 +157,108 @@
                 {% endfor %}
 
                 <div class="mt-2 text-end">
-                    <small class="text-muted">帳簿平均値による暫定判定です</small>
+                    <small class="text-muted">※帳簿平均値による暫定判定です</small>
+                </div>
+
+                <div class="mt-4 pt-3 text-muted">
+                    <h6 class="fw-bold mb-3 sub-section-title"><i class="bi bi-book me-2"></i>化学分析結果の見方</h6>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <p class="mb-2 small"><strong>CEC（陽イオン交換容量）</strong>:
+                                土が石灰などの塩基類やアンモニア等の陽イオンを保持する力を表しています。数値が大きいほど肥料を保持する力が強くなります。
+                            </p>
+                            <p class="mb-2 small"><strong>塩基類及び飽和度</strong>:
+                                CECに対してどの程度塩基類が入っているかを表します。100％を超えている場合は土が保持できないほどの肥料が入っていることになります。CECが20以上の場合は80％、15未満の場合は100％以上を目安にします。
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2 small"><strong>リン酸(P2O5)と吸収係数</strong>:
+                                リン酸吸収係数の5〜10％を施すのが適正とされます。過剰なリン酸はアブラナ科の根瘤病を発生しやすくすることがあります。
+                            </p>
+                            <p class="mb-2 small"><strong>窒素類・微量要素</strong>:
+                                アンモニア態窒素(NH4-N)は5mg/100g以下、硝酸態窒素(NO3-N)は15mg/100g以下が目安です。鉄(Fe2O3)は0.8％以下で酸素不足リスク、ケイ酸(SiO2)は10mg/100g以下で倒伏リスク、腐植は3％以上が適正値です。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 text-muted">
+                    <h6 class="fw-bold mb-3 sub-section-title"><i class="bi bi-list-check me-2"></i>分析法一覧</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless text-muted mb-0 analysis-table"
+                                   style="font-size: 0.8rem;">
+                                <thead>
+                                <tr class="border-bottom">
+                                    <th class="py-1">項目</th>
+                                    <th class="py-1">分析法</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class="py-1" style="width: 40%;">EC</td>
+                                    <td class="py-1">白金電極法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">pH(H2O)</td>
+                                    <td class="py-1">ガラス電極法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">CEC</td>
+                                    <td class="py-1">Schollenberger変法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">石灰/苦土</td>
+                                    <td class="py-1">原子吸光法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">加里</td>
+                                    <td class="py-1">炎光法</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless text-muted mb-0 analysis-table"
+                                   style="font-size: 0.8rem;">
+                                <thead>
+                                <tr class="border-bottom">
+                                    <th class="py-1">項目</th>
+                                    <th class="py-1">分析法</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class="py-1" style="width: 40%;">可給態リン酸</td>
+                                    <td class="py-1">トルオーグ法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">アンモニア態窒素</td>
+                                    <td class="py-1">V.9.B.b法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">硝酸態窒素</td>
+                                    <td class="py-1">紫外分光法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">腐植</td>
+                                    <td class="py-1">熊田法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">リン酸吸収係数</td>
+                                    <td class="py-1">V.17.A法</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-end">
+                        <small class="text-muted">
+                            分析協力: <a href="https://www.soil-research.org/" target="_blank"
+                                         class="text-decoration-none"><i class="bi bi-box-arrow-up-right me-1"></i>川田研究所</a>
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -223,32 +324,9 @@
         <!-- 補足情報セクション -->
         <div class="mt-5 pt-4 border-top text-muted">
             <div class="row">
-                <!-- 化学分析結果の見方 -->
-                <div class="col-12 mb-4">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-book me-2"></i>化学分析結果の見方</h5>
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <p class="mb-2"><strong>CEC（陽イオン交換容量）</strong>:
-                                土が石灰などの塩基類やアンモニア等の陽イオンを保持する力を表しています。数値が大きいほど肥料を保持する力が強くなります。
-                            </p>
-                            <p class="mb-2"><strong>塩基類及び飽和度</strong>:
-                                CECに対してどの程度塩基類が入っているかを表します。100％を超えている場合は土が保持できないほどの肥料が入っていることになります。CECが20以上の場合は80％、15未満の場合は100％以上を目安にします。
-                            </p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-2"><strong>リン酸(P2O5)と吸収係数</strong>:
-                                リン酸吸収係数の5〜10％を施すのが適正とされます。過剰なリン酸はアブラナ科の根瘤病を発生しやすくすることがあります。
-                            </p>
-                            <p class="mb-2"><strong>窒素類・微量要素</strong>:
-                                アンモニア態窒素(NH4-N)は5mg/100g以下、硝酸態窒素(NO3-N)は15mg/100g以下が目安です。鉄(Fe2O3)は0.8％以下で酸素不足リスク、ケイ酸(SiO2)は10mg/100g以下で倒伏リスク、腐植は3％以上が適正値です。
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 土壌採取・送付方法 -->
                 <div class="col-12 mb-4">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>正確な分析のための土壌採取・送付方法
+                    <h5 class="fw-bold mb-3 sub-section-title"><i class="bi bi-info-circle me-2"></i>正確な分析のための土壌採取・送付方法
                     </h5>
                     <ul class="list-unstyled mb-0">
                         <li>1. <strong>採取場所</strong>: 圃場の5箇所から同量を採取し、よく混合してください。</li>
@@ -258,77 +336,6 @@
                         <li>4. <strong>注意</strong>: 直射日光や高温での乾燥は分析値が変わる可能性があるため避けてください。
                         </li>
                     </ul>
-                </div>
-
-                <!-- 分析法一覧 -->
-                <div class="col-12 mb-4">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-list-check me-2"></i>分析法一覧</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <table class="table table-sm table-borderless text-muted mb-0">
-                                <thead>
-                                <tr class="border-bottom">
-                                    <th class="py-1">項目</th>
-                                    <th class="py-1">分析法</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr>
-                                    <td class="py-1" style="width: 40%;">EC</td>
-                                    <td class="py-1">白金電極法</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1">pH(H2O)</td>
-                                    <td class="py-1">ガラス電極法</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1">CEC</td>
-                                    <td class="py-1">Schollenberger変法</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1">石灰/苦土</td>
-                                    <td class="py-1">原子吸光法</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1">加里</td>
-                                    <td class="py-1">炎光法</td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <table class="table table-sm table-borderless text-muted mb-0">
-                                <thead>
-                                <tr class="border-bottom">
-                                    <th class="py-1">項目</th>
-                                    <th class="py-1">分析法</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr>
-                                    <td class="py-1" style="width: 40%;">可給態リン酸</td>
-                                    <td class="py-1">トルオーグ法</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1">アンモニア態窒素</td>
-                                    <td class="py-1">V.9.B.b法</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1">硝酸態窒素</td>
-                                    <td class="py-1">紫外分光法</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1">腐植</td>
-                                    <td class="py-1">熊田法</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1">リン酸吸収係数</td>
-                                    <td class="py-1">V.17.A法</td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
