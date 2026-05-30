@@ -9,10 +9,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from soil_analysis.models import (
     LandLedger,
-    SoilChemicalMeasurement,
     Land,
     SoilChemicalMeasurementImportErrors,
     LandBlock,
+    SoilChemicalMeasurement,
 )
 
 
@@ -69,6 +69,20 @@ class KawadaRow:
 
     @staticmethod
     def to_float(raw_value: object, row_number: int, column_name: str) -> float | None:
+        """
+        Excelの生の値を数値に変換する。
+
+        Args:
+            raw_value: 変換対象の値
+            row_number: 行番号（エラーメッセージ用）
+            column_name: カラム名（エラーメッセージ用）
+
+        Returns:
+            変換後の数値。欠損または変換不能な場合は None
+
+        Raises:
+            ValueError: 数値への変換に失敗した場合
+        """
         if raw_value is None:
             return None
         text = unicodedata.normalize("NFKC", str(raw_value)).strip()
@@ -86,6 +100,17 @@ class KawadaRow:
 
     @classmethod
     def from_excel_row(cls, row: tuple, row_number: int) -> "KawadaRow":
+        """
+        Excelの1行から KawadaRow を生成する。
+
+        Args:
+            row: Excelの行データ
+            row_number: 行番号
+
+        Returns:
+            パースされた KawadaRow
+        """
+
         def to_str(col_idx: int) -> str:
             return str(row[col_idx] if col_idx < len(row) else "").strip()
 
@@ -118,19 +143,24 @@ class KawadaRow:
         )
 
     def to_dict(self) -> dict[str, float | None]:
+        """
+        モデル保存用の辞書形式に変換する。
+
+        Returns:
+            フィールド名をキーとする辞書
+        """
         return {
             "ec": self.ec,
             "nh4n": self.nh4n,
             "no3n": self.no3n,
-            "total_nitrogen": None,
-            "nh4_per_nitrogen": None,
             "ph": self.ph,
             "cao": self.cao,
             "mgo": self.mgo,
             "k2o": self.k2o,
+            "lime_saturation": self.lime_saturation,
+            "magnesia_saturation": self.magnesia_saturation,
+            "potash_saturation": self.potash_saturation,
             "base_saturation": self.base_saturation,
-            "cao_per_mgo": None,
-            "mgo_per_k2o": None,
             "phosphorus_absorption": self.phosphorus_absorption,
             "p2o5": self.p2o5,
             "cec": self.cec,
@@ -154,12 +184,28 @@ class ParseResult:
 
 
 class ChemicalImportService:
+    """
+    化学分析データのインポートを管理するサービス
+
+    Attributes:
+        BLOCK_NAMES: 取り込み対象のブロック名リスト
+        KAWADA_FORMAT_DATA_START_ROW_INDEX: データ開始行のインデックス
+    """
+
     BLOCK_NAMES = ("A1", "A3", "B2", "C1", "C3")
-    REMARK_IMPORT_MODE = "import_mode=field_level_copied_to_5_blocks"
     KAWADA_FORMAT_DATA_START_ROW_INDEX = 3
 
     @classmethod
     def parse_kawada_worksheet(cls, worksheet: Worksheet) -> ParseResult:
+        """
+        川田研究所フォーマットのワークシートをパースする。
+
+        Args:
+            worksheet: openpyxl のワークシート
+
+        Returns:
+            パース結果（行データとエラーリスト）
+        """
         rows = list(worksheet.iter_rows(values_only=True))
         if not rows:
             return ParseResult(rows=[], errors=["シートにデータがありません。"])
@@ -283,15 +329,19 @@ class ChemicalImportService:
         return list(blocks)
 
     @classmethod
-    def save_import_data(cls, rows_data: list[dict[str, Any]]) -> dict[str, Any]:
+    def save_import_data(
+        cls, rows_data: list[dict[str, Any]], source_file: str | None = None
+    ) -> dict[str, Any]:
         """
-        確定済みデータを保存する
-        rows_data: [
-            {
-                "row_data": {...}, # KawadaRow を dict にしたもの
-                "land_ledger_id": 123
-            },
-        ]
+        確定済みデータを保存する。
+        既存のデータがある場合は上書きし、ない場合は新規作成する。
+
+        Args:
+            rows_data: 保存対象のデータリスト（row_data と land_ledger_id を含む）
+            source_file: データ元ファイル名
+
+        Returns:
+            作成/更新件数やサマリーを含む結果
         """
         created_count = 0
         updated_count = 0
@@ -321,15 +371,11 @@ class ChemicalImportService:
             }
 
         # 既存レコードを一括取得
-        block_ids = cls._get_block_ids()
-        existing_measurements = SoilChemicalMeasurement.objects.filter(
+        existing_analyses = SoilChemicalMeasurement.objects.filter(
             land_ledger_id__in=ledger_ids,
-            land_block_id__in=block_ids,
         )
-        # (ledger_id, block_id) -> record
-        existing_map = {
-            (m.land_ledger_id, m.land_block_id): m for m in existing_measurements
-        }
+        # ledger_id -> record
+        existing_map = {m.land_ledger_id: m for m in existing_analyses}
 
         ledgers_map = {
             l.id: l
@@ -357,29 +403,27 @@ class ChemicalImportService:
                     }
 
                 kawada_row = KawadaRow(**row_dict)
-                record_values = {
-                    **kawada_row.to_dict(),
-                    "remark": cls.REMARK_IMPORT_MODE,
-                }
+                record_values = kawada_row.to_dict()
 
-                for block_id in block_ids:
-                    existing = existing_map.get((ledger_id, block_id))
+                existing = existing_map.get(ledger_id)
 
-                    if existing:
-                        for field_name, field_value in record_values.items():
-                            setattr(existing, field_name, field_value)
-                        to_update.append(existing)
-                        updated_count += 1
-                        ledger_stats[ledger_id]["updated"] += 1
-                    else:
-                        new_record = SoilChemicalMeasurement(
-                            land_ledger_id=ledger_id,
-                            land_block_id=block_id,
-                            **record_values,
-                        )
-                        to_create.append(new_record)
-                        created_count += 1
-                        ledger_stats[ledger_id]["created"] += 1
+                if existing:
+                    for field_name, field_value in record_values.items():
+                        setattr(existing, field_name, field_value)
+                    if source_file:
+                        existing.source_file = source_file
+                    to_update.append(existing)
+                    updated_count += 1
+                    ledger_stats[ledger_id]["updated"] += 1
+                else:
+                    new_record = SoilChemicalMeasurement(
+                        land_ledger_id=ledger_id,
+                        source_file=source_file,
+                        **record_values,
+                    )
+                    to_create.append(new_record)
+                    created_count += 1
+                    ledger_stats[ledger_id]["created"] += 1
 
             if to_create:
                 SoilChemicalMeasurement.objects.bulk_create(to_create)
@@ -387,7 +431,9 @@ class ChemicalImportService:
                 # 更新対象のフィールドを動的に取得（to_dict のキー + remark）
                 update_fields = list(
                     KawadaRow(**valid_entries[0]["row_data"]).to_dict().keys()
-                ) + ["remark"]
+                )
+                if source_file:
+                    update_fields.append("source_file")
                 SoilChemicalMeasurement.objects.bulk_update(to_update, update_fields)
 
         summary = []

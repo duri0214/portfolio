@@ -152,6 +152,7 @@ class ChemicalAssociationViewsTest(TestCase):
                 }
             ],
             "total_rows": 1,
+            "source_file": "web_upload.xlsx",
         }
         session.save()
 
@@ -165,3 +166,12 @@ class ChemicalAssociationViewsTest(TestCase):
         # セッションがクリアされていることを確認
         self.assertNotIn("chemical_import_session", self.client.session)
         self.assertIn("chemical_import_result", self.client.session)
+
+        # 実際にデータが保存され、source_fileがセットされているか確認
+        from soil_analysis.models import SoilChemicalMeasurement
+
+        analysis = SoilChemicalMeasurement.objects.filter(
+            land_ledger=self.ledger
+        ).first()
+        self.assertIsNotNone(analysis)
+        self.assertEqual(analysis.source_file, "web_upload.xlsx")

@@ -217,18 +217,18 @@ class LandDetailView(DetailView):
 class StandardReportView(ListView):
     """
     化学分析レポート（通知表）の一覧表示
-
-    圃場の9ブロック（A1〜C3）のデータを3x3のグリッド形式で表示する。
-    グリッドの配置（上から下、左から右）は以下の通り：
-    C3, B3, A3
-    C2, B2, A2
-    C1, B1, A1
     """
 
     model = SoilChemicalMeasurement
     template_name = "soil_analysis/land_report/standard_report.html"
 
     def get_queryset(self):
+        """
+        特定の帳簿に紐づく化学分析データを取得する。
+
+        Returns:
+            SoilChemicalMeasurement のクエリセット
+        """
         land_ledger_id = self.kwargs["land_ledger_id"]
         try:
             land_ledger = LandLedgerRepository.get_by_id(land_ledger_id)
@@ -237,6 +237,15 @@ class StandardReportView(ListView):
         return super().get_queryset().filter(land_ledger=land_ledger)
 
     def get_context_data(self, **kwargs):
+        """
+        レポート表示に必要なコンテキストデータを生成する。
+
+        Args:
+            **kwargs: 追加のコンテキスト引数
+
+        Returns:
+            テンプレートに渡すコンテキスト辞書
+        """
         context = super().get_context_data(**kwargs)
         land_ledger_id = self.kwargs["land_ledger_id"]
         company_id = self.kwargs["company_id"]
@@ -250,21 +259,21 @@ class StandardReportView(ListView):
         context["company"] = company
         context["land"] = land_ledger.land
         context["land_ledger"] = land_ledger
-        context["land_scores"] = list(
-            SoilChemicalMeasurement.objects.filter(land_ledger=land_ledger)
-            .select_related("land_block")
-            .order_by("land_block__name")
-        )
+
+        # 圃場単位の化学分析データを取得
+        context["soil_analysis"] = SoilChemicalMeasurement.objects.filter(
+            land_ledger=land_ledger
+        ).first()
+
+        context["land_scores"] = []
         context["land_review"] = LandReview.objects.filter(land_ledger=land_ledger)
-        context["land_scores_dict"] = {
-            score.land_block.name: score for score in context["land_scores"]
-        }
+        context["land_scores_dict"] = {}
         context["land_blocks"] = LandBlock.objects.all()
         context["report_fields"] = REPORT_FIELDS
 
-        # 化学判定VOの生成（帳簿単位の平均値ベース）
+        # 化学判定VOの生成
         context["chemical_assessment"] = ChemicalAssessmentVO.from_measurements(
-            context["land_scores"]
+            [context["soil_analysis"]] if context["soil_analysis"] else []
         )
 
         # グリッドの順序:
@@ -452,6 +461,7 @@ class ChemicalUploadView(FormView):
             self.request.session["chemical_import_session"] = {
                 "rows": rows_data,
                 "total_rows": len(rows_data),
+                "source_file": upload_file.name,
             }
 
             return redirect("soil:chemical_success")
@@ -548,7 +558,10 @@ class ChemicalAssociationView(TemplateView):
                 )
 
             try:
-                result = ChemicalImportService.save_import_data(save_data)
+                source_file = import_session.get("source_file")
+                result = ChemicalImportService.save_import_data(
+                    save_data, source_file=source_file
+                )
                 request.session["chemical_import_result"] = result
                 # セッションクリア
                 del request.session["chemical_import_session"]
@@ -679,32 +692,20 @@ class ChemicalSuccessView(TemplateView):
                     )
                     .prefetch_related(
                         Prefetch(
-                            "soilchemicalmeasurement_set",
-                            queryset=SoilChemicalMeasurement.objects.select_related(
-                                "land_block"
-                            ),
-                            to_attr="measurements",
+                            "soilchemicalmeasurement",
+                            queryset=SoilChemicalMeasurement.objects.all(),
+                            to_attr="measurement",
                         )
                     )
                     .filter(id__in=ledger_ids)
                 )
 
                 for ledger in ledgers:
-                    block_names = sorted(
-                        list(
-                            set(
-                                m.land_block.name
-                                for m in ledger.measurements
-                                if m.land_block
-                            )
-                        )
-                    )
                     ledger_summary.append(
                         {
                             "company_name": ledger.land.company.name,
                             "land_name": ledger.land.name,
                             "period_name": ledger.land_period.name,
-                            "block_names": block_names,
                             "total": count_by_ledger.get(ledger.id, 0),
                         }
                     )
@@ -813,7 +814,14 @@ class HardnessSuccessView(TemplateView):
 
     @staticmethod
     def _extract_land_name_from_folder(folder_name: str) -> str:
-        """フォルダ名から圃場名を抽出
+        """
+        フォルダ名から圃場名を抽出する。
+
+        Args:
+            folder_name: 変換対象のフォルダ名
+
+        Returns:
+            抽出された圃場名
 
         変換パターン例:
         - "静岡ススムA1_20230701" → "静岡ススムA1"

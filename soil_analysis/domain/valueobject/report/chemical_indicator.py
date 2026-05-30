@@ -42,7 +42,15 @@ class ItemAssessment:
 
 @dataclass(frozen=True)
 class BaseChemicalIndicatorVO:
-    """化学指標のValue Objectの基底クラス"""
+    """
+    化学指標のValue Objectの基底クラス
+
+    Attributes:
+        value: 測定値
+        KEY: 項目キー (クラス定数)
+        LOW: 下限閾値 (クラス定数)
+        HIGH: 上限閾値 (クラス定数)
+    """
 
     value: float | None
 
@@ -118,9 +126,12 @@ class PhVO(BaseChemicalIndicatorVO):
     """
     pH(水素イオン濃度)のValue Object
 
-    閾値:
+    Attributes:
+        KEY: "ph"
         LOW: 6.0 (下限)
         HIGH: 7.0 (上限)
+        LOW_MESSAGE: 酸性判定時のメッセージ
+        HIGH_MESSAGE: アルカリ性判定時のメッセージ
     """
 
     KEY = "ph"
@@ -135,9 +146,14 @@ class EcVO(BaseChemicalIndicatorVO):
     """
     EC(電気伝導率)のValue Object
 
-    閾値:
+    Attributes:
+        KEY: "ec"
         LOW: 0.1 (下限)
         HIGH: 0.5 (上限)
+        HIGH_LABEL: "過剰"
+        LOW_MESSAGE: 低判定時のメッセージ
+        HIGH_MESSAGE: 高判定時のメッセージ
+        HIGH_LEVEL: 高判定時の表示レベル
     """
 
     KEY = "ec"
