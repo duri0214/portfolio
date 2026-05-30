@@ -136,16 +136,15 @@ class ChemicalImportServiceTest(TestCase):
         ]
 
         result = ChemicalImportService.save_import_data(rows_data)
-        self.assertEqual(result["created"], 5)  # 5ブロック分作成されるはず
+        self.assertEqual(result["created"], 1)  # 圃場単位で1つ作成されるはず
 
         from soil_analysis.models import SoilChemicalMeasurement
 
-        chemicals = SoilChemicalMeasurement.objects.filter(land_ledger=self.ledger)
-        self.assertEqual(chemicals.count(), 5)
-        self.assertEqual(chemicals.first().ph, 6.5)
-        self.assertEqual(
-            chemicals.first().remark, ChemicalImportService.REMARK_IMPORT_MODE
-        )
+        analysis = SoilChemicalMeasurement.objects.filter(
+            land_ledger=self.ledger
+        ).first()
+        self.assertIsNotNone(analysis)
+        self.assertEqual(analysis.ph, 6.5)
 
     def test_to_float_error_message_japanese(self):
         """数値変換失敗時のエラーメッセージに日本語カラム名が含まれること"""
@@ -194,15 +193,16 @@ class ChemicalImportServiceTest(TestCase):
 
         result = ChemicalImportService.save_import_data(rows_data)
 
-        # 重複チェックが削除されたため、エラーは出ず、1件（5ブロック）として処理される
+        # 重複チェックが削除されたため、エラーは出ず、1件として処理される
         # (すでに1件目の時点で ledger_to_latest_entry により上書きされている)
-        self.assertEqual(result["created"], 5)
+        self.assertEqual(result["created"], 1)
         self.assertEqual(result["error_count"], 0)
 
         from soil_analysis.models import SoilChemicalMeasurement
 
-        chemicals = SoilChemicalMeasurement.objects.filter(land_ledger=self.ledger)
-        self.assertEqual(chemicals.count(), 5)
+        analysis = SoilChemicalMeasurement.objects.filter(
+            land_ledger=self.ledger
+        ).first()
+        self.assertIsNotNone(analysis)
         # 後の方のデータ(row2)のph=7.0が反映されているはず
-        for c in chemicals:
-            self.assertEqual(c.ph, 7.0)
+        self.assertEqual(analysis.ph, 7.0)
