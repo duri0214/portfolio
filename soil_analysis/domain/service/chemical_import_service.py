@@ -9,10 +9,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from soil_analysis.models import (
     LandLedger,
-    SoilChemicalMeasurement,
     Land,
     SoilChemicalMeasurementImportErrors,
     LandBlock,
+    SoilChemicalMeasurement,
 )
 
 
@@ -128,6 +128,9 @@ class KawadaRow:
             "cao": self.cao,
             "mgo": self.mgo,
             "k2o": self.k2o,
+            "lime_saturation": self.lime_saturation,
+            "magnesia_saturation": self.magnesia_saturation,
+            "potash_saturation": self.potash_saturation,
             "base_saturation": self.base_saturation,
             "cao_per_mgo": None,
             "mgo_per_k2o": None,
@@ -155,7 +158,6 @@ class ParseResult:
 
 class ChemicalImportService:
     BLOCK_NAMES = ("A1", "A3", "B2", "C1", "C3")
-    REMARK_IMPORT_MODE = "import_mode=field_level_copied_to_5_blocks"
     KAWADA_FORMAT_DATA_START_ROW_INDEX = 3
 
     @classmethod
@@ -321,15 +323,11 @@ class ChemicalImportService:
             }
 
         # 既存レコードを一括取得
-        block_ids = cls._get_block_ids()
-        existing_measurements = SoilChemicalMeasurement.objects.filter(
+        existing_analyses = SoilChemicalMeasurement.objects.filter(
             land_ledger_id__in=ledger_ids,
-            land_block_id__in=block_ids,
         )
-        # (ledger_id, block_id) -> record
-        existing_map = {
-            (m.land_ledger_id, m.land_block_id): m for m in existing_measurements
-        }
+        # ledger_id -> record
+        existing_map = {m.land_ledger_id: m for m in existing_analyses}
 
         ledgers_map = {
             l.id: l
@@ -357,29 +355,24 @@ class ChemicalImportService:
                     }
 
                 kawada_row = KawadaRow(**row_dict)
-                record_values = {
-                    **kawada_row.to_dict(),
-                    "remark": cls.REMARK_IMPORT_MODE,
-                }
+                record_values = kawada_row.to_dict()
 
-                for block_id in block_ids:
-                    existing = existing_map.get((ledger_id, block_id))
+                existing = existing_map.get(ledger_id)
 
-                    if existing:
-                        for field_name, field_value in record_values.items():
-                            setattr(existing, field_name, field_value)
-                        to_update.append(existing)
-                        updated_count += 1
-                        ledger_stats[ledger_id]["updated"] += 1
-                    else:
-                        new_record = SoilChemicalMeasurement(
-                            land_ledger_id=ledger_id,
-                            land_block_id=block_id,
-                            **record_values,
-                        )
-                        to_create.append(new_record)
-                        created_count += 1
-                        ledger_stats[ledger_id]["created"] += 1
+                if existing:
+                    for field_name, field_value in record_values.items():
+                        setattr(existing, field_name, field_value)
+                    to_update.append(existing)
+                    updated_count += 1
+                    ledger_stats[ledger_id]["updated"] += 1
+                else:
+                    new_record = SoilChemicalMeasurement(
+                        land_ledger_id=ledger_id,
+                        **record_values,
+                    )
+                    to_create.append(new_record)
+                    created_count += 1
+                    ledger_stats[ledger_id]["created"] += 1
 
             if to_create:
                 SoilChemicalMeasurement.objects.bulk_create(to_create)
@@ -387,7 +380,7 @@ class ChemicalImportService:
                 # 更新対象のフィールドを動的に取得（to_dict のキー + remark）
                 update_fields = list(
                     KawadaRow(**valid_entries[0]["row_data"]).to_dict().keys()
-                ) + ["remark"]
+                )
                 SoilChemicalMeasurement.objects.bulk_update(to_update, update_fields)
 
         summary = []
