@@ -444,6 +444,7 @@ class ChemicalUploadView(FormView):
             self.request.session["chemical_import_session"] = {
                 "rows": rows_data,
                 "total_rows": len(rows_data),
+                "source_file": upload_file.name,
             }
 
             return redirect("soil:chemical_success")
@@ -540,7 +541,10 @@ class ChemicalAssociationView(TemplateView):
                 )
 
             try:
-                result = ChemicalImportService.save_import_data(save_data)
+                source_file = import_session.get("source_file")
+                result = ChemicalImportService.save_import_data(
+                    save_data, source_file=source_file
+                )
                 request.session["chemical_import_result"] = result
                 # セッションクリア
                 del request.session["chemical_import_session"]
