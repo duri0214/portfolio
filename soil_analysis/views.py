@@ -25,6 +25,9 @@ from openpyxl import load_workbook
 
 from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
+from soil_analysis.domain.repository.chemical_measurement import (
+    SoilChemicalMeasurementRepository,
+)
 from soil_analysis.domain.repository.company import CompanyRepository
 from soil_analysis.domain.repository.hardness_import_error import (
     HardnessImportErrorRepository,
@@ -33,12 +36,17 @@ from soil_analysis.domain.repository.hardness_measurement import (
     SoilHardnessMeasurementRepository,
 )
 from soil_analysis.domain.repository.land import LandRepository
+from soil_analysis.domain.repository.land_block import LandBlockRepository
 from soil_analysis.domain.repository.land_ledger import LandLedgerRepository
+from soil_analysis.domain.repository.land_review import LandReviewRepository
 from soil_analysis.domain.service.chemical_import_service import (
     ChemicalImportService,
 )
 from soil_analysis.domain.service.hardness_import_service import (
     HardnessImportService,
+)
+from soil_analysis.domain.service.hardness_measurement_service import (
+    HardnessMeasurementService,
 )
 from soil_analysis.domain.service.hardness_plot_generation import (
     HardnessPlotGenerationService,
@@ -50,6 +58,9 @@ from soil_analysis.domain.valueobject.report.chemical_assessment import (
     ChemicalAssessmentVO,
 )
 from soil_analysis.domain.valueobject.report.fields import REPORT_FIELDS
+from soil_analysis.domain.valueobject.report.hardness_assessment import (
+    HardnessBlockAssessment,
+)
 from soil_analysis.forms import (
     CompanyCreateForm,
     LandCreateForm,
@@ -62,9 +73,7 @@ from soil_analysis.models import (
     Company,
     Land,
     SoilChemicalMeasurement,
-    LandReview,
     LandLedger,
-    LandBlock,
     SoilChemicalMeasurementImportErrors,
     SoilHardnessMeasurement,
     RouteSuggestImport,
@@ -217,6 +226,10 @@ class LandDetailView(DetailView):
 class StandardReportView(ListView):
     """
     化学分析レポート（通知表）の一覧表示
+
+    Attributes:
+        model: 使用するモデル
+        template_name: 使用するテンプレート名
     """
 
     model = SoilChemicalMeasurement
@@ -272,6 +285,17 @@ class StandardReportView(ListView):
             [context["soil_analysis"]] if context["soil_analysis"] else []
         )
 
+        # 硬度判定VOの生成
+        context["hardness_assessment"] = (
+            HardnessMeasurementService.get_hardness_assessment(land_ledger)
+        )
+
+        context["hardness_thresholds"] = {
+            "low": HardnessBlockAssessment.THRESHOLD_LOW,
+            "high": HardnessBlockAssessment.THRESHOLD_HIGH,
+            "max": HardnessBlockAssessment.MAX_SCALE,
+        }
+
         # グリッドの順序:
         # C3, B3, A3
         # C2, B2, A2
@@ -286,6 +310,12 @@ class StandardReportView(ListView):
                 if block:
                     blocks.append(block)
         context["ordered_blocks"] = blocks
+
+        # ブロックと評価データを紐付け
+        context["ordered_blocks_with_assessment"] = [
+            {"block": b, "assessment": context["hardness_assessment"].get_block(b.name)}
+            for b in blocks
+        ]
 
         return context
 
