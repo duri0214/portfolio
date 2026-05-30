@@ -1,4 +1,4 @@
-from django.db.models import Count, Min, Max
+from django.db.models import Count, Min, Max, Avg
 
 from soil_analysis.domain.valueobject.hardness import FolderStats
 from soil_analysis.models import SoilHardnessMeasurement, LandLedger, Land
@@ -169,6 +169,46 @@ class SoilHardnessMeasurementRepository:
 
         # 該当なしの場合は未使用の全帳簿を返す
         return list(base_query.order_by("pk"))
+
+    @staticmethod
+    def get_block_averages(land_ledger: LandLedger) -> dict[str, float | None]:
+        """
+        指定された台帳に紐づくブロックごとの平均圧力を取得します。
+
+        Args:
+            land_ledger: 台帳インスタンス
+
+        Returns:
+            dict[str, float | None]: ブロック名をキー、平均圧力を値とする辞書
+        """
+        stats = (
+            SoilHardnessMeasurement.objects.filter(land_ledger=land_ledger)
+            .values("land_block__name")
+            .annotate(avg_pressure=Avg("pressure"))
+        )
+        return {
+            item["land_block__name"]: item["avg_pressure"]
+            for item in stats
+            if item["land_block__name"]
+        }
+
+    @staticmethod
+    def get_depth_averages(land_ledger: LandLedger) -> list[dict]:
+        """
+        指定された台帳に紐づくブロックごと、深度ごとの平均圧力を取得します。
+
+        Args:
+            land_ledger: 台帳インスタンス
+
+        Returns:
+            list[dict]: ブロック名、深度、平均圧力を含む辞書のリスト
+        """
+        return list(
+            SoilHardnessMeasurement.objects.filter(land_ledger=land_ledger)
+            .values("land_block__name", "depth")
+            .annotate(avg_pressure=Avg("pressure"))
+            .order_by("land_block__name", "depth")
+        )
 
     @staticmethod
     def get_total_groups_count() -> int:

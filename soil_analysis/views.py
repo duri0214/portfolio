@@ -230,11 +230,7 @@ class StandardReportView(ListView):
             SoilChemicalMeasurement のクエリセット
         """
         land_ledger_id = self.kwargs["land_ledger_id"]
-        try:
-            land_ledger = LandLedgerRepository.get_by_id(land_ledger_id)
-        except LandLedger.DoesNotExist:
-            raise Http404("Land Ledger does not exist.")
-        return super().get_queryset().filter(land_ledger=land_ledger)
+        return super().get_queryset().filter(land_ledger_id=land_ledger_id)
 
     def get_context_data(self, **kwargs):
         """
@@ -251,24 +247,24 @@ class StandardReportView(ListView):
         company_id = self.kwargs["company_id"]
 
         try:
-            land_ledger = LandLedgerRepository.get_by_id(land_ledger_id)
-            company = CompanyRepository.get_company_by_id(company_id)
-        except (LandLedger.DoesNotExist, Company.DoesNotExist):
-            raise Http404("Land Ledger or Company does not exist.")
+            land_ledger = LandLedgerRepository.get_with_details(land_ledger_id)
+            company = land_ledger.land.company
+        except LandLedger.DoesNotExist:
+            raise Http404("Land Ledger does not exist.")
 
         context["company"] = company
         context["land"] = land_ledger.land
         context["land_ledger"] = land_ledger
 
         # 圃場単位の化学分析データを取得
-        context["soil_analysis"] = SoilChemicalMeasurement.objects.filter(
-            land_ledger=land_ledger
-        ).first()
+        context["soil_analysis"] = SoilChemicalMeasurementRepository.get_by_ledger(
+            land_ledger
+        )
 
         context["land_scores"] = []
-        context["land_review"] = LandReview.objects.filter(land_ledger=land_ledger)
+        context["land_review"] = LandReviewRepository.get_by_ledger(land_ledger)
         context["land_scores_dict"] = {}
-        context["land_blocks"] = LandBlock.objects.all()
+        context["land_blocks"] = LandBlockRepository.get_all()
         context["report_fields"] = REPORT_FIELDS
 
         # 化学判定VOの生成
