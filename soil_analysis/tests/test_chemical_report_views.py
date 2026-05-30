@@ -97,7 +97,11 @@ class StandardReportViewTest(TestCase):
         self.assertContains(response, "圃場属性")
         self.assertContains(response, "化学分析と物理性（9ブロック）の診断結果")
         self.assertContains(response, "pH・ECともに適正範囲内です")
-        self.assertContains(response, "物理性（土壌硬度 9点法）")
+        self.assertContains(response, "物理性")
+        self.assertContains(response, "良好")
+        self.assertContains(response, "注意")
+        self.assertContains(response, "不良")
+        self.assertContains(response, "※数値は5点平均硬度(kPa)")
         self.assertContains(response, "圃場単位の分析値に基づく判定です")
         self.assertContains(response, "テスト株式会社")
 
@@ -159,3 +163,55 @@ class StandardReportViewTest(TestCase):
         response = self.client.get(url)
 
         self.assertContains(response, "判定に必要なデータが不足しています")
+
+    def test_view_displays_hardness_data(self):
+        # A1ブロックに硬度データを追加
+        from soil_analysis.models import SoilHardnessMeasurement, Device
+        from django.utils import timezone
+
+        device = Device.objects.create(name="Test Device")
+        SoilHardnessMeasurement.objects.create(
+            land_ledger=self.ledger,
+            land_block=self.block_a1,
+            set_device=device,
+            set_memory=1,
+            set_datetime=timezone.now(),
+            set_depth=60,
+            set_spring=1,
+            set_cone=1,
+            depth=10,
+            pressure=1200,
+            folder="test",
+        )
+
+        url = reverse(
+            "soil:standard_report",
+            kwargs={"company_id": self.company.id, "land_ledger_id": self.ledger.id},
+        )
+        response = self.client.get(url)
+
+        self.assertContains(response, "1,200")
+        self.assertContains(response, "kPa")
+
+    def test_view_displays_dynamic_sampling_method(self):
+        # 9点法の帳簿を作成
+        sampling_method_9 = SamplingMethod.objects.create(name="9点法", times=9)
+        ledger_9 = LandLedger.objects.create(
+            land=self.land,
+            land_period=LandPeriod.objects.create(name="2025 春", year=2025),
+            sampling_date=date(2025, 4, 1),
+            analytical_agency=self.company,
+            crop=self.crop,
+            sampling_method=sampling_method_9,
+            sampling_staff=self.user,
+        )
+
+        url = reverse(
+            "soil:standard_report",
+            kwargs={"company_id": self.company.id, "land_ledger_id": ledger_9.id},
+        )
+        response = self.client.get(url)
+
+        self.assertContains(response, "※数値は9点平均硬度(kPa)")
+        self.assertContains(response, "9箇所</strong>で貫入計測を行う「9点法」")
+        self.assertContains(response, "ブロック内の9箇所の測定値を深度ごとに平均化")
