@@ -1,5 +1,5 @@
 {% extends "soil_analysis/base.html" %}
-{% load static custom_filters %}
+{% load static custom_filters humanize %}
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'soil_analysis/css/land_report/standard_report.css' %}">
 {% endblock %}
@@ -129,7 +129,21 @@
                                     <span><i class="bi bi-square-fill text-warning"></i> 注意</span>
                                     <span><i class="bi bi-square-fill text-danger"></i> 不良</span>
                                 </div>
-                                <p class="small text-muted" style="font-size: 0.7rem;">
+                                <div class="mt-2 pt-2 border-top text-start px-2 mx-auto"
+                                     style="font-size: 0.6rem; max-width: 200px;">
+                                    <div class="fw-bold mb-1 text-muted">判定基準:</div>
+                                    <ul class="list-unstyled mb-0 text-muted">
+                                        <li>良好: {{ hardness_thresholds.low|intcomma }}kPa以下</li>
+                                        <li>
+                                            注意: {{ hardness_thresholds.low|add:1|intcomma }}〜{{ hardness_thresholds.high|intcomma }}kPa
+                                        </li>
+                                        <li>不良: {{ hardness_thresholds.high|add:1|intcomma }}kPa以上</li>
+                                    </ul>
+                                    <div class="mt-1">
+                                        ※グラフ上限: {{ hardness_thresholds.max|intcomma }}kPa
+                                    </div>
+                                </div>
+                                <p class="small text-muted mt-2" style="font-size: 0.7rem;">
                                     ※数値は{{ land_ledger.sampling_method.times }}点平均硬度(kPa)
                                 </p>
                             </div>
