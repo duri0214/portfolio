@@ -6,21 +6,6 @@ REPORT_FIELD_BY_KEY: dict[str, ReportField] = {f.key: f for f in REPORT_FIELDS}
 
 
 @dataclass(frozen=True)
-class BaseChemicalIndicatorVO:
-    """化学指標のValue Objectの基底クラス"""
-
-    value: float | None
-
-    @staticmethod
-    def _get_item_name(key: str) -> str:
-        """項目キーから表示名 label(description) を取得する"""
-        field = REPORT_FIELD_BY_KEY.get(key)
-        if field:
-            return f"{field.label}({field.description})"
-        return key
-
-
-@dataclass(frozen=True)
 class ItemAssessment:
     """
     各項目の判定結果
@@ -56,26 +41,37 @@ class ItemAssessment:
 
 
 @dataclass(frozen=True)
-class PhVO(BaseChemicalIndicatorVO):
-    """
-    pH(水素イオン濃度)のValue Object
+class BaseChemicalIndicatorVO:
+    """化学指標のValue Objectの基底クラス"""
 
-    閾値:
-        LOW: 6.0 (下限)
-        HIGH: 7.0 (上限)
-    """
+    value: float | None
 
-    LOW = 6.0
-    HIGH = 7.0
+    # 各サブクラスで定義する定数 (クラス属性)
+    KEY = ""
+    LOW = None
+    HIGH = None
+
+    @staticmethod
+    def _get_item_name(key: str) -> str:
+        """項目キーから表示名 label(description) を取得する"""
+        field = REPORT_FIELD_BY_KEY.get(key)
+        if field:
+            return f"{field.label}({field.description})"
+        return key
 
     def is_low(self) -> bool:
-        return self.value is not None and self.value < self.LOW
+        """下限値を下回っているか"""
+        return self.value is not None and self.LOW is not None and self.value < self.LOW
 
     def is_high(self) -> bool:
-        return self.value is not None and self.value > self.HIGH
+        """上限値を上回っているか"""
+        return (
+            self.value is not None and self.HIGH is not None and self.value > self.HIGH
+        )
 
     def assess(self) -> ItemAssessment:
-        name = self._get_item_name("ph")
+        """項目の判定を行う"""
+        name = self._get_item_name(self.KEY)
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -88,21 +84,50 @@ class PhVO(BaseChemicalIndicatorVO):
             )
         if self.is_low():
             return ItemAssessment(
-                name, self.value, "低", "酸性傾向です", "warning", self.LOW, self.HIGH
+                name,
+                self.value,
+                getattr(self, "LOW_LABEL", "低"),
+                getattr(self, "LOW_MESSAGE", "低めです"),
+                getattr(self, "LOW_LEVEL", "warning"),
+                self.LOW,
+                self.HIGH,
             )
         if self.is_high():
             return ItemAssessment(
                 name,
                 self.value,
-                "高",
-                "アルカリ性傾向です",
-                "warning",
+                getattr(self, "HIGH_LABEL", "高"),
+                getattr(self, "HIGH_MESSAGE", "高めです"),
+                getattr(self, "HIGH_LEVEL", "warning"),
                 self.LOW,
                 self.HIGH,
             )
         return ItemAssessment(
-            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
+            name,
+            self.value,
+            "適正",
+            getattr(self, "NORMAL_MESSAGE", "適正範囲内です"),
+            "success",
+            self.LOW,
+            self.HIGH,
         )
+
+
+@dataclass(frozen=True)
+class PhVO(BaseChemicalIndicatorVO):
+    """
+    pH(水素イオン濃度)のValue Object
+
+    閾値:
+        LOW: 6.0 (下限)
+        HIGH: 7.0 (上限)
+    """
+
+    KEY = "ph"
+    LOW = 6.0
+    HIGH = 7.0
+    LOW_MESSAGE = "酸性傾向です"
+    HIGH_MESSAGE = "アルカリ性傾向です"
 
 
 @dataclass(frozen=True)
@@ -115,50 +140,13 @@ class EcVO(BaseChemicalIndicatorVO):
         HIGH: 0.5 (上限)
     """
 
+    KEY = "ec"
     LOW = 0.1
     HIGH = 0.5
-
-    def is_low(self) -> bool:
-        return self.value is not None and self.value < self.LOW
-
-    def is_high(self) -> bool:
-        return self.value is not None and self.value > self.HIGH
-
-    def assess(self) -> ItemAssessment:
-        name = self._get_item_name("ec")
-        if self.value is None:
-            return ItemAssessment(
-                name,
-                None,
-                "不明",
-                "データがありません",
-                "secondary",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_low():
-            return ItemAssessment(
-                name,
-                self.value,
-                "低",
-                "肥切れの可能性があります",
-                "warning",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_high():
-            return ItemAssessment(
-                name,
-                self.value,
-                "過剰",
-                "肥料過多の可能性があります",
-                "danger",
-                self.LOW,
-                self.HIGH,
-            )
-        return ItemAssessment(
-            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
-        )
+    HIGH_LABEL = "過剰"
+    LOW_MESSAGE = "肥切れの可能性があります"
+    HIGH_MESSAGE = "肥料過多の可能性があります"
+    HIGH_LEVEL = "danger"
 
 
 @dataclass(frozen=True)
@@ -167,45 +155,14 @@ class Nh4nVO(BaseChemicalIndicatorVO):
     NH4-N(アンモニア態窒素)のValue Object
 
     閾値:
-        UPPER_LIMIT: 5.0 (これを超えると過剰判定)
+        HIGH: 5.0 (これを超えると過剰判定)
     """
 
-    UPPER_LIMIT = 5.0
-
-    def is_high(self) -> bool:
-        return self.value is not None and self.value > self.UPPER_LIMIT
-
-    def assess(self) -> ItemAssessment:
-        name = self._get_item_name("nh4n")
-        if self.value is None:
-            return ItemAssessment(
-                name,
-                None,
-                "不明",
-                "データがありません",
-                "secondary",
-                None,
-                self.UPPER_LIMIT,
-            )
-        if self.is_high():
-            return ItemAssessment(
-                name,
-                self.value,
-                "過剰",
-                "アンモニア態窒素が過剰です",
-                "danger",
-                None,
-                self.UPPER_LIMIT,
-            )
-        return ItemAssessment(
-            name,
-            self.value,
-            "適正",
-            "適正範囲内です",
-            "success",
-            None,
-            self.UPPER_LIMIT,
-        )
+    KEY = "nh4n"
+    HIGH = 5.0
+    HIGH_LABEL = "過剰"
+    HIGH_MESSAGE = "アンモニア態窒素が過剰です"
+    HIGH_LEVEL = "danger"
 
 
 @dataclass(frozen=True)
@@ -214,45 +171,14 @@ class No3nVO(BaseChemicalIndicatorVO):
     NO3-N(硝酸態窒素)のValue Object
 
     閾値:
-        UPPER_LIMIT: 15.0 (これを超えると過剰判定)
+        HIGH: 15.0 (これを超えると過剰判定)
     """
 
-    UPPER_LIMIT = 15.0
-
-    def is_high(self) -> bool:
-        return self.value is not None and self.value > self.UPPER_LIMIT
-
-    def assess(self) -> ItemAssessment:
-        name = self._get_item_name("no3n")
-        if self.value is None:
-            return ItemAssessment(
-                name,
-                None,
-                "不明",
-                "データがありません",
-                "secondary",
-                None,
-                self.UPPER_LIMIT,
-            )
-        if self.is_high():
-            return ItemAssessment(
-                name,
-                self.value,
-                "過剰",
-                "硝酸態窒素が過剰です",
-                "danger",
-                None,
-                self.UPPER_LIMIT,
-            )
-        return ItemAssessment(
-            name,
-            self.value,
-            "適正",
-            "適正範囲内です",
-            "success",
-            None,
-            self.UPPER_LIMIT,
-        )
+    KEY = "no3n"
+    HIGH = 15.0
+    HIGH_LABEL = "過剰"
+    HIGH_MESSAGE = "硝酸態窒素が過剰です"
+    HIGH_LEVEL = "danger"
 
 
 @dataclass(frozen=True)
@@ -264,30 +190,10 @@ class CecVO(BaseChemicalIndicatorVO):
         LOW: 12.0 (これ未満で低判定)
     """
 
+    KEY = "cec"
     LOW = 12.0
-
-    def is_low(self) -> bool:
-        return self.value is not None and self.value < self.LOW
-
-    def assess(self) -> ItemAssessment:
-        name = self._get_item_name("cec")
-        if self.value is None:
-            return ItemAssessment(
-                name, None, "不明", "データがありません", "secondary", self.LOW, None
-            )
-        if self.is_low():
-            return ItemAssessment(
-                name, self.value, "低", "保肥力が低いです", "warning", self.LOW, None
-            )
-        return ItemAssessment(
-            name,
-            self.value,
-            "適正",
-            "十分な保肥力があります",
-            "success",
-            self.LOW,
-            None,
-        )
+    LOW_MESSAGE = "保肥力が低いです"
+    NORMAL_MESSAGE = "十分な保肥力があります"
 
 
 @dataclass(frozen=True)
@@ -301,15 +207,10 @@ class BaseSaturationVO(BaseChemicalIndicatorVO):
         OVER: 100.0 (過剰)
     """
 
+    KEY = "base_saturation"
     LOW = 60.0
     HIGH = 80.0
     OVER = 100.0
-
-    def is_low(self) -> bool:
-        return self.value is not None and self.value < self.LOW
-
-    def is_high(self) -> bool:
-        return self.value is not None and self.value > self.HIGH
 
     def is_over(self) -> bool:
         return self.value is not None and self.value > self.OVER
@@ -383,50 +284,13 @@ class P2o5VO(BaseChemicalIndicatorVO):
         HIGH: 100.0 (上限)
     """
 
+    KEY = "p2o5"
     LOW = 50.0
     HIGH = 100.0
-
-    def is_low(self) -> bool:
-        return self.value is not None and self.value < self.LOW
-
-    def is_high(self) -> bool:
-        return self.value is not None and self.value > self.HIGH
-
-    def assess(self) -> ItemAssessment:
-        name = self._get_item_name("p2o5")
-        if self.value is None:
-            return ItemAssessment(
-                name,
-                None,
-                "不明",
-                "データがありません",
-                "secondary",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_low():
-            return ItemAssessment(
-                name,
-                self.value,
-                "低",
-                "リン酸が不足しています。適正なリン酸施用が必要です。",
-                "warning",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_high():
-            return ItemAssessment(
-                name,
-                self.value,
-                "過剰",
-                "リン酸が過剰です。根瘤病のリスクを高める可能性があります。",
-                "danger",
-                self.LOW,
-                self.HIGH,
-            )
-        return ItemAssessment(
-            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
-        )
+    HIGH_LABEL = "過剰"
+    LOW_MESSAGE = "リン酸が不足しています。適正なリン酸施用が必要です。"
+    HIGH_MESSAGE = "リン酸が過剰です。根瘤病のリスクを高める可能性があります。"
+    HIGH_LEVEL = "danger"
 
 
 @dataclass(frozen=True)
@@ -438,24 +302,10 @@ class HumusVO(BaseChemicalIndicatorVO):
         LOW: 3.0 (これ未満で低判定)
     """
 
+    KEY = "humus"
     LOW = 3.0
-
-    def is_low(self) -> bool:
-        return self.value is not None and self.value < self.LOW
-
-    def assess(self) -> ItemAssessment:
-        name = self._get_item_name("humus")
-        if self.value is None:
-            return ItemAssessment(
-                name, None, "不明", "データがありません", "secondary", self.LOW, None
-            )
-        if self.is_low():
-            return ItemAssessment(
-                name, self.value, "低", "腐植が不足しています", "danger", self.LOW, None
-            )
-        return ItemAssessment(
-            name, self.value, "適正", "適正範囲内です", "success", self.LOW, None
-        )
+    LOW_MESSAGE = "腐植が不足しています"
+    LOW_LEVEL = "danger"
 
 
 @dataclass(frozen=True)
@@ -468,50 +318,15 @@ class CaoVO(BaseChemicalIndicatorVO):
         HIGH: 450.0 (上限)
     """
 
+    KEY = "cao"
     LOW = 300.0
     HIGH = 450.0
-
-    def is_low(self) -> bool:
-        return self.value is not None and self.value < self.LOW
-
-    def is_high(self) -> bool:
-        return self.value is not None and self.value > self.HIGH
-
-    def assess(self) -> ItemAssessment:
-        name = self._get_item_name("cao")
-        if self.value is None:
-            return ItemAssessment(
-                name,
-                None,
-                "不明",
-                "データがありません",
-                "secondary",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_low():
-            return ItemAssessment(
-                name,
-                self.value,
-                "低",
-                "石灰が不足しています",
-                "warning",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_high():
-            return ItemAssessment(
-                name,
-                self.value,
-                "過剰",
-                "石灰が過剰です。他の成分（苦土・加里等）の吸収阻害を招く恐れがあります。",
-                "danger",
-                self.LOW,
-                self.HIGH,
-            )
-        return ItemAssessment(
-            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
-        )
+    HIGH_LABEL = "過剰"
+    LOW_MESSAGE = "石灰が不足しています"
+    HIGH_MESSAGE = (
+        "石灰が過剰です。他の成分（苦土・加里等）の吸収阻害を招く恐れがあります。"
+    )
+    HIGH_LEVEL = "danger"
 
 
 @dataclass(frozen=True)
@@ -524,50 +339,13 @@ class MgoVO(BaseChemicalIndicatorVO):
         HIGH: 50.0 (上限)
     """
 
+    KEY = "mgo"
     LOW = 30.0
     HIGH = 50.0
-
-    def is_low(self) -> bool:
-        return self.value is not None and self.value < self.LOW
-
-    def is_high(self) -> bool:
-        return self.value is not None and self.value > self.HIGH
-
-    def assess(self) -> ItemAssessment:
-        name = self._get_item_name("mgo")
-        if self.value is None:
-            return ItemAssessment(
-                name,
-                None,
-                "不明",
-                "データがありません",
-                "secondary",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_low():
-            return ItemAssessment(
-                name,
-                self.value,
-                "低",
-                "苦土が不足しています",
-                "warning",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_high():
-            return ItemAssessment(
-                name,
-                self.value,
-                "過剰",
-                "苦土が過剰です",
-                "danger",
-                self.LOW,
-                self.HIGH,
-            )
-        return ItemAssessment(
-            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
-        )
+    HIGH_LABEL = "過剰"
+    LOW_MESSAGE = "苦土が不足しています"
+    HIGH_MESSAGE = "苦土が過剰です"
+    HIGH_LEVEL = "danger"
 
 
 @dataclass(frozen=True)
@@ -580,50 +358,13 @@ class K2oVO(BaseChemicalIndicatorVO):
         HIGH: 35.0 (上限)
     """
 
+    KEY = "k2o"
     LOW = 20.0
     HIGH = 35.0
-
-    def is_low(self) -> bool:
-        return self.value is not None and self.value < self.LOW
-
-    def is_high(self) -> bool:
-        return self.value is not None and self.value > self.HIGH
-
-    def assess(self) -> ItemAssessment:
-        name = self._get_item_name("k2o")
-        if self.value is None:
-            return ItemAssessment(
-                name,
-                None,
-                "不明",
-                "データがありません",
-                "secondary",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_low():
-            return ItemAssessment(
-                name,
-                self.value,
-                "低",
-                "加里が不足しています",
-                "warning",
-                self.LOW,
-                self.HIGH,
-            )
-        if self.is_high():
-            return ItemAssessment(
-                name,
-                self.value,
-                "過剰",
-                "加里が過剰です",
-                "danger",
-                self.LOW,
-                self.HIGH,
-            )
-        return ItemAssessment(
-            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
-        )
+    HIGH_LABEL = "過剰"
+    LOW_MESSAGE = "加里が不足しています"
+    HIGH_MESSAGE = "加里が過剰です"
+    HIGH_LEVEL = "danger"
 
 
 @dataclass(frozen=True)
@@ -660,7 +401,7 @@ class PhosphorusAbsorptionVO(BaseChemicalIndicatorVO):
 class ReferenceVO(BaseChemicalIndicatorVO):
     """判定基準がなく、参照値としてのみ扱う項目のためのVO"""
 
-    key: str
+    key: str = ""
 
     def assess(self) -> ItemAssessment:
         name = self._get_item_name(self.key)

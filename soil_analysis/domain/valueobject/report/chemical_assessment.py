@@ -159,7 +159,7 @@ class ChemicalAssessmentVO:
                 label="成分吸収阻害リスク",
                 result=self.no3n.is_high()
                 or (self.ec.value is not None and self.ec.value > 1.0),
-                condition=f"NO3-N > {self.no3n.UPPER_LIMIT} または EC > 1.0",
+                condition=f"NO3-N > {self.no3n.HIGH} または EC > 1.0",
                 description="硝酸態窒素（NO3-N）やECが非常に高い場合、作物が苦土や鉄などの成分をうまく吸収できなくなる可能性があります。",
             )
         )
