@@ -69,6 +69,20 @@ class KawadaRow:
 
     @staticmethod
     def to_float(raw_value: object, row_number: int, column_name: str) -> float | None:
+        """
+        Excelの生の値を数値に変換する。
+
+        Args:
+            raw_value: 変換対象の値
+            row_number: 行番号（エラーメッセージ用）
+            column_name: カラム名（エラーメッセージ用）
+
+        Returns:
+            変換後の数値。欠損または変換不能な場合は None
+
+        Raises:
+            ValueError: 数値への変換に失敗した場合
+        """
         if raw_value is None:
             return None
         text = unicodedata.normalize("NFKC", str(raw_value)).strip()
@@ -86,6 +100,17 @@ class KawadaRow:
 
     @classmethod
     def from_excel_row(cls, row: tuple, row_number: int) -> "KawadaRow":
+        """
+        Excelの1行から KawadaRow を生成する。
+
+        Args:
+            row: Excelの行データ
+            row_number: 行番号
+
+        Returns:
+            パースされた KawadaRow
+        """
+
         def to_str(col_idx: int) -> str:
             return str(row[col_idx] if col_idx < len(row) else "").strip()
 
@@ -118,6 +143,12 @@ class KawadaRow:
         )
 
     def to_dict(self) -> dict[str, float | None]:
+        """
+        モデル保存用の辞書形式に変換する。
+
+        Returns:
+            フィールド名をキーとする辞書
+        """
         return {
             "ec": self.ec,
             "nh4n": self.nh4n,
@@ -157,11 +188,28 @@ class ParseResult:
 
 
 class ChemicalImportService:
+    """
+    化学分析データのインポートを管理するサービス
+
+    Attributes:
+        BLOCK_NAMES: 取り込み対象のブロック名リスト
+        KAWADA_FORMAT_DATA_START_ROW_INDEX: データ開始行のインデックス
+    """
+
     BLOCK_NAMES = ("A1", "A3", "B2", "C1", "C3")
     KAWADA_FORMAT_DATA_START_ROW_INDEX = 3
 
     @classmethod
     def parse_kawada_worksheet(cls, worksheet: Worksheet) -> ParseResult:
+        """
+        川田研究所フォーマットのワークシートをパースする。
+
+        Args:
+            worksheet: openpyxl のワークシート
+
+        Returns:
+            パース結果（行データとエラーリスト）
+        """
         rows = list(worksheet.iter_rows(values_only=True))
         if not rows:
             return ParseResult(rows=[], errors=["シートにデータがありません。"])
@@ -287,13 +335,14 @@ class ChemicalImportService:
     @classmethod
     def save_import_data(cls, rows_data: list[dict[str, Any]]) -> dict[str, Any]:
         """
-        確定済みデータを保存する
-        rows_data: [
-            {
-                "row_data": {...}, # KawadaRow を dict にしたもの
-                "land_ledger_id": 123
-            },
-        ]
+        確定済みデータを保存する。
+        既存のデータがある場合は上書きし、ない場合は新規作成する。
+
+        Args:
+            rows_data: 保存対象のデータリスト（row_data と land_ledger_id を含む）
+
+        Returns:
+            作成/更新件数やサマリーを含む結果
         """
         created_count = 0
         updated_count = 0
