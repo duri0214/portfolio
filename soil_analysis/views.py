@@ -64,6 +64,7 @@ from soil_analysis.models import (
     SoilChemicalMeasurement,
     LandReview,
     LandLedger,
+    LandBlock,
     SoilChemicalMeasurementImportErrors,
     SoilHardnessMeasurement,
     RouteSuggestImport,
@@ -267,12 +268,28 @@ class StandardReportView(ListView):
         context["land_scores"] = []
         context["land_review"] = LandReview.objects.filter(land_ledger=land_ledger)
         context["land_scores_dict"] = {}
+        context["land_blocks"] = LandBlock.objects.all()
         context["report_fields"] = REPORT_FIELDS
 
         # 化学判定VOの生成
         context["chemical_assessment"] = ChemicalAssessmentVO.from_measurements(
             [context["soil_analysis"]] if context["soil_analysis"] else []
         )
+
+        # グリッドの順序:
+        # C3, B3, A3
+        # C2, B2, A2
+        # C1, B1, A1
+        blocks = []
+        for row in ["3", "2", "1"]:
+            for col in ["C", "B", "A"]:
+                name = f"{col}{row}"
+                block = next(
+                    (b for b in context["land_blocks"] if b.name == name), None
+                )
+                if block:
+                    blocks.append(block)
+        context["ordered_blocks"] = blocks
 
         return context
 

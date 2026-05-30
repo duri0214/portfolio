@@ -89,12 +89,32 @@
 
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">化学分析の診断結果</h5>
+                <h5 class="card-title mb-0">化学分析と物理性（9ブロック）の診断結果</h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <!-- 化学分析テーブル + 判定結果 -->
-                    <div class="col-12">
+                    <!-- 左カラム: 9ブロック表示（物理性ダミー） -->
+                    <div class="col-lg-3 col-md-4 border-end">
+                        <div class="mb-4">
+                            <h6 class="fw-bold small text-muted text-center mb-3">物理性（土壌硬度 9点法）</h6>
+                            <div class="land-grid-small">
+                                {% for block in ordered_blocks %}
+                                    <div class="grid-square-small text-muted" style="font-size: 0.8rem;">
+                                        {{ block.name }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="text-center mt-3">
+                                <span class="badge bg-secondary">準備中</span>
+                                <p class="small text-muted mt-2" style="font-size: 0.7rem;">
+                                    ※現在は物理性の測定値を<br>準備しています。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右カラム: 圃場単位の化学分析テーブル + 判定結果 -->
+                    <div class="col-lg-9 col-md-8">
                         <div class="ps-md-3">
                             <div class="mb-3">
                                 <h6 class="fw-bold small text-muted">

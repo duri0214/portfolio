@@ -95,8 +95,9 @@ class StandardReportViewTest(TestCase):
 
         # 判定結果が表示されていること
         self.assertContains(response, "圃場属性")
-        self.assertContains(response, "化学分析の診断結果")
+        self.assertContains(response, "化学分析と物理性（9ブロック）の診断結果")
         self.assertContains(response, "pH・ECともに適正範囲内です")
+        self.assertContains(response, "物理性（土壌硬度 9点法）")
         self.assertContains(response, "圃場単位の分析値に基づく判定です")
         self.assertContains(response, "テスト株式会社")
 
