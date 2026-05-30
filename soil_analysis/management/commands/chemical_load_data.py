@@ -105,7 +105,9 @@ class Command(BaseCommand):
                     }
                 )
 
-            result = ChemicalImportService.save_import_data(save_data)
+            result = ChemicalImportService.save_import_data(
+                save_data, source_file=os.path.basename(file_path)
+            )
 
             self.stdout.write(
                 self.style.SUCCESS(
