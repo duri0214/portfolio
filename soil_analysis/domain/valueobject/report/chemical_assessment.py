@@ -74,6 +74,12 @@ class ChemicalAssessmentVO:
         """
         複数の測定データから平均値を算出してVOを生成する。
         欠損値は集約時に除外する。
+
+        Args:
+            measurements: 測定モデルのリスト
+
+        Returns:
+            集約された化学分析判定VO
         """
         if not measurements:
             return cls()
@@ -106,12 +112,8 @@ class ChemicalAssessmentVO:
         """
         項目間の相関判定（横断的なドメインロジック）を個別のチェックポイントとして返す
 
-        判定内容:
-        - 肥料成分の不足: ECが低く、全体的に肥料成分が不足している可能性があります。
-        - 肥料成分の過剰: ECが高く、肥料過多（塩類集積）の可能性があります。
-        - 石灰成分の過剰: pHが高く、石灰分が過剰な可能性があります。
-        - 土壌の酸性化リスク: pHが低くECが高い場合、窒素肥料の過剰投入による酸性化が進んでいる可能性があります。
-        - 成分吸収阻害リスク: 硝酸態窒素（NO3-N）やECが非常に高い場合、成分吸収阻害の恐れがあります。
+        Returns:
+            相関判定結果のリスト
         """
         results = []
         if self.ph.value is None or self.ec.value is None:
@@ -168,6 +170,9 @@ class ChemicalAssessmentVO:
     def get_combination_comments(self) -> list[str]:
         """
         有効な相関判定（判定結果が True のもの）の説明文リストを返す。
+
+        Returns:
+            判定コメント（説明文）のリスト
         """
         return [r.description for r in self.combination_assessments if r.result]
 
@@ -213,6 +218,9 @@ class ChemicalAssessmentVO:
         """
         土壌診断結果を要約した文章を生成する。
         相関判定の結果を優先し、特に問題がない場合は pH と EC の状態に基づいたメッセージを返す。
+
+        Returns:
+            診断結果の要約文
         """
         if all(
             v.value is None
