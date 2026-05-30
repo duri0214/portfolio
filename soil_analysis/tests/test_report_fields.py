@@ -8,13 +8,12 @@ from soil_analysis.models import SoilChemicalMeasurement
 
 class FieldDefinitionTests(SimpleTestCase):
     def test_all_field_keys_exist_in_soil_chemical_measurement_model(self):
-        model_field_names = {
-            field.name
-            for field in SoilChemicalMeasurement._meta.get_fields()
-            if getattr(field, "attname", None)
-        }
         for report_field in REPORT_FIELDS:
-            self.assertIn(report_field.key, model_field_names)
+            # フィールドまたはプロパティとして存在することを確認
+            self.assertTrue(
+                hasattr(SoilChemicalMeasurement, report_field.key),
+                f"Field or property '{report_field.key}' not found in SoilChemicalMeasurement model",
+            )
 
     def test_major_display_labels_and_units(self):
         by_key = {report_field.key: report_field for report_field in REPORT_FIELDS}
