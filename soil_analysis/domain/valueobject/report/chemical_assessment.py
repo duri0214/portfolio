@@ -241,7 +241,11 @@ class ChemicalAssessmentVO:
         if ph_res.label == "適正" and ec_res.label == "適正":
             return "pH・ECともに適正範囲内です。良好な状態を維持してください。"
 
-        return f"土壌診断の結果、{ph_res.label if ph_res.label != '適正' else ''}{'・' if ph_res.label != '適正' and ec_res.label != '適正' else ''}{ec_res.label if ec_res.label != '適正' else ''}な状態が見受けられます。詳細は各項目を確認してください。"
+        # 「適正」以外のラベルを抽出して結合する
+        labels = [res.label for res in [ph_res, ec_res] if res.label != "適正"]
+        joined_labels = "・".join(labels)
+
+        return f"土壌診断の結果、{joined_labels}な状態が見受けられます。詳細は各項目を確認してください。"
 
     @property
     def results(self) -> dict[str, ItemAssessment]:
