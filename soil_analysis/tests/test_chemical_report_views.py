@@ -99,8 +99,14 @@ class StandardReportViewTest(TestCase):
         )
 
         # 判定結果が表示されていること
+        self.assertContains(response, "圃場属性")
         self.assertContains(response, "化学性の判定結果")
         self.assertContains(response, "pH・ECともに適正範囲内です")
+        self.assertContains(response, "物理性の判定結果")
+        self.assertContains(
+            response,
+            "帳簿平均値による暫定判定です。現在は化学性の値を表示しています。",
+        )
 
     def test_view_displays_warning(self):
         # 異常値を投入した別の帳簿を作成
@@ -139,9 +145,12 @@ class StandardReportViewTest(TestCase):
         )
         response = self.client.get(url)
 
-        self.assertContains(response, "高pHかつ低EC")
-        self.assertContains(response, "Base Saturation(塩基飽和度)が120.0%と過剰です")
-        self.assertContains(response, "Humus(腐植)が2.0%と不足しています")
+        self.assertContains(response, "石灰成分の過剰")
+        self.assertContains(response, "肥料成分の不足")
+        self.assertContains(
+            response, "警告：Base Saturation(塩基飽和度)が過剰です（120.0）"
+        )
+        self.assertContains(response, "警告：Humus(腐植)が2.0%と不足しています")
 
     def test_view_displays_insufficient_data(self):
         # データがない帳簿

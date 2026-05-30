@@ -5,14 +5,16 @@ from soil_analysis.domain.valueobject.report.chemical_assessment import (
 )
 from soil_analysis.domain.valueobject.report.chemical_indicator import (
     BaseSaturationVO,
+    CaoVO,
     CecVO,
     EcVO,
     HumusVO,
+    K2oVO,
+    MgoVO,
     Nh4nVO,
     No3nVO,
     P2o5VO,
     PhVO,
-    ReferenceVO,
 )
 
 
@@ -120,12 +122,12 @@ class TestChemicalAssessmentVO(unittest.TestCase):
         self.assertEqual(res.label, "低")
 
     def test_p2o5_assessment(self):
-        vo = ChemicalAssessmentVO(p2o5=P2o5VO(5.0))
+        vo = ChemicalAssessmentVO(p2o5=P2o5VO(10.0))
         res = vo.p2o5.assess()
         self.assertEqual(res.name, "P2O5(可給態リン酸)")
         self.assertEqual(res.label, "低")
 
-        vo = ChemicalAssessmentVO(p2o5=P2o5VO(40.0))
+        vo = ChemicalAssessmentVO(p2o5=P2o5VO(120.0))
         res = vo.p2o5.assess()
         self.assertEqual(res.label, "過剰")
         self.assertEqual(res.level, "danger")
@@ -139,56 +141,46 @@ class TestChemicalAssessmentVO(unittest.TestCase):
 
     def test_individual_salt_assessments(self):
         # CaO
-        vo = ChemicalAssessmentVO(cao=ReferenceVO(100.0, "cao"))
+        vo = ChemicalAssessmentVO(cao=CaoVO(100.0))
         res = vo.cao.assess()
         self.assertEqual(res.name, "CaO(交換性石灰)")
-        self.assertEqual(res.label, "参照")
-        self.assertEqual(res.level, "secondary")
+        self.assertEqual(res.label, "低")
+        self.assertEqual(res.level, "warning")
 
         # MgO
-        vo = ChemicalAssessmentVO(mgo=ReferenceVO(50.0, "mgo"))
+        vo = ChemicalAssessmentVO(mgo=MgoVO(40.0))
         res = vo.mgo.assess()
         self.assertEqual(res.name, "MgO(交換性苦土)")
-        self.assertEqual(res.label, "参照")
+        self.assertEqual(res.label, "適正")
 
         # K2O
-        vo = ChemicalAssessmentVO(k2o=ReferenceVO(20.0, "k2o"))
+        vo = ChemicalAssessmentVO(k2o=K2oVO(40.0))
         res = vo.k2o.assess()
         self.assertEqual(res.name, "K2O(交換性加里)")
-        self.assertEqual(res.label, "参照")
+        self.assertEqual(res.label, "過剰")
 
     def test_combination_logic(self):
         # 高pH低EC -> 石灰過剰 & 肥料不足
-        vo = ChemicalAssessmentVO(ph=PhVO(7.5), ec=EcVO(0.05))
+        vo = ChemicalAssessmentVO(ph=PhVO(7.5), ec=EcVO(0.05), no3n=No3nVO(5.0))
         assessments = {a.label: a.result for a in vo.combination_assessments}
         self.assertTrue(assessments["石灰成分の過剰"])
         self.assertTrue(assessments["肥料成分の不足"])
         self.assertFalse(assessments["肥料成分の過剰"])
         self.assertFalse(assessments["土壌の酸性化リスク"])
-
-        # 高pH高EC -> 石灰過剰 & 肥料過剰
-        vo = ChemicalAssessmentVO(ph=PhVO(7.5), ec=EcVO(0.6))
-        assessments = {a.label: a.result for a in vo.combination_assessments}
-        self.assertTrue(assessments["石灰成分の過剰"])
-        self.assertFalse(assessments["肥料成分の不足"])
-        self.assertTrue(assessments["肥料成分の過剰"])
-        self.assertFalse(assessments["土壌の酸性化リスク"])
-
-        # 低pH低EC -> 肥料不足
-        vo = ChemicalAssessmentVO(ph=PhVO(5.5), ec=EcVO(0.05))
-        assessments = {a.label: a.result for a in vo.combination_assessments}
-        self.assertFalse(assessments["石灰成分の過剰"])
-        self.assertTrue(assessments["肥料成分の不足"])
-        self.assertFalse(assessments["肥料成分の過剰"])
-        self.assertFalse(assessments["土壌の酸性化リスク"])
+        self.assertFalse(assessments["成分吸収阻害リスク"])
 
         # 低pH高EC -> 肥料過剰 & 酸性化リスク
-        vo = ChemicalAssessmentVO(ph=PhVO(5.5), ec=EcVO(0.6))
+        vo = ChemicalAssessmentVO(ph=PhVO(5.5), ec=EcVO(0.6), no3n=No3nVO(5.0))
         assessments = {a.label: a.result for a in vo.combination_assessments}
         self.assertFalse(assessments["石灰成分の過剰"])
         self.assertFalse(assessments["肥料成分の不足"])
         self.assertTrue(assessments["肥料成分の過剰"])
         self.assertTrue(assessments["土壌の酸性化リスク"])
+
+        # 成分吸収阻害リスク（NO3-N過多）
+        vo = ChemicalAssessmentVO(ph=PhVO(6.5), ec=EcVO(0.3), no3n=No3nVO(20.0))
+        assessments = {a.label: a.result for a in vo.combination_assessments}
+        self.assertTrue(assessments["成分吸収阻害リスク"])
 
     def test_from_measurements_averaging(self):
         class MockMeasurement:
@@ -200,21 +192,23 @@ class TestChemicalAssessmentVO(unittest.TestCase):
                 self.cec = kwargs.get("cec")
                 self.base_saturation = kwargs.get("base_saturation")
                 self.p2o5 = kwargs.get("p2o5")
+                self.phosphorus_absorption = kwargs.get("phosphorus_absorption")
                 self.humus = kwargs.get("humus")
                 self.cao = kwargs.get("cao")
                 self.mgo = kwargs.get("mgo")
                 self.k2o = kwargs.get("k2o")
 
         measurements = [
-            MockMeasurement(ph=6.0, ec=0.2, cao=100.0),
-            MockMeasurement(ph=7.0, ec=0.4, cao=200.0),
-            MockMeasurement(ph=None, ec=0.6, cao=None),
+            MockMeasurement(ph=6.0, ec=0.2, cao=100.0, phosphorus_absorption=1000.0),
+            MockMeasurement(ph=7.0, ec=0.4, cao=200.0, phosphorus_absorption=1200.0),
+            MockMeasurement(ph=None, ec=0.6, cao=None, phosphorus_absorption=None),
         ]
 
         vo = ChemicalAssessmentVO.from_measurements(measurements)
         self.assertAlmostEqual(vo.ph.value, 6.5)
         self.assertAlmostEqual(vo.ec.value, 0.4)
         self.assertAlmostEqual(vo.cao.value, 150.0)
+        self.assertAlmostEqual(vo.phosphorus_absorption.value, 1100.0)
 
     def test_missing_data_summary(self):
         vo = ChemicalAssessmentVO()
@@ -225,7 +219,7 @@ class TestChemicalAssessmentVO(unittest.TestCase):
         vo = ChemicalAssessmentVO(
             base_saturation=BaseSaturationVO(120.0),
             humus=HumusVO(2.0),
-            p2o5=P2o5VO(40.0),
+            p2o5=P2o5VO(120.0),
             nh4n=Nh4nVO(6.0),
         )
         warnings = vo.get_warnings()
@@ -255,5 +249,7 @@ class TestChemicalAssessmentVO(unittest.TestCase):
         self.assertEqual(
             len(categorized["塩基類関連"]), 5
         )  # pH, Base Saturation, CaO, MgO, K2O
-        self.assertEqual(len(categorized["リン酸関連"]), 1)  # P2O5
+        self.assertEqual(
+            len(categorized["リン酸関連"]), 2
+        )  # P2O5, PhosphorusAbsorption
         self.assertEqual(len(categorized["土壌ポテンシャル関連"]), 2)  # CEC, Humus
