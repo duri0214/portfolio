@@ -257,7 +257,6 @@ class StandardReportView(ListView):
         """
         context = super().get_context_data(**kwargs)
         land_ledger_id = self.kwargs["land_ledger_id"]
-        company_id = self.kwargs["company_id"]
 
         try:
             land_ledger = LandLedgerRepository.get_with_details(land_ledger_id)
@@ -718,7 +717,7 @@ class ChemicalSuccessView(TemplateView):
                     )
                     .prefetch_related(
                         Prefetch(
-                            "soilchemicalmeasurement",
+                            "soil_chemical_measurement",
                             queryset=SoilChemicalMeasurement.objects.all(),
                             to_attr="measurement",
                         )
