@@ -575,7 +575,10 @@ class SoilChemicalMeasurement(models.Model):
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
     updated_at = models.DateTimeField("更新日時", auto_now=True)
     land_ledger = models.OneToOneField(
-        LandLedger, on_delete=models.CASCADE, verbose_name="台帳"
+        LandLedger,
+        on_delete=models.CASCADE,
+        verbose_name="台帳",
+        related_name="soil_chemical_measurement",
     )
 
 

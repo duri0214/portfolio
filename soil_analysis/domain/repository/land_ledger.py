@@ -46,6 +46,32 @@ class LandLedgerRepository:
         return LandLedger.objects.filter(pk=ledger_id).first()
 
     @staticmethod
+    def get_with_details(ledger_id: int) -> LandLedger:
+        """
+        関連情報を含めて帳簿を取得します。
+
+        Args:
+            ledger_id: 帳簿ID
+
+        Returns:
+            LandLedger: 帳簿インスタンス
+
+        Raises:
+            LandLedger.DoesNotExist: 帳簿が見つからない場合
+        """
+        return (
+            LandLedger.objects.select_related(
+                "land",
+                "land_period",
+                "crop",
+                "sampling_method",
+                "analytical_agency",
+            )
+            .prefetch_related("land__company")
+            .get(pk=ledger_id)
+        )
+
+    @staticmethod
     def get_form_data_for_ajax(folder_name: str) -> dict:
         """
         フォーム表示用データをAjaxで取得

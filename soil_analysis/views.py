@@ -25,6 +25,9 @@ from openpyxl import load_workbook
 
 from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
+from soil_analysis.domain.repository.chemical_measurement import (
+    SoilChemicalMeasurementRepository,
+)
 from soil_analysis.domain.repository.company import CompanyRepository
 from soil_analysis.domain.repository.hardness_import_error import (
     HardnessImportErrorRepository,
@@ -33,12 +36,17 @@ from soil_analysis.domain.repository.hardness_measurement import (
     SoilHardnessMeasurementRepository,
 )
 from soil_analysis.domain.repository.land import LandRepository
+from soil_analysis.domain.repository.land_block import LandBlockRepository
 from soil_analysis.domain.repository.land_ledger import LandLedgerRepository
+from soil_analysis.domain.repository.land_review import LandReviewRepository
 from soil_analysis.domain.service.chemical_import_service import (
     ChemicalImportService,
 )
 from soil_analysis.domain.service.hardness_import_service import (
     HardnessImportService,
+)
+from soil_analysis.domain.service.hardness_measurement_service import (
+    HardnessMeasurementService,
 )
 from soil_analysis.domain.service.hardness_plot_generation import (
     HardnessPlotGenerationService,
@@ -50,6 +58,9 @@ from soil_analysis.domain.valueobject.report.chemical_assessment import (
     ChemicalAssessmentVO,
 )
 from soil_analysis.domain.valueobject.report.fields import REPORT_FIELDS
+from soil_analysis.domain.valueobject.report.hardness_assessment import (
+    HardnessBlockAssessment,
+)
 from soil_analysis.forms import (
     CompanyCreateForm,
     LandCreateForm,
@@ -62,9 +73,7 @@ from soil_analysis.models import (
     Company,
     Land,
     SoilChemicalMeasurement,
-    LandReview,
     LandLedger,
-    LandBlock,
     SoilChemicalMeasurementImportErrors,
     SoilHardnessMeasurement,
     RouteSuggestImport,
@@ -217,6 +226,10 @@ class LandDetailView(DetailView):
 class StandardReportView(ListView):
     """
     化学分析レポート（通知表）の一覧表示
+
+    Attributes:
+        model: 使用するモデル
+        template_name: 使用するテンプレート名
     """
 
     model = SoilChemicalMeasurement
@@ -230,11 +243,7 @@ class StandardReportView(ListView):
             SoilChemicalMeasurement のクエリセット
         """
         land_ledger_id = self.kwargs["land_ledger_id"]
-        try:
-            land_ledger = LandLedgerRepository.get_by_id(land_ledger_id)
-        except LandLedger.DoesNotExist:
-            raise Http404("Land Ledger does not exist.")
-        return super().get_queryset().filter(land_ledger=land_ledger)
+        return super().get_queryset().filter(land_ledger_id=land_ledger_id)
 
     def get_context_data(self, **kwargs):
         """
@@ -248,33 +257,43 @@ class StandardReportView(ListView):
         """
         context = super().get_context_data(**kwargs)
         land_ledger_id = self.kwargs["land_ledger_id"]
-        company_id = self.kwargs["company_id"]
 
         try:
-            land_ledger = LandLedgerRepository.get_by_id(land_ledger_id)
-            company = CompanyRepository.get_company_by_id(company_id)
-        except (LandLedger.DoesNotExist, Company.DoesNotExist):
-            raise Http404("Land Ledger or Company does not exist.")
+            land_ledger = LandLedgerRepository.get_with_details(land_ledger_id)
+            company = land_ledger.land.company
+        except LandLedger.DoesNotExist:
+            raise Http404("Land Ledger does not exist.")
 
         context["company"] = company
         context["land"] = land_ledger.land
         context["land_ledger"] = land_ledger
 
         # 圃場単位の化学分析データを取得
-        context["soil_analysis"] = SoilChemicalMeasurement.objects.filter(
-            land_ledger=land_ledger
-        ).first()
+        context["soil_analysis"] = SoilChemicalMeasurementRepository.get_by_ledger(
+            land_ledger
+        )
 
         context["land_scores"] = []
-        context["land_review"] = LandReview.objects.filter(land_ledger=land_ledger)
+        context["land_review"] = LandReviewRepository.get_by_ledger(land_ledger)
         context["land_scores_dict"] = {}
-        context["land_blocks"] = LandBlock.objects.all()
+        context["land_blocks"] = LandBlockRepository.get_all()
         context["report_fields"] = REPORT_FIELDS
 
         # 化学判定VOの生成
         context["chemical_assessment"] = ChemicalAssessmentVO.from_measurements(
             [context["soil_analysis"]] if context["soil_analysis"] else []
         )
+
+        # 硬度判定VOの生成
+        context["hardness_assessment"] = (
+            HardnessMeasurementService.get_hardness_assessment(land_ledger)
+        )
+
+        context["hardness_thresholds"] = {
+            "low": HardnessBlockAssessment.THRESHOLD_LOW,
+            "high": HardnessBlockAssessment.THRESHOLD_HIGH,
+            "max": HardnessBlockAssessment.MAX_SCALE,
+        }
 
         # グリッドの順序:
         # C3, B3, A3
@@ -290,6 +309,12 @@ class StandardReportView(ListView):
                 if block:
                     blocks.append(block)
         context["ordered_blocks"] = blocks
+
+        # ブロックと評価データを紐付け
+        context["ordered_blocks_with_assessment"] = [
+            {"block": b, "assessment": context["hardness_assessment"].get_block(b.name)}
+            for b in blocks
+        ]
 
         return context
 
@@ -692,7 +717,7 @@ class ChemicalSuccessView(TemplateView):
                     )
                     .prefetch_related(
                         Prefetch(
-                            "soilchemicalmeasurement",
+                            "soil_chemical_measurement",
                             queryset=SoilChemicalMeasurement.objects.all(),
                             to_attr="measurement",
                         )

@@ -186,10 +186,6 @@ class ParseResult:
 class ChemicalImportService:
     """
     化学分析データのインポートを管理するサービス
-
-    Attributes:
-        BLOCK_NAMES: 取り込み対象のブロック名リスト
-        KAWADA_FORMAT_DATA_START_ROW_INDEX: データ開始行のインデックス
     """
 
     BLOCK_NAMES = ("A1", "A3", "B2", "C1", "C3")
