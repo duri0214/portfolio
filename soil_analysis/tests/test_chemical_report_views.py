@@ -71,15 +71,11 @@ class StandardReportViewTest(TestCase):
             ec=0.3,
             nh4n=2.0,
             no3n=10.0,
-            total_nitrogen=12.0,
-            nh4_per_nitrogen=16.6,
             cao=100.0,
             mgo=30.0,
             k2o=20.0,
             cec=15.0,
             base_saturation=75.0,
-            cao_per_mgo=3.3,
-            mgo_per_k2o=1.5,
             phosphorus_absorption=1000.0,
             p2o5=20.0,
             humus=4.0,
@@ -99,9 +95,8 @@ class StandardReportViewTest(TestCase):
 
         # 判定結果が表示されていること
         self.assertContains(response, "圃場属性")
-        self.assertContains(response, "化学分析と物理性（9ブロック）の診断結果")
+        self.assertContains(response, "化学分析の診断結果")
         self.assertContains(response, "pH・ECともに適正範囲内です")
-        self.assertContains(response, "物理性（土壌硬度 9点法）")
         self.assertContains(response, "圃場単位の分析値に基づく判定です")
         self.assertContains(response, "テスト株式会社")
 
@@ -120,15 +115,11 @@ class StandardReportViewTest(TestCase):
             land_ledger=ledger_bad,
             ph=7.5,
             ec=0.05,  # 高pH低EC
-            total_nitrogen=0.0,
-            nh4_per_nitrogen=0.0,
             cao=0.0,
             mgo=0.0,
             k2o=0.0,
             cec=0.0,
             base_saturation=120.0,  # 過剰警告
-            cao_per_mgo=0.0,
-            mgo_per_k2o=0.0,
             phosphorus_absorption=0.0,
             p2o5=0.0,
             humus=2.0,  # 腐植不足警告

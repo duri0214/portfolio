@@ -135,7 +135,9 @@ class ChemicalImportServiceTest(TestCase):
             {"row_data": dataclasses.asdict(row), "land_ledger_id": self.ledger.id}
         ]
 
-        result = ChemicalImportService.save_import_data(rows_data)
+        result = ChemicalImportService.save_import_data(
+            rows_data, source_file="test_file.xlsx"
+        )
         self.assertEqual(result["created"], 1)  # 圃場単位で1つ作成されるはず
 
         from soil_analysis.models import SoilChemicalMeasurement
@@ -145,6 +147,7 @@ class ChemicalImportServiceTest(TestCase):
         ).first()
         self.assertIsNotNone(analysis)
         self.assertEqual(analysis.ph, 6.5)
+        self.assertEqual(analysis.source_file, "test_file.xlsx")
 
     def test_to_float_error_message_japanese(self):
         """数値変換失敗時のエラーメッセージに日本語カラム名が含まれること"""
@@ -191,7 +194,9 @@ class ChemicalImportServiceTest(TestCase):
             {"row_data": dataclasses.asdict(row2), "land_ledger_id": self.ledger.id},
         ]
 
-        result = ChemicalImportService.save_import_data(rows_data)
+        result = ChemicalImportService.save_import_data(
+            rows_data, source_file="updated_file.xlsx"
+        )
 
         # 重複チェックが削除されたため、エラーは出ず、1件として処理される
         # (すでに1件目の時点で ledger_to_latest_entry により上書きされている)
@@ -206,3 +211,4 @@ class ChemicalImportServiceTest(TestCase):
         self.assertIsNotNone(analysis)
         # 後の方のデータ(row2)のph=7.0が反映されているはず
         self.assertEqual(analysis.ph, 7.0)
+        self.assertEqual(analysis.source_file, "updated_file.xlsx")
