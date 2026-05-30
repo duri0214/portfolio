@@ -45,10 +45,10 @@ from soil_analysis.domain.service.hardness_plot_generation import (
 )
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
-from soil_analysis.domain.valueobject.chemical_assessment import (
+from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
+from soil_analysis.domain.valueobject.report.chemical_assessment import (
     ChemicalAssessmentVO,
 )
-from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.domain.valueobject.report.fields import REPORT_FIELDS
 from soil_analysis.forms import (
     CompanyCreateForm,

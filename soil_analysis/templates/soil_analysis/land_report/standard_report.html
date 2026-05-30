@@ -85,7 +85,37 @@
                 <h5 class="card-title mb-0">化学性の判定結果</h5>
             </div>
             <div class="card-body">
-                <p class="card-text fw-bold">{{ chemical_assessment.get_summary }}</p>
+                <div class="mb-3">
+                    <h6 class="fw-bold small text-muted">
+                        総合判定（{{ chemical_assessment.combination_items_label }}）</h6>
+                    <div class="row row-cols-1 row-cols-sm-2 g-2 mb-2">
+                        {% for assessment in chemical_assessment.combination_assessments %}
+                            <div class="col">
+                                <div class="d-flex align-items-center p-2 border rounded {% if assessment.result %}bg-warning-subtle border-warning{% else %}bg-light text-muted{% endif %}"
+                                     style="font-size: 0.85rem;">
+                                    <div class="me-2">
+                                        {% if assessment.result %}
+                                            <i class="bi bi-check-circle-fill text-warning"></i>
+                                        {% else %}
+                                            <i class="bi bi-circle text-secondary"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ assessment.label }}</div>
+                                        <div class="text-muted" style="font-size: 0.7rem;">
+                                            条件: {{ assessment.condition }}
+                                        </div>
+                                        <div style="font-size: 0.75rem;">
+                                            {% if assessment.result %}{{ assessment.description }}{% else %}
+                                                問題なし{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <p class="card-text small text-muted mb-0">サマリ: {{ chemical_assessment.get_summary }}</p>
+                </div>
                 {% with warnings=chemical_assessment.get_warnings %}
                     {% if warnings %}
                         <div class="mt-2">
@@ -110,15 +140,7 @@
                                         <div class="fw-bold text-{{ result.level }}">{{ result.label }}</div>
                                         <div class="fw-bold">{{ result.value|floatformat:2|default:"-" }}</div>
                                         <div class="text-muted pt-1 mt-1 border-top" style="font-size: 0.65rem;">
-                                            {% if result.min_threshold and result.max_threshold %}
-                                                {{ result.min_threshold }}〜{{ result.max_threshold }}
-                                            {% elif result.min_threshold %}
-                                                {{ result.min_threshold }}以上
-                                            {% elif result.max_threshold %}
-                                                {{ result.max_threshold }}以下
-                                            {% else %}
-                                                -
-                                            {% endif %}
+                                            {{ result.threshold_statement }}
                                         </div>
                                     </div>
                                 </div>
