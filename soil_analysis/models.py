@@ -512,8 +512,6 @@ class SoilChemicalMeasurement(models.Model):
         ec (FloatField): 電気伝導率
         nh4n (FloatField): アンモニア態窒素
         no3n (FloatField): 硝酸態窒素
-        total_nitrogen (FloatField): 無機態窒素
-        nh4_per_nitrogen (FloatField): アンモニア態窒素比
         ph (FloatField): 水素イオン濃度
         cao (FloatField): 交換性石灰
         mgo (FloatField): 交換性苦土
@@ -522,8 +520,6 @@ class SoilChemicalMeasurement(models.Model):
         magnesia_saturation (FloatField): 苦土飽和度
         potash_saturation (FloatField): 加里飽和度
         base_saturation (FloatField): 塩基飽和度
-        cao_per_mgo (FloatField): CaO/MgO
-        mgo_per_k2o (FloatField): MgO/K2O
         phosphorus_absorption (FloatField): リン酸吸収係数
         p2o5 (FloatField): 可給態リン酸
         cec (FloatField): 塩基置換容量
@@ -536,8 +532,6 @@ class SoilChemicalMeasurement(models.Model):
     ec = models.FloatField("電気伝導率", null=True)
     nh4n = models.FloatField("アンモニア態窒素", null=True)
     no3n = models.FloatField("硝酸態窒素", null=True)
-    total_nitrogen = models.FloatField("無機態窒素", null=True)
-    nh4_per_nitrogen = models.FloatField("アンモニア態窒素比", null=True)
     ph = models.FloatField("水素イオン濃度", null=True)
     cao = models.FloatField("交換性石灰", null=True)
     mgo = models.FloatField("交換性苦土", null=True)
@@ -546,13 +540,36 @@ class SoilChemicalMeasurement(models.Model):
     magnesia_saturation = models.FloatField("苦土飽和度", null=True)
     potash_saturation = models.FloatField("加里飽和度", null=True)
     base_saturation = models.FloatField("塩基飽和度", null=True)
-    cao_per_mgo = models.FloatField("CaO/MgO", null=True)
-    mgo_per_k2o = models.FloatField("MgO/K2O", null=True)
     phosphorus_absorption = models.FloatField("リン酸吸収係数", null=True)
     p2o5 = models.FloatField("可給態リン酸", null=True)
     cec = models.FloatField("塩基置換容量", null=True)
     humus = models.FloatField("腐植", null=True)
     bulk_density = models.FloatField("仮比重", null=True)
+
+    @property
+    def total_nitrogen(self) -> float | None:
+        if self.nh4n is None or self.no3n is None:
+            return None
+        return self.nh4n + self.no3n
+
+    @property
+    def nh4_per_nitrogen(self) -> float | None:
+        total = self.total_nitrogen
+        if not total:
+            return None
+        return (self.nh4n / total) * 100
+
+    @property
+    def cao_per_mgo(self) -> float | None:
+        if self.cao is None or self.mgo is None or self.mgo == 0:
+            return None
+        return self.cao / self.mgo
+
+    @property
+    def mgo_per_k2o(self) -> float | None:
+        if self.mgo is None or self.k2o is None or self.k2o == 0:
+            return None
+        return self.mgo / self.k2o
 
     source_file = models.CharField("データ元ファイル", max_length=256, null=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
