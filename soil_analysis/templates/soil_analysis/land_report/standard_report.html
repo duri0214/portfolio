@@ -96,18 +96,41 @@
                     <!-- 左カラム: 9ブロック表示（物理性ダミー） -->
                     <div class="col-lg-3 col-md-4 border-end">
                         <div class="mb-4">
-                            <h6 class="fw-bold small text-muted text-center mb-3">物理性（土壌硬度 9点法）</h6>
+                            <h6 class="fw-bold small text-muted text-center mb-3">物理性</h6>
                             <div class="land-grid-small">
-                                {% for block in ordered_blocks %}
-                                    <div class="grid-square-small text-muted" style="font-size: 0.8rem;">
-                                        {{ block.name }}
+                                {% for item in ordered_blocks_with_assessment %}
+                                    <div class="grid-square-small {{ item.assessment.assessment_category }}">
+                                        <div class="block-name">{{ item.block.name }}</div>
+                                        <div class="hardness-sparkline">
+                                            {% if item.assessment.sparkline_points %}
+                                                <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                                    <polyline
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            stroke-width="3"
+                                                            points="{{ item.assessment.sparkline_points }}"
+                                                    ></polyline>
+                                                </svg>
+                                            {% else %}
+                                                <span class="text-muted" style="font-size: 0.6rem;">-</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="hardness-value">
+                                            {{ item.assessment.display_value }}
+                                            {% if item.assessment.avg_pressure is not None %}
+                                                <span style="font-size: 0.5rem;">kPa</span>{% endif %}
+                                        </div>
                                     </div>
                                 {% endfor %}
                             </div>
                             <div class="text-center mt-3">
-                                <span class="badge bg-secondary">準備中</span>
-                                <p class="small text-muted mt-2" style="font-size: 0.7rem;">
-                                    ※現在は物理性の測定値を<br>準備しています。
+                                <div class="d-flex justify-content-center gap-2 mb-2" style="font-size: 0.65rem;">
+                                    <span><i class="bi bi-square-fill text-success"></i> 良好</span>
+                                    <span><i class="bi bi-square-fill text-warning"></i> 注意</span>
+                                    <span><i class="bi bi-square-fill text-danger"></i> 不良</span>
+                                </div>
+                                <p class="small text-muted" style="font-size: 0.7rem;">
+                                    ※数値は{{ land_ledger.sampling_method.times }}点平均硬度(kPa)
                                 </p>
                             </div>
                         </div>
@@ -326,15 +349,38 @@
         <div class="mt-5 pt-4 border-top text-muted">
             <div class="row">
                 <!-- 土壌採取・送付方法 -->
-                <div class="col-12 mb-4">
-                    <h5 class="fw-bold mb-3 sub-section-title"><i class="bi bi-info-circle me-2"></i>正確な分析のための土壌採取・送付方法
+                <div class="col-md-6 mb-4">
+                    <h5 class="fw-bold mb-3 sub-section-title"><i class="bi bi-info-circle me-2"></i>土壌採取・送付方法（化学分析）
                     </h5>
-                    <ul class="list-unstyled mb-0">
-                        <li>1. <strong>採取場所</strong>: 圃場の5箇所から同量を採取し、よく混合してください。</li>
-                        <li>2. <strong>採取部位</strong>: 表土の2〜3cmを除き、その下の深さ20cmまでの土壌を採取します。</li>
-                        <li>3. <strong>準備</strong>: 風通しの良い日陰で乾燥させ（風乾）、2mmのふるいを通したものを約100g送付してください。
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2">1. <strong>採取時期</strong>: 前作の収穫後、かつ次作の施肥前（4週間以上前）が理想的です。
                         </li>
-                        <li>4. <strong>注意</strong>: 直射日光や高温での乾燥は分析値が変わる可能性があるため避けてください。
+                        <li class="mb-2">2. <strong>採取場所</strong>:
+                            圃場を代表する複数箇所（{{ land_ledger.sampling_method.times }}箇所など）から同量を採取し、バケツ等でよく混合してください。
+                        </li>
+                        <li class="mb-2">3. <strong>採取深さ</strong>:
+                            表土の残渣等を除き、<strong>作土層（0〜15cm）</strong>を柱状に採取します。
+                        </li>
+                        <li class="mb-2">4. <strong>風乾</strong>: 直射日光を避け、風通しの良い日陰で「白乾」するまで乾燥させてください。
+                        </li>
+                        <li class="mb-2">5. <strong>送付</strong>: 礫や根を除き、約300gを送付用ジップロック袋に詰めて検査機関へ送付してください。
+                        </li>
+                    </ul>
+                </div>
+                <!-- 土壌硬度測定について -->
+                <div class="col-md-6 mb-4">
+                    <h5 class="fw-bold mb-3 sub-section-title"><i class="bi bi-activity me-2"></i>土壌硬度（物理性）の測定
+                    </h5>
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2">1. <strong>測定方法</strong>:
+                            各ブロック（エリア）において、<strong>{{ land_ledger.sampling_method.times }}箇所</strong>で貫入計測を行う「{{ land_ledger.sampling_method.name }}」を採用しています。
+                        </li>
+                        <li class="mb-2">2. <strong>平均化</strong>: ブロック内の{{ land_ledger.sampling_method.times }}箇所の測定値を深度ごとに平均化することで、そのエリアの代表的な硬度を算出しています。
+                        </li>
+                        <li class="mb-2">3. <strong>グラフの見方</strong>:
+                            スパークライン（折れ線）は、左から右への深度（0〜60cm）に伴う硬度の推移を示しています。上方向が「硬い」状態を表します。
+                        </li>
+                        <li class="mb-2">4. <strong>目的</strong>: 硬盤層の有無や深さを把握し、サブソイラ等の物理性改善や根張りの予測に活用します。
                         </li>
                     </ul>
                 </div>
