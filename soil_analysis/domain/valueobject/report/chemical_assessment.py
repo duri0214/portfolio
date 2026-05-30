@@ -3,15 +3,18 @@ from typing import Any
 
 from .chemical_indicator import (
     BaseSaturationVO,
+    CaoVO,
     CecVO,
     EcVO,
     HumusVO,
     ItemAssessment,
+    K2oVO,
+    MgoVO,
     Nh4nVO,
     No3nVO,
     P2o5VO,
     PhVO,
-    ReferenceVO,
+    PhosphorusAbsorptionVO,
 )
 
 
@@ -53,10 +56,11 @@ class ChemicalAssessmentVO:
     cec: CecVO = CecVO(None)
     base_saturation: BaseSaturationVO = BaseSaturationVO(None)
     p2o5: P2o5VO = P2o5VO(None)
+    phosphorus_absorption: PhosphorusAbsorptionVO = PhosphorusAbsorptionVO(None)
     humus: HumusVO = HumusVO(None)
-    cao: ReferenceVO = ReferenceVO(None, "cao")
-    mgo: ReferenceVO = ReferenceVO(None, "mgo")
-    k2o: ReferenceVO = ReferenceVO(None, "k2o")
+    cao: CaoVO = CaoVO(None)
+    mgo: MgoVO = MgoVO(None)
+    k2o: K2oVO = K2oVO(None)
 
     @classmethod
     def from_measurements(cls, measurements: list[Any]) -> "ChemicalAssessmentVO":
@@ -83,10 +87,11 @@ class ChemicalAssessmentVO:
             cec=CecVO(avg("cec")),
             base_saturation=BaseSaturationVO(avg("base_saturation")),
             p2o5=P2o5VO(avg("p2o5")),
+            phosphorus_absorption=PhosphorusAbsorptionVO(avg("phosphorus_absorption")),
             humus=HumusVO(avg("humus")),
-            cao=ReferenceVO(avg("cao"), "cao"),
-            mgo=ReferenceVO(avg("mgo"), "mgo"),
-            k2o=ReferenceVO(avg("k2o"), "k2o"),
+            cao=CaoVO(avg("cao")),
+            mgo=MgoVO(avg("mgo")),
+            k2o=K2oVO(avg("k2o")),
         )
 
     @property
@@ -132,6 +137,16 @@ class ChemicalAssessmentVO:
                 result=self.ph.is_low() and self.ec.is_high(),
                 condition=f"pH < {self.ph.LOW} かつ EC > {self.ec.HIGH}",
                 description="pHが低くECが高い場合、窒素肥料の過剰投入による酸性化が進んでいる可能性があります。",
+            )
+        )
+        # 窒素過多による成分吸収阻害リスク
+        results.append(
+            CombinationAssessment(
+                label="成分吸収阻害リスク",
+                result=self.no3n.is_high()
+                or (self.ec.value is not None and self.ec.value > 1.0),
+                condition=f"NO3-N > {self.no3n.UPPER_LIMIT} または EC > 1.0",
+                description="硝酸態窒素（NO3-N）やECが非常に高い場合、作物が苦土や鉄などの成分をうまく吸収できなくなる可能性があります。",
             )
         )
         return results
@@ -186,6 +201,9 @@ class ChemicalAssessmentVO:
                 self.base_saturation,
                 self.p2o5,
                 self.humus,
+                self.cao,
+                self.mgo,
+                self.k2o,
             ]
         ):
             return "判定に必要なデータが不足しています。"
@@ -209,9 +227,13 @@ class ChemicalAssessmentVO:
             "nh4n": self.nh4n.assess(),
             "no3n": self.no3n.assess(),
             "cec": self.cec.assess(),
-            "base_saturation": self.base_saturation.assess(),
+            "base_saturation": self.base_saturation.assess(self.cec.value),
             "p2o5": self.p2o5.assess(),
+            "phosphorus_absorption": self.phosphorus_absorption.assess(),
             "humus": self.humus.assess(),
+            "cao": self.cao.assess(),
+            "mgo": self.mgo.assess(),
+            "k2o": self.k2o.assess(),
         }
 
     @property
@@ -225,13 +247,14 @@ class ChemicalAssessmentVO:
             ],
             "塩基類関連": [
                 self.ph.assess(),
-                self.base_saturation.assess(),
+                self.base_saturation.assess(self.cec.value),
                 self.cao.assess(),
                 self.mgo.assess(),
                 self.k2o.assess(),
             ],
             "リン酸関連": [
                 self.p2o5.assess(),
+                self.phosphorus_absorption.assess(),
             ],
             "土壌ポテンシャル関連": [
                 self.cec.assess(),

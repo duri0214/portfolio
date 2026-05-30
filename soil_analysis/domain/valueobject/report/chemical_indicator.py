@@ -265,8 +265,20 @@ class BaseSaturationVO:
     def is_over(self) -> bool:
         return self.value is not None and self.value > self.OVER
 
-    def assess(self) -> ItemAssessment:
+    def assess(self, cec: float | None = None) -> ItemAssessment:
         name = _get_item_name("base_saturation")
+
+        # CECに応じた動的な閾値設定
+        low_limit = self.LOW
+        high_limit = self.HIGH
+        if cec is not None:
+            if cec >= 20.0:
+                # CEC 20以上なら80%が目安
+                high_limit = 80.0
+            elif cec < 15.0:
+                # CEC 15未満なら100%以上
+                low_limit = 100.0
+
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -274,49 +286,49 @@ class BaseSaturationVO:
                 "不明",
                 "データがありません",
                 "secondary",
-                self.LOW,
-                self.HIGH,
+                low_limit,
+                high_limit,
             )
         if self.is_over():
             return ItemAssessment(
                 name,
                 self.value,
                 "過剰",
-                "塩基類が飽和状態を超えています",
+                "塩基類が飽和状態を超えています。土が保持できる量を超えています。",
                 "danger",
-                self.LOW,
-                self.HIGH,
+                low_limit,
+                high_limit,
             )
-        if self.is_low():
+        if self.value < low_limit:
             return ItemAssessment(
                 name,
                 self.value,
                 "低",
-                f"塩基類が不足しています（基準: {self.LOW}%以上）",
+                f"塩基類が不足しています（目標: {low_limit}%以上）",
                 "warning",
-                self.LOW,
-                self.HIGH,
+                low_limit,
+                high_limit,
             )
-        if self.is_high():
+        if self.value > high_limit:
             return ItemAssessment(
                 name,
                 self.value,
                 "過剰",
-                f"塩基類が多めです（基準: {self.HIGH}%以下）",
+                f"塩基類が多めです（目標: {high_limit}%以下）",
                 "danger",
-                self.LOW,
-                self.HIGH,
+                low_limit,
+                high_limit,
             )
         return ItemAssessment(
-            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
+            name, self.value, "適正", "適正範囲内です", "success", low_limit, high_limit
         )
 
 
 @dataclass(frozen=True)
 class P2o5VO:
     value: float | None
-    LOW = 10.0
-    HIGH = 30.0
+    LOW = 50.0
+    HIGH = 100.0
 
     def is_low(self) -> bool:
         return self.value is not None and self.value < self.LOW
@@ -341,7 +353,7 @@ class P2o5VO:
                 name,
                 self.value,
                 "低",
-                "リン酸が不足しています",
+                "リン酸が不足しています。適正なリン酸施用が必要です。",
                 "warning",
                 self.LOW,
                 self.HIGH,
@@ -351,7 +363,7 @@ class P2o5VO:
                 name,
                 self.value,
                 "過剰",
-                "リン酸が過剰です",
+                "リン酸が過剰です。根瘤病のリスクを高める可能性があります。",
                 "danger",
                 self.LOW,
                 self.HIGH,
@@ -381,6 +393,179 @@ class HumusVO:
             )
         return ItemAssessment(
             name, self.value, "適正", "適正範囲内です", "success", self.LOW, None
+        )
+
+
+@dataclass(frozen=True)
+class CaoVO:
+    value: float | None
+    LOW = 300.0
+    HIGH = 450.0
+
+    def is_low(self) -> bool:
+        return self.value is not None and self.value < self.LOW
+
+    def is_high(self) -> bool:
+        return self.value is not None and self.value > self.HIGH
+
+    def assess(self) -> ItemAssessment:
+        name = _get_item_name("cao")
+        if self.value is None:
+            return ItemAssessment(
+                name,
+                None,
+                "不明",
+                "データがありません",
+                "secondary",
+                self.LOW,
+                self.HIGH,
+            )
+        if self.is_low():
+            return ItemAssessment(
+                name,
+                self.value,
+                "低",
+                "石灰が不足しています",
+                "warning",
+                self.LOW,
+                self.HIGH,
+            )
+        if self.is_high():
+            return ItemAssessment(
+                name,
+                self.value,
+                "過剰",
+                "石灰が過剰です。他の成分（苦土・加里等）の吸収阻害を招く恐れがあります。",
+                "danger",
+                self.LOW,
+                self.HIGH,
+            )
+        return ItemAssessment(
+            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
+        )
+
+
+@dataclass(frozen=True)
+class MgoVO:
+    value: float | None
+    LOW = 30.0
+    HIGH = 50.0
+
+    def is_low(self) -> bool:
+        return self.value is not None and self.value < self.LOW
+
+    def is_high(self) -> bool:
+        return self.value is not None and self.value > self.HIGH
+
+    def assess(self) -> ItemAssessment:
+        name = _get_item_name("mgo")
+        if self.value is None:
+            return ItemAssessment(
+                name,
+                None,
+                "不明",
+                "データがありません",
+                "secondary",
+                self.LOW,
+                self.HIGH,
+            )
+        if self.is_low():
+            return ItemAssessment(
+                name,
+                self.value,
+                "低",
+                "苦土が不足しています",
+                "warning",
+                self.LOW,
+                self.HIGH,
+            )
+        if self.is_high():
+            return ItemAssessment(
+                name,
+                self.value,
+                "過剰",
+                "苦土が過剰です",
+                "danger",
+                self.LOW,
+                self.HIGH,
+            )
+        return ItemAssessment(
+            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
+        )
+
+
+@dataclass(frozen=True)
+class K2oVO:
+    value: float | None
+    LOW = 20.0
+    HIGH = 35.0
+
+    def is_low(self) -> bool:
+        return self.value is not None and self.value < self.LOW
+
+    def is_high(self) -> bool:
+        return self.value is not None and self.value > self.HIGH
+
+    def assess(self) -> ItemAssessment:
+        name = _get_item_name("k2o")
+        if self.value is None:
+            return ItemAssessment(
+                name,
+                None,
+                "不明",
+                "データがありません",
+                "secondary",
+                self.LOW,
+                self.HIGH,
+            )
+        if self.is_low():
+            return ItemAssessment(
+                name,
+                self.value,
+                "低",
+                "加里が不足しています",
+                "warning",
+                self.LOW,
+                self.HIGH,
+            )
+        if self.is_high():
+            return ItemAssessment(
+                name,
+                self.value,
+                "過剰",
+                "加里が過剰です",
+                "danger",
+                self.LOW,
+                self.HIGH,
+            )
+        return ItemAssessment(
+            name, self.value, "適正", "適正範囲内です", "success", self.LOW, self.HIGH
+        )
+
+
+@dataclass(frozen=True)
+class PhosphorusAbsorptionVO:
+    value: float | None
+
+    def assess(self) -> ItemAssessment:
+        name = _get_item_name("phosphorus_absorption")
+        if self.value is None:
+            return ItemAssessment(name, None, "不明", "データがありません", "secondary")
+
+        recommendation = ""
+        if self.value:
+            low_p = self.value * 0.05
+            high_p = self.value * 0.10
+            recommendation = (
+                f"適正なリン酸施用量は {low_p:.1f}〜{high_p:.1f} mg/100g です。"
+            )
+
+        return ItemAssessment(
+            name,
+            self.value,
+            "参照",
+            f"リン酸吸収係数に基づき、{recommendation}",
+            "info",
         )
 
 
