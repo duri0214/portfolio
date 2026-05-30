@@ -22,6 +22,12 @@ from .chemical_indicator import (
 class CombinationAssessment:
     """
     項目間の相関判定結果
+
+    Attributes:
+        label: 判定項目ラベル
+        result: 判定結果 (Trueの場合、該当する状態であることを示す)
+        condition: 判定条件のテキスト表現
+        description: 判定内容の詳細説明
     """
 
     label: str
@@ -43,6 +49,7 @@ class ChemicalAssessmentVO:
         cec: CEC(保肥力)
         base_saturation: Base Saturation(塩基飽和度)
         p2o5: P2O5(可給態リン酸)
+        phosphorus_absorption: リン酸吸収係数
         humus: Humus(腐植)
         cao: CaO(交換性石灰)
         mgo: MgO(交換性苦土)
@@ -98,6 +105,13 @@ class ChemicalAssessmentVO:
     def combination_assessments(self) -> list[CombinationAssessment]:
         """
         項目間の相関判定（横断的なドメインロジック）を個別のチェックポイントとして返す
+
+        判定内容:
+        - 肥料成分の不足: ECが低く、全体的に肥料成分が不足している可能性があります。
+        - 肥料成分の過剰: ECが高く、肥料過多（塩類集積）の可能性があります。
+        - 石灰成分の過剰: pHが高く、石灰分が過剰な可能性があります。
+        - 土壌の酸性化リスク: pHが低くECが高い場合、窒素肥料の過剰投入による酸性化が進んでいる可能性があります。
+        - 成分吸収阻害リスク: 硝酸態窒素（NO3-N）やECが非常に高い場合、成分吸収阻害の恐れがあります。
         """
         results = []
         if self.ph.value is None or self.ec.value is None:
@@ -153,7 +167,7 @@ class ChemicalAssessmentVO:
 
     def get_combination_comments(self) -> list[str]:
         """
-        互換性のために維持。有効な判定の説明文を返す。
+        有効な相関判定（判定結果が True のもの）の説明文リストを返す。
         """
         return [r.description for r in self.combination_assessments if r.result]
 
@@ -163,6 +177,9 @@ class ChemicalAssessmentVO:
         return "pH・ECの相関"
 
     def get_warnings(self) -> list[str]:
+        """
+        注意が必要な項目（判定レベルが danger のもの）を警告メッセージとして抽出する。
+        """
         warnings = []
 
         # 個別の判定結果を走査して danger レベルのものを警告に追加
@@ -189,7 +206,10 @@ class ChemicalAssessmentVO:
         return warnings
 
     def get_summary(self) -> str:
-        """総合サマリの生成"""
+        """
+        土壌診断結果を要約した文章を生成する。
+        相関判定の結果を優先し、特に問題がない場合は pH と EC の状態に基づいたメッセージを返す。
+        """
         if all(
             v.value is None
             for v in [
@@ -221,6 +241,7 @@ class ChemicalAssessmentVO:
 
     @property
     def results(self) -> dict[str, ItemAssessment]:
+        """全項目の個別判定結果を辞書形式で取得する"""
         return {
             "ph": self.ph.assess(),
             "ec": self.ec.assess(),
@@ -238,7 +259,10 @@ class ChemicalAssessmentVO:
 
     @property
     def categorized_results(self) -> dict[str, list[ItemAssessment]]:
-        """カテゴリーごとの判定結果を返す"""
+        """
+        判定結果をカテゴリー（窒素・EC、塩基類、リン酸、土壌ポテンシャル）ごとに分類して返す。
+        レポート表示などで利用される。
+        """
         return {
             "窒素・EC関連": [
                 self.ec.assess(),
