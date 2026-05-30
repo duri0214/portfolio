@@ -179,15 +179,19 @@ class ChemicalAssessmentVO:
     def get_warnings(self) -> list[str]:
         """
         注意が必要な項目（判定レベルが danger のもの）を警告メッセージとして抽出する。
+
+        Returns:
+            list[str]: 警告メッセージのリスト
         """
         warnings = []
 
         # 個別の判定結果を走査して danger レベルのものを警告に追加
-        for res in self.results.values():
+        # self.results の各キーに対応する VO クラスをチェックする
+        for key, res in self.results.items():
             if res.level == "danger":
-                # すでに個別に詳細なメッセージを定義しているもの（現在は腐植のみ）は除外するか、
-                # あるいは一律で生成して補足する
-                if "Humus" in res.name:
+                vo: Any = getattr(self, key)
+                # 腐植は一律の警告ではなく、後続の処理で個別のアドバイスを含むメッセージを出すため、ここでは除外する
+                if isinstance(vo, HumusVO):
                     continue
 
                 # 単位を取得するためにフィールド定義を参照
@@ -241,7 +245,14 @@ class ChemicalAssessmentVO:
 
     @property
     def results(self) -> dict[str, ItemAssessment]:
-        """全項目の個別判定結果を辞書形式で取得する"""
+        """
+        全項目の個別判定結果を辞書形式で取得する。
+
+        Returns:
+            dict[str, ItemAssessment]:
+                キーは本クラスの属性名（"ph", "ec" 等）に対応し、
+                値はその項目の判定結果（ItemAssessment）を保持する。
+        """
         return {
             "ph": self.ph.assess(),
             "ec": self.ec.assess(),

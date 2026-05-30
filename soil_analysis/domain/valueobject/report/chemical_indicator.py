@@ -57,6 +57,14 @@ class ItemAssessment:
 
 @dataclass(frozen=True)
 class PhVO(BaseChemicalIndicatorVO):
+    """
+    pH(水素イオン濃度)のValue Object
+
+    閾値:
+        LOW: 6.0 (下限)
+        HIGH: 7.0 (上限)
+    """
+
     LOW = 6.0
     HIGH = 7.0
 
@@ -99,6 +107,14 @@ class PhVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class EcVO(BaseChemicalIndicatorVO):
+    """
+    EC(電気伝導率)のValue Object
+
+    閾値:
+        LOW: 0.1 (下限)
+        HIGH: 0.5 (上限)
+    """
+
     LOW = 0.1
     HIGH = 0.5
 
@@ -147,6 +163,13 @@ class EcVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class Nh4nVO(BaseChemicalIndicatorVO):
+    """
+    NH4-N(アンモニア態窒素)のValue Object
+
+    閾値:
+        UPPER_LIMIT: 5.0 (これを超えると過剰判定)
+    """
+
     UPPER_LIMIT = 5.0
 
     def is_high(self) -> bool:
@@ -187,6 +210,13 @@ class Nh4nVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class No3nVO(BaseChemicalIndicatorVO):
+    """
+    NO3-N(硝酸態窒素)のValue Object
+
+    閾値:
+        UPPER_LIMIT: 15.0 (これを超えると過剰判定)
+    """
+
     UPPER_LIMIT = 15.0
 
     def is_high(self) -> bool:
@@ -227,6 +257,13 @@ class No3nVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class CecVO(BaseChemicalIndicatorVO):
+    """
+    CEC(保肥力)のValue Object
+
+    閾値:
+        LOW: 12.0 (これ未満で低判定)
+    """
+
     LOW = 12.0
 
     def is_low(self) -> bool:
@@ -255,6 +292,15 @@ class CecVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class BaseSaturationVO(BaseChemicalIndicatorVO):
+    """
+    塩基飽和度(Base Saturation)のValue Object
+
+    閾値 (CECに応じて動的に変化するが、基本値は以下の通り):
+        LOW: 60.0 (下限)
+        HIGH: 80.0 (上限)
+        OVER: 100.0 (過剰)
+    """
+
     LOW = 60.0
     HIGH = 80.0
     OVER = 100.0
@@ -329,6 +375,14 @@ class BaseSaturationVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class P2o5VO(BaseChemicalIndicatorVO):
+    """
+    P2O5(可給態リン酸)のValue Object
+
+    閾値:
+        LOW: 50.0 (下限)
+        HIGH: 100.0 (上限)
+    """
+
     LOW = 50.0
     HIGH = 100.0
 
@@ -377,6 +431,13 @@ class P2o5VO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class HumusVO(BaseChemicalIndicatorVO):
+    """
+    Humus(腐植)のValue Object
+
+    閾値:
+        LOW: 3.0 (これ未満で低判定)
+    """
+
     LOW = 3.0
 
     def is_low(self) -> bool:
@@ -399,6 +460,14 @@ class HumusVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class CaoVO(BaseChemicalIndicatorVO):
+    """
+    CaO(交換性石灰)のValue Object
+
+    閾値:
+        LOW: 300.0 (下限)
+        HIGH: 450.0 (上限)
+    """
+
     LOW = 300.0
     HIGH = 450.0
 
@@ -447,6 +516,14 @@ class CaoVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class MgoVO(BaseChemicalIndicatorVO):
+    """
+    MgO(交換性苦土)のValue Object
+
+    閾値:
+        LOW: 30.0 (下限)
+        HIGH: 50.0 (上限)
+    """
+
     LOW = 30.0
     HIGH = 50.0
 
@@ -495,6 +572,14 @@ class MgoVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class K2oVO(BaseChemicalIndicatorVO):
+    """
+    K2O(交換性加里)のValue Object
+
+    閾値:
+        LOW: 20.0 (下限)
+        HIGH: 35.0 (上限)
+    """
+
     LOW = 20.0
     HIGH = 35.0
 
@@ -543,6 +628,11 @@ class K2oVO(BaseChemicalIndicatorVO):
 
 @dataclass(frozen=True)
 class PhosphorusAbsorptionVO(BaseChemicalIndicatorVO):
+    """
+    リン酸吸収係数のValue Object
+
+    固有の判定閾値はないが、値に基づいた施肥設計の参考値を生成する。
+    """
 
     def assess(self) -> ItemAssessment:
         name = self._get_item_name("phosphorus_absorption")
