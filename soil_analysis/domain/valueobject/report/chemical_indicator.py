@@ -1,14 +1,23 @@
 from dataclasses import dataclass
 
-from .fields import REPORT_FIELD_BY_KEY
+from .fields import REPORT_FIELDS, ReportField
+
+REPORT_FIELD_BY_KEY: dict[str, ReportField] = {f.key: f for f in REPORT_FIELDS}
 
 
-def _get_item_name(key: str) -> str:
-    """REPORT_FIELD_BY_KEYから項目名を表示形式 label(description) で取得する"""
-    field = REPORT_FIELD_BY_KEY.get(key)
-    if not field:
+@dataclass(frozen=True)
+class BaseChemicalIndicatorVO:
+    """化学指標のValue Objectの基底クラス"""
+
+    value: float | None
+
+    @staticmethod
+    def _get_item_name(key: str) -> str:
+        """項目キーから表示名 label(description) を取得する"""
+        field = REPORT_FIELD_BY_KEY.get(key)
+        if field:
+            return f"{field.label}({field.description})"
         return key
-    return f"{field.label}({field.description})"
 
 
 @dataclass(frozen=True)
@@ -47,8 +56,7 @@ class ItemAssessment:
 
 
 @dataclass(frozen=True)
-class PhVO:
-    value: float | None
+class PhVO(BaseChemicalIndicatorVO):
     LOW = 6.0
     HIGH = 7.0
 
@@ -59,7 +67,7 @@ class PhVO:
         return self.value is not None and self.value > self.HIGH
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("ph")
+        name = self._get_item_name("ph")
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -90,8 +98,7 @@ class PhVO:
 
 
 @dataclass(frozen=True)
-class EcVO:
-    value: float | None
+class EcVO(BaseChemicalIndicatorVO):
     LOW = 0.1
     HIGH = 0.5
 
@@ -102,7 +109,7 @@ class EcVO:
         return self.value is not None and self.value > self.HIGH
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("ec")
+        name = self._get_item_name("ec")
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -139,15 +146,14 @@ class EcVO:
 
 
 @dataclass(frozen=True)
-class Nh4nVO:
-    value: float | None
+class Nh4nVO(BaseChemicalIndicatorVO):
     UPPER_LIMIT = 5.0
 
     def is_high(self) -> bool:
         return self.value is not None and self.value > self.UPPER_LIMIT
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("nh4n")
+        name = self._get_item_name("nh4n")
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -180,15 +186,14 @@ class Nh4nVO:
 
 
 @dataclass(frozen=True)
-class No3nVO:
-    value: float | None
+class No3nVO(BaseChemicalIndicatorVO):
     UPPER_LIMIT = 15.0
 
     def is_high(self) -> bool:
         return self.value is not None and self.value > self.UPPER_LIMIT
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("no3n")
+        name = self._get_item_name("no3n")
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -221,15 +226,14 @@ class No3nVO:
 
 
 @dataclass(frozen=True)
-class CecVO:
-    value: float | None
+class CecVO(BaseChemicalIndicatorVO):
     LOW = 12.0
 
     def is_low(self) -> bool:
         return self.value is not None and self.value < self.LOW
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("cec")
+        name = self._get_item_name("cec")
         if self.value is None:
             return ItemAssessment(
                 name, None, "不明", "データがありません", "secondary", self.LOW, None
@@ -250,8 +254,7 @@ class CecVO:
 
 
 @dataclass(frozen=True)
-class BaseSaturationVO:
-    value: float | None
+class BaseSaturationVO(BaseChemicalIndicatorVO):
     LOW = 60.0
     HIGH = 80.0
     OVER = 100.0
@@ -266,7 +269,7 @@ class BaseSaturationVO:
         return self.value is not None and self.value > self.OVER
 
     def assess(self, cec: float | None = None) -> ItemAssessment:
-        name = _get_item_name("base_saturation")
+        name = self._get_item_name("base_saturation")
 
         # CECに応じた動的な閾値設定
         low_limit = self.LOW
@@ -325,8 +328,7 @@ class BaseSaturationVO:
 
 
 @dataclass(frozen=True)
-class P2o5VO:
-    value: float | None
+class P2o5VO(BaseChemicalIndicatorVO):
     LOW = 50.0
     HIGH = 100.0
 
@@ -337,7 +339,7 @@ class P2o5VO:
         return self.value is not None and self.value > self.HIGH
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("p2o5")
+        name = self._get_item_name("p2o5")
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -374,15 +376,14 @@ class P2o5VO:
 
 
 @dataclass(frozen=True)
-class HumusVO:
-    value: float | None
+class HumusVO(BaseChemicalIndicatorVO):
     LOW = 3.0
 
     def is_low(self) -> bool:
         return self.value is not None and self.value < self.LOW
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("humus")
+        name = self._get_item_name("humus")
         if self.value is None:
             return ItemAssessment(
                 name, None, "不明", "データがありません", "secondary", self.LOW, None
@@ -397,8 +398,7 @@ class HumusVO:
 
 
 @dataclass(frozen=True)
-class CaoVO:
-    value: float | None
+class CaoVO(BaseChemicalIndicatorVO):
     LOW = 300.0
     HIGH = 450.0
 
@@ -409,7 +409,7 @@ class CaoVO:
         return self.value is not None and self.value > self.HIGH
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("cao")
+        name = self._get_item_name("cao")
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -446,8 +446,7 @@ class CaoVO:
 
 
 @dataclass(frozen=True)
-class MgoVO:
-    value: float | None
+class MgoVO(BaseChemicalIndicatorVO):
     LOW = 30.0
     HIGH = 50.0
 
@@ -458,7 +457,7 @@ class MgoVO:
         return self.value is not None and self.value > self.HIGH
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("mgo")
+        name = self._get_item_name("mgo")
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -495,8 +494,7 @@ class MgoVO:
 
 
 @dataclass(frozen=True)
-class K2oVO:
-    value: float | None
+class K2oVO(BaseChemicalIndicatorVO):
     LOW = 20.0
     HIGH = 35.0
 
@@ -507,7 +505,7 @@ class K2oVO:
         return self.value is not None and self.value > self.HIGH
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("k2o")
+        name = self._get_item_name("k2o")
         if self.value is None:
             return ItemAssessment(
                 name,
@@ -544,11 +542,10 @@ class K2oVO:
 
 
 @dataclass(frozen=True)
-class PhosphorusAbsorptionVO:
-    value: float | None
+class PhosphorusAbsorptionVO(BaseChemicalIndicatorVO):
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name("phosphorus_absorption")
+        name = self._get_item_name("phosphorus_absorption")
         if self.value is None:
             return ItemAssessment(name, None, "不明", "データがありません", "secondary")
 
@@ -570,14 +567,13 @@ class PhosphorusAbsorptionVO:
 
 
 @dataclass(frozen=True)
-class ReferenceVO:
+class ReferenceVO(BaseChemicalIndicatorVO):
     """判定基準がなく、参照値としてのみ扱う項目のためのVO"""
 
-    value: float | None
     key: str
 
     def assess(self) -> ItemAssessment:
-        name = _get_item_name(self.key)
+        name = self._get_item_name(self.key)
         if self.value is None:
             return ItemAssessment(name, None, "不明", "データがありません", "secondary")
         return ItemAssessment(
