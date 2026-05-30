@@ -1,0 +1,44 @@
+.land-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    justify-content: center;
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.grid-square {
+    width: 100px;
+    height: 100px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.grid-square:hover {
+    filter: brightness(0.9);
+}
+
+.tooltip-inner {
+    max-width: 350px !important;
+    text-align: left;
+    padding: 10px;
+}
+
+.sub-section-title {
+    border-left: 5px solid #007bff;
+    padding-left: 10px;
+    margin-bottom: 15px;
+}
+
+.analysis-table thead th {
+    border-bottom: 1px solid #dee2e6 !important;
+    color: #495057;
+    font-weight: 600;
+}
+
+.analysis-table tbody td {
+    border-bottom: 1px dashed #e9ecef;
+}
+
+.analysis-table tbody tr:last-child td {
+    border-bottom: none;
+}

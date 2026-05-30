@@ -45,8 +45,10 @@ from soil_analysis.domain.service.hardness_plot_generation import (
 )
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
-from soil_analysis.domain.service.reports.reportlayout1 import ReportLayout1
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
+from soil_analysis.domain.valueobject.report.chemical_assessment import (
+    ChemicalAssessmentVO,
+)
 from soil_analysis.domain.valueobject.report.fields import REPORT_FIELDS
 from soil_analysis.forms import (
     CompanyCreateForm,
@@ -212,7 +214,7 @@ class LandDetailView(DetailView):
         )
 
 
-class LandReportChemicalListView(ListView):
+class StandardReportView(ListView):
     """
     化学分析レポート（通知表）の一覧表示
 
@@ -224,21 +226,31 @@ class LandReportChemicalListView(ListView):
     """
 
     model = SoilChemicalMeasurement
-    template_name = "soil_analysis/land_report/chemical.html"
+    template_name = "soil_analysis/land_report/standard_report.html"
 
     def get_queryset(self):
-        land_ledger = LandLedger.objects.get(id=self.kwargs["land_ledger_id"])
+        land_ledger_id = self.kwargs["land_ledger_id"]
+        try:
+            land_ledger = LandLedgerRepository.get_by_id(land_ledger_id)
+        except LandLedger.DoesNotExist:
+            raise Http404("Land Ledger does not exist.")
         return super().get_queryset().filter(land_ledger=land_ledger)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        land_ledger = LandLedger.objects.get(id=self.kwargs["land_ledger_id"])
+        land_ledger_id = self.kwargs["land_ledger_id"]
+        company_id = self.kwargs["company_id"]
 
-        context["charts"] = ReportLayout1(land_ledger).publish()
-        context["company"] = Company.objects.get(id=self.kwargs["company_id"])
+        try:
+            land_ledger = LandLedgerRepository.get_by_id(land_ledger_id)
+            company = CompanyRepository.get_company_by_id(company_id)
+        except (LandLedger.DoesNotExist, Company.DoesNotExist):
+            raise Http404("Land Ledger or Company does not exist.")
+
+        context["company"] = company
         context["land"] = land_ledger.land
         context["land_ledger"] = land_ledger
-        context["land_scores"] = (
+        context["land_scores"] = list(
             SoilChemicalMeasurement.objects.filter(land_ledger=land_ledger)
             .select_related("land_block")
             .order_by("land_block__name")
@@ -249,6 +261,12 @@ class LandReportChemicalListView(ListView):
         }
         context["land_blocks"] = LandBlock.objects.all()
         context["report_fields"] = REPORT_FIELDS
+
+        # 化学判定VOの生成（帳簿単位の平均値ベース）
+        context["chemical_assessment"] = ChemicalAssessmentVO.from_measurements(
+            context["land_scores"]
+        )
+
         # グリッドの順序:
         # C3, B3, A3
         # C2, B2, A2

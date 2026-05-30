@@ -1,0 +1,366 @@
+{% extends "soil_analysis/base.html" %}
+{% load static custom_filters %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/land_report/standard_report.css' %}">
+{% endblock %}
+{% block content %}
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:land_detail' company.id land.id %}">Land Detail</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">土壌診断通知表</li>
+            </ol>
+        </nav>
+
+        {% if land.image %}
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h6 class="text-muted small">土壌硬度分布</h6>
+                    <img src="{{ land.image.url }}" alt="土壌硬度分布" class="img-fluid rounded shadow-sm"
+                         style="max-height: 400px;">
+                    <hr>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">圃場属性</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tbody>
+                            <tr>
+                                <td class="bg-light w-25">圃場</td>
+                                <td>{{ land_ledger.land.name|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-light">作物</td>
+                                <td>{{ land_ledger.crop.name|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-light">時期</td>
+                                <td>{{ land_ledger.land_period.name|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-light">採土日</td>
+                                <td>{{ land_ledger.sampling_date|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-light">採土法</td>
+                                <td>{{ land_ledger.sampling_method.name|default:"-" }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tbody>
+                            <tr>
+                                <td class="bg-light w-25">採土者</td>
+                                <td>{{ land_ledger.sampling_staff|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-light">分析依頼日</td>
+                                <td>{{ land_ledger.analysis_request_date|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-light">報告日</td>
+                                <td>{{ land_ledger.reporting_date|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-light">分析機関</td>
+                                <td>{{ land_ledger.analytical_agency.name|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-light">分析番号</td>
+                                <td>{{ land_ledger.analysis_number|default:"-" }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">化学性の判定結果</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="fw-bold small text-muted">
+                        総合判定（{{ chemical_assessment.combination_items_label }}）</h6>
+                    <div class="row row-cols-1 row-cols-sm-2 g-2 mb-2">
+                        {% for assessment in chemical_assessment.combination_assessments %}
+                            <div class="col">
+                                <div class="d-flex align-items-center p-2 border rounded {% if assessment.result %}bg-warning-subtle border-warning{% else %}bg-light text-muted{% endif %}"
+                                     style="font-size: 0.85rem;">
+                                    <div class="me-2">
+                                        {% if assessment.result %}
+                                            <i class="bi bi-check-circle-fill text-warning"></i>
+                                        {% else %}
+                                            <i class="bi bi-circle text-secondary"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ assessment.label }}</div>
+                                        <div class="text-muted" style="font-size: 0.7rem;">
+                                            条件: {{ assessment.condition }}
+                                        </div>
+                                        <div style="font-size: 0.75rem;">
+                                            {% if assessment.result %}{{ assessment.description }}{% else %}
+                                                問題なし{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <p class="card-text small text-muted mb-0">サマリ: {{ chemical_assessment.get_summary }}</p>
+                </div>
+                {% with warnings=chemical_assessment.get_warnings %}
+                    {% if warnings %}
+                        <div class="mt-2">
+                            {% for warning in warnings %}
+                                <div class="text-danger small"><i
+                                        class="bi bi-exclamation-triangle-fill"></i> {{ warning }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <hr>
+                {% for category, results in chemical_assessment.categorized_results.items %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold border-bottom pb-1 small text-primary">{{ category }}</h6>
+                        <div class="row row-cols-2 row-cols-md-4 g-2">
+                            {% for result in results %}
+                                <div class="col">
+                                    <div class="border rounded p-2 text-center h-100 bg-light">
+                                        <div class="small text-muted"
+                                             style="font-size: 0.7rem; height: 2.4rem; overflow: hidden;">{{ result.name }}</div>
+                                        <div class="fw-bold text-{{ result.level }}">{{ result.label }}</div>
+                                        <div class="fw-bold">{{ result.value|floatformat:2|default:"-" }}</div>
+                                        <div class="text-muted pt-1 mt-1 border-top" style="font-size: 0.65rem;">
+                                            {{ result.threshold_statement }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="mt-2 text-end">
+                    <small class="text-muted">※帳簿平均値による暫定判定です</small>
+                </div>
+
+                <div class="mt-4 pt-3 text-muted">
+                    <h6 class="fw-bold mb-3 sub-section-title"><i class="bi bi-book me-2"></i>化学分析結果の見方</h6>
+                    <div class="mb-4">
+                        <p class="small mb-3">
+                            分析項目の単位の多くは <strong>mg/100g</strong>
+                            です。これは作土を10cmとした場合、1反(10a)あたり何kgの成分が含まれているかを表します。
+                            （例：石灰 300mg/100g ＝ 1反あたり300kg）
+                        </p>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <p class="mb-2 small"><strong>EC、pH</strong>:
+                                    EC(電気伝導率)は肥料の残留量と密接に関係します。EC
+                                    1mS/cmの場合、硝酸態窒素が約20mg/100g残留していると言われます。
+                                    高pH低ECは石灰過多、低pH高ECは窒素過剰など、バランスの把握に重要です。
+                                </p>
+                                <p class="mb-2 small"><strong>CEC（陽イオン交換容量）</strong>:
+                                    土が肥料（陽イオン）を保持する力を表します。数値が大きいほど保肥力が強く、肥料切れしにくくなります。
+                                </p>
+                                <p class="mb-2 small"><strong>塩基類及び飽和度</strong>:
+                                    CECに対して石灰・苦土・加里がどの程度入っているかを表します。合計（塩基飽和度）が100％を超えると保持しきれない肥料が流亡しやすくなります。
+                                    CEC 20以上なら80％、15未満なら100％以上を目安にします。
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2 small"><strong>リン酸(P2O5)と吸収係数</strong>:
+                                    土壌によってリン酸の効きやすさが異なるため、吸収係数の5〜10％を施すのが適正とされます。
+                                    過剰なリン酸はアブラナ科の根瘤病リスクを高める可能性があります。
+                                </p>
+                                <p class="mb-2 small"><strong>窒素類・微量要素</strong>:
+                                    アンモニア態窒素(NH4-N)は5mg/100g以下、硝酸態窒素(NO3-N)は15mg/100g以下が目安です。
+                                    鉄(Fe2O3)は0.8％以下で酸素不足リスク、ケイ酸(SiO2)は10mg/100g以下で倒伏リスク、腐植は3％以上が適正値です。
+                                </p>
+                                <p class="mb-2 small"><strong>マンガン(Mn)、ホウ素(B)</strong>:
+                                    マンガンは光合成、ホウ素はカルシウム吸収等に関係します。欠乏すると生長点が枯死する等の障害が起きます。
+                                    有効態ホウ素が6ppmを超えると発芽阻害が起こりやすくなります。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 text-muted">
+                    <h6 class="fw-bold mb-3 sub-section-title"><i class="bi bi-list-check me-2"></i>分析法一覧</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless text-muted mb-0 analysis-table"
+                                   style="font-size: 0.8rem;">
+                                <thead>
+                                <tr class="border-bottom">
+                                    <th class="py-1">項目</th>
+                                    <th class="py-1">分析法</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class="py-1" style="width: 40%;">EC</td>
+                                    <td class="py-1">白金電極法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">pH(H2O)</td>
+                                    <td class="py-1">ガラス電極法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">CEC</td>
+                                    <td class="py-1">Schollenberger変法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">石灰/苦土</td>
+                                    <td class="py-1">原子吸光法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">加里</td>
+                                    <td class="py-1">炎光法</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless text-muted mb-0 analysis-table"
+                                   style="font-size: 0.8rem;">
+                                <thead>
+                                <tr class="border-bottom">
+                                    <th class="py-1">項目</th>
+                                    <th class="py-1">分析法</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class="py-1" style="width: 40%;">可給態リン酸</td>
+                                    <td class="py-1">トルオーグ法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">アンモニア態窒素</td>
+                                    <td class="py-1">V.9.B.b法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">硝酸態窒素</td>
+                                    <td class="py-1">紫外分光法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">腐植</td>
+                                    <td class="py-1">熊田法</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">リン酸吸収係数</td>
+                                    <td class="py-1">V.17.A法</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-end">
+                        <small class="text-muted">
+                            分析協力: <a href="https://www.soil-research.org/about-research/fee" target="_blank"
+                                         class="text-decoration-none"><i class="bi bi-box-arrow-up-right me-1"></i>川田研究所</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if land_review.first.comment %}
+            <div class="alert alert-secondary mb-4 shadow-sm" role="alert">
+                <h6 class="alert-heading small fw-bold">専門家コメント</h6>
+                {{ land_review.first.comment }}
+            </div>
+        {% endif %}
+
+        <div class="card mb-5 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">物理性の判定結果</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p class="text-muted small mb-0">帳簿平均値による暫定判定です。現在は化学性の値を表示しています。</p>
+                </div>
+                <div class="land-grid mb-3">
+                    {% for block in ordered_blocks %}
+                        {% with land_score=land_scores_dict|get_item:block.name %}
+                            <div class="card grid-square shadow-sm {% if land_score %}bg-success-subtle text-success-emphasis border-success-subtle{% else %}bg-light text-muted{% endif %}"
+                                    {% if land_score %}
+                                 data-bs-toggle="tooltip"
+                                 data-bs-html="true"
+                                 data-bs-title="#tooltip-{{ block.name }}"
+                                    {% endif %}>
+                                <div class="card-body p-0 d-flex align-items-center justify-content-center">
+                                    <h5 class="card-title mb-0 border-0 fw-bold text-center"
+                                        style="font-size: 1.2rem;">{{ block.name }}</h5>
+                                </div>
+                            </div>
+
+                            {% if land_score %}
+                                <div id="tooltip-{{ block.name }}" style="display: none;">
+                                    <div class='text-start small'>
+                                        <div class='fw-bold border-bottom mb-1 text-center'>{{ block.name }}</div>
+                                        <ul class='list-unstyled mb-0' style='column-count: 2; column-gap: 15px;'>
+                                            {% for field in report_fields %}
+                                                <li>
+                                            <span style="color: #adb5bd;">
+                                                {{ field.label }}{% if field.unit %}({{ field.unit }}){% endif %}:
+                                            </span>
+                                                    {{ land_score|get_attr:field.key }}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% if land_score.remark %}
+                                            <div class='border-top mt-1 pt-1'>
+                                                <small style="color: #adb5bd;">備考:</small> {{ land_score.remark }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 補足情報セクション -->
+        <div class="mt-5 pt-4 border-top text-muted">
+            <div class="row">
+                <!-- 土壌採取・送付方法 -->
+                <div class="col-12 mb-4">
+                    <h5 class="fw-bold mb-3 sub-section-title"><i class="bi bi-info-circle me-2"></i>正確な分析のための土壌採取・送付方法
+                    </h5>
+                    <ul class="list-unstyled mb-0">
+                        <li>1. <strong>採取場所</strong>: 圃場の5箇所から同量を採取し、よく混合してください。</li>
+                        <li>2. <strong>採取部位</strong>: 表土の2〜3cmを除き、その下の深さ20cmまでの土壌を採取します。</li>
+                        <li>3. <strong>準備</strong>: 風通しの良い日陰で乾燥させ（風乾）、2mmのふるいを通したものを約100g送付してください。
+                        </li>
+                        <li>4. <strong>注意</strong>: 直射日光や高温での乾燥は分析値が変わる可能性があるため避けてください。
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'soil_analysis/js/land_report/standard_report.js' %}"></script>
+{% endblock %}
