@@ -20,7 +20,8 @@
       "abbreviation": "A3",
       "ward_type": 1,
       "name": "A館3階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -30,7 +31,8 @@
       "abbreviation": "A4",
       "ward_type": 1,
       "name": "A館4階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -40,7 +42,8 @@
       "abbreviation": "A5",
       "ward_type": 1,
       "name": "A館5階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -50,7 +53,8 @@
       "abbreviation": "A6",
       "ward_type": 1,
       "name": "A館6階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -60,7 +64,8 @@
       "abbreviation": "A7",
       "ward_type": 1,
       "name": "A館7階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -70,7 +75,8 @@
       "abbreviation": "A8",
       "ward_type": 1,
       "name": "A館8階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -80,7 +86,8 @@
       "abbreviation": "B2",
       "ward_type": 1,
       "name": "B館2階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -90,7 +97,8 @@
       "abbreviation": "B3",
       "ward_type": 1,
       "name": "B館3階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -100,7 +108,8 @@
       "abbreviation": "B4",
       "ward_type": 1,
       "name": "B館4階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -110,7 +119,8 @@
       "abbreviation": "B5",
       "ward_type": 1,
       "name": "B館5階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -120,7 +130,8 @@
       "abbreviation": "B6",
       "ward_type": 1,
       "name": "B館6階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -130,7 +141,8 @@
       "abbreviation": "C1",
       "ward_type": 1,
       "name": "C館1階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -140,7 +152,8 @@
       "abbreviation": "西",
       "ward_type": 1,
       "name": "西館",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -150,7 +163,8 @@
       "abbreviation": "東3",
       "ward_type": 2,
       "name": "東館3階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -160,7 +174,8 @@
       "abbreviation": "東4",
       "ward_type": 2,
       "name": "東館4階",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -170,7 +185,8 @@
       "abbreviation": "リハ",
       "ward_type": 2,
       "name": "リハビリテーション病棟",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -180,7 +196,8 @@
       "abbreviation": "包括",
       "ward_type": 2,
       "name": "地域包括ケア病棟",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -190,7 +207,8 @@
       "abbreviation": "緩和",
       "ward_type": 2,
       "name": "緩和ケア病棟",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   }
 ]

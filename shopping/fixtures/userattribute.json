@@ -10,7 +10,8 @@
       "image": "shopping/profile/pose_dance_ukareru_man.png",
       "store": 1,
       "address": "東京都渋谷区",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   },
   {
@@ -22,7 +23,8 @@
       "nickname": "買い物するマン",
       "description": "ピザが大好きな常連客の買い物するマンです。週末は家族と一緒に色々な種類のピザを注文して楽しんでいます。最近はサイドメニューのガーリックトーストにもはまっています。",
       "address": "神奈川県横浜市",
-      "created_at": "2024-09-23T10:00:00Z"
+      "created_at": "2024-09-23T10:00:00Z",
+      "updated_at": "2024-09-23T10:00:00Z"
     }
   }
 ]

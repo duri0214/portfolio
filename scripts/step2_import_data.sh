@@ -22,21 +22,26 @@ while true; do
     read -r
 done
 
+# --- Migrate ---
+python manage.py migrate
+
 # --- USA Research (Masters) ---
-python manage.py loaddata usa_research/fixtures/market.json
-python manage.py loaddata usa_research/fixtures/symbol.json
-python manage.py loaddata usa_research/fixtures/unit.json
+python manage.py loaddata \
+    usa_research/fixtures/market.json \
+    usa_research/fixtures/symbol.json \
+    usa_research/fixtures/unit.json
 
 # --- Vietnam Research ---
-python manage.py loaddata vietnam_research/fixtures/group.json
-python manage.py loaddata vietnam_research/fixtures/indClass.json
-python manage.py loaddata vietnam_research/fixtures/market.json
-python manage.py loaddata vietnam_research/fixtures/symbol.json
-python manage.py loaddata vietnam_research/fixtures/sbi.json
-python manage.py loaddata vietnam_research/fixtures/vnIndex.json
-python manage.py loaddata vietnam_research/fixtures/articles.json
-python manage.py loaddata vietnam_research/fixtures/basicInformation.json
-python manage.py loaddata vietnam_research/fixtures/watchlist.json
+python manage.py loaddata \
+    vietnam_research/fixtures/group.json \
+    vietnam_research/fixtures/indClass.json \
+    vietnam_research/fixtures/market.json \
+    vietnam_research/fixtures/symbol.json \
+    vietnam_research/fixtures/sbi.json \
+    vietnam_research/fixtures/vnIndex.json \
+    vietnam_research/fixtures/articles.json \
+    vietnam_research/fixtures/basicInformation.json \
+    vietnam_research/fixtures/watchlist.json
 
 # ここで vietnam_research の 各種データインポートバッチをまわす
 python manage.py daily_import_market_data
@@ -58,35 +63,39 @@ python manage.py monthly_fao_food_balance_chart
 python manage.py generate_vietnam_statistics_dummy_data --clear
 
 # --- GMarker ---
-python manage.py loaddata gmarker/fixtures/place.json
-python manage.py loaddata gmarker/fixtures/nearbyPlace.json
+python manage.py loaddata \
+    gmarker/fixtures/place.json \
+    gmarker/fixtures/nearbyPlace.json
 
 # --- Shopping ---
-python manage.py loaddata shopping/fixtures/user.json
-python manage.py loaddata shopping/fixtures/store.json
-python manage.py loaddata shopping/fixtures/userattribute.json
-python manage.py loaddata shopping/fixtures/product.json
+python manage.py loaddata \
+    shopping/fixtures/user.json \
+    shopping/fixtures/store.json \
+    shopping/fixtures/userattribute.json \
+    shopping/fixtures/product.json
 
 # --- Rental Shop (Warehouse) ---
-python manage.py loaddata rental_shop/fixtures/warehouse.json
-python manage.py loaddata rental_shop/fixtures/user.json
-python manage.py loaddata rental_shop/fixtures/userattribute.json
-python manage.py loaddata rental_shop/fixtures/rentalStatus.json
-python manage.py loaddata rental_shop/fixtures/company.json
-python manage.py loaddata rental_shop/fixtures/billingPerson.json
-python manage.py loaddata rental_shop/fixtures/billingStatus.json
-python manage.py loaddata rental_shop/fixtures/warehousestaff.json
-python manage.py loaddata rental_shop/fixtures/item.json
+python manage.py loaddata \
+    rental_shop/fixtures/warehouse.json \
+    rental_shop/fixtures/user.json \
+    rental_shop/fixtures/userattribute.json \
+    rental_shop/fixtures/rentalStatus.json \
+    rental_shop/fixtures/company.json \
+    rental_shop/fixtures/billingPerson.json \
+    rental_shop/fixtures/billingStatus.json \
+    rental_shop/fixtures/warehousestaff.json \
+    rental_shop/fixtures/item.json
 
 # --- Soil Analysis ---
-python manage.py loaddata soil_analysis/fixtures/user.json
-python manage.py loaddata soil_analysis/fixtures/userattribute.json
-python manage.py loaddata soil_analysis/fixtures/companycategory.json
-python manage.py loaddata soil_analysis/fixtures/company.json
-python manage.py loaddata soil_analysis/fixtures/crop.json
-python manage.py loaddata soil_analysis/fixtures/land_block.json
-python manage.py loaddata soil_analysis/fixtures/land_period.json
-python manage.py loaddata soil_analysis/fixtures/cultivationtype.json
+python manage.py loaddata \
+    soil_analysis/fixtures/user.json \
+    soil_analysis/fixtures/userattribute.json \
+    soil_analysis/fixtures/companycategory.json \
+    soil_analysis/fixtures/company.json \
+    soil_analysis/fixtures/crop.json \
+    soil_analysis/fixtures/land_block.json \
+    soil_analysis/fixtures/land_period.json \
+    soil_analysis/fixtures/cultivationtype.json
 
 # ここで soil analysis の master data バッチをまわす
 python manage.py weather_load_const_master
@@ -106,34 +115,37 @@ python manage.py loaddata soil_analysis/fixtures/land_review.json
 python manage.py loaddata soil_analysis/fixtures/device.json
 
 # --- Taxonomy ---
-python manage.py loaddata taxonomy/fixtures/kingdom.json
-python manage.py loaddata taxonomy/fixtures/phylum.json
-python manage.py loaddata taxonomy/fixtures/classification.json
-python manage.py loaddata taxonomy/fixtures/family.json
-python manage.py loaddata taxonomy/fixtures/genus.json
-python manage.py loaddata taxonomy/fixtures/species.json
-python manage.py loaddata taxonomy/fixtures/naturalMonument.json
-python manage.py loaddata taxonomy/fixtures/tag.json
-python manage.py loaddata taxonomy/fixtures/breed.json
-python manage.py loaddata taxonomy/fixtures/breedTags.json
-python manage.py loaddata taxonomy/fixtures/feedGroup.json
-python manage.py loaddata taxonomy/fixtures/henGroup.json
+python manage.py loaddata \
+    taxonomy/fixtures/kingdom.json \
+    taxonomy/fixtures/phylum.json \
+    taxonomy/fixtures/classification.json \
+    taxonomy/fixtures/family.json \
+    taxonomy/fixtures/genus.json \
+    taxonomy/fixtures/species.json \
+    taxonomy/fixtures/naturalMonument.json \
+    taxonomy/fixtures/tag.json \
+    taxonomy/fixtures/breed.json \
+    taxonomy/fixtures/breedTags.json \
+    taxonomy/fixtures/feedGroup.json \
+    taxonomy/fixtures/henGroup.json
 
 # ここで taxonomy の master data バッチ（気象コード等）をまわす
 python manage.py loaddata taxonomy/fixtures/jma_weather_code.json
 python manage.py loaddata taxonomy/fixtures/eggLedger.json
 
 # --- Hospital / AI Agent ---
-python manage.py loaddata hospital/fixtures/user.json
-python manage.py loaddata hospital/fixtures/ward.json
-python manage.py loaddata hospital/fixtures/city.json
-python manage.py loaddata hospital/fixtures/election.json
-python manage.py loaddata hospital/fixtures/userattribute.json
-python manage.py loaddata hospital/fixtures/voteplace.json
+python manage.py loaddata \
+    hospital/fixtures/user.json \
+    hospital/fixtures/ward.json \
+    hospital/fixtures/city.json \
+    hospital/fixtures/election.json \
+    hospital/fixtures/userattribute.json \
+    hospital/fixtures/voteplace.json
 
-python manage.py loaddata ai_agent/fixtures/entity.json
-python manage.py loaddata ai_agent/fixtures/guardrail_config.json
-python manage.py loaddata ai_agent/fixtures/rag_material.json
+python manage.py loaddata \
+    ai_agent/fixtures/entity.json \
+    ai_agent/fixtures/guardrail_config.json \
+    ai_agent/fixtures/rag_material.json
 
 # --- USA Research ---
 python manage.py loaddata usa_research/fixtures/financial_results.json
