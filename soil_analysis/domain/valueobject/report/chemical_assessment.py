@@ -28,12 +28,14 @@ class CombinationAssessment:
         result: 判定結果 (Trueの場合、該当する状態であることを示す)
         condition: 判定条件のテキスト表現
         description: 判定内容の詳細説明
+        level: 表示レベル ("success" or "danger")
     """
 
     label: str
     result: bool
     condition: str
     description: str
+    level: str = "success"
 
 
 @dataclass(frozen=True)
@@ -126,6 +128,7 @@ class ChemicalAssessmentVO:
                 result=self.ec.is_low(),
                 condition=f"EC < {self.ec.LOW}",
                 description="ECが低く、全体的に肥料成分が不足している可能性があります。",
+                level="danger" if self.ec.is_low() else "success",
             )
         )
         # 肥料成分の過剰
@@ -135,6 +138,7 @@ class ChemicalAssessmentVO:
                 result=self.ec.is_high(),
                 condition=f"EC > {self.ec.HIGH}",
                 description="ECが高く、肥料過多（塩類集積）の可能性があります。",
+                level="danger" if self.ec.is_high() else "success",
             )
         )
         # 石灰成分の過剰
@@ -144,6 +148,7 @@ class ChemicalAssessmentVO:
                 result=self.ph.is_high(),
                 condition=f"pH > {self.ph.HIGH}",
                 description="pHが高く、石灰分が過剰な可能性があります。他の成分の吸収阻害を招く恐れがあります。",
+                level="danger" if self.ph.is_high() else "success",
             )
         )
         # 土壌の酸性化リスク
@@ -153,16 +158,22 @@ class ChemicalAssessmentVO:
                 result=self.ph.is_low() and self.ec.is_high(),
                 condition=f"pH < {self.ph.LOW} かつ EC > {self.ec.HIGH}",
                 description="pHが低くECが高い場合、窒素肥料の過剰投入による酸性化が進んでいる可能性があります。",
+                level=(
+                    "danger" if (self.ph.is_low() and self.ec.is_high()) else "success"
+                ),
             )
         )
-        # 窒素過多による成分吸収阻害リスク
+        # 成分吸収阻害リスク
+        is_absorption_risk = self.no3n.is_high() or (
+            self.ec.value is not None and self.ec.value > 1.0
+        )
         results.append(
             CombinationAssessment(
                 label="成分吸収阻害リスク",
-                result=self.no3n.is_high()
-                or (self.ec.value is not None and self.ec.value > 1.0),
+                result=is_absorption_risk,
                 condition=f"NO3-N > {self.no3n.HIGH} または EC > 1.0",
                 description="硝酸態窒素（NO3-N）やECが非常に高い場合、作物が苦土や鉄などの成分をうまく吸収できなくなる可能性があります。",
+                level="danger" if is_absorption_risk else "success",
             )
         )
         return results
@@ -201,16 +212,12 @@ class ChemicalAssessmentVO:
 
                 # 単位を取得するためにフィールド定義を参照
                 # res.name には "label(description)" が入っている
-                warnings.append(
-                    f"警告：{res.name}が{res.label}です（{res.value:.1f}）。"
-                )
+                warnings.append(f"警告：{res.name}が{res.label}です。")
 
         # 特殊なアドバイスを伴う警告
         if self.humus.is_low():
             name = self.humus.assess().name
-            warnings.append(
-                f"警告：{name}が{self.humus.value:.1f}%と不足しています。堆肥の投入を推奨します。"
-            )
+            warnings.append(f"警告：{name}が不足しています。堆肥の投入を推奨します。")
 
         return warnings
 
