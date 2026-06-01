@@ -14,17 +14,6 @@
             </ol>
         </nav>
 
-        {% if land.image %}
-            <div class="row mb-4">
-                <div class="col-12 text-center">
-                    <h6 class="text-muted small">土壌硬度分布</h6>
-                    <img src="{{ land.image.url }}" alt="土壌硬度分布" class="img-fluid rounded shadow-sm"
-                         style="max-height: 400px;">
-                    <hr>
-                </div>
-            </div>
-        {% endif %}
-
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">圃場属性</h5>
@@ -96,7 +85,12 @@
                     <!-- 左カラム: 9ブロック表示（物理性ダミー） -->
                     <div class="col-lg-3 col-md-4 border-end">
                         <div class="mb-4">
-                            <h6 class="fw-bold small text-muted text-center mb-3">物理性</h6>
+                            <h6 class="fw-bold small text-muted mb-1">物理性</h6>
+                            <div class="d-flex gap-2 mb-3" style="font-size: 0.65rem;">
+                                <span class="text-success"><i class="bi bi-square-fill"></i> 良好</span>
+                                <span class="text-warning"><i class="bi bi-square-fill"></i> 注意</span>
+                                <span class="text-danger"><i class="bi bi-square-fill"></i> 不良</span>
+                            </div>
                             <div class="land-grid-small">
                                 {% for item in ordered_blocks_with_assessment %}
                                     <div class="grid-square-small {{ item.assessment.assessment_category }}">
@@ -123,12 +117,7 @@
                                     </div>
                                 {% endfor %}
                             </div>
-                            <div class="text-center mt-3">
-                                <div class="d-flex justify-content-center gap-2 mb-2" style="font-size: 0.65rem;">
-                                    <span class="text-success"><i class="bi bi-square-fill"></i> 良好</span>
-                                    <span class="text-warning"><i class="bi bi-square-fill"></i> 注意</span>
-                                    <span class="text-danger"><i class="bi bi-square-fill"></i> 不良</span>
-                                </div>
+                            <div class="mt-3">
                                 <div class="mt-2 pt-2 border-top text-start px-2 mx-auto"
                                      style="font-size: 0.6rem; max-width: 200px;">
                                     <div class="fw-bold mb-1 text-muted">判定基準:</div>
@@ -148,32 +137,54 @@
                                 </p>
                             </div>
                         </div>
+
+                        {% if land.image %}
+                            <div class="mt-2 text-center">
+                                <h6 class="fw-bold small text-muted mb-2">圃場画像・硬度分布</h6>
+                                <img src="{{ land.image.url }}" alt="圃場画像"
+                                     class="img-fluid rounded shadow-sm border">
+                            </div>
+                        {% else %}
+                            <div class="mt-2 text-center">
+                                <h6 class="fw-bold small text-muted mb-2">圃場画像・硬度分布</h6>
+                                <div class="border rounded d-flex flex-column align-items-center justify-content-center bg-light text-muted shadow-sm"
+                                     style="height: 150px;">
+                                    <i class="bi bi-image mb-2" style="font-size: 2rem;"></i>
+                                    <span class="small">画像なし</span>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
 
                     <!-- 右カラム: 圃場単位の化学分析テーブル + 判定結果 -->
                     <div class="col-lg-9 col-md-8">
                         <div class="ps-md-3">
                             <div class="mb-3">
-                                <h6 class="fw-bold small text-muted">
+                                <h6 class="fw-bold small text-muted mb-1">
                                     総合判定（{{ chemical_assessment.combination_items_label }}）</h6>
+                                <div class="d-flex gap-2 mb-2" style="font-size: 0.65rem;">
+                                    <span class="text-success"><i class="bi bi-square-fill"></i> 問題なし</span>
+                                    <span class="text-danger"><i class="bi bi-square-fill"></i> 異常あり</span>
+                                </div>
                                 <div class="row row-cols-1 row-cols-sm-2 g-2 mb-2">
                                     {% for assessment in chemical_assessment.combination_assessments %}
                                         <div class="col">
-                                            <div class="d-flex align-items-center p-2 border rounded {% if assessment.result %}bg-warning-subtle border-warning{% else %}bg-light text-muted{% endif %}"
+                                            <div class="d-flex align-items-center p-2 border rounded bg-{{ assessment.level }}-subtle border-{{ assessment.level }}"
                                                  style="font-size: 0.85rem;">
                                                 <div class="me-2">
                                                     {% if assessment.result %}
-                                                        <i class="bi bi-check-circle-fill text-warning"></i>
+                                                        <i class="bi bi-exclamation-triangle-fill text-{{ assessment.level }}"></i>
                                                     {% else %}
-                                                        <i class="bi bi-circle text-secondary"></i>
+                                                        <i class="bi bi-check-circle-fill text-{{ assessment.level }}"></i>
                                                     {% endif %}
                                                 </div>
                                                 <div>
-                                                    <div class="fw-bold">{{ assessment.label }}</div>
+                                                    <div class="fw-bold text-{{ assessment.level }}">{{ assessment.label }}</div>
                                                     <div class="text-muted" style="font-size: 0.7rem;">
                                                         条件: {{ assessment.condition }}
                                                     </div>
-                                                    <div style="font-size: 0.75rem;">
+                                                    <div style="font-size: 0.75rem;"
+                                                         class="text-{{ assessment.level }}">
                                                         {% if assessment.result %}{{ assessment.description }}{% else %}
                                                             問題なし{% endif %}
                                                     </div>
@@ -185,9 +196,17 @@
                                 <p class="card-text small text-muted mb-0">
                                     サマリ: {{ chemical_assessment.get_summary }}</p>
                             </div>
+                            <hr>
+                            <h6 class="fw-bold small text-muted mb-1">項目別詳細（圃場単位）</h6>
+                            <div class="d-flex gap-2 mb-3" style="font-size: 0.65rem;">
+                                <span class="text-success"><i class="bi bi-square-fill"></i> 適正</span>
+                                <span class="text-danger"><i class="bi bi-square-fill"></i> 異常</span>
+                                <span class="text-info"><i class="bi bi-square-fill"></i> 参照</span>
+                                <span class="text-secondary"><i class="bi bi-square-fill"></i> 不明</span>
+                            </div>
                             {% with warnings=chemical_assessment.get_warnings %}
                                 {% if warnings %}
-                                    <div class="mt-2">
+                                    <div class="mt-2 mb-3">
                                         {% for warning in warnings %}
                                             <div class="text-danger small"><i
                                                     class="bi bi-exclamation-triangle-fill"></i> {{ warning }}</div>
@@ -195,9 +214,6 @@
                                     </div>
                                 {% endif %}
                             {% endwith %}
-
-                            <hr>
-                            <h6 class="fw-bold small text-muted mb-3">項目別詳細（圃場単位）</h6>
                             {% for category, results in chemical_assessment.categorized_results.items %}
                                 <div class="mb-4">
                                     <h6 class="fw-bold border-bottom pb-1 small text-primary">{{ category }}</h6>
