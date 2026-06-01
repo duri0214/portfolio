@@ -5,21 +5,21 @@ import pytz
 from django.core.management import call_command
 from django.test import TestCase
 
-from soil_analysis.domain.service.hardness_import_service import (
-    HardnessImportService,
+from soil_analysis.domain.valueobject.management.hardness_import_parser import (
+    HardnessImportParser,
 )
 
 
 def extract_device(line: list) -> str:
-    return HardnessImportService.extract_device(line)
+    return HardnessImportParser.extract_device(line)
 
 
 def extract_datetime(line: list) -> datetime:
-    return HardnessImportService.extract_datetime(line)
+    return HardnessImportParser.extract_datetime(line)
 
 
 def extract_numeric_value(line: list) -> int:
-    return HardnessImportService.extract_numeric_value(line)
+    return HardnessImportParser.extract_numeric_value(line)
 
 
 class TestImportSoilHardness(TestCase):
@@ -27,7 +27,7 @@ class TestImportSoilHardness(TestCase):
         out = StringIO()
         err = StringIO()
         folder_path = "/path/to/nonexistent/folder"
-        call_command("hardness_load_data", folder_path, stdout=out, stderr=err)
+        call_command("load_data_hardness", folder_path, stdout=out, stderr=err)
         self.assertIn(f"Folder path does not exist: {folder_path}", err.getvalue())
 
     def test_extract_device_valid(self):

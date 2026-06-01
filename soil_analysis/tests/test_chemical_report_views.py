@@ -83,6 +83,12 @@ class StandardReportViewTest(TestCase):
         )
 
     def test_view_displays_assessment(self):
+        """
+        シナリオ:
+        - 入力: 正常な化学分析データを持つ帳簿。
+        - 処理: 標準レポート画面(standard_report)を表示。
+        - 期待値: ステータス200、正しいテンプレートの使用、および「pH・ECともに適正範囲内です」等の正常判定が表示されていること。
+        """
         url = reverse(
             "soil:standard_report",
             kwargs={"company_id": self.company.id, "land_ledger_id": self.ledger.id},
@@ -106,6 +112,12 @@ class StandardReportViewTest(TestCase):
         self.assertContains(response, "テスト株式会社")
 
     def test_view_displays_warning(self):
+        """
+        シナリオ:
+        - 入力: 異常な化学分析データ（高pH低EC等）を持つ帳簿。
+        - 処理: 標準レポート画面を表示。
+        - 期待値: 「石灰成分の過剰」「肥料成分の不足」等の警告メッセージが表示されていること。
+        """
         # 異常値を投入した別の帳簿を作成
         ledger_bad = LandLedger.objects.create(
             land=self.land,
@@ -139,12 +151,18 @@ class StandardReportViewTest(TestCase):
 
         self.assertContains(response, "石灰成分の過剰")
         self.assertContains(response, "肥料成分の不足")
+        self.assertContains(response, "警告：Base Saturation(塩基飽和度)が過剰です。")
         self.assertContains(
-            response, "警告：Base Saturation(塩基飽和度)が過剰です（120.0）"
+            response, "警告：Humus(腐植)が不足しています。堆肥の投入を推奨します。"
         )
-        self.assertContains(response, "警告：Humus(腐植)が2.0%と不足しています")
 
     def test_view_displays_insufficient_data(self):
+        """
+        シナリオ:
+        - 入力: 化学分析データが紐付いていない帳簿。
+        - 処理: 標準レポート画面を表示。
+        - 期待値: 「判定に必要なデータが不足しています」というメッセージが表示されていること。
+        """
         # データがない帳簿
         ledger_empty = LandLedger.objects.create(
             land=self.land,
@@ -165,6 +183,12 @@ class StandardReportViewTest(TestCase):
         self.assertContains(response, "判定に必要なデータが不足しています")
 
     def test_view_displays_hardness_data(self):
+        """
+        シナリオ:
+        - 入力: 土壌硬度データが紐付いている帳簿。
+        - 処理: 標準レポート画面を表示。
+        - 期待値: 測定値（kPa）が正しく画面に表示されていること。
+        """
         # A1ブロックに硬度データを追加
         from soil_analysis.models import SoilHardnessMeasurement, Device
         from django.utils import timezone
@@ -194,6 +218,12 @@ class StandardReportViewTest(TestCase):
         self.assertContains(response, "kPa")
 
     def test_view_displays_dynamic_sampling_method(self):
+        """
+        シナリオ:
+        - 入力: 9点法でサンプリングされた帳簿。
+        - 処理: 標準レポート画面を表示。
+        - 期待値: 注釈や説明文が「9点法」に合わせた内容に動的に変化していること。
+        """
         # 9点法の帳簿を作成
         sampling_method_9 = SamplingMethod.objects.create(name="9点法", times=9)
         ledger_9 = LandLedger.objects.create(

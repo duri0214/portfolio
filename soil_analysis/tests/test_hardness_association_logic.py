@@ -98,7 +98,7 @@ class HardnessAssociationLogicTest(TestCase):
     def test_only_unassociated_groups_returned(self):
         # 1. 最初の5圃場分（相当）をインポート
         self.create_csv("Folder1", 1, " 23.07.01 10:00:00")
-        call_command("hardness_load_data", self.temp_dir)
+        call_command("load_data_hardness", self.temp_dir)
 
         # 2. 紐付けを行う (land_block もセットする)
         from soil_analysis.models import LandBlock
@@ -112,7 +112,7 @@ class HardnessAssociationLogicTest(TestCase):
 
         # 3. 2ラウンド目: 新しい4圃場分（相当）をインポート
         self.create_csv("Folder2", 2, " 23.07.02 10:00:00")
-        call_command("hardness_load_data", self.temp_dir)
+        call_command("load_data_hardness", self.temp_dir)
 
         # 4. 検証: get_folder_groups_for_association が Folder2 のみを返すこと
         groups = HardnessImportService.get_folder_groups_for_association()

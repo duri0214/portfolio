@@ -152,7 +152,7 @@ class ChemicalImportServiceTest(TestCase):
     def test_to_float_error_message_japanese(self):
         """数値変換失敗時のエラーメッセージに日本語カラム名が含まれること"""
         with self.assertRaises(ValueError) as cm:
-            KawadaRow.to_float("invalid", 10, "交換性石灰")
+            KawadaRow.parse_numeric_value("invalid", 10, "交換性石灰")
 
         self.assertIn("交換性石灰", str(cm.exception))
         self.assertIn("数値変換失敗", str(cm.exception))
