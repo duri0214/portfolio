@@ -4,8 +4,8 @@ import os
 from soil_analysis.domain.repository.management.hardness_import_repository import (
     HardnessImportRepository,
 )
-from soil_analysis.domain.valueobject.management.hardness_csv_parser import (
-    HardnessCSVParser,
+from soil_analysis.domain.valueobject.management.hardness_import_parser import (
+    HardnessImportParser,
 )
 
 
@@ -29,26 +29,34 @@ class HardnessImportService:
         file_results = []
 
         for csv_file in csv_files:
-            try:
-                rows = HardnessCSVParser.parse_csv(csv_file)
-                created_count = 0
-                for row in rows:
-                    if HardnessImportRepository.save_measurement(row):
-                        created_count += 1
+            parent_folder = os.path.basename(os.path.dirname(csv_file))
+            file_name = os.path.basename(csv_file)
 
-                if created_count > 0:
-                    total_created += created_count
-                    file_results.append(
-                        {"file": csv_file, "status": "success", "count": created_count}
+            parse_result = HardnessImportParser.parse_csv(csv_file)
+
+            if parse_result.errors:
+                for error_msg in parse_result.errors:
+                    HardnessImportRepository.create_error(
+                        file=file_name, folder=parent_folder, message=error_msg
                     )
-            except Exception as e:
-                parent_folder = os.path.basename(os.path.dirname(csv_file))
-                file_name = os.path.basename(csv_file)
-                HardnessImportRepository.create_error(
-                    file=file_name, folder=parent_folder, message=str(e)
-                )
                 file_results.append(
-                    {"file": csv_file, "status": "error", "message": str(e)}
+                    {
+                        "file": csv_file,
+                        "status": "error",
+                        "messages": parse_result.errors,
+                    }
+                )
+                continue
+
+            created_count = 0
+            for row in parse_result.rows:
+                if HardnessImportRepository.save_measurement(row):
+                    created_count += 1
+
+            if created_count > 0:
+                total_created += created_count
+                file_results.append(
+                    {"file": csv_file, "status": "success", "count": created_count}
                 )
 
         return {"total_created": total_created, "file_results": file_results}

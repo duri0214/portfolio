@@ -39,6 +39,10 @@ class ChemicalImportService:
         parse_result = ChemicalImportParser.parse_kawada_worksheet(worksheet)
 
         if parse_result.errors:
+            for error_msg in parse_result.errors:
+                ChemicalImportRepository.create_error(
+                    row_number=None, land_name=None, message=error_msg
+                )
             raise ValueError("\n".join(parse_result.errors))
 
         if not parse_result.rows:
