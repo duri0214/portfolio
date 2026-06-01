@@ -96,7 +96,7 @@ class BaseChemicalIndicatorVO:
                 self.value,
                 getattr(self, "LOW_LABEL", "低"),
                 getattr(self, "LOW_MESSAGE", "低めです"),
-                getattr(self, "LOW_LEVEL", "warning"),
+                getattr(self, "LOW_LEVEL", "danger"),
                 self.LOW,
                 self.HIGH,
             )
@@ -106,7 +106,7 @@ class BaseChemicalIndicatorVO:
                 self.value,
                 getattr(self, "HIGH_LABEL", "高"),
                 getattr(self, "HIGH_MESSAGE", "高めです"),
-                getattr(self, "HIGH_LEVEL", "warning"),
+                getattr(self, "HIGH_LEVEL", "danger"),
                 self.LOW,
                 self.HIGH,
             )
@@ -271,7 +271,7 @@ class BaseSaturationVO(BaseChemicalIndicatorVO):
                 self.value,
                 "低",
                 f"塩基類が不足しています（目標: {low_limit}%以上）",
-                "warning",
+                "danger",
                 low_limit,
                 high_limit,
             )
@@ -428,5 +428,5 @@ class ReferenceVO(BaseChemicalIndicatorVO):
             self.value,
             "参照",
             "判定基準が未設定のため、参照値として表示しています",
-            "secondary",
+            "info",
         )

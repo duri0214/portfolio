@@ -108,8 +108,9 @@ class HardnessImportServiceTest(TestCase):
             writer = csv.writer(f)
             writer.writerows(self.create_csv_content(1, " 23.07.01 10:00:00"))
 
-        rows = HardnessImportService.parse_csv(csv_file)
-        self.assertEqual(len(rows), 2)
+        parse_result = HardnessImportService.parse_csv(csv_file)
+        self.assertEqual(len(parse_result.rows), 2)
+        rows = parse_result.rows
         self.assertEqual(rows[0].set_device_name, "DIK-5531")
         self.assertEqual(rows[0].folder, "Folder1")
         self.assertEqual(rows[0].depth, 1)

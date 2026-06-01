@@ -25,6 +25,9 @@ from openpyxl import load_workbook
 
 from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
+from soil_analysis.domain.repository.chemical_import_error import (
+    ChemicalImportErrorRepository,
+)
 from soil_analysis.domain.repository.chemical_measurement import (
     SoilChemicalMeasurementRepository,
 )
@@ -74,7 +77,6 @@ from soil_analysis.models import (
     Land,
     SoilChemicalMeasurement,
     LandLedger,
-    SoilChemicalMeasurementImportErrors,
     SoilHardnessMeasurement,
     RouteSuggestImport,
     RokunoheLandRegistry,
@@ -421,16 +423,21 @@ class HardnessUploadView(FormView):
                 os.path.join(upload_folder, "**/*.csv"), recursive=True
             )
             for csv_file in csv_files:
-                try:
-                    rows = HardnessImportService.parse_csv(csv_file)
-                    HardnessImportService.save_import_data(rows)
-                except Exception as e:
-                    parent_folder = os.path.basename(os.path.dirname(csv_file))
-                    HardnessImportErrorRepository.create(
-                        file=os.path.basename(csv_file),
-                        folder=parent_folder,
-                        message=str(e),
-                    )
+                parent_folder = os.path.basename(os.path.dirname(csv_file))
+                file_name = os.path.basename(csv_file)
+
+                parse_result = HardnessImportService.parse_csv(csv_file)
+
+                if parse_result.errors:
+                    for error_msg in parse_result.errors:
+                        HardnessImportErrorRepository.create(
+                            file=file_name,
+                            folder=parent_folder,
+                            message=error_msg,
+                        )
+                    continue
+
+                HardnessImportService.save_import_data(parse_result.rows)
 
             try:
                 shutil.rmtree(upload_folder)
@@ -691,9 +698,7 @@ class ChemicalSuccessView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         result = self.request.session.get("chemical_import_result")
-        context["import_errors"] = (
-            SoilChemicalMeasurementImportErrors.objects.all().order_by("-created_at")
-        )
+        context["import_errors"] = ChemicalImportErrorRepository.get_all()
         if result:
             context["created_count"] = result.get("created", 0)
             context["updated_count"] = result.get("updated", 0)

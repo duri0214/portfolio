@@ -1,9 +1,3 @@
-import csv
-import dataclasses
-import os
-from datetime import datetime
-
-import pytz
 from django.db import transaction, IntegrityError
 from django.utils import timezone
 
@@ -15,136 +9,32 @@ from soil_analysis.domain.repository.hardness_measurement import (
     SoilHardnessMeasurementRepository,
 )
 from soil_analysis.domain.repository.sampling_order import SamplingOrderRepository
+from soil_analysis.domain.valueobject.management.hardness_import_parser import (
+    HardnessImportParser,
+    HardnessRow,
+    HardnessParseResult,
+)
 from soil_analysis.models import (
     SoilHardnessMeasurement,
     LandLedger,
 )
 
 
-@dataclasses.dataclass(frozen=True)
-class HardnessRow:
-    """
-    土壌硬度データをパースしたデータ行
-
-    Attributes:
-        set_device_name: デバイス名
-        set_memory: メモリー番号
-        set_datetime: 測定日時
-        set_depth: 設定深度
-        set_spring: スプリング番号
-        set_cone: コーン番号
-        depth: 測定深度
-        pressure: 圧力
-        folder: フォルダ名
-        file_name: ファイル名
-    """
-
-    set_device_name: str
-    set_memory: int
-    set_datetime: datetime
-    set_depth: int
-    set_spring: int
-    set_cone: int
-    depth: int
-    pressure: int
-    folder: str
-    file_name: str
-
-
 class HardnessImportService:
     SAMPLING_TIMES_PER_BLOCK = 5
 
-    @staticmethod
-    def extract_device(line: list) -> str:
-        value = line[1].strip()
-        if value != "Digital Cone Penetrometer":
-            raise ValueError(f"unexpected data row: {value}")
-
-        value = line[0].strip()
-        if not value.startswith("DIK-"):
-            raise ValueError(f"unexpected device name: {value}")
-
-        return value
-
-    @staticmethod
-    def extract_datetime(line: list) -> datetime:
-        value = line[0].strip()
-        if value != "Date and Time":
-            raise ValueError(f"unexpected data row: {value}")
-
-        value = line[1].strip()
-        try:
-            value = pytz.timezone("Asia/Tokyo").localize(
-                datetime.strptime(value, "%y.%m.%d %H:%M:%S")
-            )
-        except ValueError:
-            raise ValueError(f"unexpected datetime: {value}")
-
-        return value
-
-    @staticmethod
-    def extract_numeric_value(line: list) -> int:
-        value = line[0].strip()
-        if not any(
-            value.startswith(prefix)
-            for prefix in ("Memory No.", "Set Depth", "Spring", "Cone")
-        ):
-            raise ValueError(f"unexpected data row: {value}")
-
-        value = line[1].strip()
-        try:
-            value = int(value)
-        except ValueError:
-            raise ValueError(f"unexpected numeric value: {value}")
-        return value
-
     @classmethod
-    def parse_csv(cls, file_path: str) -> list[HardnessRow]:
+    def parse_csv(cls, file_path: str) -> HardnessParseResult:
         """
-        CSVファイルをパースしてHardnessRowのリストを返す
+        CSVファイルをパースしてHardnessParseResultを返す
 
         Args:
             file_path: CSVファイルのパス
 
         Returns:
-            list[HardnessRow]: パースされたデータのリスト
+            HardnessParseResult: パースされたデータの結果
         """
-        rows = []
-        parent_folder = os.path.basename(os.path.dirname(file_path))
-        file_name = os.path.basename(file_path)
-
-        with open(file_path, newline="", encoding="utf-8") as f:
-            reader = csv.reader(f)
-
-            # 1行目～10行目 から属性情報を取得
-            set_device_name = cls.extract_device(next(reader))
-            set_memory = cls.extract_numeric_value(next(reader))
-            next(reader)  # skip Latitude
-            next(reader)  # skip Longitude
-            set_depth = cls.extract_numeric_value(next(reader))
-            set_datetime = cls.extract_datetime(next(reader))
-            set_spring = cls.extract_numeric_value(next(reader))
-            set_cone = cls.extract_numeric_value(next(reader))
-            next(reader)  # skip blank line
-            next(reader)  # skip header line
-
-            # 11行目以降のデータをパース
-            for row in reader:
-                rows.append(
-                    HardnessRow(
-                        set_device_name=set_device_name,
-                        set_memory=set_memory,
-                        set_datetime=set_datetime,
-                        set_depth=set_depth,
-                        set_spring=set_spring,
-                        set_cone=set_cone,
-                        depth=int(row[0]),
-                        pressure=int(row[1]),
-                        folder=parent_folder,
-                        file_name=file_name,
-                    )
-                )
-        return rows
+        return HardnessImportParser.parse_csv(file_path)
 
     @classmethod
     def save_import_data(cls, rows: list[HardnessRow]) -> dict[str, int]:
