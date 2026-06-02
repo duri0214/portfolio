@@ -1,6 +1,7 @@
 [
   {
     "model": "taxonomy.breedTags",
+    "pk": 1,
     "fields": {
       "breed": 1,
       "tag": 1

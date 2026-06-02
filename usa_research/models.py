@@ -18,7 +18,7 @@ class RssFeed(models.Model):
     )
     title = models.CharField(max_length=500)
     summary = models.TextField(blank=True)
-    link = models.URLField(max_length=500, unique=True)
+    link = models.URLField(max_length=255, unique=True)
     published_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
