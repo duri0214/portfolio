@@ -96,17 +96,21 @@ pip install -r requirements.txt
 
 ソースコードを更新してデプロイする際の手順です。
 
+#### 1. ソースコードの更新
+
 ```bash
 cd /var/www/html/portfolio
-
-# 1. ソースコードの更新
 git fetch --prune origin
 git reset --hard origin/master
 git clean -fd
+```
 
-# サーバーセットアップ (権限設定)
-# サーバー構築時、または権限エラーが発生した際に実行してください。
-# これにより、以降に生成されるファイルも自動的に適切な権限（ACL）を継承します。
+#### 2. サーバーセットアップ (権限設定)
+
+サーバー構築時、または権限エラーが発生した際に実行してください。
+これにより、以降に生成されるファイルも自動的に適切な権限（ACL）を継承します。
+
+```bash
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
 sudo find /var/www/html/portfolio -type d -exec chmod 775 {} +
 sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
@@ -115,24 +119,34 @@ sudo apt update && sudo apt install acl -y
 sudo setfacl -R -d -m u:ubuntu:rwx /var/www/html/portfolio/media
 sudo setfacl -R -d -m g:www-data:rwx /var/www/html/portfolio/media
 sudo setfacl -R -d -m o::rx /var/www/html/portfolio/media
+```
 
-# 2. venv の再構築 (リセット)
-# (ライブラリに変更がある場合のみでOK。通常は `pip install -r requirements.txt` のみ)
+#### 3. venv の再構築 (リセット)
+
+(ライブラリに変更がある場合のみでOK。通常は `pip install -r requirements.txt` のみ)
+
+```bash
 # rm -rf venv
 # python3 -m venv venv
+```
 
-# 3. 環境の構築
+#### 4. 環境の構築
+
+```bash
 source /var/www/html/portfolio/venv/bin/activate
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
+```
 
-# 4. Django メンテナンス
+#### 5. Django メンテナンス
+
+```bash
 python manage.py collectstatic --noinput
 python manage.py clearsessions
 python manage.py migrate
 ```
 
-### スーパーユーザーの作成
+#### 6. スーパーユーザーの作成
 
 ```bash
 python manage.py createsuperuser
@@ -140,7 +154,7 @@ python manage.py createsuperuser
 # （vietnam_research 等の一部の fixture が、作成者/管理者として user_id: 1 に依存しています）
 ```
 
-### データのインポート手順
+#### 7. データのインポート手順
 
 各アプリの Fixture と初期化バッチを、以下の順序で実行してください。
 ※ 備忘録：配布用 fixture (*/user.json) のパスワード実体は test#1234 です
@@ -160,7 +174,7 @@ chmod +x scripts/step2_import_data.sh
 ./scripts/step2_import_data.sh
 ```
 
-### 5. サービスの再起動
+#### 8. サービスの再起動
 
 ```bash
 sudo systemctl restart apache2
