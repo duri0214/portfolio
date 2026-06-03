@@ -5,11 +5,17 @@ import re
 import shutil
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.db.models import Prefetch, Sum, Count
-from django.http import HttpResponseRedirect, JsonResponse, Http404
+from django.http import (
+    HttpResponseRedirect,
+    JsonResponse,
+    Http404,
+    FileResponse,
+)
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -769,6 +775,55 @@ class HardnessDeleteAllView(View):
         return HttpResponseRedirect(reverse("soil:hardness_upload"))
 
 
+class ChemicalDownloadSampleView(View):
+    """
+    サンプルExcelファイルをダウンロード提供
+    """
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+        file_path = os.path.join(
+            settings.BASE_DIR,
+            "soil_analysis",
+            "static",
+            "soil_analysis",
+            "sample_data",
+            "chemical_sample.xlsx",
+        )
+        if os.path.exists(file_path):
+            return FileResponse(
+                open(file_path, "rb"),
+                as_attachment=True,
+                filename="chemical_sample.xlsx",
+            )
+        raise Http404
+
+
+class ChemicalDeleteAllView(View):
+    """
+    SoilChemicalMeasurementテーブルの全データ削除
+    開発・テスト環境での使用を想定
+    """
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        try:
+            # 削除前のレコード数を取得
+            count = SoilChemicalMeasurement.objects.count()
+
+            # 全データ削除
+            SoilChemicalMeasurement.objects.all().delete()
+
+            messages.success(
+                request,
+                f"SoilChemicalMeasurementテーブルの全データ（{count}件）を削除しました。",
+            )
+        except Exception as e:
+            messages.error(request, f"削除中にエラーが発生しました: {str(e)}")
+
+        return HttpResponseRedirect(reverse("soil:chemical_upload"))
+
+
 class HardnessGenerateDummyCsvView(View):
     """
     テスト用CSVを生成してZIPファイルでダウンロード提供
@@ -791,7 +846,7 @@ class HardnessGenerateDummyCsvView(View):
             if csv_output_path and os.path.exists(csv_output_path):
                 # ZIP化してダウンロード
                 response = ZipFileService.create_zip_download(
-                    csv_output_path, "取り込みCSV.zip"
+                    csv_output_path, "hardness_sample.zip"
                 )
 
                 # 一時ディレクトリを削除

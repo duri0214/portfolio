@@ -2,16 +2,17 @@
 {% load static %}
 
 {% block content %}
-    <div class="container">
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:hardness_upload' %}">Upload hardness</a>
+    <div class="container mt-4">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a>
                 </li>
-                <li class="breadcrumb-item active" aria-current="page">Upload success</li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:hardness_upload' %}" class="text-decoration-none">土壌硬度データ取り込み</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">アップロード成功</li>
             </ol>
         </nav>
-        <h1>Upload Successful</h1>
+        <h1 class="h3 mb-4">アップロード成功</h1>
         {% if import_errors %}
             <p>処理は成功しましたが、エラーが発生したデータがあります。詳細は以下のテーブルをご確認ください。</p>
             <table class="table table-bordered table-gray table-striped">

@@ -2,15 +2,17 @@
 {% load static %}
 
 {% block content %}
-    <div class="container">
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_upload' %}">Upload chemical</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Upload success</li>
+    <div class="container mt-4">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_upload' %}" class="text-decoration-none">化学分析データ取り込み</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">関連付け完了</li>
             </ol>
         </nav>
-        <h1>Association Successful</h1>
+        <h1 class="h3 mb-4">データの関連付け完了</h1>
         {% if import_errors %}
             <p>処理は成功しましたが、エラーが発生したデータがあります。詳細は以下のテーブルをご確認ください。</p>
             <table class="table table-bordered table-gray table-striped">
@@ -90,10 +92,10 @@
         {% endif %}
 
         <div class="text-center">
-            <a class="btn btn-primary btn-lg" href="{% url 'soil:home' %}">
+            <a class="btn btn-primary btn-lg" href="{% url 'soil:home' %}" role="button">
                 <i class="fas fa-home"></i> ホームに戻る
             </a>
-            <a class="btn btn-outline-secondary btn-lg ms-2" href="{% url 'soil:chemical_upload' %}">
+            <a class="btn btn-outline-secondary btn-lg ms-2" href="{% url 'soil:chemical_upload' %}" role="button">
                 <i class="fas fa-upload"></i> 新しいデータをアップロード
             </a>
         </div>
