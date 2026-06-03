@@ -45,7 +45,7 @@ urlpatterns = [
     path("linebot_engine/", include("linebot_engine.urls")),
     path("rental_shop/", include("rental_shop.urls")),
     path("taxonomy/", include("taxonomy.urls")),
-    path("soil_analysis/", include("soil_analysis.urls", namespace="soil")),
+    path("soil_analysis/", include("soil_analysis.urls")),
     path("securities/", include("securities.urls")),
     path("hospital/", include("hospital.urls")),
     path("llm_chat/", include("llm_chat.urls")),
