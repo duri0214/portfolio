@@ -1,6 +1,6 @@
 ---
 name: issue
-description: Issueの本文を日本語で生成する。「issue書いて」「チケット作って」などの依頼で起動。
+description: GitHub Issue の本文を日本語で生成する。「issue書いて」「チケット作って」「リファクタリングチケット作って」などの依頼で使用する。
 ---
 
 # Issue 作成規約
@@ -24,3 +24,4 @@ description: Issueの本文を日本語で生成する。「issue書いて」「
 ## 期待される効果
 - [効果]
 ```
+

@@ -1,3 +1,7 @@
+---
+apply: ".*(test|tests).*\.py$"
+---
+
 # テストコード規約
 
 テストコードを記述する際は、後で見返した時に意図が明確に伝わるよう、以下のルールを遵守する。
@@ -27,3 +31,4 @@ def test_calculate_total_score():
 ## テストの構成 (Given-When-Then)
 
 docstring のシナリオに沿って、コード内でも Given (前提条件), When (実行), Then (検証) の構成を意識して記述する。
+
