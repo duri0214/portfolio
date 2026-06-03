@@ -65,6 +65,16 @@ urlpatterns = [
         name="chemical_association_success",
     ),
     path(
+        "chemical/download_sample/",
+        views.ChemicalDownloadSampleView.as_view(),
+        name="chemical_download_sample",
+    ),
+    path(
+        "chemical/delete_all/",
+        views.ChemicalDeleteAllView.as_view(),
+        name="chemical_delete_all",
+    ),
+    path(
         "hardness/delete_all",
         views.HardnessDeleteAllView.as_view(),
         name="hardness_delete_all",

@@ -2,25 +2,81 @@
 {% block content %}
     <div class="container mt-4">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a>
+                </li>
                 <li class="breadcrumb-item active" aria-current="page">化学分析データ取り込み</li>
             </ol>
         </nav>
 
-        <h1 class="mb-4"><i class="fas fa-flask me-2"></i>化学分析データ取り込み</h1>
+        <h1 class="h3 mb-4"><i class="fas fa-flask me-2 text-primary"></i>化学分析データ取り込み</h1>
 
-        <div class="card">
+        <div class="alert alert-primary" role="alert">
+            <h5><i class="fas fa-book me-2"></i>操作手順ガイド</h5>
+            <p class="mb-3">化学分析データの処理は以下の順序で進めてください：</p>
+
+            <div class="card border-light mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-3">1</span>
+                        <div>
+                            <strong>データアップロード</strong>
+                            <br><small
+                                class="text-muted">川田研究所のExcelファイル（.xlsx）をアップロードしてください</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-light mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-3">2</span>
+                        <div>
+                            <strong>アップロードデータ確認</strong>
+                            <br><small class="text-muted">取り込み行数と圃場名を確認し、アサイン画面へ進む</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-light mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-3">3</span>
+                        <div>
+                            <strong>取り込みデータの関連付け</strong>
+                            <br><small class="text-muted">各行に対して適切な帳簿を選択・関連付け</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-light mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-3">4</span>
+                        <div>
+                            <strong>最終保存</strong>
+                            <br><small class="text-muted">全行の関連付け完了後、データを確定して保存</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
             <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-file-excel me-2 text-primary"></i>Excelファイルアップロード</h5>
+                <p class="text-muted small">川田研究所のExcelファイル（.xlsx）をアップロードしてください</p>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    
+
                     <div class="mb-3">
                         <label for="{{ form.file.id_for_label }}" class="form-label">
                             {{ form.file.label }}
                         </label>
                         {{ form.file }}
-                        <div class="form-text">川田研究所のExcelファイル（.xlsx）を選択してください</div>
                     </div>
 
                     <button class="btn btn-primary" type="submit">
@@ -33,14 +89,75 @@
             </div>
         </div>
 
-        <div class="alert alert-info mt-4">
-            <h6><i class="fas fa-info-circle"></i> 取り込み手順</h6>
-            <ol class="mb-0">
-                <li>川田研究所のExcelファイルを用意してください</li>
-                <li>「取り込み実行」ボタンをクリックしてください</li>
-                <li>一覧画面で各行の取り込み先帳簿を選択してください</li>
-                <li>全行確定後に最終保存を実行してください</li>
-            </ol>
+        <hr class="my-5">
+
+        <!-- 開発・テスト用機能 -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">
+                            <i class="fas fa-file-excel me-2"></i>サンプルExcelダウンロード
+                        </h5>
+                        <p class="card-text text-muted">
+                            川田研究所形式のサンプルExcelデータをダウンロードできます。
+                        </p>
+                        <a href="{% url 'soil:chemical_download_sample' %}" class="btn btn-success">
+                            <i class="fas fa-download me-1"></i>サンプルExcelダウンロード
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <div class="card border-danger">
+                    <div class="card-body">
+                        <h5 class="card-title text-danger">
+                            <i class="fas fa-trash-alt me-2"></i>全データ削除
+                        </h5>
+                        <p class="card-text text-muted">
+                            SoilChemicalMeasurementテーブルの全レコードを削除します。
+                            <br><small class="text-danger">※この操作は取り消すことができません</small>
+                        </p>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteConfirmModal">
+                            <i class="fas fa-exclamation-triangle me-1"></i>全データ削除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 削除確認モーダル -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteConfirmModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>全消し注意
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger" role="alert">
+                        <strong>警告:</strong> この操作により、SoilChemicalMeasurementテーブルの全データが完全に削除されます。
+                    </div>
+                    <p>この操作は取り消すことができません。本当に実行しますか？</p>
+                    <p class="text-muted">削除を実行する場合は「削除実行」ボタンをクリックしてください。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <form method="post" action="{% url 'soil:chemical_delete_all' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-1"></i>削除実行
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

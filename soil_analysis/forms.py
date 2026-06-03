@@ -136,7 +136,8 @@ class LandCreateForm(forms.ModelForm):
 
 class UploadForm(forms.Form):
     file = forms.FileField(
-        widget=ClearableFileInput(attrs={"class": "form-control", "tabindex": "1"})
+        label="計測データ ZIP",
+        widget=ClearableFileInput(attrs={"class": "form-control", "tabindex": "1"}),
     )
 
 

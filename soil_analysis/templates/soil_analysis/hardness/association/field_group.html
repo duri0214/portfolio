@@ -1,17 +1,20 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 {% block content %}
-    <div class="container">
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:hardness_upload' %}">Upload hardness</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:hardness_association' %}">Association</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Field Group</li>
+    <div class="container mt-4">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:hardness_upload' %}" class="text-decoration-none">土壌硬度データ取り込み</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:hardness_association' %}"
+                                               class="text-decoration-none">データの関連付け</a></li>
+                <li class="breadcrumb-item active" aria-current="page">圃場グループの処理</li>
             </ol>
         </nav>
 
-        <h1>圃場グループの帳簿選択</h1>
+        <h1 class="h3 mb-4">圃場グループの帳簿選択</h1>
 
         <!-- 進捗情報 -->
         <div class="alert alert-info mb-4">

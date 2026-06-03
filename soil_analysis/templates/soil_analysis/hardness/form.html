@@ -1,18 +1,19 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 {% block content %}
-    <div class="container">
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Upload hardness</li>
+    <div class="container mt-4">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">土壌硬度データ取り込み</li>
             </ol>
         </nav>
-        <h1>土壌硬度データのアップロード</h1>
+        <h1 class="h3 mb-4"><i class="fas fa-hammer me-2 text-primary"></i>土壌硬度データ取り込み</h1>
 
         <!-- オペレーションマニュアル -->
         <div class="alert alert-primary" role="alert">
-            <h5><i class="bi bi-journal-bookmark"></i> 操作手順ガイド</h5>
+            <h5><i class="fas fa-book me-2"></i>操作手順ガイド</h5>
             <p class="mb-3">硬度データの処理は以下の順序で進めてください：</p>
 
             <div class="card border-light mb-2">
@@ -85,17 +86,25 @@
             </div>
         </div>
 
-        <!-- 既存のアップロード機能 -->
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <h3>CSVファイルアップロード</h3>
-                <p class="text-muted">取り込みCSV フォルダをzip化してアップロードしてください</p>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-file-csv me-2 text-primary"></i>CSVファイルアップロード</h5>
+                <p class="text-muted small">
+                    計測データを含むフォルダ（例：hardness_sample）をzip化してアップロードしてください</p>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    {{ form.as_p }}
+                    <div class="mb-3">
+                        <label for="{{ form.file.id_for_label }}" class="form-label">
+                            {{ form.file.label }}
+                        </label>
+                        {{ form.file }}
+                    </div>
                     <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-upload"></i> アップロード
+                        <i class="fas fa-upload me-1"></i>取り込み実行
                     </button>
+                    <a href="{% url 'soil:home' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>キャンセル
+                    </a>
                 </form>
             </div>
         </div>
@@ -108,7 +117,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title text-success">
-                            <i class="bi bi-file-earmark-plus"></i> テスト用CSV生成
+                            <i class="fas fa-file-csv me-2"></i>テスト用CSV生成
                         </h5>
                         <p class="card-text text-muted">
                             開発・テスト用のサンプルCSVデータを生成してダウンロードできます。
@@ -131,7 +140,7 @@
                                 {% endif %}
                             </div>
                             <button type="submit" class="btn btn-success">
-                                <i class="bi bi-download"></i> テスト用CSV生成・ダウンロード
+                                <i class="fas fa-download me-1"></i>テスト用CSV生成・ダウンロード
                             </button>
                         </form>
                     </div>
@@ -142,14 +151,15 @@
                 <div class="card border-danger">
                     <div class="card-body">
                         <h5 class="card-title text-danger">
-                            <i class="bi bi-trash"></i> 全データ削除
+                            <i class="fas fa-trash-alt me-2"></i>全データ削除
                         </h5>
                         <p class="card-text text-muted">
                             SoilHardnessMeasurementテーブルの全レコードを削除します。
                             <br><small class="text-danger">※この操作は取り消すことができません</small>
                         </p>
-                        <button type="button" class="btn btn-danger" onclick="confirmDeleteAll()">
-                            <i class="bi bi-exclamation-triangle"></i> 全データ削除
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteConfirmModal">
+                            <i class="fas fa-exclamation-triangle me-1"></i>全データ削除
                         </button>
                     </div>
                 </div>
@@ -164,7 +174,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="deleteConfirmModalLabel">
-                        <i class="bi bi-exclamation-triangle"></i> 全消し注意
+                        <i class="fas fa-exclamation-triangle me-2"></i>全消し注意
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                             aria-label="Close"></button>
@@ -181,7 +191,7 @@
                     <form method="post" action="{% url 'soil:hardness_delete_all' %}" style="display: inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger">
-                            <i class="bi bi-trash"></i> 削除実行
+                            <i class="fas fa-trash-alt me-1"></i>削除実行
                         </button>
                     </form>
                 </div>
@@ -189,7 +199,4 @@
         </div>
     </div>
 
-    {% block extra_js %}
-        <script src="{% static 'soil_analysis/js/hardness/form.js' %}"></script>
-    {% endblock %}
 {% endblock %}

@@ -1,17 +1,20 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 {% block content %}
-    <div class="container">
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_upload' %}">Upload chemical</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_association' %}">Association</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Field Row {{ row_data.row_number }}</li>
+    <div class="container mt-4">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_upload' %}" class="text-decoration-none">化学分析データ取り込み</a>
+                </li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:chemical_association' %}"
+                                               class="text-decoration-none">データの関連付け</a></li>
+                <li class="breadcrumb-item active" aria-current="page">行 {{ row_data.row_number }} の処理</li>
             </ol>
         </nav>
 
-        <h1>帳簿の選択 (行: {{ row_data.row_number }})</h1>
+        <h1 class="h3 mb-4">帳簿の選択 (行: {{ row_data.row_number }})</h1>
 
         <div class="row">
             <div class="col-md-6">
@@ -37,22 +40,70 @@
                                 <th>栽培作物</th>
                                 <td>{{ row_data.crop|default_if_none:"" }}</td>
                             </tr>
-                            <tr><th>EC (mS/cm)</th><td>{{ row_data.ec|default_if_none:"" }}</td></tr>
-                            <tr><th>pH</th><td>{{ row_data.ph|default_if_none:"" }}</td></tr>
-                            <tr><th>meq/100g</th><td>{{ row_data.cec|default_if_none:"" }}</td></tr>
-                            <tr><th>CaO (mg/100g)</th><td>{{ row_data.cao|default_if_none:"" }}</td></tr>
-                            <tr><th>MgO (mg/100g)</th><td>{{ row_data.mgo|default_if_none:"" }}</td></tr>
-                            <tr><th>K2O (mg/100g)</th><td>{{ row_data.k2o|default_if_none:"" }}</td></tr>
-                            <tr><th>石灰飽和度 %</th><td>{{ row_data.lime_saturation|default_if_none:"" }}</td></tr>
-                            <tr><th>苦土飽和度 %</th><td>{{ row_data.magnesia_saturation|default_if_none:"" }}</td></tr>
-                            <tr><th>加里飽和度 %</th><td>{{ row_data.potash_saturation|default_if_none:"" }}</td></tr>
-                            <tr><th>塩基飽和度 %</th><td>{{ row_data.base_saturation|default_if_none:"" }}</td></tr>
-                            <tr><th>P2O5 (mg/100g)</th><td>{{ row_data.p2o5|default_if_none:"" }}</td></tr>
-                            <tr><th>リン吸 (mg/100g)</th><td>{{ row_data.phosphorus_absorption|default_if_none:"" }}</td></tr>
-                            <tr><th>NH4-N (mg/100g)</th><td>{{ row_data.nh4n|default_if_none:"" }}</td></tr>
-                            <tr><th>NO3-N (mg/100g)</th><td>{{ row_data.no3n|default_if_none:"" }}</td></tr>
-                            <tr><th>腐植 %</th><td>{{ row_data.humus|default_if_none:"" }}</td></tr>
-                            <tr><th>仮比重</th><td>{{ row_data.bulk_density|default_if_none:"" }}</td></tr>
+                            <tr>
+                                <th>EC (mS/cm)</th>
+                                <td>{{ row_data.ec|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>pH</th>
+                                <td>{{ row_data.ph|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>meq/100g</th>
+                                <td>{{ row_data.cec|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>CaO (mg/100g)</th>
+                                <td>{{ row_data.cao|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>MgO (mg/100g)</th>
+                                <td>{{ row_data.mgo|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>K2O (mg/100g)</th>
+                                <td>{{ row_data.k2o|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>石灰飽和度 %</th>
+                                <td>{{ row_data.lime_saturation|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>苦土飽和度 %</th>
+                                <td>{{ row_data.magnesia_saturation|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>加里飽和度 %</th>
+                                <td>{{ row_data.potash_saturation|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>塩基飽和度 %</th>
+                                <td>{{ row_data.base_saturation|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>P2O5 (mg/100g)</th>
+                                <td>{{ row_data.p2o5|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>リン吸 (mg/100g)</th>
+                                <td>{{ row_data.phosphorus_absorption|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>NH4-N (mg/100g)</th>
+                                <td>{{ row_data.nh4n|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>NO3-N (mg/100g)</th>
+                                <td>{{ row_data.no3n|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>腐植 %</th>
+                                <td>{{ row_data.humus|default_if_none:"" }}</td>
+                            </tr>
+                            <tr>
+                                <th>仮比重</th>
+                                <td>{{ row_data.bulk_density|default_if_none:"" }}</td>
+                            </tr>
                         </table>
                     </div>
                 </div>
