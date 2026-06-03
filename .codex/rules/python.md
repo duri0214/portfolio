@@ -157,9 +157,7 @@ class SessionState(Enum):
     """
 
     RIDDLE_START = "RIDDLE_START"
-
     WAIT_ANSWER = "WAIT_ANSWER"
-
     FINISHED = "FINISHED"
 ```
 
@@ -202,3 +200,4 @@ class UserProfile:
 ## 例外設計
 
 - 例外クラスは適切なドメイン（Value Object層など）に配置し、責務を明確にする。
+

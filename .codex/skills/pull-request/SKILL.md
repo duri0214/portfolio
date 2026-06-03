@@ -1,6 +1,6 @@
 ---
 name: pull-request
-description: プルリクエストの本文を日本語で生成する。「pr書いて」「PR作って」などの依頼で起動。
+description: プルリクエスト本文を日本語で生成する。「pr書いて」「PR作って」「pull request 作って」などの依頼で使用する。
 ---
 
 # プルリクエスト (PR) 作成規約
@@ -36,3 +36,4 @@ https://github.com/duri0214/portfolio/issues/[ブランチ名の先頭の数字]
 - 現在のブランチ名を確認し、その先頭にある数字を Issue 番号として使用すること。
 - （例：ブランチ名が `123-feature-name` の場合、Issueリンクは `https://github.com/duri0214/portfolio/issues/123` とする）
 - ブランチ名に数字が含まれていない場合は、この項目を除外するか、空欄にすること。
+
