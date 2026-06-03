@@ -20,4 +20,4 @@
 - rules/skills を整備する場合は、今回変更する各ファイルの役割が重複していないか確認する。通常のソースコード変更全体にはこの観点を広げない。
 - `references/` は分岐別の補助資料や追加資料が必要な場合だけ使い、本文の単純な退避先として使わない。
 - Rules: `centos-to-ubuntu-setup`, `django`, `kiss`, `portfolio`, `python`, `testing`
-- Skills: `branch`, `commit`, `issue`, `pull-request`
+- Skills: `branch`, `commit`, `pull-request`, `ticket`
