@@ -16,7 +16,8 @@
 
 ## Classification
 
-- 同じ項目を rules と skills の両方に置かない。
+- rules と skills は役割で分ける。同じ対象に関する項目でも、常時適用の制約は rules、特定依頼で起動する手順は skills に置く。
+- rules/skills を整備する場合は、今回変更する各ファイルの役割が重複していないか確認する。通常のソースコード変更全体にはこの観点を広げない。
 - `references/` は分岐別の補助資料や追加資料が必要な場合だけ使い、本文の単純な退避先として使わない。
-- Rules: `centos-to-ubuntu-setup`, `django`, `portfolio`, `python`, `testing`
-- Skills: `branch`, `issue`, `kiss`, `pull-request`
+- Rules: `centos-to-ubuntu-setup`, `django`, `kiss`, `portfolio`, `python`, `testing`
+- Skills: `branch`, `commit`, `issue`, `pull-request`

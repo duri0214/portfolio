@@ -4,6 +4,15 @@ apply: always
 
 # ポートフォリオ共通業務ルール (Portfolio Common Rules)
 
+## 設計方針
+- 基本的に DDD（ドメイン駆動設計）のエッセンスに沿って設計・実装する。
+- `domain/` 配下は基本的に Repository、Service、Value Object の3層で構成する。
+- 業務ルールや判断ロジックは、可能な限り `domain/` 配下の Value Object、Service、Repository に集約する。
+- Django の `views.py`、`forms.py`、`models.py` はフレームワーク連携や入出力、永続化の責務を中心にし、業務ロジックを過度に持たせない。
+- Repository は永続化の詳細を隠蔽し、Service が Django モデルのクエリ操作に直接依存しないようにする。
+- UseCase、Factory など追加の DDD 構造は、必要性が明確な場合にだけ作る。
+- 基本の3層で十分な場合は追加の層を作らず、過剰品質を避ける。
+
 ## ユーザー管理の設計パターンの統一
 - すべてのアプリにおいて、認証（ID/Pass）は Django 標準の `auth.User` を使用し、アプリ固有の属性やロール（役割）の管理は、各アプリ内で `User` と 1:1 で紐づく `UserAttribute` モデル（またはそれに相当するプロフィールモデル）を定義して行う。
 - 同一の `User` に対し、アプリごとに異なる役割（例：`hospital` では医師/患者、`shopping` ではスタッフ/購入者）を独立して定義できる構成を維持すること。
