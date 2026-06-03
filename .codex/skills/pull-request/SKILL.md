@@ -1,5 +1,5 @@
 ---
-name: pull_request
+name: pull-request
 description: プルリクエストの本文を日本語で生成する。「pr書いて」「PR作って」などの依頼で起動。
 ---
 

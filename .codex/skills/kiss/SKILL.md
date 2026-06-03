@@ -1,5 +1,5 @@
 ---
-name: KISS
+name: kiss
 description: KISS原則（シンプル設計）のチェックリストとガイドラインを参照・適用する。
 ---
 
