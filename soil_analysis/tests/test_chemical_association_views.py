@@ -491,6 +491,10 @@ class ChemicalAssociationViewsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         summary_names = [row["land_name"] for row in response.context["ledger_summary"]]
+        summary_periods = [
+            f"{row['period_year']} {row['period_name']}"
+            for row in response.context["ledger_summary"]
+        ]
         self.assertEqual(
             summary_names,
             [
@@ -499,6 +503,8 @@ class ChemicalAssociationViewsTest(TestCase):
                 "FIELD003（点検用圃場）",
             ],
         )
+        self.assertEqual(summary_periods, ["2026 播種時", "2026 播種時", "2026 播種時"])
+        self.assertContains(response, "2026 播種時")
 
     def test_save_all_redirects_to_success(self):
         session = self.client.session

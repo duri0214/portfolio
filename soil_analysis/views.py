@@ -764,6 +764,7 @@ class ChemicalSuccessView(TemplateView):
                         {
                             "company_name": ledger.land.company.name,
                             "land_name": ledger.land.name,
+                            "period_year": ledger.land_period.year,
                             "period_name": ledger.land_period.name,
                             "total": count_by_ledger.get(ledger.id, 0),
                         }
