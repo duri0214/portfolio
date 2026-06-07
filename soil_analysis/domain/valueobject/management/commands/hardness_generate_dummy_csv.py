@@ -6,7 +6,7 @@ class SoilHardnessDevice:
     """土壌硬度計測器に関連する定数と仕様"""
 
     DEVICE_NAME = "DIK-5531"
-    DEFAULT_MAX_MEMORY = 400
+    DIK5531_MAX_MEMORY = 400
     MAX_DEPTH = 60
     MIN_PRESSURE = 232
     MAX_PRESSURE = 3000

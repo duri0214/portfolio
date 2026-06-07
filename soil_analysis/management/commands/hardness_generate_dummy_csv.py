@@ -89,13 +89,16 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        num_fields = max(1, min(options["num_fields"], 16))
+        max_memory = SoilHardnessDevice.DIK5531_MAX_MEMORY
+        memories_per_field = self.BLOCKS_PER_FIELD * self.POINTS_PER_BLOCK
+        max_fields = max_memory // memories_per_field
+        num_fields = max(1, min(options["num_fields"], max_fields))
         dataset_count = max(1, min(options["dataset_count"], 2))
 
-        if options["num_fields"] > 16:
+        if options["num_fields"] > max_fields:
             self.stdout.write(
                 self.style.WARNING(
-                    f"指定された{options['num_fields']}圃場は計測器の制約により16圃場に制限されました"
+                    f"指定された{options['num_fields']}圃場は計測器の制約（最大メモリ:{max_memory}）により{max_fields}圃場に制限されました"
                 )
             )
         if options["dataset_count"] > 2:
