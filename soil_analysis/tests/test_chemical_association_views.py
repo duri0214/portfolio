@@ -349,6 +349,39 @@ class ChemicalAssociationViewsTest(TestCase):
         )
         self.assertEqual(suggested_ledgers, expected_ledgers)
 
+    def test_association_list_shows_selected_ledger_year_and_sampling_date(self):
+        """
+        シナリオ:
+        - 入力: 関連付け済み行を含む化学分析取り込みセッションを用意する。
+        - 処理: 化学分析の関連付け一覧画面を表示する。
+        - 期待値: Excel行番号として表示され、関連付け済み帳簿に年度と採土日が表示されること。
+        """
+        session = self.client.session
+        session["chemical_import_session"] = {
+            "rows": [
+                {
+                    "row_data": {
+                        "row_number": 4,
+                        "analysis_number": "A001",
+                        "person_name": "テスト太郎",
+                        "land_name": "圃場A",
+                        "crop": "キャベツ",
+                    },
+                    "selected_ledger_id": self.ledger.id,
+                    "status": "confirmed",
+                }
+            ],
+            "total_rows": 1,
+        }
+        session.save()
+
+        response = self.client.get(reverse("soil:chemical_association"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "処理済み - Excel行: 4")
+        self.assertContains(response, "2024 2024年春")
+        self.assertContains(response, "採土日: 2024-04-01")
+
     def test_row_confirmation_rejects_used_chemical_ledger_post(self):
         """
         シナリオ:
