@@ -137,11 +137,14 @@ class Command(BaseCommand):
                 start_memory_no=current_memory_no,
                 measurement_date=measurement_date,
             )
+            total_files += num_generated
+            current_memory_no = next_memory_no
 
-            zip_path = download_output_path / f"hardness_upload_{dataset_index:02d}.zip"
+            # ZIPファイル名は以前と同様 hardness_upload_XX.zip とする
+            zip_path = download_output_path / f"hardness_upload_{dataset_round:02d}.zip"
             self._zip_folder(dataset_dir, zip_path)
             readme_lines.append(
-                f"- hardness_upload_{dataset_index:02d}.zip: {num_fields}圃場分"
+                f"- hardness_upload_{dataset_round:02d}.zip: {num_fields}圃場分"
             )
 
         (download_output_path / "README.txt").write_text(
