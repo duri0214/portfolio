@@ -8,9 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from django.core.management.base import BaseCommand
-from django.db import DatabaseError
 
-from soil_analysis.domain.repository.device import DeviceRepository
 from soil_analysis.domain.valueobject.management.commands.hardness_generate_dummy_csv import (
     SoilHardnessDevice,
     SoilHardnessCsvHeader,
@@ -67,11 +65,17 @@ class Command(BaseCommand):
 """
 
     def add_arguments(self, parser):
+        """
+        コマンドライン引数を定義する。
+        """
+        parser.formatter_class = argparse.RawDescriptionHelpFormatter
+        parser.description = self.description
+
         parser.add_argument(
             "--num_fields",
             type=int,
             default=1,
-            help="生成する圃場数（最大16圃場）",
+            help="生成したい圃場数を指定してCSVを作成する",
         )
         parser.add_argument(
             "--dataset_count",
