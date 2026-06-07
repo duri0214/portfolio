@@ -225,7 +225,12 @@ class Command(BaseCommand):
                     global_memory_counter += 1
                     total_files += 1
 
-        return total_files
+                if global_memory_counter > SoilHardnessDevice.DIK5531_MAX_MEMORY:
+                    break
+            if global_memory_counter > SoilHardnessDevice.DIK5531_MAX_MEMORY:
+                break
+
+        return total_files, global_memory_counter
 
     @staticmethod
     def _zip_folder(source_dir: Path, zip_path: Path) -> None:
