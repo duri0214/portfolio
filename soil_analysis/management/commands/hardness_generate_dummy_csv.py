@@ -152,7 +152,7 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(
-            f"完了！{dataset_count}セット、各{num_fields}圃場分、合計{total_files}ファイルを生成しました"
+            f"完了！{want_to_create_dataset_round}ラウンド、各{num_fields}圃場分、合計{total_files}ファイルを生成しました"
         )
         self.stdout.write(
             f"生成されたファイルは以下のディレクトリに保存されています: {download_output_path}"
@@ -166,15 +166,40 @@ class Command(BaseCommand):
 
     @classmethod
     def _generate_dataset(
-        cls, dataset_dir: Path, dataset_index: int, num_fields: int
-    ) -> int:
-        measurement_date = datetime(2026, 6, dataset_index, 9, 0, 0)
+        cls,
+        dataset_dir: Path,
+        num_fields: int,
+        start_memory_no: int,
+        measurement_date: datetime,
+    ) -> tuple[int, int]:
+        """
+        データセットを生成する
+
+        Args:
+            dataset_dir: データセット出力先ディレクトリ
+            num_fields: 圃場数
+            start_memory_no: 開始メモリ番号
+            measurement_date: 測定日時
+
+        Returns:
+            tuple[int, int]: (生成されたファイル数, 次の開始メモリ番号)
+
+        Note:
+            global_memory_counter は計測デバイスの連続値（メモリ番号）をシミュレートする。
+            デバイスの最大メモリ数は SoilHardnessDevice.DIK5531_MAX_MEMORY であり、これを超えると実機では上書きまたはエラーとなる。
+
+            連続アップロード検証（データセット1を投入後、データセット2を投入するシナリオ）において、
+            メモリ番号が重複するとユニーク制約によりエラーが発生するため、データセット間で番号を連続させる必要がある。
+            本物のデバイスの挙動をトレースし、1つ目のデータセットの最終番号の次から2つ目が始まるように制御する。
+        """
         date_str = measurement_date.strftime("%y.%m.%d %H:%M:%S")
-        global_memory_counter = ((dataset_index - 1) * 200) + 1
+
+        global_memory_counter = start_memory_no
         total_files = 0
 
         for field_num in range(1, num_fields + 1):
-            field_dirname = f"FIELD{field_num:03d}_STAGE{dataset_index:02d}"
+            # フォルダ名を一意にするため、親ディレクトリ名（ROUND01等）をサフィックスとして付与
+            field_dirname = f"FIELD{field_num:03d}_{dataset_dir.name}"
             field_dir = dataset_dir / field_dirname
             os.makedirs(field_dir, exist_ok=True)
 
