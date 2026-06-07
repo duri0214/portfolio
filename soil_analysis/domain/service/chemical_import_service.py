@@ -1,7 +1,6 @@
 from typing import Any
 
 from django.db import transaction
-from django.db.models import Q
 from openpyxl.worksheet.worksheet import Worksheet
 
 from soil_analysis.domain.repository.chemical_import_error import (
@@ -57,6 +56,41 @@ class ChemicalImportService:
         )
 
     @classmethod
+    def _get_target_period_name(
+        cls, land_ids: list[int], base_ledger_id: int | None = None
+    ) -> str | None:
+        """
+        候補帳簿を絞り込むための時期名を取得する。
+
+        Args:
+            land_ids: 候補対象の圃場ID。
+            base_ledger_id: 基準帳簿ID。
+
+        Returns:
+            基準帳簿または直近使用済み帳簿の時期名。判断できない場合は None。
+        """
+        if base_ledger_id:
+            return (
+                LandLedger.objects.filter(id=base_ledger_id)
+                .values_list("land_period__name", flat=True)
+                .first()
+            )
+
+        latest_used_ledger = (
+            SoilChemicalMeasurement.objects.filter(land_ledger__land_id__in=land_ids)
+            .select_related("land_ledger__land_period")
+            .order_by(
+                "-land_ledger__land_period__year",
+                "-land_ledger__sampling_date",
+                "-land_ledger_id",
+            )
+            .first()
+        )
+        if latest_used_ledger:
+            return latest_used_ledger.land_ledger.land_period.name
+        return None
+
+    @classmethod
     def get_suggested_ledgers(
         cls, land_name: str, base_ledger_id: int | None = None
     ) -> list[LandLedger]:
@@ -66,28 +100,19 @@ class ChemicalImportService:
         """
         # 圃場名で検索（完全一致または部分一致）
         lands = Land.objects.filter(name__icontains=land_name)
+        land_ids = list(lands.values_list("id", flat=True))
 
         # それらの圃場に紐づく未使用の帳簿を取得
         ledgers = (
-            LandLedger.objects.filter(land__in=lands)
+            LandLedger.objects.filter(land_id__in=land_ids)
             .exclude(id__in=cls.get_used_ledger_ids())
             .select_related("land", "land__company", "land_period")
+            .order_by("land_period__year", "sampling_date", "id")
         )
 
-        if base_ledger_id:
-            try:
-                base_ledger = LandLedger.objects.get(id=base_ledger_id)
-
-                # 同じ period のものを優先的に並び替える
-                def sort_key(l):
-                    return (
-                        0 if l.land_period_id == base_ledger.land_period_id else 1,
-                        l.id,
-                    )
-
-                ledgers = sorted(ledgers, key=sort_key)
-            except LandLedger.DoesNotExist:
-                pass
+        target_period_name = cls._get_target_period_name(land_ids, base_ledger_id)
+        if target_period_name:
+            ledgers = ledgers.filter(land_period__name=target_period_name)
 
         return list(ledgers[:10])  # とりあえず上位10件
 
@@ -101,44 +126,9 @@ class ChemicalImportService:
         if not land_names:
             return {}
 
-        query = Q()
-        for name in set(land_names):
-            if name:
-                query |= Q(name__icontains=name)
-
-        if not query:
-            return {name: [] for name in land_names}
-
-        lands = Land.objects.filter(query)
-        all_ledgers = list(
-            LandLedger.objects.filter(land__in=lands)
-            .exclude(id__in=cls.get_used_ledger_ids())
-            .select_related("land", "land__company", "land_period")
-            .order_by("-id")
-        )
-
-        base_period_id = None
-        if base_ledger_id:
-            try:
-                base_period_id = LandLedger.objects.values_list(
-                    "land_period_id", flat=True
-                ).get(id=base_ledger_id)
-            except LandLedger.DoesNotExist:
-                pass
-
         result = {}
         for name in land_names:
-            # 各名称に合致するものを抽出（メモリ上でフィルタリング）
-            suggested = [l for l in all_ledgers if name.lower() in l.land.name.lower()]
-
-            if base_period_id:
-
-                def sort_key(l):
-                    return 0 if l.land_period_id == base_period_id else 1
-
-                suggested.sort(key=sort_key)
-
-            result[name] = suggested[:10]
+            result[name] = cls.get_suggested_ledgers(name, base_ledger_id)
 
         return result
 

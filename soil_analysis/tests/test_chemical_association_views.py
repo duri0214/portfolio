@@ -252,6 +252,99 @@ class ChemicalAssociationViewsTest(TestCase):
         self.assertNotContains(response, f'value="{self.ledger.id}"')
         self.assertContains(response, f'value="{unused_ledger.id}"')
 
+    def test_association_list_candidate_count_uses_next_unused_same_period_name(self):
+        """
+        シナリオ:
+        - 入力: 2026年播種時を使用済みにし、同一圃場に収穫時と翌年播種時の未使用帳簿を用意する。
+        - 処理: 化学分析の関連付け一覧画面を表示する。
+        - 期待値: 候補数は同じ時期名を継続した未使用帳簿のみを数え、1件になること。
+        """
+        land = Land.objects.create(
+            name="FIELD001（点検用圃場）",
+            company=self.company,
+            jma_city=self.ledger.land.jma_city,
+            cultivation_type=self.ledger.land.cultivation_type,
+            owner=self.user,
+            center="36.0,140.0",
+        )
+        used_period = LandPeriod.objects.create(name="播種時", year=2026)
+        harvest_period = LandPeriod.objects.create(name="収穫時", year=2026)
+        next_sowing_period = LandPeriod.objects.create(name="播種時", year=2027)
+        next_harvest_period = LandPeriod.objects.create(name="収穫時", year=2027)
+        used_ledger = LandLedger.objects.create(
+            land=land,
+            land_period=used_period,
+            sampling_date=date(2026, 3, 3),
+            analytical_agency=self.company,
+            crop=self.ledger.crop,
+            sampling_method=self.ledger.sampling_method,
+            sampling_staff=self.user,
+        )
+        LandLedger.objects.create(
+            land=land,
+            land_period=harvest_period,
+            sampling_date=date(2026, 9, 3),
+            analytical_agency=self.company,
+            crop=self.ledger.crop,
+            sampling_method=self.ledger.sampling_method,
+            sampling_staff=self.user,
+        )
+        expected_ledger = LandLedger.objects.create(
+            land=land,
+            land_period=next_sowing_period,
+            sampling_date=date(2027, 3, 3),
+            analytical_agency=self.company,
+            crop=self.ledger.crop,
+            sampling_method=self.ledger.sampling_method,
+            sampling_staff=self.user,
+        )
+        LandLedger.objects.create(
+            land=land,
+            land_period=next_harvest_period,
+            sampling_date=date(2027, 9, 3),
+            analytical_agency=self.company,
+            crop=self.ledger.crop,
+            sampling_method=self.ledger.sampling_method,
+            sampling_staff=self.user,
+        )
+        SoilChemicalMeasurement.objects.create(
+            land_ledger=used_ledger,
+            ph=6.5,
+            ec=0.1,
+            source_file="stage01.xlsx",
+        )
+        session = self.client.session
+        session["chemical_import_session"] = {
+            "rows": [
+                {
+                    "row_data": {
+                        "row_number": 4,
+                        "analysis_number": "A101",
+                        "person_name": "テスト太郎",
+                        "land_name": "FIELD001（点検用圃場）",
+                        "crop": "キャベツ",
+                    },
+                    "selected_ledger_id": None,
+                    "status": "pending",
+                }
+            ],
+            "total_rows": 1,
+        }
+        session.save()
+
+        response = self.client.get(reverse("soil:chemical_association"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["rows"][0]["suggested_count"], 1)
+        self.assertEqual(
+            response.context["rows"][0]["selected_ledger"],
+            None,
+        )
+        suggested_ledgers = ChemicalImportService.get_suggested_ledgers(
+            "FIELD001（点検用圃場）"
+        )
+        self.assertEqual(suggested_ledgers, [expected_ledger])
+
     def test_row_confirmation_rejects_used_chemical_ledger_post(self):
         """
         シナリオ:
@@ -309,6 +402,66 @@ class ChemicalAssociationViewsTest(TestCase):
         updated_session = self.client.session["chemical_import_session"]["rows"][0]
         self.assertEqual(updated_session["status"], "pending")
         self.assertIsNone(updated_session["selected_ledger_id"])
+
+    def test_success_summary_orders_by_land_name_ascending(self):
+        """
+        シナリオ:
+        - 入力: FIELD003, FIELD002, FIELD001 の順に保存結果の帳簿IDをセッションへ入れる。
+        - 処理: 化学分析の関連付け完了画面を表示する。
+        - 期待値: 集計表示はセッション順ではなく圃場名昇順で FIELD001, FIELD002, FIELD003 になること。
+        """
+        period = LandPeriod.objects.create(name="播種時", year=2026)
+        ledgers = []
+        for land_name in (
+            "FIELD003（点検用圃場）",
+            "FIELD002（点検用圃場）",
+            "FIELD001（点検用圃場）",
+        ):
+            land = Land.objects.create(
+                name=land_name,
+                company=self.company,
+                jma_city=self.ledger.land.jma_city,
+                cultivation_type=self.ledger.land.cultivation_type,
+                owner=self.user,
+                center="36.0,140.0",
+            )
+            ledger = LandLedger.objects.create(
+                land=land,
+                land_period=period,
+                sampling_date=date(2026, 3, 3),
+                analytical_agency=self.company,
+                crop=self.ledger.crop,
+                sampling_method=self.ledger.sampling_method,
+                sampling_staff=self.user,
+            )
+            SoilChemicalMeasurement.objects.create(
+                land_ledger=ledger,
+                ph=6.5,
+                ec=0.1,
+                source_file="stage02.xlsx",
+            )
+            ledgers.append(ledger)
+        session = self.client.session
+        session["chemical_import_result"] = {
+            "created": 3,
+            "updated": 0,
+            "ledger_ids": [ledger.id for ledger in ledgers],
+            "error_count": 0,
+        }
+        session.save()
+
+        response = self.client.get(reverse("soil:chemical_association_success"))
+
+        self.assertEqual(response.status_code, 200)
+        summary_names = [row["land_name"] for row in response.context["ledger_summary"]]
+        self.assertEqual(
+            summary_names,
+            [
+                "FIELD001（点検用圃場）",
+                "FIELD002（点検用圃場）",
+                "FIELD003（点検用圃場）",
+            ],
+        )
 
     def test_save_all_redirects_to_success(self):
         session = self.client.session

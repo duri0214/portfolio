@@ -754,6 +754,9 @@ class ChemicalSuccessView(TemplateView):
                         )
                     )
                     .filter(id__in=ledger_ids)
+                    .order_by(
+                        "land__name", "land_period__year", "land_period__name", "id"
+                    )
                 )
 
                 for ledger in ledgers:

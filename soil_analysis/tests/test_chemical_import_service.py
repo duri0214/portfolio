@@ -111,11 +111,11 @@ class ChemicalImportServiceTest(TestCase):
         - 処理: 圃場名から化学分析用の候補帳簿を取得する。
         - 期待値: 化学分析データに紐付け済みの帳簿は候補から除外されること。
         """
-        unused_period = LandPeriod.objects.create(name="2024年秋", year=2024)
+        unused_period = LandPeriod.objects.create(name="2024年春", year=2025)
         unused_ledger = LandLedger.objects.create(
             land=self.land,
             land_period=unused_period,
-            sampling_date=date(2024, 10, 1),
+            sampling_date=date(2025, 4, 1),
             analytical_agency=self.company,
             crop=self.crop,
             sampling_method=self.sampling_method,
@@ -132,6 +132,72 @@ class ChemicalImportServiceTest(TestCase):
 
         self.assertNotIn(self.ledger, ledgers)
         self.assertIn(unused_ledger, ledgers)
+
+    def test_get_suggested_ledgers_keeps_used_period_name_for_next_round(self):
+        """
+        シナリオ:
+        - 入力: 2026年播種時を使用済みにし、同一圃場に2026年収穫時・2027年播種時・2027年収穫時を用意する。
+        - 処理: 2ラウンド目の候補帳簿を圃場名から取得する。
+        - 期待値: 使用済み帳簿と異なる時期名の帳簿は候補にならず、未使用の2027年播種時だけが返ること。
+        """
+        land = Land.objects.create(
+            name="FIELD001（点検用圃場）",
+            company=self.company,
+            jma_city=self.city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="36.0,140.0",
+        )
+        used_period = LandPeriod.objects.create(name="播種時", year=2026)
+        harvest_period = LandPeriod.objects.create(name="収穫時", year=2026)
+        next_sowing_period = LandPeriod.objects.create(name="播種時", year=2027)
+        next_harvest_period = LandPeriod.objects.create(name="収穫時", year=2027)
+        used_ledger = LandLedger.objects.create(
+            land=land,
+            land_period=used_period,
+            sampling_date=date(2026, 3, 3),
+            analytical_agency=self.company,
+            crop=self.crop,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        LandLedger.objects.create(
+            land=land,
+            land_period=harvest_period,
+            sampling_date=date(2026, 9, 3),
+            analytical_agency=self.company,
+            crop=self.crop,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        expected_ledger = LandLedger.objects.create(
+            land=land,
+            land_period=next_sowing_period,
+            sampling_date=date(2027, 3, 3),
+            analytical_agency=self.company,
+            crop=self.crop,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        LandLedger.objects.create(
+            land=land,
+            land_period=next_harvest_period,
+            sampling_date=date(2027, 9, 3),
+            analytical_agency=self.company,
+            crop=self.crop,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        SoilChemicalMeasurement.objects.create(
+            land_ledger=used_ledger,
+            ph=6.5,
+            ec=0.1,
+            source_file="stage01.xlsx",
+        )
+
+        ledgers = ChemicalImportService.get_suggested_ledgers("FIELD001（点検用圃場）")
+
+        self.assertEqual(ledgers, [expected_ledger])
 
     def test_save_import_data(self):
         """データの保存ができること"""
