@@ -56,28 +56,37 @@ class ChemicalImportService:
         )
 
     @classmethod
-    def _get_target_period_name(
-        cls, land_ids: list[int], base_ledger_id: int | None = None
-    ) -> str | None:
+    def _get_target_period_id(
+        cls, company_ids: list[int], base_ledger_id: int | None = None
+    ) -> int | None:
         """
-        候補帳簿を絞り込むための時期名を取得する。
+        候補帳簿を絞り込むための対象時期IDを取得する。
 
         Args:
-            land_ids: 候補対象の圃場ID。
+            company_ids: 候補対象の会社ID。
             base_ledger_id: 基準帳簿ID。
 
         Returns:
-            基準帳簿または直近使用済み帳簿の時期名。判断できない場合は None。
+            対象時期ID。判断できない場合は None。
         """
         if base_ledger_id:
             return (
                 LandLedger.objects.filter(id=base_ledger_id)
-                .values_list("land_period__name", flat=True)
+                .values_list("land_period_id", flat=True)
                 .first()
             )
 
+        used_ledger_ids = cls.get_used_ledger_ids()
+        unused_ledgers = (
+            LandLedger.objects.filter(land__company_id__in=company_ids)
+            .exclude(id__in=used_ledger_ids)
+            .select_related("land_period")
+            .order_by("land_period__year", "sampling_date", "id")
+        )
         latest_used_ledger = (
-            SoilChemicalMeasurement.objects.filter(land_ledger__land_id__in=land_ids)
+            SoilChemicalMeasurement.objects.filter(
+                land_ledger__land__company_id__in=company_ids
+            )
             .select_related("land_ledger__land_period")
             .order_by(
                 "-land_ledger__land_period__year",
@@ -87,8 +96,13 @@ class ChemicalImportService:
             .first()
         )
         if latest_used_ledger:
-            return latest_used_ledger.land_ledger.land_period.name
-        return None
+            target_period_name = latest_used_ledger.land_ledger.land_period.name
+            return (
+                unused_ledgers.filter(land_period__name=target_period_name)
+                .values_list("land_period_id", flat=True)
+                .first()
+            )
+        return unused_ledgers.values_list("land_period_id", flat=True).first()
 
     @classmethod
     def get_suggested_ledgers(
@@ -98,21 +112,22 @@ class ChemicalImportService:
         圃場名から候補となる帳簿を検索する。
         base_ledger_id が指定されている場合、その帳簿と同じ period を持つものを優先する。
         """
-        # 圃場名で検索（完全一致または部分一致）
+        # 圃場名から会社を特定し、同一会社内の対象LandPeriod帳簿を候補にする。
         lands = Land.objects.filter(name__icontains=land_name)
-        land_ids = list(lands.values_list("id", flat=True))
+        company_ids = list(lands.values_list("company_id", flat=True).distinct())
+        target_period_id = cls._get_target_period_id(company_ids, base_ledger_id)
+        if not target_period_id:
+            return []
 
-        # それらの圃場に紐づく未使用の帳簿を取得
         ledgers = (
-            LandLedger.objects.filter(land_id__in=land_ids)
+            LandLedger.objects.filter(
+                land__company_id__in=company_ids,
+                land_period_id=target_period_id,
+            )
             .exclude(id__in=cls.get_used_ledger_ids())
             .select_related("land", "land__company", "land_period")
-            .order_by("land_period__year", "sampling_date", "id")
+            .order_by("land__name", "id")
         )
-
-        target_period_name = cls._get_target_period_name(land_ids, base_ledger_id)
-        if target_period_name:
-            ledgers = ledgers.filter(land_period__name=target_period_name)
 
         return list(ledgers[:10])  # とりあえず上位10件
 

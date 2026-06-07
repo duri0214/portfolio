@@ -255,64 +255,68 @@ class ChemicalAssociationViewsTest(TestCase):
     def test_association_list_candidate_count_uses_next_unused_same_period_name(self):
         """
         シナリオ:
-        - 入力: 2026年播種時を使用済みにし、同一圃場に収穫時と翌年播種時の未使用帳簿を用意する。
+        - 入力: 3圃場の2026年播種時を使用済みにし、2027年播種時の未使用帳簿を用意する。
         - 処理: 化学分析の関連付け一覧画面を表示する。
-        - 期待値: 候補数は同じ時期名を継続した未使用帳簿のみを数え、1件になること。
+        - 期待値: 候補数は次の未使用の播種時帳簿を数え、3件になること。
         """
-        land = Land.objects.create(
-            name="FIELD001（点検用圃場）",
-            company=self.company,
-            jma_city=self.ledger.land.jma_city,
-            cultivation_type=self.ledger.land.cultivation_type,
-            owner=self.user,
-            center="36.0,140.0",
-        )
         used_period = LandPeriod.objects.create(name="播種時", year=2026)
         harvest_period = LandPeriod.objects.create(name="収穫時", year=2026)
         next_sowing_period = LandPeriod.objects.create(name="播種時", year=2027)
         next_harvest_period = LandPeriod.objects.create(name="収穫時", year=2027)
-        used_ledger = LandLedger.objects.create(
-            land=land,
-            land_period=used_period,
-            sampling_date=date(2026, 3, 3),
-            analytical_agency=self.company,
-            crop=self.ledger.crop,
-            sampling_method=self.ledger.sampling_method,
-            sampling_staff=self.user,
-        )
-        LandLedger.objects.create(
-            land=land,
-            land_period=harvest_period,
-            sampling_date=date(2026, 9, 3),
-            analytical_agency=self.company,
-            crop=self.ledger.crop,
-            sampling_method=self.ledger.sampling_method,
-            sampling_staff=self.user,
-        )
-        expected_ledger = LandLedger.objects.create(
-            land=land,
-            land_period=next_sowing_period,
-            sampling_date=date(2027, 3, 3),
-            analytical_agency=self.company,
-            crop=self.ledger.crop,
-            sampling_method=self.ledger.sampling_method,
-            sampling_staff=self.user,
-        )
-        LandLedger.objects.create(
-            land=land,
-            land_period=next_harvest_period,
-            sampling_date=date(2027, 9, 3),
-            analytical_agency=self.company,
-            crop=self.ledger.crop,
-            sampling_method=self.ledger.sampling_method,
-            sampling_staff=self.user,
-        )
-        SoilChemicalMeasurement.objects.create(
-            land_ledger=used_ledger,
-            ph=6.5,
-            ec=0.1,
-            source_file="stage01.xlsx",
-        )
+        expected_ledgers = []
+        for number in range(1, 4):
+            land = Land.objects.create(
+                name=f"FIELD00{number}（点検用圃場）",
+                company=self.company,
+                jma_city=self.ledger.land.jma_city,
+                cultivation_type=self.ledger.land.cultivation_type,
+                owner=self.user,
+                center="36.0,140.0",
+            )
+            used_ledger = LandLedger.objects.create(
+                land=land,
+                land_period=used_period,
+                sampling_date=date(2026, 3, 3),
+                analytical_agency=self.company,
+                crop=self.ledger.crop,
+                sampling_method=self.ledger.sampling_method,
+                sampling_staff=self.user,
+            )
+            LandLedger.objects.create(
+                land=land,
+                land_period=harvest_period,
+                sampling_date=date(2026, 9, 3),
+                analytical_agency=self.company,
+                crop=self.ledger.crop,
+                sampling_method=self.ledger.sampling_method,
+                sampling_staff=self.user,
+            )
+            expected_ledgers.append(
+                LandLedger.objects.create(
+                    land=land,
+                    land_period=next_sowing_period,
+                    sampling_date=date(2027, 3, 3),
+                    analytical_agency=self.company,
+                    crop=self.ledger.crop,
+                    sampling_method=self.ledger.sampling_method,
+                    sampling_staff=self.user,
+                )
+            )
+            LandLedger.objects.create(
+                land=land,
+                land_period=next_harvest_period,
+                sampling_date=date(2027, 9, 3),
+                analytical_agency=self.company,
+                crop=self.ledger.crop,
+                sampling_method=self.ledger.sampling_method,
+                sampling_staff=self.user,
+            )
+            SoilChemicalMeasurement.objects.create(
+                land_ledger=used_ledger,
+                ph=6.5,
+                ec=0.1,
+                source_file="stage01.xlsx",
+            )
         session = self.client.session
         session["chemical_import_session"] = {
             "rows": [
@@ -335,7 +339,7 @@ class ChemicalAssociationViewsTest(TestCase):
         response = self.client.get(reverse("soil:chemical_association"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["rows"][0]["suggested_count"], 1)
+        self.assertEqual(response.context["rows"][0]["suggested_count"], 3)
         self.assertEqual(
             response.context["rows"][0]["selected_ledger"],
             None,
@@ -343,7 +347,7 @@ class ChemicalAssociationViewsTest(TestCase):
         suggested_ledgers = ChemicalImportService.get_suggested_ledgers(
             "FIELD001（点検用圃場）"
         )
-        self.assertEqual(suggested_ledgers, [expected_ledger])
+        self.assertEqual(suggested_ledgers, expected_ledgers)
 
     def test_row_confirmation_rejects_used_chemical_ledger_post(self):
         """

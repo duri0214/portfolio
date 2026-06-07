@@ -199,6 +199,53 @@ class ChemicalImportServiceTest(TestCase):
 
         self.assertEqual(ledgers, [expected_ledger])
 
+    def test_get_suggested_ledgers_uses_first_unused_period_for_first_round(self):
+        """
+        シナリオ:
+        - 入力: 3圃場に2026年播種時と2027年播種時の未使用帳簿を用意する。
+        - 処理: 1ラウンド目の候補帳簿を圃場名から取得する。
+        - 期待値: 最初の未使用LandPeriodである2026年播種時の3帳簿だけが返ること。
+        """
+        company = Company.objects.create(
+            name="Round Test Company", category=self.company.category
+        )
+        first_period = LandPeriod.objects.create(name="播種時", year=2026)
+        next_period = LandPeriod.objects.create(name="播種時", year=2027)
+        expected_ledgers = []
+        for number in range(1, 4):
+            land = Land.objects.create(
+                name=f"FIELD00{number}（点検用圃場）",
+                company=company,
+                jma_city=self.city,
+                cultivation_type=self.cultivation_type,
+                owner=self.user,
+                center="36.0,140.0",
+            )
+            expected_ledgers.append(
+                LandLedger.objects.create(
+                    land=land,
+                    land_period=first_period,
+                    sampling_date=date(2026, 3, 3),
+                    analytical_agency=company,
+                    crop=self.crop,
+                    sampling_method=self.sampling_method,
+                    sampling_staff=self.user,
+                )
+            )
+            LandLedger.objects.create(
+                land=land,
+                land_period=next_period,
+                sampling_date=date(2027, 3, 3),
+                analytical_agency=company,
+                crop=self.crop,
+                sampling_method=self.sampling_method,
+                sampling_staff=self.user,
+            )
+
+        ledgers = ChemicalImportService.get_suggested_ledgers("FIELD001（点検用圃場）")
+
+        self.assertEqual(ledgers, expected_ledgers)
+
     def test_save_import_data(self):
         """データの保存ができること"""
         row = KawadaRow(
