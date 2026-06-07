@@ -210,10 +210,20 @@
                                     <td>{{ ledger.sampling_date|default:"-" }}</td>
                                     <td>{{ ledger.analysis_number|default:"-" }}</td>
                                     <td>
-                                        <a href="{% url 'soil:standard_report' object.company.id ledger.id %}"
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-chart-bar"></i> 通知表を表示
-                                        </a>
+                                        {% if ledger.chemical_measurement_count or ledger.hardness_measurement_count %}
+                                            <a href="{% url 'soil:standard_report' object.company.id ledger.id %}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-chart-bar"></i> 通知表を表示
+                                            </a>
+                                        {% else %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    disabled
+                                                    aria-disabled="true"
+                                                    title="化学データまたは硬度データが登録されると表示できます">
+                                                <i class="fas fa-chart-bar"></i> 通知表を表示
+                                            </button>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}

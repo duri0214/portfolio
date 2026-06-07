@@ -222,7 +222,14 @@ class LandDetailView(DetailView):
         )
         land_ledger_prefetch = Prefetch(
             "landledger_set",
-            queryset=LandLedger.objects.select_related("land_period", "crop"),
+            queryset=LandLedger.objects.select_related("land_period", "crop")
+            .annotate(
+                chemical_measurement_count=Count("soil_chemical_measurement"),
+                hardness_measurement_count=Count(
+                    "soilhardnessmeasurement", distinct=True
+                ),
+            )
+            .order_by("land_period__year", "sampling_date", "land_period__name", "id"),
             to_attr="ledgers",
         )
         return (
@@ -661,9 +668,11 @@ class ChemicalAssociationRowView(TemplateView):
         suggested_ledgers = ChemicalImportService.get_suggested_ledgers(
             land_name, base_ledger_id=import_session.get("base_ledger_id")
         )
-        all_ledgers = LandLedger.objects.select_related(
-            "land", "land__company", "land_period"
-        ).order_by("-id")[:200]
+        all_ledgers = (
+            LandLedger.objects.select_related("land", "land__company", "land_period")
+            .exclude(id__in=ChemicalImportService.get_used_ledger_ids())
+            .order_by("-id")[:200]
+        )
         suggested_ids = {ledger.id for ledger in suggested_ledgers}
         fallback_ledgers = [
             ledger for ledger in all_ledgers if ledger.id not in suggested_ids
@@ -690,6 +699,16 @@ class ChemicalAssociationRowView(TemplateView):
 
         ledger_id = request.POST.get("land_ledger")
         if ledger_id:
+            if SoilChemicalMeasurement.objects.filter(
+                land_ledger_id=ledger_id
+            ).exists():
+                messages.error(
+                    request, "選択した帳簿はすでに化学分析データに紐付いています。"
+                )
+                return redirect(
+                    "soil:chemical_association_field_row", row_index=row_index
+                )
+
             import_session["rows"][row_index]["selected_ledger_id"] = int(ledger_id)
             import_session["rows"][row_index]["status"] = "confirmed"
             request.session.modified = True
@@ -742,6 +761,9 @@ class ChemicalSuccessView(TemplateView):
                         )
                     )
                     .filter(id__in=ledger_ids)
+                    .order_by(
+                        "land__name", "land_period__year", "land_period__name", "id"
+                    )
                 )
 
                 for ledger in ledgers:
@@ -749,6 +771,7 @@ class ChemicalSuccessView(TemplateView):
                         {
                             "company_name": ledger.land.company.name,
                             "land_name": ledger.land.name,
+                            "period_year": ledger.land_period.year,
                             "period_name": ledger.land_period.name,
                             "total": count_by_ledger.get(ledger.id, 0),
                         }

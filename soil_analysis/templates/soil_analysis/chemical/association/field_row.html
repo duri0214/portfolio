@@ -126,7 +126,7 @@
                                                 <option value="{{ ledger.pk }}"
                                                         {% if ledger.pk == selected_ledger_id %}selected{% endif %}>
                                                     {{ ledger.land.company.name }} - {{ ledger.land.name }}
-                                                    ({{ ledger.land_period.name }})
+                                                    ({{ ledger.land_period.year }} {{ ledger.land_period.name }} / 採土日: {{ ledger.sampling_date|date:"Y-m-d" }})
                                                 </option>
                                             {% endfor %}
                                         </optgroup>
@@ -136,7 +136,7 @@
                                             <option value="{{ ledger.pk }}"
                                                     {% if ledger.pk == selected_ledger_id %}selected{% endif %}>
                                                 {{ ledger.land.company.name }} - {{ ledger.land.name }}
-                                                ({{ ledger.land_period.name }})
+                                                ({{ ledger.land_period.year }} {{ ledger.land_period.name }} / 採土日: {{ ledger.sampling_date|date:"Y-m-d" }})
                                             </option>
                                         {% endfor %}
                                     </optgroup>
