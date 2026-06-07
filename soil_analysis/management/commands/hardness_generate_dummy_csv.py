@@ -119,13 +119,23 @@ class Command(BaseCommand):
             "",
         ]
 
-        for dataset_index in range(1, dataset_count + 1):
-            dataset_dir = output_path / f"hardness_upload_{dataset_index:02d}"
+        # 全データセットを通じて連番にするためのカウンタ
+        current_memory_no = 1
+
+        for dataset_round in range(1, want_to_create_dataset_round + 1):
+            # ROUND01, ROUND02 という名前でディレクトリを作成（内部のフォルダ名に流用するため）
+            round_name = f"ROUND{dataset_round:02d}"
+            dataset_dir = output_path / round_name
             os.makedirs(dataset_dir, exist_ok=True)
-            total_files += self._generate_dataset(
+
+            # データセットごとに測定日を変える（2026年6月1日、2日...）
+            measurement_date = datetime(2026, 6, dataset_round, 9, 0, 0)
+
+            num_generated, next_memory_no = self._generate_dataset(
                 dataset_dir=dataset_dir,
-                dataset_index=dataset_index,
                 num_fields=num_fields,
+                start_memory_no=current_memory_no,
+                measurement_date=measurement_date,
             )
 
             zip_path = download_output_path / f"hardness_upload_{dataset_index:02d}.zip"
