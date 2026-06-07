@@ -124,6 +124,67 @@ class ChemicalAssociationViewsTest(TestCase):
         self.assertEqual(updated_session["status"], "confirmed")
         self.assertEqual(updated_session["selected_ledger_id"], self.ledger.id)
 
+    def test_row_confirmation_shows_year_and_sampling_date_in_ledger_options(self):
+        """
+        シナリオ:
+        - 入力: 同一圃場に、同じ時期名で年度が異なる帳簿を用意する。
+        - 処理: 化学分析の行別帳簿関連付け画面を表示する。
+        - 期待値: 候補帳簿の選択肢に年度と採土日が表示され、帳簿を区別できること。
+        """
+        period = LandPeriod.objects.create(name="播種時", year=2025)
+        other_ledger = LandLedger.objects.create(
+            land=self.ledger.land,
+            land_period=period,
+            sampling_date=date(2025, 4, 1),
+            analytical_agency=self.company,
+            crop=self.ledger.crop,
+            sampling_method=self.ledger.sampling_method,
+            sampling_staff=self.user,
+        )
+        session = self.client.session
+        session["chemical_import_session"] = {
+            "rows": [
+                {
+                    "row_data": {
+                        "row_number": 4,
+                        "analysis_number": "A001",
+                        "person_name": "テスト太郎",
+                        "land_name": "圃場A",
+                        "crop": "キャベツ",
+                        "ec": 0.1,
+                        "ph": 6.5,
+                        "cec": None,
+                        "cao": None,
+                        "mgo": None,
+                        "k2o": None,
+                        "lime_saturation": None,
+                        "magnesia_saturation": None,
+                        "potash_saturation": None,
+                        "base_saturation": None,
+                        "p2o5": None,
+                        "phosphorus_absorption": None,
+                        "nh4n": None,
+                        "no3n": None,
+                        "humus": None,
+                        "bulk_density": None,
+                    },
+                    "selected_ledger_id": None,
+                    "status": "pending",
+                }
+            ],
+            "total_rows": 1,
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("soil:chemical_association_field_row", kwargs={"row_index": 0})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "2024 2024年春 / 採土日: 2024-04-01")
+        self.assertContains(response, "2025 播種時 / 採土日: 2025-04-01")
+        self.assertContains(response, f'value="{other_ledger.id}"')
+
     def test_save_all_redirects_to_success(self):
         session = self.client.session
         session["chemical_import_session"] = {
