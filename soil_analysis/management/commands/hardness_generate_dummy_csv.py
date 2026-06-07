@@ -43,7 +43,6 @@ class Command(BaseCommand):
     BLOCKS_PER_FIELD = 5
     # 1地点あたりの計測数
     POINTS_PER_BLOCK = 5
-
     help = "土壌硬度計測器CSVファイルを生成します"
     # 詳細な説明を description に持たせる（RawDescriptionHelpFormatter で改行を維持）
     description = """
@@ -66,6 +65,8 @@ class Command(BaseCommand):
 
 各地点（ブロック）で 5回の測定を実施
 複数圃場を計測する場合、memoryは連番で増加し続ける
+
+連続アップロード検証用に、最大 2 ラウンド（ZIP）を生成可能です。
 """
 
     def add_arguments(self, parser):
