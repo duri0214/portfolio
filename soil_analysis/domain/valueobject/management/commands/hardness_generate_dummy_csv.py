@@ -1,12 +1,19 @@
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 class SoilHardnessDevice:
     """土壌硬度計測器に関連する定数と仕様"""
 
     DEVICE_NAME = "DIK-5531"
+    DIK5531_MAX_MEMORY = 400
     MAX_DEPTH = 60
+    MIN_PRESSURE = 232
+    MAX_PRESSURE = 3000
+    MIN_BASE_PRESSURE = 232
+    MAX_BASE_PRESSURE = 350
+    SPRING_CONSTANT = "490"
+    CONE_AREA = "2"
 
 
 @dataclass
@@ -16,6 +23,7 @@ class SoilHardnessCharacteristics:
     パラメータを指定しない場合は自動的にランダム値が使用されます。
 
     Attributes:
+        seed: 乱数シード（再現性が必要な場合に指定）
         base_pressure: 基本圧力値（表層の硬度）
         max_pressure_increase: 最大増加量（深度MAX_DEPTHでの増加量）
         noise_range: ランダム変動範囲のタプル (min, max)、マイナス値も含む
@@ -25,14 +33,31 @@ class SoilHardnessCharacteristics:
     # 土壌の物理特性に関する定数
     MAX_PRESSURE_DELTA = 100
 
-    # 毎回ランダム値を生成するにはdefault_factory関数を使用
-    base_pressure: int = field(default_factory=lambda: random.randint(232, 350))
-    max_pressure_increase: int = field(default_factory=lambda: 3000)
-    noise_range: tuple[int, int] = field(default_factory=lambda: (-200, 200))
+    seed: int | None = None
+    base_pressure: int | None = None
+    max_pressure_increase: int | None = None
+    noise_range: tuple[int, int] | None = None
     last_pressure: int | None = None
 
     def __post_init__(self):
         """初期化後に実行される処理"""
+        # シードが指定されている場合は、ランダム値を決定する前にセットする
+        if self.seed is not None:
+            random.seed(self.seed)
+
+        # 未指定パラメータのデフォルト値をランダム生成
+        if self.base_pressure is None:
+            self.base_pressure = random.randint(
+                SoilHardnessDevice.MIN_BASE_PRESSURE,
+                SoilHardnessDevice.MAX_BASE_PRESSURE,
+            )
+
+        if self.max_pressure_increase is None:
+            self.max_pressure_increase = SoilHardnessDevice.MAX_PRESSURE
+
+        if self.noise_range is None:
+            self.noise_range = (-200, 200)
+
         # 初期値設定
         self.last_pressure = self.base_pressure
 
@@ -72,7 +97,10 @@ class SoilHardnessCharacteristics:
                 calculated_pressure = self.last_pressure + self.MAX_PRESSURE_DELTA
 
         # 有効範囲内に収める
-        pressure = max(232, min(3000, calculated_pressure))
+        pressure = max(
+            SoilHardnessDevice.MIN_PRESSURE,
+            min(SoilHardnessDevice.MAX_PRESSURE, calculated_pressure),
+        )
 
         # 次回のために今回の値を保存
         self.last_pressure = pressure
@@ -101,8 +129,8 @@ class SoilHardnessCsvHeader:
             ["Longitude", "E 000.00.0000"],
             ["Set Depth[cm]", str(SoilHardnessDevice.MAX_DEPTH)],
             ["Date and Time", date_str],
-            ["Spring[N/48.5mm]", "490"],
-            ["Cone[cm2]", "2"],
+            ["Spring[N/48.5mm]", SoilHardnessDevice.SPRING_CONSTANT],
+            ["Cone[cm2]", SoilHardnessDevice.CONE_AREA],
             [],
             ["Depth[cm]", "Pressure[kPa]", "DateTime", "GpsMode", "GPS Satellites"],
         ]

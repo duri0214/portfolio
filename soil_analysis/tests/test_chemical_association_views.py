@@ -1,8 +1,13 @@
 from datetime import date
+import io
+import zipfile
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from openpyxl import load_workbook
+
+from soil_analysis.domain.service.chemical_import_service import ChemicalImportService
 
 from soil_analysis.models import (
     Company,
@@ -175,3 +180,34 @@ class ChemicalAssociationViewsTest(TestCase):
         ).first()
         self.assertIsNotNone(analysis)
         self.assertEqual(analysis.source_file, "web_upload.xlsx")
+
+    def test_chemical_sample_download_returns_stage_workbooks(self):
+        """
+        シナリオ:
+        - 入力: サンプルExcelダウンロードURLへGETする。
+        - 処理: 返却されたZIP内の stage01/stage02/duplicate Excel を読み込む。
+        - 期待値: 各Excelが川田形式としてパースでき、連続登録検証用の行を含むこと。
+        """
+        response = self.client.get(reverse("soil:chemical_download_sample"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/zip")
+
+        with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+            names = set(archive.namelist())
+            self.assertIn("chemical_stage01.xlsx", names)
+            self.assertIn("chemical_stage02.xlsx", names)
+            self.assertIn("chemical_duplicate.xlsx", names)
+            for workbook_name in (
+                "chemical_stage01.xlsx",
+                "chemical_stage02.xlsx",
+                "chemical_duplicate.xlsx",
+            ):
+                workbook = load_workbook(
+                    io.BytesIO(archive.read(workbook_name)), data_only=True
+                )
+                parse_result = ChemicalImportService.parse_kawada_worksheet(
+                    workbook.active
+                )
+                self.assertEqual(parse_result.errors, [])
+                self.assertEqual(len(parse_result.rows), 3)

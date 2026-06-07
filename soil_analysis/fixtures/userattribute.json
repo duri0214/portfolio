@@ -33,12 +33,12 @@
     "fields": {
       "user": 21,
       "role": "owner",
-      "address": "千葉県成田市",
-      "organization": "アグリファクトリー",
-      "area": "成田",
-      "remark": null,
-      "created_at": "2022-08-13T00:00:00+09:00",
-      "updated_at": "2022-08-13T00:00:00+09:00"
+      "address": "千葉県成田市 テスト圃場1・2",
+      "organization": "土壌分析テスト法人",
+      "area": "FIELD001 / FIELD002 点検用圃場",
+      "remark": "Issue 708 連続アップロード点検用オーナー",
+      "created_at": "2026-01-01T00:00:00+09:00",
+      "updated_at": "2026-01-01T00:00:00+09:00"
     }
   },
   {
@@ -47,12 +47,12 @@
     "fields": {
       "user": 22,
       "role": "owner",
-      "address": "徳島県徳島市",
-      "organization": "農業法人三徳",
-      "area": "徳島",
-      "remark": null,
-      "created_at": "2022-08-13T00:00:00+09:00",
-      "updated_at": "2022-08-13T00:00:00+09:00"
+      "address": "千葉県成田市 テスト圃場3",
+      "organization": "土壌分析テスト法人",
+      "area": "FIELD003 点検用圃場",
+      "remark": "Issue 708 連続アップロード点検用オーナー",
+      "created_at": "2026-01-01T00:00:00+09:00",
+      "updated_at": "2026-01-01T00:00:00+09:00"
     }
   }
 ]

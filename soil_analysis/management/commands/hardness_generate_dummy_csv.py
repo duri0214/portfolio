@@ -1,8 +1,9 @@
+import argparse
 import csv
 import os
-import random
 import tempfile
-from datetime import datetime, timedelta
+import zipfile
+from datetime import datetime
 from pathlib import Path
 
 from django.core.management.base import BaseCommand
@@ -15,15 +16,16 @@ from soil_analysis.domain.valueobject.management.commands.hardness_generate_dumm
 
 
 class Command(BaseCommand):
-    help = """
+    """
     土壌硬度計測器CSVファイルを生成するバッチ
 
-    計測器制約:
-    - 計測器は400メモリーまで保存可能
-    - 1圃場あたり25メモリー消費のため、1日最大16圃場まで計測可能
+    計測器想定 (DIK-5531を使用する場合):
+    - 最大 400 メモリーまで保存可能
+    - 1圃場あたりの消費メモリはサンプリング法（例: 5点法なら5地点）に依存
+    - 現状（5地点 × 5回 = 25メモリー/圃場）では、最大 16 圃場 (400 / 25) まで保存可能
 
     計測シナリオ:
-    圃場は3x3の9ブロックに分かれるが、実際の計測は5ブロックのみ実施
+    圃場は3x3の9ブロックに分かれるが、実際の計測は 5ブロックのみ実施
     ┌────┬────┬────┐
     │ C3 │ B3 │ A3 │  → C3, A3を計測
     ├────┼────┼────┤
@@ -32,63 +34,185 @@ class Command(BaseCommand):
     │ C1 │ B1 │ A1 │  → C1, A1を計測
     └────┴────┴────┘
 
-    各ブロックで5点法による5回の測定を実施
-    1圃場あたり25メモリー（5ブロック × 5測定）を消費
+    各地点（ブロック）で 5回の測定を実施
     複数圃場を計測する場合、memoryは連番で増加し続ける
     """
 
+    # 5点法（SamplingMethod）を想定した地点数
+    BLOCKS_PER_FIELD = 5
+    # 1地点あたりの計測数
+    POINTS_PER_BLOCK = 5
+    help = "土壌硬度計測器CSVファイルを生成します"
+    # 詳細な説明を description に持たせる（RawDescriptionHelpFormatter で改行を維持）
+    description = """
+土壌硬度計測器CSVファイルを生成するバッチ
+
+計測器想定 (DIK-5531を使用する場合):
+- 最大 400 メモリーまで保存可能
+- 1圃場あたりの消費メモリはサンプリング法（例: 5点法なら5地点）に依存
+- 現状（5地点 × 5回 = 25メモリー/圃場）では、最大 16 圃場 (400 / 25) まで保存可能
+
+計測シナリオ:
+圃場は3x3の9ブロックに分かれるが、実際の計測は 5ブロックのみ実施
+┌────┬────┬────┐
+│ C3 │ B3 │ A3 │  → C3, A3を計測
+├────┼────┼────┤
+│ C2 │ B2 │ A2 │  → B2のみ計測
+├────┼────┼────┤
+│ C1 │ B1 │ A1 │  → C1, A1を計測
+└────┴────┴────┘
+
+各地点（ブロック）で 5回の測定を実施
+複数圃場を計測する場合、memoryは連番で増加し続ける
+
+連続アップロード検証用に、最大 2 ラウンド（ZIP）を生成可能です。
+"""
+
     def add_arguments(self, parser):
+        """
+        コマンドライン引数を定義する。
+        """
+        parser.formatter_class = argparse.RawDescriptionHelpFormatter
+        parser.description = self.description
+
         parser.add_argument(
             "--num_fields",
             type=int,
             default=1,
-            help="生成する圃場数（最大16圃場）",
+            help="生成したい圃場数を指定してCSVを作成する",
+        )
+        parser.add_argument(
+            "--want_to_create_dataset_round",
+            type=int,
+            default=1,
+            help="生成したいラウンド数を指定してCSVを作成する（最大 2 ラウンド）",
         )
 
     def handle(self, *args, **options):
-        num_fields = min(options["num_fields"], 16)
-
-        if options["num_fields"] > 16:
-            self.stdout.write(
-                self.style.WARNING(
-                    f"指定された{options['num_fields']}圃場は計測器の制約により16圃場に制限されました"
-                )
-            )
+        max_memory = SoilHardnessDevice.DIK5531_MAX_MEMORY
+        memories_per_field = self.BLOCKS_PER_FIELD * self.POINTS_PER_BLOCK
+        max_fields = max_memory // memories_per_field
+        num_fields = max(1, min(options["num_fields"], max_fields))
+        want_to_create_dataset_round = max(
+            1,
+            min(
+                options["want_to_create_dataset_round"],
+                2,
+            ),
+        )
 
         # 一時ディレクトリを作成
         output_path = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
 
-        # CSVファイル出力用のディレクトリ名を設定
-        csv_output_path = output_path / "hardness_sample"
-        os.makedirs(csv_output_path, exist_ok=True)
+        # ブラウザからはこのフォルダをZIP化して返す。中に投入用ZIPを複数格納する。
+        download_output_path = output_path / "hardness_samples"
+        os.makedirs(download_output_path, exist_ok=True)
 
-        # 全圃場共通の測定日を生成（1日で全圃場を計測する前提）
-        measurement_date = datetime.now() - timedelta(
-            days=random.randint(1, 30),
-            hours=random.randint(8, 17),  # 8時-17時の間で開始
-            minutes=random.randint(0, 59),
+        total_files = 0
+        readme_lines = [
+            "土壌硬度 連続アップロード検証用データ",
+            "",
+            "hardness_upload_01.zip、hardness_upload_02.zip の順に soil:hardness_upload へ投入してください。",
+            "各ZIPは測定日時・メモリ番号・フォルダ名が重複しないように生成されています。",
+            "同じZIPを再投入すると、取り込み済みデータのエラー確認に使えます。",
+            "",
+        ]
+
+        # 全データセットを通じて連番にするためのカウンタ
+        current_memory_no = 1
+
+        for dataset_round in range(1, want_to_create_dataset_round + 1):
+            # ROUND01, ROUND02 という名前でディレクトリを作成（内部のフォルダ名に流用するため）
+            round_name = f"ROUND{dataset_round:02d}"
+            dataset_dir = output_path / round_name
+            os.makedirs(dataset_dir, exist_ok=True)
+
+            # データセットごとに測定日を変える（2026年6月1日、2日...）
+            measurement_date = datetime(2026, 6, dataset_round, 9, 0, 0)
+
+            num_generated, next_memory_no = self._generate_dataset(
+                dataset_dir=dataset_dir,
+                num_fields=num_fields,
+                start_memory_no=current_memory_no,
+                measurement_date=measurement_date,
+            )
+            total_files += num_generated
+            current_memory_no = next_memory_no
+
+            # ZIPファイル名は以前と同様 hardness_upload_XX.zip とする
+            zip_path = download_output_path / f"hardness_upload_{dataset_round:02d}.zip"
+            self._zip_folder(dataset_dir, zip_path)
+            readme_lines.append(
+                f"- hardness_upload_{dataset_round:02d}.zip: {num_fields}圃場分"
+            )
+
+        (download_output_path / "README.txt").write_text(
+            "\n".join(readme_lines), encoding="utf-8"
         )
+
+        self.stdout.write(
+            f"完了！{want_to_create_dataset_round}ラウンド、各{num_fields}圃場分、合計{total_files}ファイルを生成しました"
+        )
+        self.stdout.write(
+            f"生成されたファイルは以下のディレクトリに保存されています: {download_output_path}"
+        )
+        self.stdout.write(
+            "※このディレクトリは一時的なものです。必要に応じてファイルをコピーしてください。"
+        )
+
+        # 出力パスを返す（プログラムからの呼び出し用）
+        return str(download_output_path)
+
+    @classmethod
+    def _generate_dataset(
+        cls,
+        dataset_dir: Path,
+        num_fields: int,
+        start_memory_no: int,
+        measurement_date: datetime,
+    ) -> tuple[int, int]:
+        """
+        データセットを生成する
+
+        Args:
+            dataset_dir: データセット出力先ディレクトリ
+            num_fields: 圃場数
+            start_memory_no: 開始メモリ番号
+            measurement_date: 測定日時
+
+        Returns:
+            tuple[int, int]: (生成されたファイル数, 次の開始メモリ番号)
+
+        Note:
+            global_memory_counter は計測デバイスの連続値（メモリ番号）をシミュレートする。
+            デバイスの最大メモリ数は SoilHardnessDevice.DIK5531_MAX_MEMORY であり、これを超えると実機では上書きまたはエラーとなる。
+
+            連続アップロード検証（データセット1を投入後、データセット2を投入するシナリオ）において、
+            メモリ番号が重複するとユニーク制約によりエラーが発生するため、データセット間で番号を連続させる必要がある。
+            本物のデバイスの挙動をトレースし、1つ目のデータセットの最終番号の次から2つ目が始まるように制御する。
+        """
         date_str = measurement_date.strftime("%y.%m.%d %H:%M:%S")
 
-        # 全圃場を通してmemoryを連番で管理
-        global_memory_counter = 1
+        global_memory_counter = start_memory_no
         total_files = 0
-        for field_num in range(1, num_fields + 1):
-            self.stdout.write(f"圃場 {field_num} のファイル生成中...")
 
-            # 圃場ごとに異なるフォルダを作成（FIELD001など）
-            field_dirname = f"FIELD{str(field_num).zfill(3)}"
-            field_dir = os.path.join(csv_output_path, field_dirname)
+        for field_num in range(1, num_fields + 1):
+            # フォルダ名を一意にするため、親ディレクトリ名（ROUND01等）をサフィックスとして付与
+            field_dirname = f"FIELD{field_num:03d}_{dataset_dir.name}"
+            field_dir = dataset_dir / field_dirname
             os.makedirs(field_dir, exist_ok=True)
 
-            # 実際の計測では5ブロック（C1, C3, B2, A1, A3）のみを計測
-            for block_idx in range(5):
-                # 各ブロックで5回の測定
-                for measurement in range(1, 6):
+            # 実際の計測では指定されたブロック数のみを計測
+            for _ in range(cls.BLOCKS_PER_FIELD):
+                for _ in range(cls.POINTS_PER_BLOCK):
+                    if global_memory_counter > SoilHardnessDevice.DIK5531_MAX_MEMORY:
+                        # 最大メモリを超える場合は生成を打ち切る（実機の挙動を考慮）
+                        break
+
                     file_seq = str(global_memory_counter).zfill(4)
                     filename = f"{SoilHardnessDevice.DEVICE_NAME}_{file_seq}_N00000000_E000000000.csv"
-                    filepath = os.path.join(field_dir, filename)
-                    self._generate_csv_file(
+                    filepath = field_dir / filename
+                    cls._generate_csv_file(
                         filepath=filepath,
                         memory_no=global_memory_counter,
                         date_str=date_str,
@@ -97,18 +221,21 @@ class Command(BaseCommand):
                     global_memory_counter += 1
                     total_files += 1
 
-        self.stdout.write(
-            f"完了！{num_fields}圃場分、合計{total_files}ファイルを生成しました"
-        )
-        self.stdout.write(
-            f"生成されたファイルは以下のディレクトリに保存されています: {output_path}"
-        )
-        self.stdout.write(
-            "※このディレクトリは一時的なものです。必要に応じてファイルをコピーしてください。"
-        )
+                if global_memory_counter > SoilHardnessDevice.DIK5531_MAX_MEMORY:
+                    break
+            if global_memory_counter > SoilHardnessDevice.DIK5531_MAX_MEMORY:
+                break
 
-        # 出力パスを返す（プログラムからの呼び出し用）
-        return str(csv_output_path)
+        return total_files, global_memory_counter
+
+    @staticmethod
+    def _zip_folder(source_dir: Path, zip_path: Path) -> None:
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for root, dirs, files in os.walk(source_dir):
+                for file in files:
+                    file_path = Path(root) / file
+                    arc_name = file_path.relative_to(source_dir)
+                    zip_file.write(file_path, arc_name)
 
     @staticmethod
     def _generate_csv_file(filepath, memory_no, date_str):
@@ -120,8 +247,8 @@ class Command(BaseCommand):
             memory_no: メモリ番号
             date_str: 測定日時文字列（全圃場で統一）
         """
-        # 土壌特性は毎回ランダム値で生成
-        characteristics = SoilHardnessCharacteristics()
+        # 土壌特性はメモリ番号をシードとして生成
+        characteristics = SoilHardnessCharacteristics(seed=memory_no)
 
         # CSVデータの作成
         with open(filepath, "w", newline="") as csvfile:

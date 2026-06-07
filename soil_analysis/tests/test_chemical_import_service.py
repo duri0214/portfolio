@@ -212,3 +212,55 @@ class ChemicalImportServiceTest(TestCase):
         # 後の方のデータ(row2)のph=7.0が反映されているはず
         self.assertEqual(analysis.ph, 7.0)
         self.assertEqual(analysis.source_file, "updated_file.xlsx")
+
+    def test_save_import_data_updates_only_selected_ledgers(self):
+        """
+        シナリオ:
+        - 入力: 既存の化学分析がある台帳と、今回の取り込み対象台帳を用意する。
+        - 処理: 今回対象の台帳だけを rows_data に渡して保存する。
+        - 期待値: rows_data に含めていない既存台帳の化学分析値は変更されないこと。
+        """
+        import dataclasses
+
+        from soil_analysis.models import SoilChemicalMeasurement
+
+        other_period = LandPeriod.objects.create(name="2024年秋", year=2024)
+        other_ledger = LandLedger.objects.create(
+            land=self.land,
+            land_period=other_period,
+            sampling_date=date(2024, 10, 1),
+            analytical_agency=self.company,
+            crop=self.crop,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        SoilChemicalMeasurement.objects.create(
+            land_ledger=other_ledger,
+            ph=5.5,
+            ec=0.1,
+            source_file="existing.xlsx",
+        )
+
+        row = KawadaRow(
+            row_number=4,
+            analysis_number="A003",
+            person_name="テスト太郎",
+            land_name="圃場A",
+            crop="キャベツ",
+            ph=7.2,
+            ec=0.3,
+        )
+        rows_data = [
+            {"row_data": dataclasses.asdict(row), "land_ledger_id": self.ledger.id}
+        ]
+
+        result = ChemicalImportService.save_import_data(
+            rows_data, source_file="selected_only.xlsx"
+        )
+
+        self.assertEqual(result["created"], 1)
+        other_measurement = SoilChemicalMeasurement.objects.get(
+            land_ledger=other_ledger
+        )
+        self.assertEqual(other_measurement.ph, 5.5)
+        self.assertEqual(other_measurement.source_file, "existing.xlsx")
