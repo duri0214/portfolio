@@ -23,6 +23,7 @@ from soil_analysis.models import (
     LandPeriod,
     SamplingMethod,
     LandBlock,
+    SoilChemicalMeasurement,
 )
 
 
@@ -184,6 +185,130 @@ class ChemicalAssociationViewsTest(TestCase):
         self.assertContains(response, "2024 2024年春 / 採土日: 2024-04-01")
         self.assertContains(response, "2025 播種時 / 採土日: 2025-04-01")
         self.assertContains(response, f'value="{other_ledger.id}"')
+
+    def test_row_confirmation_excludes_used_chemical_ledger_options(self):
+        """
+        シナリオ:
+        - 入力: 化学分析データに紐付け済みの帳簿と未使用帳簿を用意する。
+        - 処理: 化学分析の行別帳簿関連付け画面を表示する。
+        - 期待値: 使用済み帳簿は候補帳簿にも全帳簿にも表示されず、未使用帳簿だけ選べること。
+        """
+        unused_period = LandPeriod.objects.create(name="2024年秋", year=2024)
+        unused_ledger = LandLedger.objects.create(
+            land=self.ledger.land,
+            land_period=unused_period,
+            sampling_date=date(2024, 10, 1),
+            analytical_agency=self.company,
+            crop=self.ledger.crop,
+            sampling_method=self.ledger.sampling_method,
+            sampling_staff=self.user,
+        )
+        SoilChemicalMeasurement.objects.create(
+            land_ledger=self.ledger,
+            ph=6.5,
+            ec=0.1,
+            source_file="used.xlsx",
+        )
+        session = self.client.session
+        session["chemical_import_session"] = {
+            "rows": [
+                {
+                    "row_data": {
+                        "row_number": 4,
+                        "analysis_number": "A001",
+                        "person_name": "テスト太郎",
+                        "land_name": "圃場A",
+                        "crop": "キャベツ",
+                        "ec": 0.1,
+                        "ph": 6.5,
+                        "cec": None,
+                        "cao": None,
+                        "mgo": None,
+                        "k2o": None,
+                        "lime_saturation": None,
+                        "magnesia_saturation": None,
+                        "potash_saturation": None,
+                        "base_saturation": None,
+                        "p2o5": None,
+                        "phosphorus_absorption": None,
+                        "nh4n": None,
+                        "no3n": None,
+                        "humus": None,
+                        "bulk_density": None,
+                    },
+                    "selected_ledger_id": None,
+                    "status": "pending",
+                }
+            ],
+            "total_rows": 1,
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("soil:chemical_association_field_row", kwargs={"row_index": 0})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, f'value="{self.ledger.id}"')
+        self.assertContains(response, f'value="{unused_ledger.id}"')
+
+    def test_row_confirmation_rejects_used_chemical_ledger_post(self):
+        """
+        シナリオ:
+        - 入力: 化学分析データに紐付け済みの帳簿IDをPOSTする。
+        - 処理: 行別帳簿関連付け画面で帳簿を確定しようとする。
+        - 期待値: 使用済み帳簿は確定されず、同じ行の関連付け画面に戻ること。
+        """
+        SoilChemicalMeasurement.objects.create(
+            land_ledger=self.ledger,
+            ph=6.5,
+            ec=0.1,
+            source_file="used.xlsx",
+        )
+        session = self.client.session
+        session["chemical_import_session"] = {
+            "rows": [
+                {
+                    "row_data": {
+                        "row_number": 4,
+                        "analysis_number": "A001",
+                        "person_name": "テスト太郎",
+                        "land_name": "圃場A",
+                        "crop": "キャベツ",
+                        "ec": 0.1,
+                        "ph": 6.5,
+                        "cec": None,
+                        "cao": None,
+                        "mgo": None,
+                        "k2o": None,
+                        "lime_saturation": None,
+                        "magnesia_saturation": None,
+                        "potash_saturation": None,
+                        "base_saturation": None,
+                        "p2o5": None,
+                        "phosphorus_absorption": None,
+                        "nh4n": None,
+                        "no3n": None,
+                        "humus": None,
+                        "bulk_density": None,
+                    },
+                    "selected_ledger_id": None,
+                    "status": "pending",
+                }
+            ],
+            "total_rows": 1,
+        }
+        session.save()
+
+        row_url = reverse(
+            "soil:chemical_association_field_row", kwargs={"row_index": 0}
+        )
+        response = self.client.post(row_url, {"land_ledger": self.ledger.id})
+
+        self.assertRedirects(response, row_url)
+        updated_session = self.client.session["chemical_import_session"]["rows"][0]
+        self.assertEqual(updated_session["status"], "pending")
+        self.assertIsNone(updated_session["selected_ledger_id"])
 
     def test_save_all_redirects_to_success(self):
         session = self.client.session

@@ -43,6 +43,20 @@ class ChemicalImportService:
         return ParseResult(rows=result.rows, errors=result.errors)
 
     @classmethod
+    def get_used_ledger_ids(cls) -> list[int]:
+        """
+        化学分析データに紐付け済みの帳簿IDを取得する。
+
+        Returns:
+            使用済み帳簿IDのリスト。
+        """
+        return list(
+            SoilChemicalMeasurement.objects.values_list(
+                "land_ledger_id", flat=True
+            ).distinct()
+        )
+
+    @classmethod
     def get_suggested_ledgers(
         cls, land_name: str, base_ledger_id: int | None = None
     ) -> list[LandLedger]:
@@ -53,9 +67,11 @@ class ChemicalImportService:
         # 圃場名で検索（完全一致または部分一致）
         lands = Land.objects.filter(name__icontains=land_name)
 
-        # それらの圃場に紐づく帳簿を取得
-        ledgers = LandLedger.objects.filter(land__in=lands).select_related(
-            "land", "land__company", "land_period"
+        # それらの圃場に紐づく未使用の帳簿を取得
+        ledgers = (
+            LandLedger.objects.filter(land__in=lands)
+            .exclude(id__in=cls.get_used_ledger_ids())
+            .select_related("land", "land__company", "land_period")
         )
 
         if base_ledger_id:
@@ -96,6 +112,7 @@ class ChemicalImportService:
         lands = Land.objects.filter(query)
         all_ledgers = list(
             LandLedger.objects.filter(land__in=lands)
+            .exclude(id__in=cls.get_used_ledger_ids())
             .select_related("land", "land__company", "land_period")
             .order_by("-id")
         )

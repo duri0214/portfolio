@@ -21,6 +21,7 @@ from soil_analysis.models import (
     Crop,
     SamplingMethod,
     LandBlock,
+    SoilChemicalMeasurement,
 )
 
 
@@ -102,6 +103,35 @@ class ChemicalImportServiceTest(TestCase):
             "圃場A", base_ledger_id=ledger2.id
         )
         self.assertEqual(ledgers2[0].id, ledger2.id)
+
+    def test_get_suggested_ledgers_excludes_used_ledger(self):
+        """
+        シナリオ:
+        - 入力: 同一圃場に使用済み帳簿と未使用帳簿を用意する。
+        - 処理: 圃場名から化学分析用の候補帳簿を取得する。
+        - 期待値: 化学分析データに紐付け済みの帳簿は候補から除外されること。
+        """
+        unused_period = LandPeriod.objects.create(name="2024年秋", year=2024)
+        unused_ledger = LandLedger.objects.create(
+            land=self.land,
+            land_period=unused_period,
+            sampling_date=date(2024, 10, 1),
+            analytical_agency=self.company,
+            crop=self.crop,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        SoilChemicalMeasurement.objects.create(
+            land_ledger=self.ledger,
+            ph=6.5,
+            ec=0.1,
+            source_file="used.xlsx",
+        )
+
+        ledgers = ChemicalImportService.get_suggested_ledgers("圃場A")
+
+        self.assertNotIn(self.ledger, ledgers)
+        self.assertIn(unused_ledger, ledgers)
 
     def test_save_import_data(self):
         """データの保存ができること"""

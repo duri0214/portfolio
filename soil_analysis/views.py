@@ -661,9 +661,11 @@ class ChemicalAssociationRowView(TemplateView):
         suggested_ledgers = ChemicalImportService.get_suggested_ledgers(
             land_name, base_ledger_id=import_session.get("base_ledger_id")
         )
-        all_ledgers = LandLedger.objects.select_related(
-            "land", "land__company", "land_period"
-        ).order_by("-id")[:200]
+        all_ledgers = (
+            LandLedger.objects.select_related("land", "land__company", "land_period")
+            .exclude(id__in=ChemicalImportService.get_used_ledger_ids())
+            .order_by("-id")[:200]
+        )
         suggested_ids = {ledger.id for ledger in suggested_ledgers}
         fallback_ledgers = [
             ledger for ledger in all_ledgers if ledger.id not in suggested_ids
@@ -690,6 +692,16 @@ class ChemicalAssociationRowView(TemplateView):
 
         ledger_id = request.POST.get("land_ledger")
         if ledger_id:
+            if SoilChemicalMeasurement.objects.filter(
+                land_ledger_id=ledger_id
+            ).exists():
+                messages.error(
+                    request, "選択した帳簿はすでに化学分析データに紐付いています。"
+                )
+                return redirect(
+                    "soil:chemical_association_field_row", row_index=row_index
+                )
+
             import_session["rows"][row_index]["selected_ledger_id"] = int(ledger_id)
             import_session["rows"][row_index]["status"] = "confirmed"
             request.session.modified = True
