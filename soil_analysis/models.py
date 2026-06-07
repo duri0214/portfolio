@@ -635,12 +635,14 @@ class Device(models.Model):
 
     Attributes:
         name (str): デバイス名
+        max_memory (int): 最大メモリ数
         remark (str): 備考
         created_at (datetime): 作成日時
         updated_at (datetime): 更新日時
     """
 
     name = models.CharField("デバイス名", max_length=256)
+    max_memory = models.IntegerField("最大メモリ数", null=True, blank=True)
     remark = models.TextField("備考", null=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
     updated_at = models.DateTimeField("更新日時", auto_now=True)

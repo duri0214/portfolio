@@ -6,7 +6,14 @@ class SoilHardnessDevice:
     """土壌硬度計測器に関連する定数と仕様"""
 
     DEVICE_NAME = "DIK-5531"
+    DEFAULT_MAX_MEMORY = 400
     MAX_DEPTH = 60
+    MIN_PRESSURE = 232
+    MAX_PRESSURE = 3000
+    MIN_BASE_PRESSURE = 232
+    MAX_BASE_PRESSURE = 350
+    SPRING_CONSTANT = "490"
+    CONE_AREA = "2"
 
 
 @dataclass
@@ -26,8 +33,14 @@ class SoilHardnessCharacteristics:
     MAX_PRESSURE_DELTA = 100
 
     # 毎回ランダム値を生成するにはdefault_factory関数を使用
-    base_pressure: int = field(default_factory=lambda: random.randint(232, 350))
-    max_pressure_increase: int = field(default_factory=lambda: 3000)
+    base_pressure: int = field(
+        default_factory=lambda: random.randint(
+            SoilHardnessDevice.MIN_BASE_PRESSURE, SoilHardnessDevice.MAX_BASE_PRESSURE
+        )
+    )
+    max_pressure_increase: int = field(
+        default_factory=lambda: SoilHardnessDevice.MAX_PRESSURE
+    )
     noise_range: tuple[int, int] = field(default_factory=lambda: (-200, 200))
     last_pressure: int | None = None
 
@@ -72,7 +85,10 @@ class SoilHardnessCharacteristics:
                 calculated_pressure = self.last_pressure + self.MAX_PRESSURE_DELTA
 
         # 有効範囲内に収める
-        pressure = max(232, min(3000, calculated_pressure))
+        pressure = max(
+            SoilHardnessDevice.MIN_PRESSURE,
+            min(SoilHardnessDevice.MAX_PRESSURE, calculated_pressure),
+        )
 
         # 次回のために今回の値を保存
         self.last_pressure = pressure
@@ -101,8 +117,8 @@ class SoilHardnessCsvHeader:
             ["Longitude", "E 000.00.0000"],
             ["Set Depth[cm]", str(SoilHardnessDevice.MAX_DEPTH)],
             ["Date and Time", date_str],
-            ["Spring[N/48.5mm]", "490"],
-            ["Cone[cm2]", "2"],
+            ["Spring[N/48.5mm]", SoilHardnessDevice.SPRING_CONSTANT],
+            ["Cone[cm2]", SoilHardnessDevice.CONE_AREA],
             [],
             ["Depth[cm]", "Pressure[kPa]", "DateTime", "GpsMode", "GPS Satellites"],
         ]

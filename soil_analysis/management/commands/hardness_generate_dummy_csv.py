@@ -1,3 +1,4 @@
+import argparse
 import csv
 import os
 import random
@@ -7,7 +8,9 @@ from datetime import datetime
 from pathlib import Path
 
 from django.core.management.base import BaseCommand
+from django.db import DatabaseError
 
+from soil_analysis.domain.repository.device import DeviceRepository
 from soil_analysis.domain.valueobject.management.commands.hardness_generate_dummy_csv import (
     SoilHardnessDevice,
     SoilHardnessCsvHeader,
@@ -16,15 +19,15 @@ from soil_analysis.domain.valueobject.management.commands.hardness_generate_dumm
 
 
 class Command(BaseCommand):
-    help = """
+    """
     土壌硬度計測器CSVファイルを生成するバッチ
 
     計測器制約:
-    - 計測器は400メモリーまで保存可能
-    - 1圃場あたり25メモリー消費のため、1日最大16圃場まで計測可能
+    - 計測器は SoilHardnessDevice.DEFAULT_MAX_MEMORY メモリーまで保存可能
+    - 1圃場あたり (BLOCKS_PER_FIELD * POINTS_PER_BLOCK) メモリー消費のため、最大圃場数はこれに基づき計算される
 
     計測シナリオ:
-    圃場は3x3の9ブロックに分かれるが、実際の計測は5ブロックのみ実施
+    圃場は3x3の9ブロックに分かれるが、実際の計測は BLOCKS_PER_FIELD ブロックのみ実施
     ┌────┬────┬────┐
     │ C3 │ B3 │ A3 │  → C3, A3を計測
     ├────┼────┼────┤
@@ -33,10 +36,35 @@ class Command(BaseCommand):
     │ C1 │ B1 │ A1 │  → C1, A1を計測
     └────┴────┴────┘
 
-    各ブロックで5点法による5回の測定を実施
-    1圃場あたり25メモリー（5ブロック × 5測定）を消費
+    各ブロックで POINTS_PER_BLOCK 点法による測定を実施
     複数圃場を計測する場合、memoryは連番で増加し続ける
     """
+
+    BLOCKS_PER_FIELD = 5
+    POINTS_PER_BLOCK = 5
+
+    help = "土壌硬度計測器CSVファイルを生成します"
+    # 詳細な説明を description に持たせる（RawDescriptionHelpFormatter で改行を維持）
+    description = """
+土壌硬度計測器CSVファイルを生成するバッチ
+
+計測器制約:
+- 計測器は SoilHardnessDevice.DEFAULT_MAX_MEMORY メモリーまで保存可能
+- 1圃場あたり (BLOCKS_PER_FIELD * POINTS_PER_BLOCK) メモリー消費のため、最大圃場数はこれに基づき計算される
+
+計測シナリオ:
+圃場は3x3の9ブロックに分かれるが、実際の計測は BLOCKS_PER_FIELD ブロックのみ実施
+┌────┬────┬────┐
+│ C3 │ B3 │ A3 │  → C3, A3を計測
+├────┼────┼────┤
+│ C2 │ B2 │ A2 │  → B2のみ計測
+├────┼────┼────┤
+│ C1 │ B1 │ A1 │  → C1, A1を計測
+└────┴────┴────┘
+
+各ブロックで POINTS_PER_BLOCK 点法による測定を実施
+複数圃場を計測する場合、memoryは連番で増加し続ける
+"""
 
     def add_arguments(self, parser):
         parser.add_argument(
