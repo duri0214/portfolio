@@ -203,9 +203,13 @@ class Command(BaseCommand):
             field_dir = dataset_dir / field_dirname
             os.makedirs(field_dir, exist_ok=True)
 
-            # 実際の計測では5ブロック（C1, C3, B2, A1, A3）のみを計測
-            for _ in range(5):
-                for _ in range(1, 6):
+            # 実際の計測では指定されたブロック数のみを計測
+            for _ in range(cls.BLOCKS_PER_FIELD):
+                for _ in range(cls.POINTS_PER_BLOCK):
+                    if global_memory_counter > SoilHardnessDevice.DIK5531_MAX_MEMORY:
+                        # 最大メモリを超える場合は生成を打ち切る（実機の挙動を考慮）
+                        break
+
                     file_seq = str(global_memory_counter).zfill(4)
                     filename = f"{SoilHardnessDevice.DEVICE_NAME}_{file_seq}_N00000000_E000000000.csv"
                     filepath = field_dir / filename
