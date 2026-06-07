@@ -83,10 +83,10 @@ class Command(BaseCommand):
             help="生成したい圃場数を指定してCSVを作成する",
         )
         parser.add_argument(
-            "--dataset_count",
+            "--want_to_create_dataset_round",
             type=int,
             default=1,
-            help="生成するアップロード用データセット数（最大2セット）",
+            help="生成したいラウンド数を指定してCSVを作成する（最大 2 ラウンド）",
         )
 
     def handle(self, *args, **options):
@@ -94,18 +94,18 @@ class Command(BaseCommand):
         memories_per_field = self.BLOCKS_PER_FIELD * self.POINTS_PER_BLOCK
         max_fields = max_memory // memories_per_field
         num_fields = max(1, min(options["num_fields"], max_fields))
-        dataset_count = max(1, min(options["dataset_count"], 2))
+        want_to_create_dataset_round = max(
+            1,
+            min(
+                options["want_to_create_dataset_round"],
+                2,
+            ),
+        )
 
         if options["num_fields"] > max_fields:
             self.stdout.write(
                 self.style.WARNING(
                     f"指定された{options['num_fields']}圃場は計測器の制約（最大メモリ:{max_memory}）により{max_fields}圃場に制限されました"
-                )
-            )
-        if options["dataset_count"] > 2:
-            self.stdout.write(
-                self.style.WARNING(
-                    f"指定された{options['dataset_count']}セットは検証用途の制約により2セットに制限されました"
                 )
             )
 
