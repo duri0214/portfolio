@@ -425,6 +425,7 @@ class HardnessUploadView(FormView):
         if os.path.exists(upload_folder):
             # エラーログのクリア
             HardnessImportErrorRepository.delete_all()
+            imported_folder_names = set()
 
             csv_files = glob.glob(
                 os.path.join(upload_folder, "**/*.csv"), recursive=True
@@ -436,6 +437,7 @@ class HardnessUploadView(FormView):
                 parse_result = HardnessImportService.parse_csv(csv_file)
 
                 if parse_result.errors:
+                    imported_folder_names.add(parent_folder)
                     for error_msg in parse_result.errors:
                         HardnessImportErrorRepository.create(
                             file=file_name,
@@ -445,6 +447,11 @@ class HardnessUploadView(FormView):
                     continue
 
                 HardnessImportService.save_import_data(parse_result.rows)
+                imported_folder_names.update(row.folder for row in parse_result.rows)
+
+            self.request.session["hardness_import_folders"] = sorted(
+                imported_folder_names
+            )
 
             try:
                 shutil.rmtree(upload_folder)
@@ -980,10 +987,11 @@ class HardnessSuccessView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["import_errors"] = HardnessImportErrorRepository.get_all()
+        import_folder_names = self.request.session.get("hardness_import_folders")
 
         # CSVインポートされた硬度測定データをフォルダ名でグループ化し、各フォルダの統計情報を取得
         folder_stats = SoilHardnessMeasurementRepository.get_folder_stats(
-            associated_only=False
+            associated_only=False, folder_names=import_folder_names
         )
 
         # フォルダ名に基づいて新規登録が必要な圃場を特定
@@ -992,15 +1000,15 @@ class HardnessSuccessView(TemplateView):
             folder_name = stats.folder
             land_name = self._extract_land_name_from_folder(folder_name)
 
-            if land_name and not LandRepository.exists_by_name(land_name):
+            if land_name and not LandRepository.exists_by_name_or_display_prefix(
+                land_name
+            ):
                 missing_lands.append(
                     {"folder_name": folder_name, "suggested_land_name": land_name}
                 )
 
         context["folder_stats"] = folder_stats
-        context["total_records"] = len(
-            SoilHardnessMeasurementRepository.get_folder_stats()
-        )
+        context["total_records"] = sum(stats.count for stats in folder_stats)
         context["missing_lands"] = missing_lands
 
         # 圃場作成用の会社一覧を追加（農業法人のみ）

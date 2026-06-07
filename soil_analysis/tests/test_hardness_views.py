@@ -93,3 +93,53 @@ class HardnessViewsTest(TestCase):
         self.assertEqual(response.context["min_memory"], 1)
         self.assertEqual(response.context["max_memory"], 1)
         self.assertEqual(response.context["folder_name"], "Folder1")
+
+    def test_hardness_success_view_uses_current_import_folders(self):
+        """
+        シナリオ:
+        - 入力: DBには過去取り込みのFolder1と今回取り込みのFIELD001_ROUND02が混在し、セッションにはFIELD001_ROUND02だけを保持する。
+        - 処理: 硬度アップロード成功画面を表示する。
+        - 期待値: 取り込みデータ集計と総レコード数はFIELD001_ROUND02だけを対象にし、表示補足付き圃場を未作成扱いしない。
+        """
+        Land.objects.create(
+            name="FIELD001（点検用圃場）",
+            company=self.company,
+            jma_city=self.city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+        )
+        SoilHardnessMeasurement.objects.create(
+            set_device=self.device,
+            set_memory=2,
+            set_datetime=datetime(2023, 7, 2, 10, 0, 0),
+            set_depth=50,
+            set_spring=1,
+            set_cone=1,
+            depth=1,
+            pressure=110,
+            folder="FIELD001_ROUND02",
+        )
+        SoilHardnessMeasurement.objects.create(
+            set_device=self.device,
+            set_memory=3,
+            set_datetime=datetime(2023, 7, 2, 10, 0, 0),
+            set_depth=50,
+            set_spring=1,
+            set_cone=1,
+            depth=1,
+            pressure=120,
+            folder="FIELD001_ROUND02",
+        )
+        session = self.client.session
+        session["hardness_import_folders"] = ["FIELD001_ROUND02"]
+        session.save()
+
+        response = self.client.get(reverse("soil:hardness_success"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_records"], 2)
+        self.assertEqual(
+            [stats.folder for stats in response.context["folder_stats"]],
+            ["FIELD001_ROUND02"],
+        )
+        self.assertEqual(response.context["missing_lands"], [])

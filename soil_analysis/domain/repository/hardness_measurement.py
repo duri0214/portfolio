@@ -10,7 +10,9 @@ class SoilHardnessMeasurementRepository:
     """
 
     @staticmethod
-    def get_folder_stats(associated_only: bool = False) -> list[FolderStats]:
+    def get_folder_stats(
+        associated_only: bool = False, folder_names: list[str] | None = None
+    ) -> list[FolderStats]:
         """
         フォルダ別の統計情報を取得します
 
@@ -18,6 +20,7 @@ class SoilHardnessMeasurementRepository:
             associated_only: データの処理段階に応じて対象を絞り込む
                            False: CSVインポート直後の全データが対象
                            True:  圃場関連付け完了後のデータが対象
+            folder_names: 指定した場合、そのフォルダ名の測定データだけを対象にする
 
         Returns:
             list[FolderStats]: フォルダ別統計情報のリスト
@@ -36,6 +39,9 @@ class SoilHardnessMeasurementRepository:
         """
         # 基本クエリを構築
         queryset = SoilHardnessMeasurement.objects.select_related("set_device")
+
+        if folder_names is not None:
+            queryset = queryset.filter(folder__in=folder_names)
 
         # 条件に応じて絞り込み
         if associated_only:
