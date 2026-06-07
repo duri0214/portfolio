@@ -943,24 +943,16 @@ class HardnessGenerateDummyCsvView(View):
     @staticmethod
     def post(request, *args, **kwargs):
         try:
-            dataset_count = int(request.POST.get("dataset_count", 2))
+            want_to_create_dataset_round = int(
+                request.POST.get("want_to_create_dataset_round", 2)
+            )
             num_fields = int(request.POST.get("num_fields", 3))
-
-            if dataset_count < 1 or dataset_count > 2:
-                messages.error(
-                    request, "データセット数は1〜2の範囲で指定してください。"
-                )
-                return HttpResponseRedirect(reverse("soil:hardness_upload"))
-
-            if num_fields < 1 or num_fields > 16:
-                messages.error(request, "圃場数は1〜16の範囲で指定してください。")
-                return HttpResponseRedirect(reverse("soil:hardness_upload"))
 
             # CSVを生成して出力パスを取得
             csv_output_path = call_command(
                 "hardness_generate_dummy_csv",
                 f"--num_fields={num_fields}",
-                f"--dataset_count={dataset_count}",
+                f"--want_to_create_dataset_round={want_to_create_dataset_round}",
             )
 
             if csv_output_path and os.path.exists(csv_output_path):

@@ -126,14 +126,14 @@
                         <form method="post" action="{% url 'soil:hardness_generate_dummy_csv' %}">
                             {% csrf_token %}
                             <div class="mb-3">
-                                {{ csv_generate_form.dataset_count.label_tag }}
-                                {{ csv_generate_form.dataset_count }}
-                                {% if csv_generate_form.dataset_count.help_text %}
-                                    <div class="form-text">{{ csv_generate_form.dataset_count.help_text }}</div>
+                                {{ csv_generate_form.want_to_create_dataset_round.label_tag }}
+                                {{ csv_generate_form.want_to_create_dataset_round }}
+                                {% if csv_generate_form.want_to_create_dataset_round.help_text %}
+                                    <div class="form-text">{{ csv_generate_form.want_to_create_dataset_round.help_text }}</div>
                                 {% endif %}
-                                {% if csv_generate_form.dataset_count.errors %}
+                                {% if csv_generate_form.want_to_create_dataset_round.errors %}
                                     <div class="invalid-feedback d-block">
-                                        {% for error in csv_generate_form.dataset_count.errors %}
+                                        {% for error in csv_generate_form.want_to_create_dataset_round.errors %}
                                             {{ error }}
                                         {% endfor %}
                                     </div>

@@ -10,6 +10,9 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
 
+from soil_analysis.domain.repository.hardness_import_error import (
+    HardnessImportErrorRepository,
+)
 from soil_analysis.domain.service.hardness_import_service import (
     HardnessImportService,
     HardnessRow,
@@ -31,9 +34,6 @@ from soil_analysis.models import (
     SamplingMethod,
     SamplingOrder,
     LandBlock,
-)
-from soil_analysis.domain.repository.hardness_import_error import (
-    HardnessImportErrorRepository,
 )
 
 
@@ -273,13 +273,15 @@ class HardnessImportServiceTest(TestCase):
     def test_generate_dummy_csv_command_creates_two_upload_zips_without_overlap(self):
         """
         シナリオ:
-        - 入力: dataset_count=2, num_fields=2 を指定する。
+        - 入力: want_to_create_dataset_round=2, num_fields=2 を指定する。
         - 処理: 硬度ダミーCSV生成コマンドを実行する。
         - 期待値: 2つの投入用ZIPが生成され、フォルダ名・測定日時・メモリ番号が重複しないこと。
         """
         output_path = Path(
             call_command(
-                "hardness_generate_dummy_csv", "--num_fields=2", "--dataset_count=2"
+                "hardness_generate_dummy_csv",
+                "--num_fields=2",
+                "--want_to_create_dataset_round=2",
             )
         )
         self.addCleanup(lambda: shutil.rmtree(output_path.parent, ignore_errors=True))

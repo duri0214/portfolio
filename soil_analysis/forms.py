@@ -151,8 +151,8 @@ class ChemicalUploadForm(forms.Form):
 
 
 class CsvGenerateForm(forms.Form):
-    dataset_count = forms.IntegerField(
-        label="生成するデータセット数",
+    want_to_create_dataset_round = forms.IntegerField(
+        label="生成するラウンド数",
         min_value=1,
         max_value=2,
         initial=2,
@@ -164,7 +164,7 @@ class CsvGenerateForm(forms.Form):
                 "max": "2",
             }
         ),
-        help_text="連続アップロード検証用に1〜2セット生成できます",
+        help_text="連続アップロード検証用に1〜2ラウンド生成できます",
     )
     num_fields = forms.IntegerField(
         label="生成する圃場数",
