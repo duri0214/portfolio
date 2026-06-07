@@ -87,7 +87,7 @@ class StandardReportViewTest(TestCase):
         シナリオ:
         - 入力: 正常な化学分析データを持つ帳簿。
         - 処理: 標準レポート画面(standard_report)を表示。
-        - 期待値: ステータス200、正しいテンプレートの使用、および「pH・ECともに適正範囲内です」等の正常判定が表示されていること。
+        - 期待値: ステータス200、正しいテンプレートの使用、正常判定、およびレビュー未登録時の「評価する」導線が表示されていること。
         """
         url = reverse(
             "soil:standard_report",
@@ -110,6 +110,11 @@ class StandardReportViewTest(TestCase):
         self.assertContains(response, "※数値は5点平均硬度(kPa)")
         self.assertContains(response, "圃場単位の分析値に基づく判定です")
         self.assertContains(response, "テスト株式会社")
+        self.assertContains(response, "専門家評価")
+        self.assertContains(
+            response, "この台帳にはまだ評価コメントが登録されていません。"
+        )
+        self.assertContains(response, "評価する")
 
     def test_view_displays_warning(self):
         """

@@ -151,6 +151,21 @@ class ChemicalUploadForm(forms.Form):
 
 
 class CsvGenerateForm(forms.Form):
+    dataset_count = forms.IntegerField(
+        label="生成するデータセット数",
+        min_value=1,
+        max_value=2,
+        initial=2,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "1-2の範囲で入力してください",
+                "min": "1",
+                "max": "2",
+            }
+        ),
+        help_text="連続アップロード検証用に1〜2セット生成できます",
+    )
     num_fields = forms.IntegerField(
         label="生成する圃場数",
         min_value=1,

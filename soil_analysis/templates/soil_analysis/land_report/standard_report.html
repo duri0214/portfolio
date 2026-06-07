@@ -367,12 +367,28 @@
             </div>
         </div>
 
-        {% if land_review.first.comment %}
-            <div class="alert alert-secondary mb-4 shadow-sm" role="alert">
-                <h6 class="alert-heading small fw-bold">専門家コメント</h6>
-                {{ land_review.first.comment }}
+        <div class="card mb-4 shadow-sm border-0">
+            <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div>
+                    <h6 class="fw-bold mb-2">
+                        <i class="bi bi-clipboard-check me-1"></i>専門家評価
+                    </h6>
+                    {% if land_review.first.comment %}
+                        <p class="mb-0">{{ land_review.first.comment }}</p>
+                    {% else %}
+                        <p class="text-muted mb-0 small">
+                            この台帳にはまだ評価コメントが登録されていません。
+                        </p>
+                    {% endif %}
+                </div>
+                <button type="button"
+                        class="btn btn-outline-primary flex-shrink-0"
+                        disabled
+                        title="評価コメントの登録機能は Issue #720 で実装予定です">
+                    評価する
+                </button>
             </div>
-        {% endif %}
+        </div>
 
 
         <!-- 補足情報セクション -->

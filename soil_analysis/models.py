@@ -648,11 +648,11 @@ class Device(models.Model):
 
 class SoilHardnessMeasurement(models.Model):
     """
-    土壌硬度測定の生データ。
+    土壌硬度CSVから取り込んだ深度別の測定レコード。
 
-    土壌硬度計から取得された深度（depth）ごとの圧力（pressure）値を保持します。
-    1回の貫入計測は複数の深度レコードで構成されます。
-    計測は圃場のブロック単位（land_block）で行われ、特定の時期の台帳（land_ledger）に紐づきます。
+    CSV取り込み直後は未関連付けで、後続の関連付け画面で台帳・圃場ブロックを確定する。
+    1回の貫入計測は同一の set_device, set_memory, set_datetime を持つ複数 depth レコードで構成される。
+    folder はアップロードZIP内の親フォルダ名で、関連付け前の圃場グルーピングに使う。
 
     Attributes:
         set_memory (int): メモリ番号
@@ -662,12 +662,12 @@ class SoilHardnessMeasurement(models.Model):
         set_cone (int): コーン番号
         depth (int): 深度(cm)
         pressure (int): 圧力(kPa)
-        folder (str): フォルダ名
+        folder (str): アップロードZIP内の親フォルダ名。関連付け画面で圃場グループを識別するために使う。
         created_at (datetime): 作成日時
         updated_at (datetime): 更新日時
-        set_device (Device): 測定デバイス
-        land_block (LandBlock): 圃場ブロック
-        land_ledger (LandLedger): 台帳
+        set_device (Device): 測定デバイス。set_memory, set_datetime, depth と組み合わせて一意性を判定する。
+        land_block (LandBlock | None): 関連付け後の圃場ブロック。CSV取り込み直後は未設定。
+        land_ledger (LandLedger | None): 関連付け後の台帳。CSV取り込み直後は未設定。
     """
 
     set_memory = models.IntegerField("メモリ番号")

@@ -1,20 +1,21 @@
 import dataclasses
 import glob
+import io
 import os
 import re
 import shutil
+import zipfile
 from pathlib import Path
 
-from django.conf import settings
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.db.models import Prefetch, Sum, Count
 from django.http import (
+    HttpResponse,
     HttpResponseRedirect,
     JsonResponse,
     Http404,
-    FileResponse,
 )
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -27,7 +28,7 @@ from django.views.generic import (
     TemplateView,
     FormView,
 )
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 
 from lib.geo.valueobject.coord import XarvioCoord
 from lib.zipfileservice import ZipFileService
@@ -777,26 +778,136 @@ class HardnessDeleteAllView(View):
 
 class ChemicalDownloadSampleView(View):
     """
-    サンプルExcelファイルをダウンロード提供
+    連続登録テスト用のサンプルExcel一式をZIPでダウンロード提供
     """
 
     @staticmethod
     def get(request, *args, **kwargs):
-        file_path = os.path.join(
-            settings.BASE_DIR,
-            "soil_analysis",
-            "static",
-            "soil_analysis",
-            "sample_data",
-            "chemical_sample.xlsx",
+        zip_buffer = io.BytesIO()
+        sample_files = {
+            "chemical_stage01.xlsx": ChemicalDownloadSampleView._create_workbook_bytes(
+                stage=1
+            ),
+            "chemical_stage02.xlsx": ChemicalDownloadSampleView._create_workbook_bytes(
+                stage=2
+            ),
+            "chemical_duplicate.xlsx": ChemicalDownloadSampleView._create_workbook_bytes(
+                stage=1
+            ),
+            "README.txt": ChemicalDownloadSampleView._create_readme().encode("utf-8"),
+        }
+
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for filename, content in sample_files.items():
+                zip_file.writestr(filename, content)
+
+        response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
+        response["Content-Disposition"] = 'attachment; filename="chemical_samples.zip"'
+        return response
+
+    @staticmethod
+    def _create_workbook_bytes(stage: int) -> bytes:
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "川田研究所レポート"
+
+        worksheet.append(
+            [
+                "Agsoil株式会社",
+                None,
+                "御中",
+                None,
+                None,
+                None,
+                f"2026.6.{stage}",
+            ]
         )
-        if os.path.exists(file_path):
-            return FileResponse(
-                open(file_path, "rb"),
-                as_attachment=True,
-                filename="chemical_sample.xlsx",
+        worksheet.append([])
+        worksheet.append(
+            [
+                "分析番号",
+                "氏名",
+                "圃場名",
+                "栽培作物",
+                "EC (mS/cm)",
+                "pH",
+                "meq/100g",
+                "CaO (mg/100g)",
+                "MgO (mg/100g)",
+                "K2O (mg/100g)",
+                "石灰飽和度 %",
+                "苦土飽和度 %",
+                "加里飽和度 %",
+                "塩基飽和度 %",
+                "P2O5 (mg/100g)",
+                "リン吸 (mg/100g)",
+                "NH4-N (mg/100g)",
+                "NO3-N (mg/100g)",
+                "腐植 %",
+                "仮比重",
+            ]
+        )
+
+        base_analysis_number = 2606000 + (stage * 100)
+        land_names = (
+            "FIELD001（点検用圃場）",
+            "FIELD002（点検用圃場）",
+            "FIELD003（点検用圃場）",
+        )
+        for row_index, land_name in enumerate(land_names, start=1):
+            worksheet.append(
+                ChemicalDownloadSampleView._create_chemical_row(
+                    analysis_number=base_analysis_number + row_index,
+                    land_name=land_name,
+                    crop_name=("レタス", "キャベツ", "トマト")[row_index - 1],
+                    value_offset=(stage * 10) + row_index,
+                )
             )
-        raise Http404
+
+        output = io.BytesIO()
+        workbook.save(output)
+        return output.getvalue()
+
+    @staticmethod
+    def _create_chemical_row(
+        analysis_number: int, land_name: str, crop_name: str, value_offset: int
+    ) -> list:
+        return [
+            str(analysis_number),
+            "テスト担当",
+            land_name,
+            crop_name,
+            round(0.20 + value_offset * 0.01, 3),
+            round(6.10 + value_offset * 0.02, 2),
+            round(11.0 + value_offset * 0.3, 1),
+            round(300.0 + value_offset * 3.0, 1),
+            round(45.0 + value_offset * 1.2, 1),
+            round(22.0 + value_offset * 0.8, 1),
+            round(85.0 + value_offset * 0.7, 1),
+            round(18.0 + value_offset * 0.4, 1),
+            round(4.0 + value_offset * 0.2, 1),
+            round(105.0 + value_offset * 0.9, 1),
+            round(600.0 + value_offset * 4.0, 1),
+            round(520.0 + value_offset * 5.0, 1),
+            round(0.5 + value_offset * 0.03, 2),
+            round(1.0 + value_offset * 0.08, 2),
+            round(2.0 + value_offset * 0.06, 2),
+            round(1.00 + value_offset * 0.01, 2),
+        ]
+
+    @staticmethod
+    def _create_readme() -> str:
+        return "\n".join(
+            [
+                "化学分析 連続アップロード検証用データ",
+                "",
+                "1. chemical_stage01.xlsx を soil:chemical_upload へ投入してください。",
+                "2. chemical_stage02.xlsx を続けて投入してください。",
+                "3. chemical_duplicate.xlsx は stage01 と同じ圃場名を含むため、同じ台帳に割り当てた場合の更新検証に使います。",
+                "",
+                "各Excelは川田研究所形式の列順に合わせています。",
+            ]
+        )
 
 
 class ChemicalDeleteAllView(View):
@@ -832,7 +943,14 @@ class HardnessGenerateDummyCsvView(View):
     @staticmethod
     def post(request, *args, **kwargs):
         try:
+            dataset_count = int(request.POST.get("dataset_count", 2))
             num_fields = int(request.POST.get("num_fields", 3))
+
+            if dataset_count < 1 or dataset_count > 2:
+                messages.error(
+                    request, "データセット数は1〜2の範囲で指定してください。"
+                )
+                return HttpResponseRedirect(reverse("soil:hardness_upload"))
 
             if num_fields < 1 or num_fields > 16:
                 messages.error(request, "圃場数は1〜16の範囲で指定してください。")
@@ -840,13 +958,15 @@ class HardnessGenerateDummyCsvView(View):
 
             # CSVを生成して出力パスを取得
             csv_output_path = call_command(
-                "hardness_generate_dummy_csv", f"--num_fields={num_fields}"
+                "hardness_generate_dummy_csv",
+                f"--num_fields={num_fields}",
+                f"--dataset_count={dataset_count}",
             )
 
             if csv_output_path and os.path.exists(csv_output_path):
                 # ZIP化してダウンロード
                 response = ZipFileService.create_zip_download(
-                    csv_output_path, "hardness_sample.zip"
+                    csv_output_path, "hardness_samples.zip"
                 )
 
                 # 一時ディレクトリを削除

@@ -73,15 +73,12 @@ class HardnessImportService:
                     )
                     SoilHardnessMeasurementRepository.create(measurement)
                     created_count += 1
-            except IntegrityError as e:
-                if "duplicate entry" in str(e).lower():
-                    HardnessImportErrorRepository.create(
-                        file=row.file_name,
-                        folder=row.folder,
-                        message="取り込み済み",
-                    )
-                else:
-                    raise e
+            except IntegrityError:
+                HardnessImportErrorRepository.create(
+                    file=row.file_name,
+                    folder=row.folder,
+                    message="取り込み済み",
+                )
             except Exception as e:
                 HardnessImportErrorRepository.create(
                     file=row.file_name,

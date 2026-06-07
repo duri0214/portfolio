@@ -126,6 +126,20 @@
                         <form method="post" action="{% url 'soil:hardness_generate_dummy_csv' %}">
                             {% csrf_token %}
                             <div class="mb-3">
+                                {{ csv_generate_form.dataset_count.label_tag }}
+                                {{ csv_generate_form.dataset_count }}
+                                {% if csv_generate_form.dataset_count.help_text %}
+                                    <div class="form-text">{{ csv_generate_form.dataset_count.help_text }}</div>
+                                {% endif %}
+                                {% if csv_generate_form.dataset_count.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in csv_generate_form.dataset_count.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
                                 {{ csv_generate_form.num_fields.label_tag }}
                                 {{ csv_generate_form.num_fields }}
                                 {% if csv_generate_form.num_fields.help_text %}
