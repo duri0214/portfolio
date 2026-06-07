@@ -20,6 +20,22 @@ class LandRepository:
         return Land.objects.filter(name=name).exists()
 
     @staticmethod
+    def exists_by_name_or_display_prefix(name: str) -> bool:
+        """
+        フォルダ名から推定した圃場名に対応する圃場が存在するか確認します。
+
+        Args:
+            name: フォルダ名から推定した圃場名
+
+        Returns:
+            bool: 完全一致、または「FIELD001（点検用圃場）」のような表示補足付き名称が存在する場合はTrue
+        """
+        return (
+            Land.objects.filter(name=name).exists()
+            or Land.objects.filter(name__startswith=f"{name}（").exists()
+        )
+
+    @staticmethod
     def get_land_to_ledgers_map(lands: list[Land]) -> dict[int, list]:
         """
         圃場ごとの帳簿マップを取得します

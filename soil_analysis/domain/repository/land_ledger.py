@@ -160,9 +160,12 @@ class LandLedgerRepository:
         return response_data
 
     @staticmethod
-    def get_association_success_context() -> dict:
+    def get_association_success_context(folder_names: list[str] | None = None) -> dict:
         """
         関連付け完了画面用のコンテキストデータを取得
+
+        Args:
+            folder_names: 指定した場合、そのフォルダ名の関連付け済み測定データだけを対象にする
 
         Returns:
             コンテキストデータ辞書
@@ -171,10 +174,14 @@ class LandLedgerRepository:
         associated_measurements = SoilHardnessMeasurement.objects.filter(
             land_ledger__isnull=False, land_block__isnull=False
         )
+        if folder_names is not None:
+            associated_measurements = associated_measurements.filter(
+                folder__in=folder_names
+            )
 
         # CSVインポートされた硬度測定データをフォルダ名でグループ化し、各フォルダの統計情報を取得
         folder_stats = SoilHardnessMeasurementRepository.get_folder_stats(
-            associated_only=True
+            associated_only=True, folder_names=folder_names
         )
 
         # 各フォルダで使用された機材名とland_block、land_ledger情報を取得
