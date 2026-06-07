@@ -1196,7 +1196,10 @@ class HardnessAssociationSuccessView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        repository_context = LandLedgerRepository.get_association_success_context()
+        import_folder_names = self.request.session.get("hardness_import_folders")
+        repository_context = LandLedgerRepository.get_association_success_context(
+            folder_names=import_folder_names
+        )
         context.update(repository_context)
 
         return context

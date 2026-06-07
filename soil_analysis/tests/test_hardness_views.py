@@ -15,6 +15,7 @@ from soil_analysis.models import (
     LandPeriod,
     CultivationType,
     SamplingMethod,
+    LandBlock,
     JmaArea,
     JmaPrefecture,
     JmaRegion,
@@ -143,3 +144,44 @@ class HardnessViewsTest(TestCase):
             ["FIELD001_ROUND02"],
         )
         self.assertEqual(response.context["missing_lands"], [])
+
+    def test_hardness_association_success_view_uses_current_import_folders(self):
+        """
+        シナリオ:
+        - 入力: DBには過去関連付け済みFolder1と今回関連付け済みFIELD001_ROUND02が混在し、セッションにはFIELD001_ROUND02だけを保持する。
+        - 処理: 硬度関連付け成功画面を表示する。
+        - 期待値: フォルダ別・Land Block別・Land Ledger別の集計はFIELD001_ROUND02だけを対象にし、DB全量を集計しない。
+        """
+        land_block = LandBlock.objects.create(name="A1")
+        for memory, folder in (
+            (10, "Folder1"),
+            (20, "FIELD001_ROUND02"),
+            (21, "FIELD001_ROUND02"),
+        ):
+            SoilHardnessMeasurement.objects.create(
+                set_device=self.device,
+                set_memory=memory,
+                set_datetime=datetime(2023, 7, 2, 10, 0, 0),
+                set_depth=50,
+                set_spring=1,
+                set_cone=1,
+                depth=1,
+                pressure=110,
+                folder=folder,
+                land_block=land_block,
+                land_ledger=self.ledger,
+            )
+        session = self.client.session
+        session["hardness_import_folders"] = ["FIELD001_ROUND02"]
+        session.save()
+
+        response = self.client.get(reverse("soil:hardness_association_success"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_records"], 2)
+        self.assertEqual(
+            [stats.folder for stats in response.context["folder_stats"]],
+            ["FIELD001_ROUND02"],
+        )
+        self.assertEqual(response.context["land_block_stats"][0]["count"], 2)
+        self.assertEqual(response.context["land_ledger_stats"][0]["count"], 2)
