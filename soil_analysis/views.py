@@ -222,7 +222,14 @@ class LandDetailView(DetailView):
         )
         land_ledger_prefetch = Prefetch(
             "landledger_set",
-            queryset=LandLedger.objects.select_related("land_period", "crop"),
+            queryset=LandLedger.objects.select_related("land_period", "crop")
+            .annotate(
+                chemical_measurement_count=Count("soil_chemical_measurement"),
+                hardness_measurement_count=Count(
+                    "soilhardnessmeasurement", distinct=True
+                ),
+            )
+            .order_by("land_period__year", "sampling_date", "land_period__name", "id"),
             to_attr="ledgers",
         )
         return (
