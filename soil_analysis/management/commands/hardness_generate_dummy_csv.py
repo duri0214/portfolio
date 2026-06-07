@@ -102,13 +102,6 @@ class Command(BaseCommand):
             ),
         )
 
-        if options["num_fields"] > max_fields:
-            self.stdout.write(
-                self.style.WARNING(
-                    f"指定された{options['num_fields']}圃場は計測器の制約（最大メモリ:{max_memory}）により{max_fields}圃場に制限されました"
-                )
-            )
-
         # 一時ディレクトリを作成
         output_path = Path(tempfile.mkdtemp(prefix="soil_hardness_"))
 
