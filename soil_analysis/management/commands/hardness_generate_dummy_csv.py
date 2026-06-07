@@ -1,7 +1,6 @@
 import argparse
 import csv
 import os
-import random
 import tempfile
 import zipfile
 from datetime import datetime
@@ -213,9 +212,6 @@ class Command(BaseCommand):
                     file_seq = str(global_memory_counter).zfill(4)
                     filename = f"{SoilHardnessDevice.DEVICE_NAME}_{file_seq}_N00000000_E000000000.csv"
                     filepath = field_dir / filename
-                    random.seed(
-                        (dataset_index * 1000) + (field_num * 100) + total_files
-                    )
                     cls._generate_csv_file(
                         filepath=filepath,
                         memory_no=global_memory_counter,
@@ -251,8 +247,8 @@ class Command(BaseCommand):
             memory_no: メモリ番号
             date_str: 測定日時文字列（全圃場で統一）
         """
-        # 土壌特性は毎回ランダム値で生成
-        characteristics = SoilHardnessCharacteristics()
+        # 土壌特性はメモリ番号をシードとして生成
+        characteristics = SoilHardnessCharacteristics(seed=memory_no)
 
         # CSVデータの作成
         with open(filepath, "w", newline="") as csvfile:
