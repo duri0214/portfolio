@@ -445,6 +445,7 @@ class LandLedger(models.Model):
         land_period (LandPeriod): 時期
         sampling_method (SamplingMethod): 採土法
         sampling_staff (User): 採土スタッフ
+        hardness_image (ImageField): 硬度分布図
     """
 
     sampling_date = models.DateField("採土日")
@@ -466,6 +467,9 @@ class LandLedger(models.Model):
     )
     sampling_staff = models.ForeignKey(
         get_user_model(), on_delete=models.CASCADE, verbose_name="採土スタッフ"
+    )
+    hardness_image = models.ImageField(
+        "硬度分布図", upload_to="hardness_images", null=True, blank=True
     )
 
     class Meta:

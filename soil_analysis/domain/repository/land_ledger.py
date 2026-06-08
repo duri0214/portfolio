@@ -279,6 +279,7 @@ class LandLedgerRepository:
                 "land_ledger__sampling_date",
                 "land_ledger__crop__name",
                 "land_ledger__land_period__name",
+                "land_ledger__hardness_image",
             )
             .annotate(
                 count=Count("id"),
@@ -304,6 +305,7 @@ class LandLedgerRepository:
                 "sampling_date": stat["land_ledger__sampling_date"],
                 "crop_name": stat["land_ledger__crop__name"],
                 "period_name": stat["land_ledger__land_period__name"],
+                "hardness_image": stat["land_ledger__hardness_image"],
                 "count": stat["count"],
             }
             for stat in land_ledger_stats
