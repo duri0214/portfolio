@@ -111,7 +111,6 @@ python manage.py weather_fetch_warning
 python manage.py loaddata soil_analysis/fixtures/samplingmethod.json
 python manage.py loaddata soil_analysis/fixtures/samplingorder.json
 python manage.py loaddata soil_analysis/fixtures/land_ledger.json
-python manage.py loaddata soil_analysis/fixtures/land_review.json
 python manage.py loaddata soil_analysis/fixtures/device.json
 
 # --- Taxonomy ---
