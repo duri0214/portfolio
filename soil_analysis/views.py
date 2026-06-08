@@ -424,6 +424,9 @@ class HardnessUploadView(FormView):
         return context
 
     def form_valid(self, form):
+        # プロット生成フラグのリセット
+        self.request.session["hardness_plots_generated"] = False
+
         # Zipを処理してバッチ実行
         app_name = self.request.resolver_match.app_name
         upload_folder = ZipFileService.handle_uploaded_zip(
@@ -1208,13 +1211,27 @@ class HardnessAssociationFieldGroupView(ListView):
 class HardnessAssociationSuccessView(TemplateView):
     template_name = "soil_analysis/hardness/association/success.html"
 
-    @staticmethod
-    def post(request, *args, **kwargs):
-        if "btn_generate_plots" in request.POST:
-            HardnessPlotGenerationService.generate_and_save_plots()
-            return HttpResponseRedirect(reverse("soil:home"))
+    def get(self, request, *args, **kwargs):
+        """
+        関連付け成功画面。
+        遷移時に自動で3Dプロット画像を生成して保存する。
+        """
+        import_folder_names = self.request.session.get("hardness_import_folders")
+        if import_folder_names and not self.request.session.get(
+            "hardness_plots_generated"
+        ):
+            land_ledger_ids = list(
+                SoilHardnessMeasurement.objects.filter(
+                    folder__in=import_folder_names, land_ledger_id__isnull=False
+                )
+                .values_list("land_ledger_id", flat=True)
+                .distinct()
+            )
+            if land_ledger_ids:
+                HardnessPlotGenerationService.generate_and_save_plots(land_ledger_ids)
+                self.request.session["hardness_plots_generated"] = True
 
-        return HttpResponseRedirect(request.path)
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

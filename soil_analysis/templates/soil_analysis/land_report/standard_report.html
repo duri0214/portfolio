@@ -138,10 +138,10 @@
                             </div>
                         </div>
 
-                        {% if land.image %}
+                        {% if land_ledger.hardness_image %}
                             <div class="mt-2 text-center">
-                                <h6 class="fw-bold small text-muted mb-2">圃場画像・硬度分布</h6>
-                                <img src="{{ land.image.url }}" alt="圃場画像"
+                                <h6 class="fw-bold small text-muted mb-2">圃場硬度分布（3Dプロット）</h6>
+                                <img src="{{ land_ledger.hardness_image.url }}" alt="硬度分布画像"
                                      class="img-fluid rounded shadow-sm border">
                             </div>
                         {% else %}
