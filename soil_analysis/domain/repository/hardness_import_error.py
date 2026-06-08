@@ -40,4 +40,4 @@ class HardnessImportErrorRepository:
         Returns:
             list[SoilHardnessMeasurementImportErrors]: エラーリスト
         """
-        return list(SoilHardnessMeasurementImportErrors.objects.all())
+        return list(SoilHardnessMeasurementImportErrors.objects.all().order_by("id"))

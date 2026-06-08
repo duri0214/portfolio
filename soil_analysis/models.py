@@ -438,7 +438,6 @@ class LandLedger(models.Model):
         sampling_date (date): 採土日
         analysis_request_date (date): 分析依頼日
         reporting_date (date): 報告日
-        analysis_number (int): 分析番号
         analytical_agency (Company): 分析機関
         crop (Crop): 作物
         land (Land): 圃場
@@ -451,7 +450,6 @@ class LandLedger(models.Model):
     sampling_date = models.DateField("採土日")
     analysis_request_date = models.DateField("分析依頼日", null=True)
     reporting_date = models.DateField("報告日", null=True)
-    analysis_number = models.IntegerField("分析番号", null=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
     updated_at = models.DateTimeField("更新日時", auto_now=True)
     analytical_agency = models.ForeignKey(
@@ -471,6 +469,11 @@ class LandLedger(models.Model):
     hardness_image = models.ImageField(
         "硬度分布図", upload_to="hardness_images", null=True, blank=True
     )
+
+    @property
+    def analysis_number(self) -> int | None:
+        measurement = getattr(self, "soil_chemical_measurement", None)
+        return measurement.analysis_number if measurement else None
 
     class Meta:
         constraints = [
@@ -513,6 +516,7 @@ class SoilChemicalMeasurement(models.Model):
     圃場単位での化学分析結果を保存します。
 
     Attributes:
+        analysis_number (int): 分析番号
         ec (FloatField): 電気伝導率
         nh4n (FloatField): アンモニア態窒素
         no3n (FloatField): 硝酸態窒素
@@ -533,6 +537,7 @@ class SoilChemicalMeasurement(models.Model):
         land_ledger (LandLedger): 台帳
     """
 
+    analysis_number = models.IntegerField("分析番号", null=True, unique=True)
     ec = models.FloatField("電気伝導率", null=True)
     nh4n = models.FloatField("アンモニア態窒素", null=True)
     no3n = models.FloatField("硝酸態窒素", null=True)

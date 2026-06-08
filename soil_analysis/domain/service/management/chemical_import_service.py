@@ -1,4 +1,5 @@
 import os
+import re
 
 from openpyxl import load_workbook
 
@@ -40,10 +41,31 @@ class ChemicalImportService:
 
         if parse_result.errors:
             for error_msg in parse_result.errors:
+                row_number = None
+                match = re.search(r"row=(\d+):", error_msg)
+                if match:
+                    row_number = int(match.group(1))
+
                 ChemicalImportRepository.create_error(
-                    row_number=None, land_name=None, message=error_msg
+                    row_number=row_number, land_name=None, message=error_msg
                 )
             raise ValueError("\n".join(parse_result.errors))
+
+        # 分析番号の重複チェック
+        analysis_errors = ChemicalImportRepository.validate_analysis_numbers(
+            parse_result.rows
+        )
+        if analysis_errors:
+            for error_msg in analysis_errors:
+                row_number = None
+                match = re.search(r"row=(\d+):", error_msg)
+                if match:
+                    row_number = int(match.group(1))
+
+                ChemicalImportRepository.create_error(
+                    row_number=row_number, land_name=None, message=error_msg
+                )
+            raise ValueError("\n".join(analysis_errors))
 
         if not parse_result.rows:
             return {

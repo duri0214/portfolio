@@ -3,6 +3,9 @@ from django.db import transaction
 from soil_analysis.domain.repository.chemical_import_error import (
     ChemicalImportErrorRepository,
 )
+from soil_analysis.domain.repository.chemical_measurement import (
+    SoilChemicalMeasurementRepository,
+)
 from soil_analysis.models import (
     LandLedger,
     SoilChemicalMeasurement,
@@ -45,6 +48,13 @@ class ChemicalImportRepository:
             message=message,
             remark=remark,
         )
+
+    @classmethod
+    def validate_analysis_numbers(cls, rows: list) -> list[str]:
+        """
+        分析番号の重複をチェックします
+        """
+        return SoilChemicalMeasurementRepository.validate_analysis_numbers(rows)
 
     @classmethod
     def save_measurements(

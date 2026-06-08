@@ -47,6 +47,4 @@ class ChemicalImportErrorRepository:
         Returns:
             list[SoilChemicalMeasurementImportErrors]: エラーリスト
         """
-        return list(
-            SoilChemicalMeasurementImportErrors.objects.all().order_by("-created_at")
-        )
+        return list(SoilChemicalMeasurementImportErrors.objects.all().order_by("id"))
