@@ -1,6 +1,6 @@
-from datetime import date
 import io
 import zipfile
+from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -8,7 +8,6 @@ from django.urls import reverse
 from openpyxl import load_workbook
 
 from soil_analysis.domain.service.chemical_import_service import ChemicalImportService
-
 from soil_analysis.models import (
     Company,
     CompanyCategory,
@@ -82,7 +81,7 @@ class ChemicalAssociationViewsTest(TestCase):
                 {
                     "row_data": {
                         "row_number": 4,
-                        "analysis_number": "A001",
+                        "analysis_number": 2607001,
                         "person_name": "テスト太郎",
                         "land_name": "圃場A",
                         "crop": "キャベツ",
@@ -148,7 +147,7 @@ class ChemicalAssociationViewsTest(TestCase):
                 {
                     "row_data": {
                         "row_number": 4,
-                        "analysis_number": "A001",
+                        "analysis_number": 2607001,
                         "person_name": "テスト太郎",
                         "land_name": "圃場A",
                         "crop": "キャベツ",
@@ -215,7 +214,7 @@ class ChemicalAssociationViewsTest(TestCase):
                 {
                     "row_data": {
                         "row_number": 4,
-                        "analysis_number": "A001",
+                        "analysis_number": 2607001,
                         "person_name": "テスト太郎",
                         "land_name": "圃場A",
                         "crop": "キャベツ",
@@ -362,7 +361,7 @@ class ChemicalAssociationViewsTest(TestCase):
                 {
                     "row_data": {
                         "row_number": 4,
-                        "analysis_number": "A001",
+                        "analysis_number": 2607001,
                         "person_name": "テスト太郎",
                         "land_name": "圃場A",
                         "crop": "キャベツ",
@@ -401,7 +400,7 @@ class ChemicalAssociationViewsTest(TestCase):
                 {
                     "row_data": {
                         "row_number": 4,
-                        "analysis_number": "A001",
+                        "analysis_number": 2607001,
                         "person_name": "テスト太郎",
                         "land_name": "圃場A",
                         "crop": "キャベツ",
@@ -513,7 +512,7 @@ class ChemicalAssociationViewsTest(TestCase):
                 {
                     "row_data": {
                         "row_number": 4,
-                        "analysis_number": "A001",
+                        "analysis_number": 2607001,
                         "person_name": "テスト太郎",
                         "land_name": "圃場A",
                         "crop": "キャベツ",

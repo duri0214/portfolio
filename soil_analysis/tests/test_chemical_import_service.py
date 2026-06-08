@@ -261,7 +261,7 @@ class ChemicalImportServiceTest(TestCase):
         """データの保存ができること"""
         row = KawadaRow(
             row_number=4,
-            analysis_number="A001",
+            analysis_number=2607001,
             person_name="テスト太郎",
             land_name="圃場A",
             crop="キャベツ",
@@ -315,6 +315,7 @@ class ChemicalImportServiceTest(TestCase):
         """Excelからのパース時に日本語カラム名が伝播すること"""
         # row index 7 is cao (交換性石灰)
         bad_row = [None] * 20
+        bad_row[0] = "2607001"
         bad_row[7] = "不適切な値"
 
         with self.assertRaises(ValueError) as cm:
@@ -326,7 +327,7 @@ class ChemicalImportServiceTest(TestCase):
 
         row1 = KawadaRow(
             row_number=4,
-            analysis_number="A001",
+            analysis_number=2607001,
             person_name="テスト太郎",
             land_name="圃場A",
             crop="キャベツ",
@@ -335,7 +336,7 @@ class ChemicalImportServiceTest(TestCase):
         )
         row2 = KawadaRow(
             row_number=5,
-            analysis_number="A002",
+            analysis_number=2607002,
             person_name="テスト太郎",
             land_name="圃場A (修正)",
             crop="キャベツ",
@@ -397,7 +398,7 @@ class ChemicalImportServiceTest(TestCase):
 
         row = KawadaRow(
             row_number=4,
-            analysis_number="A003",
+            analysis_number=2607003,
             person_name="テスト太郎",
             land_name="圃場A",
             crop="キャベツ",

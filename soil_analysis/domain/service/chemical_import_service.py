@@ -6,6 +6,9 @@ from openpyxl.worksheet.worksheet import Worksheet
 from soil_analysis.domain.repository.chemical_import_error import (
     ChemicalImportErrorRepository,
 )
+from soil_analysis.domain.repository.chemical_measurement import (
+    SoilChemicalMeasurementRepository,
+)
 from soil_analysis.domain.valueobject.management.chemical_import_parser import (
     ChemicalImportParser,
     ChemicalKawadaRow as KawadaRow,
@@ -31,6 +34,7 @@ class ChemicalImportService:
     def parse_kawada_worksheet(cls, worksheet: Worksheet) -> ParseResult:
         """
         川田研究所フォーマットのワークシートをパースする。
+        分析番号の重複（DBおよびファイル内）もチェックする。
 
         Args:
             worksheet: openpyxl のワークシート
@@ -39,7 +43,15 @@ class ChemicalImportService:
             パース結果（行データとエラーリスト）
         """
         result = ChemicalImportParser.parse_kawada_worksheet(worksheet)
-        return ParseResult(rows=result.rows, errors=result.errors)
+        if result.errors:
+            return ParseResult(rows=result.rows, errors=result.errors)
+
+        # 重複チェック
+        errors = SoilChemicalMeasurementRepository.validate_analysis_numbers(
+            result.rows
+        )
+
+        return ParseResult(rows=result.rows, errors=errors)
 
     @classmethod
     def get_used_ledger_ids(cls) -> list[int]:
