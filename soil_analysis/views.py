@@ -10,6 +10,7 @@ from pathlib import Path
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
+from django.db import transaction
 from django.db.models import Prefetch, Sum, Count
 from django.http import (
     HttpResponse,
@@ -495,18 +496,22 @@ class ChemicalUploadView(FormView):
             parse_result = ChemicalImportService.parse_kawada_worksheet(worksheet)
 
             if parse_result.errors:
-                ChemicalImportErrorRepository.delete_all()
+                error_data = []
                 for error in parse_result.errors:
-                    # エラーメッセージから行番号と圃場名を抽出(できるだけ)
+                    # エラーメッセージから行番号を抽出(できるだけ)
                     # 形式例: "row=4: 分析番号 2607001 は既に取り込まれています。"
                     row_number = None
                     row_match = re.search(r"row=(\d+)", error)
                     if row_match:
                         row_number = int(row_match.group(1))
 
-                    ChemicalImportErrorRepository.create(
-                        row_number=row_number, land_name=None, message=error
+                    error_data.append(
+                        {"row_number": row_number, "land_name": None, "message": error}
                     )
+
+                with transaction.atomic():
+                    ChemicalImportErrorRepository.delete_all()
+                    ChemicalImportErrorRepository.bulk_create(error_data)
 
                 # エラーがある場合は、セッションにエラーありのフラグを立てて成功画面へ
                 self.request.session["chemical_import_session"] = {

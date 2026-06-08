@@ -33,6 +33,28 @@ class ChemicalImportErrorRepository:
         )
 
     @staticmethod
+    def bulk_create(errors: list[dict]) -> list[SoilChemicalMeasurementImportErrors]:
+        """
+        インポートエラーを一括で記録します
+
+        Args:
+            errors: エラー情報のリスト (各要素は row_number, land_name, message, remark を含む dict)
+
+        Returns:
+            list[SoilChemicalMeasurementImportErrors]: 作成されたエラーインスタンスのリスト
+        """
+        objs = [
+            SoilChemicalMeasurementImportErrors(
+                row_number=e.get("row_number"),
+                land_name=e.get("land_name"),
+                message=e.get("message"),
+                remark=e.get("remark"),
+            )
+            for e in errors
+        ]
+        return SoilChemicalMeasurementImportErrors.objects.bulk_create(objs)
+
+    @staticmethod
     def delete_all() -> None:
         """
         全てのインポートエラーを削除します

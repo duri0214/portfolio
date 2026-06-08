@@ -110,11 +110,17 @@ class ChemicalKawadaRow:
             return cls.parse_numeric_value(raw_value, row_number, display_name)
 
         raw_analysis_number = cls.parse_numeric_value(row[0], row_number, "分析番号")
+        analysis_number = None
+        if raw_analysis_number is not None:
+            if not float(raw_analysis_number).is_integer():
+                raise ValueError(
+                    f"分析番号は整数で指定してください row={row_number}, column=分析番号, value={row[0]}"
+                )
+            analysis_number = int(raw_analysis_number)
+
         return cls(
             row_number=row_number,
-            analysis_number=(
-                int(raw_analysis_number) if raw_analysis_number is not None else None
-            ),
+            analysis_number=analysis_number,
             person_name=to_str(1) or None,
             land_name=to_str(2),
             crop=to_str(3) or None,
