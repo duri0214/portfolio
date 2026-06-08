@@ -495,9 +495,27 @@ class ChemicalUploadView(FormView):
             parse_result = ChemicalImportService.parse_kawada_worksheet(worksheet)
 
             if parse_result.errors:
+                ChemicalImportErrorRepository.delete_all()
                 for error in parse_result.errors:
-                    messages.error(self.request, error)
-                return self.form_invalid(form)
+                    # エラーメッセージから行番号と圃場名を抽出(できるだけ)
+                    # 形式例: "row=4: 分析番号 2607001 は既に取り込まれています。"
+                    row_number = None
+                    row_match = re.search(r"row=(\d+)", error)
+                    if row_match:
+                        row_number = int(row_match.group(1))
+
+                    ChemicalImportErrorRepository.create(
+                        row_number=row_number, land_name=None, message=error
+                    )
+
+                # エラーがある場合は、セッションにエラーありのフラグを立てて成功画面へ
+                self.request.session["chemical_import_session"] = {
+                    "rows": [],
+                    "total_rows": 0,
+                    "source_file": upload_file.name,
+                    "has_error": True,
+                }
+                return redirect("soil:chemical_success")
 
             if not parse_result.rows:
                 messages.error(self.request, "取り込み対象行がありません。")
@@ -636,6 +654,11 @@ class ChemicalUploadSuccessView(TemplateView):
         context = super().get_context_data(**kwargs)
         import_session = self.request.session.get("chemical_import_session")
         if not import_session:
+            return context
+
+        context["has_error"] = import_session.get("has_error", False)
+        if context["has_error"]:
+            context["errors"] = ChemicalImportErrorRepository.get_all()
             return context
 
         rows = import_session.get("rows", [])
