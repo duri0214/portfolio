@@ -1,6 +1,10 @@
-from unittest.mock import patch
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import Mock, patch
 
 from django.contrib.auth.models import User
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -142,6 +146,29 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertEqual(403, response.status_code)
         call_command_mock.assert_not_called()
 
+    def test_superuser_redirects_when_pdf_download_is_already_running(self):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、PDF保存処理が既に実行中の状態。
+        - 処理: 六戸町会議録PDF保存ボタンのPOST先へリクエストする。
+        - 期待値: 例外で500にせず、トップページへリダイレクトされること。
+        """
+        user = User.objects.create_superuser(
+            username="admin2",
+            email="admin2@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch(
+            "jp_stocks.views.call_command",
+            side_effect=CommandError("六戸町PDFダウンロードは既に実行中です。"),
+        ):
+            response = self.client.post(reverse("jpn:rokunohe_pdf_download"))
+
+        self.assertEqual(302, response.status_code)
+        self.assertEqual(reverse("jpn:index"), response.url)
+
     def test_non_superuser_sees_disabled_pdf_download_button(self):
         """
         シナリオ:
@@ -160,3 +187,81 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         self.assertContains(response, "六戸町会議録PDF保存")
         self.assertContains(response, "disabled")
+
+
+class RokunohePdfDownloadCommandTest(TestCase):
+    def test_waits_between_external_requests(self):
+        """
+        シナリオ:
+        - 入力: PDFリンクを2件含むHTMLレスポンスと、リクエスト間隔0.1秒。
+        - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: 2件目以降の外部リクエスト前に待機処理が呼び出されること。
+        """
+        first_page_response = self._create_response(
+            '<a href="file1.pdf">会議録1 [PDF]</a><a href="file2.pdf">会議録2 [PDF]</a>'
+        )
+        pdf_response = self._create_response("", content=b"%PDF")
+        second_page_response = self._create_response("")
+
+        with TemporaryDirectory() as temp_dir:
+            with patch(
+                "jp_stocks.management.commands.rokunohe_pdf_download.requests.get",
+                side_effect=[
+                    first_page_response,
+                    pdf_response,
+                    pdf_response,
+                    second_page_response,
+                ],
+            ), patch(
+                "jp_stocks.management.commands.rokunohe_pdf_download.time.sleep"
+            ) as sleep_mock:
+                call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0.1)
+
+        self.assertGreaterEqual(sleep_mock.call_count, 2)
+        sleep_mock.assert_any_call(0.1)
+
+    def test_skips_existing_pdf_file(self):
+        """
+        シナリオ:
+        - 入力: 保存済みPDFと同じファイル名になるPDFリンクを含むHTMLレスポンス。
+        - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: 保存済みPDFは再ダウンロードされず、HTML取得のみ実行されること。
+        """
+        first_page_response = self._create_response(
+            '<a href="exists.pdf">保存済み [PDF]</a>'
+        )
+        second_page_response = self._create_response("")
+
+        with TemporaryDirectory() as temp_dir:
+            existing_pdf_path = Path(temp_dir) / "保存済み.pdf"
+            existing_pdf_path.write_bytes(b"%PDF")
+
+            with patch(
+                "jp_stocks.management.commands.rokunohe_pdf_download.requests.get",
+                side_effect=[first_page_response, second_page_response],
+            ) as get_mock:
+                call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
+
+        self.assertEqual(2, get_mock.call_count)
+
+    def test_rejects_parallel_execution_with_lock_file(self):
+        """
+        シナリオ:
+        - 入力: 保存先に実行中を示すロックファイルが存在する状態。
+        - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: CommandErrorが発生し、並行実行が拒否されること。
+        """
+        with TemporaryDirectory() as temp_dir:
+            lock_path = Path(temp_dir) / ".rokunohe_pdf_download.lock"
+            lock_path.write_text("running", encoding="utf-8")
+
+            with self.assertRaises(CommandError):
+                call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
+
+    def _create_response(self, text: str, content: bytes = b"") -> Mock:
+        response = Mock()
+        response.text = text
+        response.content = content
+        response.apparent_encoding = "utf-8"
+        response.raise_for_status = Mock()
+        return response
