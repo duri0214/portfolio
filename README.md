@@ -10,9 +10,6 @@ Django(Python)を用いた、各種データ分析・可視化ツールのポー
 
 ### 仮想環境 (venv) の構築
 
-以下のコマンドは OS のシェル（Linux は bash、Windows は PowerShell）で実行します。
-`>>>` が表示されている場合は Python の対話モードなので、`exit()` で抜けてから実行してください。
-
 **Linux**
 
 ```bash
@@ -29,7 +26,8 @@ pip install -r requirements.txt
 
 **Windows (PowerShell)**
 
-既に `(venv)` が表示されている場合や `venv` フォルダが存在する場合は、この作成手順ではなく「venv の再構築 (リセット)」を実行してください。
+既に `(venv)` が表示されている場合や `venv` フォルダが存在する場合は、この作成手順ではなく「venv の再構築 (リセット)
+」を実行してください。
 
 ```powershell
 # 作成
