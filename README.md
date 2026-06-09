@@ -14,7 +14,7 @@ Django(Python)を用いた、各種データ分析・可視化ツールのポー
 
 ```bash
 # 作成
-python3 -m venv venv
+python -m venv venv
 
 # 有効化
 source venv/bin/activate
@@ -47,7 +47,7 @@ pip install -r requirements.txt
 ```bash
 deactivate
 rm -rf venv
-python3 -m venv venv
+python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -109,12 +109,13 @@ git clean -fd
 
 サーバー構築時、または権限エラーが発生した際に実行してください。
 これにより、以降に生成されるファイルも自動的に適切な権限（ACL）を継承します。
+`venv` は実行ファイルを含むため、一括 `chmod 664` の対象から除外します。
 
 ```bash
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
-sudo find /var/www/html/portfolio -type d -exec chmod 775 {} +
-sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
-chmod +x /var/www/html/portfolio/scripts/*.sh
+sudo find /var/www/html/portfolio -path /var/www/html/portfolio/venv -prune -o -type d -exec chmod 775 {} +
+sudo find /var/www/html/portfolio -path /var/www/html/portfolio/venv -prune -o -type f -exec chmod 664 {} +
+sudo chmod +x /var/www/html/portfolio/scripts/*.sh
 sudo apt update && sudo apt install acl -y
 sudo setfacl -R -d -m u:ubuntu:rwx /var/www/html/portfolio/media
 sudo setfacl -R -d -m g:www-data:rwx /var/www/html/portfolio/media
@@ -126,16 +127,16 @@ sudo setfacl -R -d -m o::rx /var/www/html/portfolio/media
 (ライブラリに変更がある場合のみでOK。通常は `pip install -r requirements.txt` のみ)
 
 ```bash
-# rm -rf venv
-# python3 -m venv venv
+rm -rf venv
+python -m venv venv
 ```
 
 #### 4. 環境の構築
 
 ```bash
 source /var/www/html/portfolio/venv/bin/activate
-pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
 ```
 
 #### 5. Django メンテナンス
