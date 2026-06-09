@@ -18,17 +18,18 @@ class IndexView(TemplateView):
 
 class RokunohePdfDownloadView(UserPassesTestMixin, View):
     raise_exception = True
+    command_name = "rokunohe_pdf_download"
+    success_message = (
+        "六戸町会議録PDFを media/jp_stocks/rokunohe_pdf_back_numbers に保存しました。"
+    )
 
     def test_func(self):
         return self.request.user.is_superuser
 
     def post(self, request, *args, **kwargs):
         try:
-            call_command("rokunohe_pdf_download")
-            messages.success(
-                request,
-                "六戸町会議録PDFを media/jp_stocks/rokunohe_pdf_back_numbers に保存しました。",
-            )
+            call_command(self.command_name)
+            messages.success(request, self.success_message)
         except CommandError as e:
             messages.warning(request, str(e))
         return redirect("jpn:index")
