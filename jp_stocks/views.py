@@ -1,4 +1,9 @@
+from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.management import call_command
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import TemplateView, CreateView, ListView
 
 from jp_stocks.domain.repository.order import OrderRepository
@@ -8,6 +13,21 @@ from jp_stocks.models import Order
 
 class IndexView(TemplateView):
     template_name = "jp_stocks/index.html"
+
+
+class RokunohePdfDownloadView(UserPassesTestMixin, View):
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        call_command("rokunohe_pdf_download")
+        messages.success(
+            request,
+            "六戸町会議録PDFを media/jp_stocks/rokunohe_pdf_backnumbers に保存しました。",
+        )
+        return redirect("jpn:index")
 
 
 class OrderBookListView(ListView):

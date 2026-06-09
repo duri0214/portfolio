@@ -1,24 +1,34 @@
-import os
+import re
+from pathlib import Path
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
     help = "六戸町の会議録PDFを一括ダウンロードします"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--save-dir",
+            default=None,
+            help="PDFの保存先ディレクトリ。未指定時は media/jp_stocks/rokunohe_pdf_backnumbers に保存します。",
+        )
+
     def handle(self, *args, **options):
         # 現行ページとバックナンバーページのURL
         target_urls = [
-            "https://www.town.rokunohe.aomori.jp/docs/2023051900005",
+            "https://www.town.rokunohe.aomori.jp/docs/2023051900005/",
+            "https://www.town.rokunohe.aomori.jp/docs/2023051900005/chousei_cyougikai_kaigiroku_kako.html",
         ]
 
         # 保存先ディレクトリ
-        save_dir = "rokunohe_pdf_backnumbers"
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+        save_dir = self._get_save_dir(options["save_dir"])
+        if not save_dir.exists():
+            save_dir.mkdir(parents=True)
             self.stdout.write(f"ディレクトリを作成しました: {save_dir}")
 
         downloaded_filenames = set()
@@ -26,7 +36,7 @@ class Command(BaseCommand):
         for target_url in target_urls:
             self.stdout.write(f"処理中: {target_url}")
             try:
-                response = requests.get(target_url)
+                response = requests.get(target_url, timeout=30)
                 response.raise_for_status()
                 # エンコーディングを自動検出（Shift_JISなどの場合があるため）
                 response.encoding = response.apparent_encoding
@@ -43,45 +53,28 @@ class Command(BaseCommand):
                     if not href:
                         continue
 
-                    # URLが .pdf で終わるか、リンクテキストに [PDF という文字列が含まれる場合
+                    # URLに .pdf が含まれるか、リンクテキストに [PDF という文字列が含まれる場合
                     text = link.get_text()
-                    if href.lower().endswith(".pdf") or "[PDF" in text:
-                        pdf_url = urljoin(target_url, href)
-
-                        # 404対策: リンクが相対パスで /docs/2023051900005 からの相対ではなく
-                        # /docs/ からの相対である可能性があるため、調整を試みる
-                        # web_searchの結果では file_contents/071209.pdf となっていた
-                        # 実際のURLが https://www.town.rokunohe.aomori.jp/docs/file_contents/071209.pdf なら 404
-                        # おそらく https://www.town.rokunohe.aomori.jp/file_contents/071209.pdf か
-                        # https://www.town.rokunohe.aomori.jp/docs/2023051900005/file_contents/071209.pdf
-                        # web_searchの1番目の結果のURLは https://www.town.rokunohe.aomori.jp/docs/2023051900005
-                        # そこでのリンクが file_contents/071209.pdf なら、
-                        # 通常は https://www.town.rokunohe.aomori.jp/docs/file_contents/071209.pdf になる
-                        # しかし、もし /docs/2023051900005/ (末尾スラッシュあり) なら
-                        # https://www.town.rokunohe.aomori.jp/docs/2023051900005/file_contents/071209.pdf になる
-
-                        if not target_url.endswith("/"):
-                            # スラッシュがない場合、urljoinは最後のコンポーネントをファイルとみなして置き換える
-                            # そのため https://www.town.rokunohe.aomori.jp/docs/file_contents/071209.pdf になっていた
-                            # 期待されるのは https://www.town.rokunohe.aomori.jp/docs/2023051900005/file_contents/071209.pdf
-                            # またはドメイン直下
-                            pdf_url = urljoin(target_url + "/", href)
+                    if ".pdf" in href.lower() or "[pdf" in text.lower():
+                        pdf_url = urljoin(self._get_base_url(target_url), href)
 
                         # ファイル名を取得
-                        filename = os.path.basename(href)
+                        filename = self._get_filename(text=text, href=href)
                         if not filename.lower().endswith(".pdf"):
                             filename += ".pdf"
 
                         if filename in downloaded_filenames:
-                            self.stdout.write(f"スキップ (重複): {filename}")
-                            continue
+                            filename = self._get_unique_filename(
+                                filename=filename,
+                                downloaded_filenames=downloaded_filenames,
+                            )
 
                         # 保存パス
-                        save_path = os.path.join(save_dir, filename)
+                        save_path = save_dir / filename
 
                         # ダウンロード
                         self.stdout.write(f"ダウンロード中: {pdf_url}")
-                        pdf_response = requests.get(pdf_url)
+                        pdf_response = requests.get(pdf_url, timeout=30)
                         pdf_response.raise_for_status()
 
                         with open(save_path, "wb") as f:
@@ -97,3 +90,34 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.ERROR(f"エラーが発生しました ({target_url}): {e}")
                 )
+
+    def _get_save_dir(self, save_dir: str | None) -> Path:
+        if save_dir:
+            return Path(save_dir)
+        return Path(settings.MEDIA_ROOT) / "jp_stocks" / "rokunohe_pdf_backnumbers"
+
+    def _get_base_url(self, target_url: str) -> str:
+        if target_url.endswith("/") or target_url.endswith(".html"):
+            return target_url
+        return f"{target_url}/"
+
+    def _get_filename(self, text: str, href: str) -> str:
+        filename = re.sub(r"\[pdf.*?\]", "", text, flags=re.IGNORECASE).strip()
+        filename = re.sub(r'[\\/:*?"<>|]', "_", filename)
+        filename = re.sub(r"\s+", "_", filename)
+        if filename:
+            return filename
+        return Path(href).name
+
+    def _get_unique_filename(
+        self, filename: str, downloaded_filenames: set[str]
+    ) -> str:
+        path = Path(filename)
+        stem = path.stem
+        suffix = path.suffix
+        number = 2
+        unique_filename = f"{stem}_{number}{suffix}"
+        while unique_filename in downloaded_filenames:
+            number += 1
+            unique_filename = f"{stem}_{number}{suffix}"
+        return unique_filename

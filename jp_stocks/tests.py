@@ -1,4 +1,8 @@
+from unittest.mock import patch
+
+from django.contrib.auth.models import User
 from django.test import TestCase
+from django.urls import reverse
 
 from jp_stocks.domain.service.order import OrderBookService
 from jp_stocks.domain.valueobject.order import OrderPair
@@ -94,3 +98,65 @@ class OrderBookServiceTest(TestCase):
             OrderPair(price=105, sell_quantity=10, buy_quantity=0),
         ]
         self.assertEqual(result, expected_result)
+
+
+class RokunohePdfDownloadViewTest(TestCase):
+    def test_superuser_can_start_pdf_download(self):
+        """
+        シナリオ:
+        - 入力: superuserでログインした状態。
+        - 処理: 六戸町会議録PDF保存ボタンのPOST先へリクエストする。
+        - 期待値: 管理コマンドが呼び出され、トップページへリダイレクトされること。
+        """
+        user = User.objects.create_superuser(
+            username="admin",
+            email="admin@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch("jp_stocks.views.call_command") as call_command_mock:
+            response = self.client.post(reverse("jpn:rokunohe_pdf_download"))
+
+        self.assertEqual(302, response.status_code)
+        self.assertEqual(reverse("jpn:index"), response.url)
+        call_command_mock.assert_called_once_with("rokunohe_pdf_download")
+
+    def test_non_superuser_cannot_start_pdf_download(self):
+        """
+        シナリオ:
+        - 入力: 一般ユーザーでログインした状態。
+        - 処理: 六戸町会議録PDF保存ボタンのPOST先へリクエストする。
+        - 期待値: 403が返り、管理コマンドは呼び出されないこと。
+        """
+        user = User.objects.create_user(
+            username="user",
+            email="user@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch("jp_stocks.views.call_command") as call_command_mock:
+            response = self.client.post(reverse("jpn:rokunohe_pdf_download"))
+
+        self.assertEqual(403, response.status_code)
+        call_command_mock.assert_not_called()
+
+    def test_non_superuser_sees_disabled_pdf_download_button(self):
+        """
+        シナリオ:
+        - 入力: 一般ユーザーでログインした状態。
+        - 処理: jp_stocksトップページを表示する。
+        - 期待値: 六戸町会議録PDF保存ボタンがdisabledとして表示されること。
+        """
+        user = User.objects.create_user(
+            username="user",
+            email="user@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("jpn:index"))
+
+        self.assertContains(response, "六戸町会議録PDF保存")
+        self.assertContains(response, "disabled")
