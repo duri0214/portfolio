@@ -1,3 +1,4 @@
+from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
@@ -206,7 +207,11 @@ class RokunohePdfDownloadCommandTest(TestCase):
         first_page_response = self._create_response(
             '<a href="file1.pdf">会議録1 [PDF]</a><a href="file2.pdf">会議録2 [PDF]</a>'
         )
-        pdf_response = self._create_response("", content=b"%PDF")
+        pdf_response = self._create_response(
+            "",
+            content=b"%PDF",
+            headers={"Last-Modified": "Wed, 25 Feb 2026 01:55:27 GMT"},
+        )
         second_page_response = self._create_response("")
 
         with TemporaryDirectory() as temp_dir:
@@ -220,16 +225,19 @@ class RokunohePdfDownloadCommandTest(TestCase):
                 ],
             ), patch(
                 "jp_stocks.management.commands.rokunohe_pdf_download.time.sleep"
-            ) as sleep_mock, self.assertLogs(
-                "jp_stocks.management.commands.rokunohe_pdf_download",
-                level="INFO",
-            ) as logs:
-                call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0.1)
+            ) as sleep_mock:
+                stdout = StringIO()
+                call_command(
+                    "rokunohe_pdf_download",
+                    save_dir=temp_dir,
+                    delay=0.1,
+                    stdout=stdout,
+                )
 
         self.assertGreaterEqual(sleep_mock.call_count, 2)
         sleep_mock.assert_any_call(0.1)
-        self.assertIn("進捗 1/2: ダウンロード中", "\n".join(logs.output))
-        self.assertIn("進捗 2/2: ダウンロード中", "\n".join(logs.output))
+        self.assertIn("進捗 1/2: ダウンロード中", stdout.getvalue())
+        self.assertIn("進捗 2/2: ダウンロード中", stdout.getvalue())
 
     def test_skips_existing_pdf_file(self):
         """
@@ -244,7 +252,7 @@ class RokunohePdfDownloadCommandTest(TestCase):
         second_page_response = self._create_response("")
 
         with TemporaryDirectory() as temp_dir:
-            existing_pdf_path = Path(temp_dir) / "保存済み.pdf"
+            existing_pdf_path = Path(temp_dir) / "20260225_保存済み.pdf"
             existing_pdf_path.write_bytes(b"%PDF")
 
             with patch(
@@ -254,6 +262,32 @@ class RokunohePdfDownloadCommandTest(TestCase):
                 call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
 
         self.assertEqual(2, get_mock.call_count)
+
+    def test_prepends_last_modified_date_to_pdf_filename(self):
+        """
+        シナリオ:
+        - 入力: Last-Modifiedヘッダを持つPDFレスポンス。
+        - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: PDFがYYYYMMDD_ファイル名.pdf形式で保存されること。
+        """
+        first_page_response = self._create_response(
+            '<a href="dated.pdf">会議録 [PDF]</a>'
+        )
+        pdf_response = self._create_response(
+            "",
+            content=b"%PDF",
+            headers={"Last-Modified": "Wed, 25 Feb 2026 01:55:27 GMT"},
+        )
+        second_page_response = self._create_response("")
+
+        with TemporaryDirectory() as temp_dir:
+            with patch(
+                "jp_stocks.management.commands.rokunohe_pdf_download.requests.get",
+                side_effect=[first_page_response, pdf_response, second_page_response],
+            ):
+                call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
+
+            self.assertTrue((Path(temp_dir) / "20260225_会議録.pdf").exists())
 
     def test_rejects_parallel_execution_with_lock_file(self):
         """
@@ -270,10 +304,13 @@ class RokunohePdfDownloadCommandTest(TestCase):
                 call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
 
     @staticmethod
-    def _create_response(text: str, content: bytes = b"") -> Mock:
+    def _create_response(
+        text: str, content: bytes = b"", headers: dict[str, str] | None = None
+    ) -> Mock:
         response = Mock()
         response.text = text
         response.content = content
+        response.headers = headers or {}
         response.apparent_encoding = "utf-8"
         response.raise_for_status = Mock()
         return response

@@ -1,6 +1,6 @@
-import logging
 import re
 import time
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -8,8 +8,6 @@ import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-
-logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -85,12 +83,15 @@ class Command(BaseCommand):
                                 downloaded_filenames=downloaded_filenames,
                             )
 
-                        save_path = save_dir / filename
-                        if save_path.exists():
+                        existing_dated_path = self._get_existing_dated_path(
+                            save_dir=save_dir,
+                            filename=filename,
+                        )
+                        if existing_dated_path:
                             skipped_count += 1
                             downloaded_filenames.add(filename)
                             self._write_info(
-                                f"進捗 {index}/{len(pdf_links)}: スキップ (保存済み): {save_path}"
+                                f"進捗 {index}/{len(pdf_links)}: スキップ (保存済み): {existing_dated_path}"
                             )
                             continue
 
@@ -103,6 +104,19 @@ class Command(BaseCommand):
                             request_count=request_count,
                         )
                         pdf_response.raise_for_status()
+
+                        filename = self._prepend_last_modified_date(
+                            filename=filename,
+                            response=pdf_response,
+                        )
+                        save_path = save_dir / filename
+                        if save_path.exists():
+                            skipped_count += 1
+                            downloaded_filenames.add(filename)
+                            self._write_info(
+                                f"進捗 {index}/{len(pdf_links)}: スキップ (保存済み): {save_path}"
+                            )
+                            continue
 
                         with open(save_path, "wb") as f:
                             f.write(pdf_response.content)
@@ -171,6 +185,29 @@ class Command(BaseCommand):
             raise CommandError("六戸町PDFダウンロードは既に実行中です。") from e
 
     @staticmethod
+    def _prepend_last_modified_date(filename: str, response: requests.Response) -> str:
+        last_modified = response.headers.get("Last-Modified")
+        if not last_modified:
+            return filename
+
+        try:
+            updated_date = parsedate_to_datetime(last_modified).strftime("%Y%m%d")
+        except (TypeError, ValueError, IndexError, OverflowError):
+            return filename
+
+        if filename.startswith(f"{updated_date}_"):
+            return filename
+        return f"{updated_date}_{filename}"
+
+    @staticmethod
+    def _get_existing_dated_path(save_dir: Path, filename: str) -> Path | None:
+        dated_filename_pattern = re.compile(rf"^\d{{8}}_{re.escape(filename)}$")
+        for path in save_dir.glob(f"*_{filename}"):
+            if dated_filename_pattern.match(path.name):
+                return path
+        return None
+
+    @staticmethod
     def _find_pdf_links(links, target_url: str) -> list[dict[str, str]]:
         pdf_links = []
         for link in links:
@@ -195,13 +232,10 @@ class Command(BaseCommand):
         return pdf_links
 
     def _write_info(self, message: str) -> None:
-        logger.info(message)
         self.stdout.write(message)
 
     def _write_success(self, message: str) -> None:
-        logger.info(message)
         self.stdout.write(self.style.SUCCESS(message))
 
     def _write_error(self, message: str) -> None:
-        logger.error(message)
         self.stdout.write(self.style.ERROR(message))
