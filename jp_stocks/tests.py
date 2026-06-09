@@ -263,7 +263,8 @@ class RokunohePdfDownloadCommandTest(TestCase):
             with self.assertRaises(CommandError):
                 call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
 
-    def _create_response(self, text: str, content: bytes = b"") -> Mock:
+    @staticmethod
+    def _create_response(text: str, content: bytes = b"") -> Mock:
         response = Mock()
         response.text = text
         response.content = content
