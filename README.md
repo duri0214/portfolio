@@ -34,8 +34,6 @@ pip install -r requirements.txt
 ```powershell
 # 作成
 python -m venv venv
-# python が見つからない場合
-# py -m venv venv
 
 # 有効化
 .\venv\Scripts\activate
@@ -65,8 +63,6 @@ pip install -r requirements.txt
 deactivate 2>$null
 Remove-Item -Recurse -Force venv -ErrorAction SilentlyContinue
 python -m venv venv
-# python が見つからない場合
-# py -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
