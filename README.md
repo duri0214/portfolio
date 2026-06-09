@@ -127,6 +127,7 @@ sudo setfacl -R -d -m o::rx /var/www/html/portfolio/media
 (ライブラリに変更がある場合のみでOK。通常は `pip install -r requirements.txt` のみ)
 
 ```bash
+deactivate 2>/dev/null || true
 rm -rf venv
 python -m venv venv
 ```
