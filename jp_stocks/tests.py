@@ -214,11 +214,16 @@ class RokunohePdfDownloadCommandTest(TestCase):
                 ],
             ), patch(
                 "jp_stocks.management.commands.rokunohe_pdf_download.time.sleep"
-            ) as sleep_mock:
+            ) as sleep_mock, self.assertLogs(
+                "jp_stocks.management.commands.rokunohe_pdf_download",
+                level="INFO",
+            ) as logs:
                 call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0.1)
 
         self.assertGreaterEqual(sleep_mock.call_count, 2)
         sleep_mock.assert_any_call(0.1)
+        self.assertIn("進捗 1/2: ダウンロード中", "\n".join(logs.output))
+        self.assertIn("進捗 2/2: ダウンロード中", "\n".join(logs.output))
 
     def test_skips_existing_pdf_file(self):
         """

@@ -27,7 +27,7 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
             call_command("rokunohe_pdf_download")
             messages.success(
                 request,
-                "六戸町会議録PDFを media/jp_stocks/rokunohe_pdf_backnumbers に保存しました。",
+                "六戸町会議録PDFを media/jp_stocks/rokunohe_pdf_back_numbers に保存しました。",
             )
         except CommandError as e:
             messages.warning(request, str(e))
