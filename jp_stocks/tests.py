@@ -122,8 +122,11 @@ class RokunohePdfDownloadViewTest(TestCase):
         with patch("jp_stocks.views.call_command") as call_command_mock:
             response = self.client.post(reverse("jpn:rokunohe_pdf_download"))
 
-        self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("jpn:index"), response.url)
+        self.assertRedirects(
+            response,
+            reverse("jpn:index"),
+            fetch_redirect_response=False,
+        )
         call_command_mock.assert_called_once_with("rokunohe_pdf_download")
 
     def test_non_superuser_cannot_start_pdf_download(self):
@@ -166,8 +169,11 @@ class RokunohePdfDownloadViewTest(TestCase):
         ):
             response = self.client.post(reverse("jpn:rokunohe_pdf_download"))
 
-        self.assertEqual(302, response.status_code)
-        self.assertEqual(reverse("jpn:index"), response.url)
+        self.assertRedirects(
+            response,
+            reverse("jpn:index"),
+            fetch_redirect_response=False,
+        )
 
     def test_non_superuser_sees_disabled_pdf_download_button(self):
         """
