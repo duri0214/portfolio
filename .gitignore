@@ -5,4 +5,3 @@ db.sqlite3
 .env
 venv
 scripts/.my.cnf
-rokunohe_pdf_backnumbers/
