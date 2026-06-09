@@ -147,8 +147,8 @@ python -m pip install -r requirements.txt
 
 ```bash
 python manage.py collectstatic --noinput
-python manage.py clearsessions
 python manage.py migrate
+python manage.py clearsessions
 ```
 
 #### 6. スーパーユーザーの作成
