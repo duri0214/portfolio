@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from django.core import serializers
 from django.test import SimpleTestCase
 
 
@@ -100,6 +101,24 @@ class LandLedgerFixtureScenarioTest(SimpleTestCase):
         self.assertTrue(
             [item["fields"]["id"] for item in ledgers] == list(range(1, 13))
         )
+
+    def test_land_ledger_fixture_can_be_deserialized_by_django(self):
+        """
+        シナリオ:
+        - 入力: land_ledger.json の fixture。
+        - 処理: Django 標準の JSON deserializer で読み込む。
+        - 期待値: LandLedger モデルに存在しないフィールドを含まず、
+          DeserializationError が発生しないこと。
+        """
+        fixture_dir = Path(__file__).resolve().parents[1] / "fixtures"
+        fixture_path = fixture_dir / "land_ledger.json"
+
+        with fixture_path.open(encoding="utf-8") as fixture_file:
+            deserialized_objects = list(
+                serializers.deserialize("json", fixture_file.read())
+            )
+
+        self.assertEqual(len(deserialized_objects), 12)
 
     @staticmethod
     def _load_fixture(path: Path) -> list[dict]:
