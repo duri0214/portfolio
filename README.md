@@ -29,6 +29,8 @@ pip install -r requirements.txt
 
 **Windows (PowerShell)**
 
+既に `(venv)` が表示されている場合や `venv` フォルダが存在する場合は、この作成手順ではなく「venv の再構築 (リセット)」を実行してください。
+
 ```powershell
 # 作成
 python -m venv venv
@@ -60,8 +62,8 @@ pip install -r requirements.txt
 **Windows (PowerShell)**
 
 ```powershell
-deactivate
-Remove-Item -Recurse -Force venv
+deactivate 2>$null
+Remove-Item -Recurse -Force venv -ErrorAction SilentlyContinue
 python -m venv venv
 # python が見つからない場合
 # py -m venv venv
