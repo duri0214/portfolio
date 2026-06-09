@@ -4,6 +4,12 @@ apply: always
 
 # ポートフォリオ共通業務ルール (Portfolio Common Rules)
 
+## Git/GitHub 操作
+- GitHub API、GitHub Contents API、MCP のファイル更新系ツールなどで、リモートブランチ上のファイルを直接作成・更新・削除しない。
+- 変更は必ずローカル作業ツリーで編集し、`git add`、`git commit`、`git push` の通常フローで反映する。
+- `git add`、`git commit`、`git push`、`git checkout`、`git reset` などが失敗した場合は、API 等で迂回せず、原因を切り分けてユーザーに確認する。
+- GitHub API は Issue/PR の作成、コメント、メタ情報更新、状態確認など、ファイル内容を直接変更しない操作に限って使用する。
+
 ## 設計方針
 - 基本的に DDD（ドメイン駆動設計）のエッセンスに沿って設計・実装する。
 - `domain/` 配下は基本的に Repository、Service、Value Object の3層で構成する。

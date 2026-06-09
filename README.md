@@ -14,7 +14,7 @@ Django(Python)を用いた、各種データ分析・可視化ツールのポー
 
 ```bash
 # 作成
-python -m venv venv
+python3 -m venv venv
 
 # 有効化
 source venv/bin/activate
@@ -25,6 +25,9 @@ pip install -r requirements.txt
 ```
 
 **Windows (PowerShell)**
+
+既に `(venv)` が表示されている場合や `venv` フォルダが存在する場合は、この作成手順ではなく「venv の再構築 (リセット)
+」を実行してください。
 
 ```powershell
 # 作成
@@ -47,7 +50,7 @@ pip install -r requirements.txt
 ```bash
 deactivate
 rm -rf venv
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -55,8 +58,8 @@ pip install -r requirements.txt
 **Windows (PowerShell)**
 
 ```powershell
-deactivate
-Remove-Item -Recurse -Force venv
+deactivate 2>$null
+Remove-Item -Recurse -Force venv -ErrorAction SilentlyContinue
 python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
@@ -127,8 +130,9 @@ sudo setfacl -R -d -m o::rx /var/www/html/portfolio/media
 (ライブラリに変更がある場合のみでOK。通常は `pip install -r requirements.txt` のみ)
 
 ```bash
+deactivate 2>/dev/null || true
 rm -rf venv
-python -m venv venv
+python3 -m venv venv
 ```
 
 #### 4. 環境の構築
@@ -143,8 +147,8 @@ python -m pip install -r requirements.txt
 
 ```bash
 python manage.py collectstatic --noinput
-python manage.py clearsessions
 python manage.py migrate
+python manage.py clearsessions
 ```
 
 #### 6. スーパーユーザーの作成
