@@ -14,7 +14,7 @@ Django(Python)を用いた、各種データ分析・可視化ツールのポー
 
 ```bash
 # 作成
-python -m venv venv
+python3 -m venv venv
 
 # 有効化
 source venv/bin/activate
@@ -47,7 +47,7 @@ pip install -r requirements.txt
 ```bash
 deactivate
 rm -rf venv
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -129,7 +129,7 @@ sudo setfacl -R -d -m o::rx /var/www/html/portfolio/media
 ```bash
 deactivate 2>/dev/null || true
 rm -rf venv
-python -m venv venv
+python3 -m venv venv
 ```
 
 #### 4. 環境の構築
