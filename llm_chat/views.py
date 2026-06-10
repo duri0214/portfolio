@@ -1,13 +1,19 @@
 import csv
-import os
 import io
 import json
 import logging
+import os
 import traceback
 from typing import Generator
 
+from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import User
+from django.core.management import call_command
+from django.core.management.base import CommandError
+from django.db import transaction
 from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import FormView
@@ -15,15 +21,9 @@ from dotenv import load_dotenv
 
 from lib.llm.valueobject.completion import StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
+from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.chat import ChatDisplayService
-from llm_chat.domain.valueobject.completion.riddle import (
-    GenderType,
-    Gender,
-    SessionState,
-)
-from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.use_case.completion.chat import (
     OpenAIGptStreamingUseCase,
 )
@@ -31,11 +31,14 @@ from llm_chat.domain.use_case.completion.riddle import (
     RiddleUseCase,
     RiddleStreamingUseCase,
 )
+from llm_chat.domain.valueobject.completion.riddle import (
+    GenderType,
+    Gender,
+    SessionState,
+)
+from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.forms import UserTextForm, RiddleCSVUploadForm
 from llm_chat.models import RiddleQuestion
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.db import transaction
 
 # .env ファイルを読み込む
 load_dotenv()
@@ -43,6 +46,11 @@ load_dotenv()
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
+
+
+def _get_login_user(request):
+    """ログインユーザーまたはデフォルトユーザー（pk=1）を取得します。"""
+    return request.user if request.user.is_authenticated else User.objects.get(pk=1)
 
 
 class IndexView(FormView):
@@ -53,7 +61,7 @@ class IndexView(FormView):
     def get_initial(self):
         """フォームの初期値を設定します。"""
         initial = super().get_initial()
-        login_user = self._get_login_user()
+        login_user = _get_login_user(self.request)
 
         initial_values = ChatDisplayService.get_initial_values(self.request, login_user)
         initial.update(initial_values)
@@ -62,7 +70,7 @@ class IndexView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        login_user = self._get_login_user()
+        login_user = _get_login_user(self.request)
         chat_history = ChatLogRepository.find_chat_history(user=login_user)
 
         # JSON フォーマットデータをテンプレートに渡す
@@ -72,13 +80,70 @@ class IndexView(FormView):
 
         return context
 
-    def _get_login_user(self):
-        """ログインユーザーまたはデフォルトユーザー（pk=1）を取得します。"""
-        return (
-            self.request.user
-            if self.request.user.is_authenticated
-            else User.objects.get(pk=1)
+
+class RokunoheMinutesRagView(View):
+    """
+    六戸町会議録専用のRAGチャットビュー。
+    """
+
+    def get(self, request, *args, **kwargs):
+        login_user = _get_login_user(request)
+        chat_history = ChatLogRepository.find_chat_history(
+            user=login_user, use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG
         )
+        form = UserTextForm(initial={"use_case_type": UseCaseType.ROKUNOHE_MINUTES_RAG})
+
+        context = {
+            "chat_history": [log.to_display() for log in chat_history],
+            "form": form,
+            "use_case_type": UseCaseType.ROKUNOHE_MINUTES_RAG,
+            "is_superuser": request.user.is_superuser,
+        }
+        return render(request, "llm_chat/rokunohe_minutes.html", context)
+
+    def post(self, request, *args, **kwargs):
+        user_input = request.POST.get("user_input")
+        if not user_input:
+            return JsonResponse({"error": "No user input provided"}, status=400)
+
+        try:
+            login_user = _get_login_user(request)
+            use_case = UseCaseFactory.create(UseCaseType.ROKUNOHE_MINUTES_RAG)
+            message = use_case.execute(user=login_user, content=user_input)
+            return JsonResponse(
+                {
+                    "status": "success",
+                    "result": message.to_display(),
+                }
+            )
+        except Exception as e:
+            logger.error(f"RokunoheMinutesRagView Error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return JsonResponse({"error": str(e)}, status=500)
+
+
+class RokunohePdfDownloadView(UserPassesTestMixin, View):
+    """
+    六戸町会議録PDFをダウンロードして保存するビュー。
+    jp_stocks から移設。
+    """
+
+    raise_exception = True
+    command_name = "rokunohe_pdf_download"
+    success_message = (
+        "六戸町会議録PDFを media/llm_chat/rokunohe_pdf_back_numbers に保存しました。"
+    )
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        try:
+            call_command(self.command_name)
+            messages.success(request, self.success_message)
+        except CommandError as e:
+            messages.warning(request, str(e))
+        return redirect("llm:rokunohe_minutes")
 
 
 class SyncResponseView(View):
@@ -107,9 +172,7 @@ class SyncResponseView(View):
                 UseCaseType.GEMINI,
                 UseCaseType.OPENAI_GPT_STREAMING,
             ):
-                return JsonResponse(
-                    {"error": "Invalid use case for sync"}, status=400
-                )
+                return JsonResponse({"error": "Invalid use case for sync"}, status=400)
 
             # セッションに use_case_type を保存（モデル変更なしで記憶するため）
             request.session["use_case_type"] = use_case_type
@@ -194,7 +257,9 @@ class StreamingResponseView(View):
                 UseCaseType.OPENAI_GPT_STREAMING,
                 UseCaseType.RIDDLE,
             ):
-                return JsonResponse({"error": "Invalid use case for streaming"}, status=400)
+                return JsonResponse(
+                    {"error": "Invalid use case for streaming"}, status=400
+                )
 
             # セッションに use_case_type を保存
             request.session["use_case_type"] = use_case_type
@@ -313,12 +378,18 @@ class ClearChatLogsView(View):
     @staticmethod
     def post(request, *args, **kwargs):
         """
-        ChatLogsテーブルの全レコードを削除します。
+        指定されたユーザー（またはデフォルトユーザー）のチャット履歴を削除します。
+        use_case_type が指定されている場合は、そのユースケースに限定します。
         """
         try:
-            count = ChatLogRepository.clear_all()
+            login_user = _get_login_user(request)
+            use_case_type = request.POST.get("use_case_type")
+            count = ChatLogRepository.clear_history(
+                user=login_user, use_case_type=use_case_type
+            )
             return JsonResponse({"status": "success", "deleted": count})
         except Exception as e:
+            logger.error(f"ClearChatLogsView Error: {str(e)}")
             return JsonResponse(
                 {"error": "Failed to clear", "detail": str(e)}, status=500
             )

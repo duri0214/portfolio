@@ -35,6 +35,7 @@ class ChatLogs(models.Model):
         (UseCaseType.OPENAI_TEXT_TO_SPEECH, "OpenAI Text to Speech"),
         (UseCaseType.OPENAI_SPEECH_TO_TEXT, "OpenAI Speech to Text"),
         (UseCaseType.OPENAI_RAG, "OpenAI RAG"),
+        (UseCaseType.ROKUNOHE_MINUTES_RAG, "Rokunohe Minutes RAG"),
         (UseCaseType.RIDDLE, "Riddle"),
     ]
 

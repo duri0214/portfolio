@@ -5,15 +5,20 @@ from .views import (
     IndexView,
     StreamResultSaveView,
     SyncResponseView,
+    RokunoheMinutesRagView,
     ClearChatLogsView,
     RiddleAdminView,
     RiddleCSVUploadView,
     RiddleSampleCSVView,
+    RokunohePdfDownloadView,
 )
 
 app_name = "llm"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
+    path(
+        "rokunohe-minutes/", RokunoheMinutesRagView.as_view(), name="rokunohe_minutes"
+    ),
     path("riddle_admin/", RiddleAdminView.as_view(), name="riddle_admin"),
     path(
         "riddle_admin/upload/",
@@ -33,4 +38,9 @@ urlpatterns = [
         name="streaming_result_save",
     ),
     path("clear_chat_logs/", ClearChatLogsView.as_view(), name="clear_chat_logs"),
+    path(
+        "rokunohe-pdf-download/",
+        RokunohePdfDownloadView.as_view(),
+        name="rokunohe_pdf_download",
+    ),
 ]

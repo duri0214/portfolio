@@ -12,6 +12,9 @@ from llm_chat.domain.use_case.completion.multimedia import (
 )
 from llm_chat.domain.use_case.completion.rag import OpenAIRagUseCase
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
+from llm_chat.domain.use_case.completion.rokunohe_minutes import (
+    RokunoheMinutesRagUseCase,
+)
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
@@ -66,6 +69,9 @@ class UseCaseFactory:
 
         if use_case_type == UseCaseType.OPENAI_RAG:
             return OpenAIRagUseCase()
+
+        if use_case_type == UseCaseType.ROKUNOHE_MINUTES_RAG:
+            return RokunoheMinutesRagUseCase()
 
         if use_case_type == UseCaseType.RIDDLE:
             config = OpenAIGptConfig(

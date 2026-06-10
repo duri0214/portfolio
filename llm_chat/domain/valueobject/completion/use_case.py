@@ -17,4 +17,5 @@ class UseCaseType:
     OPENAI_TEXT_TO_SPEECH = "OpenAITextToSpeech"
     OPENAI_SPEECH_TO_TEXT = "OpenAISpeechToText"
     OPENAI_RAG = "OpenAIRag"
+    ROKUNOHE_MINUTES_RAG = "RokunoheMinutesRag"
     RIDDLE = "Riddle"

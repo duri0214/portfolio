@@ -26,7 +26,14 @@
             <div class="col-12">
                 <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;"></div>
 
-                <div class="d-flex justify-content-end mb-3 gap-2">
+                <div class="d-flex justify-content-end mb-3 gap-2 align-items-center">
+                    {% if is_superuser %}
+                        <a href="{% url 'llm:rokunohe_minutes' %}" class="btn btn-outline-info btn-sm">六戸町会議録QA
+                            (管理)</a>
+                    {% else %}
+                        <a href="{% url 'llm:rokunohe_minutes' %}"
+                           class="btn btn-outline-info btn-sm">六戸町会議録QA</a>
+                    {% endif %}
                     <a href="{% url 'llm:riddle_admin' %}" class="btn btn-outline-secondary btn-sm">なぞなぞ管理</a>
                     <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                 </div>

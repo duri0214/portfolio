@@ -1,3 +1,4 @@
+import os
 import re
 import time
 from email.utils import parsedate_to_datetime
@@ -8,22 +9,39 @@ import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from pypdf import PdfReader
+
+from lib.llm.service.completion import OpenAILlmRagService
+from lib.llm.valueobject.config import ModelName
+
+
+class Document:
+    """OpenAILlmRagService.upsert_documents が期待するドキュメントオブジェクト。"""
+
+    def __init__(self, page_content: str, metadata: dict):
+        self.page_content = page_content
+        self.metadata = metadata
 
 
 class Command(BaseCommand):
-    help = "六戸町の会議録PDFを一括ダウンロードします"
+    help = "六戸町の会議録PDFを一括ダウンロードし、Chroma DBにインポートします"
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--save-dir",
             default=None,
-            help="PDFの保存先ディレクトリ。未指定時は media/jp_stocks/rokunohe_pdf_back_numbers に保存します。",
+            help="PDFの保存先ディレクトリ。未指定時は media/llm_chat/rokunohe_pdf_back_numbers に保存します。",
         )
         parser.add_argument(
             "--delay",
             default=2.0,
             type=float,
             help="外部サイトへのリクエスト間隔秒数。未指定時は2秒待機します。",
+        )
+        parser.add_argument(
+            "--skip-import",
+            action="store_true",
+            help="Chroma DB へのインポートをスキップします。",
         )
 
     def handle(self, *args, **options):
@@ -87,43 +105,47 @@ class Command(BaseCommand):
                             save_dir=save_dir,
                             filename=filename,
                         )
+
+                        save_path = None
                         if existing_dated_path:
                             skipped_count += 1
                             downloaded_filenames.add(filename)
                             self._write_info(
                                 f"進捗 {index}/{len(pdf_links)}: スキップ (保存済み): {existing_dated_path}"
                             )
-                            continue
-
-                        self._write_info(
-                            f"進捗 {index}/{len(pdf_links)}: ダウンロード中: {pdf_link['url']}"
-                        )
-                        pdf_response, request_count = self._get_with_delay(
-                            url=pdf_link["url"],
-                            delay_seconds=options["delay"],
-                            request_count=request_count,
-                        )
-                        pdf_response.raise_for_status()
-
-                        filename = self._prepend_last_modified_date(
-                            filename=filename,
-                            response=pdf_response,
-                        )
-                        save_path = save_dir / filename
-                        if save_path.exists():
-                            skipped_count += 1
-                            downloaded_filenames.add(filename)
+                            save_path = existing_dated_path
+                        else:
                             self._write_info(
-                                f"進捗 {index}/{len(pdf_links)}: スキップ (保存済み): {save_path}"
+                                f"進捗 {index}/{len(pdf_links)}: ダウンロード中: {pdf_link['url']}"
                             )
-                            continue
+                            pdf_response, request_count = self._get_with_delay(
+                                url=pdf_link["url"],
+                                delay_seconds=options["delay"],
+                                request_count=request_count,
+                            )
+                            pdf_response.raise_for_status()
 
-                        with open(save_path, "wb") as f:
-                            f.write(pdf_response.content)
+                            filename = self._prepend_last_modified_date(
+                                filename=filename,
+                                response=pdf_response,
+                            )
+                            save_path = save_dir / filename
+                            if save_path.exists():
+                                skipped_count += 1
+                                downloaded_filenames.add(filename)
+                                self._write_info(
+                                    f"進捗 {index}/{len(pdf_links)}: スキップ (保存済み): {save_path}"
+                                )
+                            else:
+                                with open(save_path, "wb") as f:
+                                    f.write(pdf_response.content)
+                                downloaded_filenames.add(filename)
+                                downloaded_count += 1
+                                self._write_success(f"保存完了: {save_path}")
 
-                        downloaded_filenames.add(filename)
-                        downloaded_count += 1
-                        self._write_success(f"保存完了: {save_path}")
+                        # Chroma DB へのインポート
+                        if save_path and not options["skip_import"]:
+                            self._import_to_chroma(save_path)
 
                     self._write_info(
                         f"処理完了: ダウンロード {downloaded_count} 件, スキップ {skipped_count} 件"
@@ -139,7 +161,7 @@ class Command(BaseCommand):
     def _get_save_dir(save_dir: str | None) -> Path:
         if save_dir:
             return Path(save_dir)
-        return Path(settings.MEDIA_ROOT) / "jp_stocks" / "rokunohe_pdf_back_numbers"
+        return Path(settings.MEDIA_ROOT) / "llm_chat" / "rokunohe_pdf_back_numbers"
 
     @staticmethod
     def _get_base_url(target_url: str) -> str:
@@ -239,3 +261,47 @@ class Command(BaseCommand):
 
     def _write_error(self, message: str) -> None:
         self.stdout.write(self.style.ERROR(message))
+
+    def _import_to_chroma(self, pdf_path: Path) -> None:
+        """PDFからテキストを抽出し、Chroma DBにインポートします。"""
+        collection_name = "rokunohe_minutes"
+        try:
+            rag_service = OpenAILlmRagService(
+                model=ModelName.GPT_5_MINI,
+                api_key=os.getenv("OPENAI_API_KEY") or "",
+                collection_name=collection_name,
+            )
+
+            # 既に登録済みかチェック（メタデータのsourceで判定）
+            existing = rag_service._collection.get(
+                where={"source": str(pdf_path.name)}, limit=1
+            )
+            if existing and existing["ids"]:
+                self._write_info(f"インポートスキップ (登録済み): {pdf_path.name}")
+                return
+
+            self._write_info(f"インポート開始: {pdf_path.name}")
+            reader = PdfReader(pdf_path)
+            text_parts = []
+            for page in reader.pages:
+                text = page.extract_text()
+                if text:
+                    text_parts.append(text)
+
+            full_text = "\n".join(text_parts).strip()
+            if not full_text:
+                self._write_error(f"テキストが抽出できませんでした: {pdf_path.name}")
+                return
+
+            doc = Document(
+                page_content=full_text,
+                metadata={
+                    "source": str(pdf_path.name),
+                    "id": f"rokunohe_{pdf_path.stem}",
+                },
+            )
+            rag_service.upsert_documents([doc])
+            self._write_success(f"インポート完了: {pdf_path.name}")
+
+        except Exception as e:
+            self._write_error(f"インポートエラー ({pdf_path.name}): {e}")

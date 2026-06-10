@@ -10,16 +10,24 @@ def migrate_is_riddle_to_use_case_type(apps, schema_editor):
     それ以外は model_name から推定するが、既存データには model_name が
     ユースケース名として入っているため、そのまま使用する。
     """
-    ChatLogs = apps.get_model('llm_chat', 'ChatLogs')
+    ChatLogs = apps.get_model("llm_chat", "ChatLogs")
 
     for log in ChatLogs.objects.all():
         # is_riddle が True の場合は Riddle
-        if hasattr(log, 'is_riddle') and log.is_riddle:
+        if hasattr(log, "is_riddle") and log.is_riddle:
             log.use_case_type = "Riddle"
         # model_name がある場合は、それがユースケース名として入っている可能性が高い
         # （旧実装では model_name にユースケース名が入っていた）
-        elif log.model_name in ["OpenAIGpt", "OpenAIGptStreaming", "Gemini", "OpenAIDalle",
-                                 "OpenAITextToSpeech", "OpenAISpeechToText", "OpenAIRag", "Riddle"]:
+        elif log.model_name in [
+            "OpenAIGpt",
+            "OpenAIGptStreaming",
+            "Gemini",
+            "OpenAIDalle",
+            "OpenAITextToSpeech",
+            "OpenAISpeechToText",
+            "OpenAIRag",
+            "Riddle",
+        ]:
             log.use_case_type = log.model_name
         else:
             # それ以外はデフォルトで OpenAIGpt
@@ -55,7 +63,9 @@ class Migration(migrations.Migration):
             ),
         ),
         # データ移行を実行
-        migrations.RunPython(migrate_is_riddle_to_use_case_type, migrations.RunPython.noop),
+        migrations.RunPython(
+            migrate_is_riddle_to_use_case_type, migrations.RunPython.noop
+        ),
         # is_riddle フィールドを削除
         migrations.RemoveField(
             model_name="chatlogs",
