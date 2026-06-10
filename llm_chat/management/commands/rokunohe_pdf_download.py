@@ -1,4 +1,3 @@
-import os
 import re
 import time
 from email.utils import parsedate_to_datetime
@@ -9,18 +8,14 @@ import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from pypdf import PdfReader
 
-from lib.llm.service.completion import OpenAILlmRagService
-from lib.llm.valueobject.config import ModelName
-
-
-class Document:
-    """OpenAILlmRagService.upsert_documents が期待するドキュメントオブジェクト。"""
-
-    def __init__(self, page_content: str, metadata: dict):
-        self.page_content = page_content
-        self.metadata = metadata
+from llm_chat.domain.service.completion.rokunohe_minutes import (
+    RokunoheMinutesPdfImportService,
+)
+from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
+    ROKUNOHE_MINUTES_MEDIA_DIR,
+    RokunoheMinutesImportStatus,
+)
 
 
 class Command(BaseCommand):
@@ -161,7 +156,7 @@ class Command(BaseCommand):
     def _get_save_dir(save_dir: str | None) -> Path:
         if save_dir:
             return Path(save_dir)
-        return Path(settings.MEDIA_ROOT) / "llm_chat" / "rokunohe_pdf_back_numbers"
+        return Path(settings.MEDIA_ROOT) / ROKUNOHE_MINUTES_MEDIA_DIR
 
     @staticmethod
     def _get_base_url(target_url: str) -> str:
@@ -264,43 +259,16 @@ class Command(BaseCommand):
 
     def _import_to_chroma(self, pdf_path: Path) -> None:
         """PDFからテキストを抽出し、Chroma DBにインポートします。"""
-        collection_name = "rokunohe_minutes"
         try:
-            rag_service = OpenAILlmRagService(
-                model=ModelName.GPT_5_MINI,
-                api_key=os.getenv("OPENAI_API_KEY") or "",
-                collection_name=collection_name,
-            )
-
-            # 既に登録済みかチェック（メタデータのsourceで判定）
-            existing = rag_service._collection.get(
-                where={"source": str(pdf_path.name)}, limit=1
-            )
-            if existing and existing["ids"]:
+            import_service = RokunoheMinutesPdfImportService()
+            status = import_service.import_pdf(pdf_path)
+            if status == RokunoheMinutesImportStatus.SKIPPED_EXISTING:
                 self._write_info(f"インポートスキップ (登録済み): {pdf_path.name}")
                 return
-
-            self._write_info(f"インポート開始: {pdf_path.name}")
-            reader = PdfReader(pdf_path)
-            text_parts = []
-            for page in reader.pages:
-                text = page.extract_text()
-                if text:
-                    text_parts.append(text)
-
-            full_text = "\n".join(text_parts).strip()
-            if not full_text:
+            if status == RokunoheMinutesImportStatus.SKIPPED_EMPTY_TEXT:
                 self._write_error(f"テキストが抽出できませんでした: {pdf_path.name}")
                 return
 
-            doc = Document(
-                page_content=full_text,
-                metadata={
-                    "source": str(pdf_path.name),
-                    "id": f"rokunohe_{pdf_path.stem}",
-                },
-            )
-            rag_service.upsert_documents([doc])
             self._write_success(f"インポート完了: {pdf_path.name}")
 
         except Exception as e:

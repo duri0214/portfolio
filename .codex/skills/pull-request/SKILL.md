@@ -1,47 +1,65 @@
 ---
 name: pull-request
-description: プルリクエスト本文を日本語で生成する。「pr書いて」「PR作って」「pull request 作って」など、PR本文作成やPR作成の依頼で使用する。生成時は Summary、目検による動作確認手順、自動テストでカバーできた範囲、関連Issue を含めた Markdown 形式にする。
+description: GitHub CLIでプルリクエストを作成する。「pr書いて」「PR作って」「pull request 作って」など、PR作成やPR本文作成の依頼で使用する。Issue番号をブランチ名から取得し、Issue情報・差分・テスト結果をもとに日本語のPR本文を作成して `gh pr create` まで実行する。
 ---
 
-# プルリクエスト (PR) 作成規約
+# プルリクエスト作成ルール
 
-- **出力言語は必ず日本語とすること。**
-- Codex が PR 内容を生成する際は、以下の指示を最優先すること。
-- 日本語以外の言語（英語など）で出力された場合は、直ちに日本語に翻訳して出力し直すこと。
+## 基本方針
 
-## 生成フォーマット
+- 出力言語とPR本文は必ず日本語にする。
+- GitHub操作は原則 `gh` コマンドで行う。
+- リモート上のファイル内容をAPIで直接変更しない。
+- PR作成依頼では、本文を表示するだけで終わらず、作成可能な状態なら `gh pr create` まで実行する。
+- 未コミット変更がある、ブランチが未push、CI確認が必要など、PR作成前に必要な作業が残っている場合は、その理由を短く伝えて止める。
 
-PR本文を生成する際は、**必ず以下の Markdown コードブロック（三重バッククォート）で囲んだ状態で記述すること。**
+## 事前確認
 
-```markdown
+1. `git status --short --branch` で現在ブランチと作業ツリーを確認する。
+2. `master` / `main` 上にいる場合はPRを作成しない。
+3. ブランチ名の先頭の数字をIssue番号として扱う。
+   - 例: `740-llm-chat-rag-ddd` -> Issue `740`
+4. Issue番号が取得できる場合は `gh issue view <番号> --json title,body,labels,assignees,projectItems,url` でIssue情報を取得する。
+5. `git diff --stat`、`git diff --name-status`、必要に応じて `git log --oneline origin/<base>..HEAD` を確認する。
+6. 実行済みテストが会話やログから分かる場合はPR本文へ反映する。不明な場合は「未実施」と明記する。
+
+## PR本文
+
+PR本文には以下を含める。
+
+```text
 ## Summary
-[ここに変更内容の簡潔な要約を日本語で記述してください]
+[変更内容の要約]
 
-- [主な変更点1]
-- [主な変更点2]
+- [主な変更点]
 
 ## 目検による動作確認手順
-[どの画面をどのように操作すると、どのような結果（期待結果）になるべきかをチェックボックス形式で記述してください]
+- [ ] [画面やコマンドで確認する内容]
 
 ## 自動テストでカバーできた範囲
-[実行したテストファイル名や、テストした内容を記述してください]
+[実行したテストコマンドと確認できた範囲]
 
 ## 関連Issue
-https://github.com/duri0214/portfolio/issues/[ブランチ名の先頭の数字]
+[Issue URL]
 ```
 
-## リンク生成のルール
+## PR作成
 
-- 現在のブランチ名を確認し、その先頭にある数字を Issue 番号として使用すること。
-- （例：ブランチ名が `123-feature-name` の場合、Issueリンクは `https://github.com/duri0214/portfolio/issues/123` とする）
-- ブランチ名に数字が含まれていない場合は、この項目を除外するか、空欄にすること。
+1. baseブランチは通常 `master` とする。リポジトリの既定ブランチが明らかに異なる場合だけ、その既定ブランチを使う。
+2. PRタイトルはIssueタイトルをベースにする。
+   - 推奨: `#<Issue番号> <Issueタイトル>`
+3. PR本文は一時ファイルに書き出し、`gh pr create --base <base> --head <current-branch> --title "<title>" --body-file <body-file>` で作成する。
+4. 作成後に `gh pr view --json url,number,title` でURLを確認する。
 
-## PR作成時のメタ情報設定
+## メタ情報設定
 
-PRを実際に作成する場合は、本文生成に加えて以下をできるだけ設定すること。設定できない項目があっても、PR作成自体は止めないこと。
+PR作成後、設定できるものを `gh` で設定する。失敗してもPR作成自体は維持し、失敗内容だけ伝える。
 
-- **Title**: ブランチ名の先頭から取得した Issue 番号を使い、関連 Issue のタイトルを取得して PR タイトルに設定する。
-- **Assignee**: `gh api user --jq .login` などで自分自身の GitHub ユーザー名を取得し、PR の assignee に自分自身を設定する。
-- **Label**: ブランチ名の先頭から取得した Issue 番号を使い、関連 Issue に付いている label を取得して、同じ label を PR にできるだけ設定する。関連 Issue に label がない場合や取得できない場合は省略する。
-- **Projects**: `gh project list --owner duri0214 --format json` などで Project 一覧を取得し、取得できた Project が1件だけなら、その Project の `title` を使って PR に設定する。Project 名を固定文字列で決め打ちしないこと。Project 操作の権限が不足している場合は、`gh auth refresh -s read:project -s project` が必要なことを伝える。
+- Assignee: `gh api user --jq .login` で取得した自分自身を設定する。
+- Label: Issueに付いているlabelをPRにも設定する。
+- Project: IssueのProject情報を確認し、対応するProjectへPRを追加する。権限不足の場合は `gh auth refresh -s read:project -s project` が必要なことを伝える。
+
+## 本文だけ求められた場合
+
+ユーザーが明示的に「本文だけ」「PR文だけ」と依頼した場合は、PR作成は行わず本文だけ返す。
 
