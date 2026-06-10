@@ -15,8 +15,13 @@ class ChatLogRepository:
     """
 
     @staticmethod
-    def find_chat_history(user: User) -> list[MessageDTO]:
-        chat_logs = ChatLogs.objects.filter(user=user).order_by("created_at")
+    def find_chat_history(
+        user: User, use_case_type: str | None = None
+    ) -> list[MessageDTO]:
+        query = ChatLogs.objects.filter(user=user)
+        if use_case_type:
+            query = query.filter(use_case_type=use_case_type)
+        chat_logs = query.order_by("created_at")
         return [chat_log.to_message_dto() for chat_log in chat_logs]
 
     @staticmethod
@@ -38,6 +43,25 @@ class ChatLogRepository:
             int: 削除されたレコードの件数。
         """
         deleted_count, _ = ChatLogs.objects.all().delete()
+        return deleted_count
+
+    @staticmethod
+    def clear_history(user: User, use_case_type: str | None = None) -> int:
+        """
+        指定されたユーザーのチャット履歴を削除します。
+        use_case_type が指定されている場合は、そのユースケースに限定します。
+
+        Args:
+            user (User): 対象ユーザー。
+            use_case_type (str | None): ユースケースタイプ。
+
+        Returns:
+            int: 削除されたレコードの件数。
+        """
+        query = ChatLogs.objects.filter(user=user)
+        if use_case_type:
+            query = query.filter(use_case_type=use_case_type)
+        deleted_count, _ = query.delete()
         return deleted_count
 
     @staticmethod

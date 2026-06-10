@@ -1,10 +1,4 @@
-from django.contrib import messages
-from django.contrib.auth.mixins import UserPassesTestMixin
-from django.core.management import call_command
-from django.core.management.base import CommandError
-from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views import View
 from django.views.generic import TemplateView, CreateView, ListView
 
 from jp_stocks.domain.repository.order import OrderRepository
@@ -14,25 +8,6 @@ from jp_stocks.models import Order
 
 class IndexView(TemplateView):
     template_name = "jp_stocks/index.html"
-
-
-class RokunohePdfDownloadView(UserPassesTestMixin, View):
-    raise_exception = True
-    command_name = "rokunohe_pdf_download"
-    success_message = (
-        "六戸町会議録PDFを media/jp_stocks/rokunohe_pdf_back_numbers に保存しました。"
-    )
-
-    def test_func(self):
-        return self.request.user.is_superuser
-
-    def post(self, request, *args, **kwargs):
-        try:
-            call_command(self.command_name)
-            messages.success(request, self.success_message)
-        except CommandError as e:
-            messages.warning(request, str(e))
-        return redirect("jpn:index")
 
 
 class OrderBookListView(ListView):

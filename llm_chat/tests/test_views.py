@@ -257,13 +257,10 @@ class ViewLogicTest(TestCase):
            - レスポンスに削除件数が含まれていること
            - 実際にレコードが削除されていること
         """
-        user = User.objects.create_user(username="test_user_clear")
-        from llm_chat.models import ChatLogs
+        self.client.login(username="admin", password="password")
 
-        ChatLogs.objects.create(user=user, role="USER", content="test1")
-        ChatLogs.objects.create(user=user, role="ASSISTANT", content="test2")
-
-        from django.urls import reverse
+        ChatLogs.objects.create(user=self.user, role="USER", content="test1")
+        ChatLogs.objects.create(user=self.user, role="ASSISTANT", content="test2")
 
         response = self.client.post(reverse("llm:clear_chat_logs"))
         self.assertEqual(response.status_code, 200)

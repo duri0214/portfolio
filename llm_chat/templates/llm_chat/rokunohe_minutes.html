@@ -1,0 +1,187 @@
+{% extends 'llm_chat/base.html' %}
+{% load static %}
+{% load split_ext %}
+{% load markdown_extras %}
+
+{% block content %}
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'llm:index' %}">LLM Chat</a></li>
+                <li class="breadcrumb-item active" aria-current="page">六戸町会議録 RAG</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <!-- Hero -->
+            <div class="col-12">
+                <div class="bg-light p-5 rounded shadow-sm">
+                    <h1 class="display-4">六戸町会議録 QA</h1>
+                    <p class="lead">Chroma DB に蓄積された六戸町会議録 PDF を根拠に質問に回答します。</p>
+                </div>
+            </div>
+
+            <!-- Chat Interface -->
+            <div class="col-12">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;"></div>
+
+                <div class="d-flex justify-content-end mb-3 gap-2">
+                    {% if is_superuser %}
+                        <form method="post" action="{% url 'llm:rokunohe_pdf_download' %}" class="me-auto">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF保存</button>
+                        </form>
+                    {% endif %}
+                    <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
+                </div>
+
+                {% for chat_log in chat_history %}
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body">
+                            <div class="text-muted small fw-bold mb-1">{{ chat_log.role }}</div>
+                            <div class="card-text">
+                                {% if chat_log.content != "N/A" %}
+                                    {{ chat_log.content|markdown }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div id="streaming-card" class="card shadow-sm border-0 mb-3" style="display: none;">
+                    <div class="card-body">
+                        <div class="text-muted small fw-bold mb-1">（処理中...）</div>
+                        <p id="output" class="card-text mb-0"></p>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <form id="ragForm">
+                            <div class="mb-2">{{ form.question.label }} {{ form.question }}</div>
+                            <input type="hidden" name="use_case_type" value="{{ use_case_type }}">
+                            <div id="loading-indicator" class="align-items-center mt-2 d-none">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"
+                                     aria-hidden="true"></div>
+                                <span class="small">資料を検索して回答を生成中です。少々お待ちください…</span>
+                            </div>
+                            <div class="d-flex justify-content-end mt-3 gap-2">
+                                {% if user.is_authenticated %}
+                                    <input id="sendButton" class="btn btn-primary" type="button" value="送信">
+                                {% else %}
+                                    <input id="sendButton" class="btn btn-outline-secondary" type="button" value="送信"
+                                           disabled>
+                                {% endif %}
+                            </div>
+                            {% if not user.is_authenticated %}
+                                <div class="d-flex justify-content-end mt-2 text-muted small">
+                                    ログインしないと送信できません
+                                </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sendButton = document.getElementById("sendButton");
+            const userInput = document.getElementById("id_question");
+            const loadingIndicator = document.getElementById("loading-indicator");
+            const clearBtn = document.getElementById("clearChatLogsBtn");
+            let isLoading = false;
+
+            function startLoading() {
+                isLoading = true;
+                loadingIndicator.classList.remove("d-none");
+                loadingIndicator.classList.add("d-flex");
+                sendButton.disabled = true;
+                sendButton.value = "送信中...";
+            }
+
+            function stopLoading() {
+                isLoading = false;
+                loadingIndicator.classList.add("d-none");
+                loadingIndicator.classList.remove("d-flex");
+                sendButton.disabled = false;
+                sendButton.value = "送信";
+            }
+
+            sendButton.addEventListener("click", function () {
+                const message = userInput.value.trim();
+                if (!message) {
+                    alert("メッセージを入力してください。");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("user_input", message);
+
+                startLoading();
+                fetch(window.location.href, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": Cookies.get("csrftoken"),
+                    },
+                    body: formData,
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            location.reload();
+                        } else {
+                            alert("エラー: " + (data.error || "不明なエラー"));
+                            stopLoading();
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        alert("通信エラーが発生しました。");
+                        stopLoading();
+                    });
+            });
+
+            if (clearBtn) {
+                clearBtn.addEventListener("click", function () {
+                    if (!confirm("履歴を削除しますか？")) return;
+
+                    const formData = new FormData();
+                    formData.append("use_case_type", "{{ use_case_type }}");
+
+                    fetch("{% url 'llm:clear_chat_logs' %}", {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": Cookies.get("csrftoken"),
+                        },
+                        body: formData,
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === "success") {
+                                location.reload();
+                            }
+                        });
+                });
+            }
+
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: "smooth"
+            });
+        });
+    </script>
+{% endblock %}
