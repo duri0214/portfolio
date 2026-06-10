@@ -10,7 +10,19 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from lib.llm.valueobject.completion import RoleType
+from llm_chat.domain.repository.completion.rokunohe_minutes import (
+    RokunoheMinutesRagRepository,
+)
+from llm_chat.domain.service.completion.rokunohe_minutes import (
+    RokunoheMinutesPdfImportService,
+    RokunoheMinutesRagService,
+)
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
+from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
+    ROKUNOHE_MINUTES_COLLECTION_NAME,
+    RokunoheMinutesImportStatus,
+    RokunoheMinutesPdf,
+)
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
@@ -239,21 +251,152 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertNotContains(response, "会議録PDF保存")
 
 
+class RokunoheMinutesPdfImportServiceTest(TestCase):
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
+    def test_imports_pdf_text_to_repository(self, mock_pdf_reader):
+        """
+        シナリオ:
+        - 入力: 未登録のPDFと、PDFから抽出できるテキスト。
+        - 処理: PDFインポートサービスを実行する。
+        - 期待値: PDF本文と出典メタデータを持つドキュメントがRepositoryへ登録されること。
+        """
+        repository = Mock()
+        repository.exists.return_value = False
+        mock_page = Mock()
+        mock_page.extract_text.return_value = "六戸町会議録の内容です。"
+        mock_pdf_reader.return_value.pages = [mock_page]
+
+        service = RokunoheMinutesPdfImportService(repository=repository)
+        status = service.import_pdf(Path("会議録.pdf"))
+
+        self.assertEqual(status, RokunoheMinutesImportStatus.IMPORTED)
+        repository.upsert_documents.assert_called_once()
+        docs = repository.upsert_documents.call_args[0][0]
+        self.assertEqual(len(docs), 1)
+        self.assertEqual(docs[0].page_content, "六戸町会議録の内容です。")
+        self.assertEqual(docs[0].metadata["source"], "会議録.pdf")
+        self.assertEqual(docs[0].metadata["id"], "rokunohe_会議録")
+
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
+    def test_skips_existing_pdf_before_reading(self, mock_pdf_reader):
+        """
+        シナリオ:
+        - 入力: Repositoryで登録済みと判定されるPDF。
+        - 処理: PDFインポートサービスを実行する。
+        - 期待値: PDF読み取りと登録を行わず、登録済みスキップ結果が返ること。
+        """
+        repository = Mock()
+        repository.exists.return_value = True
+
+        service = RokunoheMinutesPdfImportService(repository=repository)
+        status = service.import_pdf(Path("登録済み.pdf"))
+
+        self.assertEqual(status, RokunoheMinutesImportStatus.SKIPPED_EXISTING)
+        mock_pdf_reader.assert_not_called()
+        repository.upsert_documents.assert_not_called()
+
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
+    def test_skips_pdf_when_text_is_empty(self, mock_pdf_reader):
+        """
+        シナリオ:
+        - 入力: 未登録だが本文を抽出できないPDF。
+        - 処理: PDFインポートサービスを実行する。
+        - 期待値: Repositoryへ登録せず、本文なしスキップ結果が返ること。
+        """
+        repository = Mock()
+        repository.exists.return_value = False
+        mock_page = Mock()
+        mock_page.extract_text.return_value = ""
+        mock_pdf_reader.return_value.pages = [mock_page]
+
+        service = RokunoheMinutesPdfImportService(repository=repository)
+        status = service.import_pdf(Path("空.pdf"))
+
+        self.assertEqual(status, RokunoheMinutesImportStatus.SKIPPED_EMPTY_TEXT)
+        repository.upsert_documents.assert_not_called()
+
+
+class RokunoheMinutesRagServiceTest(TestCase):
+    def test_generate_uses_repository_answer(self):
+        """
+        シナリオ:
+        - 入力: RepositoryがRAG回答を返す状態のユーザーメッセージ。
+        - 処理: 六戸町会議録RAGサービスで回答を生成する。
+        - 期待値: Repositoryの回答内容を使ったassistantメッセージが返ること。
+        """
+        user = User.objects.create_user(username="rag-user")
+        repository = Mock()
+        repository.retrieve_answer.return_value = Mock(answer="六戸町の回答です。")
+        service = RokunoheMinutesRagService(repository=repository)
+        user_message = MessageDTO(
+            user=user,
+            role=RoleType.USER,
+            content="質問です",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
+        assistant_message = service.generate(user_message)
+
+        repository.retrieve_answer.assert_called_once()
+        self.assertEqual(assistant_message.content, "六戸町の回答です。")
+        self.assertEqual(
+            assistant_message.use_case_type,
+            UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
+
+class RokunoheMinutesRagRepositoryTest(TestCase):
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_uses_rokunohe_minutes_collection(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: APIキーのみを指定したRepository初期化。
+        - 処理: Repositoryを生成する。
+        - 期待値: 六戸町会議録専用collection名でRAGサービスが初期化されること。
+        """
+        RokunoheMinutesRagRepository(api_key="dummy")
+
+        mock_rag_service.assert_called_once()
+        self.assertEqual(
+            mock_rag_service.call_args.kwargs["collection_name"],
+            ROKUNOHE_MINUTES_COLLECTION_NAME,
+        )
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_exists_checks_source_metadata(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB上に同じsource名の登録が存在するPDF。
+        - 処理: Repositoryで存在確認を行う。
+        - 期待値: sourceメタデータを条件に検索し、登録済みとしてTrueを返すこと。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {"ids": ["exists"]}
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        result = repository.exists(RokunoheMinutesPdf(path=Path("会議録.pdf")))
+
+        self.assertTrue(result)
+        rag_instance._collection.get.assert_called_once_with(
+            where={"source": "会議録.pdf"},
+            limit=1,
+        )
+
+
 class RokunohePdfDownloadCommandTest(TestCase):
-    @patch("llm_chat.management.commands.rokunohe_pdf_download.OpenAILlmRagService")
-    @patch("llm_chat.management.commands.rokunohe_pdf_download.PdfReader")
-    def test_waits_between_external_requests(self, mock_pdf, mock_rag):
+    @patch(
+        "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
+    )
+    def test_waits_between_external_requests(self, mock_import_service):
         """
         シナリオ:
         - 入力: PDFリンクを2件含むHTMLレスポンスと、リクエスト間隔0.1秒。
         - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
         - 期待値: 2件目以降の外部リクエスト前に待機処理が呼び出されること。
         """
-        # モックの設定
-        mock_pdf_instance = mock_pdf.return_value
-        mock_page = Mock()
-        mock_page.extract_text.return_value = "テストテキスト"
-        mock_pdf_instance.pages = [mock_page]
+        mock_import_service.return_value.import_pdf.return_value = (
+            RokunoheMinutesImportStatus.IMPORTED
+        )
 
         first_page_response = self._create_response(
             '<a href="file1.pdf">会議録1 [PDF]</a><a href="file2.pdf">会議録2 [PDF]</a>'
@@ -290,17 +433,19 @@ class RokunohePdfDownloadCommandTest(TestCase):
         self.assertIn("進捗 1/2: ダウンロード中", stdout.getvalue())
         self.assertIn("進捗 2/2: ダウンロード中", stdout.getvalue())
 
-    @patch("llm_chat.management.commands.rokunohe_pdf_download.OpenAILlmRagService")
-    @patch("llm_chat.management.commands.rokunohe_pdf_download.PdfReader")
-    def test_skips_existing_pdf_file(self, mock_pdf, mock_rag):
+    @patch(
+        "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
+    )
+    def test_skips_existing_pdf_file(self, mock_import_service):
         """
         シナリオ:
         - 入力: 保存済みPDFと同じファイル名になるPDFリンクを含むHTMLレスポンス。
         - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
         - 期待値: 保存済みPDFは再ダウンロードされず、HTML取得のみ実行されること。
         """
-        # インポート済みと判定されるように設定
-        mock_rag.return_value._collection.get.return_value = {"ids": ["exists"]}
+        mock_import_service.return_value.import_pdf.return_value = (
+            RokunoheMinutesImportStatus.SKIPPED_EXISTING
+        )
 
         first_page_response = self._create_response(
             '<a href="exists.pdf">保存済み [PDF]</a>'
@@ -319,20 +464,19 @@ class RokunohePdfDownloadCommandTest(TestCase):
 
         self.assertEqual(2, get_mock.call_count)
 
-    @patch("llm_chat.management.commands.rokunohe_pdf_download.OpenAILlmRagService")
-    @patch("llm_chat.management.commands.rokunohe_pdf_download.PdfReader")
-    def test_prepends_last_modified_date_to_pdf_filename(self, mock_pdf, mock_rag):
+    @patch(
+        "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
+    )
+    def test_prepends_last_modified_date_to_pdf_filename(self, mock_import_service):
         """
         シナリオ:
         - 入力: Last-Modifiedヘッダを持つPDFレスポンス。
         - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
         - 期待値: PDFがYYYYMMDD_ファイル名.pdf形式で保存されること。
         """
-        # モックの設定
-        mock_pdf_instance = mock_pdf.return_value
-        mock_page = Mock()
-        mock_page.extract_text.return_value = "テストテキスト"
-        mock_pdf_instance.pages = [mock_page]
+        mock_import_service.return_value.import_pdf.return_value = (
+            RokunoheMinutesImportStatus.IMPORTED
+        )
 
         first_page_response = self._create_response(
             '<a href="dated.pdf">会議録 [PDF]</a>'
@@ -372,23 +516,19 @@ class RokunohePdfDownloadCommandTest(TestCase):
             with self.assertRaises(CommandError):
                 call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
 
-    @patch("llm_chat.management.commands.rokunohe_pdf_download.OpenAILlmRagService")
-    @patch("llm_chat.management.commands.rokunohe_pdf_download.PdfReader")
-    def test_imports_extracted_text_to_chroma(self, mock_pdf, mock_rag):
+    @patch(
+        "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
+    )
+    def test_imports_extracted_text_to_chroma(self, mock_import_service):
         """
         シナリオ:
         - 入力: PDFリンク1件と、PDF内のテキスト。
         - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
-        - 期待値: PDFからテキストが抽出され、RAGサービスのupsert_documentsが呼び出されること。
+        - 期待値: 保存されたPDFパスを使ってRAGインポートサービスが呼び出されること。
         """
-        pdf_text = "六戸町会議録の内容です。"
-        mock_pdf_instance = mock_pdf.return_value
-        mock_page = Mock()
-        mock_page.extract_text.return_value = pdf_text
-        mock_pdf_instance.pages = [mock_page]
-
-        rag_instance = mock_rag.return_value
-        rag_instance._collection.get.return_value = {"ids": []}  # 未登録
+        mock_import_service.return_value.import_pdf.return_value = (
+            RokunoheMinutesImportStatus.IMPORTED
+        )
 
         first_page_response = self._create_response(
             '<a href="test.pdf">会議録 [PDF]</a>'
@@ -403,12 +543,9 @@ class RokunohePdfDownloadCommandTest(TestCase):
             ):
                 call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
 
-        rag_instance.upsert_documents.assert_called_once()
-        args, _ = rag_instance.upsert_documents.call_args
-        docs = args[0]
-        self.assertEqual(len(docs), 1)
-        self.assertEqual(docs[0].page_content, pdf_text)
-        self.assertEqual(docs[0].metadata["source"], "会議録.pdf")
+        mock_import_service.return_value.import_pdf.assert_called_once()
+        args, _ = mock_import_service.return_value.import_pdf.call_args
+        self.assertEqual(args[0].name, "会議録.pdf")
 
     @staticmethod
     def _create_response(
