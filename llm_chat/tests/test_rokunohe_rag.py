@@ -14,7 +14,7 @@ from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
-class RokunoheRagViewTest(TestCase):
+class RokunoheMinutesRagViewTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_superuser(

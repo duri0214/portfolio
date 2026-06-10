@@ -81,7 +81,7 @@ class IndexView(FormView):
         return context
 
 
-class OpenAIRag(View):
+class RokunoheMinutesRagView(View):
     """
     六戸町会議録専用のRAGチャットビュー。
     """
@@ -117,7 +117,7 @@ class OpenAIRag(View):
                 }
             )
         except Exception as e:
-            logger.error(f"OpenAIRag Error: {str(e)}")
+            logger.error(f"RokunoheMinutesRagView Error: {str(e)}")
             logger.error(traceback.format_exc())
             return JsonResponse({"error": str(e)}, status=500)
 

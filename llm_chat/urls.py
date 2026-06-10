@@ -5,7 +5,7 @@ from .views import (
     IndexView,
     StreamResultSaveView,
     SyncResponseView,
-    OpenAIRag,
+    RokunoheMinutesRagView,
     ClearChatLogsView,
     RiddleAdminView,
     RiddleCSVUploadView,
@@ -16,7 +16,9 @@ from .views import (
 app_name = "llm"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
-    path("rokunohe-minutes/", OpenAIRag.as_view(), name="rokunohe_minutes"),
+    path(
+        "rokunohe-minutes/", RokunoheMinutesRagView.as_view(), name="rokunohe_minutes"
+    ),
     path("riddle_admin/", RiddleAdminView.as_view(), name="riddle_admin"),
     path(
         "riddle_admin/upload/",
