@@ -298,12 +298,12 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "コレクションリセット")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
 
-    def test_non_superuser_sees_disabled_pdf_download_button(self):
+    def test_non_superuser_sees_disabled_admin_buttons(self):
         """
         シナリオ:
         - 入力: 一般ユーザーでログインした状態。
         - 処理: 六戸町会議録QAページを表示する。
-        - 期待値: 会議録PDF取得・ベクトル化ボタンが無効な状態で表示されること。
+        - 期待値: 管理者向け操作ボタンが無効な状態で表示されること。
         """
         user = User.objects.create_user(
             username="user2",
@@ -317,7 +317,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "管理者権限が必要なボタンは無効化されています")
         self.assertContains(response, "disabled")
-        self.assertNotContains(response, "コレクションリセット")
+        self.assertContains(response, "コレクションリセット")
 
     @patch("llm_chat.views.RokunoheMinutesRagRepository")
     def test_superuser_can_reset_vector_db_collection(self, mock_repository):
