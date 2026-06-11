@@ -145,7 +145,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         """
         シナリオ:
         - 入力: superuserでログインした状態。
-        - 処理: 六戸町会議録PDF保存ボタンのPOST先へリクエストする。
+        - 処理: 六戸町会議録PDF取得・ベクトル化ボタンのPOST先へリクエストする。
         - 期待値: 管理コマンドが呼び出され、六戸町会議録QAページへリダイレクトされること。
         """
         user = User.objects.create_superuser(
@@ -169,7 +169,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         """
         シナリオ:
         - 入力: 一般ユーザーでログインした状態。
-        - 処理: 六戸町会議録PDF保存ボタンのPOST先へリクエストする。
+        - 処理: 六戸町会議録PDF取得・ベクトル化ボタンのPOST先へリクエストする。
         - 期待値: 403が返り、管理コマンドは呼び出されないこと。
         """
         user = User.objects.create_user(
@@ -192,7 +192,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         """
         シナリオ:
         - 入力: superuserでログインし、PDF保存処理が既に実行中の状態。
-        - 処理: 六戸町会議録PDF保存ボタンのPOST先へリクエストする。
+        - 処理: 六戸町会議録PDF取得・ベクトル化ボタンのPOST先へリクエストする。
         - 期待値: 例外で500にせず、六戸町会議録QAページへリダイレクトされること。
         """
         user = User.objects.create_superuser(
@@ -219,7 +219,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         シナリオ:
         - 入力: superuserでログインした状態。
         - 処理: 六戸町会議録QAページを表示する。
-        - 期待値: 会議録PDF保存ボタンが表示されること。
+        - 期待値: 会議録PDF取得・ベクトル化ボタンが有効な状態で表示されること。
         """
         user = User.objects.create_superuser(
             username="admin3",
@@ -230,14 +230,15 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         response = self.client.get(reverse("llm:rokunohe_minutes"))
 
-        self.assertContains(response, "会議録PDF保存")
+        self.assertContains(response, "会議録PDF取得・ベクトル化")
+        self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
 
-    def test_non_superuser_does_not_see_pdf_download_button(self):
+    def test_non_superuser_sees_disabled_pdf_download_button(self):
         """
         シナリオ:
         - 入力: 一般ユーザーでログインした状態。
         - 処理: 六戸町会議録QAページを表示する。
-        - 期待値: 会議録PDF保存ボタンが表示されないこと。
+        - 期待値: 会議録PDF取得・ベクトル化ボタンが無効な状態で表示されること。
         """
         user = User.objects.create_user(
             username="user2",
@@ -248,7 +249,9 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         response = self.client.get(reverse("llm:rokunohe_minutes"))
 
-        self.assertNotContains(response, "会議録PDF保存")
+        self.assertContains(response, "会議録PDF取得・ベクトル化")
+        self.assertContains(response, "管理者権限が必要なボタンは無効化されています")
+        self.assertContains(response, "disabled")
 
 
 class RokunoheMinutesPdfImportServiceTest(TestCase):
