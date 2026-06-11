@@ -24,6 +24,7 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinutesPdf,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+from llm_chat.models import ChatLogs
 
 
 class RokunoheMinutesRagViewTest(TestCase):
@@ -155,8 +156,28 @@ class RokunohePdfDownloadViewTest(TestCase):
         )
         self.client.force_login(user)
 
-        with patch("llm_chat.views.call_command") as call_command_mock:
-            response = self.client.post(reverse("llm:rokunohe_pdf_download"))
+        summary_message = MessageDTO(
+            user=user,
+            role=RoleType.ASSISTANT,
+            content="取り込み後の初回サマリーです。",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        ChatLogs.objects.create(
+            user=user,
+            role=RoleType.USER.value,
+            content="古い質問",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        with patch("llm_chat.views.call_command") as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            rag_service_mock.return_value.generate_initial_summary.return_value = (
+                summary_message
+            )
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_download"),
+                {"reset_consent": "1"},
+            )
 
         self.assertRedirects(
             response,
@@ -164,6 +185,45 @@ class RokunohePdfDownloadViewTest(TestCase):
             fetch_redirect_response=False,
         )
         call_command_mock.assert_called_once_with("rokunohe_pdf_download")
+        rag_service_mock.return_value.generate_initial_summary.assert_called_once_with(
+            user
+        )
+        self.assertEqual(
+            list(
+                ChatLogs.objects.filter(
+                    user=user,
+                    use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+                ).values_list("content", flat=True)
+            ),
+            ["取り込み後の初回サマリーです。"],
+        )
+
+    def test_superuser_must_consent_to_reset_before_pdf_download(self):
+        """
+        シナリオ:
+        - 入力: superuserだが会話リセット同意値なしでPOSTする。
+        - 処理: 六戸町会議録PDF取得・ベクトル化ボタンのPOST先へリクエストする。
+        - 期待値: 管理コマンドを呼び出さず、六戸町会議録QAページへリダイレクトされること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-consent",
+            email="admin-consent@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch("llm_chat.views.call_command") as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            response = self.client.post(reverse("llm:rokunohe_pdf_download"))
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        call_command_mock.assert_not_called()
+        rag_service_mock.assert_not_called()
 
     def test_non_superuser_cannot_start_pdf_download(self):
         """
@@ -205,14 +265,18 @@ class RokunohePdfDownloadViewTest(TestCase):
         with patch(
             "llm_chat.views.call_command",
             side_effect=CommandError("六戸町PDFダウンロードは既に実行中です。"),
-        ):
-            response = self.client.post(reverse("llm:rokunohe_pdf_download"))
+        ), patch("llm_chat.views.RokunoheMinutesRagService") as rag_service_mock:
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_download"),
+                {"reset_consent": "1"},
+            )
 
         self.assertRedirects(
             response,
             reverse("llm:rokunohe_minutes"),
             fetch_redirect_response=False,
         )
+        rag_service_mock.assert_not_called()
 
     def test_superuser_sees_pdf_download_button(self):
         """
@@ -278,7 +342,30 @@ class RokunoheMinutesPdfImportServiceTest(TestCase):
         self.assertEqual(len(docs), 1)
         self.assertEqual(docs[0].page_content, "六戸町会議録の内容です。")
         self.assertEqual(docs[0].metadata["source"], "会議録.pdf")
-        self.assertEqual(docs[0].metadata["id"], "rokunohe_会議録")
+        self.assertEqual(docs[0].metadata["id"], "rokunohe_会議録_page_1")
+        self.assertEqual(docs[0].metadata["page"], 1)
+        self.assertEqual(docs[0].metadata["chunk_index"], 0)
+
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
+    def test_imports_pdf_text_with_source_date_metadata(self, mock_pdf_reader):
+        """
+        シナリオ:
+        - 入力: ファイル名先頭に日付を持つPDF。
+        - 処理: PDFインポートサービスを実行する。
+        - 期待値: ファイル名の日付がメタデータへ登録されること。
+        """
+        repository = Mock()
+        repository.exists.return_value = False
+        mock_page = Mock()
+        mock_page.extract_text.return_value = "日付付き会議録の内容です。"
+        mock_pdf_reader.return_value.pages = [mock_page]
+
+        service = RokunoheMinutesPdfImportService(repository=repository)
+        status = service.import_pdf(Path("20260225_会議録.pdf"))
+
+        self.assertEqual(status, RokunoheMinutesImportStatus.IMPORTED)
+        docs = repository.upsert_documents.call_args[0][0]
+        self.assertEqual(docs[0].metadata["source_date"], "20260225")
 
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
     def test_skips_existing_pdf_before_reading(self, mock_pdf_reader):

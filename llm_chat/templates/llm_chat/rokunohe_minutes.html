@@ -37,8 +37,9 @@
 
                 <div class="d-flex justify-content-end mb-3 gap-2">
                     {% if is_superuser %}
-                        <form method="post" action="{% url 'llm:rokunohe_pdf_download' %}" class="me-auto">
+                        <form id="pdfDownloadForm" method="post" action="{% url 'llm:rokunohe_pdf_download' %}" class="me-auto">
                             {% csrf_token %}
+                            <input type="hidden" name="reset_consent" value="1">
                             <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
                         </form>
                     {% else %}
@@ -110,6 +111,7 @@
             const userInput = document.getElementById("id_question");
             const loadingIndicator = document.getElementById("loading-indicator");
             const clearBtn = document.getElementById("clearChatLogsBtn");
+            const pdfDownloadForm = document.getElementById("pdfDownloadForm");
             let isLoading = false;
 
             function startLoading() {
@@ -182,6 +184,15 @@
                                 location.reload();
                             }
                         });
+                });
+            }
+
+            if (pdfDownloadForm) {
+                pdfDownloadForm.addEventListener("submit", function (event) {
+                    const confirmed = confirm("会議録PDF取得・ベクトル化を実行する前に、六戸町会議録QAの会話履歴をリセットします。実行しますか？");
+                    if (!confirmed) {
+                        event.preventDefault();
+                    }
                 });
             }
 
