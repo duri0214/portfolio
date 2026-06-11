@@ -35,5 +35,18 @@ class RokunoheMinutesRagRepository:
     def upsert_documents(self, documents: list[RokunoheMinutesDocument]) -> None:
         self._rag_service.upsert_documents(documents)
 
+    def delete_pdf_documents(self, pdf: RokunoheMinutesPdf) -> None:
+        existing = self._rag_service._collection.get(where={"source": pdf.source_name})
+        if existing and existing["ids"]:
+            self._rag_service._collection.delete(ids=existing["ids"])
+
+    def reset_collection(self) -> int:
+        existing = self._rag_service._collection.get()
+        if not existing or not existing["ids"]:
+            return 0
+
+        self._rag_service._collection.delete(ids=existing["ids"])
+        return len(existing["ids"])
+
     def retrieve_answer(self, message: Message) -> RagResponse:
         return self._rag_service.retrieve_answer(message)

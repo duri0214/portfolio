@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from django.contrib.auth.models import User
+from lib.llm.valueobject.completion import RoleType
 from pypdf import PdfReader
 
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
@@ -59,15 +61,16 @@ class RokunoheMinutesPdfImportService:
         if self.repository.exists(pdf):
             return RokunoheMinutesImportStatus.SKIPPED_EXISTING
 
-        document = self._create_document(pdf)
-        if document is None:
+        documents = self._create_documents(pdf)
+        if not documents:
             return RokunoheMinutesImportStatus.SKIPPED_EMPTY_TEXT
 
-        self.repository.upsert_documents([document])
+        self.repository.delete_pdf_documents(pdf)
+        self.repository.upsert_documents(documents)
         return RokunoheMinutesImportStatus.IMPORTED
 
     @staticmethod
-    def _create_document(pdf: RokunoheMinutesPdf) -> RokunoheMinutesDocument | None:
+    def _create_documents(pdf: RokunoheMinutesPdf) -> list[RokunoheMinutesDocument]:
         """
         PDF本文とメタデータからRAG登録用ドキュメントを作成します。
 
@@ -75,29 +78,33 @@ class RokunoheMinutesPdfImportService:
             pdf: 本文抽出対象の六戸町会議録PDF。
 
         Returns:
-            RokunoheMinutesDocument | None:
-                抽出本文とsource/idメタデータを持つドキュメント。
-                PDFから空文字しか得られない場合はNoneを返します。
+            list[RokunoheMinutesDocument]:
+                ページ単位の抽出本文とsource/page/dateメタデータを持つドキュメント。
+                PDFから空文字しか得られない場合は空リストを返します。
 
         Side Effects:
             PDFファイルを読み取り、各ページからテキストを抽出します。
         """
         reader = PdfReader(pdf.path)
-        text_parts = []
-        for page in reader.pages:
+        documents = []
+        for page_index, page in enumerate(reader.pages, start=1):
             text = page.extract_text()
-            if text:
-                text_parts.append(text)
+            if not text or not text.strip():
+                continue
 
-        full_text = "\n".join(text_parts).strip()
-        if not full_text:
-            return None
+            metadata = RokunoheMinutesMetadata.from_pdf(
+                pdf,
+                page=page_index,
+                chunk_index=page_index - 1,
+            )
+            documents.append(
+                RokunoheMinutesDocument(
+                    page_content=text.strip(),
+                    metadata=metadata.to_dict(),
+                )
+            )
 
-        metadata = RokunoheMinutesMetadata.from_pdf(pdf)
-        return RokunoheMinutesDocument(
-            page_content=full_text,
-            metadata=metadata.to_dict(),
-        )
+        return documents
 
 
 class RokunoheMinutesRagService(BaseChatService):
@@ -112,6 +119,11 @@ class RokunoheMinutesRagService(BaseChatService):
     """
 
     model_name = ModelName.GPT_5_MINI
+    initial_summary_prompt = (
+        "取り込み済みの六戸町会議録を横断して、分析の入口になる初回サマリーを作成してください。"
+        "主要テーマ、直近の傾向、深掘りに向く質問例を日本語で簡潔に箇条書きしてください。"
+        "根拠にした会議録の出典も分かる範囲で添えてください。"
+    )
 
     def __init__(self, repository: RokunoheMinutesRagRepository | None = None):
         """
@@ -154,3 +166,22 @@ class RokunoheMinutesRagService(BaseChatService):
             content=response.answer,
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
+
+    def generate_initial_summary(self, user: User) -> MessageDTO:
+        """
+        PDF取り込み直後に表示する分析入口用サマリーを生成します。
+
+        Args:
+            user: サマリーを保存する対象ユーザー。
+
+        Returns:
+            MessageDTO: チャット履歴へ保存するassistantメッセージ。
+        """
+        user_message = MessageDTO(
+            user=user,
+            role=RoleType.USER,
+            content=self.initial_summary_prompt,
+            model_name=self.model_name,
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        return self.generate(user_message)

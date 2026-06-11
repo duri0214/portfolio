@@ -24,6 +24,7 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinutesPdf,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+from llm_chat.models import ChatLogs
 
 
 class RokunoheMinutesRagViewTest(TestCase):
@@ -155,8 +156,28 @@ class RokunohePdfDownloadViewTest(TestCase):
         )
         self.client.force_login(user)
 
-        with patch("llm_chat.views.call_command") as call_command_mock:
-            response = self.client.post(reverse("llm:rokunohe_pdf_download"))
+        summary_message = MessageDTO(
+            user=user,
+            role=RoleType.ASSISTANT,
+            content="取り込み後の初回サマリーです。",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        ChatLogs.objects.create(
+            user=user,
+            role=RoleType.USER.value,
+            content="古い質問",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        with patch("llm_chat.views.call_command") as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            rag_service_mock.return_value.generate_initial_summary.return_value = (
+                summary_message
+            )
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_download"),
+                {"reset_consent": "1"},
+            )
 
         self.assertRedirects(
             response,
@@ -164,6 +185,45 @@ class RokunohePdfDownloadViewTest(TestCase):
             fetch_redirect_response=False,
         )
         call_command_mock.assert_called_once_with("rokunohe_pdf_download")
+        rag_service_mock.return_value.generate_initial_summary.assert_called_once_with(
+            user
+        )
+        self.assertEqual(
+            list(
+                ChatLogs.objects.filter(
+                    user=user,
+                    use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+                ).values_list("content", flat=True)
+            ),
+            ["取り込み後の初回サマリーです。"],
+        )
+
+    def test_superuser_must_consent_to_reset_before_pdf_download(self):
+        """
+        シナリオ:
+        - 入力: superuserだが会話リセット同意値なしでPOSTする。
+        - 処理: 六戸町会議録PDF取得・ベクトル化ボタンのPOST先へリクエストする。
+        - 期待値: 管理コマンドを呼び出さず、六戸町会議録QAページへリダイレクトされること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-consent",
+            email="admin-consent@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch("llm_chat.views.call_command") as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            response = self.client.post(reverse("llm:rokunohe_pdf_download"))
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        call_command_mock.assert_not_called()
+        rag_service_mock.assert_not_called()
 
     def test_non_superuser_cannot_start_pdf_download(self):
         """
@@ -205,14 +265,18 @@ class RokunohePdfDownloadViewTest(TestCase):
         with patch(
             "llm_chat.views.call_command",
             side_effect=CommandError("六戸町PDFダウンロードは既に実行中です。"),
-        ):
-            response = self.client.post(reverse("llm:rokunohe_pdf_download"))
+        ), patch("llm_chat.views.RokunoheMinutesRagService") as rag_service_mock:
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_download"),
+                {"reset_consent": "1"},
+            )
 
         self.assertRedirects(
             response,
             reverse("llm:rokunohe_minutes"),
             fetch_redirect_response=False,
         )
+        rag_service_mock.assert_not_called()
 
     def test_superuser_sees_pdf_download_button(self):
         """
@@ -231,14 +295,15 @@ class RokunohePdfDownloadViewTest(TestCase):
         response = self.client.get(reverse("llm:rokunohe_minutes"))
 
         self.assertContains(response, "会議録PDF取得・ベクトル化")
+        self.assertContains(response, "コレクションリセット")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
 
-    def test_non_superuser_sees_disabled_pdf_download_button(self):
+    def test_non_superuser_sees_disabled_admin_buttons(self):
         """
         シナリオ:
         - 入力: 一般ユーザーでログインした状態。
         - 処理: 六戸町会議録QAページを表示する。
-        - 期待値: 会議録PDF取得・ベクトル化ボタンが無効な状態で表示されること。
+        - 期待値: 管理者向け操作ボタンが無効な状態で表示されること。
         """
         user = User.objects.create_user(
             username="user2",
@@ -252,6 +317,94 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "管理者権限が必要なボタンは無効化されています")
         self.assertContains(response, "disabled")
+        self.assertContains(response, "コレクションリセット")
+
+    @patch("llm_chat.views.RokunoheMinutesRagRepository")
+    def test_superuser_can_reset_vector_db_collection(self, mock_repository):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、六戸町会議録RAG履歴がある状態。
+        - 処理: Vector DBコレクションリセットのPOST先へ同意値付きでリクエストする。
+        - 期待値: コレクションがリセットされ、六戸町会議録RAG履歴も削除されること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-reset",
+            email="admin-reset@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        ChatLogs.objects.create(
+            user=user,
+            role=RoleType.USER.value,
+            content="古い質問",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        mock_repository.return_value.reset_collection.return_value = 3
+
+        response = self.client.post(
+            reverse("llm:rokunohe_vector_db_reset"),
+            {"reset_collection_consent": "1"},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        mock_repository.return_value.reset_collection.assert_called_once_with()
+        self.assertFalse(
+            ChatLogs.objects.filter(
+                user=user,
+                use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+            ).exists()
+        )
+
+    @patch("llm_chat.views.RokunoheMinutesRagRepository")
+    def test_superuser_must_consent_to_reset_vector_db_collection(
+        self, mock_repository
+    ):
+        """
+        シナリオ:
+        - 入力: superuserだが同意値なしでPOSTする。
+        - 処理: Vector DBコレクションリセットのPOST先へリクエストする。
+        - 期待値: コレクションリセットを呼び出さず、六戸町会議録QAページへリダイレクトされること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-reset-consent",
+            email="admin-reset-consent@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("llm:rokunohe_vector_db_reset"))
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        mock_repository.assert_not_called()
+
+    def test_non_superuser_cannot_reset_vector_db_collection(self):
+        """
+        シナリオ:
+        - 入力: 一般ユーザーでログインした状態。
+        - 処理: Vector DBコレクションリセットのPOST先へリクエストする。
+        - 期待値: 403が返ること。
+        """
+        user = User.objects.create_user(
+            username="user-reset",
+            email="user-reset@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("llm:rokunohe_vector_db_reset"),
+            {"reset_collection_consent": "1"},
+        )
+
+        self.assertEqual(403, response.status_code)
 
 
 class RokunoheMinutesPdfImportServiceTest(TestCase):
@@ -273,12 +426,36 @@ class RokunoheMinutesPdfImportServiceTest(TestCase):
         status = service.import_pdf(Path("会議録.pdf"))
 
         self.assertEqual(status, RokunoheMinutesImportStatus.IMPORTED)
+        repository.delete_pdf_documents.assert_called_once()
         repository.upsert_documents.assert_called_once()
         docs = repository.upsert_documents.call_args[0][0]
         self.assertEqual(len(docs), 1)
         self.assertEqual(docs[0].page_content, "六戸町会議録の内容です。")
         self.assertEqual(docs[0].metadata["source"], "会議録.pdf")
-        self.assertEqual(docs[0].metadata["id"], "rokunohe_会議録")
+        self.assertEqual(docs[0].metadata["id"], "rokunohe_会議録_page_1")
+        self.assertEqual(docs[0].metadata["page"], 1)
+        self.assertEqual(docs[0].metadata["chunk_index"], 0)
+
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
+    def test_imports_pdf_text_with_source_date_metadata(self, mock_pdf_reader):
+        """
+        シナリオ:
+        - 入力: ファイル名先頭に日付を持つPDF。
+        - 処理: PDFインポートサービスを実行する。
+        - 期待値: ファイル名の日付がメタデータへ登録されること。
+        """
+        repository = Mock()
+        repository.exists.return_value = False
+        mock_page = Mock()
+        mock_page.extract_text.return_value = "日付付き会議録の内容です。"
+        mock_pdf_reader.return_value.pages = [mock_page]
+
+        service = RokunoheMinutesPdfImportService(repository=repository)
+        status = service.import_pdf(Path("20260225_会議録.pdf"))
+
+        self.assertEqual(status, RokunoheMinutesImportStatus.IMPORTED)
+        docs = repository.upsert_documents.call_args[0][0]
+        self.assertEqual(docs[0].metadata["source_date"], "20260225")
 
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
     def test_skips_existing_pdf_before_reading(self, mock_pdf_reader):
@@ -296,6 +473,7 @@ class RokunoheMinutesPdfImportServiceTest(TestCase):
 
         self.assertEqual(status, RokunoheMinutesImportStatus.SKIPPED_EXISTING)
         mock_pdf_reader.assert_not_called()
+        repository.delete_pdf_documents.assert_not_called()
         repository.upsert_documents.assert_not_called()
 
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
@@ -316,6 +494,7 @@ class RokunoheMinutesPdfImportServiceTest(TestCase):
         status = service.import_pdf(Path("空.pdf"))
 
         self.assertEqual(status, RokunoheMinutesImportStatus.SKIPPED_EMPTY_TEXT)
+        repository.delete_pdf_documents.assert_not_called()
         repository.upsert_documents.assert_not_called()
 
 
@@ -384,6 +563,45 @@ class RokunoheMinutesRagRepositoryTest(TestCase):
             where={"source": "会議録.pdf"},
             limit=1,
         )
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_delete_pdf_documents_removes_existing_source_documents(
+        self, mock_rag_service
+    ):
+        """
+        シナリオ:
+        - 入力: Chroma DB上に同じsource名のドキュメントIDが存在するPDF。
+        - 処理: RepositoryでPDF単位の削除を行う。
+        - 期待値: source条件で取得したIDだけが削除されること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {"ids": ["doc_1", "doc_2"]}
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        repository.delete_pdf_documents(RokunoheMinutesPdf(path=Path("会議録.pdf")))
+
+        rag_instance._collection.get.assert_called_once_with(
+            where={"source": "会議録.pdf"}
+        )
+        rag_instance._collection.delete.assert_called_once_with(ids=["doc_1", "doc_2"])
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_reset_collection_removes_all_documents(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionにドキュメントIDが存在する状態。
+        - 処理: Repositoryでcollectionリセットを行う。
+        - 期待値: collection内の全IDが削除され、削除件数が返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {"ids": ["doc_1", "doc_2"]}
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        deleted_count = repository.reset_collection()
+
+        rag_instance._collection.get.assert_called_once_with()
+        rag_instance._collection.delete.assert_called_once_with(ids=["doc_1", "doc_2"])
+        self.assertEqual(deleted_count, 2)
 
 
 class RokunohePdfDownloadCommandTest(TestCase):
