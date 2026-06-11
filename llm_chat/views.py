@@ -130,9 +130,7 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
 
     raise_exception = True
     command_name = "rokunohe_pdf_download"
-    success_message = (
-        "六戸町会議録PDFを media/llm_chat/rokunohe_pdf_back_numbers に保存しました。"
-    )
+    success_message = "六戸町会議録PDFの取得・ベクトル化処理を実行しました。"
 
     def test_func(self):
         return self.request.user.is_superuser

@@ -39,11 +39,18 @@
                     {% if is_superuser %}
                         <form method="post" action="{% url 'llm:rokunohe_pdf_download' %}" class="me-auto">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF保存</button>
+                            <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
                         </form>
+                    {% else %}
+                        <button type="button" class="btn btn-outline-secondary btn-sm me-auto" disabled>
+                            会議録PDF取得・ベクトル化
+                        </button>
                     {% endif %}
                     <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                 </div>
+                {% if not is_superuser %}
+                    <p class="small text-muted mt-2 mb-3">管理者権限が必要なボタンは無効化されています</p>
+                {% endif %}
 
                 {% for chat_log in chat_history %}
                     <div class="card shadow-sm border-0 mb-3">
