@@ -156,6 +156,71 @@ class ViewLogicTest(TestCase):
         initial = view.get_initial()
         self.assertEqual(initial.get("use_case_type"), UseCaseType.RIDDLE)
 
+    def test_index_view_excludes_rokunohe_minutes_from_regular_chat(self):
+        """
+        シナリオ:
+        - 入力: 通常チャット履歴と六戸町会議録RAG履歴が同じユーザーに存在する。
+        - 処理: IndexView のコンテキストと初期値を取得する。
+        - 期待値: 通常画面には六戸町会議録RAG履歴が表示されず、初期ユースケースにも選ばれない。
+        """
+        factory = RequestFactory()
+        request = factory.get("/")
+        request.user = self.user
+        request.session = SessionStore()
+
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.USER.value,
+            content="通常チャット",
+            model_name=ModelName.GPT_5_MINI,
+            use_case_type=UseCaseType.OPENAI_GPT_STREAMING,
+        )
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.USER.value,
+            content="六戸町会議録の質問",
+            model_name=ModelName.GPT_5_MINI,
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
+        view = IndexView()
+        view.request = request
+
+        context = view.get_context_data()
+        initial = view.get_initial()
+
+        displayed_contents = [log["content"] for log in context["chat_history"]]
+        self.assertEqual(displayed_contents, ["通常チャット"])
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT_STREAMING)
+
+    def test_index_view_uses_default_when_only_rokunohe_minutes_exists(self):
+        """
+        シナリオ:
+        - 入力: 六戸町会議録RAG履歴だけが存在し、セッションにも同ユースケースが残っている。
+        - 処理: IndexView の初期値を取得する。
+        - 期待値: 通常画面の初期ユースケースはデフォルトのストリーミングになる。
+        """
+        factory = RequestFactory()
+        request = factory.get("/")
+        request.user = self.user
+        request.session = SessionStore()
+        request.session["use_case_type"] = UseCaseType.ROKUNOHE_MINUTES_RAG
+
+        ChatLogs.objects.create(
+            user=self.user,
+            role=RoleType.USER.value,
+            content="六戸町会議録の質問",
+            model_name=ModelName.GPT_5_MINI,
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
+        view = IndexView()
+        view.request = request
+
+        initial = view.get_initial()
+
+        self.assertEqual(initial.get("use_case_type"), UseCaseType.OPENAI_GPT_STREAMING)
+
     def test_riddle_sample_csv_view(self):
         """
         [シナリオ] サンプルCSVダウンロードリンクにアクセスする
