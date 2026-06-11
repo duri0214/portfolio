@@ -16,11 +16,27 @@ class ChatLogRepository:
 
     @staticmethod
     def find_chat_history(
-        user: User, use_case_type: str | None = None
+        user: User,
+        use_case_type: str | None = None,
+        excluded_use_case_types: list[str] | tuple[str, ...] | None = None,
     ) -> list[MessageDTO]:
+        """
+        指定ユーザーのチャット履歴を時系列で取得します。
+
+        Args:
+            user (User): 対象ユーザー。
+            use_case_type (str | None): 取得対象のユースケースタイプ。
+            excluded_use_case_types (list[str] | tuple[str, ...] | None):
+                除外するユースケースタイプ。
+
+        Returns:
+            list[MessageDTO]: チャット履歴。
+        """
         query = ChatLogs.objects.filter(user=user)
         if use_case_type:
             query = query.filter(use_case_type=use_case_type)
+        if excluded_use_case_types:
+            query = query.exclude(use_case_type__in=excluded_use_case_types)
         chat_logs = query.order_by("created_at")
         return [chat_log.to_message_dto() for chat_log in chat_logs]
 

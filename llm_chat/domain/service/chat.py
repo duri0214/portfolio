@@ -5,12 +5,35 @@ from django.http import HttpRequest
 
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.riddle import RiddleService
+from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.riddle import GenderType
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
 class ChatDisplayService:
-    """IndexViewなどの表示ロジックを担当するサービスクラス"""
+    """
+    IndexViewなどの表示ロジックを担当するサービスクラス。
+
+    Attributes:
+        REGULAR_CHAT_EXCLUDED_USE_CASE_TYPES:
+            通常チャット画面から分離する専用ユースケース。
+    """
+
+    REGULAR_CHAT_EXCLUDED_USE_CASE_TYPES = (UseCaseType.ROKUNOHE_MINUTES_RAG,)
+
+    @staticmethod
+    def get_regular_chat_history(login_user: User) -> list[MessageDTO]:
+        """
+        通常チャット画面に表示する履歴を取得します。
+
+        六戸町会議録RAGは専用画面で扱うため、通常チャット画面からは除外します。
+        """
+        return ChatLogRepository.find_chat_history(
+            user=login_user,
+            excluded_use_case_types=(
+                ChatDisplayService.REGULAR_CHAT_EXCLUDED_USE_CASE_TYPES
+            ),
+        )
 
     @staticmethod
     def get_initial_values(request: HttpRequest, login_user: User) -> dict[str, Any]:
@@ -24,7 +47,7 @@ class ChatDisplayService:
         4. 履歴がない場合：デフォルトの "OpenAIGptStreaming"
         """
         initial = {}
-        chat_history = ChatLogRepository.find_chat_history(user=login_user)
+        chat_history = ChatDisplayService.get_regular_chat_history(login_user)
 
         # 1. なぞなぞが進行中の場合は、Riddleモードを優先
         if ChatDisplayService.is_riddle_active(chat_history):
@@ -37,7 +60,11 @@ class ChatDisplayService:
 
         # 2. セッションから use_case_type を復元
         session_use_case_type = request.session.get("use_case_type")
-        if session_use_case_type:
+        if (
+            session_use_case_type
+            and session_use_case_type
+            not in ChatDisplayService.REGULAR_CHAT_EXCLUDED_USE_CASE_TYPES
+        ):
             initial["use_case_type"] = session_use_case_type
         else:
             last_log = chat_history[-1] if chat_history else None

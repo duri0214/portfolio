@@ -71,7 +71,7 @@ class IndexView(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         login_user = _get_login_user(self.request)
-        chat_history = ChatLogRepository.find_chat_history(user=login_user)
+        chat_history = ChatDisplayService.get_regular_chat_history(login_user)
 
         # JSON フォーマットデータをテンプレートに渡す
         context["chat_history"] = [log.to_display() for log in chat_history]
