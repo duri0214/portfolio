@@ -11,6 +11,7 @@ from .views import (
     RiddleCSVUploadView,
     RiddleSampleCSVView,
     RokunohePdfDownloadView,
+    RokunoheVectorDbResetView,
 )
 
 app_name = "llm"
@@ -42,5 +43,10 @@ urlpatterns = [
         "rokunohe-pdf-download/",
         RokunohePdfDownloadView.as_view(),
         name="rokunohe_pdf_download",
+    ),
+    path(
+        "rokunohe-vector-db-reset/",
+        RokunoheVectorDbResetView.as_view(),
+        name="rokunohe_vector_db_reset",
     ),
 ]

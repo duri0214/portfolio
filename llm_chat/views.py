@@ -23,6 +23,9 @@ from lib.llm.valueobject.completion import StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
+from llm_chat.domain.repository.completion.rokunohe_minutes import (
+    RokunoheMinutesRagRepository,
+)
 from llm_chat.domain.service.chat import ChatDisplayService
 from llm_chat.domain.service.completion.rokunohe_minutes import (
     RokunoheMinutesRagService,
@@ -165,6 +168,39 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
         service = RokunoheMinutesRagService()
         summary = service.generate_initial_summary(user)
         ChatLogRepository.insert(summary)
+
+
+class RokunoheVectorDbResetView(UserPassesTestMixin, View):
+    """
+    六戸町会議録RAGのChroma DB collectionをリセットする管理者用ビュー。
+    """
+
+    raise_exception = True
+    reset_consent_value = "1"
+    success_message = "六戸町会議録RAGのVector DBコレクションをリセットしました。"
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("reset_collection_consent") != self.reset_consent_value:
+            messages.warning(
+                request,
+                "Vector DBコレクションのリセットに同意してから実行してください。",
+            )
+            return redirect("llm:rokunohe_minutes")
+
+        login_user = _get_login_user(request)
+        repository = RokunoheMinutesRagRepository(
+            api_key=os.getenv("OPENAI_API_KEY") or ""
+        )
+        deleted_count = repository.reset_collection()
+        ChatLogRepository.clear_history(
+            user=login_user,
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        messages.success(request, f"{self.success_message} 削除件数: {deleted_count}件")
+        return redirect("llm:rokunohe_minutes")
 
 
 class SyncResponseView(View):

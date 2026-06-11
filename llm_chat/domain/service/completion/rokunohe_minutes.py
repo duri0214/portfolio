@@ -65,6 +65,7 @@ class RokunoheMinutesPdfImportService:
         if not documents:
             return RokunoheMinutesImportStatus.SKIPPED_EMPTY_TEXT
 
+        self.repository.delete_pdf_documents(pdf)
         self.repository.upsert_documents(documents)
         return RokunoheMinutesImportStatus.IMPORTED
 

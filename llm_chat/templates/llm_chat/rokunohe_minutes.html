@@ -42,6 +42,11 @@
                             <input type="hidden" name="reset_consent" value="1">
                             <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
                         </form>
+                        <form id="vectorDbResetForm" method="post" action="{% url 'llm:rokunohe_vector_db_reset' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="reset_collection_consent" value="1">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">コレクションリセット</button>
+                        </form>
                     {% else %}
                         <button type="button" class="btn btn-outline-secondary btn-sm me-auto" disabled>
                             会議録PDF取得・ベクトル化
@@ -112,6 +117,7 @@
             const loadingIndicator = document.getElementById("loading-indicator");
             const clearBtn = document.getElementById("clearChatLogsBtn");
             const pdfDownloadForm = document.getElementById("pdfDownloadForm");
+            const vectorDbResetForm = document.getElementById("vectorDbResetForm");
             let isLoading = false;
 
             function startLoading() {
@@ -190,6 +196,15 @@
             if (pdfDownloadForm) {
                 pdfDownloadForm.addEventListener("submit", function (event) {
                     const confirmed = confirm("会議録PDF取得・ベクトル化を実行する前に、六戸町会議録QAの会話履歴をリセットします。実行しますか？");
+                    if (!confirmed) {
+                        event.preventDefault();
+                    }
+                });
+            }
+
+            if (vectorDbResetForm) {
+                vectorDbResetForm.addEventListener("submit", function (event) {
+                    const confirmed = confirm("六戸町会議録RAGのVector DBコレクションをすべて削除し、会話履歴もリセットします。PDFを再取得・ベクトル化するまで資料検索は使えません。実行しますか？");
                     if (!confirmed) {
                         event.preventDefault();
                     }
