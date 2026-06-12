@@ -42,11 +42,6 @@
                             <input type="hidden" name="reset_consent" value="1">
                             <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
                         </form>
-                        <form id="vectorDbResetForm" method="post" action="{% url 'llm:rokunohe_vector_db_reset' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="reset_collection_consent" value="1">
-                            <button type="submit" class="btn btn-outline-danger btn-sm">コレクションリセット</button>
-                        </form>
                         <form id="themeAnalysisForm" method="post" action="{% url 'llm:rokunohe_theme_analysis_run' %}">
                             {% csrf_token %}
                             <input type="hidden" name="analysis_consent" value="1">
@@ -55,12 +50,15 @@
                         <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
                             コレクションビューア
                         </a>
+                        <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
+                        <form id="vectorDbResetForm" method="post" action="{% url 'llm:rokunohe_vector_db_reset' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="reset_collection_consent" value="1">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">コレクションリセット</button>
+                        </form>
                     {% else %}
                         <button type="button" class="btn btn-outline-secondary btn-sm me-auto" disabled>
                             会議録PDF取得・ベクトル化
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
-                            コレクションリセット
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                             テーマ分析を実行
@@ -68,8 +66,11 @@
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                             コレクションビューア
                         </button>
+                        <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                            コレクションリセット
+                        </button>
                     {% endif %}
-                    <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                 </div>
                 {% if not is_superuser %}
                     <p class="small text-muted mt-2 mb-3">管理者権限が必要なボタンは無効化されています</p>
@@ -79,7 +80,7 @@
                     <div class="spinner-border spinner-border-sm" aria-hidden="true"></div>
                     <div>
                         <div class="fw-bold">テーマ分析を実行中です</div>
-                        <div class="small">候補ラベル抽出、クラスタリング、代表テーマ命名を順に処理しています。完了までこの画面を閉じずにお待ちください。</div>
+                        <div class="small">直近1年分のチャンクを対象に、候補ラベル抽出、クラスタリング、代表テーマ命名を順に処理しています。完了までこの画面を閉じずにお待ちください。</div>
                     </div>
                 </div>
 
@@ -241,7 +242,7 @@
 
             if (themeAnalysisForm) {
                 themeAnalysisForm.addEventListener("submit", function (event) {
-                    const confirmed = confirm("保存済みのrokunohe_minutes collectionをもとにテーマ分析を実行します。処理に時間がかかる場合があります。実行しますか？");
+                    const confirmed = confirm("保存済みのrokunohe_minutes collectionの直近1年分をもとにテーマ分析を実行します。処理に時間がかかる場合があります。実行しますか？");
                     if (!confirmed) {
                         event.preventDefault();
                         return;

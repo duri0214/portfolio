@@ -81,7 +81,9 @@ class RokunoheMinutesRagRepository:
         )
         return self._build_collection_items(existing)
 
-    def list_theme_source_chunks(self) -> list[RokunoheMinutesThemeSourceChunk]:
+    def list_theme_source_chunks(
+        self, *, source_date_from: int | None = None
+    ) -> list[RokunoheMinutesThemeSourceChunk]:
         existing = self._rag_service._collection.get(
             include=["documents", "metadatas", "embeddings"],
         )
@@ -102,6 +104,9 @@ class RokunoheMinutesRagRepository:
             metadata = metadatas[index] if index < len(metadatas) else {}
             embedding = embeddings[index] if index < len(embeddings) else []
             embedding_list = list(embedding) if embedding is not None else []
+            source_date_int = self._get_source_date_int(metadata)
+            if source_date_from is not None and source_date_int < source_date_from:
+                continue
             if not document or not embedding_list:
                 continue
             chunks.append(

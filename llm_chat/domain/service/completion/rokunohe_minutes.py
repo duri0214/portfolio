@@ -1,8 +1,10 @@
 import logging
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from django.contrib.auth.models import User
+from django.utils import timezone
 from lib.llm.valueobject.completion import RoleType
 import numpy as np
 from openai import OpenAI
@@ -290,6 +292,7 @@ class RokunoheMinuteThemeAnalysisService:
     """
 
     default_cluster_count = 50
+    default_recent_days = 365
     random_state = 42
 
     def __init__(
@@ -319,11 +322,20 @@ class RokunoheMinuteThemeAnalysisService:
             クラスタ代表ラベルを生成し、保存済みテーマ分析結果をリセットしてから
             Django DBへ分析結果を保存します。
         """
-        chunks = self.rag_repository.list_theme_source_chunks()
+        source_date_from = self._get_source_date_from()
+        chunks = self.rag_repository.list_theme_source_chunks(
+            source_date_from=source_date_from
+        )
         if not chunks:
-            raise ValueError("rokunohe_minutes collection に分析対象がありません。")
+            raise ValueError(
+                "rokunohe_minutes collection に直近1年の分析対象がありません。"
+            )
 
-        logger.info("Rokunohe theme analysis started: chunks=%s", len(chunks))
+        logger.info(
+            "Rokunohe theme analysis started: chunks=%s source_date_from=%s",
+            len(chunks),
+            source_date_from,
+        )
         self.theme_repository.reset_analysis_results()
         job = self.theme_repository.create_job(
             requested_cluster_count=self.default_cluster_count,
@@ -359,6 +371,10 @@ class RokunoheMinuteThemeAnalysisService:
             self.theme_repository.mark_failed(job=job, error_message=str(e))
             logger.exception("Rokunohe theme analysis failed: job_id=%s", job.pk)
             raise
+
+    def _get_source_date_from(self) -> int:
+        recent_start = timezone.localdate() - timedelta(days=self.default_recent_days)
+        return int(recent_start.strftime("%Y%m%d"))
 
     def _create_chunk_analyses(
         self,

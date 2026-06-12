@@ -311,6 +311,16 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "テーマ分析を実行中です")
         self.assertContains(response, "コレクションビューア")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
+        content = response.content.decode()
+        self.assertLess(
+            content.index("テーマ分析を実行"), content.index("コレクションリセット")
+        )
+        self.assertLess(
+            content.index("コレクションビューア"), content.index("コレクションリセット")
+        )
+        self.assertLess(
+            content.index("チャット履歴を削除"), content.index("コレクションリセット")
+        )
 
     def test_non_superuser_sees_disabled_admin_buttons(self):
         """
@@ -334,6 +344,16 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "コレクションリセット")
         self.assertContains(response, "テーマ分析を実行")
         self.assertContains(response, "コレクションビューア")
+        content = response.content.decode()
+        self.assertLess(
+            content.index("テーマ分析を実行"), content.index("コレクションリセット")
+        )
+        self.assertLess(
+            content.index("コレクションビューア"), content.index("コレクションリセット")
+        )
+        self.assertLess(
+            content.index("チャット履歴を削除"), content.index("コレクションリセット")
+        )
 
     @patch("llm_chat.views.RokunoheMinutesRagRepository")
     def test_superuser_can_reset_vector_db_collection(self, mock_repository):
@@ -777,13 +797,15 @@ class RokunoheMinutesRagServiceTest(TestCase):
 
 
 class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
-    def test_run_saves_llm_labels_and_kmeans_clusters(self):
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.timezone.localdate")
+    def test_run_saves_llm_labels_and_kmeans_clusters(self, mock_localdate):
         """
         シナリオ:
         - 入力: embedding付きの六戸町会議録チャンク2件と、LLMラベルServiceのモック。
         - 処理: テーマ分析Serviceを実行する。
-        - 期待値: 候補ラベル抽出、K-meansクラスタリング、DB保存Repository呼び出しが行われること。
+        - 期待値: 直近1年分を対象に、候補ラベル抽出、K-meansクラスタリング、DB保存Repository呼び出しが行われること。
         """
+        mock_localdate.return_value = date(2026, 6, 12)
         rag_repository = Mock()
         rag_repository.list_theme_source_chunks.return_value = [
             RokunoheMinutesThemeSourceChunk(
@@ -825,6 +847,9 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
         result = service.run()
 
         self.assertEqual(result, job)
+        rag_repository.list_theme_source_chunks.assert_called_once_with(
+            source_date_from=20250612
+        )
         theme_repository.reset_analysis_results.assert_called_once_with()
         theme_repository.create_job.assert_called_once_with(
             requested_cluster_count=50,
@@ -840,13 +865,15 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
             actual_cluster_count=2,
         )
 
-    def test_run_raises_when_collection_is_empty(self):
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.timezone.localdate")
+    def test_run_raises_when_recent_year_collection_is_empty(self, mock_localdate):
         """
         シナリオ:
-        - 入力: Chroma DBの分析対象チャンクが空の状態。
+        - 入力: Chroma DBの直近1年の分析対象チャンクが空の状態。
         - 処理: テーマ分析Serviceを実行する。
         - 期待値: 分析ジョブを作成せず、対象なしのValueErrorが発生すること。
         """
+        mock_localdate.return_value = date(2026, 6, 12)
         rag_repository = Mock()
         rag_repository.list_theme_source_chunks.return_value = []
         theme_repository = Mock()
@@ -859,6 +886,9 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
         with self.assertRaises(ValueError):
             service.run()
 
+        rag_repository.list_theme_source_chunks.assert_called_once_with(
+            source_date_from=20250612
+        )
         theme_repository.create_job.assert_not_called()
 
 
@@ -1224,6 +1254,33 @@ class RokunoheMinutesRagRepositoryTest(TestCase):
         self.assertEqual(len(chunks), 1)
         self.assertEqual(chunks[0].chroma_id, "doc_1")
         self.assertEqual(chunks[0].embedding, [0.4, 0.5, 0.6])
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_theme_source_chunks_filters_by_source_date_from(
+        self, mock_rag_service
+    ):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionに直近1年内外のsource_dateを持つembedding付きチャンクが存在する状態。
+        - 処理: Repositoryで日付下限を指定してテーマ分析用チャンク一覧を取得する。
+        - 期待値: source_dateが下限以降のチャンクだけ返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["old_doc", "recent_doc"],
+            "documents": ["古い議論です。", "直近の議論です。"],
+            "metadatas": [
+                {"source": "20240101_会議録.pdf", "source_date": "20240101"},
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+            ],
+            "embeddings": [[0.1, 0.2], [0.3, 0.4]],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_theme_source_chunks(source_date_from=20250612)
+
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0].chroma_id, "recent_doc")
 
 
 class RokunohePdfDownloadCommandTest(TestCase):
