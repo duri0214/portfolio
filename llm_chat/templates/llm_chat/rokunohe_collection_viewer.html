@@ -1,0 +1,100 @@
+{% extends 'llm_chat/base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'llm:index' %}">LLM Chat</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'llm:rokunohe_minutes' %}">六戸町会議録 RAG</a></li>
+                <li class="breadcrumb-item active" aria-current="page">コレクションビューア</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h1 class="h3 mb-1">六戸町会議録 コレクションビューア</h1>
+                <p class="text-muted mb-0">
+                    {{ query_type_label }}: 全 {{ total_count }} 件中 {{ page_start }}-{{ page_end }} 件を表示しています。
+                </p>
+            </div>
+            <a href="{% url 'llm:rokunohe_minutes' %}" class="btn btn-outline-secondary btn-sm">QAへ戻る</a>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-end flex-wrap gap-3 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="small text-muted">クエリタイプ</span>
+                <a href="?page=1&per_page={{ per_page }}"
+                   class="btn btn-sm {% if query_type == '' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    全件
+                </a>
+                <a href="?query_type=recent_year&page=1&per_page={{ per_page }}"
+                   class="btn btn-sm {% if query_type == 'recent_year' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    直近1年
+                </a>
+            </div>
+            <form method="get" class="d-flex align-items-center gap-2">
+                <label for="perPageSelect" class="form-label mb-0 small text-muted">最大</label>
+                <select id="perPageSelect" name="per_page" class="form-select form-select-sm w-auto"
+                        onchange="this.form.submit()">
+                    {% for option in per_page_options %}
+                        <option value="{{ option }}" {% if option == per_page %}selected{% endif %}>{{ option }}件</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="page" value="1">
+                {% if query_type %}
+                    <input type="hidden" name="query_type" value="{{ query_type }}">
+                {% endif %}
+            </form>
+        </div>
+
+        {% if collection_items %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th scope="col">Chroma ID</th>
+                        <th scope="col">source</th>
+                        <th scope="col">source_date</th>
+                        <th scope="col">page</th>
+                        <th scope="col">chunk_index</th>
+                        <th scope="col">本文プレビュー</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in collection_items %}
+                        <tr>
+                            <td class="font-monospace small">{{ item.chroma_id }}</td>
+                            <td>{{ item.source|default_if_none:"-" }}</td>
+                            <td>{{ item.source_date|default_if_none:"-" }}</td>
+                            <td>{{ item.page|default_if_none:"-" }}</td>
+                            <td>{{ item.chunk_index|default_if_none:"-" }}</td>
+                            <td class="small">{{ item.preview|default_if_none:"-" }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <nav aria-label="collection pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if not has_previous_page %}disabled{% endif %}">
+                        <a class="page-link"
+                           href="?page={{ previous_page }}&per_page={{ per_page }}{% if query_type %}&query_type={{ query_type }}{% endif %}"
+                           aria-label="Previous">前へ</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">{{ current_page }} / {{ total_pages }}</span>
+                    </li>
+                    <li class="page-item {% if not has_next_page %}disabled{% endif %}">
+                        <a class="page-link"
+                           href="?page={{ next_page }}&per_page={{ per_page }}{% if query_type %}&query_type={{ query_type }}{% endif %}"
+                           aria-label="Next">次へ</a>
+                    </li>
+                </ul>
+            </nav>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                rokunohe_minutes collection に表示できる登録内容はありません。
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
