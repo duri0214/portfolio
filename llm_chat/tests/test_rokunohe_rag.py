@@ -760,7 +760,34 @@ class RokunoheMinutesPdfImportServiceTest(TestCase):
         service = RokunoheMinutesPdfImportService(repository=repository)
         status = service.import_pdf(Path("20240101_古い会議録.pdf"))
 
-        self.assertEqual(status, RokunoheMinutesImportStatus.SKIPPED_OLD_SOURCE)
+        self.assertEqual(
+            status, RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE
+        )
+        mock_pdf_reader.assert_not_called()
+        repository.exists.assert_not_called()
+        repository.delete_pdf_documents.assert_not_called()
+        repository.upsert_documents.assert_not_called()
+
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
+    def test_skips_pdf_after_source_date_to_before_reading(self, mock_pdf_reader):
+        """
+        シナリオ:
+        - 入力: 指定した取り込み期間の上限より新しい日付がファイル名に付いたPDF。
+        - 処理: source_date_from/to付きでPDFインポートサービスを実行する。
+        - 期待値: PDF読み取りとRepository確認を行わず、期間外スキップ結果が返ること。
+        """
+        repository = Mock()
+
+        service = RokunoheMinutesPdfImportService(
+            repository=repository,
+            source_date_from=20250101,
+            source_date_to=20251231,
+        )
+        status = service.import_pdf(Path("20260225_新しい会議録.pdf"))
+
+        self.assertEqual(
+            status, RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE
+        )
         mock_pdf_reader.assert_not_called()
         repository.exists.assert_not_called()
         repository.delete_pdf_documents.assert_not_called()
@@ -1481,7 +1508,76 @@ class RokunohePdfDownloadCommandTest(TestCase):
             self.assertFalse((Path(temp_dir) / "20240101_古い会議録.pdf").exists())
 
         mock_import_service.return_value.import_pdf.assert_not_called()
-        self.assertIn("スキップ (直近1年外)", stdout.getvalue())
+        self.assertIn("スキップ (対象期間外)", stdout.getvalue())
+
+    @patch(
+        "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
+    )
+    def test_accepts_explicit_source_date_range(self, mock_import_service):
+        """
+        シナリオ:
+        - 入力: source-date-from/to内のLast-Modifiedを持つPDFリンク。
+        - 処理: 期間指定付きで六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: 指定期間内のPDFが保存され、同じ期間指定でChroma DBインポートServiceが生成されること。
+        """
+        mock_import_service.return_value.import_pdf.return_value = (
+            RokunoheMinutesImportStatus.IMPORTED
+        )
+        first_page_response = self._create_response(
+            '<a href="period.pdf">期間内会議録 [PDF]</a>'
+        )
+        pdf_response = self._create_response(
+            "",
+            content=b"%PDF",
+            headers={"Last-Modified": "Wed, 25 Feb 2026 01:55:27 GMT"},
+        )
+        second_page_response = self._create_response("")
+
+        with TemporaryDirectory() as temp_dir:
+            with patch(
+                "llm_chat.management.commands.rokunohe_pdf_download.requests.get",
+                side_effect=[
+                    first_page_response,
+                    pdf_response,
+                    second_page_response,
+                ],
+            ):
+                stdout = StringIO()
+                call_command(
+                    "rokunohe_pdf_download",
+                    save_dir=temp_dir,
+                    delay=0,
+                    source_date_from=20260101,
+                    source_date_to=20261231,
+                    stdout=stdout,
+                )
+
+            self.assertTrue((Path(temp_dir) / "20260225_期間内会議録.pdf").exists())
+
+        mock_import_service.assert_called_with(
+            recent_days=365,
+            source_date_from=20260101,
+            source_date_to=20261231,
+        )
+        self.assertIn("source_date_from=20260101", stdout.getvalue())
+        self.assertIn("source_date_to=20261231", stdout.getvalue())
+
+    def test_rejects_invalid_source_date_range(self):
+        """
+        シナリオ:
+        - 入力: source-date-fromがsource-date-toより後の日付になる期間指定。
+        - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: CommandErrorが発生し、処理が開始されないこと。
+        """
+        with TemporaryDirectory() as temp_dir:
+            with self.assertRaises(CommandError):
+                call_command(
+                    "rokunohe_pdf_download",
+                    save_dir=temp_dir,
+                    delay=0,
+                    source_date_from=20261231,
+                    source_date_to=20260101,
+                )
 
     @patch(
         "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"

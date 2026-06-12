@@ -49,6 +49,8 @@ class RokunoheMinutesPdfImportService:
         repository: RokunoheMinutesRagRepository | None = None,
         *,
         recent_days: int | None = None,
+        source_date_from: int | None = None,
+        source_date_to: int | None = None,
     ) -> None:
         """
         六戸町会議録PDFインポートServiceを初期化します。
@@ -57,8 +59,12 @@ class RokunoheMinutesPdfImportService:
             repository: Chroma DBへの登録済み確認とドキュメント登録を担当するRepository。
                 テスト時はモックRepositoryを渡し、本番時は未指定のまま環境変数のAPIキーを使って生成します。
             recent_days: 取り込み対象にする直近日数。未指定時は365日です。
+            source_date_from: 取り込み対象にするPDF日付の下限。YYYYMMDD形式です。
+            source_date_to: 取り込み対象にするPDF日付の上限。YYYYMMDD形式です。
         """
         self.recent_days = recent_days or self.default_recent_days
+        self.source_date_from = source_date_from
+        self.source_date_to = source_date_to
         self.repository = repository or RokunoheMinutesRagRepository(
             api_key=os.getenv("OPENAI_API_KEY") or ""
         )
@@ -74,14 +80,15 @@ class RokunoheMinutesPdfImportService:
             RokunoheMinutesImportStatus:
                 - IMPORTED: PDF本文を抽出し、Chroma DBへ登録した。
                 - SKIPPED_EXISTING: 同じsource名のPDFが登録済みだった。
+                - SKIPPED_OUT_OF_SOURCE_DATE_RANGE: PDFの日付が取り込み対象期間外だった。
                 - SKIPPED_EMPTY_TEXT: PDFから登録可能な本文を抽出できなかった。
 
         Side Effects:
             未登録かつ本文抽出に成功した場合、Repository経由でChroma DBへドキュメントを登録します。
         """
         pdf = RokunoheMinutesPdf(path=pdf_path)
-        if self._is_old_source(pdf):
-            return RokunoheMinutesImportStatus.SKIPPED_OLD_SOURCE
+        if self._is_out_of_source_date_range(pdf):
+            return RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE
 
         if self.repository.exists(pdf):
             return RokunoheMinutesImportStatus.SKIPPED_EXISTING
@@ -95,13 +102,18 @@ class RokunoheMinutesPdfImportService:
         return RokunoheMinutesImportStatus.IMPORTED
 
     def get_source_date_from(self) -> int:
+        if self.source_date_from is not None:
+            return self.source_date_from
         recent_start = timezone.localdate() - timedelta(days=self.recent_days)
         return int(recent_start.strftime("%Y%m%d"))
 
-    def _is_old_source(self, pdf: RokunoheMinutesPdf) -> bool:
+    def _is_out_of_source_date_range(self, pdf: RokunoheMinutesPdf) -> bool:
         if not pdf.source_date:
             return False
-        return int(pdf.source_date) < self.get_source_date_from()
+        source_date = int(pdf.source_date)
+        if source_date < self.get_source_date_from():
+            return True
+        return self.source_date_to is not None and source_date > self.source_date_to
 
     @staticmethod
     def _create_documents(pdf: RokunoheMinutesPdf) -> list[RokunoheMinutesDocument]:

@@ -44,7 +44,19 @@ class Command(BaseCommand):
             "--recent-days",
             default=365,
             type=int,
-            help="取り込み対象にする直近日数。未指定時は365日です。",
+            help="取り込み対象にする直近日数。source-date-from未指定時は365日です。",
+        )
+        parser.add_argument(
+            "--source-date-from",
+            default=None,
+            type=int,
+            help="取り込み対象にするPDF日付の下限。YYYYMMDD形式です。",
+        )
+        parser.add_argument(
+            "--source-date-to",
+            default=None,
+            type=int,
+            help="取り込み対象にするPDF日付の上限。YYYYMMDD形式です。",
         )
 
     def handle(self, *args, **options):
@@ -66,9 +78,17 @@ class Command(BaseCommand):
         try:
             downloaded_filenames = set()
             request_count = 0
-            source_date_from = self._get_source_date_from(options["recent_days"])
+            source_date_from = self._get_source_date_from(
+                recent_days=options["recent_days"],
+                source_date_from=options["source_date_from"],
+            )
+            source_date_to = options["source_date_to"]
+            self._validate_source_date_range(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
             self._write_info(
-                f"六戸町PDFダウンロード開始: 保存先={save_dir}, リクエスト間隔={options['delay']}秒, source_date_from={source_date_from}"
+                f"六戸町PDFダウンロード開始: 保存先={save_dir}, リクエスト間隔={options['delay']}秒, source_date_from={source_date_from}, source_date_to={source_date_to or '指定なし'}"
             )
 
             for target_url in target_urls:
@@ -113,12 +133,14 @@ class Command(BaseCommand):
                         save_path = None
                         if existing_dated_path:
                             downloaded_filenames.add(filename)
-                            if self._is_old_source(
-                                existing_dated_path.name, source_date_from
+                            if self._is_out_of_source_date_range(
+                                filename=existing_dated_path.name,
+                                source_date_from=source_date_from,
+                                source_date_to=source_date_to,
                             ):
                                 skipped_count += 1
                                 self._write_info(
-                                    f"進捗 {index}/{len(pdf_links)}: スキップ (直近1年外): {existing_dated_path}"
+                                    f"進捗 {index}/{len(pdf_links)}: スキップ (対象期間外): {existing_dated_path}"
                                 )
                                 continue
 
@@ -142,11 +164,15 @@ class Command(BaseCommand):
                                 filename=filename,
                                 response=pdf_response,
                             )
-                            if self._is_old_source(filename, source_date_from):
+                            if self._is_out_of_source_date_range(
+                                filename=filename,
+                                source_date_from=source_date_from,
+                                source_date_to=source_date_to,
+                            ):
                                 skipped_count += 1
                                 downloaded_filenames.add(filename)
                                 self._write_info(
-                                    f"進捗 {index}/{len(pdf_links)}: スキップ (直近1年外): {filename}"
+                                    f"進捗 {index}/{len(pdf_links)}: スキップ (対象期間外): {filename}"
                                 )
                                 continue
 
@@ -166,7 +192,12 @@ class Command(BaseCommand):
 
                         # Chroma DB へのインポート
                         if save_path and not options["skip_import"]:
-                            self._import_to_chroma(save_path, options["recent_days"])
+                            self._import_to_chroma(
+                                pdf_path=save_path,
+                                recent_days=options["recent_days"],
+                                source_date_from=source_date_from,
+                                source_date_to=source_date_to,
+                            )
 
                     self._write_info(
                         f"処理完了: ダウンロード {downloaded_count} 件, スキップ {skipped_count} 件"
@@ -251,14 +282,31 @@ class Command(BaseCommand):
         return None
 
     @staticmethod
-    def _get_source_date_from(recent_days: int) -> int:
+    def _get_source_date_from(*, recent_days: int, source_date_from: int | None) -> int:
+        if source_date_from is not None:
+            return source_date_from
         recent_start = timezone.localdate() - timedelta(days=recent_days)
         return int(recent_start.strftime("%Y%m%d"))
 
     @staticmethod
-    def _is_old_source(filename: str, source_date_from: int) -> bool:
+    def _validate_source_date_range(
+        *, source_date_from: int, source_date_to: int | None
+    ) -> None:
+        if source_date_to is not None and source_date_from > source_date_to:
+            raise CommandError(
+                "source-date-from は source-date-to 以下の日付を指定してください。"
+            )
+
+    @staticmethod
+    def _is_out_of_source_date_range(
+        *, filename: str, source_date_from: int, source_date_to: int | None
+    ) -> bool:
         source_date = Command._get_source_date_int(filename)
-        return source_date is not None and source_date < source_date_from
+        if source_date is None:
+            return False
+        if source_date < source_date_from:
+            return True
+        return source_date_to is not None and source_date > source_date_to
 
     @staticmethod
     def _get_source_date_int(filename: str) -> int | None:
@@ -300,16 +348,27 @@ class Command(BaseCommand):
     def _write_error(self, message: str) -> None:
         self.stdout.write(self.style.ERROR(message))
 
-    def _import_to_chroma(self, pdf_path: Path, recent_days: int) -> None:
+    def _import_to_chroma(
+        self,
+        *,
+        pdf_path: Path,
+        recent_days: int,
+        source_date_from: int,
+        source_date_to: int | None,
+    ) -> None:
         """PDFからテキストを抽出し、Chroma DBにインポートします。"""
         try:
-            import_service = RokunoheMinutesPdfImportService(recent_days=recent_days)
+            import_service = RokunoheMinutesPdfImportService(
+                recent_days=recent_days,
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
             status = import_service.import_pdf(pdf_path)
             if status == RokunoheMinutesImportStatus.SKIPPED_EXISTING:
                 self._write_info(f"インポートスキップ (登録済み): {pdf_path.name}")
                 return
-            if status == RokunoheMinutesImportStatus.SKIPPED_OLD_SOURCE:
-                self._write_info(f"インポートスキップ (直近1年外): {pdf_path.name}")
+            if status == RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE:
+                self._write_info(f"インポートスキップ (対象期間外): {pdf_path.name}")
                 return
             if status == RokunoheMinutesImportStatus.SKIPPED_EMPTY_TEXT:
                 self._write_error(f"テキストが抽出できませんでした: {pdf_path.name}")
