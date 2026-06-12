@@ -136,3 +136,91 @@ class RokunoheMinutesCollectionItem:
     page: int | None
     chunk_index: int | None
     preview: str
+
+
+@dataclass(frozen=True)
+class RokunoheMinutesThemeSourceChunk:
+    """
+    テーマ分析の入力に使うChroma DB上の六戸町会議録チャンク。
+
+    Attributes:
+        chroma_id: Chroma DB上のドキュメントID。
+        document: チャンク本文。
+        source: 出典PDFファイル名。
+        source_date: 出典PDFファイル名から取得したYYYYMMDD形式の日付。
+        page: PDF内のページ番号。
+        chunk_index: RAG登録時のチャンク番号。
+        embedding: K-meansクラスタリングに使うembeddingベクトル。
+    """
+
+    chroma_id: str
+    document: str
+    source: str
+    source_date: str
+    page: int | None
+    chunk_index: int | None
+    embedding: list[float]
+
+
+@dataclass(frozen=True)
+class RokunoheMinuteThemeChunkAnalysis:
+    """
+    テーマ分析でクラスタへ割り当てられた単一チャンクの分析結果。
+
+    Attributes:
+        source_chunk: 分析対象のChromaチャンク。
+        candidate_labels: LLMがチャンク単位で抽出した候補テーマラベル。
+        cluster_index: K-meansが割り当てたクラスタ番号。
+    """
+
+    source_chunk: RokunoheMinutesThemeSourceChunk
+    candidate_labels: list[str]
+    cluster_index: int
+
+
+@dataclass(frozen=True)
+class RokunoheMinuteThemeClusterAnalysis:
+    """
+    テーマ分析で生成されたクラスタ単位の分析結果。
+
+    Attributes:
+        cluster_index: K-meansが割り当てたクラスタ番号。
+        label: LLMが命名した代表テーマ名。
+        representative_chunk_id: クラスタを代表するChromaチャンクID。
+        chunks: クラスタに属するチャンク分析結果。
+    """
+
+    cluster_index: int
+    label: str
+    representative_chunk_id: str
+    chunks: list[RokunoheMinuteThemeChunkAnalysis]
+
+    @property
+    def chunk_count(self) -> int:
+        return len(self.chunks)
+
+    @property
+    def character_count(self) -> int:
+        return sum(len(chunk.source_chunk.document) for chunk in self.chunks)
+
+    @property
+    def pdf_count(self) -> int:
+        return len({chunk.source_chunk.source for chunk in self.chunks})
+
+    @property
+    def source_date_from(self) -> str:
+        dates = sorted(
+            chunk.source_chunk.source_date
+            for chunk in self.chunks
+            if chunk.source_chunk.source_date
+        )
+        return dates[0] if dates else ""
+
+    @property
+    def source_date_to(self) -> str:
+        dates = sorted(
+            chunk.source_chunk.source_date
+            for chunk in self.chunks
+            if chunk.source_chunk.source_date
+        )
+        return dates[-1] if dates else ""

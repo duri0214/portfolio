@@ -108,3 +108,189 @@ class RiddleQuestion(models.Model):
 
     def __str__(self):
         return f"{self.order}: {self.question_text[:20]}..."
+
+
+class RokunoheMinuteThemeAnalysisJob(models.Model):
+    """
+    六戸町会議録テーマ分析の実行単位を管理するモデル。
+
+    Attributes:
+        status: 分析ジョブの実行状態。
+        requested_cluster_count: 実行時に要求したクラスタ数。
+        actual_cluster_count: 入力件数に応じて実際に生成したクラスタ数。
+        chunk_count: 分析対象になったChromaチャンク数。
+        llm_model_name: テーマ候補と代表ラベル生成に使ったLLMモデル名。
+        error_message: 失敗時のエラー内容。
+        created_at: レコードの作成日時。
+        completed_at: 分析完了日時。
+    """
+
+    STATUS_RUNNING = "running"
+    STATUS_COMPLETED = "completed"
+    STATUS_FAILED = "failed"
+    STATUS_CHOICES = [
+        (STATUS_RUNNING, "実行中"),
+        (STATUS_COMPLETED, "完了"),
+        (STATUS_FAILED, "失敗"),
+    ]
+
+    status = models.CharField(
+        verbose_name="実行状態",
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_RUNNING,
+    )
+    requested_cluster_count = models.PositiveIntegerField(
+        verbose_name="要求クラスタ数",
+        default=50,
+    )
+    actual_cluster_count = models.PositiveIntegerField(
+        verbose_name="実クラスタ数",
+        default=0,
+    )
+    chunk_count = models.PositiveIntegerField(
+        verbose_name="分析対象チャンク数",
+        default=0,
+    )
+    llm_model_name = models.CharField(
+        verbose_name="LLMモデル名",
+        max_length=50,
+        blank=True,
+    )
+    error_message = models.TextField(
+        verbose_name="エラーメッセージ",
+        blank=True,
+    )
+    created_at = models.DateTimeField(verbose_name="作成日時", auto_now_add=True)
+    completed_at = models.DateTimeField(
+        verbose_name="完了日時",
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        db_table = "llm_chat_rokunohe_minute_theme_analysis_job"
+        verbose_name = "六戸町会議録テーマ分析ジョブ"
+        verbose_name_plural = "六戸町会議録テーマ分析ジョブ一覧"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Rokunohe theme analysis job #{self.pk}: {self.status}"
+
+
+class RokunoheMinuteThemeCluster(models.Model):
+    """
+    六戸町会議録テーマ分析で生成されたクラスタを管理するモデル。
+
+    Attributes:
+        job: このクラスタを生成した分析ジョブ。
+        cluster_index: K-meansが割り当てたクラスタ番号。
+        label: LLMが命名した代表テーマ名。
+        representative_chunk_id: 代表チャンクのChroma ID。
+        chunk_count: クラスタに属するチャンク数。
+        character_count: クラスタに属する本文文字数。
+        pdf_count: クラスタに含まれるPDF数。
+        source_date_from: クラスタ内の最古source_date。
+        source_date_to: クラスタ内の最新source_date。
+        created_at: レコードの作成日時。
+    """
+
+    job = models.ForeignKey(
+        RokunoheMinuteThemeAnalysisJob,
+        verbose_name="分析ジョブ",
+        related_name="clusters",
+        on_delete=models.CASCADE,
+    )
+    cluster_index = models.PositiveIntegerField(verbose_name="クラスタ番号")
+    label = models.CharField(verbose_name="代表テーマ名", max_length=255)
+    representative_chunk_id = models.CharField(
+        verbose_name="代表チャンクID",
+        max_length=255,
+        blank=True,
+    )
+    chunk_count = models.PositiveIntegerField(verbose_name="チャンク数", default=0)
+    character_count = models.PositiveIntegerField(verbose_name="文字数", default=0)
+    pdf_count = models.PositiveIntegerField(verbose_name="PDF数", default=0)
+    source_date_from = models.CharField(
+        verbose_name="開始日",
+        max_length=8,
+        blank=True,
+    )
+    source_date_to = models.CharField(
+        verbose_name="終了日",
+        max_length=8,
+        blank=True,
+    )
+    created_at = models.DateTimeField(verbose_name="作成日時", auto_now_add=True)
+
+    class Meta:
+        db_table = "llm_chat_rokunohe_minute_theme_cluster"
+        verbose_name = "六戸町会議録テーマクラスタ"
+        verbose_name_plural = "六戸町会議録テーマクラスタ一覧"
+        unique_together = ("job", "cluster_index")
+        indexes = [
+            models.Index(fields=["job", "cluster_index"]),
+        ]
+
+    def __str__(self):
+        return f"{self.label} ({self.chunk_count} chunks)"
+
+
+class RokunoheMinuteThemeChunk(models.Model):
+    """
+    六戸町会議録テーマ分析でクラスタへ割り当てられたチャンクを管理するモデル。
+
+    Attributes:
+        job: このチャンク分析を生成した分析ジョブ。
+        cluster: このチャンクが属するテーマクラスタ。
+        chunk_id: Chroma DB上のチャンクID。
+        source: 出典PDFファイル名。
+        source_date: 出典PDFファイル名から取得したYYYYMMDD形式の日付。
+        page: PDF内のページ番号。
+        chunk_index: RAG登録時のチャンク番号。
+        candidate_labels: LLMがチャンク単位で抽出した候補テーマラベル。
+        character_count: チャンク本文の文字数。
+        created_at: レコードの作成日時。
+    """
+
+    job = models.ForeignKey(
+        RokunoheMinuteThemeAnalysisJob,
+        verbose_name="分析ジョブ",
+        related_name="theme_chunks",
+        on_delete=models.CASCADE,
+    )
+    cluster = models.ForeignKey(
+        RokunoheMinuteThemeCluster,
+        verbose_name="テーマクラスタ",
+        related_name="theme_chunks",
+        on_delete=models.CASCADE,
+    )
+    chunk_id = models.CharField(verbose_name="チャンクID", max_length=255)
+    source = models.CharField(verbose_name="出典PDF", max_length=255, blank=True)
+    source_date = models.CharField(verbose_name="出典日", max_length=8, blank=True)
+    page = models.PositiveIntegerField(verbose_name="ページ番号", null=True, blank=True)
+    chunk_index = models.PositiveIntegerField(
+        verbose_name="チャンク番号",
+        null=True,
+        blank=True,
+    )
+    candidate_labels = models.JSONField(
+        verbose_name="候補テーマラベル",
+        default=list,
+        blank=True,
+    )
+    character_count = models.PositiveIntegerField(verbose_name="文字数", default=0)
+    created_at = models.DateTimeField(verbose_name="作成日時", auto_now_add=True)
+
+    class Meta:
+        db_table = "llm_chat_rokunohe_minute_theme_chunk"
+        verbose_name = "六戸町会議録テーマチャンク"
+        verbose_name_plural = "六戸町会議録テーマチャンク一覧"
+        unique_together = ("job", "chunk_id")
+        indexes = [
+            models.Index(fields=["job", "chunk_id"]),
+            models.Index(fields=["cluster", "source_date"]),
+        ]
+
+    def __str__(self):
+        return self.chunk_id

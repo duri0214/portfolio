@@ -31,6 +31,7 @@ from llm_chat.domain.repository.completion.rokunohe_minutes import (
 )
 from llm_chat.domain.service.chat import ChatDisplayService
 from llm_chat.domain.service.completion.rokunohe_minutes import (
+    RokunoheMinuteThemeAnalysisService,
     RokunoheMinutesRagService,
 )
 from llm_chat.domain.use_case.completion.chat import (
@@ -203,6 +204,44 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
         messages.success(request, f"{self.success_message} 削除件数: {deleted_count}件")
+        return redirect("llm:rokunohe_minutes")
+
+
+class RokunoheThemeAnalysisRunView(UserPassesTestMixin, View):
+    """
+    六戸町会議録RAGのテーマ分析を実行する管理者用ビュー。
+    """
+
+    raise_exception = True
+    analysis_consent_value = "1"
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("analysis_consent") != self.analysis_consent_value:
+            messages.warning(
+                request,
+                "テーマ分析の実行に同意してから実行してください。",
+            )
+            return redirect("llm:rokunohe_minutes")
+
+        try:
+            service = RokunoheMinuteThemeAnalysisService()
+            job = service.run()
+            messages.success(
+                request,
+                (
+                    "六戸町会議録RAGのテーマ分析を実行しました。"
+                    f" 対象: {job.chunk_count}件 / クラスタ: {job.actual_cluster_count}件"
+                ),
+            )
+        except ValueError as e:
+            messages.warning(request, str(e))
+        except Exception as e:
+            logger.error(f"RokunoheThemeAnalysisRunView Error: {str(e)}")
+            logger.error(traceback.format_exc())
+            messages.error(request, f"テーマ分析の実行に失敗しました: {str(e)}")
         return redirect("llm:rokunohe_minutes")
 
 

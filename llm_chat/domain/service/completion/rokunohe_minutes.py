@@ -3,19 +3,27 @@ from pathlib import Path
 
 from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
+import numpy as np
+from openai import OpenAI
 from pypdf import PdfReader
 
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.domain.repository.completion.rokunohe_minutes import (
     RokunoheMinutesRagRepository,
 )
+from llm_chat.domain.repository.completion.rokunohe_minutes_theme import (
+    RokunoheMinuteThemeAnalysisRepository,
+)
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
+    RokunoheMinuteThemeChunkAnalysis,
+    RokunoheMinuteThemeClusterAnalysis,
     RokunoheMinutesDocument,
     RokunoheMinutesImportStatus,
     RokunoheMinutesMetadata,
     RokunoheMinutesPdf,
+    RokunoheMinutesThemeSourceChunk,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
@@ -185,3 +193,241 @@ class RokunoheMinutesRagService(BaseChatService):
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
         return self.generate(user_message)
+
+
+class RokunoheMinuteThemeLabelService:
+    """
+    六戸町会議録チャンクとクラスタのテーマ名生成を担当するService。
+
+    Attributes:
+        model_name: テーマ候補と代表ラベル生成に使用するLLMモデル名。
+    """
+
+    model_name = ModelName.GPT_5_MINI
+
+    def __init__(self, *, api_key: str | None = None) -> None:
+        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY") or "")
+
+    def extract_candidate_labels(self, text: str) -> list[str]:
+        """
+        単一チャンク本文から候補テーマラベルを抽出します。
+
+        Args:
+            text: 六戸町会議録チャンク本文。
+
+        Returns:
+            list[str]: 最大5件の候補テーマラベル。
+        """
+        prompt = (
+            "以下の六戸町会議録本文から、政策テーマを表す短い日本語ラベルを最大5件抽出してください。"
+            "回答は1行1ラベルにしてください。\n\n"
+            f"{text[:3000]}"
+        )
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        content = response.choices[0].message.content or ""
+        return self._parse_labels(content)
+
+    def name_cluster(self, chunks: list[RokunoheMinuteThemeChunkAnalysis]) -> str:
+        """
+        クラスタに属するチャンクと候補ラベルから代表テーマ名を生成します。
+
+        Args:
+            chunks: 同一クラスタに属するチャンク分析結果。
+
+        Returns:
+            str: クラスタ代表テーマ名。
+        """
+        label_text = "\n".join(
+            f"- {label}"
+            for chunk in chunks[:20]
+            for label in chunk.candidate_labels[:5]
+        )
+        excerpt_text = "\n".join(
+            f"- {chunk.source_chunk.document[:200]}" for chunk in chunks[:5]
+        )
+        prompt = (
+            "以下の候補ラベルと本文抜粋をもとに、クラスタの代表テーマ名を"
+            "日本語で20文字以内の名詞句1つにしてください。\n\n"
+            f"候補ラベル:\n{label_text}\n\n本文抜粋:\n{excerpt_text}"
+        )
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        content = response.choices[0].message.content or ""
+        label = content.strip().splitlines()[0].strip(" -・#")
+        return label[:255] or "未分類テーマ"
+
+    @staticmethod
+    def _parse_labels(content: str) -> list[str]:
+        labels = []
+        for line in content.splitlines():
+            label = line.strip().lstrip("-*0123456789.、)） ").strip()
+            if label and label not in labels:
+                labels.append(label[:100])
+            if len(labels) >= 5:
+                break
+        return labels
+
+
+class RokunoheMinuteThemeAnalysisService:
+    """
+    六戸町会議録RAGの既存チャンクからテーマクラスタリングを生成するService。
+
+    Chroma DBは本文とembeddingの取得元として使い、分析結果の正本はRepository経由で
+    Django DBへ保存します。
+
+    Attributes:
+        default_cluster_count: 通常実行時に生成を試みるクラスタ数。
+        random_state: K-means再現性のために固定する乱数シード。
+    """
+
+    default_cluster_count = 50
+    random_state = 42
+
+    def __init__(
+        self,
+        *,
+        rag_repository: RokunoheMinutesRagRepository | None = None,
+        theme_repository: RokunoheMinuteThemeAnalysisRepository | None = None,
+        label_service: RokunoheMinuteThemeLabelService | None = None,
+    ) -> None:
+        self.rag_repository = rag_repository or RokunoheMinutesRagRepository(
+            api_key=os.getenv("OPENAI_API_KEY") or ""
+        )
+        self.theme_repository = (
+            theme_repository or RokunoheMinuteThemeAnalysisRepository()
+        )
+        self.label_service = label_service or RokunoheMinuteThemeLabelService()
+
+    def run(self):
+        """
+        Chroma DBの六戸町会議録チャンクからテーマ分析ジョブを作成します。
+
+        Returns:
+            RokunoheMinuteThemeAnalysisJob: 完了状態に更新された分析ジョブ。
+
+        Side Effects:
+            Chroma DBからチャンクとembeddingを取得し、LLM APIを呼び出して候補ラベルと
+            クラスタ代表ラベルを生成し、Django DBへ分析結果を保存します。
+        """
+        chunks = self.rag_repository.list_theme_source_chunks()
+        if not chunks:
+            raise ValueError("rokunohe_minutes collection に分析対象がありません。")
+
+        job = self.theme_repository.create_job(
+            requested_cluster_count=self.default_cluster_count,
+            llm_model_name=self.label_service.model_name,
+        )
+        try:
+            chunk_analyses = self._create_chunk_analyses(chunks)
+            cluster_analyses = self._create_cluster_analyses(chunk_analyses)
+            self.theme_repository.save_analysis_result(
+                job=job,
+                clusters=cluster_analyses,
+            )
+            return self.theme_repository.mark_completed(
+                job=job,
+                chunk_count=len(chunk_analyses),
+                actual_cluster_count=len(cluster_analyses),
+            )
+        except Exception as e:
+            self.theme_repository.mark_failed(job=job, error_message=str(e))
+            raise
+
+    def _create_chunk_analyses(
+        self,
+        chunks: list[RokunoheMinutesThemeSourceChunk],
+    ) -> list[RokunoheMinuteThemeChunkAnalysis]:
+        cluster_indexes = self._cluster_chunks(chunks)
+        analyses = []
+        for chunk, cluster_index in zip(chunks, cluster_indexes):
+            labels = self.label_service.extract_candidate_labels(chunk.document)
+            analyses.append(
+                RokunoheMinuteThemeChunkAnalysis(
+                    source_chunk=chunk,
+                    candidate_labels=labels,
+                    cluster_index=cluster_index,
+                )
+            )
+        return analyses
+
+    def _cluster_chunks(
+        self,
+        chunks: list[RokunoheMinutesThemeSourceChunk],
+    ) -> list[int]:
+        cluster_count = min(self.default_cluster_count, len(chunks))
+        if cluster_count <= 0:
+            return []
+        if cluster_count == 1:
+            return [0]
+
+        embeddings = np.array([chunk.embedding for chunk in chunks])
+        centroids = self._initialize_centroids(embeddings, cluster_count)
+        labels = np.zeros(len(chunks), dtype=int)
+
+        for _ in range(100):
+            distances = np.linalg.norm(embeddings[:, np.newaxis] - centroids, axis=2)
+            next_labels = distances.argmin(axis=1)
+            next_centroids = centroids.copy()
+            for cluster_index in range(cluster_count):
+                members = embeddings[next_labels == cluster_index]
+                if len(members) > 0:
+                    next_centroids[cluster_index] = members.mean(axis=0)
+
+            if np.array_equal(labels, next_labels) and np.allclose(
+                centroids, next_centroids
+            ):
+                break
+
+            labels = next_labels
+            centroids = next_centroids
+
+        return [int(label) for label in labels]
+
+    def _initialize_centroids(
+        self,
+        embeddings: np.ndarray,
+        cluster_count: int,
+    ) -> np.ndarray:
+        rng = np.random.default_rng(self.random_state)
+        initial_indexes = rng.choice(len(embeddings), size=cluster_count, replace=False)
+        return embeddings[initial_indexes].copy()
+
+    def _create_cluster_analyses(
+        self,
+        chunk_analyses: list[RokunoheMinuteThemeChunkAnalysis],
+    ) -> list[RokunoheMinuteThemeClusterAnalysis]:
+        clusters = {}
+        for chunk_analysis in chunk_analyses:
+            clusters.setdefault(chunk_analysis.cluster_index, []).append(chunk_analysis)
+
+        cluster_analyses = []
+        for cluster_index, cluster_chunks in sorted(clusters.items()):
+            representative_chunk_id = self._find_representative_chunk_id(cluster_chunks)
+            label = self.label_service.name_cluster(cluster_chunks)
+            cluster_analyses.append(
+                RokunoheMinuteThemeClusterAnalysis(
+                    cluster_index=cluster_index,
+                    label=label,
+                    representative_chunk_id=representative_chunk_id,
+                    chunks=cluster_chunks,
+                )
+            )
+        return cluster_analyses
+
+    @staticmethod
+    def _find_representative_chunk_id(
+        chunks: list[RokunoheMinuteThemeChunkAnalysis],
+    ) -> str:
+        if len(chunks) == 1:
+            return chunks[0].source_chunk.chroma_id
+
+        embeddings = np.array([chunk.source_chunk.embedding for chunk in chunks])
+        centroid = embeddings.mean(axis=0)
+        distances = np.linalg.norm(embeddings - centroid, axis=1)
+        nearest_index = int(distances.argmin())
+        return chunks[nearest_index].source_chunk.chroma_id

@@ -47,6 +47,11 @@
                             <input type="hidden" name="reset_collection_consent" value="1">
                             <button type="submit" class="btn btn-outline-danger btn-sm">コレクションリセット</button>
                         </form>
+                        <form id="themeAnalysisForm" method="post" action="{% url 'llm:rokunohe_theme_analysis_run' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="analysis_consent" value="1">
+                            <button type="submit" class="btn btn-outline-primary btn-sm">テーマ分析を実行</button>
+                        </form>
                         <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
                             コレクションビューア
                         </a>
@@ -56,6 +61,9 @@
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                             コレクションリセット
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                            テーマ分析を実行
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                             コレクションビューア
@@ -127,6 +135,7 @@
             const clearBtn = document.getElementById("clearChatLogsBtn");
             const pdfDownloadForm = document.getElementById("pdfDownloadForm");
             const vectorDbResetForm = document.getElementById("vectorDbResetForm");
+            const themeAnalysisForm = document.getElementById("themeAnalysisForm");
             let isLoading = false;
 
             function startLoading() {
@@ -214,6 +223,15 @@
             if (vectorDbResetForm) {
                 vectorDbResetForm.addEventListener("submit", function (event) {
                     const confirmed = confirm("六戸町会議録RAGのVector DBコレクションをすべて削除し、会話履歴もリセットします。PDFを再取得・ベクトル化するまで資料検索は使えません。実行しますか？");
+                    if (!confirmed) {
+                        event.preventDefault();
+                    }
+                });
+            }
+
+            if (themeAnalysisForm) {
+                themeAnalysisForm.addEventListener("submit", function (event) {
+                    const confirmed = confirm("保存済みのrokunohe_minutes collectionをもとにテーマ分析を実行します。処理に時間がかかる場合があります。実行しますか？");
                     if (!confirmed) {
                         event.preventDefault();
                     }

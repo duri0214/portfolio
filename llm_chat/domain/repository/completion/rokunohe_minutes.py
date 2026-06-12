@@ -6,6 +6,7 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinutesCollectionItem,
     RokunoheMinutesDocument,
     RokunoheMinutesPdf,
+    RokunoheMinutesThemeSourceChunk,
 )
 
 CollectionGetResult = dict[str, list]
@@ -79,6 +80,40 @@ class RokunoheMinutesRagRepository:
             include=["documents", "metadatas"],
         )
         return self._build_collection_items(existing)
+
+    def list_theme_source_chunks(self) -> list[RokunoheMinutesThemeSourceChunk]:
+        existing = self._rag_service._collection.get(
+            include=["documents", "metadatas", "embeddings"],
+        )
+        if not existing or not existing["ids"]:
+            return []
+
+        ids = existing["ids"]
+        documents = existing.get("documents") or []
+        metadatas = existing.get("metadatas") or []
+        embeddings = existing.get("embeddings") or []
+        chunks: list[RokunoheMinutesThemeSourceChunk] = []
+
+        for index, chroma_id in enumerate(ids):
+            document = documents[index] if index < len(documents) else ""
+            metadata = metadatas[index] if index < len(metadatas) else {}
+            embedding = embeddings[index] if index < len(embeddings) else []
+            embedding_list = list(embedding) if embedding is not None else []
+            if not document or not embedding_list:
+                continue
+            chunks.append(
+                RokunoheMinutesThemeSourceChunk(
+                    chroma_id=chroma_id,
+                    document=document,
+                    source=str(metadata.get("source", "")),
+                    source_date=str(metadata.get("source_date") or ""),
+                    page=metadata.get("page"),
+                    chunk_index=metadata.get("chunk_index"),
+                    embedding=embedding_list,
+                )
+            )
+
+        return chunks
 
     def _build_collection_items(
         self,

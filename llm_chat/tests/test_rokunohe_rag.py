@@ -14,19 +14,26 @@ from lib.llm.valueobject.completion import RoleType
 from llm_chat.domain.repository.completion.rokunohe_minutes import (
     RokunoheMinutesRagRepository,
 )
+from llm_chat.domain.repository.completion.rokunohe_minutes_theme import (
+    RokunoheMinuteThemeAnalysisRepository,
+)
 from llm_chat.domain.service.completion.rokunohe_minutes import (
+    RokunoheMinuteThemeAnalysisService,
     RokunoheMinutesPdfImportService,
     RokunoheMinutesRagService,
 )
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     ROKUNOHE_MINUTES_COLLECTION_NAME,
+    RokunoheMinuteThemeChunkAnalysis,
+    RokunoheMinuteThemeClusterAnalysis,
     RokunoheMinutesCollectionItem,
     RokunoheMinutesImportStatus,
     RokunoheMinutesPdf,
+    RokunoheMinutesThemeSourceChunk,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.models import ChatLogs
+from llm_chat.models import ChatLogs, RokunoheMinuteThemeAnalysisJob
 
 
 class RokunoheMinutesRagViewTest(TestCase):
@@ -298,6 +305,7 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "コレクションリセット")
+        self.assertContains(response, "テーマ分析を実行")
         self.assertContains(response, "コレクションビューア")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
 
@@ -321,6 +329,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "管理者権限が必要なボタンは無効化されています")
         self.assertContains(response, "disabled")
         self.assertContains(response, "コレクションリセット")
+        self.assertContains(response, "テーマ分析を実行")
         self.assertContains(response, "コレクションビューア")
 
     @patch("llm_chat.views.RokunoheMinutesRagRepository")
@@ -406,6 +415,80 @@ class RokunohePdfDownloadViewTest(TestCase):
         response = self.client.post(
             reverse("llm:rokunohe_vector_db_reset"),
             {"reset_collection_consent": "1"},
+        )
+
+        self.assertEqual(403, response.status_code)
+
+    @patch("llm_chat.views.RokunoheMinuteThemeAnalysisService")
+    def test_superuser_can_run_theme_analysis(self, mock_service):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、テーマ分析実行へ同意した状態。
+        - 処理: テーマ分析実行のPOST先へリクエストする。
+        - 期待値: テーマ分析Serviceが呼び出され、六戸町会議録QAページへリダイレクトされること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-theme",
+            email="admin-theme@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        mock_job = Mock(chunk_count=20, actual_cluster_count=5)
+        mock_service.return_value.run.return_value = mock_job
+
+        response = self.client.post(
+            reverse("llm:rokunohe_theme_analysis_run"),
+            {"analysis_consent": "1"},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        mock_service.return_value.run.assert_called_once_with()
+
+    @patch("llm_chat.views.RokunoheMinuteThemeAnalysisService")
+    def test_superuser_must_consent_to_run_theme_analysis(self, mock_service):
+        """
+        シナリオ:
+        - 入力: superuserだが同意値なしでPOSTする。
+        - 処理: テーマ分析実行のPOST先へリクエストする。
+        - 期待値: テーマ分析Serviceを呼び出さず、六戸町会議録QAページへリダイレクトされること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-theme-consent",
+            email="admin-theme-consent@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("llm:rokunohe_theme_analysis_run"))
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        mock_service.assert_not_called()
+
+    def test_non_superuser_cannot_run_theme_analysis(self):
+        """
+        シナリオ:
+        - 入力: 一般ユーザーでログインした状態。
+        - 処理: テーマ分析実行のPOST先へリクエストする。
+        - 期待値: 403が返ること。
+        """
+        user = User.objects.create_user(
+            username="user-theme",
+            email="user-theme@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("llm:rokunohe_theme_analysis_run"),
+            {"analysis_consent": "1"},
         )
 
         self.assertEqual(403, response.status_code)
@@ -682,6 +765,145 @@ class RokunoheMinutesRagServiceTest(TestCase):
         )
 
 
+class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
+    def test_run_saves_llm_labels_and_kmeans_clusters(self):
+        """
+        シナリオ:
+        - 入力: embedding付きの六戸町会議録チャンク2件と、LLMラベルServiceのモック。
+        - 処理: テーマ分析Serviceを実行する。
+        - 期待値: 候補ラベル抽出、K-meansクラスタリング、DB保存Repository呼び出しが行われること。
+        """
+        rag_repository = Mock()
+        rag_repository.list_theme_source_chunks.return_value = [
+            RokunoheMinutesThemeSourceChunk(
+                chroma_id="doc_1",
+                document="学校給食についての議論です。",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+                embedding=[0.0, 0.0],
+            ),
+            RokunoheMinutesThemeSourceChunk(
+                chroma_id="doc_2",
+                document="道路整備についての議論です。",
+                source="20260301_会議録.pdf",
+                source_date="20260301",
+                page=2,
+                chunk_index=1,
+                embedding=[10.0, 10.0],
+            ),
+        ]
+        theme_repository = Mock()
+        job = Mock()
+        theme_repository.create_job.return_value = job
+        theme_repository.mark_completed.return_value = job
+        label_service = Mock()
+        label_service.model_name = "gpt-5-mini"
+        label_service.extract_candidate_labels.side_effect = [
+            ["学校給食"],
+            ["道路整備"],
+        ]
+        label_service.name_cluster.side_effect = ["学校給食", "道路整備"]
+        service = RokunoheMinuteThemeAnalysisService(
+            rag_repository=rag_repository,
+            theme_repository=theme_repository,
+            label_service=label_service,
+        )
+
+        result = service.run()
+
+        self.assertEqual(result, job)
+        theme_repository.create_job.assert_called_once_with(
+            requested_cluster_count=50,
+            llm_model_name="gpt-5-mini",
+        )
+        theme_repository.save_analysis_result.assert_called_once()
+        clusters = theme_repository.save_analysis_result.call_args.kwargs["clusters"]
+        self.assertEqual(len(clusters), 2)
+        self.assertEqual(sum(cluster.chunk_count for cluster in clusters), 2)
+        theme_repository.mark_completed.assert_called_once_with(
+            job=job,
+            chunk_count=2,
+            actual_cluster_count=2,
+        )
+
+    def test_run_raises_when_collection_is_empty(self):
+        """
+        シナリオ:
+        - 入力: Chroma DBの分析対象チャンクが空の状態。
+        - 処理: テーマ分析Serviceを実行する。
+        - 期待値: 分析ジョブを作成せず、対象なしのValueErrorが発生すること。
+        """
+        rag_repository = Mock()
+        rag_repository.list_theme_source_chunks.return_value = []
+        theme_repository = Mock()
+        service = RokunoheMinuteThemeAnalysisService(
+            rag_repository=rag_repository,
+            theme_repository=theme_repository,
+            label_service=Mock(),
+        )
+
+        with self.assertRaises(ValueError):
+            service.run()
+
+        theme_repository.create_job.assert_not_called()
+
+
+class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
+    def test_saves_cluster_and_chunk_analysis_result(self):
+        """
+        シナリオ:
+        - 入力: 分析ジョブと、クラスタ1件・チャンク1件の分析結果。
+        - 処理: テーマ分析Repositoryで分析結果を保存し、ジョブを完了にする。
+        - 期待値: クラスタ集計値とチャンク候補ラベルがDjango DBに保存されること。
+        """
+        repository = RokunoheMinuteThemeAnalysisRepository()
+        job = repository.create_job(
+            requested_cluster_count=50,
+            llm_model_name="gpt-5-mini",
+        )
+        source_chunk = RokunoheMinutesThemeSourceChunk(
+            chroma_id="doc_1",
+            document="学校給食についての議論です。",
+            source="20260225_会議録.pdf",
+            source_date="20260225",
+            page=1,
+            chunk_index=0,
+            embedding=[0.0, 0.0],
+        )
+        chunk_analysis = RokunoheMinuteThemeChunkAnalysis(
+            source_chunk=source_chunk,
+            candidate_labels=["学校給食"],
+            cluster_index=0,
+        )
+        cluster_analysis = RokunoheMinuteThemeClusterAnalysis(
+            cluster_index=0,
+            label="学校給食",
+            representative_chunk_id="doc_1",
+            chunks=[chunk_analysis],
+        )
+
+        repository.save_analysis_result(job=job, clusters=[cluster_analysis])
+        completed_job = repository.mark_completed(
+            job=job,
+            chunk_count=1,
+            actual_cluster_count=1,
+        )
+
+        self.assertEqual(
+            completed_job.status, RokunoheMinuteThemeAnalysisJob.STATUS_COMPLETED
+        )
+        cluster = completed_job.clusters.get()
+        self.assertEqual(cluster.label, "学校給食")
+        self.assertEqual(cluster.chunk_count, 1)
+        self.assertEqual(cluster.pdf_count, 1)
+        self.assertEqual(cluster.source_date_from, "20260225")
+        theme_chunk = completed_job.theme_chunks.get()
+        self.assertEqual(theme_chunk.chunk_id, "doc_1")
+        self.assertEqual(theme_chunk.candidate_labels, ["学校給食"])
+
+
 class RokunoheMinutesRagRepositoryTest(TestCase):
     @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
     def test_uses_rokunohe_minutes_collection(self, mock_rag_service):
@@ -886,6 +1108,41 @@ class RokunoheMinutesRagRepositoryTest(TestCase):
         items = repository.list_collection_items(limit=100)
 
         self.assertEqual(items, [])
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_theme_source_chunks_returns_embeddings(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionがids、documents、metadatas、embeddingsを返す状態。
+        - 処理: Repositoryでテーマ分析用チャンク一覧を取得する。
+        - 期待値: K-meansに使うembeddingと出典メタデータを持つVOが返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["doc_1"],
+            "documents": ["学校給食についての議論です。"],
+            "metadatas": [
+                {
+                    "source": "20260225_会議録.pdf",
+                    "source_date": "20260225",
+                    "page": 1,
+                    "chunk_index": 0,
+                }
+            ],
+            "embeddings": [[0.1, 0.2, 0.3]],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_theme_source_chunks()
+
+        rag_instance._collection.get.assert_called_once_with(
+            include=["documents", "metadatas", "embeddings"],
+        )
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0].chroma_id, "doc_1")
+        self.assertEqual(chunks[0].document, "学校給食についての議論です。")
+        self.assertEqual(chunks[0].source, "20260225_会議録.pdf")
+        self.assertEqual(chunks[0].embedding, [0.1, 0.2, 0.3])
 
 
 class RokunohePdfDownloadCommandTest(TestCase):

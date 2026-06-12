@@ -12,6 +12,7 @@ from .views import (
     RiddleSampleCSVView,
     RokunohePdfDownloadView,
     RokunoheVectorDbResetView,
+    RokunoheThemeAnalysisRunView,
     RokunoheCollectionViewerView,
 )
 
@@ -49,6 +50,11 @@ urlpatterns = [
         "rokunohe-vector-db-reset/",
         RokunoheVectorDbResetView.as_view(),
         name="rokunohe_vector_db_reset",
+    ),
+    path(
+        "rokunohe-theme-analysis-run/",
+        RokunoheThemeAnalysisRunView.as_view(),
+        name="rokunohe_theme_analysis_run",
     ),
     path(
         "rokunohe-collection-viewer/",
