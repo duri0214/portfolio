@@ -2,8 +2,10 @@ import csv
 import io
 import json
 import logging
+import math
 import os
 import traceback
+from datetime import timedelta
 from typing import Generator
 
 from django.contrib import messages
@@ -15,6 +17,7 @@ from django.db import transaction
 from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import FormView
 from dotenv import load_dotenv
@@ -201,6 +204,97 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
         )
         messages.success(request, f"{self.success_message} 削除件数: {deleted_count}件")
         return redirect("llm:rokunohe_minutes")
+
+
+class RokunoheCollectionViewerView(UserPassesTestMixin, View):
+    """
+    六戸町会議録RAGのChroma DB collection内容を確認する管理者用ビュー。
+    """
+
+    raise_exception = True
+    default_per_page = 100
+    per_page_options = (50, 100, 200, 500)
+    recent_year_query_type = "recent_year"
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get(self, request, *args, **kwargs):
+        per_page = self._get_per_page(request)
+        current_page = self._get_current_page(request)
+        query_type = self._get_query_type(request)
+        source_date_from = self._get_source_date_from(query_type)
+        offset = (current_page - 1) * per_page
+        repository = RokunoheMinutesRagRepository(
+            api_key=os.getenv("OPENAI_API_KEY") or ""
+        )
+        total_count = repository.count_collection_items(
+            source_date_from=source_date_from
+        )
+        total_pages = max(math.ceil(total_count / per_page), 1)
+        if current_page > total_pages:
+            current_page = total_pages
+            offset = (current_page - 1) * per_page
+
+        collection_items = repository.list_collection_items(
+            limit=per_page,
+            offset=offset,
+            source_date_from=source_date_from,
+        )
+        context = {
+            "collection_items": collection_items,
+            "current_page": current_page,
+            "has_next_page": current_page < total_pages,
+            "has_previous_page": current_page > 1,
+            "next_page": current_page + 1,
+            "page_start": offset + 1 if total_count else 0,
+            "page_end": offset + len(collection_items),
+            "per_page": per_page,
+            "per_page_options": self.per_page_options,
+            "previous_page": current_page - 1,
+            "query_type": query_type,
+            "query_type_label": self._get_query_type_label(query_type),
+            "total_count": total_count,
+            "total_pages": total_pages,
+        }
+        return render(request, "llm_chat/rokunohe_collection_viewer.html", context)
+
+    def _get_per_page(self, request) -> int:
+        try:
+            per_page = int(request.GET.get("per_page", self.default_per_page))
+        except (TypeError, ValueError):
+            return self.default_per_page
+
+        if per_page not in self.per_page_options:
+            return self.default_per_page
+        return per_page
+
+    @staticmethod
+    def _get_current_page(request) -> int:
+        try:
+            page = int(request.GET.get("page", 1))
+        except (TypeError, ValueError):
+            return 1
+
+        return max(page, 1)
+
+    def _get_source_date_from(self, query_type: str) -> int | None:
+        if query_type != self.recent_year_query_type:
+            return None
+
+        recent_year_start = timezone.localdate() - timedelta(days=365)
+        return int(recent_year_start.strftime("%Y%m%d"))
+
+    def _get_query_type(self, request) -> str:
+        query_type = request.GET.get("query_type", "")
+        if query_type == self.recent_year_query_type:
+            return query_type
+        return ""
+
+    def _get_query_type_label(self, query_type: str) -> str:
+        if query_type == self.recent_year_query_type:
+            return "直近1年"
+        return "全件"
 
 
 class SyncResponseView(View):

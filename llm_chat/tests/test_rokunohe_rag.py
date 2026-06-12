@@ -1,3 +1,4 @@
+from datetime import date
 from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -20,6 +21,7 @@ from llm_chat.domain.service.completion.rokunohe_minutes import (
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     ROKUNOHE_MINUTES_COLLECTION_NAME,
+    RokunoheMinutesCollectionItem,
     RokunoheMinutesImportStatus,
     RokunoheMinutesPdf,
 )
@@ -296,6 +298,7 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "コレクションリセット")
+        self.assertContains(response, "コレクションビューア")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
 
     def test_non_superuser_sees_disabled_admin_buttons(self):
@@ -318,6 +321,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "管理者権限が必要なボタンは無効化されています")
         self.assertContains(response, "disabled")
         self.assertContains(response, "コレクションリセット")
+        self.assertContains(response, "コレクションビューア")
 
     @patch("llm_chat.views.RokunoheMinutesRagRepository")
     def test_superuser_can_reset_vector_db_collection(self, mock_repository):
@@ -406,6 +410,156 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         self.assertEqual(403, response.status_code)
 
+    @patch("llm_chat.views.RokunoheMinutesRagRepository")
+    def test_superuser_can_view_vector_db_collection(self, mock_repository):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、Repositoryがコレクション表示用データを返す状態。
+        - 処理: コレクションビューア画面へGETリクエストする。
+        - 期待値: 管理者専用画面にChroma ID、メタデータ、本文プレビューが表示されること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-viewer",
+            email="admin-viewer@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        mock_repository.return_value.count_collection_items.return_value = 1
+        mock_repository.return_value.list_collection_items.return_value = [
+            RokunoheMinutesCollectionItem(
+                chroma_id="doc_1",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+                preview="本文プレビューです。",
+            )
+        ]
+
+        response = self.client.get(reverse("llm:rokunohe_collection_viewer"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "llm_chat/rokunohe_collection_viewer.html")
+        mock_repository.return_value.count_collection_items.assert_called_once_with(
+            source_date_from=None
+        )
+        mock_repository.return_value.list_collection_items.assert_called_once_with(
+            limit=100,
+            offset=0,
+            source_date_from=None,
+        )
+        self.assertContains(response, "doc_1")
+        self.assertContains(response, "20260225_会議録.pdf")
+        self.assertContains(response, "20260225")
+        self.assertContains(response, "本文プレビューです。")
+        self.assertContains(response, "全 1 件中 1-1 件")
+
+    @patch("llm_chat.views.RokunoheMinutesRagRepository")
+    def test_collection_viewer_uses_page_and_per_page(self, mock_repository):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、2ページ目と50件表示を指定する。
+        - 処理: コレクションビューア画面へGETリクエストする。
+        - 期待値: Repositoryへlimit=50、offset=50が渡され、ページ情報が表示されること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-viewer-page",
+            email="admin-viewer-page@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        mock_repository.return_value.count_collection_items.return_value = 120
+        mock_repository.return_value.list_collection_items.return_value = [
+            RokunoheMinutesCollectionItem(
+                chroma_id="doc_51",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=3,
+                chunk_index=2,
+                preview="51件目です。",
+            )
+        ]
+
+        response = self.client.get(
+            reverse("llm:rokunohe_collection_viewer"),
+            {"page": "2", "per_page": "50"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        mock_repository.return_value.list_collection_items.assert_called_once_with(
+            limit=50,
+            offset=50,
+            source_date_from=None,
+        )
+        self.assertContains(response, "全 120 件中 51-51 件")
+        self.assertContains(response, "2 / 3")
+        self.assertContains(response, "doc_51")
+
+    @patch("llm_chat.views.timezone.localdate")
+    @patch("llm_chat.views.RokunoheMinutesRagRepository")
+    def test_collection_viewer_uses_recent_year_query_type(
+        self, mock_repository, mock_localdate
+    ):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、クエリタイプに直近1年を指定する。
+        - 処理: コレクションビューア画面へGETリクエストする。
+        - 期待値: 1年前の日付を下限としてRepositoryへ渡し、直近1年表示になること。
+        """
+        mock_localdate.return_value = date(2026, 6, 12)
+        user = User.objects.create_superuser(
+            username="admin-viewer-recent",
+            email="admin-viewer-recent@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        mock_repository.return_value.count_collection_items.return_value = 1
+        mock_repository.return_value.list_collection_items.return_value = [
+            RokunoheMinutesCollectionItem(
+                chroma_id="doc_recent",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+                preview="直近1年の本文です。",
+            )
+        ]
+
+        response = self.client.get(
+            reverse("llm:rokunohe_collection_viewer"),
+            {"query_type": "recent_year", "per_page": "50"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        mock_repository.return_value.count_collection_items.assert_called_once_with(
+            source_date_from=20250612
+        )
+        mock_repository.return_value.list_collection_items.assert_called_once_with(
+            limit=50,
+            offset=0,
+            source_date_from=20250612,
+        )
+        self.assertContains(response, "直近1年: 全 1 件中 1-1 件")
+        self.assertContains(response, "doc_recent")
+
+    def test_non_superuser_cannot_view_vector_db_collection(self):
+        """
+        シナリオ:
+        - 入力: 一般ユーザーでログインした状態。
+        - 処理: コレクションビューア画面へGETリクエストする。
+        - 期待値: 403が返ること。
+        """
+        user = User.objects.create_user(
+            username="user-viewer",
+            email="user-viewer@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("llm:rokunohe_collection_viewer"))
+
+        self.assertEqual(403, response.status_code)
+
 
 class RokunoheMinutesPdfImportServiceTest(TestCase):
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
@@ -456,6 +610,7 @@ class RokunoheMinutesPdfImportServiceTest(TestCase):
         self.assertEqual(status, RokunoheMinutesImportStatus.IMPORTED)
         docs = repository.upsert_documents.call_args[0][0]
         self.assertEqual(docs[0].metadata["source_date"], "20260225")
+        self.assertEqual(docs[0].metadata["source_date_ymd"], 20260225)
 
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
     def test_skips_existing_pdf_before_reading(self, mock_pdf_reader):
@@ -602,6 +757,135 @@ class RokunoheMinutesRagRepositoryTest(TestCase):
         rag_instance._collection.get.assert_called_once_with()
         rag_instance._collection.delete.assert_called_once_with(ids=["doc_1", "doc_2"])
         self.assertEqual(deleted_count, 2)
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_collection_items_returns_viewer_rows(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionがids、documents、metadatasを返す状態。
+        - 処理: Repositoryで表示用一覧を取得する。
+        - 期待値: Chroma ID、メタデータ、改行除去済み本文プレビューを持つ表示用データが返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["doc_1"],
+            "documents": ["本文1行目\n本文2行目"],
+            "metadatas": [
+                {
+                    "source": "20260225_会議録.pdf",
+                    "source_date": "20260225",
+                    "page": 1,
+                    "chunk_index": 0,
+                }
+            ],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        items = repository.list_collection_items(limit=100)
+
+        rag_instance._collection.get.assert_called_once_with(
+            limit=100,
+            offset=0,
+            include=["documents", "metadatas"],
+        )
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].chroma_id, "doc_1")
+        self.assertEqual(items[0].source, "20260225_会議録.pdf")
+        self.assertEqual(items[0].source_date, "20260225")
+        self.assertEqual(items[0].page, 1)
+        self.assertEqual(items[0].chunk_index, 0)
+        self.assertEqual(items[0].preview, "本文1行目 本文2行目")
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_count_collection_items_returns_chroma_count(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionが件数を返す状態。
+        - 処理: Repositoryで登録件数を取得する。
+        - 期待値: collection.count() の値が返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.count.return_value = 120
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        count = repository.count_collection_items()
+
+        self.assertEqual(count, 120)
+        rag_instance._collection.count.assert_called_once_with()
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_collection_items_filters_by_source_date_from(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionに直近1年内外のsource_dateを持つデータが存在する状態。
+        - 処理: Repositoryで日付下限を指定して表示用一覧を取得する。
+        - 期待値: source_dateが下限以降のデータだけ日付降順で返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["old_doc", "recent_old_doc", "recent_new_doc"],
+            "documents": ["古い本文", "直近の古い本文", "直近の新しい本文"],
+            "metadatas": [
+                {"source": "20240101_会議録.pdf", "source_date": "20240101"},
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+                {"source": "20260301_会議録.pdf", "source_date": "20260301"},
+            ],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        items = repository.list_collection_items(
+            limit=100,
+            offset=0,
+            source_date_from=20250612,
+        )
+
+        rag_instance._collection.get.assert_called_once_with(
+            include=["documents", "metadatas"],
+        )
+        self.assertEqual(
+            [item.chroma_id for item in items], ["recent_new_doc", "recent_old_doc"]
+        )
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_count_collection_items_filters_by_source_date_from(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionに直近1年内外のsource_date_ymdを持つデータが存在する状態。
+        - 処理: Repositoryで日付下限を指定して件数を取得する。
+        - 期待値: source_date_ymdが下限以降の件数が返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["old_doc", "recent_doc"],
+            "documents": ["古い本文", "直近の本文"],
+            "metadatas": [
+                {"source": "20240101_会議録.pdf", "source_date_ymd": 20240101},
+                {"source": "20260225_会議録.pdf", "source_date_ymd": 20260225},
+            ],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        count = repository.count_collection_items(source_date_from=20250612)
+
+        self.assertEqual(count, 1)
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_collection_items_returns_empty_when_collection_is_empty(
+        self, mock_rag_service
+    ):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionにドキュメントIDが存在しない状態。
+        - 処理: Repositoryで表示用一覧を取得する。
+        - 期待値: 空リストが返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {"ids": []}
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        items = repository.list_collection_items(limit=100)
+
+        self.assertEqual(items, [])
 
 
 class RokunohePdfDownloadCommandTest(TestCase):

@@ -47,12 +47,18 @@
                             <input type="hidden" name="reset_collection_consent" value="1">
                             <button type="submit" class="btn btn-outline-danger btn-sm">コレクションリセット</button>
                         </form>
+                        <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
+                            コレクションビューア
+                        </a>
                     {% else %}
                         <button type="button" class="btn btn-outline-secondary btn-sm me-auto" disabled>
                             会議録PDF取得・ベクトル化
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                             コレクションリセット
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                            コレクションビューア
                         </button>
                     {% endif %}
                     <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>

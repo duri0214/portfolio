@@ -94,6 +94,7 @@ class RokunoheMinutesMetadata:
         }
         if self.source_date:
             metadata["source_date"] = self.source_date
+            metadata["source_date_ymd"] = int(self.source_date)
         if self.page is not None:
             metadata["page"] = self.page
         if self.chunk_index is not None:
@@ -113,3 +114,25 @@ class RokunoheMinutesDocument:
 
     page_content: str
     metadata: dict[str, str | int]
+
+
+@dataclass(frozen=True)
+class RokunoheMinutesCollectionItem:
+    """
+    Chroma DBに登録済みの六戸町会議録RAGドキュメント1件分の表示用データ。
+
+    Attributes:
+        chroma_id: Chroma DB上のドキュメントID。
+        source: 出典PDFファイル名。
+        source_date: 出典PDFファイル名から取得したYYYYMMDD形式の日付。
+        page: PDF内のページ番号。
+        chunk_index: RAG登録時のチャンク番号。
+        preview: 管理画面で確認する本文プレビュー。
+    """
+
+    chroma_id: str
+    source: str
+    source_date: str
+    page: int | None
+    chunk_index: int | None
+    preview: str
