@@ -50,7 +50,7 @@
                         <form id="themeAnalysisForm" method="post" action="{% url 'llm:rokunohe_theme_analysis_run' %}">
                             {% csrf_token %}
                             <input type="hidden" name="analysis_consent" value="1">
-                            <button type="submit" class="btn btn-outline-primary btn-sm">テーマ分析を実行</button>
+                            <button id="themeAnalysisButton" type="submit" class="btn btn-outline-primary btn-sm">テーマ分析を実行</button>
                         </form>
                         <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
                             コレクションビューア
@@ -74,6 +74,14 @@
                 {% if not is_superuser %}
                     <p class="small text-muted mt-2 mb-3">管理者権限が必要なボタンは無効化されています</p>
                 {% endif %}
+
+                <div id="themeAnalysisLoading" class="alert alert-primary align-items-center gap-2 d-none" role="status">
+                    <div class="spinner-border spinner-border-sm" aria-hidden="true"></div>
+                    <div>
+                        <div class="fw-bold">テーマ分析を実行中です</div>
+                        <div class="small">候補ラベル抽出、クラスタリング、代表テーマ命名を順に処理しています。完了までこの画面を閉じずにお待ちください。</div>
+                    </div>
+                </div>
 
                 {% for chat_log in chat_history %}
                     <div class="card shadow-sm border-0 mb-3">
@@ -136,6 +144,8 @@
             const pdfDownloadForm = document.getElementById("pdfDownloadForm");
             const vectorDbResetForm = document.getElementById("vectorDbResetForm");
             const themeAnalysisForm = document.getElementById("themeAnalysisForm");
+            const themeAnalysisButton = document.getElementById("themeAnalysisButton");
+            const themeAnalysisLoading = document.getElementById("themeAnalysisLoading");
             let isLoading = false;
 
             function startLoading() {
@@ -234,6 +244,15 @@
                     const confirmed = confirm("保存済みのrokunohe_minutes collectionをもとにテーマ分析を実行します。処理に時間がかかる場合があります。実行しますか？");
                     if (!confirmed) {
                         event.preventDefault();
+                        return;
+                    }
+                    if (themeAnalysisLoading) {
+                        themeAnalysisLoading.classList.remove("d-none");
+                        themeAnalysisLoading.classList.add("d-flex");
+                    }
+                    if (themeAnalysisButton) {
+                        themeAnalysisButton.disabled = true;
+                        themeAnalysisButton.textContent = "テーマ分析中...";
                     }
                 });
             }

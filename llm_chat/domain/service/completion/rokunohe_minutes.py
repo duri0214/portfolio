@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -26,6 +27,8 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinutesThemeSourceChunk,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+
+logger = logging.getLogger(__name__)
 
 
 class RokunoheMinutesPdfImportService:
@@ -320,34 +323,73 @@ class RokunoheMinuteThemeAnalysisService:
         if not chunks:
             raise ValueError("rokunohe_minutes collection に分析対象がありません。")
 
+        logger.info("Rokunohe theme analysis started: chunks=%s", len(chunks))
         self.theme_repository.reset_analysis_results()
         job = self.theme_repository.create_job(
             requested_cluster_count=self.default_cluster_count,
             llm_model_name=self.label_service.model_name,
         )
+        logger.info("Rokunohe theme analysis job created: job_id=%s", job.pk)
         try:
             chunk_analyses = self._create_chunk_analyses(chunks)
             cluster_analyses = self._create_cluster_analyses(chunk_analyses)
+            logger.info(
+                "Rokunohe theme analysis saving results: job_id=%s clusters=%s chunks=%s",
+                job.pk,
+                len(cluster_analyses),
+                len(chunk_analyses),
+            )
             self.theme_repository.save_analysis_result(
                 job=job,
                 clusters=cluster_analyses,
             )
-            return self.theme_repository.mark_completed(
+            completed_job = self.theme_repository.mark_completed(
                 job=job,
                 chunk_count=len(chunk_analyses),
                 actual_cluster_count=len(cluster_analyses),
             )
+            logger.info(
+                "Rokunohe theme analysis completed: job_id=%s clusters=%s chunks=%s",
+                job.pk,
+                completed_job.actual_cluster_count,
+                completed_job.chunk_count,
+            )
+            return completed_job
         except Exception as e:
             self.theme_repository.mark_failed(job=job, error_message=str(e))
+            logger.exception("Rokunohe theme analysis failed: job_id=%s", job.pk)
             raise
 
     def _create_chunk_analyses(
         self,
         chunks: list[RokunoheMinutesThemeSourceChunk],
     ) -> list[RokunoheMinuteThemeChunkAnalysis]:
+        logger.info(
+            "Rokunohe theme analysis clustering started: chunks=%s",
+            len(chunks),
+        )
         cluster_indexes = self._cluster_chunks(chunks)
+        logger.info(
+            "Rokunohe theme analysis candidate label extraction started: chunks=%s",
+            len(chunks),
+        )
         analyses = []
-        for chunk, cluster_index in zip(chunks, cluster_indexes):
+        total_count = len(chunks)
+        for current_index, (chunk, cluster_index) in enumerate(
+            zip(chunks, cluster_indexes),
+            start=1,
+        ):
+            if (
+                current_index == 1
+                or current_index % 10 == 0
+                or current_index == total_count
+            ):
+                logger.info(
+                    "Rokunohe theme analysis extracting candidate labels: %s/%s chunk_id=%s",
+                    current_index,
+                    total_count,
+                    chunk.chroma_id,
+                )
             labels = self.label_service.extract_candidate_labels(chunk.document)
             analyses.append(
                 RokunoheMinuteThemeChunkAnalysis(
@@ -356,6 +398,10 @@ class RokunoheMinuteThemeAnalysisService:
                     cluster_index=cluster_index,
                 )
             )
+        logger.info(
+            "Rokunohe theme analysis candidate label extraction completed: chunks=%s",
+            len(analyses),
+        )
         return analyses
 
     def _cluster_chunks(
@@ -368,6 +414,12 @@ class RokunoheMinuteThemeAnalysisService:
         if cluster_count == 1:
             return [0]
 
+        logger.info(
+            "Rokunohe theme analysis K-means started: chunks=%s cluster_count=%s random_state=%s",
+            len(chunks),
+            cluster_count,
+            self.random_state,
+        )
         embeddings = np.array([chunk.embedding for chunk in chunks])
         centroids = self._initialize_centroids(embeddings, cluster_count)
         labels = np.zeros(len(chunks), dtype=int)
@@ -389,6 +441,7 @@ class RokunoheMinuteThemeAnalysisService:
             labels = next_labels
             centroids = next_centroids
 
+        logger.info("Rokunohe theme analysis K-means completed")
         return [int(label) for label in labels]
 
     def _initialize_centroids(
@@ -409,7 +462,22 @@ class RokunoheMinuteThemeAnalysisService:
             clusters.setdefault(chunk_analysis.cluster_index, []).append(chunk_analysis)
 
         cluster_analyses = []
-        for cluster_index, cluster_chunks in sorted(clusters.items()):
+        total_clusters = len(clusters)
+        logger.info(
+            "Rokunohe theme analysis cluster naming started: clusters=%s",
+            total_clusters,
+        )
+        for current_index, (cluster_index, cluster_chunks) in enumerate(
+            sorted(clusters.items()),
+            start=1,
+        ):
+            logger.info(
+                "Rokunohe theme analysis naming cluster: %s/%s cluster_index=%s chunks=%s",
+                current_index,
+                total_clusters,
+                cluster_index,
+                len(cluster_chunks),
+            )
             representative_chunk_id = self._find_representative_chunk_id(cluster_chunks)
             label = self.label_service.name_cluster(cluster_chunks)
             cluster_analyses.append(
@@ -420,6 +488,10 @@ class RokunoheMinuteThemeAnalysisService:
                     chunks=cluster_chunks,
                 )
             )
+        logger.info(
+            "Rokunohe theme analysis cluster naming completed: clusters=%s",
+            len(cluster_analyses),
+        )
         return cluster_analyses
 
     @staticmethod

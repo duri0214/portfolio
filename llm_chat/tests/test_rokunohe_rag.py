@@ -308,6 +308,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "コレクションリセット")
         self.assertContains(response, "テーマ分析を実行")
+        self.assertContains(response, "テーマ分析を実行中です")
         self.assertContains(response, "コレクションビューア")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
 
