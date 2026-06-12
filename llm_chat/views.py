@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import os
+import time
 import traceback
 from datetime import timedelta
 from typing import Generator
@@ -226,22 +227,33 @@ class RokunoheThemeAnalysisRunView(UserPassesTestMixin, View):
             )
             return redirect("llm:rokunohe_minutes")
 
+        started_at = time.perf_counter()
         try:
             service = RokunoheMinuteThemeAnalysisService()
             job = service.run()
+            elapsed_seconds = time.perf_counter() - started_at
             messages.success(
                 request,
                 (
                     "六戸町会議録RAGのテーマ分析を実行しました。"
                     f" 対象: {job.chunk_count}件 / クラスタ: {job.actual_cluster_count}件"
+                    f" / 処理時間: {elapsed_seconds:.1f}秒"
                 ),
             )
         except ValueError as e:
-            messages.warning(request, str(e))
+            elapsed_seconds = time.perf_counter() - started_at
+            messages.warning(request, f"{str(e)} 処理時間: {elapsed_seconds:.1f}秒")
         except Exception as e:
+            elapsed_seconds = time.perf_counter() - started_at
             logger.error(f"RokunoheThemeAnalysisRunView Error: {str(e)}")
             logger.error(traceback.format_exc())
-            messages.error(request, f"テーマ分析の実行に失敗しました: {str(e)}")
+            messages.error(
+                request,
+                (
+                    f"テーマ分析の実行に失敗しました: {str(e)}"
+                    f" 処理時間: {elapsed_seconds:.1f}秒"
+                ),
+            )
         return redirect("llm:rokunohe_minutes")
 
 

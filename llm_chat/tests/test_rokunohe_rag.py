@@ -4,6 +4,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
 
+import numpy as np
+from django.contrib.messages import get_messages
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -436,10 +438,11 @@ class RokunohePdfDownloadViewTest(TestCase):
         mock_job = Mock(chunk_count=20, actual_cluster_count=5)
         mock_service.return_value.run.return_value = mock_job
 
-        response = self.client.post(
-            reverse("llm:rokunohe_theme_analysis_run"),
-            {"analysis_consent": "1"},
-        )
+        with patch("llm_chat.views.time.perf_counter", side_effect=[10.0, 12.345]):
+            response = self.client.post(
+                reverse("llm:rokunohe_theme_analysis_run"),
+                {"analysis_consent": "1"},
+            )
 
         self.assertRedirects(
             response,
@@ -447,6 +450,13 @@ class RokunohePdfDownloadViewTest(TestCase):
             fetch_redirect_response=False,
         )
         mock_service.return_value.run.assert_called_once_with()
+        message_texts = [
+            str(message) for message in get_messages(response.wsgi_request)
+        ]
+        self.assertIn(
+            "六戸町会議録RAGのテーマ分析を実行しました。 対象: 20件 / クラスタ: 5件 / 処理時間: 2.3秒",
+            message_texts,
+        )
 
     @patch("llm_chat.views.RokunoheMinuteThemeAnalysisService")
     def test_superuser_must_consent_to_run_theme_analysis(self, mock_service):
@@ -1183,6 +1193,36 @@ class RokunoheMinutesRagRepositoryTest(TestCase):
         self.assertEqual(chunks[0].document, "学校給食についての議論です。")
         self.assertEqual(chunks[0].source, "20260225_会議録.pdf")
         self.assertEqual(chunks[0].embedding, [0.1, 0.2, 0.3])
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_theme_source_chunks_accepts_numpy_embeddings(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionがnumpy配列のembeddingsを返す状態。
+        - 処理: Repositoryでテーマ分析用チャンク一覧を取得する。
+        - 期待値: numpy配列の真偽値評価エラーを起こさず、embeddingをlist化して返すこと。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["doc_1"],
+            "documents": ["道路整備についての議論です。"],
+            "metadatas": [
+                {
+                    "source": "20260301_会議録.pdf",
+                    "source_date": "20260301",
+                    "page": 2,
+                    "chunk_index": 1,
+                }
+            ],
+            "embeddings": np.array([[0.4, 0.5, 0.6]]),
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_theme_source_chunks()
+
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0].chroma_id, "doc_1")
+        self.assertEqual(chunks[0].embedding, [0.4, 0.5, 0.6])
 
 
 class RokunohePdfDownloadCommandTest(TestCase):

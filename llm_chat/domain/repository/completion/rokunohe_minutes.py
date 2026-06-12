@@ -89,9 +89,12 @@ class RokunoheMinutesRagRepository:
             return []
 
         ids = existing["ids"]
-        documents = existing.get("documents") or []
-        metadatas = existing.get("metadatas") or []
-        embeddings = existing.get("embeddings") or []
+        documents = existing.get("documents")
+        metadatas = existing.get("metadatas")
+        embeddings = existing.get("embeddings")
+        documents = documents if documents is not None else []
+        metadatas = metadatas if metadatas is not None else []
+        embeddings = embeddings if embeddings is not None else []
         chunks: list[RokunoheMinutesThemeSourceChunk] = []
 
         for index, chroma_id in enumerate(ids):
