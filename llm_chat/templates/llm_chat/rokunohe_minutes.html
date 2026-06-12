@@ -224,7 +224,7 @@
 
             if (pdfDownloadForm) {
                 pdfDownloadForm.addEventListener("submit", function (event) {
-                    const confirmed = confirm("会議録PDF取得・ベクトル化を実行する前に、六戸町会議録QAの会話履歴をリセットします。実行しますか？");
+                    const confirmed = confirm("直近1年分の会議録PDF取得・ベクトル化を実行する前に、六戸町会議録QAの会話履歴をリセットします。実行しますか？");
                     if (!confirmed) {
                         event.preventDefault();
                     }

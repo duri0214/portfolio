@@ -141,7 +141,7 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
 
     raise_exception = True
     command_name = "rokunohe_pdf_download"
-    success_message = "六戸町会議録PDFの取得・ベクトル化処理を実行しました。"
+    success_message = "六戸町会議録PDFの直近1年分の取得・ベクトル化処理を実行しました。"
     reset_consent_value = "1"
 
     def test_func(self):

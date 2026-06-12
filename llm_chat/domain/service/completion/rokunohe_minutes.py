@@ -42,14 +42,23 @@ class RokunoheMinutesPdfImportService:
     Chroma DBの具体的な永続化操作はRepositoryへ委譲し、PDF読み取りと登録フローの判断だけを扱います。
     """
 
-    def __init__(self, repository: RokunoheMinutesRagRepository | None = None) -> None:
+    default_recent_days = 365
+
+    def __init__(
+        self,
+        repository: RokunoheMinutesRagRepository | None = None,
+        *,
+        recent_days: int | None = None,
+    ) -> None:
         """
         六戸町会議録PDFインポートServiceを初期化します。
 
         Args:
             repository: Chroma DBへの登録済み確認とドキュメント登録を担当するRepository。
                 テスト時はモックRepositoryを渡し、本番時は未指定のまま環境変数のAPIキーを使って生成します。
+            recent_days: 取り込み対象にする直近日数。未指定時は365日です。
         """
+        self.recent_days = recent_days or self.default_recent_days
         self.repository = repository or RokunoheMinutesRagRepository(
             api_key=os.getenv("OPENAI_API_KEY") or ""
         )
@@ -71,6 +80,9 @@ class RokunoheMinutesPdfImportService:
             未登録かつ本文抽出に成功した場合、Repository経由でChroma DBへドキュメントを登録します。
         """
         pdf = RokunoheMinutesPdf(path=pdf_path)
+        if self._is_old_source(pdf):
+            return RokunoheMinutesImportStatus.SKIPPED_OLD_SOURCE
+
         if self.repository.exists(pdf):
             return RokunoheMinutesImportStatus.SKIPPED_EXISTING
 
@@ -81,6 +93,15 @@ class RokunoheMinutesPdfImportService:
         self.repository.delete_pdf_documents(pdf)
         self.repository.upsert_documents(documents)
         return RokunoheMinutesImportStatus.IMPORTED
+
+    def get_source_date_from(self) -> int:
+        recent_start = timezone.localdate() - timedelta(days=self.recent_days)
+        return int(recent_start.strftime("%Y%m%d"))
+
+    def _is_old_source(self, pdf: RokunoheMinutesPdf) -> bool:
+        if not pdf.source_date:
+            return False
+        return int(pdf.source_date) < self.get_source_date_from()
 
     @staticmethod
     def _create_documents(pdf: RokunoheMinutesPdf) -> list[RokunoheMinutesDocument]:

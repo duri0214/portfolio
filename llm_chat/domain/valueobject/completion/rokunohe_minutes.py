@@ -15,11 +15,13 @@ class RokunoheMinutesImportStatus(Enum):
     Attributes:
         IMPORTED: Chroma DBへの登録が完了した状態。
         SKIPPED_EXISTING: 同じPDFが登録済みのためスキップした状態。
+        SKIPPED_OLD_SOURCE: PDFの日付が取り込み対象期間外のためスキップした状態。
         SKIPPED_EMPTY_TEXT: PDFから本文を抽出できずスキップした状態。
     """
 
     IMPORTED = "imported"
     SKIPPED_EXISTING = "skipped_existing"
+    SKIPPED_OLD_SOURCE = "skipped_old_source"
     SKIPPED_EMPTY_TEXT = "skipped_empty_text"
 
 

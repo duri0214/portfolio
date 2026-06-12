@@ -745,6 +745,27 @@ class RokunoheMinutesPdfImportServiceTest(TestCase):
         repository.delete_pdf_documents.assert_not_called()
         repository.upsert_documents.assert_not_called()
 
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.timezone.localdate")
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
+    def test_skips_old_source_pdf_before_reading(self, mock_pdf_reader, mock_localdate):
+        """
+        シナリオ:
+        - 入力: 直近1年より古い日付がファイル名に付いたPDF。
+        - 処理: PDFインポートサービスを実行する。
+        - 期待値: PDF読み取りとRepository確認を行わず、期間外スキップ結果が返ること。
+        """
+        mock_localdate.return_value = date(2026, 6, 13)
+        repository = Mock()
+
+        service = RokunoheMinutesPdfImportService(repository=repository)
+        status = service.import_pdf(Path("20240101_古い会議録.pdf"))
+
+        self.assertEqual(status, RokunoheMinutesImportStatus.SKIPPED_OLD_SOURCE)
+        mock_pdf_reader.assert_not_called()
+        repository.exists.assert_not_called()
+        repository.delete_pdf_documents.assert_not_called()
+        repository.upsert_documents.assert_not_called()
+
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
     def test_skips_pdf_when_text_is_empty(self, mock_pdf_reader):
         """
@@ -1415,6 +1436,52 @@ class RokunohePdfDownloadCommandTest(TestCase):
 
             with self.assertRaises(CommandError):
                 call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
+
+    @patch(
+        "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
+    )
+    @patch("llm_chat.management.commands.rokunohe_pdf_download.timezone.localdate")
+    def test_skips_old_pdf_before_saving_and_importing(
+        self, mock_localdate, mock_import_service
+    ):
+        """
+        シナリオ:
+        - 入力: Last-Modifiedが直近1年より古いPDFリンクを含むHTMLレスポンス。
+        - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: 古いPDFは保存されず、Chroma DBインポートも呼び出されないこと。
+        """
+        mock_localdate.return_value = date(2026, 6, 13)
+        first_page_response = self._create_response(
+            '<a href="old.pdf">古い会議録 [PDF]</a>'
+        )
+        pdf_response = self._create_response(
+            "",
+            content=b"%PDF",
+            headers={"Last-Modified": "Mon, 01 Jan 2024 01:55:27 GMT"},
+        )
+        second_page_response = self._create_response("")
+
+        with TemporaryDirectory() as temp_dir:
+            with patch(
+                "llm_chat.management.commands.rokunohe_pdf_download.requests.get",
+                side_effect=[
+                    first_page_response,
+                    pdf_response,
+                    second_page_response,
+                ],
+            ):
+                stdout = StringIO()
+                call_command(
+                    "rokunohe_pdf_download",
+                    save_dir=temp_dir,
+                    delay=0,
+                    stdout=stdout,
+                )
+
+            self.assertFalse((Path(temp_dir) / "20240101_古い会議録.pdf").exists())
+
+        mock_import_service.return_value.import_pdf.assert_not_called()
+        self.assertIn("スキップ (直近1年外)", stdout.getvalue())
 
     @patch(
         "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
