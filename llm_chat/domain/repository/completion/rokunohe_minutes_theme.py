@@ -16,6 +16,10 @@ class RokunoheMinuteThemeAnalysisRepository:
     六戸町会議録テーマ分析結果のDjango DB永続化を担当するRepository。
     """
 
+    def reset_analysis_results(self) -> int:
+        deleted_count, _ = RokunoheMinuteThemeAnalysisJob.objects.all().delete()
+        return deleted_count
+
     def create_job(
         self,
         *,

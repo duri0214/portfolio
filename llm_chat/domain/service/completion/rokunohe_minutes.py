@@ -278,7 +278,8 @@ class RokunoheMinuteThemeAnalysisService:
     六戸町会議録RAGの既存チャンクからテーマクラスタリングを生成するService。
 
     Chroma DBは本文とembeddingの取得元として使い、分析結果の正本はRepository経由で
-    Django DBへ保存します。
+    Django DBへ保存します。再実行時は保存済み分析結果を削除し、現行collectionに対する
+    最新結果だけを残します。
 
     Attributes:
         default_cluster_count: 通常実行時に生成を試みるクラスタ数。
@@ -312,12 +313,14 @@ class RokunoheMinuteThemeAnalysisService:
 
         Side Effects:
             Chroma DBからチャンクとembeddingを取得し、LLM APIを呼び出して候補ラベルと
-            クラスタ代表ラベルを生成し、Django DBへ分析結果を保存します。
+            クラスタ代表ラベルを生成し、保存済みテーマ分析結果をリセットしてから
+            Django DBへ分析結果を保存します。
         """
         chunks = self.rag_repository.list_theme_source_chunks()
         if not chunks:
             raise ValueError("rokunohe_minutes collection に分析対象がありません。")
 
+        self.theme_repository.reset_analysis_results()
         job = self.theme_repository.create_job(
             requested_cluster_count=self.default_cluster_count,
             llm_model_name=self.label_service.model_name,

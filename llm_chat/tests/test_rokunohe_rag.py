@@ -814,6 +814,7 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
         result = service.run()
 
         self.assertEqual(result, job)
+        theme_repository.reset_analysis_results.assert_called_once_with()
         theme_repository.create_job.assert_called_once_with(
             requested_cluster_count=50,
             llm_model_name="gpt-5-mini",
@@ -902,6 +903,45 @@ class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
         theme_chunk = completed_job.theme_chunks.get()
         self.assertEqual(theme_chunk.chunk_id, "doc_1")
         self.assertEqual(theme_chunk.candidate_labels, ["学校給食"])
+
+    def test_reset_analysis_results_removes_previous_jobs(self):
+        """
+        シナリオ:
+        - 入力: 既存のテーマ分析ジョブが保存されている状態。
+        - 処理: テーマ分析Repositoryで分析結果をリセットする。
+        - 期待値: 既存ジョブと紐づくクラスタ・チャンクが削除されること。
+        """
+        repository = RokunoheMinuteThemeAnalysisRepository()
+        old_job = repository.create_job(
+            requested_cluster_count=50,
+            llm_model_name="gpt-5-mini",
+        )
+        source_chunk = RokunoheMinutesThemeSourceChunk(
+            chroma_id="old_doc",
+            document="古い分析結果です。",
+            source="20260225_会議録.pdf",
+            source_date="20260225",
+            page=1,
+            chunk_index=0,
+            embedding=[0.0, 0.0],
+        )
+        chunk_analysis = RokunoheMinuteThemeChunkAnalysis(
+            source_chunk=source_chunk,
+            candidate_labels=["古いテーマ"],
+            cluster_index=0,
+        )
+        cluster_analysis = RokunoheMinuteThemeClusterAnalysis(
+            cluster_index=0,
+            label="古いテーマ",
+            representative_chunk_id="old_doc",
+            chunks=[chunk_analysis],
+        )
+        repository.save_analysis_result(job=old_job, clusters=[cluster_analysis])
+
+        deleted_count = repository.reset_analysis_results()
+
+        self.assertGreaterEqual(deleted_count, 1)
+        self.assertFalse(RokunoheMinuteThemeAnalysisJob.objects.exists())
 
 
 class RokunoheMinutesRagRepositoryTest(TestCase):
