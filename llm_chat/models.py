@@ -219,7 +219,7 @@ class RokunoheMinuteThemeCluster(models.Model):
     label = models.CharField(verbose_name="代表テーマ名", max_length=255)
     representative_chunk_id = models.CharField(
         verbose_name="代表チャンクID",
-        max_length=255,
+        max_length=512,
         blank=True,
     )
     chunk_count = models.PositiveIntegerField(verbose_name="チャンク数", default=0)
@@ -284,8 +284,8 @@ class RokunoheMinuteThemeChunk(models.Model):
         related_name="theme_chunks",
         on_delete=models.CASCADE,
     )
-    chunk_id = models.CharField(verbose_name="チャンクID", max_length=255)
-    source = models.CharField(verbose_name="出典PDF", max_length=255, blank=True)
+    chunk_id = models.CharField(verbose_name="チャンクID", max_length=512)
+    source = models.CharField(verbose_name="出典PDF", max_length=512, blank=True)
     source_date = models.CharField(verbose_name="出典日", max_length=8, blank=True)
     page = models.PositiveIntegerField(verbose_name="ページ番号", null=True, blank=True)
     chunk_index = models.PositiveIntegerField(

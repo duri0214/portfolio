@@ -35,7 +35,12 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinutesThemeSourceChunk,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.models import ChatLogs, RokunoheMinuteThemeAnalysisJob
+from llm_chat.models import (
+    ChatLogs,
+    RokunoheMinuteThemeAnalysisJob,
+    RokunoheMinuteThemeChunk,
+    RokunoheMinuteThemeCluster,
+)
 
 
 class RokunoheMinutesRagViewTest(TestCase):
@@ -948,6 +953,28 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
 
 
 class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
+    def test_theme_result_models_keep_full_chroma_ids(self):
+        """
+        シナリオ:
+        - 入力: PDF名を含む長いChroma IDをテーマ分析結果として保存するモデル定義。
+        - 処理: テーマ分析クラスタ/チャンクのID系フィールド長を確認する。
+        - 期待値: MySQL保存時に末尾のpage/chunk番号が切れて一意制約衝突しない長さであること。
+        """
+        self.assertEqual(
+            RokunoheMinuteThemeCluster._meta.get_field(
+                "representative_chunk_id"
+            ).max_length,
+            512,
+        )
+        self.assertEqual(
+            RokunoheMinuteThemeChunk._meta.get_field("chunk_id").max_length,
+            512,
+        )
+        self.assertEqual(
+            RokunoheMinuteThemeChunk._meta.get_field("source").max_length,
+            512,
+        )
+
     def test_saves_cluster_and_chunk_analysis_result(self):
         """
         シナリオ:
