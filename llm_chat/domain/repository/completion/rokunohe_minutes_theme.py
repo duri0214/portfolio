@@ -19,6 +19,12 @@ class RokunoheMinuteThemeAnalysisRepository:
     Serviceが生成したクラスタ分析VOを、ジョブ、クラスタ、チャンクの3階層モデルへ
     保存するための境界です。
 
+    ジョブは「分析ボタン1回分の実行全体」を表します。1,369件のチャンクを処理する
+    実行なら、1,369個のジョブではなく1個のジョブが作られ、その配下にクラスタ行と
+    チャンク結果行がぶら下がります。DBで保持する状態はジョブ単位の
+    running/completed/failedで、`10/1369` のようなチャンク単位の途中経過は
+    サーバログに出すだけです。
+
     1. 完了/失敗済みの既存ジョブ一式を削除し、画面から見える分析結果を常に最新1世代にする。
     2. 既存runningジョブをfailedへ畳み、二重起動の残骸を中断扱いにする。
     3. 実行開始時にrunningジョブを作り、成功/失敗のどちらでも同じジョブへ結果を集約する。
@@ -70,8 +76,9 @@ class RokunoheMinuteThemeAnalysisRepository:
         """
         テーマ分析の開始を表すrunningジョブを作成します。
 
-        Serviceはこのジョブを以降の保存先として使い、成功時はcompleted、
-        失敗時はfailedへ更新します。
+        このジョブは、これから処理する対象チャンク全体をまとめる単位です。
+        チャンクごとの進捗レコードは作らず、Serviceはこのジョブをクラスタ/チャンク
+        結果の親として使います。成功時はcompleted、失敗時はfailedへ更新します。
         """
         return RokunoheMinuteThemeAnalysisJob.objects.create(
             requested_cluster_count=requested_cluster_count,
@@ -133,6 +140,10 @@ class RokunoheMinuteThemeAnalysisRepository:
     ) -> RokunoheMinuteThemeAnalysisJob:
         """
         分析ジョブを完了状態へ更新します。
+
+        完了とは、対象チャンクの束全体に対するクラスタリング、候補ラベル抽出、
+        代表ラベル生成、結果保存が終わった状態です。`10/1369` のような
+        チャンク単位の進捗をcompletedにする意味ではありません。
 
         保存済みクラスタ/チャンクの実績件数をジョブへ持たせることで、画面の
         フラッシュメッセージや一覧表示が子テーブルを再集計せずに概要を表示できます。
