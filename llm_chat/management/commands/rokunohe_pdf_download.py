@@ -21,6 +21,21 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
 
 
 class Command(BaseCommand):
+    """
+    六戸町公式サイトから会議録PDFを収集し、必要に応じてChroma DBへ登録する管理コマンド。
+
+    このコマンドは、外部サイト巡回、PDF保存、期間判定、Chroma登録を一続きで扱います。
+    管理画面の「会議録PDF取得・ベクトル化」ボタンからも呼ばれるため、同時実行防止、
+    進捗ログ、直近1年/明示期間フィルタをここでまとめて制御します。
+
+    処理の流れ:
+    1. 現行ページとバックナンバーページからPDFリンクを抽出する。
+    2. 保存済みの日付付きPDFがあれば再ダウンロードせず、そのPDFを登録候補にする。
+    3. 未保存PDFはLast-Modifiedの日付をファイル名へ付与してから保存する。
+    4. ファイル名の日付が対象期間外なら保存・登録をスキップする。
+    5. skip-import未指定時はRokunoheMinutesPdfImportServiceへ渡してChroma DBへ登録する。
+    """
+
     help = "六戸町の会議録PDFを一括ダウンロードし、Chroma DBにインポートします"
 
     def add_arguments(self, parser):
@@ -60,6 +75,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """
+        PDFリンク収集、保存済み判定、対象期間判定、Chroma登録を実行します。
+
+        save_dir配下にロックファイルを作って並行実行を拒否し、完了時には必ず削除します。
+        外部サイトへの連続アクセスを避けるため、HTML取得とPDF取得の両方で
+        delayを挟みます。個別URLで例外が起きても、他の対象URLの処理は継続します。
+        """
         # 現行ページとバックナンバーページのURL
         target_urls = [
             "https://www.town.rokunohe.aomori.jp/docs/2023051900005/",
@@ -260,6 +282,13 @@ class Command(BaseCommand):
 
     @staticmethod
     def _prepend_last_modified_date(filename: str, response: requests.Response) -> str:
+        """
+        HTTP Last-ModifiedからYYYYMMDD_プレフィックス付きファイル名を作ります。
+
+        六戸町のPDFリンクテキストだけでは日付が分からないことがあるため、
+        レスポンスヘッダの日付を保存ファイル名へ埋め込みます。この日付は後続の
+        直近1年/明示期間フィルタと、Chroma metadataのsource_dateになります。
+        """
         last_modified = response.headers.get("Last-Modified")
         if not last_modified:
             return filename
@@ -275,6 +304,13 @@ class Command(BaseCommand):
 
     @staticmethod
     def _get_existing_dated_path(save_dir: Path, filename: str) -> Path | None:
+        """
+        同じPDF名に日付プレフィックスが付いた保存済みファイルを探します。
+
+        HTML上のリンク名は日付なしで取得されることがある一方、保存時には
+        Last-Modified由来のYYYYMMDD_を付けます。再実行時に同じPDFを再取得しないため、
+        日付付き保存名と元リンク名を対応させます。
+        """
         dated_filename_pattern = re.compile(rf"^\d{{8}}_{re.escape(filename)}$")
         for path in save_dir.glob(f"*_{filename}"):
             if dated_filename_pattern.match(path.name):
@@ -283,6 +319,12 @@ class Command(BaseCommand):
 
     @staticmethod
     def _get_source_date_from(*, recent_days: int, source_date_from: int | None) -> int:
+        """
+        PDF収集対象期間の下限日付をYYYYMMDD整数で決定します。
+
+        source-date-fromが明示された場合はその日付を使います。未指定時は
+        管理画面の通常実行と同じく、今日からrecent_days日前を下限にします。
+        """
         if source_date_from is not None:
             return source_date_from
         recent_start = timezone.localdate() - timedelta(days=recent_days)
@@ -292,6 +334,12 @@ class Command(BaseCommand):
     def _validate_source_date_range(
         *, source_date_from: int, source_date_to: int | None
     ) -> None:
+        """
+        明示された処理期間が逆転していないことを検証します。
+
+        範囲が逆転したまま外部サイトへアクセスすると、意図しない全スキップや
+        分かりにくいログになるため、処理開始前にCommandErrorで止めます。
+        """
         if source_date_to is not None and source_date_from > source_date_to:
             raise CommandError(
                 "source-date-from は source-date-to 以下の日付を指定してください。"
@@ -301,6 +349,13 @@ class Command(BaseCommand):
     def _is_out_of_source_date_range(
         *, filename: str, source_date_from: int, source_date_to: int | None
     ) -> bool:
+        """
+        保存ファイル名の日付がPDF収集対象期間外かを判定します。
+
+        ファイル名にYYYYMMDD_プレフィックスがない場合は日付判定できないため
+        対象期間内として扱います。日付がある場合は、下限未満または上限超過を
+        対象期間外にします。
+        """
         source_date = Command._get_source_date_int(filename)
         if source_date is None:
             return False
@@ -317,6 +372,13 @@ class Command(BaseCommand):
 
     @staticmethod
     def _find_pdf_links(links, target_url: str) -> list[dict[str, str]]:
+        """
+        HTML上のaタグ一覧から六戸町会議録PDF候補リンクを抽出します。
+
+        六戸町ページではhrefがPDFでなくてもリンクテキストに[PDF]が含まれる場合があるため、
+        hrefと表示テキストの両方を見ます。戻り値は後続の保存処理が扱いやすいよう、
+        正規化済みファイル名と絶対URLのdictにします。
+        """
         pdf_links = []
         for link in links:
             href = link.get("href")
@@ -356,7 +418,13 @@ class Command(BaseCommand):
         source_date_from: int,
         source_date_to: int | None,
     ) -> None:
-        """PDFからテキストを抽出し、Chroma DBにインポートします。"""
+        """
+        保存済みPDFをRokunoheMinutesPdfImportServiceへ渡してChroma DBへ登録します。
+
+        コマンド側で決定したrecent_days/source_date_from/source_date_toをServiceへ渡し、
+        ダウンロード時とインポート時で同じ期間基準を使います。Serviceの戻り値ごとに
+        管理画面やサーバログで読めるメッセージへ変換します。
+        """
         try:
             import_service = RokunoheMinutesPdfImportService(
                 recent_days=recent_days,

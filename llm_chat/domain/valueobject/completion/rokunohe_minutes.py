@@ -30,6 +30,10 @@ class RokunoheMinutesPdf:
     """
     六戸町会議録PDFファイルを表すValue Object。
 
+    保存ファイル名は、可能な場合 `YYYYMMDD_元のPDF名.pdf` 形式に正規化します。
+    この日付は取り込み期間フィルタ、Chroma metadata、テーマ分析の直近1年判定で
+    共通して使うため、PDFそのものからsource名、document_id、source_dateを導出します。
+
     Attributes:
         path: ローカルに保存されたPDFファイルのパス。
     """
@@ -54,6 +58,10 @@ class RokunoheMinutesPdf:
 class RokunoheMinutesMetadata:
     """
     六戸町会議録をChroma DBへ登録する際のメタデータ。
+
+    ページ単位でChromaへ登録するため、sourceとdocument_idだけでなく、
+    page/chunk_index/source_dateも同じmetadataにまとめます。後続のコレクションビューア、
+    テーマ分析、出典表示はこのmetadataを前提に同じチャンクを追跡します。
 
     Attributes:
         source: 出典として表示・重複判定に使うPDFファイル名。
@@ -86,6 +94,13 @@ class RokunoheMinutesMetadata:
         )
 
     def to_dict(self) -> dict[str, str | int]:
+        """
+        Chroma DBへ渡すmetadata dictを生成します。
+
+        ChromaのIDとして使う `id` はPDF単位のdocument_idにページ番号を加えたものです。
+        source_dateは文字列表示用と数値フィルタ用の両方を保存し、Repository側で
+        直近1年や明示期間の絞り込みに使えるようにします。
+        """
         document_id = self.document_id
         if self.page is not None:
             document_id = f"{document_id}_page_{self.page}"
@@ -184,6 +199,10 @@ class RokunoheMinuteThemeChunkAnalysis:
 class RokunoheMinuteThemeClusterAnalysis:
     """
     テーマ分析で生成されたクラスタ単位の分析結果。
+
+    Service層で作る一時的なクラスタ集計VOです。Djangoモデルへ保存する前に、
+    チャンク数、文字数、PDF数、source_date範囲をプロパティで算出し、
+    RepositoryがそのままRokunoheMinuteThemeClusterへ移せる形にします。
 
     Attributes:
         cluster_index: K-meansが割り当てたクラスタ番号。

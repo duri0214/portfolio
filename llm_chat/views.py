@@ -135,8 +135,11 @@ class RokunoheMinutesRagView(View):
 
 class RokunohePdfDownloadView(UserPassesTestMixin, View):
     """
-    六戸町会議録PDFをダウンロードして保存するビュー。
-    jp_stocks から移設。
+    六戸町会議録PDFの取得・ベクトル化を管理画面から起動するビュー。
+
+    このViewは、管理者の同意確認、六戸町会議録QAの会話履歴リセット、
+    PDFダウンロード管理コマンド実行、取り込み後の初回サマリー作成を1回のPOSTで行います。
+    PDFの巡回・保存・Chroma登録の詳細は `rokunohe_pdf_download` コマンドへ委譲します。
     """
 
     raise_exception = True
@@ -148,6 +151,13 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
         return self.request.user.is_superuser
 
     def post(self, request, *args, **kwargs):
+        """
+        同意値を確認してから会話履歴を消し、PDF取得コマンドと初回サマリー生成を実行します。
+
+        PDF取得・ベクトル化によってRAGの根拠データが変わる可能性があるため、
+        古い会話履歴を残さず、取り込み後のcollectionをもとにしたサマリーを
+        チャット履歴の先頭として作り直します。
+        """
         if request.POST.get("reset_consent") != self.reset_consent_value:
             messages.warning(
                 request,
@@ -210,7 +220,11 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
 
 class RokunoheThemeAnalysisRunView(UserPassesTestMixin, View):
     """
-    六戸町会議録RAGのテーマ分析を実行する管理者用ビュー。
+    六戸町会議録RAGのテーマ分析パイプラインを管理画面から起動するビュー。
+
+    View自身は分析ロジックを持たず、同意確認、処理時間計測、成功/警告/失敗メッセージの
+    組み立てだけを担当します。実際のChromaチャンク取得、K-means、LLMラベル生成、
+    Django DB保存はRokunoheMinuteThemeAnalysisServiceへ委譲します。
     """
 
     raise_exception = True
@@ -220,6 +234,12 @@ class RokunoheThemeAnalysisRunView(UserPassesTestMixin, View):
         return self.request.user.is_superuser
 
     def post(self, request, *args, **kwargs):
+        """
+        テーマ分析Serviceを同期実行し、結果件数と処理時間を画面メッセージへ返します。
+
+        対象チャンクなしはユーザーが次に取るべき操作を判断できる警告として扱い、
+        その他の例外はログへstack traceを残したうえでエラーメッセージにします。
+        """
         if request.POST.get("analysis_consent") != self.analysis_consent_value:
             messages.warning(
                 request,
@@ -260,6 +280,10 @@ class RokunoheThemeAnalysisRunView(UserPassesTestMixin, View):
 class RokunoheCollectionViewerView(UserPassesTestMixin, View):
     """
     六戸町会議録RAGのChroma DB collection内容を確認する管理者用ビュー。
+
+    Chroma DBに入っている本文チャンクを、人間が点検できるページング一覧へ変換します。
+    query_typeがrecent_yearのときは、PDF取得やテーマ分析と同じ直近1年基準で
+    Repositoryへsource_date_fromを渡します。
     """
 
     raise_exception = True
@@ -271,6 +295,12 @@ class RokunoheCollectionViewerView(UserPassesTestMixin, View):
         return self.request.user.is_superuser
 
     def get(self, request, *args, **kwargs):
+        """
+        ページング条件と絞り込み条件を解決し、collection一覧を表示します。
+
+        total_countと表示データの両方に同じsource_date_fromを渡すことで、
+        「直近1年」表示時のページ数と実データがずれないようにします。
+        """
         per_page = self._get_per_page(request)
         current_page = self._get_current_page(request)
         query_type = self._get_query_type(request)
