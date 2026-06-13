@@ -35,11 +35,19 @@ logger = logging.getLogger(__name__)
 
 class RokunoheMinutesPdfImportService:
     """
-    六戸町会議録PDFの本文抽出とRAG登録手順を担当するService。
+    単一PDFファイルを六戸町会議録RAGへ登録するための取り込みパイプライン。
 
-    このServiceは単一PDFファイルを対象に、登録済み確認、PDF本文抽出、
-    RAG登録用ドキュメント生成、Repository経由のChroma DB登録までの手順を制御します。
-    Chroma DBの具体的な永続化操作はRepositoryへ委譲し、PDF読み取りと登録フローの判断だけを扱います。
+    このServiceは、管理コマンドが保存した1つのPDFを入力にして、以下の順で
+    RAG登録可否を判断します。
+
+    1. ファイル名先頭のYYYYMMDDを読み取り、指定された処理期間外なら読み取り前にスキップする。
+    2. 同じPDF sourceがChroma DBへ登録済みなら、再登録せずスキップする。
+    3. PDFをページ単位で読み取り、本文があるページだけRAG登録用ドキュメントへ変換する。
+    4. 同一PDF由来の既存チャンクを削除してから、最新のページ本文をChroma DBへ登録する。
+
+    Chroma DBの存在確認、削除、登録はRepositoryへ委譲します。このServiceは
+    「単一PDFをどの状態として扱うか」というフロー制御と、PDF本文から
+    RokunoheMinutesDocumentを作る責務だけを持ちます。
     """
 
     default_recent_days = 365
@@ -71,7 +79,7 @@ class RokunoheMinutesPdfImportService:
 
     def import_pdf(self, pdf_path: Path) -> RokunoheMinutesImportStatus:
         """
-        単一PDFを六戸町会議録RAGへ登録します。
+        単一PDFを処理期間判定、重複判定、本文抽出、Chroma登録の順に通します。
 
         Args:
             pdf_path: ローカルに保存済みの六戸町会議録PDFファイルパス。
@@ -84,7 +92,9 @@ class RokunoheMinutesPdfImportService:
                 - SKIPPED_EMPTY_TEXT: PDFから登録可能な本文を抽出できなかった。
 
         Side Effects:
-            未登録かつ本文抽出に成功した場合、Repository経由でChroma DBへドキュメントを登録します。
+            未登録かつ本文抽出に成功した場合だけ、Repository経由で同一PDF由来の
+            既存ドキュメントを削除し、新しいページ単位ドキュメントをChroma DBへ登録します。
+            期間外、登録済み、本文なしの場合はChroma DBを変更しません。
         """
         pdf = RokunoheMinutesPdf(path=pdf_path)
         if self._is_out_of_source_date_range(pdf):
@@ -102,12 +112,26 @@ class RokunoheMinutesPdfImportService:
         return RokunoheMinutesImportStatus.IMPORTED
 
     def get_source_date_from(self) -> int:
+        """
+        PDF取り込み対象期間の下限日付をYYYYMMDD整数で返します。
+
+        明示的なsource_date_fromが指定されていればそれを優先し、未指定なら
+        今日からrecent_days日前を下限にします。管理画面からの通常実行では
+        source_date_from未指定のため、直近1年が処理基準になります。
+        """
         if self.source_date_from is not None:
             return self.source_date_from
         recent_start = timezone.localdate() - timedelta(days=self.recent_days)
         return int(recent_start.strftime("%Y%m%d"))
 
     def _is_out_of_source_date_range(self, pdf: RokunoheMinutesPdf) -> bool:
+        """
+        PDFファイル名の日付が取り込み対象期間外かを判定します。
+
+        ファイル名にYYYYMMDDプレフィックスがないPDFは、日付判定できないため
+        期間外扱いにはしません。日付がある場合は下限未満、または上限指定時の
+        上限超過を対象期間外として扱います。
+        """
         if not pdf.source_date:
             return False
         source_date = int(pdf.source_date)
@@ -118,7 +142,11 @@ class RokunoheMinutesPdfImportService:
     @staticmethod
     def _create_documents(pdf: RokunoheMinutesPdf) -> list[RokunoheMinutesDocument]:
         """
-        PDF本文とメタデータからRAG登録用ドキュメントを作成します。
+        PDFをページ単位で読み、RAG登録用ドキュメントへ変換します。
+
+        PDF全体を1つの長文として扱うのではなく、ページ単位のチャンクとして
+        Chroma DBへ登録します。ページ番号とchunk_indexをメタデータへ入れることで、
+        後続のコレクションビューア、テーマ分析、出典表示が同じ粒度で追跡できます。
 
         Args:
             pdf: 本文抽出対象の六戸町会議録PDF。
@@ -155,10 +183,17 @@ class RokunoheMinutesPdfImportService:
 
 class RokunoheMinutesRagService(BaseChatService):
     """
-    六戸町会議録RAGの質問応答メッセージ生成を担当するService。
+    登録済み六戸町会議録collectionを使ってチャット回答を生成するService。
 
-    このServiceは、既にChroma DBへ登録済みの `rokunohe_minutes` collection を前提に、
-    ユーザー質問をRepositoryへ渡してRAG回答を取得し、チャット表示用のMessageDTOへ変換します。
+    このServiceは、PDF取り込み済みの `rokunohe_minutes` collection を前提に、
+    ユーザー質問を以下のパイプラインでassistantメッセージへ変換します。
+
+    1. UseCase層から受け取ったMessageDTOをRepositoryが扱うMessageへ変換する。
+    2. RepositoryにChroma DB検索とLLM回答生成を委譲する。
+    3. 返ってきた回答本文を、チャット履歴へ保存可能なassistant MessageDTOへ詰め直す。
+
+    ChatLogsへの保存責務はUseCase層に残し、このServiceは「RAG回答を作る」
+    ところまでに責務を限定します。
 
     Attributes:
         model_name: 六戸町会議録RAG回答生成に使用するLLMモデル名。
@@ -217,6 +252,10 @@ class RokunoheMinutesRagService(BaseChatService):
         """
         PDF取り込み直後に表示する分析入口用サマリーを生成します。
 
+        PDF取得・ベクトル化後はユーザー質問がまだ存在しないため、固定プロンプトを
+        仮のユーザーメッセージとして流し、取り込み済みcollectionの主要テーマや
+        深掘り質問例を先に提示します。戻り値の保存は呼び出し元のViewが担当します。
+
         Args:
             user: サマリーを保存する対象ユーザー。
 
@@ -235,7 +274,15 @@ class RokunoheMinutesRagService(BaseChatService):
 
 class RokunoheMinuteThemeLabelService:
     """
-    六戸町会議録チャンクとクラスタのテーマ名生成を担当するService。
+    テーマ分析パイプライン内でLLMによるラベル生成だけを担当するService。
+
+    テーマ分析は、embeddingによる機械的なクラスタリングだけでは人間が読める
+    テーマ名にならないため、LLMを2段階で使います。
+
+    1. 各チャンク本文から、政策テーマを表す短い候補ラベルを最大5件抽出する。
+    2. 同じクラスタに属する候補ラベルと本文抜粋を束ね、代表テーマ名を1つ生成する。
+
+    Chroma DBやDjango DBには触れず、LLM入出力の整形だけをこのServiceに閉じ込めます。
 
     Attributes:
         model_name: テーマ候補と代表ラベル生成に使用するLLMモデル名。
@@ -248,7 +295,11 @@ class RokunoheMinuteThemeLabelService:
 
     def extract_candidate_labels(self, text: str) -> list[str]:
         """
-        単一チャンク本文から候補テーマラベルを抽出します。
+        単一チャンク本文から政策テーマ候補ラベルを抽出します。
+
+        クラスタリングの前処理として、各チャンクに人間が読める短い
+        テーマ候補を付与します。この時点ではクラスタ代表名ではなく、
+        後続のクラスタ命名で使う素材を作るだけです。
 
         Args:
             text: 六戸町会議録チャンク本文。
@@ -270,7 +321,11 @@ class RokunoheMinuteThemeLabelService:
 
     def name_cluster(self, chunks: list[RokunoheMinuteThemeChunkAnalysis]) -> str:
         """
-        クラスタに属するチャンクと候補ラベルから代表テーマ名を生成します。
+        クラスタに属するチャンク群から代表テーマ名を生成します。
+
+        K-meansで同じクラスタに割り当てられたチャンクの候補ラベルと本文抜粋を
+        LLMへ渡し、ビューアで一覧しやすい20文字以内の名詞句へ圧縮します。
+        保存時はRokunoheMinuteThemeClusterのlabelになります。
 
         Args:
             chunks: 同一クラスタに属するチャンク分析結果。
@@ -313,14 +368,30 @@ class RokunoheMinuteThemeLabelService:
 
 class RokunoheMinuteThemeAnalysisService:
     """
-    六戸町会議録RAGの既存チャンクからテーマクラスタリングを生成するService。
+    六戸町会議録RAGの既存チャンクからテーマ分析結果を作る集計パイプライン。
 
-    Chroma DBは本文とembeddingの取得元として使い、分析結果の正本はRepository経由で
-    Django DBへ保存します。再実行時は保存済み分析結果を削除し、現行collectionに対する
-    最新結果だけを残します。
+    このServiceは、既にChroma DBへ登録された会議録チャンクを入力にして、
+    ビューアや後続分析で参照できるテーマクラスタをDjango DBへ保存します。
+    Chroma DBは本文、メタデータ、embeddingの取得元に限定し、集計結果の正本は
+    RokunoheMinuteThemeAnalysisRepository経由でDjango DBへ置きます。
+
+    処理は次の順で進みます。
+
+    1. 直近1年分のsource_dateを持つChromaチャンクを取得する。
+    2. 保存済みテーマ分析結果を削除し、再実行しても最新結果だけ残る状態にする。
+    3. 分析ジョブをrunning状態で作成し、以降の保存先として固定する。
+    4. embeddingをK-meansでクラスタリングし、各チャンクへcluster_indexを付与する。
+    5. 各チャンク本文をLLMへ渡して候補テーマラベルを抽出する。
+    6. クラスタごとに候補ラベルと本文抜粋をLLMへ渡し、代表テーマ名を生成する。
+    7. クラスタ、チャンク紐づけ、候補ラベルをDjango DBへ保存し、ジョブをcompletedへ更新する。
+    8. 途中で失敗した場合はジョブをfailedへ更新し、例外を呼び出し元へ再送出する。
+
+    Vector DBは集計や履歴管理が得意ではないため、テーマ分析結果はVector DBへ
+    積み増さず、毎回Django DB上で作り直します。
 
     Attributes:
         default_cluster_count: 通常実行時に生成を試みるクラスタ数。
+        default_recent_days: テーマ分析対象にする直近日数。
         random_state: K-means再現性のために固定する乱数シード。
     """
 
@@ -345,7 +416,16 @@ class RokunoheMinuteThemeAnalysisService:
 
     def run(self):
         """
-        Chroma DBの六戸町会議録チャンクからテーマ分析ジョブを作成します。
+        直近1年分のChromaチャンクから最新のテーマ分析ジョブを作成します。
+
+        このメソッドはテーマ分析の入口であり、途中状態をまたいで複数の
+        Repository/LLM処理を連結します。呼び出し元のViewはこのメソッドを1回呼ぶだけで、
+        「分析対象取得、既存結果リセット、ジョブ作成、クラスタリング、LLMラベル生成、
+        DB保存、完了/失敗ステータス更新」までを一括実行します。
+
+        空のcollectionや直近1年分に対象チャンクがない場合は、分析ジョブを作らず
+        ValueErrorを送出します。ジョブ作成後の失敗は、failed状態へ更新してから
+        例外を再送出します。
 
         Returns:
             RokunoheMinuteThemeAnalysisJob: 完了状態に更新された分析ジョブ。
@@ -406,6 +486,13 @@ class RokunoheMinuteThemeAnalysisService:
             raise
 
     def _get_source_date_from(self) -> int:
+        """
+        テーマ分析対象の下限日付をYYYYMMDD整数で返します。
+
+        現状の画面実行ではテーマ分析対象を直近1年に固定しています。PDF取り込み側は
+        明示期間指定に対応していますが、テーマ分析側はビューアと同じ直近1年の
+        collectionを対象にします。
+        """
         recent_start = timezone.localdate() - timedelta(days=self.default_recent_days)
         return int(recent_start.strftime("%Y%m%d"))
 
@@ -413,6 +500,14 @@ class RokunoheMinuteThemeAnalysisService:
         self,
         chunks: list[RokunoheMinutesThemeSourceChunk],
     ) -> list[RokunoheMinuteThemeChunkAnalysis]:
+        """
+        チャンク一覧へクラスタ番号と候補テーマラベルを付与します。
+
+        先にembeddingだけでK-meansクラスタ番号を決め、その後で各チャンク本文を
+        LLMへ渡して候補ラベルを抽出します。クラスタリングと候補ラベル抽出を
+        1つのRokunoheMinuteThemeChunkAnalysisへまとめることで、後続のクラスタ命名と
+        DB保存が同じVOだけを見れば済むようにします。
+        """
         logger.info(
             "Rokunohe theme analysis clustering started: chunks=%s",
             len(chunks),
@@ -457,6 +552,13 @@ class RokunoheMinuteThemeAnalysisService:
         self,
         chunks: list[RokunoheMinutesThemeSourceChunk],
     ) -> list[int]:
+        """
+        チャンクembeddingをK-meansでクラスタ番号へ変換します。
+
+        Chroma DBに保存済みのembeddingを使い、本文を再度LLMへ投げずに
+        近い議論同士を機械的にまとめます。クラスタ数は対象チャンク数を超えないようにし、
+        乱数シードを固定して同じ入力なら同じ初期重心から処理を始めます。
+        """
         cluster_count = min(self.default_cluster_count, len(chunks))
         if cluster_count <= 0:
             return []
@@ -498,6 +600,12 @@ class RokunoheMinuteThemeAnalysisService:
         embeddings: np.ndarray,
         cluster_count: int,
     ) -> np.ndarray:
+        """
+        K-meansの初期重心として使うembeddingを決定的に選びます。
+
+        random_stateで固定した乱数生成器を使うことで、同じ入力チャンク集合なら
+        再実行時も同じ初期重心を選び、分析結果の揺れを抑えます。
+        """
         rng = np.random.default_rng(self.random_state)
         initial_indexes = rng.choice(len(embeddings), size=cluster_count, replace=False)
         return embeddings[initial_indexes].copy()
@@ -506,6 +614,14 @@ class RokunoheMinuteThemeAnalysisService:
         self,
         chunk_analyses: list[RokunoheMinuteThemeChunkAnalysis],
     ) -> list[RokunoheMinuteThemeClusterAnalysis]:
+        """
+        チャンク分析結果をクラスタ単位へ畳み込み、代表テーマ名を付与します。
+
+        _create_chunk_analysesで得たcluster_indexごとにチャンクを束ね、
+        各クラスタの代表チャンクIDをembedding重心に最も近いチャンクから選びます。
+        その後、クラスタ内の候補ラベルと本文抜粋をLLMへ渡して、人間が読むための
+        代表テーマ名を生成します。
+        """
         clusters = {}
         for chunk_analysis in chunk_analyses:
             clusters.setdefault(chunk_analysis.cluster_index, []).append(chunk_analysis)
@@ -547,6 +663,13 @@ class RokunoheMinuteThemeAnalysisService:
     def _find_representative_chunk_id(
         chunks: list[RokunoheMinuteThemeChunkAnalysis],
     ) -> str:
+        """
+        クラスタを代表するチャンクIDを選びます。
+
+        単一チャンクのクラスタならそのチャンクを代表にします。複数チャンクがある場合は
+        embedding平均をクラスタ重心とみなし、重心に最も近いチャンクを代表として選びます。
+        ビューアではこのIDをクラスタの入口として使います。
+        """
         if len(chunks) == 1:
             return chunks[0].source_chunk.chroma_id
 
