@@ -378,13 +378,14 @@ class RokunoheMinuteThemeAnalysisService:
     処理は次の順で進みます。
 
     1. 直近1年分のsource_dateを持つChromaチャンクを取得する。
-    2. 保存済みテーマ分析結果を削除し、再実行しても最新結果だけ残る状態にする。
-    3. 分析ジョブをrunning状態で作成し、以降の保存先として固定する。
-    4. embeddingをK-meansでクラスタリングし、各チャンクへcluster_indexを付与する。
-    5. 各チャンク本文をLLMへ渡して候補テーマラベルを抽出する。
-    6. クラスタごとに候補ラベルと本文抜粋をLLMへ渡し、代表テーマ名を生成する。
-    7. クラスタ、チャンク紐づけ、候補ラベルをDjango DBへ保存し、ジョブをcompletedへ更新する。
-    8. 途中で失敗した場合はジョブをfailedへ更新し、例外を呼び出し元へ再送出する。
+    2. 完了/失敗済みの保存済みテーマ分析結果を削除する。
+    3. 既存runningジョブがあればfailedへ畳み、前回中断や二重送信の残骸を中断扱いにする。
+    4. 新しい分析ジョブをrunning状態で作成し、以降の保存先として固定する。
+    5. embeddingをK-meansでクラスタリングし、各チャンクへcluster_indexを付与する。
+    6. 各チャンク本文をLLMへ渡して候補テーマラベルを抽出する。
+    7. クラスタごとに候補ラベルと本文抜粋をLLMへ渡し、代表テーマ名を生成する。
+    8. クラスタ、チャンク紐づけ、候補ラベルをDjango DBへ保存し、ジョブをcompletedへ更新する。
+    9. 途中で失敗した場合はジョブをfailedへ更新し、例外を呼び出し元へ再送出する。
 
     Vector DBは集計や履歴管理が得意ではないため、テーマ分析結果はVector DBへ
     積み増さず、毎回Django DB上で作り直します。
@@ -420,8 +421,9 @@ class RokunoheMinuteThemeAnalysisService:
 
         このメソッドはテーマ分析の入口であり、途中状態をまたいで複数の
         Repository/LLM処理を連結します。呼び出し元のViewはこのメソッドを1回呼ぶだけで、
-        「分析対象取得、既存結果リセット、ジョブ作成、クラスタリング、LLMラベル生成、
-        DB保存、完了/失敗ステータス更新」までを一括実行します。
+        「分析対象取得、既存結果リセット、既存runningのfailed化、ジョブ作成、
+        クラスタリング、LLMラベル生成、DB保存、完了/失敗ステータス更新」までを
+        一括実行します。
 
         空のcollectionや直近1年分に対象チャンクがない場合は、分析ジョブを作らず
         ValueErrorを送出します。ジョブ作成後の失敗は、failed状態へ更新してから
@@ -432,8 +434,8 @@ class RokunoheMinuteThemeAnalysisService:
 
         Side Effects:
             Chroma DBからチャンクとembeddingを取得し、LLM APIを呼び出して候補ラベルと
-            クラスタ代表ラベルを生成し、保存済みテーマ分析結果をリセットしてから
-            Django DBへ分析結果を保存します。
+            クラスタ代表ラベルを生成し、保存済みテーマ分析結果をリセットし、
+            残っているrunningジョブをfailedへ畳んでからDjango DBへ分析結果を保存します。
         """
         source_date_from = self._get_source_date_from()
         chunks = self.rag_repository.list_theme_source_chunks(
@@ -449,7 +451,13 @@ class RokunoheMinuteThemeAnalysisService:
             len(chunks),
             source_date_from,
         )
-        self.theme_repository.reset_analysis_results()
+        deleted_count = self.theme_repository.reset_analysis_results()
+        failed_running_count = self.theme_repository.mark_running_jobs_failed()
+        logger.info(
+            "Rokunohe theme analysis previous jobs prepared: deleted=%s failed_running=%s",
+            deleted_count,
+            failed_running_count,
+        )
         job = self.theme_repository.create_job(
             requested_cluster_count=self.default_cluster_count,
             llm_model_name=self.label_service.model_name,

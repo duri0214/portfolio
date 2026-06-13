@@ -878,6 +878,8 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
             ),
         ]
         theme_repository = Mock()
+        theme_repository.reset_analysis_results.return_value = 0
+        theme_repository.mark_running_jobs_failed.return_value = 0
         job = Mock()
         theme_repository.create_job.return_value = job
         theme_repository.mark_completed.return_value = job
@@ -901,6 +903,7 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
             source_date_from=20250612
         )
         theme_repository.reset_analysis_results.assert_called_once_with()
+        theme_repository.mark_running_jobs_failed.assert_called_once_with()
         theme_repository.create_job.assert_called_once_with(
             requested_cluster_count=50,
             llm_model_name="gpt-5-mini",
@@ -939,6 +942,8 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
         rag_repository.list_theme_source_chunks.assert_called_once_with(
             source_date_from=20250612
         )
+        theme_repository.reset_analysis_results.assert_not_called()
+        theme_repository.mark_running_jobs_failed.assert_not_called()
         theme_repository.create_job.assert_not_called()
 
 
@@ -995,12 +1000,12 @@ class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
         self.assertEqual(theme_chunk.chunk_id, "doc_1")
         self.assertEqual(theme_chunk.candidate_labels, ["学校給食"])
 
-    def test_reset_analysis_results_removes_previous_jobs(self):
+    def test_reset_analysis_results_removes_previous_finished_jobs(self):
         """
         シナリオ:
-        - 入力: 既存のテーマ分析ジョブが保存されている状態。
+        - 入力: 完了済みのテーマ分析ジョブが保存されている状態。
         - 処理: テーマ分析Repositoryで分析結果をリセットする。
-        - 期待値: 既存ジョブと紐づくクラスタ・チャンクが削除されること。
+        - 期待値: 完了済みジョブと紐づくクラスタ・チャンクが削除されること。
         """
         repository = RokunoheMinuteThemeAnalysisRepository()
         old_job = repository.create_job(
@@ -1028,11 +1033,82 @@ class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
             chunks=[chunk_analysis],
         )
         repository.save_analysis_result(job=old_job, clusters=[cluster_analysis])
+        repository.mark_completed(job=old_job, chunk_count=1, actual_cluster_count=1)
 
         deleted_count = repository.reset_analysis_results()
 
         self.assertGreaterEqual(deleted_count, 1)
         self.assertFalse(RokunoheMinuteThemeAnalysisJob.objects.exists())
+
+    def test_reset_analysis_results_keeps_running_jobs(self):
+        """
+        シナリオ:
+        - 入力: running状態のテーマ分析ジョブが保存されている状態。
+        - 処理: テーマ分析Repositoryで分析結果をリセットする。
+        - 期待値: runningジョブは削除されず、別メソッドでfailed化する対象として残ること。
+        """
+        repository = RokunoheMinuteThemeAnalysisRepository()
+        running_job = repository.create_job(
+            requested_cluster_count=50,
+            llm_model_name="gpt-5-mini",
+        )
+
+        deleted_count = repository.reset_analysis_results()
+
+        self.assertEqual(deleted_count, 0)
+        self.assertTrue(
+            RokunoheMinuteThemeAnalysisJob.objects.filter(pk=running_job.pk).exists()
+        )
+
+    def test_mark_running_jobs_failed_marks_existing_running_jobs(self):
+        """
+        シナリオ:
+        - 入力: running状態のテーマ分析ジョブが保存されている状態。
+        - 処理: テーマ分析Repositoryで既存runningジョブをfailedへ更新する。
+        - 期待値: runningジョブがfailedになり、中断扱いのエラーメッセージが保存されること。
+        """
+        repository = RokunoheMinuteThemeAnalysisRepository()
+        running_job = repository.create_job(
+            requested_cluster_count=50,
+            llm_model_name="gpt-5-mini",
+        )
+
+        updated_count = repository.mark_running_jobs_failed()
+
+        self.assertEqual(updated_count, 1)
+        running_job.refresh_from_db()
+        self.assertEqual(
+            running_job.status, RokunoheMinuteThemeAnalysisJob.STATUS_FAILED
+        )
+        self.assertEqual(
+            running_job.error_message,
+            RokunoheMinuteThemeAnalysisRepository.stale_running_message,
+        )
+        self.assertIsNotNone(running_job.completed_at)
+
+    def test_mark_completed_does_not_revive_failed_job(self):
+        """
+        シナリオ:
+        - 入力: 既にfailedへ畳まれたテーマ分析ジョブ。
+        - 処理: テーマ分析Repositoryで完了更新を試みる。
+        - 期待値: failedジョブはcompletedへ戻らず、中断扱いのまま残ること。
+        """
+        repository = RokunoheMinuteThemeAnalysisRepository()
+        failed_job = repository.create_job(
+            requested_cluster_count=50,
+            llm_model_name="gpt-5-mini",
+        )
+        repository.mark_running_jobs_failed()
+
+        result = repository.mark_completed(
+            job=failed_job,
+            chunk_count=10,
+            actual_cluster_count=2,
+        )
+
+        self.assertEqual(result.status, RokunoheMinuteThemeAnalysisJob.STATUS_FAILED)
+        self.assertEqual(result.chunk_count, 0)
+        self.assertEqual(result.actual_cluster_count, 0)
 
 
 class RokunoheMinutesRagRepositoryTest(TestCase):
