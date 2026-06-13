@@ -214,6 +214,92 @@ class RokunohePdfDownloadViewTest(TestCase):
             ["取り込み後の初回サマリーです。"],
         )
 
+    def test_superuser_can_start_pdf_download_with_source_date_range(self):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、処理期間を1日だけ指定した状態。
+        - 処理: 六戸町会議録PDF取得・ベクトル化ボタンのPOST先へリクエストする。
+        - 期待値: 管理コマンドへsource_date_from/toが渡されること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-range",
+            email="admin-range@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        summary_message = MessageDTO(
+            user=user,
+            role=RoleType.ASSISTANT,
+            content="指定期間の初回サマリーです。",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
+        with patch("llm_chat.views.call_command") as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            rag_service_mock.return_value.generate_initial_summary.return_value = (
+                summary_message
+            )
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_download"),
+                {
+                    "reset_consent": "1",
+                    "source_date_from": "2026-02-25",
+                    "source_date_to": "2026-02-25",
+                },
+            )
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        call_command_mock.assert_called_once_with(
+            "rokunohe_pdf_download",
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+
+    def test_superuser_cannot_start_pdf_download_with_only_source_date_to(self):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、処理期間の終了日だけを指定した状態。
+        - 処理: 六戸町会議録PDF取得・ベクトル化ボタンのPOST先へリクエストする。
+        - 期待値: 管理コマンドを呼び出さず、警告メッセージを表示すること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-range-error",
+            email="admin-range-error@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch("llm_chat.views.call_command") as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_download"),
+                {
+                    "reset_consent": "1",
+                    "source_date_to": "2026-02-25",
+                },
+            )
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        call_command_mock.assert_not_called()
+        rag_service_mock.assert_not_called()
+        message_texts = [
+            str(message) for message in get_messages(response.wsgi_request)
+        ]
+        self.assertIn(
+            "処理期間の終了日を指定する場合は開始日も指定してください。",
+            message_texts,
+        )
+
     def test_superuser_must_consent_to_reset_before_pdf_download(self):
         """
         シナリオ:
@@ -482,7 +568,54 @@ class RokunohePdfDownloadViewTest(TestCase):
             str(message) for message in get_messages(response.wsgi_request)
         ]
         self.assertIn(
-            "六戸町会議録RAGのテーマ分析を実行しました。 対象: 20件 / クラスタ: 5件 / 処理時間: 2.3秒",
+            "六戸町会議録RAGのテーマ分析を実行しました。 対象期間: 直近1年 対象: 20件 / クラスタ: 5件 / 処理時間: 2.3秒",
+            message_texts,
+        )
+
+    @patch("llm_chat.views.RokunoheMinuteThemeAnalysisService")
+    def test_superuser_can_run_theme_analysis_with_source_date_range(
+        self, mock_service
+    ):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、処理期間を1日だけ指定した状態。
+        - 処理: テーマ分析実行のPOST先へリクエストする。
+        - 期待値: テーマ分析Serviceへsource_date_from/toが渡されること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-theme-range",
+            email="admin-theme-range@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        mock_job = Mock(chunk_count=3, actual_cluster_count=2)
+        mock_service.return_value.run.return_value = mock_job
+
+        with patch("llm_chat.views.time.perf_counter", side_effect=[10.0, 11.0]):
+            response = self.client.post(
+                reverse("llm:rokunohe_theme_analysis_run"),
+                {
+                    "analysis_consent": "1",
+                    "source_date_from": "2026-02-25",
+                    "source_date_to": "2026-02-25",
+                },
+            )
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        mock_service.assert_called_once_with(
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+        mock_service.return_value.run.assert_called_once_with()
+        message_texts = [
+            str(message) for message in get_messages(response.wsgi_request)
+        ]
+        self.assertIn(
+            "六戸町会議録RAGのテーマ分析を実行しました。 対象期間: 2026-02-25〜2026-02-25 対象: 3件 / クラスタ: 2件 / 処理時間: 1.0秒",
             message_texts,
         )
 
@@ -905,7 +1038,8 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
 
         self.assertEqual(result, job)
         rag_repository.list_theme_source_chunks.assert_called_once_with(
-            source_date_from=20250612
+            source_date_from=20250612,
+            source_date_to=None,
         )
         theme_repository.reset_analysis_results.assert_called_once_with()
         theme_repository.mark_running_jobs_failed.assert_called_once_with()
@@ -945,11 +1079,56 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
             service.run()
 
         rag_repository.list_theme_source_chunks.assert_called_once_with(
-            source_date_from=20250612
+            source_date_from=20250612,
+            source_date_to=None,
         )
         theme_repository.reset_analysis_results.assert_not_called()
         theme_repository.mark_running_jobs_failed.assert_not_called()
         theme_repository.create_job.assert_not_called()
+
+    def test_run_uses_explicit_source_date_range_for_debug_execution(self):
+        """
+        シナリオ:
+        - 入力: デバッグ用に1日だけの処理期間を指定したテーマ分析Service。
+        - 処理: テーマ分析Serviceを実行する。
+        - 期待値: Chromaチャンク取得時に指定したsource_date_from/toが渡されること。
+        """
+        rag_repository = Mock()
+        rag_repository.list_theme_source_chunks.return_value = [
+            RokunoheMinutesThemeSourceChunk(
+                chroma_id="doc_1",
+                document="指定期間だけの議論です。",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+                embedding=[0.0, 0.0],
+            )
+        ]
+        theme_repository = Mock()
+        theme_repository.reset_analysis_results.return_value = 0
+        theme_repository.mark_running_jobs_failed.return_value = 0
+        job = Mock()
+        theme_repository.create_job.return_value = job
+        theme_repository.mark_completed.return_value = job
+        label_service = Mock()
+        label_service.model_name = "gpt-5-mini"
+        label_service.extract_candidate_labels.return_value = ["指定期間"]
+        label_service.name_cluster.return_value = "指定期間"
+        service = RokunoheMinuteThemeAnalysisService(
+            rag_repository=rag_repository,
+            theme_repository=theme_repository,
+            label_service=label_service,
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+
+        service.run()
+
+        rag_repository.list_theme_source_chunks.assert_called_once_with(
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
 
 
 class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
@@ -1434,6 +1613,34 @@ class RokunoheMinutesRagRepositoryTest(TestCase):
 
         self.assertEqual(len(chunks), 1)
         self.assertEqual(chunks[0].chroma_id, "recent_doc")
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_theme_source_chunks_filters_by_source_date_to(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionに指定期間内外のsource_dateを持つembedding付きチャンクが存在する状態。
+        - 処理: Repositoryで日付上限を指定してテーマ分析用チャンク一覧を取得する。
+        - 期待値: source_dateが上限以前のチャンクだけ返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["target_doc", "future_doc"],
+            "documents": ["対象日の議論です。", "未来日の議論です。"],
+            "metadatas": [
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+                {"source": "20260301_会議録.pdf", "source_date": "20260301"},
+            ],
+            "embeddings": [[0.1, 0.2], [0.3, 0.4]],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_theme_source_chunks(
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0].chroma_id, "target_doc")
 
 
 class RokunohePdfDownloadCommandTest(TestCase):

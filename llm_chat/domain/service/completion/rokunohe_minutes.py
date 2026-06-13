@@ -377,7 +377,7 @@ class RokunoheMinuteThemeAnalysisService:
 
     処理は次の順で進みます。
 
-    1. 直近1年分のsource_dateを持つChromaチャンクを取得する。
+    1. 直近1年分、またはデバッグ用に指定されたsource_date範囲のChromaチャンクを取得する。
     2. 完了/失敗済みの保存済みテーマ分析結果を削除する。
     3. 既存runningジョブがあればfailedへ畳み、前回中断や二重送信の残骸を中断扱いにする。
     4. 新しい分析ジョブをrunning状態で作成し、以降の保存先として固定する。
@@ -406,6 +406,8 @@ class RokunoheMinuteThemeAnalysisService:
         rag_repository: RokunoheMinutesRagRepository | None = None,
         theme_repository: RokunoheMinuteThemeAnalysisRepository | None = None,
         label_service: RokunoheMinuteThemeLabelService | None = None,
+        source_date_from: int | None = None,
+        source_date_to: int | None = None,
     ) -> None:
         self.rag_repository = rag_repository or RokunoheMinutesRagRepository(
             api_key=os.getenv("OPENAI_API_KEY") or ""
@@ -414,10 +416,12 @@ class RokunoheMinuteThemeAnalysisService:
             theme_repository or RokunoheMinuteThemeAnalysisRepository()
         )
         self.label_service = label_service or RokunoheMinuteThemeLabelService()
+        self.source_date_from = source_date_from
+        self.source_date_to = source_date_to
 
     def run(self):
         """
-        直近1年分のChromaチャンクから最新のテーマ分析ジョブを作成します。
+        対象期間内のChromaチャンクから最新のテーマ分析ジョブを作成します。
 
         このメソッドはテーマ分析の入口であり、途中状態をまたいで複数の
         Repository/LLM処理を連結します。呼び出し元のViewはこのメソッドを1回呼ぶだけで、
@@ -425,7 +429,7 @@ class RokunoheMinuteThemeAnalysisService:
         クラスタリング、LLMラベル生成、DB保存、完了/失敗ステータス更新」までを
         一括実行します。
 
-        空のcollectionや直近1年分に対象チャンクがない場合は、分析ジョブを作らず
+        空のcollectionや対象期間内に分析対象チャンクがない場合は、分析ジョブを作らず
         ValueErrorを送出します。ジョブ作成後の失敗は、failed状態へ更新してから
         例外を再送出します。
 
@@ -438,18 +442,21 @@ class RokunoheMinuteThemeAnalysisService:
             残っているrunningジョブをfailedへ畳んでからDjango DBへ分析結果を保存します。
         """
         source_date_from = self._get_source_date_from()
+        source_date_to = self.source_date_to
         chunks = self.rag_repository.list_theme_source_chunks(
-            source_date_from=source_date_from
+            source_date_from=source_date_from,
+            source_date_to=source_date_to,
         )
         if not chunks:
             raise ValueError(
-                "rokunohe_minutes collection に直近1年の分析対象がありません。"
+                "rokunohe_minutes collection に対象期間内の分析対象がありません。"
             )
 
         logger.info(
-            "Rokunohe theme analysis started: chunks=%s source_date_from=%s",
+            "Rokunohe theme analysis started: chunks=%s source_date_from=%s source_date_to=%s",
             len(chunks),
             source_date_from,
+            source_date_to or "指定なし",
         )
         deleted_count = self.theme_repository.reset_analysis_results()
         failed_running_count = self.theme_repository.mark_running_jobs_failed()
@@ -497,10 +504,12 @@ class RokunoheMinuteThemeAnalysisService:
         """
         テーマ分析対象の下限日付をYYYYMMDD整数で返します。
 
-        現状の画面実行ではテーマ分析対象を直近1年に固定しています。PDF取り込み側は
-        明示期間指定に対応していますが、テーマ分析側はビューアと同じ直近1年の
-        collectionを対象にします。
+        通常実行ではビューアと同じ直近1年を使います。画面のデバッグ期間で
+        source_date_fromが明示された場合は、その日付を優先して短い範囲だけを
+        分析できるようにします。
         """
+        if self.source_date_from is not None:
+            return self.source_date_from
         recent_start = timezone.localdate() - timedelta(days=self.default_recent_days)
         return int(recent_start.strftime("%Y%m%d"))
 

@@ -107,14 +107,18 @@ class RokunoheMinutesRagRepository:
         return self._build_collection_items(existing)
 
     def list_theme_source_chunks(
-        self, *, source_date_from: int | None = None
+        self,
+        *,
+        source_date_from: int | None = None,
+        source_date_to: int | None = None,
     ) -> list[RokunoheMinutesThemeSourceChunk]:
         """
         テーマ分析Serviceへ渡す本文、メタデータ、embedding付きチャンクを取得します。
 
         テーマ分析はK-meansでembeddingを必須にするため、本文またはembeddingが欠けた
         Chromaレコードは分析対象から除外します。source_date_fromが指定された場合は
-        直近1年などの分析対象期間に入るチャンクだけを返します。
+        直近1年などの分析対象期間に入るチャンクだけを返します。source_date_toが
+        指定された場合は、デバッグ実行用に短い期間へさらに絞り込みます。
         """
         existing = self._rag_service._collection.get(
             include=["documents", "metadatas", "embeddings"],
@@ -138,6 +142,8 @@ class RokunoheMinutesRagRepository:
             embedding_list = list(embedding) if embedding is not None else []
             source_date_int = self._get_source_date_int(metadata)
             if source_date_from is not None and source_date_int < source_date_from:
+                continue
+            if source_date_to is not None and source_date_int > source_date_to:
                 continue
             if not document or not embedding_list:
                 continue

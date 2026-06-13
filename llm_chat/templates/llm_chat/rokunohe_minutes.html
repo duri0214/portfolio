@@ -40,11 +40,15 @@
                         <form id="pdfDownloadForm" method="post" action="{% url 'llm:rokunohe_pdf_download' %}" class="me-auto">
                             {% csrf_token %}
                             <input type="hidden" name="reset_consent" value="1">
+                            <input type="hidden" name="source_date_from" id="pdfSourceDateFrom">
+                            <input type="hidden" name="source_date_to" id="pdfSourceDateTo">
                             <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
                         </form>
                         <form id="themeAnalysisForm" method="post" action="{% url 'llm:rokunohe_theme_analysis_run' %}">
                             {% csrf_token %}
                             <input type="hidden" name="analysis_consent" value="1">
+                            <input type="hidden" name="source_date_from" id="themeSourceDateFrom">
+                            <input type="hidden" name="source_date_to" id="themeSourceDateTo">
                             <button id="themeAnalysisButton" type="submit" class="btn btn-outline-primary btn-sm">テーマ分析を実行</button>
                         </form>
                         <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
@@ -72,8 +76,21 @@
                         </button>
                     {% endif %}
                 </div>
+                {% if is_superuser %}
+                    <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+                        <div>
+                            <label for="debugSourceDateFrom" class="form-label small text-muted mb-1">処理期間開始</label>
+                            <input type="date" id="debugSourceDateFrom" class="form-control form-control-sm">
+                        </div>
+                        <div>
+                            <label for="debugSourceDateTo" class="form-label small text-muted mb-1">処理期間終了</label>
+                            <input type="date" id="debugSourceDateTo" class="form-control form-control-sm">
+                        </div>
+                        <span class="small text-muted mb-1">未指定時は直近1年分</span>
+                    </div>
+                {% endif %}
                 <p class="small text-muted mt-2 mb-3">
-                    会議録PDF取得・ベクトル化、コレクション確認、テーマ分析は直近1年分の会議録を処理基準にしています。
+                    会議録PDF取得・ベクトル化、コレクション確認、テーマ分析は、期間未指定時に直近1年分の会議録を処理基準にしています。
                 </p>
                 {% if not is_superuser %}
                     <p class="small text-muted mt-2 mb-3">管理者権限が必要なボタンは無効化されています</p>
@@ -83,7 +100,7 @@
                     <div class="spinner-border spinner-border-sm" aria-hidden="true"></div>
                     <div>
                         <div class="fw-bold">テーマ分析を実行中です</div>
-                        <div class="small">直近1年分のチャンクを対象に、候補ラベル抽出、クラスタリング、代表テーマ命名を順に処理しています。完了までこの画面を閉じずにお待ちください。</div>
+                        <div class="small">対象期間内のチャンクを対象に、候補ラベル抽出、クラスタリング、代表テーマ命名を順に処理しています。完了までこの画面を閉じずにお待ちください。</div>
                     </div>
                 </div>
 
@@ -150,6 +167,41 @@
             const themeAnalysisForm = document.getElementById("themeAnalysisForm");
             const themeAnalysisButton = document.getElementById("themeAnalysisButton");
             const themeAnalysisLoading = document.getElementById("themeAnalysisLoading");
+            const debugSourceDateFrom = document.getElementById("debugSourceDateFrom");
+            const debugSourceDateTo = document.getElementById("debugSourceDateTo");
+            const pdfSourceDateFrom = document.getElementById("pdfSourceDateFrom");
+            const pdfSourceDateTo = document.getElementById("pdfSourceDateTo");
+            const themeSourceDateFrom = document.getElementById("themeSourceDateFrom");
+            const themeSourceDateTo = document.getElementById("themeSourceDateTo");
+
+            function getSourceDatePeriodLabel() {
+                const from = debugSourceDateFrom ? debugSourceDateFrom.value : "";
+                const to = debugSourceDateTo ? debugSourceDateTo.value : "";
+                if (!from && !to) {
+                    return "直近1年分";
+                }
+                if (!from && to) {
+                    return `終了日 ${to} まで`;
+                }
+                return `${from} 〜 ${to || "指定なし"}`;
+            }
+
+            function syncSourceDateRange() {
+                const from = debugSourceDateFrom ? debugSourceDateFrom.value : "";
+                const to = debugSourceDateTo ? debugSourceDateTo.value : "";
+                if (pdfSourceDateFrom) {
+                    pdfSourceDateFrom.value = from;
+                }
+                if (pdfSourceDateTo) {
+                    pdfSourceDateTo.value = to;
+                }
+                if (themeSourceDateFrom) {
+                    themeSourceDateFrom.value = from;
+                }
+                if (themeSourceDateTo) {
+                    themeSourceDateTo.value = to;
+                }
+            }
             let isLoading = false;
 
             function startLoading() {
@@ -227,7 +279,8 @@
 
             if (pdfDownloadForm) {
                 pdfDownloadForm.addEventListener("submit", function (event) {
-                    const confirmed = confirm("直近1年分の会議録PDF取得・ベクトル化を実行する前に、六戸町会議録QAの会話履歴をリセットします。実行しますか？");
+                    syncSourceDateRange();
+                    const confirmed = confirm(`${getSourceDatePeriodLabel()}の会議録PDF取得・ベクトル化を実行する前に、六戸町会議録QAの会話履歴をリセットします。実行しますか？`);
                     if (!confirmed) {
                         event.preventDefault();
                     }
@@ -245,7 +298,8 @@
 
             if (themeAnalysisForm) {
                 themeAnalysisForm.addEventListener("submit", function (event) {
-                    const confirmed = confirm("保存済みのrokunohe_minutes collectionの直近1年分をもとにテーマ分析を実行します。処理に時間がかかる場合があります。実行しますか？");
+                    syncSourceDateRange();
+                    const confirmed = confirm(`保存済みのrokunohe_minutes collectionの${getSourceDatePeriodLabel()}をもとにテーマ分析を実行します。処理に時間がかかる場合があります。実行しますか？`);
                     if (!confirmed) {
                         event.preventDefault();
                         return;

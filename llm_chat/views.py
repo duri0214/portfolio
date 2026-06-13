@@ -6,7 +6,7 @@ import math
 import os
 import time
 import traceback
-from datetime import timedelta
+from datetime import date, timedelta
 from typing import Generator
 
 from django.contrib import messages
@@ -62,6 +62,72 @@ logger = logging.getLogger(__name__)
 def _get_login_user(request):
     """ログインユーザーまたはデフォルトユーザー（pk=1）を取得します。"""
     return request.user if request.user.is_authenticated else User.objects.get(pk=1)
+
+
+def _parse_source_date_range(request) -> tuple[int | None, int | None]:
+    """
+    管理画面の任意期間入力をYYYYMMDD整数へ変換します。
+
+    未指定なら既存どおり直近1年基準に任せるため、上下限ともNoneを返します。
+    終了日だけを指定した場合は、意図しない広範囲処理を避けるためエラーにします。
+    """
+    source_date_from = _parse_optional_source_date(
+        request.POST.get("source_date_from", "")
+    )
+    source_date_to = _parse_optional_source_date(request.POST.get("source_date_to", ""))
+    if source_date_from is None and source_date_to is not None:
+        raise ValueError("処理期間の終了日を指定する場合は開始日も指定してください。")
+    if (
+        source_date_from is not None
+        and source_date_to is not None
+        and source_date_from > source_date_to
+    ):
+        raise ValueError("処理期間の開始日は終了日以前にしてください。")
+    return source_date_from, source_date_to
+
+
+def _parse_optional_source_date(value: str | None) -> int | None:
+    raw_value = (value or "").strip()
+    if not raw_value:
+        return None
+    try:
+        parsed_date = date.fromisoformat(raw_value)
+    except ValueError as e:
+        raise ValueError("処理期間はYYYY-MM-DD形式で指定してください。") from e
+    return int(parsed_date.strftime("%Y%m%d"))
+
+
+def _build_source_date_command_options(
+    *,
+    source_date_from: int | None,
+    source_date_to: int | None,
+) -> dict[str, int]:
+    options: dict[str, int] = {}
+    if source_date_from is not None:
+        options["source_date_from"] = source_date_from
+    if source_date_to is not None:
+        options["source_date_to"] = source_date_to
+    return options
+
+
+def _build_source_date_period_label(
+    *,
+    source_date_from: int | None,
+    source_date_to: int | None,
+) -> str:
+    if source_date_from is None:
+        return "直近1年"
+    if source_date_to is None:
+        return f"{_format_source_date(source_date_from)}〜指定なし"
+    return (
+        f"{_format_source_date(source_date_from)}"
+        f"〜{_format_source_date(source_date_to)}"
+    )
+
+
+def _format_source_date(source_date: int) -> str:
+    raw_value = str(source_date)
+    return f"{raw_value[:4]}-{raw_value[4:6]}-{raw_value[6:8]}"
 
 
 class IndexView(FormView):
@@ -165,15 +231,31 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
             )
             return redirect("llm:rokunohe_minutes")
 
+        try:
+            source_date_from, source_date_to = _parse_source_date_range(request)
+            command_options = _build_source_date_command_options(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+        except ValueError as e:
+            messages.warning(request, str(e))
+            return redirect("llm:rokunohe_minutes")
+
         login_user = _get_login_user(request)
         ChatLogRepository.clear_history(
             user=login_user,
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
         try:
-            call_command(self.command_name)
+            call_command(self.command_name, **command_options)
             self._save_initial_summary(login_user)
-            messages.success(request, self.success_message)
+            messages.success(
+                request,
+                self._build_success_message(
+                    source_date_from=source_date_from,
+                    source_date_to=source_date_to,
+                ),
+            )
         except CommandError as e:
             messages.warning(request, str(e))
         return redirect("llm:rokunohe_minutes")
@@ -183,6 +265,20 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
         service = RokunoheMinutesRagService()
         summary = service.generate_initial_summary(user)
         ChatLogRepository.insert(summary)
+
+    def _build_success_message(
+        self,
+        *,
+        source_date_from: int | None,
+        source_date_to: int | None,
+    ) -> str:
+        if source_date_from is None:
+            return self.success_message
+        return (
+            "六戸町会議録PDFの指定期間分の取得・ベクトル化処理を実行しました。"
+            f" 対象期間: {_format_source_date(source_date_from)}"
+            f"〜{_format_source_date(source_date_to) if source_date_to else '指定なし'}"
+        )
 
 
 class RokunoheVectorDbResetView(UserPassesTestMixin, View):
@@ -249,13 +345,22 @@ class RokunoheThemeAnalysisRunView(UserPassesTestMixin, View):
 
         started_at = time.perf_counter()
         try:
-            service = RokunoheMinuteThemeAnalysisService()
+            source_date_from, source_date_to = _parse_source_date_range(request)
+            service = RokunoheMinuteThemeAnalysisService(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
             job = service.run()
             elapsed_seconds = time.perf_counter() - started_at
+            period_label = _build_source_date_period_label(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
             messages.success(
                 request,
                 (
                     "六戸町会議録RAGのテーマ分析を実行しました。"
+                    f" 対象期間: {period_label}"
                     f" 対象: {job.chunk_count}件 / クラスタ: {job.actual_cluster_count}件"
                     f" / 処理時間: {elapsed_seconds:.1f}秒"
                 ),
