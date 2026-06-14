@@ -40,29 +40,54 @@
                         <form id="pdfDownloadForm" method="post" action="{% url 'llm:rokunohe_pdf_download' %}" class="me-auto">
                             {% csrf_token %}
                             <input type="hidden" name="reset_consent" value="1">
+                            <input type="hidden" name="source_date_from" id="pdfSourceDateFrom">
+                            <input type="hidden" name="source_date_to" id="pdfSourceDateTo">
                             <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
                         </form>
+                        <a id="collectionStatsLink" href="{% url 'llm:rokunohe_collection_stats' %}" class="btn btn-outline-primary btn-sm">
+                            頻出語集計
+                        </a>
+                        <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
+                            コレクションビューア
+                        </a>
+                        <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                         <form id="vectorDbResetForm" method="post" action="{% url 'llm:rokunohe_vector_db_reset' %}">
                             {% csrf_token %}
                             <input type="hidden" name="reset_collection_consent" value="1">
                             <button type="submit" class="btn btn-outline-danger btn-sm">コレクションリセット</button>
                         </form>
-                        <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
-                            コレクションビューア
-                        </a>
                     {% else %}
                         <button type="button" class="btn btn-outline-secondary btn-sm me-auto" disabled>
                             会議録PDF取得・ベクトル化
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
-                            コレクションリセット
+                            頻出語集計
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                             コレクションビューア
                         </button>
+                        <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                            コレクションリセット
+                        </button>
                     {% endif %}
-                    <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                 </div>
+                {% if is_superuser %}
+                    <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+                        <div>
+                            <label for="debugSourceDateFrom" class="form-label small text-muted mb-1">処理期間開始</label>
+                            <input type="date" id="debugSourceDateFrom" class="form-control form-control-sm">
+                        </div>
+                        <div>
+                            <label for="debugSourceDateTo" class="form-label small text-muted mb-1">処理期間終了</label>
+                            <input type="date" id="debugSourceDateTo" class="form-control form-control-sm">
+                        </div>
+                        <span class="small text-muted mb-1">未指定時は直近1年分</span>
+                    </div>
+                {% endif %}
+                <p class="small text-muted mt-2 mb-3">
+                    会議録PDF取得・ベクトル化、コレクション確認、頻出語集計は、期間未指定時に直近1年分の会議録を処理基準にしています。
+                </p>
                 {% if not is_superuser %}
                     <p class="small text-muted mt-2 mb-3">管理者権限が必要なボタンは無効化されています</p>
                 {% endif %}
@@ -127,6 +152,49 @@
             const clearBtn = document.getElementById("clearChatLogsBtn");
             const pdfDownloadForm = document.getElementById("pdfDownloadForm");
             const vectorDbResetForm = document.getElementById("vectorDbResetForm");
+            const collectionStatsLink = document.getElementById("collectionStatsLink");
+            const debugSourceDateFrom = document.getElementById("debugSourceDateFrom");
+            const debugSourceDateTo = document.getElementById("debugSourceDateTo");
+            const pdfSourceDateFrom = document.getElementById("pdfSourceDateFrom");
+            const pdfSourceDateTo = document.getElementById("pdfSourceDateTo");
+
+            function getSourceDatePeriodLabel() {
+                const from = debugSourceDateFrom ? debugSourceDateFrom.value : "";
+                const to = debugSourceDateTo ? debugSourceDateTo.value : "";
+                if (!from && !to) {
+                    return "直近1年分";
+                }
+                if (!from && to) {
+                    return `終了日 ${to} まで`;
+                }
+                return `${from} 〜 ${to || "指定なし"}`;
+            }
+
+            function syncSourceDateRange() {
+                const from = debugSourceDateFrom ? debugSourceDateFrom.value : "";
+                const to = debugSourceDateTo ? debugSourceDateTo.value : "";
+                if (pdfSourceDateFrom) {
+                    pdfSourceDateFrom.value = from;
+                }
+                if (pdfSourceDateTo) {
+                    pdfSourceDateTo.value = to;
+                }
+            }
+
+            function syncCollectionStatsLink() {
+                if (!collectionStatsLink) return;
+                const from = debugSourceDateFrom ? debugSourceDateFrom.value : "";
+                const to = debugSourceDateTo ? debugSourceDateTo.value : "";
+                const url = new URL(collectionStatsLink.href, window.location.origin);
+                url.search = "";
+                if (from) {
+                    url.searchParams.set("source_date_from", from);
+                }
+                if (to) {
+                    url.searchParams.set("source_date_to", to);
+                }
+                collectionStatsLink.href = url.toString();
+            }
             let isLoading = false;
 
             function startLoading() {
@@ -204,7 +272,8 @@
 
             if (pdfDownloadForm) {
                 pdfDownloadForm.addEventListener("submit", function (event) {
-                    const confirmed = confirm("会議録PDF取得・ベクトル化を実行する前に、六戸町会議録QAの会話履歴をリセットします。実行しますか？");
+                    syncSourceDateRange();
+                    const confirmed = confirm(`${getSourceDatePeriodLabel()}の会議録PDF取得・ベクトル化を実行する前に、六戸町会議録QAの会話履歴をリセットします。実行しますか？`);
                     if (!confirmed) {
                         event.preventDefault();
                     }
@@ -219,6 +288,16 @@
                     }
                 });
             }
+
+            if (debugSourceDateFrom) {
+                debugSourceDateFrom.addEventListener("change", syncCollectionStatsLink);
+            }
+
+            if (debugSourceDateTo) {
+                debugSourceDateTo.addEventListener("change", syncCollectionStatsLink);
+            }
+
+            syncCollectionStatsLink();
 
             window.scrollTo({
                 top: document.body.scrollHeight,

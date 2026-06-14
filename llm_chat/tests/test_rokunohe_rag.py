@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
 
+from django.contrib.messages import get_messages
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -15,15 +16,21 @@ from llm_chat.domain.repository.completion.rokunohe_minutes import (
     RokunoheMinutesRagRepository,
 )
 from llm_chat.domain.service.completion.rokunohe_minutes import (
+    RokunoheMinutesCollectionStatsService,
     RokunoheMinutesPdfImportService,
     RokunoheMinutesRagService,
 )
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     ROKUNOHE_MINUTES_COLLECTION_NAME,
+    RokunoheMinutesCollectionStats,
     RokunoheMinutesCollectionItem,
+    RokunoheMinutesDateVolume,
     RokunoheMinutesImportStatus,
     RokunoheMinutesPdf,
+    RokunoheMinutesSourceVolume,
+    RokunoheMinutesStatsSourceChunk,
+    RokunoheMinutesWordFrequency,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.models import ChatLogs
@@ -200,6 +207,92 @@ class RokunohePdfDownloadViewTest(TestCase):
             ["取り込み後の初回サマリーです。"],
         )
 
+    def test_superuser_can_start_pdf_download_with_source_date_range(self):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、処理期間を1日だけ指定した状態。
+        - 処理: 六戸町会議録PDF取得・ベクトル化ボタンのPOST先へリクエストする。
+        - 期待値: 管理コマンドへsource_date_from/toが渡されること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-range",
+            email="admin-range@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        summary_message = MessageDTO(
+            user=user,
+            role=RoleType.ASSISTANT,
+            content="指定期間の初回サマリーです。",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
+        with patch("llm_chat.views.call_command") as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            rag_service_mock.return_value.generate_initial_summary.return_value = (
+                summary_message
+            )
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_download"),
+                {
+                    "reset_consent": "1",
+                    "source_date_from": "2026-02-25",
+                    "source_date_to": "2026-02-25",
+                },
+            )
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        call_command_mock.assert_called_once_with(
+            "rokunohe_pdf_download",
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+
+    def test_superuser_cannot_start_pdf_download_with_only_source_date_to(self):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、処理期間の終了日だけを指定した状態。
+        - 処理: 六戸町会議録PDF取得・ベクトル化ボタンのPOST先へリクエストする。
+        - 期待値: 管理コマンドを呼び出さず、警告メッセージを表示すること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-range-error",
+            email="admin-range-error@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch("llm_chat.views.call_command") as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_download"),
+                {
+                    "reset_consent": "1",
+                    "source_date_to": "2026-02-25",
+                },
+            )
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        call_command_mock.assert_not_called()
+        rag_service_mock.assert_not_called()
+        message_texts = [
+            str(message) for message in get_messages(response.wsgi_request)
+        ]
+        self.assertIn(
+            "処理期間の終了日を指定する場合は開始日も指定してください。",
+            message_texts,
+        )
+
     def test_superuser_must_consent_to_reset_before_pdf_download(self):
         """
         シナリオ:
@@ -298,8 +391,20 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "コレクションリセット")
+        self.assertContains(response, "頻出語集計")
         self.assertContains(response, "コレクションビューア")
+        self.assertContains(response, "直近1年分の会議録を処理基準")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
+        content = response.content.decode()
+        self.assertLess(
+            content.index("頻出語集計"), content.index("コレクションリセット")
+        )
+        self.assertLess(
+            content.index("コレクションビューア"), content.index("コレクションリセット")
+        )
+        self.assertLess(
+            content.index("チャット履歴を削除"), content.index("コレクションリセット")
+        )
 
     def test_non_superuser_sees_disabled_admin_buttons(self):
         """
@@ -321,7 +426,19 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "管理者権限が必要なボタンは無効化されています")
         self.assertContains(response, "disabled")
         self.assertContains(response, "コレクションリセット")
+        self.assertContains(response, "頻出語集計")
         self.assertContains(response, "コレクションビューア")
+        self.assertContains(response, "直近1年分の会議録を処理基準")
+        content = response.content.decode()
+        self.assertLess(
+            content.index("頻出語集計"), content.index("コレクションリセット")
+        )
+        self.assertLess(
+            content.index("コレクションビューア"), content.index("コレクションリセット")
+        )
+        self.assertLess(
+            content.index("チャット履歴を削除"), content.index("コレクションリセット")
+        )
 
     @patch("llm_chat.views.RokunoheMinutesRagRepository")
     def test_superuser_can_reset_vector_db_collection(self, mock_repository):
@@ -407,6 +524,160 @@ class RokunohePdfDownloadViewTest(TestCase):
             reverse("llm:rokunohe_vector_db_reset"),
             {"reset_collection_consent": "1"},
         )
+
+        self.assertEqual(403, response.status_code)
+
+    @patch("llm_chat.views.RokunoheMinutesCollectionStatsService")
+    def test_superuser_can_view_collection_stats(self, mock_service):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、集計Serviceが頻出語とボリュームを返す状態。
+        - 処理: collection集計画面へGETリクエストする。
+        - 期待値: 集計結果がテンプレートへ渡され、頻出語ランキングが表示されること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-stats",
+            email="admin-stats@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        mock_service.return_value.build_stats.return_value = (
+            RokunoheMinutesCollectionStats(
+                total_chunk_count=2,
+                total_character_count=30,
+                total_source_count=1,
+                word_frequencies=[
+                    RokunoheMinutesWordFrequency(
+                        word="学校給食",
+                        count=3,
+                        pdf_count=1,
+                    )
+                ],
+                source_volumes=[
+                    RokunoheMinutesSourceVolume(
+                        source="20260225_会議録.pdf",
+                        source_date="20260225",
+                        chunk_count=2,
+                        character_count=30,
+                    )
+                ],
+                date_volumes=[
+                    RokunoheMinutesDateVolume(
+                        source_date="20260225",
+                        source_count=1,
+                        chunk_count=2,
+                        character_count=30,
+                    )
+                ],
+            )
+        )
+
+        response = self.client.get(reverse("llm:rokunohe_collection_stats"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "llm_chat/rokunohe_collection_stats.html")
+        mock_service.assert_called_once_with(
+            source_date_from=None,
+            source_date_to=None,
+        )
+        mock_service.return_value.build_stats.assert_called_once_with()
+        self.assertContains(response, "六戸町会議録 頻出語集計")
+        self.assertContains(response, "対象期間: 直近1年")
+        self.assertContains(response, "学校給食")
+        self.assertContains(response, "20260225_会議録.pdf")
+        self.assertContains(response, "LLMは使わず")
+
+    @patch("llm_chat.views.RokunoheMinutesCollectionStatsService")
+    def test_superuser_can_view_collection_stats_with_source_date_range(
+        self, mock_service
+    ):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、処理期間を1日だけ指定した状態。
+        - 処理: collection集計画面へGETリクエストする。
+        - 期待値: 集計Serviceへsource_date_from/toが渡されること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-stats-range",
+            email="admin-stats-range@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        mock_service.return_value.build_stats.return_value = (
+            RokunoheMinutesCollectionStats(
+                total_chunk_count=0,
+                total_character_count=0,
+                total_source_count=0,
+                word_frequencies=[],
+                source_volumes=[],
+                date_volumes=[],
+            )
+        )
+
+        response = self.client.get(
+            reverse("llm:rokunohe_collection_stats"),
+            {
+                "source_date_from": "2026-02-25",
+                "source_date_to": "2026-02-25",
+            },
+        )
+
+        mock_service.assert_called_once_with(
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+        self.assertContains(response, "対象期間: 2026-02-25〜2026-02-25")
+        self.assertContains(response, "集計できる本文はありません")
+
+    @patch("llm_chat.views.RokunoheMinutesCollectionStatsService")
+    def test_collection_stats_rejects_only_source_date_to(self, mock_service):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、集計期間の終了日だけを指定した状態。
+        - 処理: collection集計画面へGETリクエストする。
+        - 期待値: 集計Serviceを呼び出さず、警告メッセージを表示してQAページへ戻ること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-stats-range-error",
+            email="admin-stats-range-error@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse("llm:rokunohe_collection_stats"),
+            {"source_date_to": "2026-02-25"},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        mock_service.assert_not_called()
+        message_texts = [
+            str(message) for message in get_messages(response.wsgi_request)
+        ]
+        self.assertIn(
+            "処理期間の終了日を指定する場合は開始日も指定してください。",
+            message_texts,
+        )
+
+    def test_non_superuser_cannot_view_collection_stats(self):
+        """
+        シナリオ:
+        - 入力: 一般ユーザーでログインした状態。
+        - 処理: collection集計画面へGETリクエストする。
+        - 期待値: 403が返ること。
+        """
+        user = User.objects.create_user(
+            username="user-stats",
+            email="user-stats@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("llm:rokunohe_collection_stats"))
 
         self.assertEqual(403, response.status_code)
 
@@ -631,6 +902,54 @@ class RokunoheMinutesPdfImportServiceTest(TestCase):
         repository.delete_pdf_documents.assert_not_called()
         repository.upsert_documents.assert_not_called()
 
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.timezone.localdate")
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
+    def test_skips_old_source_pdf_before_reading(self, mock_pdf_reader, mock_localdate):
+        """
+        シナリオ:
+        - 入力: 直近1年より古い日付がファイル名に付いたPDF。
+        - 処理: PDFインポートサービスを実行する。
+        - 期待値: PDF読み取りとRepository確認を行わず、期間外スキップ結果が返ること。
+        """
+        mock_localdate.return_value = date(2026, 6, 13)
+        repository = Mock()
+
+        service = RokunoheMinutesPdfImportService(repository=repository)
+        status = service.import_pdf(Path("20240101_古い会議録.pdf"))
+
+        self.assertEqual(
+            status, RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE
+        )
+        mock_pdf_reader.assert_not_called()
+        repository.exists.assert_not_called()
+        repository.delete_pdf_documents.assert_not_called()
+        repository.upsert_documents.assert_not_called()
+
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
+    def test_skips_pdf_after_source_date_to_before_reading(self, mock_pdf_reader):
+        """
+        シナリオ:
+        - 入力: 指定した取り込み期間の上限より新しい日付がファイル名に付いたPDF。
+        - 処理: source_date_from/to付きでPDFインポートサービスを実行する。
+        - 期待値: PDF読み取りとRepository確認を行わず、期間外スキップ結果が返ること。
+        """
+        repository = Mock()
+
+        service = RokunoheMinutesPdfImportService(
+            repository=repository,
+            source_date_from=20250101,
+            source_date_to=20251231,
+        )
+        status = service.import_pdf(Path("20260225_新しい会議録.pdf"))
+
+        self.assertEqual(
+            status, RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE
+        )
+        mock_pdf_reader.assert_not_called()
+        repository.exists.assert_not_called()
+        repository.delete_pdf_documents.assert_not_called()
+        repository.upsert_documents.assert_not_called()
+
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
     def test_skips_pdf_when_text_is_empty(self, mock_pdf_reader):
         """
@@ -680,6 +999,109 @@ class RokunoheMinutesRagServiceTest(TestCase):
             assistant_message.use_case_type,
             UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
+
+
+class RokunoheMinutesCollectionStatsServiceTest(TestCase):
+    @patch("llm_chat.domain.service.completion.rokunohe_minutes.timezone.localdate")
+    def test_build_stats_counts_words_sources_and_dates(self, mock_localdate):
+        """
+        シナリオ:
+        - 入力: 学校給食と道路整備を含むChromaチャンク3件。
+        - 処理: collection集計Serviceで頻出語とボリュームを集計する。
+        - 期待値: Janomeの名詞抽出結果、PDF別件数、日付別件数が集計されること。
+        """
+        mock_localdate.return_value = date(2026, 6, 12)
+        rag_repository = Mock()
+        rag_repository.list_stats_source_chunks.return_value = [
+            RokunoheMinutesStatsSourceChunk(
+                chroma_id="doc_1",
+                document="学校給食の改善と学校給食の支援を議論しました。",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+            ),
+            RokunoheMinutesStatsSourceChunk(
+                chroma_id="doc_2",
+                document="道路整備と除雪体制について確認しました。",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=2,
+                chunk_index=1,
+            ),
+            RokunoheMinutesStatsSourceChunk(
+                chroma_id="doc_3",
+                document="学校給食と子育て支援について議論しました。",
+                source="20260301_会議録.pdf",
+                source_date="20260301",
+                page=1,
+                chunk_index=0,
+            ),
+        ]
+        service = RokunoheMinutesCollectionStatsService(
+            rag_repository=rag_repository,
+            word_limit=10,
+        )
+
+        stats = service.build_stats()
+
+        rag_repository.list_stats_source_chunks.assert_called_once_with(
+            source_date_from=20250612,
+            source_date_to=None,
+        )
+        self.assertEqual(stats.total_chunk_count, 3)
+        self.assertEqual(stats.total_source_count, 2)
+        self.assertGreater(stats.total_character_count, 0)
+        words = {item.word: item for item in stats.word_frequencies}
+        self.assertIn("学校給食", words)
+        self.assertEqual(words["学校給食"].count, 3)
+        self.assertEqual(words["学校給食"].pdf_count, 2)
+        self.assertEqual(stats.source_volumes[0].chunk_count, 2)
+        self.assertEqual(
+            {item.source_date: item.chunk_count for item in stats.date_volumes},
+            {"20260301": 1, "20260225": 2},
+        )
+
+    def test_build_stats_uses_explicit_source_date_range(self):
+        """
+        シナリオ:
+        - 入力: source_date_from/toを明示したcollection集計Service。
+        - 処理: collection集計Serviceを実行する。
+        - 期待値: Repositoryへ指定期間がそのまま渡されること。
+        """
+        rag_repository = Mock()
+        rag_repository.list_stats_source_chunks.return_value = []
+        service = RokunoheMinutesCollectionStatsService(
+            rag_repository=rag_repository,
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+
+        stats = service.build_stats()
+
+        rag_repository.list_stats_source_chunks.assert_called_once_with(
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+        self.assertEqual(stats.total_chunk_count, 0)
+        self.assertEqual(stats.word_frequencies, [])
+
+    def test_extract_words_removes_stop_words_short_words_and_numbers(self):
+        """
+        シナリオ:
+        - 入力: 定型語、1文字語、数字、政策テーマ語を含む本文。
+        - 処理: collection集計Serviceの語抽出を行う。
+        - 期待値: 定型語や数字を除外し、意味のある名詞だけを残すこと。
+        """
+        service = RokunoheMinutesCollectionStatsService(rag_repository=Mock())
+
+        words = service._extract_words("議長 12 町 学校給食 子育て支援を確認します。")
+
+        self.assertIn("学校給食", words)
+        self.assertIn("子育て支援", words)
+        self.assertNotIn("議長", words)
+        self.assertNotIn("12", words)
+        self.assertNotIn("町", words)
 
 
 class RokunoheMinutesRagRepositoryTest(TestCase):
@@ -887,6 +1309,148 @@ class RokunoheMinutesRagRepositoryTest(TestCase):
 
         self.assertEqual(items, [])
 
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_stats_source_chunks_returns_documents(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionがids、documents、metadatasを返す状態。
+        - 処理: Repositoryでcollection集計用チャンク一覧を取得する。
+        - 期待値: 本文と出典メタデータを持つVOが返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["doc_1"],
+            "documents": ["学校給食についての議論です。"],
+            "metadatas": [
+                {
+                    "source": "20260225_会議録.pdf",
+                    "source_date": "20260225",
+                    "page": 1,
+                    "chunk_index": 0,
+                }
+            ],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_stats_source_chunks()
+
+        rag_instance._collection.get.assert_called_once_with(
+            include=["documents", "metadatas"],
+        )
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0].chroma_id, "doc_1")
+        self.assertEqual(chunks[0].document, "学校給食についての議論です。")
+        self.assertEqual(chunks[0].source, "20260225_会議録.pdf")
+        self.assertEqual(chunks[0].page, 1)
+        self.assertEqual(chunks[0].chunk_index, 0)
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_stats_source_chunks_deduplicates_chroma_ids(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionが同じIDを持つチャンクを複数返す状態。
+        - 処理: Repositoryでcollection集計用チャンク一覧を取得する。
+        - 期待値: 同一Chroma IDは1件に畳まれること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["dup_doc", "dup_doc", "unique_doc"],
+            "documents": [
+                "重複した議論1です。",
+                "重複した議論2です。",
+                "別の議論です。",
+            ],
+            "metadatas": [
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+            ],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_stats_source_chunks()
+
+        self.assertEqual(
+            [chunk.chroma_id for chunk in chunks], ["dup_doc", "unique_doc"]
+        )
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_stats_source_chunks_skips_empty_documents(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: 本文が空のChromaレコードを含むcollection。
+        - 処理: Repositoryでcollection集計用チャンク一覧を取得する。
+        - 期待値: 空本文のチャンクは集計対象から除外されること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["empty_doc", "text_doc"],
+            "documents": ["", "道路整備についての議論です。"],
+            "metadatas": [
+                {"source": "20260301_会議録.pdf", "source_date": "20260301"},
+                {"source": "20260301_会議録.pdf", "source_date": "20260301"},
+            ],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_stats_source_chunks()
+
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0].chroma_id, "text_doc")
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_stats_source_chunks_filters_by_source_date_from(
+        self, mock_rag_service
+    ):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionに直近1年内外のsource_dateを持つチャンクが存在する状態。
+        - 処理: Repositoryで日付下限を指定してcollection集計用チャンク一覧を取得する。
+        - 期待値: source_dateが下限以降のチャンクだけ返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["old_doc", "recent_doc"],
+            "documents": ["古い議論です。", "直近の議論です。"],
+            "metadatas": [
+                {"source": "20240101_会議録.pdf", "source_date": "20240101"},
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+            ],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_stats_source_chunks(source_date_from=20250612)
+
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0].chroma_id, "recent_doc")
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_stats_source_chunks_filters_by_source_date_to(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionに指定期間内外のsource_dateを持つチャンクが存在する状態。
+        - 処理: Repositoryで日付上限を指定してcollection集計用チャンク一覧を取得する。
+        - 期待値: source_dateが上限以前のチャンクだけ返ること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["target_doc", "future_doc"],
+            "documents": ["対象日の議論です。", "未来日の議論です。"],
+            "metadatas": [
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+                {"source": "20260301_会議録.pdf", "source_date": "20260301"},
+            ],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_stats_source_chunks(
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0].chroma_id, "target_doc")
+
 
 class RokunohePdfDownloadCommandTest(TestCase):
     @patch(
@@ -1020,6 +1584,121 @@ class RokunohePdfDownloadCommandTest(TestCase):
 
             with self.assertRaises(CommandError):
                 call_command("rokunohe_pdf_download", save_dir=temp_dir, delay=0)
+
+    @patch(
+        "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
+    )
+    @patch("llm_chat.management.commands.rokunohe_pdf_download.timezone.localdate")
+    def test_skips_old_pdf_before_saving_and_importing(
+        self, mock_localdate, mock_import_service
+    ):
+        """
+        シナリオ:
+        - 入力: Last-Modifiedが直近1年より古いPDFリンクを含むHTMLレスポンス。
+        - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: 古いPDFは保存されず、Chroma DBインポートも呼び出されないこと。
+        """
+        mock_localdate.return_value = date(2026, 6, 13)
+        first_page_response = self._create_response(
+            '<a href="old.pdf">古い会議録 [PDF]</a>'
+        )
+        pdf_response = self._create_response(
+            "",
+            content=b"%PDF",
+            headers={"Last-Modified": "Mon, 01 Jan 2024 01:55:27 GMT"},
+        )
+        second_page_response = self._create_response("")
+
+        with TemporaryDirectory() as temp_dir:
+            with patch(
+                "llm_chat.management.commands.rokunohe_pdf_download.requests.get",
+                side_effect=[
+                    first_page_response,
+                    pdf_response,
+                    second_page_response,
+                ],
+            ):
+                stdout = StringIO()
+                call_command(
+                    "rokunohe_pdf_download",
+                    save_dir=temp_dir,
+                    delay=0,
+                    stdout=stdout,
+                )
+
+            self.assertFalse((Path(temp_dir) / "20240101_古い会議録.pdf").exists())
+
+        mock_import_service.return_value.import_pdf.assert_not_called()
+        self.assertIn("スキップ (対象期間外)", stdout.getvalue())
+
+    @patch(
+        "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
+    )
+    def test_accepts_explicit_source_date_range(self, mock_import_service):
+        """
+        シナリオ:
+        - 入力: source-date-from/to内のLast-Modifiedを持つPDFリンク。
+        - 処理: 期間指定付きで六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: 指定期間内のPDFが保存され、同じ期間指定でChroma DBインポートServiceが生成されること。
+        """
+        mock_import_service.return_value.import_pdf.return_value = (
+            RokunoheMinutesImportStatus.IMPORTED
+        )
+        first_page_response = self._create_response(
+            '<a href="period.pdf">期間内会議録 [PDF]</a>'
+        )
+        pdf_response = self._create_response(
+            "",
+            content=b"%PDF",
+            headers={"Last-Modified": "Wed, 25 Feb 2026 01:55:27 GMT"},
+        )
+        second_page_response = self._create_response("")
+
+        with TemporaryDirectory() as temp_dir:
+            with patch(
+                "llm_chat.management.commands.rokunohe_pdf_download.requests.get",
+                side_effect=[
+                    first_page_response,
+                    pdf_response,
+                    second_page_response,
+                ],
+            ):
+                stdout = StringIO()
+                call_command(
+                    "rokunohe_pdf_download",
+                    save_dir=temp_dir,
+                    delay=0,
+                    source_date_from=20260101,
+                    source_date_to=20261231,
+                    stdout=stdout,
+                )
+
+            self.assertTrue((Path(temp_dir) / "20260225_期間内会議録.pdf").exists())
+
+        mock_import_service.assert_called_with(
+            recent_days=365,
+            source_date_from=20260101,
+            source_date_to=20261231,
+        )
+        self.assertIn("source_date_from=20260101", stdout.getvalue())
+        self.assertIn("source_date_to=20261231", stdout.getvalue())
+
+    def test_rejects_invalid_source_date_range(self):
+        """
+        シナリオ:
+        - 入力: source-date-fromがsource-date-toより後の日付になる期間指定。
+        - 処理: 六戸町会議録PDFダウンロードコマンドを実行する。
+        - 期待値: CommandErrorが発生し、処理が開始されないこと。
+        """
+        with TemporaryDirectory() as temp_dir:
+            with self.assertRaises(CommandError):
+                call_command(
+                    "rokunohe_pdf_download",
+                    save_dir=temp_dir,
+                    delay=0,
+                    source_date_from=20261231,
+                    source_date_to=20260101,
+                )
 
     @patch(
         "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"

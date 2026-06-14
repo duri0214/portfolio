@@ -5,7 +5,7 @@ import logging
 import math
 import os
 import traceback
-from datetime import timedelta
+from datetime import date, timedelta
 from typing import Generator
 
 from django.contrib import messages
@@ -31,6 +31,7 @@ from llm_chat.domain.repository.completion.rokunohe_minutes import (
 )
 from llm_chat.domain.service.chat import ChatDisplayService
 from llm_chat.domain.service.completion.rokunohe_minutes import (
+    RokunoheMinutesCollectionStatsService,
     RokunoheMinutesRagService,
 )
 from llm_chat.domain.use_case.completion.chat import (
@@ -60,6 +61,87 @@ logger = logging.getLogger(__name__)
 def _get_login_user(request):
     """ログインユーザーまたはデフォルトユーザー（pk=1）を取得します。"""
     return request.user if request.user.is_authenticated else User.objects.get(pk=1)
+
+
+def _parse_source_date_range(request) -> tuple[int | None, int | None]:
+    """
+    管理画面の任意期間入力をYYYYMMDD整数へ変換します。
+
+    未指定なら既存どおり直近1年基準に任せるため、上下限ともNoneを返します。
+    終了日だけを指定した場合は、意図しない広範囲処理を避けるためエラーにします。
+    """
+    return _parse_source_date_range_values(
+        source_date_from_value=request.POST.get("source_date_from", ""),
+        source_date_to_value=request.POST.get("source_date_to", ""),
+    )
+
+
+def _parse_source_date_range_values(
+    *,
+    source_date_from_value: str | None,
+    source_date_to_value: str | None,
+) -> tuple[int | None, int | None]:
+    """
+    任意期間入力をYYYYMMDD整数へ変換します。
+
+    POSTで実行するPDF取り込みと、GETで表示するcollection集計の両方で使います。
+    終了日だけを指定した場合は、意図しない広範囲処理を避けるためエラーにします。
+    """
+    source_date_from = _parse_optional_source_date(source_date_from_value)
+    source_date_to = _parse_optional_source_date(source_date_to_value)
+    if source_date_from is None and source_date_to is not None:
+        raise ValueError("処理期間の終了日を指定する場合は開始日も指定してください。")
+    if (
+        source_date_from is not None
+        and source_date_to is not None
+        and source_date_from > source_date_to
+    ):
+        raise ValueError("処理期間の開始日は終了日以前にしてください。")
+    return source_date_from, source_date_to
+
+
+def _parse_optional_source_date(value: str | None) -> int | None:
+    raw_value = (value or "").strip()
+    if not raw_value:
+        return None
+    try:
+        parsed_date = date.fromisoformat(raw_value)
+    except ValueError as e:
+        raise ValueError("処理期間はYYYY-MM-DD形式で指定してください。") from e
+    return int(parsed_date.strftime("%Y%m%d"))
+
+
+def _build_source_date_command_options(
+    *,
+    source_date_from: int | None,
+    source_date_to: int | None,
+) -> dict[str, int]:
+    options: dict[str, int] = {}
+    if source_date_from is not None:
+        options["source_date_from"] = source_date_from
+    if source_date_to is not None:
+        options["source_date_to"] = source_date_to
+    return options
+
+
+def _build_source_date_period_label(
+    *,
+    source_date_from: int | None,
+    source_date_to: int | None,
+) -> str:
+    if source_date_from is None:
+        return "直近1年"
+    if source_date_to is None:
+        return f"{_format_source_date(source_date_from)}〜指定なし"
+    return (
+        f"{_format_source_date(source_date_from)}"
+        f"〜{_format_source_date(source_date_to)}"
+    )
+
+
+def _format_source_date(source_date: int) -> str:
+    raw_value = str(source_date)
+    return f"{raw_value[:4]}-{raw_value[4:6]}-{raw_value[6:8]}"
 
 
 class IndexView(FormView):
@@ -133,24 +215,44 @@ class RokunoheMinutesRagView(View):
 
 class RokunohePdfDownloadView(UserPassesTestMixin, View):
     """
-    六戸町会議録PDFをダウンロードして保存するビュー。
-    jp_stocks から移設。
+    六戸町会議録PDFの取得・ベクトル化を管理画面から起動するビュー。
+
+    このViewは、管理者の同意確認、六戸町会議録QAの会話履歴リセット、
+    PDFダウンロード管理コマンド実行、取り込み後の初回サマリー作成を1回のPOSTで行います。
+    PDFの巡回・保存・Chroma登録の詳細は `rokunohe_pdf_download` コマンドへ委譲します。
     """
 
     raise_exception = True
     command_name = "rokunohe_pdf_download"
-    success_message = "六戸町会議録PDFの取得・ベクトル化処理を実行しました。"
+    success_message = "六戸町会議録PDFの直近1年分の取得・ベクトル化処理を実行しました。"
     reset_consent_value = "1"
 
     def test_func(self):
         return self.request.user.is_superuser
 
     def post(self, request, *args, **kwargs):
+        """
+        同意値を確認してから会話履歴を消し、PDF取得コマンドと初回サマリー生成を実行します。
+
+        PDF取得・ベクトル化によってRAGの根拠データが変わる可能性があるため、
+        古い会話履歴を残さず、取り込み後のcollectionをもとにしたサマリーを
+        チャット履歴の先頭として作り直します。
+        """
         if request.POST.get("reset_consent") != self.reset_consent_value:
             messages.warning(
                 request,
                 "会話履歴のリセットに同意してから実行してください。",
             )
+            return redirect("llm:rokunohe_minutes")
+
+        try:
+            source_date_from, source_date_to = _parse_source_date_range(request)
+            command_options = _build_source_date_command_options(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+        except ValueError as e:
+            messages.warning(request, str(e))
             return redirect("llm:rokunohe_minutes")
 
         login_user = _get_login_user(request)
@@ -159,9 +261,15 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
         try:
-            call_command(self.command_name)
+            call_command(self.command_name, **command_options)
             self._save_initial_summary(login_user)
-            messages.success(request, self.success_message)
+            messages.success(
+                request,
+                self._build_success_message(
+                    source_date_from=source_date_from,
+                    source_date_to=source_date_to,
+                ),
+            )
         except CommandError as e:
             messages.warning(request, str(e))
         return redirect("llm:rokunohe_minutes")
@@ -171,6 +279,20 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
         service = RokunoheMinutesRagService()
         summary = service.generate_initial_summary(user)
         ChatLogRepository.insert(summary)
+
+    def _build_success_message(
+        self,
+        *,
+        source_date_from: int | None,
+        source_date_to: int | None,
+    ) -> str:
+        if source_date_from is None:
+            return self.success_message
+        return (
+            "六戸町会議録PDFの指定期間分の取得・ベクトル化処理を実行しました。"
+            f" 対象期間: {_format_source_date(source_date_from)}"
+            f"〜{_format_source_date(source_date_to) if source_date_to else '指定なし'}"
+        )
 
 
 class RokunoheVectorDbResetView(UserPassesTestMixin, View):
@@ -206,9 +328,70 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
         return redirect("llm:rokunohe_minutes")
 
 
+class RokunoheCollectionStatsView(UserPassesTestMixin, View):
+    """
+    六戸町会議録RAGのcollection集計を表示する管理者用ビュー。
+
+    Chroma DBに登録済みの本文チャンクを、LLMなし・DB保存なしでその場集計します。
+    View自身はGETパラメータの期間指定を解決し、頻出語、PDF別ボリューム、
+    日付別ボリュームをテンプレートへ渡すだけに責務を限定します。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get(self, request, *args, **kwargs):
+        """
+        collection集計を実行し、結果を表示します。
+
+        期間未指定時は直近1年を対象にします。終了日だけが指定された場合など、
+        期間指定が不正なときは警告メッセージを出して六戸町会議録QAへ戻します。
+        """
+        try:
+            source_date_from, source_date_to = _parse_source_date_range_values(
+                source_date_from_value=request.GET.get("source_date_from", ""),
+                source_date_to_value=request.GET.get("source_date_to", ""),
+            )
+            service = RokunoheMinutesCollectionStatsService(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+            stats = service.build_stats()
+        except ValueError as e:
+            messages.warning(request, str(e))
+            return redirect("llm:rokunohe_minutes")
+        except Exception as e:
+            logger.error(f"RokunoheCollectionStatsView Error: {str(e)}")
+            logger.error(traceback.format_exc())
+            messages.error(request, f"collection集計の表示に失敗しました: {str(e)}")
+            return redirect("llm:rokunohe_minutes")
+
+        period_label = _build_source_date_period_label(
+            source_date_from=source_date_from,
+            source_date_to=source_date_to,
+        )
+        context = {
+            "stats": stats,
+            "period_label": period_label,
+            "source_date_from": (
+                _format_source_date(source_date_from) if source_date_from else ""
+            ),
+            "source_date_to": (
+                _format_source_date(source_date_to) if source_date_to else ""
+            ),
+        }
+        return render(request, "llm_chat/rokunohe_collection_stats.html", context)
+
+
 class RokunoheCollectionViewerView(UserPassesTestMixin, View):
     """
     六戸町会議録RAGのChroma DB collection内容を確認する管理者用ビュー。
+
+    Chroma DBに入っている本文チャンクを、人間が点検できるページング一覧へ変換します。
+    query_typeがrecent_yearのときは、PDF取得やcollection集計と同じ直近1年基準で
+    Repositoryへsource_date_fromを渡します。
     """
 
     raise_exception = True
@@ -220,6 +403,12 @@ class RokunoheCollectionViewerView(UserPassesTestMixin, View):
         return self.request.user.is_superuser
 
     def get(self, request, *args, **kwargs):
+        """
+        ページング条件と絞り込み条件を解決し、collection一覧を表示します。
+
+        total_countと表示データの両方に同じsource_date_fromを渡すことで、
+        「直近1年」表示時のページ数と実データがずれないようにします。
+        """
         per_page = self._get_per_page(request)
         current_page = self._get_current_page(request)
         query_type = self._get_query_type(request)
