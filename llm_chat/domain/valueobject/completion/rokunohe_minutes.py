@@ -31,7 +31,7 @@ class RokunoheMinutesPdf:
     六戸町会議録PDFファイルを表すValue Object。
 
     保存ファイル名は、可能な場合 `YYYYMMDD_元のPDF名.pdf` 形式に正規化します。
-    この日付は取り込み期間フィルタ、Chroma metadata、テーマ分析の直近1年判定で
+    この日付は取り込み期間フィルタ、Chroma metadata、集計表示の直近1年判定で
     共通して使うため、PDFそのものからsource名、document_id、source_dateを導出します。
 
     Attributes:
@@ -61,7 +61,7 @@ class RokunoheMinutesMetadata:
 
     ページ単位でChromaへ登録するため、sourceとdocument_idだけでなく、
     page/chunk_index/source_dateも同じmetadataにまとめます。後続のコレクションビューア、
-    テーマ分析、出典表示はこのmetadataを前提に同じチャンクを追跡します。
+    集計表示、出典表示はこのmetadataを前提に同じチャンクを追跡します。
 
     Attributes:
         source: 出典として表示・重複判定に使うPDFファイル名。
@@ -156,9 +156,13 @@ class RokunoheMinutesCollectionItem:
 
 
 @dataclass(frozen=True)
-class RokunoheMinutesThemeSourceChunk:
+class RokunoheMinutesStatsSourceChunk:
     """
-    テーマ分析の入力に使うChroma DB上の六戸町会議録チャンク。
+    六戸町会議録collectionの集計に使うChroma DB上の本文チャンク。
+
+    LLMやembeddingを使わず、本文と出典メタデータだけをPython側で集計するための
+    入力VOです。頻出語ランキング、PDF別ボリューム、日付別ボリュームはこの
+    チャンク集合から都度作ります。
 
     Attributes:
         chroma_id: Chroma DB上のドキュメントID。
@@ -167,7 +171,6 @@ class RokunoheMinutesThemeSourceChunk:
         source_date: 出典PDFファイル名から取得したYYYYMMDD形式の日付。
         page: PDF内のページ番号。
         chunk_index: RAG登録時のチャンク番号。
-        embedding: K-meansクラスタリングに使うembeddingベクトル。
     """
 
     chroma_id: str
@@ -176,72 +179,81 @@ class RokunoheMinutesThemeSourceChunk:
     source_date: str
     page: int | None
     chunk_index: int | None
-    embedding: list[float]
 
 
 @dataclass(frozen=True)
-class RokunoheMinuteThemeChunkAnalysis:
+class RokunoheMinutesWordFrequency:
     """
-    テーマ分析でクラスタへ割り当てられた単一チャンクの分析結果。
+    六戸町会議録collectionから抽出した頻出語の集計結果。
 
     Attributes:
-        source_chunk: 分析対象のChromaチャンク。
-        candidate_labels: 旧パイプライン互換の候補テーマラベル。現行処理では空配列。
-        cluster_index: K-meansが割り当てたクラスタ番号。
+        word: Janomeで抽出した名詞または複合名詞。
+        count: 対象チャンク全体での出現回数。
+        pdf_count: その語が登場したPDF source数。
     """
 
-    source_chunk: RokunoheMinutesThemeSourceChunk
-    candidate_labels: list[str]
-    cluster_index: int
+    word: str
+    count: int
+    pdf_count: int
 
 
 @dataclass(frozen=True)
-class RokunoheMinuteThemeClusterAnalysis:
+class RokunoheMinutesSourceVolume:
     """
-    テーマ分析で生成されたクラスタ単位の分析結果。
-
-    Service層で作る一時的なクラスタ集計VOです。Djangoモデルへ保存する前に、
-    チャンク数、文字数、PDF数、source_date範囲をプロパティで算出し、
-    RepositoryがそのままRokunoheMinuteThemeClusterへ移せる形にします。
+    PDF source単位の本文ボリューム集計結果。
 
     Attributes:
-        cluster_index: K-meansが割り当てたクラスタ番号。
-        label: LLMが命名した代表テーマ名。
-        representative_chunk_id: クラスタを代表するChromaチャンクID。
-        chunks: クラスタに属するチャンク分析結果。
+        source: 出典PDFファイル名。
+        source_date: 出典PDFファイル名から取得したYYYYMMDD形式の日付。
+        chunk_count: そのPDFから登録されたチャンク数。
+        character_count: そのPDFから登録された本文文字数。
     """
 
-    cluster_index: int
-    label: str
-    representative_chunk_id: str
-    chunks: list[RokunoheMinuteThemeChunkAnalysis]
+    source: str
+    source_date: str
+    chunk_count: int
+    character_count: int
 
-    @property
-    def chunk_count(self) -> int:
-        return len(self.chunks)
 
-    @property
-    def character_count(self) -> int:
-        return sum(len(chunk.source_chunk.document) for chunk in self.chunks)
+@dataclass(frozen=True)
+class RokunoheMinutesDateVolume:
+    """
+    source_date単位の本文ボリューム集計結果。
 
-    @property
-    def pdf_count(self) -> int:
-        return len({chunk.source_chunk.source for chunk in self.chunks})
+    Attributes:
+        source_date: 出典PDFファイル名から取得したYYYYMMDD形式の日付。
+        source_count: その日に含まれるPDF source数。
+        chunk_count: その日に登録されたチャンク数。
+        character_count: その日に登録された本文文字数。
+    """
 
-    @property
-    def source_date_from(self) -> str:
-        dates = sorted(
-            chunk.source_chunk.source_date
-            for chunk in self.chunks
-            if chunk.source_chunk.source_date
-        )
-        return dates[0] if dates else ""
+    source_date: str
+    source_count: int
+    chunk_count: int
+    character_count: int
 
-    @property
-    def source_date_to(self) -> str:
-        dates = sorted(
-            chunk.source_chunk.source_date
-            for chunk in self.chunks
-            if chunk.source_chunk.source_date
-        )
-        return dates[-1] if dates else ""
+
+@dataclass(frozen=True)
+class RokunoheMinutesCollectionStats:
+    """
+    六戸町会議録collectionをLLMなしで機械集計した表示用データ。
+
+    1回のGETリクエストでChroma collectionから対象期間の本文チャンクを読み、
+    Janomeの名詞抽出と単純な件数集計だけで作る軽量なスナップショットです。
+    DBへ保存するジョブや途中状態は持ちません。
+
+    Attributes:
+        total_chunk_count: 集計対象のChromaチャンク数。
+        total_character_count: 集計対象本文の総文字数。
+        total_source_count: 集計対象PDF source数。
+        word_frequencies: 頻出語ランキング。
+        source_volumes: PDF source別ボリューム。
+        date_volumes: source_date別ボリューム。
+    """
+
+    total_chunk_count: int
+    total_character_count: int
+    total_source_count: int
+    word_frequencies: list[RokunoheMinutesWordFrequency]
+    source_volumes: list[RokunoheMinutesSourceVolume]
+    date_volumes: list[RokunoheMinutesDateVolume]

@@ -1,0 +1,137 @@
+{% extends 'llm_chat/base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'llm:index' %}">LLM Chat</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'llm:rokunohe_minutes' %}">六戸町会議録 RAG</a></li>
+                <li class="breadcrumb-item active" aria-current="page">頻出語集計</li>
+            </ol>
+        </nav>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+            <div>
+                <h1 class="h3 mb-1">六戸町会議録 頻出語集計</h1>
+                <p class="text-muted mb-0">
+                    対象期間: {{ period_label }} / チャンク: {{ stats.total_chunk_count }}件 /
+                    PDF: {{ stats.total_source_count }}件 / 文字数: {{ stats.total_character_count }}字
+                </p>
+            </div>
+            <a href="{% url 'llm:rokunohe_minutes' %}" class="btn btn-outline-secondary btn-sm">QAへ戻る</a>
+        </div>
+
+        <form method="get" class="d-flex flex-wrap align-items-end gap-2 mb-3">
+            <div>
+                <label for="sourceDateFrom" class="form-label small text-muted mb-1">集計期間開始</label>
+                <input type="date" id="sourceDateFrom" name="source_date_from" value="{{ source_date_from }}"
+                       class="form-control form-control-sm">
+            </div>
+            <div>
+                <label for="sourceDateTo" class="form-label small text-muted mb-1">集計期間終了</label>
+                <input type="date" id="sourceDateTo" name="source_date_to" value="{{ source_date_to }}"
+                       class="form-control form-control-sm">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">集計</button>
+            <a href="{% url 'llm:rokunohe_collection_stats' %}" class="btn btn-outline-secondary btn-sm">直近1年</a>
+        </form>
+
+        <div class="alert alert-secondary small" role="alert">
+            LLMは使わず、Chroma内の本文をJanomeで機械的に名詞抽出して集計しています。
+            厳密な意味分類ではなく、話題量の偏りを見るための軽量な入口です。
+        </div>
+
+        {% if stats.total_chunk_count %}
+            <div class="row g-4">
+                <div class="col-12 col-xl-6">
+                    <h2 class="h5 mb-2">頻出語ランキング</h2>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead>
+                            <tr>
+                                <th scope="col">語</th>
+                                <th scope="col">出現回数</th>
+                                <th scope="col">登場PDF数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for item in stats.word_frequencies %}
+                                <tr>
+                                    <td>{{ item.word }}</td>
+                                    <td>{{ item.count }}</td>
+                                    <td>{{ item.pdf_count }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-12 col-xl-6">
+                    <h2 class="h5 mb-2">PDF別ボリューム</h2>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead>
+                            <tr>
+                                <th scope="col">source</th>
+                                <th scope="col">source_date</th>
+                                <th scope="col">チャンク数</th>
+                                <th scope="col">文字数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for item in stats.source_volumes %}
+                                <tr>
+                                    <td>{{ item.source }}</td>
+                                    <td>{{ item.source_date|default:"-" }}</td>
+                                    <td>{{ item.chunk_count }}</td>
+                                    <td>{{ item.character_count }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <h2 class="h5 mb-2">日付別ボリューム</h2>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead>
+                            <tr>
+                                <th scope="col">source_date</th>
+                                <th scope="col">PDF数</th>
+                                <th scope="col">チャンク数</th>
+                                <th scope="col">文字数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for item in stats.date_volumes %}
+                                <tr>
+                                    <td>{{ item.source_date }}</td>
+                                    <td>{{ item.source_count }}</td>
+                                    <td>{{ item.chunk_count }}</td>
+                                    <td>{{ item.character_count }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                対象期間内の rokunohe_minutes collection に集計できる本文はありません。
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

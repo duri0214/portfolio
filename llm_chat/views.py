@@ -4,7 +4,6 @@ import json
 import logging
 import math
 import os
-import time
 import traceback
 from datetime import date, timedelta
 from typing import Generator
@@ -32,7 +31,7 @@ from llm_chat.domain.repository.completion.rokunohe_minutes import (
 )
 from llm_chat.domain.service.chat import ChatDisplayService
 from llm_chat.domain.service.completion.rokunohe_minutes import (
-    RokunoheMinuteThemeAnalysisService,
+    RokunoheMinutesCollectionStatsService,
     RokunoheMinutesRagService,
 )
 from llm_chat.domain.use_case.completion.chat import (
@@ -71,10 +70,25 @@ def _parse_source_date_range(request) -> tuple[int | None, int | None]:
     未指定なら既存どおり直近1年基準に任せるため、上下限ともNoneを返します。
     終了日だけを指定した場合は、意図しない広範囲処理を避けるためエラーにします。
     """
-    source_date_from = _parse_optional_source_date(
-        request.POST.get("source_date_from", "")
+    return _parse_source_date_range_values(
+        source_date_from_value=request.POST.get("source_date_from", ""),
+        source_date_to_value=request.POST.get("source_date_to", ""),
     )
-    source_date_to = _parse_optional_source_date(request.POST.get("source_date_to", ""))
+
+
+def _parse_source_date_range_values(
+    *,
+    source_date_from_value: str | None,
+    source_date_to_value: str | None,
+) -> tuple[int | None, int | None]:
+    """
+    任意期間入力をYYYYMMDD整数へ変換します。
+
+    POSTで実行するPDF取り込みと、GETで表示するcollection集計の両方で使います。
+    終了日だけを指定した場合は、意図しない広範囲処理を避けるためエラーにします。
+    """
+    source_date_from = _parse_optional_source_date(source_date_from_value)
+    source_date_to = _parse_optional_source_date(source_date_to_value)
     if source_date_from is None and source_date_to is not None:
         raise ValueError("処理期間の終了日を指定する場合は開始日も指定してください。")
     if (
@@ -128,17 +142,6 @@ def _build_source_date_period_label(
 def _format_source_date(source_date: int) -> str:
     raw_value = str(source_date)
     return f"{raw_value[:4]}-{raw_value[4:6]}-{raw_value[6:8]}"
-
-
-def _format_elapsed_time(elapsed_seconds: float) -> str:
-    total_seconds = int(elapsed_seconds)
-    hours, remainder = divmod(total_seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    if hours:
-        return f"{hours}時間{minutes}分{seconds}秒"
-    if minutes:
-        return f"{minutes}分{seconds}秒"
-    return f"{seconds}秒"
 
 
 class IndexView(FormView):
@@ -325,75 +328,61 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
         return redirect("llm:rokunohe_minutes")
 
 
-class RokunoheThemeAnalysisRunView(UserPassesTestMixin, View):
+class RokunoheCollectionStatsView(UserPassesTestMixin, View):
     """
-    六戸町会議録RAGのテーマ分析パイプラインを管理画面から起動するビュー。
+    六戸町会議録RAGのcollection集計を表示する管理者用ビュー。
 
-    View自身は分析ロジックを持たず、同意確認、処理時間計測、成功/警告/失敗メッセージの
-    組み立てだけを担当します。実際のChromaチャンク取得、K-means、LLMラベル生成、
-    Django DB保存はRokunoheMinuteThemeAnalysisServiceへ委譲します。
+    Chroma DBに登録済みの本文チャンクを、LLMなし・DB保存なしでその場集計します。
+    View自身はGETパラメータの期間指定を解決し、頻出語、PDF別ボリューム、
+    日付別ボリュームをテンプレートへ渡すだけに責務を限定します。
     """
 
     raise_exception = True
-    analysis_consent_value = "1"
 
     def test_func(self):
         return self.request.user.is_superuser
 
-    def post(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         """
-        テーマ分析Serviceを同期実行し、結果件数と処理時間を画面メッセージへ返します。
+        collection集計を実行し、結果を表示します。
 
-        対象チャンクなしはユーザーが次に取るべき操作を判断できる警告として扱い、
-        その他の例外はログへstack traceを残したうえでエラーメッセージにします。
+        期間未指定時は直近1年を対象にします。終了日だけが指定された場合など、
+        期間指定が不正なときは警告メッセージを出して六戸町会議録QAへ戻します。
         """
-        if request.POST.get("analysis_consent") != self.analysis_consent_value:
-            messages.warning(
-                request,
-                "テーマ分析の実行に同意してから実行してください。",
+        try:
+            source_date_from, source_date_to = _parse_source_date_range_values(
+                source_date_from_value=request.GET.get("source_date_from", ""),
+                source_date_to_value=request.GET.get("source_date_to", ""),
             )
+            service = RokunoheMinutesCollectionStatsService(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+            stats = service.build_stats()
+        except ValueError as e:
+            messages.warning(request, str(e))
+            return redirect("llm:rokunohe_minutes")
+        except Exception as e:
+            logger.error(f"RokunoheCollectionStatsView Error: {str(e)}")
+            logger.error(traceback.format_exc())
+            messages.error(request, f"collection集計の表示に失敗しました: {str(e)}")
             return redirect("llm:rokunohe_minutes")
 
-        started_at = time.perf_counter()
-        try:
-            source_date_from, source_date_to = _parse_source_date_range(request)
-            service = RokunoheMinuteThemeAnalysisService(
-                source_date_from=source_date_from,
-                source_date_to=source_date_to,
-            )
-            job = service.run()
-            elapsed_seconds = time.perf_counter() - started_at
-            period_label = _build_source_date_period_label(
-                source_date_from=source_date_from,
-                source_date_to=source_date_to,
-            )
-            messages.success(
-                request,
-                (
-                    "六戸町会議録RAGのテーマ分析を実行しました。"
-                    f" 対象期間: {period_label}"
-                    f" 対象: {job.chunk_count}件 / クラスタ: {job.actual_cluster_count}件"
-                    f" / 処理時間: {_format_elapsed_time(elapsed_seconds)}"
-                ),
-            )
-        except ValueError as e:
-            elapsed_seconds = time.perf_counter() - started_at
-            messages.warning(
-                request,
-                f"{str(e)} 処理時間: {_format_elapsed_time(elapsed_seconds)}",
-            )
-        except Exception as e:
-            elapsed_seconds = time.perf_counter() - started_at
-            logger.error(f"RokunoheThemeAnalysisRunView Error: {str(e)}")
-            logger.error(traceback.format_exc())
-            messages.error(
-                request,
-                (
-                    f"テーマ分析の実行に失敗しました: {str(e)}"
-                    f" 処理時間: {_format_elapsed_time(elapsed_seconds)}"
-                ),
-            )
-        return redirect("llm:rokunohe_minutes")
+        period_label = _build_source_date_period_label(
+            source_date_from=source_date_from,
+            source_date_to=source_date_to,
+        )
+        context = {
+            "stats": stats,
+            "period_label": period_label,
+            "source_date_from": (
+                _format_source_date(source_date_from) if source_date_from else ""
+            ),
+            "source_date_to": (
+                _format_source_date(source_date_to) if source_date_to else ""
+            ),
+        }
+        return render(request, "llm_chat/rokunohe_collection_stats.html", context)
 
 
 class RokunoheCollectionViewerView(UserPassesTestMixin, View):
@@ -401,7 +390,7 @@ class RokunoheCollectionViewerView(UserPassesTestMixin, View):
     六戸町会議録RAGのChroma DB collection内容を確認する管理者用ビュー。
 
     Chroma DBに入っている本文チャンクを、人間が点検できるページング一覧へ変換します。
-    query_typeがrecent_yearのときは、PDF取得やテーマ分析と同じ直近1年基準で
+    query_typeがrecent_yearのときは、PDF取得やcollection集計と同じ直近1年基準で
     Repositoryへsource_date_fromを渡します。
     """
 

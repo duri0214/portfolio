@@ -44,13 +44,9 @@
                             <input type="hidden" name="source_date_to" id="pdfSourceDateTo">
                             <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
                         </form>
-                        <form id="themeAnalysisForm" method="post" action="{% url 'llm:rokunohe_theme_analysis_run' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="analysis_consent" value="1">
-                            <input type="hidden" name="source_date_from" id="themeSourceDateFrom">
-                            <input type="hidden" name="source_date_to" id="themeSourceDateTo">
-                            <button id="themeAnalysisButton" type="submit" class="btn btn-outline-primary btn-sm">テーマ分析を実行</button>
-                        </form>
+                        <a id="collectionStatsLink" href="{% url 'llm:rokunohe_collection_stats' %}" class="btn btn-outline-primary btn-sm">
+                            頻出語集計
+                        </a>
                         <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
                             コレクションビューア
                         </a>
@@ -65,7 +61,7 @@
                             会議録PDF取得・ベクトル化
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
-                            テーマ分析を実行
+                            頻出語集計
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                             コレクションビューア
@@ -90,19 +86,11 @@
                     </div>
                 {% endif %}
                 <p class="small text-muted mt-2 mb-3">
-                    会議録PDF取得・ベクトル化、コレクション確認、テーマ分析は、期間未指定時に直近1年分の会議録を処理基準にしています。
+                    会議録PDF取得・ベクトル化、コレクション確認、頻出語集計は、期間未指定時に直近1年分の会議録を処理基準にしています。
                 </p>
                 {% if not is_superuser %}
                     <p class="small text-muted mt-2 mb-3">管理者権限が必要なボタンは無効化されています</p>
                 {% endif %}
-
-                <div id="themeAnalysisLoading" class="alert alert-primary align-items-center gap-2 d-none" role="status">
-                    <div class="spinner-border spinner-border-sm" aria-hidden="true"></div>
-                    <div>
-                        <div class="fw-bold">テーマ分析を実行中です</div>
-                        <div class="small">対象期間内のチャンクを対象に、候補ラベル抽出、クラスタリング、代表テーマ命名を順に処理しています。完了までこの画面を閉じずにお待ちください。</div>
-                    </div>
-                </div>
 
                 {% for chat_log in chat_history %}
                     <div class="card shadow-sm border-0 mb-3">
@@ -164,15 +152,11 @@
             const clearBtn = document.getElementById("clearChatLogsBtn");
             const pdfDownloadForm = document.getElementById("pdfDownloadForm");
             const vectorDbResetForm = document.getElementById("vectorDbResetForm");
-            const themeAnalysisForm = document.getElementById("themeAnalysisForm");
-            const themeAnalysisButton = document.getElementById("themeAnalysisButton");
-            const themeAnalysisLoading = document.getElementById("themeAnalysisLoading");
+            const collectionStatsLink = document.getElementById("collectionStatsLink");
             const debugSourceDateFrom = document.getElementById("debugSourceDateFrom");
             const debugSourceDateTo = document.getElementById("debugSourceDateTo");
             const pdfSourceDateFrom = document.getElementById("pdfSourceDateFrom");
             const pdfSourceDateTo = document.getElementById("pdfSourceDateTo");
-            const themeSourceDateFrom = document.getElementById("themeSourceDateFrom");
-            const themeSourceDateTo = document.getElementById("themeSourceDateTo");
 
             function getSourceDatePeriodLabel() {
                 const from = debugSourceDateFrom ? debugSourceDateFrom.value : "";
@@ -195,12 +179,21 @@
                 if (pdfSourceDateTo) {
                     pdfSourceDateTo.value = to;
                 }
-                if (themeSourceDateFrom) {
-                    themeSourceDateFrom.value = from;
+            }
+
+            function syncCollectionStatsLink() {
+                if (!collectionStatsLink) return;
+                const from = debugSourceDateFrom ? debugSourceDateFrom.value : "";
+                const to = debugSourceDateTo ? debugSourceDateTo.value : "";
+                const url = new URL(collectionStatsLink.href, window.location.origin);
+                url.search = "";
+                if (from) {
+                    url.searchParams.set("source_date_from", from);
                 }
-                if (themeSourceDateTo) {
-                    themeSourceDateTo.value = to;
+                if (to) {
+                    url.searchParams.set("source_date_to", to);
                 }
+                collectionStatsLink.href = url.toString();
             }
             let isLoading = false;
 
@@ -296,24 +289,15 @@
                 });
             }
 
-            if (themeAnalysisForm) {
-                themeAnalysisForm.addEventListener("submit", function (event) {
-                    syncSourceDateRange();
-                    const confirmed = confirm(`保存済みのrokunohe_minutes collectionの${getSourceDatePeriodLabel()}をもとにテーマ分析を実行します。処理に時間がかかる場合があります。実行しますか？`);
-                    if (!confirmed) {
-                        event.preventDefault();
-                        return;
-                    }
-                    if (themeAnalysisLoading) {
-                        themeAnalysisLoading.classList.remove("d-none");
-                        themeAnalysisLoading.classList.add("d-flex");
-                    }
-                    if (themeAnalysisButton) {
-                        themeAnalysisButton.disabled = true;
-                        themeAnalysisButton.textContent = "テーマ分析中...";
-                    }
-                });
+            if (debugSourceDateFrom) {
+                debugSourceDateFrom.addEventListener("change", syncCollectionStatsLink);
             }
+
+            if (debugSourceDateTo) {
+                debugSourceDateTo.addEventListener("change", syncCollectionStatsLink);
+            }
+
+            syncCollectionStatsLink();
 
             window.scrollTo({
                 top: document.body.scrollHeight,

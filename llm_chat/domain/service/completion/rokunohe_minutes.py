@@ -1,32 +1,32 @@
 import logging
 import os
+import re
+from collections import Counter, defaultdict
 from datetime import timedelta
 from pathlib import Path
 
 from django.contrib.auth.models import User
 from django.utils import timezone
+from janome.tokenizer import Tokenizer
 from lib.llm.valueobject.completion import RoleType
-import numpy as np
-from openai import OpenAI
 from pypdf import PdfReader
 
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.domain.repository.completion.rokunohe_minutes import (
     RokunoheMinutesRagRepository,
 )
-from llm_chat.domain.repository.completion.rokunohe_minutes_theme import (
-    RokunoheMinuteThemeAnalysisRepository,
-)
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
-    RokunoheMinuteThemeChunkAnalysis,
-    RokunoheMinuteThemeClusterAnalysis,
+    RokunoheMinutesCollectionStats,
+    RokunoheMinutesDateVolume,
     RokunoheMinutesDocument,
     RokunoheMinutesImportStatus,
     RokunoheMinutesMetadata,
     RokunoheMinutesPdf,
-    RokunoheMinutesThemeSourceChunk,
+    RokunoheMinutesSourceVolume,
+    RokunoheMinutesStatsSourceChunk,
+    RokunoheMinutesWordFrequency,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
@@ -146,7 +146,7 @@ class RokunoheMinutesPdfImportService:
 
         PDF全体を1つの長文として扱うのではなく、ページ単位のチャンクとして
         Chroma DBへ登録します。ページ番号とchunk_indexをメタデータへ入れることで、
-        後続のコレクションビューア、テーマ分析、出典表示が同じ粒度で追跡できます。
+        後続のコレクションビューア、集計表示、出典表示が同じ粒度で追跡できます。
 
         Args:
             pdf: 本文抽出対象の六戸町会議録PDF。
@@ -272,420 +272,274 @@ class RokunoheMinutesRagService(BaseChatService):
         return self.generate(user_message)
 
 
-class RokunoheMinuteThemeLabelService:
+class RokunoheMinutesCollectionStatsService:
     """
-    テーマ分析パイプライン内でLLMによるラベル生成だけを担当するService。
+    六戸町会議録collectionをLLMなしで頻出語・ボリューム集計するService。
 
-    テーマ分析は、embeddingによる機械的なクラスタリングだけでは人間が読める
-    テーマ名にならないため、LLMを2段階で使います。
-
-    1. 同じクラスタに属する本文抜粋を束ね、代表テーマ名を1つ生成する。
-
-    Chroma DBやDjango DBには触れず、LLM入出力の整形だけをこのServiceに閉じ込めます。
-
-    Attributes:
-        model_name: テーマ候補と代表ラベル生成に使用するLLMモデル名。
-    """
-
-    model_name = ModelName.GPT_5_MINI
-
-    def __init__(self, *, api_key: str | None = None) -> None:
-        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY") or "")
-
-    def extract_candidate_labels(self, text: str) -> list[str]:
-        """
-        単一チャンク本文から政策テーマ候補ラベルを抽出します。
-
-        クラスタリングの前処理として、各チャンクに人間が読める短い
-        テーマ候補を付与します。この時点ではクラスタ代表名ではなく、
-        後続のクラスタ命名で使う素材を作るだけです。
-
-        Args:
-            text: 六戸町会議録チャンク本文。
-
-        Returns:
-            list[str]: 最大5件の候補テーマラベル。
-        """
-        prompt = (
-            "以下の六戸町会議録本文から、政策テーマを表す短い日本語ラベルを最大5件抽出してください。"
-            "回答は1行1ラベルにしてください。\n\n"
-            f"{text[:3000]}"
-        )
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        content = response.choices[0].message.content or ""
-        return self._parse_labels(content)
-
-    def name_cluster(self, chunks: list[RokunoheMinuteThemeChunkAnalysis]) -> str:
-        """
-        クラスタに属するチャンク群から代表テーマ名を生成します。
-
-        K-meansで同じクラスタに割り当てられたチャンクの本文抜粋をLLMへ渡し、
-        ビューアで一覧しやすい20文字以内の名詞句へ圧縮します。
-        保存時はRokunoheMinuteThemeClusterのlabelになります。
-
-        Args:
-            chunks: 同一クラスタに属するチャンク分析結果。
-
-        Returns:
-            str: クラスタ代表テーマ名。
-        """
-        excerpt_text = "\n".join(
-            f"- {chunk.source_chunk.document[:200]}" for chunk in chunks[:5]
-        )
-        prompt = (
-            "以下の本文抜粋をもとに、クラスタの代表テーマ名を"
-            "日本語で20文字以内の名詞句1つにしてください。\n\n"
-            f"本文抜粋:\n{excerpt_text}"
-        )
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        content = response.choices[0].message.content or ""
-        label = content.strip().splitlines()[0].strip(" -・#")
-        return label[:255] or "未分類テーマ"
-
-    @staticmethod
-    def _parse_labels(content: str) -> list[str]:
-        labels = []
-        for line in content.splitlines():
-            label = line.strip().lstrip("-*0123456789.、)） ").strip()
-            if label and label not in labels:
-                labels.append(label[:100])
-            if len(labels) >= 5:
-                break
-        return labels
-
-
-class RokunoheMinuteThemeAnalysisService:
-    """
-    六戸町会議録RAGの既存チャンクからテーマ分析結果を作る集計パイプライン。
-
-    このServiceは、既にChroma DBへ登録された会議録チャンクを入力にして、
-    ビューアや後続分析で参照できるテーマクラスタをDjango DBへ保存します。
-    Chroma DBは本文、メタデータ、embeddingの取得元に限定し、集計結果の正本は
-    RokunoheMinuteThemeAnalysisRepository経由でDjango DBへ置きます。
+    このServiceは、Chroma DBに保存済みの本文チャンクを読み取り、Janomeで名詞と
+    複合名詞を抽出して頻出語ランキングを作ります。K-means、LLM、Django DB保存は
+    行わず、GETリクエスト時にその場で集計結果VOを返します。
 
     処理は次の順で進みます。
 
-    1. 直近1年分、またはデバッグ用に指定されたsource_date範囲のChromaチャンクを取得する。
-    2. 完了/失敗済みの保存済みテーマ分析結果を削除する。
-    3. 既存runningジョブがあればfailedへ畳み、前回中断や二重送信の残骸を中断扱いにする。
-    4. 新しい分析ジョブをrunning状態で作成し、以降の保存先として固定する。
-    5. embeddingをK-meansでクラスタリングし、各チャンクへcluster_indexを付与する。
-    6. クラスタごとの本文抜粋をLLMへ渡し、代表テーマ名を生成する。
-    7. クラスタとチャンク紐づけをDjango DBへ保存し、ジョブをcompletedへ更新する。
-    8. 途中で失敗した場合はジョブをfailedへ更新し、例外を呼び出し元へ再送出する。
-
-    Vector DBは集計や履歴管理が得意ではないため、テーマ分析結果はVector DBへ
-    積み増さず、毎回Django DB上で作り直します。
+    1. 直近1年分、または画面で指定されたsource_date範囲のChromaチャンクを取得する。
+    2. チャンク本文をJanomeで形態素解析し、名詞が連続する部分は複合名詞として扱う。
+    3. ストップワード、1文字語、数字だけの語、議事録の定型語を除外する。
+    4. 頻出語、PDF source別ボリューム、source_date別ボリュームをメモリ上で集計する。
 
     Attributes:
-        default_cluster_count: 通常実行時に生成を試みるクラスタ数。
-        default_recent_days: テーマ分析対象にする直近日数。
-        random_state: K-means再現性のために固定する乱数シード。
+        default_recent_days: 期間未指定時に集計対象にする直近日数。
+        default_word_limit: 頻出語ランキングの既定表示件数。
     """
 
-    default_cluster_count = 50
     default_recent_days = 365
-    random_state = 42
+    default_word_limit = 50
+    stop_words = {
+        "こと",
+        "もの",
+        "ため",
+        "ところ",
+        "これ",
+        "それ",
+        "ここ",
+        "よう",
+        "さん",
+        "議長",
+        "委員",
+        "町長",
+        "課長",
+        "部長",
+        "議員",
+        "答弁",
+        "質問",
+        "説明",
+        "会議",
+        "本会議",
+        "委員会",
+        "六戸町",
+        "ページ",
+        "発言",
+        "資料",
+        "以上",
+        "次第",
+        "今回",
+        "現在",
+        "関係",
+        "お願い",
+        "確認",
+        "対応",
+        "考え",
+    }
+    number_pattern = re.compile(r"^[0-9０-９]+$")
 
     def __init__(
         self,
         *,
         rag_repository: RokunoheMinutesRagRepository | None = None,
-        theme_repository: RokunoheMinuteThemeAnalysisRepository | None = None,
-        label_service: RokunoheMinuteThemeLabelService | None = None,
         source_date_from: int | None = None,
         source_date_to: int | None = None,
+        word_limit: int | None = None,
     ) -> None:
         self.rag_repository = rag_repository or RokunoheMinutesRagRepository(
             api_key=os.getenv("OPENAI_API_KEY") or ""
         )
-        self.theme_repository = (
-            theme_repository or RokunoheMinuteThemeAnalysisRepository()
-        )
-        self.label_service = label_service or RokunoheMinuteThemeLabelService()
         self.source_date_from = source_date_from
         self.source_date_to = source_date_to
+        self.word_limit = word_limit or self.default_word_limit
+        self.tokenizer = Tokenizer()
 
-    def run(self):
+    def build_stats(self) -> RokunoheMinutesCollectionStats:
         """
-        対象期間内のChromaチャンクから最新のテーマ分析ジョブを作成します。
-
-        このメソッドはテーマ分析の入口であり、途中状態をまたいで複数の
-        Repository/LLM処理を連結します。呼び出し元のViewはこのメソッドを1回呼ぶだけで、
-        「分析対象取得、既存結果リセット、既存runningのfailed化、ジョブ作成、
-        クラスタリング、LLMラベル生成、DB保存、完了/失敗ステータス更新」までを
-        一括実行します。
-
-        空のcollectionや対象期間内に分析対象チャンクがない場合は、分析ジョブを作らず
-        ValueErrorを送出します。ジョブ作成後の失敗は、failed状態へ更新してから
-        例外を再送出します。
+        対象期間内のChromaチャンクから集計結果を作ります。
 
         Returns:
-            RokunoheMinuteThemeAnalysisJob: 完了状態に更新された分析ジョブ。
+            RokunoheMinutesCollectionStats:
+                頻出語ランキング、PDF別ボリューム、日付別ボリュームを持つ表示用VO。
 
         Side Effects:
-            Chroma DBからチャンクとembeddingを取得し、LLM APIを呼び出して候補ラベルと
-            クラスタ代表ラベルを生成し、保存済みテーマ分析結果をリセットし、
-            残っているrunningジョブをfailedへ畳んでからDjango DBへ分析結果を保存します。
+            Chroma DBから本文とmetadataを読み取ります。LLM API呼び出しやDjango DB保存は
+            行いません。
         """
         source_date_from = self._get_source_date_from()
         source_date_to = self.source_date_to
-        chunks = self.rag_repository.list_theme_source_chunks(
+        chunks = self.rag_repository.list_stats_source_chunks(
             source_date_from=source_date_from,
             source_date_to=source_date_to,
         )
-        if not chunks:
-            raise ValueError(
-                "rokunohe_minutes collection に対象期間内の分析対象がありません。"
-            )
-        self.theme_repository.validate_analysis_preconditions(chunks=chunks)
-
         logger.info(
-            "Rokunohe theme analysis started: chunks=%s source_date_from=%s source_date_to=%s",
+            "Rokunohe collection stats started: chunks=%s source_date_from=%s source_date_to=%s",
             len(chunks),
             source_date_from,
             source_date_to or "指定なし",
         )
-        deleted_count = self.theme_repository.reset_analysis_results()
-        failed_running_count = self.theme_repository.mark_running_jobs_failed()
+        word_counts = Counter()
+        word_sources: dict[str, set[str]] = defaultdict(set)
+        source_counts: dict[str, dict[str, int | str]] = {}
+        date_counts: dict[str, dict[str, int | set[str]]] = {}
+
+        for chunk in chunks:
+            character_count = len(chunk.document)
+            source_key = chunk.source or "出典不明"
+            date_key = chunk.source_date or "日付不明"
+            source_stats = source_counts.setdefault(
+                source_key,
+                {
+                    "source": source_key,
+                    "source_date": chunk.source_date,
+                    "chunk_count": 0,
+                    "character_count": 0,
+                },
+            )
+            source_stats["chunk_count"] = int(source_stats["chunk_count"]) + 1
+            source_stats["character_count"] = (
+                int(source_stats["character_count"]) + character_count
+            )
+
+            date_stats = date_counts.setdefault(
+                date_key,
+                {
+                    "source_date": date_key,
+                    "sources": set(),
+                    "chunk_count": 0,
+                    "character_count": 0,
+                },
+            )
+            sources = date_stats["sources"]
+            if isinstance(sources, set):
+                sources.add(source_key)
+            date_stats["chunk_count"] = int(date_stats["chunk_count"]) + 1
+            date_stats["character_count"] = (
+                int(date_stats["character_count"]) + character_count
+            )
+
+            chunk_words = self._extract_words(chunk.document)
+            word_counts.update(chunk_words)
+            for word in set(chunk_words):
+                word_sources[word].add(source_key)
+
+        word_frequencies = [
+            RokunoheMinutesWordFrequency(
+                word=word,
+                count=count,
+                pdf_count=len(word_sources[word]),
+            )
+            for word, count in word_counts.most_common(self.word_limit)
+        ]
+        source_volumes = self._build_source_volumes(source_counts)
+        date_volumes = self._build_date_volumes(date_counts)
+        total_character_count = sum(len(chunk.document) for chunk in chunks)
         logger.info(
-            "Rokunohe theme analysis previous jobs prepared: deleted=%s failed_running=%s",
-            deleted_count,
-            failed_running_count,
+            "Rokunohe collection stats completed: chunks=%s words=%s sources=%s dates=%s",
+            len(chunks),
+            len(word_frequencies),
+            len(source_volumes),
+            len(date_volumes),
         )
-        job = self.theme_repository.create_job(
-            requested_cluster_count=self.default_cluster_count,
-            llm_model_name=self.label_service.model_name,
+        return RokunoheMinutesCollectionStats(
+            total_chunk_count=len(chunks),
+            total_character_count=total_character_count,
+            total_source_count=len({chunk.source for chunk in chunks if chunk.source}),
+            word_frequencies=word_frequencies,
+            source_volumes=source_volumes,
+            date_volumes=date_volumes,
         )
-        logger.info("Rokunohe theme analysis job created: job_id=%s", job.pk)
-        try:
-            chunk_analyses = self._create_chunk_analyses(chunks)
-            cluster_analyses = self._create_cluster_analyses(chunk_analyses)
-            logger.info(
-                "Rokunohe theme analysis saving results: job_id=%s clusters=%s chunks=%s",
-                job.pk,
-                len(cluster_analyses),
-                len(chunk_analyses),
-            )
-            self.theme_repository.save_analysis_result(
-                job=job,
-                clusters=cluster_analyses,
-            )
-            completed_job = self.theme_repository.mark_completed(
-                job=job,
-                chunk_count=len(chunk_analyses),
-                actual_cluster_count=len(cluster_analyses),
-            )
-            logger.info(
-                "Rokunohe theme analysis completed: job_id=%s clusters=%s chunks=%s",
-                job.pk,
-                completed_job.actual_cluster_count,
-                completed_job.chunk_count,
-            )
-            return completed_job
-        except Exception as e:
-            self.theme_repository.mark_failed(job=job, error_message=str(e))
-            logger.exception("Rokunohe theme analysis failed: job_id=%s", job.pk)
-            raise
 
     def _get_source_date_from(self) -> int:
         """
-        テーマ分析対象の下限日付をYYYYMMDD整数で返します。
+        集計対象の下限日付をYYYYMMDD整数で返します。
 
-        通常実行ではビューアと同じ直近1年を使います。画面のデバッグ期間で
+        通常表示ではビューアと同じ直近1年を使います。画面の期間指定で
         source_date_fromが明示された場合は、その日付を優先して短い範囲だけを
-        分析できるようにします。
+        集計できるようにします。
         """
         if self.source_date_from is not None:
             return self.source_date_from
         recent_start = timezone.localdate() - timedelta(days=self.default_recent_days)
         return int(recent_start.strftime("%Y%m%d"))
 
-    def _create_chunk_analyses(
-        self,
-        chunks: list[RokunoheMinutesThemeSourceChunk],
-    ) -> list[RokunoheMinuteThemeChunkAnalysis]:
+    def _extract_words(self, text: str) -> list[str]:
         """
-        チャンク一覧へクラスタ番号を付与します。
+        Janomeで本文から名詞または複合名詞を抽出します。
 
-        embeddingだけでK-meansクラスタ番号を決め、各チャンクを
-        RokunoheMinuteThemeChunkAnalysisへ変換します。チャンク単位の候補ラベル抽出は
-        1,000件超のLLM呼び出しになり検証も運用も重いため行いません。
-        代表テーマ名はクラスタ単位の本文抜粋だけをLLMへ渡して生成します。
+        名詞が連続する場合は「学校」「給食」ではなく「学校給食」として扱います。
+        ただし長すぎる複合語は議事録の固有表現や読み取りノイズになりやすいため、
+        30文字で打ち切ってからフィルタします。
         """
-        logger.info(
-            "Rokunohe theme analysis clustering started: chunks=%s",
-            len(chunks),
-        )
-        cluster_indexes = self._cluster_chunks(chunks)
-        logger.info(
-            "Rokunohe theme analysis chunk assignment started: chunks=%s",
-            len(chunks),
-        )
-        analyses = []
-        total_count = len(chunks)
-        for current_index, (chunk, cluster_index) in enumerate(
-            zip(chunks, cluster_indexes),
-            start=1,
-        ):
-            if (
-                current_index == 1
-                or current_index % 10 == 0
-                or current_index == total_count
-            ):
-                logger.info(
-                    "Rokunohe theme analysis assigning chunk to cluster: %s/%s chunk_id=%s cluster_index=%s",
-                    current_index,
-                    total_count,
-                    chunk.chroma_id,
-                    cluster_index,
-                )
-            analyses.append(
-                RokunoheMinuteThemeChunkAnalysis(
-                    source_chunk=chunk,
-                    candidate_labels=[],
-                    cluster_index=cluster_index,
-                )
-            )
-        logger.info(
-            "Rokunohe theme analysis chunk assignment completed: chunks=%s",
-            len(analyses),
-        )
-        return analyses
+        words = []
+        noun_parts = []
+        for token in self.tokenizer.tokenize(text):
+            part_of_speech = token.part_of_speech.split(",")
+            surface = token.surface.strip()
+            if self._is_collectable_noun(part_of_speech, surface):
+                noun_parts.append(surface)
+                continue
+            words.extend(self._flush_noun_parts(noun_parts))
+            noun_parts = []
+        words.extend(self._flush_noun_parts(noun_parts))
+        return words
 
-    def _cluster_chunks(
-        self,
-        chunks: list[RokunoheMinutesThemeSourceChunk],
-    ) -> list[int]:
-        """
-        チャンクembeddingをK-meansでクラスタ番号へ変換します。
-
-        Chroma DBに保存済みのembeddingを使い、本文を再度LLMへ投げずに
-        近い議論同士を機械的にまとめます。クラスタ数は対象チャンク数を超えないようにし、
-        乱数シードを固定して同じ入力なら同じ初期重心から処理を始めます。
-        """
-        cluster_count = min(self.default_cluster_count, len(chunks))
-        if cluster_count <= 0:
+    def _flush_noun_parts(self, noun_parts: list[str]) -> list[str]:
+        if not noun_parts:
             return []
-        if cluster_count == 1:
-            return [0]
+        word = "".join(noun_parts)[:30]
+        return [word] if self._should_keep_word(word) else []
 
-        logger.info(
-            "Rokunohe theme analysis K-means started: chunks=%s cluster_count=%s random_state=%s",
-            len(chunks),
-            cluster_count,
-            self.random_state,
-        )
-        embeddings = np.array([chunk.embedding for chunk in chunks])
-        centroids = self._initialize_centroids(embeddings, cluster_count)
-        labels = np.zeros(len(chunks), dtype=int)
+    def _is_collectable_noun(self, part_of_speech: list[str], surface: str) -> bool:
+        if not surface:
+            return False
+        if len(part_of_speech) < 2:
+            return False
+        if part_of_speech[0] != "名詞":
+            return False
+        if part_of_speech[1] in {"数", "代名詞", "非自立"}:
+            return False
+        return True
 
-        for _ in range(100):
-            distances = np.linalg.norm(embeddings[:, np.newaxis] - centroids, axis=2)
-            next_labels = distances.argmin(axis=1)
-            next_centroids = centroids.copy()
-            for cluster_index in range(cluster_count):
-                members = embeddings[next_labels == cluster_index]
-                if len(members) > 0:
-                    next_centroids[cluster_index] = members.mean(axis=0)
-
-            if np.array_equal(labels, next_labels) and np.allclose(
-                centroids, next_centroids
-            ):
-                break
-
-            labels = next_labels
-            centroids = next_centroids
-
-        logger.info("Rokunohe theme analysis K-means completed")
-        return [int(label) for label in labels]
-
-    def _initialize_centroids(
-        self,
-        embeddings: np.ndarray,
-        cluster_count: int,
-    ) -> np.ndarray:
-        """
-        K-meansの初期重心として使うembeddingを決定的に選びます。
-
-        random_stateで固定した乱数生成器を使うことで、同じ入力チャンク集合なら
-        再実行時も同じ初期重心を選び、分析結果の揺れを抑えます。
-        """
-        rng = np.random.default_rng(self.random_state)
-        initial_indexes = rng.choice(len(embeddings), size=cluster_count, replace=False)
-        return embeddings[initial_indexes].copy()
-
-    def _create_cluster_analyses(
-        self,
-        chunk_analyses: list[RokunoheMinuteThemeChunkAnalysis],
-    ) -> list[RokunoheMinuteThemeClusterAnalysis]:
-        """
-        チャンク分析結果をクラスタ単位へ畳み込み、代表テーマ名を付与します。
-
-        _create_chunk_analysesで得たcluster_indexごとにチャンクを束ね、
-        各クラスタの代表チャンクIDをembedding重心に最も近いチャンクから選びます。
-        その後、クラスタ内の候補ラベルと本文抜粋をLLMへ渡して、人間が読むための
-        代表テーマ名を生成します。
-        """
-        clusters = {}
-        for chunk_analysis in chunk_analyses:
-            clusters.setdefault(chunk_analysis.cluster_index, []).append(chunk_analysis)
-
-        cluster_analyses = []
-        total_clusters = len(clusters)
-        logger.info(
-            "Rokunohe theme analysis cluster naming started: clusters=%s",
-            total_clusters,
-        )
-        for current_index, (cluster_index, cluster_chunks) in enumerate(
-            sorted(clusters.items()),
-            start=1,
-        ):
-            logger.info(
-                "Rokunohe theme analysis naming cluster: %s/%s cluster_index=%s chunks=%s",
-                current_index,
-                total_clusters,
-                cluster_index,
-                len(cluster_chunks),
-            )
-            representative_chunk_id = self._find_representative_chunk_id(cluster_chunks)
-            label = self.label_service.name_cluster(cluster_chunks)
-            cluster_analyses.append(
-                RokunoheMinuteThemeClusterAnalysis(
-                    cluster_index=cluster_index,
-                    label=label,
-                    representative_chunk_id=representative_chunk_id,
-                    chunks=cluster_chunks,
-                )
-            )
-        logger.info(
-            "Rokunohe theme analysis cluster naming completed: clusters=%s",
-            len(cluster_analyses),
-        )
-        return cluster_analyses
+    def _should_keep_word(self, word: str) -> bool:
+        normalized = word.strip()
+        if len(normalized) <= 1:
+            return False
+        if normalized in self.stop_words:
+            return False
+        if self.number_pattern.match(normalized):
+            return False
+        return True
 
     @staticmethod
-    def _find_representative_chunk_id(
-        chunks: list[RokunoheMinuteThemeChunkAnalysis],
-    ) -> str:
-        """
-        クラスタを代表するチャンクIDを選びます。
+    def _build_source_volumes(
+        source_counts: dict[str, dict[str, int | str]],
+    ) -> list[RokunoheMinutesSourceVolume]:
+        return [
+            RokunoheMinutesSourceVolume(
+                source=str(stats["source"]),
+                source_date=str(stats["source_date"]),
+                chunk_count=int(stats["chunk_count"]),
+                character_count=int(stats["character_count"]),
+            )
+            for stats in sorted(
+                source_counts.values(),
+                key=lambda item: (-int(item["character_count"]), str(item["source"])),
+            )
+        ]
 
-        単一チャンクのクラスタならそのチャンクを代表にします。複数チャンクがある場合は
-        embedding平均をクラスタ重心とみなし、重心に最も近いチャンクを代表として選びます。
-        ビューアではこのIDをクラスタの入口として使います。
-        """
-        if len(chunks) == 1:
-            return chunks[0].source_chunk.chroma_id
-
-        embeddings = np.array([chunk.source_chunk.embedding for chunk in chunks])
-        centroid = embeddings.mean(axis=0)
-        distances = np.linalg.norm(embeddings - centroid, axis=1)
-        nearest_index = int(distances.argmin())
-        return chunks[nearest_index].source_chunk.chroma_id
+    @staticmethod
+    def _build_date_volumes(
+        date_counts: dict[str, dict[str, int | set[str]]],
+    ) -> list[RokunoheMinutesDateVolume]:
+        volumes = []
+        for stats in sorted(
+            date_counts.values(),
+            key=lambda item: str(item["source_date"]),
+            reverse=True,
+        ):
+            sources = stats["sources"]
+            source_count = len(sources) if isinstance(sources, set) else 0
+            volumes.append(
+                RokunoheMinutesDateVolume(
+                    source_date=str(stats["source_date"]),
+                    source_count=source_count,
+                    chunk_count=int(stats["chunk_count"]),
+                    character_count=int(stats["character_count"]),
+                )
+            )
+        return volumes

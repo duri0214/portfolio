@@ -8,7 +8,7 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinutesCollectionItem,
     RokunoheMinutesDocument,
     RokunoheMinutesPdf,
-    RokunoheMinutesThemeSourceChunk,
+    RokunoheMinutesStatsSourceChunk,
 )
 
 CollectionGetResult = dict[str, list]
@@ -19,16 +19,16 @@ class RokunoheMinutesRagRepository:
     """
     六戸町会議録RAGのChroma DB永続化、閲覧用取得、RAG検索を担当するRepository。
 
-    このRepositoryは、PDF取り込みService、コレクションビューア、テーマ分析Serviceの
+    このRepositoryは、PDF取り込みService、コレクションビューア、collection集計Serviceの
     3つの入口から使われます。Chroma DBの低レベルAPIを呼び出す責務をここに閉じ込め、
     呼び出し側には用途別のValue Objectを返します。
 
     1. PDF取り込みでは、source単位の重複確認、既存PDFチャンク削除、upsertを行う。
     2. コレクションビューアでは、本文、メタデータ、日付フィルタを表示用VOへ変換する。
-    3. テーマ分析では、本文、メタデータ、embeddingをクラスタリング用VOへ変換する。
+    3. 集計表示では、本文とメタデータを頻出語・ボリューム集計用VOへ変換する。
 
     Chromaの集計やソート機能には依存せず、日付絞り込みや表示用整形は
-    Python側で行います。分析結果そのものはDjango DB側のRepositoryが扱います。
+    Python側で行います。
     """
 
     def __init__(
@@ -72,7 +72,7 @@ class RokunoheMinutesRagRepository:
 
         source_date_from未指定時はChroma DBのcountをそのまま使います。日付下限が
         指定された場合は、Chromaから本文とメタデータを取得してPython側で絞り込みます。
-        これはビューアの「直近1年」表示と、テーマ分析対象の前提を揃えるためです。
+        これはビューアの「直近1年」表示と、collection集計対象の前提を揃えるためです。
         """
         if source_date_from is not None:
             existing = self._rag_service._collection.get(
@@ -109,22 +109,21 @@ class RokunoheMinutesRagRepository:
         )
         return self._build_collection_items(existing)
 
-    def list_theme_source_chunks(
+    def list_stats_source_chunks(
         self,
         *,
         source_date_from: int | None = None,
         source_date_to: int | None = None,
-    ) -> list[RokunoheMinutesThemeSourceChunk]:
+    ) -> list[RokunoheMinutesStatsSourceChunk]:
         """
-        テーマ分析Serviceへ渡す本文、メタデータ、embedding付きチャンクを取得します。
+        collection集計Serviceへ渡す本文とメタデータ付きチャンクを取得します。
 
-        テーマ分析はK-meansでembeddingを必須にするため、本文またはembeddingが欠けた
-        Chromaレコードは分析対象から除外します。source_date_fromが指定された場合は
-        直近1年などの分析対象期間に入るチャンクだけを返します。source_date_toが
-        指定された場合は、デバッグ実行用に短い期間へさらに絞り込みます。
+        LLMやembeddingを使わない頻出語・ボリューム集計用の入口です。Chroma側の
+        集計機能には依存せず、全件取得後にPython側でsource_date範囲を絞ります。
+        本文が空のChromaレコードは集計対象から除外します。
         """
         existing = self._rag_service._collection.get(
-            include=["documents", "metadatas", "embeddings"],
+            include=["documents", "metadatas"],
         )
         if not existing or not existing["ids"]:
             return []
@@ -132,49 +131,44 @@ class RokunoheMinutesRagRepository:
         ids = existing["ids"]
         documents = existing.get("documents")
         metadatas = existing.get("metadatas")
-        embeddings = existing.get("embeddings")
         documents = documents if documents is not None else []
         metadatas = metadatas if metadatas is not None else []
-        embeddings = embeddings if embeddings is not None else []
-        chunks: list[RokunoheMinutesThemeSourceChunk] = []
+        chunks: list[RokunoheMinutesStatsSourceChunk] = []
         seen_chroma_ids = set()
         duplicate_count = 0
 
         for index, chroma_id in enumerate(ids):
             document = documents[index] if index < len(documents) else ""
             metadata = metadatas[index] if index < len(metadatas) else {}
-            embedding = embeddings[index] if index < len(embeddings) else []
-            embedding_list = list(embedding) if embedding is not None else []
             source_date_int = self._get_source_date_int(metadata)
             if source_date_from is not None and source_date_int < source_date_from:
                 continue
             if source_date_to is not None and source_date_int > source_date_to:
                 continue
-            if not document or not embedding_list:
+            if not document:
                 continue
             if chroma_id in seen_chroma_ids:
                 duplicate_count += 1
                 logger.warning(
-                    "Rokunohe theme source chunk duplicated in Chroma collection: chroma_id=%s",
+                    "Rokunohe stats source chunk duplicated in Chroma collection: chroma_id=%s",
                     chroma_id,
                 )
                 continue
             seen_chroma_ids.add(chroma_id)
             chunks.append(
-                RokunoheMinutesThemeSourceChunk(
+                RokunoheMinutesStatsSourceChunk(
                     chroma_id=chroma_id,
                     document=document,
                     source=str(metadata.get("source", "")),
                     source_date=str(metadata.get("source_date") or ""),
                     page=metadata.get("page"),
                     chunk_index=metadata.get("chunk_index"),
-                    embedding=embedding_list,
                 )
             )
 
         if duplicate_count:
             logger.warning(
-                "Rokunohe theme source chunks deduplicated: duplicates=%s unique_chunks=%s",
+                "Rokunohe stats source chunks deduplicated: duplicates=%s unique_chunks=%s",
                 duplicate_count,
                 len(chunks),
             )
