@@ -1206,6 +1206,49 @@ class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
         self.assertEqual(theme_chunk.chunk_id, "doc_1")
         self.assertEqual(theme_chunk.candidate_labels, ["学校給食"])
 
+    def test_save_analysis_result_skips_duplicate_chunk_ids(self):
+        """
+        シナリオ:
+        - 入力: 同一分析ジョブ内に同じChroma IDのチャンク分析結果が2件含まれる状態。
+        - 処理: テーマ分析Repositoryで分析結果を保存する。
+        - 期待値: 一意制約エラーにせず、重複チャンクを1件に畳んで保存すること。
+        """
+        repository = RokunoheMinuteThemeAnalysisRepository()
+        job = repository.create_job(
+            requested_cluster_count=50,
+            llm_model_name="gpt-5-mini",
+        )
+        source_chunk = RokunoheMinutesThemeSourceChunk(
+            chroma_id="duplicate_doc",
+            document="重複した議論です。",
+            source="20260225_会議録.pdf",
+            source_date="20260225",
+            page=1,
+            chunk_index=0,
+            embedding=[0.0, 0.0],
+        )
+        first_chunk_analysis = RokunoheMinuteThemeChunkAnalysis(
+            source_chunk=source_chunk,
+            candidate_labels=["重複"],
+            cluster_index=0,
+        )
+        second_chunk_analysis = RokunoheMinuteThemeChunkAnalysis(
+            source_chunk=source_chunk,
+            candidate_labels=["重複"],
+            cluster_index=0,
+        )
+        cluster_analysis = RokunoheMinuteThemeClusterAnalysis(
+            cluster_index=0,
+            label="重複",
+            representative_chunk_id="duplicate_doc",
+            chunks=[first_chunk_analysis, second_chunk_analysis],
+        )
+
+        repository.save_analysis_result(job=job, clusters=[cluster_analysis])
+
+        self.assertEqual(job.theme_chunks.count(), 1)
+        self.assertEqual(job.theme_chunks.get().chunk_id, "duplicate_doc")
+
     def test_reset_analysis_results_removes_previous_finished_jobs(self):
         """
         シナリオ:
@@ -1556,6 +1599,37 @@ class RokunoheMinutesRagRepositoryTest(TestCase):
         self.assertEqual(chunks[0].document, "学校給食についての議論です。")
         self.assertEqual(chunks[0].source, "20260225_会議録.pdf")
         self.assertEqual(chunks[0].embedding, [0.1, 0.2, 0.3])
+
+    @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
+    def test_list_theme_source_chunks_deduplicates_chroma_ids(self, mock_rag_service):
+        """
+        シナリオ:
+        - 入力: Chroma DB collectionが同じIDを持つembedding付きチャンクを複数返す状態。
+        - 処理: Repositoryでテーマ分析用チャンク一覧を取得する。
+        - 期待値: 同一Chroma IDは1件に畳まれ、テーマ分析保存時の一意制約衝突を防げること。
+        """
+        rag_instance = mock_rag_service.return_value
+        rag_instance._collection.get.return_value = {
+            "ids": ["dup_doc", "dup_doc", "unique_doc"],
+            "documents": [
+                "重複した議論1です。",
+                "重複した議論2です。",
+                "別の議論です。",
+            ],
+            "metadatas": [
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+                {"source": "20260225_会議録.pdf", "source_date": "20260225"},
+            ],
+            "embeddings": [[0.1, 0.2], [0.1, 0.2], [0.3, 0.4]],
+        }
+        repository = RokunoheMinutesRagRepository(api_key="dummy")
+
+        chunks = repository.list_theme_source_chunks()
+
+        self.assertEqual(
+            [chunk.chroma_id for chunk in chunks], ["dup_doc", "unique_doc"]
+        )
 
     @patch("llm_chat.domain.repository.completion.rokunohe_minutes.OpenAILlmRagService")
     def test_list_theme_source_chunks_accepts_numpy_embeddings(self, mock_rag_service):

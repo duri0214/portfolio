@@ -1,3 +1,5 @@
+import logging
+
 from lib.llm.service.completion import OpenAILlmRagService
 from lib.llm.valueobject.completion import Message, RagResponse
 from lib.llm.valueobject.config import ModelName
@@ -10,6 +12,7 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
 )
 
 CollectionGetResult = dict[str, list]
+logger = logging.getLogger(__name__)
 
 
 class RokunoheMinutesRagRepository:
@@ -134,6 +137,8 @@ class RokunoheMinutesRagRepository:
         metadatas = metadatas if metadatas is not None else []
         embeddings = embeddings if embeddings is not None else []
         chunks: list[RokunoheMinutesThemeSourceChunk] = []
+        seen_chroma_ids = set()
+        duplicate_count = 0
 
         for index, chroma_id in enumerate(ids):
             document = documents[index] if index < len(documents) else ""
@@ -147,6 +152,14 @@ class RokunoheMinutesRagRepository:
                 continue
             if not document or not embedding_list:
                 continue
+            if chroma_id in seen_chroma_ids:
+                duplicate_count += 1
+                logger.warning(
+                    "Rokunohe theme source chunk duplicated in Chroma collection: chroma_id=%s",
+                    chroma_id,
+                )
+                continue
+            seen_chroma_ids.add(chroma_id)
             chunks.append(
                 RokunoheMinutesThemeSourceChunk(
                     chroma_id=chroma_id,
@@ -159,6 +172,12 @@ class RokunoheMinutesRagRepository:
                 )
             )
 
+        if duplicate_count:
+            logger.warning(
+                "Rokunohe theme source chunks deduplicated: duplicates=%s unique_chunks=%s",
+                duplicate_count,
+                len(chunks),
+            )
         return chunks
 
     def _build_collection_items(

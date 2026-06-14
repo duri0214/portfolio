@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -9,6 +11,8 @@ from llm_chat.models import (
     RokunoheMinuteThemeChunk,
     RokunoheMinuteThemeCluster,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class RokunoheMinuteThemeAnalysisRepository:
@@ -102,6 +106,8 @@ class RokunoheMinuteThemeAnalysisRepository:
         with transaction.atomic():
             RokunoheMinuteThemeChunk.objects.filter(job=job).delete()
             RokunoheMinuteThemeCluster.objects.filter(job=job).delete()
+            seen_chunk_ids = set()
+            duplicate_count = 0
 
             for cluster_analysis in clusters:
                 cluster = RokunoheMinuteThemeCluster.objects.create(
@@ -115,21 +121,40 @@ class RokunoheMinuteThemeAnalysisRepository:
                     source_date_from=cluster_analysis.source_date_from,
                     source_date_to=cluster_analysis.source_date_to,
                 )
-                theme_chunks = [
-                    RokunoheMinuteThemeChunk(
-                        job=job,
-                        cluster=cluster,
-                        chunk_id=chunk.source_chunk.chroma_id,
-                        source=chunk.source_chunk.source,
-                        source_date=chunk.source_chunk.source_date,
-                        page=chunk.source_chunk.page,
-                        chunk_index=chunk.source_chunk.chunk_index,
-                        candidate_labels=chunk.candidate_labels,
-                        character_count=len(chunk.source_chunk.document),
+                theme_chunks = []
+                for chunk in cluster_analysis.chunks:
+                    chunk_id = chunk.source_chunk.chroma_id
+                    if chunk_id in seen_chunk_ids:
+                        duplicate_count += 1
+                        logger.warning(
+                            "Rokunohe theme analysis duplicate chunk skipped: job_id=%s cluster_index=%s chunk_id=%s",
+                            job.pk,
+                            cluster_analysis.cluster_index,
+                            chunk_id,
+                        )
+                        continue
+                    seen_chunk_ids.add(chunk_id)
+                    theme_chunks.append(
+                        RokunoheMinuteThemeChunk(
+                            job=job,
+                            cluster=cluster,
+                            chunk_id=chunk_id,
+                            source=chunk.source_chunk.source,
+                            source_date=chunk.source_chunk.source_date,
+                            page=chunk.source_chunk.page,
+                            chunk_index=chunk.source_chunk.chunk_index,
+                            candidate_labels=chunk.candidate_labels,
+                            character_count=len(chunk.source_chunk.document),
+                        )
                     )
-                    for chunk in cluster_analysis.chunks
-                ]
                 RokunoheMinuteThemeChunk.objects.bulk_create(theme_chunks)
+            if duplicate_count:
+                logger.warning(
+                    "Rokunohe theme analysis duplicate chunks skipped: job_id=%s duplicates=%s unique_chunks=%s",
+                    job.pk,
+                    duplicate_count,
+                    len(seen_chunk_ids),
+                )
 
     def mark_completed(
         self,
