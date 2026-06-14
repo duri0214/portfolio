@@ -279,8 +279,7 @@ class RokunoheMinuteThemeLabelService:
     テーマ分析は、embeddingによる機械的なクラスタリングだけでは人間が読める
     テーマ名にならないため、LLMを2段階で使います。
 
-    1. 各チャンク本文から、政策テーマを表す短い候補ラベルを最大5件抽出する。
-    2. 同じクラスタに属する候補ラベルと本文抜粋を束ね、代表テーマ名を1つ生成する。
+    1. 同じクラスタに属する本文抜粋を束ね、代表テーマ名を1つ生成する。
 
     Chroma DBやDjango DBには触れず、LLM入出力の整形だけをこのServiceに閉じ込めます。
 
@@ -323,8 +322,8 @@ class RokunoheMinuteThemeLabelService:
         """
         クラスタに属するチャンク群から代表テーマ名を生成します。
 
-        K-meansで同じクラスタに割り当てられたチャンクの候補ラベルと本文抜粋を
-        LLMへ渡し、ビューアで一覧しやすい20文字以内の名詞句へ圧縮します。
+        K-meansで同じクラスタに割り当てられたチャンクの本文抜粋をLLMへ渡し、
+        ビューアで一覧しやすい20文字以内の名詞句へ圧縮します。
         保存時はRokunoheMinuteThemeClusterのlabelになります。
 
         Args:
@@ -333,18 +332,13 @@ class RokunoheMinuteThemeLabelService:
         Returns:
             str: クラスタ代表テーマ名。
         """
-        label_text = "\n".join(
-            f"- {label}"
-            for chunk in chunks[:20]
-            for label in chunk.candidate_labels[:5]
-        )
         excerpt_text = "\n".join(
             f"- {chunk.source_chunk.document[:200]}" for chunk in chunks[:5]
         )
         prompt = (
-            "以下の候補ラベルと本文抜粋をもとに、クラスタの代表テーマ名を"
+            "以下の本文抜粋をもとに、クラスタの代表テーマ名を"
             "日本語で20文字以内の名詞句1つにしてください。\n\n"
-            f"候補ラベル:\n{label_text}\n\n本文抜粋:\n{excerpt_text}"
+            f"本文抜粋:\n{excerpt_text}"
         )
         response = self.client.chat.completions.create(
             model=self.model_name,
@@ -382,10 +376,9 @@ class RokunoheMinuteThemeAnalysisService:
     3. 既存runningジョブがあればfailedへ畳み、前回中断や二重送信の残骸を中断扱いにする。
     4. 新しい分析ジョブをrunning状態で作成し、以降の保存先として固定する。
     5. embeddingをK-meansでクラスタリングし、各チャンクへcluster_indexを付与する。
-    6. 各チャンク本文をLLMへ渡して候補テーマラベルを抽出する。
-    7. クラスタごとに候補ラベルと本文抜粋をLLMへ渡し、代表テーマ名を生成する。
-    8. クラスタ、チャンク紐づけ、候補ラベルをDjango DBへ保存し、ジョブをcompletedへ更新する。
-    9. 途中で失敗した場合はジョブをfailedへ更新し、例外を呼び出し元へ再送出する。
+    6. クラスタごとの本文抜粋をLLMへ渡し、代表テーマ名を生成する。
+    7. クラスタとチャンク紐づけをDjango DBへ保存し、ジョブをcompletedへ更新する。
+    8. 途中で失敗した場合はジョブをfailedへ更新し、例外を呼び出し元へ再送出する。
 
     Vector DBは集計や履歴管理が得意ではないため、テーマ分析結果はVector DBへ
     積み増さず、毎回Django DB上で作り直します。
@@ -519,12 +512,12 @@ class RokunoheMinuteThemeAnalysisService:
         chunks: list[RokunoheMinutesThemeSourceChunk],
     ) -> list[RokunoheMinuteThemeChunkAnalysis]:
         """
-        チャンク一覧へクラスタ番号と候補テーマラベルを付与します。
+        チャンク一覧へクラスタ番号を付与します。
 
-        先にembeddingだけでK-meansクラスタ番号を決め、その後で各チャンク本文を
-        LLMへ渡して候補ラベルを抽出します。クラスタリングと候補ラベル抽出を
-        1つのRokunoheMinuteThemeChunkAnalysisへまとめることで、後続のクラスタ命名と
-        DB保存が同じVOだけを見れば済むようにします。
+        embeddingだけでK-meansクラスタ番号を決め、各チャンクを
+        RokunoheMinuteThemeChunkAnalysisへ変換します。チャンク単位の候補ラベル抽出は
+        1,000件超のLLM呼び出しになり検証も運用も重いため行いません。
+        代表テーマ名はクラスタ単位の本文抜粋だけをLLMへ渡して生成します。
         """
         logger.info(
             "Rokunohe theme analysis clustering started: chunks=%s",
@@ -532,7 +525,7 @@ class RokunoheMinuteThemeAnalysisService:
         )
         cluster_indexes = self._cluster_chunks(chunks)
         logger.info(
-            "Rokunohe theme analysis candidate label extraction started: chunks=%s",
+            "Rokunohe theme analysis chunk assignment started: chunks=%s",
             len(chunks),
         )
         analyses = []
@@ -547,21 +540,21 @@ class RokunoheMinuteThemeAnalysisService:
                 or current_index == total_count
             ):
                 logger.info(
-                    "Rokunohe theme analysis extracting candidate labels: %s/%s chunk_id=%s",
+                    "Rokunohe theme analysis assigning chunk to cluster: %s/%s chunk_id=%s cluster_index=%s",
                     current_index,
                     total_count,
                     chunk.chroma_id,
+                    cluster_index,
                 )
-            labels = self.label_service.extract_candidate_labels(chunk.document)
             analyses.append(
                 RokunoheMinuteThemeChunkAnalysis(
                     source_chunk=chunk,
-                    candidate_labels=labels,
+                    candidate_labels=[],
                     cluster_index=cluster_index,
                 )
             )
         logger.info(
-            "Rokunohe theme analysis candidate label extraction completed: chunks=%s",
+            "Rokunohe theme analysis chunk assignment completed: chunks=%s",
             len(analyses),
         )
         return analyses

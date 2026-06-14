@@ -186,7 +186,7 @@ class RokunoheMinuteThemeChunkAnalysis:
 
     Attributes:
         source_chunk: 分析対象のChromaチャンク。
-        candidate_labels: LLMがチャンク単位で抽出した候補テーマラベル。
+        candidate_labels: 旧パイプライン互換の候補テーマラベル。現行処理では空配列。
         cluster_index: K-meansが割り当てたクラスタ番号。
     """
 

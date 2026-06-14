@@ -267,7 +267,7 @@ class RokunoheMinuteThemeChunk(models.Model):
         source_date: 出典PDFファイル名から取得したYYYYMMDD形式の日付。
         page: PDF内のページ番号。
         chunk_index: RAG登録時のチャンク番号。
-        candidate_labels: LLMがチャンク単位で抽出した候補テーマラベル。
+        candidate_labels: 旧パイプライン互換の候補テーマラベル。現行処理では空配列。
         character_count: チャンク本文の文字数。
         created_at: レコードの作成日時。
     """

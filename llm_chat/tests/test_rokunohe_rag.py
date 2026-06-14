@@ -998,12 +998,14 @@ class RokunoheMinutesRagServiceTest(TestCase):
 
 class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.timezone.localdate")
-    def test_run_saves_llm_labels_and_kmeans_clusters(self, mock_localdate):
+    def test_run_saves_kmeans_clusters_with_cluster_level_llm_labels(
+        self, mock_localdate
+    ):
         """
         シナリオ:
         - 入力: embedding付きの六戸町会議録チャンク2件と、LLMラベルServiceのモック。
         - 処理: テーマ分析Serviceを実行する。
-        - 期待値: 直近1年分を対象に、候補ラベル抽出、K-meansクラスタリング、DB保存Repository呼び出しが行われること。
+        - 期待値: 直近1年分を対象に、K-meansクラスタリングとクラスタ単位の代表テーマ命名だけが行われること。
         """
         mock_localdate.return_value = date(2026, 6, 12)
         rag_repository = Mock()
@@ -1035,10 +1037,6 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
         theme_repository.mark_completed.return_value = job
         label_service = Mock()
         label_service.model_name = "gpt-5-mini"
-        label_service.extract_candidate_labels.side_effect = [
-            ["学校給食"],
-            ["道路整備"],
-        ]
         label_service.name_cluster.side_effect = ["学校給食", "道路整備"]
         service = RokunoheMinuteThemeAnalysisService(
             rag_repository=rag_repository,
@@ -1066,6 +1064,16 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
         clusters = theme_repository.save_analysis_result.call_args.kwargs["clusters"]
         self.assertEqual(len(clusters), 2)
         self.assertEqual(sum(cluster.chunk_count for cluster in clusters), 2)
+        self.assertEqual(
+            [
+                chunk.candidate_labels
+                for cluster in clusters
+                for chunk in cluster.chunks
+            ],
+            [[], []],
+        )
+        label_service.extract_candidate_labels.assert_not_called()
+        self.assertEqual(label_service.name_cluster.call_count, 2)
         theme_repository.mark_completed.assert_called_once_with(
             job=job,
             chunk_count=2,
@@ -1129,7 +1137,6 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
         theme_repository.mark_completed.return_value = job
         label_service = Mock()
         label_service.model_name = "gpt-5-mini"
-        label_service.extract_candidate_labels.return_value = ["指定期間"]
         label_service.name_cluster.return_value = "指定期間"
         service = RokunoheMinuteThemeAnalysisService(
             rag_repository=rag_repository,
@@ -1148,6 +1155,8 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
         theme_repository.validate_analysis_preconditions.assert_called_once_with(
             chunks=rag_repository.list_theme_source_chunks.return_value
         )
+        label_service.extract_candidate_labels.assert_not_called()
+        label_service.name_cluster.assert_called_once()
 
     def test_run_fails_fast_when_preflight_detects_duplicate_chunks(self):
         """
@@ -1309,7 +1318,7 @@ class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
         )
         chunk_analysis = RokunoheMinuteThemeChunkAnalysis(
             source_chunk=source_chunk,
-            candidate_labels=["学校給食"],
+            candidate_labels=[],
             cluster_index=0,
         )
         cluster_analysis = RokunoheMinuteThemeClusterAnalysis(
@@ -1336,7 +1345,7 @@ class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
         self.assertEqual(cluster.source_date_from, "20260225")
         theme_chunk = completed_job.theme_chunks.get()
         self.assertEqual(theme_chunk.chunk_id, "doc_1")
-        self.assertEqual(theme_chunk.candidate_labels, ["学校給食"])
+        self.assertEqual(theme_chunk.candidate_labels, [])
 
     def test_save_analysis_result_skips_duplicate_chunk_ids(self):
         """
