@@ -284,7 +284,11 @@ class RokunoheMinuteThemeChunk(models.Model):
         related_name="theme_chunks",
         on_delete=models.CASCADE,
     )
-    chunk_id = models.CharField(verbose_name="チャンクID", max_length=512)
+    chunk_id = models.CharField(
+        verbose_name="チャンクID",
+        max_length=512,
+        db_collation="utf8mb4_bin",
+    )
     source = models.CharField(verbose_name="出典PDF", max_length=512, blank=True)
     source_date = models.CharField(verbose_name="出典日", max_length=8, blank=True)
     page = models.PositiveIntegerField(verbose_name="ページ番号", null=True, blank=True)

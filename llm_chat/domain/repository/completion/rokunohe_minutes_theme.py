@@ -1,10 +1,12 @@
 import logging
 
+from django.db import connection
 from django.db import transaction
 from django.utils import timezone
 
 from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinuteThemeClusterAnalysis,
+    RokunoheMinutesThemeSourceChunk,
 )
 from llm_chat.models import (
     RokunoheMinuteThemeAnalysisJob,
@@ -39,6 +41,71 @@ class RokunoheMinuteThemeAnalysisRepository:
     stale_running_message = (
         "新しいテーマ分析実行のため、実行中だったジョブを失敗扱いにしました。"
     )
+    expected_chunk_id_collation = "utf8mb4_bin"
+
+    def validate_analysis_preconditions(
+        self,
+        *,
+        chunks: list[RokunoheMinutesThemeSourceChunk],
+    ) -> None:
+        """
+        LLM処理へ進む前に、テーマ分析結果をDB保存できる前提を検証します。
+
+        テーマ分析は長時間かかるため、最後のbulk_createで失敗しそうな条件は
+        候補ラベル抽出より前に検出します。完全一致の重複Chroma IDは、DBの
+        `job_id + chunk_id` 一意制約で必ず衝突するため即時エラーにします。
+        MySQLでは文字列照合順序によって別IDが同一扱いになることがあるため、
+        `chunk_id` が厳密照合の `utf8mb4_bin` であることも確認します。
+        """
+        duplicate_chunk_ids = self._find_duplicate_chunk_ids(chunks)
+        if duplicate_chunk_ids:
+            preview = ", ".join(duplicate_chunk_ids[:5])
+            raise ValueError(
+                "テーマ分析対象のChroma IDに重複があります。" f" 重複ID例: {preview}"
+            )
+
+        self._validate_chunk_id_collation()
+
+    def _find_duplicate_chunk_ids(
+        self,
+        chunks: list[RokunoheMinutesThemeSourceChunk],
+    ) -> list[str]:
+        seen_chunk_ids = set()
+        duplicate_chunk_ids = []
+        for chunk in chunks:
+            if chunk.chroma_id in seen_chunk_ids:
+                duplicate_chunk_ids.append(chunk.chroma_id)
+                continue
+            seen_chunk_ids.add(chunk.chroma_id)
+        return duplicate_chunk_ids
+
+    def _validate_chunk_id_collation(self) -> None:
+        field = RokunoheMinuteThemeChunk._meta.get_field("chunk_id")
+        if field.db_collation != self.expected_chunk_id_collation:
+            raise ValueError(
+                "テーマ分析結果のchunk_idモデル定義が厳密照合ではありません。"
+                f" expected={self.expected_chunk_id_collation} actual={field.db_collation}"
+            )
+
+        if connection.vendor != "mysql":
+            return
+
+        actual_collation = self._get_chunk_id_db_collation()
+        if actual_collation != self.expected_chunk_id_collation:
+            raise ValueError(
+                "テーマ分析結果のchunk_id DBカラムが厳密照合ではありません。"
+                " migrationを適用してください。"
+                f" expected={self.expected_chunk_id_collation} actual={actual_collation}"
+            )
+
+    def _get_chunk_id_db_collation(self) -> str | None:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SHOW FULL COLUMNS FROM llm_chat_rokunohe_minute_theme_chunk LIKE %s",
+                ["chunk_id"],
+            )
+            row = cursor.fetchone()
+        return row[2] if row else None
 
     def mark_running_jobs_failed(self) -> int:
         """
@@ -108,8 +175,17 @@ class RokunoheMinuteThemeAnalysisRepository:
             RokunoheMinuteThemeCluster.objects.filter(job=job).delete()
             seen_chunk_ids = set()
             duplicate_count = 0
+            total_clusters = len(clusters)
 
-            for cluster_analysis in clusters:
+            for current_index, cluster_analysis in enumerate(clusters, start=1):
+                logger.info(
+                    "Rokunohe theme analysis saving cluster: %s/%s job_id=%s cluster_index=%s chunks=%s",
+                    current_index,
+                    total_clusters,
+                    job.pk,
+                    cluster_analysis.cluster_index,
+                    cluster_analysis.chunk_count,
+                )
                 cluster = RokunoheMinuteThemeCluster.objects.create(
                     job=job,
                     cluster_index=cluster_analysis.cluster_index,
@@ -127,10 +203,16 @@ class RokunoheMinuteThemeAnalysisRepository:
                     if chunk_id in seen_chunk_ids:
                         duplicate_count += 1
                         logger.warning(
-                            "Rokunohe theme analysis duplicate chunk skipped: job_id=%s cluster_index=%s chunk_id=%s",
+                            (
+                                "Rokunohe theme analysis duplicate chunk skipped: "
+                                "job_id=%s cluster_index=%s chunk_id=%s source=%s page=%s chunk_index=%s"
+                            ),
                             job.pk,
                             cluster_analysis.cluster_index,
                             chunk_id,
+                            chunk.source_chunk.source,
+                            chunk.source_chunk.page,
+                            chunk.source_chunk.chunk_index,
                         )
                         continue
                     seen_chunk_ids.add(chunk_id)

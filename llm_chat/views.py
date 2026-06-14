@@ -130,6 +130,17 @@ def _format_source_date(source_date: int) -> str:
     return f"{raw_value[:4]}-{raw_value[4:6]}-{raw_value[6:8]}"
 
 
+def _format_elapsed_time(elapsed_seconds: float) -> str:
+    total_seconds = int(elapsed_seconds)
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    if hours:
+        return f"{hours}時間{minutes}分{seconds}秒"
+    if minutes:
+        return f"{minutes}分{seconds}秒"
+    return f"{seconds}秒"
+
+
 class IndexView(FormView):
     template_name = "llm_chat/index.html"
     form_class = UserTextForm
@@ -362,12 +373,15 @@ class RokunoheThemeAnalysisRunView(UserPassesTestMixin, View):
                     "六戸町会議録RAGのテーマ分析を実行しました。"
                     f" 対象期間: {period_label}"
                     f" 対象: {job.chunk_count}件 / クラスタ: {job.actual_cluster_count}件"
-                    f" / 処理時間: {elapsed_seconds:.1f}秒"
+                    f" / 処理時間: {_format_elapsed_time(elapsed_seconds)}"
                 ),
             )
         except ValueError as e:
             elapsed_seconds = time.perf_counter() - started_at
-            messages.warning(request, f"{str(e)} 処理時間: {elapsed_seconds:.1f}秒")
+            messages.warning(
+                request,
+                f"{str(e)} 処理時間: {_format_elapsed_time(elapsed_seconds)}",
+            )
         except Exception as e:
             elapsed_seconds = time.perf_counter() - started_at
             logger.error(f"RokunoheThemeAnalysisRunView Error: {str(e)}")
@@ -376,7 +390,7 @@ class RokunoheThemeAnalysisRunView(UserPassesTestMixin, View):
                 request,
                 (
                     f"テーマ分析の実行に失敗しました: {str(e)}"
-                    f" 処理時間: {elapsed_seconds:.1f}秒"
+                    f" 処理時間: {_format_elapsed_time(elapsed_seconds)}"
                 ),
             )
         return redirect("llm:rokunohe_minutes")

@@ -451,6 +451,7 @@ class RokunoheMinuteThemeAnalysisService:
             raise ValueError(
                 "rokunohe_minutes collection に対象期間内の分析対象がありません。"
             )
+        self.theme_repository.validate_analysis_preconditions(chunks=chunks)
 
         logger.info(
             "Rokunohe theme analysis started: chunks=%s source_date_from=%s source_date_to=%s",

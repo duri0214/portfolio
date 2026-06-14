@@ -41,6 +41,7 @@ from llm_chat.models import (
     RokunoheMinuteThemeChunk,
     RokunoheMinuteThemeCluster,
 )
+from llm_chat.views import _format_elapsed_time
 
 
 class RokunoheMinutesRagViewTest(TestCase):
@@ -535,6 +536,17 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         self.assertEqual(403, response.status_code)
 
+    def test_format_elapsed_time_for_human_readable_messages(self):
+        """
+        シナリオ:
+        - 入力: 秒、分秒、時間分秒にまたがる経過秒数。
+        - 処理: テーマ分析の処理時間表示用formatterを呼び出す。
+        - 期待値: 小数秒ではなく、人間が読みやすい時分秒表記になること。
+        """
+        self.assertEqual(_format_elapsed_time(59.4), "59秒")
+        self.assertEqual(_format_elapsed_time(125.2), "2分5秒")
+        self.assertEqual(_format_elapsed_time(7863.5), "2時間11分3秒")
+
     @patch("llm_chat.views.RokunoheMinuteThemeAnalysisService")
     def test_superuser_can_run_theme_analysis(self, mock_service):
         """
@@ -568,7 +580,7 @@ class RokunohePdfDownloadViewTest(TestCase):
             str(message) for message in get_messages(response.wsgi_request)
         ]
         self.assertIn(
-            "六戸町会議録RAGのテーマ分析を実行しました。 対象期間: 直近1年 対象: 20件 / クラスタ: 5件 / 処理時間: 2.3秒",
+            "六戸町会議録RAGのテーマ分析を実行しました。 対象期間: 直近1年 対象: 20件 / クラスタ: 5件 / 処理時間: 2秒",
             message_texts,
         )
 
@@ -615,7 +627,7 @@ class RokunohePdfDownloadViewTest(TestCase):
             str(message) for message in get_messages(response.wsgi_request)
         ]
         self.assertIn(
-            "六戸町会議録RAGのテーマ分析を実行しました。 対象期間: 2026-02-25〜2026-02-25 対象: 3件 / クラスタ: 2件 / 処理時間: 1.0秒",
+            "六戸町会議録RAGのテーマ分析を実行しました。 対象期間: 2026-02-25〜2026-02-25 対象: 3件 / クラスタ: 2件 / 処理時間: 1秒",
             message_texts,
         )
 
@@ -1041,6 +1053,9 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
             source_date_from=20250612,
             source_date_to=None,
         )
+        theme_repository.validate_analysis_preconditions.assert_called_once_with(
+            chunks=rag_repository.list_theme_source_chunks.return_value
+        )
         theme_repository.reset_analysis_results.assert_called_once_with()
         theme_repository.mark_running_jobs_failed.assert_called_once_with()
         theme_repository.create_job.assert_called_once_with(
@@ -1085,6 +1100,7 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
         theme_repository.reset_analysis_results.assert_not_called()
         theme_repository.mark_running_jobs_failed.assert_not_called()
         theme_repository.create_job.assert_not_called()
+        theme_repository.validate_analysis_preconditions.assert_not_called()
 
     def test_run_uses_explicit_source_date_range_for_debug_execution(self):
         """
@@ -1129,6 +1145,49 @@ class RokunoheMinuteThemeAnalysisServiceTest(TestCase):
             source_date_from=20260225,
             source_date_to=20260225,
         )
+        theme_repository.validate_analysis_preconditions.assert_called_once_with(
+            chunks=rag_repository.list_theme_source_chunks.return_value
+        )
+
+    def test_run_fails_fast_when_preflight_detects_duplicate_chunks(self):
+        """
+        シナリオ:
+        - 入力: DB保存前提チェックで重複Chroma IDが検出されるテーマ分析Service。
+        - 処理: テーマ分析Serviceを実行する。
+        - 期待値: LLM候補ラベル抽出やジョブ作成へ進まず、開始直後にValueErrorで止まること。
+        """
+        rag_repository = Mock()
+        rag_repository.list_theme_source_chunks.return_value = [
+            RokunoheMinutesThemeSourceChunk(
+                chroma_id="duplicate_doc",
+                document="重複した議論です。",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+                embedding=[0.0, 0.0],
+            )
+        ]
+        theme_repository = Mock()
+        theme_repository.validate_analysis_preconditions.side_effect = ValueError(
+            "テーマ分析対象のChroma IDに重複があります。"
+        )
+        label_service = Mock()
+        service = RokunoheMinuteThemeAnalysisService(
+            rag_repository=rag_repository,
+            theme_repository=theme_repository,
+            label_service=label_service,
+        )
+
+        with self.assertRaises(ValueError):
+            service.run()
+
+        theme_repository.validate_analysis_preconditions.assert_called_once_with(
+            chunks=rag_repository.list_theme_source_chunks.return_value
+        )
+        theme_repository.reset_analysis_results.assert_not_called()
+        theme_repository.create_job.assert_not_called()
+        label_service.extract_candidate_labels.assert_not_called()
 
 
 class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
@@ -1150,9 +1209,82 @@ class RokunoheMinuteThemeAnalysisRepositoryTest(TestCase):
             512,
         )
         self.assertEqual(
+            RokunoheMinuteThemeChunk._meta.get_field("chunk_id").db_collation,
+            "utf8mb4_bin",
+        )
+        self.assertEqual(
             RokunoheMinuteThemeChunk._meta.get_field("source").max_length,
             512,
         )
+
+    def test_validate_analysis_preconditions_raises_for_duplicate_chunk_ids(self):
+        """
+        シナリオ:
+        - 入力: 同じChroma IDを持つテーマ分析対象チャンク。
+        - 処理: テーマ分析RepositoryのDB保存前提チェックを実行する。
+        - 期待値: LLM処理へ進む前に重複IDをValueErrorで検出すること。
+        """
+        repository = RokunoheMinuteThemeAnalysisRepository()
+        chunks = [
+            RokunoheMinutesThemeSourceChunk(
+                chroma_id="duplicate_doc",
+                document="重複した議論1です。",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+                embedding=[0.0, 0.0],
+            ),
+            RokunoheMinutesThemeSourceChunk(
+                chroma_id="duplicate_doc",
+                document="重複した議論2です。",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=2,
+                chunk_index=1,
+                embedding=[1.0, 1.0],
+            ),
+        ]
+
+        with self.assertRaisesMessage(
+            ValueError,
+            "テーマ分析対象のChroma IDに重複があります。",
+        ):
+            repository.validate_analysis_preconditions(chunks=chunks)
+
+    def test_validate_analysis_preconditions_rejects_non_binary_mysql_collation(self):
+        """
+        シナリオ:
+        - 入力: MySQL上のchunk_idカラム照合順序がutf8mb4_binではない状態。
+        - 処理: テーマ分析RepositoryのDB保存前提チェックを実行する。
+        - 期待値: LLM処理へ進む前にmigration未適用としてValueErrorにすること。
+        """
+        repository = RokunoheMinuteThemeAnalysisRepository()
+        chunks = [
+            RokunoheMinutesThemeSourceChunk(
+                chroma_id="doc_1",
+                document="学校給食についての議論です。",
+                source="20260225_会議録.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+                embedding=[0.0, 0.0],
+            )
+        ]
+
+        with patch(
+            "llm_chat.domain.repository.completion.rokunohe_minutes_theme.connection"
+        ) as mock_connection, patch.object(
+            repository,
+            "_get_chunk_id_db_collation",
+            return_value="utf8mb4_0900_ai_ci",
+        ):
+            mock_connection.vendor = "mysql"
+            with self.assertRaisesMessage(
+                ValueError,
+                "テーマ分析結果のchunk_id DBカラムが厳密照合ではありません。",
+            ):
+                repository.validate_analysis_preconditions(chunks=chunks)
 
     def test_saves_cluster_and_chunk_analysis_result(self):
         """
