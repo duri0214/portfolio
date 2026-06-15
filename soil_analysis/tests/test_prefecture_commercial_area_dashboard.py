@@ -113,6 +113,28 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(hokkaido.japan_map_code, 1)
         self.assertEqual(hokkaido.land_count, 1)
 
+    def test_build_raises_error_when_jma_prefecture_code_is_not_prefecture_code(self):
+        """
+        シナリオ:
+        - 入力: 1から47の都道府県コードへ変換できないJMA府県予報区コードの圃場。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: データ不整合としてValueErrorが発生すること。
+        """
+        city = self._create_city("不明地域", "990000")
+        Land.objects.create(
+            name="不明地域テスト圃場",
+            company=self.company,
+            jma_city=city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.0,135.0",
+        )
+
+        with self.assertRaisesMessage(
+            ValueError, "1から47の都道府県コードに対応していません"
+        ):
+            PrefectureCommercialAreaService.build()
+
     def test_home_view_displays_prefecture_commercial_area_dashboard(self):
         """
         シナリオ:
@@ -156,21 +178,27 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             [name for _, name in JAPAN_MAP_PREFECTURES] + ["宗谷地方"], start=1
         ):
             code = "011000" if prefecture_name == "宗谷地方" else f"{index:02d}0000"
-            area = JmaArea.objects.create(code=code, name=f"{prefecture_name}エリア")
-            prefecture = JmaPrefecture.objects.create(
-                code=code, name=prefecture_name, jma_area=area
-            )
-            region = JmaRegion.objects.create(
-                code=f"{index:06d}",
-                name=f"{prefecture_name}地域",
-                jma_prefecture=prefecture,
-            )
-            city = JmaCity.objects.create(
-                code=f"{index:07d}", name=f"{prefecture_name}市", jma_region=region
+            city = PrefectureCommercialAreaDashboardTest._create_city(
+                prefecture_name, code, index
             )
             prefectures[prefecture_name] = {
-                "prefecture": prefecture,
-                "region": region,
                 "city": city,
             }
         return prefectures
+
+    @staticmethod
+    def _create_city(prefecture_name, prefecture_code, sequence=999):
+        area = JmaArea.objects.create(
+            code=prefecture_code, name=f"{prefecture_name}エリア"
+        )
+        prefecture = JmaPrefecture.objects.create(
+            code=prefecture_code, name=prefecture_name, jma_area=area
+        )
+        region = JmaRegion.objects.create(
+            code=f"{sequence:06d}",
+            name=f"{prefecture_name}地域",
+            jma_prefecture=prefecture,
+        )
+        return JmaCity.objects.create(
+            code=f"{sequence:07d}", name=f"{prefecture_name}市", jma_region=region
+        )

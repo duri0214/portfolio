@@ -57,7 +57,6 @@ JAPAN_MAP_PREFECTURES = (
     (46, "鹿児島県"),
     (47, "沖縄県"),
 )
-PREFECTURE_JAPAN_MAP_CODES = {name: code for code, name in JAPAN_MAP_PREFECTURES}
 
 
 class PrefectureCommercialAreaService:
@@ -243,16 +242,25 @@ class PrefectureCommercialAreaService:
             jma_prefecture: 圃場や警報に紐づくJMA都道府県マスタ。
 
         Returns:
-            int | None: japan-map-js の都道府県コード。未知コードの場合はNone。
+            int: japan-map-js の都道府県コード。
+
+        Raises:
+            ValueError: JMAコードから1から47の都道府県コードを取得できない場合。
         """
         try:
             japan_map_code = int(jma_prefecture.code[:2])
-        except (TypeError, ValueError):
-            return PREFECTURE_JAPAN_MAP_CODES.get(jma_prefecture.name)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                f"JMA都道府県コードを都道府県コードへ変換できません: "
+                f"id={jma_prefecture.id}, code={jma_prefecture.code}, name={jma_prefecture.name}"
+            ) from error
 
         if 1 <= japan_map_code <= 47:
             return japan_map_code
-        return PREFECTURE_JAPAN_MAP_CODES.get(jma_prefecture.name)
+        raise ValueError(
+            f"JMA都道府県コードが1から47の都道府県コードに対応していません: "
+            f"id={jma_prefecture.id}, code={jma_prefecture.code}, name={jma_prefecture.name}"
+        )
 
     @staticmethod
     def _calculate_risk_score(land_count: int, warning_city_count: int) -> int:
