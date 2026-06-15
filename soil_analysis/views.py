@@ -63,6 +63,9 @@ from soil_analysis.domain.service.hardness_plot_generation import (
     HardnessPlotGenerationService,
 )
 from soil_analysis.domain.service.kml import KmlService
+from soil_analysis.domain.service.prefecture_commercial_area import (
+    PrefectureCommercialAreaService,
+)
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.domain.valueobject.report.chemical_assessment import (
@@ -109,6 +112,15 @@ class Home(ListView):
             .prefetch_related("land_set")
             .order_by("name")
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        context["prefecture_area_dashboard"] = prefecture_area_dashboard
+        context["commercial_areas"] = prefecture_area_dashboard.areas
+        context["commercial_area_map_data"] = prefecture_area_dashboard.map_payload
+        context["dispatch_candidates"] = prefecture_area_dashboard.dispatch_candidates
+        return context
 
 
 class CompanyCreateView(CreateView):

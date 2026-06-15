@@ -1,6 +1,10 @@
 {% extends "soil_analysis/base.html" %}
 {% load static %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/home.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="container mt-4">
         <!-- Breadcrumb -->
@@ -13,29 +17,142 @@
         <div class="row g-4">
             <!-- Hero Section -->
             <div class="col-12">
-                <div class="bg-light p-5 rounded shadow-sm">
-                    <h1 class="display-5">土壌分析CRM</h1>
-                    <p class="lead">農業法人の圃場情報・土壌データを一元管理します。</p>
-                    <hr class="my-4">
-                    <div class="d-flex flex-wrap gap-2">
-                        <a class="btn btn-primary" href="{% url 'soil:company_create' %}">
-                            <i class="fas fa-building me-1"></i>企業の追加
-                        </a>
-                        <a class="btn btn-outline-primary" href="{% url 'soil:hardness_upload' %}">
-                            <i class="fas fa-hammer me-1"></i>土壌硬度データ取り込み
-                        </a>
-                        <a class="btn btn-outline-primary" href="{% url 'soil:chemical_upload' %}">
-                            <i class="fas fa-flask me-1"></i>化学分析データ取り込み
-                        </a>
-                        <a class="btn btn-outline-primary" href="{% url 'soil:route_suggest_upload' %}">
-                            <i class="fas fa-route me-1"></i>圃場ルートサジェスト
-                        </a>
-                        <a class="btn btn-outline-primary" href="{% url 'soil:associate_picture_and_land' %}">
-                            <i class="fas fa-camera me-1"></i>写真と圃場の自動紐づけ
-                        </a>
-                        <a class="btn btn-outline-primary" href="{% url 'soil:rokunohe_land_registry' %}">
-                            <i class="fas fa-map-marker-alt me-1"></i>六戸の登記簿一覧
-                        </a>
+                <div class="bg-light p-4 p-lg-5 rounded shadow-sm">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+                        <div>
+                            <h1 class="display-6 mb-2">都道府県別商圏マップ</h1>
+                            <p class="lead mb-0">47都道府県の商圏VOを俯瞰し、出荷候補と物流リスクを確認します。</p>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 align-content-start">
+                            <a class="btn btn-primary" href="{% url 'soil:company_create' %}">
+                                <i class="fas fa-building me-1"></i>企業の追加
+                            </a>
+                            <a class="btn btn-outline-primary" href="{% url 'soil:hardness_upload' %}">
+                                <i class="fas fa-hammer me-1"></i>土壌硬度データ取り込み
+                            </a>
+                            <a class="btn btn-outline-primary" href="{% url 'soil:chemical_upload' %}">
+                                <i class="fas fa-flask me-1"></i>化学分析データ取り込み
+                            </a>
+                            <a class="btn btn-outline-primary" href="{% url 'soil:route_suggest_upload' %}">
+                                <i class="fas fa-route me-1"></i>圃場ルートサジェスト
+                            </a>
+                            <a class="btn btn-outline-primary" href="{% url 'soil:associate_picture_and_land' %}">
+                                <i class="fas fa-camera me-1"></i>写真と圃場の自動紐づけ
+                            </a>
+                            <a class="btn btn-outline-primary" href="{% url 'soil:rokunohe_land_registry' %}">
+                                <i class="fas fa-map-marker-alt me-1"></i>六戸の登記簿一覧
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-lg-3">
+                            <div class="market-kpi">
+                                <span class="market-kpi-label">商圏VO</span>
+                                <strong>{{ prefecture_area_dashboard.area_count }}</strong>
+                                <small>都道府県</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="market-kpi">
+                                <span class="market-kpi-label">登録圃場</span>
+                                <strong>{{ prefecture_area_dashboard.land_count }}</strong>
+                                <small>圃場</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="market-kpi">
+                                <span class="market-kpi-label">稼働商圏</span>
+                                <strong>{{ prefecture_area_dashboard.active_area_count }}</strong>
+                                <small>商圏</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="market-kpi">
+                                <span class="market-kpi-label">配車候補</span>
+                                <strong>{{ prefecture_area_dashboard.dispatch_candidate_count }}</strong>
+                                <small>件</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-12 col-xl-8">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h2 class="h5 mb-0"><i class="fas fa-map me-2 text-muted"></i>日本地図商圏マップ</h2>
+                                <div class="market-legend">
+                                    <span><i class="legend-dot area-active"></i>稼働</span>
+                                    <span><i class="legend-dot area-risk"></i>注意</span>
+                                    <span><i class="legend-dot area-empty"></i>未登録</span>
+                                </div>
+                            </div>
+                            {{ commercial_area_map_data|json_script:"commercial-area-map-data" }}
+                            <div class="japan-market-map">
+                                <div id="commercial-area-map" class="commercial-area-map-canvas" aria-label="47都道府県の商圏マップ"></div>
+                                <div class="market-map-detail" id="commercial-area-map-detail" aria-live="polite">
+                                    <strong>都道府県を選択</strong>
+                                    <span>商圏の集計値を確認できます。</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-4">
+                            <h2 class="h5 mb-2"><i class="fas fa-truck-moving me-2 text-muted"></i>配車候補キュー</h2>
+                            {% if dispatch_candidates %}
+                                <div class="dispatch-queue">
+                                    {% for candidate in dispatch_candidates %}
+                                        <div class="dispatch-item">
+                                            <div class="d-flex justify-content-between gap-2">
+                                                <strong>{{ candidate.origin_name }} → {{ candidate.target_market_name }}</strong>
+                                                <span class="badge bg-secondary">{{ candidate.logistics_status }}</span>
+                                            </div>
+                                            <div class="small text-muted mt-1">{{ candidate.main_crop_name }} / Risk {{ candidate.risk_score }}</div>
+                                            <p class="small mb-0 mt-2">{{ candidate.reason }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="empty-dashboard">
+                                    <i class="fas fa-route text-muted mb-2"></i>
+                                    <p class="small text-muted mb-0">圃場が登録されると配車候補が表示されます。</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h3 mb-0"><i class="fas fa-globe-asia me-2 text-muted"></i>都道府県別商圏集計</h2>
+                </div>
+                <div class="card border-0 shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>商圏</th>
+                                    <th>状態</th>
+                                    <th class="text-end">圃場</th>
+                                    <th class="text-end">企業</th>
+                                    <th>主要作物</th>
+                                    <th class="text-end">警報</th>
+                                    <th class="text-end">Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for area in prefecture_area_dashboard.featured_areas %}
+                                    <tr>
+                                        <td class="fw-semibold">{{ area.prefecture_name }}</td>
+                                        <td><span class="badge market-status {{ area.status_class }}">{{ area.status_label }}</span></td>
+                                        <td class="text-end">{{ area.land_count }}</td>
+                                        <td class="text-end">{{ area.company_count }}</td>
+                                        <td>{{ area.main_crop_name }}</td>
+                                        <td class="text-end">{{ area.warning_city_count }}</td>
+                                        <td class="text-end">{{ area.risk_score }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -112,4 +229,9 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://unpkg.com/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
+    <script src="{% static 'soil_analysis/js/home.js' %}"></script>
 {% endblock %}

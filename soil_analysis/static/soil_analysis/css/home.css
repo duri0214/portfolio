@@ -1,0 +1,132 @@
+.market-kpi {
+    min-height: 104px;
+    padding: 16px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.market-kpi-label {
+    display: block;
+    color: #52616f;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.market-kpi strong {
+    display: inline-block;
+    margin-top: 6px;
+    color: #102a43;
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.market-kpi small {
+    color: #627d98;
+}
+
+.market-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #52616f;
+    font-size: 0.82rem;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+    border-radius: 50%;
+}
+
+.japan-market-map {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 520px;
+    padding: 16px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #f8fbfd;
+}
+
+.commercial-area-map-canvas {
+    display: flex;
+    justify-content: center;
+    min-height: 420px;
+    overflow: hidden;
+}
+
+.commercial-area-map-canvas canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+.area-active {
+    border-color: #4f8a6b;
+    background: #e4f4ec;
+}
+
+.area-risk {
+    border-color: #b35c38;
+    background: #fde9dc;
+}
+
+.area-empty {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.market-map-detail {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #fff;
+    color: #102a43;
+}
+
+.market-map-detail span {
+    color: #52616f;
+    font-size: 0.9rem;
+}
+
+.dispatch-queue {
+    display: grid;
+    gap: 10px;
+}
+
+.dispatch-item {
+    padding: 14px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.empty-dashboard {
+    min-height: 160px;
+    padding: 32px 16px;
+    border: 1px dashed #bcccdc;
+    border-radius: 8px;
+    background: #fff;
+    text-align: center;
+}
+
+.market-status {
+    border: 1px solid transparent;
+    color: #102a43;
+}
+
+@media (max-width: 767.98px) {
+    .japan-market-map {
+        min-height: 420px;
+        padding: 12px;
+    }
+
+    .commercial-area-map-canvas {
+        min-height: 320px;
+    }
+}
