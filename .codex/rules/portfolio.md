@@ -8,7 +8,9 @@ apply: always
 - GitHub API、GitHub Contents API、MCP のファイル更新系ツールなどで、リモートブランチ上のファイルを直接作成・更新・削除しない。
 - 変更は必ずローカル作業ツリーで編集し、`git add`、`git commit`、`git push` の通常フローで反映する。
 - `git add`、`git commit`、`git push`、`git checkout`、`git reset` などが失敗した場合は、API 等で迂回せず、原因を切り分けてユーザーに確認する。
-- GitHub API は Issue/PR の作成、コメント、メタ情報更新、状態確認など、ファイル内容を直接変更しない操作に限って使用する。
+- Issue/PR の作成、本文更新、コメント、メタ情報更新、状態確認などの GitHub 操作は、普段使っている `gh` CLI を使う。
+- GitHub API、GitHub App、MCP の GitHub 更新系ツールで Issue/PR を作成・更新・コメントしない。権限差や挙動差でチケット重複・意図しない更新が起きるため。
+- `gh` で GitHub 操作が失敗した場合も、API 等で迂回せず、原因を切り分けてユーザーに確認する。
 
 ## 設計方針
 - 基本的に DDD（ドメイン駆動設計）のエッセンスに沿って設計・実装する。
