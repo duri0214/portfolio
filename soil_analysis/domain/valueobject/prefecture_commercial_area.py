@@ -2,12 +2,12 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class CommercialAreaVO:
+class PrefectureCommercialAreaVO:
     """
     都道府県単位の農業商圏を表す読み取り専用VOです。
 
     `soil_analysis` のトップページでは、japan-map-js 上の1都道府県と
-    全国市場VOテーブルの1行がこのVOに対応します。既存の圃場は
+    都道府県別商圏集計テーブルの1行がこのVOに対応します。既存の圃場は
     `JmaCity -> JmaRegion -> JmaPrefecture` の関連を通じて都道府県へ
     アサインされ、その集計結果をこのVOが保持します。
 
@@ -100,7 +100,7 @@ class DispatchCandidateVO:
     """
     商圏から仮想市場への出荷候補を表す読み取り専用VOです。
 
-    このVOは、全国商圏マップの右側に表示する配車候補キューのために使います。
+    このVOは、都道府県別商圏マップの右側に表示する配車候補キューのために使います。
     現段階では実在の物流APIや市場価格へ接続せず、圃場登録のある商圏を
     「どこから、どの市場へ、どの作物を出せそうか」という形で可視化する
     PoC用の表示モデルです。
@@ -126,11 +126,11 @@ class DispatchCandidateVO:
 
 
 @dataclass(frozen=True)
-class NationalMarketVO:
+class PrefectureCommercialAreaDashboardVO:
     """
-    47都道府県の商圏を束ねた全国市場ビューを表す読み取り専用VOです。
+    47都道府県の商圏を束ねた都道府県別商圏ビューを表す読み取り専用VOです。
 
-    `CommercialAreaVO` の一覧をアプリケーション画面へ渡す集約ルートとして扱います。
+    `PrefectureCommercialAreaVO` の一覧をアプリケーション画面へ渡す集約ルートとして扱います。
     トップページのKPI、日本地図、都道府県別テーブル、配車候補キューは
     このVOから派生した値だけを参照します。
 
@@ -143,7 +143,7 @@ class NationalMarketVO:
         dispatch_candidates: 出荷候補一覧。
     """
 
-    areas: list[CommercialAreaVO]
+    areas: list[PrefectureCommercialAreaVO]
     dispatch_candidates: list[DispatchCandidateVO]
 
     @property
@@ -179,7 +179,7 @@ class NationalMarketVO:
     @property
     def land_count(self) -> int:
         """
-        全国商圏にアサインされた圃場数の合計を返します。
+        都道府県別商圏にアサインされた圃場数の合計を返します。
 
         Returns:
             int: 全都道府県の登録済み圃場数。
@@ -197,15 +197,15 @@ class NationalMarketVO:
         return len(self.dispatch_candidates)
 
     @property
-    def featured_areas(self) -> list[CommercialAreaVO]:
+    def featured_areas(self) -> list[PrefectureCommercialAreaVO]:
         """
-        全国市場VOテーブルに優先表示する商圏を返します。
+        都道府県別商圏集計テーブルに優先表示する商圏を返します。
 
         リスクスコア、圃場数、企業数の順に並べることで、確認優先度の高い
         都道府県をトップページ上で目に入りやすくします。
 
         Returns:
-            list[CommercialAreaVO]: 優先表示する最大8件の商圏VO。
+            list[PrefectureCommercialAreaVO]: 優先表示する最大8件の商圏VO。
         """
         return sorted(
             self.areas,
@@ -216,7 +216,7 @@ class NationalMarketVO:
     @property
     def map_payload(self) -> list[dict[str, int | str]]:
         """
-        japan-map-js に渡す全国商圏データを返します。
+        japan-map-js に渡す都道府県別商圏データを返します。
 
         テンプレートではこの値を `json_script` で埋め込み、JavaScript側で
         都道府県ごとの色分けとクリック時の詳細表示に利用します。

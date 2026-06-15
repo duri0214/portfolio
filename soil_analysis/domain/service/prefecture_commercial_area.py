@@ -1,9 +1,9 @@
 from collections import Counter, defaultdict
 
-from soil_analysis.domain.valueobject.market import (
-    CommercialAreaVO,
+from soil_analysis.domain.valueobject.prefecture_commercial_area import (
+    PrefectureCommercialAreaVO,
     DispatchCandidateVO,
-    NationalMarketVO,
+    PrefectureCommercialAreaDashboardVO,
 )
 from soil_analysis.models import JmaPrefecture, JmaWarning, Land, LandLedger
 
@@ -60,9 +60,9 @@ JAPAN_MAP_PREFECTURES = (
 PREFECTURE_JAPAN_MAP_CODES = {name: code for code, name in JAPAN_MAP_PREFECTURES}
 
 
-class NationalMarketService:
+class PrefectureCommercialAreaService:
     """
-    既存の土壌分析データから全国商圏ダッシュボード用のVOを生成します。
+    既存の土壌分析データから都道府県別商圏ダッシュボード用のVOを生成します。
 
     このServiceは、Djangoモデルに保存されている圃場・作付台帳・気象警報を
     トップページで扱いやすい読み取り専用の商圏情報へ変換します。
@@ -73,21 +73,21 @@ class NationalMarketService:
 
     DBモデルやマイグレーションは追加せず、既存データを集計して表示する
     PoC用途のServiceです。後続で市場価格、GraphRAG、物流APIなどを接続する
-    場合も、画面側は `NationalMarketVO` を読むだけで済むようにします。
+    場合も、画面側は `PrefectureCommercialAreaDashboardVO` を読むだけで済むようにします。
     """
 
     @classmethod
-    def build(cls) -> NationalMarketVO:
+    def build(cls) -> PrefectureCommercialAreaDashboardVO:
         """
-        全国商圏ダッシュボード全体の表示モデルを組み立てます。
+        都道府県別商圏ダッシュボード全体の表示モデルを組み立てます。
 
         japan-map-js の47都道府県コードを基準に商圏を作るため、JMAマスタが
         地方単位に分割されていても、画面には47都道府県として集約されます。
-        圃場が未登録の都道府県も `CommercialAreaVO` として返すため、
+        圃場が未登録の都道府県も `PrefectureCommercialAreaVO` として返すため、
         「未登録」「稼働」「注意」の状態を日本地図上で欠けなく表現できます。
 
         Returns:
-            NationalMarketVO: 都道府県別商圏と配車候補を束ねた表示用VO。
+            PrefectureCommercialAreaDashboardVO: 都道府県別商圏と配車候補を束ねた表示用VO。
         """
         land_stats = cls._build_land_stats()
         crop_stats = cls._build_crop_stats()
@@ -104,7 +104,9 @@ class NationalMarketService:
             for japan_map_code, prefecture_name in JAPAN_MAP_PREFECTURES
         ]
         dispatch_candidates = cls._build_dispatch_candidates(areas)
-        return NationalMarketVO(areas=areas, dispatch_candidates=dispatch_candidates)
+        return PrefectureCommercialAreaDashboardVO(
+            areas=areas, dispatch_candidates=dispatch_candidates
+        )
 
     @staticmethod
     def _build_land_stats() -> dict[int, dict]:
@@ -125,7 +127,7 @@ class NationalMarketService:
             "company", "jma_city__jma_region__jma_prefecture"
         )
         for land in lands:
-            japan_map_code = NationalMarketService._get_japan_map_code(
+            japan_map_code = PrefectureCommercialAreaService._get_japan_map_code(
                 land.jma_city.jma_region.jma_prefecture
             )
             if japan_map_code is None:
@@ -152,7 +154,7 @@ class NationalMarketService:
             "crop", "land__jma_city__jma_region__jma_prefecture"
         )
         for ledger in ledgers:
-            japan_map_code = NationalMarketService._get_japan_map_code(
+            japan_map_code = PrefectureCommercialAreaService._get_japan_map_code(
                 ledger.land.jma_city.jma_region.jma_prefecture
             )
             if japan_map_code is None:
@@ -175,7 +177,7 @@ class NationalMarketService:
         warning_stats = Counter()
         warnings = JmaWarning.objects.select_related("jma_region__jma_prefecture")
         for warning in warnings:
-            japan_map_code = NationalMarketService._get_japan_map_code(
+            japan_map_code = PrefectureCommercialAreaService._get_japan_map_code(
                 warning.jma_region.jma_prefecture
             )
             if japan_map_code is None:
@@ -191,11 +193,11 @@ class NationalMarketService:
         land_stats: dict[int, dict],
         crop_stats: dict[int, Counter],
         warning_stats: Counter,
-    ) -> CommercialAreaVO:
+    ) -> PrefectureCommercialAreaVO:
         """
         1都道府県分の集計値を商圏VOへ変換します。
 
-        `CommercialAreaVO` はテンプレートでそのまま利用する表示用の値を持つため、
+        `PrefectureCommercialAreaVO` はテンプレートでそのまま利用する表示用の値を持つため、
         ここで日本地図ライブラリ用の都道府県コード、状態判定に使うリスクスコア、
         主要作物名までまとめて確定させます。
 
@@ -207,7 +209,7 @@ class NationalMarketService:
             warning_stats: 都道府県別の警報・注意報件数。
 
         Returns:
-            CommercialAreaVO: トップページへ渡す1都道府県分の商圏VO。
+            PrefectureCommercialAreaVO: トップページへ渡す1都道府県分の商圏VO。
         """
         stats = land_stats[japan_map_code]
         warning_city_count = warning_stats[japan_map_code]
@@ -215,7 +217,7 @@ class NationalMarketService:
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
         main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])
 
-        return CommercialAreaVO(
+        return PrefectureCommercialAreaVO(
             prefecture_id=japan_map_code,
             prefecture_name=prefecture_name,
             japan_map_code=japan_map_code,
@@ -295,7 +297,7 @@ class NationalMarketService:
 
     @staticmethod
     def _build_dispatch_candidates(
-        areas: list[CommercialAreaVO],
+        areas: list[PrefectureCommercialAreaVO],
     ) -> list[DispatchCandidateVO]:
         """
         商圏集計からトップページ用の出荷候補リストを生成します。

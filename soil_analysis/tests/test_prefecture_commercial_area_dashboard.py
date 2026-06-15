@@ -2,10 +2,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from soil_analysis.domain.service.national_market import (
+from soil_analysis.domain.service.prefecture_commercial_area import (
     JAPAN_MAP_PREFECTURES,
-    PREFECTURE_JAPAN_MAP_CODES,
-    NationalMarketService,
+    PrefectureCommercialAreaService,
 )
 from soil_analysis.models import (
     Company,
@@ -24,7 +23,7 @@ from soil_analysis.models import (
 )
 
 
-class NationalMarketDashboardTest(TestCase):
+class PrefectureCommercialAreaDashboardTest(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="market-user")
         self.category = CompanyCategory.objects.create(name="農業法人")
@@ -41,20 +40,20 @@ class NationalMarketDashboardTest(TestCase):
         """
         シナリオ:
         - 入力: 47都道府県のJMA都道府県マスタ。
-        - 処理: 全国市場Serviceを実行する。
+        - 処理: 都道府県別商圏Serviceを実行する。
         - 期待値: 47件の商圏VOが作成され、未登録商圏も表示対象に含まれること。
         """
-        national_market = NationalMarketService.build()
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
 
-        self.assertEqual(national_market.area_count, 47)
-        self.assertEqual(national_market.active_area_count, 0)
-        self.assertEqual(national_market.areas[0].status_label, "未登録")
+        self.assertEqual(prefecture_area_dashboard.area_count, 47)
+        self.assertEqual(prefecture_area_dashboard.active_area_count, 0)
+        self.assertEqual(prefecture_area_dashboard.areas[0].status_label, "未登録")
 
     def test_build_aggregates_prefecture_land_crop_and_warning(self):
         """
         シナリオ:
         - 入力: 静岡県に圃場、作物台帳、JMA警報が登録されているDB状態。
-        - 処理: 全国市場Serviceを実行する。
+        - 処理: 都道府県別商圏Serviceを実行する。
         - 期待値: 静岡県商圏に圃場数、企業数、主要作物、警報数、リスクが反映されること。
         """
         city = self._get_city("静岡県")
@@ -78,8 +77,8 @@ class NationalMarketDashboardTest(TestCase):
         )
         JmaWarning.objects.create(jma_region=city.jma_region, warnings="大雨注意報")
 
-        national_market = NationalMarketService.build()
-        shizuoka = self._find_area(national_market.areas, "静岡県")
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        shizuoka = self._find_area(prefecture_area_dashboard.areas, "静岡県")
 
         self.assertEqual(shizuoka.land_count, 1)
         self.assertEqual(shizuoka.company_count, 1)
@@ -94,7 +93,7 @@ class NationalMarketDashboardTest(TestCase):
         """
         シナリオ:
         - 入力: 北海道内のJMA府県予報区である宗谷地方に圃場が登録されているDB状態。
-        - 処理: 全国市場Serviceを実行する。
+        - 処理: 都道府県別商圏Serviceを実行する。
         - 期待値: 宗谷地方が日本地図上の北海道商圏へ集約され、KeyErrorにならないこと。
         """
         city = self._get_city("宗谷地方")
@@ -107,19 +106,19 @@ class NationalMarketDashboardTest(TestCase):
             center="45.415,141.673",
         )
 
-        national_market = NationalMarketService.build()
-        hokkaido = self._find_area(national_market.areas, "北海道")
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        hokkaido = self._find_area(prefecture_area_dashboard.areas, "北海道")
 
-        self.assertEqual(national_market.area_count, 47)
+        self.assertEqual(prefecture_area_dashboard.area_count, 47)
         self.assertEqual(hokkaido.japan_map_code, 1)
         self.assertEqual(hokkaido.land_count, 1)
 
-    def test_home_view_displays_national_market_dashboard(self):
+    def test_home_view_displays_prefecture_commercial_area_dashboard(self):
         """
         シナリオ:
         - 入力: 47都道府県マスタと静岡県の圃場が登録されているDB状態。
         - 処理: soil_analysis のトップページを表示する。
-        - 期待値: 日本地図、全国市場VO、配車候補、既存企業別圃場一覧が表示されること。
+        - 期待値: 日本地図、都道府県別商圏集計、配車候補、既存企業別圃場一覧が表示されること。
         """
         city = self._get_city("静岡県")
         Land.objects.create(
@@ -134,11 +133,11 @@ class NationalMarketDashboardTest(TestCase):
         response = self.client.get(reverse("soil:home"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["national_market"].area_count, 47)
+        self.assertEqual(response.context["prefecture_area_dashboard"].area_count, 47)
         self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
-        self.assertContains(response, "全国商圏管制塔")
+        self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
-        self.assertContains(response, "全国市場VO")
+        self.assertContains(response, "都道府県別商圏集計")
         self.assertContains(response, "配車候補キュー")
         self.assertContains(response, "企業別圃場一覧")
         self.assertContains(response, "静岡県")

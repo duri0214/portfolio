@@ -20,7 +20,7 @@
                 <div class="bg-light p-4 p-lg-5 rounded shadow-sm">
                     <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
                         <div>
-                            <h1 class="display-6 mb-2">全国商圏管制塔</h1>
+                            <h1 class="display-6 mb-2">都道府県別商圏マップ</h1>
                             <p class="lead mb-0">47都道府県の商圏VOを俯瞰し、出荷候補と物流リスクを確認します。</p>
                         </div>
                         <div class="d-flex flex-wrap gap-2 align-content-start">
@@ -49,28 +49,28 @@
                         <div class="col-6 col-lg-3">
                             <div class="market-kpi">
                                 <span class="market-kpi-label">商圏VO</span>
-                                <strong>{{ national_market.area_count }}</strong>
+                                <strong>{{ prefecture_area_dashboard.area_count }}</strong>
                                 <small>都道府県</small>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
                             <div class="market-kpi">
                                 <span class="market-kpi-label">登録圃場</span>
-                                <strong>{{ national_market.land_count }}</strong>
+                                <strong>{{ prefecture_area_dashboard.land_count }}</strong>
                                 <small>圃場</small>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
                             <div class="market-kpi">
                                 <span class="market-kpi-label">稼働商圏</span>
-                                <strong>{{ national_market.active_area_count }}</strong>
+                                <strong>{{ prefecture_area_dashboard.active_area_count }}</strong>
                                 <small>商圏</small>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
                             <div class="market-kpi">
                                 <span class="market-kpi-label">配車候補</span>
-                                <strong>{{ national_market.dispatch_candidate_count }}</strong>
+                                <strong>{{ prefecture_area_dashboard.dispatch_candidate_count }}</strong>
                                 <small>件</small>
                             </div>
                         </div>
@@ -123,7 +123,7 @@
 
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2 class="h3 mb-0"><i class="fas fa-globe-asia me-2 text-muted"></i>全国市場VO</h2>
+                    <h2 class="h3 mb-0"><i class="fas fa-globe-asia me-2 text-muted"></i>都道府県別商圏集計</h2>
                 </div>
                 <div class="card border-0 shadow-sm">
                     <div class="table-responsive">
@@ -140,7 +140,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for area in national_market.featured_areas %}
+                                {% for area in prefecture_area_dashboard.featured_areas %}
                                     <tr>
                                         <td class="fw-semibold">{{ area.prefecture_name }}</td>
                                         <td><span class="badge market-status {{ area.status_class }}">{{ area.status_label }}</span></td>

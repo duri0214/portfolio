@@ -63,7 +63,9 @@ from soil_analysis.domain.service.hardness_plot_generation import (
     HardnessPlotGenerationService,
 )
 from soil_analysis.domain.service.kml import KmlService
-from soil_analysis.domain.service.national_market import NationalMarketService
+from soil_analysis.domain.service.prefecture_commercial_area import (
+    PrefectureCommercialAreaService,
+)
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.domain.valueobject.report.chemical_assessment import (
@@ -113,11 +115,11 @@ class Home(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        national_market = NationalMarketService.build()
-        context["national_market"] = national_market
-        context["commercial_areas"] = national_market.areas
-        context["commercial_area_map_data"] = national_market.map_payload
-        context["dispatch_candidates"] = national_market.dispatch_candidates
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        context["prefecture_area_dashboard"] = prefecture_area_dashboard
+        context["commercial_areas"] = prefecture_area_dashboard.areas
+        context["commercial_area_map_data"] = prefecture_area_dashboard.map_payload
+        context["dispatch_candidates"] = prefecture_area_dashboard.dispatch_candidates
         return context
 
 
