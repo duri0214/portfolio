@@ -88,7 +88,6 @@ python manage.py loaddata `
     soil_analysis\fixtures\userattribute.json `
     soil_analysis\fixtures\companycategory.json `
     soil_analysis\fixtures\company.json `
-    soil_analysis\fixtures\crop.json `
     soil_analysis\fixtures\land_block.json `
     soil_analysis\fixtures\land_period.json `
     soil_analysis\fixtures\cultivationtype.json
@@ -97,16 +96,24 @@ python manage.py loaddata `
 python manage.py weather_load_const_master
 
 python manage.py loaddata soil_analysis\fixtures\jma_weather_code.json
-python manage.py loaddata soil_analysis\fixtures\land.json
 python manage.py loaddata soil_analysis\fixtures\rokunohe_land_registry.json
 
-# Weather data fetch
-python manage.py weather_fetch_forecast
-python manage.py weather_fetch_warning
-
 python manage.py loaddata soil_analysis\fixtures\samplingmethod.json
+python manage.py generate_prefecture_representative_fixtures
+
+# Weather data fetch
+try {
+    python manage.py weather_fetch_forecast
+} catch {
+    Write-Warning "weather_fetch_forecast failed. JMA API may be temporarily unavailable; continuing import."
+}
+try {
+    python manage.py weather_fetch_warning
+} catch {
+    Write-Warning "weather_fetch_warning failed. JMA API may be temporarily unavailable; continuing import."
+}
+
 python manage.py loaddata soil_analysis\fixtures\samplingorder.json
-python manage.py loaddata soil_analysis\fixtures\land_ledger.json
 python manage.py loaddata soil_analysis\fixtures\device.json
 
 # --- Taxonomy ---
@@ -145,8 +152,8 @@ python manage.py loaddata `
 # --- USA Research ---
 python manage.py loaddata usa_research\fixtures\financial_results.json
 
-# Historical asset data update (from 1950)
-python manage.py monthly_update_historical_assets --start 1950-01-01
+# Historical asset data update (from 1980)
+python manage.py monthly_update_historical_assets --start 1980-01-01
 
 # --- Bank ---
 python manage.py loaddata bank\fixtures\mufg_summary_master.json

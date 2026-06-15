@@ -179,6 +179,18 @@ chmod +x scripts/step2_import_data.sh
 ./scripts/step2_import_data.sh
 ```
 
+`soil_analysis` では、47都道府県の代表作物つき圃場データを
+`python manage.py generate_prefecture_representative_fixtures` で作成します。
+このバッチは `scripts/step2_import_data.*` の `# --- Soil Analysis ---` セクション内で、
+会社・作型・時期・採土法・JMA市区町村マスタの読み込み後に実行されます。
+
+代表作物は各都道府県につき3つ程度とし、農林水産省 作物統計および
+e-Stat 作物統計調査の都道府県別作付面積・収穫量・出荷量を参考にしています。
+厳密な最新順位の再現よりも、全国市場VOで都道府県ごとの産地らしさが見えることを優先します。
+
+- 農林水産省 作物統計: https://www.maff.go.jp/j/tokei/kouhyou/sakumotu/
+- e-Stat 作物統計調査: https://www.e-stat.go.jp/stat-search/files?toukei=00500215&tstat=000001013427
+
 #### 8. サービスの再起動
 
 ```bash

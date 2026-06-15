@@ -84,6 +84,24 @@ def get_indexes(data_time_defines, desired_date: date) -> list[int]:
     ]
 
 
+def get_amedas_codes_for_region(
+    amedas_code_in_region: dict[str, list[str]], region_code: str
+) -> list[str]:
+    """
+    地域コードに対応する AMeDAS コード一覧を返す。
+
+    気象庁の地域と AMeDAS 地点の対応がない地域は、気温計算対象なしとして扱う。
+
+    Args:
+        amedas_code_in_region: 地域コードごとの AMeDAS コード一覧。
+        region_code: 気象庁地域コード。
+
+    Returns:
+        AMeDAS コード一覧。対応がない場合は空リスト。
+    """
+    return amedas_code_in_region.get(region_code, [])
+
+
 class Command(BaseCommand):
     help = "get weather forecast"
 
@@ -238,11 +256,12 @@ class Command(BaseCommand):
                     amedas_max_temps: list[float] = []
                     if indexes:
                         min_index, max_index = indexes
+                        amedas_codes = get_amedas_codes_for_region(
+                            amedas_code_in_region, region.code
+                        )
                         for amedas_data in time_series_data[TYPE_TEMPERATURE]["areas"]:
                             amedas_code = amedas_data["area"]["code"]
-                            if amedas_code not in amedas_code_in_region.get(
-                                region.code
-                            ):
+                            if amedas_code not in amedas_codes:
                                 continue
                             amedas_min_temps.append(
                                 float(amedas_data["temps"][min_index])
