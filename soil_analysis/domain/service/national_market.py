@@ -1,4 +1,5 @@
 from collections import Counter, defaultdict
+from dataclasses import dataclass
 
 from soil_analysis.domain.valueobject.market import (
     CommercialAreaVO,
@@ -8,54 +9,73 @@ from soil_analysis.domain.valueobject.market import (
 from soil_analysis.models import JmaPrefecture, JmaWarning, Land, LandLedger
 
 
+@dataclass(frozen=True)
+class PrefectureMapPosition:
+    """
+    日本地図風CSSグリッド上に都道府県タイルを置くための表示座標です。
+
+    この座標は緯度経度や行政コードではなく、トップページの簡易日本地図を
+    CSS Gridで表現するためのレイアウト定義です。行はCSSの `grid-row` に
+    そのまま渡すため1始まり、列は既存の `map-col-0` から始まるCSSクラスに
+    合わせるため0始まりにしています。
+
+    Attributes:
+        row: CSS Grid上の行番号。`grid-row` に渡すため1始まり。
+        column: CSS Grid上の列番号。`map-col-0` に合わせるため0始まり。
+    """
+
+    row: int
+    column: int
+
+
 PREFECTURE_MAP_POSITIONS = {
-    "北海道": (1, 7),
-    "青森県": (2, 7),
-    "岩手県": (3, 7),
-    "宮城県": (4, 7),
-    "秋田県": (3, 6),
-    "山形県": (4, 6),
-    "福島県": (5, 7),
-    "茨城県": (6, 7),
-    "栃木県": (6, 6),
-    "群馬県": (6, 5),
-    "埼玉県": (7, 6),
-    "千葉県": (8, 7),
-    "東京都": (8, 6),
-    "神奈川県": (9, 6),
-    "新潟県": (5, 5),
-    "富山県": (6, 4),
-    "石川県": (6, 3),
-    "福井県": (7, 3),
-    "山梨県": (8, 5),
-    "長野県": (7, 5),
-    "岐阜県": (8, 4),
-    "静岡県": (9, 5),
-    "愛知県": (9, 4),
-    "三重県": (10, 5),
-    "滋賀県": (8, 3),
-    "京都府": (9, 3),
-    "大阪府": (10, 3),
-    "兵庫県": (9, 2),
-    "奈良県": (11, 4),
-    "和歌山県": (12, 4),
-    "鳥取県": (8, 2),
-    "島根県": (8, 1),
-    "岡山県": (9, 2),
-    "広島県": (9, 1),
-    "山口県": (10, 1),
-    "徳島県": (11, 2),
-    "香川県": (10, 2),
-    "愛媛県": (11, 1),
-    "高知県": (12, 1),
-    "福岡県": (11, 0),
-    "佐賀県": (12, 0),
-    "長崎県": (13, 0),
-    "熊本県": (12, 1),
-    "大分県": (12, 2),
-    "宮崎県": (13, 2),
-    "鹿児島県": (14, 2),
-    "沖縄県": (15, 0),
+    "北海道": PrefectureMapPosition(row=1, column=7),
+    "青森県": PrefectureMapPosition(row=2, column=7),
+    "岩手県": PrefectureMapPosition(row=3, column=7),
+    "宮城県": PrefectureMapPosition(row=4, column=7),
+    "秋田県": PrefectureMapPosition(row=3, column=6),
+    "山形県": PrefectureMapPosition(row=4, column=6),
+    "福島県": PrefectureMapPosition(row=5, column=7),
+    "茨城県": PrefectureMapPosition(row=6, column=7),
+    "栃木県": PrefectureMapPosition(row=6, column=6),
+    "群馬県": PrefectureMapPosition(row=6, column=5),
+    "埼玉県": PrefectureMapPosition(row=7, column=6),
+    "千葉県": PrefectureMapPosition(row=8, column=7),
+    "東京都": PrefectureMapPosition(row=8, column=6),
+    "神奈川県": PrefectureMapPosition(row=9, column=6),
+    "新潟県": PrefectureMapPosition(row=5, column=5),
+    "富山県": PrefectureMapPosition(row=6, column=4),
+    "石川県": PrefectureMapPosition(row=6, column=3),
+    "福井県": PrefectureMapPosition(row=7, column=3),
+    "山梨県": PrefectureMapPosition(row=8, column=5),
+    "長野県": PrefectureMapPosition(row=7, column=5),
+    "岐阜県": PrefectureMapPosition(row=8, column=4),
+    "静岡県": PrefectureMapPosition(row=9, column=5),
+    "愛知県": PrefectureMapPosition(row=9, column=4),
+    "三重県": PrefectureMapPosition(row=10, column=5),
+    "滋賀県": PrefectureMapPosition(row=8, column=3),
+    "京都府": PrefectureMapPosition(row=9, column=3),
+    "大阪府": PrefectureMapPosition(row=10, column=3),
+    "兵庫県": PrefectureMapPosition(row=9, column=2),
+    "奈良県": PrefectureMapPosition(row=11, column=4),
+    "和歌山県": PrefectureMapPosition(row=12, column=4),
+    "鳥取県": PrefectureMapPosition(row=8, column=2),
+    "島根県": PrefectureMapPosition(row=8, column=1),
+    "岡山県": PrefectureMapPosition(row=9, column=2),
+    "広島県": PrefectureMapPosition(row=9, column=1),
+    "山口県": PrefectureMapPosition(row=10, column=1),
+    "徳島県": PrefectureMapPosition(row=11, column=2),
+    "香川県": PrefectureMapPosition(row=10, column=2),
+    "愛媛県": PrefectureMapPosition(row=11, column=1),
+    "高知県": PrefectureMapPosition(row=12, column=1),
+    "福岡県": PrefectureMapPosition(row=11, column=0),
+    "佐賀県": PrefectureMapPosition(row=12, column=0),
+    "長崎県": PrefectureMapPosition(row=13, column=0),
+    "熊本県": PrefectureMapPosition(row=12, column=1),
+    "大分県": PrefectureMapPosition(row=12, column=2),
+    "宮崎県": PrefectureMapPosition(row=13, column=2),
+    "鹿児島県": PrefectureMapPosition(row=14, column=2),
+    "沖縄県": PrefectureMapPosition(row=15, column=0),
 }
 
 
@@ -191,7 +211,9 @@ class NationalMarketService:
         warning_city_count = warning_stats[prefecture.id]
         land_count = stats["land_count"]
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
-        map_row, map_col = PREFECTURE_MAP_POSITIONS.get(prefecture.name, (16, 0))
+        map_position = PREFECTURE_MAP_POSITIONS.get(
+            prefecture.name, PrefectureMapPosition(row=16, column=0)
+        )
         main_crop_name = cls._get_main_crop_name(crop_stats[prefecture.id])
 
         return CommercialAreaVO(
@@ -203,8 +225,8 @@ class NationalMarketService:
             total_area=round(stats["total_area"], 2),
             warning_city_count=warning_city_count,
             risk_score=risk_score,
-            map_row=map_row,
-            map_col=map_col,
+            map_row=map_position.row,
+            map_col=map_position.column,
         )
 
     @staticmethod
