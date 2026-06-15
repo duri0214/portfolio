@@ -116,6 +116,7 @@ class Home(ListView):
         national_market = NationalMarketService.build()
         context["national_market"] = national_market
         context["commercial_areas"] = national_market.areas
+        context["commercial_area_map_data"] = national_market.map_payload
         context["dispatch_candidates"] = national_market.dispatch_candidates
         return context
 

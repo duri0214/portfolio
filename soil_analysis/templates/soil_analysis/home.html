@@ -86,17 +86,13 @@
                                     <span><i class="legend-dot area-empty"></i>未登録</span>
                                 </div>
                             </div>
-                            <div class="japan-market-map" aria-label="47都道府県の商圏マップ">
-                                {% for area in commercial_areas %}
-                                    <button
-                                        type="button"
-                                        class="prefecture-tile {{ area.status_class }} {{ area.map_position_class }}"
-                                        title="{{ area.prefecture_name }}: {{ area.status_label }} / 圃場 {{ area.land_count }} / 警報 {{ area.warning_city_count }}"
-                                    >
-                                        <span>{{ area.prefecture_name }}</span>
-                                        <small>{{ area.land_count }}</small>
-                                    </button>
-                                {% endfor %}
+                            {{ commercial_area_map_data|json_script:"commercial-area-map-data" }}
+                            <div class="japan-market-map">
+                                <div id="commercial-area-map" class="commercial-area-map-canvas" aria-label="47都道府県の商圏マップ"></div>
+                                <div class="market-map-detail" id="commercial-area-map-detail" aria-live="polite">
+                                    <strong>都道府県を選択</strong>
+                                    <span>商圏の集計値を確認できます。</span>
+                                </div>
                             </div>
                         </div>
                         <div class="col-12 col-xl-4">
@@ -233,4 +229,9 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://unpkg.com/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
+    <script src="{% static 'soil_analysis/js/home.js' %}"></script>
 {% endblock %}

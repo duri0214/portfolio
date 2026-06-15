@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from soil_analysis.domain.service.national_market import (
-    PREFECTURE_MAP_POSITIONS,
+    PREFECTURE_JAPAN_MAP_CODES,
     NationalMarketService,
 )
 from soil_analysis.models import (
@@ -83,6 +83,7 @@ class NationalMarketDashboardTest(TestCase):
         self.assertEqual(shizuoka.land_count, 1)
         self.assertEqual(shizuoka.company_count, 1)
         self.assertEqual(shizuoka.main_crop_name, "トマト")
+        self.assertEqual(shizuoka.japan_map_code, 22)
         self.assertEqual(shizuoka.total_area, 12.5)
         self.assertEqual(shizuoka.warning_city_count, 1)
         self.assertEqual(shizuoka.status_label, "注意")
@@ -109,6 +110,7 @@ class NationalMarketDashboardTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["national_market"].area_count, 47)
+        self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
         self.assertContains(response, "全国商圏管制塔")
         self.assertContains(response, "日本地図商圏マップ")
         self.assertContains(response, "全国市場VO")
@@ -127,7 +129,7 @@ class NationalMarketDashboardTest(TestCase):
     def _create_prefectures():
         prefectures = {}
         for index, prefecture_name in enumerate(
-            PREFECTURE_MAP_POSITIONS.keys(), start=1
+            PREFECTURE_JAPAN_MAP_CODES.keys(), start=1
         ):
             area = JmaArea.objects.create(
                 code=f"{index:06d}", name=f"{prefecture_name}エリア"

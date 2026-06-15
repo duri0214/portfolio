@@ -42,134 +42,26 @@
 }
 
 .japan-market-map {
-    display: grid;
-    grid-template-columns: repeat(8, minmax(64px, 1fr));
-    grid-template-rows: repeat(15, 42px);
-    gap: 6px;
-    min-height: 650px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 520px;
     padding: 16px;
-    overflow-x: auto;
     border: 1px solid #d9e2ec;
     border-radius: 8px;
     background: #f8fbfd;
 }
 
-.prefecture-tile {
+.commercial-area-map-canvas {
     display: flex;
-    flex-direction: column;
     justify-content: center;
-    min-width: 64px;
-    min-height: 42px;
-    padding: 4px 6px;
-    border: 1px solid #bcccdc;
-    border-radius: 8px;
-    color: #102a43;
-    font-size: 0.78rem;
-    line-height: 1.15;
-    text-align: center;
-    white-space: nowrap;
+    min-height: 420px;
+    overflow: hidden;
 }
 
-.prefecture-tile small {
-    margin-top: 2px;
-    color: #52616f;
-    font-weight: 700;
-}
-
-.map-row-1 {
-    grid-row: 1;
-}
-
-.map-row-2 {
-    grid-row: 2;
-}
-
-.map-row-3 {
-    grid-row: 3;
-}
-
-.map-row-4 {
-    grid-row: 4;
-}
-
-.map-row-5 {
-    grid-row: 5;
-}
-
-.map-row-6 {
-    grid-row: 6;
-}
-
-.map-row-7 {
-    grid-row: 7;
-}
-
-.map-row-8 {
-    grid-row: 8;
-}
-
-.map-row-9 {
-    grid-row: 9;
-}
-
-.map-row-10 {
-    grid-row: 10;
-}
-
-.map-row-11 {
-    grid-row: 11;
-}
-
-.map-row-12 {
-    grid-row: 12;
-}
-
-.map-row-13 {
-    grid-row: 13;
-}
-
-.map-row-14 {
-    grid-row: 14;
-}
-
-.map-row-15 {
-    grid-row: 15;
-}
-
-.map-row-16 {
-    grid-row: 16;
-}
-
-.map-col-0 {
-    grid-column: 1;
-}
-
-.map-col-1 {
-    grid-column: 2;
-}
-
-.map-col-2 {
-    grid-column: 3;
-}
-
-.map-col-3 {
-    grid-column: 4;
-}
-
-.map-col-4 {
-    grid-column: 5;
-}
-
-.map-col-5 {
-    grid-column: 6;
-}
-
-.map-col-6 {
-    grid-column: 7;
-}
-
-.map-col-7 {
-    grid-column: 8;
+.commercial-area-map-canvas canvas {
+    max-width: 100%;
+    height: auto;
 }
 
 .area-active {
@@ -185,6 +77,21 @@
 .area-empty {
     border-color: #cbd5e1;
     background: #f1f5f9;
+}
+
+.market-map-detail {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #fff;
+    color: #102a43;
+}
+
+.market-map-detail span {
+    color: #52616f;
+    font-size: 0.9rem;
 }
 
 .dispatch-queue {
@@ -215,7 +122,11 @@
 
 @media (max-width: 767.98px) {
     .japan-market-map {
-        grid-template-columns: repeat(8, 72px);
-        min-height: 650px;
+        min-height: 420px;
+        padding: 12px;
+    }
+
+    .commercial-area-map-canvas {
+        min-height: 320px;
     }
 }

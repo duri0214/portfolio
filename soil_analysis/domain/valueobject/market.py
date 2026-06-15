@@ -6,7 +6,7 @@ class CommercialAreaVO:
     """
     都道府県単位の農業商圏を表す読み取り専用VOです。
 
-    `soil_analysis` のトップページでは、日本地図グリッド上の1マスと
+    `soil_analysis` のトップページでは、japan-map-js 上の1都道府県と
     全国市場VOテーブルの1行がこのVOに対応します。既存の圃場は
     `JmaCity -> JmaRegion -> JmaPrefecture` の関連を通じて都道府県へ
     アサインされ、その集計結果をこのVOが保持します。
@@ -18,26 +18,24 @@ class CommercialAreaVO:
     Attributes:
         prefecture_id: JMA都道府県マスタのID。
         prefecture_name: 都道府県名。
+        japan_map_code: japan-map-js が都道府県識別に使う1から47のコード。
         land_count: 登録済み圃場数。
         company_count: 登録済み農業法人・企業数。
         main_crop_name: 最も多く台帳に登場する作物名。
         total_area: 圃場面積の合計。
         warning_city_count: 警報・注意報が登録されている市区町村数。
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
-        map_row: 簡易日本地図グリッドの行番号。
-        map_col: 簡易日本地図グリッドの列番号。
     """
 
     prefecture_id: int
     prefecture_name: str
+    japan_map_code: int
     land_count: int
     company_count: int
     main_crop_name: str
     total_area: float
     warning_city_count: int
     risk_score: int
-    map_row: int
-    map_col: int
 
     @property
     def status_label(self) -> str:
@@ -74,17 +72,27 @@ class CommercialAreaVO:
         return "area-empty"
 
     @property
-    def map_position_class(self) -> str:
+    def map_payload(self) -> dict[str, int | str]:
         """
-        日本地図グリッド上の配置に使うCSSクラス名を返します。
+        japan-map-js に渡す都道府県別データを返します。
 
-        行番号と列番号をCSSクラスへ変換し、テンプレートはこの値を付与するだけで
-        都道府県タイルを所定の位置へ配置できます。
+        ライブラリ側は `code` で都道府県を特定します。集計値はクリック時の
+        詳細表示に使うため、同じJSONへ含めます。
 
         Returns:
-            str: `map-row-<行番号> map-col-<列番号>` 形式のCSSクラス名。
+            dict[str, int | str]: 日本地図描画とクリック詳細に使う都道府県データ。
         """
-        return f"map-row-{self.map_row} map-col-{self.map_col}"
+        return {
+            "code": self.japan_map_code,
+            "name": self.prefecture_name,
+            "status": self.status_label,
+            "statusClass": self.status_class,
+            "landCount": self.land_count,
+            "companyCount": self.company_count,
+            "mainCropName": self.main_crop_name,
+            "warningCount": self.warning_city_count,
+            "riskScore": self.risk_score,
+        }
 
 
 @dataclass(frozen=True)
@@ -204,3 +212,16 @@ class NationalMarketVO:
             key=lambda area: (area.risk_score, area.land_count, area.company_count),
             reverse=True,
         )[:8]
+
+    @property
+    def map_payload(self) -> list[dict[str, int | str]]:
+        """
+        japan-map-js に渡す全国商圏データを返します。
+
+        テンプレートではこの値を `json_script` で埋め込み、JavaScript側で
+        都道府県ごとの色分けとクリック時の詳細表示に利用します。
+
+        Returns:
+            list[dict[str, int | str]]: 47都道府県分の日本地図描画データ。
+        """
+        return [area.map_payload for area in self.areas]
