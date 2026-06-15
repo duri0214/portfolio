@@ -16,7 +16,7 @@ class CommercialAreaVO:
     「未登録」「稼働」「注意」の状態を画面上で欠けなく表現します。
 
     Attributes:
-        prefecture_id: JMA都道府県マスタのID。
+        prefecture_id: 47都道府県として扱う表示用ID。japan-map-js のコードと同じ値。
         prefecture_name: 都道府県名。
         japan_map_code: japan-map-js が都道府県識別に使う1から47のコード。
         land_count: 登録済み圃場数。

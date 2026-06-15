@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from soil_analysis.domain.service.national_market import (
+    JAPAN_MAP_PREFECTURES,
     PREFECTURE_JAPAN_MAP_CODES,
     NationalMarketService,
 )
@@ -89,6 +90,30 @@ class NationalMarketDashboardTest(TestCase):
         self.assertEqual(shizuoka.status_label, "注意")
         self.assertGreater(shizuoka.risk_score, 30)
 
+    def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
+        """
+        シナリオ:
+        - 入力: 北海道内のJMA府県予報区である宗谷地方に圃場が登録されているDB状態。
+        - 処理: 全国市場Serviceを実行する。
+        - 期待値: 宗谷地方が日本地図上の北海道商圏へ集約され、KeyErrorにならないこと。
+        """
+        city = self._get_city("宗谷地方")
+        Land.objects.create(
+            name="宗谷テスト圃場",
+            company=self.company,
+            jma_city=city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="45.415,141.673",
+        )
+
+        national_market = NationalMarketService.build()
+        hokkaido = self._find_area(national_market.areas, "北海道")
+
+        self.assertEqual(national_market.area_count, 47)
+        self.assertEqual(hokkaido.japan_map_code, 1)
+        self.assertEqual(hokkaido.land_count, 1)
+
     def test_home_view_displays_national_market_dashboard(self):
         """
         シナリオ:
@@ -129,13 +154,12 @@ class NationalMarketDashboardTest(TestCase):
     def _create_prefectures():
         prefectures = {}
         for index, prefecture_name in enumerate(
-            PREFECTURE_JAPAN_MAP_CODES.keys(), start=1
+            [name for _, name in JAPAN_MAP_PREFECTURES] + ["宗谷地方"], start=1
         ):
-            area = JmaArea.objects.create(
-                code=f"{index:06d}", name=f"{prefecture_name}エリア"
-            )
+            code = "011000" if prefecture_name == "宗谷地方" else f"{index:02d}0000"
+            area = JmaArea.objects.create(code=code, name=f"{prefecture_name}エリア")
             prefecture = JmaPrefecture.objects.create(
-                code=f"{index:06d}", name=prefecture_name, jma_area=area
+                code=code, name=prefecture_name, jma_area=area
             )
             region = JmaRegion.objects.create(
                 code=f"{index:06d}",

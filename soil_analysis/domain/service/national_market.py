@@ -8,55 +8,56 @@ from soil_analysis.domain.valueobject.market import (
 from soil_analysis.models import JmaPrefecture, JmaWarning, Land, LandLedger
 
 
-PREFECTURE_JAPAN_MAP_CODES = {
-    "北海道": 1,
-    "青森県": 2,
-    "岩手県": 3,
-    "宮城県": 4,
-    "秋田県": 5,
-    "山形県": 6,
-    "福島県": 7,
-    "茨城県": 8,
-    "栃木県": 9,
-    "群馬県": 10,
-    "埼玉県": 11,
-    "千葉県": 12,
-    "東京都": 13,
-    "神奈川県": 14,
-    "新潟県": 15,
-    "富山県": 16,
-    "石川県": 17,
-    "福井県": 18,
-    "山梨県": 19,
-    "長野県": 20,
-    "岐阜県": 21,
-    "静岡県": 22,
-    "愛知県": 23,
-    "三重県": 24,
-    "滋賀県": 25,
-    "京都府": 26,
-    "大阪府": 27,
-    "兵庫県": 28,
-    "奈良県": 29,
-    "和歌山県": 30,
-    "鳥取県": 31,
-    "島根県": 32,
-    "岡山県": 33,
-    "広島県": 34,
-    "山口県": 35,
-    "徳島県": 36,
-    "香川県": 37,
-    "愛媛県": 38,
-    "高知県": 39,
-    "福岡県": 40,
-    "佐賀県": 41,
-    "長崎県": 42,
-    "熊本県": 43,
-    "大分県": 44,
-    "宮崎県": 45,
-    "鹿児島県": 46,
-    "沖縄県": 47,
-}
+JAPAN_MAP_PREFECTURES = (
+    (1, "北海道"),
+    (2, "青森県"),
+    (3, "岩手県"),
+    (4, "宮城県"),
+    (5, "秋田県"),
+    (6, "山形県"),
+    (7, "福島県"),
+    (8, "茨城県"),
+    (9, "栃木県"),
+    (10, "群馬県"),
+    (11, "埼玉県"),
+    (12, "千葉県"),
+    (13, "東京都"),
+    (14, "神奈川県"),
+    (15, "新潟県"),
+    (16, "富山県"),
+    (17, "石川県"),
+    (18, "福井県"),
+    (19, "山梨県"),
+    (20, "長野県"),
+    (21, "岐阜県"),
+    (22, "静岡県"),
+    (23, "愛知県"),
+    (24, "三重県"),
+    (25, "滋賀県"),
+    (26, "京都府"),
+    (27, "大阪府"),
+    (28, "兵庫県"),
+    (29, "奈良県"),
+    (30, "和歌山県"),
+    (31, "鳥取県"),
+    (32, "島根県"),
+    (33, "岡山県"),
+    (34, "広島県"),
+    (35, "山口県"),
+    (36, "徳島県"),
+    (37, "香川県"),
+    (38, "愛媛県"),
+    (39, "高知県"),
+    (40, "福岡県"),
+    (41, "佐賀県"),
+    (42, "長崎県"),
+    (43, "熊本県"),
+    (44, "大分県"),
+    (45, "宮崎県"),
+    (46, "鹿児島県"),
+    (47, "沖縄県"),
+)
+PREFECTURE_JAPAN_MAP_CODES = {name: code for code, name in JAPAN_MAP_PREFECTURES}
 
 
 class NationalMarketService:
@@ -65,9 +66,10 @@ class NationalMarketService:
 
     このServiceは、Djangoモデルに保存されている圃場・作付台帳・気象警報を
     トップページで扱いやすい読み取り専用の商圏情報へ変換する境界です。
-    `Land` は `JmaCity -> JmaRegion -> JmaPrefecture` の関連をたどって
-    都道府県単位の商圏へアサインし、画面では日本地図ライブラリと集計表に
-    同じVOを渡します。
+    `Land` は `JmaCity -> JmaRegion -> JmaPrefecture` の関連をたどり、
+    JMAコードの都道府県部分へ集約して商圏へアサインします。気象庁マスタは
+    北海道・鹿児島・沖縄などを地方単位で分割するため、画面側の商圏は
+    japan-map-js の47都道府県コードを基準に組み立てます。
 
     DBモデルやマイグレーションは追加せず、既存データを集計して表示する
     PoC用途のServiceです。後続で市場価格、GraphRAG、物流APIなどを接続する
@@ -79,22 +81,27 @@ class NationalMarketService:
         """
         全国商圏ダッシュボード全体の表示モデルを組み立てます。
 
-        47都道府県のJMA都道府県マスタを基準に商圏を作るため、圃場が未登録の
-        都道府県も `CommercialAreaVO` として返します。これにより、画面では
-        「未登録」「稼働」「注意」の状態を日本地図ライブラリ上で欠けなく
-        表現できます。
+        japan-map-js の47都道府県コードを基準に商圏を作るため、JMAマスタが
+        地方単位に分割されていても、画面には47都道府県として集約されます。
+        圃場が未登録の都道府県も `CommercialAreaVO` として返すため、
+        「未登録」「稼働」「注意」の状態を日本地図上で欠けなく表現できます。
 
         Returns:
             NationalMarketVO: 都道府県別商圏と配車候補を束ねた表示用VO。
         """
-        prefectures = list(JmaPrefecture.objects.all().order_by("code", "id"))
         land_stats = cls._build_land_stats()
         crop_stats = cls._build_crop_stats()
         warning_stats = cls._build_warning_stats()
 
         areas = [
-            cls._build_area(prefecture, land_stats, crop_stats, warning_stats)
-            for prefecture in prefectures
+            cls._build_area(
+                japan_map_code,
+                prefecture_name,
+                land_stats,
+                crop_stats,
+                warning_stats,
+            )
+            for japan_map_code, prefecture_name in JAPAN_MAP_PREFECTURES
         ]
         dispatch_candidates = cls._build_dispatch_candidates(areas)
         return NationalMarketVO(areas=areas, dispatch_candidates=dispatch_candidates)
@@ -118,10 +125,14 @@ class NationalMarketService:
             "company", "jma_city__jma_region__jma_prefecture"
         )
         for land in lands:
-            prefecture_id = land.jma_city.jma_region.jma_prefecture_id
-            stats[prefecture_id]["land_count"] += 1
-            stats[prefecture_id]["company_ids"].add(land.company_id)
-            stats[prefecture_id]["total_area"] += land.area or 0.0
+            japan_map_code = NationalMarketService._get_japan_map_code(
+                land.jma_city.jma_region.jma_prefecture
+            )
+            if japan_map_code is None:
+                continue
+            stats[japan_map_code]["land_count"] += 1
+            stats[japan_map_code]["company_ids"].add(land.company_id)
+            stats[japan_map_code]["total_area"] += land.area or 0.0
         return stats
 
     @staticmethod
@@ -141,8 +152,12 @@ class NationalMarketService:
             "crop", "land__jma_city__jma_region__jma_prefecture"
         )
         for ledger in ledgers:
-            prefecture_id = ledger.land.jma_city.jma_region.jma_prefecture_id
-            stats[prefecture_id][ledger.crop.name] += 1
+            japan_map_code = NationalMarketService._get_japan_map_code(
+                ledger.land.jma_city.jma_region.jma_prefecture
+            )
+            if japan_map_code is None:
+                continue
+            stats[japan_map_code][ledger.crop.name] += 1
         return stats
 
     @staticmethod
@@ -160,14 +175,19 @@ class NationalMarketService:
         warning_stats = Counter()
         warnings = JmaWarning.objects.select_related("jma_region__jma_prefecture")
         for warning in warnings:
-            prefecture_id = warning.jma_region.jma_prefecture_id
-            warning_stats[prefecture_id] += 1
+            japan_map_code = NationalMarketService._get_japan_map_code(
+                warning.jma_region.jma_prefecture
+            )
+            if japan_map_code is None:
+                continue
+            warning_stats[japan_map_code] += 1
         return warning_stats
 
     @classmethod
     def _build_area(
         cls,
-        prefecture: JmaPrefecture,
+        japan_map_code: int,
+        prefecture_name: str,
         land_stats: dict[int, dict],
         crop_stats: dict[int, Counter],
         warning_stats: Counter,
@@ -180,7 +200,8 @@ class NationalMarketService:
         主要作物名までまとめて確定させます。
 
         Args:
-            prefecture: 商圏の基準となるJMA都道府県マスタ。
+            japan_map_code: japan-map-js が使う都道府県コード。
+            prefecture_name: 商圏として表示する47都道府県名。
             land_stats: 都道府県別の圃場集計。
             crop_stats: 都道府県別の作物集計。
             warning_stats: 都道府県別の警報・注意報件数。
@@ -188,16 +209,16 @@ class NationalMarketService:
         Returns:
             CommercialAreaVO: トップページへ渡す1都道府県分の商圏VO。
         """
-        stats = land_stats[prefecture.id]
-        warning_city_count = warning_stats[prefecture.id]
+        stats = land_stats[japan_map_code]
+        warning_city_count = warning_stats[japan_map_code]
         land_count = stats["land_count"]
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
-        main_crop_name = cls._get_main_crop_name(crop_stats[prefecture.id])
+        main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])
 
         return CommercialAreaVO(
-            prefecture_id=prefecture.id,
-            prefecture_name=prefecture.name,
-            japan_map_code=PREFECTURE_JAPAN_MAP_CODES[prefecture.name],
+            prefecture_id=japan_map_code,
+            prefecture_name=prefecture_name,
+            japan_map_code=japan_map_code,
             land_count=land_count,
             company_count=len(stats["company_ids"]),
             main_crop_name=main_crop_name,
@@ -205,6 +226,31 @@ class NationalMarketService:
             warning_city_count=warning_city_count,
             risk_score=risk_score,
         )
+
+    @staticmethod
+    def _get_japan_map_code(jma_prefecture: JmaPrefecture) -> int | None:
+        """
+        JMA都道府県マスタを japan-map-js の47都道府県コードへ変換します。
+
+        気象庁の府県予報区マスタは、北海道を「宗谷地方」「上川・留萌地方」
+        のように複数行へ分割します。一方、地図ライブラリは47都道府県の
+        コード体系を使うため、JMAコード先頭2桁を都道府県コードとして扱い、
+        分割されたJMA行を同じ都道府県へ集約します。
+
+        Args:
+            jma_prefecture: 圃場や警報に紐づくJMA都道府県マスタ。
+
+        Returns:
+            int | None: japan-map-js の都道府県コード。未知コードの場合はNone。
+        """
+        try:
+            japan_map_code = int(jma_prefecture.code[:2])
+        except (TypeError, ValueError):
+            return PREFECTURE_JAPAN_MAP_CODES.get(jma_prefecture.name)
+
+        if 1 <= japan_map_code <= 47:
+            return japan_map_code
+        return PREFECTURE_JAPAN_MAP_CODES.get(jma_prefecture.name)
 
     @staticmethod
     def _calculate_risk_score(land_count: int, warning_city_count: int) -> int:
