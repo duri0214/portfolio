@@ -164,18 +164,18 @@ class PrefectureCommercialAreaService:
         return stats
 
     @staticmethod
-    def _build_warning_stats() -> Counter:
+    def _build_warning_stats() -> dict[int, dict]:
         """
-        気象警報・注意報を都道府県別のリスク情報として集計します。
+        気象警報・注意報を都道府県別に集計します。
 
-        商圏マップでは警報がある都道府県を「注意」として表示するため、
-        `JmaWarning` をJMAリージョン経由で都道府県へ寄せます。件数は
-        厳密な警報種別ではなく、地図上で注意喚起するための簡易リスク指標です。
+        `JmaWarning` はJMAリージョンごとに警報・注意報名をカンマ区切りで
+        保持します。画面には地域件数ではなく、都道府県内で出ている
+        警報・注意報名を重複排除して表示します。
 
         Returns:
-            Counter: JMA都道府県IDごとの警報・注意報件数。
+            dict[int, dict]: JMA都道府県IDごとの地域件数と警報・注意報名。
         """
-        warning_stats = Counter()
+        warning_stats = defaultdict(lambda: {"region_count": 0, "names": set()})
         warnings = JmaWarning.objects.select_related("jma_region__jma_prefecture")
         for warning in warnings:
             japan_map_code = PrefectureCommercialAreaService._get_japan_map_code(
@@ -183,7 +183,13 @@ class PrefectureCommercialAreaService:
             )
             if japan_map_code is None:
                 continue
-            warning_stats[japan_map_code] += 1
+            warning_stats[japan_map_code]["region_count"] += 1
+            warning_names = [
+                warning_name.strip()
+                for warning_name in warning.warnings.split(",")
+                if warning_name.strip()
+            ]
+            warning_stats[japan_map_code]["names"].update(warning_names)
         return warning_stats
 
     @staticmethod
@@ -224,7 +230,7 @@ class PrefectureCommercialAreaService:
         prefecture_name: str,
         land_stats: dict[int, dict],
         crop_stats: dict[int, Counter],
-        warning_stats: Counter,
+        warning_stats: dict[int, dict],
         weather_stats: dict[int, dict[str, str]],
     ) -> PrefectureCommercialAreaVO:
         """
@@ -239,14 +245,16 @@ class PrefectureCommercialAreaService:
             prefecture_name: 商圏として表示する47都道府県名。
             land_stats: 都道府県別の圃場集計。
             crop_stats: 都道府県別の作物集計。
-            warning_stats: 都道府県別の警報・注意報件数。
+            warning_stats: 都道府県別の警報・注意報集計。
             weather_stats: 都道府県別の最新天気情報。
 
         Returns:
             PrefectureCommercialAreaVO: トップページへ渡す1都道府県分の商圏VO。
         """
         stats = land_stats[japan_map_code]
-        warning_city_count = warning_stats[japan_map_code]
+        warning = warning_stats[japan_map_code]
+        warning_city_count = warning["region_count"]
+        warning_names = sorted(warning["names"])
         land_count = stats["land_count"]
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
         main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])
@@ -264,6 +272,7 @@ class PrefectureCommercialAreaService:
             main_crop_name=main_crop_name,
             total_area=round(stats["total_area"], 2),
             warning_city_count=warning_city_count,
+            warning_names=warning_names,
             risk_score=risk_score,
             weather_name=weather["name"],
             weather_icon_image=weather["icon_image"],

@@ -24,6 +24,7 @@ class PrefectureCommercialAreaVO:
         main_crop_name: 最も多く台帳に登場する作物名。
         total_area: 圃場面積の合計。
         warning_city_count: 警報・注意報が登録されている市区町村数。
+        warning_names: 都道府県内で発表されている警報・注意報名。
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
         weather_name: 一番未来の予報日の天気名称。
         weather_icon_image: 一番未来の予報日の天気アイコンファイル名。
@@ -39,6 +40,7 @@ class PrefectureCommercialAreaVO:
     main_crop_name: str
     total_area: float
     warning_city_count: int
+    warning_names: list[str]
     risk_score: int
     weather_name: str
     weather_icon_image: str
@@ -80,6 +82,18 @@ class PrefectureCommercialAreaVO:
         return "area-empty"
 
     @property
+    def warning_summary(self) -> str:
+        """
+        画面表示用の警報・注意報サマリを返します。
+
+        Returns:
+            str: 警報・注意報名の列記。未発表の場合は `なし`。
+        """
+        if not self.warning_names:
+            return "なし"
+        return "、".join(self.warning_names)
+
+    @property
     def map_payload(self) -> dict[str, int | str]:
         """
         japan-map-js に渡す都道府県別データを返します。
@@ -99,6 +113,7 @@ class PrefectureCommercialAreaVO:
             "companyCount": self.company_count,
             "mainCropName": self.main_crop_name,
             "warningCount": self.warning_city_count,
+            "warningSummary": self.warning_summary,
             "riskScore": self.risk_score,
             "weatherName": self.weather_name,
             "weatherIconImage": self.weather_icon_image,

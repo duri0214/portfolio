@@ -123,6 +123,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.japan_map_code, 22)
         self.assertEqual(shizuoka.total_area, 12.5)
         self.assertEqual(shizuoka.warning_city_count, 1)
+        self.assertEqual(shizuoka.warning_summary, "大雨注意報")
         self.assertEqual(shizuoka.status_label, "注意")
         self.assertEqual(shizuoka.weather_name, "晴れ")
         self.assertEqual(shizuoka.weather_icon_image, "100.svg")
@@ -170,8 +171,37 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         chiba = self._find_area(prefecture_area_dashboard.areas, "千葉県")
 
         self.assertEqual(chiba.warning_city_count, 2)
+        self.assertEqual(chiba.warning_summary, "大雨警報、洪水警報")
         self.assertEqual(chiba.weather_name, "雨")
         self.assertEqual(chiba.weather_code, "300")
+
+    def test_build_groups_warning_names_without_showing_region_count(self):
+        """
+        シナリオ:
+        - 入力: 埼玉県の複数地域に同名を含む警報・注意報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 地域件数ではなく、重複排除された警報・注意報名が表示用に返ること。
+        """
+        city = self._get_city("埼玉県")
+        JmaWarning.objects.create(
+            jma_region=city.jma_region,
+            warnings="大雨注意報,雷注意報",
+        )
+        second_region = JmaRegion.objects.create(
+            code="110002",
+            name="埼玉県第2地域",
+            jma_prefecture=city.jma_region.jma_prefecture,
+        )
+        JmaWarning.objects.create(
+            jma_region=second_region,
+            warnings="雷注意報",
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        saitama = self._find_area(prefecture_area_dashboard.areas, "埼玉県")
+
+        self.assertEqual(saitama.warning_city_count, 2)
+        self.assertEqual(saitama.warning_summary, "大雨注意報、雷注意報")
 
     def test_build_keeps_sunny_weather_code_even_with_warning(self):
         """
@@ -316,8 +346,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "都道府県別商圏集計")
         self.assertContains(response, "天気（予報日）")
         self.assertContains(response, "圃場数")
-        self.assertContains(response, "警報・注意報地域数")
-        self.assertContains(response, "0地域")
+        self.assertContains(response, "警報・注意報")
+        self.assertContains(response, "なし")
         self.assertNotContains(response, '<th class="text-end">Risk</th>', html=True)
         self.assertContains(response, "天気未取得")
         self.assertNotContains(response, "<th>状態</th>", html=True)
