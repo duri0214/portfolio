@@ -132,7 +132,6 @@
                                 <tr>
                                     <th>商圏</th>
                                     <th>天気</th>
-                                    <th>出荷信号</th>
                                     <th class="text-end">圃場</th>
                                     <th class="text-end">企業</th>
                                     <th>主要作物</th>
@@ -156,9 +155,6 @@
                                                 <span class="text-muted">--</span>
                                             {% endif %}
                                             <span class="small text-muted d-block">{{ area.weather_name }}</span>
-                                        </td>
-                                        <td>
-                                            <span aria-label="{{ area.shipping_signal_label }}">{{ area.shipping_signal_icon }}</span>
                                         </td>
                                         <td class="text-end">{{ area.land_count }}</td>
                                         <td class="text-end">{{ area.company_count }}</td>

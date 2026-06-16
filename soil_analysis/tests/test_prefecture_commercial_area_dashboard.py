@@ -119,16 +119,15 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.status_label, "注意")
         self.assertEqual(shizuoka.weather_name, "晴れ")
         self.assertEqual(shizuoka.weather_icon_image, "100.svg")
-        self.assertEqual(shizuoka.shipping_signal_label, "青")
-        self.assertEqual(shizuoka.shipping_signal_icon, "🟢")
+        self.assertEqual(shizuoka.weather_summary_code, "100")
         self.assertGreater(shizuoka.risk_score, 30)
 
-    def test_build_marks_prefecture_red_when_weather_is_rainy(self):
+    def test_build_uses_rainy_weather_for_prefecture_map_color_source(self):
         """
         シナリオ:
         - 入力: 千葉県に圃場、雨の天気、複数のJMA警報が登録されているDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 千葉県商圏の出荷信号が、雨天由来の赤信号として表示されること。
+        - 期待値: 千葉県商圏に雨天の集計用コードが入り、地図色の判定元になること。
         """
         city = self._get_city("千葉県")
         Land.objects.create(
@@ -163,15 +162,15 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         chiba = self._find_area(prefecture_area_dashboard.areas, "千葉県")
 
         self.assertEqual(chiba.warning_city_count, 2)
-        self.assertEqual(chiba.shipping_signal_label, "赤")
-        self.assertEqual(chiba.shipping_signal_icon, "🔴")
+        self.assertEqual(chiba.weather_name, "雨")
+        self.assertEqual(chiba.weather_summary_code, "300")
 
-    def test_build_keeps_signal_green_when_weather_is_sunny_even_with_warning(self):
+    def test_build_keeps_sunny_weather_code_even_with_warning(self):
         """
         シナリオ:
         - 入力: 山形県に晴れの天気とJMA警報が登録されているDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 表示天気が晴れの場合、警報件数だけで赤信号にならないこと。
+        - 期待値: 表示天気が晴れの場合、警報件数だけで雨天扱いにならないこと。
         """
         city = self._get_city("山形県")
         JmaWarning.objects.create(jma_region=city.jma_region, warnings="乾燥注意報")
@@ -193,15 +192,14 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
 
         self.assertEqual(yamagata.weather_name, "晴れ")
         self.assertEqual(yamagata.warning_city_count, 1)
-        self.assertEqual(yamagata.shipping_signal_label, "青")
-        self.assertEqual(yamagata.shipping_signal_icon, "🟢")
+        self.assertEqual(yamagata.weather_summary_code, "100")
 
-    def test_build_uses_most_future_weather_for_shipping_signal(self):
+    def test_build_uses_most_future_weather_for_map_color_source(self):
         """
         シナリオ:
         - 入力: 山形県に今日の晴れ予報と明日の雨予報が登録されているDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 一番未来の明日予報を使い、出荷信号が赤になること。
+        - 期待値: 一番未来の明日予報を使い、雨天の集計用コードが入ること。
         """
         city = self._get_city("山形県")
         JmaWeather.objects.create(
@@ -234,8 +232,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
 
         self.assertEqual(yamagata.weather_name, "雨")
         self.assertEqual(yamagata.weather_icon_image, "300.svg")
-        self.assertEqual(yamagata.shipping_signal_label, "赤")
-        self.assertEqual(yamagata.shipping_signal_icon, "🔴")
+        self.assertEqual(yamagata.weather_summary_code, "300")
 
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """
@@ -309,9 +306,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "日本地図商圏マップ")
         self.assertContains(response, "都道府県別商圏集計")
         self.assertContains(response, "天気")
-        self.assertContains(response, "出荷信号")
         self.assertNotContains(response, "<th>状態</th>", html=True)
-        self.assertContains(response, "🟢")
+        self.assertNotContains(response, "出荷信号")
         self.assertNotContains(response, "私は天気")
         self.assertContains(response, "配車候補キュー")
         self.assertContains(response, "企業別圃場一覧")

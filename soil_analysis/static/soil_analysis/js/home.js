@@ -10,12 +10,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const commercialAreas = JSON.parse(dataElement.textContent);
     const areaByCode = new Map(commercialAreas.map((area) => [Number(area.code), area]));
     const colors = {
-        "青": { color: "#e4f4ec", hoverColor: "#c7ead8" },
-        "黄": { color: "#fff6d6", hoverColor: "#fde68a" },
-        "赤": { color: "#fee4e2", hoverColor: "#fecaca" },
+        good: { color: "#e4f4ec", hoverColor: "#c7ead8" },
+        caution: { color: "#fff6d6", hoverColor: "#fde68a" },
+        bad: { color: "#fee4e2", hoverColor: "#fecaca" },
+    };
+    const getWeatherPalette = (summaryCode) => {
+        if (summaryCode.startsWith("3") || summaryCode.startsWith("4")) {
+            return colors.bad;
+        }
+        if (summaryCode.startsWith("2")) {
+            return colors.caution;
+        }
+        return colors.good;
     };
     const mapAreas = commercialAreas.map((area) => {
-        const palette = colors[area.shippingSignal] || colors["青"];
+        const palette = getWeatherPalette(area.weatherSummaryCode || "");
         return {
             code: area.code,
             color: palette.color,
@@ -27,13 +36,13 @@ document.addEventListener("DOMContentLoaded", () => {
         detailElement.replaceChildren();
 
         const title = document.createElement("strong");
-        title.textContent = `${area.name}: ${area.shippingSignalIcon}`;
+        title.textContent = `${area.name}: ${area.weatherName}`;
 
         const summary = document.createElement("span");
         summary.textContent = `圃場 ${area.landCount} / 企業 ${area.companyCount} / 主要作物 ${area.mainCropName}`;
 
         const risk = document.createElement("span");
-        risk.textContent = `天気 ${area.weatherName} / 出荷信号 ${area.shippingSignalIcon} / 警報 ${area.warningCount} / Risk ${area.riskScore}`;
+        risk.textContent = `警報 ${area.warningCount} / Risk ${area.riskScore}`;
 
         detailElement.append(title, summary, risk);
     };
