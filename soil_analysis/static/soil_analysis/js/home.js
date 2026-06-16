@@ -39,10 +39,10 @@ document.addEventListener("DOMContentLoaded", () => {
         title.textContent = `${area.name}: ${area.weatherName}`;
 
         const summary = document.createElement("span");
-        summary.textContent = `圃場 ${area.landCount} / 企業 ${area.companyCount} / 主要作物 ${area.mainCropName}`;
+        summary.textContent = `圃場 ${area.landCount}圃場 / 企業 ${area.companyCount}社 / 主要作物 ${area.mainCropName}`;
 
         const risk = document.createElement("span");
-        risk.textContent = `予報日 ${area.weatherReportingDate || "未取得"} / 警報 ${area.warningCount} / Risk ${area.riskScore}`;
+        risk.textContent = `予報日 ${area.weatherReportingDate || "未取得"} / 警報・注意報 ${area.warningCount}地域 / Risk ${area.riskScore}`;
 
         detailElement.append(title, summary, risk);
     };

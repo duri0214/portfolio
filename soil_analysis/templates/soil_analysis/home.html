@@ -132,10 +132,10 @@
                                 <tr>
                                     <th>商圏</th>
                                     <th>天気（予報日）</th>
-                                    <th class="text-end">圃場</th>
+                                    <th class="text-end">圃場数</th>
                                     <th class="text-end">企業</th>
                                     <th>主要作物</th>
-                                    <th class="text-end">警報</th>
+                                    <th class="text-end">警報・注意報地域数</th>
                                     <th class="text-end">Risk</th>
                                 </tr>
                             </thead>
@@ -159,10 +159,10 @@
                                                 <span class="small text-muted d-block">{{ area.weather_reporting_date }}</span>
                                             {% endif %}
                                         </td>
-                                        <td class="text-end">{{ area.land_count }}</td>
+                                        <td class="text-end">{{ area.land_count }}圃場</td>
                                         <td class="text-end">{{ area.company_count }}</td>
                                         <td>{{ area.main_crop_name }}</td>
-                                        <td class="text-end">{{ area.warning_city_count }}</td>
+                                        <td class="text-end">{{ area.warning_city_count }}地域</td>
                                         <td class="text-end">{{ area.risk_score }}</td>
                                     </tr>
                                 {% endfor %}
