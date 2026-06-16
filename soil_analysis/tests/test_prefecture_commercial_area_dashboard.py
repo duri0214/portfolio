@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -15,6 +17,8 @@ from soil_analysis.models import (
     JmaCity,
     JmaPrefecture,
     JmaRegion,
+    JmaWeather,
+    JmaWeatherCode,
     JmaWarning,
     Land,
     LandLedger,
@@ -32,6 +36,13 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         )
         self.cultivation_type = CultivationType.objects.create(name="露地")
         self.crop = Crop.objects.create(name="トマト")
+        self.weather_code = JmaWeatherCode.objects.create(
+            code="100",
+            summary_code="100",
+            image="100.svg",
+            name="晴れ",
+            name_en="Sunny",
+        )
         self.period = LandPeriod.objects.create(year=2026, name="播種時")
         self.sampling_method = SamplingMethod.objects.create(name="5点法", times=5)
         self.prefectures = self._create_prefectures()
@@ -76,6 +87,18 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             sampling_staff=self.user,
         )
         JmaWarning.objects.create(jma_region=city.jma_region, warnings="大雨注意報")
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
 
         prefecture_area_dashboard = PrefectureCommercialAreaService.build()
         shizuoka = self._find_area(prefecture_area_dashboard.areas, "静岡県")
@@ -87,7 +110,10 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.total_area, 12.5)
         self.assertEqual(shizuoka.warning_city_count, 1)
         self.assertEqual(shizuoka.status_label, "注意")
+        self.assertEqual(shizuoka.weather_name, "晴れ")
+        self.assertEqual(shizuoka.weather_icon_image, "100.svg")
         self.assertEqual(shizuoka.shipping_signal_label, "黄")
+        self.assertEqual(shizuoka.shipping_signal_icon, "🟡")
         self.assertEqual(shizuoka.shipping_signal_message, "私は天気面で注意が必要です")
         self.assertGreater(shizuoka.risk_score, 30)
 
@@ -120,7 +146,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
 
         self.assertEqual(chiba.warning_city_count, 2)
         self.assertEqual(chiba.shipping_signal_label, "赤")
-        self.assertEqual(chiba.shipping_signal_class, "bg-danger")
+        self.assertEqual(chiba.shipping_signal_icon, "🔴")
         self.assertEqual(
             chiba.shipping_signal_message, "私は天気が悪くて出荷できません"
         )
@@ -196,8 +222,10 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
         self.assertContains(response, "都道府県別商圏集計")
+        self.assertContains(response, "天気")
         self.assertContains(response, "出荷信号")
-        self.assertContains(response, "私は天気面では出荷できそうです")
+        self.assertNotContains(response, "<th>状態</th>", html=True)
+        self.assertContains(response, "🟢")
         self.assertContains(response, "配車候補キュー")
         self.assertContains(response, "企業別圃場一覧")
         self.assertContains(response, "静岡県")

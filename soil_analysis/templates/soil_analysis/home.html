@@ -131,7 +131,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>商圏</th>
-                                    <th>状態</th>
+                                    <th>天気</th>
                                     <th>出荷信号</th>
                                     <th class="text-end">圃場</th>
                                     <th class="text-end">企業</th>
@@ -144,11 +144,21 @@
                                 {% for area in prefecture_area_dashboard.featured_areas %}
                                     <tr>
                                         <td class="fw-semibold">{{ area.prefecture_name }}</td>
-                                        <td><span class="badge {{ area.status_badge_class }}">{{ area.status_label }}</span></td>
                                         <td>
-                                            <span class="badge {{ area.shipping_signal_class }}">
-                                                {{ area.shipping_signal_label }}
-                                            </span>
+                                            {% if area.weather_icon_image %}
+                                                {% with 'soil_analysis/images/weather/svg/'|add:area.weather_icon_image as weather_icon_path %}
+                                                    <img src="{% static weather_icon_path %}"
+                                                         alt="{{ area.weather_name }}"
+                                                         width="32"
+                                                         height="32">
+                                                {% endwith %}
+                                            {% else %}
+                                                <span class="text-muted">--</span>
+                                            {% endif %}
+                                            <span class="small text-muted d-block">{{ area.weather_name }}</span>
+                                        </td>
+                                        <td>
+                                            <span aria-label="{{ area.shipping_signal_label }}">{{ area.shipping_signal_icon }}</span>
                                             <span class="small text-muted d-block">{{ area.shipping_signal_message }}</span>
                                         </td>
                                         <td class="text-end">{{ area.land_count }}</td>

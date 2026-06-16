@@ -25,9 +25,10 @@ class PrefectureCommercialAreaVO:
         total_area: 圃場面積の合計。
         warning_city_count: 警報・注意報が登録されている市区町村数。
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
-        status_badge_class: 商圏状態バッジに対応するBootstrapクラス名。
+        weather_name: 最新天気の名称。
+        weather_icon_image: 最新天気のアイコンファイル名。
         shipping_signal_label: 自Prefectureの天候由来の出荷信号ラベル。
-        shipping_signal_class: 出荷信号に対応するBootstrapクラス名。
+        shipping_signal_icon: 自Prefectureの出荷信号を表す丸アイコン。
         shipping_signal_message: 自Prefectureを主語にした出荷可否メッセージ。
     """
 
@@ -40,6 +41,8 @@ class PrefectureCommercialAreaVO:
     total_area: float
     warning_city_count: int
     risk_score: int
+    weather_name: str
+    weather_icon_image: str
 
     @property
     def status_label(self) -> str:
@@ -76,20 +79,6 @@ class PrefectureCommercialAreaVO:
         return "area-empty"
 
     @property
-    def status_badge_class(self) -> str:
-        """
-        商圏状態に対応するBootstrapバッジクラス名を返します。
-
-        Returns:
-            str: Bootstrapの背景・文字色クラス。
-        """
-        if self.warning_city_count:
-            return "bg-warning text-dark"
-        if self.land_count:
-            return "bg-success"
-        return "bg-secondary"
-
-    @property
     def shipping_signal_label(self) -> str:
         """
         自Prefectureの天候状態から見た出荷信号ラベルを返します。
@@ -107,18 +96,18 @@ class PrefectureCommercialAreaVO:
         return "青"
 
     @property
-    def shipping_signal_class(self) -> str:
+    def shipping_signal_icon(self) -> str:
         """
-        出荷信号に対応するBootstrapバッジクラス名を返します。
+        出荷信号を表す丸アイコンを返します。
 
         Returns:
-            str: Bootstrapの背景・文字色クラス。
+            str: 青・黄・赤の丸アイコン。
         """
         if self.shipping_signal_label == "赤":
-            return "bg-danger"
+            return "🔴"
         if self.shipping_signal_label == "黄":
-            return "bg-warning text-dark"
-        return "bg-success"
+            return "🟡"
+        return "🟢"
 
     @property
     def shipping_signal_message(self) -> str:
@@ -155,8 +144,10 @@ class PrefectureCommercialAreaVO:
             "mainCropName": self.main_crop_name,
             "warningCount": self.warning_city_count,
             "riskScore": self.risk_score,
+            "weatherName": self.weather_name,
+            "weatherIconImage": self.weather_icon_image,
             "shippingSignal": self.shipping_signal_label,
-            "shippingSignalClass": self.shipping_signal_class,
+            "shippingSignalIcon": self.shipping_signal_icon,
             "shippingSignalMessage": self.shipping_signal_message,
         }
 
