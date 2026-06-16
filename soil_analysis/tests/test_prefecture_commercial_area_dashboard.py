@@ -127,6 +127,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.weather_name, "晴れ")
         self.assertEqual(shizuoka.weather_icon_image, "100.svg")
         self.assertEqual(shizuoka.weather_code, "100")
+        self.assertEqual(shizuoka.weather_reporting_date, "2026-06-16")
         self.assertGreater(shizuoka.risk_score, 30)
 
     def test_build_uses_rainy_weather_for_prefecture_map_color_source(self):
@@ -240,6 +241,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(yamagata.weather_name, "晴一時雨")
         self.assertEqual(yamagata.weather_icon_image, "102.svg")
         self.assertEqual(yamagata.weather_code, "102")
+        self.assertEqual(yamagata.weather_reporting_date, "2026-06-17")
 
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """
@@ -313,6 +315,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "日本地図商圏マップ")
         self.assertContains(response, "都道府県別商圏集計")
         self.assertContains(response, "天気")
+        self.assertContains(response, "天気未取得")
         self.assertNotContains(response, "<th>状態</th>", html=True)
         self.assertNotContains(response, "出荷信号")
         self.assertNotContains(response, "私は天気")

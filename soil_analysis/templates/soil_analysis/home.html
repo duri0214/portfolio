@@ -155,6 +155,9 @@
                                                 <span class="text-muted">--</span>
                                             {% endif %}
                                             <span class="small text-muted d-block">{{ area.weather_name }}</span>
+                                            {% if area.weather_reporting_date %}
+                                                <span class="small text-muted d-block">{{ area.weather_reporting_date }}</span>
+                                            {% endif %}
                                         </td>
                                         <td class="text-end">{{ area.land_count }}</td>
                                         <td class="text-end">{{ area.company_count }}</td>

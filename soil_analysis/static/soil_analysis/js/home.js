@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
         summary.textContent = `圃場 ${area.landCount} / 企業 ${area.companyCount} / 主要作物 ${area.mainCropName}`;
 
         const risk = document.createElement("span");
-        risk.textContent = `警報 ${area.warningCount} / Risk ${area.riskScore}`;
+        risk.textContent = `予報日 ${area.weatherReportingDate || "未取得"} / 警報 ${area.warningCount} / Risk ${area.riskScore}`;
 
         detailElement.append(title, summary, risk);
     };

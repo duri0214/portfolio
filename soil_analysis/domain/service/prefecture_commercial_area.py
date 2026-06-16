@@ -213,6 +213,7 @@ class PrefectureCommercialAreaService:
                 "name": weather.jma_weather_code.name,
                 "icon_image": weather.jma_weather_code.image,
                 "code": weather.jma_weather_code.code,
+                "reporting_date": weather.reporting_date.isoformat(),
             }
         return weather_stats
 
@@ -251,7 +252,7 @@ class PrefectureCommercialAreaService:
         main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])
         weather = weather_stats.get(
             japan_map_code,
-            {"name": "天気未取得", "icon_image": "", "code": ""},
+            {"name": "天気未取得", "icon_image": "", "code": "", "reporting_date": ""},
         )
 
         return PrefectureCommercialAreaVO(
@@ -267,6 +268,7 @@ class PrefectureCommercialAreaService:
             weather_name=weather["name"],
             weather_icon_image=weather["icon_image"],
             weather_code=weather["code"],
+            weather_reporting_date=weather["reporting_date"],
         )
 
     @staticmethod

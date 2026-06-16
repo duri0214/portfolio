@@ -28,6 +28,7 @@ class PrefectureCommercialAreaVO:
         weather_name: 一番未来の予報日の天気名称。
         weather_icon_image: 一番未来の予報日の天気アイコンファイル名。
         weather_code: 一番未来の予報日の天気コード。
+        weather_reporting_date: 一番未来の予報日。
     """
 
     prefecture_id: int
@@ -42,6 +43,7 @@ class PrefectureCommercialAreaVO:
     weather_name: str
     weather_icon_image: str
     weather_code: str
+    weather_reporting_date: str
 
     @property
     def status_label(self) -> str:
@@ -101,6 +103,7 @@ class PrefectureCommercialAreaVO:
             "weatherName": self.weather_name,
             "weatherIconImage": self.weather_icon_image,
             "weatherCode": self.weather_code,
+            "weatherReportingDate": self.weather_reporting_date,
         }
 
 
