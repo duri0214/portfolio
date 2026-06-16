@@ -79,7 +79,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         シナリオ:
         - 入力: 静岡県に圃場、作物台帳、JMA警報が登録されているDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 静岡県商圏に圃場数、企業数、主要作物、警報数、リスクが反映されること。
+        - 期待値: 静岡県商圏に圃場数、企業数、主要作物、警報数、天気が反映されること。
         """
         city = self._get_city("静岡県")
         land = Land.objects.create(
@@ -318,6 +318,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "圃場数")
         self.assertContains(response, "警報・注意報地域数")
         self.assertContains(response, "0地域")
+        self.assertNotContains(response, '<th class="text-end">Risk</th>', html=True)
         self.assertContains(response, "天気未取得")
         self.assertNotContains(response, "<th>状態</th>", html=True)
         self.assertNotContains(response, "出荷信号")
