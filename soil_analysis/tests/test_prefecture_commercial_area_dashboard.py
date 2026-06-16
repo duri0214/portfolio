@@ -196,6 +196,47 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(yamagata.shipping_signal_label, "青")
         self.assertEqual(yamagata.shipping_signal_icon, "🟢")
 
+    def test_build_uses_most_future_weather_for_shipping_signal(self):
+        """
+        シナリオ:
+        - 入力: 山形県に今日の晴れ予報と明日の雨予報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 一番未来の明日予報を使い、出荷信号が赤になること。
+        """
+        city = self._get_city("山形県")
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.sunny_weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 17),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        yamagata = self._find_area(prefecture_area_dashboard.areas, "山形県")
+
+        self.assertEqual(yamagata.weather_name, "雨")
+        self.assertEqual(yamagata.weather_icon_image, "300.svg")
+        self.assertEqual(yamagata.shipping_signal_label, "赤")
+        self.assertEqual(yamagata.shipping_signal_icon, "🔴")
+
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """
         シナリオ:

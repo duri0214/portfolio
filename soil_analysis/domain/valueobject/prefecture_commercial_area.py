@@ -25,9 +25,9 @@ class PrefectureCommercialAreaVO:
         total_area: 圃場面積の合計。
         warning_city_count: 警報・注意報が登録されている市区町村数。
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
-        weather_name: 最新天気の名称。
-        weather_icon_image: 最新天気のアイコンファイル名。
-        weather_summary_code: 最新天気の集計用コード。
+        weather_name: 一番未来の予報日の天気名称。
+        weather_icon_image: 一番未来の予報日の天気アイコンファイル名。
+        weather_summary_code: 一番未来の予報日の天気集計用コード。
         shipping_signal_label: 自Prefectureの天候由来の出荷信号ラベル。
         shipping_signal_icon: 自Prefectureの出荷信号を表す丸アイコン。
     """

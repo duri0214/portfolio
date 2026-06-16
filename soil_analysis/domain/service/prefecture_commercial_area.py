@@ -91,7 +91,7 @@ class PrefectureCommercialAreaService:
         land_stats = cls._build_land_stats()
         crop_stats = cls._build_crop_stats()
         warning_stats = cls._build_warning_stats()
-        weather_stats = cls._build_weather_stats()
+        weather_stats = cls._build_future_weather_stats()
 
         areas = [
             cls._build_area(
@@ -187,12 +187,13 @@ class PrefectureCommercialAreaService:
         return warning_stats
 
     @staticmethod
-    def _build_weather_stats() -> dict[int, dict[str, str]]:
+    def _build_future_weather_stats() -> dict[int, dict[str, str]]:
         """
-        最新の天気予報を都道府県別に集計します。
+        一番未来の予報日の天気を都道府県別に集計します。
 
-        全国市場VOでは代表表示として、都道府県内で最も新しい天気を1件採用します。
-        複数リージョンを持つ都道府県でも、表示側ではまず天気アイコンが欠けずに
+        JMA予報は今日・明日・明後日など複数日を持つため、全国市場VOでは
+        `reporting_date` が最も未来の天気を代表表示として採用します。
+        複数リージョンを持つ都道府県でも、まず未来日の天気アイコンが欠けずに
         見えることを優先します。
 
         Returns:
