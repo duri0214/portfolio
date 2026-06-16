@@ -36,12 +36,19 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         )
         self.cultivation_type = CultivationType.objects.create(name="露地")
         self.crop = Crop.objects.create(name="トマト")
-        self.weather_code = JmaWeatherCode.objects.create(
+        self.sunny_weather_code = JmaWeatherCode.objects.create(
             code="100",
             summary_code="100",
             image="100.svg",
             name="晴れ",
             name_en="Sunny",
+        )
+        self.rainy_weather_code = JmaWeatherCode.objects.create(
+            code="300",
+            summary_code="300",
+            image="300.svg",
+            name="雨",
+            name_en="Rain",
         )
         self.period = LandPeriod.objects.create(year=2026, name="播種時")
         self.sampling_method = SamplingMethod.objects.create(name="5点法", times=5)
@@ -90,7 +97,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         JmaWeather.objects.create(
             jma_region=city.jma_region,
             reporting_date=date(2026, 6, 16),
-            jma_weather_code=self.weather_code,
+            jma_weather_code=self.sunny_weather_code,
             weather_text="晴れ",
             wind_text="北の風",
             wave_text="なし",
@@ -112,16 +119,16 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.status_label, "注意")
         self.assertEqual(shizuoka.weather_name, "晴れ")
         self.assertEqual(shizuoka.weather_icon_image, "100.svg")
-        self.assertEqual(shizuoka.shipping_signal_label, "黄")
-        self.assertEqual(shizuoka.shipping_signal_icon, "🟡")
+        self.assertEqual(shizuoka.shipping_signal_label, "青")
+        self.assertEqual(shizuoka.shipping_signal_icon, "🟢")
         self.assertGreater(shizuoka.risk_score, 30)
 
-    def test_build_marks_prefecture_red_when_weather_risk_is_high(self):
+    def test_build_marks_prefecture_red_when_weather_is_rainy(self):
         """
         シナリオ:
-        - 入力: 千葉県に圃場と複数のJMA警報が登録されているDB状態。
+        - 入力: 千葉県に圃場、雨の天気、複数のJMA警報が登録されているDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 千葉県商圏の出荷信号が、自県の天候由来の赤信号として表示されること。
+        - 期待値: 千葉県商圏の出荷信号が、雨天由来の赤信号として表示されること。
         """
         city = self._get_city("千葉県")
         Land.objects.create(
@@ -133,6 +140,18 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             center="35.607,140.106",
         )
         JmaWarning.objects.create(jma_region=city.jma_region, warnings="大雨警報")
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
         second_region = JmaRegion.objects.create(
             code="120002",
             name="千葉県第2地域",
@@ -146,6 +165,36 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(chiba.warning_city_count, 2)
         self.assertEqual(chiba.shipping_signal_label, "赤")
         self.assertEqual(chiba.shipping_signal_icon, "🔴")
+
+    def test_build_keeps_signal_green_when_weather_is_sunny_even_with_warning(self):
+        """
+        シナリオ:
+        - 入力: 山形県に晴れの天気とJMA警報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 表示天気が晴れの場合、警報件数だけで赤信号にならないこと。
+        """
+        city = self._get_city("山形県")
+        JmaWarning.objects.create(jma_region=city.jma_region, warnings="乾燥注意報")
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.sunny_weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        yamagata = self._find_area(prefecture_area_dashboard.areas, "山形県")
+
+        self.assertEqual(yamagata.weather_name, "晴れ")
+        self.assertEqual(yamagata.warning_city_count, 1)
+        self.assertEqual(yamagata.shipping_signal_label, "青")
+        self.assertEqual(yamagata.shipping_signal_icon, "🟢")
 
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """

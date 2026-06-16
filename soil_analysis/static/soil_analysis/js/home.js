@@ -10,12 +10,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const commercialAreas = JSON.parse(dataElement.textContent);
     const areaByCode = new Map(commercialAreas.map((area) => [Number(area.code), area]));
     const colors = {
-        "area-active": { color: "#e4f4ec", hoverColor: "#c7ead8" },
-        "area-risk": { color: "#fde9dc", hoverColor: "#fbd0b6" },
-        "area-empty": { color: "#f1f5f9", hoverColor: "#e2e8f0" },
+        "青": { color: "#e4f4ec", hoverColor: "#c7ead8" },
+        "黄": { color: "#fff6d6", hoverColor: "#fde68a" },
+        "赤": { color: "#fee4e2", hoverColor: "#fecaca" },
     };
     const mapAreas = commercialAreas.map((area) => {
-        const palette = colors[area.statusClass] || colors["area-empty"];
+        const palette = colors[area.shippingSignal] || colors["青"];
         return {
             code: area.code,
             color: palette.color,
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
         detailElement.replaceChildren();
 
         const title = document.createElement("strong");
-        title.textContent = `${area.name}: ${area.status}`;
+        title.textContent = `${area.name}: ${area.shippingSignalIcon}`;
 
         const summary = document.createElement("span");
         summary.textContent = `圃場 ${area.landCount} / 企業 ${area.companyCount} / 主要作物 ${area.mainCropName}`;

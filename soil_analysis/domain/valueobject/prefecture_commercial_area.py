@@ -27,6 +27,7 @@ class PrefectureCommercialAreaVO:
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
         weather_name: 最新天気の名称。
         weather_icon_image: 最新天気のアイコンファイル名。
+        weather_summary_code: 最新天気の集計用コード。
         shipping_signal_label: 自Prefectureの天候由来の出荷信号ラベル。
         shipping_signal_icon: 自Prefectureの出荷信号を表す丸アイコン。
     """
@@ -42,6 +43,7 @@ class PrefectureCommercialAreaVO:
     risk_score: int
     weather_name: str
     weather_icon_image: str
+    weather_summary_code: str
 
     @property
     def status_label(self) -> str:
@@ -88,9 +90,9 @@ class PrefectureCommercialAreaVO:
         Returns:
             str: `青`、`黄`、`赤` のいずれか。
         """
-        if self.warning_city_count >= 2:
+        if self.weather_summary_code.startswith(("3", "4")):
             return "赤"
-        if self.warning_city_count == 1:
+        if self.weather_summary_code.startswith("2"):
             return "黄"
         return "青"
 
@@ -131,6 +133,7 @@ class PrefectureCommercialAreaVO:
             "riskScore": self.risk_score,
             "weatherName": self.weather_name,
             "weatherIconImage": self.weather_icon_image,
+            "weatherSummaryCode": self.weather_summary_code,
             "shippingSignal": self.shipping_signal_label,
             "shippingSignalIcon": self.shipping_signal_icon,
         }
