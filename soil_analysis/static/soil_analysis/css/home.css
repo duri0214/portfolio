@@ -67,16 +67,19 @@
 .area-active {
     border-color: #4f8a6b;
     background: #e4f4ec;
+    color: #102a43 !important;
 }
 
 .area-risk {
     border-color: #b35c38;
     background: #fde9dc;
+    color: #102a43 !important;
 }
 
 .area-empty {
     border-color: #cbd5e1;
     background: #f1f5f9;
+    color: #102a43 !important;
 }
 
 .market-map-detail {
@@ -117,7 +120,7 @@
 
 .market-status {
     border: 1px solid transparent;
-    color: #102a43;
+    color: #102a43 !important;
 }
 
 .shipping-signal {
@@ -128,19 +131,19 @@
 .shipping-signal-blue {
     border-color: #4f8a6b;
     background: #e4f4ec;
-    color: #102a43;
+    color: #102a43 !important;
 }
 
 .shipping-signal-yellow {
     border-color: #b7791f;
     background: #fff6d6;
-    color: #102a43;
+    color: #102a43 !important;
 }
 
 .shipping-signal-red {
     border-color: #b42318;
     background: #fee4e2;
-    color: #102a43;
+    color: #102a43 !important;
 }
 
 @media (max-width: 767.98px) {
