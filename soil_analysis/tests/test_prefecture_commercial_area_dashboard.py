@@ -120,7 +120,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
 
         self.assertEqual(chiba.warning_city_count, 2)
         self.assertEqual(chiba.shipping_signal_label, "赤")
-        self.assertEqual(chiba.shipping_signal_class, "shipping-signal-red")
+        self.assertEqual(chiba.shipping_signal_class, "bg-danger")
         self.assertEqual(
             chiba.shipping_signal_message, "私は天気が悪くて出荷できません"
         )

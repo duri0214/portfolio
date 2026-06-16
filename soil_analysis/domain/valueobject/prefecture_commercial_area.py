@@ -25,8 +25,9 @@ class PrefectureCommercialAreaVO:
         total_area: 圃場面積の合計。
         warning_city_count: 警報・注意報が登録されている市区町村数。
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
+        status_badge_class: 商圏状態バッジに対応するBootstrapクラス名。
         shipping_signal_label: 自Prefectureの天候由来の出荷信号ラベル。
-        shipping_signal_class: 出荷信号に対応するCSSクラス名。
+        shipping_signal_class: 出荷信号に対応するBootstrapクラス名。
         shipping_signal_message: 自Prefectureを主語にした出荷可否メッセージ。
     """
 
@@ -75,6 +76,20 @@ class PrefectureCommercialAreaVO:
         return "area-empty"
 
     @property
+    def status_badge_class(self) -> str:
+        """
+        商圏状態に対応するBootstrapバッジクラス名を返します。
+
+        Returns:
+            str: Bootstrapの背景・文字色クラス。
+        """
+        if self.warning_city_count:
+            return "bg-warning text-dark"
+        if self.land_count:
+            return "bg-success"
+        return "bg-secondary"
+
+    @property
     def shipping_signal_label(self) -> str:
         """
         自Prefectureの天候状態から見た出荷信号ラベルを返します。
@@ -94,17 +109,16 @@ class PrefectureCommercialAreaVO:
     @property
     def shipping_signal_class(self) -> str:
         """
-        出荷信号に対応するCSSクラス名を返します。
+        出荷信号に対応するBootstrapバッジクラス名を返します。
 
         Returns:
-            str: `shipping-signal-blue`、`shipping-signal-yellow`、
-            `shipping-signal-red` のいずれか。
+            str: Bootstrapの背景・文字色クラス。
         """
         if self.shipping_signal_label == "赤":
-            return "shipping-signal-red"
+            return "bg-danger"
         if self.shipping_signal_label == "黄":
-            return "shipping-signal-yellow"
-        return "shipping-signal-blue"
+            return "bg-warning text-dark"
+        return "bg-success"
 
     @property
     def shipping_signal_message(self) -> str:
