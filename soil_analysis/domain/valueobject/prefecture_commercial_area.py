@@ -25,6 +25,9 @@ class PrefectureCommercialAreaVO:
         total_area: 圃場面積の合計。
         warning_city_count: 警報・注意報が登録されている市区町村数。
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
+        shipping_signal_label: 自Prefectureの天候由来の出荷信号ラベル。
+        shipping_signal_class: 出荷信号に対応するCSSクラス名。
+        shipping_signal_message: 自Prefectureを主語にした出荷可否メッセージ。
     """
 
     prefecture_id: int
@@ -72,6 +75,52 @@ class PrefectureCommercialAreaVO:
         return "area-empty"
 
     @property
+    def shipping_signal_label(self) -> str:
+        """
+        自Prefectureの天候状態から見た出荷信号ラベルを返します。
+
+        赤信号は「この県へ売り込める」ではなく、その行のPrefecture自身が
+        天候都合で出荷しづらい一人称のサインとして扱います。
+
+        Returns:
+            str: `青`、`黄`、`赤` のいずれか。
+        """
+        if self.warning_city_count >= 2:
+            return "赤"
+        if self.warning_city_count == 1:
+            return "黄"
+        return "青"
+
+    @property
+    def shipping_signal_class(self) -> str:
+        """
+        出荷信号に対応するCSSクラス名を返します。
+
+        Returns:
+            str: `shipping-signal-blue`、`shipping-signal-yellow`、
+            `shipping-signal-red` のいずれか。
+        """
+        if self.shipping_signal_label == "赤":
+            return "shipping-signal-red"
+        if self.shipping_signal_label == "黄":
+            return "shipping-signal-yellow"
+        return "shipping-signal-blue"
+
+    @property
+    def shipping_signal_message(self) -> str:
+        """
+        自Prefectureを主語にした出荷可否メッセージを返します。
+
+        Returns:
+            str: 全国市場VO上で表示する一人称の出荷状態。
+        """
+        if self.shipping_signal_label == "赤":
+            return "私は天気が悪くて出荷できません"
+        if self.shipping_signal_label == "黄":
+            return "私は天気面で注意が必要です"
+        return "私は天気面では出荷できそうです"
+
+    @property
     def map_payload(self) -> dict[str, int | str]:
         """
         japan-map-js に渡す都道府県別データを返します。
@@ -92,6 +141,9 @@ class PrefectureCommercialAreaVO:
             "mainCropName": self.main_crop_name,
             "warningCount": self.warning_city_count,
             "riskScore": self.risk_score,
+            "shippingSignal": self.shipping_signal_label,
+            "shippingSignalClass": self.shipping_signal_class,
+            "shippingSignalMessage": self.shipping_signal_message,
         }
 
 

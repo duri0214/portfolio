@@ -87,7 +87,43 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.total_area, 12.5)
         self.assertEqual(shizuoka.warning_city_count, 1)
         self.assertEqual(shizuoka.status_label, "注意")
+        self.assertEqual(shizuoka.shipping_signal_label, "黄")
+        self.assertEqual(shizuoka.shipping_signal_message, "私は天気面で注意が必要です")
         self.assertGreater(shizuoka.risk_score, 30)
+
+    def test_build_marks_prefecture_red_when_weather_risk_is_high(self):
+        """
+        シナリオ:
+        - 入力: 千葉県に圃場と複数のJMA警報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 千葉県商圏の出荷信号が、自県の天候由来の赤信号として表示されること。
+        """
+        city = self._get_city("千葉県")
+        Land.objects.create(
+            name="千葉テスト圃場",
+            company=self.company,
+            jma_city=city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.607,140.106",
+        )
+        JmaWarning.objects.create(jma_region=city.jma_region, warnings="大雨警報")
+        second_region = JmaRegion.objects.create(
+            code="120002",
+            name="千葉県第2地域",
+            jma_prefecture=city.jma_region.jma_prefecture,
+        )
+        JmaWarning.objects.create(jma_region=second_region, warnings="洪水警報")
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        chiba = self._find_area(prefecture_area_dashboard.areas, "千葉県")
+
+        self.assertEqual(chiba.warning_city_count, 2)
+        self.assertEqual(chiba.shipping_signal_label, "赤")
+        self.assertEqual(chiba.shipping_signal_class, "shipping-signal-red")
+        self.assertEqual(
+            chiba.shipping_signal_message, "私は天気が悪くて出荷できません"
+        )
 
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """
@@ -160,6 +196,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
         self.assertContains(response, "都道府県別商圏集計")
+        self.assertContains(response, "出荷信号")
+        self.assertContains(response, "私は天気面では出荷できそうです")
         self.assertContains(response, "配車候補キュー")
         self.assertContains(response, "企業別圃場一覧")
         self.assertContains(response, "静岡県")

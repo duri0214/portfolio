@@ -120,6 +120,29 @@
     color: #102a43;
 }
 
+.shipping-signal {
+    min-width: 2.4rem;
+    border: 1px solid transparent;
+}
+
+.shipping-signal-blue {
+    border-color: #4f8a6b;
+    background: #e4f4ec;
+    color: #102a43;
+}
+
+.shipping-signal-yellow {
+    border-color: #b7791f;
+    background: #fff6d6;
+    color: #102a43;
+}
+
+.shipping-signal-red {
+    border-color: #b42318;
+    background: #fee4e2;
+    color: #102a43;
+}
+
 @media (max-width: 767.98px) {
     .japan-market-map {
         min-height: 420px;
