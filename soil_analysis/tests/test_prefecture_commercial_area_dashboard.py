@@ -343,6 +343,11 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
+        self.assertContains(response, "気象庁 全国予報マップ")
+        self.assertContains(
+            response,
+            "https://www.jma.go.jp/bosai/map.html#5/29.555/141.395/&contents=forecast",
+        )
         self.assertContains(response, "都道府県別商圏集計")
         self.assertContains(response, "天気（予報日）")
         self.assertContains(response, "圃場数")
