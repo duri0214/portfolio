@@ -114,7 +114,6 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.weather_icon_image, "100.svg")
         self.assertEqual(shizuoka.shipping_signal_label, "黄")
         self.assertEqual(shizuoka.shipping_signal_icon, "🟡")
-        self.assertEqual(shizuoka.shipping_signal_message, "私は天気面で注意が必要です")
         self.assertGreater(shizuoka.risk_score, 30)
 
     def test_build_marks_prefecture_red_when_weather_risk_is_high(self):
@@ -147,9 +146,6 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(chiba.warning_city_count, 2)
         self.assertEqual(chiba.shipping_signal_label, "赤")
         self.assertEqual(chiba.shipping_signal_icon, "🔴")
-        self.assertEqual(
-            chiba.shipping_signal_message, "私は天気が悪くて出荷できません"
-        )
 
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """
@@ -226,6 +222,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "出荷信号")
         self.assertNotContains(response, "<th>状態</th>", html=True)
         self.assertContains(response, "🟢")
+        self.assertNotContains(response, "私は天気")
         self.assertContains(response, "配車候補キュー")
         self.assertContains(response, "企業別圃場一覧")
         self.assertContains(response, "静岡県")

@@ -29,7 +29,6 @@ class PrefectureCommercialAreaVO:
         weather_icon_image: 最新天気のアイコンファイル名。
         shipping_signal_label: 自Prefectureの天候由来の出荷信号ラベル。
         shipping_signal_icon: 自Prefectureの出荷信号を表す丸アイコン。
-        shipping_signal_message: 自Prefectureを主語にした出荷可否メッセージ。
     """
 
     prefecture_id: int
@@ -110,20 +109,6 @@ class PrefectureCommercialAreaVO:
         return "🟢"
 
     @property
-    def shipping_signal_message(self) -> str:
-        """
-        自Prefectureを主語にした出荷可否メッセージを返します。
-
-        Returns:
-            str: 全国市場VO上で表示する一人称の出荷状態。
-        """
-        if self.shipping_signal_label == "赤":
-            return "私は天気が悪くて出荷できません"
-        if self.shipping_signal_label == "黄":
-            return "私は天気面で注意が必要です"
-        return "私は天気面では出荷できそうです"
-
-    @property
     def map_payload(self) -> dict[str, int | str]:
         """
         japan-map-js に渡す都道府県別データを返します。
@@ -148,7 +133,6 @@ class PrefectureCommercialAreaVO:
             "weatherIconImage": self.weather_icon_image,
             "shippingSignal": self.shipping_signal_label,
             "shippingSignalIcon": self.shipping_signal_icon,
-            "shippingSignalMessage": self.shipping_signal_message,
         }
 
 
