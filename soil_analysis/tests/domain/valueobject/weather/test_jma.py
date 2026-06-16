@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from soil_analysis.management.commands import weather_fetch_forecast
 from soil_analysis.management.commands.weather_fetch_forecast import (
+    get_amedas_codes_for_region,
     get_data,
     get_indexes,
 )
@@ -60,6 +61,19 @@ class TestFetchWeatherForecast(TestCase):
 
         self.assertListEqual(updated_prefecture_ids, [])
         self.assertEqual(special_add_region_ids, {})
+
+    def test_get_amedas_codes_for_region_without_mapping(self):
+        """
+        シナリオ:
+        - 入力: 対応表に存在しない地域コード。
+        - 処理: 地域コードに対応する AMeDAS コード一覧を取得する。
+        - 期待値: 例外ではなく空リストが返されること。
+        """
+        amedas_code_in_region = {"460010": ["88317"]}
+
+        amedas_codes = get_amedas_codes_for_region(amedas_code_in_region, "460020")
+
+        self.assertEqual(amedas_codes, [])
 
 
 class TestGetDataAndIndexes(TestCase):

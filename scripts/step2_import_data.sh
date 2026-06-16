@@ -92,7 +92,6 @@ python manage.py loaddata \
     soil_analysis/fixtures/userattribute.json \
     soil_analysis/fixtures/companycategory.json \
     soil_analysis/fixtures/company.json \
-    soil_analysis/fixtures/crop.json \
     soil_analysis/fixtures/land_block.json \
     soil_analysis/fixtures/land_period.json \
     soil_analysis/fixtures/cultivationtype.json
@@ -101,16 +100,20 @@ python manage.py loaddata \
 python manage.py weather_load_const_master
 
 python manage.py loaddata soil_analysis/fixtures/jma_weather_code.json
-python manage.py loaddata soil_analysis/fixtures/land.json
 python manage.py loaddata soil_analysis/fixtures/rokunohe_land_registry.json
 
-# ここ以降で soil analysis の 気象データ取得バッチをまわす
-python manage.py weather_fetch_forecast
-python manage.py weather_fetch_warning
-
 python manage.py loaddata soil_analysis/fixtures/samplingmethod.json
+python manage.py generate_prefecture_representative_fixtures
+
+# ここ以降で soil analysis の 気象データ取得バッチをまわす
+if ! python manage.py weather_fetch_forecast; then
+    echo "WARNING: weather_fetch_forecast failed. JMA API may be temporarily unavailable; continuing import." >&2
+fi
+if ! python manage.py weather_fetch_warning; then
+    echo "WARNING: weather_fetch_warning failed. JMA API may be temporarily unavailable; continuing import." >&2
+fi
+
 python manage.py loaddata soil_analysis/fixtures/samplingorder.json
-python manage.py loaddata soil_analysis/fixtures/land_ledger.json
 python manage.py loaddata soil_analysis/fixtures/device.json
 
 # --- Taxonomy ---
@@ -149,8 +152,8 @@ python manage.py loaddata \
 # --- USA Research ---
 python manage.py loaddata usa_research/fixtures/financial_results.json
 
-# 資産クラスの長期推移データの初期取得（超長期: 指数を含めると1950年代〜取得可能）
-python manage.py monthly_update_historical_assets --start 1950-01-01
+# 資産クラスの長期推移データの初期取得（1980年以降）
+python manage.py monthly_update_historical_assets --start 1980-01-01
 
 # --- Bank ---
 python manage.py loaddata bank/fixtures/mufg_summary_master.json
