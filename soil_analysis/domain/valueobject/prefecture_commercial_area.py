@@ -27,7 +27,7 @@ class PrefectureCommercialAreaVO:
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
         weather_name: 一番未来の予報日の天気名称。
         weather_icon_image: 一番未来の予報日の天気アイコンファイル名。
-        weather_summary_code: 一番未来の予報日の天気集計用コード。
+        weather_code: 一番未来の予報日の天気コード。
     """
 
     prefecture_id: int
@@ -41,7 +41,7 @@ class PrefectureCommercialAreaVO:
     risk_score: int
     weather_name: str
     weather_icon_image: str
-    weather_summary_code: str
+    weather_code: str
 
     @property
     def status_label(self) -> str:
@@ -100,7 +100,7 @@ class PrefectureCommercialAreaVO:
             "riskScore": self.risk_score,
             "weatherName": self.weather_name,
             "weatherIconImage": self.weather_icon_image,
-            "weatherSummaryCode": self.weather_summary_code,
+            "weatherCode": self.weather_code,
         }
 
 

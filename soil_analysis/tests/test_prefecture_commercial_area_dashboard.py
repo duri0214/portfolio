@@ -50,6 +50,13 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             name="雨",
             name_en="Rain",
         )
+        self.sunny_then_rain_weather_code = JmaWeatherCode.objects.create(
+            code="102",
+            summary_code="300",
+            image="102.svg",
+            name="晴一時雨",
+            name_en="Clear, occasional rain",
+        )
         self.period = LandPeriod.objects.create(year=2026, name="播種時")
         self.sampling_method = SamplingMethod.objects.create(name="5点法", times=5)
         self.prefectures = self._create_prefectures()
@@ -119,7 +126,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.status_label, "注意")
         self.assertEqual(shizuoka.weather_name, "晴れ")
         self.assertEqual(shizuoka.weather_icon_image, "100.svg")
-        self.assertEqual(shizuoka.weather_summary_code, "100")
+        self.assertEqual(shizuoka.weather_code, "100")
         self.assertGreater(shizuoka.risk_score, 30)
 
     def test_build_uses_rainy_weather_for_prefecture_map_color_source(self):
@@ -163,7 +170,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
 
         self.assertEqual(chiba.warning_city_count, 2)
         self.assertEqual(chiba.weather_name, "雨")
-        self.assertEqual(chiba.weather_summary_code, "300")
+        self.assertEqual(chiba.weather_code, "300")
 
     def test_build_keeps_sunny_weather_code_even_with_warning(self):
         """
@@ -192,31 +199,19 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
 
         self.assertEqual(yamagata.weather_name, "晴れ")
         self.assertEqual(yamagata.warning_city_count, 1)
-        self.assertEqual(yamagata.weather_summary_code, "100")
+        self.assertEqual(yamagata.weather_code, "100")
 
-    def test_build_uses_most_future_weather_for_map_color_source(self):
+    def test_build_uses_weather_code_first_digit_for_map_color_source(self):
         """
         シナリオ:
-        - 入力: 山形県に今日の晴れ予報と明日の雨予報が登録されているDB状態。
+        - 入力: 山形県に今日の雨予報と明日の晴一時雨予報が登録されているDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 一番未来の明日予報を使い、雨天の集計用コードが入ること。
+        - 期待値: 一番未来の明日予報を使い、集計用コードではなく天気コードが入ること。
         """
         city = self._get_city("山形県")
         JmaWeather.objects.create(
             jma_region=city.jma_region,
             reporting_date=date(2026, 6, 16),
-            jma_weather_code=self.sunny_weather_code,
-            weather_text="晴れ",
-            wind_text="北の風",
-            wave_text="なし",
-            avg_rain_probability=10,
-            avg_min_temperature=18,
-            avg_max_temperature=28,
-            avg_max_wind_speed=4,
-        )
-        JmaWeather.objects.create(
-            jma_region=city.jma_region,
-            reporting_date=date(2026, 6, 17),
             jma_weather_code=self.rainy_weather_code,
             weather_text="雨",
             wind_text="北の風",
@@ -226,13 +221,25 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             avg_max_temperature=22,
             avg_max_wind_speed=8,
         )
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 17),
+            jma_weather_code=self.sunny_then_rain_weather_code,
+            weather_text="晴一時雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=40,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
 
         prefecture_area_dashboard = PrefectureCommercialAreaService.build()
         yamagata = self._find_area(prefecture_area_dashboard.areas, "山形県")
 
-        self.assertEqual(yamagata.weather_name, "雨")
-        self.assertEqual(yamagata.weather_icon_image, "300.svg")
-        self.assertEqual(yamagata.weather_summary_code, "300")
+        self.assertEqual(yamagata.weather_name, "晴一時雨")
+        self.assertEqual(yamagata.weather_icon_image, "102.svg")
+        self.assertEqual(yamagata.weather_code, "102")
 
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """

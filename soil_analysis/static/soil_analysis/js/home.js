@@ -14,17 +14,17 @@ document.addEventListener("DOMContentLoaded", () => {
         caution: { color: "#fff6d6", hoverColor: "#fde68a" },
         bad: { color: "#fee4e2", hoverColor: "#fecaca" },
     };
-    const getWeatherPalette = (summaryCode) => {
-        if (summaryCode.startsWith("3") || summaryCode.startsWith("4")) {
+    const getWeatherPalette = (weatherCode) => {
+        if (weatherCode.startsWith("3") || weatherCode.startsWith("4")) {
             return colors.bad;
         }
-        if (summaryCode.startsWith("2")) {
+        if (weatherCode.startsWith("2")) {
             return colors.caution;
         }
         return colors.good;
     };
     const mapAreas = commercialAreas.map((area) => {
-        const palette = getWeatherPalette(area.weatherSummaryCode || "");
+        const palette = getWeatherPalette(area.weatherCode || "");
         return {
             code: area.code,
             color: palette.color,
