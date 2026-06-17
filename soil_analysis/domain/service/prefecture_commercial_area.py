@@ -472,8 +472,8 @@ class PrefectureCommercialAreaService:
         """
         神視点でA県→B県の売り込みオッズを単一スコアとして算出します。
 
-        天気コードの先頭1桁をカテゴリとして係数化し、警報・注意報、同作物、
-        簡易物流距離、出荷元の圃場数を1つの値へ畳み込みます。
+        天気コードの先頭1桁をカテゴリとして係数化し、警報・注意報件数と
+        組み合わせて1つの値へ畳み込みます。
 
         Args:
             origin_area: 売り込み元商圏。
@@ -483,18 +483,8 @@ class PrefectureCommercialAreaService:
             int: 0から100までの神視点オッズ。
         """
         weather_factor = cls._get_weather_factor(target_area.weather_code)
-        warning_score = min(45, target_area.warning_city_count * 15)
-        same_crop_score = 20 if cls._has_same_main_crop(origin_area, target_area) else 0
-        distance_score = cls._calculate_logistics_distance_score(
-            origin_area, target_area
-        )
-        origin_capacity_score = min(10, origin_area.land_count * 2)
-        odds_score = int(
-            round(
-                (25 + warning_score + same_crop_score + distance_score) * weather_factor
-                + origin_capacity_score
-            )
-        )
+        warning_score = min(60, target_area.warning_city_count * 20)
+        odds_score = int(round((35 + warning_score) * weather_factor))
         return min(100, odds_score)
 
     @staticmethod
@@ -515,54 +505,6 @@ class PrefectureCommercialAreaService:
         if weather_code.startswith("1"):
             return 0.8
         return 0.9
-
-    @staticmethod
-    def _has_same_main_crop(
-        origin_area: PrefectureCommercialAreaVO,
-        target_area: PrefectureCommercialAreaVO,
-    ) -> bool:
-        """
-        売り込み元と売り込み先の主要作物が同じかを返します。
-
-        Args:
-            origin_area: 売り込み元商圏。
-            target_area: 売り込み先商圏。
-
-        Returns:
-            bool: 両商圏の主要作物が未設定以外で一致する場合はTrue。
-        """
-        return (
-            origin_area.main_crop_name != "未設定"
-            and origin_area.main_crop_name == target_area.main_crop_name
-        )
-
-    @staticmethod
-    def _calculate_logistics_distance_score(
-        origin_area: PrefectureCommercialAreaVO,
-        target_area: PrefectureCommercialAreaVO,
-    ) -> int:
-        """
-        都道府県コード差から簡易物流距離スコアを返します。
-
-        現段階では外部の距離APIに接続しないため、japan-map-js の都道府県コード差を
-        近さの仮指標として使います。後続で実距離や既存取引関係へ差し替える前提の
-        PoC用スコアです。
-
-        Args:
-            origin_area: 売り込み元商圏。
-            target_area: 売り込み先商圏。
-
-        Returns:
-            int: 近いほど高い物流距離スコア。
-        """
-        code_distance = abs(origin_area.japan_map_code - target_area.japan_map_code)
-        if code_distance <= 2:
-            return 15
-        if code_distance <= 5:
-            return 10
-        if code_distance <= 10:
-            return 5
-        return 0
 
     @staticmethod
     def _get_odds_label(odds_score: int) -> str:
@@ -597,15 +539,8 @@ class PrefectureCommercialAreaService:
         Returns:
             str: オッズに寄与した判断軸を含む説明文。
         """
-        crop_reason = (
-            "同作物" if cls._has_same_main_crop(origin_area, target_area) else "別作物"
-        )
-        distance_score = cls._calculate_logistics_distance_score(
-            origin_area, target_area
-        )
-        distance_reason = "近隣県" if distance_score >= 10 else "広域物流"
         return (
             f"{target_area.prefecture_name}は{target_area.warning_summary}で赤信号。"
-            f"{origin_area.prefecture_name}は{origin_area.land_count}圃場を持ち、"
-            f"{crop_reason}・{distance_reason}として売り込み候補になります。"
+            f"{origin_area.prefecture_name}は警報・注意報がないため、"
+            f"{target_area.prefecture_name}への売り込み候補になります。"
         )

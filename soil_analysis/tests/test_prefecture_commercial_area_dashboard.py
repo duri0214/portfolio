@@ -278,7 +278,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         シナリオ:
         - 入力: 静岡県に晴れのトマト圃場、千葉県に雨と警報付きのトマト圃場があるDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 静岡県→千葉県の一方向売り込み候補が神視点の単一オッズ付きで返ること。
+        - 期待値: 静岡県→千葉県の一方向売り込み候補が天気と警報由来の単一オッズ付きで返ること。
         """
         shizuoka_city = self._get_city("静岡県")
         chiba_city = self._get_city("千葉県")
@@ -337,10 +337,10 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(candidate.target_name, "千葉県")
         self.assertEqual(candidate.main_crop_name, "トマト")
-        self.assertEqual(candidate.odds_label, "高オッズ")
-        self.assertGreaterEqual(candidate.odds_score, 80)
-        self.assertIn("同作物", candidate.reason)
+        self.assertEqual(candidate.odds_label, "中オッズ")
+        self.assertGreaterEqual(candidate.odds_score, 60)
         self.assertIn("大雨警報", candidate.reason)
+        self.assertIn("警報・注意報がない", candidate.reason)
 
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """
