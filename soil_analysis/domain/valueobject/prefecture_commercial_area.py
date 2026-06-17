@@ -18,16 +18,6 @@ class WarningStatsVO:
     region_count: int
     names: frozenset[str]
 
-    @classmethod
-    def empty(cls) -> "WarningStatsVO":
-        """
-        警報・注意報がない初期状態を返します。
-
-        Returns:
-            WarningStatsVO: 地域数0、警報・注意報名なしの集計VO。
-        """
-        return cls(region_count=0, names=frozenset())
-
     def add_names(self, warning_names: list[str]) -> "WarningStatsVO":
         """
         1リージョン分の警報・注意報名を加算した新しいVOを返します。
@@ -69,16 +59,6 @@ class PrefectureWarningStatsVO:
 
     stats_by_japan_map_code: dict[int, WarningStatsVO]
 
-    @classmethod
-    def empty(cls) -> "PrefectureWarningStatsVO":
-        """
-        都道府県別の警報・注意報集計がない初期状態を返します。
-
-        Returns:
-            PrefectureWarningStatsVO: 空の都道府県別警報・注意報集計VO。
-        """
-        return cls(stats_by_japan_map_code={})
-
     def add_warning_names(
         self, japan_map_code: int, warning_names: list[str]
     ) -> "PrefectureWarningStatsVO":
@@ -111,7 +91,9 @@ class PrefectureWarningStatsVO:
         Returns:
             WarningStatsVO: 指定都道府県の警報・注意報集計。未登録の場合は空の集計。
         """
-        return self.stats_by_japan_map_code.get(japan_map_code, WarningStatsVO.empty())
+        return self.stats_by_japan_map_code.get(
+            japan_map_code, WarningStatsVO(region_count=0, names=frozenset())
+        )
 
 
 @dataclass(frozen=True)

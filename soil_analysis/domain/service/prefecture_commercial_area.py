@@ -176,7 +176,7 @@ class PrefectureCommercialAreaService:
         Returns:
             PrefectureWarningStatsVO: 都道府県コード別の警報・注意報集計。
         """
-        warning_stats = PrefectureWarningStatsVO.empty()
+        warning_stats = PrefectureWarningStatsVO(stats_by_japan_map_code={})
         warnings = JmaWarning.objects.select_related("jma_region__jma_prefecture")
         for warning in warnings:
             japan_map_code = PrefectureCommercialAreaService._get_japan_map_code(
