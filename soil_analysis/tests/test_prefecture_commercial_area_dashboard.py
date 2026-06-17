@@ -429,6 +429,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "都道府県別商圏集計")
         self.assertContains(response, "天気（予報日）")
         self.assertContains(response, '<th class="text-end">Odds</th>', html=True)
+        self.assertContains(response, '<td class="fw-semibold">沖縄県</td>', html=True)
         self.assertContains(response, "圃場数")
         self.assertContains(response, "警報・注意報")
         self.assertContains(response, "なし")
