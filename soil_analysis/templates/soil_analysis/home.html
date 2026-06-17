@@ -69,8 +69,8 @@
                         </div>
                         <div class="col-6 col-lg-3">
                             <div class="market-kpi">
-                                <span class="market-kpi-label">配車候補</span>
-                                <strong>{{ prefecture_area_dashboard.dispatch_candidate_count }}</strong>
+                                <span class="market-kpi-label">売り込み候補</span>
+                                <strong>{{ prefecture_area_dashboard.sales_opportunity_candidate_count }}</strong>
                                 <small>件</small>
                             </div>
                         </div>
@@ -102,6 +102,27 @@
                             </div>
                         </div>
                         <div class="col-12 col-xl-4">
+                            <h2 class="h5 mb-2"><i class="fas fa-bullhorn me-2 text-muted"></i>赤信号県への売り込み候補</h2>
+                            {% if prefecture_area_dashboard.sales_opportunity_candidates %}
+                                <div class="sales-opportunity-list mb-4">
+                                    {% for candidate in prefecture_area_dashboard.sales_opportunity_candidates %}
+                                        <div class="sales-opportunity-item">
+                                            <div class="d-flex justify-content-between gap-2">
+                                                <strong>{{ candidate.relation_label }}</strong>
+                                                <span class="badge bg-danger">{{ candidate.odds_label }}</span>
+                                            </div>
+                                            <div class="small text-muted mt-1">{{ candidate.main_crop_name }} / Odds {{ candidate.odds_score }}</div>
+                                            <p class="small mb-0 mt-2">{{ candidate.reason }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="empty-dashboard mb-4">
+                                    <i class="fas fa-cloud-sun-rain text-muted mb-2"></i>
+                                    <p class="small text-muted mb-0">赤信号の都道府県が出ると売り込み候補が表示されます。</p>
+                                </div>
+                            {% endif %}
+
                             <h2 class="h5 mb-2"><i class="fas fa-truck-moving me-2 text-muted"></i>配車候補キュー</h2>
                             {% if dispatch_candidates %}
                                 <div class="dispatch-queue">

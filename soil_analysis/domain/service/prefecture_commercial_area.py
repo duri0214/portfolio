@@ -6,6 +6,7 @@ from soil_analysis.domain.valueobject.prefecture_commercial_area import (
     PrefectureCommercialAreaVO,
     PrefectureWeatherStatsVO,
     PrefectureWarningStatsVO,
+    SalesOpportunityCandidateVO,
     WeatherStatsVO,
 )
 from soil_analysis.models import JmaPrefecture, JmaWarning, JmaWeather, Land, LandLedger
@@ -108,8 +109,11 @@ class PrefectureCommercialAreaService:
             for japan_map_code, prefecture_name in JAPAN_MAP_PREFECTURES
         ]
         dispatch_candidates = cls._build_dispatch_candidates(areas)
+        sales_opportunity_candidates = cls._build_sales_opportunity_candidates(areas)
         return PrefectureCommercialAreaDashboardVO(
-            areas=areas, dispatch_candidates=dispatch_candidates
+            areas=areas,
+            dispatch_candidates=dispatch_candidates,
+            sales_opportunity_candidates=sales_opportunity_candidates,
         )
 
     @staticmethod
@@ -407,3 +411,201 @@ class PrefectureCommercialAreaService:
                 )
             )
         return candidates
+
+    @classmethod
+    def _build_sales_opportunity_candidates(
+        cls,
+        areas: list[PrefectureCommercialAreaVO],
+    ) -> list[SalesOpportunityCandidateVO]:
+        """
+        赤信号商圏へ他都道府県から売り込む候補リストを生成します。
+
+        警報・注意報がある商圏を「出荷側として止まっている地域」とみなし、
+        警報・注意報がなく圃場登録のある他商圏を売り込み元候補にします。
+        A県→B県とB県→A県は別々の関係として扱うため、候補は一方向のVOで返します。
+
+        Args:
+            areas: 都道府県単位の商圏VO一覧。
+
+        Returns:
+            list[SalesOpportunityCandidateVO]: 神視点オッズつきの売り込み候補。
+        """
+        target_areas = [area for area in areas if area.warning_city_count]
+        origin_areas = [
+            area for area in areas if area.land_count and not area.warning_city_count
+        ]
+        candidates = []
+        for target_area in target_areas:
+            for origin_area in origin_areas:
+                if origin_area.japan_map_code == target_area.japan_map_code:
+                    continue
+                odds_score = cls._calculate_god_odds_score(origin_area, target_area)
+                candidates.append(
+                    SalesOpportunityCandidateVO(
+                        origin_name=origin_area.prefecture_name,
+                        target_name=target_area.prefecture_name,
+                        main_crop_name=origin_area.main_crop_name,
+                        odds_score=odds_score,
+                        odds_label=cls._get_odds_label(odds_score),
+                        relation_label=(
+                            f"{origin_area.prefecture_name}→"
+                            f"{target_area.prefecture_name}"
+                        ),
+                        reason=cls._build_sales_opportunity_reason(
+                            origin_area, target_area
+                        ),
+                    )
+                )
+
+        return sorted(
+            candidates,
+            key=lambda candidate: candidate.odds_score,
+            reverse=True,
+        )[:5]
+
+    @classmethod
+    def _calculate_god_odds_score(
+        cls,
+        origin_area: PrefectureCommercialAreaVO,
+        target_area: PrefectureCommercialAreaVO,
+    ) -> int:
+        """
+        神視点でA県→B県の売り込みオッズを単一スコアとして算出します。
+
+        天気コードの先頭1桁をカテゴリとして係数化し、警報・注意報、同作物、
+        簡易物流距離、出荷元の圃場数を1つの値へ畳み込みます。
+
+        Args:
+            origin_area: 売り込み元商圏。
+            target_area: 赤信号として売り込み先候補になる商圏。
+
+        Returns:
+            int: 0から100までの神視点オッズ。
+        """
+        weather_factor = cls._get_weather_factor(target_area.weather_code)
+        warning_score = min(45, target_area.warning_city_count * 15)
+        same_crop_score = 20 if cls._has_same_main_crop(origin_area, target_area) else 0
+        distance_score = cls._calculate_logistics_distance_score(
+            origin_area, target_area
+        )
+        origin_capacity_score = min(10, origin_area.land_count * 2)
+        odds_score = int(
+            round(
+                (25 + warning_score + same_crop_score + distance_score) * weather_factor
+                + origin_capacity_score
+            )
+        )
+        return min(100, odds_score)
+
+    @staticmethod
+    def _get_weather_factor(weather_code: str) -> float:
+        """
+        JMA天気コード先頭1桁からオッズ係数を返します。
+
+        Args:
+            weather_code: JMA天気コード。
+
+        Returns:
+            float: 晴れ、曇り、雨・雪、未取得を区別する係数。
+        """
+        if weather_code.startswith("3") or weather_code.startswith("4"):
+            return 1.25
+        if weather_code.startswith("2"):
+            return 1.0
+        if weather_code.startswith("1"):
+            return 0.8
+        return 0.9
+
+    @staticmethod
+    def _has_same_main_crop(
+        origin_area: PrefectureCommercialAreaVO,
+        target_area: PrefectureCommercialAreaVO,
+    ) -> bool:
+        """
+        売り込み元と売り込み先の主要作物が同じかを返します。
+
+        Args:
+            origin_area: 売り込み元商圏。
+            target_area: 売り込み先商圏。
+
+        Returns:
+            bool: 両商圏の主要作物が未設定以外で一致する場合はTrue。
+        """
+        return (
+            origin_area.main_crop_name != "未設定"
+            and origin_area.main_crop_name == target_area.main_crop_name
+        )
+
+    @staticmethod
+    def _calculate_logistics_distance_score(
+        origin_area: PrefectureCommercialAreaVO,
+        target_area: PrefectureCommercialAreaVO,
+    ) -> int:
+        """
+        都道府県コード差から簡易物流距離スコアを返します。
+
+        現段階では外部の距離APIに接続しないため、japan-map-js の都道府県コード差を
+        近さの仮指標として使います。後続で実距離や既存取引関係へ差し替える前提の
+        PoC用スコアです。
+
+        Args:
+            origin_area: 売り込み元商圏。
+            target_area: 売り込み先商圏。
+
+        Returns:
+            int: 近いほど高い物流距離スコア。
+        """
+        code_distance = abs(origin_area.japan_map_code - target_area.japan_map_code)
+        if code_distance <= 2:
+            return 15
+        if code_distance <= 5:
+            return 10
+        if code_distance <= 10:
+            return 5
+        return 0
+
+    @staticmethod
+    def _get_odds_label(odds_score: int) -> str:
+        """
+        神視点オッズの画面表示ラベルを返します。
+
+        Args:
+            odds_score: 神視点で発行された0から100までの単一オッズ。
+
+        Returns:
+            str: 高オッズ、中オッズ、低オッズのいずれか。
+        """
+        if odds_score >= 80:
+            return "高オッズ"
+        if odds_score >= 60:
+            return "中オッズ"
+        return "低オッズ"
+
+    @classmethod
+    def _build_sales_opportunity_reason(
+        cls,
+        origin_area: PrefectureCommercialAreaVO,
+        target_area: PrefectureCommercialAreaVO,
+    ) -> str:
+        """
+        売り込み候補の判断理由を画面表示用に組み立てます。
+
+        Args:
+            origin_area: 売り込み元商圏。
+            target_area: 売り込み先商圏。
+
+        Returns:
+            str: オッズに寄与した判断軸を含む説明文。
+        """
+        crop_reason = (
+            "同作物" if cls._has_same_main_crop(origin_area, target_area) else "別作物"
+        )
+        distance_score = cls._calculate_logistics_distance_score(
+            origin_area, target_area
+        )
+        distance_reason = "近隣県" if distance_score >= 10 else "広域物流"
+        return (
+            f"{target_area.prefecture_name}は{target_area.warning_summary}で赤信号。"
+            f"{origin_area.prefecture_name}は{origin_area.land_count}圃場を持ち、"
+            f"{crop_reason}・{distance_reason}として売り込み候補になります。"
+        )

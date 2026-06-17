@@ -334,6 +334,34 @@ class DispatchCandidateVO:
 
 
 @dataclass(frozen=True)
+class SalesOpportunityCandidateVO:
+    """
+    赤信号商圏へ他県が売り込みをかける候補関係を表す読み取り専用VOです。
+
+    このVOは、神が天気・警報・作物・簡易物流距離・出荷元の登録圃場を見て
+    発行した単一のオッズを保持します。都道府県自身が自己申告する値ではなく、
+    A県からB県へ売り込む一方向の商圏関係として扱います。
+
+    Attributes:
+        origin_name: 売り込み元の都道府県名。
+        target_name: 赤信号として売り込み先候補になる都道府県名。
+        main_crop_name: 売り込み候補の主要作物名。
+        odds_score: 神視点で発行された0から100までの単一オッズ。
+        odds_label: 画面表示用のオッズ評価ラベル。
+        relation_label: A県→B県を示す一方向の商圏関係ラベル。
+        reason: オッズに寄与した主な判断材料。
+    """
+
+    origin_name: str
+    target_name: str
+    main_crop_name: str
+    odds_score: int
+    odds_label: str
+    relation_label: str
+    reason: str
+
+
+@dataclass(frozen=True)
 class PrefectureCommercialAreaDashboardVO:
     """
     47都道府県の商圏を束ねた都道府県別商圏ビューを表す読み取り専用VOです。
@@ -349,10 +377,12 @@ class PrefectureCommercialAreaDashboardVO:
     Attributes:
         areas: 都道府県単位の商圏一覧。
         dispatch_candidates: 出荷候補一覧。
+        sales_opportunity_candidates: 赤信号商圏への売り込み候補一覧。
     """
 
     areas: list[PrefectureCommercialAreaVO]
     dispatch_candidates: list[DispatchCandidateVO]
+    sales_opportunity_candidates: list[SalesOpportunityCandidateVO]
 
     @property
     def area_count(self) -> int:
@@ -403,6 +433,16 @@ class PrefectureCommercialAreaDashboardVO:
             int: 生成済みの配車候補VO数。
         """
         return len(self.dispatch_candidates)
+
+    @property
+    def sales_opportunity_candidate_count(self) -> int:
+        """
+        トップページに表示する売り込み候補数を返します。
+
+        Returns:
+            int: 生成済みの売り込み候補VO数。
+        """
+        return len(self.sales_opportunity_candidates)
 
     @property
     def featured_areas(self) -> list[PrefectureCommercialAreaVO]:
