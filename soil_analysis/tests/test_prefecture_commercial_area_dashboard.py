@@ -416,6 +416,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
+        self.assertContains(response, "地図から都道府県を選択")
         self.assertContains(response, "気象庁 全国予報マップ")
         self.assertContains(response, "晴れ系")
         self.assertContains(response, "くもり系")
