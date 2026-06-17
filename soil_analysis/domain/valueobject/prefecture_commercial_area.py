@@ -55,6 +55,66 @@ class WarningStatsVO:
 
 
 @dataclass(frozen=True)
+class PrefectureWarningStatsVO:
+    """
+    都道府県コード別の警報・注意報集計を束ねる読み取り専用VOです。
+
+    `stats_by_japan_map_code` のキーは japan-map-js が使う1から47の
+    都道府県コードです。Service側に `dict[int, WarningStatsVO]` を露出させず、
+    コードの意味と未登録時の初期値をこのVOへ閉じ込めます。
+
+    Attributes:
+        stats_by_japan_map_code: japan-map-js 都道府県コードごとの警報・注意報集計。
+    """
+
+    stats_by_japan_map_code: dict[int, WarningStatsVO]
+
+    @classmethod
+    def empty(cls) -> "PrefectureWarningStatsVO":
+        """
+        都道府県別の警報・注意報集計がない初期状態を返します。
+
+        Returns:
+            PrefectureWarningStatsVO: 空の都道府県別警報・注意報集計VO。
+        """
+        return cls(stats_by_japan_map_code={})
+
+    def add_warning_names(
+        self, japan_map_code: int, warning_names: list[str]
+    ) -> "PrefectureWarningStatsVO":
+        """
+        指定した都道府県コードへ1リージョン分の警報・注意報名を加算します。
+
+        Args:
+            japan_map_code: japan-map-js が使う1から47の都道府県コード。
+            warning_names: カンマ区切り文字列から取り出した警報・注意報名。
+
+        Returns:
+            PrefectureWarningStatsVO: 指定都道府県の集計を更新した新しいVO。
+        """
+        current_stats = self.get_by_japan_map_code(japan_map_code)
+        next_stats = current_stats.add_names(warning_names)
+        return PrefectureWarningStatsVO(
+            stats_by_japan_map_code={
+                **self.stats_by_japan_map_code,
+                japan_map_code: next_stats,
+            }
+        )
+
+    def get_by_japan_map_code(self, japan_map_code: int) -> WarningStatsVO:
+        """
+        指定した都道府県コードの警報・注意報集計を返します。
+
+        Args:
+            japan_map_code: japan-map-js が使う1から47の都道府県コード。
+
+        Returns:
+            WarningStatsVO: 指定都道府県の警報・注意報集計。未登録の場合は空の集計。
+        """
+        return self.stats_by_japan_map_code.get(japan_map_code, WarningStatsVO.empty())
+
+
+@dataclass(frozen=True)
 class PrefectureCommercialAreaVO:
     """
     都道府県単位の農業商圏を表す読み取り専用VOです。

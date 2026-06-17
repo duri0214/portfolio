@@ -4,7 +4,7 @@ from soil_analysis.domain.valueobject.prefecture_commercial_area import (
     DispatchCandidateVO,
     PrefectureCommercialAreaDashboardVO,
     PrefectureCommercialAreaVO,
-    WarningStatsVO,
+    PrefectureWarningStatsVO,
 )
 from soil_analysis.models import JmaPrefecture, JmaWarning, JmaWeather, Land, LandLedger
 
@@ -165,7 +165,7 @@ class PrefectureCommercialAreaService:
         return stats
 
     @staticmethod
-    def _build_warning_stats() -> defaultdict[int, WarningStatsVO]:
+    def _build_warning_stats() -> PrefectureWarningStatsVO:
         """
         気象警報・注意報を都道府県別に集計します。
 
@@ -174,9 +174,9 @@ class PrefectureCommercialAreaService:
         警報・注意報名を重複排除して表示します。
 
         Returns:
-            defaultdict[int, WarningStatsVO]: 都道府県IDごとの地域件数と警報・注意報名。
+            PrefectureWarningStatsVO: 都道府県コード別の警報・注意報集計。
         """
-        warning_stats = defaultdict(WarningStatsVO.empty)
+        warning_stats = PrefectureWarningStatsVO.empty()
         warnings = JmaWarning.objects.select_related("jma_region__jma_prefecture")
         for warning in warnings:
             japan_map_code = PrefectureCommercialAreaService._get_japan_map_code(
@@ -189,8 +189,8 @@ class PrefectureCommercialAreaService:
                 for warning_name in warning.warnings.split(",")
                 if warning_name.strip()
             ]
-            warning_stats[japan_map_code] = warning_stats[japan_map_code].add_names(
-                warning_names
+            warning_stats = warning_stats.add_warning_names(
+                japan_map_code, warning_names
             )
         return warning_stats
 
@@ -232,7 +232,7 @@ class PrefectureCommercialAreaService:
         prefecture_name: str,
         land_stats: dict[int, dict],
         crop_stats: dict[int, Counter],
-        warning_stats: defaultdict[int, WarningStatsVO],
+        warning_stats: PrefectureWarningStatsVO,
         weather_stats: dict[int, dict[str, str]],
     ) -> PrefectureCommercialAreaVO:
         """
@@ -254,7 +254,7 @@ class PrefectureCommercialAreaService:
             PrefectureCommercialAreaVO: トップページへ渡す1都道府県分の商圏VO。
         """
         stats = land_stats[japan_map_code]
-        warning = warning_stats[japan_map_code]
+        warning = warning_stats.get_by_japan_map_code(japan_map_code)
         warning_city_count = warning.region_count
         warning_names = warning.sorted_names
         land_count = stats["land_count"]
