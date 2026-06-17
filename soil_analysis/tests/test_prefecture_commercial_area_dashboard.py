@@ -174,7 +174,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(chiba.warning_summary, "大雨警報、洪水警報")
         self.assertEqual(chiba.weather_name, "雨")
         self.assertEqual(chiba.weather_code, "300")
-        self.assertEqual(chiba.odds, 2.8)
+        self.assertEqual(chiba.odds, 4.3)
 
     def test_build_groups_warning_names_without_showing_region_count(self):
         """
@@ -338,7 +338,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(candidate.target_name, "千葉県")
         self.assertEqual(candidate.main_crop_name, "トマト")
-        self.assertEqual(candidate.odds, 2.4)
+        self.assertEqual(candidate.odds, 4.2)
         self.assertEqual(
             candidate.odds,
             self._find_area(prefecture_area_dashboard.areas, "千葉県").odds,

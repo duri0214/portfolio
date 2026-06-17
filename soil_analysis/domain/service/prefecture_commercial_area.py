@@ -472,8 +472,8 @@ class PrefectureCommercialAreaService:
         """
         神視点で赤信号県への売り込みオッズを単一の数値として算出します。
 
-        天気コードの先頭1桁をカテゴリとして係数化し、警報・注意報件数と
-        組み合わせて倍率に近い数値へ畳み込みます。
+        天気コードの先頭1桁を主な判断軸とし、警報・注意報件数は
+        小さな補正として倍率に近い数値へ畳み込みます。
 
         Args:
             weather_code: JMA天気コード。
@@ -483,7 +483,7 @@ class PrefectureCommercialAreaService:
             float: 神視点オッズ。
         """
         weather_odds = cls._get_weather_odds(weather_code)
-        warning_odds = min(3.0, warning_city_count * 0.4)
+        warning_odds = min(0.8, warning_city_count * 0.15)
         return round(weather_odds + warning_odds, 1)
 
     @staticmethod
@@ -498,9 +498,9 @@ class PrefectureCommercialAreaService:
             float: 晴れ、曇り、雨・雪、未取得を区別する基礎オッズ。
         """
         if weather_code.startswith("3") or weather_code.startswith("4"):
-            return 2.0
+            return 4.0
         if weather_code.startswith("2"):
-            return 1.5
+            return 2.4
         if weather_code.startswith("1"):
             return 1.1
         return 1.2
