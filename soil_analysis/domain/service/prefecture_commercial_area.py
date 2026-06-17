@@ -1,9 +1,10 @@
 from collections import Counter, defaultdict
 
 from soil_analysis.domain.valueobject.prefecture_commercial_area import (
-    PrefectureCommercialAreaVO,
     DispatchCandidateVO,
     PrefectureCommercialAreaDashboardVO,
+    PrefectureCommercialAreaVO,
+    WarningStatsVO,
 )
 from soil_analysis.models import JmaPrefecture, JmaWarning, JmaWeather, Land, LandLedger
 
@@ -164,7 +165,7 @@ class PrefectureCommercialAreaService:
         return stats
 
     @staticmethod
-    def _build_warning_stats() -> dict[int, dict]:
+    def _build_warning_stats() -> defaultdict[int, WarningStatsVO]:
         """
         気象警報・注意報を都道府県別に集計します。
 
@@ -173,9 +174,9 @@ class PrefectureCommercialAreaService:
         警報・注意報名を重複排除して表示します。
 
         Returns:
-            dict[int, dict]: JMA都道府県IDごとの地域件数と警報・注意報名。
+            defaultdict[int, WarningStatsVO]: 都道府県IDごとの地域件数と警報・注意報名。
         """
-        warning_stats = defaultdict(lambda: {"region_count": 0, "names": set()})
+        warning_stats = defaultdict(WarningStatsVO.empty)
         warnings = JmaWarning.objects.select_related("jma_region__jma_prefecture")
         for warning in warnings:
             japan_map_code = PrefectureCommercialAreaService._get_japan_map_code(
@@ -183,13 +184,14 @@ class PrefectureCommercialAreaService:
             )
             if japan_map_code is None:
                 continue
-            warning_stats[japan_map_code]["region_count"] += 1
             warning_names = [
                 warning_name.strip()
                 for warning_name in warning.warnings.split(",")
                 if warning_name.strip()
             ]
-            warning_stats[japan_map_code]["names"].update(warning_names)
+            warning_stats[japan_map_code] = warning_stats[japan_map_code].add_names(
+                warning_names
+            )
         return warning_stats
 
     @staticmethod
@@ -230,7 +232,7 @@ class PrefectureCommercialAreaService:
         prefecture_name: str,
         land_stats: dict[int, dict],
         crop_stats: dict[int, Counter],
-        warning_stats: dict[int, dict],
+        warning_stats: defaultdict[int, WarningStatsVO],
         weather_stats: dict[int, dict[str, str]],
     ) -> PrefectureCommercialAreaVO:
         """
@@ -253,8 +255,8 @@ class PrefectureCommercialAreaService:
         """
         stats = land_stats[japan_map_code]
         warning = warning_stats[japan_map_code]
-        warning_city_count = warning["region_count"]
-        warning_names = sorted(warning["names"])
+        warning_city_count = warning.region_count
+        warning_names = warning.sorted_names
         land_count = stats["land_count"]
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
         main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])

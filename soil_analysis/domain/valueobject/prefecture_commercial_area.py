@@ -2,6 +2,59 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class WarningStatsVO:
+    """
+    都道府県単位の警報・注意報集計を表す読み取り専用VOです。
+
+    `JmaWarning` はJMAリージョン単位のデータですが、トップページでは
+    japan-map-js の47都道府県単位へ集約して扱います。このVOは、警報・注意報が
+    登録されている地域数と、重複排除済みの警報・注意報名を保持します。
+
+    Attributes:
+        region_count: 警報・注意報が登録されているJMAリージョン数。
+        names: 都道府県内で発表されている警報・注意報名。
+    """
+
+    region_count: int
+    names: frozenset[str]
+
+    @classmethod
+    def empty(cls) -> "WarningStatsVO":
+        """
+        警報・注意報がない初期状態を返します。
+
+        Returns:
+            WarningStatsVO: 地域数0、警報・注意報名なしの集計VO。
+        """
+        return cls(region_count=0, names=frozenset())
+
+    def add_names(self, warning_names: list[str]) -> "WarningStatsVO":
+        """
+        1リージョン分の警報・注意報名を加算した新しいVOを返します。
+
+        Args:
+            warning_names: カンマ区切り文字列から取り出した警報・注意報名。
+
+        Returns:
+            WarningStatsVO: 地域数と警報・注意報名を更新した集計VO。
+        """
+        return WarningStatsVO(
+            region_count=self.region_count + 1,
+            names=self.names | frozenset(warning_names),
+        )
+
+    @property
+    def sorted_names(self) -> list[str]:
+        """
+        画面表示に使いやすい順序へ並べた警報・注意報名を返します。
+
+        Returns:
+            list[str]: 名前順に並べた警報・注意報名。
+        """
+        return sorted(self.names)
+
+
+@dataclass(frozen=True)
 class PrefectureCommercialAreaVO:
     """
     都道府県単位の農業商圏を表す読み取り専用VOです。

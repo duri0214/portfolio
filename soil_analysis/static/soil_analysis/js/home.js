@@ -13,8 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
         good: { color: "#e4f4ec", hoverColor: "#c7ead8" },
         caution: { color: "#fff6d6", hoverColor: "#fde68a" },
         bad: { color: "#fee4e2", hoverColor: "#fecaca" },
+        unknown: { color: "#f1f5f9", hoverColor: "#e2e8f0" },
     };
     const getWeatherPalette = (weatherCode) => {
+        if (!weatherCode) {
+            return colors.unknown;
+        }
         if (weatherCode.startsWith("3") || weatherCode.startsWith("4")) {
             return colors.bad;
         }
