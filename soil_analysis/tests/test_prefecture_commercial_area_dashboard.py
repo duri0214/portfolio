@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -15,6 +17,8 @@ from soil_analysis.models import (
     JmaCity,
     JmaPrefecture,
     JmaRegion,
+    JmaWeather,
+    JmaWeatherCode,
     JmaWarning,
     Land,
     LandLedger,
@@ -32,6 +36,27 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         )
         self.cultivation_type = CultivationType.objects.create(name="露地")
         self.crop = Crop.objects.create(name="トマト")
+        self.sunny_weather_code = JmaWeatherCode.objects.create(
+            code="100",
+            summary_code="100",
+            image="100.svg",
+            name="晴れ",
+            name_en="Sunny",
+        )
+        self.rainy_weather_code = JmaWeatherCode.objects.create(
+            code="300",
+            summary_code="300",
+            image="300.svg",
+            name="雨",
+            name_en="Rain",
+        )
+        self.sunny_then_rain_weather_code = JmaWeatherCode.objects.create(
+            code="102",
+            summary_code="300",
+            image="102.svg",
+            name="晴一時雨",
+            name_en="Clear, occasional rain",
+        )
         self.period = LandPeriod.objects.create(year=2026, name="播種時")
         self.sampling_method = SamplingMethod.objects.create(name="5点法", times=5)
         self.prefectures = self._create_prefectures()
@@ -54,7 +79,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         シナリオ:
         - 入力: 静岡県に圃場、作物台帳、JMA警報が登録されているDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 静岡県商圏に圃場数、企業数、主要作物、警報数、リスクが反映されること。
+        - 期待値: 静岡県商圏に圃場数、企業数、主要作物、警報数、天気が反映されること。
         """
         city = self._get_city("静岡県")
         land = Land.objects.create(
@@ -76,6 +101,18 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             sampling_staff=self.user,
         )
         JmaWarning.objects.create(jma_region=city.jma_region, warnings="大雨注意報")
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.sunny_weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
 
         prefecture_area_dashboard = PrefectureCommercialAreaService.build()
         shizuoka = self._find_area(prefecture_area_dashboard.areas, "静岡県")
@@ -86,8 +123,155 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.japan_map_code, 22)
         self.assertEqual(shizuoka.total_area, 12.5)
         self.assertEqual(shizuoka.warning_city_count, 1)
+        self.assertEqual(shizuoka.warning_summary, "大雨注意報")
         self.assertEqual(shizuoka.status_label, "注意")
+        self.assertEqual(shizuoka.weather_name, "晴れ")
+        self.assertEqual(shizuoka.weather_icon_image, "100.svg")
+        self.assertEqual(shizuoka.weather_code, "100")
+        self.assertEqual(shizuoka.weather_reporting_date, "2026-06-16")
         self.assertGreater(shizuoka.risk_score, 30)
+
+    def test_build_uses_rainy_weather_for_prefecture_map_color_source(self):
+        """
+        シナリオ:
+        - 入力: 千葉県に圃場、雨の天気、複数のJMA警報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 千葉県商圏に雨天の集計用コードが入り、地図色の判定元になること。
+        """
+        city = self._get_city("千葉県")
+        Land.objects.create(
+            name="千葉テスト圃場",
+            company=self.company,
+            jma_city=city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.607,140.106",
+        )
+        JmaWarning.objects.create(jma_region=city.jma_region, warnings="大雨警報")
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+        second_region = JmaRegion.objects.create(
+            code="120002",
+            name="千葉県第2地域",
+            jma_prefecture=city.jma_region.jma_prefecture,
+        )
+        JmaWarning.objects.create(jma_region=second_region, warnings="洪水警報")
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        chiba = self._find_area(prefecture_area_dashboard.areas, "千葉県")
+
+        self.assertEqual(chiba.warning_city_count, 2)
+        self.assertEqual(chiba.warning_summary, "大雨警報、洪水警報")
+        self.assertEqual(chiba.weather_name, "雨")
+        self.assertEqual(chiba.weather_code, "300")
+
+    def test_build_groups_warning_names_without_showing_region_count(self):
+        """
+        シナリオ:
+        - 入力: 埼玉県の複数地域に同名を含む警報・注意報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 地域件数ではなく、重複排除された警報・注意報名が表示用に返ること。
+        """
+        city = self._get_city("埼玉県")
+        JmaWarning.objects.create(
+            jma_region=city.jma_region,
+            warnings="大雨注意報,雷注意報",
+        )
+        second_region = JmaRegion.objects.create(
+            code="110002",
+            name="埼玉県第2地域",
+            jma_prefecture=city.jma_region.jma_prefecture,
+        )
+        JmaWarning.objects.create(
+            jma_region=second_region,
+            warnings="雷注意報",
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        saitama = self._find_area(prefecture_area_dashboard.areas, "埼玉県")
+
+        self.assertEqual(saitama.warning_city_count, 2)
+        self.assertEqual(saitama.warning_summary, "大雨注意報、雷注意報")
+
+    def test_build_keeps_sunny_weather_code_even_with_warning(self):
+        """
+        シナリオ:
+        - 入力: 山形県に晴れの天気とJMA警報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 表示天気が晴れの場合、警報件数だけで雨天扱いにならないこと。
+        """
+        city = self._get_city("山形県")
+        JmaWarning.objects.create(jma_region=city.jma_region, warnings="乾燥注意報")
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.sunny_weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        yamagata = self._find_area(prefecture_area_dashboard.areas, "山形県")
+
+        self.assertEqual(yamagata.weather_name, "晴れ")
+        self.assertEqual(yamagata.warning_city_count, 1)
+        self.assertEqual(yamagata.weather_code, "100")
+
+    def test_build_uses_weather_code_first_digit_for_map_color_source(self):
+        """
+        シナリオ:
+        - 入力: 山形県に今日の雨予報と明日の晴一時雨予報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 一番未来の明日予報を使い、集計用コードではなく天気コードが入ること。
+        """
+        city = self._get_city("山形県")
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+        JmaWeather.objects.create(
+            jma_region=city.jma_region,
+            reporting_date=date(2026, 6, 17),
+            jma_weather_code=self.sunny_then_rain_weather_code,
+            weather_text="晴一時雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=40,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        yamagata = self._find_area(prefecture_area_dashboard.areas, "山形県")
+
+        self.assertEqual(yamagata.weather_name, "晴一時雨")
+        self.assertEqual(yamagata.weather_icon_image, "102.svg")
+        self.assertEqual(yamagata.weather_code, "102")
+        self.assertEqual(yamagata.weather_reporting_date, "2026-06-17")
 
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """
@@ -159,7 +343,25 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
+        self.assertContains(response, "気象庁 全国予報マップ")
+        self.assertContains(response, "晴れ系")
+        self.assertContains(response, "くもり系")
+        self.assertContains(response, "雨・雪系")
+        self.assertContains(response, "天気未取得")
+        self.assertContains(
+            response,
+            "https://www.jma.go.jp/bosai/map.html#5/29.555/141.395/&contents=forecast",
+        )
         self.assertContains(response, "都道府県別商圏集計")
+        self.assertContains(response, "天気（予報日）")
+        self.assertContains(response, "圃場数")
+        self.assertContains(response, "警報・注意報")
+        self.assertContains(response, "なし")
+        self.assertNotContains(response, '<th class="text-end">Risk</th>', html=True)
+        self.assertContains(response, "天気未取得")
+        self.assertNotContains(response, "<th>状態</th>", html=True)
+        self.assertNotContains(response, "出荷信号")
+        self.assertNotContains(response, "私は天気")
         self.assertContains(response, "配車候補キュー")
         self.assertContains(response, "企業別圃場一覧")
         self.assertContains(response, "静岡県")

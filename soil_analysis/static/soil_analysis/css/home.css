@@ -79,6 +79,26 @@
     background: #f1f5f9;
 }
 
+.weather-sunny {
+    border-color: #4f8a6b;
+    background: #e4f4ec;
+}
+
+.weather-cloudy {
+    border-color: #b7791f;
+    background: #fff6d6;
+}
+
+.weather-rainy {
+    border-color: #c2410c;
+    background: #fee4e2;
+}
+
+.weather-unknown {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
 .market-map-detail {
     display: grid;
     gap: 4px;
@@ -113,11 +133,6 @@
     border-radius: 8px;
     background: #fff;
     text-align: center;
-}
-
-.market-status {
-    border: 1px solid transparent;
-    color: #102a43;
 }
 
 @media (max-width: 767.98px) {

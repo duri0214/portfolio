@@ -2,6 +2,187 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class WarningStatsVO:
+    """
+    都道府県単位の警報・注意報集計を表す読み取り専用VOです。
+
+    `JmaWarning` はJMAリージョン単位のデータですが、トップページでは
+    japan-map-js の47都道府県単位へ集約して扱います。このVOは、警報・注意報が
+    登録されている地域数と、重複排除済みの警報・注意報名を保持します。
+
+    Attributes:
+        region_count: 警報・注意報が登録されているJMAリージョン数。
+        names: 都道府県内で発表されている警報・注意報名。
+    """
+
+    region_count: int
+    names: frozenset[str]
+
+    def add_names(self, warning_names: list[str]) -> "WarningStatsVO":
+        """
+        1リージョン分の警報・注意報名を加算した新しいVOを返します。
+
+        Args:
+            warning_names: カンマ区切り文字列から取り出した警報・注意報名。
+
+        Returns:
+            WarningStatsVO: 地域数と警報・注意報名を更新した集計VO。
+        """
+        return WarningStatsVO(
+            region_count=self.region_count + 1,
+            names=self.names | frozenset(warning_names),
+        )
+
+    @property
+    def sorted_names(self) -> list[str]:
+        """
+        画面表示に使いやすい順序へ並べた警報・注意報名を返します。
+
+        Returns:
+            list[str]: 名前順に並べた警報・注意報名。
+        """
+        return sorted(self.names)
+
+
+@dataclass(frozen=True)
+class PrefectureWarningStatsVO:
+    """
+    都道府県コード別の警報・注意報集計を束ねる読み取り専用VOです。
+
+    `stats_by_japan_map_code` のキーは japan-map-js が使う1から47の
+    都道府県コードです。Service側に `dict[int, WarningStatsVO]` を露出させず、
+    コードの意味と未登録時の初期値をこのVOへ閉じ込めます。
+
+    Attributes:
+        stats_by_japan_map_code: japan-map-js 都道府県コードごとの警報・注意報集計。
+    """
+
+    stats_by_japan_map_code: dict[int, WarningStatsVO]
+
+    def add_warning_names(
+        self, japan_map_code: int, warning_names: list[str]
+    ) -> "PrefectureWarningStatsVO":
+        """
+        指定した都道府県コードへ1リージョン分の警報・注意報名を加算します。
+
+        Args:
+            japan_map_code: japan-map-js が使う1から47の都道府県コード。
+            warning_names: カンマ区切り文字列から取り出した警報・注意報名。
+
+        Returns:
+            PrefectureWarningStatsVO: 指定都道府県の集計を更新した新しいVO。
+        """
+        current_stats = self.get_by_japan_map_code(japan_map_code)
+        next_stats = current_stats.add_names(warning_names)
+        return PrefectureWarningStatsVO(
+            stats_by_japan_map_code={
+                **self.stats_by_japan_map_code,
+                japan_map_code: next_stats,
+            }
+        )
+
+    def get_by_japan_map_code(self, japan_map_code: int) -> WarningStatsVO:
+        """
+        指定した都道府県コードの警報・注意報集計を返します。
+
+        Args:
+            japan_map_code: japan-map-js が使う1から47の都道府県コード。
+
+        Returns:
+            WarningStatsVO: 指定都道府県の警報・注意報集計。未登録の場合は空の集計。
+        """
+        return self.stats_by_japan_map_code.get(
+            japan_map_code, WarningStatsVO(region_count=0, names=frozenset())
+        )
+
+
+@dataclass(frozen=True)
+class WeatherStatsVO:
+    """
+    都道府県単位の代表天気を表す読み取り専用VOです。
+
+    JMA予報のうち、トップページで代表表示に使う一番未来の予報日だけを
+    都道府県単位へ集約して保持します。
+
+    Attributes:
+        name: 代表表示する天気名称。
+        icon_image: 代表表示する天気アイコンファイル名。
+        code: 代表表示する天気コード。
+        reporting_date: 代表表示する予報日。
+    """
+
+    name: str
+    icon_image: str
+    code: str
+    reporting_date: str
+
+
+@dataclass(frozen=True)
+class PrefectureWeatherStatsVO:
+    """
+    都道府県コード別の代表天気を束ねる読み取り専用VOです。
+
+    `stats_by_japan_map_code` のキーは japan-map-js が使う1から47の
+    都道府県コードです。Service側に `dict[int, dict[str, str]]` を露出させず、
+    コードの意味と天気情報の項目をこのVOへ閉じ込めます。
+
+    Attributes:
+        stats_by_japan_map_code: japan-map-js 都道府県コードごとの代表天気。
+    """
+
+    stats_by_japan_map_code: dict[int, WeatherStatsVO]
+
+    def add_weather(
+        self, japan_map_code: int, weather: WeatherStatsVO
+    ) -> "PrefectureWeatherStatsVO":
+        """
+        指定した都道府県コードへ代表天気を追加します。
+
+        Args:
+            japan_map_code: japan-map-js が使う1から47の都道府県コード。
+            weather: 都道府県の代表天気。
+
+        Returns:
+            PrefectureWeatherStatsVO: 指定都道府県の代表天気を追加した新しいVO。
+        """
+        return PrefectureWeatherStatsVO(
+            stats_by_japan_map_code={
+                **self.stats_by_japan_map_code,
+                japan_map_code: weather,
+            }
+        )
+
+    def has_japan_map_code(self, japan_map_code: int) -> bool:
+        """
+        指定した都道府県コードの代表天気が登録済みかを返します。
+
+        Args:
+            japan_map_code: japan-map-js が使う1から47の都道府県コード。
+
+        Returns:
+            bool: 代表天気が登録済みの場合はTrue。
+        """
+        return japan_map_code in self.stats_by_japan_map_code
+
+    def get_by_japan_map_code(self, japan_map_code: int) -> WeatherStatsVO:
+        """
+        指定した都道府県コードの代表天気を返します。
+
+        Args:
+            japan_map_code: japan-map-js が使う1から47の都道府県コード。
+
+        Returns:
+            WeatherStatsVO: 指定都道府県の代表天気。未登録の場合は天気未取得。
+        """
+        return self.stats_by_japan_map_code.get(
+            japan_map_code,
+            WeatherStatsVO(
+                name="天気未取得", icon_image="", code="", reporting_date=""
+            ),
+        )
+
+
+@dataclass(frozen=True)
 class PrefectureCommercialAreaVO:
     """
     都道府県単位の農業商圏を表す読み取り専用VOです。
@@ -24,7 +205,12 @@ class PrefectureCommercialAreaVO:
         main_crop_name: 最も多く台帳に登場する作物名。
         total_area: 圃場面積の合計。
         warning_city_count: 警報・注意報が登録されている市区町村数。
+        warning_names: 都道府県内で発表されている警報・注意報名。
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
+        weather_name: 一番未来の予報日の天気名称。
+        weather_icon_image: 一番未来の予報日の天気アイコンファイル名。
+        weather_code: 一番未来の予報日の天気コード。
+        weather_reporting_date: 一番未来の予報日。
     """
 
     prefecture_id: int
@@ -35,7 +221,12 @@ class PrefectureCommercialAreaVO:
     main_crop_name: str
     total_area: float
     warning_city_count: int
+    warning_names: list[str]
     risk_score: int
+    weather_name: str
+    weather_icon_image: str
+    weather_code: str
+    weather_reporting_date: str
 
     @property
     def status_label(self) -> str:
@@ -72,6 +263,18 @@ class PrefectureCommercialAreaVO:
         return "area-empty"
 
     @property
+    def warning_summary(self) -> str:
+        """
+        画面表示用の警報・注意報サマリを返します。
+
+        Returns:
+            str: 警報・注意報名の列記。未発表の場合は `なし`。
+        """
+        if not self.warning_names:
+            return "なし"
+        return "、".join(self.warning_names)
+
+    @property
     def map_payload(self) -> dict[str, int | str]:
         """
         japan-map-js に渡す都道府県別データを返します。
@@ -91,7 +294,12 @@ class PrefectureCommercialAreaVO:
             "companyCount": self.company_count,
             "mainCropName": self.main_crop_name,
             "warningCount": self.warning_city_count,
+            "warningSummary": self.warning_summary,
             "riskScore": self.risk_score,
+            "weatherName": self.weather_name,
+            "weatherIconImage": self.weather_icon_image,
+            "weatherCode": self.weather_code,
+            "weatherReportingDate": self.weather_reporting_date,
         }
 
 

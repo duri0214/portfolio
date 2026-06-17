@@ -7,6 +7,8 @@ apply: always
 ## Git/GitHub 操作
 - GitHub API、GitHub Contents API、MCP のファイル更新系ツールなどで、リモートブランチ上のファイルを直接作成・更新・削除しない。
 - 変更は必ずローカル作業ツリーで編集し、`git add`、`git commit`、`git push` の通常フローで反映する。
+- コード修正を行った場合は、必要な確認（フォーマット、関連テスト、差分確認など）を通したうえで、ユーザーが明示的に `commit不要`・`push不要`・`まだコミットしない` と指示していない限り、原則としてコミットと push まで進める。
+- ユーザーが `commit` を明示した場合の詳細な確認手順や失敗時の扱いは、`commit` スキルに従う。
 - `git add`、`git commit`、`git push`、`git checkout`、`git reset` などが失敗した場合は、API 等で迂回せず、原因を切り分けてユーザーに確認する。
 - Issue/PR の作成、本文更新、コメント、メタ情報更新、状態確認などの GitHub 操作は、普段使っている `gh` CLI を使う。
 - GitHub API、GitHub App、MCP の GitHub 更新系ツールで Issue/PR を作成・更新・コメントしない。権限差や挙動差でチケット重複・意図しない更新が起きるため。
