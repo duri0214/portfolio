@@ -272,6 +272,7 @@ class PrefectureCommercialAreaService:
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
         main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])
         weather = weather_stats.get_by_japan_map_code(japan_map_code)
+        odds = cls._calculate_god_odds(weather.code, warning_city_count)
 
         return PrefectureCommercialAreaVO(
             prefecture_id=japan_map_code,
@@ -284,6 +285,7 @@ class PrefectureCommercialAreaService:
             warning_city_count=warning_city_count,
             warning_names=warning_names,
             risk_score=risk_score,
+            odds=odds,
             weather_name=weather.name,
             weather_icon_image=weather.icon_image,
             weather_code=weather.code,
@@ -439,13 +441,12 @@ class PrefectureCommercialAreaService:
             for origin_area in origin_areas:
                 if origin_area.japan_map_code == target_area.japan_map_code:
                     continue
-                odds = cls._calculate_god_odds(target_area)
                 candidates.append(
                     SalesOpportunityCandidateVO(
                         origin_name=origin_area.prefecture_name,
                         target_name=target_area.prefecture_name,
                         main_crop_name=origin_area.main_crop_name,
-                        odds=odds,
+                        odds=target_area.odds,
                         relation_label=(
                             f"{origin_area.prefecture_name}→"
                             f"{target_area.prefecture_name}"
@@ -465,7 +466,8 @@ class PrefectureCommercialAreaService:
     @classmethod
     def _calculate_god_odds(
         cls,
-        target_area: PrefectureCommercialAreaVO,
+        weather_code: str,
+        warning_city_count: int,
     ) -> float:
         """
         神視点で赤信号県への売り込みオッズを単一の数値として算出します。
@@ -474,13 +476,14 @@ class PrefectureCommercialAreaService:
         組み合わせて倍率に近い数値へ畳み込みます。
 
         Args:
-            target_area: 赤信号として売り込み先候補になる商圏。
+            weather_code: JMA天気コード。
+            warning_city_count: 都道府県内の警報・注意報件数。
 
         Returns:
             float: 神視点オッズ。
         """
-        weather_odds = cls._get_weather_odds(target_area.weather_code)
-        warning_odds = min(3.0, target_area.warning_city_count * 0.4)
+        weather_odds = cls._get_weather_odds(weather_code)
+        warning_odds = min(3.0, warning_city_count * 0.4)
         return round(weather_odds + warning_odds, 1)
 
     @staticmethod

@@ -162,6 +162,7 @@
                                     <th class="text-end">圃場数</th>
                                     <th class="text-end">企業</th>
                                     <th>主要作物</th>
+                                    <th class="text-end">Odds</th>
                                     <th>警報・注意報</th>
                                 </tr>
                             </thead>
@@ -188,6 +189,7 @@
                                         <td class="text-end">{{ area.land_count }}圃場</td>
                                         <td class="text-end">{{ area.company_count }}</td>
                                         <td>{{ area.main_crop_name }}</td>
+                                        <td class="text-end">{{ area.odds }}</td>
                                         <td>{{ area.warning_summary }}</td>
                                     </tr>
                                 {% endfor %}

@@ -207,6 +207,7 @@ class PrefectureCommercialAreaVO:
         warning_city_count: 警報・注意報が登録されている市区町村数。
         warning_names: 都道府県内で発表されている警報・注意報名。
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
+        odds: 神視点で発行された単一オッズ。
         weather_name: 一番未来の予報日の天気名称。
         weather_icon_image: 一番未来の予報日の天気アイコンファイル名。
         weather_code: 一番未来の予報日の天気コード。
@@ -223,6 +224,7 @@ class PrefectureCommercialAreaVO:
     warning_city_count: int
     warning_names: list[str]
     risk_score: int
+    odds: float
     weather_name: str
     weather_icon_image: str
     weather_code: str
@@ -296,6 +298,7 @@ class PrefectureCommercialAreaVO:
             "warningCount": self.warning_city_count,
             "warningSummary": self.warning_summary,
             "riskScore": self.risk_score,
+            "odds": self.odds,
             "weatherName": self.weather_name,
             "weatherIconImage": self.weather_icon_image,
             "weatherCode": self.weather_code,
