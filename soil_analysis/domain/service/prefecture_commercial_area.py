@@ -4,7 +4,9 @@ from soil_analysis.domain.valueobject.prefecture_commercial_area import (
     DispatchCandidateVO,
     PrefectureCommercialAreaDashboardVO,
     PrefectureCommercialAreaVO,
+    PrefectureWeatherStatsVO,
     PrefectureWarningStatsVO,
+    WeatherStatsVO,
 )
 from soil_analysis.models import JmaPrefecture, JmaWarning, JmaWeather, Land, LandLedger
 
@@ -195,7 +197,7 @@ class PrefectureCommercialAreaService:
         return warning_stats
 
     @staticmethod
-    def _build_future_weather_stats() -> dict[int, dict[str, str]]:
+    def _build_future_weather_stats() -> PrefectureWeatherStatsVO:
         """
         一番未来の予報日の天気を都道府県別に集計します。
 
@@ -205,9 +207,9 @@ class PrefectureCommercialAreaService:
         見えることを優先します。
 
         Returns:
-            dict[int, dict[str, str]]: 都道府県コードをキーにした天気名とアイコンファイル名。
+            PrefectureWeatherStatsVO: 都道府県コード別の代表天気。
         """
-        weather_stats = {}
+        weather_stats = PrefectureWeatherStatsVO(stats_by_japan_map_code={})
         weathers = JmaWeather.objects.select_related(
             "jma_region__jma_prefecture", "jma_weather_code"
         ).order_by("-reporting_date", "-id")
@@ -215,14 +217,19 @@ class PrefectureCommercialAreaService:
             japan_map_code = PrefectureCommercialAreaService._get_japan_map_code(
                 weather.jma_region.jma_prefecture
             )
-            if japan_map_code is None or japan_map_code in weather_stats:
+            if japan_map_code is None or weather_stats.has_japan_map_code(
+                japan_map_code
+            ):
                 continue
-            weather_stats[japan_map_code] = {
-                "name": weather.jma_weather_code.name,
-                "icon_image": weather.jma_weather_code.image,
-                "code": weather.jma_weather_code.code,
-                "reporting_date": weather.reporting_date.isoformat(),
-            }
+            weather_stats = weather_stats.add_weather(
+                japan_map_code,
+                WeatherStatsVO(
+                    name=weather.jma_weather_code.name,
+                    icon_image=weather.jma_weather_code.image,
+                    code=weather.jma_weather_code.code,
+                    reporting_date=weather.reporting_date.isoformat(),
+                ),
+            )
         return weather_stats
 
     @classmethod
@@ -233,7 +240,7 @@ class PrefectureCommercialAreaService:
         land_stats: dict[int, dict],
         crop_stats: dict[int, Counter],
         warning_stats: PrefectureWarningStatsVO,
-        weather_stats: dict[int, dict[str, str]],
+        weather_stats: PrefectureWeatherStatsVO,
     ) -> PrefectureCommercialAreaVO:
         """
         1都道府県分の集計値を商圏VOへ変換します。
@@ -260,10 +267,7 @@ class PrefectureCommercialAreaService:
         land_count = stats["land_count"]
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
         main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])
-        weather = weather_stats.get(
-            japan_map_code,
-            {"name": "天気未取得", "icon_image": "", "code": "", "reporting_date": ""},
-        )
+        weather = weather_stats.get_by_japan_map_code(japan_map_code)
 
         return PrefectureCommercialAreaVO(
             prefecture_id=japan_map_code,
@@ -276,10 +280,10 @@ class PrefectureCommercialAreaService:
             warning_city_count=warning_city_count,
             warning_names=warning_names,
             risk_score=risk_score,
-            weather_name=weather["name"],
-            weather_icon_image=weather["icon_image"],
-            weather_code=weather["code"],
-            weather_reporting_date=weather["reporting_date"],
+            weather_name=weather.name,
+            weather_icon_image=weather.icon_image,
+            weather_code=weather.code,
+            weather_reporting_date=weather.reporting_date,
         )
 
     @staticmethod
