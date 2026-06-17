@@ -439,14 +439,13 @@ class PrefectureCommercialAreaService:
             for origin_area in origin_areas:
                 if origin_area.japan_map_code == target_area.japan_map_code:
                     continue
-                odds_score = cls._calculate_god_odds_score(origin_area, target_area)
+                odds = cls._calculate_god_odds(target_area)
                 candidates.append(
                     SalesOpportunityCandidateVO(
                         origin_name=origin_area.prefecture_name,
                         target_name=target_area.prefecture_name,
                         main_crop_name=origin_area.main_crop_name,
-                        odds_score=odds_score,
-                        odds_label=cls._get_odds_label(odds_score),
+                        odds=odds,
                         relation_label=(
                             f"{origin_area.prefecture_name}→"
                             f"{target_area.prefecture_name}"
@@ -459,69 +458,49 @@ class PrefectureCommercialAreaService:
 
         return sorted(
             candidates,
-            key=lambda candidate: candidate.odds_score,
+            key=lambda candidate: candidate.odds,
             reverse=True,
         )[:5]
 
     @classmethod
-    def _calculate_god_odds_score(
+    def _calculate_god_odds(
         cls,
-        origin_area: PrefectureCommercialAreaVO,
         target_area: PrefectureCommercialAreaVO,
-    ) -> int:
+    ) -> float:
         """
-        神視点でA県→B県の売り込みオッズを単一スコアとして算出します。
+        神視点で赤信号県への売り込みオッズを単一の数値として算出します。
 
         天気コードの先頭1桁をカテゴリとして係数化し、警報・注意報件数と
-        組み合わせて1つの値へ畳み込みます。
+        組み合わせて倍率に近い数値へ畳み込みます。
 
         Args:
-            origin_area: 売り込み元商圏。
             target_area: 赤信号として売り込み先候補になる商圏。
 
         Returns:
-            int: 0から100までの神視点オッズ。
+            float: 神視点オッズ。
         """
-        weather_factor = cls._get_weather_factor(target_area.weather_code)
-        warning_score = min(60, target_area.warning_city_count * 20)
-        odds_score = int(round((35 + warning_score) * weather_factor))
-        return min(100, odds_score)
+        weather_odds = cls._get_weather_odds(target_area.weather_code)
+        warning_odds = min(3.0, target_area.warning_city_count * 0.4)
+        return round(weather_odds + warning_odds, 1)
 
     @staticmethod
-    def _get_weather_factor(weather_code: str) -> float:
+    def _get_weather_odds(weather_code: str) -> float:
         """
-        JMA天気コード先頭1桁からオッズ係数を返します。
+        JMA天気コード先頭1桁から天気由来の基礎オッズを返します。
 
         Args:
             weather_code: JMA天気コード。
 
         Returns:
-            float: 晴れ、曇り、雨・雪、未取得を区別する係数。
+            float: 晴れ、曇り、雨・雪、未取得を区別する基礎オッズ。
         """
         if weather_code.startswith("3") or weather_code.startswith("4"):
-            return 1.25
+            return 2.0
         if weather_code.startswith("2"):
-            return 1.0
+            return 1.5
         if weather_code.startswith("1"):
-            return 0.8
-        return 0.9
-
-    @staticmethod
-    def _get_odds_label(odds_score: int) -> str:
-        """
-        神視点オッズの画面表示ラベルを返します。
-
-        Args:
-            odds_score: 神視点で発行された0から100までの単一オッズ。
-
-        Returns:
-            str: 高オッズ、中オッズ、低オッズのいずれか。
-        """
-        if odds_score >= 80:
-            return "高オッズ"
-        if odds_score >= 60:
-            return "中オッズ"
-        return "低オッズ"
+            return 1.1
+        return 1.2
 
     @classmethod
     def _build_sales_opportunity_reason(

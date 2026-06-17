@@ -346,8 +346,7 @@ class SalesOpportunityCandidateVO:
         origin_name: 売り込み元の都道府県名。
         target_name: 赤信号として売り込み先候補になる都道府県名。
         main_crop_name: 売り込み候補の主要作物名。
-        odds_score: 神視点で発行された0から100までの単一オッズ。
-        odds_label: 画面表示用のオッズ評価ラベル。
+        odds: 神視点で発行された単一オッズ。
         relation_label: A県→B県を示す一方向の商圏関係ラベル。
         reason: オッズに寄与した主な判断材料。
     """
@@ -355,8 +354,7 @@ class SalesOpportunityCandidateVO:
     origin_name: str
     target_name: str
     main_crop_name: str
-    odds_score: int
-    odds_label: str
+    odds: float
     relation_label: str
     reason: str
 

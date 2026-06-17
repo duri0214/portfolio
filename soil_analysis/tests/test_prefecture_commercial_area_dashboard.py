@@ -337,8 +337,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(candidate.target_name, "千葉県")
         self.assertEqual(candidate.main_crop_name, "トマト")
-        self.assertEqual(candidate.odds_label, "中オッズ")
-        self.assertGreaterEqual(candidate.odds_score, 60)
+        self.assertEqual(candidate.odds, 2.4)
         self.assertIn("大雨警報", candidate.reason)
         self.assertIn("警報・注意報がない", candidate.reason)
 

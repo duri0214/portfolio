@@ -109,9 +109,9 @@
                                         <div class="sales-opportunity-item">
                                             <div class="d-flex justify-content-between gap-2">
                                                 <strong>{{ candidate.relation_label }}</strong>
-                                                <span class="badge bg-danger">{{ candidate.odds_label }}</span>
+                                                <span class="badge bg-danger">Odds {{ candidate.odds }}</span>
                                             </div>
-                                            <div class="small text-muted mt-1">{{ candidate.main_crop_name }} / Odds {{ candidate.odds_score }}</div>
+                                            <div class="small text-muted mt-1">{{ candidate.main_crop_name }}</div>
                                             <p class="small mb-0 mt-2">{{ candidate.reason }}</p>
                                         </div>
                                     {% endfor %}
