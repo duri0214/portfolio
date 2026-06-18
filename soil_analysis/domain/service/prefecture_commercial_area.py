@@ -6,6 +6,7 @@ from soil_analysis.domain.valueobject.prefecture_commercial_area import (
     PrefectureCommercialAreaVO,
     PrefectureWeatherStatsVO,
     PrefectureWarningStatsVO,
+    SalesOpportunityCandidateVO,
     WeatherStatsVO,
 )
 from soil_analysis.models import JmaPrefecture, JmaWarning, JmaWeather, Land, LandLedger
@@ -108,8 +109,11 @@ class PrefectureCommercialAreaService:
             for japan_map_code, prefecture_name in JAPAN_MAP_PREFECTURES
         ]
         dispatch_candidates = cls._build_dispatch_candidates(areas)
+        sales_opportunity_candidates = cls._build_sales_opportunity_candidates(areas)
         return PrefectureCommercialAreaDashboardVO(
-            areas=areas, dispatch_candidates=dispatch_candidates
+            areas=areas,
+            dispatch_candidates=dispatch_candidates,
+            sales_opportunity_candidates=sales_opportunity_candidates,
         )
 
     @staticmethod
@@ -268,6 +272,9 @@ class PrefectureCommercialAreaService:
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
         main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])
         weather = weather_stats.get_by_japan_map_code(japan_map_code)
+        weather_risk_index = cls._calculate_weather_risk_index(
+            weather.code, warning_city_count
+        )
 
         return PrefectureCommercialAreaVO(
             prefecture_id=japan_map_code,
@@ -280,6 +287,7 @@ class PrefectureCommercialAreaService:
             warning_city_count=warning_city_count,
             warning_names=warning_names,
             risk_score=risk_score,
+            weather_risk_index=weather_risk_index,
             weather_name=weather.name,
             weather_icon_image=weather.icon_image,
             weather_code=weather.code,
@@ -407,3 +415,129 @@ class PrefectureCommercialAreaService:
                 )
             )
         return candidates
+
+    @classmethod
+    def _build_sales_opportunity_candidates(
+        cls,
+        areas: list[PrefectureCommercialAreaVO],
+    ) -> list[SalesOpportunityCandidateVO]:
+        """
+        赤信号商圏へ他都道府県から売り込む候補リストを生成します。
+
+        警報・注意報がある商圏を「出荷側として止まっている地域」とみなし、
+        警報・注意報がなく圃場登録のある他商圏を売り込み元候補にします。
+        A県→B県とB県→A県は別々の関係として扱うため、候補は一方向のVOで返します。
+
+        Args:
+            areas: 都道府県単位の商圏VO一覧。
+
+        Returns:
+            list[SalesOpportunityCandidateVO]: リスク指数つきの売り込み候補。
+        """
+        target_areas = [area for area in areas if area.warning_city_count]
+        origin_areas = [
+            area for area in areas if area.land_count and not area.warning_city_count
+        ]
+        candidates = []
+        for target_area in target_areas:
+            for origin_area in origin_areas:
+                if origin_area.japan_map_code == target_area.japan_map_code:
+                    continue
+                candidates.append(
+                    SalesOpportunityCandidateVO(
+                        origin_name=origin_area.prefecture_name,
+                        target_name=target_area.prefecture_name,
+                        main_crop_name=origin_area.main_crop_name,
+                        weather_risk_index=target_area.weather_risk_index,
+                        relation_label=(
+                            f"{origin_area.prefecture_name}→"
+                            f"{target_area.prefecture_name}"
+                        ),
+                        reason=cls._build_sales_opportunity_reason(
+                            origin_area, target_area
+                        ),
+                    )
+                )
+
+        return sorted(
+            candidates,
+            key=lambda candidate: candidate.weather_risk_index,
+            reverse=True,
+        )[:5]
+
+    @classmethod
+    def _calculate_weather_risk_index(
+        cls,
+        weather_code: str,
+        warning_city_count: int,
+    ) -> float:
+        """
+        赤信号県への売り込み判断に使う天気リスク指数を算出します。
+
+        天気コードの先頭2桁を主な判断軸とし、警報・注意報件数は
+        小さな補正として倍率に近い数値へ畳み込みます。
+
+        Args:
+            weather_code: JMA天気コード。
+            warning_city_count: 都道府県内の警報・注意報件数。
+
+        Returns:
+            float: 天気リスク指数。
+        """
+        weather_risk = cls._get_weather_base_risk(weather_code)
+        warning_risk = min(0.8, warning_city_count * 0.15)
+        return round(weather_risk + warning_risk, 1)
+
+    @staticmethod
+    def _get_weather_base_risk(weather_code: str) -> float:
+        """
+        JMA天気コード先頭2桁から天気由来の基礎リスクを返します。
+
+        Args:
+            weather_code: JMA天気コード。
+
+        Returns:
+            float: 晴れ、曇り、雨・雪、未取得を区別する基礎リスク。
+        """
+        if weather_code.startswith("3") or weather_code.startswith("4"):
+            return 4.0
+
+        weather_prefix = weather_code[:2]
+        if weather_code in {"201", "210", "211"}:
+            return 1.8
+        if weather_prefix in {"14", "17", "18", "19", "21", "22"}:
+            return 3.3
+        if weather_prefix in {"12", "13", "15", "16", "20"}:
+            return 2.6
+        if weather_prefix == "11":
+            return 1.6
+        if weather_prefix == "10":
+            return 1.1
+
+        if weather_code.startswith("2"):
+            return 2.6
+        if weather_code.startswith("1"):
+            return 1.1
+        return 1.2
+
+    @classmethod
+    def _build_sales_opportunity_reason(
+        cls,
+        origin_area: PrefectureCommercialAreaVO,
+        target_area: PrefectureCommercialAreaVO,
+    ) -> str:
+        """
+        売り込み候補の判断理由を画面表示用に組み立てます。
+
+        Args:
+            origin_area: 売り込み元商圏。
+            target_area: 売り込み先商圏。
+
+        Returns:
+            str: リスク指数に寄与した判断軸を含む説明文。
+        """
+        return (
+            f"{target_area.prefecture_name}は{target_area.warning_summary}で赤信号。"
+            f"{origin_area.prefecture_name}は警報・注意報がないため、"
+            f"{target_area.prefecture_name}への売り込み候補になります。"
+        )

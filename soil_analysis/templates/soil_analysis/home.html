@@ -69,8 +69,8 @@
                         </div>
                         <div class="col-6 col-lg-3">
                             <div class="market-kpi">
-                                <span class="market-kpi-label">配車候補</span>
-                                <strong>{{ prefecture_area_dashboard.dispatch_candidate_count }}</strong>
+                                <span class="market-kpi-label">売り込み候補</span>
+                                <strong>{{ prefecture_area_dashboard.sales_opportunity_candidate_count }}</strong>
                                 <small>件</small>
                             </div>
                         </div>
@@ -96,12 +96,33 @@
                             <div class="japan-market-map">
                                 <div id="commercial-area-map" class="commercial-area-map-canvas" aria-label="47都道府県の商圏マップ"></div>
                                 <div class="market-map-detail" id="commercial-area-map-detail" aria-live="polite">
-                                    <strong>都道府県を選択</strong>
+                                    <strong>地図から都道府県を選択</strong>
                                     <span>商圏の集計値を確認できます。</span>
                                 </div>
                             </div>
                         </div>
                         <div class="col-12 col-xl-4">
+                            <h2 class="h5 mb-2"><i class="fas fa-bullhorn me-2 text-muted"></i>赤信号県への売り込み候補</h2>
+                            {% if prefecture_area_dashboard.sales_opportunity_candidates %}
+                                <div class="sales-opportunity-list mb-4">
+                                    {% for candidate in prefecture_area_dashboard.sales_opportunity_candidates %}
+                                        <div class="sales-opportunity-item">
+                                            <div class="d-flex justify-content-between gap-2">
+                                                <strong>{{ candidate.relation_label }}</strong>
+                                                <span class="badge bg-danger">リスク {{ candidate.weather_risk_index }}</span>
+                                            </div>
+                                            <div class="small text-muted mt-1">{{ candidate.main_crop_name }}</div>
+                                            <p class="small mb-0 mt-2">{{ candidate.reason }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="empty-dashboard mb-4">
+                                    <i class="fas fa-cloud-sun-rain text-muted mb-2"></i>
+                                    <p class="small text-muted mb-0">赤信号の都道府県が出ると売り込み候補が表示されます。</p>
+                                </div>
+                            {% endif %}
+
                             <h2 class="h5 mb-2"><i class="fas fa-truck-moving me-2 text-muted"></i>配車候補キュー</h2>
                             {% if dispatch_candidates %}
                                 <div class="dispatch-queue">
@@ -129,7 +150,11 @@
 
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2 class="h3 mb-0"><i class="fas fa-globe-asia me-2 text-muted"></i>都道府県別商圏集計</h2>
+                    <h2 class="h3 mb-0"><i class="fas fa-globe-asia me-2 text-muted"></i>全国商圏リスクランキング</h2>
+                </div>
+                <div class="risk-note mb-3">
+                    <strong>これは天気リスクを織り込んだ全国ランキングです。</strong>
+                    <span>天気コードのカテゴリと警報・注意報件数から、都道府県ごとのリスク指数を算出しています。数値が高いほど天気由来で出荷しづらい地域と読み、雨系の出荷元の代わりにどの商圏へ売り込み・配車戦略を取るかを考える材料にできます。</span>
                 </div>
                 <div class="card border-0 shadow-sm">
                     <div class="table-responsive">
@@ -141,11 +166,12 @@
                                     <th class="text-end">圃場数</th>
                                     <th class="text-end">企業</th>
                                     <th>主要作物</th>
+                                    <th class="text-end">リスク指数</th>
                                     <th>警報・注意報</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for area in prefecture_area_dashboard.featured_areas %}
+                                {% for area in prefecture_area_dashboard.areas_by_weather_risk %}
                                     <tr>
                                         <td class="fw-semibold">{{ area.prefecture_name }}</td>
                                         <td>
@@ -167,6 +193,7 @@
                                         <td class="text-end">{{ area.land_count }}圃場</td>
                                         <td class="text-end">{{ area.company_count }}</td>
                                         <td>{{ area.main_crop_name }}</td>
+                                        <td class="text-end">{{ area.weather_risk_index }}</td>
                                         <td>{{ area.warning_summary }}</td>
                                     </tr>
                                 {% endfor %}
@@ -251,6 +278,13 @@
 {% endblock %}
 
 {% block extra_js %}
+    <script>
+        window.nativeMapBeforeJpmap = window.Map;
+    </script>
     <script src="https://unpkg.com/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
-    <script src="{% static 'soil_analysis/js/home.js' %}"></script>
+    <script>
+        window.jpmapInternalMap = window.Map;
+        window.Map = window.nativeMapBeforeJpmap;
+    </script>
+    <script src="{% static 'soil_analysis/js/home.js' %}?v=770-map-fix-2"></script>
 {% endblock %}

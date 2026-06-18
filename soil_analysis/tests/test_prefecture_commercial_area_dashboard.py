@@ -57,6 +57,20 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             name="晴一時雨",
             name_en="Clear, occasional rain",
         )
+        self.cloudy_sometimes_sunny_weather_code = JmaWeatherCode.objects.create(
+            code="201",
+            summary_code="200",
+            image="201.svg",
+            name="曇時々晴",
+            name_en="Cloudy, occasional sunny",
+        )
+        self.cloudy_then_rain_weather_code = JmaWeatherCode.objects.create(
+            code="212",
+            summary_code="300",
+            image="212.svg",
+            name="曇後一時雨",
+            name_en="Cloudy, later occasional rain",
+        )
         self.period = LandPeriod.objects.create(year=2026, name="播種時")
         self.sampling_method = SamplingMethod.objects.create(name="5点法", times=5)
         self.prefectures = self._create_prefectures()
@@ -174,6 +188,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(chiba.warning_summary, "大雨警報、洪水警報")
         self.assertEqual(chiba.weather_name, "雨")
         self.assertEqual(chiba.weather_code, "300")
+        self.assertEqual(chiba.weather_risk_index, 4.3)
 
     def test_build_groups_warning_names_without_showing_region_count(self):
         """
@@ -232,6 +247,52 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(yamagata.warning_city_count, 1)
         self.assertEqual(yamagata.weather_code, "100")
 
+    def test_build_uses_weather_code_first_two_digits_for_risk_index(self):
+        """
+        シナリオ:
+        - 入力: 岐阜県に曇時々晴、愛知県に曇後一時雨、同数の注意報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 2xxを一律扱いせず、雨を含む愛知県のリスク指数が高くなること。
+        """
+        gifu_city = self._get_city("岐阜県")
+        aichi_city = self._get_city("愛知県")
+        JmaWarning.objects.create(jma_region=gifu_city.jma_region, warnings="雷注意報")
+        JmaWarning.objects.create(
+            jma_region=aichi_city.jma_region, warnings="濃霧注意報"
+        )
+        JmaWeather.objects.create(
+            jma_region=gifu_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.cloudy_sometimes_sunny_weather_code,
+            weather_text="曇時々晴",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=20,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+        JmaWeather.objects.create(
+            jma_region=aichi_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.cloudy_then_rain_weather_code,
+            weather_text="曇後一時雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=60,
+            avg_min_temperature=18,
+            avg_max_temperature=25,
+            avg_max_wind_speed=6,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        gifu = self._find_area(prefecture_area_dashboard.areas, "岐阜県")
+        aichi = self._find_area(prefecture_area_dashboard.areas, "愛知県")
+
+        self.assertEqual(gifu.weather_risk_index, 1.9)
+        self.assertEqual(aichi.weather_risk_index, 3.4)
+        self.assertGreater(aichi.weather_risk_index, gifu.weather_risk_index)
+
     def test_build_uses_weather_code_first_digit_for_map_color_source(self):
         """
         シナリオ:
@@ -272,6 +333,139 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(yamagata.weather_icon_image, "102.svg")
         self.assertEqual(yamagata.weather_code, "102")
         self.assertEqual(yamagata.weather_reporting_date, "2026-06-17")
+
+    def test_build_creates_sales_opportunity_to_warning_prefecture(self):
+        """
+        シナリオ:
+        - 入力: 静岡県に晴れのトマト圃場、千葉県に雨と警報付きのトマト圃場があるDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 静岡県→千葉県の一方向売り込み候補が天気と警報由来のリスク指数付きで返ること。
+        """
+        shizuoka_city = self._get_city("静岡県")
+        chiba_city = self._get_city("千葉県")
+        shizuoka_land = Land.objects.create(
+            name="静岡トマト圃場",
+            company=self.company,
+            jma_city=shizuoka_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="34.74424,137.64905",
+        )
+        chiba_land = Land.objects.create(
+            name="千葉トマト圃場",
+            company=self.company,
+            jma_city=chiba_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.607,140.106",
+        )
+        LandLedger.objects.create(
+            land=shizuoka_land,
+            land_period=self.period,
+            sampling_date="2026-03-01",
+            analytical_agency=self.company,
+            crop=self.crop,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        LandLedger.objects.create(
+            land=chiba_land,
+            land_period=self.period,
+            sampling_date="2026-03-01",
+            analytical_agency=self.company,
+            crop=self.crop,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        JmaWarning.objects.create(jma_region=chiba_city.jma_region, warnings="大雨警報")
+        JmaWeather.objects.create(
+            jma_region=chiba_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        candidate = prefecture_area_dashboard.sales_opportunity_candidates[0]
+
+        self.assertEqual(prefecture_area_dashboard.sales_opportunity_candidate_count, 1)
+        self.assertEqual(candidate.relation_label, "静岡県→千葉県")
+        self.assertEqual(candidate.target_name, "千葉県")
+        self.assertEqual(candidate.main_crop_name, "トマト")
+        self.assertEqual(candidate.weather_risk_index, 4.2)
+        self.assertEqual(
+            candidate.weather_risk_index,
+            self._find_area(
+                prefecture_area_dashboard.areas, "千葉県"
+            ).weather_risk_index,
+        )
+        self.assertIn("大雨警報", candidate.reason)
+        self.assertIn("警報・注意報がない", candidate.reason)
+
+    def test_dashboard_orders_areas_by_high_weather_risk(self):
+        """
+        シナリオ:
+        - 入力: 晴れの静岡県と雨警報の千葉県があるDB状態。
+        - 処理: 都道府県別商圏Serviceを実行し、リスク指数順の商圏一覧を取得する。
+        - 期待値: 天気が悪くリスク指数が高い千葉県が静岡県より前に並ぶこと。
+        """
+        shizuoka_city = self._get_city("静岡県")
+        chiba_city = self._get_city("千葉県")
+        Land.objects.create(
+            name="静岡テスト圃場",
+            company=self.company,
+            jma_city=shizuoka_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="34.74424,137.64905",
+        )
+        Land.objects.create(
+            name="千葉テスト圃場",
+            company=self.company,
+            jma_city=chiba_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.607,140.106",
+        )
+        JmaWeather.objects.create(
+            jma_region=shizuoka_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.sunny_weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+        JmaWarning.objects.create(jma_region=chiba_city.jma_region, warnings="大雨警報")
+        JmaWeather.objects.create(
+            jma_region=chiba_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        area_names = [
+            area.prefecture_name
+            for area in prefecture_area_dashboard.areas_by_weather_risk
+        ]
+
+        self.assertLess(area_names.index("千葉県"), area_names.index("静岡県"))
 
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """
@@ -324,7 +518,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         シナリオ:
         - 入力: 47都道府県マスタと静岡県の圃場が登録されているDB状態。
         - 処理: soil_analysis のトップページを表示する。
-        - 期待値: 日本地図、都道府県別商圏集計、配車候補、既存企業別圃場一覧が表示されること。
+        - 期待値: 日本地図、全国商圏リスクランキング、配車候補、既存企業別圃場一覧が表示されること。
         """
         city = self._get_city("静岡県")
         Land.objects.create(
@@ -343,6 +537,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
+        self.assertContains(response, "地図から都道府県を選択")
         self.assertContains(response, "気象庁 全国予報マップ")
         self.assertContains(response, "晴れ系")
         self.assertContains(response, "くもり系")
@@ -352,8 +547,14 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             response,
             "https://www.jma.go.jp/bosai/map.html#5/29.555/141.395/&contents=forecast",
         )
-        self.assertContains(response, "都道府県別商圏集計")
+        self.assertContains(response, "全国商圏リスクランキング")
+        self.assertContains(
+            response, "これは天気リスクを織り込んだ全国ランキングです。"
+        )
+        self.assertContains(response, "雨系の出荷元の代わり")
         self.assertContains(response, "天気（予報日）")
+        self.assertContains(response, '<th class="text-end">リスク指数</th>', html=True)
+        self.assertContains(response, '<td class="fw-semibold">沖縄県</td>', html=True)
         self.assertContains(response, "圃場数")
         self.assertContains(response, "警報・注意報")
         self.assertContains(response, "なし")
@@ -362,6 +563,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertNotContains(response, "<th>状態</th>", html=True)
         self.assertNotContains(response, "出荷信号")
         self.assertNotContains(response, "私は天気")
+        self.assertContains(response, "赤信号県への売り込み候補")
+        self.assertContains(response, "売り込み候補")
         self.assertContains(response, "配車候補キュー")
         self.assertContains(response, "企業別圃場一覧")
         self.assertContains(response, "静岡県")
