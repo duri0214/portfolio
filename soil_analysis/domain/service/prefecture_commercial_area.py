@@ -272,7 +272,9 @@ class PrefectureCommercialAreaService:
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
         main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])
         weather = weather_stats.get_by_japan_map_code(japan_map_code)
-        odds = cls._calculate_god_odds(weather.code, warning_city_count)
+        weather_risk_index = cls._calculate_weather_risk_index(
+            weather.code, warning_city_count
+        )
 
         return PrefectureCommercialAreaVO(
             prefecture_id=japan_map_code,
@@ -285,7 +287,7 @@ class PrefectureCommercialAreaService:
             warning_city_count=warning_city_count,
             warning_names=warning_names,
             risk_score=risk_score,
-            odds=odds,
+            weather_risk_index=weather_risk_index,
             weather_name=weather.name,
             weather_icon_image=weather.icon_image,
             weather_code=weather.code,
@@ -430,7 +432,7 @@ class PrefectureCommercialAreaService:
             areas: 都道府県単位の商圏VO一覧。
 
         Returns:
-            list[SalesOpportunityCandidateVO]: 神視点オッズつきの売り込み候補。
+            list[SalesOpportunityCandidateVO]: リスク指数つきの売り込み候補。
         """
         target_areas = [area for area in areas if area.warning_city_count]
         origin_areas = [
@@ -446,7 +448,7 @@ class PrefectureCommercialAreaService:
                         origin_name=origin_area.prefecture_name,
                         target_name=target_area.prefecture_name,
                         main_crop_name=origin_area.main_crop_name,
-                        odds=target_area.odds,
+                        weather_risk_index=target_area.weather_risk_index,
                         relation_label=(
                             f"{origin_area.prefecture_name}→"
                             f"{target_area.prefecture_name}"
@@ -459,18 +461,18 @@ class PrefectureCommercialAreaService:
 
         return sorted(
             candidates,
-            key=lambda candidate: candidate.odds,
+            key=lambda candidate: candidate.weather_risk_index,
             reverse=True,
         )[:5]
 
     @classmethod
-    def _calculate_god_odds(
+    def _calculate_weather_risk_index(
         cls,
         weather_code: str,
         warning_city_count: int,
     ) -> float:
         """
-        神視点で赤信号県への売り込みオッズを単一の数値として算出します。
+        赤信号県への売り込み判断に使う天気リスク指数を算出します。
 
         天気コードの先頭1桁を主な判断軸とし、警報・注意報件数は
         小さな補正として倍率に近い数値へ畳み込みます。
@@ -480,22 +482,22 @@ class PrefectureCommercialAreaService:
             warning_city_count: 都道府県内の警報・注意報件数。
 
         Returns:
-            float: 神視点オッズ。
+            float: 天気リスク指数。
         """
-        weather_odds = cls._get_weather_odds(weather_code)
-        warning_odds = min(0.8, warning_city_count * 0.15)
-        return round(weather_odds + warning_odds, 1)
+        weather_risk = cls._get_weather_base_risk(weather_code)
+        warning_risk = min(0.8, warning_city_count * 0.15)
+        return round(weather_risk + warning_risk, 1)
 
     @staticmethod
-    def _get_weather_odds(weather_code: str) -> float:
+    def _get_weather_base_risk(weather_code: str) -> float:
         """
-        JMA天気コード先頭1桁から天気由来の基礎オッズを返します。
+        JMA天気コード先頭1桁から天気由来の基礎リスクを返します。
 
         Args:
             weather_code: JMA天気コード。
 
         Returns:
-            float: 晴れ、曇り、雨・雪、未取得を区別する基礎オッズ。
+            float: 晴れ、曇り、雨・雪、未取得を区別する基礎リスク。
         """
         if weather_code.startswith("3") or weather_code.startswith("4"):
             return 4.0
@@ -519,7 +521,7 @@ class PrefectureCommercialAreaService:
             target_area: 売り込み先商圏。
 
         Returns:
-            str: オッズに寄与した判断軸を含む説明文。
+            str: リスク指数に寄与した判断軸を含む説明文。
         """
         return (
             f"{target_area.prefecture_name}は{target_area.warning_summary}で赤信号。"

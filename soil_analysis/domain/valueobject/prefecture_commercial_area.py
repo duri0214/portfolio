@@ -188,7 +188,7 @@ class PrefectureCommercialAreaVO:
     都道府県単位の農業商圏を表す読み取り専用VOです。
 
     `soil_analysis` のトップページでは、japan-map-js 上の1都道府県と
-    都道府県別商圏集計テーブルの1行がこのVOに対応します。既存の圃場は
+    全国商圏リスクランキングの1行がこのVOに対応します。既存の圃場は
     `JmaCity -> JmaRegion -> JmaPrefecture` の関連を通じて都道府県へ
     アサインされ、その集計結果をこのVOが保持します。
 
@@ -207,7 +207,7 @@ class PrefectureCommercialAreaVO:
         warning_city_count: 警報・注意報が登録されている市区町村数。
         warning_names: 都道府県内で発表されている警報・注意報名。
         risk_score: 商圏リスクスコア。警報と登録データ有無から算出する。
-        odds: 神視点で発行された単一オッズ。
+        weather_risk_index: 天気と警報・注意報から算出した出荷リスク指数。
         weather_name: 一番未来の予報日の天気名称。
         weather_icon_image: 一番未来の予報日の天気アイコンファイル名。
         weather_code: 一番未来の予報日の天気コード。
@@ -224,7 +224,7 @@ class PrefectureCommercialAreaVO:
     warning_city_count: int
     warning_names: list[str]
     risk_score: int
-    odds: float
+    weather_risk_index: float
     weather_name: str
     weather_icon_image: str
     weather_code: str
@@ -298,7 +298,7 @@ class PrefectureCommercialAreaVO:
             "warningCount": self.warning_city_count,
             "warningSummary": self.warning_summary,
             "riskScore": self.risk_score,
-            "odds": self.odds,
+            "weatherRiskIndex": self.weather_risk_index,
             "weatherName": self.weather_name,
             "weatherIconImage": self.weather_icon_image,
             "weatherCode": self.weather_code,
@@ -341,23 +341,23 @@ class SalesOpportunityCandidateVO:
     """
     赤信号商圏へ他県が売り込みをかける候補関係を表す読み取り専用VOです。
 
-    このVOは、神が赤信号県の天気と警報・注意報を見て発行した
-    単一のオッズを保持します。都道府県自身が自己申告する値ではなく、
+    このVOは、赤信号県の天気と警報・注意報から算出した
+    出荷リスク指数を保持します。都道府県自身が自己申告する値ではなく、
     A県からB県へ売り込む一方向の商圏関係として扱います。
 
     Attributes:
         origin_name: 売り込み元の都道府県名。
         target_name: 赤信号として売り込み先候補になる都道府県名。
         main_crop_name: 売り込み候補の主要作物名。
-        odds: 神視点で発行された単一オッズ。
+        weather_risk_index: 天気と警報・注意報から算出した出荷リスク指数。
         relation_label: A県→B県を示す一方向の商圏関係ラベル。
-        reason: オッズに寄与した主な判断材料。
+        reason: リスク指数に寄与した主な判断材料。
     """
 
     origin_name: str
     target_name: str
     main_crop_name: str
-    odds: float
+    weather_risk_index: float
     relation_label: str
     reason: str
 
@@ -446,21 +446,21 @@ class PrefectureCommercialAreaDashboardVO:
         return len(self.sales_opportunity_candidates)
 
     @property
-    def areas_by_odds(self) -> list[PrefectureCommercialAreaVO]:
+    def areas_by_weather_risk(self) -> list[PrefectureCommercialAreaVO]:
         """
-        都道府県別商圏集計テーブルに表示する商圏をオッズ降順で返します。
+        全国商圏リスクランキングに表示する商圏をリスク指数降順で返します。
 
-        天気が悪い地域ほど神視点オッズが高くなるため、オッズの高い
-        都道府県を上から確認できるようにします。同じオッズの場合は
+        天気が悪い地域ほどリスク指数が高くなるため、指数の高い
+        都道府県を上から確認できるようにします。同じ指数の場合は
         圃場数、企業数、都道府県コードの順で表示順を安定させます。
 
         Returns:
-            list[PrefectureCommercialAreaVO]: オッズ降順に並べた全商圏VO。
+            list[PrefectureCommercialAreaVO]: リスク指数降順に並べた全商圏VO。
         """
         return sorted(
             self.areas,
             key=lambda area: (
-                area.odds,
+                area.weather_risk_index,
                 area.land_count,
                 area.company_count,
                 -area.japan_map_code,

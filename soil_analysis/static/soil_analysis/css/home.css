@@ -114,7 +114,7 @@
     font-size: 0.9rem;
 }
 
-.odds-note {
+.risk-note {
     position: relative;
     display: grid;
     gap: 4px;
@@ -125,7 +125,7 @@
     color: #102a43;
 }
 
-.odds-note::before {
+.risk-note::before {
     position: absolute;
     top: -8px;
     left: 28px;
@@ -138,11 +138,11 @@
     transform: rotate(45deg);
 }
 
-.odds-note strong {
+.risk-note strong {
     font-size: 0.95rem;
 }
 
-.odds-note span {
+.risk-note span {
     color: #52616f;
     font-size: 0.9rem;
 }

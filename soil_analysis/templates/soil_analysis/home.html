@@ -109,7 +109,7 @@
                                         <div class="sales-opportunity-item">
                                             <div class="d-flex justify-content-between gap-2">
                                                 <strong>{{ candidate.relation_label }}</strong>
-                                                <span class="badge bg-danger">Odds {{ candidate.odds }}</span>
+                                                <span class="badge bg-danger">リスク {{ candidate.weather_risk_index }}</span>
                                             </div>
                                             <div class="small text-muted mt-1">{{ candidate.main_crop_name }}</div>
                                             <p class="small mb-0 mt-2">{{ candidate.reason }}</p>
@@ -150,11 +150,11 @@
 
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2 class="h3 mb-0"><i class="fas fa-globe-asia me-2 text-muted"></i>都道府県別商圏集計</h2>
+                    <h2 class="h3 mb-0"><i class="fas fa-globe-asia me-2 text-muted"></i>全国商圏リスクランキング</h2>
                 </div>
-                <div class="odds-note mb-3">
-                    <strong>これはオッズです。</strong>
-                    <span>天気コードのカテゴリと警報・注意報件数から、神視点で都道府県ごとに発行しています。数値が高いほど天気由来で出荷しづらい地域と読み、雨系の出荷元の代わりにどの商圏へ売り込み・配車戦略を取るかを考える材料にできます。</span>
+                <div class="risk-note mb-3">
+                    <strong>これは天気リスクを織り込んだ全国ランキングです。</strong>
+                    <span>天気コードのカテゴリと警報・注意報件数から、都道府県ごとのリスク指数を算出しています。数値が高いほど天気由来で出荷しづらい地域と読み、雨系の出荷元の代わりにどの商圏へ売り込み・配車戦略を取るかを考える材料にできます。</span>
                 </div>
                 <div class="card border-0 shadow-sm">
                     <div class="table-responsive">
@@ -166,12 +166,12 @@
                                     <th class="text-end">圃場数</th>
                                     <th class="text-end">企業</th>
                                     <th>主要作物</th>
-                                    <th class="text-end">Odds</th>
+                                    <th class="text-end">リスク指数</th>
                                     <th>警報・注意報</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for area in prefecture_area_dashboard.areas_by_odds %}
+                                {% for area in prefecture_area_dashboard.areas_by_weather_risk %}
                                     <tr>
                                         <td class="fw-semibold">{{ area.prefecture_name }}</td>
                                         <td>
@@ -193,7 +193,7 @@
                                         <td class="text-end">{{ area.land_count }}圃場</td>
                                         <td class="text-end">{{ area.company_count }}</td>
                                         <td>{{ area.main_crop_name }}</td>
-                                        <td class="text-end">{{ area.odds }}</td>
+                                        <td class="text-end">{{ area.weather_risk_index }}</td>
                                         <td>{{ area.warning_summary }}</td>
                                     </tr>
                                 {% endfor %}

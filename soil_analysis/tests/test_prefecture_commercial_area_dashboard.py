@@ -174,7 +174,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(chiba.warning_summary, "大雨警報、洪水警報")
         self.assertEqual(chiba.weather_name, "雨")
         self.assertEqual(chiba.weather_code, "300")
-        self.assertEqual(chiba.odds, 4.3)
+        self.assertEqual(chiba.weather_risk_index, 4.3)
 
     def test_build_groups_warning_names_without_showing_region_count(self):
         """
@@ -279,7 +279,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         シナリオ:
         - 入力: 静岡県に晴れのトマト圃場、千葉県に雨と警報付きのトマト圃場があるDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 静岡県→千葉県の一方向売り込み候補が天気と警報由来の単一オッズ付きで返ること。
+        - 期待値: 静岡県→千葉県の一方向売り込み候補が天気と警報由来のリスク指数付きで返ること。
         """
         shizuoka_city = self._get_city("静岡県")
         chiba_city = self._get_city("千葉県")
@@ -338,20 +338,22 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(candidate.target_name, "千葉県")
         self.assertEqual(candidate.main_crop_name, "トマト")
-        self.assertEqual(candidate.odds, 4.2)
+        self.assertEqual(candidate.weather_risk_index, 4.2)
         self.assertEqual(
-            candidate.odds,
-            self._find_area(prefecture_area_dashboard.areas, "千葉県").odds,
+            candidate.weather_risk_index,
+            self._find_area(
+                prefecture_area_dashboard.areas, "千葉県"
+            ).weather_risk_index,
         )
         self.assertIn("大雨警報", candidate.reason)
         self.assertIn("警報・注意報がない", candidate.reason)
 
-    def test_dashboard_orders_areas_by_high_odds(self):
+    def test_dashboard_orders_areas_by_high_weather_risk(self):
         """
         シナリオ:
         - 入力: 晴れの静岡県と雨警報の千葉県があるDB状態。
-        - 処理: 都道府県別商圏Serviceを実行し、オッズ順の商圏一覧を取得する。
-        - 期待値: 天気が悪くオッズが高い千葉県が静岡県より前に並ぶこと。
+        - 処理: 都道府県別商圏Serviceを実行し、リスク指数順の商圏一覧を取得する。
+        - 期待値: 天気が悪くリスク指数が高い千葉県が静岡県より前に並ぶこと。
         """
         shizuoka_city = self._get_city("静岡県")
         chiba_city = self._get_city("千葉県")
@@ -399,7 +401,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
 
         prefecture_area_dashboard = PrefectureCommercialAreaService.build()
         area_names = [
-            area.prefecture_name for area in prefecture_area_dashboard.areas_by_odds
+            area.prefecture_name
+            for area in prefecture_area_dashboard.areas_by_weather_risk
         ]
 
         self.assertLess(area_names.index("千葉県"), area_names.index("静岡県"))
@@ -455,7 +458,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         シナリオ:
         - 入力: 47都道府県マスタと静岡県の圃場が登録されているDB状態。
         - 処理: soil_analysis のトップページを表示する。
-        - 期待値: 日本地図、都道府県別商圏集計、配車候補、既存企業別圃場一覧が表示されること。
+        - 期待値: 日本地図、全国商圏リスクランキング、配車候補、既存企業別圃場一覧が表示されること。
         """
         city = self._get_city("静岡県")
         Land.objects.create(
@@ -484,11 +487,13 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             response,
             "https://www.jma.go.jp/bosai/map.html#5/29.555/141.395/&contents=forecast",
         )
-        self.assertContains(response, "都道府県別商圏集計")
-        self.assertContains(response, "これはオッズです。")
+        self.assertContains(response, "全国商圏リスクランキング")
+        self.assertContains(
+            response, "これは天気リスクを織り込んだ全国ランキングです。"
+        )
         self.assertContains(response, "雨系の出荷元の代わり")
         self.assertContains(response, "天気（予報日）")
-        self.assertContains(response, '<th class="text-end">Odds</th>', html=True)
+        self.assertContains(response, '<th class="text-end">リスク指数</th>', html=True)
         self.assertContains(response, '<td class="fw-semibold">沖縄県</td>', html=True)
         self.assertContains(response, "圃場数")
         self.assertContains(response, "警報・注意報")
