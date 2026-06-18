@@ -1,3 +1,6 @@
+from collections import Counter
+from datetime import date
+
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
@@ -18,6 +21,8 @@ from soil_analysis.models import (
     JmaCity,
     JmaPrefecture,
     JmaRegion,
+    JmaWeather,
+    JmaWeatherCode,
     Land,
     LandLedger,
     LandPeriod,
@@ -93,6 +98,81 @@ class PrefectureRepresentativeFixtureCommandTest(TestCase):
         )
         self.assertTrue(all(len(area.crop_names) == 3 for area in dashboard.areas))
 
+    def test_representative_crops_include_cross_prefecture_pairs_for_dispatch(self):
+        """
+        シナリオ:
+        - 入力: 代表作物fixtureで使う47都道府県 x 3登録作物の定義。
+        - 処理: 作物名ごとの登場都道府県を集計する。
+        - 期待値: 候補化に使える同一作物の県間ペアが複数あり、三重県のなばなも他県と重複すること。
+        """
+        prefectures_by_crop = {}
+        for prefecture_name, crops in PREFECTURE_REPRESENTATIVE_CROPS.items():
+            for crop_name in crops:
+                prefectures_by_crop.setdefault(crop_name, set()).add(prefecture_name)
+
+        shared_crop_count = sum(
+            1
+            for prefecture_names in prefectures_by_crop.values()
+            if len(prefecture_names) >= 2
+        )
+
+        self.assertGreaterEqual(shared_crop_count, 20)
+        self.assertGreaterEqual(len(prefectures_by_crop["なばな"]), 2)
+        self.assertIn("三重県", prefectures_by_crop["なばな"])
+        self.assertIn("静岡県", prefectures_by_crop["なばな"])
+
+    def test_generated_fixtures_can_create_dispatch_candidates_for_rainy_prefecture(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: 代表作物つき圃場データを作成し、三重県に雨の天気データを追加したDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 三重県と同じ登録作物を持つ他県から、売り込み候補と配車候補が作成されること。
+        """
+        self._create_reference_masters()
+        rain = JmaWeatherCode.objects.create(
+            code="300",
+            summary_code="300",
+            image="300.svg",
+            name="雨",
+            name_en="Rain",
+        )
+        call_command("generate_prefecture_representative_fixtures", verbosity=0)
+        mie_city = JmaCity.objects.get(name="三重県代表市")
+        JmaWeather.objects.create(
+            jma_region=mie_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=rain,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+
+        dashboard = PrefectureCommercialAreaService.build()
+        mie = self._find_area(dashboard.areas, "三重県")
+        sales_targets = {
+            candidate.target_name
+            for candidate in dashboard.sales_opportunity_candidates
+        }
+        dispatch_targets = {
+            candidate.target_prefecture_name
+            for candidate in dashboard.dispatch_candidates
+        }
+        candidate_crops = Counter(
+            candidate.main_crop_name
+            for candidate in dashboard.sales_opportunity_candidates
+        )
+
+        self.assertEqual(mie.weather_risk_index, 4.0)
+        self.assertIn("三重県", sales_targets)
+        self.assertIn("三重県", dispatch_targets)
+        self.assertTrue(set(candidate_crops) & set(mie.crop_names))
+
     def _create_reference_masters(self):
         sampling_staff = get_user_model().objects.create(
             id=19, username="sampling-staff"
@@ -134,3 +214,7 @@ class PrefectureRepresentativeFixtureCommandTest(TestCase):
                 name=f"{prefecture_name}代表市",
                 jma_region=region,
             )
+
+    @staticmethod
+    def _find_area(areas, prefecture_name):
+        return next(area for area in areas if area.prefecture_name == prefecture_name)
