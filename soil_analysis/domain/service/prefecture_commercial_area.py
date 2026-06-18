@@ -62,6 +62,8 @@ JAPAN_MAP_PREFECTURES = (
     (47, "沖縄県"),
 )
 
+HIGH_WEATHER_RISK_INDEX = 4.0
+
 
 class PrefectureCommercialAreaService:
     """
@@ -108,8 +110,10 @@ class PrefectureCommercialAreaService:
             )
             for japan_map_code, prefecture_name in JAPAN_MAP_PREFECTURES
         ]
-        dispatch_candidates = cls._build_dispatch_candidates(areas)
         sales_opportunity_candidates = cls._build_sales_opportunity_candidates(areas)
+        dispatch_candidates = cls._build_dispatch_candidates(
+            sales_opportunity_candidates
+        )
         return PrefectureCommercialAreaDashboardVO(
             areas=areas,
             dispatch_candidates=dispatch_candidates,
@@ -148,10 +152,10 @@ class PrefectureCommercialAreaService:
     @staticmethod
     def _build_crop_stats() -> dict[int, Counter]:
         """
-        作付台帳から都道府県別の主要作物候補を集計します。
+        作付台帳から都道府県別の登録作物を集計します。
 
         `LandLedger` の作物情報を圃場の都道府県へ寄せることで、各商圏の
-        代表的な作物名を表示できるようにします。作付台帳がない商圏は
+        登録作物名を表示できるようにします。作付台帳がない商圏は
         後続処理で「未設定」として扱います。
 
         Returns:
@@ -251,7 +255,7 @@ class PrefectureCommercialAreaService:
 
         `PrefectureCommercialAreaVO` はテンプレートでそのまま利用する表示用の値を持つため、
         ここで日本地図ライブラリ用の都道府県コード、状態判定に使うリスクスコア、
-        主要作物名までまとめて確定させます。
+        登録作物名までまとめて確定させます。
 
         Args:
             japan_map_code: japan-map-js が使う都道府県コード。
@@ -270,7 +274,8 @@ class PrefectureCommercialAreaService:
         warning_names = warning.sorted_names
         land_count = stats["land_count"]
         risk_score = cls._calculate_risk_score(land_count, warning_city_count)
-        main_crop_name = cls._get_main_crop_name(crop_stats[japan_map_code])
+        crop_names = cls._get_crop_names(crop_stats[japan_map_code])
+        main_crop_name = crop_names[0] if crop_names else "未設定"
         weather = weather_stats.get_by_japan_map_code(japan_map_code)
         weather_risk_index = cls._calculate_weather_risk_index(
             weather.code, warning_city_count
@@ -283,6 +288,7 @@ class PrefectureCommercialAreaService:
             land_count=land_count,
             company_count=len(stats["company_ids"]),
             main_crop_name=main_crop_name,
+            crop_names=crop_names,
             total_area=round(stats["total_area"], 2),
             warning_city_count=warning_city_count,
             warning_names=warning_names,
@@ -351,67 +357,61 @@ class PrefectureCommercialAreaService:
         return 0
 
     @staticmethod
-    def _get_main_crop_name(crop_counter: Counter) -> str:
+    def _get_crop_names(crop_counter: Counter) -> list[str]:
         """
-        商圏の代表作物として表示する作物名を選びます。
+        商圏の作物名を出現数順に返します。
 
-        作付台帳に紐づく作物のうち最も出現数が多いものを採用します。
-        データ未登録の商圏でも画面表示が欠けないよう、空の場合は
-        「未設定」を返します。
+        作付台帳に紐づく作物を、出現数が多い順、同数の場合は名前順で返します。
+        データ未登録の商圏は空のリストとして扱います。
 
         Args:
             crop_counter: 作物名ごとの出現回数。
 
         Returns:
-            str: 商圏テーブルや配車候補に表示する主要作物名。
+            list[str]: 商圏テーブルや配車候補判定に使う作物名一覧。
         """
         if not crop_counter:
-            return "未設定"
-        return crop_counter.most_common(1)[0][0]
+            return []
+        return [
+            crop_name
+            for crop_name, _ in sorted(
+                crop_counter.items(),
+                key=lambda item: (-item[1], item[0]),
+            )
+        ]
 
     @staticmethod
     def _build_dispatch_candidates(
-        areas: list[PrefectureCommercialAreaVO],
+        sales_opportunity_candidates: list[SalesOpportunityCandidateVO],
     ) -> list[DispatchCandidateVO]:
         """
-        商圏集計からトップページ用の出荷候補リストを生成します。
+        売り込み候補からトップページ用の配車候補リストを生成します。
 
-        現時点では外部の市場価格や物流APIへ接続せず、圃場登録がある商圏を
-        画面上で確認しやすくするための簡易候補を作ります。警報・注意報がある
-        商圏は「天候確認中」とし、通常商圏は出荷候補として表示します。
+        天気リスクが高い都道府県へ他都道府県が売り込む関係を、
+        配車調整で確認する一方向のキューとして扱います。商圏リスクスコアではなく、
+        売り込み先の天気リスク指数を判断軸にします。
 
         Args:
-            areas: 都道府県単位の商圏VO一覧。
+            sales_opportunity_candidates: 天気リスクが高い商圏への売り込み候補一覧。
 
         Returns:
             list[DispatchCandidateVO]: トップページの配車候補キューに表示する候補。
         """
-        active_areas = [area for area in areas if area.land_count]
-        sorted_areas = sorted(
-            active_areas,
-            key=lambda area: (area.warning_city_count == 0, area.land_count),
-            reverse=True,
-        )
-
         candidates = []
-        for index, area in enumerate(sorted_areas[:5]):
-            market_name = "首都圏市場" if index % 2 == 0 else "関西市場"
-            logistics_status = (
-                "配車候補あり" if not area.warning_city_count else "天候確認中"
+        for candidate in sales_opportunity_candidates[:5]:
+            reason = (
+                f"{candidate.target_name}の天気リスクを見て、"
+                f"{candidate.origin_name}からの代替出荷便を確認します。"
             )
-            if area.warning_city_count:
-                reason = f"{area.prefecture_name}は警報・注意報があるため、代替ルート確認を優先します。"
-            else:
-                reason = f"{area.prefecture_name}は圃場登録があり、{area.main_crop_name}の出荷候補として監視します。"
-
             candidates.append(
                 DispatchCandidateVO(
-                    origin_name=area.prefecture_name,
-                    target_market_name=market_name,
-                    main_crop_name=area.main_crop_name,
-                    logistics_status=logistics_status,
+                    origin_name=candidate.origin_name,
+                    target_prefecture_name=candidate.target_name,
+                    main_crop_name=candidate.main_crop_name,
+                    logistics_status="代替便確認中",
                     reason=reason,
-                    risk_score=area.risk_score,
+                    weather_risk_index=candidate.weather_risk_index,
+                    relation_label=candidate.relation_label,
                 )
             )
         return candidates
@@ -422,10 +422,11 @@ class PrefectureCommercialAreaService:
         areas: list[PrefectureCommercialAreaVO],
     ) -> list[SalesOpportunityCandidateVO]:
         """
-        赤信号商圏へ他都道府県から売り込む候補リストを生成します。
+        天気リスクが高い商圏へ同じ登録作物を持つ他都道府県から売り込む候補リストを生成します。
 
-        警報・注意報がある商圏を「出荷側として止まっている地域」とみなし、
-        警報・注意報がなく圃場登録のある他商圏を売り込み元候補にします。
+        雨・雪や警報・注意報で天気リスク指数が高い商圏を
+        「登録作物の出荷が止まりやすい地域」とみなし、同じ登録作物を持ち、
+        警報・注意報がない他商圏を売り込み元候補にします。
         A県→B県とB県→A県は別々の関係として扱うため、候補は一方向のVOで返します。
 
         Args:
@@ -434,34 +435,51 @@ class PrefectureCommercialAreaService:
         Returns:
             list[SalesOpportunityCandidateVO]: リスク指数つきの売り込み候補。
         """
-        target_areas = [area for area in areas if area.warning_city_count]
+        target_areas = [
+            area
+            for area in areas
+            if area.weather_risk_index >= HIGH_WEATHER_RISK_INDEX and area.crop_names
+        ]
         origin_areas = [
-            area for area in areas if area.land_count and not area.warning_city_count
+            area
+            for area in areas
+            if area.land_count and not area.warning_city_count and area.crop_names
         ]
         candidates = []
         for target_area in target_areas:
             for origin_area in origin_areas:
                 if origin_area.japan_map_code == target_area.japan_map_code:
                     continue
+                if origin_area.weather_risk_index >= target_area.weather_risk_index:
+                    continue
+                matched_crop_names = sorted(
+                    set(origin_area.crop_names) & set(target_area.crop_names)
+                )
+                if not matched_crop_names:
+                    continue
+                matched_crop_name = matched_crop_names[0]
                 candidates.append(
                     SalesOpportunityCandidateVO(
                         origin_name=origin_area.prefecture_name,
                         target_name=target_area.prefecture_name,
-                        main_crop_name=origin_area.main_crop_name,
+                        main_crop_name=matched_crop_name,
                         weather_risk_index=target_area.weather_risk_index,
                         relation_label=(
                             f"{origin_area.prefecture_name}→"
                             f"{target_area.prefecture_name}"
                         ),
                         reason=cls._build_sales_opportunity_reason(
-                            origin_area, target_area
+                            origin_area, target_area, matched_crop_name
                         ),
                     )
                 )
 
         return sorted(
             candidates,
-            key=lambda candidate: candidate.weather_risk_index,
+            key=lambda candidate: (
+                candidate.weather_risk_index,
+                candidate.main_crop_name,
+            ),
             reverse=True,
         )[:5]
 
@@ -472,7 +490,7 @@ class PrefectureCommercialAreaService:
         warning_city_count: int,
     ) -> float:
         """
-        赤信号県への売り込み判断に使う天気リスク指数を算出します。
+        売り込み判断に使う天気リスク指数を算出します。
 
         天気コードの先頭2桁を主な判断軸とし、警報・注意報件数は
         小さな補正として倍率に近い数値へ畳み込みます。
@@ -525,6 +543,7 @@ class PrefectureCommercialAreaService:
         cls,
         origin_area: PrefectureCommercialAreaVO,
         target_area: PrefectureCommercialAreaVO,
+        crop_name: str,
     ) -> str:
         """
         売り込み候補の判断理由を画面表示用に組み立てます。
@@ -532,12 +551,18 @@ class PrefectureCommercialAreaService:
         Args:
             origin_area: 売り込み元商圏。
             target_area: 売り込み先商圏。
+            crop_name: 売り込み元と売り込み先で一致した作物名。
 
         Returns:
             str: リスク指数に寄与した判断軸を含む説明文。
         """
+        target_weather_summary = target_area.weather_name
+        if target_area.warning_names:
+            target_weather_summary = (
+                f"{target_area.weather_name}、{target_area.warning_summary}"
+            )
         return (
-            f"{target_area.prefecture_name}は{target_area.warning_summary}で赤信号。"
-            f"{origin_area.prefecture_name}は警報・注意報がないため、"
+            f"{target_area.prefecture_name}は{target_weather_summary}で天気リスクが高い状態。"
+            f"{origin_area.prefecture_name}は警報・注意報がなく同じ{crop_name}を出せるため、"
             f"{target_area.prefecture_name}への売り込み候補になります。"
         )

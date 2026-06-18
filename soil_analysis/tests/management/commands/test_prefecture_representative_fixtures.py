@@ -78,7 +78,7 @@ class PrefectureRepresentativeFixtureCommandTest(TestCase):
         シナリオ:
         - 入力: 代表作物つき圃場データを作成済みのDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 47都道府県すべてに3圃場が入り、主要作物が未設定にならないこと。
+        - 期待値: 47都道府県すべてに3圃場が入り、登録作物が3つ集計されること。
         """
         self._create_reference_masters()
         call_command("generate_prefecture_representative_fixtures", verbosity=0)
@@ -91,6 +91,7 @@ class PrefectureRepresentativeFixtureCommandTest(TestCase):
         self.assertTrue(
             all(area.main_crop_name != "未設定" for area in dashboard.areas)
         )
+        self.assertTrue(all(len(area.crop_names) == 3 for area in dashboard.areas))
 
     def _create_reference_masters(self):
         sampling_staff = get_user_model().objects.create(

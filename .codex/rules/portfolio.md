@@ -7,6 +7,8 @@ apply: always
 ## Git/GitHub 操作
 - GitHub API、GitHub Contents API、MCP のファイル更新系ツールなどで、リモートブランチ上のファイルを直接作成・更新・削除しない。
 - 変更は必ずローカル作業ツリーで編集し、`git add`、`git commit`、`git push` の通常フローで反映する。
+- `git commit --amend` や `git push --force` / `git push --force-with-lease` による履歴上書きは原則禁止する。PR作成後の修正や追加対応は、新しいコミットとして履歴を残す。
+- 履歴上書きが必要な場合は、ユーザーから明示的な許可を得て、理由と影響範囲を作業報告に残す。
 - コード修正を行った場合は、必要な確認（フォーマット、関連テスト、差分確認など）を通したうえで、ユーザーが明示的に `commit不要`・`push不要`・`まだコミットしない` と指示していない限り、原則としてコミットと push まで進める。
 - ユーザーが `commit` を明示した場合の詳細な確認手順や失敗時の扱いは、`commit` スキルに従う。
 - `git add`、`git commit`、`git push`、`git checkout`、`git reset` などが失敗した場合は、API 等で迂回せず、原因を切り分けてユーザーに確認する。

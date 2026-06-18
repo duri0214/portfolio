@@ -93,7 +93,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         シナリオ:
         - 入力: 静岡県に圃場、作物台帳、JMA警報が登録されているDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 静岡県商圏に圃場数、企業数、主要作物、警報数、天気が反映されること。
+        - 期待値: 静岡県商圏に圃場数、企業数、登録作物、警報数、天気が反映されること。
         """
         city = self._get_city("静岡県")
         land = Land.objects.create(
@@ -134,6 +134,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(shizuoka.land_count, 1)
         self.assertEqual(shizuoka.company_count, 1)
         self.assertEqual(shizuoka.main_crop_name, "トマト")
+        self.assertEqual(shizuoka.crop_names, ["トマト"])
+        self.assertEqual(shizuoka.crop_summary, "トマト")
         self.assertEqual(shizuoka.japan_map_code, 22)
         self.assertEqual(shizuoka.total_area, 12.5)
         self.assertEqual(shizuoka.warning_city_count, 1)
@@ -337,11 +339,12 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
     def test_build_creates_sales_opportunity_to_warning_prefecture(self):
         """
         シナリオ:
-        - 入力: 静岡県に晴れのトマト圃場、千葉県に雨と警報付きのトマト圃場があるDB状態。
+        - 入力: 静岡県に晴れのトマト圃場、岐阜県に晴れの別作物圃場、千葉県に雨と警報付きのトマト圃場があるDB状態。
         - 処理: 都道府県別商圏Serviceを実行する。
-        - 期待値: 静岡県→千葉県の一方向売り込み候補が天気と警報由来のリスク指数付きで返ること。
+        - 期待値: 同じトマトを出せる静岡県→千葉県の売り込み候補と配車候補だけが天気リスク指数付きで返ること。
         """
         shizuoka_city = self._get_city("静岡県")
+        gifu_city = self._get_city("岐阜県")
         chiba_city = self._get_city("千葉県")
         shizuoka_land = Land.objects.create(
             name="静岡トマト圃場",
@@ -350,6 +353,14 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             cultivation_type=self.cultivation_type,
             owner=self.user,
             center="34.74424,137.64905",
+        )
+        gifu_land = Land.objects.create(
+            name="岐阜きゅうり圃場",
+            company=self.company,
+            jma_city=gifu_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.423,136.761",
         )
         chiba_land = Land.objects.create(
             name="千葉トマト圃場",
@@ -365,6 +376,16 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             sampling_date="2026-03-01",
             analytical_agency=self.company,
             crop=self.crop,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        cucumber = Crop.objects.create(name="きゅうり")
+        LandLedger.objects.create(
+            land=gifu_land,
+            land_period=self.period,
+            sampling_date="2026-03-01",
+            analytical_agency=self.company,
+            crop=cucumber,
             sampling_method=self.sampling_method,
             sampling_staff=self.user,
         )
@@ -392,21 +413,105 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         )
 
         prefecture_area_dashboard = PrefectureCommercialAreaService.build()
-        candidate = prefecture_area_dashboard.sales_opportunity_candidates[0]
+        sales_candidate = prefecture_area_dashboard.sales_opportunity_candidates[0]
+        dispatch_candidate = prefecture_area_dashboard.dispatch_candidates[0]
 
         self.assertEqual(prefecture_area_dashboard.sales_opportunity_candidate_count, 1)
-        self.assertEqual(candidate.relation_label, "静岡県→千葉県")
-        self.assertEqual(candidate.target_name, "千葉県")
-        self.assertEqual(candidate.main_crop_name, "トマト")
-        self.assertEqual(candidate.weather_risk_index, 4.2)
+        self.assertEqual(sales_candidate.relation_label, "静岡県→千葉県")
+        self.assertEqual(sales_candidate.target_name, "千葉県")
+        self.assertEqual(sales_candidate.main_crop_name, "トマト")
+        self.assertEqual(sales_candidate.weather_risk_index, 4.2)
         self.assertEqual(
-            candidate.weather_risk_index,
+            sales_candidate.weather_risk_index,
             self._find_area(
                 prefecture_area_dashboard.areas, "千葉県"
             ).weather_risk_index,
         )
-        self.assertIn("大雨警報", candidate.reason)
-        self.assertIn("警報・注意報がない", candidate.reason)
+        self.assertIn("大雨警報", sales_candidate.reason)
+        self.assertIn("同じトマトを出せる", sales_candidate.reason)
+        self.assertEqual(prefecture_area_dashboard.dispatch_candidate_count, 1)
+        self.assertEqual(dispatch_candidate.relation_label, "静岡県→千葉県")
+        self.assertEqual(dispatch_candidate.target_prefecture_name, "千葉県")
+        self.assertEqual(dispatch_candidate.weather_risk_index, 4.2)
+        self.assertEqual(dispatch_candidate.logistics_status, "代替便確認中")
+        self.assertFalse(hasattr(dispatch_candidate, "target_market_name"))
+        self.assertFalse(hasattr(dispatch_candidate, "risk_score"))
+
+    def test_build_creates_sales_opportunity_to_rainy_prefecture_by_same_crop(self):
+        """
+        シナリオ:
+        - 入力: 静岡県に晴れのなばな圃場、三重県に雨で警報なしの3作物圃場があるDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 三重県の3作物が表示され、同じなばなを出せる静岡県が候補になること。
+        """
+        shizuoka_city = self._get_city("静岡県")
+        mie_city = self._get_city("三重県")
+        nabana = Crop.objects.create(name="なばな")
+        tea = Crop.objects.create(name="茶")
+        rice = Crop.objects.create(name="米")
+        shizuoka_land = Land.objects.create(
+            name="静岡なばな圃場",
+            company=self.company,
+            jma_city=shizuoka_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="34.74424,137.64905",
+        )
+        mie_lands = [
+            Land.objects.create(
+                name=f"三重{crop.name}圃場",
+                company=self.company,
+                jma_city=mie_city,
+                cultivation_type=self.cultivation_type,
+                owner=self.user,
+                center="34.730,136.508",
+            )
+            for crop in (tea, rice, nabana)
+        ]
+        LandLedger.objects.create(
+            land=shizuoka_land,
+            land_period=self.period,
+            sampling_date="2026-03-01",
+            analytical_agency=self.company,
+            crop=nabana,
+            sampling_method=self.sampling_method,
+            sampling_staff=self.user,
+        )
+        for mie_land, crop in zip(mie_lands, (tea, rice, nabana), strict=True):
+            LandLedger.objects.create(
+                land=mie_land,
+                land_period=self.period,
+                sampling_date="2026-03-01",
+                analytical_agency=self.company,
+                crop=crop,
+                sampling_method=self.sampling_method,
+                sampling_staff=self.user,
+            )
+        JmaWeather.objects.create(
+            jma_region=mie_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        mie = self._find_area(prefecture_area_dashboard.areas, "三重県")
+        candidate = prefecture_area_dashboard.sales_opportunity_candidates[0]
+
+        self.assertEqual(mie.crop_names, ["なばな", "米", "茶"])
+        self.assertEqual(mie.crop_summary, "なばな、米、茶")
+        self.assertEqual(prefecture_area_dashboard.sales_opportunity_candidate_count, 1)
+        self.assertEqual(candidate.relation_label, "静岡県→三重県")
+        self.assertEqual(candidate.target_name, "三重県")
+        self.assertEqual(candidate.main_crop_name, "なばな")
+        self.assertEqual(candidate.weather_risk_index, 4.0)
+        self.assertIn("雨", candidate.reason)
 
     def test_dashboard_orders_areas_by_high_weather_risk(self):
         """
@@ -563,7 +668,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertNotContains(response, "<th>状態</th>", html=True)
         self.assertNotContains(response, "出荷信号")
         self.assertNotContains(response, "私は天気")
-        self.assertContains(response, "赤信号県への売り込み候補")
+        self.assertContains(response, "天気リスク県への売り込み候補")
         self.assertContains(response, "売り込み候補")
         self.assertContains(response, "配車候補キュー")
         self.assertContains(response, "企業別圃場一覧")
