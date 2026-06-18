@@ -8,7 +8,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const commercialAreas = JSON.parse(dataElement.textContent);
-    const areaByCode = new Map(commercialAreas.map((area) => [Number(area.code), area]));
+    const areaByCode = commercialAreas.reduce((accumulator, area) => {
+        accumulator[Number(area.code)] = area;
+        return accumulator;
+    }, {});
     const colors = {
         good: { color: "#e4f4ec", hoverColor: "#c7ead8" },
         caution: { color: "#fff6d6", hoverColor: "#fde68a" },
@@ -51,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
         detailElement.append(title, summary, risk);
     };
 
-    new window.jpmap.japanMap(mapElement, {
+    window.jpmap.japanMap(mapElement, {
         areas: mapAreas,
         showsPrefectureName: true,
         movesIslands: true,
@@ -59,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
         borderLineColor: "#8795a1",
         borderLineWidth: 0.4,
         onSelect: (data) => {
-            const area = areaByCode.get(Number(data.code));
+            const area = areaByCode[Number(data.code)];
             if (area) {
                 renderDetail(area);
             }
