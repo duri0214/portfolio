@@ -346,6 +346,64 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertIn("大雨警報", candidate.reason)
         self.assertIn("警報・注意報がない", candidate.reason)
 
+    def test_dashboard_orders_areas_by_high_odds(self):
+        """
+        シナリオ:
+        - 入力: 晴れの静岡県と雨警報の千葉県があるDB状態。
+        - 処理: 都道府県別商圏Serviceを実行し、オッズ順の商圏一覧を取得する。
+        - 期待値: 天気が悪くオッズが高い千葉県が静岡県より前に並ぶこと。
+        """
+        shizuoka_city = self._get_city("静岡県")
+        chiba_city = self._get_city("千葉県")
+        Land.objects.create(
+            name="静岡テスト圃場",
+            company=self.company,
+            jma_city=shizuoka_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="34.74424,137.64905",
+        )
+        Land.objects.create(
+            name="千葉テスト圃場",
+            company=self.company,
+            jma_city=chiba_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.607,140.106",
+        )
+        JmaWeather.objects.create(
+            jma_region=shizuoka_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.sunny_weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+        JmaWarning.objects.create(jma_region=chiba_city.jma_region, warnings="大雨警報")
+        JmaWeather.objects.create(
+            jma_region=chiba_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        area_names = [
+            area.prefecture_name for area in prefecture_area_dashboard.areas_by_odds
+        ]
+
+        self.assertLess(area_names.index("千葉県"), area_names.index("静岡県"))
+
     def test_build_groups_split_jma_prefecture_rows_into_one_prefecture(self):
         """
         シナリオ:

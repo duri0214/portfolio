@@ -446,21 +446,27 @@ class PrefectureCommercialAreaDashboardVO:
         return len(self.sales_opportunity_candidates)
 
     @property
-    def featured_areas(self) -> list[PrefectureCommercialAreaVO]:
+    def areas_by_odds(self) -> list[PrefectureCommercialAreaVO]:
         """
-        都道府県別商圏集計テーブルに優先表示する商圏を返します。
+        都道府県別商圏集計テーブルに表示する商圏をオッズ降順で返します。
 
-        リスクスコア、圃場数、企業数の順に並べることで、確認優先度の高い
-        都道府県をトップページ上で目に入りやすくします。
+        天気が悪い地域ほど神視点オッズが高くなるため、オッズの高い
+        都道府県を上から確認できるようにします。同じオッズの場合は
+        圃場数、企業数、都道府県コードの順で表示順を安定させます。
 
         Returns:
-            list[PrefectureCommercialAreaVO]: 優先表示する最大8件の商圏VO。
+            list[PrefectureCommercialAreaVO]: オッズ降順に並べた全商圏VO。
         """
         return sorted(
             self.areas,
-            key=lambda area: (area.risk_score, area.land_count, area.company_count),
+            key=lambda area: (
+                area.odds,
+                area.land_count,
+                area.company_count,
+                -area.japan_map_code,
+            ),
             reverse=True,
-        )[:8]
+        )
 
     @property
     def map_payload(self) -> list[dict[str, int | str]]:
