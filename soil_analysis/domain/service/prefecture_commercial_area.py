@@ -474,7 +474,7 @@ class PrefectureCommercialAreaService:
         """
         赤信号県への売り込み判断に使う天気リスク指数を算出します。
 
-        天気コードの先頭1桁を主な判断軸とし、警報・注意報件数は
+        天気コードの先頭2桁を主な判断軸とし、警報・注意報件数は
         小さな補正として倍率に近い数値へ畳み込みます。
 
         Args:
@@ -491,7 +491,7 @@ class PrefectureCommercialAreaService:
     @staticmethod
     def _get_weather_base_risk(weather_code: str) -> float:
         """
-        JMA天気コード先頭1桁から天気由来の基礎リスクを返します。
+        JMA天気コード先頭2桁から天気由来の基礎リスクを返します。
 
         Args:
             weather_code: JMA天気コード。
@@ -501,8 +501,21 @@ class PrefectureCommercialAreaService:
         """
         if weather_code.startswith("3") or weather_code.startswith("4"):
             return 4.0
+
+        weather_prefix = weather_code[:2]
+        if weather_code in {"201", "210", "211"}:
+            return 1.8
+        if weather_prefix in {"14", "17", "18", "19", "21", "22"}:
+            return 3.3
+        if weather_prefix in {"12", "13", "15", "16", "20"}:
+            return 2.6
+        if weather_prefix == "11":
+            return 1.6
+        if weather_prefix == "10":
+            return 1.1
+
         if weather_code.startswith("2"):
-            return 2.4
+            return 2.6
         if weather_code.startswith("1"):
             return 1.1
         return 1.2

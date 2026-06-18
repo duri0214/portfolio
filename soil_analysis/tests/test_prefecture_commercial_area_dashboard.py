@@ -57,6 +57,20 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             name="晴一時雨",
             name_en="Clear, occasional rain",
         )
+        self.cloudy_sometimes_sunny_weather_code = JmaWeatherCode.objects.create(
+            code="201",
+            summary_code="200",
+            image="201.svg",
+            name="曇時々晴",
+            name_en="Cloudy, occasional sunny",
+        )
+        self.cloudy_then_rain_weather_code = JmaWeatherCode.objects.create(
+            code="212",
+            summary_code="300",
+            image="212.svg",
+            name="曇後一時雨",
+            name_en="Cloudy, later occasional rain",
+        )
         self.period = LandPeriod.objects.create(year=2026, name="播種時")
         self.sampling_method = SamplingMethod.objects.create(name="5点法", times=5)
         self.prefectures = self._create_prefectures()
@@ -232,6 +246,52 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(yamagata.weather_name, "晴れ")
         self.assertEqual(yamagata.warning_city_count, 1)
         self.assertEqual(yamagata.weather_code, "100")
+
+    def test_build_uses_weather_code_first_two_digits_for_risk_index(self):
+        """
+        シナリオ:
+        - 入力: 岐阜県に曇時々晴、愛知県に曇後一時雨、同数の注意報が登録されているDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 2xxを一律扱いせず、雨を含む愛知県のリスク指数が高くなること。
+        """
+        gifu_city = self._get_city("岐阜県")
+        aichi_city = self._get_city("愛知県")
+        JmaWarning.objects.create(jma_region=gifu_city.jma_region, warnings="雷注意報")
+        JmaWarning.objects.create(
+            jma_region=aichi_city.jma_region, warnings="濃霧注意報"
+        )
+        JmaWeather.objects.create(
+            jma_region=gifu_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.cloudy_sometimes_sunny_weather_code,
+            weather_text="曇時々晴",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=20,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+        JmaWeather.objects.create(
+            jma_region=aichi_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.cloudy_then_rain_weather_code,
+            weather_text="曇後一時雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=60,
+            avg_min_temperature=18,
+            avg_max_temperature=25,
+            avg_max_wind_speed=6,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        gifu = self._find_area(prefecture_area_dashboard.areas, "岐阜県")
+        aichi = self._find_area(prefecture_area_dashboard.areas, "愛知県")
+
+        self.assertEqual(gifu.weather_risk_index, 1.9)
+        self.assertEqual(aichi.weather_risk_index, 3.4)
+        self.assertGreater(aichi.weather_risk_index, gifu.weather_risk_index)
 
     def test_build_uses_weather_code_first_digit_for_map_color_source(self):
         """
