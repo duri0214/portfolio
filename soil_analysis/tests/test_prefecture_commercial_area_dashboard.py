@@ -485,6 +485,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             "https://www.jma.go.jp/bosai/map.html#5/29.555/141.395/&contents=forecast",
         )
         self.assertContains(response, "都道府県別商圏集計")
+        self.assertContains(response, "これはオッズです。")
+        self.assertContains(response, "雨系の出荷元の代わり")
         self.assertContains(response, "天気（予報日）")
         self.assertContains(response, '<th class="text-end">Odds</th>', html=True)
         self.assertContains(response, '<td class="fw-semibold">沖縄県</td>', html=True)

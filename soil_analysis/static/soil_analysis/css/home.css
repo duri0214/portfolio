@@ -114,6 +114,39 @@
     font-size: 0.9rem;
 }
 
+.odds-note {
+    position: relative;
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border: 1px solid #f3b4a0;
+    border-radius: 8px;
+    background: #fff7ed;
+    color: #102a43;
+}
+
+.odds-note::before {
+    position: absolute;
+    top: -8px;
+    left: 28px;
+    width: 14px;
+    height: 14px;
+    border-top: 1px solid #f3b4a0;
+    border-left: 1px solid #f3b4a0;
+    background: #fff7ed;
+    content: "";
+    transform: rotate(45deg);
+}
+
+.odds-note strong {
+    font-size: 0.95rem;
+}
+
+.odds-note span {
+    color: #52616f;
+    font-size: 0.9rem;
+}
+
 .dispatch-queue {
     display: grid;
     gap: 10px;
