@@ -54,18 +54,27 @@ document.addEventListener("DOMContentLoaded", () => {
         detailElement.append(title, summary, risk);
     };
 
-    window.jpmap.japanMap(mapElement, {
-        areas: mapAreas,
-        showsPrefectureName: true,
-        movesIslands: true,
-        width: Math.min(mapElement.clientWidth || 720, 760),
-        borderLineColor: "#8795a1",
-        borderLineWidth: 0.4,
-        onSelect: (data) => {
-            const area = areaByCode[Number(data.code)];
-            if (area) {
-                renderDetail(area);
-            }
-        },
-    });
+    try {
+        if (window.jpmapInternalMap) {
+            window.Map = window.jpmapInternalMap;
+        }
+        window.jpmap.japanMap(mapElement, {
+            areas: mapAreas,
+            showsPrefectureName: true,
+            movesIslands: true,
+            width: Math.min(mapElement.clientWidth || 720, 760),
+            borderLineColor: "#8795a1",
+            borderLineWidth: 0.4,
+            onSelect: (data) => {
+                const area = areaByCode[Number(data.code)];
+                if (area) {
+                    renderDetail(area);
+                }
+            },
+        });
+    } finally {
+        if (window.nativeMapBeforeJpmap) {
+            window.Map = window.nativeMapBeforeJpmap;
+        }
+    }
 });

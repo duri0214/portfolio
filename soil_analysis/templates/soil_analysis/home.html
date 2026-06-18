@@ -274,6 +274,13 @@
 {% endblock %}
 
 {% block extra_js %}
+    <script>
+        window.nativeMapBeforeJpmap = window.Map;
+    </script>
     <script src="https://unpkg.com/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
-    <script src="{% static 'soil_analysis/js/home.js' %}"></script>
+    <script>
+        window.jpmapInternalMap = window.Map;
+        window.Map = window.nativeMapBeforeJpmap;
+    </script>
+    <script src="{% static 'soil_analysis/js/home.js' %}?v=770-map-fix-2"></script>
 {% endblock %}
