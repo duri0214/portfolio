@@ -202,7 +202,8 @@ class PrefectureCommercialAreaVO:
         japan_map_code: japan-map-js が都道府県識別に使う1から47のコード。
         land_count: 登録済み圃場数。
         company_count: 登録済み農業法人・企業数。
-        main_crop_name: 最も多く台帳に登場する作物名。
+        main_crop_name: 最も多く台帳に登場する代表作物名。
+        crop_names: 作付台帳に登場する作物名一覧。
         total_area: 圃場面積の合計。
         warning_city_count: 警報・注意報が登録されている市区町村数。
         warning_names: 都道府県内で発表されている警報・注意報名。
@@ -220,6 +221,7 @@ class PrefectureCommercialAreaVO:
     land_count: int
     company_count: int
     main_crop_name: str
+    crop_names: list[str]
     total_area: float
     warning_city_count: int
     warning_names: list[str]
@@ -277,6 +279,18 @@ class PrefectureCommercialAreaVO:
         return "、".join(self.warning_names)
 
     @property
+    def crop_summary(self) -> str:
+        """
+        画面表示用の作物サマリを返します。
+
+        Returns:
+            str: 作物名の列記。未登録の場合は `未設定`。
+        """
+        if not self.crop_names:
+            return "未設定"
+        return "、".join(self.crop_names)
+
+    @property
     def map_payload(self) -> dict[str, int | str]:
         """
         japan-map-js に渡す都道府県別データを返します。
@@ -295,6 +309,7 @@ class PrefectureCommercialAreaVO:
             "landCount": self.land_count,
             "companyCount": self.company_count,
             "mainCropName": self.main_crop_name,
+            "cropSummary": self.crop_summary,
             "warningCount": self.warning_city_count,
             "warningSummary": self.warning_summary,
             "riskScore": self.risk_score,
@@ -309,46 +324,47 @@ class PrefectureCommercialAreaVO:
 @dataclass(frozen=True)
 class DispatchCandidateVO:
     """
-    商圏から仮想市場への出荷候補を表す読み取り専用VOです。
+    都道府県間の一人称商圏に基づく配車候補を表す読み取り専用VOです。
 
     このVOは、都道府県別商圏マップの右側に表示する配車候補キューのために使います。
-    現段階では実在の物流APIや市場価格へ接続せず、圃場登録のある商圏を
-    「どこから、どの市場へ、どの作物を出せそうか」という形で可視化する
-    PoC用の表示モデルです。
+    現段階では実在の物流APIや市場価格へ接続せず、天気リスクが高い都道府県へ
+    他都道府県が同じ登録作物を売り込む関係を配車の確認対象として可視化します。
 
     後続で市況データや配車APIに置き換える場合も、テンプレート側はこのVOを
     読むだけにしておくことで、外部連携の差し替え範囲をService側へ閉じます。
 
     Attributes:
-        origin_name: 出荷元の都道府県商圏名。
-        target_market_name: 仮想の出荷先市場名。
-        main_crop_name: 出荷候補の主要作物名。
+        origin_name: 売り込み元の都道府県名。
+        target_prefecture_name: 天気リスクが高い売り込み先の都道府県名。
+        main_crop_name: 出荷候補として一致した作物名。
         logistics_status: 配車候補の状態。
         reason: 推奨理由。
-        risk_score: 対象商圏のリスクスコア。
+        weather_risk_index: 売り込み先都道府県の天気リスク指数。
+        relation_label: A県→B県を示す一方向の商圏関係ラベル。
     """
 
     origin_name: str
-    target_market_name: str
+    target_prefecture_name: str
     main_crop_name: str
     logistics_status: str
     reason: str
-    risk_score: int
+    weather_risk_index: float
+    relation_label: str
 
 
 @dataclass(frozen=True)
 class SalesOpportunityCandidateVO:
     """
-    赤信号商圏へ他県が売り込みをかける候補関係を表す読み取り専用VOです。
+    天気リスクが高い商圏へ他県が売り込みをかける候補関係を表す読み取り専用VOです。
 
-    このVOは、赤信号県の天気と警報・注意報から算出した
+    このVOは、売り込み先の天気と警報・注意報から算出した
     出荷リスク指数を保持します。都道府県自身が自己申告する値ではなく、
     A県からB県へ売り込む一方向の商圏関係として扱います。
 
     Attributes:
         origin_name: 売り込み元の都道府県名。
-        target_name: 赤信号として売り込み先候補になる都道府県名。
-        main_crop_name: 売り込み候補の主要作物名。
+        target_name: 天気リスクが高く売り込み先候補になる都道府県名。
+        main_crop_name: 売り込み候補として一致した作物名。
         weather_risk_index: 天気と警報・注意報から算出した出荷リスク指数。
         relation_label: A県→B県を示す一方向の商圏関係ラベル。
         reason: リスク指数に寄与した主な判断材料。
@@ -377,8 +393,8 @@ class PrefectureCommercialAreaDashboardVO:
 
     Attributes:
         areas: 都道府県単位の商圏一覧。
-        dispatch_candidates: 出荷候補一覧。
-        sales_opportunity_candidates: 赤信号商圏への売り込み候補一覧。
+        dispatch_candidates: 都道府県間の配車候補一覧。
+        sales_opportunity_candidates: 天気リスクが高い商圏への売り込み候補一覧。
     """
 
     areas: list[PrefectureCommercialAreaVO]
