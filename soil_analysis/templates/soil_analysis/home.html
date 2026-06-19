@@ -94,7 +94,10 @@
                             </div>
                             {{ commercial_area_map_data|json_script:"commercial-area-map-data" }}
                             <div class="japan-market-map">
-                                <div id="commercial-area-map" class="commercial-area-map-canvas" aria-label="47都道府県の商圏マップ"></div>
+                                <div id="commercial-area-map"
+                                     class="commercial-area-map-canvas"
+                                     aria-label="47都道府県の商圏マップ"
+                                     data-detail-url-template="{% url 'soil:prefecture_detail' 999 %}"></div>
                                 <div class="market-map-detail" id="commercial-area-map-detail" aria-live="polite">
                                     <strong>地図から都道府県を選択</strong>
                                     <span>商圏の集計値を確認できます。</span>
@@ -217,7 +220,9 @@
                             <tbody>
                                 {% for area in prefecture_area_dashboard.areas_by_weather_risk %}
                                     <tr>
-                                        <td class="fw-semibold">{{ area.prefecture_name }}</td>
+                                        <td class="fw-semibold">
+                                            <a href="{% url 'soil:prefecture_detail' area.japan_map_code %}" class="text-decoration-none">{{ area.prefecture_name }}</a>
+                                        </td>
                                         <td>
                                             {% if area.weather_icon_image %}
                                                 {% with 'soil_analysis/images/weather/svg/'|add:area.weather_icon_image as weather_icon_path %}
@@ -330,5 +335,5 @@
         window.jpmapInternalMap = window.Map;
         window.Map = window.nativeMapBeforeJpmap;
     </script>
-    <script src="{% static 'soil_analysis/js/home.js' %}?v=770-map-fix-2"></script>
+    <script src="{% static 'soil_analysis/js/home.js' %}?v=774-prefecture-detail"></script>
 {% endblock %}

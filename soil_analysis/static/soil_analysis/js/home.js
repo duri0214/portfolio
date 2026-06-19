@@ -38,6 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
             hoverColor: palette.hoverColor,
         };
     });
+    const detailUrlTemplate = mapElement.dataset.detailUrlTemplate || "";
+    const buildDetailUrl = (area) => detailUrlTemplate.replace("999", area.code);
 
     const renderDetail = (area) => {
         detailElement.replaceChildren();
@@ -54,7 +56,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const risk = document.createElement("span");
         risk.textContent = `予報日 ${area.weatherReportingDate || "未取得"} / 警報・注意報 ${area.warningSummary}`;
 
-        detailElement.append(title, jmaArea, summary, risk);
+        const detailLink = document.createElement("a");
+        detailLink.className = "btn btn-sm btn-primary justify-self-start mt-2";
+        detailLink.href = buildDetailUrl(area);
+        detailLink.textContent = "詳細ページへ";
+
+        detailElement.append(title, jmaArea, summary, risk, detailLink);
     };
 
     try {
