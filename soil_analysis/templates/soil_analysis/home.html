@@ -111,7 +111,7 @@
                                                 <strong class="d-flex flex-wrap align-items-center gap-1">
                                                     <span>{{ candidate.origin_name }}</span>
                                                     {% if candidate.origin_weather_icon_image %}
-                                                        {% with icon_path="soil_analysis/img/weather/"|add:candidate.origin_weather_icon_image %}
+                                                        {% with icon_path="soil_analysis/images/weather/svg/"|add:candidate.origin_weather_icon_image %}
                                                             <img src="{% static icon_path %}"
                                                                  alt="{{ candidate.origin_weather_name }}"
                                                                  title="{{ candidate.origin_weather_name }}"
@@ -122,7 +122,7 @@
                                                     <span>→</span>
                                                     <span>{{ candidate.target_name }}</span>
                                                     {% if candidate.target_weather_icon_image %}
-                                                        {% with icon_path="soil_analysis/img/weather/"|add:candidate.target_weather_icon_image %}
+                                                        {% with icon_path="soil_analysis/images/weather/svg/"|add:candidate.target_weather_icon_image %}
                                                             <img src="{% static icon_path %}"
                                                                  alt="{{ candidate.target_weather_name }}"
                                                                  title="{{ candidate.target_weather_name }}"
@@ -154,7 +154,7 @@
                                                 <strong class="d-flex flex-wrap align-items-center gap-1">
                                                     <span>{{ candidate.origin_name }}</span>
                                                     {% if candidate.origin_weather_icon_image %}
-                                                        {% with icon_path="soil_analysis/img/weather/"|add:candidate.origin_weather_icon_image %}
+                                                        {% with icon_path="soil_analysis/images/weather/svg/"|add:candidate.origin_weather_icon_image %}
                                                             <img src="{% static icon_path %}"
                                                                  alt="{{ candidate.origin_weather_name }}"
                                                                  title="{{ candidate.origin_weather_name }}"
@@ -165,7 +165,7 @@
                                                     <span>→</span>
                                                     <span>{{ candidate.target_prefecture_name }}</span>
                                                     {% if candidate.target_weather_icon_image %}
-                                                        {% with icon_path="soil_analysis/img/weather/"|add:candidate.target_weather_icon_image %}
+                                                        {% with icon_path="soil_analysis/images/weather/svg/"|add:candidate.target_weather_icon_image %}
                                                             <img src="{% static icon_path %}"
                                                                  alt="{{ candidate.target_weather_name }}"
                                                                  title="{{ candidate.target_weather_name }}"
