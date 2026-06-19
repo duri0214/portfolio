@@ -200,6 +200,8 @@ class PrefectureCommercialAreaVO:
         prefecture_id: 47都道府県として扱う表示用ID。japan-map-js のコードと同じ値。
         prefecture_name: 都道府県名。
         japan_map_code: japan-map-js が都道府県識別に使う1から47のコード。
+        jma_area_code: JMAの大きい地域コード。
+        jma_area_name: JMAの大きい地域名。
         land_count: 登録済み圃場数。
         company_count: 登録済み農業法人・企業数。
         main_crop_name: 最も多く台帳に登場する代表作物名。
@@ -218,6 +220,8 @@ class PrefectureCommercialAreaVO:
     prefecture_id: int
     prefecture_name: str
     japan_map_code: int
+    jma_area_code: str
+    jma_area_name: str
     land_count: int
     company_count: int
     main_crop_name: str
@@ -304,6 +308,7 @@ class PrefectureCommercialAreaVO:
         return {
             "code": self.japan_map_code,
             "name": self.prefecture_name,
+            "jmaAreaName": self.jma_area_name,
             "status": self.status_label,
             "statusClass": self.status_class,
             "landCount": self.land_count,
@@ -336,6 +341,10 @@ class DispatchCandidateVO:
     Attributes:
         origin_name: 売り込み元の都道府県名。
         target_prefecture_name: 天気リスクが高い売り込み先の都道府県名。
+        origin_weather_name: 売り込み元の天気名。
+        origin_weather_icon_image: 売り込み元の天気アイコンファイル名。
+        target_weather_name: 売り込み先の天気名。
+        target_weather_icon_image: 売り込み先の天気アイコンファイル名。
         main_crop_name: 出荷候補として一致した作物名。
         logistics_status: 配車候補の状態。
         reason: 推奨理由。
@@ -345,6 +354,10 @@ class DispatchCandidateVO:
 
     origin_name: str
     target_prefecture_name: str
+    origin_weather_name: str
+    origin_weather_icon_image: str
+    target_weather_name: str
+    target_weather_icon_image: str
     main_crop_name: str
     logistics_status: str
     reason: str
@@ -364,16 +377,28 @@ class SalesOpportunityCandidateVO:
     Attributes:
         origin_name: 売り込み元の都道府県名。
         target_name: 天気リスクが高く売り込み先候補になる都道府県名。
+        origin_weather_name: 売り込み元の天気名。
+        origin_weather_icon_image: 売り込み元の天気アイコンファイル名。
+        target_weather_name: 売り込み先の天気名。
+        target_weather_icon_image: 売り込み先の天気アイコンファイル名。
         main_crop_name: 売り込み候補として一致した作物名。
         weather_risk_index: 天気と警報・注意報から算出した出荷リスク指数。
+        origin_weather_risk_index: 売り込み元都道府県の天気リスク指数。
+        is_same_jma_area: 売り込み元と売り込み先が同じJMA地域かどうか。
         relation_label: A県→B県を示す一方向の商圏関係ラベル。
         reason: リスク指数に寄与した主な判断材料。
     """
 
     origin_name: str
     target_name: str
+    origin_weather_name: str
+    origin_weather_icon_image: str
+    target_weather_name: str
+    target_weather_icon_image: str
     main_crop_name: str
     weather_risk_index: float
+    origin_weather_risk_index: float
+    is_same_jma_area: bool
     relation_label: str
     reason: str
 

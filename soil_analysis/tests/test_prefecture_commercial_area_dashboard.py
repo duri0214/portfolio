@@ -419,6 +419,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(prefecture_area_dashboard.sales_opportunity_candidate_count, 1)
         self.assertEqual(sales_candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(sales_candidate.target_name, "千葉県")
+        self.assertEqual(sales_candidate.target_weather_icon_image, "300.svg")
         self.assertEqual(sales_candidate.main_crop_name, "トマト")
         self.assertEqual(sales_candidate.weather_risk_index, 4.2)
         self.assertEqual(
@@ -432,6 +433,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(prefecture_area_dashboard.dispatch_candidate_count, 1)
         self.assertEqual(dispatch_candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(dispatch_candidate.target_prefecture_name, "千葉県")
+        self.assertEqual(dispatch_candidate.target_weather_icon_image, "300.svg")
         self.assertEqual(dispatch_candidate.weather_risk_index, 4.2)
         self.assertEqual(dispatch_candidate.logistics_status, "代替便確認中")
         self.assertFalse(hasattr(dispatch_candidate, "target_market_name"))
@@ -512,6 +514,92 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(candidate.main_crop_name, "なばな")
         self.assertEqual(candidate.weather_risk_index, 4.0)
         self.assertIn("雨", candidate.reason)
+
+    def test_build_creates_sales_opportunity_from_lower_risk_warning_prefecture(self):
+        """
+        シナリオ:
+        - 入力: 秋田県に注意報つきの米圃場、兵庫県に低リスクの米圃場、山形県により高い天気リスクの米圃場があるDB状態。
+        - 処理: 都道府県別商圏Serviceを実行する。
+        - 期待値: 秋田県に注意報があっても、隣接県で同じ米を出せるため遠方の兵庫県より優先されること。
+        """
+        akita_city = self._get_city("秋田県")
+        hyogo_city = self._get_city("兵庫県")
+        yamagata_city = self._get_city("山形県")
+        yamagata_prefecture = yamagata_city.jma_region.jma_prefecture
+        yamagata_prefecture.jma_area = akita_city.jma_region.jma_prefecture.jma_area
+        yamagata_prefecture.save()
+        rice = Crop.objects.create(name="米")
+        akita_land = Land.objects.create(
+            name="秋田米圃場",
+            company=self.company,
+            jma_city=akita_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="39.720,140.103",
+        )
+        hyogo_land = Land.objects.create(
+            name="兵庫米圃場",
+            company=self.company,
+            jma_city=hyogo_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="34.691,135.183",
+        )
+        yamagata_land = Land.objects.create(
+            name="山形米圃場",
+            company=self.company,
+            jma_city=yamagata_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="38.240,140.363",
+        )
+        for land in (akita_land, hyogo_land, yamagata_land):
+            LandLedger.objects.create(
+                land=land,
+                land_period=self.period,
+                sampling_date="2026-03-01",
+                analytical_agency=self.company,
+                crop=rice,
+                sampling_method=self.sampling_method,
+                sampling_staff=self.user,
+            )
+        JmaWarning.objects.create(jma_region=akita_city.jma_region, warnings="雷注意報")
+        JmaWeather.objects.create(
+            jma_region=akita_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.cloudy_sometimes_sunny_weather_code,
+            weather_text="曇時々晴",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=30,
+            avg_min_temperature=18,
+            avg_max_temperature=25,
+            avg_max_wind_speed=5,
+        )
+        JmaWarning.objects.create(
+            jma_region=yamagata_city.jma_region, warnings="濃霧注意報,雷注意報"
+        )
+        JmaWeather.objects.create(
+            jma_region=yamagata_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        candidate = prefecture_area_dashboard.sales_opportunity_candidates[0]
+
+        self.assertEqual(candidate.relation_label, "秋田県→山形県")
+        self.assertEqual(candidate.main_crop_name, "米")
+        self.assertEqual(candidate.weather_risk_index, 4.2)
+        self.assertEqual(candidate.origin_weather_risk_index, 1.9)
+        self.assertIn("天気リスク指数が1.9", candidate.reason)
 
     def test_dashboard_orders_areas_by_high_weather_risk(self):
         """
@@ -640,6 +728,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["prefecture_area_dashboard"].area_count, 47)
         self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
+        self.assertIn("jmaAreaName", response.context["commercial_area_map_data"][0])
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
         self.assertContains(response, "地図から都道府県を選択")

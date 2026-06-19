@@ -45,13 +45,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const title = document.createElement("strong");
         title.textContent = `${area.name}: ${area.weatherName}`;
 
+        const jmaArea = document.createElement("span");
+        jmaArea.textContent = `エリア ${area.jmaAreaName || "未設定"}`;
+
         const summary = document.createElement("span");
         summary.textContent = `圃場 ${area.landCount}圃場 / 企業 ${area.companyCount}社 / 登録作物 ${area.cropSummary}`;
 
         const risk = document.createElement("span");
         risk.textContent = `予報日 ${area.weatherReportingDate || "未取得"} / 警報・注意報 ${area.warningSummary}`;
 
-        detailElement.append(title, summary, risk);
+        detailElement.append(title, jmaArea, summary, risk);
     };
 
     try {

@@ -108,7 +108,29 @@
                                     {% for candidate in prefecture_area_dashboard.sales_opportunity_candidates %}
                                         <div class="sales-opportunity-item">
                                             <div class="d-flex justify-content-between gap-2">
-                                                <strong>{{ candidate.relation_label }}</strong>
+                                                <strong class="d-flex flex-wrap align-items-center gap-1">
+                                                    <span>{{ candidate.origin_name }}</span>
+                                                    {% if candidate.origin_weather_icon_image %}
+                                                        {% with icon_path="soil_analysis/images/weather/svg/"|add:candidate.origin_weather_icon_image %}
+                                                            <img src="{% static icon_path %}"
+                                                                 alt="{{ candidate.origin_weather_name }}"
+                                                                 title="{{ candidate.origin_weather_name }}"
+                                                                 width="22"
+                                                                 height="22">
+                                                        {% endwith %}
+                                                    {% endif %}
+                                                    <span>→</span>
+                                                    <span>{{ candidate.target_name }}</span>
+                                                    {% if candidate.target_weather_icon_image %}
+                                                        {% with icon_path="soil_analysis/images/weather/svg/"|add:candidate.target_weather_icon_image %}
+                                                            <img src="{% static icon_path %}"
+                                                                 alt="{{ candidate.target_weather_name }}"
+                                                                 title="{{ candidate.target_weather_name }}"
+                                                                 width="22"
+                                                                 height="22">
+                                                        {% endwith %}
+                                                    {% endif %}
+                                                </strong>
                                                 <span class="badge bg-danger">リスク {{ candidate.weather_risk_index }}</span>
                                             </div>
                                             <div class="small text-muted mt-1">{{ candidate.main_crop_name }}</div>
@@ -129,7 +151,29 @@
                                     {% for candidate in dispatch_candidates %}
                                         <div class="dispatch-item">
                                             <div class="d-flex justify-content-between gap-2">
-                                                <strong>{{ candidate.relation_label }}</strong>
+                                                <strong class="d-flex flex-wrap align-items-center gap-1">
+                                                    <span>{{ candidate.origin_name }}</span>
+                                                    {% if candidate.origin_weather_icon_image %}
+                                                        {% with icon_path="soil_analysis/images/weather/svg/"|add:candidate.origin_weather_icon_image %}
+                                                            <img src="{% static icon_path %}"
+                                                                 alt="{{ candidate.origin_weather_name }}"
+                                                                 title="{{ candidate.origin_weather_name }}"
+                                                                 width="22"
+                                                                 height="22">
+                                                        {% endwith %}
+                                                    {% endif %}
+                                                    <span>→</span>
+                                                    <span>{{ candidate.target_prefecture_name }}</span>
+                                                    {% if candidate.target_weather_icon_image %}
+                                                        {% with icon_path="soil_analysis/images/weather/svg/"|add:candidate.target_weather_icon_image %}
+                                                            <img src="{% static icon_path %}"
+                                                                 alt="{{ candidate.target_weather_name }}"
+                                                                 title="{{ candidate.target_weather_name }}"
+                                                                 width="22"
+                                                                 height="22">
+                                                        {% endwith %}
+                                                    {% endif %}
+                                                </strong>
                                                 <span class="badge bg-secondary">{{ candidate.logistics_status }}</span>
                                             </div>
                                             <div class="small text-muted mt-1">{{ candidate.main_crop_name }} / 天気リスク {{ candidate.weather_risk_index }}</div>

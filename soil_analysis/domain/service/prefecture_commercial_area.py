@@ -96,6 +96,7 @@ class PrefectureCommercialAreaService:
         """
         land_stats = cls._build_land_stats()
         crop_stats = cls._build_crop_stats()
+        jma_area_stats = cls._build_jma_area_stats()
         warning_stats = cls._build_warning_stats()
         weather_stats = cls._build_future_weather_stats()
 
@@ -105,6 +106,7 @@ class PrefectureCommercialAreaService:
                 prefecture_name,
                 land_stats,
                 crop_stats,
+                jma_area_stats,
                 warning_stats,
                 weather_stats,
             )
@@ -147,6 +149,32 @@ class PrefectureCommercialAreaService:
             stats[japan_map_code]["land_count"] += 1
             stats[japan_map_code]["company_ids"].add(land.company_id)
             stats[japan_map_code]["total_area"] += land.area or 0.0
+        return stats
+
+    @staticmethod
+    def _build_jma_area_stats() -> dict[int, dict[str, str]]:
+        """
+        JMA都道府県マスタから47都道府県ごとの大きい地域を集計します。
+
+        JMAの `area` は東北地方、近畿地方のような大きい地域を表します。
+        売り込み候補の近さ判定では、都道府県名をハードコードせず、
+        同じJMA地域に属するかを使います。
+
+        Returns:
+            dict[int, dict[str, str]]: japan-map-js コードごとのJMA地域コードと地域名。
+        """
+        stats = {}
+        prefectures = JmaPrefecture.objects.select_related("jma_area")
+        for prefecture in prefectures:
+            japan_map_code = PrefectureCommercialAreaService._get_japan_map_code(
+                prefecture
+            )
+            if japan_map_code is None or japan_map_code in stats:
+                continue
+            stats[japan_map_code] = {
+                "code": prefecture.jma_area.code,
+                "name": prefecture.jma_area.name,
+            }
         return stats
 
     @staticmethod
@@ -247,6 +275,7 @@ class PrefectureCommercialAreaService:
         prefecture_name: str,
         land_stats: dict[int, dict],
         crop_stats: dict[int, Counter],
+        jma_area_stats: dict[int, dict[str, str]],
         warning_stats: PrefectureWarningStatsVO,
         weather_stats: PrefectureWeatherStatsVO,
     ) -> PrefectureCommercialAreaVO:
@@ -262,6 +291,7 @@ class PrefectureCommercialAreaService:
             prefecture_name: 商圏として表示する47都道府県名。
             land_stats: 都道府県別の圃場集計。
             crop_stats: 都道府県別の作物集計。
+            jma_area_stats: 都道府県別のJMA地域集計。
             warning_stats: 都道府県別の警報・注意報集計。
             weather_stats: 都道府県別の最新天気情報。
 
@@ -269,6 +299,7 @@ class PrefectureCommercialAreaService:
             PrefectureCommercialAreaVO: トップページへ渡す1都道府県分の商圏VO。
         """
         stats = land_stats[japan_map_code]
+        jma_area = jma_area_stats.get(japan_map_code, {"code": "", "name": ""})
         warning = warning_stats.get_by_japan_map_code(japan_map_code)
         warning_city_count = warning.region_count
         warning_names = warning.sorted_names
@@ -285,6 +316,8 @@ class PrefectureCommercialAreaService:
             prefecture_id=japan_map_code,
             prefecture_name=prefecture_name,
             japan_map_code=japan_map_code,
+            jma_area_code=jma_area["code"],
+            jma_area_name=jma_area["name"],
             land_count=land_count,
             company_count=len(stats["company_ids"]),
             main_crop_name=main_crop_name,
@@ -407,6 +440,10 @@ class PrefectureCommercialAreaService:
                 DispatchCandidateVO(
                     origin_name=candidate.origin_name,
                     target_prefecture_name=candidate.target_name,
+                    origin_weather_name=candidate.origin_weather_name,
+                    origin_weather_icon_image=candidate.origin_weather_icon_image,
+                    target_weather_name=candidate.target_weather_name,
+                    target_weather_icon_image=candidate.target_weather_icon_image,
                     main_crop_name=candidate.main_crop_name,
                     logistics_status="代替便確認中",
                     reason=reason,
@@ -426,7 +463,13 @@ class PrefectureCommercialAreaService:
 
         雨・雪や警報・注意報で天気リスク指数が高い商圏を
         「登録作物の出荷が止まりやすい地域」とみなし、同じ登録作物を持ち、
-        警報・注意報がない他商圏を売り込み元候補にします。
+        対象より天気リスク指数が低い他商圏を売り込み元候補にします。
+        隣接県が候補になる場合は、遠方県より優先します。
+        ここでいう隣接県は、JMAの大きい地域が同じ都道府県として扱います。
+        候補はいったん全量生成し、売り込み先のリスク、同一JMA地域、
+        売り込み元のリスクの順に並べてから、売り込み先都道府県ごとに
+        先頭1件だけを残します。これにより、47都道府県それぞれに対して
+        もっとも強い売り込み元候補を1件ずつ選べます。
         A県→B県とB県→A県は別々の関係として扱うため、候補は一方向のVOで返します。
 
         Args:
@@ -440,11 +483,7 @@ class PrefectureCommercialAreaService:
             for area in areas
             if area.weather_risk_index >= HIGH_WEATHER_RISK_INDEX and area.crop_names
         ]
-        origin_areas = [
-            area
-            for area in areas
-            if area.land_count and not area.warning_city_count and area.crop_names
-        ]
+        origin_areas = [area for area in areas if area.land_count and area.crop_names]
         candidates = []
         for target_area in target_areas:
             for origin_area in origin_areas:
@@ -462,8 +501,16 @@ class PrefectureCommercialAreaService:
                     SalesOpportunityCandidateVO(
                         origin_name=origin_area.prefecture_name,
                         target_name=target_area.prefecture_name,
+                        origin_weather_name=origin_area.weather_name,
+                        origin_weather_icon_image=origin_area.weather_icon_image,
+                        target_weather_name=target_area.weather_name,
+                        target_weather_icon_image=target_area.weather_icon_image,
                         main_crop_name=matched_crop_name,
                         weather_risk_index=target_area.weather_risk_index,
+                        origin_weather_risk_index=origin_area.weather_risk_index,
+                        is_same_jma_area=(
+                            origin_area.jma_area_code == target_area.jma_area_code
+                        ),
                         relation_label=(
                             f"{origin_area.prefecture_name}→"
                             f"{target_area.prefecture_name}"
@@ -474,14 +521,27 @@ class PrefectureCommercialAreaService:
                     )
                 )
 
-        return sorted(
+        sorted_candidates = sorted(
             candidates,
             key=lambda candidate: (
-                candidate.weather_risk_index,
+                -candidate.weather_risk_index,
+                not candidate.is_same_jma_area,
+                candidate.origin_weather_risk_index,
                 candidate.main_crop_name,
+                candidate.origin_name,
             ),
-            reverse=True,
-        )[:5]
+        )
+
+        selected_candidates = []
+        selected_target_names = set()
+        for candidate in sorted_candidates:
+            if candidate.target_name in selected_target_names:
+                continue
+            selected_candidates.append(candidate)
+            selected_target_names.add(candidate.target_name)
+            if len(selected_candidates) == 5:
+                break
+        return selected_candidates
 
     @classmethod
     def _calculate_weather_risk_index(
@@ -563,6 +623,7 @@ class PrefectureCommercialAreaService:
             )
         return (
             f"{target_area.prefecture_name}は{target_weather_summary}で天気リスクが高い状態。"
-            f"{origin_area.prefecture_name}は警報・注意報がなく同じ{crop_name}を出せるため、"
+            f"{origin_area.prefecture_name}は天気リスク指数が{origin_area.weather_risk_index}で、"
+            f"同じ{crop_name}を出せるため、"
             f"{target_area.prefecture_name}への売り込み候補になります。"
         )
