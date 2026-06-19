@@ -56,12 +56,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const risk = document.createElement("span");
         risk.textContent = `予報日 ${area.weatherReportingDate || "未取得"} / 警報・注意報 ${area.warningSummary}`;
 
+        const offerCount = document.createElement("span");
+        offerCount.textContent = `オファー候補 ${area.salesOfferCount || 0}件`;
+
         const detailLink = document.createElement("a");
         detailLink.className = "btn btn-sm btn-primary justify-self-start mt-2";
         detailLink.href = buildDetailUrl(area);
         detailLink.textContent = "詳細ページへ";
 
-        detailElement.append(title, jmaArea, summary, risk, detailLink);
+        detailElement.append(title, jmaArea, summary, risk, offerCount, detailLink);
     };
 
     try {

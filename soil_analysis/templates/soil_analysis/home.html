@@ -127,6 +127,7 @@
                                     <th class="text-end">企業</th>
                                     <th>登録作物</th>
                                     <th class="text-end">リスク指数</th>
+                                    <th class="text-end">オファー候補</th>
                                     <th>警報・注意報</th>
                                 </tr>
                             </thead>
@@ -156,6 +157,7 @@
                                         <td class="text-end">{{ area.company_count }}</td>
                                         <td>{{ area.crop_summary }}</td>
                                         <td class="text-end">{{ area.weather_risk_index }}</td>
+                                        <td class="text-end">{{ area.sales_offer_count }}件</td>
                                         <td>{{ area.warning_summary }}</td>
                                     </tr>
                                 {% endfor %}

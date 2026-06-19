@@ -415,10 +415,12 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         prefecture_area_dashboard = PrefectureCommercialAreaService.build()
         sales_candidate = prefecture_area_dashboard.sales_opportunity_candidates[0]
         dispatch_candidate = prefecture_area_dashboard.dispatch_candidates[0]
+        chiba_area = self._find_area(prefecture_area_dashboard.areas, "千葉県")
 
         self.assertEqual(
             len(prefecture_area_dashboard.all_sales_opportunity_candidates), 1
         )
+        self.assertEqual(chiba_area.sales_offer_count, 1)
         self.assertEqual(prefecture_area_dashboard.sales_opportunity_candidate_count, 1)
         self.assertEqual(sales_candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(sales_candidate.target_name, "千葉県")
@@ -427,9 +429,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(sales_candidate.weather_risk_index, 4.2)
         self.assertEqual(
             sales_candidate.weather_risk_index,
-            self._find_area(
-                prefecture_area_dashboard.areas, "千葉県"
-            ).weather_risk_index,
+            chiba_area.weather_risk_index,
         )
         self.assertIn("大雨警報", sales_candidate.reason)
         self.assertIn("同じトマトを出せる", sales_candidate.reason)
@@ -732,6 +732,9 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(response.context["prefecture_area_dashboard"].area_count, 47)
         self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
         self.assertIn("jmaAreaName", response.context["commercial_area_map_data"][0])
+        self.assertIn(
+            "salesOfferCount", response.context["commercial_area_map_data"][0]
+        )
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
         self.assertContains(response, "地図から都道府県を選択")
@@ -751,6 +754,9 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "詳細ページで深掘りする商圏")
         self.assertContains(response, "天気（予報日）")
         self.assertContains(response, '<th class="text-end">リスク指数</th>', html=True)
+        self.assertContains(
+            response, '<th class="text-end">オファー候補</th>', html=True
+        )
         self.assertContains(
             response,
             '<td class="fw-semibold"><a href="/soil_analysis/prefecture/47/detail" class="text-decoration-none">沖縄県</a></td>',
@@ -859,6 +865,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["area"].prefecture_name, "千葉県")
+        self.assertEqual(response.context["area"].sales_offer_count, 2)
         self.assertEqual(len(response.context["sales_opportunity_candidates"]), 2)
         self.assertContains(response, "千葉県 詳細")
         self.assertContains(response, "千葉県エリア")

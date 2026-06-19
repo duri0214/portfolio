@@ -1,4 +1,5 @@
 from collections import Counter, defaultdict
+from dataclasses import replace
 
 from soil_analysis.domain.valueobject.prefecture_commercial_area import (
     DispatchCandidateVO,
@@ -115,6 +116,16 @@ class PrefectureCommercialAreaService:
         all_sales_opportunity_candidates = cls._build_all_sales_opportunity_candidates(
             areas
         )
+        offer_counts = Counter(
+            candidate.target_name for candidate in all_sales_opportunity_candidates
+        )
+        areas = [
+            replace(
+                area,
+                sales_offer_count=offer_counts[area.prefecture_name],
+            )
+            for area in areas
+        ]
         sales_opportunity_candidates = cls._select_top_sales_opportunity_candidates(
             all_sales_opportunity_candidates
         )
@@ -337,6 +348,7 @@ class PrefectureCommercialAreaService:
             weather_icon_image=weather.icon_image,
             weather_code=weather.code,
             weather_reporting_date=weather.reporting_date,
+            sales_offer_count=0,
         )
 
     @staticmethod
