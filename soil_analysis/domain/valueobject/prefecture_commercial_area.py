@@ -341,6 +341,10 @@ class DispatchCandidateVO:
     Attributes:
         origin_name: 売り込み元の都道府県名。
         target_prefecture_name: 天気リスクが高い売り込み先の都道府県名。
+        origin_weather_name: 売り込み元の天気名。
+        origin_weather_icon_image: 売り込み元の天気アイコンファイル名。
+        target_weather_name: 売り込み先の天気名。
+        target_weather_icon_image: 売り込み先の天気アイコンファイル名。
         main_crop_name: 出荷候補として一致した作物名。
         logistics_status: 配車候補の状態。
         reason: 推奨理由。
@@ -350,6 +354,10 @@ class DispatchCandidateVO:
 
     origin_name: str
     target_prefecture_name: str
+    origin_weather_name: str
+    origin_weather_icon_image: str
+    target_weather_name: str
+    target_weather_icon_image: str
     main_crop_name: str
     logistics_status: str
     reason: str
@@ -369,6 +377,10 @@ class SalesOpportunityCandidateVO:
     Attributes:
         origin_name: 売り込み元の都道府県名。
         target_name: 天気リスクが高く売り込み先候補になる都道府県名。
+        origin_weather_name: 売り込み元の天気名。
+        origin_weather_icon_image: 売り込み元の天気アイコンファイル名。
+        target_weather_name: 売り込み先の天気名。
+        target_weather_icon_image: 売り込み先の天気アイコンファイル名。
         main_crop_name: 売り込み候補として一致した作物名。
         weather_risk_index: 天気と警報・注意報から算出した出荷リスク指数。
         origin_weather_risk_index: 売り込み元都道府県の天気リスク指数。
@@ -379,6 +391,10 @@ class SalesOpportunityCandidateVO:
 
     origin_name: str
     target_name: str
+    origin_weather_name: str
+    origin_weather_icon_image: str
+    target_weather_name: str
+    target_weather_icon_image: str
     main_crop_name: str
     weather_risk_index: float
     origin_weather_risk_index: float

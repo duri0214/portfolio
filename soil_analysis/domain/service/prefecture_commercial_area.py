@@ -440,6 +440,10 @@ class PrefectureCommercialAreaService:
                 DispatchCandidateVO(
                     origin_name=candidate.origin_name,
                     target_prefecture_name=candidate.target_name,
+                    origin_weather_name=candidate.origin_weather_name,
+                    origin_weather_icon_image=candidate.origin_weather_icon_image,
+                    target_weather_name=candidate.target_weather_name,
+                    target_weather_icon_image=candidate.target_weather_icon_image,
                     main_crop_name=candidate.main_crop_name,
                     logistics_status="代替便確認中",
                     reason=reason,
@@ -497,6 +501,10 @@ class PrefectureCommercialAreaService:
                     SalesOpportunityCandidateVO(
                         origin_name=origin_area.prefecture_name,
                         target_name=target_area.prefecture_name,
+                        origin_weather_name=origin_area.weather_name,
+                        origin_weather_icon_image=origin_area.weather_icon_image,
+                        target_weather_name=target_area.weather_name,
+                        target_weather_icon_image=target_area.weather_icon_image,
                         main_crop_name=matched_crop_name,
                         weather_risk_index=target_area.weather_risk_index,
                         origin_weather_risk_index=origin_area.weather_risk_index,

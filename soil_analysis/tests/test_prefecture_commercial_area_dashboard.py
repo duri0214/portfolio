@@ -419,6 +419,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(prefecture_area_dashboard.sales_opportunity_candidate_count, 1)
         self.assertEqual(sales_candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(sales_candidate.target_name, "千葉県")
+        self.assertEqual(sales_candidate.target_weather_icon_image, "300.svg")
         self.assertEqual(sales_candidate.main_crop_name, "トマト")
         self.assertEqual(sales_candidate.weather_risk_index, 4.2)
         self.assertEqual(
@@ -432,6 +433,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(prefecture_area_dashboard.dispatch_candidate_count, 1)
         self.assertEqual(dispatch_candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(dispatch_candidate.target_prefecture_name, "千葉県")
+        self.assertEqual(dispatch_candidate.target_weather_icon_image, "300.svg")
         self.assertEqual(dispatch_candidate.weather_risk_index, 4.2)
         self.assertEqual(dispatch_candidate.logistics_status, "代替便確認中")
         self.assertFalse(hasattr(dispatch_candidate, "target_market_name"))
