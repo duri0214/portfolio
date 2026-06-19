@@ -112,7 +112,12 @@ class PrefectureCommercialAreaService:
             )
             for japan_map_code, prefecture_name in JAPAN_MAP_PREFECTURES
         ]
-        sales_opportunity_candidates = cls._build_sales_opportunity_candidates(areas)
+        all_sales_opportunity_candidates = cls._build_all_sales_opportunity_candidates(
+            areas
+        )
+        sales_opportunity_candidates = cls._select_top_sales_opportunity_candidates(
+            all_sales_opportunity_candidates
+        )
         dispatch_candidates = cls._build_dispatch_candidates(
             sales_opportunity_candidates
         )
@@ -120,6 +125,7 @@ class PrefectureCommercialAreaService:
             areas=areas,
             dispatch_candidates=dispatch_candidates,
             sales_opportunity_candidates=sales_opportunity_candidates,
+            all_sales_opportunity_candidates=all_sales_opportunity_candidates,
         )
 
     @staticmethod
@@ -454,29 +460,27 @@ class PrefectureCommercialAreaService:
         return candidates
 
     @classmethod
-    def _build_sales_opportunity_candidates(
+    def _build_all_sales_opportunity_candidates(
         cls,
         areas: list[PrefectureCommercialAreaVO],
     ) -> list[SalesOpportunityCandidateVO]:
         """
-        天気リスクが高い商圏へ同じ登録作物を持つ他都道府県から売り込む候補リストを生成します。
+        天気リスクが高い商圏へ同じ登録作物を持つ他都道府県から売り込む全候補を生成します。
 
         雨・雪や警報・注意報で天気リスク指数が高い商圏を
         「登録作物の出荷が止まりやすい地域」とみなし、同じ登録作物を持ち、
         対象より天気リスク指数が低い他商圏を売り込み元候補にします。
         隣接県が候補になる場合は、遠方県より優先します。
         ここでいう隣接県は、JMAの大きい地域が同じ都道府県として扱います。
-        候補はいったん全量生成し、売り込み先のリスク、同一JMA地域、
-        売り込み元のリスクの順に並べてから、売り込み先都道府県ごとに
-        先頭1件だけを残します。これにより、47都道府県それぞれに対して
-        もっとも強い売り込み元候補を1件ずつ選べます。
+        候補は売り込み先のリスク、同一JMA地域、売り込み元のリスクの順に
+        並べます。詳細ページでは、この全量候補を都道府県で絞り込んで表示します。
         A県→B県とB県→A県は別々の関係として扱うため、候補は一方向のVOで返します。
 
         Args:
             areas: 都道府県単位の商圏VO一覧。
 
         Returns:
-            list[SalesOpportunityCandidateVO]: リスク指数つきの売り込み候補。
+            list[SalesOpportunityCandidateVO]: リスク指数つきの売り込み全候補。
         """
         target_areas = [
             area
@@ -521,7 +525,7 @@ class PrefectureCommercialAreaService:
                     )
                 )
 
-        sorted_candidates = sorted(
+        return sorted(
             candidates,
             key=lambda candidate: (
                 -candidate.weather_risk_index,
@@ -532,9 +536,25 @@ class PrefectureCommercialAreaService:
             ),
         )
 
+    @staticmethod
+    def _select_top_sales_opportunity_candidates(
+        candidates: list[SalesOpportunityCandidateVO],
+    ) -> list[SalesOpportunityCandidateVO]:
+        """
+        全量候補から売り込み先都道府県ごとの代表候補だけを選びます。
+
+        トップページや配車候補キューでは全国俯瞰として情報量を絞るため、
+        売り込み先ごとに最も優先度の高い候補を1件だけ残します。
+
+        Args:
+            candidates: 優先順に並んだ売り込み全候補。
+
+        Returns:
+            list[SalesOpportunityCandidateVO]: 売り込み先ごとの代表候補。
+        """
         selected_candidates = []
         selected_target_names = set()
-        for candidate in sorted_candidates:
+        for candidate in candidates:
             if candidate.target_name in selected_target_names:
                 continue
             selected_candidates.append(candidate)

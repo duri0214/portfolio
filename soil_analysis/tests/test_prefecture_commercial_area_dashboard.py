@@ -416,6 +416,9 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         sales_candidate = prefecture_area_dashboard.sales_opportunity_candidates[0]
         dispatch_candidate = prefecture_area_dashboard.dispatch_candidates[0]
 
+        self.assertEqual(
+            len(prefecture_area_dashboard.all_sales_opportunity_candidates), 1
+        )
         self.assertEqual(prefecture_area_dashboard.sales_opportunity_candidate_count, 1)
         self.assertEqual(sales_candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(sales_candidate.target_name, "千葉県")
@@ -772,11 +775,12 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
     def test_prefecture_detail_view_displays_area_candidates_and_lands(self):
         """
         シナリオ:
-        - 入力: 静岡県から千葉県へ売り込めるトマト圃場と、千葉県の雨天リスクがあるDB状態。
-        - 処理: 静岡県の都道府県詳細ページを表示する。
-        - 期待値: 静岡県の天気・売り込み候補・静岡県の圃場だけが表示され、配車候補は重複表示されないこと。
+        - 入力: 静岡県・愛知県から千葉県へ売り込めるトマト圃場と、千葉県の雨天リスクがあるDB状態。
+        - 処理: 千葉県の都道府県詳細ページを表示する。
+        - 期待値: 詳細ページでは同じ売り込み先への複数候補が表示され、配車候補は重複表示されないこと。
         """
         shizuoka_city = self._get_city("静岡県")
+        aichi_city = self._get_city("愛知県")
         chiba_city = self._get_city("千葉県")
         shizuoka_land = Land.objects.create(
             name="静岡トマト圃場",
@@ -787,6 +791,14 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             center="34.74424,137.64905",
             area=12.5,
         )
+        aichi_land = Land.objects.create(
+            name="愛知トマト圃場",
+            company=self.company,
+            jma_city=aichi_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.180,136.906",
+        )
         chiba_land = Land.objects.create(
             name="千葉トマト圃場",
             company=self.company,
@@ -795,7 +807,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             owner=self.user,
             center="35.607,140.106",
         )
-        for land in (shizuoka_land, chiba_land):
+        for land in (shizuoka_land, aichi_land, chiba_land):
             LandLedger.objects.create(
                 land=land,
                 land_period=self.period,
@@ -807,6 +819,18 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             )
         JmaWeather.objects.create(
             jma_region=shizuoka_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.sunny_weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+        JmaWeather.objects.create(
+            jma_region=aichi_city.jma_region,
             reporting_date=date(2026, 6, 16),
             jma_weather_code=self.sunny_weather_code,
             weather_text="晴れ",
@@ -831,17 +855,20 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
             avg_max_wind_speed=8,
         )
 
-        response = self.client.get(reverse("soil:prefecture_detail", args=[22]))
+        response = self.client.get(reverse("soil:prefecture_detail", args=[12]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["area"].prefecture_name, "静岡県")
-        self.assertContains(response, "静岡県 詳細")
-        self.assertContains(response, "静岡県エリア")
-        self.assertContains(response, "晴れ")
+        self.assertEqual(response.context["area"].prefecture_name, "千葉県")
+        self.assertEqual(len(response.context["sales_opportunity_candidates"]), 2)
+        self.assertContains(response, "千葉県 詳細")
+        self.assertContains(response, "千葉県エリア")
+        self.assertContains(response, "雨")
         self.assertContains(response, "天気リスク指数")
         self.assertContains(response, "静岡県→千葉県")
-        self.assertContains(response, "静岡トマト圃場")
-        self.assertNotContains(response, "千葉トマト圃場")
+        self.assertContains(response, "愛知県→千葉県")
+        self.assertContains(response, "千葉トマト圃場")
+        self.assertNotContains(response, "静岡トマト圃場")
+        self.assertNotContains(response, "愛知トマト圃場")
         self.assertNotContains(response, "配車候補キュー")
 
     def test_prefecture_detail_view_displays_empty_state_without_land(self):

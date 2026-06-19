@@ -159,7 +159,7 @@ class PrefectureDetailView(ListView):
         context["area"] = area
         context["sales_opportunity_candidates"] = [
             candidate
-            for candidate in prefecture_area_dashboard.sales_opportunity_candidates
+            for candidate in prefecture_area_dashboard.all_sales_opportunity_candidates
             if candidate.origin_name == area.prefecture_name
             or candidate.target_name == area.prefecture_name
         ]

@@ -419,12 +419,14 @@ class PrefectureCommercialAreaDashboardVO:
     Attributes:
         areas: 都道府県単位の商圏一覧。
         dispatch_candidates: 都道府県間の配車候補一覧。
-        sales_opportunity_candidates: 天気リスクが高い商圏への売り込み候補一覧。
+        sales_opportunity_candidates: 都道府県ごとの代表として選抜した売り込み候補一覧。
+        all_sales_opportunity_candidates: 全量の売り込み候補一覧。
     """
 
     areas: list[PrefectureCommercialAreaVO]
     dispatch_candidates: list[DispatchCandidateVO]
     sales_opportunity_candidates: list[SalesOpportunityCandidateVO]
+    all_sales_opportunity_candidates: list[SalesOpportunityCandidateVO]
 
     @property
     def area_count(self) -> int:
