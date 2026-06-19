@@ -726,6 +726,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["prefecture_area_dashboard"].area_count, 47)
         self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
+        self.assertIn("jmaAreaName", response.context["commercial_area_map_data"][0])
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
         self.assertContains(response, "地図から都道府県を選択")

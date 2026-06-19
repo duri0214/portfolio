@@ -308,6 +308,7 @@ class PrefectureCommercialAreaVO:
         return {
             "code": self.japan_map_code,
             "name": self.prefecture_name,
+            "jmaAreaName": self.jma_area_name,
             "status": self.status_label,
             "statusClass": self.status_class,
             "landCount": self.land_count,
