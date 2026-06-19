@@ -63,6 +63,9 @@ JAPAN_MAP_PREFECTURES = (
 )
 
 HIGH_WEATHER_RISK_INDEX = 4.0
+NEIGHBOR_PREFECTURES = {
+    "山形県": {"秋田県", "宮城県", "福島県", "新潟県"},
+}
 
 
 class PrefectureCommercialAreaService:
@@ -426,7 +429,8 @@ class PrefectureCommercialAreaService:
 
         雨・雪や警報・注意報で天気リスク指数が高い商圏を
         「登録作物の出荷が止まりやすい地域」とみなし、同じ登録作物を持ち、
-        警報・注意報がない他商圏を売り込み元候補にします。
+        対象より天気リスク指数が低い他商圏を売り込み元候補にします。
+        隣接県が候補になる場合は、遠方県より優先します。
         A県→B県とB県→A県は別々の関係として扱うため、候補は一方向のVOで返します。
 
         Args:
@@ -440,11 +444,7 @@ class PrefectureCommercialAreaService:
             for area in areas
             if area.weather_risk_index >= HIGH_WEATHER_RISK_INDEX and area.crop_names
         ]
-        origin_areas = [
-            area
-            for area in areas
-            if area.land_count and not area.warning_city_count and area.crop_names
-        ]
+        origin_areas = [area for area in areas if area.land_count and area.crop_names]
         candidates = []
         for target_area in target_areas:
             for origin_area in origin_areas:
@@ -464,6 +464,7 @@ class PrefectureCommercialAreaService:
                         target_name=target_area.prefecture_name,
                         main_crop_name=matched_crop_name,
                         weather_risk_index=target_area.weather_risk_index,
+                        origin_weather_risk_index=origin_area.weather_risk_index,
                         relation_label=(
                             f"{origin_area.prefecture_name}→"
                             f"{target_area.prefecture_name}"
@@ -474,14 +475,43 @@ class PrefectureCommercialAreaService:
                     )
                 )
 
-        return sorted(
+        sorted_candidates = sorted(
             candidates,
             key=lambda candidate: (
-                candidate.weather_risk_index,
+                -candidate.weather_risk_index,
+                not cls._is_neighbor_prefecture(
+                    candidate.origin_name, candidate.target_name
+                ),
+                candidate.origin_weather_risk_index,
                 candidate.main_crop_name,
+                candidate.origin_name,
             ),
-            reverse=True,
-        )[:5]
+        )
+
+        selected_candidates = []
+        selected_target_names = set()
+        for candidate in sorted_candidates:
+            if candidate.target_name in selected_target_names:
+                continue
+            selected_candidates.append(candidate)
+            selected_target_names.add(candidate.target_name)
+            if len(selected_candidates) == 5:
+                break
+        return selected_candidates
+
+    @staticmethod
+    def _is_neighbor_prefecture(origin_name: str, target_name: str) -> bool:
+        """
+        売り込み元と売り込み先が隣接する都道府県かを返します。
+
+        Args:
+            origin_name: 売り込み元都道府県名。
+            target_name: 売り込み先都道府県名。
+
+        Returns:
+            bool: 隣接県として扱う場合はTrue。
+        """
+        return origin_name in NEIGHBOR_PREFECTURES.get(target_name, set())
 
     @classmethod
     def _calculate_weather_risk_index(
@@ -563,6 +593,7 @@ class PrefectureCommercialAreaService:
             )
         return (
             f"{target_area.prefecture_name}は{target_weather_summary}で天気リスクが高い状態。"
-            f"{origin_area.prefecture_name}は警報・注意報がなく同じ{crop_name}を出せるため、"
+            f"{origin_area.prefecture_name}は天気リスク指数が{origin_area.weather_risk_index}で、"
+            f"同じ{crop_name}を出せるため、"
             f"{target_area.prefecture_name}への売り込み候補になります。"
         )

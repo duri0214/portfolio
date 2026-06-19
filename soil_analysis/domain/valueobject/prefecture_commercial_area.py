@@ -366,6 +366,7 @@ class SalesOpportunityCandidateVO:
         target_name: 天気リスクが高く売り込み先候補になる都道府県名。
         main_crop_name: 売り込み候補として一致した作物名。
         weather_risk_index: 天気と警報・注意報から算出した出荷リスク指数。
+        origin_weather_risk_index: 売り込み元都道府県の天気リスク指数。
         relation_label: A県→B県を示す一方向の商圏関係ラベル。
         reason: リスク指数に寄与した主な判断材料。
     """
@@ -374,6 +375,7 @@ class SalesOpportunityCandidateVO:
     target_name: str
     main_crop_name: str
     weather_risk_index: float
+    origin_weather_risk_index: float
     relation_label: str
     reason: str
 
