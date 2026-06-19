@@ -25,6 +25,40 @@
     color: #627d98;
 }
 
+.market-kpi-text {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+}
+
+.market-kpi-value {
+    display: block;
+    color: #102a43;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.market-kpi-meta {
+    display: block;
+    color: #627d98;
+    font-size: 0.86rem;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.market-weather-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.market-weather-value img {
+    flex: 0 0 auto;
+}
+
 .market-legend {
     display: flex;
     flex-wrap: wrap;
@@ -56,6 +90,7 @@
     display: flex;
     justify-content: center;
     min-height: 420px;
+    cursor: pointer;
     overflow: hidden;
 }
 

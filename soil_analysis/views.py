@@ -101,17 +101,8 @@ from soil_analysis.models import (
 SAMPLING_TIMES_PER_BLOCK = 5
 
 
-class Home(ListView):
-    model = Company
+class Home(TemplateView):
     template_name = "soil_analysis/home.html"
-    context_object_name = "companies"
-
-    def get_queryset(self):
-        return (
-            Company.objects.filter(category__name="農業法人")
-            .prefetch_related("land_set")
-            .order_by("name")
-        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -119,7 +110,59 @@ class Home(ListView):
         context["prefecture_area_dashboard"] = prefecture_area_dashboard
         context["commercial_areas"] = prefecture_area_dashboard.areas
         context["commercial_area_map_data"] = prefecture_area_dashboard.map_payload
-        context["dispatch_candidates"] = prefecture_area_dashboard.dispatch_candidates
+        return context
+
+
+class PrefectureDetailView(ListView):
+    model = Company
+    template_name = "soil_analysis/prefecture/detail.html"
+    context_object_name = "companies"
+
+    def get_queryset(self):
+        prefecture_id = self.kwargs["prefecture_id"]
+        land_queryset = (
+            Land.objects.filter(
+                jma_city__jma_region__jma_prefecture__code__startswith=(
+                    f"{prefecture_id:02d}"
+                )
+            )
+            .select_related("jma_city", "cultivation_type")
+            .order_by("name")
+        )
+        return (
+            Company.objects.filter(
+                category__name="農業法人",
+                land__jma_city__jma_region__jma_prefecture__code__startswith=(
+                    f"{prefecture_id:02d}"
+                ),
+            )
+            .prefetch_related(Prefetch("land_set", queryset=land_queryset))
+            .distinct()
+            .order_by("name")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        prefecture_id = self.kwargs["prefecture_id"]
+        prefecture_area_dashboard = PrefectureCommercialAreaService.build()
+        area = next(
+            (
+                area
+                for area in prefecture_area_dashboard.areas
+                if area.japan_map_code == prefecture_id
+            ),
+            None,
+        )
+        if area is None:
+            raise Http404("Prefecture does not exist.")
+
+        context["area"] = area
+        context["sales_opportunity_candidates"] = [
+            candidate
+            for candidate in prefecture_area_dashboard.all_sales_opportunity_candidates
+            if candidate.origin_name == area.prefecture_name
+            or candidate.target_name == area.prefecture_name
+        ]
         return context
 
 

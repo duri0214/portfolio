@@ -415,7 +415,12 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         prefecture_area_dashboard = PrefectureCommercialAreaService.build()
         sales_candidate = prefecture_area_dashboard.sales_opportunity_candidates[0]
         dispatch_candidate = prefecture_area_dashboard.dispatch_candidates[0]
+        chiba_area = self._find_area(prefecture_area_dashboard.areas, "千葉県")
 
+        self.assertEqual(
+            len(prefecture_area_dashboard.all_sales_opportunity_candidates), 1
+        )
+        self.assertEqual(chiba_area.sales_offer_count, 1)
         self.assertEqual(prefecture_area_dashboard.sales_opportunity_candidate_count, 1)
         self.assertEqual(sales_candidate.relation_label, "静岡県→千葉県")
         self.assertEqual(sales_candidate.target_name, "千葉県")
@@ -424,9 +429,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(sales_candidate.weather_risk_index, 4.2)
         self.assertEqual(
             sales_candidate.weather_risk_index,
-            self._find_area(
-                prefecture_area_dashboard.areas, "千葉県"
-            ).weather_risk_index,
+            chiba_area.weather_risk_index,
         )
         self.assertIn("大雨警報", sales_candidate.reason)
         self.assertIn("同じトマトを出せる", sales_candidate.reason)
@@ -711,7 +714,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         シナリオ:
         - 入力: 47都道府県マスタと静岡県の圃場が登録されているDB状態。
         - 処理: soil_analysis のトップページを表示する。
-        - 期待値: 日本地図、全国商圏リスクランキング、配車候補、既存企業別圃場一覧が表示されること。
+        - 期待値: 日本地図と全国商圏リスクランキングが表示され、個別判断用の一覧は表示されないこと。
         """
         city = self._get_city("静岡県")
         Land.objects.create(
@@ -729,6 +732,9 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(response.context["prefecture_area_dashboard"].area_count, 47)
         self.assertEqual(len(response.context["commercial_area_map_data"]), 47)
         self.assertIn("jmaAreaName", response.context["commercial_area_map_data"][0])
+        self.assertIn(
+            "salesOfferCount", response.context["commercial_area_map_data"][0]
+        )
         self.assertContains(response, "都道府県別商圏マップ")
         self.assertContains(response, "日本地図商圏マップ")
         self.assertContains(response, "地図から都道府県を選択")
@@ -745,10 +751,17 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(
             response, "これは天気リスクを織り込んだ全国ランキングです。"
         )
-        self.assertContains(response, "雨系の出荷元の代わり")
+        self.assertContains(response, "詳細ページで深掘りする商圏")
         self.assertContains(response, "天気（予報日）")
         self.assertContains(response, '<th class="text-end">リスク指数</th>', html=True)
-        self.assertContains(response, '<td class="fw-semibold">沖縄県</td>', html=True)
+        self.assertContains(
+            response, '<th class="text-end">オファー候補</th>', html=True
+        )
+        self.assertContains(
+            response,
+            '<td class="fw-semibold"><a href="/soil_analysis/prefecture/47/detail" class="text-decoration-none">沖縄県</a></td>',
+            html=True,
+        )
         self.assertContains(response, "圃場数")
         self.assertContains(response, "警報・注意報")
         self.assertContains(response, "なし")
@@ -757,11 +770,129 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertNotContains(response, "<th>状態</th>", html=True)
         self.assertNotContains(response, "出荷信号")
         self.assertNotContains(response, "私は天気")
-        self.assertContains(response, "天気リスク県への売り込み候補")
-        self.assertContains(response, "売り込み候補")
-        self.assertContains(response, "配車候補キュー")
-        self.assertContains(response, "企業別圃場一覧")
+        self.assertContains(response, "注意商圏")
+        self.assertNotContains(response, "天気リスク県への売り込み候補")
+        self.assertNotContains(response, "売り込み候補")
+        self.assertNotContains(response, "配車候補キュー")
+        self.assertNotContains(response, "企業別圃場一覧")
+        self.assertContains(response, reverse("soil:prefecture_detail", args=[22]))
         self.assertContains(response, "静岡県")
+
+    def test_prefecture_detail_view_displays_area_candidates_and_lands(self):
+        """
+        シナリオ:
+        - 入力: 静岡県・愛知県から千葉県へ売り込めるトマト圃場と、千葉県の雨天リスクがあるDB状態。
+        - 処理: 千葉県の都道府県詳細ページを表示する。
+        - 期待値: 詳細ページでは同じ売り込み先への複数候補が表示され、配車候補は重複表示されないこと。
+        """
+        shizuoka_city = self._get_city("静岡県")
+        aichi_city = self._get_city("愛知県")
+        chiba_city = self._get_city("千葉県")
+        shizuoka_land = Land.objects.create(
+            name="静岡トマト圃場",
+            company=self.company,
+            jma_city=shizuoka_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="34.74424,137.64905",
+            area=12.5,
+        )
+        aichi_land = Land.objects.create(
+            name="愛知トマト圃場",
+            company=self.company,
+            jma_city=aichi_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.180,136.906",
+        )
+        chiba_land = Land.objects.create(
+            name="千葉トマト圃場",
+            company=self.company,
+            jma_city=chiba_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="35.607,140.106",
+        )
+        for land in (shizuoka_land, aichi_land, chiba_land):
+            LandLedger.objects.create(
+                land=land,
+                land_period=self.period,
+                sampling_date="2026-03-01",
+                analytical_agency=self.company,
+                crop=self.crop,
+                sampling_method=self.sampling_method,
+                sampling_staff=self.user,
+            )
+        JmaWeather.objects.create(
+            jma_region=shizuoka_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.sunny_weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+        JmaWeather.objects.create(
+            jma_region=aichi_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.sunny_weather_code,
+            weather_text="晴れ",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=10,
+            avg_min_temperature=18,
+            avg_max_temperature=28,
+            avg_max_wind_speed=4,
+        )
+        JmaWarning.objects.create(jma_region=chiba_city.jma_region, warnings="大雨警報")
+        JmaWeather.objects.create(
+            jma_region=chiba_city.jma_region,
+            reporting_date=date(2026, 6, 16),
+            jma_weather_code=self.rainy_weather_code,
+            weather_text="雨",
+            wind_text="北の風",
+            wave_text="なし",
+            avg_rain_probability=80,
+            avg_min_temperature=18,
+            avg_max_temperature=22,
+            avg_max_wind_speed=8,
+        )
+
+        response = self.client.get(reverse("soil:prefecture_detail", args=[12]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["area"].prefecture_name, "千葉県")
+        self.assertEqual(response.context["area"].sales_offer_count, 2)
+        self.assertEqual(len(response.context["sales_opportunity_candidates"]), 2)
+        self.assertContains(response, "千葉県 詳細")
+        self.assertContains(response, "千葉県エリア")
+        self.assertContains(response, "雨")
+        self.assertContains(response, "market-weather-value")
+        self.assertContains(response, "market-kpi-meta")
+        self.assertContains(response, "天気リスク指数")
+        self.assertContains(response, "静岡県→千葉県")
+        self.assertContains(response, "愛知県→千葉県")
+        self.assertContains(response, "千葉トマト圃場")
+        self.assertNotContains(response, "静岡トマト圃場")
+        self.assertNotContains(response, "愛知トマト圃場")
+        self.assertNotContains(response, "配車候補キュー")
+
+    def test_prefecture_detail_view_displays_empty_state_without_land(self):
+        """
+        シナリオ:
+        - 入力: 47都道府県マスタのみで沖縄県に圃場や売り込み候補がないDB状態。
+        - 処理: 沖縄県の都道府県詳細ページを表示する。
+        - 期待値: 画面が壊れず、売り込み候補と圃場一覧の空状態が表示されること。
+        """
+        response = self.client.get(reverse("soil:prefecture_detail", args=[47]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "沖縄県 詳細")
+        self.assertContains(response, "沖縄県 に関係する売り込み候補はありません。")
+        self.assertContains(response, "沖縄県 に登録済みの圃場はありません。")
 
     @staticmethod
     def _find_area(areas, prefecture_name):

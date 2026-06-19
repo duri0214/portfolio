@@ -1,0 +1,140 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ area.prefecture_name }}</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="bg-light p-4 p-lg-5 rounded shadow-sm">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+                        <div>
+                            <h1 class="display-6 mb-2">{{ area.prefecture_name }} 詳細</h1>
+                            <p class="lead mb-0">{{ area.jma_area_name|default:"JMAエリア未設定" }} / {{ area.weather_name }} / 天気リスク指数 {{ area.weather_risk_index }}</p>
+                        </div>
+                        <div class="align-content-start">
+                            <a class="btn btn-outline-secondary" href="{% url 'soil:home' %}">
+                                <i class="fas fa-arrow-left me-1"></i>全国商圏マップへ戻る
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6 col-lg-3">
+                            <div class="market-kpi market-kpi-text">
+                                <span class="market-kpi-label">JMAエリア</span>
+                                <span class="market-kpi-value">{{ area.jma_area_name|default:"未設定" }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="market-kpi market-kpi-text">
+                                <span class="market-kpi-label">天気</span>
+                                <div class="market-weather-value">
+                                    {% if area.weather_icon_image %}
+                                        {% with weather_icon_path="soil_analysis/images/weather/svg/"|add:area.weather_icon_image %}
+                                            <img src="{% static weather_icon_path %}"
+                                                 alt="{{ area.weather_name }}"
+                                                 width="32"
+                                                 height="32">
+                                        {% endwith %}
+                                    {% endif %}
+                                    <span class="market-kpi-value">{{ area.weather_name }}</span>
+                                </div>
+                                <span class="market-kpi-meta">{{ area.weather_reporting_date|default:"予報日未取得" }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="market-kpi market-kpi-text">
+                                <span class="market-kpi-label">警報・注意報</span>
+                                <span class="market-kpi-value">{{ area.warning_summary }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="market-kpi">
+                                <span class="market-kpi-label">天気リスク指数</span>
+                                <strong>{{ area.weather_risk_index }}</strong>
+                                <small>{{ area.land_count }}圃場 / {{ area.company_count }}社</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-5">
+                <h2 class="h4 mb-3"><i class="fas fa-bullhorn me-2 text-muted"></i>天気リスク県への売り込み候補</h2>
+                {% if sales_opportunity_candidates %}
+                    <div class="sales-opportunity-list">
+                        {% for candidate in sales_opportunity_candidates %}
+                            <div class="sales-opportunity-item">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <strong>{{ candidate.relation_label }}</strong>
+                                    <span class="badge bg-danger">リスク {{ candidate.weather_risk_index }}</span>
+                                </div>
+                                <div class="small text-muted mt-1">{{ candidate.main_crop_name }}</div>
+                                <p class="small mb-0 mt-2">{{ candidate.reason }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-dashboard">
+                        <i class="fas fa-cloud-sun-rain text-muted mb-2"></i>
+                        <p class="small text-muted mb-0">{{ area.prefecture_name }} に関係する売り込み候補はありません。</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-12 col-xl-7">
+                <h2 class="h4 mb-3"><i class="fas fa-list me-2 text-muted"></i>{{ area.prefecture_name }} の企業別圃場一覧</h2>
+                {% if companies %}
+                    <div class="card border-0 shadow-sm">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>企業名</th>
+                                        <th>圃場名</th>
+                                        <th>市区町村</th>
+                                        <th class="text-end">面積</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for company in companies %}
+                                        {% for land in company.land_set.all %}
+                                            <tr>
+                                                {% if forloop.first %}
+                                                    <td rowspan="{{ company.land_set.all|length }}" class="align-middle">
+                                                        <a href="{% url 'soil:company_detail' company.pk %}" class="fw-semibold text-decoration-none">{{ company.name }}</a>
+                                                    </td>
+                                                {% endif %}
+                                                <td>
+                                                    <a href="{% url 'soil:land_detail' company.pk land.pk %}" class="text-decoration-none">{{ land.name }}</a>
+                                                </td>
+                                                <td>{{ land.jma_city.name }}</td>
+                                                <td class="text-end">{{ land.area|default:"-" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-dashboard">
+                        <i class="fas fa-seedling text-muted mb-2"></i>
+                        <p class="small text-muted mb-0">{{ area.prefecture_name }} に登録済みの圃場はありません。</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
