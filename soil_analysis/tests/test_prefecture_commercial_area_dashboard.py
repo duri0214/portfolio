@@ -863,6 +863,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(response, "千葉県 詳細")
         self.assertContains(response, "千葉県エリア")
         self.assertContains(response, "雨")
+        self.assertContains(response, "market-weather-value")
+        self.assertContains(response, "market-kpi-meta")
         self.assertContains(response, "天気リスク指数")
         self.assertContains(response, "静岡県→千葉県")
         self.assertContains(response, "愛知県→千葉県")
