@@ -523,6 +523,9 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         akita_city = self._get_city("秋田県")
         hyogo_city = self._get_city("兵庫県")
         yamagata_city = self._get_city("山形県")
+        yamagata_prefecture = yamagata_city.jma_region.jma_prefecture
+        yamagata_prefecture.jma_area = akita_city.jma_region.jma_prefecture.jma_area
+        yamagata_prefecture.save()
         rice = Crop.objects.create(name="米")
         akita_land = Land.objects.create(
             name="秋田米圃場",

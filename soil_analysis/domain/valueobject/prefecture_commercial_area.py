@@ -200,6 +200,8 @@ class PrefectureCommercialAreaVO:
         prefecture_id: 47都道府県として扱う表示用ID。japan-map-js のコードと同じ値。
         prefecture_name: 都道府県名。
         japan_map_code: japan-map-js が都道府県識別に使う1から47のコード。
+        jma_area_code: JMAの大きい地域コード。
+        jma_area_name: JMAの大きい地域名。
         land_count: 登録済み圃場数。
         company_count: 登録済み農業法人・企業数。
         main_crop_name: 最も多く台帳に登場する代表作物名。
@@ -218,6 +220,8 @@ class PrefectureCommercialAreaVO:
     prefecture_id: int
     prefecture_name: str
     japan_map_code: int
+    jma_area_code: str
+    jma_area_name: str
     land_count: int
     company_count: int
     main_crop_name: str
@@ -367,6 +371,7 @@ class SalesOpportunityCandidateVO:
         main_crop_name: 売り込み候補として一致した作物名。
         weather_risk_index: 天気と警報・注意報から算出した出荷リスク指数。
         origin_weather_risk_index: 売り込み元都道府県の天気リスク指数。
+        is_same_jma_area: 売り込み元と売り込み先が同じJMA地域かどうか。
         relation_label: A県→B県を示す一方向の商圏関係ラベル。
         reason: リスク指数に寄与した主な判断材料。
     """
@@ -376,6 +381,7 @@ class SalesOpportunityCandidateVO:
     main_crop_name: str
     weather_risk_index: float
     origin_weather_risk_index: float
+    is_same_jma_area: bool
     relation_label: str
     reason: str
 
