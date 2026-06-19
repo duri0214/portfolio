@@ -101,17 +101,8 @@ from soil_analysis.models import (
 SAMPLING_TIMES_PER_BLOCK = 5
 
 
-class Home(ListView):
-    model = Company
+class Home(TemplateView):
     template_name = "soil_analysis/home.html"
-    context_object_name = "companies"
-
-    def get_queryset(self):
-        return (
-            Company.objects.filter(category__name="農業法人")
-            .prefetch_related("land_set")
-            .order_by("name")
-        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -119,7 +110,6 @@ class Home(ListView):
         context["prefecture_area_dashboard"] = prefecture_area_dashboard
         context["commercial_areas"] = prefecture_area_dashboard.areas
         context["commercial_area_map_data"] = prefecture_area_dashboard.map_payload
-        context["dispatch_candidates"] = prefecture_area_dashboard.dispatch_candidates
         return context
 
 

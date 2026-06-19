@@ -711,7 +711,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         シナリオ:
         - 入力: 47都道府県マスタと静岡県の圃場が登録されているDB状態。
         - 処理: soil_analysis のトップページを表示する。
-        - 期待値: 日本地図、全国商圏リスクランキング、配車候補、既存企業別圃場一覧が表示されること。
+        - 期待値: 日本地図と全国商圏リスクランキングが表示され、個別判断用の一覧は表示されないこと。
         """
         city = self._get_city("静岡県")
         Land.objects.create(
@@ -745,7 +745,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertContains(
             response, "これは天気リスクを織り込んだ全国ランキングです。"
         )
-        self.assertContains(response, "雨系の出荷元の代わり")
+        self.assertContains(response, "詳細ページで深掘りする商圏")
         self.assertContains(response, "天気（予報日）")
         self.assertContains(response, '<th class="text-end">リスク指数</th>', html=True)
         self.assertContains(
@@ -761,10 +761,11 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertNotContains(response, "<th>状態</th>", html=True)
         self.assertNotContains(response, "出荷信号")
         self.assertNotContains(response, "私は天気")
-        self.assertContains(response, "天気リスク県への売り込み候補")
-        self.assertContains(response, "売り込み候補")
-        self.assertContains(response, "配車候補キュー")
-        self.assertContains(response, "企業別圃場一覧")
+        self.assertContains(response, "注意商圏")
+        self.assertNotContains(response, "天気リスク県への売り込み候補")
+        self.assertNotContains(response, "売り込み候補")
+        self.assertNotContains(response, "配車候補キュー")
+        self.assertNotContains(response, "企業別圃場一覧")
         self.assertContains(response, reverse("soil:prefecture_detail", args=[22]))
         self.assertContains(response, "静岡県")
 
