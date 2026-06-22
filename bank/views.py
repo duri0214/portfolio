@@ -6,7 +6,6 @@ import markdown
 import time
 
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
@@ -429,9 +428,6 @@ class BankAccountManageView(View):
 class BankAccountSampleCsvDownloadView(View):
     @staticmethod
     def get(request):
-        if not request.user.is_superuser:
-            raise PermissionDenied
-
         buffer = io.StringIO()
         fieldnames = [
             "name",
