@@ -126,14 +126,24 @@ class MufgLivingCostAnalysisView(TemplateView):
 
 class MufgCategoryMonthlyAnalysisView(TemplateView):
     template_name = "bank/mufg_analysis_category_monthly.html"
+    amount_type_labels = {
+        "payment": "出金",
+        "deposit": "入金",
+    }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         bank_id = self.request.GET.get("bank")
+        amount_type = self.request.GET.get("amount_type", "payment")
+        if amount_type not in self.amount_type_labels:
+            amount_type = "payment"
+        amount_label = self.amount_type_labels[amount_type]
 
         if not bank_id:
             context["error"] = "銀行を選択してください。"
             context["banks"] = Bank.objects.all()
+            context["amount_type"] = amount_type
+            context["amount_label"] = amount_label
             return context
 
         bank = get_object_or_404(Bank, pk=bank_id)
@@ -147,28 +157,41 @@ class MufgCategoryMonthlyAnalysisView(TemplateView):
         active_categories = []
         for cat in data["categories"]:
             cat_total = sum(
-                data["stats"].get((month, cat), {"payment": 0})["payment"]
+                data["stats"].get((month, cat), {amount_type: 0})[amount_type]
                 for month in data["months"]
             )
             if cat_total > 0:
                 active_categories.append(cat)
 
+        detail_data = {}
         for month in data["months"]:
             row = {"month": month, "category_values": []}
-            total_payment = 0
+            total_amount = 0
             for cat in active_categories:
                 val = data["stats"].get((month, cat), {"payment": 0, "deposit": 0})
-                payment = val["payment"]
-                row["category_values"].append(payment)
-                total_payment += payment
-            row["total"] = total_payment
+                amount = val[amount_type]
+                row["category_values"].append(
+                    {
+                        "category": cat,
+                        "amount": amount,
+                        "detail_key": f"{month}|{cat}",
+                    }
+                )
+                if amount > 0:
+                    detail_data[f"{month}|{cat}"] = [
+                        detail
+                        for detail in data["details"].get((month, cat), [])
+                        if detail[f"{amount_type}_amount"] > 0
+                    ]
+                total_amount += amount
+            row["total"] = total_amount
             pivot_table.append(row)
 
         # 列ごとの合計（カテゴリごとの合計）を計算
         category_totals = []
         for cat in active_categories:
             total = sum(
-                data["stats"].get((month, cat), {"payment": 0})["payment"]
+                data["stats"].get((month, cat), {amount_type: 0})[amount_type]
                 for month in data["months"]
             )
             category_totals.append(total)
@@ -176,10 +199,13 @@ class MufgCategoryMonthlyAnalysisView(TemplateView):
         context.update(
             {
                 "bank": bank,
+                "amount_type": amount_type,
+                "amount_label": amount_label,
                 "categories": active_categories,
                 "pivot_table": pivot_table,
                 "category_totals": category_totals,
                 "grand_total": sum(category_totals),
+                "detail_data": detail_data,
                 "banks": Bank.objects.all(),
             }
         )

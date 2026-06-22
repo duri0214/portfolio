@@ -81,11 +81,21 @@ class MufgRepository:
         transactions = (
             MufgDepositCsvRaw.objects.filter(bank=self.bank)
             .annotate(month=TruncMonth("trade_date"))
-            .values("month", "summary", "payment_amount", "deposit_amount")
-            .order_by("month")
+            .values(
+                "month",
+                "trade_date",
+                "summary",
+                "summary_detail",
+                "payment_amount",
+                "deposit_amount",
+                "balance",
+                "inout_type",
+            )
+            .order_by("month", "trade_date", "id")
         )
 
         stats = {}  # {(month, category): {'payment': sum, 'deposit': sum}}
+        details = {}  # {(month, category): [transactions]}
         all_months = set()
         all_categories = set(summary_to_category.values())
         all_categories.add("未分類")
@@ -98,12 +108,25 @@ class MufgRepository:
             key = (month, category)
             if key not in stats:
                 stats[key] = {"payment": 0, "deposit": 0}
+                details[key] = []
 
             stats[key]["payment"] += tx["payment_amount"] or 0
             stats[key]["deposit"] += tx["deposit_amount"] or 0
+            details[key].append(
+                {
+                    "trade_date": tx["trade_date"].strftime("%Y-%m-%d"),
+                    "summary": tx["summary"],
+                    "summary_detail": tx["summary_detail"],
+                    "payment_amount": tx["payment_amount"] or 0,
+                    "deposit_amount": tx["deposit_amount"] or 0,
+                    "balance": tx["balance"],
+                    "inout_type": tx["inout_type"] or "",
+                }
+            )
 
         return {
             "stats": stats,
+            "details": details,
             "months": sorted(list(all_months)),
             "categories": sorted(list(all_categories)),
         }

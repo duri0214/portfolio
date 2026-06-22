@@ -1,10 +1,16 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from datetime import date
 
 from django.test import TestCase
 
 from .forms import UploadFileForm
-from .models import Bank
+from .models import (
+    Bank,
+    DepositSummaryCategory,
+    DepositSummaryMaster,
+    MufgDepositCsvRaw,
+)
 
 
 class MufgDepositUploadViewTests(TestCase):
@@ -187,3 +193,85 @@ class MufgDepositUploadViewTests(TestCase):
         self.assertContains(response, "サンプルCSV")
         self.assertContains(response, reverse("bank:bank_account_sample_csv"))
         self.assertNotContains(response, "disabled")
+
+    def test_category_monthly_defaults_to_payment_and_includes_detail_data(self):
+        """
+        シナリオ:
+        - 入力: 同じカテゴリに出金と入金の明細がある状態。
+        - 処理: カテゴリ別月次集計をデフォルト条件で表示する。
+        - 期待値: 出金合計が表示対象となり、クリック詳細用データにも出金明細だけが含まれること。
+        """
+        bank = self.create_category_monthly_transactions()
+
+        response = self.client.get(
+            reverse("bank:mufg_analysis_category_monthly"), {"bank": bank.id}
+        )
+
+        self.assertEqual(response.context["amount_type"], "payment")
+        self.assertEqual(response.context["amount_label"], "出金")
+        self.assertEqual(response.context["pivot_table"][0]["total"], 1200)
+        self.assertEqual(
+            response.context["pivot_table"][0]["category_values"][0]["amount"], 1200
+        )
+        details = response.context["detail_data"]["2026-01|カード"]
+        self.assertEqual(len(details), 1)
+        self.assertEqual(details[0]["payment_amount"], 1200)
+        self.assertContains(response, "月別摘要別詳細")
+        self.assertContains(response, 'value="payment"')
+        self.assertContains(response, 'value="deposit"')
+
+    def test_category_monthly_can_switch_to_deposit(self):
+        """
+        シナリオ:
+        - 入力: 同じカテゴリに出金と入金の明細がある状態。
+        - 処理: amount_type=deposit でカテゴリ別月次集計を表示する。
+        - 期待値: 入金合計が表示対象となり、クリック詳細用データにも入金明細だけが含まれること。
+        """
+        bank = self.create_category_monthly_transactions()
+
+        response = self.client.get(
+            reverse("bank:mufg_analysis_category_monthly"),
+            {"bank": bank.id, "amount_type": "deposit"},
+        )
+
+        self.assertEqual(response.context["amount_type"], "deposit")
+        self.assertEqual(response.context["amount_label"], "入金")
+        self.assertEqual(response.context["pivot_table"][0]["total"], 5000)
+        self.assertEqual(
+            response.context["pivot_table"][0]["category_values"][0]["amount"], 5000
+        )
+        details = response.context["detail_data"]["2026-01|カード"]
+        self.assertEqual(len(details), 1)
+        self.assertEqual(details[0]["deposit_amount"], 5000)
+
+    @staticmethod
+    def create_category_monthly_transactions():
+        bank = Bank.objects.create(
+            name="三菱UFJ銀行（生活費）",
+            financial_code="0005",
+            branch_code="123",
+            account_number="1234567",
+        )
+        category = DepositSummaryCategory.objects.create(name="カード")
+        DepositSummaryMaster.objects.create(summary="カード利用", category=category)
+        MufgDepositCsvRaw.objects.create(
+            bank=bank,
+            trade_date=date(2026, 1, 10),
+            summary="カード利用",
+            summary_detail="スーパー",
+            payment_amount=1200,
+            deposit_amount=None,
+            balance=9800,
+            inout_type="出金",
+        )
+        MufgDepositCsvRaw.objects.create(
+            bank=bank,
+            trade_date=date(2026, 1, 15),
+            summary="カード利用",
+            summary_detail="返金",
+            payment_amount=None,
+            deposit_amount=5000,
+            balance=14800,
+            inout_type="入金",
+        )
+        return bank

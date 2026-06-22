@@ -10,7 +10,7 @@
         </ol>
     </nav>
 
-    <h1>MUFG カテゴリ別月次集計 (出金)</h1>
+    <h1>MUFG カテゴリ別月次集計 ({{ amount_label }})</h1>
 
     <div class="card mb-4">
         <div class="card-body">
@@ -36,9 +36,19 @@
     {% elif bank %}
         <div class="card">
             <div class="card-header">
-                カテゴリ別月次推移（出金合計）
+                カテゴリ別月次推移（{{ amount_label }}合計）
             </div>
             <div class="card-body">
+                <form method="get" class="mb-3">
+                    <input type="hidden" name="bank" value="{{ bank.id }}">
+                    <div class="btn-group" role="group" aria-label="入金出金切替">
+                        <input type="radio" class="btn-check" name="amount_type" id="amountPayment" value="payment" autocomplete="off" {% if amount_type == "payment" %}checked{% endif %} onchange="this.form.submit()">
+                        <label class="btn btn-outline-primary" for="amountPayment">出金</label>
+
+                        <input type="radio" class="btn-check" name="amount_type" id="amountDeposit" value="deposit" autocomplete="off" {% if amount_type == "deposit" %}checked{% endif %} onchange="this.form.submit()">
+                        <label class="btn btn-outline-primary" for="amountDeposit">入金</label>
+                    </div>
+                </form>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-sm">
                         <thead class="table-light">
@@ -54,10 +64,17 @@
                             {% for row in pivot_table %}
                                 <tr>
                                     <th style="position: sticky; left: 0; background-color: #fff; z-index: 1;">{{ row.month }}</th>
-                                    {% for val in row.category_values %}
+                                    {% for cell in row.category_values %}
                                         <td class="text-end">
-                                            {% if val > 0 %}
-                                                {{ val|intcomma }}
+                                            {% if cell.amount > 0 %}
+                                                <button class="btn btn-link btn-sm p-0 text-decoration-none js-detail-trigger"
+                                                        type="button"
+                                                        data-detail-key="{{ cell.detail_key }}"
+                                                        data-month="{{ row.month }}"
+                                                        data-category="{{ cell.category }}"
+                                                        data-amount="{{ cell.amount }}">
+                                                    {{ cell.amount|intcomma }}
+                                                </button>
                                             {% else %}
                                                 <span class="text-muted">-</span>
                                             {% endif %}
@@ -80,6 +97,43 @@
                 </div>
             </div>
         </div>
+
+        <section class="mt-4" id="categoryMonthlyDetailSection">
+            <div class="card">
+                <div class="card-header">
+                    月別摘要別詳細
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0" id="categoryMonthlyDetailEmpty">
+                        月別摘要別テーブルの金額をクリックすると詳細を表示します。
+                    </p>
+                    <div class="d-none" id="categoryMonthlyDetailContent">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                            <div>
+                                <h2 class="h5 mb-1" id="categoryMonthlyDetailTitle"></h2>
+                                <div class="text-muted small" id="categoryMonthlyDetailMeta"></div>
+                            </div>
+                            <div class="fs-5 fw-bold" id="categoryMonthlyDetailTotal"></div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>日付</th>
+                                        <th>摘要</th>
+                                        <th>摘要内容</th>
+                                        <th class="text-end">{{ amount_label }}</th>
+                                        <th class="text-end">差引残高</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="categoryMonthlyDetailRows"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {{ detail_data|json_script:"category-monthly-detail-data" }}
     {% endif %}
 </div>
 
@@ -98,4 +152,52 @@
         z-index: 3;
     }
 </style>
+<script>
+    const detailDataElement = document.getElementById('category-monthly-detail-data');
+    const detailData = detailDataElement ? JSON.parse(detailDataElement.textContent) : {};
+    const amountType = '{{ amount_type }}';
+    const amountLabel = '{{ amount_label }}';
+    const formatter = new Intl.NumberFormat('ja-JP');
+
+    document.querySelectorAll('.js-detail-trigger').forEach((button) => {
+        button.addEventListener('click', () => {
+            const detailKey = button.dataset.detailKey;
+            const details = detailData[detailKey] || [];
+            const amount = Number(button.dataset.amount || 0);
+            const detailRows = document.getElementById('categoryMonthlyDetailRows');
+            const empty = document.getElementById('categoryMonthlyDetailEmpty');
+            const content = document.getElementById('categoryMonthlyDetailContent');
+
+            document.getElementById('categoryMonthlyDetailTitle').textContent = `${button.dataset.month} / ${button.dataset.category}`;
+            document.getElementById('categoryMonthlyDetailMeta').textContent = `${amountLabel}明細 ${details.length}件`;
+            document.getElementById('categoryMonthlyDetailTotal').textContent = `${formatter.format(amount)}円`;
+
+            detailRows.innerHTML = '';
+            details.forEach((detail) => {
+                const row = document.createElement('tr');
+                const amountValue = amountType === 'payment' ? detail.payment_amount : detail.deposit_amount;
+                const values = [
+                    detail.trade_date,
+                    detail.summary,
+                    detail.summary_detail,
+                    formatter.format(amountValue),
+                    formatter.format(detail.balance),
+                ];
+                values.forEach((value, index) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    if (index >= 3) {
+                        cell.classList.add('text-end');
+                    }
+                    row.appendChild(cell);
+                });
+                detailRows.appendChild(row);
+            });
+
+            empty.classList.add('d-none');
+            content.classList.remove('d-none');
+            document.getElementById('categoryMonthlyDetailSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+</script>
 {% endblock %}
