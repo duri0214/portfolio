@@ -9,7 +9,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from django.db import transaction
-from .forms import UploadFileForm
+from .forms import BankAccountForm, UploadFileForm
 from .models import Bank
 from .domain.service.mufg_csv_service import MufgCsvService
 from .domain.repository.mufg_repository import MufgRepository
@@ -174,10 +174,13 @@ class MufgDepositUploadView(View):
         self.csv_service = MufgCsvService()
 
     def get(self, request):
-        form = UploadFileForm()
-        return render(request, self.template_name, {"form": form})
+        context = self.get_context()
+        return render(request, self.template_name, context)
 
     def post(self, request):
+        if request.POST.get("form_type") == "bank_account":
+            return self.create_bank_account(request)
+
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             start_time = time.time()
@@ -214,7 +217,26 @@ class MufgDepositUploadView(View):
                 error_msg_html = markdown.markdown(error_msg_md)
                 messages.error(request, error_msg_html)
             return redirect("bank:mufg_deposit_upload")
-        return render(request, self.template_name, {"form": form})
+        context = self.get_context(form=form)
+        return render(request, self.template_name, context)
+
+    @staticmethod
+    def get_context(form=None, bank_form=None):
+        return {
+            "form": form or UploadFileForm(),
+            "bank_form": bank_form or BankAccountForm(),
+            "banks": Bank.objects.order_by("name"),
+        }
+
+    def create_bank_account(self, request):
+        bank_form = BankAccountForm(request.POST)
+        if bank_form.is_valid():
+            bank = bank_form.save()
+            messages.success(request, f"{bank} を登録しました。")
+            return redirect("bank:mufg_deposit_upload")
+
+        context = self.get_context(bank_form=bank_form)
+        return render(request, self.template_name, context)
 
     def handle_uploaded_file(self, uploaded_file, bank):
         filename = uploaded_file.name.lower()
