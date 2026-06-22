@@ -8,14 +8,14 @@ from .models import Bank
 
 
 class MufgDepositUploadViewTests(TestCase):
-    def test_create_bank_account_from_upload_page(self):
+    def test_create_bank_account_from_manage_page(self):
         """
         シナリオ:
         - 入力: MUFGの金融機関コード、店番、口座番号を含む口座登録フォーム。
-        - 処理: MUFG普通預金CSVアップロード画面へ口座登録POSTを送信する。
-        - 期待値: Bankが作成され、アップロード画面へリダイレクトされること。
+        - 処理: 口座登録画面へ口座登録POSTを送信する。
+        - 期待値: Bankが作成され、口座登録画面へリダイレクトされること。
         """
-        url = reverse("bank:mufg_deposit_upload")
+        url = reverse("bank:bank_account_manage")
 
         response = self.client.post(
             url,
@@ -42,11 +42,11 @@ class MufgDepositUploadViewTests(TestCase):
         """
         シナリオ:
         - 入力: 店番が3桁数字ではない口座登録フォーム。
-        - 処理: MUFG普通預金CSVアップロード画面へ口座登録POSTを送信する。
+        - 処理: 口座登録画面へ口座登録POSTを送信する。
         - 期待値: Bankは作成されず、登録フォームのエラーが画面に返ること。
         """
         response = self.client.post(
-            reverse("bank:mufg_deposit_upload"),
+            reverse("bank:bank_account_manage"),
             {
                 "form_type": "bank_account",
                 "name": "三菱UFJ銀行（生活費）",
@@ -86,7 +86,7 @@ class MufgDepositUploadViewTests(TestCase):
         """
         シナリオ:
         - 入力: 2件の口座情報を含むCSVファイル。
-        - 処理: MUFG普通預金CSVアップロード画面へ口座CSV登録POSTを送信する。
+        - 処理: 口座登録画面へ口座CSV登録POSTを送信する。
         - 期待値: CSV内の口座がBankとして登録されること。
         """
         csv_content = (
@@ -99,7 +99,7 @@ class MufgDepositUploadViewTests(TestCase):
             csv_content.encode("utf-8-sig"),
             content_type="text/csv",
         )
-        url = reverse("bank:mufg_deposit_upload")
+        url = reverse("bank:bank_account_manage")
 
         response = self.client.post(
             url,
@@ -120,7 +120,7 @@ class MufgDepositUploadViewTests(TestCase):
         """
         シナリオ:
         - 入力: 1行目は正常、2行目は店番が不正なCSVファイル。
-        - 処理: MUFG普通預金CSVアップロード画面へ口座CSV登録POSTを送信する。
+        - 処理: 口座登録画面へ口座CSV登録POSTを送信する。
         - 期待値: 途中まで登録されず、Bankが1件も作成されないこと。
         """
         csv_content = (
@@ -135,9 +135,22 @@ class MufgDepositUploadViewTests(TestCase):
         )
 
         response = self.client.post(
-            reverse("bank:mufg_deposit_upload"),
+            reverse("bank:bank_account_manage"),
             {"form_type": "bank_account_csv", "file": uploaded_file},
         )
 
-        self.assertRedirects(response, reverse("bank:mufg_deposit_upload"))
+        self.assertRedirects(response, reverse("bank:bank_account_manage"))
         self.assertEqual(Bank.objects.count(), 0)
+
+    def test_upload_page_keeps_only_deposit_csv_upload_form(self):
+        """
+        シナリオ:
+        - 入力: 口座登録機能を別ページに分離した状態。
+        - 処理: MUFG普通預金CSVアップロード画面を表示する。
+        - 期待値: アップロード画面には口座登録フォームが表示されないこと。
+        """
+        response = self.client.get(reverse("bank:mufg_deposit_upload"))
+
+        self.assertContains(response, "ファイル アップロード")
+        self.assertNotContains(response, "手入力で登録")
+        self.assertNotContains(response, "CSVで登録")
