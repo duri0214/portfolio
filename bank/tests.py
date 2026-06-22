@@ -1,4 +1,5 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.auth.models import User
 from django.urls import reverse
 
 from django.test import TestCase
@@ -154,3 +155,71 @@ class MufgDepositUploadViewTests(TestCase):
         self.assertContains(response, "ファイル アップロード")
         self.assertNotContains(response, "手入力で登録")
         self.assertNotContains(response, "CSVで登録")
+
+    def test_superuser_can_download_bank_account_sample_csv(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーでログインした状態。
+        - 処理: 口座CSVサンプルのダウンロードURLへGETする。
+        - 期待値: CSVファイルとしてサンプル口座2件が返ること。
+        """
+        user = User.objects.create_superuser(
+            username="admin",
+            email="admin@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("bank:bank_account_sample_csv"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn(
+            'attachment; filename="bank_accounts_sample.csv"',
+            response["Content-Disposition"],
+        )
+        content = response.content.decode("utf-8")
+        self.assertIn("name,financial_code,branch_code,account_number,remark", content)
+        self.assertIn("三菱UFJ銀行（プライベート）,0005,000,0000000", content)
+        self.assertIn("三菱UFJ銀行（仕事用）,0005,111,1111111", content)
+
+    def test_non_superuser_cannot_download_bank_account_sample_csv(self):
+        """
+        シナリオ:
+        - 入力: 通常ユーザーでログインした状態。
+        - 処理: 口座CSVサンプルのダウンロードURLへGETする。
+        - 期待値: 403が返り、CSVをダウンロードできないこと。
+        """
+        user = User.objects.create_user(username="user", password="password")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("bank:bank_account_sample_csv"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_user_cannot_download_bank_account_sample_csv(self):
+        """
+        シナリオ:
+        - 入力: ログインしていない状態。
+        - 処理: 口座CSVサンプルのダウンロードURLへGETする。
+        - 期待値: 403が返り、CSVをダウンロードできないこと。
+        """
+        response = self.client.get(reverse("bank:bank_account_sample_csv"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_non_superuser_sees_disabled_sample_csv_button(self):
+        """
+        シナリオ:
+        - 入力: 通常ユーザーでログインした状態。
+        - 処理: 口座登録画面を表示する。
+        - 期待値: サンプルCSVボタンがdisabledで表示されること。
+        """
+        user = User.objects.create_user(username="user", password="password")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("bank:bank_account_manage"))
+
+        self.assertContains(response, "サンプルCSV")
+        self.assertContains(response, "disabled")
+        self.assertNotContains(response, reverse("bank:bank_account_sample_csv"))

@@ -6,6 +6,8 @@ import markdown
 import time
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
@@ -17,6 +19,23 @@ from .domain.service.mufg_csv_service import MufgCsvService
 from .domain.repository.mufg_repository import MufgRepository
 
 logger = logging.getLogger(__name__)
+
+BANK_ACCOUNT_SAMPLE_CSV_ROWS = [
+    {
+        "name": "三菱UFJ銀行（プライベート）",
+        "financial_code": "0005",
+        "branch_code": "000",
+        "account_number": "0000000",
+        "remark": "MUFG Eco通帳CSV対応",
+    },
+    {
+        "name": "三菱UFJ銀行（仕事用）",
+        "financial_code": "0005",
+        "branch_code": "111",
+        "account_number": "1111111",
+        "remark": "MUFG Eco通帳CSV対応",
+    },
+]
 
 
 class IndexView(TemplateView):
@@ -405,6 +424,33 @@ class BankAccountManageView(View):
         raise ValueError(
             "CSVファイルの文字コードは UTF-8 または CP932 にしてください。"
         )
+
+
+class BankAccountSampleCsvDownloadView(View):
+    @staticmethod
+    def get(request):
+        if not request.user.is_superuser:
+            raise PermissionDenied
+
+        buffer = io.StringIO()
+        fieldnames = [
+            "name",
+            "financial_code",
+            "branch_code",
+            "account_number",
+            "remark",
+        ]
+        writer = csv.DictWriter(buffer, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(BANK_ACCOUNT_SAMPLE_CSV_ROWS)
+
+        response = HttpResponse(
+            buffer.getvalue(), content_type="text/csv; charset=utf-8"
+        )
+        response["Content-Disposition"] = (
+            'attachment; filename="bank_accounts_sample.csv"'
+        )
+        return response
 
 
 class MufgDepositDeleteView(View):

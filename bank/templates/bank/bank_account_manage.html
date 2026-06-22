@@ -83,7 +83,18 @@
                 </form>
 
                 <div class="mt-4">
-                    <h3>CSVで登録</h3>
+                    <div class="d-flex align-items-center justify-content-between gap-3">
+                        <h3 class="mb-0">CSVで登録</h3>
+                        {% if request.user.is_superuser %}
+                            <a class="btn btn-outline-secondary btn-sm" href="{% url 'bank:bank_account_sample_csv' %}">
+                                <i class="bi bi-download"></i> サンプルCSV
+                            </a>
+                        {% else %}
+                            <button class="btn btn-outline-secondary btn-sm" type="button" disabled>
+                                <i class="bi bi-download"></i> サンプルCSV
+                            </button>
+                        {% endif %}
+                    </div>
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="bank_account_csv">
