@@ -1,0 +1,129 @@
+{% extends "bank/base.html" %}
+{% block content %}
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'bank:index' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">口座登録</li>
+            </ol>
+        </nav>
+        <h1>口座登録</h1>
+
+        {% if messages %}
+            <div class="messages mt-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message|safe }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <h3>手入力で登録</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="bank_account">
+                    <div class="mb-3">
+                        <label for="{{ bank_form.name.id_for_label }}" class="form-label">{{ bank_form.name.label }}</label>
+                        {{ bank_form.name }}
+                        {% if bank_form.name.help_text %}
+                            <div class="form-text">{{ bank_form.name.help_text }}</div>
+                        {% endif %}
+                        {% if bank_form.name.errors %}
+                            <div class="invalid-feedback d-block">{{ bank_form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ bank_form.financial_code.id_for_label }}" class="form-label">{{ bank_form.financial_code.label }}</label>
+                            {{ bank_form.financial_code }}
+                            {% if bank_form.financial_code.help_text %}
+                                <div class="form-text">{{ bank_form.financial_code.help_text }}</div>
+                            {% endif %}
+                            {% if bank_form.financial_code.errors %}
+                                <div class="invalid-feedback d-block">{{ bank_form.financial_code.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ bank_form.branch_code.id_for_label }}" class="form-label">{{ bank_form.branch_code.label }}</label>
+                            {{ bank_form.branch_code }}
+                            {% if bank_form.branch_code.help_text %}
+                                <div class="form-text">{{ bank_form.branch_code.help_text }}</div>
+                            {% endif %}
+                            {% if bank_form.branch_code.errors %}
+                                <div class="invalid-feedback d-block">{{ bank_form.branch_code.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3 mt-3">
+                        <label for="{{ bank_form.account_number.id_for_label }}" class="form-label">{{ bank_form.account_number.label }}</label>
+                        {{ bank_form.account_number }}
+                        {% if bank_form.account_number.help_text %}
+                            <div class="form-text">{{ bank_form.account_number.help_text }}</div>
+                        {% endif %}
+                        {% if bank_form.account_number.errors %}
+                            <div class="invalid-feedback d-block">{{ bank_form.account_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ bank_form.remark.id_for_label }}" class="form-label">{{ bank_form.remark.label }}</label>
+                        {{ bank_form.remark }}
+                        {% if bank_form.remark.errors %}
+                            <div class="invalid-feedback d-block">{{ bank_form.remark.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% if bank_form.non_field_errors %}
+                        <div class="alert alert-danger">{{ bank_form.non_field_errors }}</div>
+                    {% endif %}
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="bi bi-plus-circle"></i> 口座登録
+                    </button>
+                </form>
+
+                <div class="mt-4">
+                    <div class="d-flex align-items-center justify-content-between gap-3">
+                        <h3 class="mb-0">CSVで登録</h3>
+                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'bank:bank_account_sample_csv' %}">
+                            <i class="bi bi-download"></i> サンプルCSV
+                        </a>
+                    </div>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="bank_account_csv">
+                        <div class="mb-3">
+                            <label for="{{ bank_csv_form.file.id_for_label }}" class="form-label">{{ bank_csv_form.file.label }}</label>
+                            {{ bank_csv_form.file }}
+                            {% if bank_csv_form.file.help_text %}
+                                <div class="form-text">{{ bank_csv_form.file.help_text }}</div>
+                            {% endif %}
+                            {% if bank_csv_form.file.errors %}
+                                <div class="invalid-feedback d-block">{{ bank_csv_form.file.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="bi bi-file-earmark-arrow-up"></i> CSV登録
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <h3>登録済み口座</h3>
+                {% if banks %}
+                    <div class="list-group">
+                        {% for bank in banks %}
+                            <div class="list-group-item">
+                                <div class="fw-semibold">{{ bank.name }}</div>
+                                <div class="small text-muted">{{ bank.financial_code }} / {{ bank.branch_code }}-{{ bank.account_number }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">登録済み口座はありません。</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
