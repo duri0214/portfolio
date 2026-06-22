@@ -150,7 +150,7 @@ class VnIndex(models.Model):
     """
     ベトナムの世界での日経平均のような数字
 
-    See Also: https://jp.investing.com/indices/vn-historical-data
+    See Also: https://finance.yahoo.com/quote/%5EVNINDEX.VN/
     """
 
     Y = models.CharField(max_length=4)

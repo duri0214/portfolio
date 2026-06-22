@@ -11,7 +11,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """
         Yahoo Finance APIから為替レートとVN-INDEXを取得します。
-        Bloombergの403エラー対策としてAPI経由に切り替えました。
+
+        外部サイトのHTML構造やbot対策に依存しないよう、為替とVN-INDEXを
+        同じYahoo Finance chart API経由で取得します。
         """
         headers = {"User-Agent": "Mozilla/5.0"}
 
@@ -40,7 +42,9 @@ class Command(BaseCommand):
                 if rate == 0 or rate is None:
                     if base == "VND" and dest == "USD":
                         # USDVNDの逆数を使用
-                        url_inv = "https://query1.finance.yahoo.com/v8/finance/chart/USDVND=X"
+                        url_inv = (
+                            "https://query1.finance.yahoo.com/v8/finance/chart/USDVND=X"
+                        )
                         res_inv = requests.get(url_inv, headers=headers, timeout=10)
                         rate_inv = res_inv.json()["chart"]["result"][0]["meta"][
                             "regularMarketPrice"
@@ -48,7 +52,9 @@ class Command(BaseCommand):
                         if rate_inv and rate_inv != 0:
                             rate = 1 / rate_inv
                         else:
-                            raise ValueError(f"Rate for {symbol} is 0 and fallback failed")
+                            raise ValueError(
+                                f"Rate for {symbol} is 0 and fallback failed"
+                            )
                     else:
                         raise ValueError(f"Rate for {symbol} is 0")
 
@@ -65,22 +71,18 @@ class Command(BaseCommand):
                     self.style.ERROR(f"Failed to fetch exchange rate {symbol}: {e}")
                 )
 
-        # VN-INDEXの取得 (Investing.com からスクレイピング)
-        vn_index_url = "https://jp.investing.com/indices/vn"
+        # VN-INDEXの取得
+        vn_index_symbol = "%5EVNINDEX.VN"
+        vn_index_url = (
+            f"https://query1.finance.yahoo.com/v8/finance/chart/{vn_index_symbol}"
+        )
         try:
-            # 取得用のヘッダー（Investing.comはボット対策が厳しいためブラウザを模倣）
-            scrape_headers = {"User-Agent": "Mozilla/5.0"}
-            response = requests.get(vn_index_url, headers=scrape_headers, timeout=10)
+            response = requests.get(vn_index_url, headers=headers, timeout=10)
             response.raise_for_status()
+            data = response.json()
+            closing_price = data["chart"]["result"][0]["meta"]["regularMarketPrice"]
 
-            from bs4 import BeautifulSoup
-
-            soup = BeautifulSoup(response.text, "lxml")
-            price_element = soup.find(attrs={"data-test": "instrument-price-last"})
-
-            if price_element:
-                price_str = price_element.text.replace(",", "")
-                closing_price = float(price_str)
+            if closing_price:
                 now = datetime.datetime.now()
                 VnIndex.objects.update_or_create(
                     Y=now.strftime("%Y"),
@@ -88,12 +90,14 @@ class Command(BaseCommand):
                     defaults={"closing_price": closing_price},
                 )
                 self.stdout.write(
-                    self.style.SUCCESS(f"Successfully fetched VN-INDEX: {closing_price}")
+                    self.style.SUCCESS(
+                        f"Successfully fetched VN-INDEX: {closing_price}"
+                    )
                 )
             else:
                 self.stdout.write(
                     self.style.WARNING(
-                        f"VN-INDEX element not found on Investing.com ({vn_index_url})"
+                        f"VN-INDEX price not found on Yahoo Finance ({vn_index_url})"
                     )
                 )
         except Exception as e:
