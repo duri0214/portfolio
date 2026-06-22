@@ -89,6 +89,27 @@
                 </form>
 
                 <div class="mt-4">
+                    <h4 class="h5">口座CSV登録</h4>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="bank_account_csv">
+                        <div class="mb-3">
+                            <label for="{{ bank_csv_form.file.id_for_label }}" class="form-label">{{ bank_csv_form.file.label }}</label>
+                            {{ bank_csv_form.file }}
+                            {% if bank_csv_form.file.help_text %}
+                                <div class="form-text">{{ bank_csv_form.file.help_text }}</div>
+                            {% endif %}
+                            {% if bank_csv_form.file.errors %}
+                                <div class="invalid-feedback d-block">{{ bank_csv_form.file.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="bi bi-file-earmark-arrow-up"></i> CSV登録
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-4">
                     <h4 class="h5">登録済み口座</h4>
                     {% if banks %}
                         <div class="list-group">

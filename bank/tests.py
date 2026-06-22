@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
 from django.test import TestCase
@@ -80,3 +81,63 @@ class MufgDepositUploadViewTests(TestCase):
         form = UploadFileForm()
 
         self.assertQuerySetEqual(form.fields["bank"].queryset, [bank])
+
+    def test_create_bank_accounts_from_csv(self):
+        """
+        シナリオ:
+        - 入力: 2件の口座情報を含むCSVファイル。
+        - 処理: MUFG普通預金CSVアップロード画面へ口座CSV登録POSTを送信する。
+        - 期待値: CSV内の口座がBankとして登録されること。
+        """
+        csv_content = (
+            "name,financial_code,branch_code,account_number,remark\n"
+            "三菱UFJ銀行（生活費）,0005,123,1234567,MUFG Eco通帳CSV対応\n"
+            "三菱UFJ銀行（仕事用）,0005,456,7654321,\n"
+        )
+        uploaded_file = SimpleUploadedFile(
+            "banks.csv",
+            csv_content.encode("utf-8-sig"),
+            content_type="text/csv",
+        )
+        url = reverse("bank:mufg_deposit_upload")
+
+        response = self.client.post(
+            url,
+            {"form_type": "bank_account_csv", "file": uploaded_file},
+        )
+
+        self.assertRedirects(response, url)
+        self.assertEqual(Bank.objects.count(), 2)
+        self.assertTrue(
+            Bank.objects.filter(
+                financial_code="0005",
+                branch_code="456",
+                account_number="7654321",
+            ).exists()
+        )
+
+    def test_create_bank_accounts_from_csv_rolls_back_invalid_row(self):
+        """
+        シナリオ:
+        - 入力: 1行目は正常、2行目は店番が不正なCSVファイル。
+        - 処理: MUFG普通預金CSVアップロード画面へ口座CSV登録POSTを送信する。
+        - 期待値: 途中まで登録されず、Bankが1件も作成されないこと。
+        """
+        csv_content = (
+            "name,financial_code,branch_code,account_number,remark\n"
+            "三菱UFJ銀行（生活費）,0005,123,1234567,MUFG Eco通帳CSV対応\n"
+            "三菱UFJ銀行（不正）,0005,12,7654321,\n"
+        )
+        uploaded_file = SimpleUploadedFile(
+            "banks.csv",
+            csv_content.encode("utf-8-sig"),
+            content_type="text/csv",
+        )
+
+        response = self.client.post(
+            reverse("bank:mufg_deposit_upload"),
+            {"form_type": "bank_account_csv", "file": uploaded_file},
+        )
+
+        self.assertRedirects(response, reverse("bank:mufg_deposit_upload"))
+        self.assertEqual(Bank.objects.count(), 0)

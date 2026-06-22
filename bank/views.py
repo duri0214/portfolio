@@ -1,3 +1,5 @@
+import csv
+import io
 import logging
 import zipfile
 import markdown
@@ -9,7 +11,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from django.db import transaction
-from .forms import BankAccountForm, UploadFileForm
+from .forms import BankAccountCsvUploadForm, BankAccountForm, UploadFileForm
 from .models import Bank
 from .domain.service.mufg_csv_service import MufgCsvService
 from .domain.repository.mufg_repository import MufgRepository
@@ -180,6 +182,8 @@ class MufgDepositUploadView(View):
     def post(self, request):
         if request.POST.get("form_type") == "bank_account":
             return self.create_bank_account(request)
+        if request.POST.get("form_type") == "bank_account_csv":
+            return self.create_bank_accounts_from_csv(request)
 
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
@@ -221,10 +225,11 @@ class MufgDepositUploadView(View):
         return render(request, self.template_name, context)
 
     @staticmethod
-    def get_context(form=None, bank_form=None):
+    def get_context(form=None, bank_form=None, bank_csv_form=None):
         return {
             "form": form or UploadFileForm(),
             "bank_form": bank_form or BankAccountForm(),
+            "bank_csv_form": bank_csv_form or BankAccountCsvUploadForm(),
             "banks": Bank.objects.order_by("name"),
         }
 
@@ -237,6 +242,79 @@ class MufgDepositUploadView(View):
 
         context = self.get_context(bank_form=bank_form)
         return render(request, self.template_name, context)
+
+    def create_bank_accounts_from_csv(self, request):
+        bank_csv_form = BankAccountCsvUploadForm(request.POST, request.FILES)
+        if not bank_csv_form.is_valid():
+            context = self.get_context(bank_csv_form=bank_csv_form)
+            return render(request, self.template_name, context)
+
+        try:
+            created_count, skipped_count = self.import_bank_account_csv(
+                bank_csv_form.cleaned_data["file"]
+            )
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect("bank:mufg_deposit_upload")
+
+        messages.success(
+            request,
+            f"口座CSVを取り込みました（登録: {created_count}件, 既存スキップ: {skipped_count}件）。",
+        )
+        return redirect("bank:mufg_deposit_upload")
+
+    def import_bank_account_csv(self, uploaded_file):
+        content = self.decode_bank_account_csv(uploaded_file.read())
+        reader = csv.DictReader(io.StringIO(content))
+        required_headers = {"name", "financial_code", "branch_code", "account_number"}
+        headers = set(reader.fieldnames or [])
+        if not required_headers.issubset(headers):
+            raise ValueError(
+                "CSVヘッダーには name, financial_code, branch_code, account_number が必要です。"
+            )
+
+        created_count = 0
+        skipped_count = 0
+        with transaction.atomic():
+            for row_number, row in enumerate(reader, start=2):
+                data = {
+                    "name": row.get("name", "").strip(),
+                    "financial_code": row.get("financial_code", "").strip(),
+                    "branch_code": row.get("branch_code", "").strip(),
+                    "account_number": row.get("account_number", "").strip(),
+                    "remark": row.get("remark", "").strip(),
+                }
+                if Bank.objects.filter(
+                    financial_code=data["financial_code"],
+                    branch_code=data["branch_code"],
+                    account_number=data["account_number"],
+                ).exists():
+                    skipped_count += 1
+                    continue
+
+                form = BankAccountForm(data)
+                if not form.is_valid():
+                    errors = "; ".join(
+                        f"{field}: {', '.join(messages)}"
+                        for field, messages in form.errors.items()
+                    )
+                    raise ValueError(f"{row_number}行目の口座情報が不正です。{errors}")
+
+                form.save()
+                created_count += 1
+
+        return created_count, skipped_count
+
+    @staticmethod
+    def decode_bank_account_csv(raw_content):
+        for encoding in ("utf-8-sig", "cp932"):
+            try:
+                return raw_content.decode(encoding)
+            except UnicodeDecodeError:
+                continue
+        raise ValueError(
+            "CSVファイルの文字コードは UTF-8 または CP932 にしてください。"
+        )
 
     def handle_uploaded_file(self, uploaded_file, bank):
         filename = uploaded_file.name.lower()

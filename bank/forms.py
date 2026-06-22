@@ -56,6 +56,14 @@ class BankAccountForm(forms.ModelForm):
         return account_number
 
 
+class BankAccountCsvUploadForm(forms.Form):
+    file = forms.FileField(
+        label="口座CSVファイル",
+        help_text="name,financial_code,branch_code,account_number,remark のヘッダー行を含むCSVをアップロードしてください。",
+        widget=forms.FileInput(attrs={"class": "form-control", "accept": ".csv"}),
+    )
+
+
 class UploadFileForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
