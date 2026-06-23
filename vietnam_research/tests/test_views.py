@@ -205,6 +205,9 @@ class TestView(TestCase):
         response = self.client.get(reverse("vnm:index"))
         content = response.content.decode("utf-8")
 
+        self.assertContains(
+            response, '<i class="fas fa-user"></i> ゲストさん', html=True
+        )
         self.assertIn('href="/accounts/login/?next=', content)
         self.assertIn("vietnam_research", content)
 
