@@ -102,11 +102,12 @@ class TestView(TestCase):
         シナリオ:
         - 入力: shopping の決済確認画面を next に指定してログイン画面を開く。
         - 処理: ログインフォームを表示する。
-        - 期待値: POST 時に失われないよう hidden input に next が保持されること。
+        - 期待値: 共通ログインテンプレートで、POST 時に失われないよう hidden input に next が保持されること。
         """
         response = self.client.get("/accounts/login/?next=/shopping/payment/confirm/1/")
 
         self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, "registration/login.html")
         self.assertContains(
             response,
             '<input type="hidden" name="next" value="/shopping/payment/confirm/1/">',
