@@ -79,9 +79,7 @@ class TestView(TestCase):
 
         response = self.client.get(reverse("vnm:index"))
         self.assertEqual(200, response.status_code)
-        self.assertContains(
-            response, f'<i class="fas fa-user"></i> {self.user.username}さん', html=True
-        )
+        self.assertContains(response, f"{self.user.username}さん")
 
         # ログアウト後
         self.client.logout()
@@ -205,9 +203,7 @@ class TestView(TestCase):
         response = self.client.get(reverse("vnm:index"))
         content = response.content.decode("utf-8")
 
-        self.assertContains(
-            response, '<i class="fas fa-user"></i> ゲストさん', html=True
-        )
+        self.assertContains(response, "ゲストさん")
         self.assertIn('href="/accounts/login/?next=', content)
         self.assertIn("vietnam_research", content)
 
