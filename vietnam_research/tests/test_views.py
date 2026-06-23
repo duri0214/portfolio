@@ -172,6 +172,66 @@ class TestView(TestCase):
         self.assertIn('href="/accounts/login/?next=', content)
         self.assertIn("vietnam_research", content)
 
+    def test_shared_header_logout_form_keeps_current_page_as_next(self):
+        """
+        シナリオ:
+        - 入力: ログイン状態で vnm のトップページを表示する。
+        - 処理: 共通ヘッダーのLOGOUTフォームを描画する。
+        - 期待値: 現在ページが next として付与され、ログアウト後に元ページへ戻れること。
+        """
+        logged_in = self.client.login(
+            username=self.user.username, password=self.password_plane
+        )
+        self.assertTrue(logged_in)
+
+        response = self.client.get(reverse("vnm:index"))
+
+        self.assertContains(
+            response,
+            '<input type="hidden" name="next" value="/vietnam_research/">',
+            html=True,
+        )
+
+    def test_logout_redirects_to_next_after_success(self):
+        """
+        シナリオ:
+        - 入力: shopping の決済確認画面を next に指定したログアウトPOST。
+        - 処理: ログイン済みユーザーでログアウトする。
+        - 期待値: 既定の vnm:index ではなく、指定された next へリダイレクトすること。
+        """
+        logged_in = self.client.login(
+            username=self.user.username, password=self.password_plane
+        )
+        self.assertTrue(logged_in)
+
+        response = self.client.post(
+            reverse("logout"), data={"next": "/shopping/payment/confirm/1/"}
+        )
+
+        self.assertRedirects(
+            response,
+            "/shopping/payment/confirm/1/",
+            fetch_redirect_response=False,
+        )
+
+    def test_unsafe_logout_next_falls_back_to_default_redirect(self):
+        """
+        シナリオ:
+        - 入力: 外部URLを next に指定したログアウトPOST。
+        - 処理: ログイン済みユーザーでログアウトする。
+        - 期待値: 外部URLへ遷移せず、既定ページへ戻ること。
+        """
+        logged_in = self.client.login(
+            username=self.user.username, password=self.password_plane
+        )
+        self.assertTrue(logged_in)
+
+        response = self.client.post(
+            reverse("logout"), data={"next": "https://example.com/"}
+        )
+
+        self.assertRedirects(response, reverse("vnm:index"))
+
     def test_can_navigate_to_article_create_page(self):
         """
         ログインしている場合、保護されている記事作成ページに遷移できる
