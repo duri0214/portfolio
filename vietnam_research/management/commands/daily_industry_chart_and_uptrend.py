@@ -35,12 +35,21 @@ def calc_price(price_for_several_days: pd.Series) -> dict:
     return {"initial": initial_price, "latest": latest_price, "delta": delta_pct}
 
 
-def formatted_text(code: str, slopes: list, passed: int, price: dict) -> str:
-    initial = price.get("initial", "-")
-    latest = price.get("latest", "-")
-    delta = price.get("delta", "-")
+def _format_number(value: object) -> str:
+    if value == "-" or value is None:
+        return "-"
 
-    return f"{code}｜{slopes}, passed: {passed}, initial: {initial}, latest: {latest}, delta: {delta}"
+    return f"{float(value):.2f}"
+
+
+def formatted_text(code: str, slopes: list, passed: int, price: dict) -> str:
+    formatted_slopes = [_format_number(slope) for slope in slopes]
+    slopes_text = ", ".join(formatted_slopes)
+    initial = _format_number(price.get("initial", "-"))
+    latest = _format_number(price.get("latest", "-"))
+    delta = _format_number(price.get("delta", "-"))
+
+    return f"{code}｜slopes: [{slopes_text}], passed: {passed}, initial: {initial}, latest: {latest}, delta: {delta}"
 
 
 class Command(BaseCommand):
