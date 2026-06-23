@@ -97,6 +97,81 @@ class TestView(TestCase):
             response, "/accounts/login/?next=/vietnam_research/article/create/"
         )
 
+    def test_login_form_keeps_next_redirect_field(self):
+        """
+        シナリオ:
+        - 入力: shopping の決済確認画面を next に指定してログイン画面を開く。
+        - 処理: ログインフォームを表示する。
+        - 期待値: POST 時に失われないよう hidden input に next が保持されること。
+        """
+        response = self.client.get("/accounts/login/?next=/shopping/payment/confirm/1/")
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(
+            response,
+            '<input type="hidden" name="next" value="/shopping/payment/confirm/1/">',
+            html=True,
+        )
+
+    def test_login_redirects_to_next_after_success(self):
+        """
+        シナリオ:
+        - 入力: shopping の決済確認画面を next に指定したログインPOST。
+        - 処理: 正しいユーザー名とパスワードでログインする。
+        - 期待値: 既定の vnm:index ではなく、指定された next へリダイレクトすること。
+        """
+        response = self.client.post(
+            "/accounts/login/?next=/shopping/payment/confirm/1/",
+            data={"username": self.user.username, "password": self.password_plane},
+        )
+
+        self.assertRedirects(
+            response,
+            "/shopping/payment/confirm/1/",
+            fetch_redirect_response=False,
+        )
+
+    def test_login_without_next_keeps_default_redirect(self):
+        """
+        シナリオ:
+        - 入力: next を指定しないログインPOST。
+        - 処理: 正しいユーザー名とパスワードでログインする。
+        - 期待値: 従来どおり既定の vnm:index へリダイレクトすること。
+        """
+        response = self.client.post(
+            reverse("login"),
+            data={"username": self.user.username, "password": self.password_plane},
+        )
+
+        self.assertRedirects(response, reverse("vnm:index"))
+
+    def test_unsafe_login_next_falls_back_to_default_redirect(self):
+        """
+        シナリオ:
+        - 入力: 外部URLを next に指定したログインPOST。
+        - 処理: 正しいユーザー名とパスワードでログインする。
+        - 期待値: 外部URLへ遷移せず、Django標準の安全判定で既定ページへ戻ること。
+        """
+        response = self.client.post(
+            "/accounts/login/?next=https://example.com/",
+            data={"username": self.user.username, "password": self.password_plane},
+        )
+
+        self.assertRedirects(response, reverse("vnm:index"))
+
+    def test_shared_header_login_link_keeps_current_page_as_next(self):
+        """
+        シナリオ:
+        - 入力: 非ログイン状態で vnm のトップページを表示する。
+        - 処理: 共通ヘッダーのLOGINリンクを描画する。
+        - 期待値: 現在ページが next として付与され、ログイン後に元ページへ戻れること。
+        """
+        response = self.client.get(reverse("vnm:index"))
+        content = response.content.decode("utf-8")
+
+        self.assertIn('href="/accounts/login/?next=', content)
+        self.assertIn("vietnam_research", content)
+
     def test_can_navigate_to_article_create_page(self):
         """
         ログインしている場合、保護されている記事作成ページに遷移できる

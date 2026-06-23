@@ -7,6 +7,7 @@
                 <h4 class="card-title text-center mb-4">ログイン</h4>
                 <form action="{% url 'login' %}" method="POST">
                     {% csrf_token %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
                     {{ form.non_field_errors }}
                     {% for field in form %}
                         <div class="form-group">
