@@ -124,38 +124,58 @@
                                     <h5 class="mb-0"><i class="fas fa-th me-2"></i>在庫：棚のどこにありますか？</h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered shelf-table text-center mb-0">
-                                            <thead class="bg-light">
-                                            <tr>
-                                                <th class="bg-secondary text-white"></th>
-                                                {# 現時点では倉庫に紐づく棚は1要素 shelves.0 が前提になっています issue180 #}
-                                                {% for cell in warehouse.shelves.0.rows.0.cells %}
-                                                    <th class="text-center">{{ forloop.counter }}列目</th>
-                                                {% endfor %}
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            {# 現時点では倉庫に紐づく棚は1要素 shelves.0 が前提になっています issue180 #}
-                                            {% for row in warehouse.shelves.0.rows %}
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                data-shelf-control="prev"
+                                                data-warehouse-id="{{ warehouse.instance.pk }}"
+                                                aria-label="手前の棚を表示">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                        <div class="fw-bold">
+                                            <span data-shelf-label="{{ warehouse.instance.pk }}">1奥目</span>
+                                            <span class="text-muted small">/ {{ warehouse.shelves|length }}奥</span>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                data-shelf-control="next"
+                                                data-warehouse-id="{{ warehouse.instance.pk }}"
+                                                aria-label="奥の棚を表示">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    {% for shelf in warehouse.shelves %}
+                                        <div class="table-responsive {% if not forloop.first %}d-none{% endif %}"
+                                             data-shelf-panel="{{ warehouse.instance.pk }}"
+                                             data-shelf-index="{{ forloop.counter0 }}">
+                                            <table class="table table-bordered shelf-table text-center mb-0">
+                                                <thead class="bg-light">
                                                 <tr>
-                                                    <th class="bg-secondary text-white">{{ forloop.revcounter }}段目</th>
-                                                    {% for cell in row.cells %}
-                                                        <td class="{% if cell.item_count > 0 %}bg-primary text-white{% else %}bg-light text-muted{% endif %}"
-                                                            style="width: 80px; height: 60px; vertical-align: middle;">
-                                                            {% if cell.item_count > 0 %}
-                                                                <span class="fs-4 fw-bold">{{ cell.item_count }}</span>
-                                                                <div class="small">items</div>
-                                                            {% else %}
-                                                                <span class="small">Empty</span>
-                                                            {% endif %}
-                                                        </td>
+                                                    <th class="bg-secondary text-white"></th>
+                                                    {% for cell in shelf.rows.0.cells %}
+                                                        <th class="text-center">{{ forloop.counter }}列目</th>
                                                     {% endfor %}
                                                 </tr>
-                                            {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </thead>
+                                                <tbody>
+                                                {% for row in shelf.rows %}
+                                                    <tr>
+                                                        <th class="bg-secondary text-white">{{ forloop.revcounter }}段目</th>
+                                                        {% for cell in row.cells %}
+                                                            <td class="{% if cell.item_count > 0 %}bg-primary text-white{% else %}bg-light text-muted{% endif %}"
+                                                                style="width: 80px; height: 60px; vertical-align: middle;">
+                                                                {% if cell.item_count > 0 %}
+                                                                    <span class="fs-4 fw-bold">{{ cell.item_count }}</span>
+                                                                    <div class="small">items</div>
+                                                                {% else %}
+                                                                    <span class="small">Empty</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        {% endfor %}
+                                                    </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% endfor %}
                                 </div>
                             </div>
 
@@ -254,6 +274,44 @@
                         newUrl.searchParams.set('warehouse_id', id);
                         history.replaceState(null, null, newUrl);
                     }
+                });
+            });
+
+            const shelfState = {};
+
+            function updateShelfPanels(warehouseId, nextIndex) {
+                const panels = document.querySelectorAll(`[data-shelf-panel="${warehouseId}"]`);
+                const label = document.querySelector(`[data-shelf-label="${warehouseId}"]`);
+                if (!panels.length || !label) {
+                    return;
+                }
+
+                const maxIndex = panels.length - 1;
+                const activeIndex = Math.min(Math.max(nextIndex, 0), maxIndex);
+                shelfState[warehouseId] = activeIndex;
+
+                panels.forEach(panel => {
+                    const panelIndex = Number(panel.dataset.shelfIndex);
+                    panel.classList.toggle('d-none', panelIndex !== activeIndex);
+                });
+                label.textContent = `${activeIndex + 1}奥目`;
+
+                document.querySelectorAll(`[data-warehouse-id="${warehouseId}"]`).forEach(button => {
+                    const control = button.dataset.shelfControl;
+                    button.disabled =
+                        (control === 'prev' && activeIndex === 0) ||
+                        (control === 'next' && activeIndex === maxIndex);
+                });
+            }
+
+            document.querySelectorAll('[data-shelf-control]').forEach(button => {
+                const warehouseId = button.dataset.warehouseId;
+                updateShelfPanels(warehouseId, 0);
+
+                button.addEventListener('click', function () {
+                    const currentIndex = shelfState[warehouseId] || 0;
+                    const move = button.dataset.shelfControl === 'next' ? 1 : -1;
+                    updateShelfPanels(warehouseId, currentIndex + move);
                 });
             });
         });
