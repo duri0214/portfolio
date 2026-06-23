@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
+from rental_shop.domain.repository.warehouse import WarehouseRepository
 from rental_shop.models import (
     Warehouse,
     UserAttribute,
@@ -66,6 +67,45 @@ class TestView(TestCase):
     def test_get_top_page_200(self):
         response = self.client.get(reverse("ren:index"))
         self.assertEqual(200, response.status_code)
+
+    def test_find_by_staff_creates_shelves_by_depth(self):
+        """
+        シナリオ:
+        - 入力: 同じ倉庫の 1奥目と 2奥目に在庫アイテムがある状態。
+        - 処理: スタッフに紐づく倉庫VOを取得する。
+        - 期待値: 倉庫の奥行き分の棚が作られ、pos_z ごとに別の棚へ数量が反映されること。
+        """
+        staff = UserAttribute.objects.get(pk=1)
+        warehouse = Warehouse.objects.get(code="iru-ma")
+        Item.objects.create(
+            serial_number="SN002",
+            name="アイテム2",
+            price=1000,
+            pos_x=1,
+            pos_y=1,
+            pos_z=2,
+            rental_status_id=RentalStatus.STOCK,
+            staff=staff,
+            warehouse=warehouse,
+        )
+        Item.objects.create(
+            serial_number="SN003",
+            name="アイテム3",
+            price=1000,
+            pos_x=1,
+            pos_y=1,
+            pos_z=2,
+            rental_status_id=RentalStatus.STOCK,
+            staff=staff,
+            warehouse=warehouse,
+        )
+
+        warehouse_vo = WarehouseRepository.find_by_staff(staff)[0]
+
+        self.assertEqual(3, len(warehouse_vo.shelves))
+        self.assertEqual(1, warehouse_vo.shelves[0].rows[0].cells[0].item_count)
+        self.assertEqual(2, warehouse_vo.shelves[1].rows[0].cells[0].item_count)
+        self.assertEqual(0, warehouse_vo.shelves[2].rows[0].cells[0].item_count)
 
     def test_rent_item(self):
         item = Item.objects.get(serial_number="SN001")

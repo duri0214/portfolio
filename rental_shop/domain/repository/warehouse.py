@@ -38,7 +38,7 @@ class WarehouseRepository:
             Item.objects.filter(
                 warehouse_id=warehouse_id, rental_status_id=RentalStatus.STOCK
             )
-            .values("pos_y", "pos_x")
+            .values("pos_z", "pos_y", "pos_x")
             .annotate(
                 num_items=Count("id"),
                 items=Concat(
@@ -48,7 +48,7 @@ class WarehouseRepository:
                     separator=",",
                 ),
             )
-            .order_by("pos_y", "pos_x")
+            .order_by("pos_z", "pos_y", "pos_x")
         )
 
     @classmethod
@@ -74,7 +74,7 @@ class WarehouseRepository:
         for warehouse in warehouse_list:
             # 棚のマトリックス（ShelfVO）を構築
             item_position_counts = cls.get_item_position_counts(warehouse.id)
-            shelves = [cls._create_shelf(warehouse, item_position_counts)]
+            shelves = cls._create_shelves(warehouse, item_position_counts)
 
             # ステータスごとのアイテムを取得
             available_items = Item.objects.filter(
@@ -104,18 +104,43 @@ class WarehouseRepository:
         return warehouse_vos
 
     @staticmethod
-    def _create_shelf(warehouse, item_position_counts: QuerySet) -> Shelf:
+    def _create_shelves(warehouse, item_position_counts: QuerySet) -> list[Shelf]:
         """
-        倉庫の高さ・幅に基づき、各座標のアイテム数を埋めた Shelf VO を作成します。
+        倉庫の奥行きごとに、高さ・幅に基づく Shelf VO を作成します。
 
         Args:
-            warehouse: 倉庫のモデルインスタンス（height, width 属性を使用）。
+            warehouse: 倉庫のモデルインスタンス（depth, height, width 属性を使用）。
             item_position_counts (QuerySet): get_item_position_counts() で取得した集計結果。
 
         Returns:
-            Shelf: 棚の行とセルの階層構造を持つ Shelf 値オブジェクト。
+            list[Shelf]: 奥行きごとの Shelf 値オブジェクトのリスト。
         """
-        # 1. 初期状態の棚を作成（全ての座標にアイテム数 0 のセルを配置）
+        shelves = [
+            WarehouseRepository._create_empty_shelf(warehouse)
+            for _ in range(warehouse.depth)
+        ]
+
+        # DB上の座標 (pos_x, pos_y, pos_z) は 1 から始まる（1-based）ため、
+        # 配列のインデックス（0-based）に合わせて -1 して代入する。
+        for row_data in item_position_counts:
+            z_idx = row_data["pos_z"] - 1
+            y_idx = row_data["pos_y"] - 1
+            x_idx = row_data["pos_x"] - 1
+            shelves[z_idx].rows[y_idx].cells[x_idx].item_count += row_data["num_items"]
+
+        return shelves
+
+    @staticmethod
+    def _create_empty_shelf(warehouse) -> Shelf:
+        """
+        倉庫の高さ・幅に基づき、空の Shelf VO を作成します。
+
+        Args:
+            warehouse: 倉庫のモデルインスタンス（height, width 属性を使用）。
+
+        Returns:
+            Shelf: アイテム数がすべて 0 の Shelf 値オブジェクト。
+        """
         shelf_rows = []
         for _ in range(warehouse.height):
             # 各行に、倉庫の幅（width）分のセル（ShelfCell）を生成
@@ -123,13 +148,5 @@ class WarehouseRepository:
                 cells=[ShelfCell(item_count=0) for _ in range(warehouse.width)]
             )
             shelf_rows.append(shelf_row)
-
-        # 2. 集計データ（DB上の各座標の個数）を棚のセルにマッピング
-        # DB上の座標 (pos_x, pos_y) は 1 から始まる（1-based）ため、
-        # 配列のインデックス（0-based）に合わせて -1 して代入する。
-        for row_data in item_position_counts:
-            y_idx = row_data["pos_y"] - 1
-            x_idx = row_data["pos_x"] - 1
-            shelf_rows[y_idx].cells[x_idx].item_count += row_data["num_items"]
 
         return Shelf(rows=shelf_rows)
