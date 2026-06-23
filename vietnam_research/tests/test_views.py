@@ -114,6 +114,41 @@ class TestView(TestCase):
             html=True,
         )
 
+    def test_login_page_selects_app_from_next_in_header_dropdown(self):
+        """
+        シナリオ:
+        - 入力: bank と gmarker のページを next に指定してログイン画面を開く。
+        - 処理: 共通ヘッダーのアプリ選択ドロップダウンを描画する。
+        - 期待値: ログイン画面自身ではなく、ログイン後に戻るアプリが選択状態になること。
+        """
+        bank_response = self.client.get("/accounts/login/?next=/bank/accounts/")
+        gmarker_response = self.client.get(
+            "/accounts/login/?next=/gmarker/coord/create/"
+        )
+
+        self.assertContains(
+            bank_response,
+            '<option value="/bank/" selected>BANK</option>',
+            html=True,
+        )
+        self.assertContains(
+            gmarker_response,
+            '<option value="/gmarker/" selected>GMARKER</option>',
+            html=True,
+        )
+
+    def test_shared_header_does_not_show_unimplemented_search_form(self):
+        """
+        シナリオ:
+        - 入力: 非ログイン状態で vnm のトップページを表示する。
+        - 処理: 共通ヘッダーを描画する。
+        - 期待値: 未実装の検索入力と検索ボタンが表示されないこと。
+        """
+        response = self.client.get(reverse("vnm:index"))
+
+        self.assertNotContains(response, 'type="search"')
+        self.assertNotContains(response, "Search")
+
     def test_login_redirects_to_next_after_success(self):
         """
         シナリオ:
