@@ -44,6 +44,18 @@ class CustomLoginView(LoginView):
     """
 
     authentication_form = CustomAuthenticationForm
+    template_name = "shared/login.html"
+
+    def get_context_data(self, **kwargs):
+        """
+        ログイン成功後の戻り先をログインフォームへ渡します。
+
+        LoginView の安全判定済みURLを使うため、外部URLなど不正な next は hidden input に保持しません。
+        """
+        context = super().get_context_data(**kwargs)
+        context["redirect_field_name"] = self.redirect_field_name
+        context["redirect_field_value"] = self.get_redirect_url()
+        return context
 
 
 class CustomLogoutView(RedirectView):
