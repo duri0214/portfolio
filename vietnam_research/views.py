@@ -44,7 +44,7 @@ class CustomLoginView(LoginView):
     """
 
     authentication_form = CustomAuthenticationForm
-    template_name = "registration/login.html"
+    template_name = "shared/login.html"
 
     def get_context_data(self, **kwargs):
         """

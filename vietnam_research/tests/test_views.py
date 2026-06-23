@@ -107,7 +107,7 @@ class TestView(TestCase):
         response = self.client.get("/accounts/login/?next=/shopping/payment/confirm/1/")
 
         self.assertEqual(200, response.status_code)
-        self.assertTemplateUsed(response, "registration/login.html")
+        self.assertTemplateUsed(response, "shared/login.html")
         self.assertContains(
             response,
             '<input type="hidden" name="next" value="/shopping/payment/confirm/1/">',
