@@ -14,11 +14,28 @@
 ## 参考
 
 - [Jira Cloud platform REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/)
+- [Manage API tokens for your Atlassian account](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
+- [Basic auth for REST APIs](https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/)
 - [Issue #236: lib: jiraライブラリにCRUDをつける](https://github.com/duri0214/portfolio/issues/236)
 
 ## Jira側でAPIトークンを生成する
 
 Jira Cloud のAPIトークンを作り、ローカルの `.env` に保存します。APIトークンやメールアドレスを記事やコードに直書きしないようにします。
+
+公式ドキュメントによると、2024年12月15日以降に作成したAPIトークンはデフォルトで1年の有効期限が設定されます。古いトークンも期限切れになる場合があるため、`401 Client must be authenticated` が返る場合は、まずトークンが失効していないか確認します。
+
+APIトークンの発行手順は以下です。
+
+1. https://id.atlassian.com/manage-profile/security/api-tokens にログインする。
+2. `Create API token` を選択する。
+3. APIトークンの用途が分かる名前を付ける。
+4. 有効期限を選択する。
+5. `Create` を選択する。
+6. 表示されたトークンをコピーして、安全な場所に保存する。
+
+トークンは作成直後にしか表示されません。コピーし忘れた場合やリセットした場合は、古いトークンを使い回さず、新しいトークンを作り直します。
+
+PythonからJira REST APIを呼ぶときは、AtlassianアカウントのメールアドレスとAPIトークンをBasic認証に使います。パスワードではなくAPIトークンを渡すのがポイントです。
 
 ```dotenv:lib/jira/.env.example
 JIRA_YOUR_DOMAIN=
