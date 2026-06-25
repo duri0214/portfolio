@@ -1,13 +1,13 @@
 ---
-apply: "docs/qiita/python_jira_rest_api_2025.md"
+apply: "docs/qiita/python_jira_rest_api_2026.md"
 ---
 
-# 編集ルール（スタイルガイド） — Python Jira REST API 2025
+# 編集ルール（スタイルガイド） — Python Jira REST API 2026
 
-適用対象: docs/qiita/python_jira_rest_api_2025.md（このファイル専用）
+適用対象: docs/qiita/python_jira_rest_api_2026.md（このファイル専用）
 
 目的:
-- Qiita記事「Pythonでシンプルにjiraからチケット情報を取得する2025」の更新時に、REST API v3、ローカル実装、AI時代の代替手段を読みやすく接続する。
+- Qiita記事「Pythonでシンプルにjiraからチケット情報を取得する2026」の更新時に、REST API v3、ローカル実装、AI時代の代替手段を読みやすく接続する。
 - 記事の元の素朴さを保ちながら、CRUD実装とJiraコネクタ活用の2段構成へ拡張する。
 
 適用スコープ:
