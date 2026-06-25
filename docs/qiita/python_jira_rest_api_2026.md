@@ -30,7 +30,7 @@ JIRA_API_KEY=
 
 ## 実装方針
 
-`lib/jira/jira_service.py` の `JiraService` は、Jira REST API v3 の薄いラッパーです。
+[`lib/jira/`](https://github.com/duri0214/portfolio/tree/master/lib/jira) に置いている [`jira_service.py`](https://github.com/duri0214/portfolio/blob/master/lib/jira/jira_service.py) の `JiraService` は、Jira REST API v3 の薄いラッパーです。
 
 - `fetch_projects`: プロジェクト一覧を取得
 - `fetch_issues`: プロジェクト配下のTask一覧を取得
