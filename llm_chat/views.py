@@ -29,6 +29,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import FormView
 from dotenv import load_dotenv
+from openai import RateLimitError
 
 from lib.llm.valueobject.completion import StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
@@ -69,6 +70,13 @@ load_dotenv()
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
+
+
+OPENAI_RAG_QUOTA_ERROR_MESSAGE = (
+    "OpenAI APIの利用枠または課金設定が不足しているため、"
+    "PDFのEmbedding作成に失敗しました。"
+    "OpenAI PlatformのBillingで支払い設定またはクレジット残高を確認してください。"
+)
 
 
 def _get_login_user(request):
@@ -247,10 +255,20 @@ class OpenAIRagPdfUploadView(UserPassesTestMixin, View):
         total_imported_count = 0
         empty_pdfs = []
         failed_pdfs = []
+        quota_error_occurred = False
         for file in form.cleaned_data["files"]:
             pdf = OpenAIRagPdf.objects.create(display_name=file.name, file=file)
             try:
                 imported_count = import_service.import_pdf(pdf.id)
+            except RateLimitError:
+                logger.error(
+                    "OpenAIRagPdfUploadView RateLimitError: OpenAI quota or billing is insufficient",
+                    exc_info=True,
+                )
+                pdf.file.delete(save=False)
+                pdf.delete()
+                quota_error_occurred = True
+                break
             except Exception as e:
                 logger.error(f"OpenAIRagPdfUploadView Error: {str(e)}")
                 logger.error(traceback.format_exc())
@@ -280,6 +298,8 @@ class OpenAIRagPdfUploadView(UserPassesTestMixin, View):
                 request,
                 f"本文を抽出できないPDFがありました: {', '.join(empty_pdfs)}",
             )
+        if quota_error_occurred:
+            messages.error(request, OPENAI_RAG_QUOTA_ERROR_MESSAGE)
         if failed_pdfs:
             messages.error(
                 request,
@@ -384,9 +404,7 @@ class OpenAIRagPdfCollectionViewerView(UserPassesTestMixin, View):
             "total_count": total_count,
             "total_pages": total_pages,
         }
-        return render(
-            request, "llm_chat/openai_rag_collection_viewer.html", context
-        )
+        return render(request, "llm_chat/openai_rag_collection_viewer.html", context)
 
     def _get_per_page(self, request) -> int:
         try:

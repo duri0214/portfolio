@@ -22,14 +22,20 @@
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
                         <h1 class="h5 mb-3">PDF登録</h1>
-                        <form method="post" enctype="multipart/form-data" action="{% url 'llm:openai_rag_pdf_upload' %}">
+                        <form id="openaiRagPdfUploadForm" method="post" enctype="multipart/form-data" action="{% url 'llm:openai_rag_pdf_upload' %}">
                             {% csrf_token %}
                             <div class="mb-3">
                                 {{ form.files }}
                                 <div class="form-text">複数選択できます。Vector DB登録後、元PDFはサーバから削除します。</div>
                             </div>
+                            <div id="openaiRagPdfUploadProgress" class="d-none mb-3">
+                                <div class="progress" role="progressbar" aria-label="PDF登録中">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                                </div>
+                                <div class="form-text">PDFをVector DBへ登録中です。画面を閉じずにお待ちください。</div>
+                            </div>
                             <div class="d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary">登録</button>
+                                <button id="openaiRagPdfUploadButton" type="submit" class="btn btn-primary">登録</button>
                             </div>
                         </form>
                     </div>
@@ -116,4 +122,21 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("openaiRagPdfUploadForm");
+            const button = document.getElementById("openaiRagPdfUploadButton");
+            const progress = document.getElementById("openaiRagPdfUploadProgress");
+            if (!form || !button || !progress) return;
+
+            form.addEventListener("submit", function () {
+                button.disabled = true;
+                button.textContent = "登録中...";
+                progress.classList.remove("d-none");
+            });
+        });
+    </script>
 {% endblock %}
