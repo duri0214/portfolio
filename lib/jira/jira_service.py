@@ -7,10 +7,11 @@ from requests import HTTPError
 from requests.auth import HTTPBasicAuth
 
 from lib.jira.valueobject.ticket import (
+    CreateIssuePayload,
     ProjectVO,
     IssueVO,
     SubTaskVO,
-    # CreateIssuePayload,
+    UpdateIssuePayload,
 )
 
 # .env ファイルを読み込む
@@ -47,7 +48,10 @@ class JiraService:
         self.base_url = f"https://{domain}.atlassian.net"
         # TODO: Basic認証の問題なのか401は出ない。OAuth 2.0化が必要か
         self.auth = HTTPBasicAuth(email, api_token)
-        self.headers = {"Accept": "application/json"}
+        self.headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
 
     def fetch_projects(self) -> list[ProjectVO]:
         """
@@ -198,6 +202,88 @@ class JiraService:
 
         return issues_by_project
 
+    def fetch_issue(self, issue_key: str) -> dict:
+        """
+        Fetch one issue from the JIRA API by issue key.
+
+        Args:
+            issue_key (str): The issue key or ID.
+
+        Returns:
+            dict: The raw Jira issue response.
+
+        Raises:
+            HTTPError: If the HTTP request returns an error response.
+        """
+        url = f"{self.base_url}/rest/api/3/issue/{issue_key}"
+        response = requests.get(url, headers=self.headers, auth=self.auth)
+        response.raise_for_status()
+        return response.json()
+
+    def create_issue(self, payload: CreateIssuePayload) -> dict:
+        """
+        Create one Jira issue.
+
+        Args:
+            payload (CreateIssuePayload): Fields required by Jira issue creation.
+
+        Returns:
+            dict: The created issue key, ID, and self URL returned by Jira.
+
+        Raises:
+            HTTPError: If the HTTP request returns an error response.
+        """
+        url = f"{self.base_url}/rest/api/3/issue"
+        response = requests.post(
+            url,
+            headers=self.headers,
+            auth=self.auth,
+            json=payload.to_dict(),
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def update_issue(self, issue_key: str, payload: UpdateIssuePayload) -> None:
+        """
+        Update one Jira issue.
+
+        Args:
+            issue_key (str): The issue key or ID.
+            payload (UpdateIssuePayload): Fields to update.
+
+        Raises:
+            HTTPError: If the HTTP request returns an error response.
+        """
+        url = f"{self.base_url}/rest/api/3/issue/{issue_key}"
+        response = requests.put(
+            url,
+            headers=self.headers,
+            auth=self.auth,
+            json=payload.to_dict(),
+        )
+        response.raise_for_status()
+
+    def delete_issue(self, issue_key: str, delete_subtasks: bool = False) -> None:
+        """
+        Delete one Jira issue.
+
+        Args:
+            issue_key (str): The issue key or ID.
+            delete_subtasks (bool): Whether Jira should delete subtasks too.
+
+        Raises:
+            HTTPError: If the HTTP request returns an error response.
+        """
+        url = f"{self.base_url}/rest/api/3/issue/{issue_key}"
+        params = {"deleteSubtasks": str(delete_subtasks).lower()}
+        response = requests.delete(
+            url,
+            headers=self.headers,
+            auth=self.auth,
+            params=params,
+        )
+        response.raise_for_status()
+
     @staticmethod
     def _parse_content_field(content: list) -> str:
         """
@@ -268,17 +354,14 @@ if __name__ == "__main__":
     except requests.exceptions.HTTPError as http_err:
         print(f"[HTTP Error] {http_err}")
 
-    # TODO: チケットを作成する機能を作る Issue236
+    # チケットを作成する機能 Issue236
     #  https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
     # payload_xxx = CreateIssuePayload(
-    #     description_text="Order entry fails when selecting supplier.",
-    #     issue_type_id="10000",
-    #     labels=["bugfix"],
-    #     parent_key="HEN",
-    #     priority_id="20000",
-    #     project_id="10000",
-    #     reporter_id="5b10a2844c20165700ede21g",
     #     summary="Main order flow broken",
+    #     project_key="HEN",
+    #     issue_type_id="10000",
+    #     description_text="Order entry fails when selecting supplier.",
+    #     labels=["bugfix"],
     # )
     # チケットを作成
     # try:
@@ -287,5 +370,11 @@ if __name__ == "__main__":
     # except HTTPError as e:
     #     print("エラーが発生しました:", str(e))
     #
-    # TODO: チケットを削除する Issue236
-    # TODO: チケットを編集する Issue236
+    # チケットを編集する Issue236
+    # jira_service.update_issue(
+    #     "HEN-1",
+    #     UpdateIssuePayload(summary="Main order flow fixed"),
+    # )
+    #
+    # チケットを削除する Issue236
+    # jira_service.delete_issue("HEN-1")

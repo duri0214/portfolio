@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 from requests import HTTPError
 
 from lib.jira.jira_service import JiraService
-from lib.jira.valueobject.ticket import IssueVO
+from lib.jira.valueobject.ticket import CreateIssuePayload, IssueVO, UpdateIssuePayload
 
 
 class TestJiraServiceFetchIssues(unittest.TestCase):
@@ -251,3 +251,130 @@ class TestJiraServiceFetchIssues(unittest.TestCase):
             self.fail(
                 "HTTPErrorが発生しました。すべての引数が存在している場合でも失敗しています。"
             )
+
+    @patch("requests.get")
+    def test_fetch_issue(self, mock_get):
+        """
+        シナリオ:
+        - 入力: Jira APIが単一チケットのJSONを返す。
+        - 処理: fetch_issueを呼び出す。
+        - 期待値: 指定キーのAPI URLへGETし、レスポンスJSONを返すこと。
+        """
+        mock_get.return_value = self.create_mock_response({"key": "HEN-1"})
+
+        issue = self.service.fetch_issue("HEN-1")
+
+        self.assertEqual(issue["key"], "HEN-1")
+        mock_get.assert_called_once_with(
+            "https://test-domain.atlassian.net/rest/api/3/issue/HEN-1",
+            headers=self.service.headers,
+            auth=self.service.auth,
+        )
+
+    @patch("requests.post")
+    def test_create_issue(self, mock_post):
+        """
+        シナリオ:
+        - 入力: summary、project_key、issue_type_idを持つ作成ペイロード。
+        - 処理: create_issueを呼び出す。
+        - 期待値: Jira作成APIへPOSTし、作成されたチケット情報を返すこと。
+        """
+        mock_post.return_value = self.create_mock_response(
+            {"id": "10001", "key": "HEN-1", "self": "https://example.com/HEN-1"},
+            status_code=201,
+        )
+        payload = CreateIssuePayload(
+            summary="Main order flow broken",
+            project_key="HEN",
+            issue_type_id="10000",
+            description_text="Order entry fails when selecting supplier.",
+            labels=["bugfix"],
+        )
+
+        created_issue = self.service.create_issue(payload)
+
+        self.assertEqual(created_issue["key"], "HEN-1")
+        mock_post.assert_called_once_with(
+            "https://test-domain.atlassian.net/rest/api/3/issue",
+            headers=self.service.headers,
+            auth=self.service.auth,
+            json=payload.to_dict(),
+        )
+
+    @patch("requests.put")
+    def test_update_issue(self, mock_put):
+        """
+        シナリオ:
+        - 入力: summaryとlabelsを持つ更新ペイロード。
+        - 処理: update_issueを呼び出す。
+        - 期待値: Jira編集APIへPUTし、HTTPエラーがなければNoneを返すこと。
+        """
+        mock_put.return_value = self.create_mock_response({}, status_code=204)
+        payload = UpdateIssuePayload(summary="Main order flow fixed", labels=["done"])
+
+        result = self.service.update_issue("HEN-1", payload)
+
+        self.assertIsNone(result)
+        mock_put.assert_called_once_with(
+            "https://test-domain.atlassian.net/rest/api/3/issue/HEN-1",
+            headers=self.service.headers,
+            auth=self.service.auth,
+            json=payload.to_dict(),
+        )
+
+    @patch("requests.delete")
+    def test_delete_issue(self, mock_delete):
+        """
+        シナリオ:
+        - 入力: 削除対象のチケットキーとdelete_subtasks=True。
+        - 処理: delete_issueを呼び出す。
+        - 期待値: Jira削除APIへDELETEし、deleteSubtasks=trueを送ること。
+        """
+        mock_delete.return_value = self.create_mock_response({}, status_code=204)
+
+        result = self.service.delete_issue("HEN-1", delete_subtasks=True)
+
+        self.assertIsNone(result)
+        mock_delete.assert_called_once_with(
+            "https://test-domain.atlassian.net/rest/api/3/issue/HEN-1",
+            headers=self.service.headers,
+            auth=self.service.auth,
+            params={"deleteSubtasks": "true"},
+        )
+
+    def test_create_issue_payload_to_dict_omits_empty_optional_fields(self):
+        """
+        シナリオ:
+        - 入力: 必須項目だけを持つ作成ペイロード。
+        - 処理: to_dictを呼び出す。
+        - 期待値: 任意項目を含まず、Jira API形式のfieldsを返すこと。
+        """
+        payload = CreateIssuePayload(
+            summary="Main order flow broken",
+            project_key="HEN",
+            issue_type_id="10000",
+        )
+
+        fields = payload.to_dict()["fields"]
+
+        self.assertEqual(fields["summary"], "Main order flow broken")
+        self.assertEqual(fields["project"], {"key": "HEN"})
+        self.assertEqual(fields["issuetype"], {"id": "10000"})
+        self.assertNotIn("description", fields)
+        self.assertNotIn("labels", fields)
+
+    def test_update_issue_payload_to_dict_formats_description(self):
+        """
+        シナリオ:
+        - 入力: description_textを持つ更新ペイロード。
+        - 処理: to_dictを呼び出す。
+        - 期待値: Jira Document Formatのdescriptionを含むこと。
+        """
+        payload = UpdateIssuePayload(description_text="Fixed order entry.")
+
+        description = payload.to_dict()["fields"]["description"]
+
+        self.assertEqual(description["type"], "doc")
+        self.assertEqual(
+            description["content"][0]["content"][0]["text"], "Fixed order entry."
+        )
