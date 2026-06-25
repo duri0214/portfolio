@@ -2,6 +2,7 @@ from django import forms
 
 from llm_chat.domain.valueobject.completion.riddle import GenderType
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+from llm_chat.models import OpenAIRagPdf
 
 
 class UserTextForm(forms.Form):
@@ -44,10 +45,22 @@ class UserTextForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        rag_pdf_choices = kwargs.pop("rag_pdf_choices", [])
         for field in self.base_fields.values():
             field.widget.attrs["class"] = "form-control"
             field.widget.attrs["rows"] = 3
         super().__init__(*args, **kwargs)
+        self.fields["rag_pdf"].choices = [
+            ("", "PDFを選択してください"),
+            *rag_pdf_choices,
+        ]
+
+    rag_pdf = forms.ChoiceField(
+        choices=[],
+        label="RAG PDF",
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
 
 
 class RiddleCSVUploadForm(forms.Form):
@@ -58,3 +71,25 @@ class RiddleCSVUploadForm(forms.Form):
             attrs={"class": "form-control", "accept": ".csv"}
         ),
     )
+
+
+class OpenAIRagPdfUploadForm(forms.ModelForm):
+    class Meta:
+        model = OpenAIRagPdf
+        fields = ["display_name", "file"]
+        labels = {
+            "display_name": "表示名",
+            "file": "PDFファイル",
+        }
+        widgets = {
+            "display_name": forms.TextInput(attrs={"class": "form-control"}),
+            "file": forms.ClearableFileInput(
+                attrs={"class": "form-control", "accept": ".pdf,application/pdf"}
+            ),
+        }
+
+    def clean_file(self):
+        file = self.cleaned_data["file"]
+        if not file.name.lower().endswith(".pdf"):
+            raise forms.ValidationError("PDFファイルを選択してください。")
+        return file

@@ -108,3 +108,33 @@ class RiddleQuestion(models.Model):
 
     def __str__(self):
         return f"{self.order}: {self.question_text[:20]}..."
+
+
+class OpenAIRagPdf(models.Model):
+    """
+    OpenAI RAGで利用するPDFファイルを管理するモデル。
+
+    固定サンプルPDFを暗黙に使うのではなく、ユーザーが登録したPDFを
+    チャット画面で明示的に選択できるようにするためのメタデータを保持します。
+
+    Attributes:
+        display_name: チャット画面や管理画面に表示するPDF名。
+        file: アップロードされたPDFファイル。
+        is_active: チャット画面の選択肢として表示するかどうか。
+        imported_at: Vector DBへの登録が完了した日時。
+        created_at: レコードの作成日時。
+    """
+
+    display_name = models.CharField("表示名", max_length=255)
+    file = models.FileField("PDFファイル", upload_to="llm_chat/openai_rag_pdfs/")
+    is_active = models.BooleanField("有効", default=True)
+    imported_at = models.DateTimeField("Vector DB登録日時", null=True, blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "OpenAI RAG PDF"
+        verbose_name_plural = "OpenAI RAG PDF一覧"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.display_name

@@ -83,6 +83,10 @@ class ChatDisplayService:
         else:
             initial["gender"] = GenderType.MAN.value
 
+        rag_pdf_id = request.session.get("rag_pdf_id")
+        if rag_pdf_id:
+            initial["rag_pdf"] = rag_pdf_id
+
         return initial
 
     @staticmethod

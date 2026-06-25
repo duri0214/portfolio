@@ -6,15 +6,23 @@ import math
 import os
 import traceback
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Generator
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import transaction
-from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
+from django.http import (
+    FileResponse,
+    Http404,
+    StreamingHttpResponse,
+    JsonResponse,
+    HttpResponse,
+)
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -26,9 +34,14 @@ from lib.llm.valueobject.completion import StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
+from llm_chat.domain.repository.completion.rag import (
+    OpenAIRagPdfRepository,
+    OpenAIRagVectorRepository,
+)
 from llm_chat.domain.repository.completion.rokunohe_minutes import (
     RokunoheMinutesRagRepository,
 )
+from llm_chat.domain.service.completion.rag import OpenAIRagPdfImportService
 from llm_chat.domain.service.chat import ChatDisplayService
 from llm_chat.domain.service.completion.rokunohe_minutes import (
     RokunoheMinutesCollectionStatsService,
@@ -47,8 +60,8 @@ from llm_chat.domain.valueobject.completion.riddle import (
     SessionState,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.forms import UserTextForm, RiddleCSVUploadForm
-from llm_chat.models import RiddleQuestion
+from llm_chat.forms import UserTextForm, RiddleCSVUploadForm, OpenAIRagPdfUploadForm
+from llm_chat.models import RiddleQuestion, OpenAIRagPdf
 
 # .env ファイルを読み込む
 load_dotenv()
@@ -149,6 +162,11 @@ class IndexView(FormView):
     form_class = UserTextForm
     success_url = reverse_lazy("llm:index")
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["rag_pdf_choices"] = OpenAIRagPdfRepository.list_active_choices()
+        return kwargs
+
     def get_initial(self):
         """フォームの初期値を設定します。"""
         initial = super().get_initial()
@@ -168,8 +186,124 @@ class IndexView(FormView):
         context["chat_history"] = [log.to_display() for log in chat_history]
         context["is_superuser"] = self.request.user.is_superuser
         context["is_riddle_active"] = ChatDisplayService.is_riddle_active(chat_history)
+        context["rag_pdf_count"] = OpenAIRagPdf.objects.filter(is_active=True).count()
 
         return context
+
+
+class OpenAIRagPdfAdminView(UserPassesTestMixin, View):
+    """
+    OpenAI RAGで使用するPDFの登録・一覧表示を行う管理者用ビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get(self, request, *args, **kwargs):
+        context = {
+            "form": OpenAIRagPdfUploadForm(),
+            "pdfs": OpenAIRagPdf.objects.all(),
+            "sample_pdfs": self._get_sample_pdf_names(),
+        }
+        return render(request, "llm_chat/openai_rag_pdf_admin.html", context)
+
+    @staticmethod
+    def _get_sample_pdf_names() -> list[str]:
+        sample_dir = Path(settings.BASE_DIR) / "lib" / "llm" / "pdf_sample"
+        if not sample_dir.exists():
+            return []
+        return sorted(path.name for path in sample_dir.glob("*.pdf"))
+
+
+class OpenAIRagPdfUploadView(UserPassesTestMixin, View):
+    """
+    OpenAI RAG用PDFを保存し、Vector DBへ登録する管理者用ビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        form = OpenAIRagPdfUploadForm(request.POST, request.FILES)
+        if not form.is_valid():
+            for error in form.errors.values():
+                messages.warning(request, error)
+            return redirect("llm:openai_rag_pdf_admin")
+
+        pdf = form.save()
+        try:
+            imported_count = OpenAIRagPdfImportService().import_pdf(pdf.id)
+            if imported_count:
+                messages.success(
+                    request,
+                    f"PDFを登録しました。Vector DB登録ページ数: {imported_count}件",
+                )
+            else:
+                messages.warning(
+                    request,
+                    "PDFを保存しましたが、抽出できる本文がありませんでした。",
+                )
+        except Exception as e:
+            logger.error(f"OpenAIRagPdfUploadView Error: {str(e)}")
+            logger.error(traceback.format_exc())
+            messages.error(request, f"PDFのVector DB登録に失敗しました: {str(e)}")
+        return redirect("llm:openai_rag_pdf_admin")
+
+
+class OpenAIRagPdfDeleteView(UserPassesTestMixin, View):
+    """
+    OpenAI RAG用PDFと、そのPDF由来のVector DBチャンクを削除する管理者用ビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, pdf_id, *args, **kwargs):
+        try:
+            pdf_source = OpenAIRagPdfRepository.find_active(pdf_id)
+            deleted_count = OpenAIRagVectorRepository(
+                api_key=os.getenv("OPENAI_API_KEY") or ""
+            ).delete_pdf_documents(pdf_source)
+            pdf = OpenAIRagPdf.objects.get(id=pdf_id)
+            pdf.file.delete(save=False)
+            pdf.delete()
+            messages.success(
+                request,
+                f"PDFを削除しました。Vector DB削除件数: {deleted_count}件",
+            )
+        except OpenAIRagPdf.DoesNotExist:
+            messages.warning(request, "削除対象のPDFが見つかりません。")
+        return redirect("llm:openai_rag_pdf_admin")
+
+
+class OpenAIRagSamplePdfDownloadView(UserPassesTestMixin, View):
+    """
+    lib/llm/pdf_sample 配下のPDFをサンプルとしてダウンロードするビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get(self, request, filename, *args, **kwargs):
+        sample_dir = Path(settings.BASE_DIR) / "lib" / "llm" / "pdf_sample"
+        file_path = (sample_dir / filename).resolve()
+        if sample_dir.resolve() not in file_path.parents or file_path.suffix != ".pdf":
+            raise Http404("PDF sample not found")
+        if not file_path.exists():
+            raise Http404("PDF sample not found")
+        return FileResponse(
+            file_path.open("rb"),
+            as_attachment=True,
+            filename=file_path.name,
+        )
 
 
 class RokunoheMinutesRagView(View):
@@ -504,6 +638,7 @@ class SyncResponseView(View):
             user_input = request.POST.get("user_input")
             audio_file = request.FILES.get("audio_file")
             gender_val = request.POST.get("gender")
+            rag_pdf_id = request.POST.get("rag_pdf")
 
             if not use_case_type:
                 return JsonResponse({"error": "No use case type provided"}, status=400)
@@ -539,7 +674,14 @@ class SyncResponseView(View):
 
             # ユースケースの実行
             try:
-                if isinstance(use_case, RiddleUseCase):
+                if use_case_type == UseCaseType.OPENAI_RAG:
+                    message = use_case.execute(
+                        user=request.user,
+                        content=user_input,
+                        rag_pdf_id=rag_pdf_id,
+                    )
+                    request.session["rag_pdf_id"] = rag_pdf_id
+                elif isinstance(use_case, RiddleUseCase):
                     message = use_case.execute(
                         user=request.user, content=user_input, gender=gender
                     )

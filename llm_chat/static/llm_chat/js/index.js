@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const useCaseType = document.querySelector('select[name="use_case_type"]');
     const audioFileInput = document.querySelector('input[name="audio_file"]');
     const audioFileContainer = document.getElementById("audio-file-container");
+    const ragPdfInput = document.querySelector('select[name="rag_pdf"]');
+    const ragPdfContainer = document.getElementById("rag-pdf-container");
     const genderInput = document.querySelector('select[name="gender"]');
     const genderContainer = document.getElementById("gender-container");
     const sendButton = document.getElementById("sendButton");
@@ -175,6 +177,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (genderInput) {
             requestData.append("gender", genderInput.value);
         }
+        if (ragPdfInput) {
+            requestData.append("rag_pdf", ragPdfInput.value);
+        }
 
         // ユースケースごとのエンドポイントを指定
         let endpointUrl;
@@ -201,6 +206,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
             requestData.append("audio_file", audioFileInput.files[0]);
+        }
+
+        if (selectedUseCaseType === "OpenAIRag" && (!ragPdfInput || !ragPdfInput.value)) {
+            alert("RAGに使用するPDFを選択してください。");
+            return;
         }
 
         // リクエストの送信
@@ -287,6 +297,12 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             genderContainer.style.display = "none";
         }
+
+        if (useCaseType.value === "OpenAIRag") {
+            ragPdfContainer.style.display = "block";
+        } else {
+            ragPdfContainer.style.display = "none";
+        }
     });
 
     // ページロード時にも選択状態に応じてフィールドを表示／非表示
@@ -300,6 +316,12 @@ document.addEventListener("DOMContentLoaded", function () {
         genderContainer.style.display = "block";
     } else {
         genderContainer.style.display = "none";
+    }
+
+    if (useCaseType.value === "OpenAIRag") {
+        ragPdfContainer.style.display = "block";
+    } else {
+        ragPdfContainer.style.display = "none";
     }
 
     // ページ下部へスクロール

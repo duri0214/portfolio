@@ -34,6 +34,9 @@
                            class="btn btn-outline-info btn-sm">六戸町会議録QA</a>
                     {% endif %}
                     <a href="{% url 'llm:riddle_admin' %}" class="btn btn-outline-secondary btn-sm">なぞなぞ管理</a>
+                    {% if is_superuser %}
+                        <a href="{% url 'llm:openai_rag_pdf_admin' %}" class="btn btn-outline-secondary btn-sm">RAG PDF管理</a>
+                    {% endif %}
                     <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                 </div>
 
@@ -75,6 +78,15 @@
                         <form>
                             <div class="mb-2">{{ form.question.label }} {{ form.question }}</div>
                             <div class="mb-2">{{ form.use_case_type.label }} {{ form.use_case_type }}</div>
+                            <div id="rag-pdf-container" class="mb-2" style="display: none;">
+                                <label for="{{ form.rag_pdf.id_for_label }}">{{ form.rag_pdf.label }}</label>
+                                {{ form.rag_pdf }}
+                                {% if rag_pdf_count == 0 %}
+                                    <div class="form-text">
+                                        登録済みPDFがありません。RAG PDF管理からPDFを登録してください。
+                                    </div>
+                                {% endif %}
+                            </div>
                             <div id="audio-file-container" class="mb-2" style="display: none;">
                                 <label for="audio_file">{{ form.audio_file.label }}</label>
                                 {{ form.audio_file }}
