@@ -17,6 +17,7 @@
 - [Manage API tokens for your Atlassian account](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 - [Basic auth for REST APIs](https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/)
 - [Issue #236: lib: jiraライブラリにCRUDをつける](https://github.com/duri0214/portfolio/issues/236)
+- [実際に確認したPR #789](https://github.com/duri0214/portfolio/pull/789)
 
 ## Jira側でAPIトークンを生成する
 
