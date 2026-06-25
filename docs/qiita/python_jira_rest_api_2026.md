@@ -21,7 +21,15 @@
 
 ## Jira側でAPIトークンを生成する
 
-Jira Cloud のAPIトークンを作り、ローカルの `.env` に保存します。APIトークンやメールアドレスを記事やコードに直書きしないようにします。
+Jira Cloud の REST API は、Atlassianアカウントのログインパスワードではなく、APIトークンを使って認証します。
+
+PythonからAPIを呼び出すときは、次の3つを用意します。
+
+- Jiraサイトのドメイン: `https://<your-domain>.atlassian.net` の `<your-domain>` 部分
+- Atlassianアカウントのメールアドレス
+- Atlassianアカウントで発行したAPIトークン
+
+これらはローカルの `.env` に保存します。APIトークンやメールアドレスを記事やコードに直書きしないようにします。
 
 公式ドキュメントによると、2024年12月15日以降に作成したAPIトークンはデフォルトで1年の有効期限が設定されます。古いトークンも期限切れになる場合があるため、`401 Client must be authenticated` が返る場合は、まずトークンが失効していないか確認します。
 
@@ -44,7 +52,11 @@ JIRA_USER_EMAIL=
 JIRA_API_KEY=
 ```
 
-`JIRA_YOUR_DOMAIN` は `https://<your-domain>.atlassian.net` の `<your-domain>` 部分です。
+`.env` には以下のように対応させます。
+
+- `JIRA_YOUR_DOMAIN`: `https://<your-domain>.atlassian.net` の `<your-domain>` 部分
+- `JIRA_USER_EMAIL`: Atlassianアカウントのメールアドレス
+- `JIRA_API_KEY`: 発行したAPIトークン
 
 ## 実装方針
 
