@@ -3,6 +3,8 @@ from pathlib import Path
 
 
 OPENAI_RAG_COLLECTION_NAME = "openai_rag_pdfs"
+OPENAI_RAG_EMBEDDING_MODEL = "text-embedding-3-small"
+OPENAI_RAG_CHUNK_BASIS = "page"
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,11 @@ class OpenAIRagPdfSource:
     def document_id(self) -> str:
         return f"openai_rag_pdf_{self.pdf_id}"
 
+    @property
+    def source_extension_label(self) -> str:
+        suffix = self.path.suffix.lstrip(".")
+        return suffix.upper() if suffix else "UNKNOWN"
+
 
 @dataclass(frozen=True)
 class OpenAIRagPdfMetadata:
@@ -43,13 +50,22 @@ class OpenAIRagPdfMetadata:
     pdf: OpenAIRagPdfSource
     page: int
     chunk_index: int
+    imported_at: str
+    collection_name: str = OPENAI_RAG_COLLECTION_NAME
+    embedding_model: str = OPENAI_RAG_EMBEDDING_MODEL
+    chunk_basis: str = OPENAI_RAG_CHUNK_BASIS
 
     def to_dict(self) -> dict[str, str | int]:
         return {
             "id": f"{self.pdf.document_id}_page_{self.page}",
             "rag_pdf_id": self.pdf.pdf_id,
+            "collection_name": f"{self.pdf.source_extension_label}｜{self.collection_name}",
+            "embedding_model": self.embedding_model,
+            "chunk_basis": self.chunk_basis,
             "source": self.pdf.source_name,
-            "file_name": self.pdf.path.name,
+            "file_name": self.pdf.source_name,
+            "stored_file_name": self.pdf.path.name,
+            "imported_at": self.imported_at,
             "page": self.page,
             "chunk_index": self.chunk_index,
         }
@@ -67,3 +83,21 @@ class OpenAIRagDocument:
 
     page_content: str
     metadata: dict[str, str | int]
+
+
+@dataclass(frozen=True)
+class OpenAIRagCollectionItem:
+    """
+    Chroma DBに登録済みのOpenAI RAG PDFドキュメント1件分の表示用データ。
+    """
+
+    chroma_id: str
+    collection_name: str
+    source: str
+    file_name: str
+    embedding_model: str
+    chunk_basis: str
+    imported_at: str
+    page: int | None
+    chunk_index: int | None
+    preview: str

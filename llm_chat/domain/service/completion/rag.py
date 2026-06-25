@@ -1,5 +1,6 @@
 import os
 
+from django.utils import timezone
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from pypdf import PdfReader
 
@@ -50,17 +51,20 @@ class OpenAIRagPdfImportService:
             同じPDF ID由来の既存Chromaチャンクを削除し、PDF本文を再登録します。
         """
         pdf = self.pdf_repository.find_active(pdf_id)
-        documents = self._create_documents(pdf)
+        imported_at = timezone.now()
+        documents = self._create_documents(pdf, imported_at=imported_at.isoformat())
         if not documents:
             return 0
 
         self.vector_repository.delete_pdf_documents(pdf)
         self.vector_repository.upsert_documents(documents)
-        self.pdf_repository.mark_imported(pdf.pdf_id)
+        self.pdf_repository.mark_imported(pdf.pdf_id, imported_at=imported_at)
         return len(documents)
 
     @staticmethod
-    def _create_documents(pdf: OpenAIRagPdfSource) -> list[OpenAIRagDocument]:
+    def _create_documents(
+        pdf: OpenAIRagPdfSource, *, imported_at: str
+    ) -> list[OpenAIRagDocument]:
         reader = PdfReader(pdf.path)
         documents = []
         for page_index, page in enumerate(reader.pages, start=1):
@@ -72,6 +76,7 @@ class OpenAIRagPdfImportService:
                 pdf=pdf,
                 page=page_index,
                 chunk_index=page_index - 1,
+                imported_at=imported_at,
             )
             documents.append(
                 OpenAIRagDocument(

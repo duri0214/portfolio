@@ -1,10 +1,13 @@
-from django.utils import timezone
+from datetime import datetime
+from pathlib import Path
 
 from lib.llm.service.completion import OpenAILlmRagService
 from lib.llm.valueobject.completion import Message, RagResponse
 from lib.llm.valueobject.config import ModelName
 from llm_chat.domain.valueobject.completion.rag import (
+    OPENAI_RAG_EMBEDDING_MODEL,
     OPENAI_RAG_COLLECTION_NAME,
+    OpenAIRagCollectionItem,
     OpenAIRagDocument,
     OpenAIRagPdfSource,
 )
@@ -33,10 +36,11 @@ class OpenAIRagPdfRepository:
     @staticmethod
     def find_active(pdf_id: int) -> OpenAIRagPdfSource:
         pdf = OpenAIRagPdf.objects.get(id=pdf_id, is_active=True)
+        path = Path(pdf.file.path) if pdf.file else Path(pdf.display_name)
         return OpenAIRagPdfSource(
             pdf_id=pdf.id,
             display_name=pdf.display_name,
-            path=pdf.file.path,
+            path=path,
         )
 
     @staticmethod
@@ -44,9 +48,9 @@ class OpenAIRagPdfRepository:
         return OpenAIRagPdf.objects.filter(id=pdf_id, is_active=True).exists()
 
     @staticmethod
-    def mark_imported(pdf_id: int) -> None:
+    def mark_imported(pdf_id: int, *, imported_at: datetime) -> None:
         pdf = OpenAIRagPdf.objects.get(id=pdf_id)
-        pdf.imported_at = timezone.now()
+        pdf.imported_at = imported_at
         OpenAIRagPdf.objects.bulk_update([pdf], ["imported_at"])
 
 
@@ -64,11 +68,13 @@ class OpenAIRagVectorRepository:
         api_key: str,
         model: str = ModelName.GPT_5_MINI,
         collection_name: str = OPENAI_RAG_COLLECTION_NAME,
+        embedding_model: str = OPENAI_RAG_EMBEDDING_MODEL,
     ) -> None:
         self._rag_service = OpenAILlmRagService(
             model=model,
             api_key=api_key,
             collection_name=collection_name,
+            embedding_model=embedding_model,
         )
 
     def upsert_documents(self, documents: list[OpenAIRagDocument]) -> None:
@@ -81,6 +87,58 @@ class OpenAIRagVectorRepository:
 
         self._rag_service._collection.delete(ids=existing["ids"])
         return len(existing["ids"])
+
+    def delete_all_documents(self) -> int:
+        existing = self._rag_service._collection.get()
+        if not existing or not existing["ids"]:
+            return 0
+
+        self._rag_service._collection.delete(ids=existing["ids"])
+        return len(existing["ids"])
+
+    def count_collection_items(self) -> int:
+        return self._rag_service._collection.count()
+
+    def list_collection_items(
+        self, *, limit: int, offset: int = 0
+    ) -> list[OpenAIRagCollectionItem]:
+        existing = self._rag_service._collection.get(
+            limit=limit,
+            offset=offset,
+            include=["documents", "metadatas"],
+        )
+        return self._build_collection_items(existing)
+
+    @staticmethod
+    def _build_collection_items(existing: dict[str, list]) -> list[OpenAIRagCollectionItem]:
+        if not existing or not existing["ids"]:
+            return []
+
+        ids = existing["ids"]
+        documents = existing.get("documents") or []
+        metadatas = existing.get("metadatas") or []
+        items: list[OpenAIRagCollectionItem] = []
+
+        for index, chroma_id in enumerate(ids):
+            document = documents[index] if index < len(documents) else ""
+            metadata = metadatas[index] if index < len(metadatas) else {}
+            preview = document.replace("\n", " ")[:200]
+            items.append(
+                OpenAIRagCollectionItem(
+                    chroma_id=chroma_id,
+                    collection_name=str(metadata.get("collection_name", "")),
+                    source=str(metadata.get("source", "")),
+                    file_name=str(metadata.get("file_name", "")),
+                    embedding_model=str(metadata.get("embedding_model", "")),
+                    chunk_basis=str(metadata.get("chunk_basis", "")),
+                    imported_at=str(metadata.get("imported_at", "")),
+                    page=metadata.get("page"),
+                    chunk_index=metadata.get("chunk_index"),
+                    preview=preview,
+                )
+            )
+
+        return items
 
     def retrieve_answer(self, message: Message, *, pdf_id: int) -> RagResponse:
         return self._rag_service.retrieve_answer(

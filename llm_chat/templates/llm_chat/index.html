@@ -33,12 +33,20 @@
                         <a href="{% url 'llm:rokunohe_minutes' %}"
                            class="btn btn-outline-info btn-sm">六戸町会議録QA</a>
                     {% endif %}
-                    <a href="{% url 'llm:riddle_admin' %}" class="btn btn-outline-secondary btn-sm">なぞなぞ管理</a>
                     {% if is_superuser %}
+                        <a href="{% url 'llm:riddle_admin' %}" class="btn btn-outline-secondary btn-sm">なぞなぞ管理</a>
                         <a href="{% url 'llm:openai_rag_pdf_admin' %}" class="btn btn-outline-secondary btn-sm">RAG PDF管理</a>
+                    {% else %}
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>なぞなぞ管理</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>RAG PDF管理</button>
                     {% endif %}
                     <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                 </div>
+                {% if not is_superuser %}
+                    <div class="d-flex justify-content-end mt-2 mb-3 text-muted small">
+                        管理ページに行くにはログインが必要です
+                    </div>
+                {% endif %}
 
                 {% for chat_log in chat_history %}
                     <div class="card shadow-sm border-0 mb-3">

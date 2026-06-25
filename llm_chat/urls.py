@@ -13,6 +13,8 @@ from .views import (
     OpenAIRagPdfAdminView,
     OpenAIRagPdfUploadView,
     OpenAIRagPdfDeleteView,
+    OpenAIRagPdfCollectionDeleteAllView,
+    OpenAIRagPdfCollectionViewerView,
     OpenAIRagSamplePdfDownloadView,
     RokunohePdfDownloadView,
     RokunoheVectorDbResetView,
@@ -41,6 +43,16 @@ urlpatterns = [
         "openai-rag-pdfs/<int:pdf_id>/delete/",
         OpenAIRagPdfDeleteView.as_view(),
         name="openai_rag_pdf_delete",
+    ),
+    path(
+        "openai-rag-pdfs/collection-delete-all/",
+        OpenAIRagPdfCollectionDeleteAllView.as_view(),
+        name="openai_rag_pdf_collection_delete_all",
+    ),
+    path(
+        "openai-rag-pdfs/collection-viewer/",
+        OpenAIRagPdfCollectionViewerView.as_view(),
+        name="openai_rag_pdf_collection_viewer",
     ),
     path(
         "openai-rag-pdfs/samples/<path:filename>/",

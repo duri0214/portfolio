@@ -119,14 +119,18 @@ class OpenAIRagPdf(models.Model):
 
     Attributes:
         display_name: チャット画面や管理画面に表示するPDF名。
-        file: アップロードされたPDFファイル。
+        file: Vector DB取り込み時だけ一時保存するPDFファイル。
         is_active: チャット画面の選択肢として表示するかどうか。
         imported_at: Vector DBへの登録が完了した日時。
         created_at: レコードの作成日時。
     """
 
     display_name = models.CharField("表示名", max_length=255)
-    file = models.FileField("PDFファイル", upload_to="llm_chat/openai_rag_pdfs/")
+    file = models.FileField(
+        "PDFファイル",
+        upload_to="llm_chat/openai_rag_pdfs/",
+        blank=True,
+    )
     is_active = models.BooleanField("有効", default=True)
     imported_at = models.DateTimeField("Vector DB登録日時", null=True, blank=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)

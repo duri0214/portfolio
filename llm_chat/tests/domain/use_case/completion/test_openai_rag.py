@@ -51,8 +51,20 @@ class OpenAIRagPdfImportServiceTest(TestCase):
         documents = vector_repository.upsert_documents.call_args.args[0]
         self.assertEqual(documents[0].page_content, "1ページ目の本文")
         self.assertEqual(documents[0].metadata["rag_pdf_id"], 10)
+        self.assertEqual(
+            documents[0].metadata["collection_name"], "PDF｜openai_rag_pdfs"
+        )
+        self.assertEqual(
+            documents[0].metadata["embedding_model"], "text-embedding-3-small"
+        )
+        self.assertEqual(documents[0].metadata["chunk_basis"], "page")
         self.assertEqual(documents[0].metadata["source"], "サンプルPDF")
-        pdf_repository.mark_imported.assert_called_once_with(10)
+        self.assertEqual(documents[0].metadata["file_name"], "サンプルPDF")
+        self.assertEqual(documents[0].metadata["stored_file_name"], "sample.pdf")
+        self.assertIn("imported_at", documents[0].metadata)
+        pdf_repository.mark_imported.assert_called_once()
+        self.assertEqual(pdf_repository.mark_imported.call_args.args[0], 10)
+        self.assertIn("imported_at", pdf_repository.mark_imported.call_args.kwargs)
 
 
 class OpenAIRagUseCaseTest(TestCase):

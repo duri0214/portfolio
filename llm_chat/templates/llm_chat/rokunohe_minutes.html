@@ -89,7 +89,7 @@
                     会議録PDF取得・ベクトル化、コレクション確認、頻出語集計は、期間未指定時に直近1年分の会議録を処理基準にしています。
                 </p>
                 {% if not is_superuser %}
-                    <p class="small text-muted mt-2 mb-3">管理者権限が必要なボタンは無効化されています</p>
+                    <p class="small text-muted mt-2 mb-3">管理ページに行くにはログインが必要です</p>
                 {% endif %}
 
                 {% for chat_log in chat_history %}

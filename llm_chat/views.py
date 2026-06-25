@@ -41,8 +41,8 @@ from llm_chat.domain.repository.completion.rag import (
 from llm_chat.domain.repository.completion.rokunohe_minutes import (
     RokunoheMinutesRagRepository,
 )
+from llm_chat.domain.service.completion.chat import ChatDisplayService
 from llm_chat.domain.service.completion.rag import OpenAIRagPdfImportService
-from llm_chat.domain.service.chat import ChatDisplayService
 from llm_chat.domain.service.completion.rokunohe_minutes import (
     RokunoheMinutesCollectionStatsService,
     RokunoheMinutesRagService,
@@ -205,16 +205,24 @@ class OpenAIRagPdfAdminView(UserPassesTestMixin, View):
         context = {
             "form": OpenAIRagPdfUploadForm(),
             "pdfs": OpenAIRagPdf.objects.all(),
-            "sample_pdfs": self._get_sample_pdf_names(),
+            "sample_pdfs": self._get_sample_pdfs(),
         }
         return render(request, "llm_chat/openai_rag_pdf_admin.html", context)
 
     @staticmethod
-    def _get_sample_pdf_names() -> list[str]:
+    def _get_sample_pdfs() -> list[dict[str, str]]:
         sample_dir = Path(settings.BASE_DIR) / "lib" / "llm" / "pdf_sample"
         if not sample_dir.exists():
             return []
-        return sorted(path.name for path in sample_dir.glob("*.pdf"))
+        labels = {
+            "doj_cloud_act_white_paper_2019_04_10.pdf": "サンプル1: 英文の法律",
+            "令和4年版少子化社会対策白書全体版（PDF版）.pdf": "サンプル2: 少子化社会対策白書",
+            "条立ての文書サンプル.pdf": "サンプル3: 条立て文書",
+        }
+        return [
+            {"filename": path.name, "label": labels.get(path.name, path.stem)}
+            for path in sorted(sample_dir.glob("*.pdf"), key=lambda p: p.name)
+        ]
 
 
 class OpenAIRagPdfUploadView(UserPassesTestMixin, View):
@@ -234,23 +242,49 @@ class OpenAIRagPdfUploadView(UserPassesTestMixin, View):
                 messages.warning(request, error)
             return redirect("llm:openai_rag_pdf_admin")
 
-        pdf = form.save()
-        try:
-            imported_count = OpenAIRagPdfImportService().import_pdf(pdf.id)
+        import_service = OpenAIRagPdfImportService()
+        registered_count = 0
+        total_imported_count = 0
+        empty_pdfs = []
+        failed_pdfs = []
+        for file in form.cleaned_data["files"]:
+            pdf = OpenAIRagPdf.objects.create(display_name=file.name, file=file)
+            try:
+                imported_count = import_service.import_pdf(pdf.id)
+            except Exception as e:
+                logger.error(f"OpenAIRagPdfUploadView Error: {str(e)}")
+                logger.error(traceback.format_exc())
+                pdf.file.delete(save=False)
+                pdf.delete()
+                failed_pdfs.append(file.name)
+                continue
+
             if imported_count:
-                messages.success(
-                    request,
-                    f"PDFを登録しました。Vector DB登録ページ数: {imported_count}件",
-                )
+                pdf.file.delete(save=False)
+                pdf.file.name = ""
+                pdf.save(update_fields=["file"])
+                registered_count += 1
+                total_imported_count += imported_count
             else:
-                messages.warning(
-                    request,
-                    "PDFを保存しましたが、抽出できる本文がありませんでした。",
-                )
-        except Exception as e:
-            logger.error(f"OpenAIRagPdfUploadView Error: {str(e)}")
-            logger.error(traceback.format_exc())
-            messages.error(request, f"PDFのVector DB登録に失敗しました: {str(e)}")
+                pdf.file.delete(save=False)
+                pdf.delete()
+                empty_pdfs.append(file.name)
+
+        if registered_count:
+            messages.success(
+                request,
+                f"PDFを{registered_count}件登録しました。Vector DB登録ページ数: {total_imported_count}件",
+            )
+        if empty_pdfs:
+            messages.warning(
+                request,
+                f"本文を抽出できないPDFがありました: {', '.join(empty_pdfs)}",
+            )
+        if failed_pdfs:
+            messages.error(
+                request,
+                f"PDFのVector DB登録に失敗しました: {', '.join(failed_pdfs)}",
+            )
         return redirect("llm:openai_rag_pdf_admin")
 
 
@@ -275,11 +309,103 @@ class OpenAIRagPdfDeleteView(UserPassesTestMixin, View):
             pdf.delete()
             messages.success(
                 request,
-                f"PDFを削除しました。Vector DB削除件数: {deleted_count}件",
+                f"削除しました。Vector DB削除件数: {deleted_count}件",
             )
         except OpenAIRagPdf.DoesNotExist:
             messages.warning(request, "削除対象のPDFが見つかりません。")
         return redirect("llm:openai_rag_pdf_admin")
+
+
+class OpenAIRagPdfCollectionDeleteAllView(UserPassesTestMixin, View):
+    """
+    OpenAI RAG PDF用collection内の全チャンクと登録情報を削除するビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        deleted_count = OpenAIRagVectorRepository(
+            api_key=os.getenv("OPENAI_API_KEY") or ""
+        ).delete_all_documents()
+        for pdf in OpenAIRagPdf.objects.all():
+            if pdf.file:
+                pdf.file.delete(save=False)
+        OpenAIRagPdf.objects.all().delete()
+        messages.success(
+            request,
+            f"全削除しました。Vector DB削除件数: {deleted_count}件",
+        )
+        return redirect("llm:openai_rag_pdf_admin")
+
+
+class OpenAIRagPdfCollectionViewerView(UserPassesTestMixin, View):
+    """
+    OpenAI RAG PDFのChroma DB collection内容を確認する管理者用ビュー。
+    """
+
+    raise_exception = True
+    default_per_page = 100
+    per_page_options = (50, 100, 200, 500)
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get(self, request, *args, **kwargs):
+        per_page = self._get_per_page(request)
+        current_page = self._get_current_page(request)
+        offset = (current_page - 1) * per_page
+        repository = OpenAIRagVectorRepository(
+            api_key=os.getenv("OPENAI_API_KEY") or ""
+        )
+        total_count = repository.count_collection_items()
+        total_pages = max(math.ceil(total_count / per_page), 1)
+        if current_page > total_pages:
+            current_page = total_pages
+            offset = (current_page - 1) * per_page
+
+        collection_items = repository.list_collection_items(
+            limit=per_page,
+            offset=offset,
+        )
+        context = {
+            "collection_items": collection_items,
+            "current_page": current_page,
+            "has_next_page": current_page < total_pages,
+            "has_previous_page": current_page > 1,
+            "next_page": current_page + 1,
+            "page_start": offset + 1 if total_count else 0,
+            "page_end": offset + len(collection_items),
+            "per_page": per_page,
+            "per_page_options": self.per_page_options,
+            "previous_page": current_page - 1,
+            "total_count": total_count,
+            "total_pages": total_pages,
+        }
+        return render(
+            request, "llm_chat/openai_rag_collection_viewer.html", context
+        )
+
+    def _get_per_page(self, request) -> int:
+        try:
+            per_page = int(request.GET.get("per_page", self.default_per_page))
+        except (TypeError, ValueError):
+            return self.default_per_page
+
+        if per_page not in self.per_page_options:
+            return self.default_per_page
+        return per_page
+
+    @staticmethod
+    def _get_current_page(request) -> int:
+        try:
+            page = int(request.GET.get("page", 1))
+        except (TypeError, ValueError):
+            return 1
+
+        return max(page, 1)
 
 
 class OpenAIRagSamplePdfDownloadView(UserPassesTestMixin, View):

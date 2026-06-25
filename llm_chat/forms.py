@@ -2,7 +2,6 @@ from django import forms
 
 from llm_chat.domain.valueobject.completion.riddle import GenderType
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.models import OpenAIRagPdf
 
 
 class UserTextForm(forms.Form):
@@ -73,23 +72,28 @@ class RiddleCSVUploadForm(forms.Form):
     )
 
 
-class OpenAIRagPdfUploadForm(forms.ModelForm):
-    class Meta:
-        model = OpenAIRagPdf
-        fields = ["display_name", "file"]
-        labels = {
-            "display_name": "表示名",
-            "file": "PDFファイル",
-        }
-        widgets = {
-            "display_name": forms.TextInput(attrs={"class": "form-control"}),
-            "file": forms.ClearableFileInput(
-                attrs={"class": "form-control", "accept": ".pdf,application/pdf"}
-            ),
-        }
+class MultiplePdfFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
 
-    def clean_file(self):
-        file = self.cleaned_data["file"]
-        if not file.name.lower().endswith(".pdf"):
-            raise forms.ValidationError("PDFファイルを選択してください。")
-        return file
+
+class MultiplePdfFileField(forms.FileField):
+    def clean(self, data, initial=None):
+        files = data if isinstance(data, (list, tuple)) else [data]
+        cleaned_files = [forms.FileField.clean(self, file, initial) for file in files]
+        for file in cleaned_files:
+            if not file.name.lower().endswith(".pdf"):
+                raise forms.ValidationError("PDFファイルを選択してください。")
+        return cleaned_files
+
+
+class OpenAIRagPdfUploadForm(forms.Form):
+    files = MultiplePdfFileField(
+        label="PDFファイル",
+        widget=MultiplePdfFileInput(
+            attrs={
+                "class": "form-control",
+                "accept": ".pdf,application/pdf",
+                "multiple": True,
+            }
+        ),
+    )
