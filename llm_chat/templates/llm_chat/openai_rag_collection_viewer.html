@@ -16,12 +16,23 @@
                 <p class="text-muted mb-0">
                     全 {{ total_count }} 件中 {{ page_start }}-{{ page_end }} 件を表示しています。
                 </p>
+                <p class="text-muted small mb-0">物理 collection: <span class="font-monospace">{{ physical_collection_name }}</span></p>
             </div>
             <a href="{% url 'llm:openai_rag_pdf_admin' %}" class="btn btn-outline-secondary btn-sm">PDF管理へ戻る</a>
         </div>
 
         <div class="d-flex align-items-center justify-content-end flex-wrap gap-3 mb-3">
             <form method="get" class="d-flex align-items-center gap-2">
+                <label for="pdfSelect" class="form-label mb-0 small text-muted">登録文書</label>
+                <select id="pdfSelect" name="pdf_id" class="form-select form-select-sm w-auto"
+                        onchange="this.form.submit()">
+                    <option value="">全件</option>
+                    {% for pdf_id, pdf_name in document_choices %}
+                        <option value="{{ pdf_id }}" {% if pdf_id == selected_pdf_id %}selected{% endif %}>
+                            {{ physical_collection_name }} / {{ pdf_name }}
+                        </option>
+                    {% endfor %}
+                </select>
                 <label for="perPageSelect" class="form-label mb-0 small text-muted">最大</label>
                 <select id="perPageSelect" name="per_page" class="form-select form-select-sm w-auto"
                         onchange="this.form.submit()">
@@ -39,7 +50,7 @@
                     <thead>
                     <tr>
                         <th scope="col">Chroma ID</th>
-                        <th scope="col">collection</th>
+                        <th scope="col">collection_label</th>
                         <th scope="col">source</th>
                         <th scope="col">embedding</th>
                         <th scope="col">chunk_basis</th>
@@ -53,7 +64,7 @@
                     {% for item in collection_items %}
                         <tr>
                             <td class="font-monospace small">{{ item.chroma_id }}</td>
-                            <td>{{ item.collection_name|default_if_none:"-" }}</td>
+                            <td>{{ item.collection_label|default_if_none:"-" }}</td>
                             <td>{{ item.source|default_if_none:"-" }}</td>
                             <td>{{ item.embedding_model|default_if_none:"-" }}</td>
                             <td>{{ item.chunk_basis|default_if_none:"-" }}</td>
@@ -70,7 +81,7 @@
                 <ul class="pagination justify-content-center">
                     <li class="page-item {% if not has_previous_page %}disabled{% endif %}">
                         <a class="page-link"
-                           href="?page={{ previous_page }}&per_page={{ per_page }}"
+                           href="?page={{ previous_page }}&per_page={{ per_page }}{% if selected_pdf_id %}&pdf_id={{ selected_pdf_id }}{% endif %}"
                            aria-label="Previous">前へ</a>
                     </li>
                     <li class="page-item disabled">
@@ -78,7 +89,7 @@
                     </li>
                     <li class="page-item {% if not has_next_page %}disabled{% endif %}">
                         <a class="page-link"
-                           href="?page={{ next_page }}&per_page={{ per_page }}"
+                           href="?page={{ next_page }}&per_page={{ per_page }}{% if selected_pdf_id %}&pdf_id={{ selected_pdf_id }}{% endif %}"
                            aria-label="Next">次へ</a>
                     </li>
                 </ul>

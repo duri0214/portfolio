@@ -13,6 +13,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import transaction
@@ -60,8 +61,9 @@ from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
     SessionState,
 )
+from llm_chat.domain.valueobject.completion.rag import OPENAI_RAG_COLLECTION_NAME
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.forms import UserTextForm, RiddleCSVUploadForm, OpenAIRagPdfUploadForm
+from llm_chat.forms import UserTextForm, RiddleCSVUploadForm, MultiplePdfFileField
 from llm_chat.models import RiddleQuestion, OpenAIRagPdf
 
 # .env ファイルを読み込む
@@ -211,7 +213,6 @@ class OpenAIRagPdfAdminView(UserPassesTestMixin, View):
 
     def get(self, request, *args, **kwargs):
         context = {
-            "form": OpenAIRagPdfUploadForm(),
             "pdfs": OpenAIRagPdf.objects.all(),
             "sample_pdfs": self._get_sample_pdfs(),
         }
@@ -244,9 +245,10 @@ class OpenAIRagPdfUploadView(UserPassesTestMixin, View):
         return self.request.user.is_superuser
 
     def post(self, request, *args, **kwargs):
-        form = OpenAIRagPdfUploadForm(request.POST, request.FILES)
-        if not form.is_valid():
-            for error in form.errors.values():
+        try:
+            pdf_files = MultiplePdfFileField().clean(request.FILES.getlist("files"))
+        except ValidationError as e:
+            for error in e.messages:
                 messages.warning(request, error)
             return redirect("llm:openai_rag_pdf_admin")
 
@@ -256,35 +258,29 @@ class OpenAIRagPdfUploadView(UserPassesTestMixin, View):
         empty_pdfs = []
         failed_pdfs = []
         quota_error_occurred = False
-        for file in form.cleaned_data["files"]:
-            pdf = OpenAIRagPdf.objects.create(display_name=file.name, file=file)
+        for file in pdf_files:
+            pdf = OpenAIRagPdf.objects.create(display_name=file.name)
             try:
-                imported_count = import_service.import_pdf(pdf.id)
+                imported_count = import_service.import_pdf(pdf.id, pdf_file=file)
             except RateLimitError:
                 logger.error(
                     "OpenAIRagPdfUploadView RateLimitError: OpenAI quota or billing is insufficient",
                     exc_info=True,
                 )
-                pdf.file.delete(save=False)
                 pdf.delete()
                 quota_error_occurred = True
                 break
             except Exception as e:
                 logger.error(f"OpenAIRagPdfUploadView Error: {str(e)}")
                 logger.error(traceback.format_exc())
-                pdf.file.delete(save=False)
                 pdf.delete()
                 failed_pdfs.append(file.name)
                 continue
 
             if imported_count:
-                pdf.file.delete(save=False)
-                pdf.file.name = ""
-                pdf.save(update_fields=["file"])
                 registered_count += 1
                 total_imported_count += imported_count
             else:
-                pdf.file.delete(save=False)
                 pdf.delete()
                 empty_pdfs.append(file.name)
 
@@ -325,7 +321,6 @@ class OpenAIRagPdfDeleteView(UserPassesTestMixin, View):
                 api_key=os.getenv("OPENAI_API_KEY") or ""
             ).delete_pdf_documents(pdf_source)
             pdf = OpenAIRagPdf.objects.get(id=pdf_id)
-            pdf.file.delete(save=False)
             pdf.delete()
             messages.success(
                 request,
@@ -350,9 +345,6 @@ class OpenAIRagPdfCollectionDeleteAllView(UserPassesTestMixin, View):
         deleted_count = OpenAIRagVectorRepository(
             api_key=os.getenv("OPENAI_API_KEY") or ""
         ).delete_all_documents()
-        for pdf in OpenAIRagPdf.objects.all():
-            if pdf.file:
-                pdf.file.delete(save=False)
         OpenAIRagPdf.objects.all().delete()
         messages.success(
             request,
@@ -376,11 +368,12 @@ class OpenAIRagPdfCollectionViewerView(UserPassesTestMixin, View):
     def get(self, request, *args, **kwargs):
         per_page = self._get_per_page(request)
         current_page = self._get_current_page(request)
+        selected_pdf_id = self._get_selected_pdf_id(request)
         offset = (current_page - 1) * per_page
         repository = OpenAIRagVectorRepository(
             api_key=os.getenv("OPENAI_API_KEY") or ""
         )
-        total_count = repository.count_collection_items()
+        total_count = repository.count_collection_items(pdf_id=selected_pdf_id)
         total_pages = max(math.ceil(total_count / per_page), 1)
         if current_page > total_pages:
             current_page = total_pages
@@ -389,9 +382,11 @@ class OpenAIRagPdfCollectionViewerView(UserPassesTestMixin, View):
         collection_items = repository.list_collection_items(
             limit=per_page,
             offset=offset,
+            pdf_id=selected_pdf_id,
         )
         context = {
             "collection_items": collection_items,
+            "document_choices": OpenAIRagPdfRepository.list_active_choices(),
             "current_page": current_page,
             "has_next_page": current_page < total_pages,
             "has_previous_page": current_page > 1,
@@ -400,7 +395,9 @@ class OpenAIRagPdfCollectionViewerView(UserPassesTestMixin, View):
             "page_end": offset + len(collection_items),
             "per_page": per_page,
             "per_page_options": self.per_page_options,
+            "physical_collection_name": OPENAI_RAG_COLLECTION_NAME,
             "previous_page": current_page - 1,
+            "selected_pdf_id": str(selected_pdf_id) if selected_pdf_id else "",
             "total_count": total_count,
             "total_pages": total_pages,
         }
@@ -424,6 +421,16 @@ class OpenAIRagPdfCollectionViewerView(UserPassesTestMixin, View):
             return 1
 
         return max(page, 1)
+
+    @staticmethod
+    def _get_selected_pdf_id(request) -> int | None:
+        raw_pdf_id = request.GET.get("pdf_id", "").strip()
+        if not raw_pdf_id:
+            return None
+        try:
+            return int(raw_pdf_id)
+        except ValueError:
+            return None
 
 
 class OpenAIRagSamplePdfDownloadView(UserPassesTestMixin, View):
@@ -833,6 +840,15 @@ class SyncResponseView(View):
                     message = use_case.execute(user=request.user, content=user_input)
             except ValueError as e:
                 return JsonResponse({"error": str(e)}, status=400)
+            except RateLimitError:
+                logger.error(
+                    "SyncResponseView RateLimitError: OpenAI quota or billing is insufficient",
+                    exc_info=True,
+                )
+                return JsonResponse(
+                    {"error": OPENAI_RAG_QUOTA_ERROR_MESSAGE},
+                    status=402,
+                )
 
             # 成功レスポンスを返す
             success_message = f"{use_case_type} 処理が完了しました"

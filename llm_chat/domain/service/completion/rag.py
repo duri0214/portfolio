@@ -37,12 +37,13 @@ class OpenAIRagPdfImportService:
             api_key=os.getenv("OPENAI_API_KEY") or ""
         )
 
-    def import_pdf(self, pdf_id: int) -> int:
+    def import_pdf(self, pdf_id: int, pdf_file=None) -> int:
         """
         PDFをVector DBへ登録し、登録したページ数を返します。
 
         Args:
             pdf_id: 登録対象のOpenAIRagPdf ID。
+            pdf_file: アップロードされたPDFファイル。指定時はサーバーへ保存せず直接読み込みます。
 
         Returns:
             int: Vector DBへ登録したドキュメント件数。
@@ -52,7 +53,11 @@ class OpenAIRagPdfImportService:
         """
         pdf = self.pdf_repository.find_active(pdf_id)
         imported_at = timezone.now()
-        documents = self._create_documents(pdf, imported_at=imported_at.isoformat())
+        documents = self._create_documents(
+            pdf,
+            imported_at=imported_at.isoformat(),
+            pdf_file=pdf_file,
+        )
         if not documents:
             return 0
 
@@ -63,9 +68,11 @@ class OpenAIRagPdfImportService:
 
     @staticmethod
     def _create_documents(
-        pdf: OpenAIRagPdfSource, *, imported_at: str
+        pdf: OpenAIRagPdfSource, *, imported_at: str, pdf_file=None
     ) -> list[OpenAIRagDocument]:
-        reader = PdfReader(pdf.path)
+        if pdf_file and hasattr(pdf_file, "seek"):
+            pdf_file.seek(0)
+        reader = PdfReader(pdf_file or pdf.path)
         documents = []
         for page_index, page in enumerate(reader.pages, start=1):
             text = page.extract_text()

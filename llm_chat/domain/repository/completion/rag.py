@@ -36,11 +36,10 @@ class OpenAIRagPdfRepository:
     @staticmethod
     def find_active(pdf_id: int) -> OpenAIRagPdfSource:
         pdf = OpenAIRagPdf.objects.get(id=pdf_id, is_active=True)
-        path = Path(pdf.file.path) if pdf.file else Path(pdf.display_name)
         return OpenAIRagPdfSource(
             pdf_id=pdf.id,
             display_name=pdf.display_name,
-            path=path,
+            path=Path(pdf.display_name),
         )
 
     @staticmethod
@@ -96,21 +95,31 @@ class OpenAIRagVectorRepository:
         self._rag_service._collection.delete(ids=existing["ids"])
         return len(existing["ids"])
 
-    def count_collection_items(self) -> int:
-        return self._rag_service._collection.count()
+    def count_collection_items(self, *, pdf_id: int | None = None) -> int:
+        if pdf_id is None:
+            return self._rag_service._collection.count()
+
+        existing = self._rag_service._collection.get(
+            where={"rag_pdf_id": pdf_id},
+        )
+        return len(existing["ids"]) if existing and existing["ids"] else 0
 
     def list_collection_items(
-        self, *, limit: int, offset: int = 0
+        self, *, limit: int, offset: int = 0, pdf_id: int | None = None
     ) -> list[OpenAIRagCollectionItem]:
+        where = {"rag_pdf_id": pdf_id} if pdf_id is not None else None
         existing = self._rag_service._collection.get(
             limit=limit,
             offset=offset,
+            where=where,
             include=["documents", "metadatas"],
         )
         return self._build_collection_items(existing)
 
     @staticmethod
-    def _build_collection_items(existing: dict[str, list]) -> list[OpenAIRagCollectionItem]:
+    def _build_collection_items(
+        existing: dict[str, list],
+    ) -> list[OpenAIRagCollectionItem]:
         if not existing or not existing["ids"]:
             return []
 
@@ -127,6 +136,10 @@ class OpenAIRagVectorRepository:
                 OpenAIRagCollectionItem(
                     chroma_id=chroma_id,
                     collection_name=str(metadata.get("collection_name", "")),
+                    collection_label=str(
+                        metadata.get("collection_label")
+                        or metadata.get("collection_name", "")
+                    ),
                     source=str(metadata.get("source", "")),
                     file_name=str(metadata.get("file_name", "")),
                     embedding_model=str(metadata.get("embedding_model", "")),

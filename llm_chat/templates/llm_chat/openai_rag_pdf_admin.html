@@ -25,7 +25,7 @@
                         <form id="openaiRagPdfUploadForm" method="post" enctype="multipart/form-data" action="{% url 'llm:openai_rag_pdf_upload' %}">
                             {% csrf_token %}
                             <div class="mb-3">
-                                {{ form.files }}
+                                <input type="file" name="files" class="form-control" accept=".pdf,application/pdf" multiple>
                                 <div class="form-text">複数選択できます。Vector DB登録後、元PDFはサーバから削除します。</div>
                             </div>
                             <div id="openaiRagPdfUploadProgress" class="d-none mb-3">

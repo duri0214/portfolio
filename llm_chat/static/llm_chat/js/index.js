@@ -280,6 +280,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch((error) => {
                 console.error("送信エラー:", error);
+                showToast("通信エラーが発生しました。サーバーのログを確認してください。", "danger");
                 stopLoading();
             });
     }

@@ -56,10 +56,12 @@ class OpenAIRagPdfMetadata:
     chunk_basis: str = OPENAI_RAG_CHUNK_BASIS
 
     def to_dict(self) -> dict[str, str | int]:
+        collection_label = f"{self.pdf.source_extension_label}｜{self.collection_name}"
         return {
             "id": f"{self.pdf.document_id}_page_{self.page}",
             "rag_pdf_id": self.pdf.pdf_id,
-            "collection_name": f"{self.pdf.source_extension_label}｜{self.collection_name}",
+            "collection_name": self.collection_name,
+            "collection_label": collection_label,
             "embedding_model": self.embedding_model,
             "chunk_basis": self.chunk_basis,
             "source": self.pdf.source_name,
@@ -93,6 +95,7 @@ class OpenAIRagCollectionItem:
 
     chroma_id: str
     collection_name: str
+    collection_label: str
     source: str
     file_name: str
     embedding_model: str

@@ -51,8 +51,9 @@ class OpenAIRagPdfImportServiceTest(TestCase):
         documents = vector_repository.upsert_documents.call_args.args[0]
         self.assertEqual(documents[0].page_content, "1ページ目の本文")
         self.assertEqual(documents[0].metadata["rag_pdf_id"], 10)
+        self.assertEqual(documents[0].metadata["collection_name"], "openai_rag_pdfs")
         self.assertEqual(
-            documents[0].metadata["collection_name"], "PDF｜openai_rag_pdfs"
+            documents[0].metadata["collection_label"], "PDF｜openai_rag_pdfs"
         )
         self.assertEqual(
             documents[0].metadata["embedding_model"], "text-embedding-3-small"
