@@ -4,7 +4,7 @@
 
 現場でJiraを使う機会が増えたので、Jira Cloud REST API v3 を Python から素朴に呼び出す形で整理します。
 
-以前は「プロジェクト一覧を取る」「チケット一覧を取る」ところまででしたが、今回は Issue #236 の対応として、チケットの作成・取得・編集・削除までを `lib/jira/` に足しました。
+2025版では「プロジェクト一覧を取る」「チケット一覧を取る」ところまででしたが、今回は [Issue #236](https://github.com/duri0214/portfolio/issues/236) の対応として、チケットの作成・取得・編集・削除までを `lib/jira/` に足しました。
 
 この記事は2段構成です。
 
@@ -14,7 +14,7 @@
 ## 参考
 
 - Jira Cloud platform REST API v3
-- Issue #236: lib: jiraライブラリにCRUDをつける
+- [Issue #236: lib: jiraライブラリにCRUDをつける](https://github.com/duri0214/portfolio/issues/236)
 
 ## Jira側でAPIトークンを生成する
 
