@@ -16,6 +16,37 @@ apply: always
 - GitHub API、GitHub App、MCP の GitHub 更新系ツールで Issue/PR を作成・更新・コメントしない。権限差や挙動差でチケット重複・意図しない更新が起きるため。
 - `gh` で GitHub 操作が失敗した場合も、API 等で迂回せず、原因を切り分けてユーザーに確認する。
 
+## GitHub Issue/PR ラベル運用
+- 対象アプリが明確な Issue/PR には、種別・優先度ラベルとは別に `app: <slug>` 形式のアプリラベルを付ける。
+- アプリラベルは、主な変更対象となる Django アプリ、共通ライブラリ、または機能領域を示す。複数領域に同程度の変更が入る場合だけ複数のアプリラベルを付ける。
+- 横断的な設定、デプロイ、CI、ドキュメント、リポジトリ運用だけの Issue/PR には、無理にアプリラベルを付けない。
+- ラベル名は GitHub 上に存在するものを優先し、新規作成が必要な場合は既存の `app: ...` 命名に合わせる。
+- `app:` ラベルが存在していても、Issue への紐づきが 0 件のものは対応表へ常設しない。必要になった時点で対応表へ追加する。
+
+### アプリラベル対応表
+
+2026-06-26 時点で Issue に紐づいている `app:` ラベルを基準にする。
+
+| Label | 対応する主な領域 | 目安 |
+| --- | --- | --- |
+| `app: agent` | `ai_agent/` | AI Agent の画面、会話管理、エージェント用ドメイン。 |
+| `app: bank` | `bank/` | 銀行明細、MUFG CSV、資金分析。 |
+| `app: googlemap` | `gmarker/` | Google Maps 連携、GMarker、地図ピン・レビュー分析。 |
+| `app: hospital` | `hospital/` | 病院・不在者投票管理。 |
+| `app: japan-research` | `jp_stocks/`、日本市場調査系 | 日本株、日本市場、国内調査系の機能。 |
+| `app: kokkai` | `kokkai/` | 国会・議事録・政治情報分析。 |
+| `app: lib` | `lib/` | 複数アプリで使う共通ライブラリ。より具体的な専用ラベルがある場合はそちらを優先する。 |
+| `app: llm-chat` | `llm_chat/` | LLM チャット、RAG、PDF 取り込み・分析。 |
+| `app: missile-research` | ミサイル/安全保障調査系 | 専用ディレクトリがない旧・構想系領域。既存 Issue の継続時に使う。 |
+| `app: pptx` | `lib/pptx_generator/` | PPTX 生成・テンプレート編集ライブラリ。 |
+| `app: quake-research` | 地震調査系 | 専用ディレクトリがない旧・構想系領域。既存 Issue の継続時に使う。 |
+| `app: rental-shop` | `rental_shop/` | レンタルショップ、倉庫・商品管理。 |
+| `app: shopping` | `shopping/` | ショッピング、出店計画、店舗系機能。 |
+| `app: soil-analysis` | `soil_analysis/` | 土壌分析、圃場、天気、商圏マップ。 |
+| `app: taxonomy` | `taxonomy/` | Taxonomy アプリ、分類・体系化機能。 |
+| `app: usa-research` | `usa_research/` | 米国株、マクロ指標、米国市場分析。 |
+| `app: vietnam-research` | `vietnam_research/` | ベトナム株、統計、ベトナム市場分析。 |
+
 ## 設計方針
 - 基本的に DDD（ドメイン駆動設計）のエッセンスに沿って設計・実装する。
 - `domain/` 配下は基本的に Repository、Service、Value Object の3層で構成する。
