@@ -16,9 +16,35 @@ document.addEventListener("DOMContentLoaded", function () {
     const loadingIndicator = document.getElementById("loading-indicator");
     let isLoading = false;
 
-    function isSuperuserButtonEnabled() {
-        // when not superuser, a button is rendered disabled; keep it disabled
-        return !sendButton.hasAttribute("disabled") || sendButton.classList.contains("btn-primary");
+    function canUseChatButtons() {
+        return sendButton.classList.contains("btn-primary");
+    }
+
+    function isRiddleResetButton() {
+        return riddleButton && riddleButton.classList.contains("btn-warning");
+    }
+
+    function updateActionButtons() {
+        if (!canUseChatButtons()) {
+            return;
+        }
+
+        const isRiddleSelected = useCaseType.value === "Riddle";
+        const isRiddleReset = isRiddleResetButton();
+
+        if (riddleButton) {
+            riddleButton.disabled = !isRiddleSelected && !isRiddleReset;
+        }
+        if (sendButton) {
+            sendButton.disabled = isRiddleSelected && !isRiddleReset;
+        }
+    }
+
+    function updateUseCaseFields() {
+        audioFileContainer.style.display = useCaseType.value === "OpenAISpeechToText" ? "block" : "none";
+        genderContainer.style.display = useCaseType.value === "Riddle" ? "block" : "none";
+        ragPdfContainer.style.display = useCaseType.value === "OpenAIRag" ? "block" : "none";
+        updateActionButtons();
     }
 
     function startLoading() {
@@ -45,15 +71,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         if (sendButton) {
             sendButton.value = "送信";
-            if (isSuperuserButtonEnabled()) {
-                sendButton.disabled = false;
-            }
         }
-        if (riddleButton) {
-            if (isSuperuserButtonEnabled()) {
-                riddleButton.disabled = false;
-            }
-        }
+        updateActionButtons();
     }
 
     // ChatLogs全削除ボタン
@@ -287,43 +306,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ドロップダウン変更時のイベント処理
     useCaseType.addEventListener("change", function () {
-        if (useCaseType.value === "OpenAISpeechToText") {
-            audioFileContainer.style.display = "block"; // フォームを表示
-        } else {
-            audioFileContainer.style.display = "none"; // フォームを非表示
-        }
-
-        if (useCaseType.value === "Riddle") {
-            genderContainer.style.display = "block";
-        } else {
-            genderContainer.style.display = "none";
-        }
-
-        if (useCaseType.value === "OpenAIRag") {
-            ragPdfContainer.style.display = "block";
-        } else {
-            ragPdfContainer.style.display = "none";
-        }
+        updateUseCaseFields();
     });
 
     // ページロード時にも選択状態に応じてフィールドを表示／非表示
-    if (useCaseType.value === "OpenAISpeechToText") {
-        audioFileContainer.style.display = "block";
-    } else {
-        audioFileContainer.style.display = "none";
-    }
-
-    if (useCaseType.value === "Riddle") {
-        genderContainer.style.display = "block";
-    } else {
-        genderContainer.style.display = "none";
-    }
-
-    if (useCaseType.value === "OpenAIRag") {
-        ragPdfContainer.style.display = "block";
-    } else {
-        ragPdfContainer.style.display = "none";
-    }
+    updateUseCaseFields();
 
     // ページ下部へスクロール
     function scrollToBottom() {
