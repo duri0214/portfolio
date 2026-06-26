@@ -140,6 +140,11 @@ urlpatterns = [
         name="rokunohe_land_registry",
     ),
     path(
+        "rokunohe/farmland-risk",
+        views.RokunoheFarmlandRiskView.as_view(),
+        name="rokunohe_farmland_risk",
+    ),
+    path(
         "land-ledger/create-ajax/",
         views.LandLedgerCreateAjaxView.as_view(),
         name="land_ledger_create_ajax",

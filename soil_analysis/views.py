@@ -62,6 +62,9 @@ from soil_analysis.domain.service.hardness_measurement_service import (
 from soil_analysis.domain.service.hardness_plot_generation import (
     HardnessPlotGenerationService,
 )
+from soil_analysis.domain.service.agricultural_statistics import (
+    AgriculturalStatisticsService,
+)
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.prefecture_commercial_area import (
     PrefectureCommercialAreaService,
@@ -1557,4 +1560,13 @@ class RokunoheLandRegistryListView(ListView):
             }
             for row in current_totals
         ]
+        return context
+
+
+class RokunoheFarmlandRiskView(TemplateView):
+    template_name = "soil_analysis/rokunohe_farmland_risk/report.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["dashboard"] = AgriculturalStatisticsService.build_dashboard()
         return context
