@@ -55,6 +55,14 @@ class Command(BaseCommand):
                     + ", ".join(result.skipped_dataset_keys)
                 )
             )
+        fetched_count = (
+            result.created_count + result.skipped_count + result.dry_run_count
+        )
+        if fetched_count == 0 and result.skipped_dataset_keys:
+            raise CommandError(
+                "No e-Stat datasets were fetched. Configure EstatDataset.stats_data_id "
+                "and filters before running this command."
+            )
         self.stdout.write(
             self.style.SUCCESS(
                 "e-Stat farmland statistics fetch completed. "

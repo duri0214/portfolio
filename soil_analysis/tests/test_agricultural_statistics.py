@@ -124,6 +124,38 @@ class AgriculturalStatisticsRepositoryTest(TestCase):
 
         self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 2)
 
+    def test_ensure_dataset_updates_placeholder_stats_data_id(self):
+        """
+        シナリオ:
+        - 入力: 統計表IDが TODO のまま作成済みの指標定義。
+        - 処理: Repositoryで初期指標定義の存在を保証する。
+        - 期待値: ユーザー設定済みの値ではなく TODO の場合だけ、確認済みの初期値に更新されること。
+        """
+        EstatDataset.objects.create(
+            indicator_key="total_cultivated_area",
+            display_name="経営耕地面積",
+            stats_data_id="TODO_TOTAL_CULTIVATED_AREA",
+            filters={},
+            unit="ha",
+        )
+
+        dataset = AgriculturalStatisticsRepository.ensure_dataset(
+            {
+                "indicator_key": "total_cultivated_area",
+                "display_name": "経営耕地面積",
+                "stats_data_id": "0002068836",
+                "filters": {
+                    "cdCat01": "1171",
+                    "cdCat02": "1001",
+                },
+                "unit": "ha",
+                "category": "base",
+            }
+        )
+
+        self.assertEqual(dataset.stats_data_id, "0002068836")
+        self.assertEqual(dataset.filters["cdCat01"], "1171")
+
 
 class AgriculturalRiskCalculatorTest(TestCase):
     def test_calculate_uses_issue_formula(self):

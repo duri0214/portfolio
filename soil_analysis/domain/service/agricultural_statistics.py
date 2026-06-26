@@ -22,8 +22,11 @@ DEFAULT_ESTAT_DATASETS = [
     {
         "indicator_key": "total_cultivated_area",
         "display_name": "経営耕地面積",
-        "stats_data_id": "TODO_TOTAL_CULTIVATED_AREA",
-        "filters": {},
+        "stats_data_id": "0002068836",
+        "filters": {
+            "cdCat01": "1171",
+            "cdCat02": "1001",
+        },
         "unit": "ha",
         "category": "base",
     },

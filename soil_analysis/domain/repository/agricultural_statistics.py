@@ -71,7 +71,7 @@ class AgriculturalStatisticsRepository:
     @staticmethod
     def ensure_dataset(definition: dict) -> EstatDataset:
         """
-        指標定義が未作成の場合だけ初期値で作成します。
+        指標定義を取得し、未作成または TODO 状態の場合だけ初期値を反映します。
 
         Args:
             definition: 指標定義。
@@ -79,16 +79,21 @@ class AgriculturalStatisticsRepository:
         Returns:
             EstatDataset: 保存済み指標定義。
         """
-        dataset, _ = EstatDataset.objects.get_or_create(
+        defaults = {
+            "display_name": definition["display_name"],
+            "stats_data_id": definition["stats_data_id"],
+            "filters": definition.get("filters", {}),
+            "unit": definition.get("unit", ""),
+            "category": definition.get("category", ""),
+        }
+        dataset, created = EstatDataset.objects.get_or_create(
             indicator_key=definition["indicator_key"],
-            defaults={
-                "display_name": definition["display_name"],
-                "stats_data_id": definition["stats_data_id"],
-                "filters": definition.get("filters", {}),
-                "unit": definition.get("unit", ""),
-                "category": definition.get("category", ""),
-            },
+            defaults=defaults,
         )
+        if not created and dataset.stats_data_id.startswith("TODO_"):
+            for field, value in defaults.items():
+                setattr(dataset, field, value)
+            dataset.save(update_fields=[*defaults.keys(), "updated_at"])
         return dataset
 
     @staticmethod
