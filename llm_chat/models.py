@@ -1,7 +1,15 @@
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
 from django.contrib.auth.models import User
 from django.db import models
 
 from lib.llm.valueobject.completion import RoleType
+from llm_chat.domain.valueobject.completion.rag import (
+    OPENAI_RAG_EMBEDDING_MODEL,
+    build_openai_rag_collection_label,
+    build_openai_rag_collection_name,
+)
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
@@ -108,3 +116,62 @@ class RiddleQuestion(models.Model):
 
     def __str__(self):
         return f"{self.order}: {self.question_text[:20]}..."
+
+
+class OpenAIRagPdf(models.Model):
+    """
+    OpenAI RAGで利用するPDFファイルを管理するモデル。
+
+    固定サンプルPDFを暗黙に使うのではなく、ユーザーが登録したPDFを
+    チャット画面で明示的に選択できるようにするためのメタデータを保持します。
+
+    Attributes:
+        display_name: チャット画面や管理画面に表示するPDF名。
+        collection_name: Chroma DB上の物理collection名。
+        is_active: チャット画面の選択肢として表示するかどうか。
+        imported_at: Vector DBへの登録が完了した日時。
+        created_at: レコードの作成日時。
+    """
+
+    display_name = models.CharField("表示名", max_length=255)
+    collection_name = models.CharField(
+        "物理collection名", max_length=63, unique=True, null=True, blank=True
+    )
+    is_active = models.BooleanField("有効", default=True)
+    imported_at = models.DateTimeField("Vector DB登録日時", null=True, blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "OpenAI RAG PDF"
+        verbose_name_plural = "OpenAI RAG PDF一覧"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.display_name
+
+    def assign_collection_name(self) -> None:
+        if not self.id:
+            raise ValueError("collection_name requires a saved OpenAIRagPdf ID")
+        if self.collection_name:
+            return
+
+        self.collection_name = build_openai_rag_collection_name(self.id)
+        self.save(update_fields=["collection_name"])
+
+    @property
+    def collection_label(self) -> str:
+        suffix = Path(self.display_name).suffix.lstrip(".")
+        source_extension_label = suffix.upper() if suffix else "UNKNOWN"
+        imported_at = "未登録"
+        if self.imported_at:
+            imported_at = (
+                self.imported_at.astimezone(ZoneInfo("Asia/Tokyo"))
+                .replace(microsecond=0)
+                .strftime("%Y-%m-%d %H:%M:%S")
+            )
+        return build_openai_rag_collection_label(
+            source_extension_label=source_extension_label,
+            source_name=self.display_name,
+            embedding_model=OPENAI_RAG_EMBEDDING_MODEL,
+            imported_at=imported_at,
+        )

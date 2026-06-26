@@ -1,7 +1,8 @@
 import os
-from typing import Generator
+from typing import Any, Generator
 
 from django.contrib.auth.models import User
+from django.http import HttpRequest
 
 from lib.llm.service.completion import (
     LlmCompletionService,
@@ -17,8 +18,104 @@ from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
 from llm_chat.domain.service.completion.riddle import RiddleService
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
-from llm_chat.domain.valueobject.completion.riddle import Gender, Riddle, SessionState
+from llm_chat.domain.valueobject.completion.riddle import (
+    Gender,
+    GenderType,
+    Riddle,
+    SessionState,
+)
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
+
+
+class ChatDisplayService:
+    """
+    IndexViewなどの表示ロジックを担当するサービスクラス。
+
+    Attributes:
+        REGULAR_CHAT_EXCLUDED_USE_CASE_TYPES:
+            通常チャット画面から分離する専用ユースケース。
+    """
+
+    REGULAR_CHAT_EXCLUDED_USE_CASE_TYPES = (UseCaseType.ROKUNOHE_MINUTES_RAG,)
+
+    @staticmethod
+    def get_regular_chat_history(login_user: User) -> list[MessageDTO]:
+        """
+        通常チャット画面に表示する履歴を取得します。
+
+        六戸町会議録RAGは専用画面で扱うため、通常チャット画面からは除外します。
+        """
+        return ChatLogRepository.find_chat_history(
+            user=login_user,
+            excluded_use_case_types=(
+                ChatDisplayService.REGULAR_CHAT_EXCLUDED_USE_CASE_TYPES
+            ),
+        )
+
+    @staticmethod
+    def get_initial_values(request: HttpRequest, login_user: User) -> dict[str, Any]:
+        """
+        フォームの初期値を決定します。
+
+        以下の優先順位で `use_case_type` を決定します：
+        1. なぞなぞが進行中の場合（最新のなぞなぞ履歴が未終了）："Riddle"
+        2. セッションに保存された use_case_type がある場合：それを優先
+        3. 過去のチャット履歴がある場合：最新のメッセージで使用されたモデルから推定
+        4. 履歴がない場合：デフォルトの "OpenAIGptStreaming"
+        """
+        initial = {}
+        chat_history = ChatDisplayService.get_regular_chat_history(login_user)
+
+        if ChatDisplayService.is_riddle_active(chat_history):
+            initial["use_case_type"] = UseCaseType.RIDDLE
+            riddle_gender = request.session.get("riddle_gender")
+            if riddle_gender:
+                initial["gender"] = riddle_gender
+            return initial
+
+        session_use_case_type = request.session.get("use_case_type")
+        if (
+            session_use_case_type
+            and session_use_case_type
+            not in ChatDisplayService.REGULAR_CHAT_EXCLUDED_USE_CASE_TYPES
+        ):
+            initial["use_case_type"] = session_use_case_type
+        else:
+            last_log = chat_history[-1] if chat_history else None
+            initial["use_case_type"] = (
+                last_log.use_case_type if last_log else UseCaseType.OPENAI_GPT_STREAMING
+            )
+
+        riddle_gender = request.session.get("riddle_gender")
+        if riddle_gender:
+            initial["gender"] = riddle_gender
+        else:
+            initial["gender"] = GenderType.MAN.value
+
+        rag_pdf_id = request.session.get("rag_pdf_id")
+        if rag_pdf_id:
+            initial["rag_pdf"] = rag_pdf_id
+
+        return initial
+
+    @staticmethod
+    def is_riddle_active(chat_history: list) -> bool:
+        """
+        なぞなぞが進行中か判定します。
+        最新の履歴がなぞなぞモード（UseCaseType.RIDDLE）であり、 かつ
+        AIからの終了定型文（RiddleService.RIDDLE_END_MESSAGE）が含まれていない場合に
+        「進行中（アクティブ）」とみなされます。
+
+        フロントエンドでは、この判定結果に基づきボタンの色（黄色＝進行中、緑色＝開始前）が変化します。
+        """
+        if not chat_history:
+            return False
+
+        last_log = chat_history[-1]
+        return (
+            last_log.use_case_type == UseCaseType.RIDDLE
+            and RiddleService.RIDDLE_END_MESSAGE not in (last_log.content or "")
+        )
 
 
 class ChatService(BaseChatService):

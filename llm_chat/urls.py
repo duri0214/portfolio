@@ -10,6 +10,12 @@ from .views import (
     RiddleAdminView,
     RiddleCSVUploadView,
     RiddleSampleCSVView,
+    OpenAIRagPdfAdminView,
+    OpenAIRagPdfUploadView,
+    OpenAIRagPdfDeleteView,
+    OpenAIRagPdfCollectionDeleteAllView,
+    OpenAIRagPdfCollectionViewerView,
+    OpenAIRagSamplePdfDownloadView,
     RokunohePdfDownloadView,
     RokunoheVectorDbResetView,
     RokunoheCollectionStatsView,
@@ -23,6 +29,36 @@ urlpatterns = [
         "rokunohe-minutes/", RokunoheMinutesRagView.as_view(), name="rokunohe_minutes"
     ),
     path("riddle_admin/", RiddleAdminView.as_view(), name="riddle_admin"),
+    path(
+        "openai-rag-pdfs/",
+        OpenAIRagPdfAdminView.as_view(),
+        name="openai_rag_pdf_admin",
+    ),
+    path(
+        "openai-rag-pdfs/upload/",
+        OpenAIRagPdfUploadView.as_view(),
+        name="openai_rag_pdf_upload",
+    ),
+    path(
+        "openai-rag-pdfs/<int:pdf_id>/delete/",
+        OpenAIRagPdfDeleteView.as_view(),
+        name="openai_rag_pdf_delete",
+    ),
+    path(
+        "openai-rag-pdfs/collection-delete-all/",
+        OpenAIRagPdfCollectionDeleteAllView.as_view(),
+        name="openai_rag_pdf_collection_delete_all",
+    ),
+    path(
+        "openai-rag-pdfs/collection-viewer/",
+        OpenAIRagPdfCollectionViewerView.as_view(),
+        name="openai_rag_pdf_collection_viewer",
+    ),
+    path(
+        "openai-rag-pdfs/samples/<path:filename>/",
+        OpenAIRagSamplePdfDownloadView.as_view(),
+        name="openai_rag_sample_pdf_download",
+    ),
     path(
         "riddle_admin/upload/",
         RiddleCSVUploadView.as_view(),

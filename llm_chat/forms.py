@@ -44,10 +44,22 @@ class UserTextForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        rag_pdf_choices = kwargs.pop("rag_pdf_choices", [])
         for field in self.base_fields.values():
             field.widget.attrs["class"] = "form-control"
             field.widget.attrs["rows"] = 3
         super().__init__(*args, **kwargs)
+        self.fields["rag_pdf"].choices = [
+            ("", "PDFを選択してください"),
+            *rag_pdf_choices,
+        ]
+
+    rag_pdf = forms.ChoiceField(
+        choices=[],
+        label="RAG PDF",
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
 
 
 class RiddleCSVUploadForm(forms.Form):
@@ -58,3 +70,15 @@ class RiddleCSVUploadForm(forms.Form):
             attrs={"class": "form-control", "accept": ".csv"}
         ),
     )
+
+
+class MultiplePdfFileField(forms.FileField):
+    def clean(self, data, initial=None):
+        files = data if isinstance(data, (list, tuple)) else [data]
+        if not files:
+            raise forms.ValidationError("PDFファイルを選択してください。")
+        cleaned_files = [forms.FileField.clean(self, file, initial) for file in files]
+        for file in cleaned_files:
+            if not file.name.lower().endswith(".pdf"):
+                raise forms.ValidationError("PDFファイルを選択してください。")
+        return cleaned_files

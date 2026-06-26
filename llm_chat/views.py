@@ -6,30 +6,45 @@ import math
 import os
 import traceback
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Generator
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import transaction
-from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
+from django.http import (
+    FileResponse,
+    Http404,
+    StreamingHttpResponse,
+    JsonResponse,
+    HttpResponse,
+)
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.generic import FormView
 from dotenv import load_dotenv
+from openai import RateLimitError
 
 from lib.llm.valueobject.completion import StreamResponse
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
 from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
+from llm_chat.domain.repository.completion.rag import (
+    OpenAIRagPdfRepository,
+    OpenAIRagVectorRepository,
+)
 from llm_chat.domain.repository.completion.rokunohe_minutes import (
     RokunoheMinutesRagRepository,
 )
-from llm_chat.domain.service.chat import ChatDisplayService
+from llm_chat.domain.service.completion.chat import ChatDisplayService
+from llm_chat.domain.service.completion.rag import OpenAIRagPdfImportService
 from llm_chat.domain.service.completion.rokunohe_minutes import (
     RokunoheMinutesCollectionStatsService,
     RokunoheMinutesRagService,
@@ -47,8 +62,8 @@ from llm_chat.domain.valueobject.completion.riddle import (
     SessionState,
 )
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
-from llm_chat.forms import UserTextForm, RiddleCSVUploadForm
-from llm_chat.models import RiddleQuestion
+from llm_chat.forms import UserTextForm, RiddleCSVUploadForm, MultiplePdfFileField
+from llm_chat.models import RiddleQuestion, OpenAIRagPdf
 
 # .env ファイルを読み込む
 load_dotenv()
@@ -56,6 +71,13 @@ load_dotenv()
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
+
+
+OPENAI_RAG_QUOTA_ERROR_MESSAGE = (
+    "OpenAI APIの利用枠または課金設定が不足しているため、"
+    "PDFのEmbedding作成に失敗しました。"
+    "OpenAI PlatformのBillingで支払い設定またはクレジット残高を確認してください。"
+)
 
 
 def _get_login_user(request):
@@ -149,6 +171,11 @@ class IndexView(FormView):
     form_class = UserTextForm
     success_url = reverse_lazy("llm:index")
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["rag_pdf_choices"] = OpenAIRagPdfRepository.list_active_choices()
+        return kwargs
+
     def get_initial(self):
         """フォームの初期値を設定します。"""
         initial = super().get_initial()
@@ -168,8 +195,288 @@ class IndexView(FormView):
         context["chat_history"] = [log.to_display() for log in chat_history]
         context["is_superuser"] = self.request.user.is_superuser
         context["is_riddle_active"] = ChatDisplayService.is_riddle_active(chat_history)
+        context["rag_pdf_count"] = OpenAIRagPdf.objects.filter(is_active=True).count()
 
         return context
+
+
+class OpenAIRagPdfAdminView(UserPassesTestMixin, View):
+    """
+    OpenAI RAGで使用するPDFの登録・一覧表示を行う管理者用ビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get(self, request, *args, **kwargs):
+        context = {
+            "pdfs": OpenAIRagPdf.objects.all(),
+            "sample_pdfs": self._get_sample_pdfs(),
+        }
+        return render(request, "llm_chat/openai_rag_pdf_admin.html", context)
+
+    @staticmethod
+    def _get_sample_pdfs() -> list[dict[str, str]]:
+        sample_dir = Path(settings.BASE_DIR) / "lib" / "llm" / "pdf_sample"
+        if not sample_dir.exists():
+            return []
+        labels = {
+            "doj_cloud_act_white_paper_2019_04_10.pdf": "サンプル1: 英文の法律",
+            "令和4年版少子化社会対策白書全体版（PDF版）.pdf": "サンプル2: 少子化社会対策白書",
+            "条立ての文書サンプル.pdf": "サンプル3: 条立て文書",
+        }
+        return [
+            {"filename": path.name, "label": labels.get(path.name, path.stem)}
+            for path in sorted(sample_dir.glob("*.pdf"), key=lambda p: p.name)
+        ]
+
+
+class OpenAIRagPdfUploadView(UserPassesTestMixin, View):
+    """
+    OpenAI RAG用PDFを保存し、Vector DBへ登録する管理者用ビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        try:
+            pdf_files = MultiplePdfFileField().clean(request.FILES.getlist("files"))
+        except ValidationError as e:
+            for error in e.messages:
+                messages.warning(request, error)
+            return redirect("llm:openai_rag_pdf_admin")
+
+        import_service = OpenAIRagPdfImportService()
+        registered_count = 0
+        total_imported_count = 0
+        empty_pdfs = []
+        failed_pdfs = []
+        quota_error_occurred = False
+        for file in pdf_files:
+            pdf = OpenAIRagPdf.objects.create(display_name=file.name)
+            pdf.assign_collection_name()
+            try:
+                imported_count = import_service.import_pdf(pdf.id, pdf_file=file)
+            except RateLimitError:
+                logger.error(
+                    "OpenAIRagPdfUploadView RateLimitError: OpenAI quota or billing is insufficient",
+                    exc_info=True,
+                )
+                pdf.delete()
+                quota_error_occurred = True
+                break
+            except Exception as e:
+                logger.error(f"OpenAIRagPdfUploadView Error: {str(e)}")
+                logger.error(traceback.format_exc())
+                pdf.delete()
+                failed_pdfs.append(file.name)
+                continue
+
+            if imported_count:
+                registered_count += 1
+                total_imported_count += imported_count
+            else:
+                pdf.delete()
+                empty_pdfs.append(file.name)
+
+        if registered_count:
+            messages.success(
+                request,
+                f"PDFを{registered_count}件登録しました。Vector DB登録ページ数: {total_imported_count}件",
+            )
+        if empty_pdfs:
+            messages.warning(
+                request,
+                f"本文を抽出できないPDFがありました: {', '.join(empty_pdfs)}",
+            )
+        if quota_error_occurred:
+            messages.error(request, OPENAI_RAG_QUOTA_ERROR_MESSAGE)
+        if failed_pdfs:
+            messages.error(
+                request,
+                f"PDFのVector DB登録に失敗しました: {', '.join(failed_pdfs)}",
+            )
+        return redirect("llm:openai_rag_pdf_admin")
+
+
+class OpenAIRagPdfDeleteView(UserPassesTestMixin, View):
+    """
+    OpenAI RAG用PDFと、そのPDF由来のVector DBチャンクを削除する管理者用ビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, pdf_id, *args, **kwargs):
+        try:
+            pdf_source = OpenAIRagPdfRepository.find_active(pdf_id)
+            deleted_count = OpenAIRagVectorRepository(
+                api_key=os.getenv("OPENAI_API_KEY") or "",
+                collection_name=pdf_source.collection_name,
+            ).delete_pdf_documents(pdf_source)
+            pdf = OpenAIRagPdf.objects.get(id=pdf_id)
+            pdf.delete()
+            messages.success(
+                request,
+                f"削除しました。Vector DB削除件数: {deleted_count}件",
+            )
+        except OpenAIRagPdf.DoesNotExist:
+            messages.warning(request, "削除対象のPDFが見つかりません。")
+        return redirect("llm:openai_rag_pdf_admin")
+
+
+class OpenAIRagPdfCollectionDeleteAllView(UserPassesTestMixin, View):
+    """
+    OpenAI RAG PDF用collection内の全チャンクと登録情報を削除するビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        deleted_count = 0
+        for pdf in OpenAIRagPdfRepository.list_active():
+            pdf_source = OpenAIRagPdfRepository.find_active(pdf.id)
+            deleted_count += OpenAIRagVectorRepository(
+                api_key=os.getenv("OPENAI_API_KEY") or "",
+                collection_name=pdf_source.collection_name,
+            ).delete_all_documents()
+        OpenAIRagPdf.objects.all().delete()
+        messages.success(
+            request,
+            f"全削除しました。Vector DB削除件数: {deleted_count}件",
+        )
+        return redirect("llm:openai_rag_pdf_admin")
+
+
+class OpenAIRagPdfCollectionViewerView(UserPassesTestMixin, View):
+    """
+    OpenAI RAG PDFのChroma DB collection内容を確認する管理者用ビュー。
+    """
+
+    raise_exception = True
+    default_per_page = 100
+    per_page_options = (50, 100, 200, 500)
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get(self, request, *args, **kwargs):
+        per_page = self._get_per_page(request)
+        current_page = self._get_current_page(request)
+        document_choices = OpenAIRagPdfRepository.list_active()
+        selected_pdf_id = self._get_selected_pdf_id(request)
+        if selected_pdf_id is None and document_choices:
+            selected_pdf_id = document_choices[0].id
+
+        offset = (current_page - 1) * per_page
+        selected_pdf = None
+        repository = None
+        collection_items = []
+        total_count = 0
+        if selected_pdf_id is not None:
+            try:
+                selected_pdf = OpenAIRagPdfRepository.find_active(selected_pdf_id)
+                repository = OpenAIRagVectorRepository(
+                    api_key=os.getenv("OPENAI_API_KEY") or "",
+                    collection_name=selected_pdf.collection_name,
+                )
+                total_count = repository.count_collection_items()
+            except OpenAIRagPdf.DoesNotExist:
+                selected_pdf_id = None
+
+        total_pages = max(math.ceil(total_count / per_page), 1)
+        if current_page > total_pages:
+            current_page = total_pages
+            offset = (current_page - 1) * per_page
+
+        if repository is not None:
+            collection_items = repository.list_collection_items(
+                limit=per_page,
+                offset=offset,
+            )
+        context = {
+            "collection_items": collection_items,
+            "document_choices": document_choices,
+            "current_page": current_page,
+            "has_next_page": current_page < total_pages,
+            "has_previous_page": current_page > 1,
+            "next_page": current_page + 1,
+            "page_start": offset + 1 if total_count else 0,
+            "page_end": offset + len(collection_items),
+            "per_page": per_page,
+            "per_page_options": self.per_page_options,
+            "physical_collection_name": (
+                selected_pdf.collection_name if selected_pdf is not None else ""
+            ),
+            "previous_page": current_page - 1,
+            "selected_pdf_id": str(selected_pdf_id) if selected_pdf_id else "",
+            "total_count": total_count,
+            "total_pages": total_pages,
+        }
+        return render(request, "llm_chat/openai_rag_collection_viewer.html", context)
+
+    def _get_per_page(self, request) -> int:
+        try:
+            per_page = int(request.GET.get("per_page", self.default_per_page))
+        except (TypeError, ValueError):
+            return self.default_per_page
+
+        if per_page not in self.per_page_options:
+            return self.default_per_page
+        return per_page
+
+    @staticmethod
+    def _get_current_page(request) -> int:
+        try:
+            page = int(request.GET.get("page", 1))
+        except (TypeError, ValueError):
+            return 1
+
+        return max(page, 1)
+
+    @staticmethod
+    def _get_selected_pdf_id(request) -> int | None:
+        raw_pdf_id = request.GET.get("pdf_id", "").strip()
+        if not raw_pdf_id:
+            return None
+        try:
+            return int(raw_pdf_id)
+        except ValueError:
+            return None
+
+
+class OpenAIRagSamplePdfDownloadView(UserPassesTestMixin, View):
+    """
+    lib/llm/pdf_sample 配下のPDFをサンプルとしてダウンロードするビュー。
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get(self, request, filename, *args, **kwargs):
+        sample_dir = Path(settings.BASE_DIR) / "lib" / "llm" / "pdf_sample"
+        file_path = (sample_dir / filename).resolve()
+        if sample_dir.resolve() not in file_path.parents or file_path.suffix != ".pdf":
+            raise Http404("PDF sample not found")
+        if not file_path.exists():
+            raise Http404("PDF sample not found")
+        return FileResponse(
+            file_path.open("rb"),
+            as_attachment=True,
+            filename=file_path.name,
+        )
 
 
 class RokunoheMinutesRagView(View):
@@ -504,6 +811,7 @@ class SyncResponseView(View):
             user_input = request.POST.get("user_input")
             audio_file = request.FILES.get("audio_file")
             gender_val = request.POST.get("gender")
+            rag_pdf_id = request.POST.get("rag_pdf")
 
             if not use_case_type:
                 return JsonResponse({"error": "No use case type provided"}, status=400)
@@ -539,7 +847,14 @@ class SyncResponseView(View):
 
             # ユースケースの実行
             try:
-                if isinstance(use_case, RiddleUseCase):
+                if use_case_type == UseCaseType.OPENAI_RAG:
+                    message = use_case.execute(
+                        user=request.user,
+                        content=user_input,
+                        rag_pdf_id=rag_pdf_id,
+                    )
+                    request.session["rag_pdf_id"] = rag_pdf_id
+                elif isinstance(use_case, RiddleUseCase):
                     message = use_case.execute(
                         user=request.user, content=user_input, gender=gender
                     )
@@ -547,6 +862,15 @@ class SyncResponseView(View):
                     message = use_case.execute(user=request.user, content=user_input)
             except ValueError as e:
                 return JsonResponse({"error": str(e)}, status=400)
+            except RateLimitError:
+                logger.error(
+                    "SyncResponseView RateLimitError: OpenAI quota or billing is insufficient",
+                    exc_info=True,
+                )
+                return JsonResponse(
+                    {"error": OPENAI_RAG_QUOTA_ERROR_MESSAGE},
+                    status=402,
+                )
 
             # 成功レスポンスを返す
             success_message = f"{use_case_type} 処理が完了しました"

@@ -1,19 +1,27 @@
 import io
 import time
 from datetime import timedelta
+from unittest.mock import Mock, patch
 
+import httpx
 from django.contrib.auth.models import User
 from django.contrib.sessions.backends.db import SessionStore
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils import timezone
+from openai import RateLimitError
 
 from lib.llm.valueobject.completion import RoleType
 from lib.llm.valueobject.config import ModelName
 from llm_chat.domain.service.completion.riddle import RiddleService
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.models import ChatLogs, RiddleQuestion
-from llm_chat.views import IndexView, RiddleSampleCSVView, RiddleCSVUploadView
+from llm_chat.views import (
+    IndexView,
+    OPENAI_RAG_QUOTA_ERROR_MESSAGE,
+    RiddleSampleCSVView,
+    RiddleCSVUploadView,
+)
 
 
 class ViewLogicTest(TestCase):
@@ -333,6 +341,42 @@ class ViewLogicTest(TestCase):
         self.assertEqual(data["status"], "success")
         self.assertEqual(data["deleted"], 2)
         self.assertEqual(ChatLogs.objects.count(), 0)
+
+    def test_sync_response_openai_rag_rate_limit_error_message(self):
+        """
+        シナリオ:
+        - 入力: OpenAI RAG の同期リクエスト中に OpenAI API の利用枠エラーが発生する。
+        - 処理: SyncResponseView へ POST する。
+        - 期待値: ユーザーが課金/利用枠不足と分かるエラーメッセージをJSONで返す。
+        """
+        self.client.login(username="admin", password="password")
+        response = httpx.Response(
+            status_code=429,
+            request=httpx.Request("POST", "https://api.openai.com/v1/embeddings"),
+        )
+        rate_limit_error = RateLimitError(
+            "insufficient_quota",
+            response=response,
+            body={"code": "insufficient_quota"},
+        )
+        use_case = Mock()
+        use_case.execute.side_effect = rate_limit_error
+
+        with patch(
+            "llm_chat.views.UseCaseFactory.create",
+            return_value=use_case,
+        ):
+            response = self.client.post(
+                reverse("llm:sync_response"),
+                {
+                    "use_case_type": UseCaseType.OPENAI_RAG,
+                    "user_input": "質問",
+                    "rag_pdf": "1",
+                },
+            )
+
+        self.assertEqual(response.status_code, 402)
+        self.assertEqual(response.json()["error"], OPENAI_RAG_QUOTA_ERROR_MESSAGE)
 
     @staticmethod
     def _create_messages_mock():

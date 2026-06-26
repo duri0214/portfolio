@@ -423,7 +423,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         response = self.client.get(reverse("llm:rokunohe_minutes"))
 
         self.assertContains(response, "会議録PDF取得・ベクトル化")
-        self.assertContains(response, "管理者権限が必要なボタンは無効化されています")
+        self.assertContains(response, "管理ページに行くにはログインが必要です")
         self.assertContains(response, "disabled")
         self.assertContains(response, "コレクションリセット")
         self.assertContains(response, "頻出語集計")

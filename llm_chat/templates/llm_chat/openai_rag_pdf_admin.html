@@ -1,0 +1,144 @@
+{% extends 'llm_chat/base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'llm:index' %}">LLM Chat</a></li>
+                <li class="breadcrumb-item active" aria-current="page">OpenAI RAG PDF管理</li>
+            </ol>
+        </nav>
+
+        {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mb-2" role="alert">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="row g-4">
+            <div class="col-12 col-lg-5">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h1 class="h5 mb-3">PDF登録</h1>
+                        <form id="openaiRagPdfUploadForm" method="post" enctype="multipart/form-data" action="{% url 'llm:openai_rag_pdf_upload' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <input type="file" name="files" class="form-control" accept=".pdf,application/pdf" multiple>
+                                <div class="form-text">複数選択できます。Vector DB登録後、元PDFはサーバから削除します。</div>
+                            </div>
+                            <div id="openaiRagPdfUploadProgress" class="d-none mb-3">
+                                <div class="progress" role="progressbar" aria-label="PDF登録中">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                                </div>
+                                <div class="form-text">PDFをVector DBへ登録中です。画面を閉じずにお待ちください。</div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button id="openaiRagPdfUploadButton" type="submit" class="btn btn-primary">登録</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mt-4">
+                    <div class="card-body">
+                        <h2 class="h6 mb-3">サンプルPDFダウンロード</h2>
+                        {% if sample_pdfs %}
+                            <div class="d-flex flex-column gap-2">
+                                {% for sample_pdf in sample_pdfs %}
+                                    <a class="btn btn-outline-primary btn-sm text-start"
+                                       href="{% url 'llm:openai_rag_sample_pdf_download' sample_pdf.filename %}">
+                                        {{ sample_pdf.label }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">サンプルPDFはありません。</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-7">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                            <h2 class="h5 mb-0">登録済みPDF</h2>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'llm:openai_rag_pdf_collection_viewer' %}"
+                                   class="btn btn-outline-info btn-sm">コレクションビューア</a>
+                            {% if pdfs %}
+                                <form method="post"
+                                      action="{% url 'llm:openai_rag_pdf_collection_delete_all' %}"
+                                      onsubmit="return confirm('全PDFのVector DB登録データと登録情報を削除します。実行しますか？');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">全削除</button>
+                                </form>
+                            {% endif %}
+                            </div>
+                        </div>
+                        {% if pdfs %}
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                    <tr>
+                                        <th>collection_label</th>
+                                        <th>物理collection</th>
+                                        <th>Vector DB</th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for pdf in pdfs %}
+                                        <tr>
+                                            <td>{{ pdf.collection_label }}</td>
+                                            <td class="small font-monospace">{{ pdf.collection_name }}</td>
+                                            <td class="small">
+                                                {% if pdf.imported_at %}
+                                                    {{ pdf.imported_at|date:"Y-m-d H:i" }}
+                                                {% else %}
+                                                    未登録
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-flex justify-content-end gap-2">
+                                                    <form method="post"
+                                                          action="{% url 'llm:openai_rag_pdf_delete' pdf.id %}"
+                                                          onsubmit="return confirm('PDFとVector DB登録データを削除します。実行しますか？');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">削除</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">登録済みPDFはありません。</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("openaiRagPdfUploadForm");
+            const button = document.getElementById("openaiRagPdfUploadButton");
+            const progress = document.getElementById("openaiRagPdfUploadProgress");
+            if (!form || !button || !progress) return;
+
+            form.addEventListener("submit", function () {
+                button.disabled = true;
+                button.textContent = "登録中...";
+                progress.classList.remove("d-none");
+            });
+        });
+    </script>
+{% endblock %}
