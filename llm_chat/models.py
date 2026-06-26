@@ -1,8 +1,15 @@
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
 from django.contrib.auth.models import User
 from django.db import models
 
 from lib.llm.valueobject.completion import RoleType
-from llm_chat.domain.valueobject.completion.rag import build_openai_rag_collection_name
+from llm_chat.domain.valueobject.completion.rag import (
+    OPENAI_RAG_EMBEDDING_MODEL,
+    build_openai_rag_collection_label,
+    build_openai_rag_collection_name,
+)
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
@@ -150,3 +157,21 @@ class OpenAIRagPdf(models.Model):
 
         self.collection_name = build_openai_rag_collection_name(self.id)
         self.save(update_fields=["collection_name"])
+
+    @property
+    def collection_label(self) -> str:
+        suffix = Path(self.display_name).suffix.lstrip(".")
+        source_extension_label = suffix.upper() if suffix else "UNKNOWN"
+        imported_at = "未登録"
+        if self.imported_at:
+            imported_at = (
+                self.imported_at.astimezone(ZoneInfo("Asia/Tokyo"))
+                .replace(microsecond=0)
+                .strftime("%Y-%m-%d %H:%M:%S")
+            )
+        return build_openai_rag_collection_label(
+            source_extension_label=source_extension_label,
+            source_name=self.display_name,
+            embedding_model=OPENAI_RAG_EMBEDDING_MODEL,
+            imported_at=imported_at,
+        )

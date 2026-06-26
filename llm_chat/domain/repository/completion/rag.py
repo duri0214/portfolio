@@ -26,7 +26,7 @@ class OpenAIRagPdfRepository:
     @staticmethod
     def list_active_choices() -> list[tuple[str, str]]:
         return [
-            (str(pdf.id), pdf.display_name)
+            (str(pdf.id), pdf.collection_label)
             for pdf in OpenAIRagPdf.objects.filter(is_active=True)
         ]
 

@@ -1,4 +1,5 @@
 import os
+from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
@@ -53,7 +54,9 @@ class OpenAIRagPdfImportService:
         imported_at = timezone.now()
         documents = self._create_documents(
             pdf,
-            imported_at=imported_at.isoformat(),
+            imported_at=imported_at.astimezone(ZoneInfo("Asia/Tokyo"))
+            .replace(microsecond=0)
+            .strftime("%Y-%m-%d %H:%M:%S"),
             pdf_file=pdf_file,
         )
         if not documents:

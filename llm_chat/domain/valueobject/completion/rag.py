@@ -12,6 +12,18 @@ def build_openai_rag_collection_name(pdf_id: int) -> str:
     return f"{OPENAI_RAG_COLLECTION_PREFIX}_{pdf_id}"
 
 
+def build_openai_rag_collection_label(
+    *,
+    source_extension_label: str,
+    source_name: str,
+    imported_at: str,
+    embedding_model: str = OPENAI_RAG_EMBEDDING_MODEL,
+) -> str:
+    return (
+        f"{source_extension_label}｜{source_name}｜" f"{embedding_model}｜{imported_at}"
+    )
+
+
 @dataclass(frozen=True)
 class OpenAIRagPdfSource:
     """
@@ -61,9 +73,11 @@ class OpenAIRagPdfMetadata:
     chunk_basis: str = OPENAI_RAG_CHUNK_BASIS
 
     def to_dict(self) -> dict[str, str | int]:
-        collection_label = (
-            f"{self.pdf.source_extension_label}｜{self.pdf.source_name}｜"
-            f"{self.embedding_model}｜{self.imported_at}"
+        collection_label = build_openai_rag_collection_label(
+            source_extension_label=self.pdf.source_extension_label,
+            source_name=self.pdf.source_name,
+            embedding_model=self.embedding_model,
+            imported_at=self.imported_at,
         )
         return {
             "id": f"{self.pdf.document_id}_page_{self.page}",
