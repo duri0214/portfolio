@@ -30,7 +30,7 @@
                         onchange="this.form.submit()">
                     {% for pdf in document_choices %}
                         <option value="{{ pdf.id }}" {% if pdf.id|stringformat:"s" == selected_pdf_id %}selected{% endif %}>
-                            {{ pdf.collection_label }}
+                            {{ pdf.display_name }}
                         </option>
                     {% endfor %}
                 </select>
