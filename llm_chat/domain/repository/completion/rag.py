@@ -10,6 +10,7 @@ from llm_chat.domain.valueobject.completion.rag import (
     OpenAIRagCollectionItem,
     OpenAIRagDocument,
     OpenAIRagPdfSource,
+    build_openai_rag_collection_name,
 )
 from llm_chat.models import OpenAIRagPdf
 
@@ -40,6 +41,8 @@ class OpenAIRagPdfRepository:
             pdf_id=pdf.id,
             display_name=pdf.display_name,
             path=Path(pdf.display_name),
+            collection_name=pdf.collection_name
+            or build_openai_rag_collection_name(pdf.id),
         )
 
     @staticmethod

@@ -84,6 +84,7 @@
                                     <thead>
                                     <tr>
                                         <th>取り込み元ファイル名</th>
+                                        <th>物理collection</th>
                                         <th>Vector DB</th>
                                         <th></th>
                                     </tr>
@@ -92,6 +93,7 @@
                                     {% for pdf in pdfs %}
                                         <tr>
                                             <td>{{ pdf.display_name }}</td>
+                                            <td class="small font-monospace">{{ pdf.collection_name }}</td>
                                             <td class="small">
                                                 {% if pdf.imported_at %}
                                                     {{ pdf.imported_at|date:"Y-m-d H:i" }}

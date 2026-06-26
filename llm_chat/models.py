@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from lib.llm.valueobject.completion import RoleType
+from llm_chat.domain.valueobject.completion.rag import build_openai_rag_collection_name
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 
@@ -119,12 +120,16 @@ class OpenAIRagPdf(models.Model):
 
     Attributes:
         display_name: チャット画面や管理画面に表示するPDF名。
+        collection_name: Chroma DB上の物理collection名。
         is_active: チャット画面の選択肢として表示するかどうか。
         imported_at: Vector DBへの登録が完了した日時。
         created_at: レコードの作成日時。
     """
 
     display_name = models.CharField("表示名", max_length=255)
+    collection_name = models.CharField(
+        "物理collection名", max_length=63, unique=True, null=True, blank=True
+    )
     is_active = models.BooleanField("有効", default=True)
     imported_at = models.DateTimeField("Vector DB登録日時", null=True, blank=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
@@ -136,3 +141,12 @@ class OpenAIRagPdf(models.Model):
 
     def __str__(self):
         return self.display_name
+
+    def assign_collection_name(self) -> None:
+        if not self.id:
+            raise ValueError("collection_name requires a saved OpenAIRagPdf ID")
+        if self.collection_name:
+            return
+
+        self.collection_name = build_openai_rag_collection_name(self.id)
+        self.save(update_fields=["collection_name"])

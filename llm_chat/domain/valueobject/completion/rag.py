@@ -3,8 +3,13 @@ from pathlib import Path
 
 
 OPENAI_RAG_COLLECTION_NAME = "openai_rag_pdfs"
+OPENAI_RAG_COLLECTION_PREFIX = "openai_rag_pdf"
 OPENAI_RAG_EMBEDDING_MODEL = "text-embedding-3-small"
 OPENAI_RAG_CHUNK_BASIS = "page"
+
+
+def build_openai_rag_collection_name(pdf_id: int) -> str:
+    return f"{OPENAI_RAG_COLLECTION_PREFIX}_{pdf_id}"
 
 
 @dataclass(frozen=True)
@@ -21,6 +26,7 @@ class OpenAIRagPdfSource:
     pdf_id: int
     display_name: str
     path: Path
+    collection_name: str
 
     @property
     def source_name(self) -> str:
@@ -51,16 +57,18 @@ class OpenAIRagPdfMetadata:
     page: int
     chunk_index: int
     imported_at: str
-    collection_name: str = OPENAI_RAG_COLLECTION_NAME
     embedding_model: str = OPENAI_RAG_EMBEDDING_MODEL
     chunk_basis: str = OPENAI_RAG_CHUNK_BASIS
 
     def to_dict(self) -> dict[str, str | int]:
-        collection_label = f"{self.pdf.source_extension_label}｜{self.collection_name}"
+        collection_label = (
+            f"{self.pdf.source_extension_label}｜{self.pdf.source_name}｜"
+            f"{self.embedding_model}｜{self.imported_at}"
+        )
         return {
             "id": f"{self.pdf.document_id}_page_{self.page}",
             "rag_pdf_id": self.pdf.pdf_id,
-            "collection_name": self.collection_name,
+            "collection_name": self.pdf.collection_name,
             "collection_label": collection_label,
             "embedding_model": self.embedding_model,
             "chunk_basis": self.chunk_basis,

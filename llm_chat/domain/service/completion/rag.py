@@ -33,9 +33,7 @@ class OpenAIRagPdfImportService:
         vector_repository: OpenAIRagVectorRepository | None = None,
     ) -> None:
         self.pdf_repository = pdf_repository or OpenAIRagPdfRepository()
-        self.vector_repository = vector_repository or OpenAIRagVectorRepository(
-            api_key=os.getenv("OPENAI_API_KEY") or ""
-        )
+        self.vector_repository = vector_repository
 
     def import_pdf(self, pdf_id: int, pdf_file=None) -> int:
         """
@@ -61,10 +59,22 @@ class OpenAIRagPdfImportService:
         if not documents:
             return 0
 
-        self.vector_repository.delete_pdf_documents(pdf)
-        self.vector_repository.upsert_documents(documents)
+        vector_repository = self._get_vector_repository(pdf)
+        vector_repository.delete_pdf_documents(pdf)
+        vector_repository.upsert_documents(documents)
         self.pdf_repository.mark_imported(pdf.pdf_id, imported_at=imported_at)
         return len(documents)
+
+    def _get_vector_repository(
+        self, pdf: OpenAIRagPdfSource
+    ) -> OpenAIRagVectorRepository:
+        if self.vector_repository is not None:
+            return self.vector_repository
+
+        return OpenAIRagVectorRepository(
+            api_key=os.getenv("OPENAI_API_KEY") or "",
+            collection_name=pdf.collection_name,
+        )
 
     @staticmethod
     def _create_documents(
@@ -114,10 +124,7 @@ class OpenAIRagService(BaseChatService):
             max_tokens=4000,
             model=self.model_name,
         )
-        self.repository = repository or OpenAIRagVectorRepository(
-            api_key=self.config.api_key,
-            model=self.config.model,
-        )
+        self.repository = repository
 
     def generate(self, user_message: MessageDTO, *, pdf_id: int) -> MessageDTO:
         """
@@ -130,7 +137,16 @@ class OpenAIRagService(BaseChatService):
         Returns:
             MessageDTO: RAG回答本文をcontentに持つassistantメッセージ。
         """
-        response = self.repository.retrieve_answer(
+        if self.repository is not None:
+            repository = self.repository
+        else:
+            pdf = OpenAIRagPdfRepository.find_active(pdf_id)
+            repository = OpenAIRagVectorRepository(
+                api_key=self.config.api_key,
+                model=self.config.model,
+                collection_name=pdf.collection_name,
+            )
+        response = repository.retrieve_answer(
             user_message.to_message(),
             pdf_id=pdf_id,
         )

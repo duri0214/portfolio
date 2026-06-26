@@ -24,6 +24,7 @@ class OpenAIRagPdfImportServiceTest(TestCase):
             pdf_id=10,
             display_name="サンプルPDF",
             path=Path("sample.pdf"),
+            collection_name="openai_rag_pdf_10",
         )
         pdf_repository = Mock()
         pdf_repository.find_active.return_value = pdf_source
@@ -51,9 +52,10 @@ class OpenAIRagPdfImportServiceTest(TestCase):
         documents = vector_repository.upsert_documents.call_args.args[0]
         self.assertEqual(documents[0].page_content, "1ページ目の本文")
         self.assertEqual(documents[0].metadata["rag_pdf_id"], 10)
-        self.assertEqual(documents[0].metadata["collection_name"], "openai_rag_pdfs")
+        self.assertEqual(documents[0].metadata["collection_name"], "openai_rag_pdf_10")
         self.assertEqual(
-            documents[0].metadata["collection_label"], "PDF｜openai_rag_pdfs"
+            documents[0].metadata["collection_label"].split("｜")[:3],
+            ["PDF", "サンプルPDF", "text-embedding-3-small"],
         )
         self.assertEqual(
             documents[0].metadata["embedding_model"], "text-embedding-3-small"

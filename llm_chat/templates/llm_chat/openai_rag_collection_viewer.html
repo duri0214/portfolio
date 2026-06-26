@@ -16,7 +16,9 @@
                 <p class="text-muted mb-0">
                     全 {{ total_count }} 件中 {{ page_start }}-{{ page_end }} 件を表示しています。
                 </p>
-                <p class="text-muted small mb-0">物理 collection: <span class="font-monospace">{{ physical_collection_name }}</span></p>
+                {% if physical_collection_name %}
+                    <p class="text-muted small mb-0">物理 collection: <span class="font-monospace">{{ physical_collection_name }}</span></p>
+                {% endif %}
             </div>
             <a href="{% url 'llm:openai_rag_pdf_admin' %}" class="btn btn-outline-secondary btn-sm">PDF管理へ戻る</a>
         </div>
@@ -26,10 +28,9 @@
                 <label for="pdfSelect" class="form-label mb-0 small text-muted">登録文書</label>
                 <select id="pdfSelect" name="pdf_id" class="form-select form-select-sm w-auto"
                         onchange="this.form.submit()">
-                    <option value="">全件</option>
-                    {% for pdf_id, pdf_name in document_choices %}
-                        <option value="{{ pdf_id }}" {% if pdf_id == selected_pdf_id %}selected{% endif %}>
-                            {{ physical_collection_name }} / {{ pdf_name }}
+                    {% for pdf in document_choices %}
+                        <option value="{{ pdf.id }}" {% if pdf.id|stringformat:"s" == selected_pdf_id %}selected{% endif %}>
+                            {{ pdf.collection_name }} / {{ pdf.display_name }}
                         </option>
                     {% endfor %}
                 </select>
@@ -96,7 +97,11 @@
             </nav>
         {% else %}
             <div class="alert alert-info" role="alert">
-                openai_rag_pdfs collection に表示できる登録内容はありません。
+                {% if physical_collection_name %}
+                    {{ physical_collection_name }} collection に表示できる登録内容はありません。
+                {% else %}
+                    表示できる登録内容はありません。
+                {% endif %}
             </div>
         {% endif %}
     </div>

@@ -61,7 +61,6 @@ from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
     SessionState,
 )
-from llm_chat.domain.valueobject.completion.rag import OPENAI_RAG_COLLECTION_NAME
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.forms import UserTextForm, RiddleCSVUploadForm, MultiplePdfFileField
 from llm_chat.models import RiddleQuestion, OpenAIRagPdf
@@ -260,6 +259,7 @@ class OpenAIRagPdfUploadView(UserPassesTestMixin, View):
         quota_error_occurred = False
         for file in pdf_files:
             pdf = OpenAIRagPdf.objects.create(display_name=file.name)
+            pdf.assign_collection_name()
             try:
                 imported_count = import_service.import_pdf(pdf.id, pdf_file=file)
             except RateLimitError:
@@ -318,7 +318,8 @@ class OpenAIRagPdfDeleteView(UserPassesTestMixin, View):
         try:
             pdf_source = OpenAIRagPdfRepository.find_active(pdf_id)
             deleted_count = OpenAIRagVectorRepository(
-                api_key=os.getenv("OPENAI_API_KEY") or ""
+                api_key=os.getenv("OPENAI_API_KEY") or "",
+                collection_name=pdf_source.collection_name,
             ).delete_pdf_documents(pdf_source)
             pdf = OpenAIRagPdf.objects.get(id=pdf_id)
             pdf.delete()
@@ -342,9 +343,13 @@ class OpenAIRagPdfCollectionDeleteAllView(UserPassesTestMixin, View):
         return self.request.user.is_superuser
 
     def post(self, request, *args, **kwargs):
-        deleted_count = OpenAIRagVectorRepository(
-            api_key=os.getenv("OPENAI_API_KEY") or ""
-        ).delete_all_documents()
+        deleted_count = 0
+        for pdf in OpenAIRagPdfRepository.list_active():
+            pdf_source = OpenAIRagPdfRepository.find_active(pdf.id)
+            deleted_count += OpenAIRagVectorRepository(
+                api_key=os.getenv("OPENAI_API_KEY") or "",
+                collection_name=pdf_source.collection_name,
+            ).delete_all_documents()
         OpenAIRagPdf.objects.all().delete()
         messages.success(
             request,
@@ -368,25 +373,40 @@ class OpenAIRagPdfCollectionViewerView(UserPassesTestMixin, View):
     def get(self, request, *args, **kwargs):
         per_page = self._get_per_page(request)
         current_page = self._get_current_page(request)
+        document_choices = OpenAIRagPdfRepository.list_active()
         selected_pdf_id = self._get_selected_pdf_id(request)
+        if selected_pdf_id is None and document_choices:
+            selected_pdf_id = document_choices[0].id
+
         offset = (current_page - 1) * per_page
-        repository = OpenAIRagVectorRepository(
-            api_key=os.getenv("OPENAI_API_KEY") or ""
-        )
-        total_count = repository.count_collection_items(pdf_id=selected_pdf_id)
+        selected_pdf = None
+        repository = None
+        collection_items = []
+        total_count = 0
+        if selected_pdf_id is not None:
+            try:
+                selected_pdf = OpenAIRagPdfRepository.find_active(selected_pdf_id)
+                repository = OpenAIRagVectorRepository(
+                    api_key=os.getenv("OPENAI_API_KEY") or "",
+                    collection_name=selected_pdf.collection_name,
+                )
+                total_count = repository.count_collection_items()
+            except OpenAIRagPdf.DoesNotExist:
+                selected_pdf_id = None
+
         total_pages = max(math.ceil(total_count / per_page), 1)
         if current_page > total_pages:
             current_page = total_pages
             offset = (current_page - 1) * per_page
 
-        collection_items = repository.list_collection_items(
-            limit=per_page,
-            offset=offset,
-            pdf_id=selected_pdf_id,
-        )
+        if repository is not None:
+            collection_items = repository.list_collection_items(
+                limit=per_page,
+                offset=offset,
+            )
         context = {
             "collection_items": collection_items,
-            "document_choices": OpenAIRagPdfRepository.list_active_choices(),
+            "document_choices": document_choices,
             "current_page": current_page,
             "has_next_page": current_page < total_pages,
             "has_previous_page": current_page > 1,
@@ -395,7 +415,9 @@ class OpenAIRagPdfCollectionViewerView(UserPassesTestMixin, View):
             "page_end": offset + len(collection_items),
             "per_page": per_page,
             "per_page_options": self.per_page_options,
-            "physical_collection_name": OPENAI_RAG_COLLECTION_NAME,
+            "physical_collection_name": (
+                selected_pdf.collection_name if selected_pdf is not None else ""
+            ),
             "previous_page": current_page - 1,
             "selected_pdf_id": str(selected_pdf_id) if selected_pdf_id else "",
             "total_count": total_count,
