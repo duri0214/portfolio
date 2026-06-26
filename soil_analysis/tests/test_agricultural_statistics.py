@@ -15,6 +15,7 @@ from soil_analysis.domain.service.agricultural_statistics import (
     AgriculturalStatisticsService,
 )
 from soil_analysis.domain.valueobject.estat import AgriculturalRiskInput
+from soil_analysis.domain.valueobject.estat import parse_estat_datetime
 from soil_analysis.models import (
     AgriculturalRegion,
     AgriculturalRiskReport,
@@ -158,6 +159,18 @@ class AgriculturalStatisticsRepositoryTest(TestCase):
 
 
 class AgriculturalRiskCalculatorTest(TestCase):
+    def test_parse_estat_datetime_makes_date_string_timezone_aware(self):
+        """
+        シナリオ:
+        - 入力: e-Stat の更新日として返るタイムゾーンなしの日付文字列。
+        - 処理: 日時文字列を Django の DateTimeField 保存用に変換する。
+        - 期待値: タイムゾーン付き datetime が返り、保存時の naive datetime 警告を避けられること。
+        """
+        parsed = parse_estat_datetime("2025-04-09")
+
+        self.assertIsNotNone(parsed)
+        self.assertTrue(timezone.is_aware(parsed))
+
     def test_calculate_uses_issue_formula(self):
         """
         シナリオ:

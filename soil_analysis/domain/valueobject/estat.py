@@ -3,6 +3,8 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 
+from django.utils import timezone
+
 
 @dataclass(frozen=True)
 class EstatValueRow:
@@ -153,6 +155,9 @@ def parse_estat_datetime(value: object) -> datetime | None:
         return None
     value_text = str(value).replace("Z", "+00:00")
     try:
-        return datetime.fromisoformat(value_text)
+        parsed = datetime.fromisoformat(value_text)
     except ValueError:
         return None
+    if timezone.is_naive(parsed):
+        return timezone.make_aware(parsed, timezone.get_current_timezone())
+    return parsed
