@@ -33,6 +33,10 @@ CULTIVATED_AREA_DISTRIBUTION_COUNT_KEY = "cultivated_area_distribution_count"
 OPERATOR_AGE_DISTRIBUTION_KEY = "operator_age_distribution_count"
 SUCCESSOR_STATUS_DISTRIBUTION_KEY = "successor_status_count"
 ABANDONED_FARMLAND_AREA_KEY = "abandoned_farmland_area_2015"
+NATIONAL_CULTIVATED_AREA_DISTRIBUTION_KEY = "national_cultivated_area_distribution"
+NATIONAL_SUCCESSOR_STATUS_DISTRIBUTION_KEY = "national_successor_status_count"
+NATIONAL_ABANDONED_FARMLAND_AREA_KEY = "national_abandoned_farmland_area_2015"
+NATIONAL_COMPARISON_CATEGORY = "national_comparison"
 MOJ_INHERITANCE_SOURCE_URL = "https://www.moj.go.jp/MINJI/minji05_00579.html"
 CULTIVATED_AREA_DISTRIBUTION_FALLBACK_LABELS = {
     "1001": "計",
@@ -122,6 +126,44 @@ DEFAULT_ESTAT_DATASETS = [
         },
         "unit": "ha",
         "category": "abandoned_farmland",
+        "fallback_data_period_label": "2015年農林業センサス（2015年1月〜2015年12月）",
+    },
+]
+
+NATIONAL_ESTAT_DATASETS = [
+    {
+        "indicator_key": NATIONAL_CULTIVATED_AREA_DISTRIBUTION_KEY,
+        "display_name": "全国 経営耕地面積規模別面積",
+        "stats_data_id": "0001926015",
+        "filters": {
+            "cdCat01": "001",
+        },
+        "unit": "ha",
+        "category": NATIONAL_COMPARISON_CATEGORY,
+        "fallback_data_period_label": "2020年農林業センサス（2020年1月〜2020年12月）",
+    },
+    {
+        "indicator_key": NATIONAL_SUCCESSOR_STATUS_DISTRIBUTION_KEY,
+        "display_name": "全国 5年以内の後継者確保状況別経営体数",
+        "stats_data_id": "0001926067",
+        "filters": {
+            "cdCat01": "001",
+        },
+        "unit": "経営体",
+        "category": NATIONAL_COMPARISON_CATEGORY,
+        "fallback_data_period_label": "2020年農林業センサス（2020年1月〜2020年12月）",
+    },
+    {
+        "indicator_key": NATIONAL_ABANDONED_FARMLAND_AREA_KEY,
+        "display_name": "全国 耕作放棄地面積（2015年）",
+        "stats_data_id": "0003168899",
+        "filters": {
+            "cdArea": "N0001",
+            "cdCat01": "001",
+            "cdTime": "201500",
+        },
+        "unit": "ha",
+        "category": NATIONAL_COMPARISON_CATEGORY,
         "fallback_data_period_label": "2015年農林業センサス（2015年1月〜2015年12月）",
     },
 ]
@@ -309,7 +351,7 @@ class AgriculturalStatisticsService:
         region = AgriculturalStatisticsRepository.get_or_create_default_region(
             area_code
         )
-        for definition in DEFAULT_ESTAT_DATASETS:
+        for definition in DEFAULT_ESTAT_DATASETS + NATIONAL_ESTAT_DATASETS:
             AgriculturalStatisticsRepository.ensure_dataset(definition)
         for definition in DEFAULT_SUPPLEMENTAL_INDICATORS:
             AgriculturalStatisticsRepository.upsert_supplemental_indicator(definition)
@@ -341,9 +383,7 @@ class AgriculturalStatisticsService:
             EstatFetchResult: バッチ実行結果。
         """
         cls.ensure_default_configuration(area_code)
-        datasets = cls._fetch_target_datasets(
-            AgriculturalStatisticsRepository.get_datasets()
-        )
+        datasets = AgriculturalStatisticsRepository.get_datasets()
         fetched_at = timezone.now()
         default_period_label = str(target_date or fetched_at.date())
         created_count = 0
@@ -353,13 +393,19 @@ class AgriculturalStatisticsService:
 
         regions = cls._fetch_target_regions(area_code, include_national)
         for region in regions:
-            for dataset in datasets:
+            for dataset in cls._fetch_target_datasets(datasets, region.area_code):
                 if dataset.stats_data_id.startswith("TODO_"):
                     skipped_dataset_keys.append(dataset.indicator_key)
                     continue
 
+                area_code_for_dataset = dataset.filters.get("cdArea", region.area_code)
+                filters = {
+                    key: value
+                    for key, value in dataset.filters.items()
+                    if key != "cdArea"
+                }
                 response = client.get_stats_data(
-                    dataset.stats_data_id, region.area_code, dataset.filters
+                    dataset.stats_data_id, area_code_for_dataset, filters
                 )
                 rows = cls._extract_value_rows(response, default_period_label)
                 estat_updated_at = cls._extract_estat_updated_at(response)
@@ -406,18 +452,34 @@ class AgriculturalStatisticsService:
             report_date: 集計日。
         """
         latest = AgriculturalStatisticsRepository.get_latest_snapshot_values(region)
+        distribution_key = cls._distribution_key_for_region(region.area_code)
+        successor_key = cls._successor_key_for_region(region.area_code)
+        abandoned_key = cls._abandoned_key_for_region(region.area_code)
         distribution_snapshots = (
             AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
-                region, CULTIVATED_AREA_DISTRIBUTION_KEY
+                region, distribution_key
             )
         )
         successor_snapshots = (
             AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
-                region, SUCCESSOR_STATUS_DISTRIBUTION_KEY
+                region, successor_key
+            )
+        )
+        abandoned_snapshots = (
+            AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
+                region, abandoned_key
             )
         )
         risk_input = cls._build_risk_input(
-            latest, distribution_snapshots, successor_snapshots
+            latest,
+            distribution_snapshots,
+            successor_snapshots,
+            distribution_key=distribution_key,
+            successor_missing_code=cls._successor_missing_code_for_region(
+                region.area_code
+            ),
+            abandoned_key=abandoned_key,
+            abandoned_snapshots=abandoned_snapshots,
         )
         result = AgriculturalRiskCalculator.calculate(risk_input)
         return AgriculturalStatisticsRepository.save_risk_report(
@@ -513,11 +575,14 @@ class AgriculturalStatisticsService:
         )
         national_distribution_snapshots = (
             AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
-                national_region, CULTIVATED_AREA_DISTRIBUTION_KEY
+                national_region, NATIONAL_CULTIVATED_AREA_DISTRIBUTION_KEY
             )
         )
+        national_datasets = cls._display_national_datasets(
+            AgriculturalStatisticsRepository.get_datasets()
+        )
         national_dataset_status_rows = cls._build_dataset_status_rows(
-            datasets,
+            national_datasets,
             national_latest_snapshot_values,
             national_distribution_snapshots,
         )
@@ -751,25 +816,39 @@ class AgriculturalStatisticsService:
         latest: dict,
         distribution_snapshots: dict | None = None,
         successor_snapshots: dict | None = None,
+        distribution_key: str = CULTIVATED_AREA_DISTRIBUTION_KEY,
+        successor_missing_code: str = "1007",
+        abandoned_key: str = ABANDONED_FARMLAND_AREA_KEY,
+        abandoned_snapshots: dict | None = None,
     ) -> AgriculturalRiskInput:
         return AgriculturalRiskInput(
             total_cultivated_area=(
                 cls._value(latest, "total_cultivated_area")
-                or cls._distribution_total_value(distribution_snapshots or {})
+                or cls._distribution_total_value(
+                    distribution_snapshots or {},
+                    distribution_key=distribution_key,
+                )
             ),
             age_70_plus_area=cls._value(latest, "age_70_plus_area"),
             age_60s_area=cls._value(latest, "age_60s_area"),
             no_successor_ratio=(
                 cls._ratio_value(latest, "no_successor_ratio")
-                or cls._successor_missing_ratio(successor_snapshots or {})
+                or cls._successor_missing_ratio(
+                    successor_snapshots or {},
+                    missing_code=successor_missing_code,
+                )
             ),
             shrink_stop_intention_ratio=cls._ratio_value(
                 latest, "shrink_stop_intention_ratio"
             ),
-            supplemental_unmanageable_area=cls._value(
-                latest, ABANDONED_FARMLAND_AREA_KEY
-            )
-            or 0.0,
+            supplemental_unmanageable_area=(
+                cls._abandoned_farmland_value(
+                    latest,
+                    abandoned_key,
+                    abandoned_snapshots or {},
+                )
+                or 0.0
+            ),
         )
 
     @staticmethod
@@ -788,9 +867,32 @@ class AgriculturalStatisticsService:
             return value / 100
         return value
 
+    @classmethod
+    def _abandoned_farmland_value(
+        cls, latest: dict, abandoned_key: str, abandoned_snapshots: dict
+    ) -> float | None:
+        target_period_labels = (
+            ["201500", "2015000000"]
+            if abandoned_key == NATIONAL_ABANDONED_FARMLAND_AREA_KEY
+            else ["2015000000", "201500"]
+        )
+        for period_label in target_period_labels:
+            snapshot = abandoned_snapshots.get(period_label)
+            if snapshot is not None:
+                return snapshot.value
+        return cls._value(latest, abandoned_key)
+
     @staticmethod
-    def _distribution_total_value(distribution_snapshots: dict) -> float | None:
-        total_snapshot = distribution_snapshots.get("1001")
+    def _distribution_total_value(
+        distribution_snapshots: dict,
+        distribution_key: str = CULTIVATED_AREA_DISTRIBUTION_KEY,
+    ) -> float | None:
+        total_code = (
+            "001"
+            if distribution_key == NATIONAL_CULTIVATED_AREA_DISTRIBUTION_KEY
+            else "1001"
+        )
+        total_snapshot = distribution_snapshots.get(total_code)
         if total_snapshot is None:
             return None
         return total_snapshot.value
@@ -798,6 +900,7 @@ class AgriculturalStatisticsService:
     @staticmethod
     def _successor_missing_ratio(
         snapshots_by_period: dict,
+        missing_code: str = "1007",
     ) -> float | None:
         """
         `successor_missing` は農業経営の後継者が未確保である状態を指します。
@@ -817,8 +920,9 @@ class AgriculturalStatisticsService:
             「後継者を確保していない経営体数 / 計」の比率。必要な分類値が
             欠けている場合や計が0の場合は None。
         """
-        total_snapshot = snapshots_by_period.get("1001")
-        missing_snapshot = snapshots_by_period.get("1007")
+        total_code = "001" if missing_code == "007" else "1001"
+        total_snapshot = snapshots_by_period.get(total_code)
+        missing_snapshot = snapshots_by_period.get(missing_code)
         total = total_snapshot.value if total_snapshot is not None else None
         missing = missing_snapshot.value if missing_snapshot is not None else None
         if not total:
@@ -975,12 +1079,20 @@ class AgriculturalStatisticsService:
         )
 
     @staticmethod
-    def _fetch_target_datasets(datasets: list) -> list:
+    def _fetch_target_datasets(datasets: list, area_code: str) -> list:
+        excluded_categories = {NATIONAL_COMPARISON_CATEGORY}
+        if area_code == NATIONAL_AREA_CODE:
+            excluded_categories = set()
         return [
             dataset
             for dataset in datasets
             if dataset.indicator_key
             not in DERIVED_INDICATOR_KEYS | CALCULATION_ONLY_INDICATOR_KEYS
+            and (
+                dataset.category == NATIONAL_COMPARISON_CATEGORY
+                if area_code == NATIONAL_AREA_CODE
+                else dataset.category not in excluded_categories
+            )
         ]
 
     @classmethod
@@ -994,6 +1106,30 @@ class AgriculturalStatisticsService:
         ]
 
     @staticmethod
+    def _distribution_key_for_region(area_code: str) -> str:
+        if area_code == NATIONAL_AREA_CODE:
+            return NATIONAL_CULTIVATED_AREA_DISTRIBUTION_KEY
+        return CULTIVATED_AREA_DISTRIBUTION_KEY
+
+    @staticmethod
+    def _successor_key_for_region(area_code: str) -> str:
+        if area_code == NATIONAL_AREA_CODE:
+            return NATIONAL_SUCCESSOR_STATUS_DISTRIBUTION_KEY
+        return SUCCESSOR_STATUS_DISTRIBUTION_KEY
+
+    @staticmethod
+    def _successor_missing_code_for_region(area_code: str) -> str:
+        if area_code == NATIONAL_AREA_CODE:
+            return "007"
+        return "1007"
+
+    @staticmethod
+    def _abandoned_key_for_region(area_code: str) -> str:
+        if area_code == NATIONAL_AREA_CODE:
+            return NATIONAL_ABANDONED_FARMLAND_AREA_KEY
+        return ABANDONED_FARMLAND_AREA_KEY
+
+    @staticmethod
     def _display_datasets(datasets: list) -> list:
         return sorted(
             [
@@ -1001,6 +1137,22 @@ class AgriculturalStatisticsService:
                 for dataset in datasets
                 if dataset.indicator_key
                 not in DERIVED_INDICATOR_KEYS | CALCULATION_ONLY_INDICATOR_KEYS
+                and dataset.category != NATIONAL_COMPARISON_CATEGORY
+            ],
+            key=lambda dataset: (
+                dataset.stats_data_id.startswith("TODO_"),
+                dataset.stats_data_id,
+                dataset.display_name,
+            ),
+        )
+
+    @staticmethod
+    def _display_national_datasets(datasets: list) -> list:
+        return sorted(
+            [
+                dataset
+                for dataset in datasets
+                if dataset.category == NATIONAL_COMPARISON_CATEGORY
             ],
             key=lambda dataset: (
                 dataset.stats_data_id.startswith("TODO_"),
@@ -1013,8 +1165,16 @@ class AgriculturalStatisticsService:
     def _status_snapshot(
         dataset, latest_snapshot_values: dict, distribution_snapshots: dict
     ):
-        if dataset.indicator_key == CULTIVATED_AREA_DISTRIBUTION_KEY:
-            return distribution_snapshots.get("1001") or latest_snapshot_values.get(
+        if dataset.indicator_key in {
+            CULTIVATED_AREA_DISTRIBUTION_KEY,
+            NATIONAL_CULTIVATED_AREA_DISTRIBUTION_KEY,
+        }:
+            total_code = (
+                "001"
+                if dataset.indicator_key == NATIONAL_CULTIVATED_AREA_DISTRIBUTION_KEY
+                else "1001"
+            )
+            return distribution_snapshots.get(total_code) or latest_snapshot_values.get(
                 dataset.indicator_key
             )
         return latest_snapshot_values.get(dataset.indicator_key)
@@ -1060,7 +1220,7 @@ class AgriculturalStatisticsService:
 
     @staticmethod
     def _fallback_data_period_label(dataset) -> str | None:
-        for definition in DEFAULT_ESTAT_DATASETS:
+        for definition in DEFAULT_ESTAT_DATASETS + NATIONAL_ESTAT_DATASETS:
             if definition["indicator_key"] == dataset.indicator_key:
                 return definition.get("fallback_data_period_label")
         return None
@@ -1165,10 +1325,16 @@ class AgriculturalStatisticsService:
         KPIごとに地域粒度とデータ時点を明示します。
         """
         status_by_key = {row.indicator_key: row for row in rows}
-        base = status_by_key.get(CULTIVATED_AREA_DISTRIBUTION_KEY)
+        base = status_by_key.get(CULTIVATED_AREA_DISTRIBUTION_KEY) or status_by_key.get(
+            NATIONAL_CULTIVATED_AREA_DISTRIBUTION_KEY
+        )
         age = status_by_key.get(OPERATOR_AGE_DISTRIBUTION_KEY)
-        successor = status_by_key.get(SUCCESSOR_STATUS_DISTRIBUTION_KEY)
-        abandoned = status_by_key.get(ABANDONED_FARMLAND_AREA_KEY)
+        successor = status_by_key.get(SUCCESSOR_STATUS_DISTRIBUTION_KEY) or (
+            status_by_key.get(NATIONAL_SUCCESSOR_STATUS_DISTRIBUTION_KEY)
+        )
+        abandoned = status_by_key.get(ABANDONED_FARMLAND_AREA_KEY) or (
+            status_by_key.get(NATIONAL_ABANDONED_FARMLAND_AREA_KEY)
+        )
         base_period = base.data_period_label if base is not None else None
         age_period = age.data_period_label if age is not None else None
         successor_period = (

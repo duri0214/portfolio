@@ -232,6 +232,67 @@ class AgriculturalRiskCalculatorTest(TestCase):
         self.assertIsNone(result.retirement_confirmed_area)
         self.assertIsNone(result.unmanageable_candidate_area)
 
+    def test_calculate_report_uses_national_dataset_definitions(self):
+        """
+        シナリオ:
+        - 入力: 全国用の経営耕地面積、後継者確保状況、耕作放棄地面積。
+        - 処理: 全国地域の離農リスクレポートを集計する。
+        - 期待値: 全国用の分類コードで後継者なし割合と維持率が計算されること。
+        """
+        region = AgriculturalStatisticsService.ensure_default_configuration("00000")
+        area_dataset = EstatDataset.objects.get(
+            indicator_key="national_cultivated_area_distribution"
+        )
+        successor_dataset = EstatDataset.objects.get(
+            indicator_key="national_successor_status_count"
+        )
+        abandoned_dataset = EstatDataset.objects.get(
+            indicator_key="national_abandoned_farmland_area_2015"
+        )
+        fetched_at = timezone.now()
+        AgriculturalStatisticSnapshot.objects.create(
+            region=region,
+            dataset=area_dataset,
+            period_label="001",
+            value=3232882,
+            fetched_at=fetched_at,
+            estat_updated_at=fetched_at,
+            raw_data={"@cat01": "001", "@cat02": "001", "$": "3232882"},
+            source_hash="national-area-total",
+        )
+        for period_label, value in [("001", 1075705), ("007", 764367)]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=region,
+                dataset=successor_dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=fetched_at,
+                estat_updated_at=fetched_at,
+                raw_data={"@cat01": "001", "@cat02": period_label, "$": str(value)},
+                source_hash=f"national-successor-{period_label}",
+            )
+        AgriculturalStatisticSnapshot.objects.create(
+            region=region,
+            dataset=abandoned_dataset,
+            period_label="201500",
+            value=423064,
+            fetched_at=fetched_at,
+            estat_updated_at=fetched_at,
+            raw_data={"@area": "N0001", "@cat01": "001", "$": "423064"},
+            source_hash="national-abandoned-2015",
+        )
+
+        report = AgriculturalStatisticsService.calculate_and_save_report(
+            region=region,
+            report_date=date(2026, 6, 27),
+        )
+
+        self.assertEqual(report.total_cultivated_area, 3232882)
+        self.assertEqual(report.supplemental_unmanageable_area, 423064)
+        self.assertEqual(report.unmanageable_candidate_area, 423064)
+        self.assertEqual(report.farmland_maintenance_rate, 86.9)
+        self.assertEqual(report.succession_risk, 71.1)
+
 
 class AgriculturalStatisticsCommandTest(TestCase):
     def test_command_requires_estat_app_id(self):
@@ -286,7 +347,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
             call_command("fetch_farmland_statistics", verbosity=0)
 
-        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 10)
+        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 8)
         self.assertEqual(AgriculturalRiskReport.objects.count(), 2)
 
     @patch("soil_analysis.domain.dataprovider.estat.requests.get")
