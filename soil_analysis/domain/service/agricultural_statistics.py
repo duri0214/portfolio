@@ -12,7 +12,6 @@ from soil_analysis.domain.valueobject.estat import (
     AgriculturalRiskInput,
     AgriculturalRiskResult,
     EstatDatasetStatus,
-    EstatSnapshotDisplayRow,
     EstatValueRow,
     parse_estat_datetime,
 )
@@ -342,7 +341,6 @@ class AgriculturalStatisticsService:
         region = cls.ensure_default_configuration(area_code)
         latest_report = AgriculturalStatisticsRepository.get_latest_risk_report(region)
         snapshots = AgriculturalStatisticsRepository.get_snapshots(region)
-        snapshot_display_rows = cls._build_snapshot_display_rows(snapshots)
         report_trend = AgriculturalStatisticsRepository.get_risk_report_trend(region)
         age_area_rows = cls._build_age_area_rows(latest_report)
         distribution_snapshots = (
@@ -365,7 +363,6 @@ class AgriculturalStatisticsService:
             prefecture_name=region.prefecture_name,
             area_code=region.area_code,
             latest_report=latest_report,
-            snapshot_display_rows=snapshot_display_rows,
             report_trend=report_trend,
             age_area_rows=age_area_rows,
             cultivated_area_distribution_rows=cultivated_area_distribution_rows,
@@ -390,34 +387,6 @@ class AgriculturalStatisticsService:
             for raw_data in value_data
             if isinstance(raw_data, dict)
         ]
-
-    @classmethod
-    def _build_snapshot_display_rows(
-        cls, snapshots: list
-    ) -> list[EstatSnapshotDisplayRow]:
-        return [
-            EstatSnapshotDisplayRow(
-                display_name=snapshot.dataset.display_name,
-                classification_label=cls._snapshot_classification_label(snapshot),
-                value=snapshot.value,
-                unit=snapshot.dataset.unit,
-                fetched_at=snapshot.fetched_at,
-            )
-            for snapshot in snapshots
-        ]
-
-    @classmethod
-    def _snapshot_classification_label(cls, snapshot) -> str:
-        if snapshot.dataset.indicator_key == CULTIVATED_AREA_DISTRIBUTION_KEY:
-            cat02 = str(snapshot.raw_data.get("@cat02") or snapshot.period_label)
-            return CULTIVATED_AREA_DISTRIBUTION_LABELS.get(cat02, cat02)
-        if snapshot.raw_data.get("@time"):
-            return str(snapshot.raw_data["@time"])
-        if snapshot.raw_data.get("@cat02"):
-            return str(snapshot.raw_data["@cat02"])
-        if snapshot.raw_data.get("@cat01"):
-            return str(snapshot.raw_data["@cat01"])
-        return snapshot.period_label
 
     @classmethod
     def _build_cultivated_area_distribution_rows(

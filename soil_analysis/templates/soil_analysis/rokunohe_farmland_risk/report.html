@@ -35,29 +35,53 @@
                 <div class="col-6 col-lg-3">
                     <div class="risk-kpi">
                         <span>管理不能化候補面積</span>
-                        <strong>{{ dashboard.latest_report.unmanageable_candidate_area|default_if_none:"未取得" }}</strong>
-                        <small>ha</small>
+                        <strong>
+                            {% if dashboard.latest_report.unmanageable_candidate_area is not None %}
+                                {{ dashboard.latest_report.unmanageable_candidate_area }}
+                            {% else %}
+                                未実装（TODO）
+                            {% endif %}
+                        </strong>
+                        {% if dashboard.latest_report.unmanageable_candidate_area is not None %}<small>ha</small>{% endif %}
                     </div>
                 </div>
                 <div class="col-6 col-lg-3">
                     <div class="risk-kpi">
                         <span>10年後農地維持率</span>
-                        <strong>{{ dashboard.latest_report.farmland_maintenance_rate|default_if_none:"未取得" }}</strong>
-                        <small>%</small>
+                        <strong>
+                            {% if dashboard.latest_report.farmland_maintenance_rate is not None %}
+                                {{ dashboard.latest_report.farmland_maintenance_rate }}
+                            {% else %}
+                                未実装（TODO）
+                            {% endif %}
+                        </strong>
+                        {% if dashboard.latest_report.farmland_maintenance_rate is not None %}<small>%</small>{% endif %}
                     </div>
                 </div>
                 <div class="col-6 col-lg-3">
                     <div class="risk-kpi">
                         <span>後継者なし割合</span>
-                        <strong>{{ dashboard.latest_report.succession_risk|default_if_none:"未取得" }}</strong>
-                        <small>%</small>
+                        <strong>
+                            {% if dashboard.latest_report.succession_risk is not None %}
+                                {{ dashboard.latest_report.succession_risk }}
+                            {% else %}
+                                未実装（TODO）
+                            {% endif %}
+                        </strong>
+                        {% if dashboard.latest_report.succession_risk is not None %}<small>%</small>{% endif %}
                     </div>
                 </div>
                 <div class="col-6 col-lg-3">
                     <div class="risk-kpi">
                         <span>縮小・中止意向</span>
-                        <strong>{{ dashboard.latest_report.intention_risk|default_if_none:"未取得" }}</strong>
-                        <small>%</small>
+                        <strong>
+                            {% if dashboard.latest_report.intention_risk is not None %}
+                                {{ dashboard.latest_report.intention_risk }}
+                            {% else %}
+                                未実装（TODO）
+                            {% endif %}
+                        </strong>
+                        {% if dashboard.latest_report.intention_risk is not None %}<small>%</small>{% endif %}
                     </div>
                 </div>
             </div>
@@ -107,7 +131,7 @@
                                         {% endif %}
                                     </div>
                                     <div class="age-bar-value">
-                                        {% if row.value is not None %}{{ row.value|floatformat:1 }} {{ row.unit }}{% else %}未取得{% endif %}
+                                        {% if row.value is not None %}{{ row.value|floatformat:1 }} {{ row.unit }}{% else %}未実装（TODO）{% endif %}
                                     </div>
                                 </div>
                             {% endfor %}
@@ -119,13 +143,13 @@
                         <h2 class="h5">リスク要因の内訳</h2>
                         <dl class="risk-breakdown mb-0">
                             <dt>高齢化リスク</dt>
-                            <dd>{{ dashboard.latest_report.aging_risk|default_if_none:"未取得" }}%</dd>
+                            <dd>{% if dashboard.latest_report.aging_risk is not None %}{{ dashboard.latest_report.aging_risk }}%{% else %}未実装（TODO）{% endif %}</dd>
                             <dt>離農確定候補面積</dt>
-                            <dd>{{ dashboard.latest_report.retirement_confirmed_area|default_if_none:"未取得" }} ha</dd>
+                            <dd>{% if dashboard.latest_report.retirement_confirmed_area is not None %}{{ dashboard.latest_report.retirement_confirmed_area }} ha{% else %}未実装（TODO）{% endif %}</dd>
                             <dt>離農予備軍面積</dt>
-                            <dd>{{ dashboard.latest_report.retirement_reserve_area|default_if_none:"未取得" }} ha</dd>
+                            <dd>{% if dashboard.latest_report.retirement_reserve_area is not None %}{{ dashboard.latest_report.retirement_reserve_area }} ha{% else %}未実装（TODO）{% endif %}</dd>
                             <dt>補助指標</dt>
-                            <dd>荒廃農地・相続土地国庫帰属制度の公開統計は未取得</dd>
+                            <dd>荒廃農地・相続土地国庫帰属制度の公開統計は未実装（TODO）</dd>
                         </dl>
                     </section>
                 </div>
@@ -155,6 +179,16 @@
                             未取得
                         {% endif %}
                     </span>
+                </div>
+            </div>
+            <div class="data-definition-list">
+                <div>
+                    <strong>経営耕地面積</strong>
+                    <span>六戸町の経営耕地面積の合計です。リスク計算の母数と、分布の構成比を出すための合計値として取得しています。</span>
+                </div>
+                <div>
+                    <strong>経営耕地面積規模別面積</strong>
+                    <span>同じ統計表を経営規模区分ごとに取得した面積です。1ha以下などの小規模農家層の分布を見るために使います。</span>
                 </div>
             </div>
             <div class="table-responsive mt-3">
@@ -212,7 +246,7 @@
         </section>
 
         <div class="row g-4">
-            <div class="col-12 col-lg-5">
+            <div class="col-12">
                 <section class="report-panel h-100">
                     <h2 class="h5">取得履歴トレンド</h2>
                     {% if dashboard.report_trend %}
@@ -238,43 +272,6 @@
                         </div>
                     {% else %}
                         <p class="text-secondary mb-0">レポート履歴はまだありません。</p>
-                    {% endif %}
-                </section>
-            </div>
-            <div class="col-12 col-lg-7">
-                <section class="report-panel h-100">
-                    <h2 class="h5">e-Stat スナップショット</h2>
-                    {% if dashboard.snapshot_display_rows %}
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                <tr>
-                                    <th>指標</th>
-                                    <th>分類</th>
-                                    <th class="text-end">値</th>
-                                    <th>取得日時</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for snapshot in dashboard.snapshot_display_rows %}
-                                    <tr>
-                                        <td>{{ snapshot.display_name }}</td>
-                                        <td>{{ snapshot.classification_label }}</td>
-                                        <td class="text-end">
-                                            {% if snapshot.value is not None %}
-                                                {{ snapshot.value|floatformat:2|intcomma }} {{ snapshot.unit }}
-                                            {% else %}
-                                                未取得
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ snapshot.fetched_at|date:"Y-m-d H:i" }}</td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-secondary mb-0">スナップショットはまだ保存されていません。</p>
                     {% endif %}
                 </section>
             </div>
