@@ -237,7 +237,7 @@
 
 .distribution-bar-row {
     display: grid;
-    grid-template-columns: 8rem 1fr 11rem;
+    grid-template-columns: 8rem minmax(10rem, 1fr) minmax(18rem, auto);
     gap: 0.75rem;
     align-items: center;
 }
@@ -249,17 +249,21 @@
 }
 
 .distribution-bar-value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.55rem;
+    align-items: baseline;
+    justify-content: flex-end;
     text-align: right;
+    white-space: nowrap;
 }
 
 .distribution-bar-value strong {
-    display: block;
     color: #334e68;
     font-size: 0.9rem;
 }
 
 .distribution-bar-value span {
-    display: block;
     color: #66788a;
 }
 
@@ -434,7 +438,9 @@
     }
 
     .distribution-bar-value {
+        justify-content: flex-start;
         text-align: left;
+        white-space: normal;
     }
 
     .data-status-heading {
