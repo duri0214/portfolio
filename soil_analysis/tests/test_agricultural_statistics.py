@@ -344,7 +344,7 @@ class AgriculturalRiskReportViewTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "離農・管理不能農地レポート")
-        self.assertContains(response, reverse("soil:rokunohe_farmland_risk"))
+        self.assertContains(response, reverse("soil:farmland_risk"))
 
     def test_report_view_displays_empty_state(self):
         """
@@ -353,7 +353,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         - 処理: 離農・管理不能農地レポートを表示する。
         - 期待値: 空状態が表示され、画面が正常に表示されること。
         """
-        response = self.client.get(reverse("soil:rokunohe_farmland_risk"))
+        response = self.client.get(reverse("soil:farmland_risk"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "統計データはまだ取得されていません")
@@ -446,7 +446,7 @@ class AgriculturalRiskReportViewTest(TestCase):
             farmland_maintenance_rate=81.5,
         )
 
-        response = self.client.get(reverse("soil:rokunohe_farmland_risk"))
+        response = self.client.get(reverse("soil:farmland_risk"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "管理不能化候補面積")
@@ -505,7 +505,7 @@ class AgriculturalRiskReportViewTest(TestCase):
             source_hash="legacy-total-cultivated-area-hash",
         )
 
-        response = self.client.get(reverse("soil:rokunohe_farmland_risk"))
+        response = self.client.get(reverse("soil:farmland_risk"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "データ時点")
@@ -513,3 +513,15 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertNotContains(
             response, "データ時点:\n                            未取得"
         )
+
+    def test_legacy_rokunohe_farmland_risk_url_redirects(self):
+        """
+        シナリオ:
+        - 入力: 旧六戸町固定URLへのアクセス。
+        - 処理: 離農・管理不能農地レポートを表示するURLへ遷移する。
+        - 期待値: 地域固定でないURLへリダイレクトされること。
+        """
+        response = self.client.get(reverse("soil:rokunohe_farmland_risk"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], reverse("soil:farmland_risk"))

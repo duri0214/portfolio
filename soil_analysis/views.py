@@ -1563,10 +1563,16 @@ class RokunoheLandRegistryListView(ListView):
         return context
 
 
-class RokunoheFarmlandRiskView(TemplateView):
+class FarmlandRiskView(TemplateView):
     template_name = "soil_analysis/farmland_risk/report.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["dashboard"] = AgriculturalStatisticsService.build_dashboard()
+        area_code = self.request.GET.get("area_code")
+        if area_code:
+            context["dashboard"] = AgriculturalStatisticsService.build_dashboard(
+                area_code=area_code
+            )
+        else:
+            context["dashboard"] = AgriculturalStatisticsService.build_dashboard()
         return context
