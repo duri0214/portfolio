@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import date
-from urllib.parse import urlencode
 
 from django.utils import timezone
 
@@ -19,7 +18,7 @@ from soil_analysis.domain.valueobject.estat import (
 
 ROKUNOHE_AREA_CODE = "02405"
 RETIREMENT_TREND_COEFFICIENT = 0.35
-ESTAT_API_DATA_URL = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData"
+ESTAT_DATA_VIEW_URL = "https://www.e-stat.go.jp/dbview"
 
 DEFAULT_ESTAT_DATASETS = [
     {
@@ -321,7 +320,7 @@ class AgriculturalStatisticsService:
             AgriculturalStatisticsRepository.get_latest_snapshot_values(region)
         )
         dataset_status_rows = cls._build_dataset_status_rows(
-            datasets, latest_snapshot_values, region.area_code
+            datasets, latest_snapshot_values
         )
         return AgriculturalRiskDashboard(
             region_name=region.name,
@@ -412,16 +411,16 @@ class AgriculturalStatisticsService:
 
     @classmethod
     def _build_dataset_status_rows(
-        cls, datasets: list, latest_snapshot_values: dict, area_code: str
+        cls, datasets: list, latest_snapshot_values: dict
     ) -> list[EstatDatasetStatus]:
         return [
-            cls._build_dataset_status_row(dataset, latest_snapshot_values, area_code)
+            cls._build_dataset_status_row(dataset, latest_snapshot_values)
             for dataset in datasets
         ]
 
     @classmethod
     def _build_dataset_status_row(
-        cls, dataset, latest_snapshot_values: dict, area_code: str
+        cls, dataset, latest_snapshot_values: dict
     ) -> EstatDatasetStatus:
         snapshot = latest_snapshot_values.get(dataset.indicator_key)
         is_configured = not dataset.stats_data_id.startswith("TODO_")
@@ -435,8 +434,8 @@ class AgriculturalStatisticsService:
             indicator_key=dataset.indicator_key,
             display_name=dataset.display_name,
             stats_data_id=dataset.stats_data_id if is_configured else "未設定",
-            stats_data_url=(
-                cls._stats_data_url(dataset, area_code) if is_configured else ""
+            source_page_url=(
+                cls._source_page_url(dataset.stats_data_id) if is_configured else ""
             ),
             filters_label=cls._filters_label(dataset.filters),
             unit=dataset.unit,
@@ -450,16 +449,8 @@ class AgriculturalStatisticsService:
         )
 
     @staticmethod
-    def _stats_data_url(dataset, area_code: str) -> str:
-        params = {
-            "lang": "J",
-            "statsDataId": dataset.stats_data_id,
-            "metaGetFlg": "Y",
-            "cntGetFlg": "N",
-            "cdArea": area_code,
-            **dataset.filters,
-        }
-        return f"{ESTAT_API_DATA_URL}?{urlencode(params)}"
+    def _source_page_url(stats_data_id: str) -> str:
+        return f"{ESTAT_DATA_VIEW_URL}?sid={stats_data_id}"
 
     @staticmethod
     def _filters_label(filters: dict) -> str:

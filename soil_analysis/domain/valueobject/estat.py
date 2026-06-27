@@ -124,7 +124,7 @@ class EstatDatasetStatus:
         indicator_key: レポート計算で使う指標キー。
         display_name: 画面に表示する指標名。
         stats_data_id: e-Stat 統計表表示 ID。
-        stats_data_url: e-Stat API クエリ URL。
+        source_page_url: e-Stat の目検用統計表ページ URL。
         filters_label: e-Stat API に渡す絞り込み条件の表示文字列。
         unit: 値の単位。
         status_label: 取得済み、未設定などの状態。
@@ -137,7 +137,7 @@ class EstatDatasetStatus:
     indicator_key: str
     display_name: str
     stats_data_id: str
-    stats_data_url: str
+    source_page_url: str
     filters_label: str
     unit: str
     status_label: str
