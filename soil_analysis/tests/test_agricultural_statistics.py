@@ -331,7 +331,9 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "e-Stat地域コード 02405")
         self.assertContains(response, "データ取得状況")
         self.assertContains(response, "0002068836")
+        self.assertContains(response, "statsDataId=0002068836")
         self.assertContains(response, "cdCat01=1171")
+        self.assertContains(response, "cdCat02=1001")
         self.assertContains(response, "未実装（TODO）")
 
     def test_report_view_displays_latest_risk_report(self):

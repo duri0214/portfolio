@@ -146,7 +146,15 @@
                                     {{ row.status_label }}
                                 </span>
                             </td>
-                            <td><code>{{ row.stats_data_id }}</code></td>
+                            <td>
+                                {% if row.stats_data_url %}
+                                    <a href="{{ row.stats_data_url }}" target="_blank" rel="noopener">
+                                        <code>{{ row.stats_data_id }}</code>
+                                    </a>
+                                {% else %}
+                                    <code>{{ row.stats_data_id }}</code>
+                                {% endif %}
+                            </td>
                             <td><code>{{ row.filters_label }}</code></td>
                             <td>{{ row.period_label|default_if_none:"-" }}</td>
                             <td class="text-end">
