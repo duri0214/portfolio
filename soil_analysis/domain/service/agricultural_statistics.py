@@ -22,7 +22,7 @@ ESTAT_DATA_VIEW_URL = "https://www.e-stat.go.jp/dbview"
 DERIVED_INDICATOR_KEYS = {"total_cultivated_area"}
 CULTIVATED_AREA_DISTRIBUTION_KEY = "cultivated_area_distribution"
 CULTIVATED_AREA_DISTRIBUTION_COUNT_KEY = "cultivated_area_distribution_count"
-CULTIVATED_AREA_DISTRIBUTION_LABELS = {
+CULTIVATED_AREA_DISTRIBUTION_FALLBACK_LABELS = {
     "1001": "計",
     "1002": "0.3ha未満",
     "1003": "0.3～0.5ha",
@@ -494,7 +494,7 @@ class AgriculturalStatisticsService:
     def _distribution_period_labels(cls, snapshots_by_period: dict) -> list[str]:
         if snapshots_by_period:
             return list(snapshots_by_period.keys())
-        return list(CULTIVATED_AREA_DISTRIBUTION_LABELS.keys())
+        return list(CULTIVATED_AREA_DISTRIBUTION_FALLBACK_LABELS.keys())
 
     @classmethod
     def _snapshots_by_normalized_label(cls, snapshots_by_period: dict) -> dict:
@@ -518,7 +518,9 @@ class AgriculturalStatisticsService:
             name = code_metadata.get("name") if isinstance(code_metadata, dict) else ""
             if name:
                 return cls._format_scale_label(name)
-        return CULTIVATED_AREA_DISTRIBUTION_LABELS.get(period_label, period_label)
+        return CULTIVATED_AREA_DISTRIBUTION_FALLBACK_LABELS.get(
+            period_label, period_label
+        )
 
     @staticmethod
     def _format_scale_label(label: str) -> str:
