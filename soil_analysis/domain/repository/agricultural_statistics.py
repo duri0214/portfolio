@@ -31,7 +31,11 @@ class AgriculturalStatisticsRepository:
             "02405": {
                 "name": "上北郡六戸町",
                 "prefecture_name": "青森県",
-            }
+            },
+            "00000": {
+                "name": "全国",
+                "prefecture_name": "",
+            },
         }
         defaults = defaults_by_area_code.get(
             area_code,

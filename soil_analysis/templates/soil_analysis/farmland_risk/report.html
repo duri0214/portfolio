@@ -19,7 +19,7 @@
             <div>
                 <p class="text-muted small mb-1">{{ dashboard.prefecture_name }} {{ dashboard.region_name }} / e-Stat地域コード {{ dashboard.area_code }}</p>
                 <h1 class="h2 mb-2">離農・管理不能農地の足跡可視化レポート</h1>
-                <p class="mb-0 text-secondary">農林業センサス系の継続取得データをもとに、経営主の高齢化、後継者不在、縮小・中止意向から10年後の農地維持リスクを確認します。</p>
+                <p class="mb-0 text-secondary">農林業センサス系の継続取得データをもとに、経営主の高齢化、後継者不在、耕作放棄地面積から10年後の農地維持リスクを確認します。</p>
                 <div class="region-selector" aria-label="対象地域">
                     <span class="region-selector-label">対象地域</span>
                     <span class="region-chip is-active">{{ dashboard.region_name }}</span>
@@ -32,72 +32,106 @@
 
         {% if dashboard.latest_report %}
             <div class="row g-3 mb-4">
-                <div class="col-6 col-lg-3">
+                <div class="col-12 col-lg-4">
                     <div class="risk-kpi">
                         <span>管理不能化候補面積</span>
-                        <strong>
-                            {% if dashboard.latest_report.unmanageable_candidate_area is not None %}
-                                {{ dashboard.latest_report.unmanageable_candidate_area }}
-                            {% else %}
-                                未実装（TODO）
-                            {% endif %}
-                        </strong>
-                        {% if dashboard.latest_report.unmanageable_candidate_area is not None %}<small>ha</small>{% endif %}
-                        <div class="kpi-meta">
-                            <span class="scope-badge">{{ dashboard.kpi_basis.unmanageable_candidate_area.region_label }}</span>
-                            <span>{{ dashboard.kpi_basis.unmanageable_candidate_area.period_label }}</span>
-                        </div>
+                        {% with comparison=dashboard.national_comparison.rows.0 %}
+                            <div class="kpi-primary-value">
+                                <strong>
+                                    {% if dashboard.latest_report.unmanageable_candidate_area is not None %}
+                                        {{ dashboard.latest_report.unmanageable_candidate_area }}
+                                    {% else %}
+                                        未実装（TODO）
+                                    {% endif %}
+                                </strong>
+                                {% if dashboard.latest_report.unmanageable_candidate_area is not None %}<small>ha</small>{% endif %}
+                                {% if comparison.comparison_label %}<span class="kpi-inline-comparison">（{{ comparison.comparison_label }}）</span>{% endif %}
+                            </div>
+                            <div class="kpi-meta">
+                                <span class="scope-badge">{{ dashboard.kpi_basis.unmanageable_candidate_area.region_label }}</span>
+                                <span>{{ dashboard.kpi_basis.unmanageable_candidate_area.period_label }}</span>
+                            </div>
+                            <div class="kpi-comparison">
+                                <span>全国</span>
+                                <strong>
+                                    {% if comparison.national_value is not None %}
+                                        {{ comparison.national_value|floatformat:1|intcomma }} {{ comparison.unit }}
+                                    {% else %}
+                                        未取得
+                                    {% endif %}
+                                </strong>
+                                <small>{{ comparison.basis_type }}</small>
+                                <small>{{ comparison.national_basis.period_label }}</small>
+                            </div>
+                        {% endwith %}
                     </div>
                 </div>
-                <div class="col-6 col-lg-3">
+                <div class="col-12 col-lg-4">
                     <div class="risk-kpi">
                         <span>10年後農地維持率</span>
-                        <strong>
-                            {% if dashboard.latest_report.farmland_maintenance_rate is not None %}
-                                {{ dashboard.latest_report.farmland_maintenance_rate }}
-                            {% else %}
-                                未実装（TODO）
-                            {% endif %}
-                        </strong>
-                        {% if dashboard.latest_report.farmland_maintenance_rate is not None %}<small>%</small>{% endif %}
-                        <div class="kpi-meta">
-                            <span class="scope-badge">{{ dashboard.kpi_basis.farmland_maintenance_rate.region_label }}</span>
-                            <span>{{ dashboard.kpi_basis.farmland_maintenance_rate.period_label }}</span>
-                        </div>
+                        {% with comparison=dashboard.national_comparison.rows.1 %}
+                            <div class="kpi-primary-value">
+                                <strong>
+                                    {% if dashboard.latest_report.farmland_maintenance_rate is not None %}
+                                        {{ dashboard.latest_report.farmland_maintenance_rate }}
+                                    {% else %}
+                                        未実装（TODO）
+                                    {% endif %}
+                                </strong>
+                                {% if dashboard.latest_report.farmland_maintenance_rate is not None %}<small>%</small>{% endif %}
+                                {% if comparison.comparison_label %}<span class="kpi-inline-comparison">（{{ comparison.comparison_label }}）</span>{% endif %}
+                            </div>
+                            <div class="kpi-meta">
+                                <span class="scope-badge">{{ dashboard.kpi_basis.farmland_maintenance_rate.region_label }}</span>
+                                <span>{{ dashboard.kpi_basis.farmland_maintenance_rate.period_label }}</span>
+                            </div>
+                            <div class="kpi-comparison">
+                                <span>全国</span>
+                                <strong>
+                                    {% if comparison.national_value is not None %}
+                                        {{ comparison.national_value|floatformat:1|intcomma }} {{ comparison.unit }}
+                                    {% else %}
+                                        未取得
+                                    {% endif %}
+                                </strong>
+                                <small>{{ comparison.basis_type }}</small>
+                                <small>{{ comparison.national_basis.period_label }}</small>
+                            </div>
+                        {% endwith %}
                     </div>
                 </div>
-                <div class="col-6 col-lg-3">
+                <div class="col-12 col-lg-4">
                     <div class="risk-kpi">
                         <span>後継者なし割合</span>
-                        <strong>
-                            {% if dashboard.latest_report.succession_risk is not None %}
-                                {{ dashboard.latest_report.succession_risk }}
-                            {% else %}
-                                未実装（TODO）
-                            {% endif %}
-                        </strong>
-                        {% if dashboard.latest_report.succession_risk is not None %}<small>%</small>{% endif %}
-                        <div class="kpi-meta">
-                            <span class="scope-badge">{{ dashboard.kpi_basis.succession_risk.region_label }}</span>
-                            <span>{{ dashboard.kpi_basis.succession_risk.period_label }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="risk-kpi">
-                        <span>縮小・中止意向</span>
-                        <strong>
-                            {% if dashboard.latest_report.intention_risk is not None %}
-                                {{ dashboard.latest_report.intention_risk }}
-                            {% else %}
-                                未実装（TODO）
-                            {% endif %}
-                        </strong>
-                        {% if dashboard.latest_report.intention_risk is not None %}<small>%</small>{% endif %}
-                        <div class="kpi-meta">
-                            <span class="scope-badge">{{ dashboard.kpi_basis.intention_risk.region_label }}</span>
-                            <span>{{ dashboard.kpi_basis.intention_risk.source_label }}</span>
-                        </div>
+                        {% with comparison=dashboard.national_comparison.rows.2 %}
+                            <div class="kpi-primary-value">
+                                <strong>
+                                    {% if dashboard.latest_report.succession_risk is not None %}
+                                        {{ dashboard.latest_report.succession_risk }}
+                                    {% else %}
+                                        未実装（TODO）
+                                    {% endif %}
+                                </strong>
+                                {% if dashboard.latest_report.succession_risk is not None %}<small>%</small>{% endif %}
+                                {% if comparison.comparison_label %}<span class="kpi-inline-comparison">（{{ comparison.comparison_label }}）</span>{% endif %}
+                            </div>
+                            <div class="kpi-meta">
+                                <span class="scope-badge">{{ dashboard.kpi_basis.succession_risk.region_label }}</span>
+                                <span>{{ dashboard.kpi_basis.succession_risk.period_label }}</span>
+                            </div>
+                            <div class="kpi-comparison">
+                                <span>全国</span>
+                                <strong>
+                                    {% if comparison.national_value is not None %}
+                                        {{ comparison.national_value|floatformat:1|intcomma }} {{ comparison.unit }}
+                                    {% else %}
+                                        未取得
+                                    {% endif %}
+                                </strong>
+                                <small>{{ comparison.basis_type }}</small>
+                                <small>{{ comparison.national_basis.period_label }}</small>
+                            </div>
+                        {% endwith %}
                     </div>
                 </div>
             </div>
@@ -171,7 +205,7 @@
             {% endif %}
 
             <div class="row g-4 mb-4">
-                <div class="col-12 col-lg-6">
+                <div class="col-12">
                     <section class="report-panel h-100">
                         <h2 class="h5">年齢階層別の経営体数</h2>
                         <p class="distribution-note">
@@ -208,25 +242,6 @@
                                 </div>
                             {% endfor %}
                         </div>
-                    </section>
-                </div>
-                <div class="col-12 col-lg-6">
-                    <section class="report-panel h-100">
-                        <h2 class="h5">リスク要因の内訳</h2>
-                        <p class="distribution-note">
-                            <span class="scope-badge">{{ dashboard.kpi_basis.risk_breakdown.region_label }}</span>
-                            {{ dashboard.kpi_basis.risk_breakdown.period_label }}
-                        </p>
-                        <dl class="risk-breakdown mb-0">
-                            <dt>高齢化リスク</dt>
-                            <dd>{% if dashboard.latest_report.aging_risk is not None %}{{ dashboard.latest_report.aging_risk }}%{% else %}未実装（TODO）{% endif %}</dd>
-                            <dt>離農確定候補面積</dt>
-                            <dd>{% if dashboard.latest_report.retirement_confirmed_area is not None %}{{ dashboard.latest_report.retirement_confirmed_area }} ha{% else %}未実装（TODO）{% endif %}</dd>
-                            <dt>離農予備軍面積</dt>
-                            <dd>{% if dashboard.latest_report.retirement_reserve_area is not None %}{{ dashboard.latest_report.retirement_reserve_area }} ha{% else %}未実装（TODO）{% endif %}</dd>
-                            <dt>補助指標</dt>
-                            <dd>{% if dashboard.latest_report.supplemental_unmanageable_area %}耕作放棄地 {{ dashboard.latest_report.supplemental_unmanageable_area }} ha を補助加算{% else %}耕作放棄地・相続土地国庫帰属制度は取得状況を下段に表示{% endif %}</dd>
-                        </dl>
                     </section>
                 </div>
             </div>

@@ -232,6 +232,67 @@ class AgriculturalRiskCalculatorTest(TestCase):
         self.assertIsNone(result.retirement_confirmed_area)
         self.assertIsNone(result.unmanageable_candidate_area)
 
+    def test_calculate_report_uses_national_dataset_definitions(self):
+        """
+        シナリオ:
+        - 入力: 全国用の経営耕地面積、後継者確保状況、耕作放棄地面積。
+        - 処理: 全国地域の離農リスクレポートを集計する。
+        - 期待値: 全国用の分類コードで後継者なし割合と維持率が計算されること。
+        """
+        region = AgriculturalStatisticsService.ensure_default_configuration("00000")
+        area_dataset = EstatDataset.objects.get(
+            indicator_key="national_cultivated_area_distribution"
+        )
+        successor_dataset = EstatDataset.objects.get(
+            indicator_key="national_successor_status_count"
+        )
+        abandoned_dataset = EstatDataset.objects.get(
+            indicator_key="national_abandoned_farmland_area_2015"
+        )
+        fetched_at = timezone.now()
+        AgriculturalStatisticSnapshot.objects.create(
+            region=region,
+            dataset=area_dataset,
+            period_label="001",
+            value=3232882,
+            fetched_at=fetched_at,
+            estat_updated_at=fetched_at,
+            raw_data={"@cat01": "001", "@cat02": "001", "$": "3232882"},
+            source_hash="national-area-total",
+        )
+        for period_label, value in [("001", 1075705), ("007", 764367)]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=region,
+                dataset=successor_dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=fetched_at,
+                estat_updated_at=fetched_at,
+                raw_data={"@cat01": "001", "@cat02": period_label, "$": str(value)},
+                source_hash=f"national-successor-{period_label}",
+            )
+        AgriculturalStatisticSnapshot.objects.create(
+            region=region,
+            dataset=abandoned_dataset,
+            period_label="201500",
+            value=423064,
+            fetched_at=fetched_at,
+            estat_updated_at=fetched_at,
+            raw_data={"@area": "N0001", "@cat01": "001", "$": "423064"},
+            source_hash="national-abandoned-2015",
+        )
+
+        report = AgriculturalStatisticsService.calculate_and_save_report(
+            region=region,
+            report_date=date(2026, 6, 27),
+        )
+
+        self.assertEqual(report.total_cultivated_area, 3232882)
+        self.assertEqual(report.supplemental_unmanageable_area, 423064)
+        self.assertEqual(report.unmanageable_candidate_area, 423064)
+        self.assertEqual(report.farmland_maintenance_rate, 86.9)
+        self.assertEqual(report.succession_risk, 71.1)
+
 
 class AgriculturalStatisticsCommandTest(TestCase):
     def test_command_requires_estat_app_id(self):
@@ -286,8 +347,8 @@ class AgriculturalStatisticsCommandTest(TestCase):
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
             call_command("fetch_farmland_statistics", verbosity=0)
 
-        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 5)
-        self.assertEqual(AgriculturalRiskReport.objects.count(), 1)
+        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 8)
+        self.assertEqual(AgriculturalRiskReport.objects.count(), 2)
 
     @patch("soil_analysis.domain.dataprovider.estat.requests.get")
     def test_command_dry_run_does_not_write_database(self, mock_get):
@@ -369,6 +430,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "0002068866")
         self.assertContains(response, "0002068879")
         self.assertContains(response, "0003205603")
+        self.assertNotContains(response, "全国比較KPI")
 
     def test_report_view_displays_latest_risk_report(self):
         """
@@ -550,6 +612,82 @@ class AgriculturalRiskReportViewTest(TestCase):
             unmanageable_candidate_area=185,
             farmland_maintenance_rate=81.5,
         )
+        national_region = AgriculturalStatisticsService.ensure_default_configuration(
+            "00000"
+        )
+        for dataset, period_label, value, source_hash, survey_date in [
+            (
+                distribution_dataset,
+                "1001",
+                4000000,
+                "national-distribution-total",
+                "202001-202012",
+            ),
+            (
+                abandoned_dataset,
+                "100",
+                420000,
+                "national-abandoned-area-2015",
+                "201501-201512",
+            ),
+        ]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=national_region,
+                dataset=dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=timezone.now(),
+                estat_updated_at=timezone.now(),
+                raw_data={
+                    "@cat02": period_label,
+                    "$": str(value),
+                    "_table_metadata": {
+                        "tabulation_sub_category": "2020年農林業センサス",
+                        "survey_date": survey_date,
+                    },
+                },
+                source_hash=source_hash,
+            )
+        for period_label, label, value in [
+            ("1001", "計", 1000000),
+            ("1007", "確保していない", 520000),
+        ]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=national_region,
+                dataset=successor_dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=timezone.now(),
+                estat_updated_at=timezone.now(),
+                raw_data={
+                    "@cat01": "1171",
+                    "@cat02": period_label,
+                    "$": str(value),
+                    "_table_metadata": {
+                        "tabulation_sub_category": "2020年農林業センサス",
+                        "survey_date": "202001-202012",
+                    },
+                    "_class_metadata": {
+                        "cat02": {
+                            period_label: {
+                                "name": label,
+                                "unit": "経営体",
+                            }
+                        }
+                    },
+                },
+                source_hash=f"national-successor-count-{period_label}",
+            )
+        AgriculturalRiskReport.objects.create(
+            region=national_region,
+            report_date=date(2026, 6, 27),
+            total_cultivated_area=4000000,
+            no_successor_ratio=0.52,
+            supplemental_unmanageable_area=420000,
+            succession_risk=52,
+            unmanageable_candidate_area=420000,
+            farmland_maintenance_rate=89.5,
+        )
 
         response = self.client.get(reverse("soil:farmland_risk"))
 
@@ -567,6 +705,17 @@ class AgriculturalRiskReportViewTest(TestCase):
             response,
             "後継者なし割合を全農地面積へ直接掛けず",
         )
+        self.assertNotContains(response, "全国比較KPI")
+        self.assertContains(response, '<div class="kpi-comparison">', count=3)
+        self.assertContains(response, "e-Stat値から画面内計算")
+        self.assertContains(response, "e-Stat値から算出")
+        self.assertContains(response, "420,000.0 ha")
+        self.assertContains(response, "89.5 %")
+        self.assertContains(response, "52.0 %")
+        self.assertContains(response, "全国占有率 0.0%")
+        self.assertContains(response, "全国より8.0pt低い")
+        self.assertContains(response, "全国より2.0pt低い")
+        self.assertContains(response, "2015年農林業センサス（2015年1月〜2015年12月）")
         self.assertContains(response, "取得済み")
         self.assertContains(response, "データ時点")
         self.assertContains(response, "2020年農林業センサス（2020年1月〜2020年12月）")
@@ -647,6 +796,8 @@ class AgriculturalRiskReportViewTest(TestCase):
             "現時点では法務省ページ上の最新累計値のみを表示しています。",
         )
         self.assertContains(response, "年齢階層別の経営体数")
+        self.assertNotContains(response, "縮小・中止意向")
+        self.assertNotContains(response, "リスク要因の内訳")
         self.assertContains(
             response,
             '<span class="data-period">2020年農林業センサス（2020年1月〜2020年12月）</span>',
