@@ -768,6 +768,8 @@ class AgriculturalStatisticsService:
     ) -> float | None:
         """
         `successor_missing` は農業経営の後継者が未確保である状態を指します。
+        ここでの `successor` は「成功者」ではなく農地・農業経営を引き継ぐ
+        後継者、`missing` はその後継者を確保できていない状態です。
 
         農業経営の後継者を確保していない経営体の割合を算出します。
 
