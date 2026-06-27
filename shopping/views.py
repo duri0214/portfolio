@@ -9,6 +9,7 @@ from django.views.generic import (
     FormView,
     UpdateView,
     ListView,
+    TemplateView,
 )
 
 from config import settings
@@ -16,6 +17,7 @@ from .domain.repository.payment import StripePaymentRepository
 from .domain.repository.product import ProductRepository
 from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
+from .domain.service.location_risk import LocationRiskService
 from .domain.service.payment import StripePaymentService
 from .domain.valueobject.payment import PaymentIntent, PaymentInfo
 from .forms import (
@@ -119,6 +121,54 @@ class IndexView(ListView):
         context = super().get_context_data(**kwargs)
         context["staffs"] = UserAttributeRepository.get_all_staff()
         context["customers"] = UserAttributeRepository.get_all_customers()
+        return context
+
+
+class StorePlanningView(TemplateView):
+    """出店候補地を評判分析と立地リスクの両面から確認する画面。"""
+
+    template_name = "shopping/store_planning.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["target_location"] = {
+            "name": "足立区千住大川町付近の喫茶店",
+            "latitude": 35.79294926538929,
+            "longitude": 139.81451579469035,
+            "comparison_area": "北千住駅周辺",
+        }
+        context["location_assessment"] = LocationRiskService.assess(
+            pedestrian_count_per_hour=30
+        )
+        context["data_sources"] = [
+            {
+                "name": "店前通行量の実測",
+                "usage": "平日/休日、朝/昼/夕方に10分から15分だけ数えて1時間換算する",
+                "status": "手入力",
+            },
+            {
+                "name": "jSTAT MAP / 国勢調査",
+                "usage": "半径500m圏の夜間人口、世帯属性、年代構成を確認する",
+                "status": "外部確認",
+            },
+            {
+                "name": "Google Maps 混雑傾向",
+                "usage": "対象店舗と駅前店舗の曜日別ピークを比較する",
+                "status": "外部確認",
+            },
+        ]
+        context["planning_axes"] = [
+            {
+                "title": "評判・口コミ",
+                "summary": "Google Maps レビューを集約し、エリアの印象やネガティブ要因を把握する",
+                "issue": "#131",
+            },
+            {
+                "title": "通行量・周辺人口",
+                "summary": "店前を通る人数と周辺人口から、通りすがり集客への依存度を判断する",
+                "issue": "#803",
+            },
+        ]
         return context
 
 

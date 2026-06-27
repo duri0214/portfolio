@@ -1,0 +1,90 @@
+{% extends 'shopping/base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'shp:index' %}">Shopping</a></li>
+                <li class="breadcrumb-item active" aria-current="page">出店計画</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="p-4 bg-light rounded shadow-sm">
+                    <h1 class="h2 mb-3">出店計画</h1>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">対象地点</dt>
+                        <dd class="col-sm-9">{{ target_location.name }}</dd>
+                        <dt class="col-sm-3">座標</dt>
+                        <dd class="col-sm-9">{{ target_location.latitude }}, {{ target_location.longitude }}</dd>
+                        <dt class="col-sm-3">比較対象</dt>
+                        <dd class="col-sm-9">{{ target_location.comparison_area }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            {% for axis in planning_axes %}
+                <div class="col-md-6">
+                    <section class="border rounded p-4 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <h2 class="h5 mb-2">{{ axis.title }}</h2>
+                            <span class="badge text-bg-secondary">{{ axis.issue }}</span>
+                        </div>
+                        <p class="text-muted mb-0">{{ axis.summary }}</p>
+                    </section>
+                </div>
+            {% endfor %}
+
+            <div class="col-lg-5">
+                <section class="border rounded p-4 h-100">
+                    <h2 class="h5 mb-3">店前通行量シナリオ</h2>
+                    <p class="mb-3">
+                        1時間あたり {{ location_assessment.pedestrian_count_per_hour }} 人が店前を通る前提で、
+                        入店率ごとの期待来店数を試算する。
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>シナリオ</th>
+                                <th>入店率</th>
+                                <th>期待来店数/時</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for estimate in location_assessment.estimates %}
+                                <tr>
+                                    <td>{{ estimate.label }}</td>
+                                    <td>{{ estimate.entry_rate_percent|floatformat:1 }}%</td>
+                                    <td>{{ estimate.visitors_per_hour|floatformat:2 }} 人</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-lg-7">
+                <section class="border rounded p-4 h-100">
+                    <h2 class="h5 mb-3">立地リスク判定</h2>
+                    <p class="fs-5 fw-semibold mb-2">{{ location_assessment.risk_label }}</p>
+                    <p class="mb-4">{{ location_assessment.recommendation }}</p>
+                    <h3 class="h6 mb-3">確認するデータ</h3>
+                    <div class="row g-3">
+                        {% for source in data_sources %}
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="fw-semibold">{{ source.name }}</div>
+                                    <div class="small text-muted my-2">{{ source.usage }}</div>
+                                    <span class="badge text-bg-light">{{ source.status }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+{% endblock %}

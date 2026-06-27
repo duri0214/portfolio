@@ -27,6 +27,9 @@
                     <p class="lead">yummy yummy pizza</p>
                     <hr class="my-4">
                     <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-primary" href="{% url 'shp:store_planning' %}">
+                            <i class="fas fa-map-marked-alt me-1"></i>出店計画
+                        </a>
                         {% if user.is_superuser %}
                             <a class="btn btn-outline-primary" href="{% url 'shp:staff_create' %}">
                                 <i class="fas fa-user-plus me-1"></i>店員作成

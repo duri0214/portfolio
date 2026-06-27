@@ -33,6 +33,32 @@ class TestView(TestCase):
         response = self.client.get(reverse("shp:index"))
         self.assertEqual(200, response.status_code)
 
+    def test_top_page_links_to_store_planning(self):
+        """
+        シナリオ:
+        - 入力: shoppingトップページのURL。
+        - 処理: テストクライアントでGETする。
+        - 期待値: 出店計画画面への導線が表示されること。
+        """
+        response = self.client.get(reverse("shp:index"))
+
+        self.assertContains(response, "出店計画")
+        self.assertContains(response, reverse("shp:store_planning"))
+
+    def test_get_store_planning_page_200(self):
+        """
+        シナリオ:
+        - 入力: 出店計画画面のURL。
+        - 処理: テストクライアントでGETする。
+        - 期待値: HTTP 200 が返され、評判分析と立地リスクの2軸が表示されること。
+        """
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "評判・口コミ")
+        self.assertContains(response, "通行量・周辺人口")
+        self.assertContains(response, "通りすがり依存は厳しい")
+
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
         """
         シナリオ:
