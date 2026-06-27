@@ -159,6 +159,24 @@
     margin-bottom: 1rem;
 }
 
+.distribution-example {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding: 0.7rem 0.85rem;
+    border-left: 4px solid #4d7c9f;
+    border-radius: 6px;
+    background: #f3f8fc;
+    color: #47596b;
+    font-size: 0.88rem;
+}
+
+.distribution-example strong {
+    color: #334e68;
+    white-space: nowrap;
+}
+
 .source-list {
     display: flex;
     flex-wrap: wrap;
