@@ -996,9 +996,33 @@ class AgriculturalStatisticsService:
             ),
             None,
         )
+        farmland_application = next(
+            (
+                row
+                for row in target_rows
+                if row.indicator_key
+                == "inheritance_land_reversion_applications_farmland"
+            ),
+            None,
+        )
+        total_value = total.value if total is not None else None
+        farmland_value = (
+            farmland_application.value if farmland_application is not None else None
+        )
+        other_application_value = None
+        if total_value is not None and farmland_value is not None:
+            other_application_value = total_value - farmland_value
         return {
             "total": total,
-            "breakdown_rows": [row for row in target_rows if row is not total],
+            "breakdown_rows": [row for row in target_rows if row is not total]
+            + [
+                {
+                    "display_name": "相続土地国庫帰属制度 申請件数（その他）",
+                    "value": other_application_value,
+                    "unit": total.unit if total is not None else "件",
+                    "note": "申請件数の合計から田・畑を差し引いた検算用の内訳です。",
+                }
+            ],
             "trend_note": "現時点では法務省ページ上の最新累計値のみを表示しています。今後、月次の過去値を保存できるようにするとトレンド化できます。",
         }
 
@@ -1012,9 +1036,11 @@ class AgriculturalStatisticsService:
         """
         status_by_key = {row.indicator_key: row for row in rows}
         base = status_by_key.get(CULTIVATED_AREA_DISTRIBUTION_KEY)
+        age = status_by_key.get(OPERATOR_AGE_DISTRIBUTION_KEY)
         successor = status_by_key.get(SUCCESSOR_STATUS_DISTRIBUTION_KEY)
         abandoned = status_by_key.get(ABANDONED_FARMLAND_AREA_KEY)
         base_period = base.data_period_label if base is not None else None
+        age_period = age.data_period_label if age is not None else None
         successor_period = (
             successor.data_period_label if successor is not None else None
         )
@@ -1036,6 +1062,13 @@ class AgriculturalStatisticsService:
                 "region_label": "六戸町",
                 "period_label": successor_period or "-",
                 "source_label": "後継者を確保していない経営体数 / 計",
+            },
+            "operator_age_distribution": {
+                "region_label": "六戸町",
+                "period_label": age_period or "-",
+                "source_label": age.display_name if age is not None else "",
+                "stats_data_id": age.stats_data_id if age is not None else "",
+                "source_page_url": age.source_page_url if age is not None else "",
             },
             "intention_risk": {
                 "region_label": "未設定",

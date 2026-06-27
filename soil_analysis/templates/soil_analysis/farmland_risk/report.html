@@ -101,6 +101,9 @@
                     </div>
                 </div>
             </div>
+            <p class="distribution-note">
+                後継者なし割合は経営体数ベース、10年後農地維持率は面積ベースの指標です。現時点では年齢階層別の面積を取得できていないため、後継者なし割合を全農地面積へ直接掛けず、耕作放棄地面積など取得済みの面積指標を使った暫定値として表示します。
+            </p>
 
             {% if dashboard.cultivated_area_distribution_rows %}
                 <section class="report-panel mb-4">
@@ -152,7 +155,18 @@
                 <div class="col-12 col-lg-6">
                     <section class="report-panel h-100">
                         <h2 class="h5">年齢階層別の経営体数</h2>
-                        <p class="distribution-note">2020年農林業センサスの六戸町データです。e-Statの5歳刻み分類を年代別に集計して表示します。</p>
+                        <p class="distribution-note">
+                            <span class="scope-badge">{{ dashboard.kpi_basis.operator_age_distribution.region_label }}</span>
+                            {{ dashboard.kpi_basis.operator_age_distribution.period_label }}。e-Statの5歳刻み分類を年代別に集計して表示します。
+                        </p>
+                        {% if dashboard.kpi_basis.operator_age_distribution.source_page_url %}
+                            <div class="source-list" aria-label="使用した指標">
+                                <span>使用した指標</span>
+                                <a href="{{ dashboard.kpi_basis.operator_age_distribution.source_page_url }}" target="_blank" rel="noopener">
+                                    {{ dashboard.kpi_basis.operator_age_distribution.source_label }}（{{ dashboard.kpi_basis.operator_age_distribution.stats_data_id }}）
+                                </a>
+                            </div>
+                        {% endif %}
                         <div class="age-bars">
                             {% for row in dashboard.age_area_rows %}
                                 <div class="age-bar-row">
@@ -247,7 +261,7 @@
                         <table class="table table-sm align-middle mb-0">
                             <thead>
                             <tr>
-                                <th>内訳・補足</th>
+                                <th>申請件数内訳・補足</th>
                                 <th class="text-end">値</th>
                             </tr>
                             </thead>
@@ -262,6 +276,7 @@
                         </table>
                     </div>
                 </div>
+                <p class="distribution-note mt-3 mb-2">申請件数は、田・畑とその他の合計で 5,545 件になります。帰属件数（田・畑）は同じ法務省ページの補足値です。</p>
                 <p class="distribution-note mt-3 mb-2">{{ dashboard.inheritance_land_reversion_summary.trend_note }}</p>
                 <a href="{{ dashboard.inheritance_land_reversion_summary.total.source_url }}" target="_blank" rel="noopener">{{ dashboard.inheritance_land_reversion_summary.total.source_name }}</a>
             </section>

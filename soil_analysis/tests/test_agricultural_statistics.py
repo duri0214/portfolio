@@ -558,6 +558,14 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "81.5")
         self.assertContains(response, "対象地域")
         self.assertContains(response, "上北郡六戸町")
+        self.assertContains(
+            response,
+            "後継者なし割合は経営体数ベース、10年後農地維持率は面積ベースの指標です。",
+        )
+        self.assertContains(
+            response,
+            "後継者なし割合を全農地面積へ直接掛けず",
+        )
         self.assertContains(response, "取得済み")
         self.assertContains(response, "データ時点")
         self.assertContains(response, "2020年農林業センサス（2020年1月〜2020年12月）")
@@ -607,11 +615,25 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "5,545 件")
         self.assertContains(response, "相続土地国庫帰属制度 申請件数（田・畑）")
         self.assertContains(response, "2,169 件")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数（その他）")
+        self.assertContains(response, "3,376 件")
+        self.assertContains(
+            response,
+            "申請件数は、田・畑とその他の合計で 5,545 件になります。",
+        )
         self.assertContains(
             response,
             "現時点では法務省ページ上の最新累計値のみを表示しています。",
         )
         self.assertContains(response, "年齢階層別の経営体数")
+        self.assertContains(
+            response,
+            "経営主年齢階層別経営体数（0002068866）",
+        )
+        self.assertContains(
+            response,
+            "https://www.e-stat.go.jp/dbview?sid=0002068866",
+        )
         self.assertContains(
             response,
             "e-Statの5歳刻み分類を年代別に集計して表示します。",
