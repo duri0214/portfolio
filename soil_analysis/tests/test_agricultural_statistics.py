@@ -254,9 +254,10 @@ class AgriculturalStatisticsCommandTest(TestCase):
         - 期待値: スナップショットが1件保存され、レポート集計も作成されること。
         """
         EstatDataset.objects.create(
-            indicator_key="total_cultivated_area",
-            display_name="経営耕地面積",
+            indicator_key="cultivated_area_distribution",
+            display_name="経営耕地面積規模別面積",
             stats_data_id="000001",
+            filters={"cdCat01": "1171"},
             unit="ha",
         )
         response = Mock()
@@ -272,7 +273,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
                     },
                     "DATA_INF": {
                         "VALUE": {
-                            "@time": "2020",
+                            "@cat02": "1001",
                             "@unit": "ha",
                             "$": "1000",
                         }
@@ -285,7 +286,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
             call_command("fetch_rokunohe_farmland_statistics", verbosity=0)
 
-        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 2)
+        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 1)
         self.assertEqual(AgriculturalRiskReport.objects.count(), 1)
 
     @patch("soil_analysis.domain.dataprovider.estat.requests.get")
@@ -361,7 +362,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "0002068836")
         self.assertContains(response, "https://www.e-stat.go.jp/dbview?sid=0002068836")
         self.assertContains(response, "cdCat01=1171")
-        self.assertContains(response, "cdCat02=1001")
+        self.assertNotContains(response, "cdCat02=1001")
         self.assertContains(response, "未実装（TODO）")
 
     def test_report_view_displays_latest_risk_report(self):
@@ -372,27 +373,8 @@ class AgriculturalRiskReportViewTest(TestCase):
         - 期待値: 管理不能化候補面積と10年後農地維持率が表示されること。
         """
         region = AgriculturalStatisticsService.ensure_default_configuration()
-        dataset = EstatDataset.objects.get(indicator_key="total_cultivated_area")
         distribution_dataset = EstatDataset.objects.get(
             indicator_key="cultivated_area_distribution"
-        )
-        AgriculturalStatisticSnapshot.objects.create(
-            region=region,
-            dataset=dataset,
-            period_label="1171",
-            value=1471,
-            fetched_at=timezone.now(),
-            estat_updated_at=timezone.now(),
-            raw_data={
-                "@cat01": "1171",
-                "@cat02": "1001",
-                "$": "1471",
-                "_table_metadata": {
-                    "tabulation_sub_category": "2020年農林業センサス",
-                    "survey_date": "202001-202012",
-                },
-            },
-            source_hash="total-cultivated-area-hash",
         )
         for period_label, value in [("1001", 1000), ("1002", 100), ("1004", 250)]:
             AgriculturalStatisticSnapshot.objects.create(
@@ -439,7 +421,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "対象地域")
         self.assertContains(response, "上北郡六戸町")
         self.assertContains(response, "取得済み")
-        self.assertContains(response, "1,471.00 ha")
+        self.assertContains(response, "1,000.00 ha")
         self.assertContains(response, "データ時点")
         self.assertContains(response, "2020年農林業センサス（2020年1月〜2020年12月）")
         self.assertContains(response, "e-Stat公表/更新日")
@@ -456,11 +438,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "構成比 25.0%")
         self.assertContains(
             response,
-            "六戸町の経営耕地面積の合計です。リスク計算の母数と、分布の構成比を出すための合計値として取得しています。",
-        )
-        self.assertContains(
-            response,
-            "同じ統計表を経営規模区分ごとに取得した面積です。1ha以下などの小規模農家層の分布を見るために使います。",
+            "経営規模区分ごとの面積です。合計値はこの統計の「計」を使い、リスク計算の母数と構成比の分母にしています。1ha以下などの小規模農家層の分布を見るために取得しています。",
         )
         self.assertContains(response, "未実装（TODO）")
         self.assertNotContains(response, "e-Stat スナップショット")
@@ -474,7 +452,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         - 期待値: 統計表IDから既知のデータ時点を補完して表示すること。
         """
         region = AgriculturalStatisticsService.ensure_default_configuration()
-        dataset = EstatDataset.objects.get(indicator_key="total_cultivated_area")
+        dataset = EstatDataset.objects.get(indicator_key="cultivated_area_distribution")
         AgriculturalStatisticSnapshot.objects.create(
             region=region,
             dataset=dataset,

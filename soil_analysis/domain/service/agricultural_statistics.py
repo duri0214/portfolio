@@ -22,6 +22,7 @@ ESTAT_DATA_VIEW_URL = "https://www.e-stat.go.jp/dbview"
 ESTAT_DATA_PERIOD_LABELS_BY_STATS_DATA_ID = {
     "0002068836": "2020年農林業センサス（2020年1月〜2020年12月）",
 }
+DERIVED_INDICATOR_KEYS = {"total_cultivated_area"}
 CULTIVATED_AREA_DISTRIBUTION_KEY = "cultivated_area_distribution"
 CULTIVATED_AREA_DISTRIBUTION_LABELS = {
     "1001": "計",
@@ -42,17 +43,6 @@ CULTIVATED_AREA_DISTRIBUTION_LABELS = {
 }
 
 DEFAULT_ESTAT_DATASETS = [
-    {
-        "indicator_key": "total_cultivated_area",
-        "display_name": "経営耕地面積",
-        "stats_data_id": "0002068836",
-        "filters": {
-            "cdCat01": "1171",
-            "cdCat02": "1001",
-        },
-        "unit": "ha",
-        "category": "base",
-    },
     {
         "indicator_key": CULTIVATED_AREA_DISTRIBUTION_KEY,
         "display_name": "経営耕地面積規模別面積",
@@ -245,7 +235,9 @@ class AgriculturalStatisticsService:
             EstatFetchResult: バッチ実行結果。
         """
         region = cls.ensure_default_configuration(area_code)
-        datasets = AgriculturalStatisticsRepository.get_datasets()
+        datasets = cls._fetch_target_datasets(
+            AgriculturalStatisticsRepository.get_datasets()
+        )
         fetched_at = timezone.now()
         default_period_label = str(target_date or fetched_at.date())
         created_count = 0
@@ -304,7 +296,12 @@ class AgriculturalStatisticsService:
             report_date: 集計日。
         """
         latest = AgriculturalStatisticsRepository.get_latest_snapshot_values(region)
-        risk_input = cls._build_risk_input(latest)
+        distribution_snapshots = (
+            AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
+                region, CULTIVATED_AREA_DISTRIBUTION_KEY
+            )
+        )
+        risk_input = cls._build_risk_input(latest, distribution_snapshots)
         result = AgriculturalRiskCalculator.calculate(risk_input)
         return AgriculturalStatisticsRepository.save_risk_report(
             region=region,
@@ -354,12 +351,14 @@ class AgriculturalStatisticsService:
         cultivated_area_distribution_rows = (
             cls._build_cultivated_area_distribution_rows(distribution_snapshots)
         )
-        datasets = AgriculturalStatisticsRepository.get_datasets()
+        datasets = cls._display_datasets(
+            AgriculturalStatisticsRepository.get_datasets()
+        )
         latest_snapshot_values = (
             AgriculturalStatisticsRepository.get_latest_snapshot_values(region)
         )
         dataset_status_rows = cls._build_dataset_status_rows(
-            datasets, latest_snapshot_values
+            datasets, latest_snapshot_values, distribution_snapshots
         )
         return AgriculturalRiskDashboard(
             region_name=region.name,
@@ -450,9 +449,14 @@ class AgriculturalStatisticsService:
         )
 
     @classmethod
-    def _build_risk_input(cls, latest: dict) -> AgriculturalRiskInput:
+    def _build_risk_input(
+        cls, latest: dict, distribution_snapshots: dict | None = None
+    ) -> AgriculturalRiskInput:
         return AgriculturalRiskInput(
-            total_cultivated_area=cls._value(latest, "total_cultivated_area"),
+            total_cultivated_area=(
+                cls._value(latest, "total_cultivated_area")
+                or cls._distribution_total_value(distribution_snapshots or {})
+            ),
             age_70_plus_area=cls._value(latest, "age_70_plus_area"),
             age_60s_area=cls._value(latest, "age_60s_area"),
             no_successor_ratio=cls._ratio_value(latest, "no_successor_ratio"),
@@ -479,6 +483,13 @@ class AgriculturalStatisticsService:
         return value
 
     @staticmethod
+    def _distribution_total_value(distribution_snapshots: dict) -> float | None:
+        total_snapshot = distribution_snapshots.get("1001")
+        if total_snapshot is None:
+            return None
+        return total_snapshot.value
+
+    @staticmethod
     def _build_age_area_rows(latest_report) -> list[dict[str, float | str | None]]:
         if latest_report is None:
             return []
@@ -497,18 +508,25 @@ class AgriculturalStatisticsService:
 
     @classmethod
     def _build_dataset_status_rows(
-        cls, datasets: list, latest_snapshot_values: dict
+        cls,
+        datasets: list,
+        latest_snapshot_values: dict,
+        distribution_snapshots: dict | None = None,
     ) -> list[EstatDatasetStatus]:
         return [
-            cls._build_dataset_status_row(dataset, latest_snapshot_values)
+            cls._build_dataset_status_row(
+                dataset, latest_snapshot_values, distribution_snapshots or {}
+            )
             for dataset in datasets
         ]
 
     @classmethod
     def _build_dataset_status_row(
-        cls, dataset, latest_snapshot_values: dict
+        cls, dataset, latest_snapshot_values: dict, distribution_snapshots: dict
     ) -> EstatDatasetStatus:
-        snapshot = latest_snapshot_values.get(dataset.indicator_key)
+        snapshot = cls._status_snapshot(
+            dataset, latest_snapshot_values, distribution_snapshots
+        )
         is_configured = not dataset.stats_data_id.startswith("TODO_")
         if snapshot is not None:
             status_label = "取得済み"
@@ -537,6 +555,39 @@ class AgriculturalStatisticsService:
                 snapshot.estat_updated_at if snapshot is not None else None
             ),
         )
+
+    @staticmethod
+    def _fetch_target_datasets(datasets: list) -> list:
+        return [
+            dataset
+            for dataset in datasets
+            if dataset.indicator_key not in DERIVED_INDICATOR_KEYS
+        ]
+
+    @staticmethod
+    def _display_datasets(datasets: list) -> list:
+        return sorted(
+            [
+                dataset
+                for dataset in datasets
+                if dataset.indicator_key not in DERIVED_INDICATOR_KEYS
+            ],
+            key=lambda dataset: (
+                dataset.stats_data_id.startswith("TODO_"),
+                dataset.stats_data_id,
+                dataset.display_name,
+            ),
+        )
+
+    @staticmethod
+    def _status_snapshot(
+        dataset, latest_snapshot_values: dict, distribution_snapshots: dict
+    ):
+        if dataset.indicator_key == CULTIVATED_AREA_DISTRIBUTION_KEY:
+            return distribution_snapshots.get("1001") or latest_snapshot_values.get(
+                dataset.indicator_key
+            )
+        return latest_snapshot_values.get(dataset.indicator_key)
 
     @staticmethod
     def _source_page_url(stats_data_id: str) -> str:
