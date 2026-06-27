@@ -286,7 +286,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
             call_command("fetch_farmland_statistics", verbosity=0)
 
-        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 2)
+        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 5)
         self.assertEqual(AgriculturalRiskReport.objects.count(), 1)
 
     @patch("soil_analysis.domain.dataprovider.estat.requests.get")
@@ -363,7 +363,12 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "https://www.e-stat.go.jp/dbview?sid=0002068836")
         self.assertContains(response, "cdCat01=1171")
         self.assertNotContains(response, "cdCat02=1001")
-        self.assertContains(response, "未実装（TODO）")
+        self.assertContains(response, "全国補助トレンド")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数")
+        self.assertContains(response, "5,545 件")
+        self.assertContains(response, "0002068866")
+        self.assertContains(response, "0002068879")
+        self.assertContains(response, "0003205603")
 
     def test_report_view_displays_latest_risk_report(self):
         """
@@ -498,7 +503,12 @@ class AgriculturalRiskReportViewTest(TestCase):
             response,
             "経営規模区分ごとの経営体数です。面積だけでは小規模農家層の件数が分からないため、nとして併記します。",
         )
-        self.assertContains(response, "未実装（TODO）")
+        self.assertContains(response, "全国補助トレンド")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数（田・畑）")
+        self.assertContains(response, "2,169 件")
+        self.assertContains(response, "経営主年齢階層別経営体数")
+        self.assertContains(response, "5年以内の後継者確保状況")
+        self.assertContains(response, "耕作放棄地面積")
         self.assertNotContains(response, "e-Stat スナップショット")
         self.assertNotContains(response, "<th>分類</th>", html=True)
         self.assertNotContains(response, "取得履歴トレンド")

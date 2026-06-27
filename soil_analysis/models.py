@@ -937,3 +937,44 @@ class AgriculturalRiskReport(models.Model):
             )
         ]
         ordering = ["-report_date", "-id"]
+
+
+class SupplementalRiskIndicator(models.Model):
+    """
+    e-Stat 以外の公開情報から補助的に扱うリスク指標です。
+
+    六戸町に限定できない全国統計も、地域粒度を明示したうえで保存します。
+
+    Attributes:
+        indicator_key: 指標キー。
+        display_name: 画面表示名。
+        source_name: 取得元名。
+        source_url: 取得元URL。
+        region_label: 全国、青森県などの地域粒度。
+        period_label: 統計値の時点。
+        value: 統計値。
+        unit: 単位。
+        category: 指標カテゴリ。
+        note: 指標の読み方や注意点。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    indicator_key = models.CharField("指標キー", max_length=100, unique=True)
+    display_name = models.CharField("表示名", max_length=255)
+    source_name = models.CharField("取得元", max_length=255)
+    source_url = models.URLField("取得元URL")
+    region_label = models.CharField("地域粒度", max_length=100)
+    period_label = models.CharField("対象期間", max_length=100)
+    value = models.FloatField("値", null=True, blank=True)
+    unit = models.CharField("単位", max_length=50, blank=True, default="")
+    category = models.CharField("カテゴリ", max_length=100, blank=True, default="")
+    note = models.TextField("備考", blank=True, default="")
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["category", "indicator_key"]
+
+    def __str__(self):
+        return self.display_name

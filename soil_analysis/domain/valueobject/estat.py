@@ -160,6 +160,36 @@ class EstatDatasetStatus:
 
 
 @dataclass(frozen=True)
+class SupplementalRiskIndicatorStatus:
+    """
+    e-Stat 以外の補助指標を画面に表示するための値です。
+
+    Attributes:
+        indicator_key: 指標キー。
+        display_name: 画面に表示する指標名。
+        source_name: 取得元名。
+        source_url: 取得元URL。
+        region_label: 全国、青森県などの地域粒度。
+        period_label: 統計値の時点。
+        value: 統計値。
+        unit: 単位。
+        category: 指標カテゴリ。
+        note: 指標の読み方や注意点。
+    """
+
+    indicator_key: str
+    display_name: str
+    source_name: str
+    source_url: str
+    region_label: str
+    period_label: str
+    value: float | None
+    unit: str
+    category: str
+    note: str
+
+
+@dataclass(frozen=True)
 class EstatFetchResult:
     """
     e-Stat 取得バッチの結果です。
@@ -189,7 +219,9 @@ class AgriculturalRiskDashboard:
         latest_report: 最新リスクレポート。
         age_area_rows: 年齢階層別面積として表示する行。
         cultivated_area_distribution_rows: 経営耕地面積規模別面積の分布行。
+        successor_status_rows: 後継者確保状況別の経営体数行。
         cultivated_area_distribution_sources: 分布表示に使った統計指標。
+        supplemental_indicator_rows: e-Stat 以外の補助指標行。
         dataset_status_rows: 指標ごとの取得状況。
         has_data: 表示可能な統計データがあるかどうか。
     """
@@ -200,7 +232,9 @@ class AgriculturalRiskDashboard:
     latest_report: object | None
     age_area_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_rows: list[dict[str, float | str | None]]
+    successor_status_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_sources: list[EstatDatasetStatus]
+    supplemental_indicator_rows: list[SupplementalRiskIndicatorStatus]
     dataset_status_rows: list[EstatDatasetStatus]
     has_data: bool
 
