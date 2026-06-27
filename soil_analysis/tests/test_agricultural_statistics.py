@@ -468,6 +468,14 @@ class AgriculturalRiskReportViewTest(TestCase):
             response,
             "面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。",
         )
+        self.assertContains(
+            response,
+            "規模区分は圃場1筆ごとの面積ではなく、1つの経営体が持つ経営耕地面積の合計で決まります。",
+        )
+        self.assertContains(
+            response,
+            "0.3ha、0.4ha、0.2haの圃場を持つ経営体は、合計0.9haとして0.5〜1.0haの区分に入ります。",
+        )
         self.assertNotContains(response, "次回の e-Stat 取得バッチ後に反映されます。")
         self.assertContains(response, "計")
         self.assertContains(response, "構成比 100.0%")
@@ -481,6 +489,9 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(
             response,
             "たとえば0.5〜1.0haの行は、その規模区分に属する経営体が持つ経営耕地面積を合計したhaです。",
+        )
+        self.assertContains(
+            response, "分類は圃場1筆ごとではなく経営体全体の経営耕地面積で決まります。"
         )
         self.assertContains(
             response,
