@@ -810,7 +810,9 @@ class AgriculturalStatisticsService:
             if total_snapshot is not None:
                 data_period_label = cls._data_period_label(total_snapshot)
             for label, codes in OPERATOR_AGE_GROUP_CODES.items():
-                value = cls._sum_snapshot_values(age_snapshots_by_period, codes)
+                value = cls._sum_values_for_period_labels(
+                    age_snapshots_by_period, codes
+                )
                 rows.append(
                     {
                         "label": label,
@@ -824,12 +826,22 @@ class AgriculturalStatisticsService:
         return []
 
     @staticmethod
-    def _sum_snapshot_values(snapshots_by_period: dict, period_labels: set[str]):
+    def _sum_values_for_period_labels(
+        snapshots_by_period: dict, period_labels: set[str]
+    ) -> float | None:
         """
-        e-Stat スナップショットから指定分類コードの値を合計します。
+        指定した分類コードに対応する e-Stat 統計値を合計します。
 
-        ここでのスナップショットは、統計表ID・地域・分類コードごとに保存した
-        最新の統計値です。年齢階層のように複数分類を1つの表示行へまとめる時に使います。
+        ここでの `period_label` は時系列の期間ではなく、e-Stat の分類コードです。
+        例えば経営主年齢の 30代 は、30〜34歳と35〜39歳の2つの分類コードを
+        1つの表示行へまとめるため、このメソッドで各分類の値を足します。
+
+        Args:
+            snapshots_by_period: e-Stat の分類コードをキーにした保存済み統計値。
+            period_labels: 合計対象にする分類コードの集合。
+
+        Returns:
+            合計値。対象分類が存在しない、または値がすべて欠けている場合は None。
         """
         values = [
             snapshots_by_period[period_label].value
