@@ -630,6 +630,13 @@ class AgriculturalRiskReportViewTest(TestCase):
             response,
             "申請件数は、田・畑とその他の合計で 5,545 件になります。",
         )
+        self.assertContains(response, "補足値")
+        self.assertContains(response, "相続土地国庫帰属制度 帰属件数（農用地）")
+        self.assertContains(response, "879 件")
+        self.assertContains(
+            response,
+            "帰属件数（農用地）は申請件数の内訳ではなく",
+        )
         self.assertContains(
             response,
             "現時点では法務省ページ上の最新累計値のみを表示しています。",
@@ -645,7 +652,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         )
         self.assertContains(
             response,
-            "e-Statの5歳刻み分類を年代別に集計して表示します。",
+            "e-Statの年齢階層を表示用の階級にまとめて表示します。",
         )
         self.assertContains(response, "30歳未満")
         self.assertContains(response, "30代")

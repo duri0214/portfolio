@@ -740,10 +740,10 @@ class AgriculturalStatisticsService:
         cls, age_snapshots_by_period: dict
     ) -> list[dict[str, float | str | None]]:
         """
-        経営主年齢の5歳刻み分類を年代別の表示行へ集約します。
+        経営主年齢の分類を画面用の年齢階級へ集約します。
 
-        e-Stat上は30～34歳、35～39歳のように細かく分かれているため、
-        画面では年代別に合算して、男女別や「男女計」接頭辞を出さずに見せます。
+        e-Stat上の細かい年齢階層を、30歳未満、30代、40代、50代、
+        60代、70歳以上にまとめ、男女別や「男女計」接頭辞を出さずに見せます。
         """
         if age_snapshots_by_period:
             total_snapshot = age_snapshots_by_period.get("1001")
@@ -1023,6 +1023,15 @@ class AgriculturalStatisticsService:
             ),
             None,
         )
+        supplemental_rows = [
+            row
+            for row in target_rows
+            if row.indicator_key
+            not in {
+                INHERITANCE_LAND_REVERSION_TOTAL_KEY,
+                "inheritance_land_reversion_applications_farmland",
+            }
+        ]
         total_value = total.value if total is not None else None
         farmland_value = (
             farmland_application.value if farmland_application is not None else None
@@ -1032,7 +1041,9 @@ class AgriculturalStatisticsService:
             other_application_value = total_value - farmland_value
         return {
             "total": total,
-            "breakdown_rows": [row for row in target_rows if row is not total]
+            "application_breakdown_rows": [
+                row for row in [farmland_application] if row is not None
+            ]
             + [
                 {
                     "display_name": "相続土地国庫帰属制度 申請件数（その他）",
@@ -1041,6 +1052,7 @@ class AgriculturalStatisticsService:
                     "note": "申請件数の合計から田・畑を差し引いた検算用の内訳です。",
                 }
             ],
+            "supplemental_rows": supplemental_rows,
             "trend_note": "現時点では法務省ページ上の最新累計値のみを表示しています。今後、月次の過去値を保存できるようにするとトレンド化できます。",
         }
 

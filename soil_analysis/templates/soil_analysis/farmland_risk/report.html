@@ -173,7 +173,7 @@
                         <h2 class="h5">年齢階層別の経営体数</h2>
                         <p class="distribution-note">
                             <span class="scope-badge">{{ dashboard.kpi_basis.operator_age_distribution.region_label }}</span>
-                            {{ dashboard.kpi_basis.operator_age_distribution.period_label }}。e-Statの5歳刻み分類を年代別に集計して表示します。
+                            {{ dashboard.kpi_basis.operator_age_distribution.period_label }}。e-Statの年齢階層を表示用の階級にまとめて表示します。
                         </p>
                         {% if dashboard.kpi_basis.operator_age_distribution.source_page_url %}
                             <div class="source-list" aria-label="使用した指標">
@@ -276,12 +276,12 @@
                         <table class="table table-sm align-middle mb-0">
                             <thead>
                             <tr>
-                                <th>申請件数内訳・補足</th>
+                                <th>申請件数内訳</th>
                                 <th class="text-end">値</th>
                             </tr>
                             </thead>
                             <tbody>
-                            {% for row in dashboard.inheritance_land_reversion_summary.breakdown_rows %}
+                            {% for row in dashboard.inheritance_land_reversion_summary.application_breakdown_rows %}
                                 <tr>
                                     <td>{{ row.display_name }}</td>
                                     <td class="text-end">{{ row.value|floatformat:0|intcomma }} {{ row.unit }}</td>
@@ -289,9 +289,27 @@
                             {% endfor %}
                             </tbody>
                         </table>
+                        {% if dashboard.inheritance_land_reversion_summary.supplemental_rows %}
+                            <table class="table table-sm align-middle mt-3 mb-0">
+                                <thead>
+                                <tr>
+                                    <th>補足値</th>
+                                    <th class="text-end">値</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for row in dashboard.inheritance_land_reversion_summary.supplemental_rows %}
+                                    <tr>
+                                        <td>{{ row.display_name }}</td>
+                                        <td class="text-end">{{ row.value|floatformat:0|intcomma }} {{ row.unit }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endif %}
                     </div>
                 </div>
-                <p class="distribution-note mt-3 mb-2">申請件数は、田・畑とその他の合計で 5,545 件になります。帰属件数（田・畑）は同じ法務省ページの補足値です。</p>
+                <p class="distribution-note mt-3 mb-2">申請件数は、田・畑とその他の合計で 5,545 件になります。帰属件数（農用地）は申請件数の内訳ではなく、同じ法務省ページの補足値です。</p>
                 <p class="distribution-note mt-3 mb-2">{{ dashboard.inheritance_land_reversion_summary.trend_note }}</p>
                 <a href="{{ dashboard.inheritance_land_reversion_summary.total.source_url }}" target="_blank" rel="noopener">{{ dashboard.inheritance_land_reversion_summary.total.source_name }}</a>
             </section>
