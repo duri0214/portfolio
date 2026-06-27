@@ -895,9 +895,7 @@ class AgriculturalRiskReport(models.Model):
         total_cultivated_area: 現在の経営耕地面積。
         age_70_plus_area: 70歳以上の経営体が保有する面積。
         age_60s_area: 60代の経営体が保有する面積。
-        no_successor_ratio: 農業経営の後継者を確保していない経営体の割合。
-            `successor` は処理の成功者ではなく、農地・農業経営を引き継ぐ
-            後継者を指す。
+        no_successor_ratio: 後継者なし割合。
         shrink_stop_intention_ratio: 縮小・中止意向の割合。
         supplemental_unmanageable_area: 補助指標による管理不能化候補面積。
         aging_risk: 高齢化リスク。
