@@ -46,6 +46,51 @@
     padding: 1.25rem;
 }
 
+.data-status-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.data-freshness {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    color: #66788a;
+    font-size: 0.86rem;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid #d9e2ec;
+    background: #f7fafc;
+    color: #47596b;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-pill.is-ready {
+    border-color: #b9d8c9;
+    background: #edf8f2;
+    color: #276749;
+}
+
+.status-pill.is-pending {
+    border-color: #d7c7a1;
+    background: #fff8e6;
+    color: #7a5a12;
+}
+
+.status-pill.is-muted {
+    color: #66788a;
+}
+
 .age-bars {
     display: grid;
     gap: 1rem;
@@ -118,5 +163,13 @@
 
     .age-bar-value {
         text-align: left;
+    }
+
+    .data-status-heading {
+        display: block;
+    }
+
+    .data-freshness {
+        margin-top: 0.75rem;
     }
 }

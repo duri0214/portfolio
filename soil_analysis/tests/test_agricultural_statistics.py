@@ -329,6 +329,9 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "統計データはまだ取得されていません")
         self.assertContains(response, "e-Stat地域コード 02405")
+        self.assertContains(response, "データ取得状況")
+        self.assertContains(response, "0002068836")
+        self.assertContains(response, "cdCat01=1171")
 
     def test_report_view_displays_latest_risk_report(self):
         """
@@ -338,6 +341,17 @@ class AgriculturalRiskReportViewTest(TestCase):
         - 期待値: 管理不能化候補面積と10年後農地維持率が表示されること。
         """
         region = AgriculturalStatisticsService.ensure_default_configuration()
+        dataset = EstatDataset.objects.get(indicator_key="total_cultivated_area")
+        AgriculturalStatisticSnapshot.objects.create(
+            region=region,
+            dataset=dataset,
+            period_label="1171",
+            value=1471,
+            fetched_at=timezone.now(),
+            estat_updated_at=timezone.now(),
+            raw_data={"@cat01": "1171", "@cat02": "1001", "$": "1471"},
+            source_hash="total-cultivated-area-hash",
+        )
         AgriculturalRiskReport.objects.create(
             region=region,
             report_date=date(2026, 6, 27),
@@ -361,3 +375,5 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "管理不能化候補面積")
         self.assertContains(response, "185")
         self.assertContains(response, "81.5")
+        self.assertContains(response, "取得済み")
+        self.assertContains(response, "1,471.00 ha")

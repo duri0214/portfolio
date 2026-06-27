@@ -11,6 +11,7 @@ from soil_analysis.domain.valueobject.estat import (
     AgriculturalRiskDashboard,
     AgriculturalRiskInput,
     AgriculturalRiskResult,
+    EstatDatasetStatus,
     EstatValueRow,
     parse_estat_datetime,
 )
@@ -313,6 +314,13 @@ class AgriculturalStatisticsService:
         snapshots = AgriculturalStatisticsRepository.get_snapshots(region)
         report_trend = AgriculturalStatisticsRepository.get_risk_report_trend(region)
         age_area_rows = cls._build_age_area_rows(latest_report)
+        datasets = AgriculturalStatisticsRepository.get_datasets()
+        latest_snapshot_values = (
+            AgriculturalStatisticsRepository.get_latest_snapshot_values(region)
+        )
+        dataset_status_rows = cls._build_dataset_status_rows(
+            datasets, latest_snapshot_values
+        )
         return AgriculturalRiskDashboard(
             region_name=region.name,
             prefecture_name=region.prefecture_name,
@@ -321,6 +329,9 @@ class AgriculturalStatisticsService:
             snapshots=snapshots,
             report_trend=report_trend,
             age_area_rows=age_area_rows,
+            dataset_status_rows=dataset_status_rows,
+            latest_fetched_at=cls._latest_fetched_at(dataset_status_rows),
+            latest_estat_updated_at=cls._latest_estat_updated_at(dataset_status_rows),
             has_data=latest_report is not None or bool(snapshots),
         )
 
@@ -396,3 +407,61 @@ class AgriculturalStatisticsService:
                 "unit": "ha",
             },
         ]
+
+    @classmethod
+    def _build_dataset_status_rows(
+        cls, datasets: list, latest_snapshot_values: dict
+    ) -> list[EstatDatasetStatus]:
+        return [
+            cls._build_dataset_status_row(dataset, latest_snapshot_values)
+            for dataset in datasets
+        ]
+
+    @classmethod
+    def _build_dataset_status_row(
+        cls, dataset, latest_snapshot_values: dict
+    ) -> EstatDatasetStatus:
+        snapshot = latest_snapshot_values.get(dataset.indicator_key)
+        is_configured = not dataset.stats_data_id.startswith("TODO_")
+        if snapshot is not None:
+            status_label = "取得済み"
+        elif is_configured:
+            status_label = "未取得"
+        else:
+            status_label = "統計表未設定"
+        return EstatDatasetStatus(
+            indicator_key=dataset.indicator_key,
+            display_name=dataset.display_name,
+            stats_data_id=dataset.stats_data_id if is_configured else "未設定",
+            filters_label=cls._filters_label(dataset.filters),
+            unit=dataset.unit,
+            status_label=status_label,
+            latest_value=snapshot.value if snapshot is not None else None,
+            period_label=snapshot.period_label if snapshot is not None else None,
+            fetched_at=snapshot.fetched_at if snapshot is not None else None,
+            estat_updated_at=(
+                snapshot.estat_updated_at if snapshot is not None else None
+            ),
+        )
+
+    @staticmethod
+    def _filters_label(filters: dict) -> str:
+        if not filters:
+            return "なし"
+        return ", ".join(f"{key}={value}" for key, value in sorted(filters.items()))
+
+    @staticmethod
+    def _latest_fetched_at(rows: list[EstatDatasetStatus]):
+        fetched_values = [row.fetched_at for row in rows if row.fetched_at is not None]
+        if not fetched_values:
+            return None
+        return max(fetched_values)
+
+    @staticmethod
+    def _latest_estat_updated_at(rows: list[EstatDatasetStatus]):
+        updated_values = [
+            row.estat_updated_at for row in rows if row.estat_updated_at is not None
+        ]
+        if not updated_values:
+            return None
+        return max(updated_values)

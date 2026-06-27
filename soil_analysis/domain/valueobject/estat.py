@@ -116,6 +116,36 @@ class AgriculturalRiskResult:
 
 
 @dataclass(frozen=True)
+class EstatDatasetStatus:
+    """
+    e-Stat 指標ごとの取得状況を画面に表示するための値です。
+
+    Attributes:
+        indicator_key: レポート計算で使う指標キー。
+        display_name: 画面に表示する指標名。
+        stats_data_id: e-Stat 統計表表示 ID。
+        filters_label: e-Stat API に渡す絞り込み条件の表示文字列。
+        unit: 値の単位。
+        status_label: 取得済み、未設定などの状態。
+        latest_value: 最新スナップショットの値。
+        period_label: 統計値の対象期間。
+        fetched_at: このアプリが取得した日時。
+        estat_updated_at: e-Stat 側の公開・更新日時。
+    """
+
+    indicator_key: str
+    display_name: str
+    stats_data_id: str
+    filters_label: str
+    unit: str
+    status_label: str
+    latest_value: float | None
+    period_label: str | None
+    fetched_at: datetime | None
+    estat_updated_at: datetime | None
+
+
+@dataclass(frozen=True)
 class AgriculturalRiskDashboard:
     """
     離農・管理不能農地リスク画面に渡す表示用データです。
@@ -128,6 +158,9 @@ class AgriculturalRiskDashboard:
         snapshots: 取得済み統計スナップショット。
         report_trend: リスクレポートの時系列。
         age_area_rows: 年齢階層別面積として表示する行。
+        dataset_status_rows: 指標ごとの取得状況。
+        latest_fetched_at: このアプリが最後に e-Stat から取得した日時。
+        latest_estat_updated_at: e-Stat 側の最新更新日時。
         has_data: 表示可能な統計データがあるかどうか。
     """
 
@@ -138,6 +171,9 @@ class AgriculturalRiskDashboard:
     snapshots: list
     report_trend: list
     age_area_rows: list[dict[str, float | str | None]]
+    dataset_status_rows: list[EstatDatasetStatus]
+    latest_fetched_at: datetime | None
+    latest_estat_updated_at: datetime | None
     has_data: bool
 
 

@@ -104,6 +104,72 @@
             </div>
         {% endif %}
 
+        <section class="report-panel mb-4">
+            <div class="data-status-heading">
+                <h2 class="h5 mb-0">データ取得状況</h2>
+                <div class="data-freshness">
+                    <span>アプリ取得日時:
+                        {% if dashboard.latest_fetched_at %}
+                            {{ dashboard.latest_fetched_at|date:"Y-m-d H:i" }}
+                        {% else %}
+                            未取得
+                        {% endif %}
+                    </span>
+                    <span>e-Stat更新日時:
+                        {% if dashboard.latest_estat_updated_at %}
+                            {{ dashboard.latest_estat_updated_at|date:"Y-m-d H:i" }}
+                        {% else %}
+                            未取得
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="table-responsive mt-3">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>指標</th>
+                        <th>状態</th>
+                        <th>統計表ID</th>
+                        <th>取得条件</th>
+                        <th>期間</th>
+                        <th class="text-end">最新値</th>
+                        <th>取得日時</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in dashboard.dataset_status_rows %}
+                        <tr>
+                            <td>{{ row.display_name }}</td>
+                            <td>
+                                <span class="status-pill {% if row.status_label == '取得済み' %}is-ready{% elif row.status_label == '未取得' %}is-pending{% else %}is-muted{% endif %}">
+                                    {{ row.status_label }}
+                                </span>
+                            </td>
+                            <td><code>{{ row.stats_data_id }}</code></td>
+                            <td><code>{{ row.filters_label }}</code></td>
+                            <td>{{ row.period_label|default_if_none:"-" }}</td>
+                            <td class="text-end">
+                                {% if row.latest_value is not None %}
+                                    {{ row.latest_value|floatformat:2|intcomma }} {{ row.unit }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.fetched_at %}
+                                    {{ row.fetched_at|date:"Y-m-d H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
         <div class="row g-4">
             <div class="col-12 col-lg-5">
                 <section class="report-panel h-100">
