@@ -769,11 +769,13 @@ class AgriculturalStatisticsService:
         snapshots_by_period: dict,
     ) -> float | None:
         """
-        後継者を確保していない経営体の割合を分類別スナップショットから算出します。
+        農業経営の後継者を確保していない経営体の割合を算出します。
 
         2020年農林業センサスの「5年以内の後継者の確保状況別経営体数」では、
         period_label `1001` が経営体数の計、`1007` が「後継者を確保していない」
         経営体数です。この2値から `no_successor_ratio` の代替値を作ります。
+        ここでの `successor` は処理の成功者ではなく、農地・農業経営を引き継ぐ
+        後継者を意味します。
 
         Args:
             snapshots_by_period: 後継者確保状況の分類コードをキーにした統計値。
