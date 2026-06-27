@@ -165,16 +165,16 @@
             <div class="data-status-heading">
                 <h2 class="h5 mb-0">データ取得状況</h2>
                 <div class="data-freshness">
-                    <span>アプリ取得日時:
-                        {% if dashboard.latest_fetched_at %}
-                            {{ dashboard.latest_fetched_at|date:"Y-m-d H:i" }}
+                    <span>データ時点:
+                        {% if dashboard.latest_data_period_label %}
+                            {{ dashboard.latest_data_period_label }}
                         {% else %}
                             未取得
                         {% endif %}
                     </span>
-                    <span>保存データ内のe-Stat公表/更新日:
+                    <span>e-Stat公表/更新日:
                         {% if dashboard.latest_estat_updated_at %}
-                            {{ dashboard.latest_estat_updated_at|date:"Y-m-d H:i" }}
+                            {{ dashboard.latest_estat_updated_at|date:"Y-m-d" }}
                         {% else %}
                             未取得
                         {% endif %}
@@ -199,9 +199,8 @@
                         <th>状態</th>
                         <th>統計表ID</th>
                         <th>取得条件</th>
-                        <th>期間</th>
+                        <th>データ時点</th>
                         <th class="text-end">最新値</th>
-                        <th>取得日時</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -223,17 +222,10 @@
                                 {% endif %}
                             </td>
                             <td><code>{{ row.filters_label }}</code></td>
-                            <td>{{ row.period_label|default_if_none:"-" }}</td>
+                            <td>{{ row.data_period_label|default_if_none:"-" }}</td>
                             <td class="text-end">
                                 {% if row.latest_value is not None %}
                                     {{ row.latest_value|floatformat:2|intcomma }} {{ row.unit }}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if row.fetched_at %}
-                                    {{ row.fetched_at|date:"Y-m-d H:i" }}
                                 {% else %}
                                     -
                                 {% endif %}

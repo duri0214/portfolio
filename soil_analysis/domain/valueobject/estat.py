@@ -26,13 +26,19 @@ class EstatValueRow:
     source_hash: str
 
     @classmethod
-    def from_raw(cls, raw_data: dict, default_period_label: str) -> "EstatValueRow":
+    def from_raw(
+        cls,
+        raw_data: dict,
+        default_period_label: str,
+        table_metadata: dict | None = None,
+    ) -> "EstatValueRow":
         """
         e-Stat の VALUE レコードから保存用VOを作成します。
 
         Args:
             raw_data: e-Stat API の VALUE レコード。
             default_period_label: VALUE に時間軸がない場合の代替期間。
+            table_metadata: e-Stat TABLE_INF から画面表示に必要な情報だけ抜粋した値。
 
         Returns:
             EstatValueRow: 保存用に正規化した統計値。
@@ -47,12 +53,15 @@ class EstatValueRow:
         value_text = raw_data.get("$") or raw_data.get("#text")
         value = cls._to_float(value_text)
         unit = str(raw_data.get("@unit", ""))
+        enriched_raw_data = dict(raw_data)
+        if table_metadata:
+            enriched_raw_data["_table_metadata"] = table_metadata
         return cls(
             period_label=period_label,
             value=value,
             unit=unit,
-            raw_data=raw_data,
-            source_hash=cls._build_hash(raw_data),
+            raw_data=enriched_raw_data,
+            source_hash=cls._build_hash(enriched_raw_data),
         )
 
     @staticmethod
@@ -130,7 +139,7 @@ class EstatDatasetStatus:
         unit: 値の単位。
         status_label: 取得済み、未設定などの状態。
         latest_value: 最新スナップショットの値。
-        period_label: 統計値の対象期間。
+        data_period_label: 統計値のデータ時点。
         fetched_at: このアプリが取得した日時。
         estat_updated_at: e-Stat 側の公開・更新日時。
     """
@@ -143,7 +152,7 @@ class EstatDatasetStatus:
     unit: str
     status_label: str
     latest_value: float | None
-    period_label: str | None
+    data_period_label: str | None
     fetched_at: datetime | None
     estat_updated_at: datetime | None
 
@@ -162,7 +171,7 @@ class AgriculturalRiskDashboard:
         age_area_rows: 年齢階層別面積として表示する行。
         cultivated_area_distribution_rows: 経営耕地面積規模別面積の分布行。
         dataset_status_rows: 指標ごとの取得状況。
-        latest_fetched_at: このアプリが最後に e-Stat から取得した日時。
+        latest_data_period_label: 画面全体の代表データ時点。
         latest_estat_updated_at: e-Stat 側の最新更新日時。
         has_data: 表示可能な統計データがあるかどうか。
     """
@@ -175,7 +184,7 @@ class AgriculturalRiskDashboard:
     age_area_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_rows: list[dict[str, float | str | None]]
     dataset_status_rows: list[EstatDatasetStatus]
-    latest_fetched_at: datetime | None
+    latest_data_period_label: str | None
     latest_estat_updated_at: datetime | None
     has_data: bool
 

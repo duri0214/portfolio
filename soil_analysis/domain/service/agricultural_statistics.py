@@ -367,7 +367,7 @@ class AgriculturalStatisticsService:
             age_area_rows=age_area_rows,
             cultivated_area_distribution_rows=cultivated_area_distribution_rows,
             dataset_status_rows=dataset_status_rows,
-            latest_fetched_at=cls._latest_fetched_at(dataset_status_rows),
+            latest_data_period_label=cls._latest_data_period_label(dataset_status_rows),
             latest_estat_updated_at=cls._latest_estat_updated_at(dataset_status_rows),
             has_data=latest_report is not None or bool(snapshots),
         )
@@ -379,14 +379,40 @@ class AgriculturalStatisticsService:
         statistical_data = response.get("GET_STATS_DATA", {}).get(
             "STATISTICAL_DATA", {}
         )
+        table_metadata = cls._extract_table_metadata(response)
         value_data = statistical_data.get("DATA_INF", {}).get("VALUE", [])
         if isinstance(value_data, dict):
             value_data = [value_data]
         return [
-            EstatValueRow.from_raw(raw_data, default_period_label)
+            EstatValueRow.from_raw(raw_data, default_period_label, table_metadata)
             for raw_data in value_data
             if isinstance(raw_data, dict)
         ]
+
+    @staticmethod
+    def _extract_table_metadata(response: dict) -> dict:
+        table_inf = (
+            response.get("GET_STATS_DATA", {})
+            .get("STATISTICAL_DATA", {})
+            .get("TABLE_INF", {})
+        )
+        if not isinstance(table_inf, dict):
+            return {}
+        title = table_inf.get("TITLE", {})
+        title_text = title.get("$") if isinstance(title, dict) else title
+        statistics_name_spec = table_inf.get("STATISTICS_NAME_SPEC", {})
+        return {
+            "statistics_name": table_inf.get("STATISTICS_NAME", ""),
+            "tabulation_sub_category": (
+                statistics_name_spec.get("TABULATION_SUB_CATEGORY1", "")
+                if isinstance(statistics_name_spec, dict)
+                else ""
+            ),
+            "title": title_text or "",
+            "survey_date": table_inf.get("SURVEY_DATE", ""),
+            "open_date": table_inf.get("OPEN_DATE", ""),
+            "updated_date": table_inf.get("UPDATED_DATE", ""),
+        }
 
     @classmethod
     def _build_cultivated_area_distribution_rows(
@@ -498,7 +524,9 @@ class AgriculturalStatisticsService:
             unit=dataset.unit,
             status_label=status_label,
             latest_value=snapshot.value if snapshot is not None else None,
-            period_label=snapshot.period_label if snapshot is not None else None,
+            data_period_label=(
+                cls._data_period_label(snapshot) if snapshot is not None else None
+            ),
             fetched_at=snapshot.fetched_at if snapshot is not None else None,
             estat_updated_at=(
                 snapshot.estat_updated_at if snapshot is not None else None
@@ -515,12 +543,39 @@ class AgriculturalStatisticsService:
             return "なし"
         return ", ".join(f"{key}={value}" for key, value in sorted(filters.items()))
 
+    @classmethod
+    def _data_period_label(cls, snapshot) -> str | None:
+        metadata = snapshot.raw_data.get("_table_metadata", {})
+        survey_date = metadata.get("survey_date") if isinstance(metadata, dict) else ""
+        if survey_date:
+            formatted_survey_date = cls._format_survey_date(survey_date)
+            tabulation_name = metadata.get("tabulation_sub_category", "")
+            if tabulation_name:
+                return f"{tabulation_name}（{formatted_survey_date}）"
+            return formatted_survey_date
+        if snapshot.raw_data.get("@time"):
+            return str(snapshot.raw_data["@time"])
+        return None
+
     @staticmethod
-    def _latest_fetched_at(rows: list[EstatDatasetStatus]):
-        fetched_values = [row.fetched_at for row in rows if row.fetched_at is not None]
-        if not fetched_values:
+    def _format_survey_date(survey_date: str) -> str:
+        if len(survey_date) == 13 and survey_date[6] == "-":
+            start = survey_date[:6]
+            end = survey_date[7:]
+            return (
+                f"{int(start[:4])}年{int(start[4:])}月"
+                f"〜{int(end[:4])}年{int(end[4:])}月"
+            )
+        if len(survey_date) == 6:
+            return f"{int(survey_date[:4])}年{int(survey_date[4:])}月"
+        return survey_date
+
+    @staticmethod
+    def _latest_data_period_label(rows: list[EstatDatasetStatus]) -> str | None:
+        labels = [row.data_period_label for row in rows if row.data_period_label]
+        if not labels:
             return None
-        return max(fetched_values)
+        return labels[0]
 
     @staticmethod
     def _latest_estat_updated_at(rows: list[EstatDatasetStatus]):

@@ -264,13 +264,19 @@ class AgriculturalStatisticsCommandTest(TestCase):
             "GET_STATS_DATA": {
                 "RESULT_INF": {"DATE": "2026-06-27T00:00:00+09:00"},
                 "STATISTICAL_DATA": {
+                    "TABLE_INF": {
+                        "STATISTICS_NAME_SPEC": {
+                            "TABULATION_SUB_CATEGORY1": "2020年農林業センサス"
+                        },
+                        "SURVEY_DATE": "202001-202012",
+                    },
                     "DATA_INF": {
                         "VALUE": {
                             "@time": "2020",
                             "@unit": "ha",
                             "$": "1000",
                         }
-                    }
+                    },
                 },
             }
         }
@@ -300,13 +306,19 @@ class AgriculturalStatisticsCommandTest(TestCase):
         response.json.return_value = {
             "GET_STATS_DATA": {
                 "STATISTICAL_DATA": {
+                    "TABLE_INF": {
+                        "STATISTICS_NAME_SPEC": {
+                            "TABULATION_SUB_CATEGORY1": "2020年農林業センサス"
+                        },
+                        "SURVEY_DATE": "202001-202012",
+                    },
                     "DATA_INF": {
                         "VALUE": {
                             "@time": "2020",
                             "@unit": "ha",
                             "$": "1000",
                         }
-                    }
+                    },
                 }
             }
         }
@@ -371,7 +383,15 @@ class AgriculturalRiskReportViewTest(TestCase):
             value=1471,
             fetched_at=timezone.now(),
             estat_updated_at=timezone.now(),
-            raw_data={"@cat01": "1171", "@cat02": "1001", "$": "1471"},
+            raw_data={
+                "@cat01": "1171",
+                "@cat02": "1001",
+                "$": "1471",
+                "_table_metadata": {
+                    "tabulation_sub_category": "2020年農林業センサス",
+                    "survey_date": "202001-202012",
+                },
+            },
             source_hash="total-cultivated-area-hash",
         )
         for period_label, value in [("1001", 1000), ("1002", 100), ("1004", 250)]:
@@ -382,7 +402,15 @@ class AgriculturalRiskReportViewTest(TestCase):
                 value=value,
                 fetched_at=timezone.now(),
                 estat_updated_at=timezone.now(),
-                raw_data={"@cat01": "1171", "@cat02": period_label, "$": str(value)},
+                raw_data={
+                    "@cat01": "1171",
+                    "@cat02": period_label,
+                    "$": str(value),
+                    "_table_metadata": {
+                        "tabulation_sub_category": "2020年農林業センサス",
+                        "survey_date": "202001-202012",
+                    },
+                },
                 source_hash=f"distribution-{period_label}",
             )
         AgriculturalRiskReport.objects.create(
@@ -412,6 +440,10 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "上北郡六戸町")
         self.assertContains(response, "取得済み")
         self.assertContains(response, "1,471.00 ha")
+        self.assertContains(response, "データ時点")
+        self.assertContains(response, "2020年農林業センサス（2020年1月〜2020年12月）")
+        self.assertContains(response, "e-Stat公表/更新日")
+        self.assertNotContains(response, "アプリ取得日時")
         self.assertContains(response, "経営耕地面積規模別分布")
         self.assertContains(
             response, "構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。"
