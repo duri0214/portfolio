@@ -728,7 +728,9 @@ class AgriculturalStatisticsService:
             age_60s_area=cls._value(latest, "age_60s_area"),
             no_successor_ratio=(
                 cls._ratio_value(latest, "no_successor_ratio")
-                or cls._successor_missing_ratio(successor_snapshots or {})
+                or cls._no_successor_ratio_from_status_snapshots(
+                    successor_snapshots or {}
+                )
             ),
             shrink_stop_intention_ratio=cls._ratio_value(
                 latest, "shrink_stop_intention_ratio"
@@ -763,12 +765,22 @@ class AgriculturalStatisticsService:
         return total_snapshot.value
 
     @staticmethod
-    def _successor_missing_ratio(snapshots_by_period: dict) -> float | None:
+    def _no_successor_ratio_from_status_snapshots(
+        snapshots_by_period: dict,
+    ) -> float | None:
         """
-        後継者を確保していない経営体の割合を算出します。
+        後継者を確保していない経営体の割合を分類別スナップショットから算出します。
 
         2020年農林業センサスの「5年以内の後継者の確保状況別経営体数」では、
-        period_label `1001` が計、`1007` が「確保していない」です。
+        period_label `1001` が経営体数の計、`1007` が「後継者を確保していない」
+        経営体数です。この2値から `no_successor_ratio` の代替値を作ります。
+
+        Args:
+            snapshots_by_period: 後継者確保状況の分類コードをキーにした統計値。
+
+        Returns:
+            「後継者を確保していない経営体数 / 計」の比率。必要な分類値が
+            欠けている場合や計が0の場合は None。
         """
         total_snapshot = snapshots_by_period.get("1001")
         missing_snapshot = snapshots_by_period.get("1007")
