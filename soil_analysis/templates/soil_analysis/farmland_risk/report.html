@@ -95,9 +95,9 @@
                         <span>使用した指標</span>
                         {% for source in dashboard.cultivated_area_distribution_sources %}
                             {% if source.source_page_url %}
-                                <a href="{{ source.source_page_url }}" target="_blank" rel="noopener">{{ source.display_name }}（{{ source.stats_data_id }}）</a>
+                                <a href="{{ source.source_page_url }}" target="_blank" rel="noopener">使用: {{ source.display_name }}（{{ source.stats_data_id }}）</a>
                             {% else %}
-                                <span>{{ source.display_name }}</span>
+                                <span>使用: {{ source.display_name }}</span>
                             {% endif %}
                         {% endfor %}
                     </div>

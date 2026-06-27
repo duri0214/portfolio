@@ -462,8 +462,8 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertNotContains(response, "アプリ取得日時")
         self.assertContains(response, "経営耕地面積規模別分布")
         self.assertContains(response, "使用した指標")
-        self.assertContains(response, "経営耕地面積規模別面積（0002068836）")
-        self.assertContains(response, "経営耕地面積規模別経営体数（0002068830）")
+        self.assertContains(response, "使用: 経営耕地面積規模別面積（0002068836）")
+        self.assertContains(response, "使用: 経営耕地面積規模別経営体数（0002068830）")
         self.assertContains(
             response,
             "面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。",
@@ -487,6 +487,50 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertNotContains(response, "e-Stat スナップショット")
         self.assertNotContains(response, "<th>分類</th>", html=True)
         self.assertNotContains(response, "取得履歴トレンド")
+
+    def test_report_view_only_lists_fetched_distribution_sources(self):
+        """
+        シナリオ:
+        - 入力: 面積分布だけ保存済みで、経営体数分布は未取得のDB状態。
+        - 処理: 離農・管理不能農地レポートを表示する。
+        - 期待値: 使用した指標には実際に分布へ使った取得済み指標だけが表示されること。
+        """
+        region = AgriculturalStatisticsService.ensure_default_configuration()
+        distribution_dataset = EstatDataset.objects.get(
+            indicator_key="cultivated_area_distribution"
+        )
+        AgriculturalStatisticSnapshot.objects.create(
+            region=region,
+            dataset=distribution_dataset,
+            period_label="1001",
+            value=1000,
+            fetched_at=timezone.now(),
+            estat_updated_at=timezone.now(),
+            raw_data={
+                "@cat01": "1171",
+                "@cat02": "1001",
+                "$": "1000",
+                "_table_metadata": {
+                    "tabulation_sub_category": "2020年農林業センサス",
+                    "survey_date": "202001-202012",
+                },
+            },
+            source_hash="distribution-only-total",
+        )
+        AgriculturalRiskReport.objects.create(
+            region=region,
+            report_date=date(2026, 6, 27),
+            total_cultivated_area=1000,
+        )
+
+        response = self.client.get(reverse("soil:farmland_risk"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "使用した指標")
+        self.assertContains(response, "使用: 経営耕地面積規模別面積（0002068836）")
+        self.assertNotContains(
+            response, "使用: 経営耕地面積規模別経営体数（0002068830）"
+        )
 
     def test_report_view_backfills_known_data_period_for_existing_snapshots(self):
         """

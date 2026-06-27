@@ -737,4 +737,5 @@ class AgriculturalStatisticsService:
                 CULTIVATED_AREA_DISTRIBUTION_KEY,
                 CULTIVATED_AREA_DISTRIBUTION_COUNT_KEY,
             }
+            and row.status_label == "取得済み"
         ]
