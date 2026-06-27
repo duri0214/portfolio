@@ -43,6 +43,10 @@
                             {% endif %}
                         </strong>
                         {% if dashboard.latest_report.unmanageable_candidate_area is not None %}<small>ha</small>{% endif %}
+                        <div class="kpi-meta">
+                            <span class="scope-badge">{{ dashboard.kpi_basis.unmanageable_candidate_area.region_label }}</span>
+                            <span>{{ dashboard.kpi_basis.unmanageable_candidate_area.period_label }}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="col-6 col-lg-3">
@@ -56,6 +60,10 @@
                             {% endif %}
                         </strong>
                         {% if dashboard.latest_report.farmland_maintenance_rate is not None %}<small>%</small>{% endif %}
+                        <div class="kpi-meta">
+                            <span class="scope-badge">{{ dashboard.kpi_basis.farmland_maintenance_rate.region_label }}</span>
+                            <span>{{ dashboard.kpi_basis.farmland_maintenance_rate.period_label }}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="col-6 col-lg-3">
@@ -69,6 +77,10 @@
                             {% endif %}
                         </strong>
                         {% if dashboard.latest_report.succession_risk is not None %}<small>%</small>{% endif %}
+                        <div class="kpi-meta">
+                            <span class="scope-badge">{{ dashboard.kpi_basis.succession_risk.region_label }}</span>
+                            <span>{{ dashboard.kpi_basis.succession_risk.period_label }}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="col-6 col-lg-3">
@@ -82,6 +94,10 @@
                             {% endif %}
                         </strong>
                         {% if dashboard.latest_report.intention_risk is not None %}<small>%</small>{% endif %}
+                        <div class="kpi-meta">
+                            <span class="scope-badge">{{ dashboard.kpi_basis.intention_risk.region_label }}</span>
+                            <span>{{ dashboard.kpi_basis.intention_risk.source_label }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -135,7 +151,8 @@
             <div class="row g-4 mb-4">
                 <div class="col-12 col-lg-6">
                     <section class="report-panel h-100">
-                        <h2 class="h5">年齢階層別の経営体数・面積</h2>
+                        <h2 class="h5">年齢階層別の経営体数</h2>
+                        <p class="distribution-note">2020年農林業センサスの六戸町データです。60代と70歳以上は別階層の合計ですが、現在の取得値ではどちらも238経営体です。</p>
                         <div class="age-bars">
                             {% for row in dashboard.age_area_rows %}
                                 <div class="age-bar-row">
@@ -158,11 +175,39 @@
                                 </div>
                             {% endfor %}
                         </div>
+                        {% if dashboard.age_distribution_rows %}
+                            <div class="table-responsive mt-3">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th>年齢階層</th>
+                                        <th class="text-end">経営体数</th>
+                                        <th class="text-end">構成比</th>
+                                        <th>データ時点</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in dashboard.age_distribution_rows %}
+                                        <tr>
+                                            <td>{{ row.label }}</td>
+                                            <td class="text-end">{% if row.value is not None %}{{ row.value|floatformat:0|intcomma }} {{ row.unit }}{% else %}-{% endif %}</td>
+                                            <td class="text-end">{% if row.share is not None %}{{ row.share|floatformat:1 }}%{% else %}-{% endif %}</td>
+                                            <td>{{ row.data_period_label|default:"-" }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
                     </section>
                 </div>
                 <div class="col-12 col-lg-6">
                     <section class="report-panel h-100">
                         <h2 class="h5">リスク要因の内訳</h2>
+                        <p class="distribution-note">
+                            <span class="scope-badge">{{ dashboard.kpi_basis.risk_breakdown.region_label }}</span>
+                            {{ dashboard.kpi_basis.risk_breakdown.period_label }}
+                        </p>
                         <dl class="risk-breakdown mb-0">
                             <dt>高齢化リスク</dt>
                             <dd>{% if dashboard.latest_report.aging_risk is not None %}{{ dashboard.latest_report.aging_risk }}%{% else %}未実装（TODO）{% endif %}</dd>
@@ -180,28 +225,31 @@
             {% if dashboard.successor_status_rows %}
                 <section class="report-panel mb-4">
                     <h2 class="h5">5年以内の後継者確保状況</h2>
-                    <p class="distribution-note">2020年農林業センサスの六戸町データです。後継者を確保していない経営体の割合を、後継者不在リスクの代替指標として扱います。</p>
-                    <div class="distribution-bars">
-                        {% for row in dashboard.successor_status_rows %}
-                            <div class="distribution-bar-row">
-                                <div class="distribution-bar-label">{{ row.label }}</div>
-                                <div class="distribution-bar-track">
-                                    {% if row.share is not None %}
-                                        <div class="distribution-bar-fill" style="width: {{ row.share|floatformat:1 }}%;"></div>
-                                    {% else %}
-                                        <div class="distribution-bar-fill empty" style="width: 0%;"></div>
-                                    {% endif %}
-                                </div>
-                                <div class="distribution-bar-value">
-                                    {% if row.value is not None %}
-                                        <strong>{{ row.value|floatformat:0|intcomma }} {{ row.unit }}</strong>
-                                        {% if row.share is not None %}<span>構成比 {{ row.share|floatformat:1 }}%</span>{% endif %}
-                                    {% else %}
-                                        未取得
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
+                    <p class="distribution-note">
+                        <span class="scope-badge">六戸町</span>
+                        2020年農林業センサスの地域データです。次回センサスでも同じ統計表・分類が公開されれば、同じ保存形式で時系列比較できます。
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>区分</th>
+                                <th class="text-end">経営体数</th>
+                                <th class="text-end">構成比</th>
+                                <th>データ時点</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in dashboard.successor_status_rows %}
+                                <tr>
+                                    <td>{{ row.label }}</td>
+                                    <td class="text-end">{% if row.value is not None %}{{ row.value|floatformat:0|intcomma }} {{ row.unit }}{% else %}-{% endif %}</td>
+                                    <td class="text-end">{% if row.share is not None %}{{ row.share|floatformat:1 }}%{% else %}-{% endif %}</td>
+                                    <td>{{ row.data_period_label|default:"-" }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </section>
             {% endif %}
@@ -212,23 +260,37 @@
             </div>
         {% endif %}
 
-        {% if dashboard.supplemental_indicator_rows %}
+        {% if dashboard.inheritance_land_reversion_summary.total %}
             <section class="report-panel mb-4">
                 <h2 class="h5">全国補助トレンド</h2>
-                <p class="distribution-note">六戸町単独の統計ではなく、相続後の土地管理困難化が全国で増えている背景指標です。地域粒度を分けて、六戸町のe-Statデータと混同しないように表示します。</p>
-                <div class="supplemental-grid">
-                    {% for row in dashboard.supplemental_indicator_rows %}
-                        <div class="supplemental-item">
-                            <span>{{ row.region_label }} / {{ row.period_label }}</span>
-                            <strong>
-                                {% if row.value is not None %}{{ row.value|floatformat:0|intcomma }} {{ row.unit }}{% else %}未取得{% endif %}
-                            </strong>
-                            <p>{{ row.display_name }}</p>
-                            <small>{{ row.note }}</small>
-                            <a href="{{ row.source_url }}" target="_blank" rel="noopener">{{ row.source_name }}</a>
-                        </div>
-                    {% endfor %}
+                <div class="supplemental-summary">
+                    <div>
+                        <span class="scope-badge">{{ dashboard.inheritance_land_reversion_summary.total.region_label }}</span>
+                        <span class="data-period">{{ dashboard.inheritance_land_reversion_summary.total.period_label }}</span>
+                        <strong>{{ dashboard.inheritance_land_reversion_summary.total.value|floatformat:0|intcomma }} {{ dashboard.inheritance_land_reversion_summary.total.unit }}</strong>
+                        <p>{{ dashboard.inheritance_land_reversion_summary.total.display_name }}</p>
+                    </div>
+                    <div class="supplemental-breakdown">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>内訳・補足</th>
+                                <th class="text-end">値</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in dashboard.inheritance_land_reversion_summary.breakdown_rows %}
+                                <tr>
+                                    <td>{{ row.display_name }}</td>
+                                    <td class="text-end">{{ row.value|floatformat:0|intcomma }} {{ row.unit }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+                <p class="distribution-note mt-3 mb-2">{{ dashboard.inheritance_land_reversion_summary.trend_note }}</p>
+                <a href="{{ dashboard.inheritance_land_reversion_summary.total.source_url }}" target="_blank" rel="noopener">{{ dashboard.inheritance_land_reversion_summary.total.source_name }}</a>
             </section>
         {% endif %}
 
@@ -247,7 +309,7 @@
                 </div>
                 <div>
                     <strong>経営主年齢階層別経営体数</strong>
-                    <span>60代と70歳以上の経営体数を、経営主高齢化の補助指標として表示します。面積ではなく経営体数です。</span>
+                    <span>全年齢階層を表で表示し、60代と70歳以上を高齢化の要約として併記します。面積ではなく経営体数です。</span>
                 </div>
                 <div>
                     <strong>5年以内の後継者確保状況</strong>
@@ -255,7 +317,7 @@
                 </div>
                 <div>
                     <strong>耕作放棄地面積</strong>
-                    <span>2015年農林業センサスで取得できる六戸町の耕作放棄地面積です。管理不能化候補面積の補助指標として扱います。</span>
+                    <span>2015年農林業センサスで取得できる六戸町の耕作放棄地面積です。2020年農林業センサスでは同名の継続表を確認できないため、データ時点を明示して補助指標として扱います。</span>
                 </div>
             </div>
             <div class="table-responsive mt-3">

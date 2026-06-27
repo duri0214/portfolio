@@ -217,11 +217,14 @@ class AgriculturalRiskDashboard:
         prefecture_name: 都道府県名。
         area_code: e-Stat 地域コード。
         latest_report: 最新リスクレポート。
-        age_area_rows: 年齢階層別面積として表示する行。
+        age_area_rows: 主要年齢階層の経営体数行。
+        age_distribution_rows: 全年齢階層の経営体数行。
         cultivated_area_distribution_rows: 経営耕地面積規模別面積の分布行。
         successor_status_rows: 後継者確保状況別の経営体数行。
         cultivated_area_distribution_sources: 分布表示に使った統計指標。
         supplemental_indicator_rows: e-Stat 以外の補助指標行。
+        inheritance_land_reversion_summary: 相続土地国庫帰属制度の全国統計表示データ。
+        kpi_basis: KPIごとの地域粒度・データ時点・根拠。
         dataset_status_rows: 指標ごとの取得状況。
         has_data: 表示可能な統計データがあるかどうか。
     """
@@ -231,10 +234,13 @@ class AgriculturalRiskDashboard:
     area_code: str
     latest_report: object | None
     age_area_rows: list[dict[str, float | str | None]]
+    age_distribution_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_rows: list[dict[str, float | str | None]]
     successor_status_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_sources: list[EstatDatasetStatus]
     supplemental_indicator_rows: list[SupplementalRiskIndicatorStatus]
+    inheritance_land_reversion_summary: dict
+    kpi_basis: dict
     dataset_status_rows: list[EstatDatasetStatus]
     has_data: bool
 

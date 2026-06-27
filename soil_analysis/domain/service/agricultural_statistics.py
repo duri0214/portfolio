@@ -54,6 +54,7 @@ OPERATOR_AGE_SUMMARY_CODES = {
     "60代": {"1011", "1012"},
     "70歳以上": {"1013", "1014", "1015", "1016"},
 }
+INHERITANCE_LAND_REVERSION_TOTAL_KEY = "inheritance_land_reversion_applications_total"
 
 DEFAULT_ESTAT_DATASETS = [
     {
@@ -125,7 +126,7 @@ DEFAULT_SUPPLEMENTAL_INDICATORS = [
         "value": 5545,
         "unit": "件",
         "category": "inheritance_land_reversion",
-        "note": "速報値。六戸町単独ではなく、相続後の土地管理困難化が全国で増えている背景指標として扱う。",
+        "note": "速報値。現時点では単月更新ページの累計値として扱い、時系列化は今後の取得拡張で対応する。",
     },
     {
         "indicator_key": "inheritance_land_reversion_applications_farmland",
@@ -137,7 +138,7 @@ DEFAULT_SUPPLEMENTAL_INDICATORS = [
         "value": 2169,
         "unit": "件",
         "category": "inheritance_land_reversion",
-        "note": "申請件数の地目別内訳。田・畑を農地管理困難化の補助トレンドとして表示する。",
+        "note": "申請件数の地目別内訳。合計値の一部であり、独立した別指標ではない。",
     },
     {
         "indicator_key": "inheritance_land_reversion_approved_farmland",
@@ -149,7 +150,7 @@ DEFAULT_SUPPLEMENTAL_INDICATORS = [
         "value": 879,
         "unit": "件",
         "category": "inheritance_land_reversion",
-        "note": "帰属件数の種目別内訳。地域値ではなく、制度利用が現実に積み上がっていることを示す。",
+        "note": "帰属件数の種目別内訳。合計申請とは母数が異なるため、補足値として扱う。",
     },
 ]
 
@@ -415,6 +416,10 @@ class AgriculturalStatisticsService:
         age_area_rows = cls._build_age_area_rows(
             latest_report, age_distribution_snapshots
         )
+        age_distribution_rows = cls._build_classification_rows(
+            age_distribution_snapshots,
+            skip_total=True,
+        )
         distribution_snapshots = (
             AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
                 region, CULTIVATED_AREA_DISTRIBUTION_KEY
@@ -448,16 +453,23 @@ class AgriculturalStatisticsService:
         supplemental_indicator_rows = cls._build_supplemental_indicator_rows(
             AgriculturalStatisticsRepository.get_supplemental_indicators()
         )
+        inheritance_land_reversion_summary = (
+            cls._build_inheritance_land_reversion_summary(supplemental_indicator_rows)
+        )
+        kpi_basis = cls._build_kpi_basis(dataset_status_rows)
         return AgriculturalRiskDashboard(
             region_name=region.name,
             prefecture_name=region.prefecture_name,
             area_code=region.area_code,
             latest_report=latest_report,
             age_area_rows=age_area_rows,
+            age_distribution_rows=age_distribution_rows,
             cultivated_area_distribution_rows=cultivated_area_distribution_rows,
             successor_status_rows=successor_status_rows,
             cultivated_area_distribution_sources=distribution_sources,
             supplemental_indicator_rows=supplemental_indicator_rows,
+            inheritance_land_reversion_summary=inheritance_land_reversion_summary,
+            kpi_basis=kpi_basis,
             dataset_status_rows=dataset_status_rows,
             has_data=(
                 latest_report is not None
@@ -692,6 +704,12 @@ class AgriculturalStatisticsService:
 
     @staticmethod
     def _successor_missing_ratio(snapshots_by_period: dict) -> float | None:
+        """
+        後継者を確保していない経営体の割合を算出します。
+
+        2020年農林業センサスの「5年以内の後継者の確保状況別経営体数」では、
+        period_label `1001` が計、`1007` が「確保していない」です。
+        """
         total_snapshot = snapshots_by_period.get("1001")
         missing_snapshot = snapshots_by_period.get("1007")
         total = total_snapshot.value if total_snapshot is not None else None
@@ -721,25 +739,16 @@ class AgriculturalStatisticsService:
                     }
                 )
             return rows
-        if latest_report is None:
-            return []
-        return [
-            {
-                "label": "60代",
-                "value": latest_report.age_60s_area,
-                "unit": "ha",
-                "share": latest_report.age_60s_area,
-            },
-            {
-                "label": "70歳以上",
-                "value": latest_report.age_70_plus_area,
-                "unit": "ha",
-                "share": latest_report.age_70_plus_area,
-            },
-        ]
+        return []
 
     @staticmethod
     def _sum_snapshot_values(snapshots_by_period: dict, period_labels: set[str]):
+        """
+        e-Stat スナップショットから指定分類コードの値を合計します。
+
+        ここでのスナップショットは、統計表ID・地域・分類コードごとに保存した
+        最新の統計値です。年齢階層のように複数分類を1つの表示行へまとめる時に使います。
+        """
         values = [
             snapshots_by_period[period_label].value
             for period_label in period_labels
@@ -752,12 +761,20 @@ class AgriculturalStatisticsService:
 
     @classmethod
     def _build_classification_rows(
-        cls, snapshots_by_period: dict
+        cls, snapshots_by_period: dict, skip_total: bool = False
     ) -> list[dict[str, float | str | None]]:
+        """
+        分類コード別の統計値を画面表示用の行へ変換します。
+
+        `skip_total` は年齢階層表のように「計」を表から外しつつ、構成比の母数には
+        使いたい場合に指定します。
+        """
         total_snapshot = snapshots_by_period.get("1001")
         total_value = total_snapshot.value if total_snapshot is not None else None
         rows = []
         for period_label, snapshot in snapshots_by_period.items():
+            if skip_total and period_label == "1001":
+                continue
             value = snapshot.value if snapshot is not None else None
             rows.append(
                 {
@@ -766,6 +783,11 @@ class AgriculturalStatisticsService:
                     "value": value,
                     "unit": snapshot.dataset.unit if snapshot is not None else "",
                     "share": AgriculturalRiskCalculator._ratio(value, total_value),
+                    "data_period_label": (
+                        cls._data_period_label(snapshot)
+                        if snapshot is not None
+                        else None
+                    ),
                 }
             )
         return rows
@@ -945,3 +967,77 @@ class AgriculturalStatisticsService:
             )
             for indicator in indicators
         ]
+
+    @staticmethod
+    def _build_inheritance_land_reversion_summary(
+        rows: list[SupplementalRiskIndicatorStatus],
+    ) -> dict:
+        """
+        相続土地国庫帰属制度の全国値を合計と内訳に分けます。
+
+        法務省ページの同一ソースにある値なので、別々のカードではなく合計値と
+        補足内訳として表示できる形へ整えます。
+        """
+        target_rows = [
+            row for row in rows if row.category == "inheritance_land_reversion"
+        ]
+        total = next(
+            (
+                row
+                for row in target_rows
+                if row.indicator_key == INHERITANCE_LAND_REVERSION_TOTAL_KEY
+            ),
+            None,
+        )
+        return {
+            "total": total,
+            "breakdown_rows": [row for row in target_rows if row is not total],
+            "trend_note": "現時点では法務省ページ上の最新累計値のみを表示しています。今後、月次の過去値を保存できるようにするとトレンド化できます。",
+        }
+
+    @staticmethod
+    def _build_kpi_basis(rows: list[EstatDatasetStatus]) -> dict:
+        """
+        KPIカードに表示するデータ根拠を指標取得状況から組み立てます。
+
+        画面上で六戸町値と全国値、2020年/2015年などの時点が混ざらないよう、
+        KPIごとに地域粒度とデータ時点を明示します。
+        """
+        status_by_key = {row.indicator_key: row for row in rows}
+        base = status_by_key.get(CULTIVATED_AREA_DISTRIBUTION_KEY)
+        successor = status_by_key.get(SUCCESSOR_STATUS_DISTRIBUTION_KEY)
+        abandoned = status_by_key.get(ABANDONED_FARMLAND_AREA_KEY)
+        base_period = base.data_period_label if base is not None else None
+        successor_period = (
+            successor.data_period_label if successor is not None else None
+        )
+        abandoned_period = (
+            abandoned.data_period_label if abandoned is not None else None
+        )
+        return {
+            "unmanageable_candidate_area": {
+                "region_label": "六戸町",
+                "period_label": abandoned_period or "-",
+                "source_label": "耕作放棄地面積",
+            },
+            "farmland_maintenance_rate": {
+                "region_label": "六戸町",
+                "period_label": f"母数: {base_period or '-'} / 補助: {abandoned_period or '-'}",
+                "source_label": "経営耕地面積と管理不能化候補面積",
+            },
+            "succession_risk": {
+                "region_label": "六戸町",
+                "period_label": successor_period or "-",
+                "source_label": "後継者を確保していない経営体数 / 計",
+            },
+            "intention_risk": {
+                "region_label": "未設定",
+                "period_label": "-",
+                "source_label": "e-Statで直接取得できる経営意向データは未確定",
+            },
+            "risk_breakdown": {
+                "region_label": "六戸町",
+                "period_label": f"後継者: {successor_period or '-'} / 耕作放棄地: {abandoned_period or '-'}",
+                "source_label": "農林業センサス由来の補助統計",
+            },
+        }

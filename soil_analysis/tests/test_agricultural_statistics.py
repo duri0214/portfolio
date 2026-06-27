@@ -384,6 +384,15 @@ class AgriculturalRiskReportViewTest(TestCase):
         count_dataset = EstatDataset.objects.get(
             indicator_key="cultivated_area_distribution_count"
         )
+        age_dataset = EstatDataset.objects.get(
+            indicator_key="operator_age_distribution_count"
+        )
+        successor_dataset = EstatDataset.objects.get(
+            indicator_key="successor_status_count"
+        )
+        abandoned_dataset = EstatDataset.objects.get(
+            indicator_key="abandoned_farmland_area_2015"
+        )
         for period_label, value in [("1001", 1000), ("1002", 100), ("1004", 250)]:
             AgriculturalStatisticSnapshot.objects.create(
                 region=region,
@@ -434,6 +443,90 @@ class AgriculturalRiskReportViewTest(TestCase):
                 },
                 source_hash=f"distribution-count-{period_label}",
             )
+        for period_label, label, value in [
+            ("1001", "男女計_計", 611),
+            ("1004", "男女計_25～29", 1),
+            ("1011", "男女計_60～64", 98),
+            ("1012", "男女計_65～69", 140),
+            ("1013", "男女計_70～74", 106),
+            ("1014", "男女計_75～79", 54),
+            ("1015", "男女計_80～84", 58),
+            ("1016", "男女計_85歳以上", 20),
+        ]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=region,
+                dataset=age_dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=timezone.now(),
+                estat_updated_at=timezone.now(),
+                raw_data={
+                    "@cat01": "1171",
+                    "@cat02": period_label,
+                    "$": str(value),
+                    "_table_metadata": {
+                        "tabulation_sub_category": "2020年農林業センサス",
+                        "survey_date": "202001-202012",
+                    },
+                    "_class_metadata": {
+                        "cat02": {
+                            period_label: {
+                                "name": label,
+                                "unit": "経営体",
+                            }
+                        }
+                    },
+                },
+                source_hash=f"age-count-{period_label}",
+            )
+        for period_label, label, value in [
+            ("1001", "計", 611),
+            ("1007", "確保していない", 441),
+        ]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=region,
+                dataset=successor_dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=timezone.now(),
+                estat_updated_at=timezone.now(),
+                raw_data={
+                    "@cat01": "1171",
+                    "@cat02": period_label,
+                    "$": str(value),
+                    "_table_metadata": {
+                        "tabulation_sub_category": "2020年農林業センサス",
+                        "survey_date": "202001-202012",
+                    },
+                    "_class_metadata": {
+                        "cat02": {
+                            period_label: {
+                                "name": label,
+                                "unit": "経営体",
+                            }
+                        }
+                    },
+                },
+                source_hash=f"successor-count-{period_label}",
+            )
+        AgriculturalStatisticSnapshot.objects.create(
+            region=region,
+            dataset=abandoned_dataset,
+            period_label="100",
+            value=185,
+            fetched_at=timezone.now(),
+            estat_updated_at=timezone.now(),
+            raw_data={
+                "@cat01": "100",
+                "@unit": "ha",
+                "$": "185",
+                "_table_metadata": {
+                    "tabulation_sub_category": "2015年農林業センサス",
+                    "survey_date": "201501-201512",
+                },
+            },
+            source_hash="abandoned-area-2015",
+        )
         AgriculturalRiskReport.objects.create(
             region=region,
             report_date=date(2026, 6, 27),
@@ -504,8 +597,26 @@ class AgriculturalRiskReportViewTest(TestCase):
             "経営規模区分ごとの経営体数です。面積だけでは小規模農家層の件数が分からないため、nとして併記します。",
         )
         self.assertContains(response, "全国補助トレンド")
+        self.assertContains(response, "全国")
+        self.assertContains(response, "5,545 件")
         self.assertContains(response, "相続土地国庫帰属制度 申請件数（田・畑）")
         self.assertContains(response, "2,169 件")
+        self.assertContains(
+            response,
+            "現時点では法務省ページ上の最新累計値のみを表示しています。",
+        )
+        self.assertContains(response, "年齢階層別の経営体数")
+        self.assertContains(
+            response,
+            "60代と70歳以上は別階層の合計ですが、現在の取得値ではどちらも238経営体です。",
+        )
+        self.assertContains(response, "238 経営体")
+        self.assertContains(response, "男女計_25～29")
+        self.assertContains(response, "確保していない")
+        self.assertContains(response, "441 経営体")
+        self.assertContains(response, "72.2%")
+        self.assertContains(response, "次回センサスでも同じ統計表・分類が公開されれば")
+        self.assertContains(response, "2015年農林業センサス（2015年1月〜2015年12月）")
         self.assertContains(response, "経営主年齢階層別経営体数")
         self.assertContains(response, "5年以内の後継者確保状況")
         self.assertContains(response, "耕作放棄地面積")
