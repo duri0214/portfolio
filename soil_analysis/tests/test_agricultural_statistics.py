@@ -649,6 +649,11 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "年齢階層別の経営体数")
         self.assertContains(
             response,
+            '<span class="data-period">2020年農林業センサス（2020年1月〜2020年12月）</span>',
+            html=True,
+        )
+        self.assertContains(
+            response,
             "経営主年齢階層別経営体数（0002068866）",
         )
         self.assertContains(
