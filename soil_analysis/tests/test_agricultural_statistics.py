@@ -487,6 +487,7 @@ class AgriculturalRiskReportViewTest(TestCase):
             )
         for period_label, label, value in [
             ("1001", "計", 611),
+            ("1002", "親族内小計", 123),
             ("1007", "確保していない", 441),
         ]:
             AgriculturalStatisticSnapshot.objects.create(
@@ -670,9 +671,14 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertNotContains(response, "35～39")
         self.assertContains(response, "確保していない")
         self.assertContains(response, "441 経営体")
+        self.assertNotContains(response, "親族内小計")
         self.assertContains(response, '<th class="text-end">2020年</th>', html=True)
         self.assertNotContains(response, '<th class="text-end">構成比</th>', html=True)
-        self.assertContains(response, "次回センサスでも同じ統計表・分類が公開されれば")
+        self.assertContains(response, "農林業センサスは5年ごとの調査")
+        self.assertContains(
+            response,
+            "2015年農林業センサスには同一の「5年以内の後継者確保状況」設問セットは確認できない",
+        )
         self.assertContains(response, "2015年農林業センサス（2015年1月〜2015年12月）")
         self.assertContains(response, "経営主年齢階層別経営体数")
         self.assertContains(response, "5年以内の後継者確保状況")

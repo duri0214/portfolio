@@ -485,7 +485,10 @@ class AgriculturalStatisticsService:
                 region, SUCCESSOR_STATUS_DISTRIBUTION_KEY
             )
         )
-        successor_status_rows = cls._build_classification_rows(successor_snapshots)
+        successor_status_rows = cls._build_classification_rows(
+            successor_snapshots,
+            skip_subtotal=True,
+        )
         datasets = cls._display_datasets(
             AgriculturalStatisticsRepository.get_datasets()
         )
@@ -828,7 +831,10 @@ class AgriculturalStatisticsService:
 
     @classmethod
     def _build_classification_rows(
-        cls, snapshots_by_period: dict, skip_total: bool = False
+        cls,
+        snapshots_by_period: dict,
+        skip_total: bool = False,
+        skip_subtotal: bool = False,
     ) -> list[dict[str, float | str | None]]:
         """
         分類コード別の統計値を画面表示用の行へ変換します。
@@ -842,10 +848,13 @@ class AgriculturalStatisticsService:
         for period_label, snapshot in snapshots_by_period.items():
             if skip_total and period_label == "1001":
                 continue
+            label = cls._class_label(snapshot, period_label, "cat02")
+            if skip_subtotal and "小計" in label:
+                continue
             value = snapshot.value if snapshot is not None else None
             rows.append(
                 {
-                    "label": cls._class_label(snapshot, period_label, "cat02"),
+                    "label": label,
                     "period_label": period_label,
                     "value": value,
                     "unit": snapshot.dataset.unit if snapshot is not None else "",
