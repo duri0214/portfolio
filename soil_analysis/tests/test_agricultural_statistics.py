@@ -462,8 +462,8 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertNotContains(response, "アプリ取得日時")
         self.assertContains(response, "経営耕地面積規模別分布")
         self.assertContains(response, "使用した指標")
-        self.assertContains(response, "使用: 経営耕地面積規模別面積（0002068836）")
-        self.assertContains(response, "使用: 経営耕地面積規模別経営体数（0002068830）")
+        self.assertContains(response, "経営耕地面積規模別面積（0002068836）")
+        self.assertContains(response, "経営耕地面積規模別経営体数（0002068830）")
         self.assertContains(
             response,
             "面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。",
@@ -530,9 +530,11 @@ class AgriculturalRiskReportViewTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "使用した指標")
-        self.assertContains(response, "使用: 経営耕地面積規模別面積（0002068836）")
+        self.assertContains(response, "経営耕地面積規模別面積（0002068836）")
         self.assertNotContains(
-            response, "使用: 経営耕地面積規模別経営体数（0002068830）"
+            response,
+            '<a href="https://www.e-stat.go.jp/dbview?sid=0002068830" target="_blank" rel="noopener">経営耕地面積規模別経営体数（0002068830）</a>',
+            html=True,
         )
 
     def test_report_view_backfills_known_data_period_for_existing_snapshots(self):
