@@ -1227,9 +1227,6 @@ class AgriculturalStatisticsService:
         後継者なし割合はe-Statの同一設問セットから作る比率、管理不能化候補
         面積と10年後農地維持率はレポート内の派生計算値として明示します。
         """
-        if local_report is None or national_report is None:
-            return {"rows": []}
-
         definitions = [
             {
                 "key": "unmanageable_candidate_area",
@@ -1261,9 +1258,11 @@ class AgriculturalStatisticsService:
                     "label": definition["label"],
                     "unit": definition["unit"],
                     "basis_type": definition["basis_type"],
-                    "local_value": getattr(local_report, definition["value_attr"]),
+                    "local_value": cls._report_value(
+                        local_report, definition["value_attr"]
+                    ),
                     "national_value": getattr(
-                        national_report, definition["value_attr"]
+                        national_report, definition["value_attr"], None
                     ),
                     "local_basis": local_kpi_basis[key],
                     "national_basis": national_kpi_basis[key],
@@ -1273,3 +1272,9 @@ class AgriculturalStatisticsService:
             "rows": rows,
             "note": "全国値は e-Stat 地域コード 00000 を同じ統計表・同じ計算定義で集計しています。",
         }
+
+    @staticmethod
+    def _report_value(report, field_name: str) -> float | None:
+        if report is None:
+            return None
+        return getattr(report, field_name, None)

@@ -369,6 +369,9 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "0002068866")
         self.assertContains(response, "0002068879")
         self.assertContains(response, "0003205603")
+        self.assertContains(response, "全国比較KPI")
+        self.assertContains(response, "同じ統計表・同じ計算定義")
+        self.assertContains(response, "未取得")
 
     def test_report_view_displays_latest_risk_report(self):
         """
