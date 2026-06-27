@@ -444,8 +444,14 @@ class AgriculturalRiskReportViewTest(TestCase):
                 source_hash=f"distribution-count-{period_label}",
             )
         for period_label, label, value in [
-            ("1001", "男女計_計", 611),
+            ("1001", "男女計_計", 802),
             ("1004", "男女計_25～29", 1),
+            ("1005", "男女計_30～34", 20),
+            ("1006", "男女計_35～39", 35),
+            ("1007", "男女計_40～44", 44),
+            ("1008", "男女計_45～49", 56),
+            ("1009", "男女計_50～54", 80),
+            ("1010", "男女計_55～59", 90),
             ("1011", "男女計_60～64", 98),
             ("1012", "男女計_65～69", 140),
             ("1013", "男女計_70～74", 106),
@@ -608,10 +614,18 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "年齢階層別の経営体数")
         self.assertContains(
             response,
-            "60代と70歳以上は別階層の合計ですが、現在の取得値ではどちらも238経営体です。",
+            "e-Statの5歳刻み分類を年代別に集計して表示します。",
         )
+        self.assertContains(response, "30歳未満")
+        self.assertContains(response, "30代")
+        self.assertContains(response, "55 経営体")
+        self.assertContains(response, "40代")
+        self.assertContains(response, "100 経営体")
+        self.assertContains(response, "50代")
+        self.assertContains(response, "170 経営体")
         self.assertContains(response, "238 経営体")
-        self.assertContains(response, "男女計_25～29")
+        self.assertNotContains(response, "男女計_")
+        self.assertNotContains(response, "35～39")
         self.assertContains(response, "確保していない")
         self.assertContains(response, "441 経営体")
         self.assertContains(response, "72.2%")

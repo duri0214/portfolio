@@ -50,7 +50,11 @@ CULTIVATED_AREA_DISTRIBUTION_FALLBACK_LABELS = {
     "1014": "100.0～150.0ha",
     "1015": "150.0ha以上",
 }
-OPERATOR_AGE_SUMMARY_CODES = {
+OPERATOR_AGE_GROUP_CODES = {
+    "30歳未満": {"1002", "1003", "1004"},
+    "30代": {"1005", "1006"},
+    "40代": {"1007", "1008"},
+    "50代": {"1009", "1010"},
     "60代": {"1011", "1012"},
     "70歳以上": {"1013", "1014", "1015", "1016"},
 }
@@ -413,13 +417,7 @@ class AgriculturalStatisticsService:
                 region, OPERATOR_AGE_DISTRIBUTION_KEY
             )
         )
-        age_area_rows = cls._build_age_area_rows(
-            latest_report, age_distribution_snapshots
-        )
-        age_distribution_rows = cls._build_classification_rows(
-            age_distribution_snapshots,
-            skip_total=True,
-        )
+        age_area_rows = cls._build_age_group_rows(age_distribution_snapshots)
         distribution_snapshots = (
             AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
                 region, CULTIVATED_AREA_DISTRIBUTION_KEY
@@ -463,7 +461,6 @@ class AgriculturalStatisticsService:
             area_code=region.area_code,
             latest_report=latest_report,
             age_area_rows=age_area_rows,
-            age_distribution_rows=age_distribution_rows,
             cultivated_area_distribution_rows=cultivated_area_distribution_rows,
             successor_status_rows=successor_status_rows,
             cultivated_area_distribution_sources=distribution_sources,
@@ -721,14 +718,23 @@ class AgriculturalStatisticsService:
         return missing / total
 
     @classmethod
-    def _build_age_area_rows(
-        cls, latest_report, age_snapshots_by_period: dict
+    def _build_age_group_rows(
+        cls, age_snapshots_by_period: dict
     ) -> list[dict[str, float | str | None]]:
+        """
+        経営主年齢の5歳刻み分類を年代別の表示行へ集約します。
+
+        e-Stat上は30～34歳、35～39歳のように細かく分かれているため、
+        画面では年代別に合算して、男女別や「男女計」接頭辞を出さずに見せます。
+        """
         if age_snapshots_by_period:
             total_snapshot = age_snapshots_by_period.get("1001")
             total = total_snapshot.value if total_snapshot is not None else None
             rows = []
-            for label, codes in OPERATOR_AGE_SUMMARY_CODES.items():
+            data_period_label = None
+            if total_snapshot is not None:
+                data_period_label = cls._data_period_label(total_snapshot)
+            for label, codes in OPERATOR_AGE_GROUP_CODES.items():
                 value = cls._sum_snapshot_values(age_snapshots_by_period, codes)
                 rows.append(
                     {
@@ -736,6 +742,7 @@ class AgriculturalStatisticsService:
                         "value": value,
                         "unit": "経営体",
                         "share": AgriculturalRiskCalculator._ratio(value, total),
+                        "data_period_label": data_period_label,
                     }
                 )
             return rows
