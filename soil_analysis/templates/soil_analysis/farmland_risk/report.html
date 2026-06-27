@@ -90,7 +90,7 @@
                 <section class="report-panel mb-4">
                     <h2 class="h5">経営耕地面積規模別分布</h2>
                     <p class="distribution-note">面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。</p>
-                    <p class="distribution-note">経営体数は別統計の「経営耕地面積規模別経営体数」から取得します。表示されない場合は、次回の e-Stat 取得バッチ後に反映されます。</p>
+                    <p class="distribution-note">経営体数は別統計の「経営耕地面積規模別経営体数」から取得します。</p>
                     <div class="source-list" aria-label="使用した指標">
                         <span>使用した指標</span>
                         {% for source in dashboard.cultivated_area_distribution_sources %}
@@ -169,7 +169,7 @@
         {% else %}
             <div class="empty-report mb-4">
                 <h2 class="h5">統計データはまだ取得されていません</h2>
-                <p class="mb-0">六戸町の農業統計スナップショットが保存されると、最新KPIとトレンドが表示されます。</p>
+                <p class="mb-0">農業統計スナップショットが保存されると、最新KPIと分布が表示されます。</p>
             </div>
         {% endif %}
 
@@ -184,7 +184,7 @@
                 </div>
                 <div>
                     <strong>経営耕地面積規模別経営体数</strong>
-                    <span>経営規模区分ごとの経営体数です。面積だけでは小規模農家層の件数が分からないため、nとして併記します。未取得の場合は e-Stat 取得バッチの再実行後に表示されます。</span>
+                    <span>経営規模区分ごとの経営体数です。面積だけでは小規模農家層の件数が分からないため、nとして併記します。</span>
                 </div>
             </div>
             <div class="table-responsive mt-3">

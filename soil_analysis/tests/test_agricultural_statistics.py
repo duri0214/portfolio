@@ -468,7 +468,7 @@ class AgriculturalRiskReportViewTest(TestCase):
             response,
             "面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。",
         )
-        self.assertContains(response, "次回の e-Stat 取得バッチ後に反映されます。")
+        self.assertNotContains(response, "次回の e-Stat 取得バッチ後に反映されます。")
         self.assertContains(response, "計")
         self.assertContains(response, "構成比 100.0%")
         self.assertContains(response, "611 経営体")
@@ -482,7 +482,10 @@ class AgriculturalRiskReportViewTest(TestCase):
             response,
             "たとえば0.5〜1.0haの行は、その規模区分に属する経営体が持つ経営耕地面積を合計したhaです。",
         )
-        self.assertContains(response, "経営規模区分ごとの経営体数です。")
+        self.assertContains(
+            response,
+            "経営規模区分ごとの経営体数です。面積だけでは小規模農家層の件数が分からないため、nとして併記します。",
+        )
         self.assertContains(response, "未実装（TODO）")
         self.assertNotContains(response, "e-Stat スナップショット")
         self.assertNotContains(response, "<th>分類</th>", html=True)
