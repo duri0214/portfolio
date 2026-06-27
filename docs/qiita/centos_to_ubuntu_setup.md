@@ -1373,8 +1373,6 @@ $ crontab -e
 20 18 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_vietnam_statistics
 ```
 
-`daily_fetch_farmland_statistics` は、離農・管理不能農地レポート用に e-Stat の農業統計を日次取得します。実行前に `.env` の `ESTAT_APP_ID` と、管理画面などで `EstatDataset.stats_data_id` / `filters` を設定しておきます。
-
 ### その他
 
 ここから下は、必要に応じて参照してください。
