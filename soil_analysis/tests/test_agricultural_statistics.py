@@ -465,8 +465,10 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "経営耕地面積規模別面積（0002068836）")
         self.assertContains(response, "経営耕地面積規模別経営体数（0002068830）")
         self.assertContains(
-            response, "構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。"
+            response,
+            "面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。",
         )
+        self.assertContains(response, "次回の e-Stat 取得バッチ後に反映されます。")
         self.assertContains(response, "計")
         self.assertContains(response, "構成比 100.0%")
         self.assertContains(response, "611 経営体")
@@ -478,8 +480,9 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "100 経営体")
         self.assertContains(
             response,
-            "経営規模区分ごとの面積です。合計値はこの統計の「計」を使い、リスク計算の母数と構成比の分母にしています。1ha以下などの小規模農家層の分布を見るために取得しています。",
+            "たとえば0.5〜1.0haの行は、その規模区分に属する経営体が持つ経営耕地面積を合計したhaです。",
         )
+        self.assertContains(response, "経営規模区分ごとの経営体数です。")
         self.assertContains(response, "未実装（TODO）")
         self.assertNotContains(response, "e-Stat スナップショット")
         self.assertNotContains(response, "<th>分類</th>", html=True)

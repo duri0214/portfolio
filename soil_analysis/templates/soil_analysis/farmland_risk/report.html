@@ -89,7 +89,8 @@
             {% if dashboard.cultivated_area_distribution_rows %}
                 <section class="report-panel mb-4">
                     <h2 class="h5">経営耕地面積規模別分布</h2>
-                    <p class="distribution-note">構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。</p>
+                    <p class="distribution-note">面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。</p>
+                    <p class="distribution-note">経営体数は別統計の「経営耕地面積規模別経営体数」から取得します。表示されない場合は、次回の e-Stat 取得バッチ後に反映されます。</p>
                     <div class="source-list" aria-label="使用した指標">
                         <span>使用した指標</span>
                         {% for source in dashboard.cultivated_area_distribution_sources %}
@@ -179,7 +180,11 @@
             <div class="data-definition-list">
                 <div>
                     <strong>経営耕地面積規模別面積</strong>
-                    <span>経営規模区分ごとの面積です。合計値はこの統計の「計」を使い、リスク計算の母数と構成比の分母にしています。1ha以下などの小規模農家層の分布を見るために取得しています。</span>
+                    <span>経営規模区分ごとの面積合計です。たとえば0.5〜1.0haの行は、その規模区分に属する経営体が持つ経営耕地面積を合計したhaです。合計値はこの統計の「計」を使い、リスク計算の母数と構成比の分母にしています。</span>
+                </div>
+                <div>
+                    <strong>経営耕地面積規模別経営体数</strong>
+                    <span>経営規模区分ごとの経営体数です。面積だけでは小規模農家層の件数が分からないため、nとして併記します。未取得の場合は e-Stat 取得バッチの再実行後に表示されます。</span>
                 </div>
             </div>
             <div class="table-responsive mt-3">
