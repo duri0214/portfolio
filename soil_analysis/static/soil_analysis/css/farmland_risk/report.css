@@ -211,11 +211,7 @@
     color: #66788a;
 }
 
-.age-bars {
-    display: grid;
-    gap: 0.75rem;
-}
-
+.age-bars,
 .distribution-bars {
     display: grid;
     gap: 0.75rem;
@@ -280,6 +276,7 @@
     font-weight: 600;
 }
 
+.age-bar-row,
 .distribution-bar-row {
     display: grid;
     grid-template-columns: 8rem minmax(10rem, 1fr) minmax(18rem, auto);
@@ -287,12 +284,15 @@
     align-items: center;
 }
 
+.age-bar-label,
+.age-bar-value,
 .distribution-bar-label,
 .distribution-bar-value {
     font-size: 0.9rem;
     color: #47596b;
 }
 
+.age-bar-value,
 .distribution-bar-value {
     display: flex;
     flex-wrap: wrap;
@@ -303,15 +303,18 @@
     white-space: nowrap;
 }
 
+.age-bar-value strong,
 .distribution-bar-value strong {
     color: #334e68;
     font-size: 0.9rem;
 }
 
+.age-bar-value span,
 .distribution-bar-value span {
     color: #66788a;
 }
 
+.age-bar-track,
 .distribution-bar-track {
     height: 14px;
     border-radius: 999px;
@@ -319,64 +322,23 @@
     overflow: hidden;
 }
 
+.age-bar-fill,
 .distribution-bar-fill {
     height: 100%;
     max-width: 100%;
     border-radius: inherit;
+}
+
+.distribution-bar-fill {
     background: #4d7c9f;
 }
 
-.distribution-bar-fill.empty {
-    background: transparent;
-}
-
-.age-bar-row {
-    display: grid;
-    grid-template-columns: 8rem minmax(10rem, 1fr) minmax(18rem, auto);
-    gap: 0.75rem;
-    align-items: center;
-}
-
-.age-bar-label,
-.age-bar-value {
-    font-size: 0.9rem;
-    color: #47596b;
-}
-
-.age-bar-value {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem 0.55rem;
-    align-items: baseline;
-    justify-content: flex-end;
-    text-align: right;
-    white-space: nowrap;
-}
-
-.age-bar-value strong {
-    color: #334e68;
-    font-size: 0.9rem;
-}
-
-.age-bar-value span {
-    color: #66788a;
-}
-
-.age-bar-track {
-    height: 14px;
-    border-radius: 999px;
-    background: #e8eef5;
-    overflow: hidden;
-}
-
 .age-bar-fill {
-    height: 100%;
-    max-width: 100%;
-    border-radius: inherit;
     background: #2f7d66;
 }
 
-.age-bar-fill.empty {
+.age-bar-fill.empty,
+.distribution-bar-fill.empty {
     background: transparent;
 }
 
@@ -463,22 +425,13 @@
         width: 100%;
     }
 
-    .age-bar-row {
-        grid-template-columns: 1fr;
-        gap: 0.35rem;
-    }
-
+    .age-bar-row,
     .distribution-bar-row {
         grid-template-columns: 1fr;
         gap: 0.35rem;
     }
 
-    .age-bar-value {
-        justify-content: flex-start;
-        text-align: left;
-        white-space: normal;
-    }
-
+    .age-bar-value,
     .distribution-bar-value {
         justify-content: flex-start;
         text-align: left;
