@@ -577,15 +577,3 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertNotContains(
             response, "データ時点:\n                            未取得"
         )
-
-    def test_legacy_rokunohe_farmland_risk_url_redirects(self):
-        """
-        シナリオ:
-        - 入力: 旧六戸町固定URLへのアクセス。
-        - 処理: 離農・管理不能農地レポートを表示するURLへ遷移する。
-        - 期待値: 地域固定でないURLへリダイレクトされること。
-        """
-        response = self.client.get(reverse("soil:rokunohe_farmland_risk"))
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], reverse("soil:farmland_risk"))

@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
-from django.views.generic import RedirectView
 
 from . import views
 
@@ -144,11 +143,6 @@ urlpatterns = [
         "farmland-risk",
         views.FarmlandRiskView.as_view(),
         name="farmland_risk",
-    ),
-    path(
-        "rokunohe/farmland-risk",
-        RedirectView.as_view(pattern_name="soil:farmland_risk", permanent=False),
-        name="rokunohe_farmland_risk",
     ),
     path(
         "land-ledger/create-ajax/",
