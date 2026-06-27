@@ -287,7 +287,7 @@
 
 .age-bar-row {
     display: grid;
-    grid-template-columns: 6rem 1fr 6.5rem;
+    grid-template-columns: 6rem minmax(8rem, 1fr) minmax(11rem, auto);
     gap: 0.75rem;
     align-items: center;
 }
@@ -299,11 +299,21 @@
 }
 
 .age-bar-value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.55rem;
+    align-items: baseline;
+    justify-content: flex-end;
     text-align: right;
+    white-space: nowrap;
+}
+
+.age-bar-value strong {
+    color: #334e68;
+    font-size: 0.9rem;
 }
 
 .age-bar-value span {
-    display: block;
     color: #66788a;
 }
 
@@ -434,7 +444,9 @@
     }
 
     .age-bar-value {
+        justify-content: flex-start;
         text-align: left;
+        white-space: normal;
     }
 
     .distribution-bar-value {
