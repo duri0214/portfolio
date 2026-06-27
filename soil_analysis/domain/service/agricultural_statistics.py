@@ -13,6 +13,7 @@ from soil_analysis.domain.valueobject.estat import (
     EstatDatasetStatus,
     EstatFetchResult,
     EstatValueRow,
+    SupplementalRiskIndicatorStatus,
     parse_estat_datetime,
 )
 
@@ -20,8 +21,18 @@ DEFAULT_AREA_CODE = "02405"
 RETIREMENT_TREND_COEFFICIENT = 0.35
 ESTAT_DATA_VIEW_URL = "https://www.e-stat.go.jp/dbview"
 DERIVED_INDICATOR_KEYS = {"total_cultivated_area"}
+CALCULATION_ONLY_INDICATOR_KEYS = {
+    "age_60s_area",
+    "age_70_plus_area",
+    "no_successor_ratio",
+    "shrink_stop_intention_ratio",
+}
 CULTIVATED_AREA_DISTRIBUTION_KEY = "cultivated_area_distribution"
 CULTIVATED_AREA_DISTRIBUTION_COUNT_KEY = "cultivated_area_distribution_count"
+OPERATOR_AGE_DISTRIBUTION_KEY = "operator_age_distribution_count"
+SUCCESSOR_STATUS_DISTRIBUTION_KEY = "successor_status_count"
+ABANDONED_FARMLAND_AREA_KEY = "abandoned_farmland_area_2015"
+MOJ_INHERITANCE_SOURCE_URL = "https://www.moj.go.jp/MINJI/minji05_00579.html"
 CULTIVATED_AREA_DISTRIBUTION_FALLBACK_LABELS = {
     "1001": "計",
     "1002": "0.3ha未満",
@@ -39,6 +50,21 @@ CULTIVATED_AREA_DISTRIBUTION_FALLBACK_LABELS = {
     "1014": "100.0～150.0ha",
     "1015": "150.0ha以上",
 }
+OPERATOR_AGE_GROUP_CODES = {
+    "30歳未満": {"1002", "1003", "1004"},
+    "30代": {"1005", "1006"},
+    "40代": {"1007", "1008"},
+    "50代": {"1009", "1010"},
+    "60代": {"1011", "1012"},
+    "70歳以上": {"1013", "1014", "1015", "1016"},
+}
+INHERITANCE_LAND_REVERSION_TOTAL_KEY = "inheritance_land_reversion_applications_total"
+INHERITANCE_LAND_REVERSION_APPLICATION_KEYS = [
+    "inheritance_land_reversion_applications_farmland",
+    "inheritance_land_reversion_applications_residential",
+    "inheritance_land_reversion_applications_forest",
+    "inheritance_land_reversion_applications_other",
+]
 
 DEFAULT_ESTAT_DATASETS = [
     {
@@ -64,36 +90,113 @@ DEFAULT_ESTAT_DATASETS = [
         "fallback_data_period_label": "2020年農林業センサス（2020年1月〜2020年12月）",
     },
     {
-        "indicator_key": "age_70_plus_area",
-        "display_name": "70歳以上の経営体が保有する面積",
-        "stats_data_id": "TODO_AGE_70_PLUS_AREA",
-        "filters": {},
-        "unit": "ha",
+        "indicator_key": OPERATOR_AGE_DISTRIBUTION_KEY,
+        "display_name": "経営主年齢階層別経営体数",
+        "stats_data_id": "0002068866",
+        "filters": {
+            "cdCat01": "1171",
+        },
+        "unit": "経営体",
         "category": "age",
+        "fallback_data_period_label": "2020年農林業センサス（2020年1月〜2020年12月）",
     },
     {
-        "indicator_key": "age_60s_area",
-        "display_name": "60代の経営体が保有する面積",
-        "stats_data_id": "TODO_AGE_60S_AREA",
-        "filters": {},
-        "unit": "ha",
-        "category": "age",
-    },
-    {
-        "indicator_key": "no_successor_ratio",
-        "display_name": "後継者なし経営体割合",
-        "stats_data_id": "TODO_NO_SUCCESSOR_RATIO",
-        "filters": {},
-        "unit": "%",
+        "indicator_key": SUCCESSOR_STATUS_DISTRIBUTION_KEY,
+        "display_name": "5年以内の後継者確保状況別経営体数",
+        "stats_data_id": "0002068879",
+        "filters": {
+            "cdCat01": "1171",
+        },
+        "unit": "経営体",
         "category": "succession",
+        "fallback_data_period_label": "2020年農林業センサス（2020年1月〜2020年12月）",
     },
     {
-        "indicator_key": "shrink_stop_intention_ratio",
-        "display_name": "縮小・中止意向割合",
-        "stats_data_id": "TODO_SHRINK_STOP_INTENTION",
-        "filters": {},
-        "unit": "%",
-        "category": "intention",
+        "indicator_key": ABANDONED_FARMLAND_AREA_KEY,
+        "display_name": "耕作放棄地面積（2015年）",
+        "stats_data_id": "0003205603",
+        "filters": {
+            "cdTab": "0050",
+            "cdCat01": "100",
+        },
+        "unit": "ha",
+        "category": "abandoned_farmland",
+        "fallback_data_period_label": "2015年農林業センサス（2015年1月〜2015年12月）",
+    },
+]
+
+DEFAULT_SUPPLEMENTAL_INDICATORS = [
+    {
+        "indicator_key": "inheritance_land_reversion_applications_total",
+        "display_name": "相続土地国庫帰属制度 申請件数",
+        "source_name": "法務省 相続土地国庫帰属制度の統計",
+        "source_url": MOJ_INHERITANCE_SOURCE_URL,
+        "region_label": "全国",
+        "period_label": "令和8年5月31日現在",
+        "value": 5545,
+        "unit": "件",
+        "category": "inheritance_land_reversion",
+        "note": "速報値。現時点では単月更新ページの累計値として扱い、時系列化は今後の取得拡張で対応する。",
+    },
+    {
+        "indicator_key": "inheritance_land_reversion_applications_farmland",
+        "display_name": "相続土地国庫帰属制度 申請件数（田・畑）",
+        "source_name": "法務省 相続土地国庫帰属制度の統計",
+        "source_url": MOJ_INHERITANCE_SOURCE_URL,
+        "region_label": "全国",
+        "period_label": "令和8年5月31日現在",
+        "value": 2169,
+        "unit": "件",
+        "category": "inheritance_land_reversion",
+        "note": "申請件数の地目別内訳。合計値の一部であり、独立した別指標ではない。",
+    },
+    {
+        "indicator_key": "inheritance_land_reversion_applications_residential",
+        "display_name": "相続土地国庫帰属制度 申請件数（宅地）",
+        "source_name": "法務省 相続土地国庫帰属制度の統計",
+        "source_url": MOJ_INHERITANCE_SOURCE_URL,
+        "region_label": "全国",
+        "period_label": "令和8年5月31日現在",
+        "value": 1916,
+        "unit": "件",
+        "category": "inheritance_land_reversion",
+        "note": "申請件数の地目別内訳。合計値の一部であり、独立した別指標ではない。",
+    },
+    {
+        "indicator_key": "inheritance_land_reversion_applications_forest",
+        "display_name": "相続土地国庫帰属制度 申請件数（山林）",
+        "source_name": "法務省 相続土地国庫帰属制度の統計",
+        "source_url": MOJ_INHERITANCE_SOURCE_URL,
+        "region_label": "全国",
+        "period_label": "令和8年5月31日現在",
+        "value": 850,
+        "unit": "件",
+        "category": "inheritance_land_reversion",
+        "note": "申請件数の地目別内訳。合計値の一部であり、独立した別指標ではない。",
+    },
+    {
+        "indicator_key": "inheritance_land_reversion_applications_other",
+        "display_name": "相続土地国庫帰属制度 申請件数（その他）",
+        "source_name": "法務省 相続土地国庫帰属制度の統計",
+        "source_url": MOJ_INHERITANCE_SOURCE_URL,
+        "region_label": "全国",
+        "period_label": "令和8年5月31日現在",
+        "value": 610,
+        "unit": "件",
+        "category": "inheritance_land_reversion",
+        "note": "申請件数の地目別内訳。合計値の一部であり、独立した別指標ではない。",
+    },
+    {
+        "indicator_key": "inheritance_land_reversion_approved_farmland",
+        "display_name": "相続土地国庫帰属制度 帰属件数（農用地）",
+        "source_name": "法務省 相続土地国庫帰属制度の統計",
+        "source_url": MOJ_INHERITANCE_SOURCE_URL,
+        "region_label": "全国",
+        "period_label": "令和8年5月31日現在",
+        "value": 879,
+        "unit": "件",
+        "category": "inheritance_land_reversion",
+        "note": "帰属件数の種目別内訳。合計申請とは母数が異なるため、補足値として扱う。",
     },
 ]
 
@@ -132,8 +235,14 @@ class AgriculturalRiskCalculator:
         unmanageable_candidate_area = cls._sum_optional(
             retirement_confirmed_area,
             retirement_reserve_area,
-            risk_input.supplemental_unmanageable_area,
         )
+        if unmanageable_candidate_area is not None:
+            unmanageable_candidate_area = cls._sum_optional(
+                unmanageable_candidate_area,
+                risk_input.supplemental_unmanageable_area,
+            )
+        elif risk_input.supplemental_unmanageable_area:
+            unmanageable_candidate_area = risk_input.supplemental_unmanageable_area
         farmland_maintenance_rate = cls._maintenance_rate(
             total_area, unmanageable_candidate_area
         )
@@ -201,6 +310,8 @@ class AgriculturalStatisticsService:
         )
         for definition in DEFAULT_ESTAT_DATASETS:
             AgriculturalStatisticsRepository.ensure_dataset(definition)
+        for definition in DEFAULT_SUPPLEMENTAL_INDICATORS:
+            AgriculturalStatisticsRepository.upsert_supplemental_indicator(definition)
         return region
 
     @classmethod
@@ -293,7 +404,14 @@ class AgriculturalStatisticsService:
                 region, CULTIVATED_AREA_DISTRIBUTION_KEY
             )
         )
-        risk_input = cls._build_risk_input(latest, distribution_snapshots)
+        successor_snapshots = (
+            AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
+                region, SUCCESSOR_STATUS_DISTRIBUTION_KEY
+            )
+        )
+        risk_input = cls._build_risk_input(
+            latest, distribution_snapshots, successor_snapshots
+        )
         result = AgriculturalRiskCalculator.calculate(risk_input)
         return AgriculturalStatisticsRepository.save_risk_report(
             region=region,
@@ -333,7 +451,15 @@ class AgriculturalStatisticsService:
         region = cls.ensure_default_configuration(area_code)
         latest_report = AgriculturalStatisticsRepository.get_latest_risk_report(region)
         snapshots = AgriculturalStatisticsRepository.get_snapshots(region)
-        age_area_rows = cls._build_age_area_rows(latest_report)
+        latest_snapshot_values = (
+            AgriculturalStatisticsRepository.get_latest_snapshot_values(region)
+        )
+        age_distribution_snapshots = (
+            AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
+                region, OPERATOR_AGE_DISTRIBUTION_KEY
+            )
+        )
+        age_area_rows = cls._build_age_group_rows(age_distribution_snapshots)
         distribution_snapshots = (
             AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
                 region, CULTIVATED_AREA_DISTRIBUTION_KEY
@@ -349,26 +475,55 @@ class AgriculturalStatisticsService:
                 distribution_snapshots, distribution_count_snapshots
             )
         )
+        cultivated_area_distribution_summary = (
+            cls._build_cultivated_area_distribution_summary(
+                cultivated_area_distribution_rows
+            )
+        )
+        successor_snapshots = (
+            AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
+                region, SUCCESSOR_STATUS_DISTRIBUTION_KEY
+            )
+        )
+        successor_status_rows = cls._build_classification_rows(
+            successor_snapshots,
+            skip_subtotal=True,
+        )
         datasets = cls._display_datasets(
             AgriculturalStatisticsRepository.get_datasets()
         )
-        latest_snapshot_values = (
-            AgriculturalStatisticsRepository.get_latest_snapshot_values(region)
-        )
         dataset_status_rows = cls._build_dataset_status_rows(
-            datasets, latest_snapshot_values, distribution_snapshots
+            datasets,
+            latest_snapshot_values,
+            distribution_snapshots,
         )
         distribution_sources = cls._distribution_source_rows(dataset_status_rows)
+        supplemental_indicator_rows = cls._build_supplemental_indicator_rows(
+            AgriculturalStatisticsRepository.get_supplemental_indicators()
+        )
+        inheritance_land_reversion_summary = (
+            cls._build_inheritance_land_reversion_summary(supplemental_indicator_rows)
+        )
+        kpi_basis = cls._build_kpi_basis(dataset_status_rows)
         return AgriculturalRiskDashboard(
             region_name=region.name,
             prefecture_name=region.prefecture_name,
             area_code=region.area_code,
             latest_report=latest_report,
             age_area_rows=age_area_rows,
+            cultivated_area_distribution_summary=cultivated_area_distribution_summary,
             cultivated_area_distribution_rows=cultivated_area_distribution_rows,
+            successor_status_rows=successor_status_rows,
             cultivated_area_distribution_sources=distribution_sources,
+            supplemental_indicator_rows=supplemental_indicator_rows,
+            inheritance_land_reversion_summary=inheritance_land_reversion_summary,
+            kpi_basis=kpi_basis,
             dataset_status_rows=dataset_status_rows,
-            has_data=latest_report is not None or bool(snapshots),
+            has_data=(
+                latest_report is not None
+                or bool(snapshots)
+                or bool(supplemental_indicator_rows)
+            ),
         )
 
     @classmethod
@@ -490,6 +645,18 @@ class AgriculturalStatisticsService:
             )
         return rows
 
+    @staticmethod
+    def _build_cultivated_area_distribution_summary(
+        rows: list[dict[str, float | str | None]],
+    ) -> dict[str, float | str | None]:
+        total_row = next(
+            (row for row in rows if row.get("period_label") == "1001"),
+            None,
+        )
+        if total_row is None:
+            return {}
+        return total_row
+
     @classmethod
     def _distribution_period_labels(cls, snapshots_by_period: dict) -> list[str]:
         if snapshots_by_period:
@@ -547,7 +714,10 @@ class AgriculturalStatisticsService:
 
     @classmethod
     def _build_risk_input(
-        cls, latest: dict, distribution_snapshots: dict | None = None
+        cls,
+        latest: dict,
+        distribution_snapshots: dict | None = None,
+        successor_snapshots: dict | None = None,
     ) -> AgriculturalRiskInput:
         return AgriculturalRiskInput(
             total_cultivated_area=(
@@ -556,11 +726,17 @@ class AgriculturalStatisticsService:
             ),
             age_70_plus_area=cls._value(latest, "age_70_plus_area"),
             age_60s_area=cls._value(latest, "age_60s_area"),
-            no_successor_ratio=cls._ratio_value(latest, "no_successor_ratio"),
+            no_successor_ratio=(
+                cls._ratio_value(latest, "no_successor_ratio")
+                or cls._successor_missing_ratio(successor_snapshots or {})
+            ),
             shrink_stop_intention_ratio=cls._ratio_value(
                 latest, "shrink_stop_intention_ratio"
             ),
-            supplemental_unmanageable_area=0.0,
+            supplemental_unmanageable_area=cls._value(
+                latest, ABANDONED_FARMLAND_AREA_KEY
+            )
+            or 0.0,
         )
 
     @staticmethod
@@ -587,21 +763,136 @@ class AgriculturalStatisticsService:
         return total_snapshot.value
 
     @staticmethod
-    def _build_age_area_rows(latest_report) -> list[dict[str, float | str | None]]:
-        if latest_report is None:
-            return []
-        return [
-            {
-                "label": "60代",
-                "value": latest_report.age_60s_area,
-                "unit": "ha",
-            },
-            {
-                "label": "70歳以上",
-                "value": latest_report.age_70_plus_area,
-                "unit": "ha",
-            },
+    def _successor_missing_ratio(
+        snapshots_by_period: dict,
+    ) -> float | None:
+        """
+        `successor_missing` は農業経営の後継者が未確保である状態を指します。
+        ここでの `successor` は「成功者」ではなく農地・農業経営を引き継ぐ
+        後継者、`missing` はその後継者を確保できていない状態です。
+
+        農業経営の後継者を確保していない経営体の割合を算出します。
+
+        2020年農林業センサスの「5年以内の後継者の確保状況別経営体数」では、
+        period_label `1001` が経営体数の計、`1007` が「後継者を確保していない」
+        経営体数です。この2値から `no_successor_ratio` の代替値を作ります。
+
+        Args:
+            snapshots_by_period: 後継者確保状況の分類コードをキーにした統計値。
+
+        Returns:
+            「後継者を確保していない経営体数 / 計」の比率。必要な分類値が
+            欠けている場合や計が0の場合は None。
+        """
+        total_snapshot = snapshots_by_period.get("1001")
+        missing_snapshot = snapshots_by_period.get("1007")
+        total = total_snapshot.value if total_snapshot is not None else None
+        missing = missing_snapshot.value if missing_snapshot is not None else None
+        if not total:
+            return None
+        if missing is None:
+            return None
+        return missing / total
+
+    @classmethod
+    def _build_age_group_rows(
+        cls, age_snapshots_by_period: dict
+    ) -> list[dict[str, float | str | None]]:
+        """
+        経営主年齢の分類を画面用の年齢階級へ集約します。
+
+        e-Stat上の細かい年齢階層を、30歳未満、30代、40代、50代、
+        60代、70歳以上にまとめ、男女別や「男女計」接頭辞を出さずに見せます。
+        """
+        if age_snapshots_by_period:
+            total_snapshot = age_snapshots_by_period.get("1001")
+            total = total_snapshot.value if total_snapshot is not None else None
+            rows = []
+            data_period_label = None
+            if total_snapshot is not None:
+                data_period_label = cls._data_period_label(total_snapshot)
+            for label, codes in OPERATOR_AGE_GROUP_CODES.items():
+                value = cls._sum_values_for_period_labels(
+                    age_snapshots_by_period, codes
+                )
+                rows.append(
+                    {
+                        "label": label,
+                        "value": value,
+                        "unit": "経営体",
+                        "share": AgriculturalRiskCalculator._ratio(value, total),
+                        "data_period_label": data_period_label,
+                    }
+                )
+            return rows
+        return []
+
+    @staticmethod
+    def _sum_values_for_period_labels(
+        snapshots_by_period: dict, period_labels: set[str]
+    ) -> float | None:
+        """
+        指定した分類コードに対応する e-Stat 統計値を合計します。
+
+        ここでの `period_label` は時系列の期間ではなく、e-Stat の分類コードです。
+        例えば経営主年齢の 30代 は、30〜34歳と35〜39歳の2つの分類コードを
+        1つの表示行へまとめるため、このメソッドで各分類の値を足します。
+
+        Args:
+            snapshots_by_period: e-Stat の分類コードをキーにした保存済み統計値。
+            period_labels: 合計対象にする分類コードの集合。
+
+        Returns:
+            合計値。対象分類が存在しない、または値がすべて欠けている場合は None。
+        """
+        values = [
+            snapshots_by_period[period_label].value
+            for period_label in period_labels
+            if period_label in snapshots_by_period
+            and snapshots_by_period[period_label].value is not None
         ]
+        if not values:
+            return None
+        return sum(values)
+
+    @classmethod
+    def _build_classification_rows(
+        cls,
+        snapshots_by_period: dict,
+        skip_total: bool = False,
+        skip_subtotal: bool = False,
+    ) -> list[dict[str, float | str | None]]:
+        """
+        分類コード別の統計値を画面表示用の行へ変換します。
+
+        `skip_total` は年齢階層表のように「計」を表から外しつつ、構成比の母数には
+        使いたい場合に指定します。
+        """
+        total_snapshot = snapshots_by_period.get("1001")
+        total_value = total_snapshot.value if total_snapshot is not None else None
+        rows = []
+        for period_label, snapshot in snapshots_by_period.items():
+            if skip_total and period_label == "1001":
+                continue
+            label = cls._class_label(snapshot, period_label, "cat02")
+            if skip_subtotal and "小計" in label:
+                continue
+            value = snapshot.value if snapshot is not None else None
+            rows.append(
+                {
+                    "label": label,
+                    "period_label": period_label,
+                    "value": value,
+                    "unit": snapshot.dataset.unit if snapshot is not None else "",
+                    "share": AgriculturalRiskCalculator._ratio(value, total_value),
+                    "data_period_label": (
+                        cls._data_period_label(snapshot)
+                        if snapshot is not None
+                        else None
+                    ),
+                }
+            )
+        return rows
 
     @classmethod
     def _build_dataset_status_rows(
@@ -655,7 +946,8 @@ class AgriculturalStatisticsService:
         return [
             dataset
             for dataset in datasets
-            if dataset.indicator_key not in DERIVED_INDICATOR_KEYS
+            if dataset.indicator_key
+            not in DERIVED_INDICATOR_KEYS | CALCULATION_ONLY_INDICATOR_KEYS
         ]
 
     @staticmethod
@@ -664,7 +956,8 @@ class AgriculturalStatisticsService:
             [
                 dataset
                 for dataset in datasets
-                if dataset.indicator_key not in DERIVED_INDICATOR_KEYS
+                if dataset.indicator_key
+                not in DERIVED_INDICATOR_KEYS | CALCULATION_ONLY_INDICATOR_KEYS
             ],
             key=lambda dataset: (
                 dataset.stats_data_id.startswith("TODO_"),
@@ -682,6 +975,21 @@ class AgriculturalStatisticsService:
                 dataset.indicator_key
             )
         return latest_snapshot_values.get(dataset.indicator_key)
+
+    @staticmethod
+    def _class_label(snapshot, period_label: str, class_id: str) -> str:
+        if snapshot is not None:
+            class_metadata = snapshot.raw_data.get("_class_metadata", {})
+            metadata = (
+                class_metadata.get(class_id, {})
+                if isinstance(class_metadata, dict)
+                else {}
+            )
+            code_metadata = metadata.get(str(period_label), {})
+            name = code_metadata.get("name") if isinstance(code_metadata, dict) else ""
+            if name:
+                return name
+        return period_label
 
     @staticmethod
     def _source_page_url(stats_data_id: str) -> str:
@@ -741,3 +1049,120 @@ class AgriculturalStatisticsService:
             }
             and row.status_label == "取得済み"
         ]
+
+    @staticmethod
+    def _build_supplemental_indicator_rows(
+        indicators: list,
+    ) -> list[SupplementalRiskIndicatorStatus]:
+        return [
+            SupplementalRiskIndicatorStatus(
+                indicator_key=indicator.indicator_key,
+                display_name=indicator.display_name,
+                source_name=indicator.source_name,
+                source_url=indicator.source_url,
+                region_label=indicator.region_label,
+                period_label=indicator.period_label,
+                value=indicator.value,
+                unit=indicator.unit,
+                category=indicator.category,
+                note=indicator.note,
+            )
+            for indicator in indicators
+        ]
+
+    @staticmethod
+    def _build_inheritance_land_reversion_summary(
+        rows: list[SupplementalRiskIndicatorStatus],
+    ) -> dict:
+        """
+        相続土地国庫帰属制度の全国値を合計と内訳に分けます。
+
+        法務省ページの同一ソースにある値なので、別々のカードではなく合計値と
+        補足内訳として表示できる形へ整えます。
+        """
+        target_rows = [
+            row for row in rows if row.category == "inheritance_land_reversion"
+        ]
+        total = next(
+            (
+                row
+                for row in target_rows
+                if row.indicator_key == INHERITANCE_LAND_REVERSION_TOTAL_KEY
+            ),
+            None,
+        )
+        rows_by_key = {row.indicator_key: row for row in target_rows}
+        application_rows = [
+            rows_by_key[indicator_key]
+            for indicator_key in INHERITANCE_LAND_REVERSION_APPLICATION_KEYS
+            if indicator_key in rows_by_key
+        ]
+        supplemental_rows = [
+            row
+            for row in target_rows
+            if row.indicator_key
+            not in {INHERITANCE_LAND_REVERSION_TOTAL_KEY}
+            | set(INHERITANCE_LAND_REVERSION_APPLICATION_KEYS)
+        ]
+        return {
+            "total": total,
+            "application_breakdown_rows": application_rows,
+            "supplemental_rows": supplemental_rows,
+            "trend_note": "現時点では法務省ページ上の最新累計値のみを表示しています。今後、月次の過去値を保存できるようにするとトレンド化できます。",
+        }
+
+    @staticmethod
+    def _build_kpi_basis(rows: list[EstatDatasetStatus]) -> dict:
+        """
+        KPIカードに表示するデータ根拠を指標取得状況から組み立てます。
+
+        画面上で六戸町値と全国値、2020年/2015年などの時点が混ざらないよう、
+        KPIごとに地域粒度とデータ時点を明示します。
+        """
+        status_by_key = {row.indicator_key: row for row in rows}
+        base = status_by_key.get(CULTIVATED_AREA_DISTRIBUTION_KEY)
+        age = status_by_key.get(OPERATOR_AGE_DISTRIBUTION_KEY)
+        successor = status_by_key.get(SUCCESSOR_STATUS_DISTRIBUTION_KEY)
+        abandoned = status_by_key.get(ABANDONED_FARMLAND_AREA_KEY)
+        base_period = base.data_period_label if base is not None else None
+        age_period = age.data_period_label if age is not None else None
+        successor_period = (
+            successor.data_period_label if successor is not None else None
+        )
+        abandoned_period = (
+            abandoned.data_period_label if abandoned is not None else None
+        )
+        return {
+            "unmanageable_candidate_area": {
+                "region_label": "六戸町",
+                "period_label": abandoned_period or "-",
+                "source_label": "耕作放棄地面積",
+            },
+            "farmland_maintenance_rate": {
+                "region_label": "六戸町",
+                "period_label": f"母数: {base_period or '-'}",
+                "source_label": "経営耕地面積と管理不能化候補面積",
+            },
+            "succession_risk": {
+                "region_label": "六戸町",
+                "period_label": successor_period or "-",
+                "source_label": "後継者を確保していない経営体数 / 計",
+            },
+            "operator_age_distribution": {
+                "region_label": "六戸町",
+                "period_label": age_period or "-",
+                "source_label": age.display_name if age is not None else "",
+                "stats_data_id": age.stats_data_id if age is not None else "",
+                "source_page_url": age.source_page_url if age is not None else "",
+            },
+            "intention_risk": {
+                "region_label": "未設定",
+                "period_label": "-",
+                "source_label": "e-Statで直接取得できる経営意向データは未確定",
+            },
+            "risk_breakdown": {
+                "region_label": "六戸町",
+                "period_label": f"後継者: {successor_period or '-'} / 耕作放棄地: {abandoned_period or '-'}",
+                "source_label": "農林業センサス由来の補助統計",
+            },
+        }

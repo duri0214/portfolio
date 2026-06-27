@@ -6,6 +6,7 @@ from .models import (
     AgriculturalStatisticSnapshot,
     EstatDataset,
     RokunoheLandRegistry,
+    SupplementalRiskIndicator,
 )
 
 
@@ -64,3 +65,18 @@ class AgriculturalRiskReportAdmin(admin.ModelAdmin):
         "farmland_maintenance_rate",
     )
     list_filter = ("region", "report_date")
+
+
+@admin.register(SupplementalRiskIndicator)
+class SupplementalRiskIndicatorAdmin(admin.ModelAdmin):
+    list_display = (
+        "indicator_key",
+        "display_name",
+        "region_label",
+        "period_label",
+        "value",
+        "unit",
+        "category",
+    )
+    list_filter = ("region_label", "category")
+    search_fields = ("indicator_key", "display_name", "source_name")

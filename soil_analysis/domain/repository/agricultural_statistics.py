@@ -7,6 +7,7 @@ from soil_analysis.models import (
     AgriculturalRiskReport,
     AgriculturalStatisticSnapshot,
     EstatDataset,
+    SupplementalRiskIndicator,
 )
 
 
@@ -97,8 +98,39 @@ class AgriculturalStatisticsRepository:
         return dataset
 
     @staticmethod
+    def upsert_supplemental_indicator(definition: dict) -> SupplementalRiskIndicator:
+        """
+        補助指標を取得または更新します。
+
+        Args:
+            definition: 補助指標定義。
+
+        Returns:
+            SupplementalRiskIndicator: 保存済み補助指標。
+        """
+        indicator, _ = SupplementalRiskIndicator.objects.update_or_create(
+            indicator_key=definition["indicator_key"],
+            defaults={
+                "display_name": definition["display_name"],
+                "source_name": definition["source_name"],
+                "source_url": definition["source_url"],
+                "region_label": definition["region_label"],
+                "period_label": definition["period_label"],
+                "value": definition.get("value"),
+                "unit": definition.get("unit", ""),
+                "category": definition.get("category", ""),
+                "note": definition.get("note", ""),
+            },
+        )
+        return indicator
+
+    @staticmethod
     def get_datasets() -> list[EstatDataset]:
         return list(EstatDataset.objects.all().order_by("indicator_key"))
+
+    @staticmethod
+    def get_supplemental_indicators() -> list[SupplementalRiskIndicator]:
+        return list(SupplementalRiskIndicator.objects.all().order_by("category", "id"))
 
     @staticmethod
     def get_region_by_area_code(area_code: str) -> AgriculturalRegion:

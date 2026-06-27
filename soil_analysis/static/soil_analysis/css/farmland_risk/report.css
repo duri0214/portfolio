@@ -67,6 +67,29 @@
     margin-left: 0.2rem;
 }
 
+.kpi-meta {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: 0.65rem;
+    color: #66788a;
+    font-size: 0.78rem;
+}
+
+.scope-badge {
+    display: inline-flex;
+    align-items: center;
+    width: max-content;
+    min-height: 1.35rem;
+    padding: 0.1rem 0.5rem;
+    border: 1px solid #b9d8c9;
+    border-radius: 999px;
+    background: #edf8f2;
+    color: #276749;
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 .report-panel,
 .empty-report {
     padding: 1.25rem;
@@ -153,6 +176,27 @@
     gap: 0.75rem;
 }
 
+.distribution-total {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.65rem;
+    align-items: baseline;
+    margin: 0.75rem 0 0.85rem;
+    color: #47596b;
+}
+
+.distribution-total span {
+    color: #66788a;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.distribution-total strong {
+    color: #334e68;
+    font-size: 1.25rem;
+    line-height: 1.2;
+}
+
 .distribution-note {
     color: #66788a;
     font-size: 0.86rem;
@@ -193,7 +237,7 @@
 
 .distribution-bar-row {
     display: grid;
-    grid-template-columns: 8rem 1fr 11rem;
+    grid-template-columns: 8rem minmax(10rem, 1fr) minmax(18rem, auto);
     gap: 0.75rem;
     align-items: center;
 }
@@ -205,17 +249,21 @@
 }
 
 .distribution-bar-value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.55rem;
+    align-items: baseline;
+    justify-content: flex-end;
     text-align: right;
+    white-space: nowrap;
 }
 
 .distribution-bar-value strong {
-    display: block;
     color: #334e68;
     font-size: 0.9rem;
 }
 
 .distribution-bar-value span {
-    display: block;
     color: #66788a;
 }
 
@@ -239,7 +287,7 @@
 
 .age-bar-row {
     display: grid;
-    grid-template-columns: 6rem 1fr 6.5rem;
+    grid-template-columns: 6rem minmax(8rem, 1fr) minmax(11rem, auto);
     gap: 0.75rem;
     align-items: center;
 }
@@ -251,7 +299,22 @@
 }
 
 .age-bar-value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.55rem;
+    align-items: baseline;
+    justify-content: flex-end;
     text-align: right;
+    white-space: nowrap;
+}
+
+.age-bar-value strong {
+    color: #334e68;
+    font-size: 0.9rem;
+}
+
+.age-bar-value span {
+    color: #66788a;
 }
 
 .age-bar-track {
@@ -287,6 +350,79 @@
     margin-bottom: 0;
 }
 
+.supplemental-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.85rem;
+}
+
+.supplemental-item {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.9rem;
+    border: 1px solid #e5edf5;
+    border-radius: 8px;
+    background: #f8fbfd;
+}
+
+.supplemental-item span,
+.supplemental-item small {
+    color: #66788a;
+    font-size: 0.82rem;
+}
+
+.supplemental-item strong {
+    color: #334e68;
+    font-size: 1.35rem;
+    line-height: 1.2;
+}
+
+.supplemental-item p {
+    margin-bottom: 0;
+    color: #47596b;
+    font-weight: 600;
+}
+
+.supplemental-item a {
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.supplemental-summary {
+    display: grid;
+    grid-template-columns: minmax(13rem, 0.45fr) 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+.supplemental-summary strong {
+    display: block;
+    margin-top: 0.5rem;
+    color: #334e68;
+    font-size: 1.7rem;
+    line-height: 1.2;
+}
+
+.supplemental-summary p {
+    margin: 0.35rem 0 0;
+    color: #47596b;
+    font-weight: 600;
+}
+
+.data-period {
+    display: block;
+    margin-top: 0.4rem;
+    color: #66788a;
+    font-size: 0.84rem;
+}
+
+.supplemental-breakdown {
+    padding: 0.85rem;
+    border: 1px solid #e5edf5;
+    border-radius: 8px;
+    background: #f8fbfd;
+}
+
 @media (max-width: 767.98px) {
     .report-heading {
         display: block;
@@ -308,11 +444,15 @@
     }
 
     .age-bar-value {
+        justify-content: flex-start;
         text-align: left;
+        white-space: normal;
     }
 
     .distribution-bar-value {
+        justify-content: flex-start;
         text-align: left;
+        white-space: normal;
     }
 
     .data-status-heading {
@@ -326,5 +466,9 @@
     .data-definition-list div {
         grid-template-columns: 1fr;
         gap: 0.25rem;
+    }
+
+    .supplemental-summary {
+        grid-template-columns: 1fr;
     }
 }

@@ -92,7 +92,9 @@ class AgriculturalRiskInput:
         total_cultivated_area: 現在の経営耕地面積。
         age_70_plus_area: 70歳以上の経営体が保有する面積。
         age_60s_area: 60代の経営体が保有する面積。
-        no_successor_ratio: 後継者なし割合。0.0から1.0の比率。
+        no_successor_ratio: 農業経営の後継者を確保していない経営体の割合。
+            `successor` は処理の成功者ではなく、農地・農業経営を引き継ぐ
+            後継者を指す。0.0から1.0の比率。
         shrink_stop_intention_ratio: 縮小・中止意向の割合。0.0から1.0の比率。
         supplemental_unmanageable_area: 補助指標による管理不能化候補面積。
     """
@@ -160,6 +162,36 @@ class EstatDatasetStatus:
 
 
 @dataclass(frozen=True)
+class SupplementalRiskIndicatorStatus:
+    """
+    e-Stat 以外の補助指標を画面に表示するための値です。
+
+    Attributes:
+        indicator_key: 指標キー。
+        display_name: 画面に表示する指標名。
+        source_name: 取得元名。
+        source_url: 取得元URL。
+        region_label: 全国、青森県などの地域粒度。
+        period_label: 統計値の時点。
+        value: 統計値。
+        unit: 単位。
+        category: 指標カテゴリ。
+        note: 指標の読み方や注意点。
+    """
+
+    indicator_key: str
+    display_name: str
+    source_name: str
+    source_url: str
+    region_label: str
+    period_label: str
+    value: float | None
+    unit: str
+    category: str
+    note: str
+
+
+@dataclass(frozen=True)
 class EstatFetchResult:
     """
     e-Stat 取得バッチの結果です。
@@ -187,9 +219,14 @@ class AgriculturalRiskDashboard:
         prefecture_name: 都道府県名。
         area_code: e-Stat 地域コード。
         latest_report: 最新リスクレポート。
-        age_area_rows: 年齢階層別面積として表示する行。
+        age_area_rows: 年代別に集計した経営体数行。
+        cultivated_area_distribution_summary: 経営耕地面積規模別分布の合計行。
         cultivated_area_distribution_rows: 経営耕地面積規模別面積の分布行。
+        successor_status_rows: 後継者確保状況別の経営体数行。
         cultivated_area_distribution_sources: 分布表示に使った統計指標。
+        supplemental_indicator_rows: e-Stat 以外の補助指標行。
+        inheritance_land_reversion_summary: 相続土地国庫帰属制度の全国統計表示データ。
+        kpi_basis: KPIごとの地域粒度・データ時点・根拠。
         dataset_status_rows: 指標ごとの取得状況。
         has_data: 表示可能な統計データがあるかどうか。
     """
@@ -199,8 +236,13 @@ class AgriculturalRiskDashboard:
     area_code: str
     latest_report: object | None
     age_area_rows: list[dict[str, float | str | None]]
+    cultivated_area_distribution_summary: dict[str, float | str | None]
     cultivated_area_distribution_rows: list[dict[str, float | str | None]]
+    successor_status_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_sources: list[EstatDatasetStatus]
+    supplemental_indicator_rows: list[SupplementalRiskIndicatorStatus]
+    inheritance_land_reversion_summary: dict
+    kpi_basis: dict
     dataset_status_rows: list[EstatDatasetStatus]
     has_data: bool
 

@@ -286,7 +286,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
             call_command("fetch_farmland_statistics", verbosity=0)
 
-        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 2)
+        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 5)
         self.assertEqual(AgriculturalRiskReport.objects.count(), 1)
 
     @patch("soil_analysis.domain.dataprovider.estat.requests.get")
@@ -363,7 +363,12 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "https://www.e-stat.go.jp/dbview?sid=0002068836")
         self.assertContains(response, "cdCat01=1171")
         self.assertNotContains(response, "cdCat02=1001")
-        self.assertContains(response, "未実装（TODO）")
+        self.assertContains(response, "全国補助トレンド")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数")
+        self.assertContains(response, "5,545 件")
+        self.assertContains(response, "0002068866")
+        self.assertContains(response, "0002068879")
+        self.assertContains(response, "0003205603")
 
     def test_report_view_displays_latest_risk_report(self):
         """
@@ -378,6 +383,15 @@ class AgriculturalRiskReportViewTest(TestCase):
         )
         count_dataset = EstatDataset.objects.get(
             indicator_key="cultivated_area_distribution_count"
+        )
+        age_dataset = EstatDataset.objects.get(
+            indicator_key="operator_age_distribution_count"
+        )
+        successor_dataset = EstatDataset.objects.get(
+            indicator_key="successor_status_count"
+        )
+        abandoned_dataset = EstatDataset.objects.get(
+            indicator_key="abandoned_farmland_area_2015"
         )
         for period_label, value in [("1001", 1000), ("1002", 100), ("1004", 250)]:
             AgriculturalStatisticSnapshot.objects.create(
@@ -429,6 +443,97 @@ class AgriculturalRiskReportViewTest(TestCase):
                 },
                 source_hash=f"distribution-count-{period_label}",
             )
+        for period_label, label, value in [
+            ("1001", "男女計_計", 802),
+            ("1004", "男女計_25～29", 1),
+            ("1005", "男女計_30～34", 20),
+            ("1006", "男女計_35～39", 35),
+            ("1007", "男女計_40～44", 44),
+            ("1008", "男女計_45～49", 56),
+            ("1009", "男女計_50～54", 80),
+            ("1010", "男女計_55～59", 90),
+            ("1011", "男女計_60～64", 98),
+            ("1012", "男女計_65～69", 140),
+            ("1013", "男女計_70～74", 106),
+            ("1014", "男女計_75～79", 54),
+            ("1015", "男女計_80～84", 58),
+            ("1016", "男女計_85歳以上", 20),
+        ]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=region,
+                dataset=age_dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=timezone.now(),
+                estat_updated_at=timezone.now(),
+                raw_data={
+                    "@cat01": "1171",
+                    "@cat02": period_label,
+                    "$": str(value),
+                    "_table_metadata": {
+                        "tabulation_sub_category": "2020年農林業センサス",
+                        "survey_date": "202001-202012",
+                    },
+                    "_class_metadata": {
+                        "cat02": {
+                            period_label: {
+                                "name": label,
+                                "unit": "経営体",
+                            }
+                        }
+                    },
+                },
+                source_hash=f"age-count-{period_label}",
+            )
+        for period_label, label, value in [
+            ("1001", "計", 611),
+            ("1002", "親族内小計", 123),
+            ("1007", "確保していない", 441),
+        ]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=region,
+                dataset=successor_dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=timezone.now(),
+                estat_updated_at=timezone.now(),
+                raw_data={
+                    "@cat01": "1171",
+                    "@cat02": period_label,
+                    "$": str(value),
+                    "_table_metadata": {
+                        "tabulation_sub_category": "2020年農林業センサス",
+                        "survey_date": "202001-202012",
+                    },
+                    "_class_metadata": {
+                        "cat02": {
+                            period_label: {
+                                "name": label,
+                                "unit": "経営体",
+                            }
+                        }
+                    },
+                },
+                source_hash=f"successor-count-{period_label}",
+            )
+        AgriculturalStatisticSnapshot.objects.create(
+            region=region,
+            dataset=abandoned_dataset,
+            period_label="100",
+            value=185,
+            fetched_at=timezone.now(),
+            estat_updated_at=timezone.now(),
+            raw_data={
+                "@cat01": "100",
+                "@unit": "ha",
+                "$": "185",
+                "_table_metadata": {
+                    "tabulation_sub_category": "2015年農林業センサス",
+                    "survey_date": "201501-201512",
+                },
+            },
+            source_hash="abandoned-area-2015",
+        )
         AgriculturalRiskReport.objects.create(
             region=region,
             report_date=date(2026, 6, 27),
@@ -454,9 +559,21 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "81.5")
         self.assertContains(response, "対象地域")
         self.assertContains(response, "上北郡六戸町")
+        self.assertContains(
+            response,
+            "後継者なし割合は経営体数ベース、10年後農地維持率は面積ベースの指標です。",
+        )
+        self.assertContains(
+            response,
+            "後継者なし割合を全農地面積へ直接掛けず",
+        )
         self.assertContains(response, "取得済み")
         self.assertContains(response, "データ時点")
         self.assertContains(response, "2020年農林業センサス（2020年1月〜2020年12月）")
+        self.assertContains(response, "母数: 2020年農林業センサス")
+        self.assertNotContains(
+            response, "母数: 2020年農林業センサス（2020年1月〜2020年12月） / 補助:"
+        )
         self.assertContains(response, "e-Stat公表/更新日")
         self.assertNotContains(response, '<th class="text-end">最新値</th>', html=True)
         self.assertNotContains(response, "アプリ取得日時")
@@ -478,9 +595,14 @@ class AgriculturalRiskReportViewTest(TestCase):
             "0.3ha、0.4ha、0.2haの圃場を持つ経営体は、合計0.9haとして0.5〜1.0haの区分に入ります。",
         )
         self.assertNotContains(response, "次回の e-Stat 取得バッチ後に反映されます。")
-        self.assertContains(response, "計")
-        self.assertContains(response, "構成比 100.0%")
+        self.assertContains(response, "<span>合計</span>", html=True)
+        self.assertContains(response, "1,000.0 ha")
         self.assertContains(response, "611 経営体")
+        self.assertNotContains(
+            response,
+            '<div class="distribution-bar-label">計</div>',
+            html=True,
+        )
         self.assertContains(response, "0.3ha未満")
         self.assertContains(response, "構成比 10.0%")
         self.assertContains(response, "2 経営体")
@@ -498,7 +620,74 @@ class AgriculturalRiskReportViewTest(TestCase):
             response,
             "経営規模区分ごとの経営体数です。面積だけでは小規模農家層の件数が分からないため、nとして併記します。",
         )
-        self.assertContains(response, "未実装（TODO）")
+        self.assertContains(response, "全国補助トレンド")
+        self.assertContains(response, "全国")
+        self.assertContains(response, "5,545 件")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数（田・畑）")
+        self.assertContains(response, "2,169 件")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数（宅地）")
+        self.assertContains(response, "1,916 件")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数（山林）")
+        self.assertContains(response, "850 件")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数（その他）")
+        self.assertContains(response, "610 件")
+        self.assertContains(
+            response,
+            "申請件数は、田・畑、宅地、山林、その他の合計で 5,545 件になります。",
+        )
+        self.assertContains(response, "補足値")
+        self.assertContains(response, "相続土地国庫帰属制度 帰属件数（農用地）")
+        self.assertContains(response, "879 件")
+        self.assertContains(
+            response,
+            "帰属件数（農用地）は申請件数の内訳ではなく",
+        )
+        self.assertContains(
+            response,
+            "現時点では法務省ページ上の最新累計値のみを表示しています。",
+        )
+        self.assertContains(response, "年齢階層別の経営体数")
+        self.assertContains(
+            response,
+            '<span class="data-period">2020年農林業センサス（2020年1月〜2020年12月）</span>',
+            html=True,
+        )
+        self.assertContains(
+            response,
+            "経営主年齢階層別経営体数（0002068866）",
+        )
+        self.assertContains(
+            response,
+            "https://www.e-stat.go.jp/dbview?sid=0002068866",
+        )
+        self.assertContains(
+            response,
+            "e-Statの年齢階層を表示用の階級にまとめて表示します。",
+        )
+        self.assertContains(response, "30歳未満")
+        self.assertContains(response, "30代")
+        self.assertContains(response, "55 経営体")
+        self.assertContains(response, "40代")
+        self.assertContains(response, "100 経営体")
+        self.assertContains(response, "50代")
+        self.assertContains(response, "170 経営体")
+        self.assertContains(response, "238 経営体")
+        self.assertNotContains(response, "男女計_")
+        self.assertNotContains(response, "35～39")
+        self.assertContains(response, "確保していない")
+        self.assertContains(response, "441 経営体")
+        self.assertNotContains(response, "親族内小計")
+        self.assertContains(response, '<th class="text-end">2020年</th>', html=True)
+        self.assertNotContains(response, '<th class="text-end">構成比</th>', html=True)
+        self.assertContains(response, "農林業センサスは5年ごとの調査")
+        self.assertContains(
+            response,
+            "2015年農林業センサスには同一の「5年以内の後継者確保状況」設問セットは確認できない",
+        )
+        self.assertContains(response, "2015年農林業センサス（2015年1月〜2015年12月）")
+        self.assertContains(response, "経営主年齢階層別経営体数")
+        self.assertContains(response, "5年以内の後継者確保状況")
+        self.assertContains(response, "耕作放棄地面積")
         self.assertNotContains(response, "e-Stat スナップショット")
         self.assertNotContains(response, "<th>分類</th>", html=True)
         self.assertNotContains(response, "取得履歴トレンド")
