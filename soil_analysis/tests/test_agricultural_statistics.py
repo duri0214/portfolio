@@ -15,6 +15,7 @@ from soil_analysis.domain.service.agricultural_statistics import (
     AgriculturalStatisticsService,
 )
 from soil_analysis.domain.valueobject.estat import AgriculturalRiskInput
+from soil_analysis.domain.valueobject.estat import EstatValueRow
 from soil_analysis.domain.valueobject.estat import parse_estat_datetime
 from soil_analysis.models import (
     AgriculturalRegion,
@@ -159,6 +160,21 @@ class AgriculturalStatisticsRepositoryTest(TestCase):
 
 
 class AgriculturalRiskCalculatorTest(TestCase):
+    def test_estat_value_row_uses_category_as_period_label(self):
+        """
+        シナリオ:
+        - 入力: 経営耕地面積規模別の VALUE レコード。
+        - 処理: e-Stat VALUE レコードを保存用VOへ変換する。
+        - 期待値: 地域コードではなく規模分類コードが period_label になり、分布を分類別に保存できること。
+        """
+        row = EstatValueRow.from_raw(
+            {"@cat01": "1171", "@cat02": "1004", "@unit": "ha", "$": "250"},
+            "2026-06-27",
+        )
+
+        self.assertEqual(row.period_label, "1004")
+        self.assertEqual(row.value, 250)
+
     def test_parse_estat_datetime_makes_date_string_timezone_aware(self):
         """
         シナリオ:
@@ -263,7 +279,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
             call_command("fetch_rokunohe_farmland_statistics", verbosity=0)
 
-        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 1)
+        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 2)
         self.assertEqual(AgriculturalRiskReport.objects.count(), 1)
 
     @patch("soil_analysis.domain.dataprovider.estat.requests.get")
@@ -345,6 +361,9 @@ class AgriculturalRiskReportViewTest(TestCase):
         """
         region = AgriculturalStatisticsService.ensure_default_configuration()
         dataset = EstatDataset.objects.get(indicator_key="total_cultivated_area")
+        distribution_dataset = EstatDataset.objects.get(
+            indicator_key="cultivated_area_distribution"
+        )
         AgriculturalStatisticSnapshot.objects.create(
             region=region,
             dataset=dataset,
@@ -355,6 +374,17 @@ class AgriculturalRiskReportViewTest(TestCase):
             raw_data={"@cat01": "1171", "@cat02": "1001", "$": "1471"},
             source_hash="total-cultivated-area-hash",
         )
+        for period_label, value in [("1001", 1000), ("1002", 100), ("1004", 250)]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=region,
+                dataset=distribution_dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=timezone.now(),
+                estat_updated_at=timezone.now(),
+                raw_data={"@cat01": "1171", "@cat02": period_label, "$": str(value)},
+                source_hash=f"distribution-{period_label}",
+            )
         AgriculturalRiskReport.objects.create(
             region=region,
             report_date=date(2026, 6, 27),
@@ -380,3 +410,8 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "81.5")
         self.assertContains(response, "取得済み")
         self.assertContains(response, "1,471.00 ha")
+        self.assertContains(response, "経営耕地面積規模別分布")
+        self.assertContains(response, "0.3ha未満")
+        self.assertContains(response, "10.0%")
+        self.assertContains(response, "0.5～1.0ha")
+        self.assertContains(response, "25.0%")

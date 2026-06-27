@@ -58,6 +58,34 @@
                 </div>
             </div>
 
+            {% if dashboard.cultivated_area_distribution_rows %}
+                <section class="report-panel mb-4">
+                    <h2 class="h5">経営耕地面積規模別分布</h2>
+                    <div class="distribution-bars">
+                        {% for row in dashboard.cultivated_area_distribution_rows %}
+                            <div class="distribution-bar-row">
+                                <div class="distribution-bar-label">{{ row.label }}</div>
+                                <div class="distribution-bar-track">
+                                    {% if row.share is not None %}
+                                        <div class="distribution-bar-fill" style="width: {{ row.share|floatformat:1 }}%;"></div>
+                                    {% else %}
+                                        <div class="distribution-bar-fill empty" style="width: 0%;"></div>
+                                    {% endif %}
+                                </div>
+                                <div class="distribution-bar-value">
+                                    {% if row.value is not None %}
+                                        {{ row.value|floatformat:1|intcomma }} {{ row.unit }}
+                                        {% if row.share is not None %}<span>{{ row.share|floatformat:1 }}%</span>{% endif %}
+                                    {% else %}
+                                        未取得
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
             <div class="row g-4 mb-4">
                 <div class="col-12 col-lg-6">
                     <section class="report-panel h-100">

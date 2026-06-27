@@ -178,6 +178,24 @@ class AgriculturalStatisticsRepository:
         return latest
 
     @staticmethod
+    def get_latest_snapshots_by_period(
+        region: AgriculturalRegion, indicator_key: str
+    ) -> dict[str, AgriculturalStatisticSnapshot]:
+        snapshots = (
+            AgriculturalStatisticSnapshot.objects.filter(
+                region=region,
+                dataset__indicator_key=indicator_key,
+            )
+            .select_related("dataset")
+            .order_by("period_label", "-fetched_at", "-id")
+        )
+        latest = {}
+        for snapshot in snapshots:
+            if snapshot.period_label not in latest:
+                latest[snapshot.period_label] = snapshot
+        return latest
+
+    @staticmethod
     def get_snapshots(
         region: AgriculturalRegion,
     ) -> list[AgriculturalStatisticSnapshot]:

@@ -39,6 +39,7 @@ class EstatValueRow:
         """
         period_label = str(
             raw_data.get("@time")
+            or raw_data.get("@cat02")
             or raw_data.get("@cat01")
             or raw_data.get("@area")
             or default_period_label
@@ -160,6 +161,7 @@ class AgriculturalRiskDashboard:
         snapshots: 取得済み統計スナップショット。
         report_trend: リスクレポートの時系列。
         age_area_rows: 年齢階層別面積として表示する行。
+        cultivated_area_distribution_rows: 経営耕地面積規模別面積の分布行。
         dataset_status_rows: 指標ごとの取得状況。
         latest_fetched_at: このアプリが最後に e-Stat から取得した日時。
         latest_estat_updated_at: e-Stat 側の最新更新日時。
@@ -173,6 +175,7 @@ class AgriculturalRiskDashboard:
     snapshots: list
     report_trend: list
     age_area_rows: list[dict[str, float | str | None]]
+    cultivated_area_distribution_rows: list[dict[str, float | str | None]]
     dataset_status_rows: list[EstatDatasetStatus]
     latest_fetched_at: datetime | None
     latest_estat_updated_at: datetime | None

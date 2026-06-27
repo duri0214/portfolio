@@ -19,6 +19,24 @@ from soil_analysis.domain.valueobject.estat import (
 ROKUNOHE_AREA_CODE = "02405"
 RETIREMENT_TREND_COEFFICIENT = 0.35
 ESTAT_DATA_VIEW_URL = "https://www.e-stat.go.jp/dbview"
+CULTIVATED_AREA_DISTRIBUTION_KEY = "cultivated_area_distribution"
+CULTIVATED_AREA_DISTRIBUTION_LABELS = {
+    "1001": "計",
+    "1002": "0.3ha未満",
+    "1003": "0.3～0.5ha",
+    "1004": "0.5～1.0ha",
+    "1005": "1.0～1.5ha",
+    "1006": "1.5～2.0ha",
+    "1007": "2.0～3.0ha",
+    "1008": "3.0～5.0ha",
+    "1009": "5.0～10.0ha",
+    "1010": "10.0～20.0ha",
+    "1011": "20.0～30.0ha",
+    "1012": "30.0～50.0ha",
+    "1013": "50.0～100.0ha",
+    "1014": "100.0～150.0ha",
+    "1015": "150.0ha以上",
+}
 
 DEFAULT_ESTAT_DATASETS = [
     {
@@ -31,6 +49,16 @@ DEFAULT_ESTAT_DATASETS = [
         },
         "unit": "ha",
         "category": "base",
+    },
+    {
+        "indicator_key": CULTIVATED_AREA_DISTRIBUTION_KEY,
+        "display_name": "経営耕地面積規模別面積",
+        "stats_data_id": "0002068836",
+        "filters": {
+            "cdCat01": "1171",
+        },
+        "unit": "ha",
+        "category": "base_distribution",
     },
     {
         "indicator_key": "age_70_plus_area",
@@ -315,6 +343,14 @@ class AgriculturalStatisticsService:
         snapshots = AgriculturalStatisticsRepository.get_snapshots(region)
         report_trend = AgriculturalStatisticsRepository.get_risk_report_trend(region)
         age_area_rows = cls._build_age_area_rows(latest_report)
+        distribution_snapshots = (
+            AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
+                region, CULTIVATED_AREA_DISTRIBUTION_KEY
+            )
+        )
+        cultivated_area_distribution_rows = (
+            cls._build_cultivated_area_distribution_rows(distribution_snapshots)
+        )
         datasets = AgriculturalStatisticsRepository.get_datasets()
         latest_snapshot_values = (
             AgriculturalStatisticsRepository.get_latest_snapshot_values(region)
@@ -330,6 +366,7 @@ class AgriculturalStatisticsService:
             snapshots=snapshots,
             report_trend=report_trend,
             age_area_rows=age_area_rows,
+            cultivated_area_distribution_rows=cultivated_area_distribution_rows,
             dataset_status_rows=dataset_status_rows,
             latest_fetched_at=cls._latest_fetched_at(dataset_status_rows),
             latest_estat_updated_at=cls._latest_estat_updated_at(dataset_status_rows),
@@ -351,6 +388,29 @@ class AgriculturalStatisticsService:
             for raw_data in value_data
             if isinstance(raw_data, dict)
         ]
+
+    @classmethod
+    def _build_cultivated_area_distribution_rows(
+        cls, snapshots_by_period: dict
+    ) -> list[dict[str, float | str | None]]:
+        total_snapshot = snapshots_by_period.get("1001")
+        total_value = total_snapshot.value if total_snapshot is not None else None
+        rows = []
+        for period_label, label in CULTIVATED_AREA_DISTRIBUTION_LABELS.items():
+            if period_label == "1001":
+                continue
+            snapshot = snapshots_by_period.get(period_label)
+            value = snapshot.value if snapshot is not None else None
+            rows.append(
+                {
+                    "label": label,
+                    "period_label": period_label,
+                    "value": value,
+                    "unit": "ha",
+                    "share": AgriculturalRiskCalculator._ratio(value, total_value),
+                }
+            )
+        return rows
 
     @staticmethod
     def _extract_estat_updated_at(response: dict):
