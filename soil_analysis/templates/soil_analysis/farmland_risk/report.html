@@ -211,9 +211,7 @@
                             <thead>
                             <tr>
                                 <th>区分</th>
-                                <th class="text-end">経営体数</th>
-                                <th class="text-end">構成比</th>
-                                <th>データ時点</th>
+                                <th class="text-end">2020年</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -221,8 +219,6 @@
                                 <tr>
                                     <td>{{ row.label }}</td>
                                     <td class="text-end">{% if row.value is not None %}{{ row.value|floatformat:0|intcomma }} {{ row.unit }}{% else %}-{% endif %}</td>
-                                    <td class="text-end">{% if row.share is not None %}{{ row.share|floatformat:1 }}%{% else %}-{% endif %}</td>
-                                    <td>{{ row.data_period_label|default:"-" }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
