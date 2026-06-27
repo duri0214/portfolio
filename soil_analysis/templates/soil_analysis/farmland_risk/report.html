@@ -35,19 +35,22 @@
                 <div class="col-6 col-lg-3">
                     <div class="risk-kpi">
                         <span>管理不能化候補面積</span>
-                        <strong>
-                            {% if dashboard.latest_report.unmanageable_candidate_area is not None %}
-                                {{ dashboard.latest_report.unmanageable_candidate_area }}
-                            {% else %}
-                                未実装（TODO）
-                            {% endif %}
-                        </strong>
-                        {% if dashboard.latest_report.unmanageable_candidate_area is not None %}<small>ha</small>{% endif %}
-                        <div class="kpi-meta">
-                            <span class="scope-badge">{{ dashboard.kpi_basis.unmanageable_candidate_area.region_label }}</span>
-                            <span>{{ dashboard.kpi_basis.unmanageable_candidate_area.period_label }}</span>
-                        </div>
                         {% with comparison=dashboard.national_comparison.rows.0 %}
+                            <div class="kpi-primary-value">
+                                <strong>
+                                    {% if dashboard.latest_report.unmanageable_candidate_area is not None %}
+                                        {{ dashboard.latest_report.unmanageable_candidate_area }}
+                                    {% else %}
+                                        未実装（TODO）
+                                    {% endif %}
+                                </strong>
+                                {% if dashboard.latest_report.unmanageable_candidate_area is not None %}<small>ha</small>{% endif %}
+                                {% if comparison.comparison_label %}<span class="kpi-inline-comparison">（{{ comparison.comparison_label }}）</span>{% endif %}
+                            </div>
+                            <div class="kpi-meta">
+                                <span class="scope-badge">{{ dashboard.kpi_basis.unmanageable_candidate_area.region_label }}</span>
+                                <span>{{ dashboard.kpi_basis.unmanageable_candidate_area.period_label }}</span>
+                            </div>
                             <div class="kpi-comparison">
                                 <span>全国</span>
                                 <strong>
@@ -58,9 +61,6 @@
                                     {% endif %}
                                 </strong>
                                 <small>{{ comparison.basis_type }}</small>
-                                {% if comparison.comparison_label %}
-                                    <small>{{ comparison.comparison_label }}</small>
-                                {% endif %}
                             </div>
                         {% endwith %}
                     </div>
@@ -68,19 +68,22 @@
                 <div class="col-6 col-lg-3">
                     <div class="risk-kpi">
                         <span>10年後農地維持率</span>
-                        <strong>
-                            {% if dashboard.latest_report.farmland_maintenance_rate is not None %}
-                                {{ dashboard.latest_report.farmland_maintenance_rate }}
-                            {% else %}
-                                未実装（TODO）
-                            {% endif %}
-                        </strong>
-                        {% if dashboard.latest_report.farmland_maintenance_rate is not None %}<small>%</small>{% endif %}
-                        <div class="kpi-meta">
-                            <span class="scope-badge">{{ dashboard.kpi_basis.farmland_maintenance_rate.region_label }}</span>
-                            <span>{{ dashboard.kpi_basis.farmland_maintenance_rate.period_label }}</span>
-                        </div>
                         {% with comparison=dashboard.national_comparison.rows.1 %}
+                            <div class="kpi-primary-value">
+                                <strong>
+                                    {% if dashboard.latest_report.farmland_maintenance_rate is not None %}
+                                        {{ dashboard.latest_report.farmland_maintenance_rate }}
+                                    {% else %}
+                                        未実装（TODO）
+                                    {% endif %}
+                                </strong>
+                                {% if dashboard.latest_report.farmland_maintenance_rate is not None %}<small>%</small>{% endif %}
+                                {% if comparison.comparison_label %}<span class="kpi-inline-comparison">（{{ comparison.comparison_label }}）</span>{% endif %}
+                            </div>
+                            <div class="kpi-meta">
+                                <span class="scope-badge">{{ dashboard.kpi_basis.farmland_maintenance_rate.region_label }}</span>
+                                <span>{{ dashboard.kpi_basis.farmland_maintenance_rate.period_label }}</span>
+                            </div>
                             <div class="kpi-comparison">
                                 <span>全国</span>
                                 <strong>
@@ -91,9 +94,6 @@
                                     {% endif %}
                                 </strong>
                                 <small>{{ comparison.basis_type }}</small>
-                                {% if comparison.comparison_label %}
-                                    <small>{{ comparison.comparison_label }}</small>
-                                {% endif %}
                             </div>
                         {% endwith %}
                     </div>
@@ -101,19 +101,22 @@
                 <div class="col-6 col-lg-3">
                     <div class="risk-kpi">
                         <span>後継者なし割合</span>
-                        <strong>
-                            {% if dashboard.latest_report.succession_risk is not None %}
-                                {{ dashboard.latest_report.succession_risk }}
-                            {% else %}
-                                未実装（TODO）
-                            {% endif %}
-                        </strong>
-                        {% if dashboard.latest_report.succession_risk is not None %}<small>%</small>{% endif %}
-                        <div class="kpi-meta">
-                            <span class="scope-badge">{{ dashboard.kpi_basis.succession_risk.region_label }}</span>
-                            <span>{{ dashboard.kpi_basis.succession_risk.period_label }}</span>
-                        </div>
                         {% with comparison=dashboard.national_comparison.rows.2 %}
+                            <div class="kpi-primary-value">
+                                <strong>
+                                    {% if dashboard.latest_report.succession_risk is not None %}
+                                        {{ dashboard.latest_report.succession_risk }}
+                                    {% else %}
+                                        未実装（TODO）
+                                    {% endif %}
+                                </strong>
+                                {% if dashboard.latest_report.succession_risk is not None %}<small>%</small>{% endif %}
+                                {% if comparison.comparison_label %}<span class="kpi-inline-comparison">（{{ comparison.comparison_label }}）</span>{% endif %}
+                            </div>
+                            <div class="kpi-meta">
+                                <span class="scope-badge">{{ dashboard.kpi_basis.succession_risk.region_label }}</span>
+                                <span>{{ dashboard.kpi_basis.succession_risk.period_label }}</span>
+                            </div>
                             <div class="kpi-comparison">
                                 <span>全国</span>
                                 <strong>
@@ -124,9 +127,6 @@
                                     {% endif %}
                                 </strong>
                                 <small>{{ comparison.basis_type }}</small>
-                                {% if comparison.comparison_label %}
-                                    <small>{{ comparison.comparison_label }}</small>
-                                {% endif %}
                             </div>
                         {% endwith %}
                     </div>

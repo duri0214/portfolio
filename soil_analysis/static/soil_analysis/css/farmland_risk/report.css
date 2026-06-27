@@ -67,6 +67,24 @@
     margin-left: 0.2rem;
 }
 
+.kpi-primary-value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.2rem;
+    align-items: baseline;
+}
+
+.kpi-primary-value small {
+    margin-left: 0;
+}
+
+.kpi-inline-comparison {
+    display: inline;
+    margin-bottom: 0;
+    color: #66788a;
+    font-size: 0.95rem;
+}
+
 .kpi-meta {
     display: grid;
     gap: 0.25rem;
