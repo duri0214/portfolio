@@ -428,7 +428,7 @@ class AgriculturalStatisticsService:
         elif is_configured:
             status_label = "未取得"
         else:
-            status_label = "統計表未設定"
+            status_label = "未実装（TODO）"
         return EstatDatasetStatus(
             indicator_key=dataset.indicator_key,
             display_name=dataset.display_name,
