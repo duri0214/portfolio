@@ -465,3 +465,32 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "未実装（TODO）")
         self.assertNotContains(response, "e-Stat スナップショット")
         self.assertNotContains(response, "<th>分類</th>", html=True)
+
+    def test_report_view_backfills_known_data_period_for_existing_snapshots(self):
+        """
+        シナリオ:
+        - 入力: SURVEY_DATE 保存前の既存スナップショット。
+        - 処理: 離農・管理不能農地レポートを表示する。
+        - 期待値: 統計表IDから既知のデータ時点を補完して表示すること。
+        """
+        region = AgriculturalStatisticsService.ensure_default_configuration()
+        dataset = EstatDataset.objects.get(indicator_key="total_cultivated_area")
+        AgriculturalStatisticSnapshot.objects.create(
+            region=region,
+            dataset=dataset,
+            period_label="1001",
+            value=2354,
+            fetched_at=timezone.now(),
+            estat_updated_at=timezone.now(),
+            raw_data={"@cat01": "1171", "@cat02": "1001", "$": "2354"},
+            source_hash="legacy-total-cultivated-area-hash",
+        )
+
+        response = self.client.get(reverse("soil:rokunohe_farmland_risk"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "データ時点")
+        self.assertContains(response, "2020年農林業センサス（2020年1月〜2020年12月）")
+        self.assertNotContains(
+            response, "データ時点:\n                            未取得"
+        )

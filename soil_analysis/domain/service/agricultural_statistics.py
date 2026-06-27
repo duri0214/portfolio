@@ -19,6 +19,9 @@ from soil_analysis.domain.valueobject.estat import (
 ROKUNOHE_AREA_CODE = "02405"
 RETIREMENT_TREND_COEFFICIENT = 0.35
 ESTAT_DATA_VIEW_URL = "https://www.e-stat.go.jp/dbview"
+ESTAT_DATA_PERIOD_LABELS_BY_STATS_DATA_ID = {
+    "0002068836": "2020年農林業センサス（2020年1月〜2020年12月）",
+}
 CULTIVATED_AREA_DISTRIBUTION_KEY = "cultivated_area_distribution"
 CULTIVATED_AREA_DISTRIBUTION_LABELS = {
     "1001": "計",
@@ -525,7 +528,9 @@ class AgriculturalStatisticsService:
             status_label=status_label,
             latest_value=snapshot.value if snapshot is not None else None,
             data_period_label=(
-                cls._data_period_label(snapshot) if snapshot is not None else None
+                cls._data_period_label(snapshot)
+                if snapshot is not None
+                else cls._fallback_data_period_label(dataset)
             ),
             fetched_at=snapshot.fetched_at if snapshot is not None else None,
             estat_updated_at=(
@@ -555,7 +560,11 @@ class AgriculturalStatisticsService:
             return formatted_survey_date
         if snapshot.raw_data.get("@time"):
             return str(snapshot.raw_data["@time"])
-        return None
+        return cls._fallback_data_period_label(snapshot.dataset)
+
+    @staticmethod
+    def _fallback_data_period_label(dataset) -> str | None:
+        return ESTAT_DATA_PERIOD_LABELS_BY_STATS_DATA_ID.get(dataset.stats_data_id)
 
     @staticmethod
     def _format_survey_date(survey_date: str) -> str:
