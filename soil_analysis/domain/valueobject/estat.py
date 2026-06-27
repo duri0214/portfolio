@@ -218,6 +218,7 @@ class AgriculturalRiskDashboard:
         area_code: e-Stat 地域コード。
         latest_report: 最新リスクレポート。
         age_area_rows: 年代別に集計した経営体数行。
+        cultivated_area_distribution_summary: 経営耕地面積規模別分布の合計行。
         cultivated_area_distribution_rows: 経営耕地面積規模別面積の分布行。
         successor_status_rows: 後継者確保状況別の経営体数行。
         cultivated_area_distribution_sources: 分布表示に使った統計指標。
@@ -233,6 +234,7 @@ class AgriculturalRiskDashboard:
     area_code: str
     latest_report: object | None
     age_area_rows: list[dict[str, float | str | None]]
+    cultivated_area_distribution_summary: dict[str, float | str | None]
     cultivated_area_distribution_rows: list[dict[str, float | str | None]]
     successor_status_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_sources: list[EstatDatasetStatus]

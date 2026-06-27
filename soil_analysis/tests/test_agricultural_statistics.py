@@ -569,6 +569,10 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "取得済み")
         self.assertContains(response, "データ時点")
         self.assertContains(response, "2020年農林業センサス（2020年1月〜2020年12月）")
+        self.assertContains(response, "母数: 2020年農林業センサス")
+        self.assertNotContains(
+            response, "母数: 2020年農林業センサス（2020年1月〜2020年12月） / 補助:"
+        )
         self.assertContains(response, "e-Stat公表/更新日")
         self.assertNotContains(response, '<th class="text-end">最新値</th>', html=True)
         self.assertNotContains(response, "アプリ取得日時")
@@ -590,9 +594,13 @@ class AgriculturalRiskReportViewTest(TestCase):
             "0.3ha、0.4ha、0.2haの圃場を持つ経営体は、合計0.9haとして0.5〜1.0haの区分に入ります。",
         )
         self.assertNotContains(response, "次回の e-Stat 取得バッチ後に反映されます。")
-        self.assertContains(response, "計")
-        self.assertContains(response, "構成比 100.0%")
+        self.assertContains(response, "合計 1,000.0 ha")
         self.assertContains(response, "611 経営体")
+        self.assertNotContains(
+            response,
+            '<div class="distribution-bar-label">計</div>',
+            html=True,
+        )
         self.assertContains(response, "0.3ha未満")
         self.assertContains(response, "構成比 10.0%")
         self.assertContains(response, "2 経営体")

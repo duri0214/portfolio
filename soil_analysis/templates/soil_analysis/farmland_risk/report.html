@@ -110,6 +110,14 @@
                     <h2 class="h5">経営耕地面積規模別分布</h2>
                     <p class="distribution-note">面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。</p>
                     <p class="distribution-note">規模区分は圃場1筆ごとの面積ではなく、1つの経営体が持つ経営耕地面積の合計で決まります。</p>
+                    {% if dashboard.cultivated_area_distribution_summary %}
+                        <p class="distribution-note">
+                            合計 {{ dashboard.cultivated_area_distribution_summary.value|floatformat:1|intcomma }} {{ dashboard.cultivated_area_distribution_summary.unit }}
+                            {% if dashboard.cultivated_area_distribution_summary.count_value is not None %}
+                                / {{ dashboard.cultivated_area_distribution_summary.count_value|floatformat:0|intcomma }} {{ dashboard.cultivated_area_distribution_summary.count_unit }}
+                            {% endif %}
+                        </p>
+                    {% endif %}
                     <div class="distribution-example">
                         <strong>例</strong>
                         <span>0.3ha、0.4ha、0.2haの圃場を持つ経営体は、合計0.9haとして0.5〜1.0haの区分に入ります。</span>
@@ -127,25 +135,27 @@
                     </div>
                     <div class="distribution-bars">
                         {% for row in dashboard.cultivated_area_distribution_rows %}
-                            <div class="distribution-bar-row">
-                                <div class="distribution-bar-label">{{ row.label }}</div>
-                                <div class="distribution-bar-track">
-                                    {% if row.share is not None %}
-                                        <div class="distribution-bar-fill" style="width: {{ row.share|floatformat:1 }}%;"></div>
-                                    {% else %}
-                                        <div class="distribution-bar-fill empty" style="width: 0%;"></div>
-                                    {% endif %}
+                            {% if row.period_label != "1001" %}
+                                <div class="distribution-bar-row">
+                                    <div class="distribution-bar-label">{{ row.label }}</div>
+                                    <div class="distribution-bar-track">
+                                        {% if row.share is not None %}
+                                            <div class="distribution-bar-fill" style="width: {{ row.share|floatformat:1 }}%;"></div>
+                                        {% else %}
+                                            <div class="distribution-bar-fill empty" style="width: 0%;"></div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="distribution-bar-value">
+                                        {% if row.value is not None %}
+                                            <strong>{{ row.value|floatformat:1|intcomma }} {{ row.unit }}</strong>
+                                            {% if row.share is not None %}<span>構成比 {{ row.share|floatformat:1 }}%</span>{% endif %}
+                                            {% if row.count_value is not None %}<span>{{ row.count_value|floatformat:0|intcomma }} {{ row.count_unit }}</span>{% endif %}
+                                        {% else %}
+                                            未取得
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <div class="distribution-bar-value">
-                                    {% if row.value is not None %}
-                                        <strong>{{ row.value|floatformat:1|intcomma }} {{ row.unit }}</strong>
-                                        {% if row.share is not None %}<span>構成比 {{ row.share|floatformat:1 }}%</span>{% endif %}
-                                        {% if row.count_value is not None %}<span>{{ row.count_value|floatformat:0|intcomma }} {{ row.count_unit }}</span>{% endif %}
-                                    {% else %}
-                                        未取得
-                                    {% endif %}
-                                </div>
-                            </div>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 </section>

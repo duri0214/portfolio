@@ -433,6 +433,11 @@ class AgriculturalStatisticsService:
                 distribution_snapshots, distribution_count_snapshots
             )
         )
+        cultivated_area_distribution_summary = (
+            cls._build_cultivated_area_distribution_summary(
+                cultivated_area_distribution_rows
+            )
+        )
         successor_snapshots = (
             AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
                 region, SUCCESSOR_STATUS_DISTRIBUTION_KEY
@@ -461,6 +466,7 @@ class AgriculturalStatisticsService:
             area_code=region.area_code,
             latest_report=latest_report,
             age_area_rows=age_area_rows,
+            cultivated_area_distribution_summary=cultivated_area_distribution_summary,
             cultivated_area_distribution_rows=cultivated_area_distribution_rows,
             successor_status_rows=successor_status_rows,
             cultivated_area_distribution_sources=distribution_sources,
@@ -593,6 +599,18 @@ class AgriculturalStatisticsService:
                 }
             )
         return rows
+
+    @staticmethod
+    def _build_cultivated_area_distribution_summary(
+        rows: list[dict[str, float | str | None]],
+    ) -> dict[str, float | str | None]:
+        total_row = next(
+            (row for row in rows if row.get("period_label") == "1001"),
+            None,
+        )
+        if total_row is None:
+            return {}
+        return total_row
 
     @classmethod
     def _distribution_period_labels(cls, snapshots_by_period: dict) -> list[str]:
@@ -1055,7 +1073,7 @@ class AgriculturalStatisticsService:
             },
             "farmland_maintenance_rate": {
                 "region_label": "六戸町",
-                "period_label": f"母数: {base_period or '-'} / 補助: {abandoned_period or '-'}",
+                "period_label": f"母数: {base_period or '-'}",
                 "source_label": "経営耕地面積と管理不能化候補面積",
             },
             "succession_risk": {
