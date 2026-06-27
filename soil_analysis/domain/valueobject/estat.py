@@ -149,6 +149,26 @@ class EstatDatasetStatus:
 
 
 @dataclass(frozen=True)
+class EstatSnapshotDisplayRow:
+    """
+    e-Stat スナップショットを画面に表示するための値です。
+
+    Attributes:
+        display_name: 指標名。
+        classification_label: 期間または分類の表示名。
+        value: 最新値。
+        unit: 単位。
+        fetched_at: このアプリが取得した日時。
+    """
+
+    display_name: str
+    classification_label: str
+    value: float | None
+    unit: str
+    fetched_at: datetime
+
+
+@dataclass(frozen=True)
 class AgriculturalRiskDashboard:
     """
     離農・管理不能農地リスク画面に渡す表示用データです。
@@ -158,7 +178,7 @@ class AgriculturalRiskDashboard:
         prefecture_name: 都道府県名。
         area_code: e-Stat 地域コード。
         latest_report: 最新リスクレポート。
-        snapshots: 取得済み統計スナップショット。
+        snapshot_display_rows: 取得済み統計スナップショットの表示行。
         report_trend: リスクレポートの時系列。
         age_area_rows: 年齢階層別面積として表示する行。
         cultivated_area_distribution_rows: 経営耕地面積規模別面積の分布行。
@@ -172,7 +192,7 @@ class AgriculturalRiskDashboard:
     prefecture_name: str
     area_code: str
     latest_report: object | None
-    snapshots: list
+    snapshot_display_rows: list[EstatSnapshotDisplayRow]
     report_trend: list
     age_area_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_rows: list[dict[str, float | str | None]]

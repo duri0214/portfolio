@@ -240,25 +240,25 @@
             <div class="col-12 col-lg-7">
                 <section class="report-panel h-100">
                     <h2 class="h5">e-Stat スナップショット</h2>
-                    {% if dashboard.snapshots %}
+                    {% if dashboard.snapshot_display_rows %}
                         <div class="table-responsive">
                             <table class="table table-sm align-middle mb-0">
                                 <thead>
                                 <tr>
                                     <th>指標</th>
-                                    <th>期間</th>
+                                    <th>分類</th>
                                     <th class="text-end">値</th>
                                     <th>取得日時</th>
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {% for snapshot in dashboard.snapshots %}
+                                {% for snapshot in dashboard.snapshot_display_rows %}
                                     <tr>
-                                        <td>{{ snapshot.dataset.display_name }}</td>
-                                        <td>{{ snapshot.period_label }}</td>
+                                        <td>{{ snapshot.display_name }}</td>
+                                        <td>{{ snapshot.classification_label }}</td>
                                         <td class="text-end">
                                             {% if snapshot.value is not None %}
-                                                {{ snapshot.value|floatformat:2|intcomma }} {{ snapshot.dataset.unit }}
+                                                {{ snapshot.value|floatformat:2|intcomma }} {{ snapshot.unit }}
                                             {% else %}
                                                 未取得
                                             {% endif %}
