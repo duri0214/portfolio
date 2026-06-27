@@ -59,6 +59,12 @@ OPERATOR_AGE_GROUP_CODES = {
     "70歳以上": {"1013", "1014", "1015", "1016"},
 }
 INHERITANCE_LAND_REVERSION_TOTAL_KEY = "inheritance_land_reversion_applications_total"
+INHERITANCE_LAND_REVERSION_APPLICATION_KEYS = [
+    "inheritance_land_reversion_applications_farmland",
+    "inheritance_land_reversion_applications_residential",
+    "inheritance_land_reversion_applications_forest",
+    "inheritance_land_reversion_applications_other",
+]
 
 DEFAULT_ESTAT_DATASETS = [
     {
@@ -140,6 +146,42 @@ DEFAULT_SUPPLEMENTAL_INDICATORS = [
         "region_label": "全国",
         "period_label": "令和8年5月31日現在",
         "value": 2169,
+        "unit": "件",
+        "category": "inheritance_land_reversion",
+        "note": "申請件数の地目別内訳。合計値の一部であり、独立した別指標ではない。",
+    },
+    {
+        "indicator_key": "inheritance_land_reversion_applications_residential",
+        "display_name": "相続土地国庫帰属制度 申請件数（宅地）",
+        "source_name": "法務省 相続土地国庫帰属制度の統計",
+        "source_url": MOJ_INHERITANCE_SOURCE_URL,
+        "region_label": "全国",
+        "period_label": "令和8年5月31日現在",
+        "value": 1916,
+        "unit": "件",
+        "category": "inheritance_land_reversion",
+        "note": "申請件数の地目別内訳。合計値の一部であり、独立した別指標ではない。",
+    },
+    {
+        "indicator_key": "inheritance_land_reversion_applications_forest",
+        "display_name": "相続土地国庫帰属制度 申請件数（山林）",
+        "source_name": "法務省 相続土地国庫帰属制度の統計",
+        "source_url": MOJ_INHERITANCE_SOURCE_URL,
+        "region_label": "全国",
+        "period_label": "令和8年5月31日現在",
+        "value": 850,
+        "unit": "件",
+        "category": "inheritance_land_reversion",
+        "note": "申請件数の地目別内訳。合計値の一部であり、独立した別指標ではない。",
+    },
+    {
+        "indicator_key": "inheritance_land_reversion_applications_other",
+        "display_name": "相続土地国庫帰属制度 申請件数（その他）",
+        "source_name": "法務省 相続土地国庫帰属制度の統計",
+        "source_url": MOJ_INHERITANCE_SOURCE_URL,
+        "region_label": "全国",
+        "period_label": "令和8年5月31日現在",
+        "value": 610,
         "unit": "件",
         "category": "inheritance_land_reversion",
         "note": "申請件数の地目別内訳。合計値の一部であり、独立した別指標ではない。",
@@ -1014,44 +1056,22 @@ class AgriculturalStatisticsService:
             ),
             None,
         )
-        farmland_application = next(
-            (
-                row
-                for row in target_rows
-                if row.indicator_key
-                == "inheritance_land_reversion_applications_farmland"
-            ),
-            None,
-        )
+        rows_by_key = {row.indicator_key: row for row in target_rows}
+        application_rows = [
+            rows_by_key[indicator_key]
+            for indicator_key in INHERITANCE_LAND_REVERSION_APPLICATION_KEYS
+            if indicator_key in rows_by_key
+        ]
         supplemental_rows = [
             row
             for row in target_rows
             if row.indicator_key
-            not in {
-                INHERITANCE_LAND_REVERSION_TOTAL_KEY,
-                "inheritance_land_reversion_applications_farmland",
-            }
+            not in {INHERITANCE_LAND_REVERSION_TOTAL_KEY}
+            | set(INHERITANCE_LAND_REVERSION_APPLICATION_KEYS)
         ]
-        total_value = total.value if total is not None else None
-        farmland_value = (
-            farmland_application.value if farmland_application is not None else None
-        )
-        other_application_value = None
-        if total_value is not None and farmland_value is not None:
-            other_application_value = total_value - farmland_value
         return {
             "total": total,
-            "application_breakdown_rows": [
-                row for row in [farmland_application] if row is not None
-            ]
-            + [
-                {
-                    "display_name": "相続土地国庫帰属制度 申請件数（その他）",
-                    "value": other_application_value,
-                    "unit": total.unit if total is not None else "件",
-                    "note": "申請件数の合計から田・畑を差し引いた検算用の内訳です。",
-                }
-            ],
+            "application_breakdown_rows": application_rows,
             "supplemental_rows": supplemental_rows,
             "trend_note": "現時点では法務省ページ上の最新累計値のみを表示しています。今後、月次の過去値を保存できるようにするとトレンド化できます。",
         }

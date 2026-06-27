@@ -624,11 +624,15 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "5,545 件")
         self.assertContains(response, "相続土地国庫帰属制度 申請件数（田・畑）")
         self.assertContains(response, "2,169 件")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数（宅地）")
+        self.assertContains(response, "1,916 件")
+        self.assertContains(response, "相続土地国庫帰属制度 申請件数（山林）")
+        self.assertContains(response, "850 件")
         self.assertContains(response, "相続土地国庫帰属制度 申請件数（その他）")
-        self.assertContains(response, "3,376 件")
+        self.assertContains(response, "610 件")
         self.assertContains(
             response,
-            "申請件数は、田・畑とその他の合計で 5,545 件になります。",
+            "申請件数は、田・畑、宅地、山林、その他の合計で 5,545 件になります。",
         )
         self.assertContains(response, "補足値")
         self.assertContains(response, "相続土地国庫帰属制度 帰属件数（農用地）")
