@@ -21,7 +21,7 @@ DEFAULT_AREA_CODE = "02405"
 RETIREMENT_TREND_COEFFICIENT = 0.35
 ESTAT_DATA_VIEW_URL = "https://www.e-stat.go.jp/dbview"
 DERIVED_INDICATOR_KEYS = {"total_cultivated_area"}
-HIDDEN_LEGACY_INDICATOR_KEYS = {
+CALCULATION_ONLY_INDICATOR_KEYS = {
     "age_60s_area",
     "age_70_plus_area",
     "no_successor_ratio",
@@ -921,7 +921,7 @@ class AgriculturalStatisticsService:
             dataset
             for dataset in datasets
             if dataset.indicator_key
-            not in DERIVED_INDICATOR_KEYS | HIDDEN_LEGACY_INDICATOR_KEYS
+            not in DERIVED_INDICATOR_KEYS | CALCULATION_ONLY_INDICATOR_KEYS
         ]
 
     @staticmethod
@@ -931,7 +931,7 @@ class AgriculturalStatisticsService:
                 dataset
                 for dataset in datasets
                 if dataset.indicator_key
-                not in DERIVED_INDICATOR_KEYS | HIDDEN_LEGACY_INDICATOR_KEYS
+                not in DERIVED_INDICATOR_KEYS | CALCULATION_ONLY_INDICATOR_KEYS
             ],
             key=lambda dataset: (
                 dataset.stats_data_id.startswith("TODO_"),
