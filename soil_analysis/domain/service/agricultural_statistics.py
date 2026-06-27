@@ -1391,7 +1391,8 @@ class AgriculturalStatisticsService:
         六戸町KPIと全国KPIを同じ計算定義で比較できる表示行へ整えます。
 
         後継者なし割合はe-Statの同一設問セットから作る比率、管理不能化候補
-        面積と10年後農地維持率はレポート内の派生計算値として明示します。
+        面積と10年後農地維持率はe-Stat値をもとに画面内の式で計算した値として
+        明示します。
         """
         definitions = [
             {
@@ -1399,36 +1400,42 @@ class AgriculturalStatisticsService:
                 "label": "管理不能化候補面積",
                 "unit": "ha",
                 "value_attr": "unmanageable_candidate_area",
-                "basis_type": "派生計算値",
+                "basis_type": "e-Stat値から画面内計算",
+                "comparison_type": "share",
             },
             {
                 "key": "farmland_maintenance_rate",
                 "label": "10年後農地維持率",
                 "unit": "%",
                 "value_attr": "farmland_maintenance_rate",
-                "basis_type": "派生計算値",
+                "basis_type": "e-Stat値から画面内計算",
+                "comparison_type": "point_diff",
             },
             {
                 "key": "succession_risk",
                 "label": "後継者なし割合",
                 "unit": "%",
                 "value_attr": "succession_risk",
-                "basis_type": "e-Stat由来比率",
+                "basis_type": "e-Stat値から算出",
+                "comparison_type": "point_diff",
             },
         ]
         rows = []
         for definition in definitions:
             key = definition["key"]
+            local_value = cls._report_value(local_report, definition["value_attr"])
+            national_value = getattr(national_report, definition["value_attr"], None)
             rows.append(
                 {
                     "label": definition["label"],
                     "unit": definition["unit"],
                     "basis_type": definition["basis_type"],
-                    "local_value": cls._report_value(
-                        local_report, definition["value_attr"]
-                    ),
-                    "national_value": getattr(
-                        national_report, definition["value_attr"], None
+                    "local_value": local_value,
+                    "national_value": national_value,
+                    "comparison_label": cls._national_comparison_label(
+                        local_value,
+                        national_value,
+                        definition["comparison_type"],
                     ),
                     "local_basis": local_kpi_basis[key],
                     "national_basis": national_kpi_basis[key],
@@ -1444,3 +1451,18 @@ class AgriculturalStatisticsService:
         if report is None:
             return None
         return getattr(report, field_name, None)
+
+    @staticmethod
+    def _national_comparison_label(
+        local_value: float | None,
+        national_value: float | None,
+        comparison_type: str,
+    ) -> str:
+        if local_value is None or not national_value:
+            return ""
+        if comparison_type == "share":
+            share = round((local_value / national_value) * 100, 1)
+            return f"全国比 {share}%"
+        point_diff = round(local_value - national_value, 1)
+        sign = "+" if point_diff > 0 else ""
+        return f"全国差 {sign}{point_diff}pt"

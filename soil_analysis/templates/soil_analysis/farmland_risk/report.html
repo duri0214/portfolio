@@ -58,6 +58,9 @@
                                     {% endif %}
                                 </strong>
                                 <small>{{ comparison.basis_type }}</small>
+                                {% if comparison.comparison_label %}
+                                    <small>{{ comparison.comparison_label }}</small>
+                                {% endif %}
                             </div>
                         {% endwith %}
                     </div>
@@ -88,6 +91,9 @@
                                     {% endif %}
                                 </strong>
                                 <small>{{ comparison.basis_type }}</small>
+                                {% if comparison.comparison_label %}
+                                    <small>{{ comparison.comparison_label }}</small>
+                                {% endif %}
                             </div>
                         {% endwith %}
                     </div>
@@ -118,6 +124,9 @@
                                     {% endif %}
                                 </strong>
                                 <small>{{ comparison.basis_type }}</small>
+                                {% if comparison.comparison_label %}
+                                    <small>{{ comparison.comparison_label }}</small>
+                                {% endif %}
                             </div>
                         {% endwith %}
                     </div>
