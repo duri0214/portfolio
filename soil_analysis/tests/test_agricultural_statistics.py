@@ -594,7 +594,8 @@ class AgriculturalRiskReportViewTest(TestCase):
             "0.3ha、0.4ha、0.2haの圃場を持つ経営体は、合計0.9haとして0.5〜1.0haの区分に入ります。",
         )
         self.assertNotContains(response, "次回の e-Stat 取得バッチ後に反映されます。")
-        self.assertContains(response, "合計 1,000.0 ha")
+        self.assertContains(response, "<span>合計</span>", html=True)
+        self.assertContains(response, "1,000.0 ha")
         self.assertContains(response, "611 経営体")
         self.assertNotContains(
             response,

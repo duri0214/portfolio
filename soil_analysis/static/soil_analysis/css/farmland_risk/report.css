@@ -176,6 +176,27 @@
     gap: 0.75rem;
 }
 
+.distribution-total {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.65rem;
+    align-items: baseline;
+    margin: 0.75rem 0 0.85rem;
+    color: #47596b;
+}
+
+.distribution-total span {
+    color: #66788a;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.distribution-total strong {
+    color: #334e68;
+    font-size: 1.25rem;
+    line-height: 1.2;
+}
+
 .distribution-note {
     color: #66788a;
     font-size: 0.86rem;
