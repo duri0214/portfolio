@@ -1366,16 +1366,6 @@ class AgriculturalStatisticsService:
                 "stats_data_id": age.stats_data_id if age is not None else "",
                 "source_page_url": age.source_page_url if age is not None else "",
             },
-            "intention_risk": {
-                "region_label": "未設定",
-                "period_label": "-",
-                "source_label": "e-Statで直接取得できる経営意向データは未確定",
-            },
-            "risk_breakdown": {
-                "region_label": region_label,
-                "period_label": f"後継者: {successor_period or '-'} / 耕作放棄地: {abandoned_period or '-'}",
-                "source_label": "農林業センサス由来の補助統計",
-            },
         }
 
     @classmethod

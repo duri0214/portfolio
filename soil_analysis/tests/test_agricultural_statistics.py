@@ -796,6 +796,8 @@ class AgriculturalRiskReportViewTest(TestCase):
             "現時点では法務省ページ上の最新累計値のみを表示しています。",
         )
         self.assertContains(response, "年齢階層別の経営体数")
+        self.assertNotContains(response, "縮小・中止意向")
+        self.assertNotContains(response, "リスク要因の内訳")
         self.assertContains(
             response,
             '<span class="data-period">2020年農林業センサス（2020年1月〜2020年12月）</span>',
