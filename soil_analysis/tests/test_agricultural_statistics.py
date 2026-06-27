@@ -715,6 +715,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "全国占有率 0.0%")
         self.assertContains(response, "全国より8.0pt低い")
         self.assertContains(response, "全国より2.0pt低い")
+        self.assertContains(response, "2015年農林業センサス（2015年1月〜2015年12月）")
         self.assertContains(response, "取得済み")
         self.assertContains(response, "データ時点")
         self.assertContains(response, "2020年農林業センサス（2020年1月〜2020年12月）")
