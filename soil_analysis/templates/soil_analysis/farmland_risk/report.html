@@ -108,7 +108,10 @@
             {% if dashboard.cultivated_area_distribution_rows %}
                 <section class="report-panel mb-4">
                     <h2 class="h5">経営耕地面積規模別分布</h2>
-                    <p class="distribution-note">面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。</p>
+                    <p class="distribution-note">
+                        <span class="scope-badge">六戸町</span>
+                        面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。
+                    </p>
                     <p class="distribution-note">規模区分は圃場1筆ごとの面積ではなく、1つの経営体が持つ経営耕地面積の合計で決まります。</p>
                     <div class="distribution-example">
                         <strong>例</strong>
@@ -195,7 +198,6 @@
                                         {% if row.value is not None %}
                                             {{ row.value|floatformat:0|intcomma }} {{ row.unit }}
                                             {% if row.share is not None %}<span>構成比 {{ row.share|floatformat:1 }}%</span>{% endif %}
-                                            {% if row.data_period_label %}<span>{{ row.data_period_label }}</span>{% endif %}
                                         {% else %}
                                             未取得
                                         {% endif %}
