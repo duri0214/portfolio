@@ -46,7 +46,7 @@
 
 .risk-kpi {
     padding: 1rem;
-    min-height: 116px;
+    min-height: 156px;
 }
 
 .risk-kpi span {
@@ -90,31 +90,31 @@
     white-space: nowrap;
 }
 
-.basis-badge {
-    display: inline-flex;
-    align-items: center;
-    min-height: 1.35rem;
-    padding: 0.1rem 0.5rem;
-    border: 1px solid #c7d2e2;
-    border-radius: 999px;
-    background: #f2f6fb;
-    color: #334e68;
-    font-size: 0.76rem;
-    font-weight: 700;
-    white-space: nowrap;
+.kpi-comparison {
+    display: grid;
+    gap: 0.2rem;
+    margin-top: 0.75rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid #e5edf5;
 }
 
-.national-comparison-table th,
-.national-comparison-table td {
-    min-width: 8rem;
-}
-
-.comparison-basis {
-    display: block;
-    margin-top: 0.25rem;
+.kpi-comparison span {
+    margin-bottom: 0;
     color: #66788a;
     font-size: 0.78rem;
-    line-height: 1.35;
+    font-weight: 700;
+}
+
+.kpi-comparison strong {
+    color: #334e68;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.kpi-comparison small {
+    margin-left: 0;
+    color: #66788a;
+    font-size: 0.74rem;
 }
 
 .report-panel,

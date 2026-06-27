@@ -369,9 +369,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "0002068866")
         self.assertContains(response, "0002068879")
         self.assertContains(response, "0003205603")
-        self.assertContains(response, "全国比較KPI")
-        self.assertContains(response, "同じ統計表・同じ計算定義")
-        self.assertContains(response, "未取得")
+        self.assertNotContains(response, "全国比較KPI")
 
     def test_report_view_displays_latest_risk_report(self):
         """
@@ -646,8 +644,8 @@ class AgriculturalRiskReportViewTest(TestCase):
             response,
             "後継者なし割合を全農地面積へ直接掛けず",
         )
-        self.assertContains(response, "全国比較KPI")
-        self.assertContains(response, "同じ統計表・同じ計算定義")
+        self.assertNotContains(response, "全国比較KPI")
+        self.assertContains(response, '<div class="kpi-comparison">', count=3)
         self.assertContains(response, "派生計算値")
         self.assertContains(response, "e-Stat由来比率")
         self.assertContains(response, "420,000.0 ha")
