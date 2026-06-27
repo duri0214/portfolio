@@ -304,7 +304,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         """
         with patch.dict("os.environ", {"ESTAT_APP_ID": ""}):
             with self.assertRaises(CommandError):
-                call_command("fetch_farmland_statistics")
+                call_command("daily_fetch_farmland_statistics")
 
     @patch("soil_analysis.domain.dataprovider.estat.requests.get")
     def test_command_saves_mocked_estat_snapshot(self, mock_get):
@@ -345,7 +345,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         mock_get.return_value = response
 
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
-            call_command("fetch_farmland_statistics", verbosity=0)
+            call_command("daily_fetch_farmland_statistics", verbosity=0)
 
         self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 8)
         self.assertEqual(AgriculturalRiskReport.objects.count(), 2)
@@ -387,7 +387,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         mock_get.return_value = response
 
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
-            call_command("fetch_farmland_statistics", "--dry-run", verbosity=0)
+            call_command("daily_fetch_farmland_statistics", "--dry-run", verbosity=0)
 
         self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 0)
         self.assertEqual(AgriculturalRiskReport.objects.count(), 0)

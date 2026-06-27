@@ -1362,6 +1362,7 @@ $ crontab -e
 45 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py update_sector_rotation
 50 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py fetch_usa_rss
 51 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py update_macro_indicators
+55 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_fetch_farmland_statistics
 15 18 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_fao_food_balance_chart
 15 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_cleanup_linebot_engine
 20 19 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_update_msci_weights
