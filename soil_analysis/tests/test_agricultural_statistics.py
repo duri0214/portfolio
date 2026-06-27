@@ -243,7 +243,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         """
         with patch.dict("os.environ", {"ESTAT_APP_ID": ""}):
             with self.assertRaises(CommandError):
-                call_command("fetch_rokunohe_farmland_statistics")
+                call_command("fetch_farmland_statistics")
 
     @patch("soil_analysis.domain.dataprovider.estat.requests.get")
     def test_command_saves_mocked_estat_snapshot(self, mock_get):
@@ -284,9 +284,9 @@ class AgriculturalStatisticsCommandTest(TestCase):
         mock_get.return_value = response
 
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
-            call_command("fetch_rokunohe_farmland_statistics", verbosity=0)
+            call_command("fetch_farmland_statistics", verbosity=0)
 
-        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 1)
+        self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 2)
         self.assertEqual(AgriculturalRiskReport.objects.count(), 1)
 
     @patch("soil_analysis.domain.dataprovider.estat.requests.get")
@@ -326,7 +326,7 @@ class AgriculturalStatisticsCommandTest(TestCase):
         mock_get.return_value = response
 
         with patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"}):
-            call_command("fetch_rokunohe_farmland_statistics", "--dry-run", verbosity=0)
+            call_command("fetch_farmland_statistics", "--dry-run", verbosity=0)
 
         self.assertEqual(AgriculturalStatisticSnapshot.objects.count(), 0)
         self.assertEqual(AgriculturalRiskReport.objects.count(), 0)
@@ -376,6 +376,9 @@ class AgriculturalRiskReportViewTest(TestCase):
         distribution_dataset = EstatDataset.objects.get(
             indicator_key="cultivated_area_distribution"
         )
+        count_dataset = EstatDataset.objects.get(
+            indicator_key="cultivated_area_distribution_count"
+        )
         for period_label, value in [("1001", 1000), ("1002", 100), ("1004", 250)]:
             AgriculturalStatisticSnapshot.objects.create(
                 region=region,
@@ -394,6 +397,37 @@ class AgriculturalRiskReportViewTest(TestCase):
                     },
                 },
                 source_hash=f"distribution-{period_label}",
+            )
+        for period_label, label, value in [
+            ("1001", "計", 611),
+            ("1003", "0.3ha未満", 2),
+            ("1005", "0.5～1.0", 100),
+        ]:
+            AgriculturalStatisticSnapshot.objects.create(
+                region=region,
+                dataset=count_dataset,
+                period_label=period_label,
+                value=value,
+                fetched_at=timezone.now(),
+                estat_updated_at=timezone.now(),
+                raw_data={
+                    "@cat01": "1171",
+                    "@cat02": period_label,
+                    "$": str(value),
+                    "_table_metadata": {
+                        "tabulation_sub_category": "2020年農林業センサス",
+                        "survey_date": "202001-202012",
+                    },
+                    "_class_metadata": {
+                        "cat02": {
+                            period_label: {
+                                "name": label,
+                                "unit": "経営体",
+                            }
+                        }
+                    },
+                },
+                source_hash=f"distribution-count-{period_label}",
             )
         AgriculturalRiskReport.objects.create(
             region=region,
@@ -421,21 +455,27 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "対象地域")
         self.assertContains(response, "上北郡六戸町")
         self.assertContains(response, "取得済み")
-        self.assertContains(response, "1,000.00 ha")
         self.assertContains(response, "データ時点")
         self.assertContains(response, "2020年農林業センサス（2020年1月〜2020年12月）")
         self.assertContains(response, "e-Stat公表/更新日")
+        self.assertNotContains(response, '<th class="text-end">最新値</th>', html=True)
         self.assertNotContains(response, "アプリ取得日時")
         self.assertContains(response, "経営耕地面積規模別分布")
+        self.assertContains(response, "使用した指標")
+        self.assertContains(response, "経営耕地面積規模別面積（0002068836）")
+        self.assertContains(response, "経営耕地面積規模別経営体数（0002068830）")
         self.assertContains(
             response, "構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。"
         )
         self.assertContains(response, "計")
         self.assertContains(response, "構成比 100.0%")
+        self.assertContains(response, "611 経営体")
         self.assertContains(response, "0.3ha未満")
         self.assertContains(response, "構成比 10.0%")
+        self.assertContains(response, "2 経営体")
         self.assertContains(response, "0.5～1.0ha")
         self.assertContains(response, "構成比 25.0%")
+        self.assertContains(response, "100 経営体")
         self.assertContains(
             response,
             "経営規模区分ごとの面積です。合計値はこの統計の「計」を使い、リスク計算の母数と構成比の分母にしています。1ha以下などの小規模農家層の分布を見るために取得しています。",

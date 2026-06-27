@@ -129,7 +129,7 @@
 ### e-Stat 農業統計取得
 
 六戸町の離農・管理不能農地レポートでは、e-Stat API から農業統計を取得して DB に保存します。
-API への接続情報は画面側では使わず、管理コマンド `fetch_rokunohe_farmland_statistics` の実行時だけ `ESTAT_APP_ID` 環境変数から読み込みます。
+API への接続情報は画面側では使わず、管理コマンド `fetch_farmland_statistics` の実行時だけ `ESTAT_APP_ID` 環境変数から読み込みます。
 
 #### e-Stat アプリケーションIDの取得
 
@@ -147,7 +147,7 @@ PowerShell で一時的に設定して動作確認する場合は、次のよう
 
 ```powershell
 $env:ESTAT_APP_ID="取得したアプリケーションID"
-python manage.py fetch_rokunohe_farmland_statistics --dry-run
+python manage.py fetch_farmland_statistics --dry-run
 ```
 
 `ESTAT_APP_ID` が未設定の場合、コマンドは `CommandError: ESTAT_APP_ID is not set.` で停止します。

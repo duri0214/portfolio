@@ -1564,7 +1564,7 @@ class RokunoheLandRegistryListView(ListView):
 
 
 class RokunoheFarmlandRiskView(TemplateView):
-    template_name = "soil_analysis/rokunohe_farmland_risk/report.html"
+    template_name = "soil_analysis/farmland_risk/report.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

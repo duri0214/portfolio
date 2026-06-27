@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import date
 
 from django.utils import timezone
@@ -12,18 +11,17 @@ from soil_analysis.domain.valueobject.estat import (
     AgriculturalRiskInput,
     AgriculturalRiskResult,
     EstatDatasetStatus,
+    EstatFetchResult,
     EstatValueRow,
     parse_estat_datetime,
 )
 
-ROKUNOHE_AREA_CODE = "02405"
+DEFAULT_AREA_CODE = "02405"
 RETIREMENT_TREND_COEFFICIENT = 0.35
 ESTAT_DATA_VIEW_URL = "https://www.e-stat.go.jp/dbview"
-ESTAT_DATA_PERIOD_LABELS_BY_STATS_DATA_ID = {
-    "0002068836": "2020年農林業センサス（2020年1月〜2020年12月）",
-}
 DERIVED_INDICATOR_KEYS = {"total_cultivated_area"}
 CULTIVATED_AREA_DISTRIBUTION_KEY = "cultivated_area_distribution"
+CULTIVATED_AREA_DISTRIBUTION_COUNT_KEY = "cultivated_area_distribution_count"
 CULTIVATED_AREA_DISTRIBUTION_LABELS = {
     "1001": "計",
     "1002": "0.3ha未満",
@@ -52,6 +50,18 @@ DEFAULT_ESTAT_DATASETS = [
         },
         "unit": "ha",
         "category": "base_distribution",
+        "fallback_data_period_label": "2020年農林業センサス（2020年1月〜2020年12月）",
+    },
+    {
+        "indicator_key": CULTIVATED_AREA_DISTRIBUTION_COUNT_KEY,
+        "display_name": "経営耕地面積規模別経営体数",
+        "stats_data_id": "0002068830",
+        "filters": {
+            "cdCat01": "1171",
+        },
+        "unit": "経営体",
+        "category": "base_distribution",
+        "fallback_data_period_label": "2020年農林業センサス（2020年1月〜2020年12月）",
     },
     {
         "indicator_key": "age_70_plus_area",
@@ -86,24 +96,6 @@ DEFAULT_ESTAT_DATASETS = [
         "category": "intention",
     },
 ]
-
-
-@dataclass(frozen=True)
-class EstatFetchResult:
-    """
-    e-Stat 取得バッチの結果です。
-
-    Attributes:
-        created_count: 新規保存したスナップショット数。
-        skipped_count: 既存と同一で保存しなかったスナップショット数。
-        dry_run_count: dry-run で保存対象だったスナップショット数。
-        skipped_dataset_keys: 統計表ID未設定のため取得をスキップした指標キー。
-    """
-
-    created_count: int
-    skipped_count: int
-    dry_run_count: int
-    skipped_dataset_keys: list[str]
 
 
 class AgriculturalRiskCalculator:
@@ -197,7 +189,7 @@ class AgriculturalStatisticsService:
     """
 
     @classmethod
-    def ensure_default_configuration(cls, area_code: str = ROKUNOHE_AREA_CODE):
+    def ensure_default_configuration(cls, area_code: str = DEFAULT_AREA_CODE):
         """
         六戸町と初期指標定義を作成します。
 
@@ -216,7 +208,7 @@ class AgriculturalStatisticsService:
         cls,
         *,
         client: EstatApiClient,
-        area_code: str = ROKUNOHE_AREA_CODE,
+        area_code: str = DEFAULT_AREA_CODE,
         target_date: date | None = None,
         force: bool = False,
         dry_run: bool = False,
@@ -327,7 +319,7 @@ class AgriculturalStatisticsService:
 
     @classmethod
     def build_dashboard(
-        cls, area_code: str = ROKUNOHE_AREA_CODE
+        cls, area_code: str = DEFAULT_AREA_CODE
     ) -> AgriculturalRiskDashboard:
         """
         離農・管理不能農地リスク画面の表示モデルを作成します。
@@ -347,8 +339,15 @@ class AgriculturalStatisticsService:
                 region, CULTIVATED_AREA_DISTRIBUTION_KEY
             )
         )
+        distribution_count_snapshots = (
+            AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
+                region, CULTIVATED_AREA_DISTRIBUTION_COUNT_KEY
+            )
+        )
         cultivated_area_distribution_rows = (
-            cls._build_cultivated_area_distribution_rows(distribution_snapshots)
+            cls._build_cultivated_area_distribution_rows(
+                distribution_snapshots, distribution_count_snapshots
+            )
         )
         datasets = cls._display_datasets(
             AgriculturalStatisticsRepository.get_datasets()
@@ -359,6 +358,7 @@ class AgriculturalStatisticsService:
         dataset_status_rows = cls._build_dataset_status_rows(
             datasets, latest_snapshot_values, distribution_snapshots
         )
+        distribution_sources = cls._distribution_source_rows(dataset_status_rows)
         return AgriculturalRiskDashboard(
             region_name=region.name,
             prefecture_name=region.prefecture_name,
@@ -366,9 +366,8 @@ class AgriculturalStatisticsService:
             latest_report=latest_report,
             age_area_rows=age_area_rows,
             cultivated_area_distribution_rows=cultivated_area_distribution_rows,
+            cultivated_area_distribution_sources=distribution_sources,
             dataset_status_rows=dataset_status_rows,
-            latest_data_period_label=cls._latest_data_period_label(dataset_status_rows),
-            latest_estat_updated_at=cls._latest_estat_updated_at(dataset_status_rows),
             has_data=latest_report is not None or bool(snapshots),
         )
 
@@ -380,11 +379,17 @@ class AgriculturalStatisticsService:
             "STATISTICAL_DATA", {}
         )
         table_metadata = cls._extract_table_metadata(response)
+        class_metadata = cls._extract_class_metadata(response)
         value_data = statistical_data.get("DATA_INF", {}).get("VALUE", [])
         if isinstance(value_data, dict):
             value_data = [value_data]
         return [
-            EstatValueRow.from_raw(raw_data, default_period_label, table_metadata)
+            EstatValueRow.from_raw(
+                raw_data,
+                default_period_label,
+                table_metadata=table_metadata,
+                class_metadata=class_metadata,
+            )
             for raw_data in value_data
             if isinstance(raw_data, dict)
         ]
@@ -414,16 +419,58 @@ class AgriculturalStatisticsService:
             "updated_date": table_inf.get("UPDATED_DATE", ""),
         }
 
+    @staticmethod
+    def _extract_class_metadata(response: dict) -> dict:
+        class_objects = (
+            response.get("GET_STATS_DATA", {})
+            .get("STATISTICAL_DATA", {})
+            .get("CLASS_INF", {})
+            .get("CLASS_OBJ", [])
+        )
+        if isinstance(class_objects, dict):
+            class_objects = [class_objects]
+
+        metadata = {}
+        for class_object in class_objects:
+            if not isinstance(class_object, dict):
+                continue
+            class_id = str(class_object.get("@id", ""))
+            classes = class_object.get("CLASS", [])
+            if isinstance(classes, dict):
+                classes = [classes]
+            metadata[class_id] = {
+                str(item.get("@code")): {
+                    "name": item.get("@name", ""),
+                    "unit": item.get("@unit", ""),
+                }
+                for item in classes
+                if isinstance(item, dict) and item.get("@code")
+            }
+        return metadata
+
     @classmethod
     def _build_cultivated_area_distribution_rows(
-        cls, snapshots_by_period: dict
+        cls, area_snapshots_by_period: dict, count_snapshots_by_period: dict
     ) -> list[dict[str, float | str | None]]:
-        total_snapshot = snapshots_by_period.get("1001")
+        """
+        面積表と経営体数表を規模区分ラベルで突き合わせた分布行を作ります。
+
+        e-Stat では面積表と経営体数表で cat02 コードの並びが一致しないため、
+        コードではなく分類名を正規化して結合します。
+        """
+        total_snapshot = area_snapshots_by_period.get("1001")
         total_value = total_snapshot.value if total_snapshot is not None else None
+        count_snapshots_by_label = cls._snapshots_by_normalized_label(
+            count_snapshots_by_period
+        )
         rows = []
-        for period_label, label in CULTIVATED_AREA_DISTRIBUTION_LABELS.items():
-            snapshot = snapshots_by_period.get(period_label)
+        for period_label in cls._distribution_period_labels(area_snapshots_by_period):
+            snapshot = area_snapshots_by_period.get(period_label)
             value = snapshot.value if snapshot is not None else None
+            label = cls._distribution_label(snapshot, period_label)
+            count_snapshot = count_snapshots_by_label.get(
+                cls._normalize_scale_label(label)
+            )
             rows.append(
                 {
                     "label": label,
@@ -431,9 +478,59 @@ class AgriculturalStatisticsService:
                     "value": value,
                     "unit": "ha",
                     "share": AgriculturalRiskCalculator._ratio(value, total_value),
+                    "count_value": (
+                        count_snapshot.value if count_snapshot is not None else None
+                    ),
+                    "count_unit": (
+                        count_snapshot.dataset.unit
+                        if count_snapshot is not None
+                        else "経営体"
+                    ),
                 }
             )
         return rows
+
+    @classmethod
+    def _distribution_period_labels(cls, snapshots_by_period: dict) -> list[str]:
+        if snapshots_by_period:
+            return list(snapshots_by_period.keys())
+        return list(CULTIVATED_AREA_DISTRIBUTION_LABELS.keys())
+
+    @classmethod
+    def _snapshots_by_normalized_label(cls, snapshots_by_period: dict) -> dict:
+        return {
+            cls._normalize_scale_label(
+                cls._distribution_label(snapshot, period_label)
+            ): snapshot
+            for period_label, snapshot in snapshots_by_period.items()
+        }
+
+    @classmethod
+    def _distribution_label(cls, snapshot, period_label: str) -> str:
+        if snapshot is not None:
+            class_metadata = snapshot.raw_data.get("_class_metadata", {})
+            cat02_metadata = (
+                class_metadata.get("cat02", {})
+                if isinstance(class_metadata, dict)
+                else {}
+            )
+            code_metadata = cat02_metadata.get(str(period_label), {})
+            name = code_metadata.get("name") if isinstance(code_metadata, dict) else ""
+            if name:
+                return cls._format_scale_label(name)
+        return CULTIVATED_AREA_DISTRIBUTION_LABELS.get(period_label, period_label)
+
+    @staticmethod
+    def _format_scale_label(label: str) -> str:
+        if label in {"計", "経営耕地なし"}:
+            return label
+        if "ha" in label:
+            return label
+        return f"{label}ha"
+
+    @staticmethod
+    def _normalize_scale_label(label: str) -> str:
+        return label.replace("ha", "")
 
     @staticmethod
     def _extract_estat_updated_at(response: dict):
@@ -542,11 +639,8 @@ class AgriculturalStatisticsService:
             filters_label=cls._filters_label(dataset.filters),
             unit=dataset.unit,
             status_label=status_label,
-            latest_value=snapshot.value if snapshot is not None else None,
             data_period_label=(
-                cls._data_period_label(snapshot)
-                if snapshot is not None
-                else cls._fallback_data_period_label(dataset)
+                cls._data_period_label(snapshot) if snapshot is not None else None
             ),
             fetched_at=snapshot.fetched_at if snapshot is not None else None,
             estat_updated_at=(
@@ -613,7 +707,10 @@ class AgriculturalStatisticsService:
 
     @staticmethod
     def _fallback_data_period_label(dataset) -> str | None:
-        return ESTAT_DATA_PERIOD_LABELS_BY_STATS_DATA_ID.get(dataset.stats_data_id)
+        for definition in DEFAULT_ESTAT_DATASETS:
+            if definition["indicator_key"] == dataset.indicator_key:
+                return definition.get("fallback_data_period_label")
+        return None
 
     @staticmethod
     def _format_survey_date(survey_date: str) -> str:
@@ -629,17 +726,15 @@ class AgriculturalStatisticsService:
         return survey_date
 
     @staticmethod
-    def _latest_data_period_label(rows: list[EstatDatasetStatus]) -> str | None:
-        labels = [row.data_period_label for row in rows if row.data_period_label]
-        if not labels:
-            return None
-        return labels[0]
-
-    @staticmethod
-    def _latest_estat_updated_at(rows: list[EstatDatasetStatus]):
-        updated_values = [
-            row.estat_updated_at for row in rows if row.estat_updated_at is not None
+    def _distribution_source_rows(
+        rows: list[EstatDatasetStatus],
+    ) -> list[EstatDatasetStatus]:
+        return [
+            row
+            for row in rows
+            if row.indicator_key
+            in {
+                CULTIVATED_AREA_DISTRIBUTION_KEY,
+                CULTIVATED_AREA_DISTRIBUTION_COUNT_KEY,
+            }
         ]
-        if not updated_values:
-            return None
-        return max(updated_values)

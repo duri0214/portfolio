@@ -31,6 +31,7 @@ class EstatValueRow:
         raw_data: dict,
         default_period_label: str,
         table_metadata: dict | None = None,
+        class_metadata: dict | None = None,
     ) -> "EstatValueRow":
         """
         e-Stat の VALUE レコードから保存用VOを作成します。
@@ -39,6 +40,7 @@ class EstatValueRow:
             raw_data: e-Stat API の VALUE レコード。
             default_period_label: VALUE に時間軸がない場合の代替期間。
             table_metadata: e-Stat TABLE_INF から画面表示に必要な情報だけ抜粋した値。
+            class_metadata: e-Stat CLASS_INF から分類コードの表示名を抜粋した値。
 
         Returns:
             EstatValueRow: 保存用に正規化した統計値。
@@ -56,6 +58,8 @@ class EstatValueRow:
         enriched_raw_data = dict(raw_data)
         if table_metadata:
             enriched_raw_data["_table_metadata"] = table_metadata
+        if class_metadata:
+            enriched_raw_data["_class_metadata"] = class_metadata
         return cls(
             period_label=period_label,
             value=value,
@@ -138,7 +142,6 @@ class EstatDatasetStatus:
         filters_label: e-Stat API に渡す絞り込み条件の表示文字列。
         unit: 値の単位。
         status_label: 取得済み、未設定などの状態。
-        latest_value: 最新スナップショットの値。
         data_period_label: 統計値のデータ時点。
         fetched_at: このアプリが取得した日時。
         estat_updated_at: e-Stat 側の公開・更新日時。
@@ -151,10 +154,27 @@ class EstatDatasetStatus:
     filters_label: str
     unit: str
     status_label: str
-    latest_value: float | None
     data_period_label: str | None
     fetched_at: datetime | None
     estat_updated_at: datetime | None
+
+
+@dataclass(frozen=True)
+class EstatFetchResult:
+    """
+    e-Stat 取得バッチの結果です。
+
+    Attributes:
+        created_count: 新規保存したスナップショット数。
+        skipped_count: 既存と同一で保存しなかったスナップショット数。
+        dry_run_count: dry-run で保存対象だったスナップショット数。
+        skipped_dataset_keys: 統計表ID未設定のため取得をスキップした指標キー。
+    """
+
+    created_count: int
+    skipped_count: int
+    dry_run_count: int
+    skipped_dataset_keys: list[str]
 
 
 @dataclass(frozen=True)
@@ -169,9 +189,8 @@ class AgriculturalRiskDashboard:
         latest_report: 最新リスクレポート。
         age_area_rows: 年齢階層別面積として表示する行。
         cultivated_area_distribution_rows: 経営耕地面積規模別面積の分布行。
+        cultivated_area_distribution_sources: 分布表示に使った統計指標。
         dataset_status_rows: 指標ごとの取得状況。
-        latest_data_period_label: 画面全体の代表データ時点。
-        latest_estat_updated_at: e-Stat 側の最新更新日時。
         has_data: 表示可能な統計データがあるかどうか。
     """
 
@@ -181,9 +200,8 @@ class AgriculturalRiskDashboard:
     latest_report: object | None
     age_area_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_rows: list[dict[str, float | str | None]]
+    cultivated_area_distribution_sources: list[EstatDatasetStatus]
     dataset_status_rows: list[EstatDatasetStatus]
-    latest_data_period_label: str | None
-    latest_estat_updated_at: datetime | None
     has_data: bool
 
 

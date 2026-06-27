@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'soil_analysis/css/rokunohe_farmland_risk/report.css' %}">
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/farmland_risk/report.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -90,6 +90,16 @@
                 <section class="report-panel mb-4">
                     <h2 class="h5">経営耕地面積規模別分布</h2>
                     <p class="distribution-note">構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。</p>
+                    <div class="source-list" aria-label="使用した指標">
+                        <span>使用した指標</span>
+                        {% for source in dashboard.cultivated_area_distribution_sources %}
+                            {% if source.source_page_url %}
+                                <a href="{{ source.source_page_url }}" target="_blank" rel="noopener">{{ source.display_name }}（{{ source.stats_data_id }}）</a>
+                            {% else %}
+                                <span>{{ source.display_name }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                     <div class="distribution-bars">
                         {% for row in dashboard.cultivated_area_distribution_rows %}
                             <div class="distribution-bar-row">
@@ -103,8 +113,9 @@
                                 </div>
                                 <div class="distribution-bar-value">
                                     {% if row.value is not None %}
-                                        {{ row.value|floatformat:1|intcomma }} {{ row.unit }}
+                                        <strong>{{ row.value|floatformat:1|intcomma }} {{ row.unit }}</strong>
                                         {% if row.share is not None %}<span>構成比 {{ row.share|floatformat:1 }}%</span>{% endif %}
+                                        {% if row.count_value is not None %}<span>{{ row.count_value|floatformat:0|intcomma }} {{ row.count_unit }}</span>{% endif %}
                                     {% else %}
                                         未取得
                                     {% endif %}
@@ -164,22 +175,6 @@
         <section class="report-panel mb-4">
             <div class="data-status-heading">
                 <h2 class="h5 mb-0">データ取得状況</h2>
-                <div class="data-freshness">
-                    <span>データ時点:
-                        {% if dashboard.latest_data_period_label %}
-                            {{ dashboard.latest_data_period_label }}
-                        {% else %}
-                            未取得
-                        {% endif %}
-                    </span>
-                    <span>e-Stat公表/更新日:
-                        {% if dashboard.latest_estat_updated_at %}
-                            {{ dashboard.latest_estat_updated_at|date:"Y-m-d" }}
-                        {% else %}
-                            未取得
-                        {% endif %}
-                    </span>
-                </div>
             </div>
             <div class="data-definition-list">
                 <div>
@@ -196,7 +191,7 @@
                         <th>統計表ID</th>
                         <th>取得条件</th>
                         <th>データ時点</th>
-                        <th class="text-end">最新値</th>
+                        <th>e-Stat公表/更新日</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -219,9 +214,9 @@
                             </td>
                             <td><code>{{ row.filters_label }}</code></td>
                             <td>{{ row.data_period_label|default_if_none:"-" }}</td>
-                            <td class="text-end">
-                                {% if row.latest_value is not None %}
-                                    {{ row.latest_value|floatformat:2|intcomma }} {{ row.unit }}
+                            <td>
+                                {% if row.estat_updated_at %}
+                                    {{ row.estat_updated_at|date:"Y-m-d" }}
                                 {% else %}
                                     -
                                 {% endif %}

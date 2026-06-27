@@ -5,19 +5,19 @@ from django.core.management.base import BaseCommand, CommandError
 
 from soil_analysis.domain.dataprovider.estat import EstatApiClient
 from soil_analysis.domain.service.agricultural_statistics import (
-    ROKUNOHE_AREA_CODE,
+    DEFAULT_AREA_CODE,
     AgriculturalStatisticsService,
 )
 
 
 class Command(BaseCommand):
-    help = "Fetch e-Stat agricultural statistics for Rokunohe farmland risk report"
+    help = "Fetch e-Stat agricultural statistics for farmland risk reports"
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--area-code",
-            default=ROKUNOHE_AREA_CODE,
-            help="e-Stat area code. Default is Rokunohe town: 02405.",
+            default=DEFAULT_AREA_CODE,
+            help="e-Stat area code. Default is the initial target area: 02405.",
         )
         parser.add_argument(
             "--force",
