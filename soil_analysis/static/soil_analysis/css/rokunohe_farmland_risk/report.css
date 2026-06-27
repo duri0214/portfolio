@@ -9,6 +9,32 @@
     align-items: flex-start;
 }
 
+.region-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.85rem;
+}
+
+.region-selector-label {
+    color: #66788a;
+    font-size: 0.86rem;
+}
+
+.region-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.75rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid #b9d8c9;
+    background: #edf8f2;
+    color: #276749;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
 .risk-kpi,
 .report-panel,
 .empty-report {

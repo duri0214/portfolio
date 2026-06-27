@@ -408,12 +408,16 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "管理不能化候補面積")
         self.assertContains(response, "185")
         self.assertContains(response, "81.5")
+        self.assertContains(response, "対象地域")
+        self.assertContains(response, "上北郡六戸町")
         self.assertContains(response, "取得済み")
         self.assertContains(response, "1,471.00 ha")
         self.assertContains(response, "経営耕地面積規模別分布")
         self.assertContains(
             response, "構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。"
         )
+        self.assertContains(response, "計")
+        self.assertContains(response, "構成比 100.0%")
         self.assertContains(response, "0.3ha未満")
         self.assertContains(response, "構成比 10.0%")
         self.assertContains(response, "0.5～1.0ha")

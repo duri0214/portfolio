@@ -427,8 +427,6 @@ class AgriculturalStatisticsService:
         total_value = total_snapshot.value if total_snapshot is not None else None
         rows = []
         for period_label, label in CULTIVATED_AREA_DISTRIBUTION_LABELS.items():
-            if period_label == "1001":
-                continue
             snapshot = snapshots_by_period.get(period_label)
             value = snapshot.value if snapshot is not None else None
             rows.append(
