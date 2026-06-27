@@ -126,6 +126,33 @@
 - `ChemicalImportService`: 川田研究所形式の Excel ファイルから化学分析データを取り込みます。
 - `HardnessImportService`: 土壌硬度計の CSV データを取り込みます。
 
+### e-Stat 農業統計取得
+
+六戸町の離農・管理不能農地レポートでは、e-Stat API から農業統計を取得して DB に保存します。
+API への接続情報は画面側では使わず、管理コマンド `fetch_farmland_statistics` の実行時だけ `ESTAT_APP_ID` 環境変数から読み込みます。
+
+#### e-Stat アプリケーションIDの取得
+
+1. e-Stat の利用ガイドを確認します: https://www.e-stat.go.jp/api/api-info/api-guide
+2. 政府統計の総合窓口(e-Stat)でユーザ登録を行います。
+3. ログイン後、マイページの「API機能(アプリケーションID発行)」からアプリケーションIDを発行します。
+4. 名称、URL、概要を入力します。公開サイトで利用しない場合、URL は `http://test.localhost/` などのローカルアドレスで問題ありません。
+5. 発行されたアプリケーションIDを `.env` の `ESTAT_APP_ID` に設定します。
+
+```env
+ESTAT_APP_ID=取得したアプリケーションID
+```
+
+PowerShell で一時的に設定して動作確認する場合は、次のように実行します。
+
+```powershell
+$env:ESTAT_APP_ID="取得したアプリケーションID"
+python manage.py fetch_farmland_statistics --dry-run
+```
+
+`ESTAT_APP_ID` が未設定の場合、コマンドは `CommandError: ESTAT_APP_ID is not set.` で停止します。
+実データ取得には、管理画面などから `EstatDataset.stats_data_id` と `filters` を対象統計表に合わせて設定してからバッチを実行します。
+
 ### テストデータ生成
 
 - `hardness_generate_dummy_csv`: 土壌硬度計測のダミーデータを生成します。

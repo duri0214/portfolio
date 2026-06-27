@@ -785,3 +785,155 @@ class RokunoheLandRegistry(models.Model):
 
     def google_maps_url(self) -> str:
         return f"https://www.google.com/maps?q={quote(self.coordinate)}"
+
+
+class AgriculturalRegion(models.Model):
+    """
+    e-Stat の農業統計を集計する対象地域です。
+
+    Attributes:
+        area_code: e-Stat の地域エリア単一コード。
+        name: 地域名。
+        prefecture_name: 都道府県名。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    area_code = models.CharField("地域コード", max_length=10, unique=True)
+    name = models.CharField("地域名", max_length=100)
+    prefecture_name = models.CharField("都道府県名", max_length=100)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    def __str__(self):
+        return f"{self.prefecture_name}{self.name} ({self.area_code})"
+
+
+class EstatDataset(models.Model):
+    """
+    e-Stat から継続取得する統計表と指標定義です。
+
+    `filters` には `cdCat01` や `cdTab` など、e-Stat API にそのまま渡す
+    絞り込みパラメータを保持します。地域コードは取得時に対象地域から補います。
+
+    Attributes:
+        indicator_key: レポート計算で使う指標キー。
+        display_name: 画面に表示する指標名。
+        stats_data_id: e-Stat 統計表表示 ID。
+        filters: e-Stat API に渡す絞り込み条件。
+        unit: 値の単位。
+        category: 指標カテゴリ。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    indicator_key = models.CharField("指標キー", max_length=100, unique=True)
+    display_name = models.CharField("表示名", max_length=255)
+    stats_data_id = models.CharField("統計表ID", max_length=30)
+    filters = models.JSONField("e-Statフィルタ", default=dict, blank=True)
+    unit = models.CharField("単位", max_length=50, blank=True, default="")
+    category = models.CharField("カテゴリ", max_length=100, blank=True, default="")
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    def __str__(self):
+        return self.display_name
+
+
+class AgriculturalStatisticSnapshot(models.Model):
+    """
+    e-Stat から取得した農業統計値の履歴です。
+
+    同じ地域・指標・期間でも、e-Stat 側の値やメタデータが変わった場合は
+    `source_hash` が変わり、新しいスナップショットとして保存します。
+
+    Attributes:
+        region: 対象地域。
+        dataset: 指標定義。
+        period_label: 統計値の対象期間。
+        value: 統計値。
+        fetched_at: 取得日時。
+        estat_updated_at: e-Stat 側の公開・更新日時。
+        raw_data: e-Stat の値レコード。
+        source_hash: 取得値とメタデータから作る重複判定用ハッシュ。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    region = models.ForeignKey(
+        AgriculturalRegion, on_delete=models.CASCADE, verbose_name="対象地域"
+    )
+    dataset = models.ForeignKey(
+        EstatDataset, on_delete=models.CASCADE, verbose_name="指標定義"
+    )
+    period_label = models.CharField("対象期間", max_length=50)
+    value = models.FloatField("値", null=True, blank=True)
+    fetched_at = models.DateTimeField("取得日時")
+    estat_updated_at = models.DateTimeField("e-Stat更新日時", null=True, blank=True)
+    raw_data = models.JSONField("e-Stat raw data", default=dict, blank=True)
+    source_hash = models.CharField("ソースハッシュ", max_length=64)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["region", "dataset", "period_label", "source_hash"],
+                name="agri_snapshot_region_dataset_period_hash_unique",
+            )
+        ]
+        ordering = ["-fetched_at", "dataset__indicator_key"]
+
+
+class AgriculturalRiskReport(models.Model):
+    """
+    地域別の離農・管理不能農地リスク集計結果です。
+
+    Attributes:
+        region: 対象地域。
+        report_date: 集計日。
+        total_cultivated_area: 現在の経営耕地面積。
+        age_70_plus_area: 70歳以上の経営体が保有する面積。
+        age_60s_area: 60代の経営体が保有する面積。
+        no_successor_ratio: 後継者なし割合。
+        shrink_stop_intention_ratio: 縮小・中止意向の割合。
+        supplemental_unmanageable_area: 補助指標による管理不能化候補面積。
+        aging_risk: 高齢化リスク。
+        succession_risk: 継承リスク。
+        intention_risk: 意向リスク。
+        retirement_confirmed_area: 離農確定候補面積。
+        retirement_reserve_area: 離農予備軍面積。
+        unmanageable_candidate_area: 管理不能化候補面積。
+        farmland_maintenance_rate: 10年後の農地維持率。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    region = models.ForeignKey(
+        AgriculturalRegion, on_delete=models.CASCADE, verbose_name="対象地域"
+    )
+    report_date = models.DateField("集計日")
+    total_cultivated_area = models.FloatField("現在の経営耕地面積", null=True)
+    age_70_plus_area = models.FloatField("70歳以上面積", null=True)
+    age_60s_area = models.FloatField("60代面積", null=True)
+    no_successor_ratio = models.FloatField("後継者なし割合", null=True)
+    shrink_stop_intention_ratio = models.FloatField("縮小・中止意向割合", null=True)
+    supplemental_unmanageable_area = models.FloatField("補助管理不能面積", default=0)
+    aging_risk = models.FloatField("高齢化リスク", null=True)
+    succession_risk = models.FloatField("継承リスク", null=True)
+    intention_risk = models.FloatField("意向リスク", null=True)
+    retirement_confirmed_area = models.FloatField("離農確定候補面積", null=True)
+    retirement_reserve_area = models.FloatField("離農予備軍面積", null=True)
+    unmanageable_candidate_area = models.FloatField("管理不能化候補面積", null=True)
+    farmland_maintenance_rate = models.FloatField("10年後農地維持率", null=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["region", "report_date"],
+                name="agri_risk_report_region_date_unique",
+            )
+        ]
+        ordering = ["-report_date", "-id"]

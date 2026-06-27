@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import RokunoheLandRegistry
+from .models import (
+    AgriculturalRegion,
+    AgriculturalRiskReport,
+    AgriculturalStatisticSnapshot,
+    EstatDataset,
+    RokunoheLandRegistry,
+)
 
 
 @admin.register(RokunoheLandRegistry)
@@ -15,3 +21,46 @@ class RokunoheLandRegistryAdmin(admin.ModelAdmin):
         "current_area",
     )
     search_fields = ("address", "coordinate")
+
+
+@admin.register(AgriculturalRegion)
+class AgriculturalRegionAdmin(admin.ModelAdmin):
+    list_display = ("area_code", "prefecture_name", "name", "updated_at")
+    search_fields = ("area_code", "prefecture_name", "name")
+
+
+@admin.register(EstatDataset)
+class EstatDatasetAdmin(admin.ModelAdmin):
+    list_display = (
+        "indicator_key",
+        "display_name",
+        "stats_data_id",
+        "unit",
+        "category",
+    )
+    search_fields = ("indicator_key", "display_name", "stats_data_id")
+
+
+@admin.register(AgriculturalStatisticSnapshot)
+class AgriculturalStatisticSnapshotAdmin(admin.ModelAdmin):
+    list_display = (
+        "region",
+        "dataset",
+        "period_label",
+        "value",
+        "fetched_at",
+        "source_hash",
+    )
+    list_filter = ("region", "dataset")
+    search_fields = ("region__area_code", "dataset__indicator_key", "period_label")
+
+
+@admin.register(AgriculturalRiskReport)
+class AgriculturalRiskReportAdmin(admin.ModelAdmin):
+    list_display = (
+        "region",
+        "report_date",
+        "unmanageable_candidate_area",
+        "farmland_maintenance_rate",
+    )
+    list_filter = ("region", "report_date")

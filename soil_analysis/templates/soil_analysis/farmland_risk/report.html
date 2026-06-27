@@ -1,0 +1,241 @@
+{% extends "soil_analysis/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'soil_analysis/css/farmland_risk/report.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-4 farmland-risk-report">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">土壌分析CRM</a></li>
+                <li class="breadcrumb-item active" aria-current="page">離農・管理不能農地レポート</li>
+            </ol>
+        </nav>
+
+        <div class="report-heading mb-4">
+            <div>
+                <p class="text-muted small mb-1">{{ dashboard.prefecture_name }} {{ dashboard.region_name }} / e-Stat地域コード {{ dashboard.area_code }}</p>
+                <h1 class="h2 mb-2">離農・管理不能農地の足跡可視化レポート</h1>
+                <p class="mb-0 text-secondary">農林業センサス系の継続取得データをもとに、経営主の高齢化、後継者不在、縮小・中止意向から10年後の農地維持リスクを確認します。</p>
+                <div class="region-selector" aria-label="対象地域">
+                    <span class="region-selector-label">対象地域</span>
+                    <span class="region-chip is-active">{{ dashboard.region_name }}</span>
+                </div>
+            </div>
+            <a class="btn btn-outline-primary" href="{% url 'soil:rokunohe_land_registry' %}">
+                <i class="fas fa-map-marker-alt me-1"></i>六戸登記簿を見る
+            </a>
+        </div>
+
+        {% if dashboard.latest_report %}
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-lg-3">
+                    <div class="risk-kpi">
+                        <span>管理不能化候補面積</span>
+                        <strong>
+                            {% if dashboard.latest_report.unmanageable_candidate_area is not None %}
+                                {{ dashboard.latest_report.unmanageable_candidate_area }}
+                            {% else %}
+                                未実装（TODO）
+                            {% endif %}
+                        </strong>
+                        {% if dashboard.latest_report.unmanageable_candidate_area is not None %}<small>ha</small>{% endif %}
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="risk-kpi">
+                        <span>10年後農地維持率</span>
+                        <strong>
+                            {% if dashboard.latest_report.farmland_maintenance_rate is not None %}
+                                {{ dashboard.latest_report.farmland_maintenance_rate }}
+                            {% else %}
+                                未実装（TODO）
+                            {% endif %}
+                        </strong>
+                        {% if dashboard.latest_report.farmland_maintenance_rate is not None %}<small>%</small>{% endif %}
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="risk-kpi">
+                        <span>後継者なし割合</span>
+                        <strong>
+                            {% if dashboard.latest_report.succession_risk is not None %}
+                                {{ dashboard.latest_report.succession_risk }}
+                            {% else %}
+                                未実装（TODO）
+                            {% endif %}
+                        </strong>
+                        {% if dashboard.latest_report.succession_risk is not None %}<small>%</small>{% endif %}
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="risk-kpi">
+                        <span>縮小・中止意向</span>
+                        <strong>
+                            {% if dashboard.latest_report.intention_risk is not None %}
+                                {{ dashboard.latest_report.intention_risk }}
+                            {% else %}
+                                未実装（TODO）
+                            {% endif %}
+                        </strong>
+                        {% if dashboard.latest_report.intention_risk is not None %}<small>%</small>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if dashboard.cultivated_area_distribution_rows %}
+                <section class="report-panel mb-4">
+                    <h2 class="h5">経営耕地面積規模別分布</h2>
+                    <p class="distribution-note">面積は、各規模区分に属する経営体が持つ経営耕地面積の合計です。構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。</p>
+                    <p class="distribution-note">規模区分は圃場1筆ごとの面積ではなく、1つの経営体が持つ経営耕地面積の合計で決まります。</p>
+                    <div class="distribution-example">
+                        <strong>例</strong>
+                        <span>0.3ha、0.4ha、0.2haの圃場を持つ経営体は、合計0.9haとして0.5〜1.0haの区分に入ります。</span>
+                    </div>
+                    <p class="distribution-note">経営体数は別統計の「経営耕地面積規模別経営体数」から取得します。</p>
+                    <div class="source-list" aria-label="使用した指標">
+                        <span>使用した指標</span>
+                        {% for source in dashboard.cultivated_area_distribution_sources %}
+                            {% if source.source_page_url %}
+                                <a href="{{ source.source_page_url }}" target="_blank" rel="noopener">{{ source.display_name }}（{{ source.stats_data_id }}）</a>
+                            {% else %}
+                                <span>{{ source.display_name }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="distribution-bars">
+                        {% for row in dashboard.cultivated_area_distribution_rows %}
+                            <div class="distribution-bar-row">
+                                <div class="distribution-bar-label">{{ row.label }}</div>
+                                <div class="distribution-bar-track">
+                                    {% if row.share is not None %}
+                                        <div class="distribution-bar-fill" style="width: {{ row.share|floatformat:1 }}%;"></div>
+                                    {% else %}
+                                        <div class="distribution-bar-fill empty" style="width: 0%;"></div>
+                                    {% endif %}
+                                </div>
+                                <div class="distribution-bar-value">
+                                    {% if row.value is not None %}
+                                        <strong>{{ row.value|floatformat:1|intcomma }} {{ row.unit }}</strong>
+                                        {% if row.share is not None %}<span>構成比 {{ row.share|floatformat:1 }}%</span>{% endif %}
+                                        {% if row.count_value is not None %}<span>{{ row.count_value|floatformat:0|intcomma }} {{ row.count_unit }}</span>{% endif %}
+                                    {% else %}
+                                        未取得
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
+            <div class="row g-4 mb-4">
+                <div class="col-12 col-lg-6">
+                    <section class="report-panel h-100">
+                        <h2 class="h5">年齢階層別の経営耕地面積</h2>
+                        <div class="age-bars">
+                            {% for row in dashboard.age_area_rows %}
+                                <div class="age-bar-row">
+                                    <div class="age-bar-label">{{ row.label }}</div>
+                                    <div class="age-bar-track">
+                                        {% if row.value is not None %}
+                                            <div class="age-bar-fill" style="width: {{ row.value|floatformat:0 }}%;"></div>
+                                        {% else %}
+                                            <div class="age-bar-fill empty" style="width: 0%;"></div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="age-bar-value">
+                                        {% if row.value is not None %}{{ row.value|floatformat:1 }} {{ row.unit }}{% else %}未実装（TODO）{% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
+                <div class="col-12 col-lg-6">
+                    <section class="report-panel h-100">
+                        <h2 class="h5">リスク要因の内訳</h2>
+                        <dl class="risk-breakdown mb-0">
+                            <dt>高齢化リスク</dt>
+                            <dd>{% if dashboard.latest_report.aging_risk is not None %}{{ dashboard.latest_report.aging_risk }}%{% else %}未実装（TODO）{% endif %}</dd>
+                            <dt>離農確定候補面積</dt>
+                            <dd>{% if dashboard.latest_report.retirement_confirmed_area is not None %}{{ dashboard.latest_report.retirement_confirmed_area }} ha{% else %}未実装（TODO）{% endif %}</dd>
+                            <dt>離農予備軍面積</dt>
+                            <dd>{% if dashboard.latest_report.retirement_reserve_area is not None %}{{ dashboard.latest_report.retirement_reserve_area }} ha{% else %}未実装（TODO）{% endif %}</dd>
+                            <dt>補助指標</dt>
+                            <dd>荒廃農地・相続土地国庫帰属制度の公開統計は未実装（TODO）</dd>
+                        </dl>
+                    </section>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-report mb-4">
+                <h2 class="h5">統計データはまだ取得されていません</h2>
+                <p class="mb-0">農業統計スナップショットが保存されると、最新KPIと分布が表示されます。</p>
+            </div>
+        {% endif %}
+
+        <section class="report-panel mb-4">
+            <div class="data-status-heading">
+                <h2 class="h5 mb-0">データ取得状況</h2>
+            </div>
+            <div class="data-definition-list">
+                <div>
+                    <strong>経営耕地面積規模別面積</strong>
+                    <span>経営規模区分ごとの面積合計です。分類は圃場1筆ごとではなく経営体全体の経営耕地面積で決まります。たとえば0.5〜1.0haの行は、その規模区分に属する経営体が持つ経営耕地面積を合計したhaです。合計値はこの統計の「計」を使い、リスク計算の母数と構成比の分母にしています。</span>
+                </div>
+                <div>
+                    <strong>経営耕地面積規模別経営体数</strong>
+                    <span>経営規模区分ごとの経営体数です。面積だけでは小規模農家層の件数が分からないため、nとして併記します。</span>
+                </div>
+            </div>
+            <div class="table-responsive mt-3">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>指標</th>
+                        <th>状態</th>
+                        <th>統計表ID</th>
+                        <th>取得条件</th>
+                        <th>データ時点</th>
+                        <th>e-Stat公表/更新日</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in dashboard.dataset_status_rows %}
+                        <tr>
+                            <td>{{ row.display_name }}</td>
+                            <td>
+                                <span class="status-pill {% if row.status_label == '取得済み' %}is-ready{% elif row.status_label == '未取得' %}is-pending{% else %}is-muted{% endif %}">
+                                    {{ row.status_label }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if row.source_page_url %}
+                                    <a href="{{ row.source_page_url }}" target="_blank" rel="noopener">
+                                        <code>{{ row.stats_data_id }}</code>
+                                    </a>
+                                {% else %}
+                                    <code>{{ row.stats_data_id }}</code>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ row.filters_label }}</code></td>
+                            <td>{{ row.data_period_label|default_if_none:"-" }}</td>
+                            <td>
+                                {% if row.estat_updated_at %}
+                                    {{ row.estat_updated_at|date:"Y-m-d" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+{% endblock %}
