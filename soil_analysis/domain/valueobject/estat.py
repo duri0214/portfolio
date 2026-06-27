@@ -167,7 +167,6 @@ class AgriculturalRiskDashboard:
         prefecture_name: 都道府県名。
         area_code: e-Stat 地域コード。
         latest_report: 最新リスクレポート。
-        report_trend: リスクレポートの時系列。
         age_area_rows: 年齢階層別面積として表示する行。
         cultivated_area_distribution_rows: 経営耕地面積規模別面積の分布行。
         dataset_status_rows: 指標ごとの取得状況。
@@ -180,7 +179,6 @@ class AgriculturalRiskDashboard:
     prefecture_name: str
     area_code: str
     latest_report: object | None
-    report_trend: list
     age_area_rows: list[dict[str, float | str | None]]
     cultivated_area_distribution_rows: list[dict[str, float | str | None]]
     dataset_status_rows: list[EstatDatasetStatus]

@@ -232,37 +232,5 @@
                 </table>
             </div>
         </section>
-
-        <div class="row g-4">
-            <div class="col-12">
-                <section class="report-panel h-100">
-                    <h2 class="h5">取得履歴トレンド</h2>
-                    {% if dashboard.report_trend %}
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                <tr>
-                                    <th>集計日</th>
-                                    <th class="text-end">候補面積</th>
-                                    <th class="text-end">維持率</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for report in dashboard.report_trend %}
-                                    <tr>
-                                        <td>{{ report.report_date }}</td>
-                                        <td class="text-end">{{ report.unmanageable_candidate_area|default_if_none:"未取得" }}</td>
-                                        <td class="text-end">{{ report.farmland_maintenance_rate|default_if_none:"未取得" }}%</td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-secondary mb-0">レポート履歴はまだありません。</p>
-                    {% endif %}
-                </section>
-            </div>
-        </div>
     </div>
 {% endblock %}

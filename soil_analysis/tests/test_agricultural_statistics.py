@@ -443,6 +443,7 @@ class AgriculturalRiskReportViewTest(TestCase):
         self.assertContains(response, "未実装（TODO）")
         self.assertNotContains(response, "e-Stat スナップショット")
         self.assertNotContains(response, "<th>分類</th>", html=True)
+        self.assertNotContains(response, "取得履歴トレンド")
 
     def test_report_view_backfills_known_data_period_for_existing_snapshots(self):
         """

@@ -341,7 +341,6 @@ class AgriculturalStatisticsService:
         region = cls.ensure_default_configuration(area_code)
         latest_report = AgriculturalStatisticsRepository.get_latest_risk_report(region)
         snapshots = AgriculturalStatisticsRepository.get_snapshots(region)
-        report_trend = AgriculturalStatisticsRepository.get_risk_report_trend(region)
         age_area_rows = cls._build_age_area_rows(latest_report)
         distribution_snapshots = (
             AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
@@ -365,7 +364,6 @@ class AgriculturalStatisticsService:
             prefecture_name=region.prefecture_name,
             area_code=region.area_code,
             latest_report=latest_report,
-            report_trend=report_trend,
             age_area_rows=age_area_rows,
             cultivated_area_distribution_rows=cultivated_area_distribution_rows,
             dataset_status_rows=dataset_status_rows,
