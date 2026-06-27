@@ -61,6 +61,7 @@
             {% if dashboard.cultivated_area_distribution_rows %}
                 <section class="report-panel mb-4">
                     <h2 class="h5">経営耕地面積規模別分布</h2>
+                    <p class="distribution-note">構成比は、経営耕地面積の合計に対する各規模区分の面積割合です。</p>
                     <div class="distribution-bars">
                         {% for row in dashboard.cultivated_area_distribution_rows %}
                             <div class="distribution-bar-row">
@@ -75,7 +76,7 @@
                                 <div class="distribution-bar-value">
                                     {% if row.value is not None %}
                                         {{ row.value|floatformat:1|intcomma }} {{ row.unit }}
-                                        {% if row.share is not None %}<span>{{ row.share|floatformat:1 }}%</span>{% endif %}
+                                        {% if row.share is not None %}<span>構成比 {{ row.share|floatformat:1 }}%</span>{% endif %}
                                     {% else %}
                                         未取得
                                     {% endif %}

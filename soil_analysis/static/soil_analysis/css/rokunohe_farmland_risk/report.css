@@ -101,6 +101,12 @@
     gap: 0.75rem;
 }
 
+.distribution-note {
+    color: #66788a;
+    font-size: 0.86rem;
+    margin-bottom: 1rem;
+}
+
 .distribution-bar-row {
     display: grid;
     grid-template-columns: 8rem 1fr 9.5rem;
