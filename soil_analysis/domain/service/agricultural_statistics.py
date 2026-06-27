@@ -1462,7 +1462,10 @@ class AgriculturalStatisticsService:
             return ""
         if comparison_type == "share":
             share = round((local_value / national_value) * 100, 1)
-            return f"全国比 {share}%"
+            return f"全国占有率 {share}%"
         point_diff = round(local_value - national_value, 1)
-        sign = "+" if point_diff > 0 else ""
-        return f"全国差 {sign}{point_diff}pt"
+        if point_diff > 0:
+            return f"全国より{point_diff}pt高い"
+        if point_diff < 0:
+            return f"全国より{abs(point_diff)}pt低い"
+        return "全国と同水準"
