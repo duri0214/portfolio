@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 from soil_analysis.domain.dataprovider.estat import EstatApiClient
 from soil_analysis.domain.service.agricultural_statistics import (
     DEFAULT_AREA_CODE,
+    NATIONAL_AREA_CODE,
     AgriculturalStatisticsService,
 )
 
@@ -23,6 +24,11 @@ class Command(BaseCommand):
             "--force",
             action="store_true",
             help="Save snapshots even when the source hash already exists.",
+        )
+        parser.add_argument(
+            "--skip-national",
+            action="store_true",
+            help=f"Fetch only --area-code and skip national area {NATIONAL_AREA_CODE}.",
         )
         parser.add_argument(
             "--dry-run",
@@ -44,6 +50,7 @@ class Command(BaseCommand):
         result = AgriculturalStatisticsService.fetch_and_store(
             client=client,
             area_code=options["area_code"],
+            include_national=not options["skip_national"],
             target_date=target_date,
             force=options["force"],
             dry_run=options["dry_run"],

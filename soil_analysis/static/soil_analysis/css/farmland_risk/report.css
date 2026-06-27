@@ -90,6 +90,33 @@
     white-space: nowrap;
 }
 
+.basis-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.35rem;
+    padding: 0.1rem 0.5rem;
+    border: 1px solid #c7d2e2;
+    border-radius: 999px;
+    background: #f2f6fb;
+    color: #334e68;
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.national-comparison-table th,
+.national-comparison-table td {
+    min-width: 8rem;
+}
+
+.comparison-basis {
+    display: block;
+    margin-top: 0.25rem;
+    color: #66788a;
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
 .report-panel,
 .empty-report {
     padding: 1.25rem;

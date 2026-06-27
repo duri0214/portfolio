@@ -18,6 +18,7 @@ from soil_analysis.domain.valueobject.estat import (
 )
 
 DEFAULT_AREA_CODE = "02405"
+NATIONAL_AREA_CODE = "00000"
 RETIREMENT_TREND_COEFFICIENT = 0.35
 ESTAT_DATA_VIEW_URL = "https://www.e-stat.go.jp/dbview"
 DERIVED_INDICATOR_KEYS = {"total_cultivated_area"}
@@ -320,6 +321,7 @@ class AgriculturalStatisticsService:
         *,
         client: EstatApiClient,
         area_code: str = DEFAULT_AREA_CODE,
+        include_national: bool = True,
         target_date: date | None = None,
         force: bool = False,
         dry_run: bool = False,
@@ -330,6 +332,7 @@ class AgriculturalStatisticsService:
         Args:
             client: e-Stat API クライアント。
             area_code: e-Stat 地域コード。
+            include_national: 既定地域と一緒に全国値も取得するかどうか。
             target_date: 取得日の代替値。
             force: True の場合は同一値でも履歴として保存する。
             dry_run: True の場合はDBへ保存しない。
@@ -337,7 +340,7 @@ class AgriculturalStatisticsService:
         Returns:
             EstatFetchResult: バッチ実行結果。
         """
-        region = cls.ensure_default_configuration(area_code)
+        cls.ensure_default_configuration(area_code)
         datasets = cls._fetch_target_datasets(
             AgriculturalStatisticsRepository.get_datasets()
         )
@@ -348,45 +351,49 @@ class AgriculturalStatisticsService:
         dry_run_count = 0
         skipped_dataset_keys = []
 
-        for dataset in datasets:
-            if dataset.stats_data_id.startswith("TODO_"):
-                skipped_dataset_keys.append(dataset.indicator_key)
-                continue
-
-            response = client.get_stats_data(
-                dataset.stats_data_id, region.area_code, dataset.filters
-            )
-            rows = cls._extract_value_rows(response, default_period_label)
-            estat_updated_at = cls._extract_estat_updated_at(response)
-
-            for row in rows:
-                if dry_run:
-                    dry_run_count += 1
+        regions = cls._fetch_target_regions(area_code, include_national)
+        for region in regions:
+            for dataset in datasets:
+                if dataset.stats_data_id.startswith("TODO_"):
+                    skipped_dataset_keys.append(dataset.indicator_key)
                     continue
-                _, created = AgriculturalStatisticsRepository.save_snapshot(
-                    region=region,
-                    dataset=dataset,
-                    period_label=row.period_label,
-                    value=row.value,
-                    fetched_at=fetched_at,
-                    estat_updated_at=estat_updated_at,
-                    raw_data=row.raw_data,
-                    source_hash=row.source_hash,
-                    force=force,
-                )
-                if created:
-                    created_count += 1
-                else:
-                    skipped_count += 1
 
-        if not dry_run and AgriculturalStatisticsRepository.get_snapshots(region):
-            cls.calculate_and_save_report(region=region, report_date=fetched_at.date())
+                response = client.get_stats_data(
+                    dataset.stats_data_id, region.area_code, dataset.filters
+                )
+                rows = cls._extract_value_rows(response, default_period_label)
+                estat_updated_at = cls._extract_estat_updated_at(response)
+
+                for row in rows:
+                    if dry_run:
+                        dry_run_count += 1
+                        continue
+                    _, created = AgriculturalStatisticsRepository.save_snapshot(
+                        region=region,
+                        dataset=dataset,
+                        period_label=row.period_label,
+                        value=row.value,
+                        fetched_at=fetched_at,
+                        estat_updated_at=estat_updated_at,
+                        raw_data=row.raw_data,
+                        source_hash=row.source_hash,
+                        force=force,
+                    )
+                    if created:
+                        created_count += 1
+                    else:
+                        skipped_count += 1
+
+            if not dry_run and AgriculturalStatisticsRepository.get_snapshots(region):
+                cls.calculate_and_save_report(
+                    region=region, report_date=fetched_at.date()
+                )
 
         return EstatFetchResult(
             created_count=created_count,
             skipped_count=skipped_count,
             dry_run_count=dry_run_count,
-            skipped_dataset_keys=skipped_dataset_keys,
+            skipped_dataset_keys=sorted(set(skipped_dataset_keys)),
         )
 
     @classmethod
@@ -449,10 +456,17 @@ class AgriculturalStatisticsService:
             AgriculturalRiskDashboard: 画面表示用データ。
         """
         region = cls.ensure_default_configuration(area_code)
+        national_region = cls.ensure_default_configuration(NATIONAL_AREA_CODE)
         latest_report = AgriculturalStatisticsRepository.get_latest_risk_report(region)
+        national_report = AgriculturalStatisticsRepository.get_latest_risk_report(
+            national_region
+        )
         snapshots = AgriculturalStatisticsRepository.get_snapshots(region)
         latest_snapshot_values = (
             AgriculturalStatisticsRepository.get_latest_snapshot_values(region)
+        )
+        national_latest_snapshot_values = (
+            AgriculturalStatisticsRepository.get_latest_snapshot_values(national_region)
         )
         age_distribution_snapshots = (
             AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
@@ -497,6 +511,16 @@ class AgriculturalStatisticsService:
             latest_snapshot_values,
             distribution_snapshots,
         )
+        national_distribution_snapshots = (
+            AgriculturalStatisticsRepository.get_latest_snapshots_by_period(
+                national_region, CULTIVATED_AREA_DISTRIBUTION_KEY
+            )
+        )
+        national_dataset_status_rows = cls._build_dataset_status_rows(
+            datasets,
+            national_latest_snapshot_values,
+            national_distribution_snapshots,
+        )
         distribution_sources = cls._distribution_source_rows(dataset_status_rows)
         supplemental_indicator_rows = cls._build_supplemental_indicator_rows(
             AgriculturalStatisticsRepository.get_supplemental_indicators()
@@ -505,6 +529,14 @@ class AgriculturalStatisticsService:
             cls._build_inheritance_land_reversion_summary(supplemental_indicator_rows)
         )
         kpi_basis = cls._build_kpi_basis(dataset_status_rows)
+        national_comparison = cls._build_national_comparison(
+            local_report=latest_report,
+            national_report=national_report,
+            local_kpi_basis=kpi_basis,
+            national_kpi_basis=cls._build_kpi_basis(
+                national_dataset_status_rows, region_label="全国"
+            ),
+        )
         return AgriculturalRiskDashboard(
             region_name=region.name,
             prefecture_name=region.prefecture_name,
@@ -518,6 +550,7 @@ class AgriculturalStatisticsService:
             supplemental_indicator_rows=supplemental_indicator_rows,
             inheritance_land_reversion_summary=inheritance_land_reversion_summary,
             kpi_basis=kpi_basis,
+            national_comparison=national_comparison,
             dataset_status_rows=dataset_status_rows,
             has_data=(
                 latest_report is not None
@@ -950,6 +983,16 @@ class AgriculturalStatisticsService:
             not in DERIVED_INDICATOR_KEYS | CALCULATION_ONLY_INDICATOR_KEYS
         ]
 
+    @classmethod
+    def _fetch_target_regions(cls, area_code: str, include_national: bool) -> list:
+        area_codes = [area_code]
+        if include_national and NATIONAL_AREA_CODE not in area_codes:
+            area_codes.append(NATIONAL_AREA_CODE)
+        return [
+            cls.ensure_default_configuration(target_area_code)
+            for target_area_code in area_codes
+        ]
+
     @staticmethod
     def _display_datasets(datasets: list) -> list:
         return sorted(
@@ -1112,7 +1155,9 @@ class AgriculturalStatisticsService:
         }
 
     @staticmethod
-    def _build_kpi_basis(rows: list[EstatDatasetStatus]) -> dict:
+    def _build_kpi_basis(
+        rows: list[EstatDatasetStatus], region_label: str = "六戸町"
+    ) -> dict:
         """
         KPIカードに表示するデータ根拠を指標取得状況から組み立てます。
 
@@ -1134,22 +1179,22 @@ class AgriculturalStatisticsService:
         )
         return {
             "unmanageable_candidate_area": {
-                "region_label": "六戸町",
+                "region_label": region_label,
                 "period_label": abandoned_period or "-",
                 "source_label": "耕作放棄地面積",
             },
             "farmland_maintenance_rate": {
-                "region_label": "六戸町",
+                "region_label": region_label,
                 "period_label": f"母数: {base_period or '-'}",
                 "source_label": "経営耕地面積と管理不能化候補面積",
             },
             "succession_risk": {
-                "region_label": "六戸町",
+                "region_label": region_label,
                 "period_label": successor_period or "-",
                 "source_label": "後継者を確保していない経営体数 / 計",
             },
             "operator_age_distribution": {
-                "region_label": "六戸町",
+                "region_label": region_label,
                 "period_label": age_period or "-",
                 "source_label": age.display_name if age is not None else "",
                 "stats_data_id": age.stats_data_id if age is not None else "",
@@ -1161,8 +1206,70 @@ class AgriculturalStatisticsService:
                 "source_label": "e-Statで直接取得できる経営意向データは未確定",
             },
             "risk_breakdown": {
-                "region_label": "六戸町",
+                "region_label": region_label,
                 "period_label": f"後継者: {successor_period or '-'} / 耕作放棄地: {abandoned_period or '-'}",
                 "source_label": "農林業センサス由来の補助統計",
             },
+        }
+
+    @classmethod
+    def _build_national_comparison(
+        cls,
+        *,
+        local_report,
+        national_report,
+        local_kpi_basis: dict,
+        national_kpi_basis: dict,
+    ) -> dict:
+        """
+        六戸町KPIと全国KPIを同じ計算定義で比較できる表示行へ整えます。
+
+        後継者なし割合はe-Statの同一設問セットから作る比率、管理不能化候補
+        面積と10年後農地維持率はレポート内の派生計算値として明示します。
+        """
+        if local_report is None or national_report is None:
+            return {"rows": []}
+
+        definitions = [
+            {
+                "key": "unmanageable_candidate_area",
+                "label": "管理不能化候補面積",
+                "unit": "ha",
+                "value_attr": "unmanageable_candidate_area",
+                "basis_type": "派生計算値",
+            },
+            {
+                "key": "farmland_maintenance_rate",
+                "label": "10年後農地維持率",
+                "unit": "%",
+                "value_attr": "farmland_maintenance_rate",
+                "basis_type": "派生計算値",
+            },
+            {
+                "key": "succession_risk",
+                "label": "後継者なし割合",
+                "unit": "%",
+                "value_attr": "succession_risk",
+                "basis_type": "e-Stat由来比率",
+            },
+        ]
+        rows = []
+        for definition in definitions:
+            key = definition["key"]
+            rows.append(
+                {
+                    "label": definition["label"],
+                    "unit": definition["unit"],
+                    "basis_type": definition["basis_type"],
+                    "local_value": getattr(local_report, definition["value_attr"]),
+                    "national_value": getattr(
+                        national_report, definition["value_attr"]
+                    ),
+                    "local_basis": local_kpi_basis[key],
+                    "national_basis": national_kpi_basis[key],
+                }
+            )
+        return {
+            "rows": rows,
+            "note": "全国値は e-Stat 地域コード 00000 を同じ統計表・同じ計算定義で集計しています。",
         }

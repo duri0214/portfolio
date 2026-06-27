@@ -105,6 +105,56 @@
                 後継者なし割合は経営体数ベース、10年後農地維持率は面積ベースの指標です。現時点では年齢階層別の面積を取得できていないため、後継者なし割合を全農地面積へ直接掛けず、耕作放棄地面積など取得済みの面積指標を使った暫定値として表示します。
             </p>
 
+            {% if dashboard.national_comparison.rows %}
+                <section class="report-panel mb-4">
+                    <h2 class="h5">全国比較KPI</h2>
+                    <p class="distribution-note">
+                        {{ dashboard.national_comparison.note }}「e-Stat由来比率」と「派生計算値」を分けて表示します。
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle national-comparison-table mb-0">
+                            <thead>
+                            <tr>
+                                <th>指標</th>
+                                <th>根拠区分</th>
+                                <th class="text-end">{{ dashboard.region_name }}</th>
+                                <th class="text-end">全国</th>
+                                <th>全国値の根拠</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in dashboard.national_comparison.rows %}
+                                <tr>
+                                    <td>{{ row.label }}</td>
+                                    <td><span class="basis-badge">{{ row.basis_type }}</span></td>
+                                    <td class="text-end">
+                                        {% if row.local_value is not None %}
+                                            {{ row.local_value|floatformat:1|intcomma }} {{ row.unit }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                        <span class="comparison-basis">{{ row.local_basis.period_label }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        {% if row.national_value is not None %}
+                                            {{ row.national_value|floatformat:1|intcomma }} {{ row.unit }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                        <span class="comparison-basis">{{ row.national_basis.period_label }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="scope-badge">{{ row.national_basis.region_label }}</span>
+                                        <span class="comparison-basis">{{ row.national_basis.source_label }}</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            {% endif %}
+
             {% if dashboard.cultivated_area_distribution_rows %}
                 <section class="report-panel mb-4">
                     <h2 class="h5">経営耕地面積規模別分布</h2>

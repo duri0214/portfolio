@@ -227,6 +227,7 @@ class AgriculturalRiskDashboard:
         supplemental_indicator_rows: e-Stat 以外の補助指標行。
         inheritance_land_reversion_summary: 相続土地国庫帰属制度の全国統計表示データ。
         kpi_basis: KPIごとの地域粒度・データ時点・根拠。
+        national_comparison: 全国比較KPIの表示データ。
         dataset_status_rows: 指標ごとの取得状況。
         has_data: 表示可能な統計データがあるかどうか。
     """
@@ -243,6 +244,7 @@ class AgriculturalRiskDashboard:
     supplemental_indicator_rows: list[SupplementalRiskIndicatorStatus]
     inheritance_land_reversion_summary: dict
     kpi_basis: dict
+    national_comparison: dict
     dataset_status_rows: list[EstatDatasetStatus]
     has_data: bool
 
