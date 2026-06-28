@@ -178,7 +178,7 @@ class TestView(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, "東保木間一丁目 候補地")
+        self.assertContains(response, "サンプル候補地（東保木間一丁目）")
         self.assertContains(response, "東京都足立区東保木間一丁目")
         self.assertContains(response, "1,234人")
         self.assertContains(response, "city=13121, town=073001")

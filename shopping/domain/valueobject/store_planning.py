@@ -69,7 +69,7 @@ STORE_PLANNING_TARGET_LOCATIONS = [
     ),
     StorePlanningTargetLocation(
         slug="higashi-hokima-1",
-        name="東保木間一丁目 候補地",
+        name="サンプル候補地（東保木間一丁目）",
         address="東京都足立区東保木間一丁目",
         latitude=35.793608,
         longitude=139.811938,
