@@ -66,6 +66,8 @@ class TestView(TestCase):
                 "table_name": "第3表 男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等",
                 "last_modified_date": "2022-02-10",
                 "target_area_name": "東京都足立区東保木間二丁目",
+                "prefecture_name": "東京都",
+                "city_name": "足立区",
                 "city_code": "13121",
                 "town_code": "073002",
                 "total_population": 2289,
@@ -113,6 +115,10 @@ class TestView(TestCase):
         self.assertContains(response, "city=13121, town=073002")
         self.assertContains(response, "resource 000009048041")
         self.assertContains(response, "stat_infid=000032163275")
+        self.assertContains(response, "e-Stat CSV カバー範囲")
+        self.assertContains(response, "東京都")
+        self.assertContains(response, "1 市区町村")
+        self.assertContains(response, "1 町丁字")
         self.assertContains(response, 'role="progressbar"')
         self.assertNotContains(response, "店前通行量シナリオ")
         self.assertNotContains(response, "立地リスク判定")
@@ -137,6 +143,7 @@ class TestView(TestCase):
         self.assertContains(
             response, "daily_fetch_store_planning_data_sources を実行してください"
         )
+        self.assertContains(response, "e-Stat CSVはまだ取り込まれていません")
 
     def test_store_planning_page_switches_population_area_by_store(self):
         """
@@ -157,6 +164,8 @@ class TestView(TestCase):
                 "resource_id": "000009048041",
                 "table_name": "第3表 男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等",
                 "target_area_name": "東京都足立区東保木間一丁目",
+                "prefecture_name": "東京都",
+                "city_name": "足立区",
                 "city_code": "13121",
                 "town_code": "073001",
                 "total_population": 1234,

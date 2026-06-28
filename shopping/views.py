@@ -168,6 +168,9 @@ class StorePlanningView(TemplateView):
         context["population_age_rows"] = self._build_population_age_rows(
             context["data_source_snapshots"]
         )
+        context["population_csv_coverage"] = (
+            StorePlanningDataSourceRepository.get_population_csv_coverage()
+        )
         context["has_fetched_data_sources"] = data_source_snapshot is not None
         context["planning_axes"] = [
             {

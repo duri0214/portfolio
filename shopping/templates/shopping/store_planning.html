@@ -20,7 +20,6 @@
                             <a href="{{ target_location.google_maps_url }}" target="_blank" rel="noopener">
                                 {{ target_location.name }}
                             </a>
-                            <div class="small text-muted">{{ target_location.address }}</div>
                         </dd>
                         <dt class="col-sm-3">人口集計地域</dt>
                         <dd class="col-sm-9">{{ target_location.population_area }}</dd>
@@ -168,6 +167,27 @@
                     <p class="small text-muted mb-0">
                         出店判断では、e-Stat の国勢調査から周辺町丁の住民構成を確認する。
                     </p>
+                </section>
+            </div>
+
+            <div class="col-12">
+                <section class="border rounded p-3">
+                    <h2 class="h6 mb-2">e-Stat CSV カバー範囲</h2>
+                    {% if population_csv_coverage.town_count %}
+                        <p class="small text-muted mb-0">
+                            保存済みCSVは
+                            {{ population_csv_coverage.prefecture_names|join:"・" }}
+                            の {{ population_csv_coverage.city_count|intcomma }} 市区町村、
+                            {{ population_csv_coverage.town_count|intcomma }} 町丁字をカバーしています。
+                            {% if population_csv_coverage.fetched_at %}
+                                アプリ取得日時 {{ population_csv_coverage.fetched_at|date:"Y-m-d H:i" }}。
+                            {% endif %}
+                        </p>
+                    {% else %}
+                        <p class="small text-muted mb-0">
+                            e-Stat CSVはまだ取り込まれていません。取り込み後に都道府県、市区町村数、町丁字数を表示します。
+                        </p>
+                    {% endif %}
                 </section>
             </div>
         </div>

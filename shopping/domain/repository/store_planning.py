@@ -37,3 +37,37 @@ class StorePlanningDataSourceRepository:
         return StorePlanningDataSourceSnapshot.objects.filter(
             source_key=source_key
         ).first()
+
+    @staticmethod
+    def get_population_csv_coverage() -> dict:
+        raw_data_rows = StorePlanningDataSourceSnapshot.objects.values_list(
+            "raw_data", flat=True
+        )
+        prefectures = set()
+        cities = set()
+        town_count = 0
+        fetched_at = None
+        for raw_data in raw_data_rows:
+            prefecture_name = raw_data.get("prefecture_name")
+            city_name = raw_data.get("city_name")
+            city_code = raw_data.get("city_code")
+            town_code = raw_data.get("town_code")
+            if prefecture_name:
+                prefectures.add(prefecture_name)
+            if city_code and city_name:
+                cities.add((city_code, city_name))
+            if city_code and town_code:
+                town_count += 1
+
+        latest_snapshot = StorePlanningDataSourceSnapshot.objects.order_by(
+            "-fetched_at"
+        ).first()
+        if latest_snapshot is not None:
+            fetched_at = latest_snapshot.fetched_at
+
+        return {
+            "prefecture_names": sorted(prefectures),
+            "city_count": len(cities),
+            "town_count": town_count,
+            "fetched_at": fetched_at,
+        }
