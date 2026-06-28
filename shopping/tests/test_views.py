@@ -60,10 +60,6 @@ class TestView(TestCase):
             response,
             "https://www.google.com/maps?q=35.79285640333462,139.81430669359216",
         )
-        self.assertContains(
-            response,
-            "https://www.google.com/maps?q=35.79294926538929,139.81451579469035",
-        )
         self.assertContains(response, "評判・口コミ")
         self.assertContains(response, "通行量・周辺人口")
         self.assertContains(response, "jSTAT MAP / 国勢調査")

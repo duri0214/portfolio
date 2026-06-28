@@ -128,8 +128,6 @@ class StorePlanningView(TemplateView):
     """出店候補地を評判分析と立地リスクの両面から確認する画面。"""
 
     template_name = "shopping/store_planning.html"
-    conversation_latitude = 35.79294926538929
-    conversation_longitude = 139.81451579469035
     store_latitude = 35.79285640333462
     store_longitude = 139.81430669359216
 
@@ -142,14 +140,6 @@ class StorePlanningView(TemplateView):
             "comparison_area": "北千住駅周辺",
             "google_maps_url": self._google_maps_url(
                 self.store_latitude, self.store_longitude
-            ),
-        }
-        context["conversation_location"] = {
-            "label": "会話の起点座標",
-            "latitude": self.conversation_latitude,
-            "longitude": self.conversation_longitude,
-            "google_maps_url": self._google_maps_url(
-                self.conversation_latitude, self.conversation_longitude
             ),
         }
         context["location_assessment"] = LocationRiskService.assess(
