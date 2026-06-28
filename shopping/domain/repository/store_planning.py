@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.utils import timezone
 
 from shopping.domain.valueobject.store_planning import (
@@ -14,23 +15,27 @@ class StorePlanningDataSourceRepository:
         location.source_key for location in STORE_PLANNING_TARGET_LOCATIONS
     ]
 
-    @staticmethod
-    def save_snapshot(
-        data_source: StorePlanningDataSource,
-    ) -> StorePlanningDataSourceSnapshot:
-        snapshot, _ = StorePlanningDataSourceSnapshot.objects.update_or_create(
-            source_key=data_source.source_key,
-            defaults={
-                "display_name": data_source.display_name,
-                "source_url": data_source.source_url,
-                "status": data_source.status,
-                "data_period": data_source.data_period,
-                "source_updated_at": data_source.source_updated_at,
-                "fetched_at": timezone.now(),
-                "raw_data": data_source.raw_data,
-            },
-        )
-        return snapshot
+    @classmethod
+    def replace_snapshots(
+        cls, data_sources: list[StorePlanningDataSource]
+    ) -> list[StorePlanningDataSourceSnapshot]:
+        fetched_at = timezone.now()
+        snapshots = [
+            StorePlanningDataSourceSnapshot(
+                source_key=data_source.source_key,
+                display_name=data_source.display_name,
+                source_url=data_source.source_url,
+                status=data_source.status,
+                data_period=data_source.data_period,
+                source_updated_at=data_source.source_updated_at,
+                fetched_at=fetched_at,
+                raw_data=data_source.raw_data,
+            )
+            for data_source in data_sources
+        ]
+        with transaction.atomic():
+            StorePlanningDataSourceSnapshot.objects.all().delete()
+            return StorePlanningDataSourceSnapshot.objects.bulk_create(snapshots)
 
     @staticmethod
     def list_latest() -> list[StorePlanningDataSourceSnapshot]:

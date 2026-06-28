@@ -10,18 +10,31 @@ from shopping.models import StorePlanningDataSourceSnapshot
 
 class StorePlanningDataSourceCommandTest(TestCase):
     @patch("shopping.domain.dataprovider.estat.requests.get")
-    def test_command_saves_public_data_source_snapshots(self, mock_get):
+    def test_command_replaces_estat_population_snapshots(self, mock_get):
         """
         シナリオ:
-        - 入力: e-Stat国勢調査小地域集計CSVのモックレスポンス。
+        - 入力: 古い保存済みスナップショットと、e-Stat国勢調査小地域集計CSVのモックレスポンス。
         - 処理: 出店計画データソース取得コマンドを実行する。
-        - 期待値: CSV内の各町丁について10歳階級・男女別人口がDBへ保存されること。
+        - 期待値: 古い行が削除され、CSV内の各町丁だけがDBへ保存されること。
         """
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="stale_estat_population_age_groups_99999_999999",
+            display_name="古いe-Stat人口CSV集計",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み",
+            data_period="古いデータ",
+            raw_data={"town_code": "999999"},
+        )
         mock_get.side_effect = self._mock_response
 
         call_command("daily_fetch_store_planning_data_sources", verbosity=0)
 
         self.assertEqual(StorePlanningDataSourceSnapshot.objects.count(), 2)
+        self.assertFalse(
+            StorePlanningDataSourceSnapshot.objects.filter(
+                source_key="stale_estat_population_age_groups_99999_999999"
+            ).exists()
+        )
         population = StorePlanningDataSourceSnapshot.objects.get(
             source_key="estat_population_age_groups_13121_073002"
         )

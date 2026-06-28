@@ -47,8 +47,7 @@ class StorePlanningDataSourceService:
     ) -> list[StorePlanningDataSource]:
         data_sources = cls._fetch_estat_population_age_groups(client)
         if not dry_run:
-            for data_source in data_sources:
-                StorePlanningDataSourceRepository.save_snapshot(data_source)
+            StorePlanningDataSourceRepository.replace_snapshots(data_sources)
         return data_sources
 
     @classmethod
