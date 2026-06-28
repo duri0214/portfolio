@@ -139,6 +139,7 @@ class StorePlanningView(TemplateView):
             "data_period": "未取得",
             "source_updated_at": None,
             "fetched_at": None,
+            "raw_data": {},
         },
         {
             "display_name": "交通量統計表",
@@ -147,6 +148,7 @@ class StorePlanningView(TemplateView):
             "data_period": "未取得",
             "source_updated_at": None,
             "fetched_at": None,
+            "raw_data": {},
         },
         {
             "display_name": "警察庁 交通事故統計オープンデータ",
@@ -155,6 +157,7 @@ class StorePlanningView(TemplateView):
             "data_period": "未取得",
             "source_updated_at": None,
             "fetched_at": None,
+            "raw_data": {},
         },
     ]
 
@@ -184,6 +187,9 @@ class StorePlanningView(TemplateView):
         context["data_source_snapshots"] = (
             data_source_snapshots or self.fallback_data_sources
         )
+        context["data_source_summary_rows"] = self._build_data_source_summary_rows(
+            context["data_source_snapshots"]
+        )
         context["has_fetched_data_sources"] = bool(data_source_snapshots)
         context["planning_axes"] = [
             {
@@ -201,6 +207,65 @@ class StorePlanningView(TemplateView):
 
     def _google_maps_url(self, latitude: float, longitude: float) -> str:
         return f"https://www.google.com/maps?q={latitude},{longitude}"
+
+    def _build_data_source_summary_rows(self, sources):
+        counts = [self._available_count(source) for source in sources]
+        max_count = max(counts) if counts else 1
+        if max_count == 0:
+            max_count = 1
+
+        rows = []
+        for source, count in zip(sources, counts, strict=True):
+            rows.append(
+                {
+                    "display_name": self._source_value(source, "display_name"),
+                    "source_url": self._source_value(source, "source_url"),
+                    "status": self._source_value(source, "status"),
+                    "data_period": self._source_value(source, "data_period"),
+                    "detail_label": self._detail_label(source),
+                    "detail_value": self._detail_value(source, count),
+                    "count": count,
+                    "bar_percent": round(count / max_count * 100),
+                }
+            )
+        return rows
+
+    def _available_count(self, source) -> int:
+        raw_data = self._source_value(source, "raw_data", {})
+        if raw_data.get("resource_names"):
+            return len(raw_data["resource_names"])
+        if raw_data.get("years"):
+            return len(raw_data["years"])
+        if raw_data.get("page_title"):
+            return 1
+        return 0
+
+    def _detail_label(self, source) -> str:
+        raw_data = self._source_value(source, "raw_data", {})
+        if raw_data.get("resource_names"):
+            return "公開リソース"
+        if raw_data.get("years"):
+            return "公開年度"
+        if raw_data.get("page_title"):
+            return "確認ページ"
+        return "取得対象"
+
+    def _detail_value(self, source, count: int) -> str:
+        raw_data = self._source_value(source, "raw_data", {})
+        if raw_data.get("resource_names"):
+            return f"{count} 件"
+        if raw_data.get("years"):
+            first_year = raw_data["years"][0]
+            latest_year = raw_data["years"][-1]
+            return f"{first_year}年から{latest_year}年（{count}年分）"
+        if raw_data.get("page_title"):
+            return raw_data["page_title"]
+        return "未取得"
+
+    def _source_value(self, source, name: str, default=None):
+        if isinstance(source, dict):
+            return source.get(name, default)
+        return getattr(source, name, default)
 
 
 class ProductDetailView(DetailView):

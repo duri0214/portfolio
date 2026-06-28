@@ -83,6 +83,48 @@
                             を実行すると、取得日時と提供元メタ情報が保存されます。
                         </div>
                     {% endif %}
+                    <div class="border rounded p-3 mb-3">
+                        <h4 class="h6 mb-3">利用可能データ量</h4>
+                        {% for row in data_source_summary_rows %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between gap-3 small mb-1">
+                                    <span class="fw-semibold">{{ row.display_name }}</span>
+                                    <span>{{ row.detail_value }}</span>
+                                </div>
+                                <div class="progress" role="progressbar" aria-valuenow="{{ row.bar_percent }}" aria-valuemin="0" aria-valuemax="100" style="height: 10px;">
+                                    <div class="progress-bar" style="width: {{ row.bar_percent }}%;"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                            <tr>
+                                <th>データソース</th>
+                                <th>中身</th>
+                                <th>件数/範囲</th>
+                                <th>データ時点</th>
+                                <th>取得状態</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in data_source_summary_rows %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ row.source_url }}" target="_blank" rel="noopener">
+                                            {{ row.display_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ row.detail_label }}</td>
+                                    <td>{{ row.detail_value }}</td>
+                                    <td>{{ row.data_period|default:"未取得" }}</td>
+                                    <td>{{ row.status }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                     <div class="row g-3 mb-3">
                         {% for source in data_source_snapshots %}
                             <div class="col-md-6">

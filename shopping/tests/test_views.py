@@ -60,6 +60,12 @@ class TestView(TestCase):
             status="取得済み: ZIPリソース 14 件",
             data_period="2年ごと",
             source_updated_at=timezone.now(),
+            raw_data={
+                "resource_names": [
+                    "主要交差点（区部）",
+                    "主要断面",
+                ],
+            },
         )
         StorePlanningDataSourceSnapshot.objects.create(
             source_key="npa_traffic_accident",
@@ -67,6 +73,7 @@ class TestView(TestCase):
             source_url="https://www.npa.go.jp/publications/statistics/koutsuu/opendata/index_opendata.html",
             status="取得済み: 2024年までの年度リンク",
             data_period="2019年から2024年",
+            raw_data={"years": ["2019", "2024"]},
         )
         response = self.client.get(reverse("shp:store_planning"))
 
@@ -80,6 +87,12 @@ class TestView(TestCase):
         self.assertContains(response, "通行量・周辺人口")
         self.assertContains(response, "警視庁 交通量統計表")
         self.assertContains(response, "警察庁 交通事故統計オープンデータ")
+        self.assertContains(response, "利用可能データ量")
+        self.assertContains(response, "データソース")
+        self.assertContains(response, "公開リソース")
+        self.assertContains(response, "2 件")
+        self.assertContains(response, "公開年度")
+        self.assertContains(response, "2019年から2024年（2年分）")
         self.assertContains(response, "取得済み: ZIPリソース 14 件")
         self.assertContains(response, "アプリ取得日時")
         self.assertContains(response, "通りすがり依存は厳しい")
@@ -97,6 +110,9 @@ class TestView(TestCase):
         self.assertContains(response, "jSTAT MAP / 国勢調査")
         self.assertContains(response, "交通量統計表")
         self.assertContains(response, "警察庁 交通事故統計オープンデータ")
+        self.assertContains(response, "利用可能データ量")
+        self.assertContains(response, "データソース")
+        self.assertContains(response, "未取得")
         self.assertContains(
             response, "daily_fetch_store_planning_data_sources を実行してください"
         )
