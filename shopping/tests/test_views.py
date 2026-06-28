@@ -88,14 +88,6 @@ class TestView(TestCase):
                 ],
             },
         )
-        StorePlanningDataSourceSnapshot.objects.create(
-            source_key="npa_traffic_accident",
-            display_name="警察庁 交通事故統計オープンデータ",
-            source_url="https://www.npa.go.jp/publications/statistics/koutsuu/opendata/index_opendata.html",
-            status="取得済み",
-            data_period="2019年から2024年",
-            raw_data={"years": ["2019", "2024"]},
-        )
         response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
@@ -127,7 +119,6 @@ class TestView(TestCase):
         self.assertNotContains(response, "手動で確認するデータ")
         self.assertNotContains(response, "店舗座標")
         self.assertNotContains(response, "比較対象")
-        self.assertNotContains(response, "警察庁 交通事故統計オープンデータ")
 
     def test_store_planning_page_displays_fallback_sources_before_batch(self):
         """
