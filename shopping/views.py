@@ -128,14 +128,29 @@ class StorePlanningView(TemplateView):
     """出店候補地を評判分析と立地リスクの両面から確認する画面。"""
 
     template_name = "shopping/store_planning.html"
+    conversation_latitude = 35.79294926538929
+    conversation_longitude = 139.81451579469035
+    store_latitude = 35.79285640333462
+    store_longitude = 139.81430669359216
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["target_location"] = {
-            "name": "足立区千住大川町付近の喫茶店",
-            "latitude": 35.79294926538929,
-            "longitude": 139.81451579469035,
+            "name": "Chapter Table",
+            "latitude": self.store_latitude,
+            "longitude": self.store_longitude,
             "comparison_area": "北千住駅周辺",
+            "google_maps_url": self._google_maps_url(
+                self.store_latitude, self.store_longitude
+            ),
+        }
+        context["conversation_location"] = {
+            "label": "会話の起点座標",
+            "latitude": self.conversation_latitude,
+            "longitude": self.conversation_longitude,
+            "google_maps_url": self._google_maps_url(
+                self.conversation_latitude, self.conversation_longitude
+            ),
         }
         context["location_assessment"] = LocationRiskService.assess(
             pedestrian_count_per_hour=30
@@ -144,17 +159,26 @@ class StorePlanningView(TemplateView):
             {
                 "name": "店前通行量の実測",
                 "usage": "平日/休日、朝/昼/夕方に10分から15分だけ数えて1時間換算する",
-                "status": "手入力",
+                "status": "未取得: 実測が必要",
+                "source_url": "",
             },
             {
                 "name": "jSTAT MAP / 国勢調査",
                 "usage": "半径500m圏の夜間人口、世帯属性、年代構成を確認する",
-                "status": "外部確認",
+                "status": "取得元確定: 数値未取得",
+                "source_url": "https://www.e-stat.go.jp/gis/gislp/",
             },
             {
-                "name": "Google Maps 混雑傾向",
-                "usage": "対象店舗と駅前店舗の曜日別ピークを比較する",
-                "status": "外部確認",
+                "name": "警視庁 交通量統計表",
+                "usage": "近傍の主要交差点/主要断面に観測点があるか確認し、駅前側と比較する",
+                "status": "取得元確定: 近傍観測点の確認が必要",
+                "source_url": "https://catalog.data.metro.tokyo.lg.jp/dataset/t000022d0000000035",
+            },
+            {
+                "name": "警察庁 交通事故統計オープンデータ",
+                "usage": "事故地点を半径500mで抽出し、歩行者・自転車の安全面を補助指標にする",
+                "status": "取得元確定: 抽出未実装",
+                "source_url": "https://www.npa.go.jp/publications/statistics/koutsuu/opendata/index_opendata.html",
             },
         ]
         context["planning_axes"] = [
@@ -170,6 +194,9 @@ class StorePlanningView(TemplateView):
             },
         ]
         return context
+
+    def _google_maps_url(self, latitude: float, longitude: float) -> str:
+        return f"https://www.google.com/maps?q={latitude},{longitude}"
 
 
 class ProductDetailView(DetailView):

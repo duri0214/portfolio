@@ -55,8 +55,20 @@ class TestView(TestCase):
         response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
+        self.assertContains(response, "Chapter Table")
+        self.assertContains(
+            response,
+            "https://www.google.com/maps?q=35.79285640333462,139.81430669359216",
+        )
+        self.assertContains(
+            response,
+            "https://www.google.com/maps?q=35.79294926538929,139.81451579469035",
+        )
         self.assertContains(response, "評判・口コミ")
         self.assertContains(response, "通行量・周辺人口")
+        self.assertContains(response, "jSTAT MAP / 国勢調査")
+        self.assertContains(response, "警視庁 交通量統計表")
+        self.assertContains(response, "警察庁 交通事故統計オープンデータ")
         self.assertContains(response, "通りすがり依存は厳しい")
 
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
