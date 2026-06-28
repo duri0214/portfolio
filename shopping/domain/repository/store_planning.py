@@ -7,6 +7,8 @@ from shopping.models import StorePlanningDataSourceSnapshot
 class StorePlanningDataSourceRepository:
     """出店計画で使う外部データソースの取得結果を保存・参照する。"""
 
+    ACTIVE_SOURCE_KEYS = ["estat_population_age_groups_higashi_hokima_2"]
+
     @staticmethod
     def save_snapshot(
         data_source: StorePlanningDataSource,
@@ -27,4 +29,8 @@ class StorePlanningDataSourceRepository:
 
     @staticmethod
     def list_latest() -> list[StorePlanningDataSourceSnapshot]:
-        return list(StorePlanningDataSourceSnapshot.objects.order_by("display_name"))
+        return list(
+            StorePlanningDataSourceSnapshot.objects.filter(
+                source_key__in=StorePlanningDataSourceRepository.ACTIVE_SOURCE_KEYS
+            ).order_by("display_name")
+        )

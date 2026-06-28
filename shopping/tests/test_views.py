@@ -54,19 +54,32 @@ class TestView(TestCase):
         - 期待値: HTTP 200 が返され、評判分析と立地リスクの2軸が表示されること。
         """
         StorePlanningDataSourceSnapshot.objects.create(
-            source_key="estat_jstat_map",
-            display_name="jSTAT MAP / 国勢調査",
-            source_url="https://www.e-stat.go.jp/gis/gislp/",
-            status="取得済み: 公式ページ到達確認",
-            data_period="統計表ごとの対象期間はAPI取得時に確定",
+            source_key="estat_population_age_groups_higashi_hokima_2",
+            display_name="e-Stat 国勢調査 年齢別人口",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み: Chapter Table 周辺町丁の年齢別人口",
+            data_period="令和2年国勢調査 小地域集計",
             source_updated_at=timezone.now(),
-            raw_data={"page_title": "jSTAT MAP"},
+            raw_data={
+                "stat_inf_id": "000032163275",
+                "resource_id": "000009048041",
+                "table_name": "第3表 男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等",
+                "last_modified_date": "2022-02-10",
+                "target_area_name": "東京都足立区東保木間二丁目",
+                "city_code": "13121",
+                "town_code": "073002",
+                "total_population": 2289,
+                "age_groups": [
+                    {"label": "0～4歳", "population": 101},
+                    {"label": "5～9歳", "population": 119},
+                ],
+            },
         )
         StorePlanningDataSourceSnapshot.objects.create(
             source_key="npa_traffic_accident",
             display_name="警察庁 交通事故統計オープンデータ",
             source_url="https://www.npa.go.jp/publications/statistics/koutsuu/opendata/index_opendata.html",
-            status="取得済み: 2024年までの年度リンク",
+            status="取得済み",
             data_period="2019年から2024年",
             raw_data={"years": ["2019", "2024"]},
         )
@@ -78,18 +91,27 @@ class TestView(TestCase):
             response,
             "https://www.google.com/maps?q=35.79285640333462,139.81430669359216",
         )
+        self.assertContains(response, "人口集計地域")
+        self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "評判・口コミ")
-        self.assertContains(response, "店前実測・周辺人口")
-        self.assertContains(response, "jSTAT MAP / 国勢調査")
-        self.assertContains(response, "警察庁 交通事故統計オープンデータ")
-        self.assertContains(response, "データソース")
-        self.assertContains(response, "指標名")
-        self.assertContains(response, "公式ページ到達確認")
-        self.assertContains(response, "到達済み: jSTAT MAP")
-        self.assertContains(response, "公開年度範囲")
-        self.assertContains(response, "2019年から2024年（2年分）")
-        self.assertContains(response, "アプリ取得日時")
-        self.assertContains(response, "通りすがり依存は厳しい")
+        self.assertContains(response, "e-Stat 年代別人口")
+        self.assertContains(response, "e-Stat 年代別人口")
+        self.assertContains(response, "使用した指標")
+        self.assertContains(response, "ファイルID")
+        self.assertContains(response, "取得条件")
+        self.assertContains(response, "2,289 人")
+        self.assertContains(response, "0～4歳")
+        self.assertContains(response, "101 人")
+        self.assertContains(response, "city=13121, town=073002")
+        self.assertContains(response, "resource 000009048041")
+        self.assertContains(response, "stat_infid=000032163275")
+        self.assertContains(response, 'role="progressbar"')
+        self.assertNotContains(response, "店前通行量シナリオ")
+        self.assertNotContains(response, "立地リスク判定")
+        self.assertNotContains(response, "手動で確認するデータ")
+        self.assertNotContains(response, "店舗座標")
+        self.assertNotContains(response, "比較対象")
+        self.assertNotContains(response, "警察庁 交通事故統計オープンデータ")
 
     def test_store_planning_page_displays_fallback_sources_before_batch(self):
         """
@@ -101,10 +123,9 @@ class TestView(TestCase):
         response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, "jSTAT MAP / 国勢調査")
-        self.assertContains(response, "警察庁 交通事故統計オープンデータ")
-        self.assertContains(response, "データソース")
-        self.assertContains(response, "指標名")
+        self.assertContains(response, "e-Stat 年代別人口")
+        self.assertContains(response, "ファイルID")
+        self.assertContains(response, "取得条件")
         self.assertContains(response, "未取得")
         self.assertContains(
             response, "daily_fetch_store_planning_data_sources を実行してください"

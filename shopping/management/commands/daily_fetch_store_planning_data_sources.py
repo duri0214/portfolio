@@ -1,4 +1,7 @@
+import os
+
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
 
 from shopping.domain.dataprovider.public_dataset import PublicDatasetClient
 from shopping.domain.service.store_planning_data import StorePlanningDataSourceService
@@ -15,9 +18,14 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        estat_app_id = os.getenv("ESTAT_APP_ID")
+        if not estat_app_id:
+            raise CommandError("ESTAT_APP_ID is not set.")
+
         client = PublicDatasetClient()
         data_sources = StorePlanningDataSourceService.fetch_all(
             client=client,
+            estat_app_id=estat_app_id,
             dry_run=options["dry_run"],
         )
         self.stdout.write(

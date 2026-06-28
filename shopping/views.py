@@ -18,7 +18,6 @@ from .domain.repository.product import ProductRepository
 from .domain.repository.store_planning import StorePlanningDataSourceRepository
 from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
-from .domain.service.location_risk import LocationRiskService
 from .domain.service.payment import StripePaymentService
 from .domain.valueobject.payment import PaymentIntent, PaymentInfo
 from .forms import (
@@ -133,22 +132,17 @@ class StorePlanningView(TemplateView):
     store_longitude = 139.81430669359216
     fallback_data_sources = [
         {
-            "display_name": "jSTAT MAP / 国勢調査",
-            "source_url": "https://www.e-stat.go.jp/gis/gislp/",
+            "display_name": "e-Stat 国勢調査 年齢別人口",
+            "source_url": "https://www.e-stat.go.jp/stat-search/files?cycle=0&cycle_facet=tclass1%3Acycle&layout=datalist&page=1&tclass1=000001136472&tclass2=000001159886&tclass3val=0&toukei=00200521&tstat=000001136464",
             "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
             "data_period": "未取得",
             "source_updated_at": None,
             "fetched_at": None,
-            "raw_data": {},
-        },
-        {
-            "display_name": "警察庁 交通事故統計オープンデータ",
-            "source_url": "https://www.npa.go.jp/publications/statistics/koutsuu/opendata/index_opendata.html",
-            "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
-            "data_period": "未取得",
-            "source_updated_at": None,
-            "fetched_at": None,
-            "raw_data": {},
+            "raw_data": {
+                "target_area_name": "東京都足立区東保木間二丁目",
+                "stat_inf_id": "000032163275",
+                "age_groups": [],
+            },
         },
     ]
 
@@ -156,29 +150,19 @@ class StorePlanningView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["target_location"] = {
             "name": "Chapter Table",
-            "latitude": self.store_latitude,
-            "longitude": self.store_longitude,
-            "comparison_area": "北千住駅周辺",
             "google_maps_url": self._google_maps_url(
                 self.store_latitude, self.store_longitude
             ),
+            "population_area": "東京都足立区東保木間二丁目",
         }
-        context["location_assessment"] = LocationRiskService.assess(
-            pedestrian_count_per_hour=30
-        )
-        context["manual_data_sources"] = [
-            {
-                "name": "店前通行量の実測",
-                "usage": "平日/休日、朝/昼/夕方に10分から15分だけ数えて1時間換算する",
-                "status": "未取得: 実測が必要",
-                "source_url": "",
-            },
-        ]
         data_source_snapshots = StorePlanningDataSourceRepository.list_latest()
         context["data_source_snapshots"] = (
             data_source_snapshots or self.fallback_data_sources
         )
-        context["data_source_metric_rows"] = self._build_data_source_metric_rows(
+        context["population_summary"] = self._build_population_summary(
+            context["data_source_snapshots"]
+        )
+        context["population_age_rows"] = self._build_population_age_rows(
             context["data_source_snapshots"]
         )
         context["has_fetched_data_sources"] = bool(data_source_snapshots)
@@ -189,8 +173,8 @@ class StorePlanningView(TemplateView):
                 "issue": "#131",
             },
             {
-                "title": "店前実測・周辺人口",
-                "summary": "店前を通る人数は短時間の実測で把握し、周辺人口は公的統計で確認する",
+                "title": "e-Stat 年代別人口",
+                "summary": "Chapter Table 周辺町丁の住民構成を国勢調査の年代別人口で確認する",
                 "issue": "#803",
             },
         ]
@@ -199,44 +183,56 @@ class StorePlanningView(TemplateView):
     def _google_maps_url(self, latitude: float, longitude: float) -> str:
         return f"https://www.google.com/maps?q={latitude},{longitude}"
 
-    def _build_data_source_metric_rows(self, sources):
-        rows = []
+    def _build_population_summary(self, sources):
         for source in sources:
-            rows.append(
-                {
-                    "display_name": self._source_value(source, "display_name"),
+            raw_data = self._source_value(source, "raw_data", {})
+            if raw_data.get("target_area_name"):
+                return {
+                    "target_area_name": raw_data.get("target_area_name"),
+                    "total_population": raw_data.get("total_population"),
+                    "stat_inf_id": raw_data.get("stat_inf_id"),
+                    "resource_id": raw_data.get("resource_id"),
+                    "table_name": raw_data.get("table_name"),
+                    "city_code": raw_data.get("city_code"),
+                    "town_code": raw_data.get("town_code"),
+                    "release_date": raw_data.get("release_date"),
+                    "last_modified_date": raw_data.get("last_modified_date"),
+                    "source_updated_at": self._source_value(
+                        source, "source_updated_at"
+                    ),
                     "source_url": self._source_value(source, "source_url"),
+                    "stat_inf_url": self._stat_inf_url(raw_data.get("stat_inf_id")),
                     "status": self._source_value(source, "status"),
                     "data_period": self._source_value(source, "data_period"),
-                    "metric_name": self._metric_name(source),
-                    "metric_value": self._metric_value(source),
                 }
-            )
-        return rows
+        return {}
 
-    def _metric_name(self, source) -> str:
-        raw_data = self._source_value(source, "raw_data", {})
-        if raw_data.get("years"):
-            return "公開年度範囲"
-        if raw_data.get("page_title"):
-            return "公式ページ到達確認"
-        return "未取得"
-
-    def _metric_value(self, source) -> str:
-        raw_data = self._source_value(source, "raw_data", {})
-        if raw_data.get("years"):
-            first_year = raw_data["years"][0]
-            latest_year = raw_data["years"][-1]
-            year_count = len(raw_data["years"])
-            return f"{first_year}年から{latest_year}年（{year_count}年分）"
-        if raw_data.get("page_title"):
-            return f"到達済み: {raw_data['page_title']}"
-        return "未取得"
+    def _build_population_age_rows(self, sources):
+        for source in sources:
+            raw_data = self._source_value(source, "raw_data", {})
+            if raw_data.get("age_groups"):
+                max_population = max(
+                    row["population"] or 0 for row in raw_data["age_groups"]
+                )
+                rows = []
+                for row in raw_data["age_groups"]:
+                    population = row["population"]
+                    share = 0
+                    if max_population and population is not None:
+                        share = round(population / max_population * 100, 1)
+                    rows.append({**row, "share": share})
+                return rows
+        return []
 
     def _source_value(self, source, name: str, default=None):
         if isinstance(source, dict):
             return source.get(name, default)
         return getattr(source, name, default)
+
+    def _stat_inf_url(self, stat_inf_id: str | None) -> str:
+        if not stat_inf_id:
+            return ""
+        return f"https://www.e-stat.go.jp/stat-search/files?stat_infid={stat_inf_id}"
 
 
 class ProductDetailView(DetailView):
