@@ -1,7 +1,4 @@
 import re
-from datetime import datetime
-
-from django.utils import timezone
 
 from shopping.domain.dataprovider.public_dataset import PublicDatasetClient
 from shopping.domain.repository.store_planning import StorePlanningDataSourceRepository
@@ -11,10 +8,6 @@ from shopping.domain.valueobject.store_planning import StorePlanningDataSource
 class StorePlanningDataSourceService:
     """出店計画で使う外部データソースのメタ情報を取得して保存する。"""
 
-    TOKYO_TRAFFIC_DATASET_API_URL = (
-        "https://catalog.data.metro.tokyo.lg.jp/api/3/action/package_show"
-        "?id=t000022d0000000035"
-    )
     NPA_ACCIDENT_OPEN_DATA_URL = (
         "https://www.npa.go.jp/publications/statistics/koutsuu/opendata/"
         "index_opendata.html"
@@ -28,7 +21,6 @@ class StorePlanningDataSourceService:
         dry_run: bool = False,
     ) -> list[StorePlanningDataSource]:
         data_sources = [
-            cls._fetch_tokyo_traffic_dataset(client),
             cls._fetch_npa_accident_open_data(client),
             cls._fetch_estat_gis_page(client),
         ]
@@ -36,31 +28,6 @@ class StorePlanningDataSourceService:
             for data_source in data_sources:
                 StorePlanningDataSourceRepository.save_snapshot(data_source)
         return data_sources
-
-    @classmethod
-    def _fetch_tokyo_traffic_dataset(
-        cls, client: PublicDatasetClient
-    ) -> StorePlanningDataSource:
-        response = client.get_json(cls.TOKYO_TRAFFIC_DATASET_API_URL)
-        result = response["result"]
-        resources = result.get("resources", [])
-        resource_names = [resource.get("name", "") for resource in resources]
-        source_updated_at = cls._parse_datetime(result.get("metadata_modified"))
-        update_frequency = cls._find_extra_value(result, "更新頻度")
-
-        return StorePlanningDataSource(
-            source_key="keishicho_traffic_volume",
-            display_name=result.get("title", "交通量統計表"),
-            source_url=result.get("url") or cls.TOKYO_TRAFFIC_DATASET_API_URL,
-            status=f"取得済み: ZIPリソース {len(resources)} 件",
-            data_period=update_frequency or "更新頻度未取得",
-            source_updated_at=source_updated_at,
-            raw_data={
-                "package_name": result.get("name"),
-                "organization": result.get("organization", {}).get("title"),
-                "resource_names": resource_names,
-            },
-        )
 
     @classmethod
     def _fetch_npa_accident_open_data(
@@ -100,19 +67,3 @@ class StorePlanningDataSourceService:
             source_updated_at=None,
             raw_data={"page_title": page_title},
         )
-
-    @staticmethod
-    def _parse_datetime(value: str | None) -> datetime | None:
-        if not value:
-            return None
-        parsed = datetime.fromisoformat(value)
-        if timezone.is_naive(parsed):
-            return timezone.make_aware(parsed)
-        return parsed
-
-    @staticmethod
-    def _find_extra_value(result: dict, key: str) -> str:
-        for extra in result.get("extras", []):
-            if extra.get("key") == key:
-                return extra.get("value", "")
-        return ""

@@ -142,15 +142,6 @@ class StorePlanningView(TemplateView):
             "raw_data": {},
         },
         {
-            "display_name": "交通量統計表",
-            "source_url": "https://catalog.data.metro.tokyo.lg.jp/dataset/t000022d0000000035",
-            "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
-            "data_period": "未取得",
-            "source_updated_at": None,
-            "fetched_at": None,
-            "raw_data": {},
-        },
-        {
             "display_name": "警察庁 交通事故統計オープンデータ",
             "source_url": "https://www.npa.go.jp/publications/statistics/koutsuu/opendata/index_opendata.html",
             "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
@@ -198,8 +189,8 @@ class StorePlanningView(TemplateView):
                 "issue": "#131",
             },
             {
-                "title": "通行量・周辺人口",
-                "summary": "店前を通る人数と周辺人口から、通りすがり集客への依存度を判断する",
+                "title": "店前実測・周辺人口",
+                "summary": "店前を通る人数は短時間の実測で把握し、周辺人口は公的統計で確認する",
                 "issue": "#803",
             },
         ]
@@ -225,8 +216,6 @@ class StorePlanningView(TemplateView):
 
     def _metric_name(self, source) -> str:
         raw_data = self._source_value(source, "raw_data", {})
-        if raw_data.get("resource_names"):
-            return "公開ZIPリソース数"
         if raw_data.get("years"):
             return "公開年度範囲"
         if raw_data.get("page_title"):
@@ -235,9 +224,6 @@ class StorePlanningView(TemplateView):
 
     def _metric_value(self, source) -> str:
         raw_data = self._source_value(source, "raw_data", {})
-        if raw_data.get("resource_names"):
-            count = len(raw_data["resource_names"])
-            return f"{count} 件"
         if raw_data.get("years"):
             first_year = raw_data["years"][0]
             latest_year = raw_data["years"][-1]
