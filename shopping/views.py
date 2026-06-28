@@ -187,7 +187,7 @@ class StorePlanningView(TemplateView):
         context["data_source_snapshots"] = (
             data_source_snapshots or self.fallback_data_sources
         )
-        context["data_source_summary_rows"] = self._build_data_source_summary_rows(
+        context["data_source_metric_rows"] = self._build_data_source_metric_rows(
             context["data_source_snapshots"]
         )
         context["has_fetched_data_sources"] = bool(data_source_snapshots)
@@ -208,58 +208,43 @@ class StorePlanningView(TemplateView):
     def _google_maps_url(self, latitude: float, longitude: float) -> str:
         return f"https://www.google.com/maps?q={latitude},{longitude}"
 
-    def _build_data_source_summary_rows(self, sources):
-        counts = [self._available_count(source) for source in sources]
-        max_count = max(counts) if counts else 1
-        if max_count == 0:
-            max_count = 1
-
+    def _build_data_source_metric_rows(self, sources):
         rows = []
-        for source, count in zip(sources, counts, strict=True):
+        for source in sources:
             rows.append(
                 {
                     "display_name": self._source_value(source, "display_name"),
                     "source_url": self._source_value(source, "source_url"),
                     "status": self._source_value(source, "status"),
                     "data_period": self._source_value(source, "data_period"),
-                    "detail_label": self._detail_label(source),
-                    "detail_value": self._detail_value(source, count),
-                    "count": count,
-                    "bar_percent": round(count / max_count * 100),
+                    "metric_name": self._metric_name(source),
+                    "metric_value": self._metric_value(source),
                 }
             )
         return rows
 
-    def _available_count(self, source) -> int:
+    def _metric_name(self, source) -> str:
         raw_data = self._source_value(source, "raw_data", {})
         if raw_data.get("resource_names"):
-            return len(raw_data["resource_names"])
+            return "公開ZIPリソース数"
         if raw_data.get("years"):
-            return len(raw_data["years"])
+            return "公開年度範囲"
         if raw_data.get("page_title"):
-            return 1
-        return 0
+            return "公式ページ到達確認"
+        return "未取得"
 
-    def _detail_label(self, source) -> str:
+    def _metric_value(self, source) -> str:
         raw_data = self._source_value(source, "raw_data", {})
         if raw_data.get("resource_names"):
-            return "公開リソース"
-        if raw_data.get("years"):
-            return "公開年度"
-        if raw_data.get("page_title"):
-            return "確認ページ"
-        return "取得対象"
-
-    def _detail_value(self, source, count: int) -> str:
-        raw_data = self._source_value(source, "raw_data", {})
-        if raw_data.get("resource_names"):
+            count = len(raw_data["resource_names"])
             return f"{count} 件"
         if raw_data.get("years"):
             first_year = raw_data["years"][0]
             latest_year = raw_data["years"][-1]
-            return f"{first_year}年から{latest_year}年（{count}年分）"
+            year_count = len(raw_data["years"])
+            return f"{first_year}年から{latest_year}年（{year_count}年分）"
         if raw_data.get("page_title"):
-            return raw_data["page_title"]
+            return f"到達済み: {raw_data['page_title']}"
         return "未取得"
 
     def _source_value(self, source, name: str, default=None):
