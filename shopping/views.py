@@ -15,6 +15,7 @@ from django.views.generic import (
 from config import settings
 from .domain.repository.payment import StripePaymentRepository
 from .domain.repository.product import ProductRepository
+from .domain.repository.store_planning import StorePlanningDataSourceRepository
 from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.location_risk import LocationRiskService
@@ -145,32 +146,17 @@ class StorePlanningView(TemplateView):
         context["location_assessment"] = LocationRiskService.assess(
             pedestrian_count_per_hour=30
         )
-        context["data_sources"] = [
+        context["manual_data_sources"] = [
             {
                 "name": "店前通行量の実測",
                 "usage": "平日/休日、朝/昼/夕方に10分から15分だけ数えて1時間換算する",
                 "status": "未取得: 実測が必要",
                 "source_url": "",
             },
-            {
-                "name": "jSTAT MAP / 国勢調査",
-                "usage": "半径500m圏の夜間人口、世帯属性、年代構成を確認する",
-                "status": "取得元確定: 数値未取得",
-                "source_url": "https://www.e-stat.go.jp/gis/gislp/",
-            },
-            {
-                "name": "警視庁 交通量統計表",
-                "usage": "近傍の主要交差点/主要断面に観測点があるか確認し、駅前側と比較する",
-                "status": "取得元確定: 近傍観測点の確認が必要",
-                "source_url": "https://catalog.data.metro.tokyo.lg.jp/dataset/t000022d0000000035",
-            },
-            {
-                "name": "警察庁 交通事故統計オープンデータ",
-                "usage": "事故地点を半径500mで抽出し、歩行者・自転車の安全面を補助指標にする",
-                "status": "取得元確定: 抽出未実装",
-                "source_url": "https://www.npa.go.jp/publications/statistics/koutsuu/opendata/index_opendata.html",
-            },
         ]
+        context["data_source_snapshots"] = (
+            StorePlanningDataSourceRepository.list_latest()
+        )
         context["planning_axes"] = [
             {
                 "title": "評判・口コミ",

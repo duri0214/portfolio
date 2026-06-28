@@ -14,6 +14,34 @@ class Store(models.Model):
         return self.name
 
 
+class StorePlanningDataSourceSnapshot(models.Model):
+    """
+    出店計画で参照する外部データソースの取得スナップショット。
+
+    Attributes:
+        source_key: データソースを識別するキー。
+        display_name: 画面に表示するデータソース名。
+        source_url: 提供元を確認できる公開URL。
+        status: 取得・利用状態。
+        data_period: 提供元データの対象期間や更新頻度。
+        source_updated_at: 提供元が公表している更新日時。
+        fetched_at: アプリがローカルDBへ保存した日時。
+        raw_data: 提供元レスポンスから保存したメタ情報。
+    """
+
+    source_key = models.CharField("データソースキー", max_length=100, unique=True)
+    display_name = models.CharField("表示名", max_length=255)
+    source_url = models.URLField("提供元URL", max_length=500)
+    status = models.CharField("取得状態", max_length=100)
+    data_period = models.CharField("データ時点", max_length=255, blank=True)
+    source_updated_at = models.DateTimeField("提供元更新日時", null=True, blank=True)
+    fetched_at = models.DateTimeField("アプリ取得日時", default=timezone.now)
+    raw_data = models.JSONField("取得メタデータ", default=dict, blank=True)
+
+    def __str__(self):
+        return self.display_name
+
+
 class UserAttribute(models.Model):
     """
     ショッピングアプリ特有のユーザー属性。

@@ -3,8 +3,9 @@ from django.template.loader import render_to_string
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
+from django.utils import timezone
 
-from shopping.models import Product, Store
+from shopping.models import Product, Store, StorePlanningDataSourceSnapshot
 
 
 class TestView(TestCase):
@@ -48,10 +49,25 @@ class TestView(TestCase):
     def test_get_store_planning_page_200(self):
         """
         シナリオ:
-        - 入力: 出店計画画面のURL。
+        - 入力: 公開データソース取得結果が保存済みのDBと、出店計画画面のURL。
         - 処理: テストクライアントでGETする。
         - 期待値: HTTP 200 が返され、評判分析と立地リスクの2軸が表示されること。
         """
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="keishicho_traffic_volume",
+            display_name="警視庁 交通量統計表",
+            source_url="https://catalog.data.metro.tokyo.lg.jp/dataset/t000022d0000000035",
+            status="取得済み: ZIPリソース 14 件",
+            data_period="2年ごと",
+            source_updated_at=timezone.now(),
+        )
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="npa_traffic_accident",
+            display_name="警察庁 交通事故統計オープンデータ",
+            source_url="https://www.npa.go.jp/publications/statistics/koutsuu/opendata/index_opendata.html",
+            status="取得済み: 2024年までの年度リンク",
+            data_period="2019年から2024年",
+        )
         response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
@@ -62,9 +78,10 @@ class TestView(TestCase):
         )
         self.assertContains(response, "評判・口コミ")
         self.assertContains(response, "通行量・周辺人口")
-        self.assertContains(response, "jSTAT MAP / 国勢調査")
         self.assertContains(response, "警視庁 交通量統計表")
         self.assertContains(response, "警察庁 交通事故統計オープンデータ")
+        self.assertContains(response, "取得済み: ZIPリソース 14 件")
+        self.assertContains(response, "アプリ取得日時")
         self.assertContains(response, "通りすがり依存は厳しい")
 
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
