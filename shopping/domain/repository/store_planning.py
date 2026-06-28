@@ -1,19 +1,12 @@
 from django.db import transaction
 from django.utils import timezone
 
-from shopping.domain.valueobject.store_planning import (
-    STORE_PLANNING_TARGET_LOCATIONS,
-    StorePlanningDataSource,
-)
+from shopping.domain.valueobject.store_planning import StorePlanningDataSource
 from shopping.models import StorePlanningDataSourceSnapshot
 
 
 class StorePlanningDataSourceRepository:
     """出店計画で使う e-Stat 人口CSVの集計結果を保存・参照する。"""
-
-    ACTIVE_SOURCE_KEYS = [
-        location.source_key for location in STORE_PLANNING_TARGET_LOCATIONS
-    ]
 
     @classmethod
     def replace_snapshots(
@@ -36,14 +29,6 @@ class StorePlanningDataSourceRepository:
         with transaction.atomic():
             StorePlanningDataSourceSnapshot.objects.all().delete()
             return StorePlanningDataSourceSnapshot.objects.bulk_create(snapshots)
-
-    @staticmethod
-    def list_latest() -> list[StorePlanningDataSourceSnapshot]:
-        return list(
-            StorePlanningDataSourceSnapshot.objects.filter(
-                source_key__in=StorePlanningDataSourceRepository.ACTIVE_SOURCE_KEYS
-            ).order_by("source_key")
-        )
 
     @staticmethod
     def get_latest_by_source_key(
