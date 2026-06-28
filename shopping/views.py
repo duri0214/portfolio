@@ -125,7 +125,7 @@ class IndexView(ListView):
 
 
 class StorePlanningView(TemplateView):
-    """出店候補地を評判分析と立地リスクの両面から確認する画面。"""
+    """出店候補地を評判分析と周辺人口の両面から確認する画面。"""
 
     template_name = "shopping/store_planning.html"
     store_latitude = 35.79285640333462
@@ -172,11 +172,6 @@ class StorePlanningView(TemplateView):
                 "summary": "Google Maps レビューを集約し、エリアの印象やネガティブ要因を把握する",
                 "issue": "#131",
             },
-            {
-                "title": "e-Stat 年代別人口",
-                "summary": "Chapter Table 周辺町丁の住民構成を国勢調査の年代別人口で確認する",
-                "issue": "#803",
-            },
         ]
         return context
 
@@ -197,6 +192,9 @@ class StorePlanningView(TemplateView):
                     "town_code": raw_data.get("town_code"),
                     "release_date": raw_data.get("release_date"),
                     "last_modified_date": raw_data.get("last_modified_date"),
+                    "average_age": raw_data.get("average_age"),
+                    "male_population": raw_data.get("male_population"),
+                    "female_population": raw_data.get("female_population"),
                     "source_updated_at": self._source_value(
                         source, "source_updated_at"
                     ),

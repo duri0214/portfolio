@@ -51,7 +51,7 @@ class TestView(TestCase):
         シナリオ:
         - 入力: 公開データソース取得結果が保存済みのDBと、出店計画画面のURL。
         - 処理: テストクライアントでGETする。
-        - 期待値: HTTP 200 が返され、評判分析と立地リスクの2軸が表示されること。
+        - 期待値: HTTP 200 が返され、評判分析とe-Stat人口分析が表示されること。
         """
         StorePlanningDataSourceSnapshot.objects.create(
             source_key="estat_population_age_groups_higashi_hokima_2",
@@ -69,9 +69,22 @@ class TestView(TestCase):
                 "city_code": "13121",
                 "town_code": "073002",
                 "total_population": 2289,
+                "male_population": 1120,
+                "female_population": 1169,
+                "average_age": 43.8,
                 "age_groups": [
-                    {"label": "0～4歳", "population": 101},
-                    {"label": "5～9歳", "population": 119},
+                    {
+                        "label": "0代",
+                        "population": 220,
+                        "male_population": 110,
+                        "female_population": 110,
+                    },
+                    {
+                        "label": "10代",
+                        "population": 220,
+                        "male_population": 112,
+                        "female_population": 108,
+                    },
                 ],
             },
         )
@@ -95,13 +108,16 @@ class TestView(TestCase):
         self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "評判・口コミ")
         self.assertContains(response, "e-Stat 年代別人口")
-        self.assertContains(response, "e-Stat 年代別人口")
+        self.assertNotContains(response, "#803")
         self.assertContains(response, "使用した指標")
         self.assertContains(response, "ファイルID")
         self.assertContains(response, "取得条件")
-        self.assertContains(response, "2,289 人")
-        self.assertContains(response, "0～4歳")
-        self.assertContains(response, "101 人")
+        self.assertContains(response, "2,289人")
+        self.assertContains(response, "平均年齢 43.8 歳")
+        self.assertContains(response, "男 1,120人")
+        self.assertContains(response, "女 1,169人")
+        self.assertContains(response, "0代")
+        self.assertContains(response, "220人")
         self.assertContains(response, "city=13121, town=073002")
         self.assertContains(response, "resource 000009048041")
         self.assertContains(response, "stat_infid=000032163275")
