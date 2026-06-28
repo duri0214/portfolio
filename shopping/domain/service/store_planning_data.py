@@ -24,9 +24,6 @@ class StorePlanningDataSourceService:
     ESTAT_POPULATION_TABLE_NAME = (
         "男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等"
     )
-    TARGET_CITY_CODE = "13121"
-    TARGET_TOWN_CODE = "073002"
-    TARGET_AREA_NAME = "東京都足立区東保木間二丁目"
     AGE_GROUPS = [
         ("0代", list(range(13, 15))),
         ("10代", list(range(15, 17))),
@@ -48,9 +45,7 @@ class StorePlanningDataSourceService:
         client: PublicDatasetClient,
         dry_run: bool = False,
     ) -> list[StorePlanningDataSource]:
-        data_sources = [
-            cls._fetch_estat_population_age_groups(client),
-        ]
+        data_sources = cls._fetch_estat_population_age_groups(client)
         if not dry_run:
             for data_source in data_sources:
                 StorePlanningDataSourceRepository.save_snapshot(data_source)
@@ -59,29 +54,38 @@ class StorePlanningDataSourceService:
     @classmethod
     def _fetch_estat_population_age_groups(
         cls, client: PublicDatasetClient
-    ) -> StorePlanningDataSource:
+    ) -> list[StorePlanningDataSource]:
         csv_text = client.get_text(cls.ESTAT_POPULATION_CSV_URL, encoding="cp932")
         reader = csv.reader(StringIO(csv_text))
         rows = list(reader)
         header = rows[4]
-        target_rows = cls._find_target_population_rows(rows)
+        grouped_rows = cls._group_population_rows(rows)
+        return [
+            cls._build_population_data_source(header, target_rows)
+            for target_rows in grouped_rows.values()
+        ]
+
+    @classmethod
+    def _build_population_data_source(
+        cls,
+        header: list[str],
+        target_rows: dict[str, list[str]],
+    ) -> StorePlanningDataSource:
         total_row = target_rows["総数"]
         age_groups = cls._build_age_group_rows(target_rows)
+        area_name = cls._area_name(total_row)
+        city_code = total_row[2]
+        town_code = total_row[3]
 
         return StorePlanningDataSource(
-            source_key="estat_population_age_groups_higashi_hokima_2",
-            display_name="e-Stat 国勢調査 年齢別人口",
+            source_key=cls._source_key(city_code, town_code),
+            display_name=f"e-Stat 国勢調査 年齢別人口: {area_name}",
             source_url=cls.ESTAT_POPULATION_SOURCE_URL,
-            status="取得済み: Chapter Table 周辺町丁の年齢別人口",
+            status=f"取得済み: {area_name} の年齢別人口",
             data_period="令和2年国勢調査 小地域集計",
             source_updated_at=None,
             raw_data={
-                "stat_inf_id": cls.ESTAT_POPULATION_STAT_INF_ID,
-                "resource_id": cls.ESTAT_POPULATION_RESOURCE_ID,
-                "table_name": cls._table_name(header),
-                "target_area_name": cls.TARGET_AREA_NAME,
-                "city_code": cls.TARGET_CITY_CODE,
-                "town_code": cls.TARGET_TOWN_CODE,
+                **cls._base_raw_data(header, total_row),
                 "total_population": cls._to_int(total_row[12]),
                 "male_population": cls._to_int(target_rows["男"][12]),
                 "female_population": cls._to_int(target_rows["女"][12]),
@@ -99,23 +103,44 @@ class StorePlanningDataSourceService:
         )
 
     @classmethod
-    def _find_target_population_rows(
+    def _base_raw_data(cls, header: list[str], total_row: list[str]) -> dict:
+        return {
+            "stat_inf_id": cls.ESTAT_POPULATION_STAT_INF_ID,
+            "resource_id": cls.ESTAT_POPULATION_RESOURCE_ID,
+            "table_name": cls._table_name(header),
+            "target_area_name": cls._area_name(total_row),
+            "prefecture_name": total_row[8],
+            "city_name": total_row[9],
+            "large_area_name": total_row[10],
+            "small_area_name": total_row[11],
+            "city_code": total_row[2],
+            "town_code": total_row[3],
+            "age_groups": [],
+        }
+
+    @classmethod
+    def _group_population_rows(
         cls, rows: list[list[str]]
-    ) -> dict[str, list[str]]:
-        target_rows = {}
+    ) -> dict[tuple[str, str], dict[str, list[str]]]:
+        grouped_rows = {}
         for row in rows:
-            if (
-                len(row) > 12
-                and row[1] in {"総数", "男", "女"}
-                and row[2] == cls.TARGET_CITY_CODE
-                and row[3] == cls.TARGET_TOWN_CODE
-            ):
-                target_rows[row[1]] = row
-        if {"総数", "男", "女"}.issubset(target_rows):
-            return target_rows
-        raise ValueError(
-            f"e-Stat CSVに対象地域が見つかりません: {cls.TARGET_AREA_NAME}"
-        )
+            if len(row) <= 12 or row[1] not in {"総数", "男", "女"}:
+                continue
+            key = (row[2], row[3])
+            grouped_rows.setdefault(key, {})[row[1]] = row
+        return {
+            key: target_rows
+            for key, target_rows in grouped_rows.items()
+            if {"総数", "男", "女"}.issubset(target_rows)
+        }
+
+    @staticmethod
+    def _source_key(city_code: str, town_code: str) -> str:
+        return f"estat_population_age_groups_{city_code}_{town_code}"
+
+    @staticmethod
+    def _area_name(row: list[str]) -> str:
+        return "".join(row[index] for index in range(8, 12) if row[index])
 
     @classmethod
     def _build_age_group_rows(

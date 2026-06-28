@@ -1,13 +1,18 @@
 from django.utils import timezone
 
-from shopping.domain.valueobject.store_planning import StorePlanningDataSource
+from shopping.domain.valueobject.store_planning import (
+    STORE_PLANNING_TARGET_LOCATIONS,
+    StorePlanningDataSource,
+)
 from shopping.models import StorePlanningDataSourceSnapshot
 
 
 class StorePlanningDataSourceRepository:
     """出店計画で使う外部データソースの取得結果を保存・参照する。"""
 
-    ACTIVE_SOURCE_KEYS = ["estat_population_age_groups_higashi_hokima_2"]
+    ACTIVE_SOURCE_KEYS = [
+        location.source_key for location in STORE_PLANNING_TARGET_LOCATIONS
+    ]
 
     @staticmethod
     def save_snapshot(
@@ -32,5 +37,13 @@ class StorePlanningDataSourceRepository:
         return list(
             StorePlanningDataSourceSnapshot.objects.filter(
                 source_key__in=StorePlanningDataSourceRepository.ACTIVE_SOURCE_KEYS
-            ).order_by("display_name")
+            ).order_by("source_key")
         )
+
+    @staticmethod
+    def get_latest_by_source_key(
+        source_key: str,
+    ) -> StorePlanningDataSourceSnapshot | None:
+        return StorePlanningDataSourceSnapshot.objects.filter(
+            source_key=source_key
+        ).first()

@@ -54,7 +54,7 @@ class TestView(TestCase):
         - 期待値: HTTP 200 が返され、評判分析とe-Stat人口分析が表示されること。
         """
         StorePlanningDataSourceSnapshot.objects.create(
-            source_key="estat_population_age_groups_higashi_hokima_2",
+            source_key="estat_population_age_groups_13121_073002",
             display_name="e-Stat 国勢調査 年齢別人口",
             source_url="https://www.e-stat.go.jp/stat-search/files",
             status="取得済み: Chapter Table 周辺町丁の年齢別人口",
@@ -137,6 +137,51 @@ class TestView(TestCase):
         self.assertContains(
             response, "daily_fetch_store_planning_data_sources を実行してください"
         )
+
+    def test_store_planning_page_switches_population_area_by_store(self):
+        """
+        シナリオ:
+        - 入力: 複数町丁のe-Stat人口スナップショットと、店舗候補を指定したURL。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: 指定した店舗候補に紐づく町丁の人口分析が表示されること。
+        """
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="estat_population_age_groups_13121_073001",
+            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間一丁目",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み: 東京都足立区東保木間一丁目 の年齢別人口",
+            data_period="令和2年国勢調査 小地域集計",
+            source_updated_at=timezone.now(),
+            raw_data={
+                "stat_inf_id": "000032163275",
+                "resource_id": "000009048041",
+                "table_name": "第3表 男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等",
+                "target_area_name": "東京都足立区東保木間一丁目",
+                "city_code": "13121",
+                "town_code": "073001",
+                "total_population": 1234,
+                "male_population": 600,
+                "female_population": 634,
+                "average_age": 44.1,
+                "age_groups": [
+                    {
+                        "label": "0代",
+                        "population": 110,
+                        "male_population": 55,
+                        "female_population": 55,
+                    },
+                ],
+            },
+        )
+
+        url = f"{reverse('shp:store_planning')}?store=higashi-hokima-1"
+        response = self.client.get(url)
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "東保木間一丁目 候補地")
+        self.assertContains(response, "東京都足立区東保木間一丁目")
+        self.assertContains(response, "1,234人")
+        self.assertContains(response, "city=13121, town=073001")
 
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
         """

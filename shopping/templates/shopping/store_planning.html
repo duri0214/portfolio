@@ -20,10 +20,18 @@
                             <a href="{{ target_location.google_maps_url }}" target="_blank" rel="noopener">
                                 {{ target_location.name }}
                             </a>
+                            <div class="small text-muted">{{ target_location.address }}</div>
                         </dd>
                         <dt class="col-sm-3">人口集計地域</dt>
                         <dd class="col-sm-9">{{ target_location.population_area }}</dd>
                     </dl>
+                    <div class="d-flex flex-wrap gap-2 mt-3" aria-label="店舗候補">
+                        {% for store in store_locations %}
+                            <a class="btn btn-sm {% if store.is_active %}btn-primary{% else %}btn-outline-primary{% endif %}" href="?store={{ store.slug }}">
+                                {{ store.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 

@@ -19,6 +19,7 @@ from .domain.repository.store_planning import StorePlanningDataSourceRepository
 from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
+from .domain.valueobject.store_planning import STORE_PLANNING_TARGET_LOCATIONS
 from .domain.valueobject.payment import PaymentIntent, PaymentInfo
 from .forms import (
     ProductCreateFormSingle,
@@ -128,44 +129,46 @@ class StorePlanningView(TemplateView):
     """出店候補地を評判分析と周辺人口の両面から確認する画面。"""
 
     template_name = "shopping/store_planning.html"
-    store_latitude = 35.79285640333462
-    store_longitude = 139.81430669359216
-    fallback_data_sources = [
-        {
-            "display_name": "e-Stat 国勢調査 年齢別人口",
-            "source_url": "https://www.e-stat.go.jp/stat-search/files?cycle=0&cycle_facet=tclass1%3Acycle&layout=datalist&page=1&tclass1=000001136472&tclass2=000001159886&tclass3val=0&toukei=00200521&tstat=000001136464",
-            "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
-            "data_period": "未取得",
-            "source_updated_at": None,
-            "fetched_at": None,
-            "raw_data": {
-                "target_area_name": "東京都足立区東保木間二丁目",
-                "stat_inf_id": "000032163275",
-                "age_groups": [],
-            },
-        },
-    ]
+    fallback_source_url = "https://www.e-stat.go.jp/stat-search/files?cycle=0&cycle_facet=tclass1%3Acycle&layout=datalist&page=1&tclass1=000001136472&tclass2=000001159886&tclass3val=0&toukei=00200521&tstat=000001136464"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        locations = STORE_PLANNING_TARGET_LOCATIONS
+        selected_location = self._selected_location()
         context["target_location"] = {
-            "name": "Chapter Table",
+            "slug": selected_location.slug,
+            "name": selected_location.name,
+            "address": selected_location.address,
             "google_maps_url": self._google_maps_url(
-                self.store_latitude, self.store_longitude
+                selected_location.latitude, selected_location.longitude
             ),
-            "population_area": "東京都足立区東保木間二丁目",
+            "population_area": selected_location.population_area,
         }
-        data_source_snapshots = StorePlanningDataSourceRepository.list_latest()
-        context["data_source_snapshots"] = (
-            data_source_snapshots or self.fallback_data_sources
+        context["store_locations"] = [
+            {
+                "slug": location.slug,
+                "name": location.name,
+                "address": location.address,
+                "is_active": location.slug == selected_location.slug,
+                "source_key": location.source_key,
+            }
+            for location in locations
+        ]
+        data_source_snapshot = (
+            StorePlanningDataSourceRepository.get_latest_by_source_key(
+                selected_location.source_key
+            )
         )
+        context["data_source_snapshots"] = [
+            data_source_snapshot or self._fallback_data_source(selected_location)
+        ]
         context["population_summary"] = self._build_population_summary(
             context["data_source_snapshots"]
         )
         context["population_age_rows"] = self._build_population_age_rows(
             context["data_source_snapshots"]
         )
-        context["has_fetched_data_sources"] = bool(data_source_snapshots)
+        context["has_fetched_data_sources"] = data_source_snapshot is not None
         context["planning_axes"] = [
             {
                 "title": "評判・口コミ",
@@ -174,6 +177,33 @@ class StorePlanningView(TemplateView):
             },
         ]
         return context
+
+    def _selected_location(self):
+        requested_slug = self.request.GET.get("store")
+        for location in STORE_PLANNING_TARGET_LOCATIONS:
+            if location.slug == requested_slug:
+                return location
+        return STORE_PLANNING_TARGET_LOCATIONS[0]
+
+    def _fallback_data_source(self, location):
+        return {
+            "display_name": f"e-Stat 国勢調査 年齢別人口: {location.name}",
+            "source_url": self.fallback_source_url,
+            "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
+            "data_period": "未取得",
+            "source_updated_at": None,
+            "fetched_at": None,
+            "raw_data": {
+                "store_slug": location.slug,
+                "store_name": location.name,
+                "store_address": location.address,
+                "target_area_name": location.population_area,
+                "city_code": location.city_code,
+                "town_code": location.town_code,
+                "stat_inf_id": "000032163275",
+                "age_groups": [],
+            },
+        }
 
     def _google_maps_url(self, latitude: float, longitude: float) -> str:
         return f"https://www.google.com/maps?q={latitude},{longitude}"
@@ -184,6 +214,8 @@ class StorePlanningView(TemplateView):
             if raw_data.get("target_area_name"):
                 return {
                     "target_area_name": raw_data.get("target_area_name"),
+                    "store_name": raw_data.get("store_name"),
+                    "store_address": raw_data.get("store_address"),
                     "total_population": raw_data.get("total_population"),
                     "stat_inf_id": raw_data.get("stat_inf_id"),
                     "resource_id": raw_data.get("resource_id"),

@@ -15,17 +15,20 @@ class StorePlanningDataSourceCommandTest(TestCase):
         シナリオ:
         - 入力: e-Stat国勢調査小地域集計CSVのモックレスポンス。
         - 処理: 出店計画データソース取得コマンドを実行する。
-        - 期待値: Chapter Table 周辺町丁の10歳階級・男女別人口がDBへ保存されること。
+        - 期待値: CSV内の各町丁について10歳階級・男女別人口がDBへ保存されること。
         """
         mock_get.side_effect = self._mock_response
 
         call_command("daily_fetch_store_planning_data_sources", verbosity=0)
 
-        self.assertEqual(StorePlanningDataSourceSnapshot.objects.count(), 1)
+        self.assertEqual(StorePlanningDataSourceSnapshot.objects.count(), 2)
         population = StorePlanningDataSourceSnapshot.objects.get(
-            source_key="estat_population_age_groups_higashi_hokima_2"
+            source_key="estat_population_age_groups_13121_073002"
         )
-        self.assertEqual("e-Stat 国勢調査 年齢別人口", population.display_name)
+        self.assertEqual(
+            "e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間二丁目",
+            population.display_name,
+        )
         self.assertEqual("令和2年国勢調査 小地域集計", population.data_period)
         self.assertEqual(
             "東京都足立区東保木間二丁目", population.raw_data["target_area_name"]
@@ -48,6 +51,14 @@ class StorePlanningDataSourceCommandTest(TestCase):
         self.assertEqual(
             population.raw_data["total_population"],
             sum(row["population"] for row in population.raw_data["age_groups"]),
+        )
+        other_population = StorePlanningDataSourceSnapshot.objects.get(
+            source_key="estat_population_age_groups_13121_073001"
+        )
+        self.assertEqual(1234, other_population.raw_data["total_population"])
+        self.assertEqual(
+            "東京都足立区東保木間一丁目",
+            other_population.raw_data["target_area_name"],
         )
 
     @patch("shopping.domain.dataprovider.public_dataset.requests.get")
@@ -168,6 +179,99 @@ class StorePlanningDataSourceCommandTest(TestCase):
                 ],
                 "45.0",
             ),
+            self._population_row(
+                "総数",
+                "1234",
+                [
+                    "50",
+                    "60",
+                    "70",
+                    "80",
+                    "90",
+                    "100",
+                    "110",
+                    "120",
+                    "130",
+                    "140",
+                    "150",
+                    "160",
+                    "40",
+                    "35",
+                    "30",
+                    "25",
+                    "20",
+                    "15",
+                    "10",
+                    "5",
+                    "0",
+                    "4",
+                ],
+                "44.1",
+                town_code="073001",
+                small_area_name="一丁目",
+            ),
+            self._population_row(
+                "男",
+                "600",
+                [
+                    "25",
+                    "30",
+                    "35",
+                    "40",
+                    "45",
+                    "50",
+                    "55",
+                    "60",
+                    "65",
+                    "70",
+                    "75",
+                    "80",
+                    "20",
+                    "17",
+                    "15",
+                    "12",
+                    "10",
+                    "7",
+                    "5",
+                    "2",
+                    "0",
+                    "2",
+                ],
+                "43.5",
+                town_code="073001",
+                small_area_name="一丁目",
+            ),
+            self._population_row(
+                "女",
+                "634",
+                [
+                    "25",
+                    "30",
+                    "35",
+                    "40",
+                    "45",
+                    "50",
+                    "55",
+                    "60",
+                    "65",
+                    "70",
+                    "75",
+                    "80",
+                    "20",
+                    "18",
+                    "15",
+                    "13",
+                    "10",
+                    "8",
+                    "5",
+                    "3",
+                    "0",
+                    "2",
+                ],
+                "44.8",
+                town_code="073001",
+                small_area_name="一丁目",
+            ),
         ]
         for row in rows:
             output.write(",".join(row))
@@ -216,13 +320,19 @@ class StorePlanningDataSourceCommandTest(TestCase):
         ]
 
     def _population_row(
-        self, gender: str, total: str, ages: list[str], average_age: str
+        self,
+        gender: str,
+        total: str,
+        ages: list[str],
+        average_age: str,
+        town_code: str = "073002",
+        small_area_name: str = "二丁目",
     ):
         return [
             "3399",
             gender,
             "13121",
-            "073002",
+            town_code,
             "4",
             "",
             "",
@@ -230,7 +340,7 @@ class StorePlanningDataSourceCommandTest(TestCase):
             "東京都",
             "足立区",
             "東保木間",
-            "二丁目",
+            small_area_name,
             total,
             *ages,
             average_age,
