@@ -328,8 +328,8 @@ class StorePlanningDataSourceCommandTest(TestCase):
             "95～99歳",
             "100歳以上",
             "年齢不詳",
-            "平均年齢",
-            "総年齢",
+            "-",
+            "-",
         ]
 
     def _population_row(
@@ -356,6 +356,6 @@ class StorePlanningDataSourceCommandTest(TestCase):
             small_area_name,
             total,
             *ages,
+            "95520",
             average_age,
-            "",
         ]

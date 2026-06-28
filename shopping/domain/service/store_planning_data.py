@@ -88,15 +88,9 @@ class StorePlanningDataSourceService:
                 "total_population": cls._to_int(total_row[12]),
                 "male_population": cls._to_int(target_rows["男"][12]),
                 "female_population": cls._to_int(target_rows["女"][12]),
-                "average_age": cls._to_float(
-                    cls._value_by_header(header, total_row, "平均年齢")
-                ),
-                "male_average_age": cls._to_float(
-                    cls._value_by_header(header, target_rows["男"], "平均年齢")
-                ),
-                "female_average_age": cls._to_float(
-                    cls._value_by_header(header, target_rows["女"], "平均年齢")
-                ),
+                "average_age": cls._average_age(total_row),
+                "male_average_age": cls._average_age(target_rows["男"]),
+                "female_average_age": cls._average_age(target_rows["女"]),
                 "age_groups": age_groups,
             },
         )
@@ -182,12 +176,11 @@ class StorePlanningDataSourceService:
         return float(value.replace(",", ""))
 
     @classmethod
-    def _value_by_header(
-        cls, header: list[str], row: list[str], column_name: str
-    ) -> str | None:
-        if column_name not in header:
+    def _average_age(cls, row: list[str]) -> float | None:
+        value = cls._to_float(row[-1])
+        if value is None:
             return None
-        return row[header.index(column_name)]
+        return round(value, 1)
 
     @classmethod
     def _table_name(cls, header: list[str]) -> str:
