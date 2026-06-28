@@ -84,6 +84,23 @@ class TestView(TestCase):
         self.assertContains(response, "アプリ取得日時")
         self.assertContains(response, "通りすがり依存は厳しい")
 
+    def test_store_planning_page_displays_fallback_sources_before_batch(self):
+        """
+        シナリオ:
+        - 入力: 公開データソース取得結果が未保存のDBと、出店計画画面のURL。
+        - 処理: テストクライアントでGETする。
+        - 期待値: バッチ未実行でも確認対象のデータソース名と未取得状態が表示されること。
+        """
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "jSTAT MAP / 国勢調査")
+        self.assertContains(response, "交通量統計表")
+        self.assertContains(response, "警察庁 交通事故統計オープンデータ")
+        self.assertContains(
+            response, "daily_fetch_store_planning_data_sources を実行してください"
+        )
+
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
         """
         シナリオ:

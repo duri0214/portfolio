@@ -131,6 +131,32 @@ class StorePlanningView(TemplateView):
     template_name = "shopping/store_planning.html"
     store_latitude = 35.79285640333462
     store_longitude = 139.81430669359216
+    fallback_data_sources = [
+        {
+            "display_name": "jSTAT MAP / 国勢調査",
+            "source_url": "https://www.e-stat.go.jp/gis/gislp/",
+            "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
+            "data_period": "未取得",
+            "source_updated_at": None,
+            "fetched_at": None,
+        },
+        {
+            "display_name": "交通量統計表",
+            "source_url": "https://catalog.data.metro.tokyo.lg.jp/dataset/t000022d0000000035",
+            "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
+            "data_period": "未取得",
+            "source_updated_at": None,
+            "fetched_at": None,
+        },
+        {
+            "display_name": "警察庁 交通事故統計オープンデータ",
+            "source_url": "https://www.npa.go.jp/publications/statistics/koutsuu/opendata/index_opendata.html",
+            "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
+            "data_period": "未取得",
+            "source_updated_at": None,
+            "fetched_at": None,
+        },
+    ]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -154,9 +180,11 @@ class StorePlanningView(TemplateView):
                 "source_url": "",
             },
         ]
+        data_source_snapshots = StorePlanningDataSourceRepository.list_latest()
         context["data_source_snapshots"] = (
-            StorePlanningDataSourceRepository.list_latest()
+            data_source_snapshots or self.fallback_data_sources
         )
+        context["has_fetched_data_sources"] = bool(data_source_snapshots)
         context["planning_axes"] = [
             {
                 "title": "評判・口コミ",

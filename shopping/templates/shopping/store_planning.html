@@ -76,6 +76,13 @@
                     <p class="fs-5 fw-semibold mb-2">{{ location_assessment.risk_label }}</p>
                     <p class="mb-4">{{ location_assessment.recommendation }}</p>
                     <h3 class="h6 mb-3">取得済みデータソース</h3>
+                    {% if not has_fetched_data_sources %}
+                        <div class="alert alert-warning">
+                            公開データソースはまだ取得されていません。
+                            <code>python manage.py daily_fetch_store_planning_data_sources</code>
+                            を実行すると、取得日時と提供元メタ情報が保存されます。
+                        </div>
+                    {% endif %}
                     <div class="row g-3 mb-3">
                         {% for source in data_source_snapshots %}
                             <div class="col-md-6">
@@ -94,14 +101,6 @@
                                     <a class="small" href="{{ source.source_url }}" target="_blank" rel="noopener">
                                         データ元を開く
                                     </a>
-                                </div>
-                            </div>
-                        {% empty %}
-                            <div class="col-12">
-                                <div class="alert alert-warning mb-0">
-                                    公開データソースはまだ取得されていません。
-                                    <code>python manage.py daily_fetch_store_planning_data_sources</code>
-                                    を実行すると表示されます。
                                 </div>
                             </div>
                         {% endfor %}
