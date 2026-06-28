@@ -9,7 +9,7 @@ from shopping.models import StorePlanningDataSourceSnapshot
 
 
 class StorePlanningDataSourceCommandTest(TestCase):
-    @patch("shopping.domain.dataprovider.public_dataset.requests.get")
+    @patch("shopping.domain.dataprovider.estat.requests.get")
     def test_command_saves_public_data_source_snapshots(self, mock_get):
         """
         シナリオ:
@@ -61,7 +61,7 @@ class StorePlanningDataSourceCommandTest(TestCase):
             other_population.raw_data["target_area_name"],
         )
 
-    @patch("shopping.domain.dataprovider.public_dataset.requests.get")
+    @patch("shopping.domain.dataprovider.estat.requests.get")
     def test_command_dry_run_does_not_write_database(self, mock_get):
         """
         シナリオ:

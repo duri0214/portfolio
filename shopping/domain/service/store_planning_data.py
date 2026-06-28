@@ -1,13 +1,13 @@
 import csv
 from io import StringIO
 
-from shopping.domain.dataprovider.public_dataset import PublicDatasetClient
+from shopping.domain.dataprovider.estat import EstatCsvClient
 from shopping.domain.repository.store_planning import StorePlanningDataSourceRepository
 from shopping.domain.valueobject.store_planning import StorePlanningDataSource
 
 
 class StorePlanningDataSourceService:
-    """出店計画で使う外部データソースのメタ情報を取得して保存する。"""
+    """出店計画で使う e-Stat 人口CSVを取得・集計して保存する。"""
 
     ESTAT_POPULATION_SOURCE_URL = (
         "https://www.e-stat.go.jp/stat-search/files"
@@ -42,7 +42,7 @@ class StorePlanningDataSourceService:
     @classmethod
     def fetch_all(
         cls,
-        client: PublicDatasetClient,
+        client: EstatCsvClient,
         dry_run: bool = False,
     ) -> list[StorePlanningDataSource]:
         data_sources = cls._fetch_estat_population_age_groups(client)
@@ -53,7 +53,7 @@ class StorePlanningDataSourceService:
 
     @classmethod
     def _fetch_estat_population_age_groups(
-        cls, client: PublicDatasetClient
+        cls, client: EstatCsvClient
     ) -> list[StorePlanningDataSource]:
         csv_text = client.get_text(cls.ESTAT_POPULATION_CSV_URL, encoding="cp932")
         reader = csv.reader(StringIO(csv_text))

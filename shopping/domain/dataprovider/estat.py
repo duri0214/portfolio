@@ -1,8 +1,8 @@
 import requests
 
 
-class PublicDatasetClient:
-    """出店計画で使う公開データソースを取得するHTTPクライアント。"""
+class EstatCsvClient:
+    """出店計画で使う e-Stat CSV を取得するHTTPクライアント。"""
 
     TIMEOUT_SECONDS = 20
 

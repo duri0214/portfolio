@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from shopping.domain.dataprovider.public_dataset import PublicDatasetClient
+from shopping.domain.dataprovider.estat import EstatCsvClient
 from shopping.domain.service.store_planning_data import StorePlanningDataSourceService
 
 
@@ -15,7 +15,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        client = PublicDatasetClient()
+        client = EstatCsvClient()
         data_sources = StorePlanningDataSourceService.fetch_all(
             client=client,
             dry_run=options["dry_run"],

@@ -8,7 +8,7 @@ from shopping.models import StorePlanningDataSourceSnapshot
 
 
 class StorePlanningDataSourceRepository:
-    """出店計画で使う外部データソースの取得結果を保存・参照する。"""
+    """出店計画で使う e-Stat 人口CSVの集計結果を保存・参照する。"""
 
     ACTIVE_SOURCE_KEYS = [
         location.source_key for location in STORE_PLANNING_TARGET_LOCATIONS

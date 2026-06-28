@@ -49,7 +49,7 @@ class TestView(TestCase):
     def test_get_store_planning_page_200(self):
         """
         シナリオ:
-        - 入力: 公開データソース取得結果が保存済みのDBと、出店計画画面のURL。
+        - 入力: e-Stat人口CSVの集計結果が保存済みのDBと、出店計画画面のURL。
         - 処理: テストクライアントでGETする。
         - 期待値: HTTP 200 が返され、評判分析とe-Stat人口分析が表示されること。
         """
@@ -123,7 +123,7 @@ class TestView(TestCase):
     def test_store_planning_page_displays_fallback_sources_before_batch(self):
         """
         シナリオ:
-        - 入力: 公開データソース取得結果が未保存のDBと、出店計画画面のURL。
+        - 入力: e-Stat人口CSVの集計結果が未保存のDBと、出店計画画面のURL。
         - 処理: テストクライアントでGETする。
         - 期待値: バッチ未実行でも確認対象のデータソース名と未取得状態が表示されること。
         """
