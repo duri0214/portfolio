@@ -349,39 +349,47 @@ class StorePlanningView(TemplateView):
     ) -> list[dict]:
         return [
             {
-                "title": "店舗",
-                "description": "Chapter Table のピンへ地図を移動する。",
-                "buttons": [
-                    {
-                        "label": selected_location.name,
-                        "map_url": selected_location.place_google_maps_embed_url,
-                        "map_title": f"{selected_location.name} の地図",
-                        "is_selected": True,
-                    }
-                ],
-            },
-            {
                 "title": "広域（地域階層レベル3）",
-                "description": "大字・町名単位で周辺を俯瞰する。",
-                "buttons": self._map_buttons_from_rows(region_level3_rows),
+                "description": "大字・町名単位の広域を俯瞰し、店舗位置をピンで確認する。",
+                "buttons": self._map_buttons_from_rows(
+                    region_level3_rows, selected_location, zoom_level=14
+                ),
             },
             {
                 "title": "町丁（地域階層レベル4）",
-                "description": "町丁目単位の比較候補へ地図を移動する。",
-                "buttons": self._map_buttons_from_rows(region_comparison_rows),
+                "description": "町丁目単位の比較候補を見ながら、店舗位置をピンで確認する。",
+                "buttons": self._map_buttons_from_rows(
+                    region_comparison_rows, selected_location, zoom_level=16
+                ),
             },
         ]
 
-    def _map_buttons_from_rows(self, rows: list[dict]) -> list[dict]:
+    def _map_buttons_from_rows(
+        self,
+        rows: list[dict],
+        selected_location: StorePlanningTargetLocation,
+        zoom_level: int,
+    ) -> list[dict]:
         return [
             {
                 "label": row["population_area"],
-                "map_url": row["area_google_maps_embed_url"],
-                "map_title": f"{row['population_area']} の地図",
+                "map_url": self._store_pin_map_url(selected_location, zoom_level),
+                "map_title": f"{row['population_area']} から見る {selected_location.name}",
                 "is_selected": False,
             }
             for row in rows
         ]
+
+    def _store_pin_map_url(
+        self, selected_location: StorePlanningTargetLocation, zoom_level: int
+    ) -> str:
+        if selected_location.latitude is None or selected_location.longitude is None:
+            return selected_location.area_google_maps_embed_url
+        return (
+            "https://www.google.com/maps?"
+            f"q={selected_location.latitude},{selected_location.longitude}"
+            f"&z={zoom_level}&output=embed"
+        )
 
     def _build_region_comparison_meta(self, rows: list[dict]) -> dict:
         for row in rows:

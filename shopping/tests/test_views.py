@@ -135,8 +135,15 @@ class TestView(TestCase):
         self.assertContains(response, "代表地点")
         self.assertContains(response, "maps/search/?api=1")
         self.assertContains(
-            response, "https://www.google.com/maps?q=35.793608,139.811938"
+            response,
+            "https://www.google.com/maps?q=35.792822,139.8143238&amp;z=16&amp;output=embed",
         )
+        self.assertNotContains(
+            response,
+            'data-map-url="https://www.google.com/maps?q=35.793608,139.811938',
+        )
+        self.assertNotContains(response, "Chapter Table のピンへ地図を移動する")
+        self.assertNotContains(response, "店舗ピン")
         self.assertContains(response, 'role="progressbar"')
         self.assertNotContains(response, "店前通行量シナリオ")
         self.assertNotContains(response, "立地リスク判定")
@@ -339,6 +346,14 @@ class TestView(TestCase):
         self.assertContains(response, "地域階層レベル4")
         self.assertContains(response, "0730")
         self.assertContains(response, "073001")
+        self.assertContains(
+            response,
+            "https://www.google.com/maps?q=35.792822,139.8143238&amp;z=14&amp;output=embed",
+        )
+        self.assertContains(
+            response,
+            "https://www.google.com/maps?q=35.792822,139.8143238&amp;z=16&amp;output=embed",
+        )
         self.assertContains(
             response,
             "市区町村コード・地域階層レベル4・町丁字コード先頭2桁から抽出（境界未確認）",
