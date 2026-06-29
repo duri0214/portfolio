@@ -85,20 +85,13 @@ class StorePlanningDataSourceRepository:
         町丁字コード先頭2桁が一致する地域を候補として返す。
         """
         town_code_prefix = town_code[:2]
-        snapshots = StorePlanningDataSourceSnapshot.objects.order_by("source_key")
-        candidates = []
-        for snapshot in snapshots:
-            raw_data = snapshot.raw_data
-            candidate_town_code = raw_data.get("town_code", "")
-            if raw_data.get("city_code") != city_code:
-                continue
-            if raw_data.get("area_hierarchy_level") != "4":
-                continue
-            if not candidate_town_code.startswith(town_code_prefix):
-                continue
-            if candidate_town_code == town_code:
-                continue
-            candidates.append(snapshot)
-            if len(candidates) >= limit:
-                break
-        return candidates
+        snapshots = (
+            StorePlanningDataSourceSnapshot.objects.filter(
+                raw_data__city_code=city_code,
+                raw_data__area_hierarchy_level="4",
+                raw_data__town_code__startswith=town_code_prefix,
+            )
+            .exclude(raw_data__town_code=town_code)
+            .order_by("source_key")
+        )
+        return list(snapshots[:limit])
