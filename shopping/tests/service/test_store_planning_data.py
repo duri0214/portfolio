@@ -52,7 +52,8 @@ class StorePlanningDataSourceCommandTest(TestCase):
         self.assertEqual(43.8, population.raw_data["average_age"])
         self.assertEqual("000009048041", population.raw_data["resource_id"])
         self.assertEqual("000032163275", population.raw_data["stat_inf_id"])
-        self.assertEqual("073", population.raw_data["town_code_group"])
+        self.assertEqual("4", population.raw_data["area_hierarchy_level"])
+        self.assertEqual("07", population.raw_data["town_code_prefix"])
         self.assertEqual(
             {
                 "label": "0代",

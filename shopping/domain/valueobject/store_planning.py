@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from dataclasses import field
 from datetime import datetime
 from urllib.parse import quote
 
@@ -44,6 +43,7 @@ class StorePlanningArea:
         population_area: 人口集計に使う町丁字名。
         large_area_name: e-Stat CSVの大字・町名。
         small_area_name: e-Stat CSVの字・丁目名。
+        area_hierarchy_level: e-Stat CSVの地域階層レベル。
         comparison_note: 比較対象に選ばれた根拠や注意書き。
     """
 
@@ -57,6 +57,7 @@ class StorePlanningArea:
     population_area: str
     large_area_name: str = ""
     small_area_name: str = ""
+    area_hierarchy_level: str = "4"
     comparison_note: str = ""
 
     @property
@@ -70,8 +71,8 @@ class StorePlanningArea:
         return f"https://www.google.com/maps?q={self.latitude},{self.longitude}"
 
     @property
-    def town_code_group(self) -> str:
-        return self.town_code[:3]
+    def town_code_prefix(self) -> str:
+        return self.town_code[:2]
 
     @property
     def area_google_maps_url(self) -> str:
@@ -101,6 +102,7 @@ STORE_PLANNING_TARGET_LOCATIONS = [
         population_area="東京都足立区東保木間二丁目",
         large_area_name="東保木間",
         small_area_name="二丁目",
+        area_hierarchy_level="4",
     ),
 ]
 
@@ -116,6 +118,7 @@ STORE_PLANNING_COMPARISON_AREAS = [
         population_area="東京都足立区東保木間一丁目",
         large_area_name="東保木間",
         small_area_name="一丁目",
+        area_hierarchy_level="4",
         comparison_note="手動設定した比較対象地域",
     ),
 ]

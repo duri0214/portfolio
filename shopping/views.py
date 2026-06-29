@@ -241,12 +241,11 @@ class StorePlanningView(TemplateView):
     def _automatic_comparison_areas(
         self, selected_location: StorePlanningTargetLocation
     ) -> list[StorePlanningArea]:
-        if not selected_location.large_area_name:
+        if not selected_location.town_code_prefix:
             return []
-        snapshots = StorePlanningDataSourceRepository.find_same_town_group_snapshots(
+        snapshots = StorePlanningDataSourceRepository.find_nearby_area_candidate_snapshots(
             city_code=selected_location.city_code,
-            town_code_group=selected_location.town_code_group,
-            large_area_name=selected_location.large_area_name,
+            town_code_prefix=selected_location.town_code_prefix,
             excluded_town_code=selected_location.town_code,
         )
         return [self._area_from_snapshot(snapshot) for snapshot in snapshots]
@@ -266,7 +265,8 @@ class StorePlanningView(TemplateView):
             population_area=area_name,
             large_area_name=raw_data.get("large_area_name", ""),
             small_area_name=raw_data.get("small_area_name", ""),
-            comparison_note="e-Stat地域コードと町名から抽出（境界未確認）",
+            area_hierarchy_level=raw_data.get("area_hierarchy_level", ""),
+            comparison_note="市区町村コード・地域階層レベル4・町丁字コード先頭2桁から抽出（境界未確認）",
         )
 
     def _build_region_comparison_row(

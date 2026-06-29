@@ -108,7 +108,8 @@ class StorePlanningDataSourceService:
             "small_area_name": total_row[11],
             "city_code": total_row[2],
             "town_code": total_row[3],
-            "town_code_group": total_row[3][:3],
+            "area_hierarchy_level": total_row[4],
+            "town_code_prefix": total_row[3][:2],
             "age_groups": [],
         }
 
