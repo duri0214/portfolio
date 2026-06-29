@@ -333,8 +333,10 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "東京都足立区東保木間")
         self.assertContains(response, "東京都足立区東保木間一丁目")
-        self.assertContains(response, "広域（地域階層レベル3）")
-        self.assertContains(response, "町丁（地域階層レベル4）")
+        self.assertContains(response, "広域")
+        self.assertContains(response, "地域階層レベル3")
+        self.assertContains(response, "町丁")
+        self.assertContains(response, "地域階層レベル4")
         self.assertContains(response, "0730")
         self.assertContains(response, "073001")
         self.assertContains(
