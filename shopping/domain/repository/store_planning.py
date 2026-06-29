@@ -71,3 +71,35 @@ class StorePlanningDataSourceRepository:
             "town_count": town_count,
             "fetched_at": fetched_at,
         }
+
+    @staticmethod
+    def find_same_town_group_snapshots(
+        city_code: str,
+        town_code_group: str,
+        large_area_name: str,
+        excluded_town_code: str,
+        limit: int = 6,
+    ) -> list[StorePlanningDataSourceSnapshot]:
+        """
+        e-Stat CSVの行政コードと大字・町名から、比較候補になる町丁を取得する。
+
+        境界ポリゴンを使った接触判定ではなく、同じ市区町村かつ同じ大字・町名、
+        町丁字コード上位が一致する地域を候補として返す。
+        """
+        snapshots = StorePlanningDataSourceSnapshot.objects.order_by("source_key")
+        candidates = []
+        for snapshot in snapshots:
+            raw_data = snapshot.raw_data
+            town_code = raw_data.get("town_code", "")
+            if raw_data.get("city_code") != city_code:
+                continue
+            if raw_data.get("large_area_name") != large_area_name:
+                continue
+            if not town_code.startswith(town_code_group):
+                continue
+            if town_code == excluded_town_code:
+                continue
+            candidates.append(snapshot)
+            if len(candidates) >= limit:
+                break
+        return candidates

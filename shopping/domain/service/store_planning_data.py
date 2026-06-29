@@ -108,6 +108,7 @@ class StorePlanningDataSourceService:
             "small_area_name": total_row[11],
             "city_code": total_row[2],
             "town_code": total_row[3],
+            "town_code_group": total_row[3][:3],
             "age_groups": [],
         }
 

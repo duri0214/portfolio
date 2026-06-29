@@ -233,7 +233,41 @@ class StorePlanningView(TemplateView):
         selected_location: StorePlanningTargetLocation,
         comparison_areas: list[StorePlanningArea],
     ) -> list[StorePlanningArea]:
+        automatic_areas = self._automatic_comparison_areas(selected_location)
+        if automatic_areas:
+            return [selected_location, *automatic_areas]
         return [selected_location, *comparison_areas]
+
+    def _automatic_comparison_areas(
+        self, selected_location: StorePlanningTargetLocation
+    ) -> list[StorePlanningArea]:
+        if not selected_location.large_area_name:
+            return []
+        snapshots = StorePlanningDataSourceRepository.find_same_town_group_snapshots(
+            city_code=selected_location.city_code,
+            town_code_group=selected_location.town_code_group,
+            large_area_name=selected_location.large_area_name,
+            excluded_town_code=selected_location.town_code,
+        )
+        return [self._area_from_snapshot(snapshot) for snapshot in snapshots]
+
+    def _area_from_snapshot(self, snapshot) -> StorePlanningArea:
+        raw_data = snapshot.raw_data
+        area_name = raw_data.get("target_area_name", snapshot.display_name)
+        town_code = raw_data.get("town_code", "")
+        return StorePlanningArea(
+            slug=f"area-{raw_data.get('city_code', '')}-{town_code}",
+            name=f"自動候補（{raw_data.get('small_area_name') or area_name}）",
+            address=area_name,
+            latitude=None,
+            longitude=None,
+            city_code=raw_data.get("city_code", ""),
+            town_code=town_code,
+            population_area=area_name,
+            large_area_name=raw_data.get("large_area_name", ""),
+            small_area_name=raw_data.get("small_area_name", ""),
+            comparison_note="e-Stat地域コードと町名から抽出（境界未確認）",
+        )
 
     def _build_region_comparison_row(
         self,
@@ -256,6 +290,7 @@ class StorePlanningView(TemplateView):
             "google_maps_url": location.google_maps_url,
             "area_google_maps_url": location.area_google_maps_url,
             "area_google_maps_embed_url": location.area_google_maps_embed_url,
+            "comparison_note": location.comparison_note,
             "is_selected": location.slug == selected_location.slug,
             "population_summary": population_summary,
             "age_group_cells": self._build_age_group_cells(

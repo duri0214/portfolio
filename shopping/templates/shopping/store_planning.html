@@ -82,7 +82,7 @@
                         <div>
                             <h2 class="h5 mb-1">周辺地域比較</h2>
                             <p class="small text-muted mb-0">
-                                選択中の候補地と、手動設定した比較対象地域の人口構成を並べて確認する。
+                                選択中の候補地と、e-Stat地域コード・町名から抽出した比較候補の人口構成を並べて確認する。
                             </p>
                         </div>
                         <span class="badge text-bg-light align-self-md-start">比較対象</span>
@@ -112,6 +112,9 @@
                                         </div>
                                         <div class="small text-muted">{{ row.name }}</div>
                                         <div class="small text-muted">{{ row.address }}</div>
+                                        {% if row.comparison_note %}
+                                            <div class="small text-muted">{{ row.comparison_note }}</div>
+                                        {% endif %}
                                     </td>
                                     <td class="text-end text-nowrap">
                                         {% if row.population_summary.total_population %}
@@ -160,7 +163,7 @@
                                         </a>
                                         <div class="small text-muted">
                                             <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
-                                                代表地点
+                                                {% if row.latitude and row.longitude %}代表地点{% else %}地域検索{% endif %}
                                             </a>
                                         </div>
                                     </td>

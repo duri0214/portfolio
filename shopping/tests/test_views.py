@@ -214,6 +214,90 @@ class TestView(TestCase):
         self.assertContains(response, "output=embed")
         self.assertContains(response, "city=13121, town=073002")
 
+    def test_store_planning_page_displays_estat_code_based_comparison_candidates(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: 対象地域と同じ市区町村・大字町名・町丁字コード上位を持つe-Stat人口スナップショット。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: 手動比較対象ではなく、e-Stat地域コードと町名から抽出した比較候補が表示されること。
+        """
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="estat_population_age_groups_13121_073002",
+            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間二丁目",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み: 東京都足立区東保木間二丁目 の年齢別人口",
+            data_period="令和2年国勢調査 小地域集計",
+            source_updated_at=timezone.now(),
+            raw_data={
+                "stat_inf_id": "000032163275",
+                "resource_id": "000009048041",
+                "table_name": "第3表 男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等",
+                "target_area_name": "東京都足立区東保木間二丁目",
+                "prefecture_name": "東京都",
+                "city_name": "足立区",
+                "large_area_name": "東保木間",
+                "small_area_name": "二丁目",
+                "city_code": "13121",
+                "town_code": "073002",
+                "town_code_group": "073",
+                "total_population": 2289,
+                "average_age": 43.8,
+                "age_groups": [],
+            },
+        )
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="estat_population_age_groups_13121_073003",
+            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間三丁目",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み: 東京都足立区東保木間三丁目 の年齢別人口",
+            data_period="令和2年国勢調査 小地域集計",
+            source_updated_at=timezone.now(),
+            raw_data={
+                "stat_inf_id": "000032163275",
+                "resource_id": "000009048041",
+                "table_name": "第3表 男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等",
+                "target_area_name": "東京都足立区東保木間三丁目",
+                "prefecture_name": "東京都",
+                "city_name": "足立区",
+                "large_area_name": "東保木間",
+                "small_area_name": "三丁目",
+                "city_code": "13121",
+                "town_code": "073003",
+                "town_code_group": "073",
+                "total_population": 1400,
+                "average_age": 45.2,
+                "age_groups": [],
+            },
+        )
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="estat_population_age_groups_13121_074001",
+            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区別町一丁目",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み: 東京都足立区別町一丁目 の年齢別人口",
+            data_period="令和2年国勢調査 小地域集計",
+            source_updated_at=timezone.now(),
+            raw_data={
+                "target_area_name": "東京都足立区別町一丁目",
+                "large_area_name": "別町",
+                "city_code": "13121",
+                "town_code": "074001",
+                "total_population": 999,
+                "age_groups": [],
+            },
+        )
+
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "東京都足立区東保木間三丁目")
+        self.assertContains(response, "city=13121, town=073003")
+        self.assertContains(response, "e-Stat地域コードと町名から抽出（境界未確認）")
+        self.assertContains(response, "地域検索")
+        self.assertNotContains(response, "東京都足立区別町一丁目")
+        self.assertNotContains(response, "比較対象地域（東保木間一丁目）")
+
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
         """
         シナリオ:
