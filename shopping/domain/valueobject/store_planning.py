@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
 
 
@@ -40,6 +41,7 @@ class StorePlanningTargetLocation:
         city_code: e-Stat CSVの市区町村コード。
         town_code: e-Stat CSVの町丁字コード。
         population_area: 人口集計に使う町丁字名。
+        comparison_slugs: 出店計画画面で一緒に比較する候補地のslug。
     """
 
     slug: str
@@ -50,6 +52,7 @@ class StorePlanningTargetLocation:
     city_code: str
     town_code: str
     population_area: str
+    comparison_slugs: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def source_key(self) -> str:
@@ -66,6 +69,7 @@ STORE_PLANNING_TARGET_LOCATIONS = [
         city_code="13121",
         town_code="073002",
         population_area="東京都足立区東保木間二丁目",
+        comparison_slugs=("higashi-hokima-1",),
     ),
     StorePlanningTargetLocation(
         slug="higashi-hokima-1",
@@ -76,5 +80,6 @@ STORE_PLANNING_TARGET_LOCATIONS = [
         city_code="13121",
         town_code="073001",
         population_area="東京都足立区東保木間一丁目",
+        comparison_slugs=("chapter-table",),
     ),
 ]

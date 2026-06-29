@@ -48,6 +48,125 @@
 
             <div class="col-12">
                 <section class="border rounded p-4 h-100">
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">地域マップ</h2>
+                            <p class="small text-muted mb-0">
+                                Google Maps で町丁の領域を開き、対象地域と比較対象地域の位置関係を確認する。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for row in region_comparison_rows %}
+                            <a class="btn btn-sm {% if row.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                               href="{{ row.area_google_maps_url }}"
+                               target="_blank"
+                               rel="noopener">
+                                {{ row.population_area }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-12">
+                <section class="border rounded p-4 h-100">
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">周辺地域比較</h2>
+                            <p class="small text-muted mb-0">
+                                選択中の候補地と、手動設定した比較対象地域の人口構成を並べて確認する。
+                            </p>
+                        </div>
+                        <span class="badge text-bg-light align-self-md-start">比較対象</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                            <tr>
+                                <th>地域</th>
+                                <th>総人口</th>
+                                <th>平均年齢</th>
+                                <th>年代構成</th>
+                                <th>e-Stat地域コード</th>
+                                <th>データ時点</th>
+                                <th>地図</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in region_comparison_rows %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">
+                                            {{ row.population_area }}
+                                            {% if row.is_selected %}
+                                                <span class="badge text-bg-primary ms-1">対象地域</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="small text-muted">{{ row.name }}</div>
+                                        <div class="small text-muted">{{ row.address }}</div>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        {% if row.population_summary.total_population %}
+                                            {{ row.population_summary.total_population|intcomma }}人
+                                        {% else %}
+                                            未取得
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        {% if row.population_summary.average_age %}
+                                            {{ row.population_summary.average_age }} 歳
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td style="min-width: 220px;">
+                                        {% if row.age_group_cells %}
+                                            <div class="d-flex flex-wrap gap-1">
+                                                {% for age_group in row.age_group_cells %}
+                                                    {% if age_group.population %}
+                                                        <span class="badge text-bg-light border">
+                                                            {{ age_group.label }} {{ age_group.share_of_total }}%
+                                                        </span>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted small">未取得</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-nowrap">
+                                        <code>city={{ row.population_summary.city_code|default:"-" }}, town={{ row.population_summary.town_code|default:"-" }}</code>
+                                    </td>
+                                    <td>
+                                        <div>{{ row.population_summary.data_period|default:"未取得" }}</div>
+                                        <a class="small" href="{{ row.population_summary.stat_inf_url|default:row.population_summary.source_url }}" target="_blank" rel="noopener">
+                                            取得元
+                                        </a>
+                                        {% if not row.has_fetched_data_source %}
+                                            <div class="small text-warning">未取得</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
+                                            地域を開く
+                                        </a>
+                                        <div class="small text-muted">
+                                            <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
+                                                代表地点
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-12">
+                <section class="border rounded p-4 h-100">
                     <h2 class="h5 mb-3">e-Stat 年代別人口</h2>
                     {% if not has_fetched_data_sources %}
                         <div class="alert alert-warning">

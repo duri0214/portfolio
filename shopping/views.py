@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import quote
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -19,7 +20,10 @@ from .domain.repository.store_planning import StorePlanningDataSourceRepository
 from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
-from .domain.valueobject.store_planning import STORE_PLANNING_TARGET_LOCATIONS
+from .domain.valueobject.store_planning import (
+    STORE_PLANNING_TARGET_LOCATIONS,
+    StorePlanningTargetLocation,
+)
 from .domain.valueobject.payment import PaymentIntent, PaymentInfo
 from .forms import (
     ProductCreateFormSingle,
@@ -171,6 +175,9 @@ class StorePlanningView(TemplateView):
         context["population_csv_coverage"] = (
             StorePlanningDataSourceRepository.get_population_csv_coverage()
         )
+        context["region_comparison_rows"] = self._build_region_comparison_rows(
+            selected_location, locations
+        )
         context["has_fetched_data_sources"] = data_source_snapshot is not None
         context["planning_axes"] = [
             {
@@ -208,8 +215,79 @@ class StorePlanningView(TemplateView):
             },
         }
 
+    def _build_region_comparison_rows(
+        self,
+        selected_location: StorePlanningTargetLocation,
+        locations: list[StorePlanningTargetLocation],
+    ) -> list[dict]:
+        comparison_locations = self._comparison_locations(selected_location, locations)
+        return [
+            self._build_region_comparison_row(location, selected_location)
+            for location in comparison_locations
+        ]
+
+    def _comparison_locations(
+        self,
+        selected_location: StorePlanningTargetLocation,
+        locations: list[StorePlanningTargetLocation],
+    ) -> list[StorePlanningTargetLocation]:
+        location_map = {location.slug: location for location in locations}
+        comparison_locations = [selected_location]
+        for slug in selected_location.comparison_slugs:
+            location = location_map.get(slug)
+            if location is not None:
+                comparison_locations.append(location)
+        return comparison_locations
+
+    def _build_region_comparison_row(
+        self,
+        location: StorePlanningTargetLocation,
+        selected_location: StorePlanningTargetLocation,
+    ) -> dict:
+        data_source = StorePlanningDataSourceRepository.get_latest_by_source_key(
+            location.source_key
+        )
+        source = data_source or self._fallback_data_source(location)
+        population_summary = self._build_population_summary([source])
+        age_rows = self._build_population_age_rows([source])
+        return {
+            "slug": location.slug,
+            "name": location.name,
+            "address": location.address,
+            "population_area": location.population_area,
+            "latitude": location.latitude,
+            "longitude": location.longitude,
+            "google_maps_url": self._google_maps_url(
+                location.latitude, location.longitude
+            ),
+            "area_google_maps_url": self._google_maps_area_url(
+                location.population_area
+            ),
+            "is_selected": location.slug == selected_location.slug,
+            "population_summary": population_summary,
+            "age_group_cells": self._build_age_group_cells(
+                age_rows, population_summary.get("total_population")
+            ),
+            "has_fetched_data_source": data_source is not None,
+        }
+
+    def _build_age_group_cells(self, age_rows: list[dict], total_population) -> list:
+        if not age_rows or not total_population:
+            return []
+        cells = []
+        for row in age_rows:
+            population = row["population"]
+            share = 0
+            if population is not None:
+                share = round(population / total_population * 100, 1)
+            cells.append({**row, "share_of_total": share})
+        return cells
+
     def _google_maps_url(self, latitude: float, longitude: float) -> str:
         return f"https://www.google.com/maps?q={latitude},{longitude}"
+
+    def _google_maps_area_url(self, area_name: str) -> str:
+        return f"https://www.google.com/maps/search/?api=1&query={quote(area_name)}"
 
     def _build_population_summary(self, sources):
         for source in sources:

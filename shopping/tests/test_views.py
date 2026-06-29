@@ -119,12 +119,23 @@ class TestView(TestCase):
         self.assertContains(response, "東京都")
         self.assertContains(response, "1 市区町村")
         self.assertContains(response, "1 町丁字")
+        self.assertContains(response, "周辺地域比較")
+        self.assertContains(response, "地域マップ")
+        self.assertContains(response, "比較対象")
+        self.assertContains(response, "対象地域")
+        self.assertContains(response, "サンプル候補地（東保木間一丁目）")
+        self.assertContains(response, "city=13121, town=073001")
+        self.assertContains(response, "地域を開く")
+        self.assertContains(response, "代表地点")
+        self.assertContains(response, "maps/search/?api=1")
+        self.assertContains(
+            response, "https://www.google.com/maps?q=35.793608,139.811938"
+        )
         self.assertContains(response, 'role="progressbar"')
         self.assertNotContains(response, "店前通行量シナリオ")
         self.assertNotContains(response, "立地リスク判定")
         self.assertNotContains(response, "手動で確認するデータ")
         self.assertNotContains(response, "店舗座標")
-        self.assertNotContains(response, "比較対象")
 
     def test_store_planning_page_displays_fallback_sources_before_batch(self):
         """
@@ -143,6 +154,9 @@ class TestView(TestCase):
         self.assertContains(
             response, "daily_fetch_store_planning_data_sources を実行してください"
         )
+        self.assertContains(response, "周辺地域比較")
+        self.assertContains(response, "地域マップ")
+        self.assertContains(response, "サンプル候補地（東保木間一丁目）")
         self.assertContains(response, "e-Stat CSVはまだ取り込まれていません")
 
     def test_store_planning_page_switches_population_area_by_store(self):
@@ -191,6 +205,9 @@ class TestView(TestCase):
         self.assertContains(response, "東京都足立区東保木間一丁目")
         self.assertContains(response, "1,234人")
         self.assertContains(response, "city=13121, town=073001")
+        self.assertContains(response, "周辺地域比較")
+        self.assertContains(response, "Chapter Table")
+        self.assertContains(response, "city=13121, town=073002")
 
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
         """
