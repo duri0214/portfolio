@@ -57,7 +57,8 @@
                         </div>
                     </div>
                     <div class="ratio ratio-16x9 mb-3">
-                        <iframe src="{{ target_location.area_google_maps_embed_url }}"
+                        <iframe id="store-planning-area-map"
+                                src="{{ target_location.area_google_maps_embed_url }}"
                                 title="{{ target_location.population_area }} の地図"
                                 loading="lazy"
                                 referrerpolicy="no-referrer-when-downgrade"
@@ -65,12 +66,12 @@
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         {% for row in region_comparison_rows %}
-                            <a class="btn btn-sm {% if row.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
-                               href="{{ row.area_google_maps_url }}"
-                               target="_blank"
-                               rel="noopener">
+                            <button class="btn btn-sm store-planning-map-button {% if row.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                                    type="button"
+                                    data-map-url="{{ row.area_google_maps_embed_url }}"
+                                    data-map-title="{{ row.population_area }} の地図">
                                 {{ row.population_area }}
-                            </a>
+                            </button>
                         {% endfor %}
                     </div>
                 </section>
@@ -321,4 +322,20 @@
             </div>
         </div>
     </div>
+    <script>
+        document.querySelectorAll(".store-planning-map-button").forEach((button) => {
+            button.addEventListener("click", () => {
+                const map = document.getElementById("store-planning-area-map");
+                if (!map) {
+                    return;
+                }
+                map.src = button.dataset.mapUrl;
+                map.title = button.dataset.mapTitle;
+                document.querySelectorAll(".store-planning-map-button").forEach((target) => {
+                    target.classList.toggle("btn-primary", target === button);
+                    target.classList.toggle("btn-outline-primary", target !== button);
+                });
+            });
+        });
+    </script>
 {% endblock %}
