@@ -71,6 +71,12 @@ class StorePlanningArea:
         return f"https://www.google.com/maps?q={self.latitude},{self.longitude}"
 
     @property
+    def place_google_maps_embed_url(self) -> str:
+        if self.latitude is None or self.longitude is None:
+            return self.area_google_maps_embed_url
+        return f"https://www.google.com/maps?q={self.latitude},{self.longitude}&output=embed"
+
+    @property
     def area_google_maps_url(self) -> str:
         return f"https://www.google.com/maps/search/?api=1&query={quote(self.population_area)}"
 
@@ -91,8 +97,8 @@ STORE_PLANNING_TARGET_LOCATIONS = [
         slug="chapter-table",
         name="Chapter Table",
         address="東京都足立区東保木間二丁目",
-        latitude=35.792945077675284,
-        longitude=139.81461878376487,
+        latitude=35.792822,
+        longitude=139.8143238,
         city_code="13121",
         town_code="073002",
         population_area="東京都足立区東保木間二丁目",
@@ -104,15 +110,15 @@ STORE_PLANNING_TARGET_LOCATIONS = [
 
 STORE_PLANNING_COMPARISON_AREAS = [
     StorePlanningArea(
-        slug="area-hokima-1",
-        name="比較対象地域（保木間一丁目）",
-        address="東京都足立区保木間一丁目",
+        slug="area-higashi-hokima-1",
+        name="比較対象地域（東保木間一丁目）",
+        address="東京都足立区東保木間一丁目",
         latitude=35.793608,
         longitude=139.811938,
         city_code="13121",
-        town_code="076001",
-        population_area="東京都足立区保木間一丁目",
-        large_area_name="保木間",
+        town_code="073001",
+        population_area="東京都足立区東保木間一丁目",
+        large_area_name="東保木間",
         small_area_name="一丁目",
         area_hierarchy_level="4",
         comparison_note="手動設定した比較対象地域",

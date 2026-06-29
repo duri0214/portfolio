@@ -52,26 +52,36 @@
                         <div>
                             <h2 class="h5 mb-1">地域マップ</h2>
                             <p class="small text-muted mb-0">
-                                Google Maps で町丁の領域を開き、対象地域と比較対象地域の位置関係を確認する。
+                                ボタンを押すと地図が移動します。店舗ピン、広域、町丁を切り替えて位置関係を確認します。
                             </p>
                         </div>
                     </div>
                     <div class="ratio ratio-16x9 mb-3">
                         <iframe id="store-planning-area-map"
-                                src="{{ target_location.area_google_maps_embed_url }}"
-                                title="{{ target_location.population_area }} の地図"
+                                src="{{ target_location.place_google_maps_embed_url }}"
+                                title="{{ target_location.name }} の地図"
                                 loading="lazy"
                                 referrerpolicy="no-referrer-when-downgrade"
                                 allowfullscreen></iframe>
                     </div>
-                    <div class="d-flex flex-wrap gap-2">
-                        {% for row in region_comparison_rows %}
-                            <button class="btn btn-sm store-planning-map-button {% if row.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
-                                    type="button"
-                                    data-map-url="{{ row.area_google_maps_embed_url }}"
-                                    data-map-title="{{ row.population_area }} の地図">
-                                {{ row.population_area }}
-                            </button>
+                    <div class="d-grid gap-3">
+                        {% for group in region_map_button_groups %}
+                            {% if group.buttons %}
+                                <div>
+                                    <div class="small fw-semibold">{{ group.title }}</div>
+                                    <div class="small text-muted mb-1">{{ group.description }}</div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for button in group.buttons %}
+                                            <button class="btn btn-sm store-planning-map-button {% if button.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                                                    type="button"
+                                                    data-map-url="{{ button.map_url }}"
+                                                    data-map-title="{{ button.map_title }}">
+                                                {{ button.label }}
+                                            </button>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 </section>
@@ -88,6 +98,65 @@
                         </div>
                         <span class="badge text-bg-light align-self-md-start">比較対象</span>
                     </div>
+                    {% if region_comparison_meta %}
+                        <div class="small text-muted mb-3">
+                            市区町村コード <code>{{ region_comparison_meta.city_code|default:"-" }}</code> /
+                            データ時点 {{ region_comparison_meta.data_period|default:"未取得" }} /
+                            <a href="{{ region_comparison_meta.source_url }}" target="_blank" rel="noopener">取得元</a>
+                            {% if region_comparison_meta.source_updated_at %}
+                                / e-Stat公表・更新日 {{ region_comparison_meta.source_updated_at|date:"Y-m-d" }}
+                            {% elif region_comparison_meta.last_modified_date %}
+                                / e-Stat公表・更新日 {{ region_comparison_meta.last_modified_date }}
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    {% if region_level3_rows %}
+                        <h3 class="h6 mb-2">広域（地域階層レベル3）</h3>
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                <tr>
+                                    <th>地域</th>
+                                    <th>総人口</th>
+                                    <th>平均年齢</th>
+                                    <th>e-Stat町丁字コード</th>
+                                    <th>地図</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for row in region_level3_rows %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">{{ row.population_area }}</div>
+                                            <div class="small text-muted">{{ row.comparison_note }}</div>
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            {% if row.population_summary.total_population %}
+                                                {{ row.population_summary.total_population|intcomma }}人
+                                            {% else %}
+                                                未取得
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            {% if row.population_summary.average_age %}
+                                                {{ row.population_summary.average_age }} 歳
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td><code>{{ row.population_summary.town_code|default:"-" }}</code></td>
+                                        <td>
+                                            <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
+                                                地域を開く
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                    <h3 class="h6 mb-2">町丁（地域階層レベル4）</h3>
                     <div class="table-responsive">
                         <table class="table table-sm align-middle">
                             <thead>
@@ -96,8 +165,7 @@
                                 <th>総人口</th>
                                 <th>平均年齢</th>
                                 <th>年代構成</th>
-                                <th>e-Stat地域コード</th>
-                                <th>データ時点</th>
+                                <th>e-Stat町丁字コード</th>
                                 <th>地図</th>
                             </tr>
                             </thead>
@@ -147,16 +215,8 @@
                                         {% endif %}
                                     </td>
                                     <td class="text-nowrap">
-                                        <code>city={{ row.population_summary.city_code|default:"-" }}, town={{ row.population_summary.town_code|default:"-" }}</code>
-                                    </td>
-                                    <td>
-                                        <div>{{ row.population_summary.data_period|default:"未取得" }}</div>
-                                        <a class="small" href="{{ row.population_summary.stat_inf_url|default:row.population_summary.source_url }}" target="_blank" rel="noopener">
-                                            取得元
-                                        </a>
-                                        {% if not row.has_fetched_data_source %}
-                                            <div class="small text-warning">未取得</div>
-                                        {% endif %}
+                                        <code>{{ row.population_summary.town_code|default:"-" }}</code>
+                                        <div class="small text-muted">レベル {{ row.area_hierarchy_level|default:"-" }}</div>
                                     </td>
                                     <td>
                                         <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
@@ -188,9 +248,9 @@
                     {% endif %}
                     <p class="small text-muted mb-2">
                         <span class="badge text-bg-light">対象地域</span>
-                        {{ population_summary.target_area_name|default:"東京都足立区保木間二丁目" }} /
+                        {{ population_summary.target_area_name|default:"東京都足立区東保木間二丁目" }} /
                         e-Stat地域コード {{ population_summary.city_code|default:"13121" }} /
-                        町丁字コード {{ population_summary.town_code|default:"076002" }}
+                        町丁字コード {{ population_summary.town_code|default:"073002" }}
                     </p>
                     <div class="border rounded p-3 mb-3">
                         <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
@@ -280,7 +340,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <code>city={{ population_summary.city_code|default:"13121" }}, town={{ population_summary.town_code|default:"076002" }}</code>
+                                    <code>city={{ population_summary.city_code|default:"13121" }}, town={{ population_summary.town_code|default:"073002" }}</code>
                                 </td>
                                 <td>{{ population_summary.data_period|default:"未取得" }}</td>
                                 <td>
@@ -308,7 +368,14 @@
                             保存済みCSVは
                             {{ population_csv_coverage.prefecture_names|join:"・" }}
                             の {{ population_csv_coverage.city_count|intcomma }} 市区町村、
-                            {{ population_csv_coverage.town_count|intcomma }} 町丁字をカバーしています。
+                            地域階層レベル4の {{ population_csv_coverage.town_count|intcomma }} 町丁字をカバーしています。
+                            {% if population_csv_coverage.area_hierarchy_level_counts %}
+                                レベル別:
+                                {% for level, count in population_csv_coverage.area_hierarchy_level_counts.items %}
+                                    レベル{{ level }} {{ count|intcomma }}件{% if not forloop.last %}、{% endif %}
+                                {% endfor %}
+                                。
+                            {% endif %}
                             {% if population_csv_coverage.fetched_at %}
                                 アプリ取得日時 {{ population_csv_coverage.fetched_at|date:"Y-m-d H:i" }}。
                             {% endif %}

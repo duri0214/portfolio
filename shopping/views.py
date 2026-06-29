@@ -146,6 +146,9 @@ class StorePlanningView(TemplateView):
             "address": selected_location.address,
             "google_maps_url": selected_location.google_maps_url,
             "population_area": selected_location.population_area,
+            "place_google_maps_embed_url": (
+                selected_location.place_google_maps_embed_url
+            ),
             "area_google_maps_embed_url": selected_location.area_google_maps_embed_url,
         }
         context["store_locations"] = [
@@ -175,8 +178,17 @@ class StorePlanningView(TemplateView):
         context["population_csv_coverage"] = (
             StorePlanningDataSourceRepository.get_population_csv_coverage()
         )
-        context["region_comparison_rows"] = self._build_region_comparison_rows(
+        region_level3_rows = self._build_region_level3_rows(selected_location)
+        region_comparison_rows = self._build_region_comparison_rows(
             selected_location, STORE_PLANNING_COMPARISON_AREAS
+        )
+        context["region_level3_rows"] = region_level3_rows
+        context["region_comparison_rows"] = region_comparison_rows
+        context["region_map_button_groups"] = self._build_region_map_button_groups(
+            selected_location, region_level3_rows, region_comparison_rows
+        )
+        context["region_comparison_meta"] = self._build_region_comparison_meta(
+            [*region_level3_rows, *region_comparison_rows]
         )
         context["has_fetched_data_sources"] = data_source_snapshot is not None
         context["planning_axes"] = [
@@ -210,10 +222,22 @@ class StorePlanningView(TemplateView):
                 "target_area_name": location.population_area,
                 "city_code": location.city_code,
                 "town_code": location.town_code,
+                "area_hierarchy_level": location.area_hierarchy_level,
                 "stat_inf_id": "000032163275",
                 "age_groups": [],
             },
         }
+
+    def _build_region_level3_rows(
+        self, selected_location: StorePlanningTargetLocation
+    ) -> list[dict]:
+        snapshot = StorePlanningDataSourceRepository.get_parent_area_snapshot(
+            selected_location.city_code, selected_location.town_code
+        )
+        if snapshot is None:
+            return []
+        area = self._area_from_snapshot(snapshot)
+        return [self._build_region_comparison_row(area, selected_location)]
 
     def _build_region_comparison_rows(
         self,
@@ -243,9 +267,11 @@ class StorePlanningView(TemplateView):
     ) -> list[StorePlanningArea]:
         if not selected_location.town_code:
             return []
-        snapshots = StorePlanningDataSourceRepository.find_nearby_area_candidate_snapshots(
-            city_code=selected_location.city_code,
-            town_code=selected_location.town_code,
+        snapshots = (
+            StorePlanningDataSourceRepository.find_nearby_area_candidate_snapshots(
+                city_code=selected_location.city_code,
+                town_code=selected_location.town_code,
+            )
         )
         return [self._area_from_snapshot(snapshot) for snapshot in snapshots]
 
@@ -265,7 +291,15 @@ class StorePlanningView(TemplateView):
             large_area_name=raw_data.get("large_area_name", ""),
             small_area_name=raw_data.get("small_area_name", ""),
             area_hierarchy_level=raw_data.get("area_hierarchy_level", ""),
-            comparison_note="市区町村コード・地域階層レベル4・町丁字コード先頭2桁から抽出（境界未確認）",
+            comparison_note=self._comparison_note(raw_data),
+        )
+
+    def _comparison_note(self, raw_data: dict) -> str:
+        if raw_data.get("area_hierarchy_level") == "3":
+            return "大字・町名単位の広域表示（地域階層レベル3）"
+        return (
+            "市区町村コード・地域階層レベル4・町丁字コード先頭2桁から抽出"
+            "（境界未確認）"
         )
 
     def _build_region_comparison_row(
@@ -289,6 +323,7 @@ class StorePlanningView(TemplateView):
             "google_maps_url": location.google_maps_url,
             "area_google_maps_url": location.area_google_maps_url,
             "area_google_maps_embed_url": location.area_google_maps_embed_url,
+            "area_hierarchy_level": location.area_hierarchy_level,
             "comparison_note": location.comparison_note,
             "is_selected": location.slug == selected_location.slug,
             "population_summary": population_summary,
@@ -297,6 +332,62 @@ class StorePlanningView(TemplateView):
             ),
             "has_fetched_data_source": data_source is not None,
         }
+
+    def _build_region_map_button_groups(
+        self,
+        selected_location: StorePlanningTargetLocation,
+        region_level3_rows: list[dict],
+        region_comparison_rows: list[dict],
+    ) -> list[dict]:
+        return [
+            {
+                "title": "店舗",
+                "description": "Chapter Table のピンへ地図を移動する。",
+                "buttons": [
+                    {
+                        "label": selected_location.name,
+                        "map_url": selected_location.place_google_maps_embed_url,
+                        "map_title": f"{selected_location.name} の地図",
+                        "is_selected": True,
+                    }
+                ],
+            },
+            {
+                "title": "広域（地域階層レベル3）",
+                "description": "大字・町名単位で周辺を俯瞰する。",
+                "buttons": self._map_buttons_from_rows(region_level3_rows),
+            },
+            {
+                "title": "町丁（地域階層レベル4）",
+                "description": "町丁目単位の比較候補へ地図を移動する。",
+                "buttons": self._map_buttons_from_rows(region_comparison_rows),
+            },
+        ]
+
+    def _map_buttons_from_rows(self, rows: list[dict]) -> list[dict]:
+        return [
+            {
+                "label": row["population_area"],
+                "map_url": row["area_google_maps_embed_url"],
+                "map_title": f"{row['population_area']} の地図",
+                "is_selected": False,
+            }
+            for row in rows
+        ]
+
+    def _build_region_comparison_meta(self, rows: list[dict]) -> dict:
+        for row in rows:
+            summary = row.get("population_summary") or {}
+            if summary:
+                return {
+                    "city_code": summary.get("city_code"),
+                    "data_period": summary.get("data_period"),
+                    "source_url": summary.get("stat_inf_url")
+                    or summary.get("source_url"),
+                    "source_updated_at": summary.get("source_updated_at"),
+                    "last_modified_date": summary.get("last_modified_date"),
+                }
+        return {}
 
     def _build_age_group_cells(self, age_rows: list[dict], total_population) -> list:
         if not age_rows or not total_population:

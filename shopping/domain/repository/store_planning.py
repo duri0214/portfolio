@@ -45,19 +45,22 @@ class StorePlanningDataSourceRepository:
         )
         prefectures = set()
         cities = set()
-        town_count = 0
+        area_hierarchy_level_counts = {}
         fetched_at = None
         for raw_data in raw_data_rows:
             prefecture_name = raw_data.get("prefecture_name")
             city_name = raw_data.get("city_name")
             city_code = raw_data.get("city_code")
             town_code = raw_data.get("town_code")
+            area_hierarchy_level = raw_data.get("area_hierarchy_level")
             if prefecture_name:
                 prefectures.add(prefecture_name)
             if city_code and city_name:
                 cities.add((city_code, city_name))
-            if city_code and town_code:
-                town_count += 1
+            if city_code and town_code and area_hierarchy_level:
+                area_hierarchy_level_counts[area_hierarchy_level] = (
+                    area_hierarchy_level_counts.get(area_hierarchy_level, 0) + 1
+                )
 
         latest_snapshot = StorePlanningDataSourceSnapshot.objects.order_by(
             "-fetched_at"
@@ -68,7 +71,10 @@ class StorePlanningDataSourceRepository:
         return {
             "prefecture_names": sorted(prefectures),
             "city_count": len(cities),
-            "town_count": town_count,
+            "town_count": area_hierarchy_level_counts.get("4", 0),
+            "area_hierarchy_level_counts": dict(
+                sorted(area_hierarchy_level_counts.items())
+            ),
             "fetched_at": fetched_at,
         }
 
@@ -103,9 +109,32 @@ class StorePlanningDataSourceRepository:
         return list(snapshots[:limit])
 
     @staticmethod
+    def get_parent_area_snapshot(
+        city_code: str, town_code: str
+    ) -> StorePlanningDataSourceSnapshot | None:
+        """
+        町丁字コードから地域階層レベル3の親地域を取得する。
+
+        例として、東保木間二丁目の町丁字コード `073002` から、
+        大字・町名単位の `0730` を取得する。
+        """
+        parent_town_code = StorePlanningDataSourceRepository._parent_town_code(
+            town_code
+        )
+        return StorePlanningDataSourceSnapshot.objects.filter(
+            raw_data__city_code=city_code,
+            raw_data__area_hierarchy_level="3",
+            raw_data__town_code=parent_town_code,
+        ).first()
+
+    @staticmethod
     def _town_code_prefix(town_code: str) -> str:
         stripped_code = town_code.lstrip("0")
         if not stripped_code:
             return town_code[:2]
         prefix_length = len(town_code) - len(stripped_code) + 2
         return town_code[:prefix_length]
+
+    @staticmethod
+    def _parent_town_code(town_code: str) -> str:
+        return town_code[:4]
