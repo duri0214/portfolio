@@ -1,5 +1,4 @@
 import logging
-from urllib.parse import quote
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -143,13 +142,9 @@ class StorePlanningView(TemplateView):
             "slug": selected_location.slug,
             "name": selected_location.name,
             "address": selected_location.address,
-            "google_maps_url": self._google_maps_url(
-                selected_location.latitude, selected_location.longitude
-            ),
+            "google_maps_url": selected_location.google_maps_url,
             "population_area": selected_location.population_area,
-            "area_google_maps_embed_url": self._google_maps_area_embed_url(
-                selected_location.population_area
-            ),
+            "area_google_maps_embed_url": selected_location.area_google_maps_embed_url,
         }
         context["store_locations"] = [
             {
@@ -260,15 +255,9 @@ class StorePlanningView(TemplateView):
             "population_area": location.population_area,
             "latitude": location.latitude,
             "longitude": location.longitude,
-            "google_maps_url": self._google_maps_url(
-                location.latitude, location.longitude
-            ),
-            "area_google_maps_url": self._google_maps_area_url(
-                location.population_area
-            ),
-            "area_google_maps_embed_url": self._google_maps_area_embed_url(
-                location.population_area
-            ),
+            "google_maps_url": location.google_maps_url,
+            "area_google_maps_url": location.area_google_maps_url,
+            "area_google_maps_embed_url": location.area_google_maps_embed_url,
             "is_selected": location.slug == selected_location.slug,
             "population_summary": population_summary,
             "age_group_cells": self._build_age_group_cells(
@@ -288,15 +277,6 @@ class StorePlanningView(TemplateView):
                 share = round(population / total_population * 100, 1)
             cells.append({**row, "share_of_total": share})
         return cells
-
-    def _google_maps_url(self, latitude: float, longitude: float) -> str:
-        return f"https://www.google.com/maps?q={latitude},{longitude}"
-
-    def _google_maps_area_url(self, area_name: str) -> str:
-        return f"https://www.google.com/maps/search/?api=1&query={quote(area_name)}"
-
-    def _google_maps_area_embed_url(self, area_name: str) -> str:
-        return f"https://www.google.com/maps?q={quote(area_name)}&output=embed"
 
     def _build_population_summary(self, sources):
         for source in sources:
