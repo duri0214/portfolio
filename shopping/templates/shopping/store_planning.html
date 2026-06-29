@@ -188,9 +188,9 @@
                     {% endif %}
                     <p class="small text-muted mb-2">
                         <span class="badge text-bg-light">対象地域</span>
-                        {{ population_summary.target_area_name|default:"東京都足立区西保木間二丁目" }} /
+                        {{ population_summary.target_area_name|default:"東京都足立区保木間二丁目" }} /
                         e-Stat地域コード {{ population_summary.city_code|default:"13121" }} /
-                        町丁字コード {{ population_summary.town_code|default:"066002" }}
+                        町丁字コード {{ population_summary.town_code|default:"076002" }}
                     </p>
                     <div class="border rounded p-3 mb-3">
                         <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
@@ -280,7 +280,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <code>city={{ population_summary.city_code|default:"13121" }}, town={{ population_summary.town_code|default:"066002" }}</code>
+                                    <code>city={{ population_summary.city_code|default:"13121" }}, town={{ population_summary.town_code|default:"076002" }}</code>
                                 </td>
                                 <td>{{ population_summary.data_period|default:"未取得" }}</td>
                                 <td>
