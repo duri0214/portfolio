@@ -83,6 +83,8 @@ class StorePlanningDataSourceRepository:
 
         境界ポリゴンを使った接触判定ではなく、同じ市区町村かつ地域階層レベル4、
         町丁字コード先頭2桁が一致する地域を候補として返す。
+        ただし、引数の町丁字コードは選択中の対象地域そのものを表すため、
+        比較候補には含めず除外する。
         """
         town_code_prefix = town_code[:2]
         snapshots = (
