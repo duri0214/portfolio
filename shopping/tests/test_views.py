@@ -136,14 +136,14 @@ class TestView(TestCase):
         self.assertContains(response, "maps/search/?api=1")
         self.assertContains(
             response,
-            "https://www.google.com/maps?q=35.792822,139.8143238&amp;z=16&amp;output=embed",
+            "https://www.google.com/maps?q=%E6%9D%B1%E4%BA%AC%E9%83%BD%E8%B6%B3%E7%AB%8B%E5%8C%BA%E6%9D%B1%E4%BF%9D%E6%9C%A8%E9%96%93%E4%BA%8C%E4%B8%81%E7%9B%AE&amp;output=embed",
         )
         self.assertNotContains(
             response,
-            'data-map-url="https://www.google.com/maps?q=35.793608,139.811938',
+            'data-map-url="https://www.google.com/maps?q=35.792822,139.8143238',
         )
-        self.assertNotContains(response, "Chapter Table のピンへ地図を移動する")
         self.assertNotContains(response, "店舗ピン")
+        self.assertContains(response, "store-planning-map-button btn-primary")
         self.assertContains(response, 'role="progressbar"')
         self.assertNotContains(response, "店前通行量シナリオ")
         self.assertNotContains(response, "立地リスク判定")
@@ -348,11 +348,11 @@ class TestView(TestCase):
         self.assertContains(response, "073001")
         self.assertContains(
             response,
-            "https://www.google.com/maps?q=35.792822,139.8143238&amp;z=14&amp;output=embed",
+            "https://www.google.com/maps?q=%E6%9D%B1%E4%BA%AC%E9%83%BD%E8%B6%B3%E7%AB%8B%E5%8C%BA%E6%9D%B1%E4%BF%9D%E6%9C%A8%E9%96%93&amp;output=embed",
         )
         self.assertContains(
             response,
-            "https://www.google.com/maps?q=35.792822,139.8143238&amp;z=16&amp;output=embed",
+            "https://www.google.com/maps?q=%E6%9D%B1%E4%BA%AC%E9%83%BD%E8%B6%B3%E7%AB%8B%E5%8C%BA%E6%9D%B1%E4%BF%9D%E6%9C%A8%E9%96%93%E4%BA%8C%E4%B8%81%E7%9B%AE&amp;output=embed",
         )
         self.assertContains(
             response,

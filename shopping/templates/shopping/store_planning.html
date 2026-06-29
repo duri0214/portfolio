@@ -52,14 +52,14 @@
                         <div>
                             <h2 class="h5 mb-1">地域マップ</h2>
                             <p class="small text-muted mb-0">
-                                広域・町丁の集計単位を切り替えて、店舗位置をピンで確認します。
+                                広域・町丁の集計単位を切り替えて、地図の表示範囲を確認します。
                             </p>
                         </div>
                     </div>
                     <div class="ratio ratio-16x9 mb-3">
                         <iframe id="store-planning-area-map"
-                                src="{{ target_location.place_google_maps_embed_url }}"
-                                title="{{ target_location.name }} の地図"
+                                src="{{ target_location.initial_map_embed_url }}"
+                                title="{{ target_location.population_area }} の地図"
                                 loading="lazy"
                                 referrerpolicy="no-referrer-when-downgrade"
                                 allowfullscreen></iframe>
