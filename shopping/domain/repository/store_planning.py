@@ -82,11 +82,15 @@ class StorePlanningDataSourceRepository:
         e-Stat CSVの地域コードから、比較候補になる町丁を取得する。
 
         境界ポリゴンを使った接触判定ではなく、同じ市区町村かつ地域階層レベル4、
-        町丁字コード先頭2桁が一致する地域を候補として返す。
+        町丁字コードの先頭ゼロを除いた先頭2桁が一致する地域を候補として返す。
+        e-Stat CSV上の町丁字コードは先頭ゼロ付きで保存される場合があるため、
+        比較キーだけを正規化し、DB検索では保存形式に合わせたprefixを使う。
         ただし、引数の町丁字コードは選択中の対象地域そのものを表すため、
         比較候補には含めず除外する。
         """
-        town_code_prefix = town_code[:2]
+        town_code_prefix = StorePlanningDataSourceRepository._town_code_prefix(
+            town_code
+        )
         snapshots = (
             StorePlanningDataSourceSnapshot.objects.filter(
                 raw_data__city_code=city_code,
@@ -97,3 +101,11 @@ class StorePlanningDataSourceRepository:
             .order_by("source_key")
         )
         return list(snapshots[:limit])
+
+    @staticmethod
+    def _town_code_prefix(town_code: str) -> str:
+        stripped_code = town_code.lstrip("0")
+        if not stripped_code:
+            return town_code[:2]
+        prefix_length = len(town_code) - len(stripped_code) + 2
+        return town_code[:prefix_length]

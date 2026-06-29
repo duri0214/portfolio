@@ -36,15 +36,15 @@ class StorePlanningDataSourceCommandTest(TestCase):
             ).exists()
         )
         population = StorePlanningDataSourceSnapshot.objects.get(
-            source_key="estat_population_age_groups_13121_073002"
+            source_key="estat_population_age_groups_13121_066002"
         )
         self.assertEqual(
-            "e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間二丁目",
+            "e-Stat 国勢調査 年齢別人口: 東京都足立区西保木間二丁目",
             population.display_name,
         )
         self.assertEqual("令和2年国勢調査 小地域集計", population.data_period)
         self.assertEqual(
-            "東京都足立区東保木間二丁目", population.raw_data["target_area_name"]
+            "東京都足立区西保木間二丁目", population.raw_data["target_area_name"]
         )
         self.assertEqual(2289, population.raw_data["total_population"])
         self.assertEqual(1120, population.raw_data["male_population"])
@@ -52,7 +52,7 @@ class StorePlanningDataSourceCommandTest(TestCase):
         self.assertEqual(43.8, population.raw_data["average_age"])
         self.assertEqual("000009048041", population.raw_data["resource_id"])
         self.assertEqual("000032163275", population.raw_data["stat_inf_id"])
-        self.assertEqual("073002", population.raw_data["town_code"])
+        self.assertEqual("066002", population.raw_data["town_code"])
         self.assertEqual("4", population.raw_data["area_hierarchy_level"])
         self.assertEqual(
             {
@@ -68,11 +68,11 @@ class StorePlanningDataSourceCommandTest(TestCase):
             sum(row["population"] for row in population.raw_data["age_groups"]),
         )
         other_population = StorePlanningDataSourceSnapshot.objects.get(
-            source_key="estat_population_age_groups_13121_073001"
+            source_key="estat_population_age_groups_13121_066001"
         )
         self.assertEqual(1234, other_population.raw_data["total_population"])
         self.assertEqual(
-            "東京都足立区東保木間一丁目",
+            "東京都足立区西保木間一丁目",
             other_population.raw_data["target_area_name"],
         )
 
@@ -222,7 +222,7 @@ class StorePlanningDataSourceCommandTest(TestCase):
                     "4",
                 ],
                 "44.1",
-                town_code="073001",
+                town_code="066001",
                 small_area_name="一丁目",
             ),
             self._population_row(
@@ -253,7 +253,7 @@ class StorePlanningDataSourceCommandTest(TestCase):
                     "2",
                 ],
                 "43.5",
-                town_code="073001",
+                town_code="066001",
                 small_area_name="一丁目",
             ),
             self._population_row(
@@ -284,7 +284,7 @@ class StorePlanningDataSourceCommandTest(TestCase):
                     "2",
                 ],
                 "44.8",
-                town_code="073001",
+                town_code="066001",
                 small_area_name="一丁目",
             ),
         ]
@@ -340,7 +340,7 @@ class StorePlanningDataSourceCommandTest(TestCase):
         total: str,
         ages: list[str],
         average_age: str,
-        town_code: str = "073002",
+        town_code: str = "066002",
         small_area_name: str = "二丁目",
     ):
         return [
@@ -354,7 +354,7 @@ class StorePlanningDataSourceCommandTest(TestCase):
             "",
             "東京都",
             "足立区",
-            "東保木間",
+            "西保木間",
             small_area_name,
             total,
             *ages,
