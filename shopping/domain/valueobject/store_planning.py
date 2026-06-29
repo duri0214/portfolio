@@ -29,20 +29,19 @@ class StorePlanningDataSource:
 
 
 @dataclass(frozen=True)
-class StorePlanningTargetLocation:
+class StorePlanningArea:
     """
-    出店計画で人口分析の対象にする店舗候補地。
+    出店計画で人口分析や地域比較に使う町丁・地域。
 
     Attributes:
         slug: URLパラメータと保存キーに使う識別子。
-        name: 画面に表示する店舗名または候補地名。
-        address: 店舗候補地の住所。
+        name: 画面に表示する地域名または候補地名。
+        address: 地域または候補地の住所。
         latitude: Google Mapsリンクに使う緯度。
         longitude: Google Mapsリンクに使う経度。
         city_code: e-Stat CSVの市区町村コード。
         town_code: e-Stat CSVの町丁字コード。
         population_area: 人口集計に使う町丁字名。
-        comparison_slugs: 出店計画画面で一緒に比較する候補地のslug。
     """
 
     slug: str
@@ -53,7 +52,6 @@ class StorePlanningTargetLocation:
     city_code: str
     town_code: str
     population_area: str
-    comparison_slugs: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def source_key(self) -> str:
@@ -74,6 +72,11 @@ class StorePlanningTargetLocation:
         )
 
 
+@dataclass(frozen=True)
+class StorePlanningTargetLocation(StorePlanningArea):
+    """出店計画で選択対象にする店舗候補地。"""
+
+
 STORE_PLANNING_TARGET_LOCATIONS = [
     StorePlanningTargetLocation(
         slug="chapter-table",
@@ -84,10 +87,12 @@ STORE_PLANNING_TARGET_LOCATIONS = [
         city_code="13121",
         town_code="073002",
         population_area="東京都足立区東保木間二丁目",
-        comparison_slugs=("higashi-hokima-1",),
     ),
-    StorePlanningTargetLocation(
-        slug="higashi-hokima-1",
+]
+
+STORE_PLANNING_COMPARISON_AREAS = [
+    StorePlanningArea(
+        slug="area-higashi-hokima-1",
         name="比較対象地域（東保木間一丁目）",
         address="東京都足立区東保木間一丁目",
         latitude=35.793608,
@@ -95,6 +100,5 @@ STORE_PLANNING_TARGET_LOCATIONS = [
         city_code="13121",
         town_code="073001",
         population_area="東京都足立区東保木間一丁目",
-        comparison_slugs=("chapter-table",),
     ),
 ]

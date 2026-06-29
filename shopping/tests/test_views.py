@@ -162,12 +162,12 @@ class TestView(TestCase):
         self.assertContains(response, "比較対象地域（東保木間一丁目）")
         self.assertContains(response, "e-Stat CSVはまだ取り込まれていません")
 
-    def test_store_planning_page_switches_population_area_by_store(self):
+    def test_store_planning_page_ignores_comparison_area_as_store_selection(self):
         """
         シナリオ:
-        - 入力: 複数町丁のe-Stat人口スナップショットと、店舗候補を指定したURL。
+        - 入力: 比較対象地域のe-Stat人口スナップショットと、比較対象地域slugを指定したURL。
         - 処理: 出店計画画面をGETする。
-        - 期待値: 指定した店舗候補に紐づく町丁の人口分析が表示されること。
+        - 期待値: 店舗候補はChapter Tableのまま、比較対象地域として東保木間一丁目が表示されること。
         """
         StorePlanningDataSourceSnapshot.objects.create(
             source_key="estat_population_age_groups_13121_073001",
@@ -200,17 +200,18 @@ class TestView(TestCase):
             },
         )
 
-        url = f"{reverse('shp:store_planning')}?store=higashi-hokima-1"
+        url = f"{reverse('shp:store_planning')}?store=area-higashi-hokima-1"
         response = self.client.get(url)
 
         self.assertEqual(200, response.status_code)
+        self.assertContains(response, "Chapter Table")
+        self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "比較対象地域（東保木間一丁目）")
         self.assertContains(response, "東京都足立区東保木間一丁目")
         self.assertContains(response, "1,234人")
         self.assertContains(response, "city=13121, town=073001")
         self.assertContains(response, "周辺地域比較")
         self.assertContains(response, "output=embed")
-        self.assertContains(response, "Chapter Table")
         self.assertContains(response, "city=13121, town=073002")
 
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):

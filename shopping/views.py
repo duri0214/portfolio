@@ -20,7 +20,9 @@ from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
 from .domain.valueobject.store_planning import (
+    STORE_PLANNING_COMPARISON_AREAS,
     STORE_PLANNING_TARGET_LOCATIONS,
+    StorePlanningArea,
     StorePlanningTargetLocation,
 )
 from .domain.valueobject.payment import PaymentIntent, PaymentInfo
@@ -174,7 +176,7 @@ class StorePlanningView(TemplateView):
             StorePlanningDataSourceRepository.get_population_csv_coverage()
         )
         context["region_comparison_rows"] = self._build_region_comparison_rows(
-            selected_location, locations
+            selected_location, STORE_PLANNING_COMPARISON_AREAS
         )
         context["has_fetched_data_sources"] = data_source_snapshot is not None
         context["planning_axes"] = [
@@ -216,9 +218,11 @@ class StorePlanningView(TemplateView):
     def _build_region_comparison_rows(
         self,
         selected_location: StorePlanningTargetLocation,
-        locations: list[StorePlanningTargetLocation],
+        comparison_areas: list[StorePlanningArea],
     ) -> list[dict]:
-        comparison_locations = self._comparison_locations(selected_location, locations)
+        comparison_locations = self._comparison_locations(
+            selected_location, comparison_areas
+        )
         return [
             self._build_region_comparison_row(location, selected_location)
             for location in comparison_locations
@@ -227,19 +231,13 @@ class StorePlanningView(TemplateView):
     def _comparison_locations(
         self,
         selected_location: StorePlanningTargetLocation,
-        locations: list[StorePlanningTargetLocation],
-    ) -> list[StorePlanningTargetLocation]:
-        location_map = {location.slug: location for location in locations}
-        comparison_locations = [selected_location]
-        for slug in selected_location.comparison_slugs:
-            location = location_map.get(slug)
-            if location is not None:
-                comparison_locations.append(location)
-        return comparison_locations
+        comparison_areas: list[StorePlanningArea],
+    ) -> list[StorePlanningArea]:
+        return [selected_location, *comparison_areas]
 
     def _build_region_comparison_row(
         self,
-        location: StorePlanningTargetLocation,
+        location: StorePlanningArea,
         selected_location: StorePlanningTargetLocation,
     ) -> dict:
         data_source = StorePlanningDataSourceRepository.get_latest_by_source_key(
