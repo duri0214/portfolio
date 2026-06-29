@@ -71,10 +71,6 @@ class StorePlanningArea:
         return f"https://www.google.com/maps?q={self.latitude},{self.longitude}"
 
     @property
-    def town_code_prefix(self) -> str:
-        return self.town_code[:2]
-
-    @property
     def area_google_maps_url(self) -> str:
         return f"https://www.google.com/maps/search/?api=1&query={quote(self.population_area)}"
 

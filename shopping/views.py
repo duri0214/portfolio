@@ -241,12 +241,11 @@ class StorePlanningView(TemplateView):
     def _automatic_comparison_areas(
         self, selected_location: StorePlanningTargetLocation
     ) -> list[StorePlanningArea]:
-        if not selected_location.town_code_prefix:
+        if not selected_location.town_code:
             return []
         snapshots = StorePlanningDataSourceRepository.find_nearby_area_candidate_snapshots(
             city_code=selected_location.city_code,
-            town_code_prefix=selected_location.town_code_prefix,
-            excluded_town_code=selected_location.town_code,
+            town_code=selected_location.town_code,
         )
         return [self._area_from_snapshot(snapshot) for snapshot in snapshots]
 

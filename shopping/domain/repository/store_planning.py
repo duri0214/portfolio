@@ -75,8 +75,7 @@ class StorePlanningDataSourceRepository:
     @staticmethod
     def find_nearby_area_candidate_snapshots(
         city_code: str,
-        town_code_prefix: str,
-        excluded_town_code: str,
+        town_code: str,
         limit: int = 6,
     ) -> list[StorePlanningDataSourceSnapshot]:
         """
@@ -85,18 +84,19 @@ class StorePlanningDataSourceRepository:
         境界ポリゴンを使った接触判定ではなく、同じ市区町村かつ地域階層レベル4、
         町丁字コード先頭2桁が一致する地域を候補として返す。
         """
+        town_code_prefix = town_code[:2]
         snapshots = StorePlanningDataSourceSnapshot.objects.order_by("source_key")
         candidates = []
         for snapshot in snapshots:
             raw_data = snapshot.raw_data
-            town_code = raw_data.get("town_code", "")
+            candidate_town_code = raw_data.get("town_code", "")
             if raw_data.get("city_code") != city_code:
                 continue
             if raw_data.get("area_hierarchy_level") != "4":
                 continue
-            if not town_code.startswith(town_code_prefix):
+            if not candidate_town_code.startswith(town_code_prefix):
                 continue
-            if town_code == excluded_town_code:
+            if candidate_town_code == town_code:
                 continue
             candidates.append(snapshot)
             if len(candidates) >= limit:
