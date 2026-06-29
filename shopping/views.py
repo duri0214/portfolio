@@ -265,6 +265,14 @@ class StorePlanningView(TemplateView):
     def _automatic_comparison_areas(
         self, selected_location: StorePlanningTargetLocation
     ) -> list[StorePlanningArea]:
+        """
+        選択中の店舗地域を起点に、e-Stat CSVから町丁レベルの比較候補を取得する。
+
+        町丁字コードは保存値を変更せず、Repositoryで検索に使う時だけ
+        先頭ゼロを除いた先頭2桁相当の範囲にそろえる。これにより、
+        店舗が属する町丁を基準に、同じ市区町村・地域階層レベル4の
+        周辺候補を画面表示用の Value Object に変換する。
+        """
         if not selected_location.town_code:
             return []
         snapshots = (
