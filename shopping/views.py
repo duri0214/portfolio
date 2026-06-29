@@ -19,7 +19,12 @@ from .domain.repository.store_planning import StorePlanningDataSourceRepository
 from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
-from .domain.valueobject.store_planning import STORE_PLANNING_TARGET_LOCATIONS
+from .domain.valueobject.store_planning import (
+    STORE_PLANNING_COMPARISON_AREAS,
+    STORE_PLANNING_TARGET_LOCATIONS,
+    StorePlanningArea,
+    StorePlanningTargetLocation,
+)
 from .domain.valueobject.payment import PaymentIntent, PaymentInfo
 from .forms import (
     ProductCreateFormSingle,
@@ -139,10 +144,9 @@ class StorePlanningView(TemplateView):
             "slug": selected_location.slug,
             "name": selected_location.name,
             "address": selected_location.address,
-            "google_maps_url": self._google_maps_url(
-                selected_location.latitude, selected_location.longitude
-            ),
+            "google_maps_url": selected_location.google_maps_url,
             "population_area": selected_location.population_area,
+            "area_google_maps_embed_url": selected_location.area_google_maps_embed_url,
         }
         context["store_locations"] = [
             {
@@ -170,6 +174,9 @@ class StorePlanningView(TemplateView):
         )
         context["population_csv_coverage"] = (
             StorePlanningDataSourceRepository.get_population_csv_coverage()
+        )
+        context["region_comparison_rows"] = self._build_region_comparison_rows(
+            selected_location, STORE_PLANNING_COMPARISON_AREAS
         )
         context["has_fetched_data_sources"] = data_source_snapshot is not None
         context["planning_axes"] = [
@@ -208,8 +215,66 @@ class StorePlanningView(TemplateView):
             },
         }
 
-    def _google_maps_url(self, latitude: float, longitude: float) -> str:
-        return f"https://www.google.com/maps?q={latitude},{longitude}"
+    def _build_region_comparison_rows(
+        self,
+        selected_location: StorePlanningTargetLocation,
+        comparison_areas: list[StorePlanningArea],
+    ) -> list[dict]:
+        comparison_locations = self._comparison_locations(
+            selected_location, comparison_areas
+        )
+        return [
+            self._build_region_comparison_row(location, selected_location)
+            for location in comparison_locations
+        ]
+
+    def _comparison_locations(
+        self,
+        selected_location: StorePlanningTargetLocation,
+        comparison_areas: list[StorePlanningArea],
+    ) -> list[StorePlanningArea]:
+        return [selected_location, *comparison_areas]
+
+    def _build_region_comparison_row(
+        self,
+        location: StorePlanningArea,
+        selected_location: StorePlanningTargetLocation,
+    ) -> dict:
+        data_source = StorePlanningDataSourceRepository.get_latest_by_source_key(
+            location.source_key
+        )
+        source = data_source or self._fallback_data_source(location)
+        population_summary = self._build_population_summary([source])
+        age_rows = self._build_population_age_rows([source])
+        return {
+            "slug": location.slug,
+            "name": location.name,
+            "address": location.address,
+            "population_area": location.population_area,
+            "latitude": location.latitude,
+            "longitude": location.longitude,
+            "google_maps_url": location.google_maps_url,
+            "area_google_maps_url": location.area_google_maps_url,
+            "area_google_maps_embed_url": location.area_google_maps_embed_url,
+            "is_selected": location.slug == selected_location.slug,
+            "population_summary": population_summary,
+            "age_group_cells": self._build_age_group_cells(
+                age_rows, population_summary.get("total_population")
+            ),
+            "has_fetched_data_source": data_source is not None,
+        }
+
+    def _build_age_group_cells(self, age_rows: list[dict], total_population) -> list:
+        if not age_rows or not total_population:
+            return []
+        cells = []
+        for row in age_rows:
+            population = row["population"]
+            share = 0
+            if population is not None:
+                share = round(population / total_population * 100, 1)
+            cells.append({**row, "share_of_total": share})
+        return cells
 
     def _build_population_summary(self, sources):
         for source in sources:

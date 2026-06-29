@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
+from urllib.parse import quote
 
 
 @dataclass(frozen=True)
@@ -27,14 +29,14 @@ class StorePlanningDataSource:
 
 
 @dataclass(frozen=True)
-class StorePlanningTargetLocation:
+class StorePlanningArea:
     """
-    出店計画で人口分析の対象にする店舗候補地。
+    出店計画で人口分析や地域比較に使う町丁・地域。
 
     Attributes:
         slug: URLパラメータと保存キーに使う識別子。
-        name: 画面に表示する店舗名または候補地名。
-        address: 店舗候補地の住所。
+        name: 画面に表示する地域名または候補地名。
+        address: 地域または候補地の住所。
         latitude: Google Mapsリンクに使う緯度。
         longitude: Google Mapsリンクに使う経度。
         city_code: e-Stat CSVの市区町村コード。
@@ -55,6 +57,25 @@ class StorePlanningTargetLocation:
     def source_key(self) -> str:
         return f"estat_population_age_groups_{self.city_code}_{self.town_code}"
 
+    @property
+    def google_maps_url(self) -> str:
+        return f"https://www.google.com/maps?q={self.latitude},{self.longitude}"
+
+    @property
+    def area_google_maps_url(self) -> str:
+        return f"https://www.google.com/maps/search/?api=1&query={quote(self.population_area)}"
+
+    @property
+    def area_google_maps_embed_url(self) -> str:
+        return (
+            f"https://www.google.com/maps?q={quote(self.population_area)}&output=embed"
+        )
+
+
+@dataclass(frozen=True)
+class StorePlanningTargetLocation(StorePlanningArea):
+    """出店計画で選択対象にする店舗候補地。"""
+
 
 STORE_PLANNING_TARGET_LOCATIONS = [
     StorePlanningTargetLocation(
@@ -67,9 +88,12 @@ STORE_PLANNING_TARGET_LOCATIONS = [
         town_code="073002",
         population_area="東京都足立区東保木間二丁目",
     ),
-    StorePlanningTargetLocation(
-        slug="higashi-hokima-1",
-        name="サンプル候補地（東保木間一丁目）",
+]
+
+STORE_PLANNING_COMPARISON_AREAS = [
+    StorePlanningArea(
+        slug="area-higashi-hokima-1",
+        name="比較対象地域（東保木間一丁目）",
         address="東京都足立区東保木間一丁目",
         latitude=35.793608,
         longitude=139.811938,
