@@ -56,6 +56,13 @@
                             </p>
                         </div>
                     </div>
+                    <div class="ratio ratio-16x9 mb-3">
+                        <iframe src="{{ target_location.area_google_maps_embed_url }}"
+                                title="{{ target_location.population_area }} の地図"
+                                loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                allowfullscreen></iframe>
+                    </div>
                     <div class="d-flex flex-wrap gap-2">
                         {% for row in region_comparison_rows %}
                             <a class="btn btn-sm {% if row.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"

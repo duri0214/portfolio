@@ -121,6 +121,8 @@ class TestView(TestCase):
         self.assertContains(response, "1 町丁字")
         self.assertContains(response, "周辺地域比較")
         self.assertContains(response, "地域マップ")
+        self.assertContains(response, "<iframe")
+        self.assertContains(response, "output=embed")
         self.assertContains(response, "比較対象")
         self.assertContains(response, "対象地域")
         self.assertContains(response, "サンプル候補地（東保木間一丁目）")
@@ -156,6 +158,7 @@ class TestView(TestCase):
         )
         self.assertContains(response, "周辺地域比較")
         self.assertContains(response, "地域マップ")
+        self.assertContains(response, "<iframe")
         self.assertContains(response, "サンプル候補地（東保木間一丁目）")
         self.assertContains(response, "e-Stat CSVはまだ取り込まれていません")
 
@@ -206,6 +209,7 @@ class TestView(TestCase):
         self.assertContains(response, "1,234人")
         self.assertContains(response, "city=13121, town=073001")
         self.assertContains(response, "周辺地域比較")
+        self.assertContains(response, "output=embed")
         self.assertContains(response, "Chapter Table")
         self.assertContains(response, "city=13121, town=073002")
 

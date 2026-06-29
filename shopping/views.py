@@ -147,6 +147,9 @@ class StorePlanningView(TemplateView):
                 selected_location.latitude, selected_location.longitude
             ),
             "population_area": selected_location.population_area,
+            "area_google_maps_embed_url": self._google_maps_area_embed_url(
+                selected_location.population_area
+            ),
         }
         context["store_locations"] = [
             {
@@ -263,6 +266,9 @@ class StorePlanningView(TemplateView):
             "area_google_maps_url": self._google_maps_area_url(
                 location.population_area
             ),
+            "area_google_maps_embed_url": self._google_maps_area_embed_url(
+                location.population_area
+            ),
             "is_selected": location.slug == selected_location.slug,
             "population_summary": population_summary,
             "age_group_cells": self._build_age_group_cells(
@@ -288,6 +294,9 @@ class StorePlanningView(TemplateView):
 
     def _google_maps_area_url(self, area_name: str) -> str:
         return f"https://www.google.com/maps/search/?api=1&query={quote(area_name)}"
+
+    def _google_maps_area_embed_url(self, area_name: str) -> str:
+        return f"https://www.google.com/maps?q={quote(area_name)}&output=embed"
 
     def _build_population_summary(self, sources):
         for source in sources:
