@@ -1,0 +1,56 @@
+{% extends 'shopping/base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'shp:index' %}">Shopping</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'shp:store_planning' %}">出店計画</a></li>
+                <li class="breadcrumb-item active" aria-current="page">店舗登録</li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="h3 mb-4">店舗登録</h1>
+                <form method="post" class="border rounded p-4">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    <div class="row g-3">
+                        {% for field in form %}
+                            <div class="{% if field.name == 'address' or field.name == 'google_maps_coord' %}col-12{% else %}col-md-6{% endif %}">
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    <div class="form-check mt-4">
+                                        {{ field }}
+                                        <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    </div>
+                                {% else %}
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in field.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button class="btn btn-primary" type="submit">登録</button>
+                        <a class="btn btn-outline-secondary" href="{% url 'shp:store_planning' %}">戻る</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

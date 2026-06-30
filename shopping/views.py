@@ -15,14 +15,15 @@ from django.views.generic import (
 from config import settings
 from .domain.repository.payment import StripePaymentRepository
 from .domain.repository.product import ProductRepository
-from .domain.repository.store_planning import StorePlanningDataSourceRepository
+from .domain.repository.store_planning import (
+    StorePlanningDataSourceRepository,
+    StorePlanningTargetStoreRepository,
+)
 from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
 from .domain.valueobject.store_planning import (
     AREA_HIERARCHY_LEVEL_PARENT_TOWN,
-    STORE_PLANNING_COMPARISON_AREAS,
-    STORE_PLANNING_TARGET_LOCATIONS,
     StorePlanningArea,
     StorePlanningTargetLocation,
 )
@@ -31,6 +32,7 @@ from .forms import (
     ProductCreateFormSingle,
     ProductCreateFormBulk,
     ProductEditForm,
+    StorePlanningTargetStoreCreateForm,
     StaffEditForm,
     StaffDetailForm,
     StaffCreateForm,
@@ -139,7 +141,7 @@ class StorePlanningView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        locations = STORE_PLANNING_TARGET_LOCATIONS
+        locations = StorePlanningTargetStoreRepository.get_active_locations()
         selected_location = self._selected_location()
         context["target_location"] = {
             "slug": selected_location.slug,
@@ -181,9 +183,7 @@ class StorePlanningView(TemplateView):
             StorePlanningDataSourceRepository.get_population_csv_coverage()
         )
         region_level3_rows = self._build_region_level3_rows(selected_location)
-        region_comparison_rows = self._build_region_comparison_rows(
-            selected_location, STORE_PLANNING_COMPARISON_AREAS
-        )
+        region_comparison_rows = self._build_region_comparison_rows(selected_location)
         context["region_level3_rows"] = region_level3_rows
         context["region_comparison_rows"] = region_comparison_rows
         context["region_table_rows"] = self._build_region_table_rows(
@@ -207,17 +207,31 @@ class StorePlanningView(TemplateView):
 
     def _selected_location(self):
         requested_slug = self.request.GET.get("store")
-        for location in STORE_PLANNING_TARGET_LOCATIONS:
+        locations = StorePlanningTargetStoreRepository.get_active_locations()
+        for location in locations:
             if location.slug == requested_slug:
                 return location
-        return STORE_PLANNING_TARGET_LOCATIONS[0]
+        if locations:
+            return locations[0]
+        return StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+            large_area_name="東保木間",
+            small_area_name="二丁目",
+        )
 
     def _fallback_data_source(self, location):
         return {
             "display_name": f"e-Stat 国勢調査 年齢別人口: {location.name}",
             "source_url": self.fallback_source_url,
-            "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
-            "data_period": "未取得",
+            "status": "データなし",
+            "data_period": "データなし",
             "source_updated_at": None,
             "fetched_at": None,
             "raw_data": {
@@ -228,7 +242,6 @@ class StorePlanningView(TemplateView):
                 "city_code": location.city_code,
                 "town_code": location.town_code,
                 "area_hierarchy_level": location.area_hierarchy_level,
-                "stat_inf_id": "000032163275",
                 "age_groups": [],
             },
         }
@@ -247,11 +260,8 @@ class StorePlanningView(TemplateView):
     def _build_region_comparison_rows(
         self,
         selected_location: StorePlanningTargetLocation,
-        comparison_areas: list[StorePlanningArea],
     ) -> list[dict]:
-        comparison_locations = self._comparison_locations(
-            selected_location, comparison_areas
-        )
+        comparison_locations = self._comparison_locations(selected_location)
         return [
             self._build_region_comparison_row(location, selected_location)
             for location in comparison_locations
@@ -260,12 +270,18 @@ class StorePlanningView(TemplateView):
     def _comparison_locations(
         self,
         selected_location: StorePlanningTargetLocation,
-        comparison_areas: list[StorePlanningArea],
     ) -> list[StorePlanningArea]:
         automatic_areas = self._automatic_comparison_areas(selected_location)
         if automatic_areas:
-            return [selected_location, *automatic_areas]
-        return [selected_location, *comparison_areas]
+            has_selected_area = any(
+                area.city_code == selected_location.city_code
+                and area.town_code == selected_location.town_code
+                for area in automatic_areas
+            )
+            if not has_selected_area:
+                return [selected_location, *automatic_areas]
+            return automatic_areas
+        return [selected_location]
 
     def _build_region_table_rows(
         self, region_level3_rows: list[dict], region_comparison_rows: list[dict]
@@ -299,18 +315,38 @@ class StorePlanningView(TemplateView):
                 town_code=selected_location.town_code,
             )
         )
-        return [self._area_from_snapshot(snapshot) for snapshot in snapshots]
+        return [
+            self._area_from_snapshot(snapshot, selected_location=selected_location)
+            for snapshot in snapshots
+        ]
 
-    def _area_from_snapshot(self, snapshot) -> StorePlanningArea:
+    def _area_from_snapshot(
+        self,
+        snapshot,
+        selected_location: StorePlanningTargetLocation | None = None,
+    ) -> StorePlanningArea:
         raw_data = snapshot.raw_data
         area_name = raw_data.get("target_area_name", snapshot.display_name)
         town_code = raw_data.get("town_code", "")
+        is_selected_area = (
+            selected_location is not None
+            and raw_data.get("city_code") == selected_location.city_code
+            and town_code == selected_location.town_code
+        )
         return StorePlanningArea(
-            slug=f"area-{raw_data.get('city_code', '')}-{town_code}",
-            name=f"自動候補（{raw_data.get('small_area_name') or area_name}）",
-            address=area_name,
-            latitude=None,
-            longitude=None,
+            slug=(
+                selected_location.slug
+                if is_selected_area
+                else f"area-{raw_data.get('city_code', '')}-{town_code}"
+            ),
+            name=(
+                selected_location.name
+                if is_selected_area
+                else f"自動候補（{raw_data.get('small_area_name') or area_name}）"
+            ),
+            address=selected_location.address if is_selected_area else area_name,
+            latitude=selected_location.latitude if is_selected_area else None,
+            longitude=selected_location.longitude if is_selected_area else None,
             city_code=raw_data.get("city_code", ""),
             town_code=town_code,
             population_area=area_name,
@@ -475,6 +511,20 @@ class StorePlanningView(TemplateView):
         if not stat_inf_id:
             return ""
         return f"https://www.e-stat.go.jp/stat-search/files?stat_infid={stat_inf_id}"
+
+
+class StorePlanningTargetStoreCreateView(CreateView):
+    """出店計画で選択するサンプル店舗候補を登録する。"""
+
+    template_name = "shopping/store_planning_target_store/create.html"
+    form_class = StorePlanningTargetStoreCreateForm
+
+    def form_valid(self, form):
+        messages.success(self.request, "出店計画のサンプル店舗を登録しました。")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return f"{reverse('shp:store_planning')}?store={self.object.slug}"
 
 
 class ProductDetailView(DetailView):

@@ -13,7 +13,27 @@
         <div class="row g-4">
             <div class="col-12">
                 <div class="p-4 bg-light rounded shadow-sm">
-                    <h1 class="h2 mb-3">出店計画</h1>
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+                        <h1 class="h2 mb-0">出店計画</h1>
+                        <a class="btn btn-outline-primary btn-sm align-self-md-start" href="{% url 'shp:store_planning_store_create' %}">
+                            店舗登録
+                        </a>
+                    </div>
+                    <form class="mb-3" method="get" action="{% url 'shp:store_planning' %}">
+                        <label class="form-label fw-semibold" for="store-planning-store-select">店舗候補</label>
+                        <div class="d-flex flex-column flex-sm-row gap-2">
+                            <select id="store-planning-store-select" class="form-select" name="store" onchange="this.form.submit()">
+                                {% for store in store_locations %}
+                                    <option value="{{ store.slug }}" {% if store.is_active %}selected{% endif %}>
+                                        {{ store.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-primary text-nowrap" type="submit">
+                                表示
+                            </button>
+                        </div>
+                    </form>
                     <dl class="row mb-0">
                         <dt class="col-sm-3">対象地点</dt>
                         <dd class="col-sm-9">
@@ -24,13 +44,6 @@
                         <dt class="col-sm-3">人口集計地域</dt>
                         <dd class="col-sm-9">{{ target_location.population_area }}</dd>
                     </dl>
-                    <div class="d-flex flex-wrap gap-2 mt-3" aria-label="店舗候補">
-                        {% for store in store_locations %}
-                            <a class="btn btn-sm {% if store.is_active %}btn-primary{% else %}btn-outline-primary{% endif %}" href="?store={{ store.slug }}">
-                                {{ store.name }}
-                            </a>
-                        {% endfor %}
-                    </div>
                 </div>
             </div>
 
@@ -143,7 +156,7 @@
                                         {% if row.population_summary.total_population %}
                                             {{ row.population_summary.total_population|intcomma }}人
                                         {% else %}
-                                            未取得
+                                            データなし
                                         {% endif %}
                                     </td>
                                     <td class="text-end text-nowrap">
@@ -180,16 +193,14 @@
                     <h2 class="h5 mb-3">e-Stat 年代別人口</h2>
                     {% if not has_fetched_data_sources %}
                         <div class="alert alert-warning">
-                            e-Stat の人口データはまだ取得されていません。
-                            <code>python manage.py daily_fetch_store_planning_data_sources</code>
-                            を実行すると、対象町丁の年代別人口が保存されます。
+                            選択中の店舗候補に対応する e-Stat の人口データはデータなしです。
                         </div>
                     {% endif %}
                     <p class="small text-muted mb-2">
                         <span class="badge text-bg-light">対象地域</span>
-                        {{ population_summary.target_area_name|default:"東京都足立区東保木間二丁目" }} /
-                        e-Stat地域コード {{ population_summary.city_code|default:"13121" }} /
-                        町丁字コード {{ population_summary.town_code|default:"073002" }}
+                        {{ population_summary.target_area_name|default:"データなし" }} /
+                        e-Stat地域コード {{ population_summary.city_code|default:"-" }} /
+                        町丁字コード {{ population_summary.town_code|default:"-" }}
                     </p>
                     <div class="border rounded p-3 mb-3">
                         <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
@@ -199,7 +210,7 @@
                                     {% if population_summary.total_population %}
                                         {{ population_summary.total_population|intcomma }}人
                                     {% else %}
-                                        未取得
+                                        データなし
                                     {% endif %}
                                     {% if population_summary.average_age %}
                                         <span class="badge text-bg-light border ms-2">平均年齢 {{ population_summary.average_age }} 歳</span>
@@ -214,15 +225,19 @@
                             {% endif %}
                         </div>
                         <div class="small text-muted">
-                            {{ population_summary.data_period|default:"令和2年国勢調査 小地域集計" }}
+                            {{ population_summary.data_period|default:"データなし" }}
                         </div>
                     </div>
                     <div class="small mb-3">
                         <span class="fw-semibold">使用した指標</span>
-                        <a href="{{ population_summary.stat_inf_url|default:population_summary.source_url }}" target="_blank" rel="noopener">
-                            {{ population_summary.table_name|default:"男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等" }}
-                            （{{ population_summary.stat_inf_id|default:"000032163275" }}）
-                        </a>
+                        {% if population_summary.stat_inf_id %}
+                            <a href="{{ population_summary.stat_inf_url|default:population_summary.source_url }}" target="_blank" rel="noopener">
+                                {{ population_summary.table_name|default:"男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等" }}
+                                （{{ population_summary.stat_inf_id }}）
+                            </a>
+                        {% else %}
+                            データなし
+                        {% endif %}
                     </div>
                     {% if population_age_rows %}
                         <div class="d-flex flex-wrap gap-3 small mb-2">
@@ -283,19 +298,27 @@
                             <tbody>
                             <tr>
                                 <td>年齢別人口</td>
-                                <td>{{ population_summary.status|default:"未取得" }}</td>
+                                <td>{{ population_summary.status|default:"データなし" }}</td>
                                 <td>
-                                    <a href="{{ population_summary.stat_inf_url|default:population_summary.source_url }}" target="_blank" rel="noopener">
-                                        <code>{{ population_summary.stat_inf_id|default:"000032163275" }}</code>
-                                    </a>
+                                    {% if population_summary.stat_inf_id %}
+                                        <a href="{{ population_summary.stat_inf_url|default:population_summary.source_url }}" target="_blank" rel="noopener">
+                                            <code>{{ population_summary.stat_inf_id }}</code>
+                                        </a>
+                                    {% else %}
+                                        データなし
+                                    {% endif %}
                                     {% if population_summary.resource_id %}
                                         <div class="small text-muted">resource {{ population_summary.resource_id }}</div>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <code>city={{ population_summary.city_code|default:"13121" }}, town={{ population_summary.town_code|default:"073002" }}</code>
+                                    {% if population_summary.stat_inf_id %}
+                                        <code>city={{ population_summary.city_code|default:"-" }}, town={{ population_summary.town_code|default:"-" }}</code>
+                                    {% else %}
+                                        データなし
+                                    {% endif %}
                                 </td>
-                                <td>{{ population_summary.data_period|default:"未取得" }}</td>
+                                <td>{{ population_summary.data_period|default:"データなし" }}</td>
                                 <td>
                                     {% if population_summary.source_updated_at %}
                                         {{ population_summary.source_updated_at|date:"Y-m-d" }}

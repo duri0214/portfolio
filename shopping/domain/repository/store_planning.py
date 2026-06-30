@@ -6,8 +6,9 @@ from shopping.domain.valueobject.store_planning import (
     AREA_HIERARCHY_LEVEL_CITY,
     AREA_HIERARCHY_LEVEL_PARENT_TOWN,
     StorePlanningDataSource,
+    StorePlanningTargetLocation,
 )
-from shopping.models import StorePlanningDataSourceSnapshot
+from shopping.models import StorePlanningDataSourceSnapshot, StorePlanningTargetStore
 
 
 class StorePlanningDataSourceRepository:
@@ -118,21 +119,17 @@ class StorePlanningDataSourceRepository:
         先頭2桁が一致する地域を候補として返す。
         e-Stat CSV上の町丁字コードは先頭ゼロ付きで保存される場合があるため、
         比較キーだけを正規化し、DB検索では保存形式に合わせたprefixを使う。
-        ただし、引数の町丁字コードは選択中の対象地域そのものを表すため、
-        比較候補には含めず除外する。
+        引数の町丁字コードも町丁リストのrootとして含め、画面側で選択中の
+        地域として強調する。
         """
         town_code_prefix = StorePlanningDataSourceRepository._town_code_prefix(
             town_code
         )
-        snapshots = (
-            StorePlanningDataSourceSnapshot.objects.filter(
-                raw_data__city_code=city_code,
-                raw_data__area_hierarchy_level=AREA_HIERARCHY_LEVEL_BLOCK,
-                raw_data__town_code__startswith=town_code_prefix,
-            )
-            .exclude(raw_data__town_code=town_code)
-            .order_by("source_key")
-        )
+        snapshots = StorePlanningDataSourceSnapshot.objects.filter(
+            raw_data__city_code=city_code,
+            raw_data__area_hierarchy_level=AREA_HIERARCHY_LEVEL_BLOCK,
+            raw_data__town_code__startswith=town_code_prefix,
+        ).order_by("source_key")
         return list(snapshots[:limit])
 
     @staticmethod
@@ -165,3 +162,30 @@ class StorePlanningDataSourceRepository:
     @staticmethod
     def _parent_town_code(town_code: str) -> str:
         return town_code[:4]
+
+
+class StorePlanningTargetStoreRepository:
+    """出店計画画面で選択するサンプル店舗候補を参照する。"""
+
+    @classmethod
+    def get_active_locations(cls) -> list[StorePlanningTargetLocation]:
+        stores = StorePlanningTargetStore.objects.filter(is_active=True)
+        return [cls._to_location(store) for store in stores]
+
+    @classmethod
+    def _to_location(
+        cls, store: StorePlanningTargetStore
+    ) -> StorePlanningTargetLocation:
+        return StorePlanningTargetLocation(
+            slug=store.slug,
+            name=store.name,
+            address=store.address,
+            latitude=store.latitude,
+            longitude=store.longitude,
+            city_code=store.city_code,
+            town_code=store.town_code,
+            population_area=store.population_area,
+            large_area_name=store.large_area_name,
+            small_area_name=store.small_area_name,
+            area_hierarchy_level=store.area_hierarchy_level,
+        )

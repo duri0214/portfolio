@@ -47,6 +47,49 @@ class StorePlanningDataSourceSnapshot(models.Model):
         return self.display_name
 
 
+class StorePlanningTargetStore(models.Model):
+    """
+    出店計画画面で選択対象にするサンプル店舗候補。
+
+    Attributes:
+        slug: URLパラメータと保存キーに使う識別子。
+        name: 画面に表示する店舗名。
+        address: 店舗または候補地の住所。
+        latitude: Google Mapsリンクに使う緯度。
+        longitude: Google Mapsリンクに使う経度。
+        city_code: e-Stat CSVの市区町村コード。
+        town_code: e-Stat CSVの町丁字コード。
+        population_area: 人口集計に使う町丁字名。
+        large_area_name: e-Stat CSVの大字・町名。
+        small_area_name: e-Stat CSVの字・丁目名。
+        area_hierarchy_level: e-Stat CSVの地域階層レベル。
+        is_active: 出店計画画面の選択肢として表示するかどうか。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    slug = models.SlugField("店舗キー", max_length=100, unique=True)
+    name = models.CharField("店舗名", max_length=255)
+    address = models.CharField("住所", max_length=500)
+    latitude = models.FloatField("緯度", null=True, blank=True)
+    longitude = models.FloatField("経度", null=True, blank=True)
+    city_code = models.CharField("e-Stat市区町村コード", max_length=10)
+    town_code = models.CharField("e-Stat町丁字コード", max_length=10)
+    population_area = models.CharField("人口集計地域", max_length=255)
+    large_area_name = models.CharField("大字・町名", max_length=100, blank=True)
+    small_area_name = models.CharField("字・丁目名", max_length=100, blank=True)
+    area_hierarchy_level = models.CharField("地域階層レベル", max_length=1, default="4")
+    is_active = models.BooleanField("表示対象", default=True)
+    created_at = models.DateTimeField("作成日時", default=timezone.now)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return self.name
+
+
 class UserAttribute(models.Model):
     """
     ショッピングアプリ特有のユーザー属性。

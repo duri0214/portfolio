@@ -12,12 +12,18 @@ from .views import (
     PaymentConfirmView,
     PaymentCompleteView,
     StorePlanningView,
+    StorePlanningTargetStoreCreateView,
 )
 
 app_name = "shp"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
     path("store-planning/", StorePlanningView.as_view(), name="store_planning"),
+    path(
+        "store-planning/stores/create/",
+        StorePlanningTargetStoreCreateView.as_view(),
+        name="store_planning_store_create",
+    ),
     path("product/edit/<int:pk>/", ProductEditView.as_view(), name="product_edit"),
     path(
         "product/detail/<int:pk>/", ProductDetailView.as_view(), name="product_detail"
