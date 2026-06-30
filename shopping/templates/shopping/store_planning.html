@@ -110,59 +110,6 @@
                             {% endif %}
                         </div>
                     {% endif %}
-                    {% if region_level3_rows %}
-                        <h3 class="h6 mb-2 d-flex align-items-center gap-2">
-                            <span>広域</span>
-                            <span class="badge text-bg-light border border-primary text-primary">地域階層レベル3</span>
-                        </h3>
-                        <div class="table-responsive mb-3">
-                            <table class="table table-sm align-middle">
-                                <thead>
-                                <tr>
-                                    <th>地域</th>
-                                    <th>総人口</th>
-                                    <th>平均年齢</th>
-                                    <th>e-Stat町丁字コード</th>
-                                    <th>地図</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for row in region_level3_rows %}
-                                    <tr>
-                                        <td>
-                                            <div class="fw-semibold">{{ row.population_area }}</div>
-                                            <div class="small text-muted">{{ row.comparison_note }}</div>
-                                        </td>
-                                        <td class="text-end text-nowrap">
-                                            {% if row.population_summary.total_population %}
-                                                {{ row.population_summary.total_population|intcomma }}人
-                                            {% else %}
-                                                未取得
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-end text-nowrap">
-                                            {% if row.population_summary.average_age %}
-                                                {{ row.population_summary.average_age }} 歳
-                                            {% else %}
-                                                -
-                                            {% endif %}
-                                        </td>
-                                        <td><code>{{ row.population_summary.town_code|default:"-" }}</code></td>
-                                        <td>
-                                            <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
-                                                地域を開く
-                                            </a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% endif %}
-                    <h3 class="h6 mb-2 d-flex align-items-center gap-2">
-                        <span>町丁</span>
-                        <span class="badge text-bg-light border border-primary text-primary">地域階層レベル4</span>
-                    </h3>
                     <div class="table-responsive">
                         <table class="table table-sm align-middle">
                             <thead>
@@ -170,21 +117,22 @@
                                 <th>地域</th>
                                 <th>総人口</th>
                                 <th>平均年齢</th>
-                                <th>年代構成</th>
                                 <th>e-Stat町丁字コード</th>
                                 <th>地図</th>
                             </tr>
                             </thead>
                             <tbody>
-                            {% for row in region_comparison_rows %}
+                            {% for row in region_table_rows %}
                                 <tr>
                                     <td>
                                         <div class="fw-semibold">
                                             {{ row.population_area }}
+                                            <span class="badge text-bg-light border border-primary text-primary ms-1">{{ row.area_level_label }}</span>
                                             {% if row.is_selected %}
                                                 <span class="badge text-bg-primary ms-1">対象地域</span>
                                             {% endif %}
                                         </div>
+                                        <div class="small text-muted">{{ row.area_level_badge }}</div>
                                         <div class="small text-muted">{{ row.name }}</div>
                                         <div class="small text-muted">{{ row.address }}</div>
                                         {% if row.comparison_note %}
@@ -203,21 +151,6 @@
                                             {{ row.population_summary.average_age }} 歳
                                         {% else %}
                                             -
-                                        {% endif %}
-                                    </td>
-                                    <td style="min-width: 220px;">
-                                        {% if row.age_group_cells %}
-                                            <div class="d-flex flex-wrap gap-1">
-                                                {% for age_group in row.age_group_cells %}
-                                                    {% if age_group.population %}
-                                                        <span class="badge text-bg-light border">
-                                                            {{ age_group.label }} {{ age_group.share_of_total }}%
-                                                        </span>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </div>
-                                        {% else %}
-                                            <span class="text-muted small">未取得</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-nowrap">
@@ -292,12 +225,18 @@
                         </a>
                     </div>
                     {% if population_age_rows %}
+                        <div class="d-flex flex-wrap gap-3 small mb-2">
+                            <span><span class="badge bg-secondary">&nbsp;</span> 人口ボリューム</span>
+                            <span><span class="badge" style="background-color: #8fb9dd;">&nbsp;</span> 男性比</span>
+                            <span><span class="badge" style="background-color: #e6a6b7;">&nbsp;</span> 女性比</span>
+                        </div>
                         <div class="table-responsive mb-3">
                             <table class="table table-sm align-middle">
                                 <thead>
                                 <tr>
                                     <th>年代</th>
-                                    <th>構成</th>
+                                    <th>人口の山</th>
+                                    <th>男女構成</th>
                                     <th class="text-end">総数</th>
                                     <th class="text-end">男</th>
                                     <th class="text-end">女</th>
@@ -307,10 +246,18 @@
                                 {% for row in population_age_rows %}
                                     <tr>
                                         <td class="text-nowrap">{{ row.label }}</td>
-                                        <td style="min-width: 160px;">
+                                        <td style="min-width: 180px;">
                                             <div class="progress" style="height: 18px;">
-                                                <div class="progress-bar" role="progressbar" style="width: {{ row.share }}%;" aria-valuenow="{{ row.share }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                <div class="progress-bar bg-secondary" role="progressbar" style="width: {{ row.population_share }}%;" aria-valuenow="{{ row.population_share }}" aria-valuemin="0" aria-valuemax="100" aria-label="人口ボリューム {{ row.population_share }}%"></div>
                                             </div>
+                                            <div class="small text-muted">最大年代比 {{ row.population_share }}%</div>
+                                        </td>
+                                        <td style="min-width: 220px;">
+                                            <div class="progress" style="height: 18px;">
+                                                <div class="progress-bar" role="progressbar" style="width: {{ row.male_share }}%; background-color: #8fb9dd;" aria-valuenow="{{ row.male_share }}" aria-valuemin="0" aria-valuemax="100" aria-label="男性 {{ row.male_share }}%"></div>
+                                                <div class="progress-bar" role="progressbar" style="width: {{ row.female_share }}%; background-color: #e6a6b7;" aria-valuenow="{{ row.female_share }}" aria-valuemin="0" aria-valuemax="100" aria-label="女性 {{ row.female_share }}%"></div>
+                                            </div>
+                                            <div class="small text-muted">男 {{ row.male_share }}% / 女 {{ row.female_share }}%</div>
                                         </td>
                                         <td class="text-end">{{ row.population|intcomma }}人</td>
                                         <td class="text-end">{{ row.male_population|intcomma }}人</td>

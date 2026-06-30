@@ -186,6 +186,9 @@ class StorePlanningView(TemplateView):
         )
         context["region_level3_rows"] = region_level3_rows
         context["region_comparison_rows"] = region_comparison_rows
+        context["region_table_rows"] = self._build_region_table_rows(
+            region_level3_rows, region_comparison_rows
+        )
         context["region_map_button_groups"] = self._build_region_map_button_groups(
             selected_location, region_level3_rows, region_comparison_rows
         )
@@ -264,6 +267,19 @@ class StorePlanningView(TemplateView):
             return [selected_location, *automatic_areas]
         return [selected_location, *comparison_areas]
 
+    def _build_region_table_rows(
+        self, region_level3_rows: list[dict], region_comparison_rows: list[dict]
+    ) -> list[dict]:
+        wide_area_rows = [
+            {**row, "area_level_label": "広域", "area_level_badge": "地域階層レベル3"}
+            for row in region_level3_rows
+        ]
+        town_area_rows = [
+            {**row, "area_level_label": "町丁", "area_level_badge": "地域階層レベル4"}
+            for row in region_comparison_rows
+        ]
+        return [*wide_area_rows, *town_area_rows]
+
     def _automatic_comparison_areas(
         self, selected_location: StorePlanningTargetLocation
     ) -> list[StorePlanningArea]:
@@ -322,7 +338,6 @@ class StorePlanningView(TemplateView):
         )
         source = data_source or self._fallback_data_source(location)
         population_summary = self._build_population_summary([source])
-        age_rows = self._build_population_age_rows([source])
         return {
             "slug": location.slug,
             "name": location.name,
@@ -337,9 +352,6 @@ class StorePlanningView(TemplateView):
             "comparison_note": location.comparison_note,
             "is_selected": location.slug == selected_location.slug,
             "population_summary": population_summary,
-            "age_group_cells": self._build_age_group_cells(
-                age_rows, population_summary.get("total_population")
-            ),
             "has_fetched_data_source": data_source is not None,
         }
 
@@ -387,18 +399,6 @@ class StorePlanningView(TemplateView):
                 }
         return {}
 
-    def _build_age_group_cells(self, age_rows: list[dict], total_population) -> list:
-        if not age_rows or not total_population:
-            return []
-        cells = []
-        for row in age_rows:
-            population = row["population"]
-            share = 0
-            if population is not None:
-                share = round(population / total_population * 100, 1)
-            cells.append({**row, "share_of_total": share})
-        return cells
-
     def _build_population_summary(self, sources):
         for source in sources:
             raw_data = self._source_value(source, "raw_data", {})
@@ -437,13 +437,34 @@ class StorePlanningView(TemplateView):
                 )
                 rows = []
                 for row in raw_data["age_groups"]:
-                    population = row["population"]
-                    share = 0
-                    if max_population and population is not None:
-                        share = round(population / max_population * 100, 1)
-                    rows.append({**row, "share": share})
+                    population_share = 0
+                    if max_population and row.get("population") is not None:
+                        population_share = round(
+                            row["population"] / max_population * 100, 1
+                        )
+                    male_share, female_share = self._gender_share_pair(
+                        row.get("male_population"), row.get("female_population")
+                    )
+                    rows.append(
+                        {
+                            **row,
+                            "population_share": population_share,
+                            "male_share": male_share,
+                            "female_share": female_share,
+                        }
+                    )
                 return rows
         return []
+
+    def _gender_share_pair(self, male_population, female_population) -> tuple:
+        male = male_population or 0
+        female = female_population or 0
+        total = male + female
+        if not total:
+            return 0, 0
+        male_share = round(male / total * 100, 1)
+        female_share = round(100 - male_share, 1)
+        return male_share, female_share
 
     def _source_value(self, source, name: str, default=None):
         if isinstance(source, dict):
