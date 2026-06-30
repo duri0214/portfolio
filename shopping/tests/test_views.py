@@ -119,7 +119,10 @@ class TestView(TestCase):
         self.assertContains(response, "e-Stat CSV カバー範囲")
         self.assertContains(response, "東京都")
         self.assertContains(response, "1 市区町村")
-        self.assertContains(response, "地域階層レベル4の 1 町丁字")
+        self.assertContains(response, "レベル4")
+        self.assertContains(response, "字・丁目単位")
+        self.assertContains(response, "1件")
+        self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "周辺地域比較")
         self.assertContains(response, "地域マップ")
         self.assertContains(response, "<iframe")
@@ -359,8 +362,12 @@ class TestView(TestCase):
             "市区町村コード・地域階層レベル4・町丁字コード先頭2桁から抽出（境界未確認）",
         )
         self.assertContains(response, "地域検索")
-        self.assertNotContains(response, "東京都足立区東伊興一丁目")
-        self.assertNotContains(response, "東京都足立区保木間一丁目")
+        self.assertContains(response, "e-Stat CSV カバー範囲")
+        self.assertContains(response, "東京都足立区東伊興一丁目")
+        self.assertContains(response, "東京都足立区保木間一丁目")
+        self.assertContains(response, "4件")
+        self.assertNotContains(response, "9,999人")
+        self.assertNotContains(response, "999人")
 
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
         """
