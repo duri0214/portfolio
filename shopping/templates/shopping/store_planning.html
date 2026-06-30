@@ -230,10 +230,14 @@
                     </div>
                     <div class="small mb-3">
                         <span class="fw-semibold">使用した指標</span>
-                        <a href="{{ population_summary.stat_inf_url|default:population_summary.source_url }}" target="_blank" rel="noopener">
-                            {{ population_summary.table_name|default:"男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等" }}
-                            （{{ population_summary.stat_inf_id|default:"-" }}）
-                        </a>
+                        {% if population_summary.stat_inf_id %}
+                            <a href="{{ population_summary.stat_inf_url|default:population_summary.source_url }}" target="_blank" rel="noopener">
+                                {{ population_summary.table_name|default:"男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等" }}
+                                （{{ population_summary.stat_inf_id }}）
+                            </a>
+                        {% else %}
+                            データなし
+                        {% endif %}
                     </div>
                     {% if population_age_rows %}
                         <div class="d-flex flex-wrap gap-3 small mb-2">
@@ -296,15 +300,23 @@
                                 <td>年齢別人口</td>
                                 <td>{{ population_summary.status|default:"データなし" }}</td>
                                 <td>
-                                    <a href="{{ population_summary.stat_inf_url|default:population_summary.source_url }}" target="_blank" rel="noopener">
-                                        <code>{{ population_summary.stat_inf_id|default:"-" }}</code>
-                                    </a>
+                                    {% if population_summary.stat_inf_id %}
+                                        <a href="{{ population_summary.stat_inf_url|default:population_summary.source_url }}" target="_blank" rel="noopener">
+                                            <code>{{ population_summary.stat_inf_id }}</code>
+                                        </a>
+                                    {% else %}
+                                        データなし
+                                    {% endif %}
                                     {% if population_summary.resource_id %}
                                         <div class="small text-muted">resource {{ population_summary.resource_id }}</div>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <code>city={{ population_summary.city_code|default:"-" }}, town={{ population_summary.town_code|default:"-" }}</code>
+                                    {% if population_summary.stat_inf_id %}
+                                        <code>city={{ population_summary.city_code|default:"-" }}, town={{ population_summary.town_code|default:"-" }}</code>
+                                    {% else %}
+                                        データなし
+                                    {% endif %}
                                 </td>
                                 <td>{{ population_summary.data_period|default:"データなし" }}</td>
                                 <td>

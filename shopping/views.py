@@ -242,7 +242,6 @@ class StorePlanningView(TemplateView):
                 "city_code": location.city_code,
                 "town_code": location.town_code,
                 "area_hierarchy_level": location.area_hierarchy_level,
-                "stat_inf_id": "000032163275",
                 "age_groups": [],
             },
         }

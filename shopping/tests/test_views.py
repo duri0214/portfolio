@@ -118,6 +118,7 @@ class TestView(TestCase):
         self.assertContains(response, "Chapter Table")
         self.assertContains(response, "OKEI TAPROOM オケタプ")
         self.assertContains(response, "札幌市時計台")
+        self.assertContains(response, "データなし表示点検用サンプル")
         self.assertContains(response, 'id="store-planning-store-select"')
         self.assertContains(response, reverse("shp:store_planning_store_create"))
         self.assertContains(
@@ -207,7 +208,9 @@ class TestView(TestCase):
             "https://www.google.com/maps?q=35.683713863354235,139.69973314970687",
         )
         self.assertContains(response, "代々木一丁目")
-        self.assertContains(response, "city=13113, town=030001")
+        self.assertContains(response, "e-Stat地域コード 13113")
+        self.assertContains(response, "町丁字コード 030001")
+        self.assertNotContains(response, "city=13113, town=030001")
         self.assertContains(response, 'value="okei-taproom" selected')
 
     def test_store_planning_page_uses_selected_store_as_comparison_root(self):
@@ -354,9 +357,12 @@ class TestView(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "札幌市時計台")
+        self.assertContains(response, "データなし表示点検用サンプル")
         self.assertContains(response, "北海道札幌市中央区北一条西二丁目")
-        self.assertContains(response, "city=01101, town=790102")
         self.assertContains(response, "データなし")
+        self.assertNotContains(response, "city=01101, town=790102")
+        self.assertNotContains(response, "stat_infid=000032163275")
+        self.assertNotContains(response, "000032163275")
         self.assertNotContains(response, "東京都足立区東保木間")
         self.assertNotContains(response, "東京都渋谷区代々木")
         self.assertNotContains(
@@ -414,7 +420,7 @@ class TestView(TestCase):
         self.assertContains(response, "073001")
         self.assertContains(response, "周辺地域比較")
         self.assertContains(response, "output=embed")
-        self.assertContains(response, "town=073002")
+        self.assertContains(response, "073002")
 
     def test_store_planning_page_displays_estat_code_based_comparison_candidates(
         self,

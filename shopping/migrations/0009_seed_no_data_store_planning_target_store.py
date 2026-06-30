@@ -6,7 +6,7 @@ def seed_no_data_store_planning_target_store(apps, schema_editor):
     StorePlanningTargetStore.objects.update_or_create(
         slug="sapporo-clock-tower",
         defaults={
-            "name": "札幌市時計台",
+            "name": "札幌市時計台（データなし表示点検用サンプル）",
             "address": "〒060-0001 北海道札幌市中央区北１条西２丁目",
             "latitude": 43.062563,
             "longitude": 141.353685,
