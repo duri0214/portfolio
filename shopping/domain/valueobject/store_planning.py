@@ -107,21 +107,3 @@ class StorePlanningArea:
 @dataclass(frozen=True)
 class StorePlanningTargetLocation(StorePlanningArea):
     """出店計画で選択対象にする店舗候補地。"""
-
-
-STORE_PLANNING_COMPARISON_AREAS = [
-    StorePlanningArea(
-        slug="area-higashi-hokima-1",
-        name="比較対象地域（東保木間一丁目）",
-        address="東京都足立区東保木間一丁目",
-        latitude=35.793608,
-        longitude=139.811938,
-        city_code="13121",
-        town_code="073001",
-        population_area="東京都足立区東保木間一丁目",
-        large_area_name="東保木間",
-        small_area_name="一丁目",
-        area_hierarchy_level=AREA_HIERARCHY_LEVEL_BLOCK,
-        comparison_note="手動設定した比較対象地域",
-    ),
-]

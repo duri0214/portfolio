@@ -24,7 +24,7 @@ def seed_store_planning_target_stores(apps, schema_editor):
             "address": "〒151-0053 東京都渋谷区代々木１丁目５２−４ ベルテ南新宿 地下１階",
             "latitude": 35.683713863354235,
             "longitude": 139.69973314970687,
-            "city_code": "013113",
+            "city_code": "13113",
             "town_code": "030001",
             "population_area": "代々木一丁目",
             "large_area_name": "代々木",

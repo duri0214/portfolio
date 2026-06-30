@@ -24,7 +24,6 @@ from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
 from .domain.valueobject.store_planning import (
     AREA_HIERARCHY_LEVEL_PARENT_TOWN,
-    STORE_PLANNING_COMPARISON_AREAS,
     StorePlanningArea,
     StorePlanningTargetLocation,
 )
@@ -184,9 +183,7 @@ class StorePlanningView(TemplateView):
             StorePlanningDataSourceRepository.get_population_csv_coverage()
         )
         region_level3_rows = self._build_region_level3_rows(selected_location)
-        region_comparison_rows = self._build_region_comparison_rows(
-            selected_location, STORE_PLANNING_COMPARISON_AREAS
-        )
+        region_comparison_rows = self._build_region_comparison_rows(selected_location)
         context["region_level3_rows"] = region_level3_rows
         context["region_comparison_rows"] = region_comparison_rows
         context["region_table_rows"] = self._build_region_table_rows(
@@ -233,8 +230,8 @@ class StorePlanningView(TemplateView):
         return {
             "display_name": f"e-Stat 国勢調査 年齢別人口: {location.name}",
             "source_url": self.fallback_source_url,
-            "status": "未取得: daily_fetch_store_planning_data_sources を実行してください",
-            "data_period": "未取得",
+            "status": "データなし",
+            "data_period": "データなし",
             "source_updated_at": None,
             "fetched_at": None,
             "raw_data": {
@@ -264,11 +261,8 @@ class StorePlanningView(TemplateView):
     def _build_region_comparison_rows(
         self,
         selected_location: StorePlanningTargetLocation,
-        comparison_areas: list[StorePlanningArea],
     ) -> list[dict]:
-        comparison_locations = self._comparison_locations(
-            selected_location, comparison_areas
-        )
+        comparison_locations = self._comparison_locations(selected_location)
         return [
             self._build_region_comparison_row(location, selected_location)
             for location in comparison_locations
@@ -277,12 +271,9 @@ class StorePlanningView(TemplateView):
     def _comparison_locations(
         self,
         selected_location: StorePlanningTargetLocation,
-        comparison_areas: list[StorePlanningArea],
     ) -> list[StorePlanningArea]:
         automatic_areas = self._automatic_comparison_areas(selected_location)
-        if automatic_areas:
-            return [selected_location, *automatic_areas]
-        return [selected_location, *comparison_areas]
+        return [selected_location, *automatic_areas]
 
     def _build_region_table_rows(
         self, region_level3_rows: list[dict], region_comparison_rows: list[dict]

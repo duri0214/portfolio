@@ -117,6 +117,7 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "Chapter Table")
         self.assertContains(response, "OKEI TAPROOM オケタプ")
+        self.assertContains(response, "札幌市時計台")
         self.assertContains(response, 'id="store-planning-store-select"')
         self.assertContains(response, reverse("shp:store_planning_store_create"))
         self.assertContains(
@@ -168,9 +169,7 @@ class TestView(TestCase):
         self.assertContains(response, "output=embed")
         self.assertContains(response, "比較対象")
         self.assertContains(response, "対象地域")
-        self.assertContains(response, "比較対象地域（東保木間一丁目）")
         self.assertNotContains(response, "年代構成")
-        self.assertContains(response, "073001")
         self.assertContains(response, "地域を開く")
         self.assertContains(response, "代表地点")
         self.assertContains(response, "maps/search/?api=1")
@@ -208,8 +207,68 @@ class TestView(TestCase):
             "https://www.google.com/maps?q=35.683713863354235,139.69973314970687",
         )
         self.assertContains(response, "代々木一丁目")
-        self.assertContains(response, "city=013113, town=030001")
+        self.assertContains(response, "city=13113, town=030001")
         self.assertContains(response, 'value="okei-taproom" selected')
+
+    def test_store_planning_page_uses_selected_store_as_comparison_root(self):
+        """
+        シナリオ:
+        - 入力: OKEI TAPROOMと同じ市区町村・町丁字コードprefixを持つ代々木一丁目から五丁目のe-Stat人口スナップショット。
+        - 処理: OKEI TAPROOMを選択して出店計画画面をGETする。
+        - 期待値: 代々木一丁目をrootに代々木の地域階層4候補だけが表示され、東保木間の固定候補は混ざらないこと。
+        """
+        for town_code, small_area_name, total_population in [
+            ("030001", "一丁目", 1001),
+            ("030002", "二丁目", 1002),
+            ("030003", "三丁目", 1003),
+            ("030004", "四丁目", 1004),
+            ("030005", "五丁目", 1005),
+        ]:
+            area_name = f"東京都渋谷区代々木{small_area_name}"
+            StorePlanningDataSourceSnapshot.objects.create(
+                source_key=f"estat_population_age_groups_13113_{town_code}",
+                display_name=f"e-Stat 国勢調査 年齢別人口: {area_name}",
+                source_url="https://www.e-stat.go.jp/stat-search/files",
+                status=f"取得済み: {area_name} の年齢別人口",
+                data_period="令和2年国勢調査 小地域集計",
+                source_updated_at=timezone.now(),
+                raw_data={
+                    "stat_inf_id": "000032163275",
+                    "resource_id": "000009048041",
+                    "table_name": "第3表 男女，年齢（5歳階級）別人口，平均年齢及び総年齢－町丁・字等",
+                    "target_area_name": area_name,
+                    "prefecture_name": "東京都",
+                    "city_name": "渋谷区",
+                    "large_area_name": "代々木",
+                    "small_area_name": small_area_name,
+                    "city_code": "13113",
+                    "town_code": town_code,
+                    "area_hierarchy_level": "4",
+                    "total_population": total_population,
+                    "male_population": 500,
+                    "female_population": total_population - 500,
+                    "average_age": 42.0,
+                    "age_groups": [],
+                },
+            )
+
+        response = self.client.get(
+            f"{reverse('shp:store_planning')}?store=okei-taproom"
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "東京都渋谷区代々木一丁目")
+        self.assertContains(response, "東京都渋谷区代々木二丁目")
+        self.assertContains(response, "東京都渋谷区代々木三丁目")
+        self.assertContains(response, "東京都渋谷区代々木四丁目")
+        self.assertContains(response, "東京都渋谷区代々木五丁目")
+        self.assertContains(response, "030001")
+        self.assertContains(response, "030005")
+        self.assertContains(response, "1,001人")
+        self.assertNotContains(response, "東京都足立区東保木間一丁目")
+        self.assertNotContains(
+            response, "daily_fetch_store_planning_data_sources を実行してください"
+        )
 
     def test_get_store_planning_target_store_create_page_200(self):
         """
@@ -264,7 +323,7 @@ class TestView(TestCase):
         シナリオ:
         - 入力: e-Stat人口CSVの集計結果が未保存のDBと、出店計画画面のURL。
         - 処理: テストクライアントでGETする。
-        - 期待値: バッチ未実行でも確認対象のデータソース名と未取得状態が表示されること。
+        - 期待値: バッチ未実行でも確認対象のデータソース名とデータなし状態が表示されること。
         """
         response = self.client.get(reverse("shp:store_planning"))
 
@@ -272,15 +331,37 @@ class TestView(TestCase):
         self.assertContains(response, "e-Stat 年代別人口")
         self.assertContains(response, "ファイルID")
         self.assertContains(response, "取得条件")
-        self.assertContains(response, "未取得")
-        self.assertContains(
+        self.assertContains(response, "データなし")
+        self.assertNotContains(
             response, "daily_fetch_store_planning_data_sources を実行してください"
         )
         self.assertContains(response, "周辺地域比較")
         self.assertContains(response, "地域マップ")
         self.assertContains(response, "<iframe")
-        self.assertContains(response, "比較対象地域（東保木間一丁目）")
+        self.assertNotContains(response, "比較対象地域（東保木間一丁目）")
         self.assertContains(response, "e-Stat CSVはまだ取り込まれていません")
+
+    def test_store_planning_page_displays_no_data_for_store_outside_saved_csv(self):
+        """
+        シナリオ:
+        - 入力: 保存済みe-Stat CSVに存在しない市区町村コードを持つ札幌市時計台の店舗候補。
+        - 処理: その店舗候補を選択して出店計画画面をGETする。
+        - 期待値: 選択店舗をrootにした表示になり、足立区の固定値ではなくデータなしが表示されること。
+        """
+        response = self.client.get(
+            f"{reverse('shp:store_planning')}?store=sapporo-clock-tower"
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "札幌市時計台")
+        self.assertContains(response, "北海道札幌市中央区北一条西二丁目")
+        self.assertContains(response, "city=01101, town=999999")
+        self.assertContains(response, "データなし")
+        self.assertNotContains(response, "東京都足立区東保木間")
+        self.assertNotContains(response, "東京都渋谷区代々木")
+        self.assertNotContains(
+            response, "daily_fetch_store_planning_data_sources を実行してください"
+        )
 
     def test_store_planning_page_ignores_comparison_area_as_store_selection(self):
         """
