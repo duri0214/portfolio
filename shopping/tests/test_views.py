@@ -286,13 +286,32 @@ class TestView(TestCase):
         self.assertContains(response, "店舗登録")
         self.assertContains(response, "店舗名")
         self.assertContains(response, "E-Stat市区町村コード")
+        self.assertContains(response, "E-Stat都道府県名")
+        self.assertContains(response, "E-Stat市区町村名")
+        self.assertContains(response, "E-Stat大字・町名")
+        self.assertContains(response, "E-Stat字・丁目名")
+        self.assertContains(response, "Googleマップ座標")
+        self.assertContains(response, "e-Stat CSVの「市区町村コード」です")
+        self.assertContains(response, "e-Stat CSVの「町丁字コード」です")
+        self.assertContains(response, "e-Stat CSVの「都道府県名」です")
+        self.assertContains(response, "e-Stat CSVの「市区町村名」です")
+        self.assertContains(
+            response, "URLの ?store= に入る半角英数字・ハイフンの識別子"
+        )
+        self.assertContains(response, "e-Stat CSVの「大字・町名」です")
+        self.assertContains(response, "e-Stat CSVの「字・丁目名」です")
+        self.assertNotContains(response, "E-Stat人口集計地域")
+        self.assertNotContains(response, 'name="population_area"')
+        self.assertNotContains(response, 'name="latitude"')
+        self.assertNotContains(response, 'name="longitude"')
+        self.assertNotContains(response, "E-Stat地域階層レベル")
 
     def test_post_store_planning_target_store_create_page(self):
         """
         シナリオ:
-        - 入力: 出店計画の店舗候補として必要な店舗名・座標・e-Stat地域コード。
+        - 入力: 出店計画の店舗候補として必要な店舗名・Googleマップ座標・e-Stat地域コード。
         - 処理: 店舗登録フォームへPOSTする。
-        - 期待値: 店舗候補が保存され、作成した店舗を選択した出店計画画面へリダイレクトすること。
+        - 期待値: 店舗候補が保存され、座標と地域階層レベル4が設定されること。
         """
         response = self.client.post(
             reverse("shp:store_planning_store_create"),
@@ -300,14 +319,13 @@ class TestView(TestCase):
                 "slug": "test-taproom",
                 "name": "Test Taproom",
                 "address": "東京都渋谷区代々木",
-                "latitude": "35.1",
-                "longitude": "139.1",
+                "google_maps_coord": "35.1, 139.1",
                 "city_code": "13113",
                 "town_code": "030002",
-                "population_area": "東京都渋谷区代々木二丁目",
+                "prefecture_name": "東京都",
+                "city_name": "渋谷区",
                 "large_area_name": "代々木",
                 "small_area_name": "二丁目",
-                "area_hierarchy_level": "4",
                 "is_active": "on",
             },
         )
@@ -317,8 +335,77 @@ class TestView(TestCase):
             f"{reverse('shp:store_planning')}?store=test-taproom",
             fetch_redirect_response=False,
         )
-        self.assertTrue(
-            StorePlanningTargetStore.objects.filter(slug="test-taproom").exists()
+        store = StorePlanningTargetStore.objects.get(slug="test-taproom")
+        self.assertEqual(35.1, store.latitude)
+        self.assertEqual(139.1, store.longitude)
+        self.assertEqual("東京都渋谷区代々木二丁目", store.population_area)
+        self.assertEqual("4", store.area_hierarchy_level)
+
+    def test_post_store_planning_target_store_create_page_parses_google_maps_coord(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: Googleマップからコピーした「緯度, 経度」形式の座標。
+        - 処理: 店舗登録フォームへPOSTする。
+        - 期待値: カンマ区切り座標が緯度・経度に分解されて保存されること。
+        """
+        response = self.client.post(
+            reverse("shp:store_planning_store_create"),
+            {
+                "slug": "coord-taproom",
+                "name": "Coord Taproom",
+                "address": "東京都渋谷区代々木",
+                "google_maps_coord": "35.683713863354235, 139.69973314970687",
+                "city_code": "13113",
+                "town_code": "030002",
+                "prefecture_name": "東京都",
+                "city_name": "渋谷区",
+                "large_area_name": "代々木",
+                "small_area_name": "二丁目",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=coord-taproom",
+            fetch_redirect_response=False,
+        )
+        store = StorePlanningTargetStore.objects.get(slug="coord-taproom")
+        self.assertEqual(35.683713863354235, store.latitude)
+        self.assertEqual(139.69973314970687, store.longitude)
+
+    def test_post_store_planning_target_store_create_page_rejects_reversed_coord(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: Googleマップ座標欄に「経度, 緯度」の順で座標を入力する。
+        - 処理: 店舗登録フォームへPOSTする。
+        - 期待値: 緯度の範囲外としてエラーになり、店舗候補が保存されないこと。
+        """
+        response = self.client.post(
+            reverse("shp:store_planning_store_create"),
+            {
+                "slug": "reversed-coord",
+                "name": "Reversed Coord",
+                "address": "東京都渋谷区代々木",
+                "google_maps_coord": "139.69973314970687, 35.683713863354235",
+                "city_code": "13113",
+                "town_code": "030002",
+                "prefecture_name": "東京都",
+                "city_name": "渋谷区",
+                "large_area_name": "代々木",
+                "small_area_name": "二丁目",
+                "is_active": "on",
+            },
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "カンマの左側は緯度です")
+        self.assertFalse(
+            StorePlanningTargetStore.objects.filter(slug="reversed-coord").exists()
         )
 
     def test_store_planning_page_displays_fallback_sources_before_batch(self):

@@ -22,7 +22,7 @@
                     {% endif %}
                     <div class="row g-3">
                         {% for field in form %}
-                            <div class="{% if field.name == 'address' or field.name == 'population_area' %}col-12{% else %}col-md-6{% endif %}">
+                            <div class="{% if field.name == 'address' or field.name == 'google_maps_coord' %}col-12{% else %}col-md-6{% endif %}">
                                 {% if field.field.widget.input_type == 'checkbox' %}
                                     <div class="form-check mt-4">
                                         {{ field }}
@@ -31,6 +31,9 @@
                                 {% else %}
                                     <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                                     {{ field }}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
                                 {% endif %}
                                 {% if field.errors %}
                                     <div class="invalid-feedback d-block">
