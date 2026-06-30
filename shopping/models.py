@@ -26,7 +26,11 @@ class StorePlanningDataSourceSnapshot(models.Model):
         data_period: e-Statデータの対象期間。
         source_updated_at: e-Statが公表している更新日時。
         fetched_at: アプリがローカルDBへ保存した日時。
-        raw_data: e-Stat CSVから保存した集計値とメタ情報。
+        raw_data: e-Stat CSVから保存した集計値とメタ情報。市区町村コード、
+            町丁字コード、地域階層レベルなど、e-Stat CSVの地域区分列も
+            保存値のまま保持する。地域階層レベルは、1=市区町村単位、
+            2=字・町名単位、3=大字・町名が同じ字・丁目の合計、
+            4=字・丁目単位を表す区分値。
     """
 
     source_key = models.CharField("データソースキー", max_length=100, unique=True)

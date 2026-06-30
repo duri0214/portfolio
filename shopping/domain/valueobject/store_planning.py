@@ -3,6 +3,18 @@ from datetime import datetime
 from urllib.parse import quote
 
 
+AREA_HIERARCHY_LEVEL_CITY = "1"
+AREA_HIERARCHY_LEVEL_TOWN = "2"
+AREA_HIERARCHY_LEVEL_PARENT_TOWN = "3"
+AREA_HIERARCHY_LEVEL_BLOCK = "4"
+AREA_HIERARCHY_LEVEL_LABELS = {
+    AREA_HIERARCHY_LEVEL_CITY: "市区町村単位",
+    AREA_HIERARCHY_LEVEL_TOWN: "字・町名単位",
+    AREA_HIERARCHY_LEVEL_PARENT_TOWN: "大字・町名が同じ字・丁目の合計",
+    AREA_HIERARCHY_LEVEL_BLOCK: "字・丁目単位",
+}
+
+
 @dataclass(frozen=True)
 class StorePlanningDataSource:
     """
@@ -15,7 +27,8 @@ class StorePlanningDataSource:
         status: 取得・利用状態。
         data_period: e-Statデータの対象期間。
         source_updated_at: e-Statが公表している更新日時。
-        raw_data: e-Stat CSVから保存した集計値とメタ情報。
+        raw_data: e-Stat CSVから保存した集計値とメタ情報。市区町村コード、
+            町丁字コード、地域階層レベルはCSVの列値をそのまま保持する。
     """
 
     source_key: str
@@ -43,7 +56,8 @@ class StorePlanningArea:
         population_area: 人口集計に使う町丁字名。
         large_area_name: e-Stat CSVの大字・町名。
         small_area_name: e-Stat CSVの字・丁目名。
-        area_hierarchy_level: e-Stat CSVの地域階層レベル。
+        area_hierarchy_level: e-Stat CSVの地域階層レベル。1=市区町村単位、
+            2=字・町名単位、3=大字・町名が同じ字・丁目の合計、4=字・丁目単位。
         comparison_note: 比較対象に選ばれた根拠や注意書き。
     """
 
@@ -57,7 +71,7 @@ class StorePlanningArea:
     population_area: str
     large_area_name: str = ""
     small_area_name: str = ""
-    area_hierarchy_level: str = "4"
+    area_hierarchy_level: str = AREA_HIERARCHY_LEVEL_BLOCK
     comparison_note: str = ""
 
     @property
@@ -104,7 +118,7 @@ STORE_PLANNING_TARGET_LOCATIONS = [
         population_area="東京都足立区東保木間二丁目",
         large_area_name="東保木間",
         small_area_name="二丁目",
-        area_hierarchy_level="4",
+        area_hierarchy_level=AREA_HIERARCHY_LEVEL_BLOCK,
     ),
 ]
 
@@ -120,7 +134,7 @@ STORE_PLANNING_COMPARISON_AREAS = [
         population_area="東京都足立区東保木間一丁目",
         large_area_name="東保木間",
         small_area_name="一丁目",
-        area_hierarchy_level="4",
+        area_hierarchy_level=AREA_HIERARCHY_LEVEL_BLOCK,
         comparison_note="手動設定した比較対象地域",
     ),
 ]

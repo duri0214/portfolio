@@ -1,7 +1,11 @@
 from django.db import transaction
 from django.utils import timezone
 
-from shopping.domain.valueobject.store_planning import StorePlanningDataSource
+from shopping.domain.valueobject.store_planning import (
+    AREA_HIERARCHY_LEVEL_BLOCK,
+    AREA_HIERARCHY_LEVEL_PARENT_TOWN,
+    StorePlanningDataSource,
+)
 from shopping.models import StorePlanningDataSourceSnapshot
 
 
@@ -40,6 +44,14 @@ class StorePlanningDataSourceRepository:
 
     @staticmethod
     def get_population_csv_coverage() -> dict:
+        """
+        e-Stat人口CSVの保存済み明細を、地域階層レベル別の件数として集計する。
+
+        地域階層レベルはCSVに含まれる固定的な区分値で、アプリ側で増減させる
+        計算値ではない。ここでは表示用のカバー範囲として、保存済みraw_dataの
+        市区町村コード・町丁字コード・地域階層レベルがそろっている明細数を
+        レベル別に数える。
+        """
         raw_data_rows = StorePlanningDataSourceSnapshot.objects.values_list(
             "raw_data", flat=True
         )
@@ -71,7 +83,9 @@ class StorePlanningDataSourceRepository:
         return {
             "prefecture_names": sorted(prefectures),
             "city_count": len(cities),
-            "town_count": area_hierarchy_level_counts.get("4", 0),
+            "town_count": area_hierarchy_level_counts.get(
+                AREA_HIERARCHY_LEVEL_BLOCK, 0
+            ),
             "area_hierarchy_level_counts": dict(
                 sorted(area_hierarchy_level_counts.items())
             ),
@@ -87,8 +101,9 @@ class StorePlanningDataSourceRepository:
         """
         e-Stat CSVの地域コードから、比較候補になる町丁を取得する。
 
-        境界ポリゴンを使った接触判定ではなく、同じ市区町村かつ地域階層レベル4、
-        町丁字コードの先頭ゼロを除いた先頭2桁が一致する地域を候補として返す。
+        境界ポリゴンを使った接触判定ではなく、同じ市区町村かつ
+        字・丁目単位を表す地域階層レベル4、町丁字コードの先頭ゼロを除いた
+        先頭2桁が一致する地域を候補として返す。
         e-Stat CSV上の町丁字コードは先頭ゼロ付きで保存される場合があるため、
         比較キーだけを正規化し、DB検索では保存形式に合わせたprefixを使う。
         ただし、引数の町丁字コードは選択中の対象地域そのものを表すため、
@@ -100,7 +115,7 @@ class StorePlanningDataSourceRepository:
         snapshots = (
             StorePlanningDataSourceSnapshot.objects.filter(
                 raw_data__city_code=city_code,
-                raw_data__area_hierarchy_level="4",
+                raw_data__area_hierarchy_level=AREA_HIERARCHY_LEVEL_BLOCK,
                 raw_data__town_code__startswith=town_code_prefix,
             )
             .exclude(raw_data__town_code=town_code)
@@ -116,14 +131,14 @@ class StorePlanningDataSourceRepository:
         町丁字コードから地域階層レベル3の親地域を取得する。
 
         例として、東保木間二丁目の町丁字コード `073002` から、
-        大字・町名単位の `0730` を取得する。
+        大字・町名が同じ字・丁目の合計を表す `0730` を取得する。
         """
         parent_town_code = StorePlanningDataSourceRepository._parent_town_code(
             town_code
         )
         return StorePlanningDataSourceSnapshot.objects.filter(
             raw_data__city_code=city_code,
-            raw_data__area_hierarchy_level="3",
+            raw_data__area_hierarchy_level=AREA_HIERARCHY_LEVEL_PARENT_TOWN,
             raw_data__town_code=parent_town_code,
         ).first()
 

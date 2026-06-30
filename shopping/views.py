@@ -20,6 +20,7 @@ from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
 from .domain.valueobject.store_planning import (
+    AREA_HIERARCHY_LEVEL_PARENT_TOWN,
     STORE_PLANNING_COMPARISON_AREAS,
     STORE_PLANNING_TARGET_LOCATIONS,
     StorePlanningArea,
@@ -304,7 +305,7 @@ class StorePlanningView(TemplateView):
         )
 
     def _comparison_note(self, raw_data: dict) -> str:
-        if raw_data.get("area_hierarchy_level") == "3":
+        if raw_data.get("area_hierarchy_level") == AREA_HIERARCHY_LEVEL_PARENT_TOWN:
             return "大字・町名単位の広域表示（地域階層レベル3）"
         return (
             "市区町村コード・地域階層レベル4・町丁字コード先頭2桁から抽出"
