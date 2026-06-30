@@ -394,6 +394,8 @@ class TestView(TestCase):
         self.assertContains(response, "地域階層レベル4")
         self.assertContains(response, "0730")
         self.assertContains(response, "073001")
+        self.assertContains(response, "レベル 3")
+        self.assertContains(response, "レベル 4")
         self.assertContains(
             response,
             "https://www.google.com/maps?q=%E6%9D%B1%E4%BA%AC%E9%83%BD%E8%B6%B3%E7%AB%8B%E5%8C%BA%E6%9D%B1%E4%BF%9D%E6%9C%A8%E9%96%93&amp;output=embed",

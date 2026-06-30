@@ -130,8 +130,17 @@
                                 {% for row in region_level3_rows %}
                                     <tr>
                                         <td>
-                                            <div class="fw-semibold">{{ row.population_area }}</div>
-                                            <div class="small text-muted">{{ row.comparison_note }}</div>
+                                            <div class="fw-semibold">
+                                                {{ row.population_area }}
+                                                {% if row.is_selected %}
+                                                    <span class="badge text-bg-primary ms-1">対象地域</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="small text-muted">{{ row.name }}</div>
+                                            <div class="small text-muted">{{ row.address }}</div>
+                                            {% if row.comparison_note %}
+                                                <div class="small text-muted">{{ row.comparison_note }}</div>
+                                            {% endif %}
                                         </td>
                                         <td class="text-end text-nowrap">
                                             {% if row.population_summary.total_population %}
@@ -147,11 +156,19 @@
                                                 -
                                             {% endif %}
                                         </td>
-                                        <td><code>{{ row.population_summary.town_code|default:"-" }}</code></td>
+                                        <td class="text-nowrap">
+                                            <code>{{ row.population_summary.town_code|default:"-" }}</code>
+                                            <div class="small text-muted">レベル {{ row.area_hierarchy_level|default:"-" }}</div>
+                                        </td>
                                         <td>
                                             <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
                                                 地域を開く
                                             </a>
+                                            <div class="small text-muted">
+                                                <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
+                                                    {% if row.latitude and row.longitude %}代表地点{% else %}地域検索{% endif %}
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 {% endfor %}
