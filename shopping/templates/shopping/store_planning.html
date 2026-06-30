@@ -110,76 +110,6 @@
                             {% endif %}
                         </div>
                     {% endif %}
-                    {% if region_level3_rows %}
-                        <h3 class="h6 mb-2 d-flex align-items-center gap-2">
-                            <span>広域</span>
-                            <span class="badge text-bg-light border border-primary text-primary">地域階層レベル3</span>
-                        </h3>
-                        <div class="table-responsive mb-3">
-                            <table class="table table-sm align-middle">
-                                <thead>
-                                <tr>
-                                    <th>地域</th>
-                                    <th>総人口</th>
-                                    <th>平均年齢</th>
-                                    <th>e-Stat町丁字コード</th>
-                                    <th>地図</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for row in region_level3_rows %}
-                                    <tr>
-                                        <td>
-                                            <div class="fw-semibold">
-                                                {{ row.population_area }}
-                                                {% if row.is_selected %}
-                                                    <span class="badge text-bg-primary ms-1">対象地域</span>
-                                                {% endif %}
-                                            </div>
-                                            <div class="small text-muted">{{ row.name }}</div>
-                                            <div class="small text-muted">{{ row.address }}</div>
-                                            {% if row.comparison_note %}
-                                                <div class="small text-muted">{{ row.comparison_note }}</div>
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-end text-nowrap">
-                                            {% if row.population_summary.total_population %}
-                                                {{ row.population_summary.total_population|intcomma }}人
-                                            {% else %}
-                                                未取得
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-end text-nowrap">
-                                            {% if row.population_summary.average_age %}
-                                                {{ row.population_summary.average_age }} 歳
-                                            {% else %}
-                                                -
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-nowrap">
-                                            <code>{{ row.population_summary.town_code|default:"-" }}</code>
-                                            <div class="small text-muted">レベル {{ row.area_hierarchy_level|default:"-" }}</div>
-                                        </td>
-                                        <td>
-                                            <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
-                                                地域を開く
-                                            </a>
-                                            <div class="small text-muted">
-                                                <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
-                                                    {% if row.latitude and row.longitude %}代表地点{% else %}地域検索{% endif %}
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% endif %}
-                    <h3 class="h6 mb-2 d-flex align-items-center gap-2">
-                        <span>町丁</span>
-                        <span class="badge text-bg-light border border-primary text-primary">地域階層レベル4</span>
-                    </h3>
                     <div class="table-responsive">
                         <table class="table table-sm align-middle">
                             <thead>
@@ -192,15 +122,17 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for row in region_comparison_rows %}
+                            {% for row in region_table_rows %}
                                 <tr>
                                     <td>
                                         <div class="fw-semibold">
                                             {{ row.population_area }}
+                                            <span class="badge text-bg-light border border-primary text-primary ms-1">{{ row.area_level_label }}</span>
                                             {% if row.is_selected %}
                                                 <span class="badge text-bg-primary ms-1">対象地域</span>
                                             {% endif %}
                                         </div>
+                                        <div class="small text-muted">{{ row.area_level_badge }}</div>
                                         <div class="small text-muted">{{ row.name }}</div>
                                         <div class="small text-muted">{{ row.address }}</div>
                                         {% if row.comparison_note %}

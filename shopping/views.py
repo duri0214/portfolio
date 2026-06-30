@@ -186,6 +186,9 @@ class StorePlanningView(TemplateView):
         )
         context["region_level3_rows"] = region_level3_rows
         context["region_comparison_rows"] = region_comparison_rows
+        context["region_table_rows"] = self._build_region_table_rows(
+            region_level3_rows, region_comparison_rows
+        )
         context["region_map_button_groups"] = self._build_region_map_button_groups(
             selected_location, region_level3_rows, region_comparison_rows
         )
@@ -263,6 +266,19 @@ class StorePlanningView(TemplateView):
         if automatic_areas:
             return [selected_location, *automatic_areas]
         return [selected_location, *comparison_areas]
+
+    def _build_region_table_rows(
+        self, region_level3_rows: list[dict], region_comparison_rows: list[dict]
+    ) -> list[dict]:
+        wide_area_rows = [
+            {**row, "area_level_label": "広域", "area_level_badge": "地域階層レベル3"}
+            for row in region_level3_rows
+        ]
+        town_area_rows = [
+            {**row, "area_level_label": "町丁", "area_level_badge": "地域階層レベル4"}
+            for row in region_comparison_rows
+        ]
+        return [*wide_area_rows, *town_area_rows]
 
     def _automatic_comparison_areas(
         self, selected_location: StorePlanningTargetLocation
