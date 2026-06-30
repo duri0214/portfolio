@@ -294,8 +294,8 @@
                     {% if population_age_rows %}
                         <div class="d-flex flex-wrap gap-3 small mb-2">
                             <span><span class="badge bg-secondary">&nbsp;</span> 人口ボリューム</span>
-                            <span><span class="badge bg-primary">&nbsp;</span> 男性比</span>
-                            <span><span class="badge bg-danger">&nbsp;</span> 女性比</span>
+                            <span><span class="badge" style="background-color: #8fb9dd;">&nbsp;</span> 男性比</span>
+                            <span><span class="badge" style="background-color: #e6a6b7;">&nbsp;</span> 女性比</span>
                         </div>
                         <div class="table-responsive mb-3">
                             <table class="table table-sm align-middle">
@@ -321,8 +321,8 @@
                                         </td>
                                         <td style="min-width: 220px;">
                                             <div class="progress" style="height: 18px;">
-                                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ row.male_share }}%;" aria-valuenow="{{ row.male_share }}" aria-valuemin="0" aria-valuemax="100" aria-label="男性 {{ row.male_share }}%"></div>
-                                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ row.female_share }}%;" aria-valuenow="{{ row.female_share }}" aria-valuemin="0" aria-valuemax="100" aria-label="女性 {{ row.female_share }}%"></div>
+                                                <div class="progress-bar" role="progressbar" style="width: {{ row.male_share }}%; background-color: #8fb9dd;" aria-valuenow="{{ row.male_share }}" aria-valuemin="0" aria-valuemax="100" aria-label="男性 {{ row.male_share }}%"></div>
+                                                <div class="progress-bar" role="progressbar" style="width: {{ row.female_share }}%; background-color: #e6a6b7;" aria-valuenow="{{ row.female_share }}" aria-valuemin="0" aria-valuemax="100" aria-label="女性 {{ row.female_share }}%"></div>
                                             </div>
                                             <div class="small text-muted">男 {{ row.male_share }}% / 女 {{ row.female_share }}%</div>
                                         </td>
