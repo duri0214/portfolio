@@ -432,14 +432,23 @@ class StorePlanningView(TemplateView):
         for source in sources:
             raw_data = self._source_value(source, "raw_data", {})
             if raw_data.get("age_groups"):
+                max_population = max(
+                    row["population"] or 0 for row in raw_data["age_groups"]
+                )
                 rows = []
                 for row in raw_data["age_groups"]:
+                    population_share = 0
+                    if max_population and row.get("population") is not None:
+                        population_share = round(
+                            row["population"] / max_population * 100, 1
+                        )
                     male_share, female_share = self._gender_share_pair(
                         row.get("male_population"), row.get("female_population")
                     )
                     rows.append(
                         {
                             **row,
+                            "population_share": population_share,
                             "male_share": male_share,
                             "female_share": female_share,
                         }

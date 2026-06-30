@@ -293,6 +293,7 @@
                     </div>
                     {% if population_age_rows %}
                         <div class="d-flex flex-wrap gap-3 small mb-2">
+                            <span><span class="badge bg-secondary">&nbsp;</span> 人口ボリューム</span>
                             <span><span class="badge bg-primary">&nbsp;</span> 男性比</span>
                             <span><span class="badge bg-danger">&nbsp;</span> 女性比</span>
                         </div>
@@ -301,6 +302,7 @@
                                 <thead>
                                 <tr>
                                     <th>年代</th>
+                                    <th>人口の山</th>
                                     <th>男女構成</th>
                                     <th class="text-end">総数</th>
                                     <th class="text-end">男</th>
@@ -311,6 +313,12 @@
                                 {% for row in population_age_rows %}
                                     <tr>
                                         <td class="text-nowrap">{{ row.label }}</td>
+                                        <td style="min-width: 180px;">
+                                            <div class="progress" style="height: 18px;">
+                                                <div class="progress-bar bg-secondary" role="progressbar" style="width: {{ row.population_share }}%;" aria-valuenow="{{ row.population_share }}" aria-valuemin="0" aria-valuemax="100" aria-label="人口ボリューム {{ row.population_share }}%"></div>
+                                            </div>
+                                            <div class="small text-muted">最大年代比 {{ row.population_share }}%</div>
+                                        </td>
                                         <td style="min-width: 220px;">
                                             <div class="progress" style="height: 18px;">
                                                 <div class="progress-bar bg-primary" role="progressbar" style="width: {{ row.male_share }}%;" aria-valuenow="{{ row.male_share }}" aria-valuemin="0" aria-valuemax="100" aria-label="男性 {{ row.male_share }}%"></div>
