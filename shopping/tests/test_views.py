@@ -5,7 +5,12 @@ from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
-from shopping.models import Product, Store, StorePlanningDataSourceSnapshot
+from shopping.models import (
+    Product,
+    Store,
+    StorePlanningDataSourceSnapshot,
+    StorePlanningTargetStore,
+)
 
 
 class TestView(TestCase):
@@ -111,6 +116,9 @@ class TestView(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "Chapter Table")
+        self.assertContains(response, "OKEI TAPROOM オケタプ")
+        self.assertContains(response, 'id="store-planning-store-select"')
+        self.assertContains(response, reverse("shp:store_planning_store_create"))
         self.assertContains(
             response,
             "https://www.google.com/maps?q=35.792822,139.8143238",
@@ -181,6 +189,75 @@ class TestView(TestCase):
         self.assertNotContains(response, "立地リスク判定")
         self.assertNotContains(response, "手動で確認するデータ")
         self.assertNotContains(response, "店舗座標")
+
+    def test_store_planning_page_selects_registered_sample_store(self):
+        """
+        シナリオ:
+        - 入力: 初期登録済みのOKEI TAPROOMをstoreパラメータに指定したURL。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: 選択中の対象地点と人口集計条件がOKEI TAPROOMの内容で表示されること。
+        """
+        response = self.client.get(
+            f"{reverse('shp:store_planning')}?store=okei-taproom"
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "OKEI TAPROOM オケタプ")
+        self.assertContains(
+            response,
+            "https://www.google.com/maps?q=35.683713863354235,139.69973314970687",
+        )
+        self.assertContains(response, "代々木一丁目")
+        self.assertContains(response, "city=013113, town=030001")
+        self.assertContains(response, 'value="okei-taproom" selected')
+
+    def test_get_store_planning_target_store_create_page_200(self):
+        """
+        シナリオ:
+        - 入力: 出店計画の店舗登録ページURL。
+        - 処理: テストクライアントでGETする。
+        - 期待値: HTTP 200 が返され、店舗登録フォームが表示されること。
+        """
+        response = self.client.get(reverse("shp:store_planning_store_create"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "店舗登録")
+        self.assertContains(response, "店舗名")
+        self.assertContains(response, "E-Stat市区町村コード")
+
+    def test_post_store_planning_target_store_create_page(self):
+        """
+        シナリオ:
+        - 入力: 出店計画の店舗候補として必要な店舗名・座標・e-Stat地域コード。
+        - 処理: 店舗登録フォームへPOSTする。
+        - 期待値: 店舗候補が保存され、作成した店舗を選択した出店計画画面へリダイレクトすること。
+        """
+        response = self.client.post(
+            reverse("shp:store_planning_store_create"),
+            {
+                "slug": "test-taproom",
+                "name": "Test Taproom",
+                "address": "東京都渋谷区代々木",
+                "latitude": "35.1",
+                "longitude": "139.1",
+                "city_code": "13113",
+                "town_code": "030002",
+                "population_area": "東京都渋谷区代々木二丁目",
+                "large_area_name": "代々木",
+                "small_area_name": "二丁目",
+                "area_hierarchy_level": "4",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=test-taproom",
+            fetch_redirect_response=False,
+        )
+        self.assertTrue(
+            StorePlanningTargetStore.objects.filter(slug="test-taproom").exists()
+        )
 
     def test_store_planning_page_displays_fallback_sources_before_batch(self):
         """

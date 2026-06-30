@@ -15,14 +15,16 @@ from django.views.generic import (
 from config import settings
 from .domain.repository.payment import StripePaymentRepository
 from .domain.repository.product import ProductRepository
-from .domain.repository.store_planning import StorePlanningDataSourceRepository
+from .domain.repository.store_planning import (
+    StorePlanningDataSourceRepository,
+    StorePlanningTargetStoreRepository,
+)
 from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
 from .domain.valueobject.store_planning import (
     AREA_HIERARCHY_LEVEL_PARENT_TOWN,
     STORE_PLANNING_COMPARISON_AREAS,
-    STORE_PLANNING_TARGET_LOCATIONS,
     StorePlanningArea,
     StorePlanningTargetLocation,
 )
@@ -31,6 +33,7 @@ from .forms import (
     ProductCreateFormSingle,
     ProductCreateFormBulk,
     ProductEditForm,
+    StorePlanningTargetStoreCreateForm,
     StaffEditForm,
     StaffDetailForm,
     StaffCreateForm,
@@ -139,7 +142,7 @@ class StorePlanningView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        locations = STORE_PLANNING_TARGET_LOCATIONS
+        locations = StorePlanningTargetStoreRepository.get_active_locations()
         selected_location = self._selected_location()
         context["target_location"] = {
             "slug": selected_location.slug,
@@ -207,10 +210,24 @@ class StorePlanningView(TemplateView):
 
     def _selected_location(self):
         requested_slug = self.request.GET.get("store")
-        for location in STORE_PLANNING_TARGET_LOCATIONS:
+        locations = StorePlanningTargetStoreRepository.get_active_locations()
+        for location in locations:
             if location.slug == requested_slug:
                 return location
-        return STORE_PLANNING_TARGET_LOCATIONS[0]
+        if locations:
+            return locations[0]
+        return StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+            large_area_name="東保木間",
+            small_area_name="二丁目",
+        )
 
     def _fallback_data_source(self, location):
         return {
@@ -475,6 +492,20 @@ class StorePlanningView(TemplateView):
         if not stat_inf_id:
             return ""
         return f"https://www.e-stat.go.jp/stat-search/files?stat_infid={stat_inf_id}"
+
+
+class StorePlanningTargetStoreCreateView(CreateView):
+    """出店計画で選択するサンプル店舗候補を登録する。"""
+
+    template_name = "shopping/store_planning_target_store/create.html"
+    form_class = StorePlanningTargetStoreCreateForm
+
+    def form_valid(self, form):
+        messages.success(self.request, "出店計画のサンプル店舗を登録しました。")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return f"{reverse('shp:store_planning')}?store={self.object.slug}"
 
 
 class ProductDetailView(DetailView):

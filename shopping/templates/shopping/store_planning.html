@@ -13,7 +13,27 @@
         <div class="row g-4">
             <div class="col-12">
                 <div class="p-4 bg-light rounded shadow-sm">
-                    <h1 class="h2 mb-3">出店計画</h1>
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+                        <h1 class="h2 mb-0">出店計画</h1>
+                        <a class="btn btn-outline-primary btn-sm align-self-md-start" href="{% url 'shp:store_planning_store_create' %}">
+                            店舗登録
+                        </a>
+                    </div>
+                    <form class="mb-3" method="get" action="{% url 'shp:store_planning' %}">
+                        <label class="form-label fw-semibold" for="store-planning-store-select">店舗候補</label>
+                        <div class="d-flex flex-column flex-sm-row gap-2">
+                            <select id="store-planning-store-select" class="form-select" name="store" onchange="this.form.submit()">
+                                {% for store in store_locations %}
+                                    <option value="{{ store.slug }}" {% if store.is_active %}selected{% endif %}>
+                                        {{ store.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-primary text-nowrap" type="submit">
+                                表示
+                            </button>
+                        </div>
+                    </form>
                     <dl class="row mb-0">
                         <dt class="col-sm-3">対象地点</dt>
                         <dd class="col-sm-9">
@@ -24,13 +44,6 @@
                         <dt class="col-sm-3">人口集計地域</dt>
                         <dd class="col-sm-9">{{ target_location.population_area }}</dd>
                     </dl>
-                    <div class="d-flex flex-wrap gap-2 mt-3" aria-label="店舗候補">
-                        {% for store in store_locations %}
-                            <a class="btn btn-sm {% if store.is_active %}btn-primary{% else %}btn-outline-primary{% endif %}" href="?store={{ store.slug }}">
-                                {{ store.name }}
-                            </a>
-                        {% endfor %}
-                    </div>
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
 from django import forms
 
-from shopping.models import Product, UserAttribute
+from shopping.models import Product, StorePlanningTargetStore, UserAttribute
 
 
 class ProductCreateFormSingle(forms.ModelForm):
@@ -53,6 +53,45 @@ class ProductEditForm(forms.ModelForm):
             "description": forms.Textarea(
                 attrs={"tabindex": "4", "class": "form-control", "rows": "5"}
             ),
+        }
+
+
+class StorePlanningTargetStoreCreateForm(forms.ModelForm):
+    """出店計画で選択するサンプル店舗候補の登録フォーム。"""
+
+    class Meta:
+        model = StorePlanningTargetStore
+        fields = (
+            "slug",
+            "name",
+            "address",
+            "latitude",
+            "longitude",
+            "city_code",
+            "town_code",
+            "population_area",
+            "large_area_name",
+            "small_area_name",
+            "area_hierarchy_level",
+            "is_active",
+        )
+        widgets = {
+            "slug": forms.TextInput(attrs={"class": "form-control"}),
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "address": forms.TextInput(attrs={"class": "form-control"}),
+            "latitude": forms.NumberInput(
+                attrs={"class": "form-control", "step": "any"}
+            ),
+            "longitude": forms.NumberInput(
+                attrs={"class": "form-control", "step": "any"}
+            ),
+            "city_code": forms.TextInput(attrs={"class": "form-control"}),
+            "town_code": forms.TextInput(attrs={"class": "form-control"}),
+            "population_area": forms.TextInput(attrs={"class": "form-control"}),
+            "large_area_name": forms.TextInput(attrs={"class": "form-control"}),
+            "small_area_name": forms.TextInput(attrs={"class": "form-control"}),
+            "area_hierarchy_level": forms.TextInput(attrs={"class": "form-control"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
 
