@@ -322,7 +322,6 @@ class StorePlanningView(TemplateView):
         )
         source = data_source or self._fallback_data_source(location)
         population_summary = self._build_population_summary([source])
-        age_rows = self._build_population_age_rows([source])
         return {
             "slug": location.slug,
             "name": location.name,
@@ -337,9 +336,6 @@ class StorePlanningView(TemplateView):
             "comparison_note": location.comparison_note,
             "is_selected": location.slug == selected_location.slug,
             "population_summary": population_summary,
-            "age_group_cells": self._build_age_group_cells(
-                age_rows, population_summary.get("total_population")
-            ),
             "has_fetched_data_source": data_source is not None,
         }
 
@@ -386,18 +382,6 @@ class StorePlanningView(TemplateView):
                     "last_modified_date": summary.get("last_modified_date"),
                 }
         return {}
-
-    def _build_age_group_cells(self, age_rows: list[dict], total_population) -> list:
-        if not age_rows or not total_population:
-            return []
-        cells = []
-        for row in age_rows:
-            population = row["population"]
-            share = 0
-            if population is not None:
-                share = round(population / total_population * 100, 1)
-            cells.append({**row, "share_of_total": share})
-        return cells
 
     def _build_population_summary(self, sources):
         for source in sources:

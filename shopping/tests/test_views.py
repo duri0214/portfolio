@@ -161,6 +161,7 @@ class TestView(TestCase):
         self.assertContains(response, "比較対象")
         self.assertContains(response, "対象地域")
         self.assertContains(response, "比較対象地域（東保木間一丁目）")
+        self.assertNotContains(response, "年代構成")
         self.assertContains(response, "073001")
         self.assertContains(response, "地域を開く")
         self.assertContains(response, "代表地点")

@@ -170,7 +170,6 @@
                                 <th>地域</th>
                                 <th>総人口</th>
                                 <th>平均年齢</th>
-                                <th>年代構成</th>
                                 <th>e-Stat町丁字コード</th>
                                 <th>地図</th>
                             </tr>
@@ -203,21 +202,6 @@
                                             {{ row.population_summary.average_age }} 歳
                                         {% else %}
                                             -
-                                        {% endif %}
-                                    </td>
-                                    <td style="min-width: 220px;">
-                                        {% if row.age_group_cells %}
-                                            <div class="d-flex flex-wrap gap-1">
-                                                {% for age_group in row.age_group_cells %}
-                                                    {% if age_group.population %}
-                                                        <span class="badge text-bg-light border">
-                                                            {{ age_group.label }} 男 {{ age_group.male_share }}% / 女 {{ age_group.female_share }}%
-                                                        </span>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </div>
-                                        {% else %}
-                                            <span class="text-muted small">未取得</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-nowrap">
