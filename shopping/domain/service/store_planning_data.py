@@ -97,6 +97,12 @@ class StorePlanningDataSourceService:
 
     @classmethod
     def _base_raw_data(cls, header: list[str], total_row: list[str]) -> dict:
+        """
+        e-Stat CSVの地域区分列と人口集計メタデータを保存用dictへ写す。
+
+        地域階層レベルは総務省統計局「令和2年国勢調査 調査結果の利用案内」
+        に示されるCSV列値をそのまま保持し、アプリ側で推定・変換しない。
+        """
         return {
             "stat_inf_id": cls.ESTAT_POPULATION_STAT_INF_ID,
             "resource_id": cls.ESTAT_POPULATION_RESOURCE_ID,

@@ -9,7 +9,7 @@ AREA_HIERARCHY_LEVEL_PARENT_TOWN = "3"
 AREA_HIERARCHY_LEVEL_BLOCK = "4"
 AREA_HIERARCHY_LEVEL_LABELS = {
     AREA_HIERARCHY_LEVEL_CITY: "市区町村単位",
-    AREA_HIERARCHY_LEVEL_TOWN: "字・町名単位",
+    AREA_HIERARCHY_LEVEL_TOWN: "字・町名（異なる字・丁目の地域を含まないもの）",
     AREA_HIERARCHY_LEVEL_PARENT_TOWN: "大字・町名が同じ字・丁目の合計",
     AREA_HIERARCHY_LEVEL_BLOCK: "字・丁目単位",
 }
@@ -28,7 +28,8 @@ class StorePlanningDataSource:
         data_period: e-Statデータの対象期間。
         source_updated_at: e-Statが公表している更新日時。
         raw_data: e-Stat CSVから保存した集計値とメタ情報。市区町村コード、
-            町丁字コード、地域階層レベルはCSVの列値をそのまま保持する。
+            町丁字コード、地域階層レベルは、総務省統計局「令和2年国勢調査
+            調査結果の利用案内」のCSV列値をそのまま保持する。
     """
 
     source_key: str
@@ -56,8 +57,10 @@ class StorePlanningArea:
         population_area: 人口集計に使う町丁字名。
         large_area_name: e-Stat CSVの大字・町名。
         small_area_name: e-Stat CSVの字・丁目名。
-        area_hierarchy_level: e-Stat CSVの地域階層レベル。1=市区町村単位、
-            2=字・町名単位、3=大字・町名が同じ字・丁目の合計、4=字・丁目単位。
+        area_hierarchy_level: e-Stat CSVの地域階層レベル。総務省統計局
+            「令和2年国勢調査 調査結果の利用案内」に従い、1=市区町村単位、
+            2=字・町名（異なる字・丁目の地域を含まないもの）、
+            3=大字・町名が同じ字・丁目の合計、4=字・丁目単位を表す。
         comparison_note: 比較対象に選ばれた根拠や注意書き。
     """
 

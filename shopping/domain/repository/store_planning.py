@@ -47,10 +47,10 @@ class StorePlanningDataSourceRepository:
         """
         e-Stat人口CSVの保存済み明細を、地域階層レベル別の件数として集計する。
 
-        地域階層レベルはCSVに含まれる固定的な区分値で、アプリ側で増減させる
-        計算値ではない。ここでは表示用のカバー範囲として、保存済みraw_dataの
-        市区町村コード・町丁字コード・地域階層レベルがそろっている明細数を
-        レベル別に数える。
+        地域階層レベルは総務省統計局「令和2年国勢調査 調査結果の利用案内」
+        に示されるCSV上の固定的な区分値で、アプリ側で増減させる計算値ではない。
+        ここでは表示用のカバー範囲として、保存済みraw_dataの市区町村コード・
+        町丁字コード・地域階層レベルがそろっている明細数をレベル別に数える。
         """
         raw_data_rows = StorePlanningDataSourceSnapshot.objects.values_list(
             "raw_data", flat=True
