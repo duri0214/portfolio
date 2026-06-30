@@ -119,21 +119,17 @@ class StorePlanningDataSourceRepository:
         先頭2桁が一致する地域を候補として返す。
         e-Stat CSV上の町丁字コードは先頭ゼロ付きで保存される場合があるため、
         比較キーだけを正規化し、DB検索では保存形式に合わせたprefixを使う。
-        ただし、引数の町丁字コードは選択中の対象地域そのものを表すため、
-        比較候補には含めず除外する。
+        引数の町丁字コードも町丁リストのrootとして含め、画面側で選択中の
+        地域として強調する。
         """
         town_code_prefix = StorePlanningDataSourceRepository._town_code_prefix(
             town_code
         )
-        snapshots = (
-            StorePlanningDataSourceSnapshot.objects.filter(
-                raw_data__city_code=city_code,
-                raw_data__area_hierarchy_level=AREA_HIERARCHY_LEVEL_BLOCK,
-                raw_data__town_code__startswith=town_code_prefix,
-            )
-            .exclude(raw_data__town_code=town_code)
-            .order_by("source_key")
-        )
+        snapshots = StorePlanningDataSourceSnapshot.objects.filter(
+            raw_data__city_code=city_code,
+            raw_data__area_hierarchy_level=AREA_HIERARCHY_LEVEL_BLOCK,
+            raw_data__town_code__startswith=town_code_prefix,
+        ).order_by("source_key")
         return list(snapshots[:limit])
 
     @staticmethod

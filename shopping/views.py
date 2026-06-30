@@ -273,7 +273,16 @@ class StorePlanningView(TemplateView):
         selected_location: StorePlanningTargetLocation,
     ) -> list[StorePlanningArea]:
         automatic_areas = self._automatic_comparison_areas(selected_location)
-        return [selected_location, *automatic_areas]
+        if automatic_areas:
+            has_selected_area = any(
+                area.city_code == selected_location.city_code
+                and area.town_code == selected_location.town_code
+                for area in automatic_areas
+            )
+            if not has_selected_area:
+                return [selected_location, *automatic_areas]
+            return automatic_areas
+        return [selected_location]
 
     def _build_region_table_rows(
         self, region_level3_rows: list[dict], region_comparison_rows: list[dict]
@@ -307,18 +316,38 @@ class StorePlanningView(TemplateView):
                 town_code=selected_location.town_code,
             )
         )
-        return [self._area_from_snapshot(snapshot) for snapshot in snapshots]
+        return [
+            self._area_from_snapshot(snapshot, selected_location=selected_location)
+            for snapshot in snapshots
+        ]
 
-    def _area_from_snapshot(self, snapshot) -> StorePlanningArea:
+    def _area_from_snapshot(
+        self,
+        snapshot,
+        selected_location: StorePlanningTargetLocation | None = None,
+    ) -> StorePlanningArea:
         raw_data = snapshot.raw_data
         area_name = raw_data.get("target_area_name", snapshot.display_name)
         town_code = raw_data.get("town_code", "")
+        is_selected_area = (
+            selected_location is not None
+            and raw_data.get("city_code") == selected_location.city_code
+            and town_code == selected_location.town_code
+        )
         return StorePlanningArea(
-            slug=f"area-{raw_data.get('city_code', '')}-{town_code}",
-            name=f"自動候補（{raw_data.get('small_area_name') or area_name}）",
-            address=area_name,
-            latitude=None,
-            longitude=None,
+            slug=(
+                selected_location.slug
+                if is_selected_area
+                else f"area-{raw_data.get('city_code', '')}-{town_code}"
+            ),
+            name=(
+                selected_location.name
+                if is_selected_area
+                else f"自動候補（{raw_data.get('small_area_name') or area_name}）"
+            ),
+            address=selected_location.address if is_selected_area else area_name,
+            latitude=selected_location.latitude if is_selected_area else None,
+            longitude=selected_location.longitude if is_selected_area else None,
             city_code=raw_data.get("city_code", ""),
             town_code=town_code,
             population_area=area_name,
