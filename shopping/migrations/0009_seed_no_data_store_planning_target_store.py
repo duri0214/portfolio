@@ -11,7 +11,7 @@ def seed_no_data_store_planning_target_store(apps, schema_editor):
             "latitude": 43.062563,
             "longitude": 141.353685,
             "city_code": "01101",
-            "town_code": "999999",
+            "town_code": "790102",
             "population_area": "北海道札幌市中央区北一条西二丁目",
             "large_area_name": "北一条西",
             "small_area_name": "二丁目",

@@ -344,7 +344,7 @@ class TestView(TestCase):
     def test_store_planning_page_displays_no_data_for_store_outside_saved_csv(self):
         """
         シナリオ:
-        - 入力: 保存済みe-Stat CSVに存在しない市区町村コードを持つ札幌市時計台の店舗候補。
+        - 入力: 町丁字コードは実在するが、保存済みe-Stat CSVテーブルには未登録の札幌市時計台の店舗候補。
         - 処理: その店舗候補を選択して出店計画画面をGETする。
         - 期待値: 選択店舗をrootにした表示になり、足立区の固定値ではなくデータなしが表示されること。
         """
@@ -355,7 +355,7 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "札幌市時計台")
         self.assertContains(response, "北海道札幌市中央区北一条西二丁目")
-        self.assertContains(response, "city=01101, town=999999")
+        self.assertContains(response, "city=01101, town=790102")
         self.assertContains(response, "データなし")
         self.assertNotContains(response, "東京都足立区東保木間")
         self.assertNotContains(response, "東京都渋谷区代々木")
