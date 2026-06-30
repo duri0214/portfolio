@@ -374,22 +374,23 @@
                             保存済みCSVは
                             {{ population_csv_coverage.prefecture_names|join:"・" }}
                             の {{ population_csv_coverage.city_count|intcomma }} 市区町村をカバーしています。
+                            {% if population_csv_coverage.area_hierarchy_level_counts %}
+                                レベル別:
+                                {% for level, count in population_csv_coverage.area_hierarchy_level_counts.items %}
+                                    レベル{{ level }} {{ count|intcomma }}件{% if not forloop.last %}、{% endif %}
+                                {% endfor %}
+                                。
+                            {% endif %}
                             {% if population_csv_coverage.fetched_at %}
                                 アプリ取得日時 {{ population_csv_coverage.fetched_at|date:"Y-m-d H:i" }}。
                             {% endif %}
                         </p>
-                        {% for group in population_csv_coverage.area_hierarchy_level_groups %}
-                            <p class="small text-muted mb-2">
-                                <span class="fw-semibold">
-                                    レベル{{ group.level }}
-                                    {% if group.label %}（{{ group.label }}）{% endif %}
-                                    {{ group.count|intcomma }}件:
-                                </span>
-                                {% for area in group.areas %}
-                                    {{ area.name }}{% if not forloop.last %}、{% endif %}
-                                {% endfor %}
-                            </p>
-                        {% endfor %}
+                        <p class="small text-muted mb-0">
+                            <span class="fw-semibold">レベル1（市区町村単位）:</span>
+                            {% for city in population_csv_coverage.city_rows %}
+                                {{ city.prefecture_name }} {{ city.city_name }}{% if not forloop.last %}、{% endif %}
+                            {% endfor %}
+                        </p>
                     {% else %}
                         <p class="small text-muted mb-0">
                             e-Stat CSVはまだ取り込まれていません。取り込み後に都道府県、市区町村数、町丁字数を表示します。

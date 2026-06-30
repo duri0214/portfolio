@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from shopping.domain.valueobject.store_planning import (
     AREA_HIERARCHY_LEVEL_BLOCK,
-    AREA_HIERARCHY_LEVEL_LABELS,
+    AREA_HIERARCHY_LEVEL_CITY,
     AREA_HIERARCHY_LEVEL_PARENT_TOWN,
     StorePlanningDataSource,
 )
@@ -46,40 +46,36 @@ class StorePlanningDataSourceRepository:
     @staticmethod
     def get_population_csv_coverage() -> dict:
         """
-        e-Stat人口CSVの保存済み明細を、地域階層レベル別の地域一覧として集計する。
+        e-Stat人口CSVの保存済み明細から、地域階層レベル1の市区町村範囲を集計する。
 
         地域階層レベルは総務省統計局「令和2年国勢調査 調査結果の利用案内」
         に示されるCSV上の固定的な区分値で、アプリ側で増減させる計算値ではない。
-        ここでは表示用のカバー範囲として、保存済みraw_dataの市区町村コード・
-        町丁字コード・地域階層レベルがそろっている明細をレベル別に並べる。
+        ここでは表示用のカバー範囲として、地域階層レベル1のraw_dataに含まれる
+        都道府県名・市区町村名を列挙し、地域階層レベル別の明細数だけを添える。
         """
         raw_data_rows = StorePlanningDataSourceSnapshot.objects.values_list(
             "raw_data", flat=True
         )
         prefectures = set()
         cities = set()
-        area_hierarchy_level_areas = {}
+        area_hierarchy_level_counts = {}
         fetched_at = None
         for raw_data in raw_data_rows:
             prefecture_name = raw_data.get("prefecture_name")
             city_name = raw_data.get("city_name")
             city_code = raw_data.get("city_code")
-            town_code = raw_data.get("town_code")
             area_hierarchy_level = raw_data.get("area_hierarchy_level")
-            target_area_name = raw_data.get("target_area_name")
             if prefecture_name:
                 prefectures.add(prefecture_name)
-            if city_code and city_name:
-                cities.add((city_code, city_name))
-            if city_code and town_code and area_hierarchy_level:
-                area_hierarchy_level_areas.setdefault(
-                    area_hierarchy_level, []
-                ).append(
-                    {
-                        "name": target_area_name or f"{city_code}-{town_code}",
-                        "city_code": city_code,
-                        "town_code": town_code,
-                    }
+            if (
+                area_hierarchy_level == AREA_HIERARCHY_LEVEL_CITY
+                and city_code
+                and city_name
+            ):
+                cities.add((prefecture_name or "", city_code, city_name))
+            if city_code and area_hierarchy_level:
+                area_hierarchy_level_counts[area_hierarchy_level] = (
+                    area_hierarchy_level_counts.get(area_hierarchy_level, 0) + 1
                 )
 
         latest_snapshot = StorePlanningDataSourceSnapshot.objects.order_by(
@@ -91,27 +87,19 @@ class StorePlanningDataSourceRepository:
         return {
             "prefecture_names": sorted(prefectures),
             "city_count": len(cities),
-            "town_count": len(
-                area_hierarchy_level_areas.get(AREA_HIERARCHY_LEVEL_BLOCK, [])
+            "town_count": area_hierarchy_level_counts.get(
+                AREA_HIERARCHY_LEVEL_BLOCK, 0
             ),
             "area_hierarchy_level_counts": dict(
-                sorted(
-                    (
-                        level,
-                        len(areas),
-                    )
-                    for level, areas in area_hierarchy_level_areas.items()
-                )
+                sorted(area_hierarchy_level_counts.items())
             ),
-            "area_hierarchy_level_groups": [
+            "city_rows": [
                 {
-                    "level": level,
-                    "label": AREA_HIERARCHY_LEVEL_LABELS.get(level, ""),
-                    "count": len(areas),
-                    "areas": sorted(areas, key=lambda area: area["name"]),
+                    "prefecture_name": prefecture_name,
+                    "city_code": city_code,
+                    "city_name": city_name,
                 }
-                for level, areas in sorted(area_hierarchy_level_areas.items())
-                if areas
+                for prefecture_name, city_code, city_name in sorted(cities)
             ],
             "fetched_at": fetched_at,
         }

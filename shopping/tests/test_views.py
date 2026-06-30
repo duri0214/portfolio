@@ -91,6 +91,22 @@ class TestView(TestCase):
                 ],
             },
         )
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="estat_population_age_groups_13121",
+            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み: 東京都足立区 の年齢別人口",
+            data_period="令和2年国勢調査 小地域集計",
+            source_updated_at=timezone.now(),
+            raw_data={
+                "target_area_name": "東京都足立区",
+                "prefecture_name": "東京都",
+                "city_name": "足立区",
+                "city_code": "13121",
+                "area_hierarchy_level": "1",
+                "age_groups": [],
+            },
+        )
         response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
@@ -119,10 +135,11 @@ class TestView(TestCase):
         self.assertContains(response, "e-Stat CSV カバー範囲")
         self.assertContains(response, "東京都")
         self.assertContains(response, "1 市区町村")
+        self.assertContains(response, "レベル1")
+        self.assertContains(response, "市区町村単位")
         self.assertContains(response, "レベル4")
-        self.assertContains(response, "字・丁目単位")
         self.assertContains(response, "1件")
-        self.assertContains(response, "東京都足立区東保木間二丁目")
+        self.assertContains(response, "東京都 足立区")
         self.assertContains(response, "周辺地域比較")
         self.assertContains(response, "地域マップ")
         self.assertContains(response, "<iframe")
@@ -263,6 +280,22 @@ class TestView(TestCase):
             },
         )
         StorePlanningDataSourceSnapshot.objects.create(
+            source_key="estat_population_age_groups_13121",
+            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み: 東京都足立区 の年齢別人口",
+            data_period="令和2年国勢調査 小地域集計",
+            source_updated_at=timezone.now(),
+            raw_data={
+                "target_area_name": "東京都足立区",
+                "prefecture_name": "東京都",
+                "city_name": "足立区",
+                "city_code": "13121",
+                "area_hierarchy_level": "1",
+                "age_groups": [],
+            },
+        )
+        StorePlanningDataSourceSnapshot.objects.create(
             source_key="estat_population_age_groups_13121_0730",
             display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間",
             source_url="https://www.e-stat.go.jp/stat-search/files",
@@ -363,9 +396,10 @@ class TestView(TestCase):
         )
         self.assertContains(response, "地域検索")
         self.assertContains(response, "e-Stat CSV カバー範囲")
-        self.assertContains(response, "東京都足立区東伊興一丁目")
-        self.assertContains(response, "東京都足立区保木間一丁目")
+        self.assertContains(response, "東京都 足立区")
         self.assertContains(response, "4件")
+        self.assertNotContains(response, "東京都足立区東伊興一丁目")
+        self.assertNotContains(response, "東京都足立区保木間一丁目")
         self.assertNotContains(response, "9,999人")
         self.assertNotContains(response, "999人")
 
