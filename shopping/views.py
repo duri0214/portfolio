@@ -239,7 +239,9 @@ class StorePlanningView(TemplateView):
             api_key=api_key,
             target_location=selected_location,
         )
-        if fetch_result.skipped:
+        if fetch_result.error_message:
+            messages.warning(request, fetch_result.error_message)
+        elif fetch_result.skipped:
             messages.info(
                 request,
                 (

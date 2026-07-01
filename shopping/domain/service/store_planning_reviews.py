@@ -102,8 +102,20 @@ class StorePlanningReviewService:
             radius=cls.RADIUS_METER,
             fields=cls.API_FIELDS,
         )
+        if service.last_error_status_code:
+            return StorePlanningReviewFetchResult(
+                place_count=0,
+                review_count=0,
+                error_message=cls._fetch_error_message(service.last_error_status_code),
+            )
         search_place_vos = cls._unique_place_vos(exact_place_vos)
         place_vo_list = cls._place_details_for_reviews(service, search_place_vos)
+        if service.last_error_status_code:
+            return StorePlanningReviewFetchResult(
+                place_count=len(search_place_vos),
+                review_count=0,
+                error_message=cls._fetch_error_message(service.last_error_status_code),
+            )
         review_count = 0
         for place_vo in place_vo_list:
             if place_vo.place is None or place_vo.location is None:
@@ -131,6 +143,12 @@ class StorePlanningReviewService:
             place_count=len(place_vo_list),
             review_count=review_count,
         )
+
+    @staticmethod
+    def _fetch_error_message(status_code: int) -> str:
+        if status_code == 403:
+            return "レビュー取得が許可されませんでした。管理者設定を確認してください。"
+        return "レビュー取得中にエラーが発生しました。時間をおいて再度お試しください。"
 
     @classmethod
     def _place_details_for_reviews(cls, service: GoogleMapsService, place_vos: list):

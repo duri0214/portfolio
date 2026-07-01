@@ -286,6 +286,7 @@ class TestView(TestCase):
         mock_fetch_reviews.return_value.place_count = 1
         mock_fetch_reviews.return_value.review_count = 2
         mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = ""
 
         with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
             response = self.client.post(
@@ -315,6 +316,7 @@ class TestView(TestCase):
         mock_fetch_reviews.return_value.place_count = 1
         mock_fetch_reviews.return_value.review_count = 0
         mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = ""
 
         with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
             response = self.client.post(
@@ -329,6 +331,36 @@ class TestView(TestCase):
             "Google Maps レビュー取得を実行しましたが、レビューは見つかりませんでした。",
         )
         self.assertContains(response, "取得施設数: 1件 / レビュー数: 0件")
+
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_post_store_planning_fetch_reviews_shows_fetch_error_message(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: レビュー取得でエラーが返る。
+        - 処理: 出店計画画面へ戻る。
+        - 期待値: 取得エラーが画面に表示されること。
+        """
+        mock_fetch_reviews.return_value.place_count = 0
+        mock_fetch_reviews.return_value.review_count = 0
+        mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = (
+            "レビュー取得が許可されませんでした。管理者設定を確認してください。"
+        )
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews"},
+                follow=True,
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(
+            response,
+            "レビュー取得が許可されませんでした。管理者設定を確認してください。",
+        )
 
     @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")

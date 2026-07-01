@@ -93,8 +93,10 @@ class StorePlanningReviewFetchResult:
         place_count: Places API から取得した施設数。
         review_count: 保存対象になったレビュー件数。
         skipped: 取得済みレビューがあり、API取得を省略したかどうか。
+        error_message: 取得処理で表示すべきエラーがあった場合のメッセージ。
     """
 
     place_count: int
     review_count: int
     skipped: bool = False
+    error_message: str = ""

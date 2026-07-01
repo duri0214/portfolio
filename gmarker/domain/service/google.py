@@ -10,6 +10,7 @@ class GoogleMapsService:
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://places.googleapis.com/v1/places"
+        self.last_error_status_code: int | None = None
 
     def nearby_search(
         self,
@@ -65,10 +66,11 @@ class GoogleMapsService:
             )
             response.raise_for_status()
 
+            self.last_error_status_code = None
             return self._place_vos_from_response(response.json(), place_cache)
 
         except requests.HTTPError as e:
-            print(f"An HTTP error occurred: {e}")
+            self._handle_http_error(e)
             return []
         except (KeyError, TypeError) as e:
             print(f"A data parsing error occurred: {e}")
@@ -115,10 +117,11 @@ class GoogleMapsService:
                 },
             )
             response.raise_for_status()
+            self.last_error_status_code = None
             return self._place_vos_from_response(response.json(), place_cache)
 
         except requests.HTTPError as e:
-            print(f"An HTTP error occurred: {e}")
+            self._handle_http_error(e)
             return []
         except (KeyError, TypeError) as e:
             print(f"A data parsing error occurred: {e}")
@@ -147,6 +150,7 @@ class GoogleMapsService:
                 params={"languageCode": "ja"},
             )
             response.raise_for_status()
+            self.last_error_status_code = None
             place_vos = self._place_vos_from_response(
                 {"places": [response.json()]}, place_cache
             )
@@ -155,7 +159,7 @@ class GoogleMapsService:
             return place_vos[0]
 
         except requests.HTTPError as e:
-            print(f"An HTTP error occurred: {e}")
+            self._handle_http_error(e)
             return None
         except (KeyError, TypeError) as e:
             print(f"A data parsing error occurred: {e}")
@@ -250,3 +254,10 @@ class GoogleMapsService:
             # キャッシュを更新する
             for place in new_place_list:
                 place_cache[place.place_id] = place
+
+    def _handle_http_error(self, error: requests.HTTPError) -> None:
+        response = error.response
+        self.last_error_status_code = (
+            response.status_code if response is not None else None
+        )
+        print(f"An HTTP error occurred: {error}")

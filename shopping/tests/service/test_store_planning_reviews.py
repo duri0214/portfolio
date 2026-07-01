@@ -60,6 +60,7 @@ class StorePlanningReviewServiceTest(TestCase):
             mock_service = mock_service_class.return_value
             mock_service.text_search.return_value = [search_place_vo]
             mock_service.place_details.return_value = detail_place_vo
+            mock_service.last_error_status_code = None
 
             result = StorePlanningReviewService.fetch_reviews(
                 api_key="dummy-key",
@@ -84,6 +85,44 @@ class StorePlanningReviewServiceTest(TestCase):
         )
         self.assertEqual("おいしいランチでした。", saved_review.review_text)
         self.assertEqual("近隣カフェ", saved_review.place_name)
+
+    def test_fetch_reviews_returns_error_message_when_api_is_forbidden(self):
+        """
+        シナリオ:
+        - 入力: 店舗名検索で403エラーになった状態。
+        - 処理: 出店計画用レビュー取得サービスを実行する。
+        - 期待値: レビュー0件ではなく、取得エラーメッセージを返すこと。
+        """
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+        )
+
+        with patch(
+            "shopping.domain.service.store_planning_reviews.GoogleMapsService"
+        ) as mock_service_class:
+            mock_service = mock_service_class.return_value
+            mock_service.text_search.return_value = []
+            mock_service.last_error_status_code = 403
+
+            result = StorePlanningReviewService.fetch_reviews(
+                api_key="dummy-key",
+                target_location=target_location,
+            )
+
+        self.assertEqual(0, result.place_count)
+        self.assertEqual(0, result.review_count)
+        self.assertEqual(
+            "レビュー取得が許可されませんでした。管理者設定を確認してください。",
+            result.error_message,
+        )
+        mock_service.place_details.assert_not_called()
 
     def test_fetch_reviews_skips_api_when_store_slug_reviews_already_exist(self):
         """
