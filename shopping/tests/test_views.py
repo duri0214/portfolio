@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AnonymousUser, User
 from django.template.loader import render_to_string
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
@@ -667,6 +667,93 @@ class TestView(TestCase):
         self.assertNotContains(response, "東京都足立区保木間一丁目")
         self.assertNotContains(response, "9,999人")
         self.assertNotContains(response, "999人")
+
+    @override_settings(GOOGLE_MAPS_JAVASCRIPT_API_KEY="test-google-maps-key")
+    def test_store_planning_page_displays_boundary_polygon_map_when_geojson_exists(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: 対象地域と比較対象地域の境界GeoJSONを含むe-Stat人口スナップショット。
+        - 処理: Google Maps JavaScript APIキーが設定された状態で出店計画画面をGETする。
+        - 期待値: iframeではなく、対象地域と比較対象地域を同時表示するポリゴン地図用データが出力されること。
+        """
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="estat_population_age_groups_13121_073002",
+            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間二丁目",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み: 東京都足立区東保木間二丁目 の年齢別人口",
+            data_period="令和2年国勢調査 小地域集計",
+            source_updated_at=timezone.now(),
+            raw_data={
+                "target_area_name": "東京都足立区東保木間二丁目",
+                "city_code": "13121",
+                "town_code": "073002",
+                "area_hierarchy_level": "4",
+                "total_population": 2289,
+                "average_age": 43.8,
+                "age_groups": [],
+                "boundary_geojson": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [139.812, 35.792],
+                            [139.816, 35.792],
+                            [139.816, 35.796],
+                            [139.812, 35.796],
+                            [139.812, 35.792],
+                        ]
+                    ],
+                },
+            },
+        )
+        StorePlanningDataSourceSnapshot.objects.create(
+            source_key="estat_population_age_groups_13121_073001",
+            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間一丁目",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            status="取得済み: 東京都足立区東保木間一丁目 の年齢別人口",
+            data_period="令和2年国勢調査 小地域集計",
+            source_updated_at=timezone.now(),
+            raw_data={
+                "target_area_name": "東京都足立区東保木間一丁目",
+                "city_code": "13121",
+                "town_code": "073001",
+                "area_hierarchy_level": "4",
+                "total_population": 1400,
+                "average_age": 45.2,
+                "age_groups": [],
+                "geometry_geojson": {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [139.808, 35.792],
+                                [139.812, 35.792],
+                                [139.812, 35.796],
+                                [139.808, 35.796],
+                                [139.808, 35.792],
+                            ]
+                        ],
+                    },
+                },
+            },
+        )
+
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, 'id="store-planning-boundary-map"')
+        self.assertContains(response, 'id="store-planning-boundary-map-data"')
+        self.assertContains(response, "maps.googleapis.com/maps/api/js")
+        self.assertContains(response, "test-google-maps-key")
+        self.assertContains(response, "対象地域ポリゴン")
+        self.assertContains(response, "比較対象・周辺地域ポリゴン")
+        self.assertContains(response, '"role": "target"')
+        self.assertContains(response, '"role": "comparison"')
+        self.assertContains(response, '"town_code": "073002"')
+        self.assertContains(response, '"town_code": "073001"')
+        self.assertNotContains(response, 'id="store-planning-area-map"')
 
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
         """

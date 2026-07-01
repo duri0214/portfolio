@@ -65,38 +65,141 @@
                         <div>
                             <h2 class="h5 mb-1">地域マップ</h2>
                             <p class="small text-muted mb-0">
-                                広域・町丁の集計単位を切り替えて、地図の表示範囲を確認します。
+                                対象地域と比較対象地域を同じ地図上で確認します。
                             </p>
                         </div>
                     </div>
-                    <div class="ratio ratio-16x9 mb-3">
-                        <iframe id="store-planning-area-map"
-                                src="{{ target_location.initial_map_embed_url }}"
-                                title="{{ target_location.population_area }} の地図"
-                                loading="lazy"
-                                referrerpolicy="no-referrer-when-downgrade"
-                                allowfullscreen></iframe>
-                    </div>
-                    <div class="d-grid gap-3">
-                        {% for group in region_map_button_groups %}
-                            {% if group.buttons %}
-                                <div>
-                                    <div class="small fw-semibold">{{ group.title }}</div>
-                                    <div class="small text-muted mb-1">{{ group.description }}</div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        {% for button in group.buttons %}
-                                            <button class="btn btn-sm store-planning-map-button {% if button.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
-                                                    type="button"
-                                                    data-map-url="{{ button.map_url }}"
-                                                    data-map-title="{{ button.map_title }}">
-                                                {{ button.label }}
-                                            </button>
-                                        {% endfor %}
+                    {% if google_maps_javascript_api_key and has_region_boundary_map %}
+                        {{ region_boundary_map|json_script:"store-planning-boundary-map-data" }}
+                        <div class="ratio ratio-16x9 mb-3">
+                            <div id="store-planning-boundary-map"
+                                 class="border rounded"
+                                 aria-label="対象地域と比較対象地域の地図"></div>
+                        </div>
+                        <div id="store-planning-map-region-detail" class="border rounded p-3 small mb-3">
+                            <div class="fw-semibold">対象地域</div>
+                            <div class="text-muted">{{ target_location.population_area }}</div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-3 small text-muted">
+                            <span><span class="badge bg-primary">&nbsp;</span> 対象地域ポリゴン</span>
+                            <span><span class="badge bg-success">&nbsp;</span> 比較対象・周辺地域ポリゴン</span>
+                        </div>
+                        <script>
+                            window.initStorePlanningBoundaryMap = () => {
+                                const mapDataElement = document.getElementById("store-planning-boundary-map-data");
+                                const mapElement = document.getElementById("store-planning-boundary-map");
+                                if (!mapDataElement || !mapElement || !window.google) {
+                                    return;
+                                }
+
+                                const mapData = JSON.parse(mapDataElement.textContent);
+                                const fallbackCenter = {
+                                    lat: mapData.center.lat || 35.681236,
+                                    lng: mapData.center.lng || 139.767125,
+                                };
+                                const map = new google.maps.Map(mapElement, {
+                                    center: fallbackCenter,
+                                    zoom: 14,
+                                    mapTypeControl: false,
+                                    streetViewControl: false,
+                                    fullscreenControl: true,
+                                });
+                                const bounds = new google.maps.LatLngBounds();
+                                const detail = document.getElementById("store-planning-map-region-detail");
+
+                                const polygonPaths = (geometry) => {
+                                    if (!geometry) {
+                                        return [];
+                                    }
+                                    const polygons = geometry.type === "MultiPolygon"
+                                        ? geometry.coordinates
+                                        : [geometry.coordinates];
+                                    return polygons.map((polygon) => {
+                                        return polygon.map((ring) => {
+                                            return ring.map((point) => {
+                                                const latLng = {lat: point[1], lng: point[0]};
+                                                bounds.extend(latLng);
+                                                return latLng;
+                                            });
+                                        });
+                                    });
+                                };
+
+                                const updateDetail = (region) => {
+                                    if (!detail) {
+                                        return;
+                                    }
+                                    const population = region.population.total_population
+                                        ? `${region.population.total_population.toLocaleString()}人`
+                                        : "データなし";
+                                    const averageAge = region.population.average_age
+                                        ? `${region.population.average_age}歳`
+                                        : "-";
+                                    detail.innerHTML = `
+                                        <div class="fw-semibold">${region.name}</div>
+                                        <div class="text-muted">e-Stat地域コード ${region.estat.city_code || "-"} / 町丁字コード ${region.estat.town_code || "-"}</div>
+                                        <div class="text-muted">総人口 ${population} / 平均年齢 ${averageAge}</div>
+                                    `;
+                                };
+
+                                mapData.regions.forEach((region) => {
+                                    const paths = polygonPaths(region.geometry);
+                                    paths.forEach((path) => {
+                                        const isTarget = region.role === "target";
+                                        const polygon = new google.maps.Polygon({
+                                            paths: path,
+                                            strokeColor: isTarget ? "#0d6efd" : "#198754",
+                                            strokeOpacity: 0.9,
+                                            strokeWeight: isTarget ? 3 : 2,
+                                            fillColor: isTarget ? "#0d6efd" : "#198754",
+                                            fillOpacity: isTarget ? 0.24 : 0.16,
+                                            map,
+                                        });
+                                        polygon.addListener("click", () => updateDetail(region));
+                                    });
+                                });
+
+                                if (!bounds.isEmpty()) {
+                                    map.fitBounds(bounds);
+                                }
+                            };
+                        </script>
+                        <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_javascript_api_key }}&callback=initStorePlanningBoundaryMap"></script>
+                    {% else %}
+                        <div class="ratio ratio-16x9 mb-3">
+                            <iframe id="store-planning-area-map"
+                                    src="{{ target_location.initial_map_embed_url }}"
+                                    title="{{ target_location.population_area }} の地図"
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                    allowfullscreen></iframe>
+                        </div>
+                        {% if has_region_boundary_map and not google_maps_javascript_api_key %}
+                            <div class="alert alert-warning small">
+                                Google Maps JavaScript APIキーが未設定のため、地域検索地図を表示しています。
+                            </div>
+                        {% endif %}
+                        <div class="d-grid gap-3">
+                            {% for group in region_map_button_groups %}
+                                {% if group.buttons %}
+                                    <div>
+                                        <div class="small fw-semibold">{{ group.title }}</div>
+                                        <div class="small text-muted mb-1">{{ group.description }}</div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            {% for button in group.buttons %}
+                                                <button class="btn btn-sm store-planning-map-button {% if button.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                                                        type="button"
+                                                        data-map-url="{{ button.map_url }}"
+                                                        data-map-title="{{ button.map_title }}">
+                                                    {{ button.label }}
+                                                </button>
+                                            {% endfor %}
+                                        </div>
                                     </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </section>
             </div>
 
