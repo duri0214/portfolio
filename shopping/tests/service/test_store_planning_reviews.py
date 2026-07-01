@@ -119,7 +119,10 @@ class StorePlanningReviewServiceTest(TestCase):
         self.assertEqual(0, result.place_count)
         self.assertEqual(0, result.review_count)
         self.assertEqual(
-            "レビュー取得が許可されませんでした。管理者設定を確認してください。",
+            (
+                "Google Maps 側でレビュー取得が拒否されました。"
+                "APIキーのIPホワイトリストを確認してください。"
+            ),
             result.error_message,
         )
         mock_service.place_details.assert_not_called()

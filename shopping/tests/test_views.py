@@ -346,7 +346,8 @@ class TestView(TestCase):
         mock_fetch_reviews.return_value.review_count = 0
         mock_fetch_reviews.return_value.skipped = False
         mock_fetch_reviews.return_value.error_message = (
-            "レビュー取得が許可されませんでした。管理者設定を確認してください。"
+            "Google Maps 側でレビュー取得が拒否されました。"
+            "APIキーのIPホワイトリストを確認してください。"
         )
 
         with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
@@ -359,7 +360,7 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(
             response,
-            "レビュー取得が許可されませんでした。管理者設定を確認してください。",
+            "Google Maps 側でレビュー取得が拒否されました。APIキーのIPホワイトリストを確認してください。",
         )
 
     @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})

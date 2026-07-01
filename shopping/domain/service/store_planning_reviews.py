@@ -147,7 +147,10 @@ class StorePlanningReviewService:
     @staticmethod
     def _fetch_error_message(status_code: int) -> str:
         if status_code == 403:
-            return "レビュー取得が許可されませんでした。管理者設定を確認してください。"
+            return (
+                "Google Maps 側でレビュー取得が拒否されました。"
+                "APIキーのIPホワイトリストを確認してください。"
+            )
         return "レビュー取得中にエラーが発生しました。時間をおいて再度お試しください。"
 
     @classmethod
