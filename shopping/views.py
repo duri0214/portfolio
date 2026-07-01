@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy, reverse
@@ -12,7 +13,6 @@ from django.views.generic import (
     TemplateView,
 )
 
-from config import settings
 from .domain.repository.payment import StripePaymentRepository
 from .domain.repository.product import ProductRepository
 from .domain.repository.store_planning import (
