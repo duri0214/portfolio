@@ -67,6 +67,10 @@
                             <p class="small text-muted mb-0">
                                 対象地点と地域検索を地図上で確認します。
                             </p>
+                            <p class="small text-muted mb-0 mt-1">
+                                <span class="fw-semibold">開発Tips:</span>
+                                Google Maps iframe は地域検索結果の領域表示をそのまま借りられる一方、Maps JavaScript API は自前の境界データがないと代表地点の制御が中心になります。
+                            </p>
                         </div>
                     </div>
                     {% if google_maps_fe_api_key %}
