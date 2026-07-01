@@ -1,9 +1,9 @@
 from math import atan2, cos, radians, sin, sqrt
 
-from gmarker.domain.service.google import GoogleMapsService
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from lib.geo.valueobject.coord import GoogleMapsCoord
+from shopping.domain.dataprovider.google_maps_reviews import GoogleMapsReviewClient
 from shopping.domain.valueobject.store_planning import StorePlanningTargetLocation
 from shopping.domain.valueobject.store_planning_reviews import (
     StorePlanningReviewFetchResult,
@@ -92,48 +92,48 @@ class StorePlanningReviewService:
                 skipped=True,
             )
 
-        service = GoogleMapsService(api_key)
+        client = GoogleMapsReviewClient(api_key)
         center = GoogleMapsCoord(
             target_location.latitude,
             target_location.longitude,
         )
-        exact_place_vos = service.text_search(
+        exact_place_vos = client.text_search(
             query=f"{target_location.name} {target_location.address}",
             center=center,
             radius=cls.RADIUS_METER,
             fields=cls.API_FIELDS,
         )
-        if service.last_error_status_code:
+        if client.last_error_status_code:
             return StorePlanningReviewFetchResult(
                 place_count=0,
                 review_count=0,
-                error_message=cls._fetch_error_message(service.last_error_status_code),
-                error_url=cls._fetch_error_url(service.last_error_status_code),
+                error_message=cls._fetch_error_message(client.last_error_status_code),
+                error_url=cls._fetch_error_url(client.last_error_status_code),
                 error_url_label="GCP 認証情報を開く",
             )
         search_place_vos = cls._unique_place_vos(exact_place_vos)
-        place_vo_list = cls._place_details_for_reviews(service, search_place_vos)
-        if service.last_error_status_code:
+        place_vo_list = cls._place_details_for_reviews(client, search_place_vos)
+        if client.last_error_status_code:
             return StorePlanningReviewFetchResult(
                 place_count=len(search_place_vos),
                 review_count=0,
-                error_message=cls._fetch_error_message(service.last_error_status_code),
-                error_url=cls._fetch_error_url(service.last_error_status_code),
+                error_message=cls._fetch_error_message(client.last_error_status_code),
+                error_url=cls._fetch_error_url(client.last_error_status_code),
                 error_url_label="GCP 認証情報を開く",
             )
         review_count = 0
         for place_vo in place_vo_list:
-            if place_vo.place is None or place_vo.location is None:
+            if place_vo.location is None:
                 continue
             for review in place_vo.reviews:
                 author = review.author or review.google_maps_uri or "unknown"
                 StorePlanningGoogleMapsReview.objects.update_or_create(
                     target_store=target_store,
                     target_store_slug=target_store.slug,
-                    google_place_id=place_vo.place.place_id,
+                    google_place_id=place_vo.place_id,
                     author=author,
                     defaults={
-                        "place_name": place_vo.name or place_vo.place.name,
+                        "place_name": place_vo.name or place_vo.place_id,
                         "latitude": place_vo.location.latitude,
                         "longitude": place_vo.location.longitude,
                         "rating": place_vo.rating,
@@ -165,11 +165,13 @@ class StorePlanningReviewService:
         return ""
 
     @classmethod
-    def _place_details_for_reviews(cls, service: GoogleMapsService, place_vos: list):
+    def _place_details_for_reviews(
+        cls, client: GoogleMapsReviewClient, place_vos: list
+    ):
         detail_place_vos = []
         for place_vo in place_vos[: cls.MAX_DETAIL_PLACES]:
-            detail_place_vo = service.place_details(
-                place_id=place_vo.place.place_id,
+            detail_place_vo = client.place_details(
+                place_id=place_vo.place_id,
                 fields=cls.DETAIL_FIELDS,
             )
             if detail_place_vo is None:
@@ -182,9 +184,7 @@ class StorePlanningReviewService:
         unique_place_vos = []
         seen_place_ids = set()
         for place_vo in place_vos:
-            if place_vo.place is None:
-                continue
-            place_id = place_vo.place.place_id
+            place_id = place_vo.place_id
             if place_id in seen_place_ids:
                 continue
             seen_place_ids.add(place_id)

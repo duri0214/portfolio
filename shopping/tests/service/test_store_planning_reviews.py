@@ -1,10 +1,13 @@
-from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.test import TestCase
 
-from gmarker.models import Place
+from lib.geo.valueobject.coord import GoogleMapsCoord
 from shopping.domain.service.store_planning_reviews import StorePlanningReviewService
+from shopping.domain.dataprovider.google_maps_reviews import (
+    GoogleMapsPlaceData,
+    GoogleMapsReviewData,
+)
 from shopping.domain.valueobject.store_planning import StorePlanningTargetLocation
 from shopping.models import StorePlanningGoogleMapsReview, StorePlanningTargetStore
 
@@ -17,28 +20,22 @@ class StorePlanningReviewServiceTest(TestCase):
         - 処理: 出店計画用レビュー取得サービスを実行する。
         - 期待値: 店舗名検索を実行し、shopping用レビューモデルへ保存すること。
         """
-        place = Place.objects.create(
-            place_id="place-1",
-            name="近隣カフェ",
-            location="35.7935,139.8150",
-            rating=4.6,
-        )
-        review = SimpleNamespace(
+        review = GoogleMapsReviewData(
             text="おいしいランチでした。",
             author="reviewer",
             publish_time="2026-01-01T00:00:00Z",
             google_maps_uri="https://maps.google.com/example",
         )
-        search_place_vo = SimpleNamespace(
-            place=place,
-            location=SimpleNamespace(latitude=35.7935, longitude=139.8150),
+        search_place_vo = GoogleMapsPlaceData(
+            place_id="place-1",
+            location=GoogleMapsCoord(35.7935, 139.8150),
             name="近隣カフェ",
             rating=4.6,
             reviews=[],
         )
-        detail_place_vo = SimpleNamespace(
-            place=place,
-            location=SimpleNamespace(latitude=35.7935, longitude=139.8150),
+        detail_place_vo = GoogleMapsPlaceData(
+            place_id="place-1",
+            location=GoogleMapsCoord(35.7935, 139.8150),
             name="近隣カフェ",
             rating=4.6,
             reviews=[review],
@@ -55,26 +52,25 @@ class StorePlanningReviewServiceTest(TestCase):
         )
 
         with patch(
-            "shopping.domain.service.store_planning_reviews.GoogleMapsService"
-        ) as mock_service_class:
-            mock_service = mock_service_class.return_value
-            mock_service.text_search.return_value = [search_place_vo]
-            mock_service.place_details.return_value = detail_place_vo
-            mock_service.last_error_status_code = None
+            "shopping.domain.service.store_planning_reviews.GoogleMapsReviewClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.text_search.return_value = [search_place_vo]
+            mock_client.place_details.return_value = detail_place_vo
+            mock_client.last_error_status_code = None
 
             result = StorePlanningReviewService.fetch_reviews(
                 api_key="dummy-key",
                 target_location=target_location,
             )
 
-        mock_service_class.assert_called_once_with("dummy-key")
-        text_kwargs = mock_service.text_search.call_args.kwargs
+        mock_client_class.assert_called_once_with("dummy-key")
+        text_kwargs = mock_client.text_search.call_args.kwargs
         self.assertIn("Chapter Table", text_kwargs["query"])
         self.assertEqual(500, text_kwargs["radius"])
         self.assertIn("places.id", text_kwargs["fields"])
         self.assertNotIn("places.reviews", text_kwargs["fields"])
-        mock_service.nearby_search.assert_not_called()
-        details_kwargs = mock_service.place_details.call_args.kwargs
+        details_kwargs = mock_client.place_details.call_args.kwargs
         self.assertEqual("place-1", details_kwargs["place_id"])
         self.assertIn("reviews", details_kwargs["fields"])
         self.assertEqual(1, result.place_count)
@@ -105,11 +101,11 @@ class StorePlanningReviewServiceTest(TestCase):
         )
 
         with patch(
-            "shopping.domain.service.store_planning_reviews.GoogleMapsService"
-        ) as mock_service_class:
-            mock_service = mock_service_class.return_value
-            mock_service.text_search.return_value = []
-            mock_service.last_error_status_code = 403
+            "shopping.domain.service.store_planning_reviews.GoogleMapsReviewClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.text_search.return_value = []
+            mock_client.last_error_status_code = 403
 
             result = StorePlanningReviewService.fetch_reviews(
                 api_key="dummy-key",
@@ -129,7 +125,7 @@ class StorePlanningReviewServiceTest(TestCase):
             "https://console.cloud.google.com/apis/credentials", result.error_url
         )
         self.assertEqual("GCP 認証情報を開く", result.error_url_label)
-        mock_service.place_details.assert_not_called()
+        mock_client.place_details.assert_not_called()
 
     def test_fetch_reviews_skips_api_when_store_slug_reviews_already_exist(self):
         """
@@ -162,14 +158,14 @@ class StorePlanningReviewServiceTest(TestCase):
         )
 
         with patch(
-            "shopping.domain.service.store_planning_reviews.GoogleMapsService"
-        ) as mock_service_class:
+            "shopping.domain.service.store_planning_reviews.GoogleMapsReviewClient"
+        ) as mock_client_class:
             result = StorePlanningReviewService.fetch_reviews(
                 api_key="dummy-key",
                 target_location=target_location,
             )
 
-        mock_service_class.assert_not_called()
+        mock_client_class.assert_not_called()
         self.assertTrue(result.skipped)
         self.assertEqual(1, result.place_count)
         self.assertEqual(1, result.review_count)

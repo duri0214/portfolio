@@ -12,7 +12,6 @@ class GoogleMapsService:
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://places.googleapis.com/v1/places"
-        self.last_error_status_code: int | None = None
 
     def nearby_search(
         self,
@@ -69,149 +68,58 @@ class GoogleMapsService:
             )
             response.raise_for_status()
 
-            self.last_error_status_code = None
-            return self._place_vos_from_response(response.json(), place_cache)
+            data = response.json()
+            places_data = data.get("places", [])
 
-        except requests.HTTPError as e:
-            self._handle_http_error(e)
-            return []
-        except (KeyError, TypeError) as e:
-            print(f"A data parsing error occurred: {e}")
-            return []
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            return []
+            # **新しいPlaceをデータベースに登録（キャッシュに存在しないものだけ）**
+            self.extract_new_places_and_register(places_data, place_cache)
 
-    def text_search(
-        self,
-        query: str,
-        center: GoogleMapsCoord,
-        radius: int,
-        fields: list[str],
-    ) -> list[PlaceVO]:
-        """
-        Google Maps Places APIのText Search (New)で施設名・住所から場所を検索する。
-        """
-        if not fields:
-            raise ValueError("fieldsパラメータは必須です")
+            # 【2】キャッシュの再取得
+            # extract_new_places_and_register実行後にキャッシュを最新の状態に更新。
+            # ・新規登録分も含めた完全なPlaceキャッシュを取得する。
+            place_cache = PlaceRepository.fetch_all_places()
 
-        place_cache = PlaceRepository.fetch_all_places()
+            place_vo_list: list[PlaceVO] = []
+            for place_data in places_data:
+                latlng = place_data.get("location")
+                if latlng:
+                    latlng = GoogleMapsCoord(
+                        latitude=latlng.get("latitude"),
+                        longitude=latlng.get("longitude"),
+                    )
 
-        try:
-            response = requests.post(
-                url=f"{self.base_url}:searchText",
-                headers={
-                    "Content-Type": "application/json",
-                    "X-Goog-Api-Key": self.api_key,
-                    "X-Goog-FieldMask": ",".join(fields),
-                },
-                json={
-                    "textQuery": query,
-                    "languageCode": "ja",
-                    "locationBias": {
-                        "circle": {
-                            "center": {
-                                "latitude": center.latitude,
-                                "longitude": center.longitude,
-                            },
-                            "radius": radius,
-                        }
-                    },
-                },
-                timeout=self.REQUEST_TIMEOUT_SECONDS,
-            )
-            response.raise_for_status()
-            self.last_error_status_code = None
-            return self._place_vos_from_response(response.json(), place_cache)
+                reviews: list[ReviewVO] = []
+                review_data = place_data.get("reviews", [])
+                for data in review_data:
+                    reviews.append(
+                        ReviewVO(
+                            text=data.get("text", {}).get("text"),
+                            author=data.get("authorAttribution", {}).get("displayName"),
+                            publish_time=data.get("publishTime"),
+                            google_maps_uri=data.get("googleMapsUri"),
+                        )
+                    )
 
-        except requests.HTTPError as e:
-            self._handle_http_error(e)
-            return []
-        except (KeyError, TypeError) as e:
-            print(f"A data parsing error occurred: {e}")
-            return []
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            return []
-
-    def place_details(self, place_id: str, fields: list[str]) -> PlaceVO | None:
-        """
-        Google Maps Places APIのPlace Details (New)でレビュー本文を取得する。
-        """
-        if not fields:
-            raise ValueError("fieldsパラメータは必須です")
-
-        place_cache = PlaceRepository.fetch_all_places()
-
-        try:
-            response = requests.get(
-                url=f"{self.base_url}/{place_id}",
-                headers={
-                    "Content-Type": "application/json",
-                    "X-Goog-Api-Key": self.api_key,
-                    "X-Goog-FieldMask": ",".join(fields),
-                },
-                params={"languageCode": "ja"},
-                timeout=self.REQUEST_TIMEOUT_SECONDS,
-            )
-            response.raise_for_status()
-            self.last_error_status_code = None
-            place_vos = self._place_vos_from_response(
-                {"places": [response.json()]}, place_cache
-            )
-            if not place_vos:
-                return None
-            return place_vos[0]
-
-        except requests.HTTPError as e:
-            self._handle_http_error(e)
-            return None
-        except (KeyError, TypeError) as e:
-            print(f"A data parsing error occurred: {e}")
-            return None
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            return None
-
-    def _place_vos_from_response(
-        self, data: dict, place_cache: dict[str, Place]
-    ) -> list[PlaceVO]:
-        places_data = data.get("places", [])
-
-        self.extract_new_places_and_register(places_data, place_cache)
-        place_cache = PlaceRepository.fetch_all_places()
-
-        place_vo_list: list[PlaceVO] = []
-        for place_data in places_data:
-            latlng = place_data.get("location")
-            if latlng:
-                latlng = GoogleMapsCoord(
-                    latitude=latlng.get("latitude"),
-                    longitude=latlng.get("longitude"),
-                )
-
-            reviews: list[ReviewVO] = []
-            review_data = place_data.get("reviews", [])
-            for data in review_data:
-                reviews.append(
-                    ReviewVO(
-                        text=data.get("text", {}).get("text"),
-                        author=data.get("authorAttribution", {}).get("displayName"),
-                        publish_time=data.get("publishTime"),
-                        google_maps_uri=data.get("googleMapsUri"),
+                place_vo_list.append(
+                    PlaceVO(
+                        place=place_cache.get(place_data.get("id")),
+                        location=latlng,
+                        name=place_data.get("displayName", {}).get("text"),
+                        rating=place_data.get("rating"),
+                        reviews=reviews,
                     )
                 )
+            return place_vo_list
 
-            place_vo_list.append(
-                PlaceVO(
-                    place=place_cache.get(place_data.get("id")),
-                    location=latlng,
-                    name=place_data.get("displayName", {}).get("text"),
-                    rating=place_data.get("rating"),
-                    reviews=reviews,
-                )
-            )
-        return place_vo_list
+        except requests.HTTPError as e:
+            print(f"An HTTP error occurred: {e}")
+            return []
+        except (KeyError, TypeError) as e:
+            print(f"A data parsing error occurred: {e}")
+            return []
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return []
 
     @staticmethod
     def extract_new_places_and_register(
@@ -259,10 +167,3 @@ class GoogleMapsService:
             # キャッシュを更新する
             for place in new_place_list:
                 place_cache[place.place_id] = place
-
-    def _handle_http_error(self, error: requests.HTTPError) -> None:
-        response = error.response
-        self.last_error_status_code = (
-            response.status_code if response is not None else None
-        )
-        print(f"An HTTP error occurred: {error}")
