@@ -24,6 +24,24 @@ class GoogleMapsReviewClient:
         radius: int,
         fields: list[str],
     ) -> list[GoogleMapsPlaceData]:
+        """
+        ユーザー入力に近い店舗名・住所の検索文字列から候補施設を探す。
+
+        出店計画では、登録済み店舗候補の名称と住所を結合した文字列を
+        Places API Text Search に渡し、レビュー取得対象にする Place ID を探す。
+        `center` と `radius` は検索結果を対象店舗周辺へ寄せるための位置バイアスであり、
+        厳密な範囲フィルタではない。レビュー本文はここでは要求せず、返ってきた
+        Place ID を `place_details` に渡して取得する。
+
+        Args:
+            query: 店舗名・住所など、施設を検索するための文字列。
+            center: 検索結果を寄せる中心座標。
+            radius: 検索結果を寄せる半径メートル。
+            fields: Places API から取得するフィールドマスク。
+
+        Returns:
+            検索で見つかった候補施設の一覧。HTTPエラーやパース失敗時は空リスト。
+        """
         if not fields:
             raise ValueError("fieldsパラメータは必須です")
 
@@ -59,6 +77,21 @@ class GoogleMapsReviewClient:
     def place_details(
         self, place_id: str, fields: list[str]
     ) -> GoogleMapsPlaceData | None:
+        """
+        確定した Place ID から施設詳細とレビュー本文を取得する。
+
+        `text_search` は入力文字列から候補施設を探すためのAPIであり、
+        出店計画で保存するレビュー本文はこの詳細取得で要求する。
+        呼び出し側は Text Search で得た Place ID を渡し、必要なフィールドに
+        `reviews` を含めることで Google Maps のレビュー情報を受け取る。
+
+        Args:
+            place_id: Google Maps Places API の Place ID。
+            fields: Places API から取得するフィールドマスク。
+
+        Returns:
+            施設詳細。HTTPエラー、パース失敗、Place IDなしのレスポンスでは None。
+        """
         if not fields:
             raise ValueError("fieldsパラメータは必須です")
 
