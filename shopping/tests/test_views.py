@@ -247,7 +247,7 @@ class TestView(TestCase):
         self.assertContains(response, "近隣カフェ")
         self.assertContains(response, "reviewer")
         self.assertContains(response, "おいしいランチ")
-        self.assertNotContains(response, "保存済み Google Maps レビューはありません")
+        self.assertNotContains(response, "Google Maps レビューはまだ取得されていません")
 
     def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):
         """

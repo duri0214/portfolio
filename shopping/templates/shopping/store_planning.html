@@ -468,7 +468,8 @@
                                 </div>
                             {% else %}
                                 <div class="alert alert-warning mb-0">
-                                    対象地点の半径 {{ review_summary.radius_meter }}m 以内に保存済み Google Maps レビューはありません。
+                                    対象地点の半径 {{ review_summary.radius_meter }}m 以内の Google Maps レビューはまだ取得されていません。
+                                    スーパーユーザーでログインしている場合は「レビュー取得」から Places API を実行できます。
                                 </div>
                             {% endif %}
                         </div>
