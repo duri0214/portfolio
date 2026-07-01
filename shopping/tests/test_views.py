@@ -4,11 +4,13 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
+from unittest.mock import patch
 
 from shopping.models import (
     Product,
     Store,
     StorePlanningDataSourceSnapshot,
+    StorePlanningGoogleMapsReview,
     StorePlanningTargetStore,
 )
 
@@ -19,6 +21,11 @@ class TestView(TestCase):
         User.objects.create_user(email="tester@b.c", username="John Doe").set_password(
             "12345"
         )
+        cls.superuser = User.objects.create_superuser(
+            username="admin",
+            email="admin@example.com",
+            password="password",
+        )
         Store.objects.create(name="笹塚")
         Store.objects.create(name="新宿")
         cls.product = Product.objects.create(
@@ -28,6 +35,9 @@ class TestView(TestCase):
             description="テスト用の商品です",
             picture="shopping/test-product.jpg",
         )
+
+    def setUp(self):
+        self.client.force_login(self.superuser)
 
     def test_get_top_page_200(self):
         """
@@ -126,9 +136,16 @@ class TestView(TestCase):
             "https://www.google.com/maps?q=35.792822,139.8143238",
         )
         self.assertContains(response, "人口集計地域")
+        self.assertContains(response, "Google Maps操作")
+        self.assertContains(response, "利用可")
         self.assertContains(response, "東京都足立区東保木間二丁目")
-        self.assertContains(response, "評判・口コミ")
+        self.assertContains(response, "Google Maps レビュー")
+        self.assertContains(response, "対象店舗")
         self.assertContains(response, "e-Stat 年代別人口")
+        html = response.content.decode()
+        self.assertLess(
+            html.index("e-Stat 年代別人口"), html.index("Google Maps レビュー")
+        )
         self.assertNotContains(response, "#803")
         self.assertContains(response, "使用した指標")
         self.assertContains(response, "ファイルID")
@@ -192,6 +209,193 @@ class TestView(TestCase):
         self.assertNotContains(response, "立地リスク判定")
         self.assertNotContains(response, "手動で確認するデータ")
         self.assertNotContains(response, "店舗座標")
+
+    def test_store_planning_page_displays_google_maps_review_grid(self):
+        """
+        シナリオ:
+        - 入力: 対象店舗から半径500m以内にあるGoogle Maps施設レビュー。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: レビュー概要、3x3グリッド、代表レビューが表示されること。
+        """
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=StorePlanningTargetStore.objects.get(slug="chapter-table"),
+            google_place_id="review-place-1",
+            place_name="近隣カフェ",
+            latitude=35.7935,
+            longitude=139.8150,
+            rating=4.6,
+            author="reviewer",
+            review_text="おいしいランチで雰囲気も良い。おすすめです。",
+            publish_time=timezone.now(),
+        )
+
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "Google Maps レビュー")
+        self.assertContains(response, "選択中の店舗候補に紐づく Google Maps レビュー")
+        self.assertContains(response, "レビュー取得")
+        self.assertContains(response, "レビュー対象施設")
+        self.assertContains(response, "レビュー数")
+        self.assertContains(response, "平均 rating")
+        self.assertContains(response, "キーワード件数")
+        self.assertContains(response, "1件")
+        self.assertContains(response, "4.6")
+        self.assertContains(response, "北東")
+        self.assertContains(response, "score")
+        self.assertContains(response, "近隣カフェ")
+        self.assertContains(response, "reviewer")
+        self.assertContains(response, "おいしいランチ")
+        self.assertNotContains(response, "Google Maps レビューはまだ取得されていません")
+
+    def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):
+        """
+        シナリオ:
+        - 入力: 未ログイン状態の出店計画画面URL。
+        - 処理: テストクライアントでGETする。
+        - 期待値: Google Maps iframe、地図リンク、地図切替ボタンが表示されないこと。
+        """
+        self.client.logout()
+
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(
+            response,
+            "Google Maps の表示と外部リンクはスーパーユーザーでログインした場合のみ利用できます。",
+        )
+        self.assertNotContains(response, "<iframe")
+        self.assertNotContains(response, 'class="btn btn-sm store-planning-map-button')
+        self.assertNotContains(response, "https://www.google.com/maps?q=35.792822")
+        self.assertContains(response, "スーパーユーザー限定")
+        self.assertContains(response, "レビュー取得")
+        self.assertContains(response, "disabled")
+        self.assertContains(response, "store-planning-map-button-disabled")
+        self.assertContains(response, "制限中")
+
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_post_store_planning_fetches_google_maps_reviews_for_superuser(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーでレビュー取得POSTを送る。
+        - 処理: 出店計画のレビュー取得サービスを実行する。
+        - 期待値: 対象地点とAPIキーをレビュー取得サービスへ渡すこと。
+        """
+        mock_fetch_reviews.return_value.place_count = 1
+        mock_fetch_reviews.return_value.review_count = 2
+        mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews"},
+            )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            fetch_redirect_response=False,
+        )
+        kwargs = mock_fetch_reviews.call_args.kwargs
+        self.assertEqual("dummy-key", kwargs["api_key"])
+        self.assertEqual("chapter-table", kwargs["target_location"].slug)
+
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_post_store_planning_fetch_reviews_shows_empty_result_message(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーでレビュー取得POSTを送るがレビュー0件。
+        - 処理: 出店計画画面へ戻る。
+        - 期待値: 取得結果が画面に表示されること。
+        """
+        mock_fetch_reviews.return_value.place_count = 1
+        mock_fetch_reviews.return_value.review_count = 0
+        mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews"},
+                follow=True,
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(
+            response,
+            "Google Maps レビュー取得を実行しましたが、レビューは見つかりませんでした。",
+        )
+        self.assertContains(response, "取得施設数: 1件 / レビュー数: 0件")
+
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_post_store_planning_fetch_reviews_shows_fetch_error_message(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: レビュー取得でエラーが返る。
+        - 処理: 出店計画画面へ戻る。
+        - 期待値: 取得エラーが画面に表示されること。
+        """
+        mock_fetch_reviews.return_value.place_count = 0
+        mock_fetch_reviews.return_value.review_count = 0
+        mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = (
+            "Google Maps 側でレビュー取得が拒否されました。"
+            "APIキーのIPホワイトリストを確認してください。"
+        )
+        mock_fetch_reviews.return_value.error_url = (
+            "https://console.cloud.google.com/apis/credentials"
+        )
+        mock_fetch_reviews.return_value.error_url_label = "GCP 認証情報を開く"
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews"},
+                follow=True,
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(
+            response,
+            "Google Maps 側でレビュー取得が拒否されました。APIキーのIPホワイトリストを確認してください。",
+        )
+        self.assertContains(
+            response,
+            '<a href="https://console.cloud.google.com/apis/credentials"',
+        )
+        self.assertContains(response, "GCP 認証情報を開く")
+
+    @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_post_store_planning_reviews_rejects_anonymous_user(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: 未ログイン状態でレビュー取得POSTを送る。
+        - 処理: 出店計画のレビュー取得処理を呼び出す。
+        - 期待値: Places API検索は実行されず、出店計画画面へ戻ること。
+        """
+        self.client.logout()
+
+        response = self.client.post(
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            {"action": "fetch_google_maps_reviews"},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("shp:store_planning"),
+            fetch_redirect_response=False,
+        )
+        mock_fetch_reviews.assert_not_called()
 
     def test_store_planning_page_selects_registered_sample_store(self):
         """

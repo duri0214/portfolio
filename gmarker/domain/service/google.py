@@ -7,6 +7,8 @@ from lib.geo.valueobject.coord import GoogleMapsCoord
 
 
 class GoogleMapsService:
+    REQUEST_TIMEOUT_SECONDS = 10
+
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://places.googleapis.com/v1/places"
@@ -62,6 +64,7 @@ class GoogleMapsService:
                     radius=radius,
                     search_types=search_types,
                 ).to_dict(),
+                timeout=self.REQUEST_TIMEOUT_SECONDS,
             )
             response.raise_for_status()
 

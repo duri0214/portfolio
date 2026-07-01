@@ -9,6 +9,15 @@
                 <li class="breadcrumb-item active" aria-current="page">出店計画</li>
             </ol>
         </nav>
+        {% if messages %}
+            <div class="d-grid gap-2 mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} mb-0">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <div class="row g-4">
             <div class="col-12">
@@ -21,7 +30,7 @@
                     </div>
                     <form class="mb-3" method="get" action="{% url 'shp:store_planning' %}">
                         <label class="form-label fw-semibold" for="store-planning-store-select">店舗候補</label>
-                        <div class="d-flex flex-column flex-sm-row gap-2">
+                        <div>
                             <select id="store-planning-store-select" class="form-select" name="store" onchange="this.form.submit()">
                                 {% for store in store_locations %}
                                     <option value="{{ store.slug }}" {% if store.is_active %}selected{% endif %}>
@@ -29,35 +38,32 @@
                                     </option>
                                 {% endfor %}
                             </select>
-                            <button class="btn btn-primary text-nowrap" type="submit">
-                                表示
-                            </button>
                         </div>
                     </form>
                     <dl class="row mb-0">
                         <dt class="col-sm-3">対象地点</dt>
                         <dd class="col-sm-9">
-                            <a href="{{ target_location.google_maps_url }}" target="_blank" rel="noopener">
+                            {% if can_use_google_maps %}
+                                <a href="{{ target_location.google_maps_url }}" target="_blank" rel="noopener">
+                                    {{ target_location.name }}
+                                </a>
+                            {% else %}
                                 {{ target_location.name }}
-                            </a>
+                            {% endif %}
                         </dd>
                         <dt class="col-sm-3">人口集計地域</dt>
                         <dd class="col-sm-9">{{ target_location.population_area }}</dd>
+                        <dt class="col-sm-3">Google Maps操作</dt>
+                        <dd class="col-sm-9">
+                            {% if can_use_google_maps %}
+                                <span class="badge text-bg-success">利用可</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">スーパーユーザー限定</span>
+                            {% endif %}
+                        </dd>
                     </dl>
                 </div>
             </div>
-
-            {% for axis in planning_axes %}
-                <div class="col-md-6">
-                    <section class="border rounded p-4 h-100">
-                        <div class="d-flex justify-content-between align-items-start gap-3">
-                            <h2 class="h5 mb-2">{{ axis.title }}</h2>
-                            <span class="badge text-bg-secondary">{{ axis.issue }}</span>
-                        </div>
-                        <p class="text-muted mb-0">{{ axis.summary }}</p>
-                    </section>
-                </div>
-            {% endfor %}
 
             <div class="col-12">
                 <section class="border rounded p-4 h-100">
@@ -73,34 +79,59 @@
                             </p>
                         </div>
                     </div>
-                    <div class="ratio ratio-16x9 mb-3">
-                        <iframe id="store-planning-area-map"
-                                src="{{ target_location.initial_map_embed_url }}"
-                                title="{{ target_location.population_area }} の地図"
-                                loading="lazy"
-                                referrerpolicy="no-referrer-when-downgrade"
-                                allowfullscreen></iframe>
-                    </div>
-                    <div class="d-grid gap-3">
-                        {% for group in region_map_button_groups %}
-                            {% if group.buttons %}
-                                <div>
-                                    <div class="small fw-semibold">{{ group.title }}</div>
-                                    <div class="small text-muted mb-1">{{ group.description }}</div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        {% for button in group.buttons %}
-                                            <button class="btn btn-sm store-planning-map-button {% if button.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
-                                                    type="button"
-                                                    data-map-url="{{ button.map_url }}"
-                                                    data-map-title="{{ button.map_title }}">
-                                                {{ button.label }}
-                                            </button>
-                                        {% endfor %}
+                    {% if can_use_google_maps %}
+                        <div class="ratio ratio-16x9 mb-3">
+                            <iframe id="store-planning-area-map"
+                                    src="{{ target_location.initial_map_embed_url }}"
+                                    title="{{ target_location.population_area }} の地図"
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                    allowfullscreen></iframe>
+                        </div>
+                        <div class="d-grid gap-3">
+                            {% for group in region_map_button_groups %}
+                                {% if group.buttons %}
+                                    <div>
+                                        <div class="small fw-semibold">{{ group.title }}</div>
+                                        <div class="small text-muted mb-1">{{ group.description }}</div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            {% for button in group.buttons %}
+                                                <button class="btn btn-sm store-planning-map-button {% if button.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                                                        type="button"
+                                                        data-map-url="{{ button.map_url }}"
+                                                        data-map-title="{{ button.map_title }}">
+                                                    {{ button.label }}
+                                                </button>
+                                            {% endfor %}
+                                        </div>
                                     </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning mb-3">
+                            Google Maps の表示と外部リンクはスーパーユーザーでログインした場合のみ利用できます。
+                        </div>
+                        <div class="d-grid gap-3">
+                            {% for group in region_map_button_groups %}
+                                {% if group.buttons %}
+                                    <div>
+                                        <div class="small fw-semibold">{{ group.title }}</div>
+                                        <div class="small text-muted mb-1">{{ group.description }}</div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            {% for button in group.buttons %}
+                                                <button class="btn btn-sm btn-outline-secondary store-planning-map-button-disabled"
+                                                        type="button"
+                                                        disabled>
+                                                    {{ button.label }}
+                                                </button>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </section>
             </div>
 
@@ -175,14 +206,18 @@
                                         <div class="small text-muted">レベル {{ row.area_hierarchy_level|default:"-" }}</div>
                                     </td>
                                     <td>
-                                        <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
-                                            地域を開く
-                                        </a>
-                                        <div class="small text-muted">
-                                            <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
-                                                {% if row.latitude and row.longitude %}代表地点{% else %}地域検索{% endif %}
+                                        {% if can_use_google_maps %}
+                                            <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
+                                                地域を開く
                                             </a>
-                                        </div>
+                                            <div class="small text-muted">
+                                                <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
+                                                    {% if row.latitude and row.longitude %}代表地点{% else %}地域検索{% endif %}
+                                                </a>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">制限中</span>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -337,6 +372,114 @@
                     <p class="small text-muted mb-0">
                         出店判断では、e-Stat の国勢調査から周辺町丁の住民構成を確認する。
                     </p>
+                </section>
+            </div>
+
+            <div class="col-12">
+                <section class="border rounded p-4 h-100">
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">Google Maps レビュー</h2>
+                            <p class="small text-muted mb-0">
+                                選択中の店舗候補に紐づく Google Maps レビューを表示する。
+                            </p>
+                        </div>
+                        <div class="d-flex flex-column flex-sm-row gap-2 align-self-md-start">
+                            <span class="badge text-bg-light align-self-sm-center">対象店舗</span>
+                            <form method="post" action="{% url 'shp:store_planning' %}?store={{ target_location.slug }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="fetch_google_maps_reviews">
+                                {% if can_use_google_maps %}
+                                    <button class="btn btn-sm btn-outline-primary" type="submit">
+                                        レビュー取得
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" disabled>
+                                        レビュー取得
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6 col-md-3">
+                            <div class="border rounded p-3 h-100">
+                                <div class="small text-muted">レビュー対象施設</div>
+                                <div class="fs-5 fw-semibold">{{ review_summary.total_place_count|intcomma }}件</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="border rounded p-3 h-100">
+                                <div class="small text-muted">レビュー数</div>
+                                <div class="fs-5 fw-semibold">{{ review_summary.total_review_count|intcomma }}件</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="border rounded p-3 h-100">
+                                <div class="small text-muted">平均 rating</div>
+                                <div class="fs-5 fw-semibold">{{ review_summary.average_rating|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="border rounded p-3 h-100">
+                                <div class="small text-muted">キーワード件数</div>
+                                <div class="fs-5 fw-semibold">{{ review_summary.positive_count|intcomma }} / {{ review_summary.negative_count|intcomma }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-lg-5">
+                            <div class="d-grid gap-2" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+                                {% for cell in review_summary.cells %}
+                                    <div class="border rounded p-2 text-center"
+                                         style="min-height: 96px; background-color: {{ cell.background_color }}; color: {{ cell.text_color }};">
+                                        <div class="small fw-semibold">{{ cell.label }}</div>
+                                        <div class="fs-5 fw-semibold">{{ cell.review_count }}</div>
+                                        <div class="small">rating {{ cell.average_rating|default:"-" }}</div>
+                                        <div class="small">score {{ cell.score }}</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-lg-7">
+                            {% if review_summary.latest_reviews %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead>
+                                        <tr>
+                                            <th>施設</th>
+                                            <th>レビュー</th>
+                                            <th class="text-end">距離</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for review in review_summary.latest_reviews %}
+                                            <tr>
+                                                <td class="text-nowrap">
+                                                    <div class="fw-semibold">{{ review.place_name }}</div>
+                                                    <div class="small text-muted">
+                                                        rating {{ review.rating|default:"-" }}
+                                                        {% if review.publish_time %}/ {{ review.publish_time|date:"Y-m-d" }}{% endif %}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="small text-muted">{{ review.author }}</div>
+                                                    {{ review.review_text|truncatechars:90 }}
+                                                </td>
+                                                <td class="text-end text-nowrap">{{ review.distance_meter|intcomma }}m</td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning mb-0">
+                                    選択中の店舗候補の Google Maps レビューはまだ取得されていません。
+                                    スーパーユーザーでログインしている場合は「レビュー取得」から最新のレビューを取得できます。
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </section>
             </div>
 
