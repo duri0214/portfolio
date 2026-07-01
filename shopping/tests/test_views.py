@@ -234,7 +234,7 @@ class TestView(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "Google Maps レビュー")
-        self.assertContains(response, "gmarker に保存済みの Places API レビュー")
+        self.assertContains(response, "取得済みの Google Maps レビュー")
         self.assertContains(response, "レビュー取得")
         self.assertContains(response, "レビュー対象施設")
         self.assertContains(response, "レビュー数")
