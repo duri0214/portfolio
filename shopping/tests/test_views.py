@@ -348,6 +348,7 @@ class TestView(TestCase):
         mock_fetch_reviews.return_value.error_message = (
             "Google Maps 側でレビュー取得が拒否されました。"
             "APIキーのIPホワイトリストを確認してください。"
+            " https://console.cloud.google.com/apis/credentials"
         )
 
         with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
@@ -361,6 +362,10 @@ class TestView(TestCase):
         self.assertContains(
             response,
             "Google Maps 側でレビュー取得が拒否されました。APIキーのIPホワイトリストを確認してください。",
+        )
+        self.assertContains(
+            response,
+            '<a href="https://console.cloud.google.com/apis/credentials"',
         )
 
     @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})

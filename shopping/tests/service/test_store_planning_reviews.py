@@ -122,6 +122,7 @@ class StorePlanningReviewServiceTest(TestCase):
             (
                 "Google Maps 側でレビュー取得が拒否されました。"
                 "APIキーのIPホワイトリストを確認してください。"
+                " https://console.cloud.google.com/apis/credentials"
             ),
             result.error_message,
         )

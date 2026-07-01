@@ -150,6 +150,7 @@ class StorePlanningReviewService:
             return (
                 "Google Maps 側でレビュー取得が拒否されました。"
                 "APIキーのIPホワイトリストを確認してください。"
+                " https://console.cloud.google.com/apis/credentials"
             )
         return "レビュー取得中にエラーが発生しました。時間をおいて再度お試しください。"
 
