@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from lib.geo.valueobject.coord import GoogleMapsCoord
 from shopping.domain.service.store_planning_reviews import StorePlanningReviewService
-from shopping.domain.dataprovider.google_maps_reviews import (
+from shopping.domain.valueobject.google_maps_reviews import (
     GoogleMapsPlaceData,
     GoogleMapsReviewData,
 )
