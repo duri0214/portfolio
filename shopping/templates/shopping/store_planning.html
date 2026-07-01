@@ -175,9 +175,13 @@
                                     referrerpolicy="no-referrer-when-downgrade"
                                     allowfullscreen></iframe>
                         </div>
-                        {% if has_region_boundary_map and not google_maps_fe_api_key %}
+                        {% if not google_maps_fe_api_key %}
                             <div class="alert alert-warning small">
                                 Google Maps FE APIキーが未設定のため、地域検索地図を表示しています。
+                            </div>
+                        {% elif not has_region_boundary_map %}
+                            <div class="alert alert-warning small">
+                                町丁境界GeoJSONが未取得のため、地域検索地図を表示しています。
                             </div>
                         {% endif %}
                         <div class="d-grid gap-3">

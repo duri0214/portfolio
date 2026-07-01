@@ -431,6 +431,21 @@ class TestView(TestCase):
         self.assertNotContains(response, "比較対象地域（東保木間一丁目）")
         self.assertContains(response, "e-Stat CSVはまだ取り込まれていません")
 
+    @override_settings(GOOGLE_MAPS_FE_API_KEY="test-google-maps-key")
+    def test_store_planning_page_explains_boundary_map_fallback_without_geojson(self):
+        """
+        シナリオ:
+        - 入力: Google Maps FE APIキーは設定済みだが、境界GeoJSONが未保存のDB。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: ポリゴン地図ではなく地域検索地図を表示し、境界GeoJSON未取得が理由として表示されること。
+        """
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, 'id="store-planning-area-map"')
+        self.assertContains(response, "町丁境界GeoJSONが未取得")
+        self.assertNotContains(response, 'id="store-planning-boundary-map"')
+
     def test_store_planning_page_displays_no_data_for_store_outside_saved_csv(self):
         """
         シナリオ:
