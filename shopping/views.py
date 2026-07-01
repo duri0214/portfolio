@@ -3,6 +3,7 @@ import os
 
 from django.conf import settings
 from django.contrib import messages
+from django.utils.html import format_html
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import (
@@ -240,7 +241,18 @@ class StorePlanningView(TemplateView):
             target_location=selected_location,
         )
         if fetch_result.error_message:
-            messages.warning(request, fetch_result.error_message)
+            if fetch_result.error_url:
+                messages.warning(
+                    request,
+                    format_html(
+                        '{} <a href="{}" target="_blank" rel="noopener">{}</a>',
+                        fetch_result.error_message,
+                        fetch_result.error_url,
+                        fetch_result.error_url_label or "確認する",
+                    ),
+                )
+            else:
+                messages.warning(request, fetch_result.error_message)
         elif fetch_result.skipped:
             messages.info(
                 request,

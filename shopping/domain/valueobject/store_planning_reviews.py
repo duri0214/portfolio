@@ -94,9 +94,13 @@ class StorePlanningReviewFetchResult:
         review_count: 保存対象になったレビュー件数。
         skipped: 取得済みレビューがあり、API取得を省略したかどうか。
         error_message: 取得処理で表示すべきエラーがあった場合のメッセージ。
+        error_url: エラー解消に使う参照先URL。
+        error_url_label: エラー参照先リンクの表示名。
     """
 
     place_count: int
     review_count: int
     skipped: bool = False
     error_message: str = ""
+    error_url: str = ""
+    error_url_label: str = ""

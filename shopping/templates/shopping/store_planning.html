@@ -13,7 +13,7 @@
             <div class="d-grid gap-2 mb-4">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags|default:'info' }} mb-0">
-                        {{ message|urlize }}
+                        {{ message }}
                     </div>
                 {% endfor %}
             </div>

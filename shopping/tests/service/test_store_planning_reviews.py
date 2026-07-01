@@ -122,10 +122,13 @@ class StorePlanningReviewServiceTest(TestCase):
             (
                 "Google Maps 側でレビュー取得が拒否されました。"
                 "APIキーのIPホワイトリストを確認してください。"
-                " https://console.cloud.google.com/apis/credentials"
             ),
             result.error_message,
         )
+        self.assertEqual(
+            "https://console.cloud.google.com/apis/credentials", result.error_url
+        )
+        self.assertEqual("GCP 認証情報を開く", result.error_url_label)
         mock_service.place_details.assert_not_called()
 
     def test_fetch_reviews_skips_api_when_store_slug_reviews_already_exist(self):

@@ -348,8 +348,11 @@ class TestView(TestCase):
         mock_fetch_reviews.return_value.error_message = (
             "Google Maps 側でレビュー取得が拒否されました。"
             "APIキーのIPホワイトリストを確認してください。"
-            " https://console.cloud.google.com/apis/credentials"
         )
+        mock_fetch_reviews.return_value.error_url = (
+            "https://console.cloud.google.com/apis/credentials"
+        )
+        mock_fetch_reviews.return_value.error_url_label = "GCP 認証情報を開く"
 
         with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
             response = self.client.post(
@@ -367,6 +370,7 @@ class TestView(TestCase):
             response,
             '<a href="https://console.cloud.google.com/apis/credentials"',
         )
+        self.assertContains(response, "GCP 認証情報を開く")
 
     @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
