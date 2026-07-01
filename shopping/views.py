@@ -229,7 +229,7 @@ class StorePlanningView(TemplateView):
         if not api_key:
             messages.warning(
                 request,
-                "GOOGLE_MAPS_BE_API_KEY が未設定のためレビューを取得できません。",
+                "レビュー取得の設定が未完了のため、今回は取得できませんでした。",
             )
             return HttpResponseRedirect(
                 self._store_planning_url(selected_location.slug)
@@ -249,14 +249,20 @@ class StorePlanningView(TemplateView):
                 ),
             )
         else:
-            messages.success(
-                request,
-                (
-                    "Google Maps レビュー取得を実行しました。"
-                    f"取得施設数: {fetch_result.place_count}件 / "
-                    f"レビュー数: {fetch_result.review_count}件"
-                ),
+            message = (
+                f"取得施設数: {fetch_result.place_count}件 / "
+                f"レビュー数: {fetch_result.review_count}件"
             )
+            if fetch_result.review_count:
+                messages.success(
+                    request,
+                    f"Google Maps レビュー取得を実行しました。{message}",
+                )
+            else:
+                messages.warning(
+                    request,
+                    f"Google Maps レビュー取得を実行しましたが、レビューは見つかりませんでした。{message}",
+                )
         return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
 
     def _selected_location(self):

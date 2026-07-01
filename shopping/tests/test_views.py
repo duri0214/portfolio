@@ -140,7 +140,7 @@ class TestView(TestCase):
         self.assertContains(response, "利用可")
         self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "Google Maps レビュー")
-        self.assertContains(response, "半径 500m")
+        self.assertContains(response, "対象店舗")
         self.assertContains(response, "e-Stat 年代別人口")
         html = response.content.decode()
         self.assertLess(
@@ -233,7 +233,7 @@ class TestView(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "Google Maps レビュー")
-        self.assertContains(response, "取得済みの Google Maps レビュー")
+        self.assertContains(response, "選択中の店舗候補に紐づく Google Maps レビュー")
         self.assertContains(response, "レビュー取得")
         self.assertContains(response, "レビュー対象施設")
         self.assertContains(response, "レビュー数")
@@ -285,6 +285,7 @@ class TestView(TestCase):
         """
         mock_fetch_reviews.return_value.place_count = 1
         mock_fetch_reviews.return_value.review_count = 2
+        mock_fetch_reviews.return_value.skipped = False
 
         with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
             response = self.client.post(
@@ -300,6 +301,34 @@ class TestView(TestCase):
         kwargs = mock_fetch_reviews.call_args.kwargs
         self.assertEqual("dummy-key", kwargs["api_key"])
         self.assertEqual("chapter-table", kwargs["target_location"].slug)
+
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_post_store_planning_fetch_reviews_shows_empty_result_message(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーでレビュー取得POSTを送るがレビュー0件。
+        - 処理: 出店計画画面へ戻る。
+        - 期待値: 取得結果が画面に表示されること。
+        """
+        mock_fetch_reviews.return_value.place_count = 1
+        mock_fetch_reviews.return_value.review_count = 0
+        mock_fetch_reviews.return_value.skipped = False
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews"},
+                follow=True,
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(
+            response,
+            "Google Maps レビュー取得を実行しましたが、レビューは見つかりませんでした。",
+        )
+        self.assertContains(response, "取得施設数: 1件 / レビュー数: 0件")
 
     @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")

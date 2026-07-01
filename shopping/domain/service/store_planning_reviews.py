@@ -49,7 +49,6 @@ class StorePlanningReviewService:
         ["西", "中心", "東"],
         ["南西", "南", "南東"],
     ]
-    SEARCH_TYPES = ["restaurant", "cafe", "bar", "bakery"]
     API_FIELDS = [
         "places.id",
         "places.location",
@@ -70,12 +69,7 @@ class StorePlanningReviewService:
         cls, api_key: str, target_location: StorePlanningTargetLocation
     ) -> StorePlanningReviewFetchResult:
         """
-        出店計画の対象地点を中心に Places API からレビューを取得して保存する。
-
-        gmarker の GoogleMapsService で Nearby Search を実行し、取得済みの
-        PlaceVO に含まれるレビューを gmarker の PlaceReview として保存する。
-        NearbyPlace のカテゴリ検索結果は更新せず、shopping のレビュー分析に
-        必要な Place / PlaceReview だけを再利用する。
+        出店計画の対象店舗候補を検索し、取得できたレビューを保存する。
         """
         if target_location.latitude is None or target_location.longitude is None:
             return StorePlanningReviewFetchResult(place_count=0, review_count=0)
@@ -108,13 +102,7 @@ class StorePlanningReviewService:
             radius=cls.RADIUS_METER,
             fields=cls.API_FIELDS,
         )
-        nearby_place_vos = service.nearby_search(
-            center=center,
-            search_types=cls.SEARCH_TYPES,
-            radius=cls.RADIUS_METER,
-            fields=cls.API_FIELDS,
-        )
-        search_place_vos = cls._unique_place_vos([*exact_place_vos, *nearby_place_vos])
+        search_place_vos = cls._unique_place_vos(exact_place_vos)
         place_vo_list = cls._place_details_for_reviews(service, search_place_vos)
         review_count = 0
         for place_vo in place_vo_list:

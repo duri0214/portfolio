@@ -15,7 +15,7 @@ class StorePlanningReviewServiceTest(TestCase):
         シナリオ:
         - 入力: 対象店舗候補と、レビュー1件を含むPlaces API検索結果。
         - 処理: 出店計画用レビュー取得サービスを実行する。
-        - 期待値: 店舗名検索と半径500mの周辺検索を実行し、shopping用レビューモデルへ保存すること。
+        - 期待値: 店舗名検索を実行し、shopping用レビューモデルへ保存すること。
         """
         place = Place.objects.create(
             place_id="place-1",
@@ -59,7 +59,6 @@ class StorePlanningReviewServiceTest(TestCase):
         ) as mock_service_class:
             mock_service = mock_service_class.return_value
             mock_service.text_search.return_value = [search_place_vo]
-            mock_service.nearby_search.return_value = []
             mock_service.place_details.return_value = detail_place_vo
 
             result = StorePlanningReviewService.fetch_reviews(
@@ -70,13 +69,10 @@ class StorePlanningReviewServiceTest(TestCase):
         mock_service_class.assert_called_once_with("dummy-key")
         text_kwargs = mock_service.text_search.call_args.kwargs
         self.assertIn("Chapter Table", text_kwargs["query"])
-        kwargs = mock_service.nearby_search.call_args.kwargs
-        self.assertEqual(500, kwargs["radius"])
-        self.assertEqual(
-            ["restaurant", "cafe", "bar", "bakery"], kwargs["search_types"]
-        )
-        self.assertIn("places.id", kwargs["fields"])
-        self.assertNotIn("places.reviews", kwargs["fields"])
+        self.assertEqual(500, text_kwargs["radius"])
+        self.assertIn("places.id", text_kwargs["fields"])
+        self.assertNotIn("places.reviews", text_kwargs["fields"])
+        mock_service.nearby_search.assert_not_called()
         details_kwargs = mock_service.place_details.call_args.kwargs
         self.assertEqual("place-1", details_kwargs["place_id"])
         self.assertIn("reviews", details_kwargs["fields"])
