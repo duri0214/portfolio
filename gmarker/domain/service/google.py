@@ -127,6 +127,43 @@ class GoogleMapsService:
             print(f"An unexpected error occurred: {e}")
             return []
 
+    def place_details(self, place_id: str, fields: list[str]) -> PlaceVO | None:
+        """
+        Google Maps Places APIのPlace Details (New)でレビュー本文を取得する。
+        """
+        if not fields:
+            raise ValueError("fieldsパラメータは必須です")
+
+        place_cache = PlaceRepository.fetch_all_places()
+
+        try:
+            response = requests.get(
+                url=f"{self.base_url}/{place_id}",
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Goog-Api-Key": self.api_key,
+                    "X-Goog-FieldMask": ",".join(fields),
+                },
+                params={"languageCode": "ja"},
+            )
+            response.raise_for_status()
+            place_vos = self._place_vos_from_response(
+                {"places": [response.json()]}, place_cache
+            )
+            if not place_vos:
+                return None
+            return place_vos[0]
+
+        except requests.HTTPError as e:
+            print(f"An HTTP error occurred: {e}")
+            return None
+        except (KeyError, TypeError) as e:
+            print(f"A data parsing error occurred: {e}")
+            return None
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return None
+
     def _place_vos_from_response(
         self, data: dict, place_cache: dict[str, Place]
     ) -> list[PlaceVO]:

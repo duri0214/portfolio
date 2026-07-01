@@ -29,7 +29,14 @@ class StorePlanningReviewServiceTest(TestCase):
             publish_time="2026-01-01T00:00:00Z",
             google_maps_uri="https://maps.google.com/example",
         )
-        place_vo = SimpleNamespace(
+        search_place_vo = SimpleNamespace(
+            place=place,
+            location=SimpleNamespace(latitude=35.7935, longitude=139.8150),
+            name="近隣カフェ",
+            rating=4.6,
+            reviews=[],
+        )
+        detail_place_vo = SimpleNamespace(
             place=place,
             location=SimpleNamespace(latitude=35.7935, longitude=139.8150),
             name="近隣カフェ",
@@ -51,8 +58,9 @@ class StorePlanningReviewServiceTest(TestCase):
             "shopping.domain.service.store_planning_reviews.GoogleMapsService"
         ) as mock_service_class:
             mock_service = mock_service_class.return_value
-            mock_service.text_search.return_value = [place_vo]
+            mock_service.text_search.return_value = [search_place_vo]
             mock_service.nearby_search.return_value = []
+            mock_service.place_details.return_value = detail_place_vo
 
             result = StorePlanningReviewService.fetch_reviews(
                 api_key="dummy-key",
@@ -67,7 +75,11 @@ class StorePlanningReviewServiceTest(TestCase):
         self.assertEqual(
             ["restaurant", "cafe", "bar", "bakery"], kwargs["search_types"]
         )
-        self.assertIn("places.reviews", kwargs["fields"])
+        self.assertIn("places.id", kwargs["fields"])
+        self.assertNotIn("places.reviews", kwargs["fields"])
+        details_kwargs = mock_service.place_details.call_args.kwargs
+        self.assertEqual("place-1", details_kwargs["place_id"])
+        self.assertIn("reviews", details_kwargs["fields"])
         self.assertEqual(1, result.place_count)
         self.assertEqual(1, result.review_count)
         saved_review = StorePlanningGoogleMapsReview.objects.get(

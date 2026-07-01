@@ -55,8 +55,15 @@ class StorePlanningReviewService:
         "places.location",
         "places.displayName.text",
         "places.rating",
-        "places.reviews",
     ]
+    DETAIL_FIELDS = [
+        "id",
+        "location",
+        "displayName.text",
+        "rating",
+        "reviews",
+    ]
+    MAX_DETAIL_PLACES = 10
 
     @classmethod
     def fetch_reviews(
@@ -107,7 +114,8 @@ class StorePlanningReviewService:
             radius=cls.RADIUS_METER,
             fields=cls.API_FIELDS,
         )
-        place_vo_list = cls._unique_place_vos([*exact_place_vos, *nearby_place_vos])
+        search_place_vos = cls._unique_place_vos([*exact_place_vos, *nearby_place_vos])
+        place_vo_list = cls._place_details_for_reviews(service, search_place_vos)
         review_count = 0
         for place_vo in place_vo_list:
             if place_vo.place is None or place_vo.location is None:
@@ -135,6 +143,19 @@ class StorePlanningReviewService:
             place_count=len(place_vo_list),
             review_count=review_count,
         )
+
+    @classmethod
+    def _place_details_for_reviews(cls, service: GoogleMapsService, place_vos: list):
+        detail_place_vos = []
+        for place_vo in place_vos[: cls.MAX_DETAIL_PLACES]:
+            detail_place_vo = service.place_details(
+                place_id=place_vo.place.place_id,
+                fields=cls.DETAIL_FIELDS,
+            )
+            if detail_place_vo is None:
+                continue
+            detail_place_vos.append(detail_place_vo)
+        return detail_place_vos
 
     @staticmethod
     def _unique_place_vos(place_vos: list) -> list:
