@@ -1,4 +1,5 @@
 import logging
+import os
 
 from django.conf import settings
 from django.contrib import messages
@@ -23,6 +24,9 @@ from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
 from .domain.service.store_planning_reviews import StorePlanningReviewService
+from gmarker.domain.repository.google import NearbyPlaceRepository
+from gmarker.domain.service.google import GoogleMapsService
+from lib.geo.valueobject.coord import GoogleMapsCoord
 from .domain.valueobject.store_planning import (
     AREA_HIERARCHY_LEVEL_PARENT_TOWN,
     StorePlanningArea,
@@ -139,6 +143,7 @@ class StorePlanningView(TemplateView):
 
     template_name = "shopping/store_planning.html"
     fallback_source_url = "https://www.e-stat.go.jp/stat-search/files?cycle=0&cycle_facet=tclass1%3Acycle&layout=datalist&page=1&tclass1=000001136472&tclass2=000001159886&tclass3val=0&toukei=00200521&tstat=000001136464"
+    review_search_types = ["restaurant", "cafe", "bar", "bakery"]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -205,6 +210,62 @@ class StorePlanningView(TemplateView):
         )
         return context
 
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action") != "fetch_google_maps_reviews":
+            return HttpResponseRedirect(reverse("shp:store_planning"))
+        if not (request.user.is_authenticated and request.user.is_superuser):
+            messages.warning(
+                request,
+                "Google Maps レビュー取得はスーパーユーザーでログインした場合のみ実行できます。",
+            )
+            return HttpResponseRedirect(reverse("shp:store_planning"))
+
+        selected_location = self._selected_location()
+        if selected_location.latitude is None or selected_location.longitude is None:
+            messages.warning(
+                request, "店舗候補の緯度経度がないためレビューを取得できません。"
+            )
+            return HttpResponseRedirect(
+                self._store_planning_url(selected_location.slug)
+            )
+
+        api_key = os.getenv("GOOGLE_MAPS_BE_API_KEY")
+        if not api_key:
+            messages.warning(
+                request,
+                "GOOGLE_MAPS_BE_API_KEY が未設定のためレビューを取得できません。",
+            )
+            return HttpResponseRedirect(
+                self._store_planning_url(selected_location.slug)
+            )
+
+        service = GoogleMapsService(api_key)
+        place_vo_list = service.nearby_search(
+            center=GoogleMapsCoord(
+                selected_location.latitude,
+                selected_location.longitude,
+            ),
+            search_types=self.review_search_types,
+            radius=StorePlanningReviewService.RADIUS_METER,
+            fields=[
+                "places.id",
+                "places.location",
+                "places.displayName.text",
+                "places.rating",
+                "places.reviews",
+            ],
+        )
+        NearbyPlaceRepository.handle_search_code(
+            category=NearbyPlaceRepository.CATEGORY_SEARCH,
+            search_types=",".join(self.review_search_types),
+            place_vo_list=place_vo_list,
+        )
+        messages.success(
+            request,
+            f"Google Maps レビュー取得を実行しました。取得施設数: {len(place_vo_list)}件",
+        )
+        return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
+
     def _selected_location(self):
         requested_slug = self.request.GET.get("store")
         locations = StorePlanningTargetStoreRepository.get_active_locations()
@@ -225,6 +286,9 @@ class StorePlanningView(TemplateView):
             large_area_name="東保木間",
             small_area_name="二丁目",
         )
+
+    def _store_planning_url(self, store_slug: str) -> str:
+        return f"{reverse('shp:store_planning')}?store={store_slug}"
 
     def _fallback_data_source(self, location):
         return {

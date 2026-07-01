@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
+from unittest.mock import patch
 
 from gmarker.models import Place, PlaceReview
 from shopping.models import (
@@ -135,6 +136,8 @@ class TestView(TestCase):
             "https://www.google.com/maps?q=35.792822,139.8143238",
         )
         self.assertContains(response, "人口集計地域")
+        self.assertContains(response, "Google Maps操作")
+        self.assertContains(response, "利用可")
         self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "Google Maps レビュー")
         self.assertContains(response, "半径 500m")
@@ -232,6 +235,7 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "Google Maps レビュー")
         self.assertContains(response, "gmarker に保存済みの Places API レビュー")
+        self.assertContains(response, "レビュー取得")
         self.assertContains(response, "レビュー対象施設")
         self.assertContains(response, "レビュー数")
         self.assertContains(response, "平均 rating")
@@ -264,7 +268,70 @@ class TestView(TestCase):
         self.assertNotContains(response, "<iframe")
         self.assertNotContains(response, 'class="btn btn-sm store-planning-map-button')
         self.assertNotContains(response, "https://www.google.com/maps?q=35.792822")
+        self.assertContains(response, "スーパーユーザー限定")
+        self.assertContains(response, "レビュー取得")
+        self.assertContains(response, "disabled")
+        self.assertContains(response, "store-planning-map-button-disabled")
         self.assertContains(response, "制限中")
+
+    @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})
+    @patch("shopping.views.NearbyPlaceRepository.handle_search_code")
+    @patch("shopping.views.GoogleMapsService")
+    def test_post_store_planning_fetches_google_maps_reviews_for_superuser(
+        self, mock_service_class, mock_handle_search_code
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーでレビュー取得POSTを送る。
+        - 処理: 出店計画の対象地点を中心にPlaces API検索を実行する。
+        - 期待値: 半径500m・レビュー取得フィールドで検索し、保存処理へ渡すこと。
+        """
+        mock_service = mock_service_class.return_value
+        mock_service.nearby_search.return_value = []
+
+        response = self.client.post(
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            {"action": "fetch_google_maps_reviews"},
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            fetch_redirect_response=False,
+        )
+        mock_service_class.assert_called_once_with("dummy-key")
+        kwargs = mock_service.nearby_search.call_args.kwargs
+        self.assertEqual(500, kwargs["radius"])
+        self.assertEqual(
+            ["restaurant", "cafe", "bar", "bakery"], kwargs["search_types"]
+        )
+        self.assertIn("places.reviews", kwargs["fields"])
+        mock_handle_search_code.assert_called_once()
+
+    @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})
+    @patch("shopping.views.GoogleMapsService")
+    def test_post_store_planning_reviews_rejects_anonymous_user(
+        self, mock_service_class
+    ):
+        """
+        シナリオ:
+        - 入力: 未ログイン状態でレビュー取得POSTを送る。
+        - 処理: 出店計画のレビュー取得処理を呼び出す。
+        - 期待値: Places API検索は実行されず、出店計画画面へ戻ること。
+        """
+        self.client.logout()
+
+        response = self.client.post(
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            {"action": "fetch_google_maps_reviews"},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("shp:store_planning"),
+            fetch_redirect_response=False,
+        )
+        mock_service_class.assert_not_called()
 
     def test_store_planning_page_selects_registered_sample_store(self):
         """
