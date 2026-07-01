@@ -199,8 +199,8 @@ class StorePlanningView(TemplateView):
         context["has_region_boundary_map"] = any(
             region["geometry"] for region in context["region_boundary_map"]["regions"]
         )
-        context["google_maps_javascript_api_key"] = getattr(
-            settings, "GOOGLE_MAPS_JAVASCRIPT_API_KEY", ""
+        context["google_maps_fe_api_key"] = getattr(
+            settings, "GOOGLE_MAPS_FE_API_KEY", ""
         )
         context["region_comparison_meta"] = self._build_region_comparison_meta(
             [*region_level3_rows, *region_comparison_rows]
@@ -470,6 +470,7 @@ class StorePlanningView(TemplateView):
                 "lng": selected_location.longitude,
             },
             "regions": regions,
+            "mapId": getattr(settings, "GOOGLE_MAPS_MAP_ID", ""),
             "fallback_embed_url": selected_location.area_google_maps_embed_url,
         }
 

@@ -69,7 +69,7 @@
                             </p>
                         </div>
                     </div>
-                    {% if google_maps_javascript_api_key and has_region_boundary_map %}
+                    {% if google_maps_fe_api_key and has_region_boundary_map %}
                         {{ region_boundary_map|json_script:"store-planning-boundary-map-data" }}
                         <div class="ratio ratio-16x9 mb-3">
                             <div id="store-planning-boundary-map"
@@ -100,6 +100,7 @@
                                 const map = new google.maps.Map(mapElement, {
                                     center: fallbackCenter,
                                     zoom: 14,
+                                    mapId: mapData.mapId,
                                     mapTypeControl: false,
                                     streetViewControl: false,
                                     fullscreenControl: true,
@@ -164,7 +165,7 @@
                                 }
                             };
                         </script>
-                        <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_javascript_api_key }}&callback=initStorePlanningBoundaryMap"></script>
+                        <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=initStorePlanningBoundaryMap&v=weekly"></script>
                     {% else %}
                         <div class="ratio ratio-16x9 mb-3">
                             <iframe id="store-planning-area-map"
@@ -174,9 +175,9 @@
                                     referrerpolicy="no-referrer-when-downgrade"
                                     allowfullscreen></iframe>
                         </div>
-                        {% if has_region_boundary_map and not google_maps_javascript_api_key %}
+                        {% if has_region_boundary_map and not google_maps_fe_api_key %}
                             <div class="alert alert-warning small">
-                                Google Maps JavaScript APIキーが未設定のため、地域検索地図を表示しています。
+                                Google Maps FE APIキーが未設定のため、地域検索地図を表示しています。
                             </div>
                         {% endif %}
                         <div class="d-grid gap-3">

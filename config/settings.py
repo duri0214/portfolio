@@ -161,7 +161,10 @@ MEDIA_URL = "/media/"
 os.environ["MPLCONFIGDIR"] = str(MEDIA_ROOT / "matplotlib_cache")
 
 STRIPE_PUBLIC_KEY = "pk_test_eiOWUzSaLn51lXt0POuRBskA009JsTTAb5"
-GOOGLE_MAPS_JAVASCRIPT_API_KEY = os.getenv("GOOGLE_MAPS_JAVASCRIPT_API_KEY", "")
+GOOGLE_MAPS_FE_API_KEY = os.getenv(
+    "GOOGLE_MAPS_FE_API_KEY", os.getenv("GOOGLE_MAPS_JAVASCRIPT_API_KEY", "")
+)
+GOOGLE_MAPS_MAP_ID = os.getenv("GOOGLE_MAPS_MAP_ID", "8f6a4cf0806f4732")
 
 # HTTPS 前提の Cookie セキュリティ強化
 # 開発環境（DEBUG=True）やテスト実行時（IS_TESTING=True）は Secure 属性を無効化する

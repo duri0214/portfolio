@@ -668,7 +668,10 @@ class TestView(TestCase):
         self.assertNotContains(response, "9,999人")
         self.assertNotContains(response, "999人")
 
-    @override_settings(GOOGLE_MAPS_JAVASCRIPT_API_KEY="test-google-maps-key")
+    @override_settings(
+        GOOGLE_MAPS_FE_API_KEY="test-google-maps-key",
+        GOOGLE_MAPS_MAP_ID="test-map-id",
+    )
     def test_store_planning_page_displays_boundary_polygon_map_when_geojson_exists(
         self,
     ):
@@ -747,6 +750,7 @@ class TestView(TestCase):
         self.assertContains(response, 'id="store-planning-boundary-map-data"')
         self.assertContains(response, "maps.googleapis.com/maps/api/js")
         self.assertContains(response, "test-google-maps-key")
+        self.assertContains(response, '"mapId": "test-map-id"')
         self.assertContains(response, "対象地域ポリゴン")
         self.assertContains(response, "比較対象・周辺地域ポリゴン")
         self.assertContains(response, '"role": "target"')
