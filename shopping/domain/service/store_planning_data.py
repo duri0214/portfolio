@@ -38,6 +38,44 @@ class StorePlanningDataSourceService:
         ("100歳以上", [33]),
         ("年齢不詳", [34]),
     ]
+    SAMPLE_BOUNDARY_GEOJSONS = {
+        ("13121", "073001"): {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [139.8086, 35.7908],
+                    [139.8133, 35.7908],
+                    [139.8133, 35.7944],
+                    [139.8086, 35.7944],
+                    [139.8086, 35.7908],
+                ]
+            ],
+        },
+        ("13121", "073002"): {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [139.8133, 35.7908],
+                    [139.8182, 35.7908],
+                    [139.8182, 35.7944],
+                    [139.8133, 35.7944],
+                    [139.8133, 35.7908],
+                ]
+            ],
+        },
+        ("13113", "030001"): {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [139.6978, 35.6817],
+                    [139.7017, 35.6817],
+                    [139.7017, 35.6860],
+                    [139.6978, 35.6860],
+                    [139.6978, 35.6817],
+                ]
+            ],
+        },
+    }
 
     @classmethod
     def fetch_all(
@@ -116,6 +154,20 @@ class StorePlanningDataSourceService:
             "town_code": total_row[3],
             "area_hierarchy_level": total_row[4],
             "age_groups": [],
+            **cls._sample_boundary_raw_data(total_row),
+        }
+
+    @classmethod
+    def _sample_boundary_raw_data(cls, total_row: list[str]) -> dict:
+        boundary_geojson = cls.SAMPLE_BOUNDARY_GEOJSONS.get(
+            (total_row[2], total_row[3])
+        )
+        if not boundary_geojson:
+            return {}
+        return {
+            "boundary_geojson": boundary_geojson,
+            "boundary_source": "sample_mock",
+            "boundary_source_note": "出店計画デモ表示用の手書きサンプルGeoJSON",
         }
 
     @classmethod
