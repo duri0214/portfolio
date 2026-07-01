@@ -1,8 +1,12 @@
 from math import atan2, cos, radians, sin, sqrt
 
+from gmarker.domain.repository.google import PlaceReviewRepository
+from gmarker.domain.service.google import GoogleMapsService
 from gmarker.models import PlaceReview
+from lib.geo.valueobject.coord import GoogleMapsCoord
 from shopping.domain.valueobject.store_planning import StorePlanningTargetLocation
 from shopping.domain.valueobject.store_planning_reviews import (
+    StorePlanningReviewFetchResult,
     StorePlanningReview,
     StorePlanningReviewCell,
     StorePlanningReviewSummary,
@@ -44,6 +48,58 @@ class StorePlanningReviewService:
         ["西", "中心", "東"],
         ["南西", "南", "南東"],
     ]
+    SEARCH_TYPES = ["restaurant", "cafe", "bar", "bakery"]
+    API_FIELDS = [
+        "places.id",
+        "places.location",
+        "places.displayName.text",
+        "places.rating",
+        "places.reviews",
+    ]
+
+    @classmethod
+    def fetch_reviews(
+        cls, api_key: str, target_location: StorePlanningTargetLocation
+    ) -> StorePlanningReviewFetchResult:
+        """
+        出店計画の対象地点を中心に Places API からレビューを取得して保存する。
+
+        gmarker の GoogleMapsService で Nearby Search を実行し、取得済みの
+        PlaceVO に含まれるレビューを gmarker の PlaceReview として保存する。
+        NearbyPlace のカテゴリ検索結果は更新せず、shopping のレビュー分析に
+        必要な Place / PlaceReview だけを再利用する。
+        """
+        if target_location.latitude is None or target_location.longitude is None:
+            return StorePlanningReviewFetchResult(place_count=0, review_count=0)
+
+        service = GoogleMapsService(api_key)
+        place_vo_list = service.nearby_search(
+            center=GoogleMapsCoord(
+                target_location.latitude,
+                target_location.longitude,
+            ),
+            search_types=cls.SEARCH_TYPES,
+            radius=cls.RADIUS_METER,
+            fields=cls.API_FIELDS,
+        )
+        review_count = 0
+        for place_vo in place_vo_list:
+            place_reviews = [
+                PlaceReview(
+                    review_text=review.text,
+                    author=review.author,
+                    publish_time=review.publish_time,
+                    google_maps_uri=review.google_maps_uri,
+                    place=place_vo.place,
+                )
+                for review in place_vo.reviews
+            ]
+            review_count += len(place_reviews)
+            PlaceReviewRepository.bulk_create(place_reviews)
+        return StorePlanningReviewFetchResult(
+            place_count=len(place_vo_list),
+            review_count=review_count,
+        )
 
     @classmethod
     def build_summary(

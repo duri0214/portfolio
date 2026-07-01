@@ -274,44 +274,38 @@ class TestView(TestCase):
         self.assertContains(response, "store-planning-map-button-disabled")
         self.assertContains(response, "制限中")
 
-    @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})
-    @patch("shopping.views.NearbyPlaceRepository.handle_search_code")
-    @patch("shopping.views.GoogleMapsService")
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_fetches_google_maps_reviews_for_superuser(
-        self, mock_service_class, mock_handle_search_code
+        self, mock_fetch_reviews
     ):
         """
         シナリオ:
         - 入力: スーパーユーザーでレビュー取得POSTを送る。
-        - 処理: 出店計画の対象地点を中心にPlaces API検索を実行する。
-        - 期待値: 半径500m・レビュー取得フィールドで検索し、保存処理へ渡すこと。
+        - 処理: 出店計画のレビュー取得サービスを実行する。
+        - 期待値: 対象地点とAPIキーをレビュー取得サービスへ渡すこと。
         """
-        mock_service = mock_service_class.return_value
-        mock_service.nearby_search.return_value = []
+        mock_fetch_reviews.return_value.place_count = 1
+        mock_fetch_reviews.return_value.review_count = 2
 
-        response = self.client.post(
-            f"{reverse('shp:store_planning')}?store=chapter-table",
-            {"action": "fetch_google_maps_reviews"},
-        )
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews"},
+            )
 
         self.assertRedirects(
             response,
             f"{reverse('shp:store_planning')}?store=chapter-table",
             fetch_redirect_response=False,
         )
-        mock_service_class.assert_called_once_with("dummy-key")
-        kwargs = mock_service.nearby_search.call_args.kwargs
-        self.assertEqual(500, kwargs["radius"])
-        self.assertEqual(
-            ["restaurant", "cafe", "bar", "bakery"], kwargs["search_types"]
-        )
-        self.assertIn("places.reviews", kwargs["fields"])
-        mock_handle_search_code.assert_called_once()
+        kwargs = mock_fetch_reviews.call_args.kwargs
+        self.assertEqual("dummy-key", kwargs["api_key"])
+        self.assertEqual("chapter-table", kwargs["target_location"].slug)
 
     @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"})
-    @patch("shopping.views.GoogleMapsService")
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_reviews_rejects_anonymous_user(
-        self, mock_service_class
+        self, mock_fetch_reviews
     ):
         """
         シナリオ:
@@ -331,7 +325,7 @@ class TestView(TestCase):
             reverse("shp:store_planning"),
             fetch_redirect_response=False,
         )
-        mock_service_class.assert_not_called()
+        mock_fetch_reviews.assert_not_called()
 
     def test_store_planning_page_selects_registered_sample_store(self):
         """

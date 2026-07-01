@@ -82,3 +82,17 @@ class StorePlanningReviewSummary:
     negative_count: int
     cells: list[StorePlanningReviewCell]
     latest_reviews: list[StorePlanningReview]
+
+
+@dataclass(frozen=True)
+class StorePlanningReviewFetchResult:
+    """
+    Google Maps レビュー取得結果。
+
+    Attributes:
+        place_count: Places API から取得した施設数。
+        review_count: 保存対象になったレビュー件数。
+    """
+
+    place_count: int
+    review_count: int

@@ -24,9 +24,6 @@ from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
 from .domain.service.store_planning_reviews import StorePlanningReviewService
-from gmarker.domain.repository.google import NearbyPlaceRepository
-from gmarker.domain.service.google import GoogleMapsService
-from lib.geo.valueobject.coord import GoogleMapsCoord
 from .domain.valueobject.store_planning import (
     AREA_HIERARCHY_LEVEL_PARENT_TOWN,
     StorePlanningArea,
@@ -143,7 +140,6 @@ class StorePlanningView(TemplateView):
 
     template_name = "shopping/store_planning.html"
     fallback_source_url = "https://www.e-stat.go.jp/stat-search/files?cycle=0&cycle_facet=tclass1%3Acycle&layout=datalist&page=1&tclass1=000001136472&tclass2=000001159886&tclass3val=0&toukei=00200521&tstat=000001136464"
-    review_search_types = ["restaurant", "cafe", "bar", "bakery"]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -239,30 +235,17 @@ class StorePlanningView(TemplateView):
                 self._store_planning_url(selected_location.slug)
             )
 
-        service = GoogleMapsService(api_key)
-        place_vo_list = service.nearby_search(
-            center=GoogleMapsCoord(
-                selected_location.latitude,
-                selected_location.longitude,
-            ),
-            search_types=self.review_search_types,
-            radius=StorePlanningReviewService.RADIUS_METER,
-            fields=[
-                "places.id",
-                "places.location",
-                "places.displayName.text",
-                "places.rating",
-                "places.reviews",
-            ],
-        )
-        NearbyPlaceRepository.handle_search_code(
-            category=NearbyPlaceRepository.CATEGORY_SEARCH,
-            search_types=",".join(self.review_search_types),
-            place_vo_list=place_vo_list,
+        fetch_result = StorePlanningReviewService.fetch_reviews(
+            api_key=api_key,
+            target_location=selected_location,
         )
         messages.success(
             request,
-            f"Google Maps レビュー取得を実行しました。取得施設数: {len(place_vo_list)}件",
+            (
+                "Google Maps レビュー取得を実行しました。"
+                f"取得施設数: {fetch_result.place_count}件 / "
+                f"レビュー数: {fetch_result.review_count}件"
+            ),
         )
         return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
 
