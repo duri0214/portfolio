@@ -155,6 +155,9 @@ class StorePlanningView(TemplateView):
             "area_google_maps_embed_url": selected_location.area_google_maps_embed_url,
             "initial_map_embed_url": selected_location.area_google_maps_embed_url,
         }
+        context["store_planning_map"] = self._build_store_planning_map(
+            selected_location
+        )
         context["store_locations"] = [
             {
                 "slug": location.slug,
@@ -192,13 +195,6 @@ class StorePlanningView(TemplateView):
         context["region_map_button_groups"] = self._build_region_map_button_groups(
             selected_location, region_level3_rows, region_comparison_rows
         )
-        context["region_boundary_map"] = self._build_region_boundary_map(
-            selected_location,
-            context["region_table_rows"],
-        )
-        context["has_region_boundary_map"] = any(
-            region["geometry"] for region in context["region_boundary_map"]["regions"]
-        )
         context["google_maps_fe_api_key"] = getattr(
             settings, "GOOGLE_MAPS_FE_API_KEY", ""
         )
@@ -214,6 +210,24 @@ class StorePlanningView(TemplateView):
             },
         ]
         return context
+
+    def _build_store_planning_map(
+        self, selected_location: StorePlanningTargetLocation
+    ) -> dict:
+        return {
+            "center": {
+                "lat": selected_location.latitude or 35.681236,
+                "lng": selected_location.longitude or 139.767125,
+            },
+            "target": {
+                "name": selected_location.name,
+                "address": selected_location.address,
+                "population_area": selected_location.population_area,
+                "lat": selected_location.latitude,
+                "lng": selected_location.longitude,
+            },
+            "mapId": getattr(settings, "GOOGLE_MAPS_MAP_ID", ""),
+        }
 
     def _selected_location(self):
         requested_slug = self.request.GET.get("store")
@@ -384,7 +398,6 @@ class StorePlanningView(TemplateView):
         )
         source = data_source or self._fallback_data_source(location)
         population_summary = self._build_population_summary([source])
-        boundary_geojson = self._boundary_geojson_from_source(source)
         return {
             "slug": location.slug,
             "name": location.name,
@@ -400,78 +413,6 @@ class StorePlanningView(TemplateView):
             "is_selected": location.slug == selected_location.slug,
             "population_summary": population_summary,
             "has_fetched_data_source": data_source is not None,
-            "boundary_geojson": boundary_geojson,
-        }
-
-    def _boundary_geojson_from_source(self, source) -> dict | None:
-        raw_data = self._source_value(source, "raw_data", {})
-        for key in (
-            "boundary_geojson",
-            "geometry_geojson",
-            "polygon_geojson",
-            "geojson",
-        ):
-            geometry = raw_data.get(key)
-            normalized = self._normalize_geojson_geometry(geometry)
-            if normalized:
-                return normalized
-        return None
-
-    def _normalize_geojson_geometry(self, geometry) -> dict | None:
-        if not isinstance(geometry, dict):
-            return None
-        geometry_type = geometry.get("type")
-        if geometry_type == "Feature":
-            return self._normalize_geojson_geometry(geometry.get("geometry"))
-        if geometry_type == "FeatureCollection":
-            features = geometry.get("features") or []
-            for feature in features:
-                normalized = self._normalize_geojson_geometry(feature)
-                if normalized:
-                    return normalized
-            return None
-        if geometry_type not in {"Polygon", "MultiPolygon"}:
-            return None
-        if not geometry.get("coordinates"):
-            return None
-        return {
-            "type": geometry_type,
-            "coordinates": geometry["coordinates"],
-        }
-
-    def _build_region_boundary_map(
-        self,
-        selected_location: StorePlanningTargetLocation,
-        rows: list[dict],
-    ) -> dict:
-        regions = []
-        for row in rows:
-            summary = row.get("population_summary") or {}
-            regions.append(
-                {
-                    "slug": row["slug"],
-                    "name": row["population_area"],
-                    "role": "target" if row["is_selected"] else "comparison",
-                    "geometry": row.get("boundary_geojson"),
-                    "estat": {
-                        "city_code": summary.get("city_code") or "",
-                        "town_code": summary.get("town_code") or "",
-                        "area_hierarchy_level": row.get("area_hierarchy_level") or "",
-                    },
-                    "population": {
-                        "total_population": summary.get("total_population"),
-                        "average_age": summary.get("average_age"),
-                    },
-                }
-            )
-        return {
-            "center": {
-                "lat": selected_location.latitude,
-                "lng": selected_location.longitude,
-            },
-            "regions": regions,
-            "mapId": getattr(settings, "GOOGLE_MAPS_MAP_ID", ""),
-            "fallback_embed_url": selected_location.area_google_maps_embed_url,
         }
 
     def _build_region_map_button_groups(

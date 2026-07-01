@@ -54,8 +54,6 @@ class StorePlanningDataSourceCommandTest(TestCase):
         self.assertEqual("000032163275", population.raw_data["stat_inf_id"])
         self.assertEqual("073002", population.raw_data["town_code"])
         self.assertEqual("4", population.raw_data["area_hierarchy_level"])
-        self.assertEqual("sample_mock", population.raw_data["boundary_source"])
-        self.assertEqual("Polygon", population.raw_data["boundary_geojson"]["type"])
         self.assertEqual(
             {
                 "label": "0代",
@@ -73,10 +71,6 @@ class StorePlanningDataSourceCommandTest(TestCase):
             source_key="estat_population_age_groups_13121_073001"
         )
         self.assertEqual(1234, other_population.raw_data["total_population"])
-        self.assertEqual("sample_mock", other_population.raw_data["boundary_source"])
-        self.assertEqual(
-            "Polygon", other_population.raw_data["boundary_geojson"]["type"]
-        )
         self.assertEqual(
             "東京都足立区東保木間一丁目",
             other_population.raw_data["target_area_name"],

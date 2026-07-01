@@ -13,6 +13,7 @@ from shopping.models import (
 )
 
 
+@override_settings(GOOGLE_MAPS_FE_API_KEY="")
 class TestView(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -431,21 +432,6 @@ class TestView(TestCase):
         self.assertNotContains(response, "比較対象地域（東保木間一丁目）")
         self.assertContains(response, "e-Stat CSVはまだ取り込まれていません")
 
-    @override_settings(GOOGLE_MAPS_FE_API_KEY="test-google-maps-key")
-    def test_store_planning_page_explains_boundary_map_fallback_without_geojson(self):
-        """
-        シナリオ:
-        - 入力: Google Maps FE APIキーは設定済みだが、境界GeoJSONが未保存のDB。
-        - 処理: 出店計画画面をGETする。
-        - 期待値: ポリゴン地図ではなく地域検索地図を表示し、境界GeoJSON未取得が理由として表示されること。
-        """
-        response = self.client.get(reverse("shp:store_planning"))
-
-        self.assertEqual(200, response.status_code)
-        self.assertContains(response, 'id="store-planning-area-map"')
-        self.assertContains(response, "町丁境界GeoJSONが未取得")
-        self.assertNotContains(response, 'id="store-planning-boundary-map"')
-
     def test_store_planning_page_displays_no_data_for_store_outside_saved_csv(self):
         """
         シナリオ:
@@ -687,91 +673,25 @@ class TestView(TestCase):
         GOOGLE_MAPS_FE_API_KEY="test-google-maps-key",
         GOOGLE_MAPS_MAP_ID="test-map-id",
     )
-    def test_store_planning_page_displays_boundary_polygon_map_when_geojson_exists(
+    def test_store_planning_page_displays_google_maps_javascript_map_with_fe_key(
         self,
     ):
         """
         シナリオ:
-        - 入力: 対象地域と比較対象地域の境界GeoJSONを含むe-Stat人口スナップショット。
+        - 入力: Google Maps FE APIキーが設定済みの出店計画画面。
         - 処理: Google Maps JavaScript APIキーが設定された状態で出店計画画面をGETする。
-        - 期待値: iframeではなく、対象地域と比較対象地域を同時表示するポリゴン地図用データが出力されること。
+        - 期待値: iframeではなく、gmarkerと同じMaps JavaScript API用の地図データが出力されること。
         """
-        StorePlanningDataSourceSnapshot.objects.create(
-            source_key="estat_population_age_groups_13121_073002",
-            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間二丁目",
-            source_url="https://www.e-stat.go.jp/stat-search/files",
-            status="取得済み: 東京都足立区東保木間二丁目 の年齢別人口",
-            data_period="令和2年国勢調査 小地域集計",
-            source_updated_at=timezone.now(),
-            raw_data={
-                "target_area_name": "東京都足立区東保木間二丁目",
-                "city_code": "13121",
-                "town_code": "073002",
-                "area_hierarchy_level": "4",
-                "total_population": 2289,
-                "average_age": 43.8,
-                "age_groups": [],
-                "boundary_geojson": {
-                    "type": "Polygon",
-                    "coordinates": [
-                        [
-                            [139.812, 35.792],
-                            [139.816, 35.792],
-                            [139.816, 35.796],
-                            [139.812, 35.796],
-                            [139.812, 35.792],
-                        ]
-                    ],
-                },
-            },
-        )
-        StorePlanningDataSourceSnapshot.objects.create(
-            source_key="estat_population_age_groups_13121_073001",
-            display_name="e-Stat 国勢調査 年齢別人口: 東京都足立区東保木間一丁目",
-            source_url="https://www.e-stat.go.jp/stat-search/files",
-            status="取得済み: 東京都足立区東保木間一丁目 の年齢別人口",
-            data_period="令和2年国勢調査 小地域集計",
-            source_updated_at=timezone.now(),
-            raw_data={
-                "target_area_name": "東京都足立区東保木間一丁目",
-                "city_code": "13121",
-                "town_code": "073001",
-                "area_hierarchy_level": "4",
-                "total_population": 1400,
-                "average_age": 45.2,
-                "age_groups": [],
-                "geometry_geojson": {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [
-                            [
-                                [139.808, 35.792],
-                                [139.812, 35.792],
-                                [139.812, 35.796],
-                                [139.808, 35.796],
-                                [139.808, 35.792],
-                            ]
-                        ],
-                    },
-                },
-            },
-        )
-
         response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, 'id="store-planning-boundary-map"')
-        self.assertContains(response, 'id="store-planning-boundary-map-data"')
+        self.assertContains(response, 'id="store-planning-map-canvas"')
+        self.assertContains(response, 'id="store-planning-map-data"')
         self.assertContains(response, "maps.googleapis.com/maps/api/js")
         self.assertContains(response, "test-google-maps-key")
         self.assertContains(response, '"mapId": "test-map-id"')
-        self.assertContains(response, "対象地域ポリゴン")
-        self.assertContains(response, "比較対象・周辺地域ポリゴン")
-        self.assertContains(response, '"role": "target"')
-        self.assertContains(response, '"role": "comparison"')
-        self.assertContains(response, '"town_code": "073002"')
-        self.assertContains(response, '"town_code": "073001"')
+        self.assertContains(response, '"lat": 35.792822')
+        self.assertContains(response, '"lng": 139.8143238')
         self.assertNotContains(response, 'id="store-planning-area-map"')
 
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):

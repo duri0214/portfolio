@@ -65,107 +65,60 @@
                         <div>
                             <h2 class="h5 mb-1">地域マップ</h2>
                             <p class="small text-muted mb-0">
-                                対象地域と比較対象地域を同じ地図上で確認します。
+                                対象地点と地域検索を地図上で確認します。
                             </p>
                         </div>
                     </div>
-                    {% if google_maps_fe_api_key and has_region_boundary_map %}
-                        {{ region_boundary_map|json_script:"store-planning-boundary-map-data" }}
+                    {% if google_maps_fe_api_key %}
+                        {{ store_planning_map|json_script:"store-planning-map-data" }}
                         <div class="ratio ratio-16x9 mb-3">
-                            <div id="store-planning-boundary-map"
+                            <div id="store-planning-map-canvas"
                                  class="border rounded"
-                                 aria-label="対象地域と比較対象地域の地図"></div>
-                        </div>
-                        <div id="store-planning-map-region-detail" class="border rounded p-3 small mb-3">
-                            <div class="fw-semibold">対象地域</div>
-                            <div class="text-muted">{{ target_location.population_area }}</div>
-                        </div>
-                        <div class="d-flex flex-wrap gap-3 small text-muted">
-                            <span><span class="badge bg-primary">&nbsp;</span> 対象地域ポリゴン</span>
-                            <span><span class="badge bg-success">&nbsp;</span> 比較対象・周辺地域ポリゴン</span>
+                                 aria-label="出店計画の地図"></div>
                         </div>
                         <script>
-                            window.initStorePlanningBoundaryMap = () => {
-                                const mapDataElement = document.getElementById("store-planning-boundary-map-data");
-                                const mapElement = document.getElementById("store-planning-boundary-map");
+                            window.initStorePlanningMap = () => {
+                                const mapDataElement = document.getElementById("store-planning-map-data");
+                                const mapElement = document.getElementById("store-planning-map-canvas");
                                 if (!mapDataElement || !mapElement || !window.google) {
                                     return;
                                 }
 
                                 const mapData = JSON.parse(mapDataElement.textContent);
-                                const fallbackCenter = {
-                                    lat: mapData.center.lat || 35.681236,
-                                    lng: mapData.center.lng || 139.767125,
-                                };
                                 const map = new google.maps.Map(mapElement, {
-                                    center: fallbackCenter,
+                                    center: mapData.center,
                                     zoom: 14,
                                     mapId: mapData.mapId,
                                     mapTypeControl: false,
                                     streetViewControl: false,
                                     fullscreenControl: true,
                                 });
-                                const bounds = new google.maps.LatLngBounds();
-                                const detail = document.getElementById("store-planning-map-region-detail");
 
-                                const polygonPaths = (geometry) => {
-                                    if (!geometry) {
-                                        return [];
-                                    }
-                                    const polygons = geometry.type === "MultiPolygon"
-                                        ? geometry.coordinates
-                                        : [geometry.coordinates];
-                                    return polygons.map((polygon) => {
-                                        return polygon.map((ring) => {
-                                            return ring.map((point) => {
-                                                const latLng = {lat: point[1], lng: point[0]};
-                                                bounds.extend(latLng);
-                                                return latLng;
-                                            });
-                                        });
+                                if (mapData.target.lat && mapData.target.lng) {
+                                    const marker = new google.maps.Marker({
+                                        position: {
+                                            lat: mapData.target.lat,
+                                            lng: mapData.target.lng,
+                                        },
+                                        map,
+                                        title: mapData.target.name,
                                     });
-                                };
-
-                                const updateDetail = (region) => {
-                                    if (!detail) {
-                                        return;
-                                    }
-                                    const population = region.population.total_population
-                                        ? `${region.population.total_population.toLocaleString()}人`
-                                        : "データなし";
-                                    const averageAge = region.population.average_age
-                                        ? `${region.population.average_age}歳`
-                                        : "-";
-                                    detail.innerHTML = `
-                                        <div class="fw-semibold">${region.name}</div>
-                                        <div class="text-muted">e-Stat地域コード ${region.estat.city_code || "-"} / 町丁字コード ${region.estat.town_code || "-"}</div>
-                                        <div class="text-muted">総人口 ${population} / 平均年齢 ${averageAge}</div>
-                                    `;
-                                };
-
-                                mapData.regions.forEach((region) => {
-                                    const paths = polygonPaths(region.geometry);
-                                    paths.forEach((path) => {
-                                        const isTarget = region.role === "target";
-                                        const polygon = new google.maps.Polygon({
-                                            paths: path,
-                                            strokeColor: isTarget ? "#0d6efd" : "#198754",
-                                            strokeOpacity: 0.9,
-                                            strokeWeight: isTarget ? 3 : 2,
-                                            fillColor: isTarget ? "#0d6efd" : "#198754",
-                                            fillOpacity: isTarget ? 0.24 : 0.16,
-                                            map,
-                                        });
-                                        polygon.addListener("click", () => updateDetail(region));
+                                    const infoWindow = new google.maps.InfoWindow({
+                                        content: `
+                                            <div>
+                                                <div class="fw-semibold">${mapData.target.name}</div>
+                                                <div>${mapData.target.population_area}</div>
+                                                <div class="text-muted">${mapData.target.address}</div>
+                                            </div>
+                                        `,
                                     });
-                                });
-
-                                if (!bounds.isEmpty()) {
-                                    map.fitBounds(bounds);
+                                    marker.addListener("click", () => {
+                                        infoWindow.open({anchor: marker, map});
+                                    });
                                 }
                             };
                         </script>
-                        <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=initStorePlanningBoundaryMap&v=weekly"></script>
+                        <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=initStorePlanningMap&v=weekly"></script>
                     {% else %}
                         <div class="ratio ratio-16x9 mb-3">
                             <iframe id="store-planning-area-map"
@@ -178,10 +131,6 @@
                         {% if not google_maps_fe_api_key %}
                             <div class="alert alert-warning small">
                                 Google Maps FE APIキーが未設定のため、地域検索地図を表示しています。
-                            </div>
-                        {% elif not has_region_boundary_map %}
-                            <div class="alert alert-warning small">
-                                町丁境界GeoJSONが未取得のため、地域検索地図を表示しています。
                             </div>
                         {% endif %}
                         <div class="d-grid gap-3">
