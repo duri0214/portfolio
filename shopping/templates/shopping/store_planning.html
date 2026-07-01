@@ -30,7 +30,7 @@
                     </div>
                     <form class="mb-3" method="get" action="{% url 'shp:store_planning' %}">
                         <label class="form-label fw-semibold" for="store-planning-store-select">店舗候補</label>
-                        <div class="d-flex flex-column flex-sm-row gap-2">
+                        <div>
                             <select id="store-planning-store-select" class="form-select" name="store" onchange="this.form.submit()">
                                 {% for store in store_locations %}
                                     <option value="{{ store.slug }}" {% if store.is_active %}selected{% endif %}>
@@ -38,9 +38,6 @@
                                     </option>
                                 {% endfor %}
                             </select>
-                            <button class="btn btn-primary text-nowrap" type="submit">
-                                表示
-                            </button>
                         </div>
                     </form>
                     <dl class="row mb-0">
