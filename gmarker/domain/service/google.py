@@ -65,48 +65,7 @@ class GoogleMapsService:
             )
             response.raise_for_status()
 
-            data = response.json()
-            places_data = data.get("places", [])
-
-            # **新しいPlaceをデータベースに登録（キャッシュに存在しないものだけ）**
-            self.extract_new_places_and_register(places_data, place_cache)
-
-            # 【2】キャッシュの再取得
-            # extract_new_places_and_register実行後にキャッシュを最新の状態に更新。
-            # ・新規登録分も含めた完全なPlaceキャッシュを取得する。
-            place_cache = PlaceRepository.fetch_all_places()
-
-            place_vo_list: list[PlaceVO] = []
-            for place_data in places_data:
-                latlng = place_data.get("location")
-                if latlng:
-                    latlng = GoogleMapsCoord(
-                        latitude=latlng.get("latitude"),
-                        longitude=latlng.get("longitude"),
-                    )
-
-                reviews: list[ReviewVO] = []
-                review_data = place_data.get("reviews", [])
-                for data in review_data:
-                    reviews.append(
-                        ReviewVO(
-                            text=data.get("text", {}).get("text"),
-                            author=data.get("authorAttribution", {}).get("displayName"),
-                            publish_time=data.get("publishTime"),
-                            google_maps_uri=data.get("googleMapsUri"),
-                        )
-                    )
-
-                place_vo_list.append(
-                    PlaceVO(
-                        place=place_cache.get(place_data.get("id")),
-                        location=latlng,
-                        name=place_data.get("displayName", {}).get("text"),
-                        rating=place_data.get("rating"),
-                        reviews=reviews,
-                    )
-                )
-            return place_vo_list
+            return self._place_vos_from_response(response.json(), place_cache)
 
         except requests.HTTPError as e:
             print(f"An HTTP error occurred: {e}")
@@ -117,6 +76,96 @@ class GoogleMapsService:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
             return []
+
+    def text_search(
+        self,
+        query: str,
+        center: GoogleMapsCoord,
+        radius: int,
+        fields: list[str],
+    ) -> list[PlaceVO]:
+        """
+        Google Maps Places APIのText Search (New)で施設名・住所から場所を検索する。
+        """
+        if not fields:
+            raise ValueError("fieldsパラメータは必須です")
+
+        place_cache = PlaceRepository.fetch_all_places()
+
+        try:
+            response = requests.post(
+                url=f"{self.base_url}:searchText",
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Goog-Api-Key": self.api_key,
+                    "X-Goog-FieldMask": ",".join(fields),
+                },
+                json={
+                    "textQuery": query,
+                    "languageCode": "ja",
+                    "locationBias": {
+                        "circle": {
+                            "center": {
+                                "latitude": center.latitude,
+                                "longitude": center.longitude,
+                            },
+                            "radius": radius,
+                        }
+                    },
+                },
+            )
+            response.raise_for_status()
+            return self._place_vos_from_response(response.json(), place_cache)
+
+        except requests.HTTPError as e:
+            print(f"An HTTP error occurred: {e}")
+            return []
+        except (KeyError, TypeError) as e:
+            print(f"A data parsing error occurred: {e}")
+            return []
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return []
+
+    def _place_vos_from_response(
+        self, data: dict, place_cache: dict[str, Place]
+    ) -> list[PlaceVO]:
+        places_data = data.get("places", [])
+
+        self.extract_new_places_and_register(places_data, place_cache)
+        place_cache = PlaceRepository.fetch_all_places()
+
+        place_vo_list: list[PlaceVO] = []
+        for place_data in places_data:
+            latlng = place_data.get("location")
+            if latlng:
+                latlng = GoogleMapsCoord(
+                    latitude=latlng.get("latitude"),
+                    longitude=latlng.get("longitude"),
+                )
+
+            reviews: list[ReviewVO] = []
+            review_data = place_data.get("reviews", [])
+            for data in review_data:
+                reviews.append(
+                    ReviewVO(
+                        text=data.get("text", {}).get("text"),
+                        author=data.get("authorAttribution", {}).get("displayName"),
+                        publish_time=data.get("publishTime"),
+                        google_maps_uri=data.get("googleMapsUri"),
+                    )
+                )
+
+            place_vo_list.append(
+                PlaceVO(
+                    place=place_cache.get(place_data.get("id")),
+                    location=latlng,
+                    name=place_data.get("displayName", {}).get("text"),
+                    rating=place_data.get("rating"),
+                    reviews=reviews,
+                )
+            )
+        return place_vo_list
 
     @staticmethod
     def extract_new_places_and_register(

@@ -6,11 +6,11 @@ from django.urls import reverse
 from django.utils import timezone
 from unittest.mock import patch
 
-from gmarker.models import Place, PlaceReview
 from shopping.models import (
     Product,
     Store,
     StorePlanningDataSourceSnapshot,
+    StorePlanningGoogleMapsReview,
     StorePlanningTargetStore,
 )
 
@@ -217,14 +217,13 @@ class TestView(TestCase):
         - 処理: 出店計画画面をGETする。
         - 期待値: レビュー概要、3x3グリッド、代表レビューが表示されること。
         """
-        place = Place.objects.create(
-            place_id="review-place-1",
-            name="近隣カフェ",
-            location="35.7935,139.8150",
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=StorePlanningTargetStore.objects.get(slug="chapter-table"),
+            google_place_id="review-place-1",
+            place_name="近隣カフェ",
+            latitude=35.7935,
+            longitude=139.8150,
             rating=4.6,
-        )
-        PlaceReview.objects.create(
-            place=place,
             author="reviewer",
             review_text="おいしいランチで雰囲気も良い。おすすめです。",
             publish_time=timezone.now(),

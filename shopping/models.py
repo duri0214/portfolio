@@ -90,6 +90,66 @@ class StorePlanningTargetStore(models.Model):
         return self.name
 
 
+class StorePlanningGoogleMapsReview(models.Model):
+    """
+    出店計画の店舗候補ごとに取得した Google Maps レビュー。
+
+    Attributes:
+        target_store: 出店計画の対象店舗候補。
+        google_place_id: Google Maps の Place ID。
+        place_name: レビュー対象施設名。
+        latitude: レビュー対象施設の緯度。
+        longitude: レビュー対象施設の経度。
+        rating: レビュー対象施設の Google Maps rating。
+        review_text: レビュー本文。
+        author: レビュー投稿者名。
+        publish_time: レビュー公開日時。
+        google_maps_uri: レビューまたは施設の Google Maps URL。
+        fetched_at: アプリがレビューを取得した日時。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    target_store = models.ForeignKey(
+        StorePlanningTargetStore,
+        verbose_name="出店計画対象店舗",
+        on_delete=models.CASCADE,
+        related_name="google_maps_reviews",
+    )
+    target_store_slug = models.SlugField(
+        "店舗キー", max_length=100, blank=True, db_index=True
+    )
+    google_place_id = models.CharField("Google Place ID", max_length=200)
+    place_name = models.CharField("施設名", max_length=255)
+    latitude = models.FloatField("緯度")
+    longitude = models.FloatField("経度")
+    rating = models.FloatField("Google Maps rating", null=True, blank=True)
+    review_text = models.TextField("レビュー本文", blank=True)
+    author = models.CharField("投稿者", max_length=200, blank=True)
+    publish_time = models.DateTimeField("レビュー公開日時", null=True, blank=True)
+    google_maps_uri = models.URLField("Google Maps URL", max_length=500, blank=True)
+    fetched_at = models.DateTimeField("アプリ取得日時", default=timezone.now)
+    created_at = models.DateTimeField("作成日時", default=timezone.now)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["-publish_time", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target_store_slug", "google_place_id", "author"],
+                name="unique_store_planning_google_review_author",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.target_store_slug and self.target_store_id:
+            self.target_store_slug = self.target_store.slug
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.target_store.name}: {self.place_name} ({self.author})"
+
+
 class UserAttribute(models.Model):
     """
     ショッピングアプリ特有のユーザー属性。

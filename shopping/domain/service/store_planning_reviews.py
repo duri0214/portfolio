@@ -1,8 +1,8 @@
 from math import atan2, cos, radians, sin, sqrt
 
-from gmarker.domain.repository.google import PlaceReviewRepository
 from gmarker.domain.service.google import GoogleMapsService
-from gmarker.models import PlaceReview
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from lib.geo.valueobject.coord import GoogleMapsCoord
 from shopping.domain.valueobject.store_planning import StorePlanningTargetLocation
 from shopping.domain.valueobject.store_planning_reviews import (
@@ -11,6 +11,7 @@ from shopping.domain.valueobject.store_planning_reviews import (
     StorePlanningReviewCell,
     StorePlanningReviewSummary,
 )
+from shopping.models import StorePlanningGoogleMapsReview, StorePlanningTargetStore
 
 
 class StorePlanningReviewService:
@@ -72,34 +73,93 @@ class StorePlanningReviewService:
         if target_location.latitude is None or target_location.longitude is None:
             return StorePlanningReviewFetchResult(place_count=0, review_count=0)
 
+        target_store = StorePlanningTargetStore.objects.filter(
+            slug=target_location.slug
+        ).first()
+        if target_store is None:
+            return StorePlanningReviewFetchResult(place_count=0, review_count=0)
+        existing_reviews = StorePlanningGoogleMapsReview.objects.filter(
+            target_store_slug=target_store.slug
+        )
+        if existing_reviews.exists():
+            return StorePlanningReviewFetchResult(
+                place_count=existing_reviews.values("google_place_id")
+                .distinct()
+                .count(),
+                review_count=existing_reviews.count(),
+                skipped=True,
+            )
+
         service = GoogleMapsService(api_key)
-        place_vo_list = service.nearby_search(
-            center=GoogleMapsCoord(
-                target_location.latitude,
-                target_location.longitude,
-            ),
+        center = GoogleMapsCoord(
+            target_location.latitude,
+            target_location.longitude,
+        )
+        exact_place_vos = service.text_search(
+            query=f"{target_location.name} {target_location.address}",
+            center=center,
+            radius=cls.RADIUS_METER,
+            fields=cls.API_FIELDS,
+        )
+        nearby_place_vos = service.nearby_search(
+            center=center,
             search_types=cls.SEARCH_TYPES,
             radius=cls.RADIUS_METER,
             fields=cls.API_FIELDS,
         )
+        place_vo_list = cls._unique_place_vos([*exact_place_vos, *nearby_place_vos])
         review_count = 0
         for place_vo in place_vo_list:
-            place_reviews = [
-                PlaceReview(
-                    review_text=review.text,
-                    author=review.author,
-                    publish_time=review.publish_time,
-                    google_maps_uri=review.google_maps_uri,
-                    place=place_vo.place,
+            if place_vo.place is None or place_vo.location is None:
+                continue
+            for review in place_vo.reviews:
+                author = review.author or review.google_maps_uri or "unknown"
+                StorePlanningGoogleMapsReview.objects.update_or_create(
+                    target_store=target_store,
+                    target_store_slug=target_store.slug,
+                    google_place_id=place_vo.place.place_id,
+                    author=author,
+                    defaults={
+                        "place_name": place_vo.name or place_vo.place.name,
+                        "latitude": place_vo.location.latitude,
+                        "longitude": place_vo.location.longitude,
+                        "rating": place_vo.rating,
+                        "review_text": review.text or "",
+                        "publish_time": cls._parse_publish_time(review.publish_time),
+                        "google_maps_uri": review.google_maps_uri or "",
+                        "fetched_at": timezone.now(),
+                    },
                 )
-                for review in place_vo.reviews
-            ]
-            review_count += len(place_reviews)
-            PlaceReviewRepository.bulk_create(place_reviews)
+                review_count += 1
         return StorePlanningReviewFetchResult(
             place_count=len(place_vo_list),
             review_count=review_count,
         )
+
+    @staticmethod
+    def _unique_place_vos(place_vos: list) -> list:
+        unique_place_vos = []
+        seen_place_ids = set()
+        for place_vo in place_vos:
+            if place_vo.place is None:
+                continue
+            place_id = place_vo.place.place_id
+            if place_id in seen_place_ids:
+                continue
+            seen_place_ids.add(place_id)
+            unique_place_vos.append(place_vo)
+        return unique_place_vos
+
+    @staticmethod
+    def _parse_publish_time(value: str | None):
+        if not value:
+            return None
+        parsed_value = parse_datetime(value)
+        if parsed_value is None:
+            return None
+        if timezone.is_naive(parsed_value):
+            return timezone.make_aware(parsed_value)
+        return parsed_value
 
     @classmethod
     def build_summary(
@@ -116,16 +176,18 @@ class StorePlanningReviewService:
         positive_count = 0
         negative_count = 0
 
-        for review in cls._review_queryset():
-            place_coord = cls._parse_location(review.place.location)
-            if place_coord is None:
-                continue
+        target_store = StorePlanningTargetStore.objects.filter(
+            slug=target_location.slug
+        ).first()
+        if target_store is None:
+            return cls._empty_summary()
 
+        for review in cls._review_queryset(target_store):
             distance_meter = cls._distance_meter(
                 target_location.latitude,
                 target_location.longitude,
-                place_coord[0],
-                place_coord[1],
+                review.latitude,
+                review.longitude,
             )
             if distance_meter > cls.RADIUS_METER:
                 continue
@@ -133,23 +195,23 @@ class StorePlanningReviewService:
             row, col = cls._grid_position(
                 target_location.latitude,
                 target_location.longitude,
-                place_coord[0],
-                place_coord[1],
+                review.latitude,
+                review.longitude,
             )
-            place_ids.add(review.place_id)
+            place_ids.add(review.google_place_id)
             if (
-                review.place.rating is not None
-                and review.place_id not in rated_place_ids
+                review.rating is not None
+                and review.google_place_id not in rated_place_ids
             ):
-                total_rating += review.place.rating
-                rated_place_ids.add(review.place_id)
+                total_rating += review.rating
+                rated_place_ids.add(review.google_place_id)
 
             planning_review = StorePlanningReview(
-                place_name=review.place.name,
+                place_name=review.place_name,
                 author=review.author or "-",
                 review_text=review.review_text or "",
                 publish_time=review.publish_time,
-                rating=review.place.rating,
+                rating=review.rating,
                 distance_meter=round(distance_meter),
             )
             cell_rows[row][col].append(planning_review)
@@ -181,9 +243,11 @@ class StorePlanningReviewService:
         )
 
     @classmethod
-    def _review_queryset(cls):
+    def _review_queryset(cls, target_store: StorePlanningTargetStore):
         return (
-            PlaceReview.objects.select_related("place")
+            StorePlanningGoogleMapsReview.objects.filter(
+                target_store_slug=target_store.slug
+            )
             .exclude(review_text__isnull=True)
             .exclude(review_text="")
             .order_by("-publish_time", "-id")
@@ -270,18 +334,6 @@ class StorePlanningReviewService:
         if score >= 45:
             return "#f3df9b"
         return "#8fb9dd"
-
-    @staticmethod
-    def _parse_location(location: str | None) -> tuple[float, float] | None:
-        if not location:
-            return None
-        parts = [part.strip() for part in location.split(",")]
-        if len(parts) != 2:
-            return None
-        try:
-            return float(parts[0]), float(parts[1])
-        except ValueError:
-            return None
 
     @classmethod
     def _distance_meter(

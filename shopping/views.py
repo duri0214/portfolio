@@ -239,14 +239,24 @@ class StorePlanningView(TemplateView):
             api_key=api_key,
             target_location=selected_location,
         )
-        messages.success(
-            request,
-            (
-                "Google Maps レビュー取得を実行しました。"
-                f"取得施設数: {fetch_result.place_count}件 / "
-                f"レビュー数: {fetch_result.review_count}件"
-            ),
-        )
+        if fetch_result.skipped:
+            messages.info(
+                request,
+                (
+                    "Google Maps レビューは取得済みです。"
+                    f"施設数: {fetch_result.place_count}件 / "
+                    f"レビュー数: {fetch_result.review_count}件"
+                ),
+            )
+        else:
+            messages.success(
+                request,
+                (
+                    "Google Maps レビュー取得を実行しました。"
+                    f"取得施設数: {fetch_result.place_count}件 / "
+                    f"レビュー数: {fetch_result.review_count}件"
+                ),
+            )
         return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
 
     def _selected_location(self):
