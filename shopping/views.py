@@ -22,6 +22,7 @@ from .domain.repository.store_planning import (
 from .domain.repository.user_attribute import UserAttributeRepository
 from .domain.service.csv_upload import CsvService
 from .domain.service.payment import StripePaymentService
+from .domain.service.store_planning_reviews import StorePlanningReviewService
 from .domain.valueobject.store_planning import (
     AREA_HIERARCHY_LEVEL_PARENT_TOWN,
     StorePlanningArea,
@@ -155,6 +156,9 @@ class StorePlanningView(TemplateView):
             "area_google_maps_embed_url": selected_location.area_google_maps_embed_url,
             "initial_map_embed_url": selected_location.area_google_maps_embed_url,
         }
+        context["can_use_google_maps"] = (
+            self.request.user.is_authenticated and self.request.user.is_superuser
+        )
         context["store_locations"] = [
             {
                 "slug": location.slug,
@@ -196,13 +200,9 @@ class StorePlanningView(TemplateView):
             [*region_level3_rows, *region_comparison_rows]
         )
         context["has_fetched_data_sources"] = data_source_snapshot is not None
-        context["planning_axes"] = [
-            {
-                "title": "評判・口コミ",
-                "summary": "Google Maps レビューを集約し、エリアの印象やネガティブ要因を把握する",
-                "issue": "#131",
-            },
-        ]
+        context["review_summary"] = StorePlanningReviewService.build_summary(
+            selected_location
+        )
         return context
 
     def _selected_location(self):

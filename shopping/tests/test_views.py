@@ -5,6 +5,7 @@ from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
+from gmarker.models import Place, PlaceReview
 from shopping.models import (
     Product,
     Store,
@@ -19,6 +20,11 @@ class TestView(TestCase):
         User.objects.create_user(email="tester@b.c", username="John Doe").set_password(
             "12345"
         )
+        cls.superuser = User.objects.create_superuser(
+            username="admin",
+            email="admin@example.com",
+            password="password",
+        )
         Store.objects.create(name="笹塚")
         Store.objects.create(name="新宿")
         cls.product = Product.objects.create(
@@ -28,6 +34,9 @@ class TestView(TestCase):
             description="テスト用の商品です",
             picture="shopping/test-product.jpg",
         )
+
+    def setUp(self):
+        self.client.force_login(self.superuser)
 
     def test_get_top_page_200(self):
         """
@@ -127,8 +136,13 @@ class TestView(TestCase):
         )
         self.assertContains(response, "人口集計地域")
         self.assertContains(response, "東京都足立区東保木間二丁目")
-        self.assertContains(response, "評判・口コミ")
+        self.assertContains(response, "Google Maps レビュー")
+        self.assertContains(response, "半径 500m")
         self.assertContains(response, "e-Stat 年代別人口")
+        html = response.content.decode()
+        self.assertLess(
+            html.index("e-Stat 年代別人口"), html.index("Google Maps レビュー")
+        )
         self.assertNotContains(response, "#803")
         self.assertContains(response, "使用した指標")
         self.assertContains(response, "ファイルID")
@@ -192,6 +206,65 @@ class TestView(TestCase):
         self.assertNotContains(response, "立地リスク判定")
         self.assertNotContains(response, "手動で確認するデータ")
         self.assertNotContains(response, "店舗座標")
+
+    def test_store_planning_page_displays_google_maps_review_grid(self):
+        """
+        シナリオ:
+        - 入力: 対象店舗から半径500m以内にあるGoogle Maps施設レビュー。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: レビュー概要、3x3グリッド、代表レビューが表示されること。
+        """
+        place = Place.objects.create(
+            place_id="review-place-1",
+            name="近隣カフェ",
+            location="35.7935,139.8150",
+            rating=4.6,
+        )
+        PlaceReview.objects.create(
+            place=place,
+            author="reviewer",
+            review_text="おいしいランチで雰囲気も良い。おすすめです。",
+            publish_time=timezone.now(),
+        )
+
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "Google Maps レビュー")
+        self.assertContains(response, "gmarker に保存済みの Places API レビュー")
+        self.assertContains(response, "レビュー対象施設")
+        self.assertContains(response, "レビュー数")
+        self.assertContains(response, "平均 rating")
+        self.assertContains(response, "ポジ / ネガ")
+        self.assertContains(response, "1件")
+        self.assertContains(response, "4.6")
+        self.assertContains(response, "北東")
+        self.assertContains(response, "score")
+        self.assertContains(response, "近隣カフェ")
+        self.assertContains(response, "reviewer")
+        self.assertContains(response, "おいしいランチ")
+        self.assertNotContains(response, "保存済み Google Maps レビューはありません")
+
+    def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):
+        """
+        シナリオ:
+        - 入力: 未ログイン状態の出店計画画面URL。
+        - 処理: テストクライアントでGETする。
+        - 期待値: Google Maps iframe、地図リンク、地図切替ボタンが表示されないこと。
+        """
+        self.client.logout()
+
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(
+            response,
+            "Google Maps の表示と外部リンクはスーパーユーザーでログインした場合のみ利用できます。",
+        )
+        self.assertNotContains(response, "<iframe")
+        self.assertNotContains(response, 'class="btn btn-sm store-planning-map-button')
+        self.assertNotContains(response, "https://www.google.com/maps?q=35.792822")
+        self.assertContains(response, "制限中")
 
     def test_store_planning_page_selects_registered_sample_store(self):
         """
