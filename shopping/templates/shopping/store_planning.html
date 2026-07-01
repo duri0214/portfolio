@@ -73,91 +73,34 @@
                             </p>
                         </div>
                     </div>
-                    {% if google_maps_fe_api_key %}
-                        {{ store_planning_map|json_script:"store-planning-map-data" }}
-                        <div class="ratio ratio-16x9 mb-3">
-                            <div id="store-planning-map-canvas"
-                                 class="border rounded"
-                                 aria-label="出店計画の地図"></div>
-                        </div>
-                        <script>
-                            window.initStorePlanningMap = () => {
-                                const mapDataElement = document.getElementById("store-planning-map-data");
-                                const mapElement = document.getElementById("store-planning-map-canvas");
-                                if (!mapDataElement || !mapElement || !window.google) {
-                                    return;
-                                }
-
-                                const mapData = JSON.parse(mapDataElement.textContent);
-                                const map = new google.maps.Map(mapElement, {
-                                    center: mapData.center,
-                                    zoom: 14,
-                                    mapId: mapData.mapId,
-                                    mapTypeControl: false,
-                                    streetViewControl: false,
-                                    fullscreenControl: true,
-                                });
-
-                                if (mapData.target.lat && mapData.target.lng) {
-                                    const marker = new google.maps.Marker({
-                                        position: {
-                                            lat: mapData.target.lat,
-                                            lng: mapData.target.lng,
-                                        },
-                                        map,
-                                        title: mapData.target.name,
-                                    });
-                                    const infoWindow = new google.maps.InfoWindow({
-                                        content: `
-                                            <div>
-                                                <div class="fw-semibold">${mapData.target.name}</div>
-                                                <div>${mapData.target.population_area}</div>
-                                                <div class="text-muted">${mapData.target.address}</div>
-                                            </div>
-                                        `,
-                                    });
-                                    marker.addListener("click", () => {
-                                        infoWindow.open({anchor: marker, map});
-                                    });
-                                }
-                            };
-                        </script>
-                        <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=initStorePlanningMap&v=weekly"></script>
-                    {% else %}
-                        <div class="ratio ratio-16x9 mb-3">
-                            <iframe id="store-planning-area-map"
-                                    src="{{ target_location.initial_map_embed_url }}"
-                                    title="{{ target_location.population_area }} の地図"
-                                    loading="lazy"
-                                    referrerpolicy="no-referrer-when-downgrade"
-                                    allowfullscreen></iframe>
-                        </div>
-                        {% if not google_maps_fe_api_key %}
-                            <div class="alert alert-warning small">
-                                Google Maps FE APIキーが未設定のため、地域検索地図を表示しています。
-                            </div>
-                        {% endif %}
-                        <div class="d-grid gap-3">
-                            {% for group in region_map_button_groups %}
-                                {% if group.buttons %}
-                                    <div>
-                                        <div class="small fw-semibold">{{ group.title }}</div>
-                                        <div class="small text-muted mb-1">{{ group.description }}</div>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            {% for button in group.buttons %}
-                                                <button class="btn btn-sm store-planning-map-button {% if button.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
-                                                        type="button"
-                                                        data-map-url="{{ button.map_url }}"
-                                                        data-map-title="{{ button.map_title }}">
-                                                    {{ button.label }}
-                                                </button>
-                                            {% endfor %}
-                                        </div>
+                    <div class="ratio ratio-16x9 mb-3">
+                        <iframe id="store-planning-area-map"
+                                src="{{ target_location.initial_map_embed_url }}"
+                                title="{{ target_location.population_area }} の地図"
+                                loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                allowfullscreen></iframe>
+                    </div>
+                    <div class="d-grid gap-3">
+                        {% for group in region_map_button_groups %}
+                            {% if group.buttons %}
+                                <div>
+                                    <div class="small fw-semibold">{{ group.title }}</div>
+                                    <div class="small text-muted mb-1">{{ group.description }}</div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for button in group.buttons %}
+                                            <button class="btn btn-sm store-planning-map-button {% if button.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                                                    type="button"
+                                                    data-map-url="{{ button.map_url }}"
+                                                    data-map-title="{{ button.map_title }}">
+                                                {{ button.label }}
+                                            </button>
+                                        {% endfor %}
                                     </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </section>
             </div>
 

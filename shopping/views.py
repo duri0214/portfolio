@@ -155,9 +155,6 @@ class StorePlanningView(TemplateView):
             "area_google_maps_embed_url": selected_location.area_google_maps_embed_url,
             "initial_map_embed_url": selected_location.area_google_maps_embed_url,
         }
-        context["store_planning_map"] = self._build_store_planning_map(
-            selected_location
-        )
         context["store_locations"] = [
             {
                 "slug": location.slug,
@@ -195,9 +192,6 @@ class StorePlanningView(TemplateView):
         context["region_map_button_groups"] = self._build_region_map_button_groups(
             selected_location, region_level3_rows, region_comparison_rows
         )
-        context["google_maps_fe_api_key"] = getattr(
-            settings, "GOOGLE_MAPS_FE_API_KEY", ""
-        )
         context["region_comparison_meta"] = self._build_region_comparison_meta(
             [*region_level3_rows, *region_comparison_rows]
         )
@@ -210,24 +204,6 @@ class StorePlanningView(TemplateView):
             },
         ]
         return context
-
-    def _build_store_planning_map(
-        self, selected_location: StorePlanningTargetLocation
-    ) -> dict:
-        return {
-            "center": {
-                "lat": selected_location.latitude or 35.681236,
-                "lng": selected_location.longitude or 139.767125,
-            },
-            "target": {
-                "name": selected_location.name,
-                "address": selected_location.address,
-                "population_area": selected_location.population_area,
-                "lat": selected_location.latitude,
-                "lng": selected_location.longitude,
-            },
-            "mapId": getattr(settings, "GOOGLE_MAPS_MAP_ID", ""),
-        }
 
     def _selected_location(self):
         requested_slug = self.request.GET.get("store")

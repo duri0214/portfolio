@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AnonymousUser, User
 from django.template.loader import render_to_string
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
@@ -13,7 +13,6 @@ from shopping.models import (
 )
 
 
-@override_settings(GOOGLE_MAPS_FE_API_KEY="")
 class TestView(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -671,31 +670,6 @@ class TestView(TestCase):
         self.assertNotContains(response, "東京都足立区保木間一丁目")
         self.assertNotContains(response, "9,999人")
         self.assertNotContains(response, "999人")
-
-    @override_settings(
-        GOOGLE_MAPS_FE_API_KEY="test-google-maps-key",
-        GOOGLE_MAPS_MAP_ID="test-map-id",
-    )
-    def test_store_planning_page_displays_google_maps_javascript_map_with_fe_key(
-        self,
-    ):
-        """
-        シナリオ:
-        - 入力: Google Maps FE APIキーが設定済みの出店計画画面。
-        - 処理: Google Maps JavaScript APIキーが設定された状態で出店計画画面をGETする。
-        - 期待値: iframeではなく、gmarkerと同じMaps JavaScript API用の地図データが出力されること。
-        """
-        response = self.client.get(reverse("shp:store_planning"))
-
-        self.assertEqual(200, response.status_code)
-        self.assertContains(response, 'id="store-planning-map-canvas"')
-        self.assertContains(response, 'id="store-planning-map-data"')
-        self.assertContains(response, "maps.googleapis.com/maps/api/js")
-        self.assertContains(response, "test-google-maps-key")
-        self.assertContains(response, '"mapId": "test-map-id"')
-        self.assertContains(response, '"lat": 35.792822')
-        self.assertContains(response, '"lng": 139.8143238')
-        self.assertNotContains(response, 'id="store-planning-area-map"')
 
     def test_payment_confirm_template_requires_login_for_anonymous_user(self):
         """
