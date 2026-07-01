@@ -36,8 +36,8 @@ class StorePlanningReviewCell:
         place_count: レビューを持つ施設数。
         review_count: レビュー件数。
         average_rating: 施設 rating の平均。
-        positive_count: ポジティブ語が含まれるレビュー件数。
-        negative_count: ネガティブ語が含まれるレビュー件数。
+        positive_count: ポジティブ系キーワードが含まれるレビュー件数。
+        negative_count: ネガティブ系キーワードが含まれるレビュー件数。
         score: ヒートマップの濃淡に使う0から100の簡易スコア。
         background_color: ヒートマップセルの背景色。
         text_color: ヒートマップセルの文字色。
@@ -68,8 +68,8 @@ class StorePlanningReviewSummary:
         total_place_count: 半径内でレビューを持つ施設数。
         total_review_count: 半径内のレビュー件数。
         average_rating: 半径内の施設 rating 平均。
-        positive_count: ポジティブ語が含まれるレビュー件数。
-        negative_count: ネガティブ語が含まれるレビュー件数。
+        positive_count: ポジティブ系キーワードが含まれるレビュー件数。
+        negative_count: ネガティブ系キーワードが含まれるレビュー件数。
         cells: 3x3 グリッドの集約セル。
         latest_reviews: 画面に表示する代表レビュー。
     """

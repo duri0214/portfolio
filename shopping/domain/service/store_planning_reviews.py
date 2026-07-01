@@ -15,7 +15,12 @@ from shopping.models import StorePlanningGoogleMapsReview, StorePlanningTargetSt
 
 
 class StorePlanningReviewService:
-    """保存済み Google Maps レビューを出店計画画面向けに集約する。"""
+    """
+    保存済み Google Maps レビューを出店計画画面向けに集約する。
+
+    ポジティブ・ネガティブ件数は固定キーワードの含有数を数える軽量な目安であり、
+    レビュー本文の意味分析や要約は行わない。本格的な評判分析は #820 で扱う。
+    """
 
     RADIUS_METER = 500
     EARTH_RADIUS_METER = 6371000

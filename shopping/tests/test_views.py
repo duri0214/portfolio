@@ -238,7 +238,7 @@ class TestView(TestCase):
         self.assertContains(response, "レビュー対象施設")
         self.assertContains(response, "レビュー数")
         self.assertContains(response, "平均 rating")
-        self.assertContains(response, "ポジ / ネガ")
+        self.assertContains(response, "キーワード件数")
         self.assertContains(response, "1件")
         self.assertContains(response, "4.6")
         self.assertContains(response, "北東")
