@@ -614,15 +614,20 @@
                 line.textContent = text;
                 progressBox.appendChild(line);
             };
+            const reviewPostUrl = window.location.href;
             const parseJsonResponse = async (response, label) => {
                 const contentType = response.headers.get("content-type") || "";
                 if (contentType.includes("application/json")) {
                     return response.json();
                 }
                 const responseText = await response.text();
-                const detail = responseText.trim().startsWith("<!DOCTYPE")
-                    ? "HTMLエラーページが返りました。ログイン状態またはCSRFトークンを確認してください。"
-                    : responseText.trim().slice(0, 120);
+                const responseUrl = response.url || reviewPostUrl;
+                let detail = responseText.trim().slice(0, 120);
+                if (responseText.trim().startsWith("<!DOCTYPE")) {
+                    detail = response.status === 404
+                        ? `POST先が見つかりませんでした: ${responseUrl}`
+                        : `HTMLエラーページが返りました: ${responseUrl}`;
+                }
                 return {
                     ok: false,
                     message: `${label}に失敗しました。HTTP ${response.status}: ${detail}`,
@@ -646,7 +651,7 @@
                         if (forceRefetch) {
                             formData.set("force_refetch", "1");
                         }
-                        const response = await fetch(reviewForm.action, {
+                        const response = await fetch(reviewPostUrl, {
                             method: "POST",
                             headers: {
                                 "X-Requested-With": "XMLHttpRequest",
