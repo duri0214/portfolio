@@ -169,3 +169,93 @@ class StorePlanningReviewServiceTest(TestCase):
         self.assertTrue(result.skipped)
         self.assertEqual(1, result.place_count)
         self.assertEqual(1, result.review_count)
+
+    def test_fetch_nearby_same_business_reviews_saves_reviews_with_separate_scope(self):
+        """
+        シナリオ:
+        - 入力: 対象店舗と同じ業態の周辺店舗検索結果と、対象店舗レビューが保存済みのDB。
+        - 処理: 周辺同業店舗レビュー取得サービスを実行する。
+        - 期待値: 対象店舗レビューと混ざらない種別で周辺同業レビューを保存すること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE,
+            google_place_id="target-place",
+            place_name="Chapter Table",
+            latitude=35.792822,
+            longitude=139.8143238,
+            rating=4.3,
+            author="target-reviewer",
+            review_text="対象店舗のレビューです。",
+        )
+        review = GoogleMapsReviewData(
+            text="近くで使いやすいカフェでした。",
+            author="nearby-reviewer",
+            publish_time="2026-01-02T00:00:00Z",
+            google_maps_uri="https://maps.google.com/nearby",
+        )
+        search_place_vo = GoogleMapsPlaceData(
+            place_id="nearby-place",
+            location=GoogleMapsCoord(35.7930, 139.8147),
+            name="近隣カフェ",
+            rating=4.1,
+            reviews=[],
+        )
+        detail_place_vo = GoogleMapsPlaceData(
+            place_id="nearby-place",
+            location=GoogleMapsCoord(35.7930, 139.8147),
+            name="近隣カフェ",
+            rating=4.1,
+            reviews=[review],
+        )
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+            business_type_label="カフェ",
+            business_search_query="カフェ",
+        )
+
+        with patch(
+            "shopping.domain.service.store_planning_reviews.GoogleMapsReviewClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.text_search.return_value = [search_place_vo]
+            mock_client.place_details.return_value = detail_place_vo
+            mock_client.last_error_status_code = None
+
+            result = StorePlanningReviewService.fetch_nearby_same_business_reviews(
+                api_key="dummy-key",
+                target_location=target_location,
+            )
+
+        text_kwargs = mock_client.text_search.call_args.kwargs
+        self.assertIn("カフェ", text_kwargs["query"])
+        self.assertIn("東京都足立区東保木間二丁目", text_kwargs["query"])
+        self.assertEqual(1, result.place_count)
+        self.assertEqual(1, result.review_count)
+        nearby_review = StorePlanningGoogleMapsReview.objects.get(
+            target_store=target_store,
+            google_place_id="nearby-place",
+        )
+        self.assertEqual(
+            StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            nearby_review.review_scope,
+        )
+        target_summary = StorePlanningReviewService.build_summary(
+            target_location,
+            review_scope=StorePlanningReviewService.TARGET_STORE_SCOPE,
+        )
+        nearby_summary = StorePlanningReviewService.build_summary(
+            target_location,
+            review_scope=StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
+        )
+        self.assertEqual(1, target_summary.total_review_count)
+        self.assertEqual(1, nearby_summary.total_review_count)

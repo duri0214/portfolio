@@ -60,6 +60,8 @@ class StorePlanningTargetStore(models.Model):
         city_code: e-Stat CSVの市区町村コード。
         town_code: e-Stat CSVの町丁字コード。
         population_area: 人口集計に使う町丁字名。
+        business_type_label: 画面に表示する業態名。
+        business_search_query: 周辺同業店舗を検索するためのGoogle Maps検索語。
         large_area_name: e-Stat CSVの大字・町名。
         small_area_name: e-Stat CSVの字・丁目名。
         area_hierarchy_level: e-Stat CSVの地域階層レベル。
@@ -76,6 +78,10 @@ class StorePlanningTargetStore(models.Model):
     city_code = models.CharField("e-Stat市区町村コード", max_length=10)
     town_code = models.CharField("e-Stat町丁字コード", max_length=10)
     population_area = models.CharField("人口集計地域", max_length=255)
+    business_type_label = models.CharField("業態", max_length=100, default="飲食店")
+    business_search_query = models.CharField(
+        "同業検索語", max_length=255, default="レストラン"
+    )
     large_area_name = models.CharField("大字・町名", max_length=100, blank=True)
     small_area_name = models.CharField("字・丁目名", max_length=100, blank=True)
     area_hierarchy_level = models.CharField("地域階層レベル", max_length=1, default="4")
@@ -96,6 +102,7 @@ class StorePlanningGoogleMapsReview(models.Model):
 
     Attributes:
         target_store: 出店計画の対象店舗候補。
+        review_scope: 対象店舗レビューか周辺同業レビューかを分ける種別。
         google_place_id: Google Maps の Place ID。
         place_name: レビュー対象施設名。
         latitude: レビュー対象施設の緯度。
@@ -110,6 +117,18 @@ class StorePlanningGoogleMapsReview(models.Model):
         updated_at: 更新日時。
     """
 
+    class ReviewScope(models.TextChoices):
+        """
+        レビュー取得対象の種別。
+
+        Attributes:
+            TARGET_STORE: 選択中の店舗候補そのもののレビュー。
+            NEARBY_SAME_BUSINESS: 選択中店舗と同じ業態の周辺店舗レビュー。
+        """
+
+        TARGET_STORE = "target_store", "対象店舗"
+        NEARBY_SAME_BUSINESS = "nearby_same_business", "周辺同業店舗"
+
     target_store = models.ForeignKey(
         StorePlanningTargetStore,
         verbose_name="出店計画対象店舗",
@@ -118,6 +137,13 @@ class StorePlanningGoogleMapsReview(models.Model):
     )
     target_store_slug = models.SlugField(
         "店舗キー", max_length=100, blank=True, db_index=True
+    )
+    review_scope = models.CharField(
+        "レビュー種別",
+        max_length=50,
+        choices=ReviewScope,
+        default=ReviewScope.TARGET_STORE,
+        db_index=True,
     )
     google_place_id = models.CharField("Google Place ID", max_length=200)
     place_name = models.CharField("施設名", max_length=255)
@@ -136,8 +162,13 @@ class StorePlanningGoogleMapsReview(models.Model):
         ordering = ["-publish_time", "-id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["target_store_slug", "google_place_id", "author"],
-                name="unique_store_planning_google_review_author",
+                fields=[
+                    "target_store_slug",
+                    "review_scope",
+                    "google_place_id",
+                    "author",
+                ],
+                name="unique_store_planning_google_review_scope_author",
             )
         ]
 

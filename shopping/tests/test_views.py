@@ -248,6 +248,39 @@ class TestView(TestCase):
         self.assertContains(response, "おいしいランチ")
         self.assertNotContains(response, "Google Maps レビューはまだ取得されていません")
 
+    def test_store_planning_page_displays_nearby_same_business_reviews(self):
+        """
+        シナリオ:
+        - 入力: 周辺同業店舗のGoogle Mapsレビューが保存済みのDB。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: 対象店舗レビューとは別枠で周辺同業店舗の件数とレビューが表示されること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-place-1",
+            place_name="近隣同業カフェ",
+            latitude=35.7935,
+            longitude=139.8150,
+            rating=4.2,
+            author="nearby-reviewer",
+            review_text="近くの同業店レビューです。",
+            publish_time=timezone.now(),
+        )
+
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "業態")
+        self.assertContains(response, "カフェ")
+        self.assertContains(response, "周辺同業店舗 Google Maps レビュー")
+        self.assertContains(response, "周辺同業店舗")
+        self.assertContains(response, "近隣同業カフェ")
+        self.assertContains(response, "nearby-reviewer")
+        self.assertContains(response, "周辺同業レビュー取得")
+
     def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):
         """
         シナリオ:
@@ -292,6 +325,38 @@ class TestView(TestCase):
             response = self.client.post(
                 f"{reverse('shp:store_planning')}?store=chapter-table",
                 {"action": "fetch_google_maps_reviews"},
+            )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            fetch_redirect_response=False,
+        )
+        kwargs = mock_fetch_reviews.call_args.kwargs
+        self.assertEqual("dummy-key", kwargs["api_key"])
+        self.assertEqual("chapter-table", kwargs["target_location"].slug)
+
+    @patch(
+        "shopping.views.StorePlanningReviewService.fetch_nearby_same_business_reviews"
+    )
+    def test_post_store_planning_fetches_nearby_same_business_reviews_for_superuser(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーで周辺同業レビュー取得POSTを送る。
+        - 処理: 周辺同業店舗のレビュー取得サービスを実行する。
+        - 期待値: 対象地点とAPIキーを周辺同業レビュー取得サービスへ渡すこと。
+        """
+        mock_fetch_reviews.return_value.place_count = 2
+        mock_fetch_reviews.return_value.review_count = 3
+        mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_nearby_same_business_reviews"},
             )
 
         self.assertRedirects(
@@ -497,6 +562,8 @@ class TestView(TestCase):
         self.assertContains(response, "E-Stat市区町村名")
         self.assertContains(response, "E-Stat大字・町名")
         self.assertContains(response, "E-Stat字・丁目名")
+        self.assertContains(response, "業態")
+        self.assertContains(response, "Google Maps同業検索語")
         self.assertContains(response, "Googleマップ座標")
         self.assertContains(response, "e-Stat CSVの「市区町村コード」です")
         self.assertContains(response, "e-Stat CSVの「町丁字コード」です")
@@ -507,6 +574,7 @@ class TestView(TestCase):
         )
         self.assertContains(response, "e-Stat CSVの「大字・町名」です")
         self.assertContains(response, "e-Stat CSVの「字・丁目名」です")
+        self.assertContains(response, "周辺同業店舗の検索に使う語です")
         self.assertNotContains(response, "E-Stat人口集計地域")
         self.assertNotContains(response, 'name="population_area"')
         self.assertNotContains(response, 'name="latitude"')
@@ -529,6 +597,8 @@ class TestView(TestCase):
                 "google_maps_coord": "35.1, 139.1",
                 "city_code": "13113",
                 "town_code": "030002",
+                "business_type_label": "タップルーム",
+                "business_search_query": "クラフトビール",
                 "prefecture_name": "東京都",
                 "city_name": "渋谷区",
                 "large_area_name": "代々木",
@@ -546,6 +616,8 @@ class TestView(TestCase):
         self.assertEqual(35.1, store.latitude)
         self.assertEqual(139.1, store.longitude)
         self.assertEqual("東京都渋谷区代々木二丁目", store.population_area)
+        self.assertEqual("タップルーム", store.business_type_label)
+        self.assertEqual("クラフトビール", store.business_search_query)
         self.assertEqual("4", store.area_hierarchy_level)
 
     def test_post_store_planning_target_store_create_page_parses_google_maps_coord(
@@ -566,6 +638,8 @@ class TestView(TestCase):
                 "google_maps_coord": "35.683713863354235, 139.69973314970687",
                 "city_code": "13113",
                 "town_code": "030002",
+                "business_type_label": "タップルーム",
+                "business_search_query": "クラフトビール",
                 "prefecture_name": "東京都",
                 "city_name": "渋谷区",
                 "large_area_name": "代々木",

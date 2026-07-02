@@ -152,6 +152,8 @@ class StorePlanningView(TemplateView):
             "address": selected_location.address,
             "google_maps_url": selected_location.google_maps_url,
             "population_area": selected_location.population_area,
+            "business_type_label": selected_location.business_type_label,
+            "business_search_query": selected_location.business_search_query,
             "place_google_maps_embed_url": (
                 selected_location.place_google_maps_embed_url
             ),
@@ -205,10 +207,21 @@ class StorePlanningView(TemplateView):
         context["review_summary"] = StorePlanningReviewService.build_summary(
             selected_location
         )
+        context["nearby_same_business_review_summary"] = (
+            StorePlanningReviewService.build_summary(
+                selected_location,
+                review_scope=StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
+            )
+        )
         return context
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("action") != "fetch_google_maps_reviews":
+        action = request.POST.get("action")
+        allowed_actions = {
+            "fetch_google_maps_reviews",
+            "fetch_google_maps_nearby_same_business_reviews",
+        }
+        if action not in allowed_actions:
             return HttpResponseRedirect(reverse("shp:store_planning"))
         if not (request.user.is_authenticated and request.user.is_superuser):
             messages.warning(
@@ -236,10 +249,20 @@ class StorePlanningView(TemplateView):
                 self._store_planning_url(selected_location.slug)
             )
 
-        fetch_result = StorePlanningReviewService.fetch_reviews(
-            api_key=api_key,
-            target_location=selected_location,
-        )
+        if action == "fetch_google_maps_nearby_same_business_reviews":
+            fetch_result = (
+                StorePlanningReviewService.fetch_nearby_same_business_reviews(
+                    api_key=api_key,
+                    target_location=selected_location,
+                )
+            )
+            fetch_label = "周辺同業店舗の Google Maps レビュー"
+        else:
+            fetch_result = StorePlanningReviewService.fetch_reviews(
+                api_key=api_key,
+                target_location=selected_location,
+            )
+            fetch_label = "Google Maps レビュー"
         if fetch_result.error_message:
             if fetch_result.error_url:
                 messages.warning(
@@ -257,7 +280,7 @@ class StorePlanningView(TemplateView):
             messages.info(
                 request,
                 (
-                    "Google Maps レビューは取得済みです。"
+                    f"{fetch_label}は取得済みです。"
                     f"施設数: {fetch_result.place_count}件 / "
                     f"レビュー数: {fetch_result.review_count}件"
                 ),
@@ -270,12 +293,12 @@ class StorePlanningView(TemplateView):
             if fetch_result.review_count:
                 messages.success(
                     request,
-                    f"Google Maps レビュー取得を実行しました。{message}",
+                    f"{fetch_label}取得を実行しました。{message}",
                 )
             else:
                 messages.warning(
                     request,
-                    f"Google Maps レビュー取得を実行しましたが、レビューは見つかりませんでした。{message}",
+                    f"{fetch_label}取得を実行しましたが、レビューは見つかりませんでした。{message}",
                 )
         return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
 
@@ -296,6 +319,8 @@ class StorePlanningView(TemplateView):
             city_code="13121",
             town_code="073002",
             population_area="東京都足立区東保木間二丁目",
+            business_type_label="カフェ",
+            business_search_query="カフェ",
             large_area_name="東保木間",
             small_area_name="二丁目",
         )
@@ -427,6 +452,12 @@ class StorePlanningView(TemplateView):
             city_code=raw_data.get("city_code", ""),
             town_code=town_code,
             population_area=area_name,
+            business_type_label=(
+                selected_location.business_type_label if is_selected_area else ""
+            ),
+            business_search_query=(
+                selected_location.business_search_query if is_selected_area else ""
+            ),
             large_area_name=raw_data.get("large_area_name", ""),
             small_area_name=raw_data.get("small_area_name", ""),
             area_hierarchy_level=raw_data.get("area_hierarchy_level", ""),

@@ -69,6 +69,10 @@ class StorePlanningReviewService:
     ]
     MAX_DETAIL_PLACES = 10
     GCP_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
+    TARGET_STORE_SCOPE = StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE
+    NEARBY_SAME_BUSINESS_SCOPE = (
+        StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS
+    )
 
     @classmethod
     def fetch_reviews(
@@ -77,6 +81,45 @@ class StorePlanningReviewService:
         """
         出店計画の対象店舗候補を検索し、取得できたレビューを保存する。
         """
+        query = f"{target_location.name} {target_location.address}"
+        return cls._fetch_reviews(
+            api_key=api_key,
+            target_location=target_location,
+            query=query,
+            review_scope=cls.TARGET_STORE_SCOPE,
+            exclude_target_store=False,
+        )
+
+    @classmethod
+    def fetch_nearby_same_business_reviews(
+        cls, api_key: str, target_location: StorePlanningTargetLocation
+    ) -> StorePlanningReviewFetchResult:
+        """
+        対象店舗候補と同じ業態の周辺店舗を検索し、レビューを保存する。
+        """
+        if not target_location.business_search_query:
+            return StorePlanningReviewFetchResult(place_count=0, review_count=0)
+        query = (
+            f"{target_location.business_search_query} "
+            f"{target_location.population_area}"
+        )
+        return cls._fetch_reviews(
+            api_key=api_key,
+            target_location=target_location,
+            query=query,
+            review_scope=cls.NEARBY_SAME_BUSINESS_SCOPE,
+            exclude_target_store=True,
+        )
+
+    @classmethod
+    def _fetch_reviews(
+        cls,
+        api_key: str,
+        target_location: StorePlanningTargetLocation,
+        query: str,
+        review_scope: str,
+        exclude_target_store: bool,
+    ) -> StorePlanningReviewFetchResult:
         if target_location.latitude is None or target_location.longitude is None:
             return StorePlanningReviewFetchResult(place_count=0, review_count=0)
 
@@ -86,7 +129,8 @@ class StorePlanningReviewService:
         if target_store is None:
             return StorePlanningReviewFetchResult(place_count=0, review_count=0)
         existing_reviews = StorePlanningGoogleMapsReview.objects.filter(
-            target_store_slug=target_store.slug
+            target_store_slug=target_store.slug,
+            review_scope=review_scope,
         )
         if existing_reviews.exists():
             return StorePlanningReviewFetchResult(
@@ -103,7 +147,7 @@ class StorePlanningReviewService:
             target_location.longitude,
         )
         exact_place_vos = client.text_search(
-            query=f"{target_location.name} {target_location.address}",
+            query=query,
             center=center,
             radius=cls.RADIUS_METER,
             fields=cls.API_FIELDS,
@@ -117,6 +161,10 @@ class StorePlanningReviewService:
                 error_url_label="GCP 認証情報を開く",
             )
         search_place_vos = cls._unique_place_vos(exact_place_vos)
+        if exclude_target_store:
+            search_place_vos = cls._exclude_target_store_place(
+                search_place_vos, target_location
+            )
         place_vo_list = cls._place_details_for_reviews(client, search_place_vos)
         if client.last_error_status_code:
             return StorePlanningReviewFetchResult(
@@ -135,6 +183,7 @@ class StorePlanningReviewService:
                 StorePlanningGoogleMapsReview.objects.update_or_create(
                     target_store=target_store,
                     target_store_slug=target_store.slug,
+                    review_scope=review_scope,
                     google_place_id=place_vo.place_id,
                     author=author,
                     defaults={
@@ -196,6 +245,21 @@ class StorePlanningReviewService:
             unique_place_vos.append(place_vo)
         return unique_place_vos
 
+    @classmethod
+    def _exclude_target_store_place(
+        cls, place_vos: list, target_location: StorePlanningTargetLocation
+    ) -> list:
+        target_name = cls._normalize_name(target_location.name)
+        return [
+            place_vo
+            for place_vo in place_vos
+            if cls._normalize_name(place_vo.name or "") != target_name
+        ]
+
+    @staticmethod
+    def _normalize_name(value: str) -> str:
+        return value.lower().replace(" ", "").replace("　", "")
+
     @staticmethod
     def _parse_publish_time(value: str | None):
         if not value:
@@ -209,7 +273,9 @@ class StorePlanningReviewService:
 
     @classmethod
     def build_summary(
-        cls, target_location: StorePlanningTargetLocation
+        cls,
+        target_location: StorePlanningTargetLocation,
+        review_scope: str = TARGET_STORE_SCOPE,
     ) -> StorePlanningReviewSummary:
         if target_location.latitude is None or target_location.longitude is None:
             return cls._empty_summary()
@@ -228,7 +294,7 @@ class StorePlanningReviewService:
         if target_store is None:
             return cls._empty_summary()
 
-        for review in cls._review_queryset(target_store):
+        for review in cls._review_queryset(target_store, review_scope):
             distance_meter = cls._distance_meter(
                 target_location.latitude,
                 target_location.longitude,
@@ -289,10 +355,13 @@ class StorePlanningReviewService:
         )
 
     @classmethod
-    def _review_queryset(cls, target_store: StorePlanningTargetStore):
+    def _review_queryset(
+        cls, target_store: StorePlanningTargetStore, review_scope: str
+    ):
         return (
             StorePlanningGoogleMapsReview.objects.filter(
-                target_store_slug=target_store.slug
+                target_store_slug=target_store.slug,
+                review_scope=review_scope,
             )
             .exclude(review_text__isnull=True)
             .exclude(review_text="")
