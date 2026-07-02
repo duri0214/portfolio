@@ -298,6 +298,9 @@ class TestView(TestCase):
         self.assertContains(response, "X-CSRFToken")
         self.assertContains(response, "POST先が見つかりませんでした")
         self.assertContains(response, "window.location.href")
+        self.assertContains(response, "error_url")
+        self.assertContains(response, "error_url_label")
+        self.assertContains(response, "setProgressError")
 
     def test_store_planning_page_distinguishes_target_reviews_from_missing_nearby_reviews(
         self,

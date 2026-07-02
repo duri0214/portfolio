@@ -603,6 +603,19 @@
             const setProgress = (text) => {
                 progressBox.textContent = text;
             };
+            const setProgressError = (message, url, label) => {
+                progressBox.textContent = message;
+                if (!url) {
+                    return;
+                }
+                progressBox.appendChild(document.createTextNode(" "));
+                const link = document.createElement("a");
+                link.href = url;
+                link.target = "_blank";
+                link.rel = "noopener";
+                link.textContent = label || "確認する";
+                progressBox.appendChild(link);
+            };
             const reviewPostUrl = window.location.href;
             const parseJsonResponse = async (response, label) => {
                 const contentType = response.headers.get("content-type") || "";
@@ -650,7 +663,10 @@
                         });
                         const result = await parseJsonResponse(response, task.label);
                         if (!response.ok || !result.ok) {
-                            throw new Error(result.message || `${task.label}に失敗しました。`);
+                            const taskError = new Error(result.message || `${task.label}に失敗しました。`);
+                            taskError.errorUrl = result.error_url || "";
+                            taskError.errorUrlLabel = result.error_url_label || "";
+                            throw taskError;
                         }
                         setProgress(`完了 ${index + 1}件目/${reviewTasks.length}件中: ${result.message}`);
                     }
@@ -661,7 +677,7 @@
                 } catch (error) {
                     progressBox.classList.remove("alert-info");
                     progressBox.classList.add("alert-danger");
-                    setProgress(error.message);
+                    setProgressError(error.message, error.errorUrl, error.errorUrlLabel);
                     runButton.disabled = false;
                 }
             });
