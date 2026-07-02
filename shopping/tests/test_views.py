@@ -216,7 +216,7 @@ class TestView(TestCase):
         シナリオ:
         - 入力: 対象店舗から半径500m以内にあるGoogle Maps施設レビュー。
         - 処理: 出店計画画面をGETする。
-        - 期待値: レビュー概要、3x3グリッド、店舗単位の分析サマリーが表示されること。
+        - 期待値: レビュー概要、レビュー取得店舗マップ、店舗単位の分析サマリーが表示されること。
         """
         StorePlanningGoogleMapsReview.objects.create(
             target_store=StorePlanningTargetStore.objects.get(slug="chapter-table"),
@@ -246,7 +246,10 @@ class TestView(TestCase):
         self.assertContains(response, "ポジ / ネガ")
         self.assertContains(response, "1件")
         self.assertContains(response, "4.6")
-        self.assertContains(response, "北東")
+        self.assertContains(response, "レビュー取得店舗マップ")
+        self.assertContains(response, 'id="store-planning-review-map"')
+        self.assertContains(response, "storePlanningReviewMapInit")
+        self.assertContains(response, "maps.googleapis.com/maps/api/js?key=")
         self.assertContains(response, "ポジ 1")
         self.assertContains(response, "近隣カフェ")
         self.assertContains(response, "店舗レビュー比較")
@@ -278,7 +281,8 @@ class TestView(TestCase):
             publish_time=timezone.now(),
         )
 
-        response = self.client.get(reverse("shp:store_planning"))
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "業態")
@@ -311,7 +315,8 @@ class TestView(TestCase):
             publish_time=timezone.now(),
         )
 
-        response = self.client.get(reverse("shp:store_planning"))
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "対象店舗レビューは取得済みですが")
@@ -358,7 +363,8 @@ class TestView(TestCase):
             prompt_version="test-prompt",
         )
 
-        response = self.client.get(reverse("shp:store_planning"))
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "評判キャッチ")

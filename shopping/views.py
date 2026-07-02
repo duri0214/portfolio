@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -230,6 +231,22 @@ class StorePlanningView(TemplateView):
             context["target_place_insights"],
             context["nearby_same_business_place_insights"],
         )
+        review_map_places = StorePlanningReviewService.build_review_map_places(
+            selected_location
+        )
+        context["review_map_data"] = json.dumps(
+            {
+                "center": {
+                    "lat": selected_location.latitude,
+                    "lng": selected_location.longitude,
+                },
+                "places": review_map_places,
+                "mapId": os.getenv("GOOGLE_MAPS_MAP_ID", "8f6a4cf0806f4732"),
+            },
+            ensure_ascii=False,
+        )
+        context["google_maps_fe_api_key"] = os.getenv("GOOGLE_MAPS_FE_API_KEY")
+        context["has_review_map_places"] = len(review_map_places) > 1
         context["has_any_google_maps_reviews"] = (
             context["review_summary"].total_review_count
             + context["nearby_same_business_review_summary"].total_review_count

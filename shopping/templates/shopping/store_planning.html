@@ -436,24 +436,30 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row g-3">
-                        <div class="col-lg-5">
-                            <div class="d-grid gap-2" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
-                                {% for cell in combined_review_summary.cells %}
-                                    <div class="border rounded p-2 text-center"
-                                         style="min-height: 96px; background-color: {{ cell.background_color }}; color: {{ cell.text_color }};">
-                                        <div class="small fw-semibold">{{ cell.label }}</div>
-                                        <div class="fs-5 fw-semibold">{{ cell.review_count }}</div>
-                                        <div class="small">rating {{ cell.average_rating|default:"-" }}</div>
-                                        <div class="small">
-                                            <span class="text-success">ポジ {{ cell.positive_count }}</span> /
-                                            <span class="text-danger">ネガ {{ cell.negative_count }}</span>
-                                        </div>
-                                    </div>
-                                {% endfor %}
+                    <div class="mb-3">
+                        <h3 class="h6 mb-2">レビュー取得店舗マップ</h3>
+                        {% if can_use_google_maps and google_maps_fe_api_key and has_review_map_places %}
+                            <div id="store-planning-review-map" class="border rounded" style="width: 100%; height: 420px"></div>
+                            <div class="d-flex flex-wrap gap-3 small text-muted mt-2">
+                                <span><span class="badge" style="background-color: #0d6efd;">&nbsp;</span> 対象店舗</span>
+                                <span><span class="badge" style="background-color: #dc3545;">&nbsp;</span> 周辺同業</span>
                             </div>
-                        </div>
-                        <div class="col-lg-7">
+                        {% elif can_use_google_maps and not google_maps_fe_api_key %}
+                            <div class="alert alert-warning mb-0">
+                                Google Maps JavaScript APIキーが未設定のため、レビュー取得店舗マップを表示できません。
+                            </div>
+                        {% elif can_use_google_maps %}
+                            <div class="alert alert-warning mb-0">
+                                ピン表示できるレビュー取得店舗はまだありません。
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning mb-0">
+                                Google Maps の表示はスーパーユーザーでログインした場合のみ利用できます。
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div>
                             <h3 class="h6 mb-3">店舗レビュー比較</h3>
                             {% if combined_place_insights %}
                                 <div class="table-responsive">
@@ -622,4 +628,52 @@
             });
         }
     </script>
+    {% if can_use_google_maps and google_maps_fe_api_key and has_review_map_places %}
+        <script>
+            window.storePlanningReviewMapInit = () => {
+                document.addEventListener("DOMContentLoaded", () => {
+                    const mapData = JSON.parse("{{ review_map_data|escapejs }}");
+                    const map = new google.maps.Map(
+                        document.getElementById("store-planning-review-map"),
+                        {
+                            zoom: 15,
+                            center: mapData.center,
+                            mapId: mapData.mapId,
+                            mapTypeControl: false,
+                            streetViewControl: false,
+                            fullscreenControl: false,
+                        },
+                    );
+                    const infoWindow = new google.maps.InfoWindow();
+                    mapData.places.forEach((place) => {
+                        const pin = new google.maps.marker.PinElement({
+                            background: place.pin_color,
+                            borderColor: "#ffffff",
+                            glyphColor: "#ffffff",
+                        });
+                        const marker = new google.maps.marker.AdvancedMarkerElement({
+                            position: place.location,
+                            map,
+                            title: place.name,
+                            content: pin.element,
+                            gmpClickable: true,
+                        });
+                        marker.addEventListener("gmp-click", () => {
+                            infoWindow.setContent(`
+                                <div>
+                                    <div><strong>${place.name}</strong></div>
+                                    <div>${place.scope_label}</div>
+                                    <div>rating ${place.rating ?? "-"}</div>
+                                    <div>レビュー ${place.review_count}件</div>
+                                </div>
+                            `);
+                            infoWindow.open({anchor: marker, map});
+                        });
+                    });
+                });
+            };
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=storePlanningReviewMapInit&libraries=places,marker&v=weekly"
+                defer onerror="console.error('Google Maps API failed to load.');"></script>
+    {% endif %}
 {% endblock %}

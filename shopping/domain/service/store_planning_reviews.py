@@ -676,6 +676,76 @@ class StorePlanningReviewService:
         return insights
 
     @classmethod
+    def build_review_map_places(
+        cls, target_location: StorePlanningTargetLocation
+    ) -> list[dict]:
+        """
+        対象店舗とレビュー取得済み店舗をGoogle Maps表示用データに変換する。
+        """
+        if target_location.latitude is None or target_location.longitude is None:
+            return []
+
+        target_store = StorePlanningTargetStore.objects.filter(
+            slug=target_location.slug
+        ).first()
+        if target_store is None:
+            return []
+
+        places = [
+            {
+                "place_id": target_location.slug,
+                "name": target_location.name,
+                "scope_label": "対象店舗",
+                "pin_color": "#0d6efd",
+                "rating": None,
+                "review_count": 0,
+                "location": {
+                    "lat": target_location.latitude,
+                    "lng": target_location.longitude,
+                },
+            }
+        ]
+        grouped_reviews = {}
+        for review in cls._review_queryset(target_store, None):
+            distance_meter = cls._distance_meter(
+                target_location.latitude,
+                target_location.longitude,
+                review.latitude,
+                review.longitude,
+            )
+            if distance_meter > cls.RADIUS_METER:
+                continue
+            grouped_reviews.setdefault(review.google_place_id, []).append(review)
+
+        for place_reviews in grouped_reviews.values():
+            first_review = place_reviews[0]
+            scope_label = (
+                "対象店舗"
+                if first_review.review_scope == cls.TARGET_STORE_SCOPE
+                else "周辺同業"
+            )
+            pin_color = (
+                "#0d6efd"
+                if first_review.review_scope == cls.TARGET_STORE_SCOPE
+                else "#dc3545"
+            )
+            places.append(
+                {
+                    "place_id": first_review.google_place_id,
+                    "name": first_review.place_name,
+                    "scope_label": scope_label,
+                    "pin_color": pin_color,
+                    "rating": first_review.rating,
+                    "review_count": len(place_reviews),
+                    "location": {
+                        "lat": first_review.latitude,
+                        "lng": first_review.longitude,
+                    },
+                }
+            )
+        return places
+
+    @classmethod
     def _grouped_reviews_for_summary(
         cls, target_store: StorePlanningTargetStore, review_scope: str
     ) -> list[dict]:
