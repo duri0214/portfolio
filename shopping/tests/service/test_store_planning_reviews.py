@@ -629,8 +629,8 @@ class StorePlanningReviewServiceTest(TestCase):
             review_scope=StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE,
             google_place_id="target-review-place",
             place_name="Chapter Table Reviews",
-            latitude=35.792822,
-            longitude=139.8143238,
+            latitude=35.7950,
+            longitude=139.8170,
             rating=4.0,
             author="target-reviewer",
             review_text="対象店舗のレビューです。",
@@ -664,8 +664,15 @@ class StorePlanningReviewServiceTest(TestCase):
         map_places = StorePlanningReviewService.build_review_map_places(target_location)
 
         self.assertEqual(2, len(map_places))
-        self.assertEqual("Chapter Table", map_places[0]["name"])
+        self.assertEqual("Chapter Table Reviews", map_places[0]["name"])
         self.assertEqual("対象店舗", map_places[0]["scope_label"])
+        self.assertEqual("target-review-place", map_places[0]["place_id"])
+        self.assertEqual(35.7950, map_places[0]["location"]["lat"])
+        self.assertEqual(139.8170, map_places[0]["location"]["lng"])
+        self.assertEqual(
+            "https://www.google.com/maps/search/?api=1&query=Chapter+Table+Reviews&query_place_id=target-review-place",
+            map_places[0]["google_maps_url"],
+        )
         self.assertEqual("近隣カフェ", map_places[1]["name"])
         self.assertEqual("周辺同業", map_places[1]["scope_label"])
         self.assertEqual(
