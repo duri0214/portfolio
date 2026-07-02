@@ -338,6 +338,19 @@ class TestView(TestCase):
             review_text="遠いけれど評判の良い店です。",
             publish_time=timezone.now(),
         )
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-outside-place",
+            place_name="500m外の同業店",
+            latitude=35.8100,
+            longitude=139.8300,
+            rating=4.5,
+            author="another-nearby-reviewer",
+            review_text="もう一件のレビューです。",
+            publish_time=timezone.now(),
+        )
 
         with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
             response = self.client.get(reverse("shp:store_planning"))
@@ -345,6 +358,7 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "レビュー対象施設")
         self.assertContains(response, '<div class="fs-5 fw-semibold">2件</div>')
+        self.assertContains(response, '<div class="fs-5 fw-semibold">3件</div>')
         self.assertContains(response, "500m外の同業店")
 
     def test_store_planning_page_distinguishes_target_reviews_from_missing_nearby_reviews(
@@ -687,6 +701,33 @@ class TestView(TestCase):
             },
             response.json(),
         )
+
+    @patch("shopping.views.StorePlanningReviewService.analyze_place_summaries")
+    def test_ajax_store_planning_analysis_passes_max_places(self, mock_analyze_reviews):
+        """
+        シナリオ:
+        - 入力: Ajaxで周辺同業レビュー分析POSTを小分け件数つきで送る。
+        - 処理: レビュー分析サービスを実行する。
+        - 期待値: max_placesをサービスへ渡すこと。
+        """
+        mock_analyze_reviews.return_value.analyzed_count = 2
+        mock_analyze_reviews.return_value.positive_count = 1
+        mock_analyze_reviews.return_value.negative_count = 1
+        mock_analyze_reviews.return_value.skipped = False
+        mock_analyze_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "dummy-openai-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {
+                    "action": "analyze_google_maps_nearby_same_business_reviews",
+                    "max_places": "2",
+                },
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(2, mock_analyze_reviews.call_args.kwargs["max_places"])
 
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_fetch_reviews_shows_empty_result_message(

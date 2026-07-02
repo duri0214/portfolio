@@ -432,7 +432,7 @@
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
                                 <div class="small text-muted">保存レビュー数</div>
-                                <div class="fs-5 fw-semibold">{{ combined_review_summary.total_review_count|intcomma }}件</div>
+                                <div class="fs-5 fw-semibold">{{ combined_place_review_count|intcomma }}件</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
@@ -596,7 +596,7 @@
                 {action: "fetch_google_maps_reviews", label: "対象店舗レビュー取得"},
                 {action: "fetch_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー取得"},
                 {action: "analyze_google_maps_target_reviews", label: "対象店舗レビュー分析"},
-                {action: "analyze_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー分析"},
+                {action: "analyze_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー分析", batchSize: 2},
             ];
             let nearbyAnalysisPlaceCount = 0;
             const taskLabel = (task) => {
@@ -658,6 +658,17 @@
                     throw taskError;
                 }
             };
+            const runReviewTask = async (task, formData) => {
+                const response = await fetchReviewTask(task, formData);
+                const result = await parseJsonResponse(response, task.label);
+                if (!response.ok || !result.ok) {
+                    const taskError = new Error(result.message || `${task.label}に失敗しました。`);
+                    taskError.errorUrl = result.error_url || "";
+                    taskError.errorUrlLabel = result.error_url_label || "";
+                    throw taskError;
+                }
+                return result;
+            };
             reviewForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 const hasExistingReviews = reviewForm.dataset.hasExistingReviews === "1";
@@ -677,14 +688,29 @@
                         if (forceRefetch) {
                             formData.set("force_refetch", "1");
                         }
-                        const response = await fetchReviewTask(task, formData);
-                        const result = await parseJsonResponse(response, task.label);
-                        if (!response.ok || !result.ok) {
-                            const taskError = new Error(result.message || `${task.label}に失敗しました。`);
-                            taskError.errorUrl = result.error_url || "";
-                            taskError.errorUrlLabel = result.error_url_label || "";
-                            throw taskError;
+                        if (task.batchSize && nearbyAnalysisPlaceCount) {
+                            const batchCount = Math.ceil(nearbyAnalysisPlaceCount / task.batchSize);
+                            for (let batchIndex = 0; batchIndex < batchCount; batchIndex += 1) {
+                                setProgress(
+                                    `ステップ ${index + 1}/${reviewTasks.length}: ` +
+                                    `${task.label} ${batchIndex + 1}/${batchCount}（最大${task.batchSize}店舗ずつ）を実行中...`
+                                );
+                                formData.set("max_places", String(task.batchSize));
+                                const batchResult = await runReviewTask(task, formData);
+                                if (batchResult.warning) {
+                                    warningMessage = batchResult.message;
+                                }
+                                setProgress(
+                                    `ステップ ${index + 1}/${reviewTasks.length}: ` +
+                                    `${task.label} ${batchIndex + 1}/${batchCount}完了: ${batchResult.message}`
+                                );
+                                if (batchResult.skipped) {
+                                    break;
+                                }
+                            }
+                            continue;
                         }
+                        const result = await runReviewTask(task, formData);
                         if (task.action === "fetch_google_maps_nearby_same_business_reviews") {
                             nearbyAnalysisPlaceCount = result.place_count || 0;
                         }

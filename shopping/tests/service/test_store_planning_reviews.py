@@ -802,6 +802,141 @@ class StorePlanningReviewServiceTest(TestCase):
             [group["google_place_id"] for group in retry_target_groups],
         )
 
+    def test_analyze_place_summaries_limits_target_groups_with_max_places(self):
+        """
+        シナリオ:
+        - 入力: 未分析の周辺同業レビューが3店舗分あるDB。
+        - 処理: max_places=2で店舗単位分析サービスを実行する。
+        - 期待値: LLMへ渡す店舗グループを2件に絞ること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        for index in range(3):
+            StorePlanningGoogleMapsReview.objects.create(
+                target_store=target_store,
+                target_store_slug=target_store.slug,
+                review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+                google_place_id=f"nearby-place-{index}",
+                place_name=f"近隣カフェ{index}",
+                latitude=35.7930,
+                longitude=139.8147,
+                rating=4.1,
+                author=f"nearby-reviewer-{index}",
+                review_text="親切で使いやすいお店でした。",
+            )
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+            business_type_label="カフェ",
+            business_search_query="カフェ",
+        )
+
+        def summarize(groups):
+            return [
+                StorePlanningPlaceSummaryResult(
+                    google_place_id=group["google_place_id"],
+                    sentiment_score=20,
+                    positive_count=1,
+                    negative_count=0,
+                    one_line_summary="親切さが評価されている。",
+                    issue="",
+                    location_insight="近隣で日常利用されている。",
+                    raw_response={"google_place_id": group["google_place_id"]},
+                )
+                for group in groups
+            ]
+
+        with patch(
+            "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.model_name = "gpt-5-mini"
+            mock_client.PROMPT_VERSION = "test-prompt"
+            mock_client.analyze_place_summaries.side_effect = summarize
+
+            result = StorePlanningReviewService.analyze_place_summaries(
+                api_key="dummy-key",
+                target_location=target_location,
+                review_scope=StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
+                max_places=2,
+            )
+
+        target_groups = mock_client.analyze_place_summaries.call_args.args[0]
+        self.assertEqual(2, len(target_groups))
+        self.assertEqual(2, result.analyzed_count)
+        self.assertEqual(2, StorePlanningGoogleMapsPlaceSummary.objects.count())
+
+    def test_analyze_place_summaries_accepts_place_with_four_reviews(self):
+        """
+        シナリオ:
+        - 入力: レビューが4件だけ保存済みの周辺同業店舗。
+        - 処理: 店舗単位分析サービスを実行する。
+        - 期待値: 5件未満でも失敗扱いにせず、review_count=4でサマリーを保存すること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        for index in range(4):
+            StorePlanningGoogleMapsReview.objects.create(
+                target_store=target_store,
+                target_store_slug=target_store.slug,
+                review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+                google_place_id="nearby-four-review-place",
+                place_name="GRATIALLIGO",
+                latitude=35.7930,
+                longitude=139.8147,
+                rating=4.5,
+                author=f"nearby-reviewer-{index}",
+                review_text=f"クラフトビールがおいしいレビュー{index}です。",
+            )
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+            business_type_label="カフェ",
+            business_search_query="カフェ",
+        )
+
+        with patch(
+            "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.model_name = "gpt-5-mini"
+            mock_client.PROMPT_VERSION = "test-prompt"
+            mock_client.analyze_place_summaries.return_value = [
+                StorePlanningPlaceSummaryResult(
+                    google_place_id="nearby-four-review-place",
+                    sentiment_score=60,
+                    positive_count=4,
+                    negative_count=0,
+                    one_line_summary="クラフトビールが評価されている。",
+                    issue="席数が少ない",
+                    location_insight="ゆったり飲む客が集まる立地に適合",
+                    raw_response={"google_place_id": "nearby-four-review-place"},
+                )
+            ]
+
+            result = StorePlanningReviewService.analyze_place_summaries(
+                api_key="dummy-key",
+                target_location=target_location,
+                review_scope=StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
+            )
+
+        self.assertEqual(1, result.analyzed_count)
+        summary = StorePlanningGoogleMapsPlaceSummary.objects.get(
+            google_place_id="nearby-four-review-place"
+        )
+        self.assertEqual(4, summary.review_count)
+        self.assertEqual(4, summary.positive_count)
+
     def test_analyze_nearby_same_business_reviews_truncates_llm_text_fields(self):
         """
         シナリオ:

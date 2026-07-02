@@ -300,6 +300,7 @@ class StorePlanningReviewService:
         api_key: str,
         target_location: StorePlanningTargetLocation,
         review_scope: str,
+        max_places: int | None = None,
     ) -> StorePlanningReviewAnalysisFetchResult:
         """
         指定されたレビュー種別を店舗単位に集約し、サマリー後レコードを保存する。
@@ -336,6 +337,8 @@ class StorePlanningReviewService:
             return StorePlanningReviewAnalysisFetchResult(
                 analyzed_count=0, positive_count=0, negative_count=0, skipped=True
             )
+        if max_places is not None:
+            target_groups = target_groups[:max_places]
 
         client = GoogleMapsReviewAnalysisClient(api_key)
         summary_results = client.analyze_place_summaries(target_groups)

@@ -231,6 +231,9 @@ class StorePlanningView(TemplateView):
             context["target_place_insights"],
             context["nearby_same_business_place_insights"],
         )
+        context["combined_place_review_count"] = sum(
+            row["insight"].review_count for row in context["combined_place_insights"]
+        )
         review_map_places = StorePlanningReviewService.build_review_map_places(
             selected_location
         )
@@ -616,6 +619,7 @@ class StorePlanningView(TemplateView):
             api_key=api_key,
             target_location=selected_location,
             review_scope=review_scope,
+            max_places=self._positive_int_or_none(request.POST.get("max_places")),
         )
         if self._wants_json(request):
             return self._analysis_result_json(analysis_result)
@@ -637,6 +641,16 @@ class StorePlanningView(TemplateView):
                 ),
             )
         return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
+
+    @staticmethod
+    def _positive_int_or_none(value: str | None) -> int | None:
+        try:
+            parsed_value = int(value)
+        except (TypeError, ValueError):
+            return None
+        if parsed_value < 1:
+            return None
+        return parsed_value
 
     def _combined_place_insights(
         self, target_place_insights: list, nearby_same_business_place_insights: list
