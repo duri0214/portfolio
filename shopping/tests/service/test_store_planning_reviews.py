@@ -628,7 +628,7 @@ class StorePlanningReviewServiceTest(TestCase):
             rating=4.1,
             author="nearby-reviewer",
             review_text="近くで使いやすいカフェでした。",
-            google_maps_uri="https://maps.google.com/nearby-place",
+            google_maps_uri="https://maps.google.com/review-url",
         )
         target_location = StorePlanningTargetLocation(
             slug="chapter-table",
@@ -651,7 +651,7 @@ class StorePlanningReviewServiceTest(TestCase):
         self.assertEqual("近隣カフェ", map_places[1]["name"])
         self.assertEqual("周辺同業", map_places[1]["scope_label"])
         self.assertEqual(
-            "https://maps.google.com/nearby-place",
+            "https://www.google.com/maps/search/?api=1&query=%E8%BF%91%E9%9A%A3%E3%82%AB%E3%83%95%E3%82%A7&query_place_id=nearby-place",
             map_places[1]["google_maps_url"],
         )
 

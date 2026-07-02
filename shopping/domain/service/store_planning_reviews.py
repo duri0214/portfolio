@@ -1,4 +1,5 @@
 from math import atan2, cos, radians, sin, sqrt
+from urllib.parse import urlencode
 
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -742,9 +743,14 @@ class StorePlanningReviewService:
 
     @staticmethod
     def _review_google_maps_url(review: StorePlanningGoogleMapsReview) -> str:
-        if review.google_maps_uri:
-            return review.google_maps_uri
-        return f"https://www.google.com/maps?q={review.latitude},{review.longitude}"
+        query_params = urlencode(
+            {
+                "api": "1",
+                "query": review.place_name,
+                "query_place_id": review.google_place_id,
+            }
+        )
+        return f"https://www.google.com/maps/search/?{query_params}"
 
     @classmethod
     def _grouped_reviews_for_summary(
