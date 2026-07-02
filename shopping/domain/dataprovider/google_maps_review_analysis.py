@@ -13,7 +13,7 @@ class GoogleMapsReviewAnalysisClient:
     """Google Mapsレビューを出店計画向けにLLM分析するクライアント。"""
 
     MODEL_NAME = "gpt-5-mini"
-    PROMPT_VERSION = "store-planning-review-analysis-v2"
+    PROMPT_VERSION = "store-planning-review-analysis-v3"
 
     def __init__(self, api_key: str, model_name: str = MODEL_NAME):
         self.model_name = model_name
@@ -82,7 +82,7 @@ class GoogleMapsReviewAnalysisClient:
             "次のGoogle Mapsレビューを分析してください。\n"
             "各レビューについて、sentiment は positive/negative/neutral のいずれか、"
             "sentiment_score は -100 から 100 の整数にしてください。\n"
-            "one_line_summary は店舗評判を1文で、issue は課題点、"
+            "one_line_summary は課題を含めず、店舗評判の特徴だけを1文で、issue は課題点、"
             "location_insight は立地に関する示唆を書いてください。\n"
             "JSON配列の各要素は review_id, sentiment, sentiment_score, "
             "one_line_summary, issue, location_insight を含めてください。\n"
@@ -97,7 +97,7 @@ class GoogleMapsReviewAnalysisClient:
             "店舗として何が評価され、何が課題になるかを抽出してください。\n"
             "sentiment_score は店舗全体の評判を -100 から 100 の整数にしてください。\n"
             "positive_count と negative_count はレビュー群の中で主要因として扱った件数にしてください。\n"
-            "one_line_summary は店舗評判の1文要約、issue は課題点、"
+            "one_line_summary は課題を含めず、店舗評判の特徴だけを1文で、issue は課題点、"
             "location_insight は立地に関する示唆を書いてください。\n"
             "JSON配列の各要素は google_place_id, sentiment_score, positive_count, "
             "negative_count, one_line_summary, issue, location_insight を含めてください。\n"

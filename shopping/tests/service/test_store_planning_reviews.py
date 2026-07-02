@@ -540,7 +540,7 @@ class StorePlanningReviewServiceTest(TestCase):
                     sentiment_score=-40,
                     positive_count=0,
                     negative_count=1,
-                    one_line_summary="雰囲気は良いが席の狭さが課題。",
+                    one_line_summary="落ち着いた雰囲気が評価されている。",
                     issue="席が狭い",
                     location_insight="近隣では滞在快適性に改善余地がある",
                     raw_response={"review_id": review.id},
@@ -569,6 +569,7 @@ class StorePlanningReviewServiceTest(TestCase):
         )
         self.assertEqual(1, summary.review_count)
         self.assertEqual(-40, summary.sentiment_score)
+        self.assertEqual("落ち着いた雰囲気が評価されている。", summary.one_line_summary)
         self.assertEqual("席が狭い", summary.issue)
         insights = StorePlanningReviewService.build_place_insights(target_location)
         self.assertEqual(1, len(insights))

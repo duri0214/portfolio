@@ -333,7 +333,7 @@ class TestView(TestCase):
         シナリオ:
         - 入力: 周辺同業レビューと、その子テーブルに保存済みのLLM分析結果。
         - 処理: 出店計画画面をGETする。
-        - 期待値: 周辺同業店舗ごとの1行インサイトと課題点が表示されること。
+        - 期待値: 周辺同業店舗ごとの評判キャッチと課題点が別列で表示されること。
         """
         target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
         review = StorePlanningGoogleMapsReview.objects.create(
@@ -360,7 +360,7 @@ class TestView(TestCase):
             positive_count=0,
             negative_count=1,
             sentiment_score=-40,
-            one_line_summary="雰囲気は良いが席の狭さが課題。",
+            one_line_summary="落ち着いた雰囲気が評価されている。",
             issue="席が狭い",
             location_insight="近隣では滞在快適性に改善余地がある",
             model_name="gpt-5-mini",
@@ -373,7 +373,8 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "評判キャッチ")
         self.assertContains(response, "弱み")
-        self.assertContains(response, "雰囲気は良いが席の狭さが課題。")
+        self.assertContains(response, "落ち着いた雰囲気が評価されている。")
+        self.assertContains(response, "席が狭い")
         self.assertContains(response, "近隣では滞在快適性に改善余地がある")
 
     def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):
