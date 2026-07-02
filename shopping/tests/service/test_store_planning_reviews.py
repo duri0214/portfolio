@@ -655,6 +655,52 @@ class StorePlanningReviewServiceTest(TestCase):
             map_places[1]["google_maps_url"],
         )
 
+    def test_build_review_map_places_displays_ten_nearby_places_without_radius_filter(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: 周辺同業店舗レビューが11店舗分保存済みで、一部が500mより外側にあるDB。
+        - 処理: レビュー取得店舗マップ用データを作成する。
+        - 期待値: 距離では落とさず、対象店舗1件と周辺同業10店舗のピンデータが返ること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        for index in range(11):
+            StorePlanningGoogleMapsReview.objects.create(
+                target_store=target_store,
+                target_store_slug=target_store.slug,
+                review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+                google_place_id=f"nearby-place-{index}",
+                place_name=f"近隣カフェ{index:02}",
+                latitude=35.8000 + index * 0.001,
+                longitude=139.8200 + index * 0.001,
+                rating=4.1,
+                author=f"nearby-reviewer-{index}",
+                review_text="近くで使いやすいカフェでした。",
+            )
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+            business_type_label="カフェ",
+            business_search_query="カフェ",
+        )
+
+        map_places = StorePlanningReviewService.build_review_map_places(target_location)
+
+        self.assertEqual(11, len(map_places))
+        self.assertEqual("対象店舗", map_places[0]["scope_label"])
+        self.assertEqual(
+            10,
+            len([place for place in map_places if place["scope_label"] == "周辺同業"]),
+        )
+        self.assertEqual("近隣カフェ09", map_places[-1]["name"])
+
     def test_analyze_all_reviews_saves_one_target_and_ten_nearby_place_summaries(
         self,
     ):

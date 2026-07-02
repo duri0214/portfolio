@@ -709,20 +709,13 @@ class StorePlanningReviewService:
             }
         ]
         grouped_reviews = {}
-        for review in cls._review_queryset(
+        reviews = cls._review_queryset(
             target_store, cls.NEARBY_SAME_BUSINESS_SCOPE
-        ):
-            distance_meter = cls._distance_meter(
-                target_location.latitude,
-                target_location.longitude,
-                review.latitude,
-                review.longitude,
-            )
-            if distance_meter > cls.RADIUS_METER:
-                continue
+        ).order_by("place_name", "-publish_time", "-id")
+        for review in reviews:
             grouped_reviews.setdefault(review.google_place_id, []).append(review)
 
-        for place_reviews in grouped_reviews.values():
+        for place_reviews in list(grouped_reviews.values())[: cls.MAX_PLACE_INSIGHTS]:
             first_review = place_reviews[0]
             places.append(
                 {
