@@ -117,7 +117,6 @@ class StorePlanningReviewAnalysisResult:
         sentiment_score: -100から100までの感情スコア。
         one_line_summary: 出店判断で読める1行要約。
         issue: レビューから見える課題点。
-        next_action: 出店計画で検討すべき次の行動。
         location_insight: 立地に関する示唆。
         raw_response: LLM応答の保存用データ。
     """
@@ -127,7 +126,6 @@ class StorePlanningReviewAnalysisResult:
     sentiment_score: int
     one_line_summary: str
     issue: str
-    next_action: str
     location_insight: str
     raw_response: dict
 
@@ -144,7 +142,6 @@ class StorePlanningPlaceSummaryResult:
         negative_count: ネガティブ要因として扱った件数。
         one_line_summary: 店舗の評判を1行で要約した内容。
         issue: レビュー群から見える課題点。
-        next_action: 店舗が次に取るべき改善アクション。
         location_insight: 立地に関する示唆。
         raw_response: LLM応答の保存用データ。
     """
@@ -155,7 +152,6 @@ class StorePlanningPlaceSummaryResult:
     negative_count: int
     one_line_summary: str
     issue: str
-    next_action: str
     location_insight: str
     raw_response: dict
 
@@ -197,7 +193,6 @@ class StorePlanningPlaceInsight:
         strength: レビューから見える強み。
         weakness: レビューから見える弱み。
         issue: 課題点。
-        next_action: 出店計画の次アクション。
         location_insight: 立地に関する示唆。
     """
 
@@ -212,5 +207,4 @@ class StorePlanningPlaceInsight:
     strength: str
     weakness: str
     issue: str
-    next_action: str
     location_insight: str

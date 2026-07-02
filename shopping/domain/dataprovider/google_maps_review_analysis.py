@@ -13,7 +13,7 @@ class GoogleMapsReviewAnalysisClient:
     """Google Mapsレビューを出店計画向けにLLM分析するクライアント。"""
 
     MODEL_NAME = "gpt-5-mini"
-    PROMPT_VERSION = "store-planning-review-analysis-v1"
+    PROMPT_VERSION = "store-planning-review-analysis-v2"
 
     def __init__(self, api_key: str, model_name: str = MODEL_NAME):
         self.model_name = model_name
@@ -83,10 +83,9 @@ class GoogleMapsReviewAnalysisClient:
             "各レビューについて、sentiment は positive/negative/neutral のいずれか、"
             "sentiment_score は -100 から 100 の整数にしてください。\n"
             "one_line_summary は店舗評判を1文で、issue は課題点、"
-            "next_action は出店計画で取るべき次アクション、"
             "location_insight は立地に関する示唆を書いてください。\n"
             "JSON配列の各要素は review_id, sentiment, sentiment_score, "
-            "one_line_summary, issue, next_action, location_insight を含めてください。\n"
+            "one_line_summary, issue, location_insight を含めてください。\n"
             f"レビュー: {review_json}"
         )
 
@@ -99,10 +98,9 @@ class GoogleMapsReviewAnalysisClient:
             "sentiment_score は店舗全体の評判を -100 から 100 の整数にしてください。\n"
             "positive_count と negative_count はレビュー群の中で主要因として扱った件数にしてください。\n"
             "one_line_summary は店舗評判の1文要約、issue は課題点、"
-            "next_action は店舗が次に取るべき改善アクション、"
             "location_insight は立地に関する示唆を書いてください。\n"
             "JSON配列の各要素は google_place_id, sentiment_score, positive_count, "
-            "negative_count, one_line_summary, issue, next_action, location_insight を含めてください。\n"
+            "negative_count, one_line_summary, issue, location_insight を含めてください。\n"
             f"店舗別レビュー: {place_json}"
         )
 
@@ -127,7 +125,6 @@ class GoogleMapsReviewAnalysisClient:
                     sentiment_score=int(sentiment_score),
                     one_line_summary=item.get("one_line_summary") or "",
                     issue=item.get("issue") or "",
-                    next_action=item.get("next_action") or "",
                     location_insight=item.get("location_insight") or "",
                     raw_response=item,
                 )
@@ -157,7 +154,6 @@ class GoogleMapsReviewAnalysisClient:
                     negative_count=int(item.get("negative_count") or 0),
                     one_line_summary=item.get("one_line_summary") or "",
                     issue=item.get("issue") or "",
-                    next_action=item.get("next_action") or "",
                     location_insight=item.get("location_insight") or "",
                     raw_response=item,
                 )

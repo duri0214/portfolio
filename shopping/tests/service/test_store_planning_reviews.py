@@ -161,6 +161,23 @@ class StorePlanningReviewServiceTest(TestCase):
             author="reviewer",
             review_text="良いお店でした。",
         )
+        StorePlanningGoogleMapsPlaceSummary.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE,
+            google_place_id="place-1",
+            place_name="Chapter Table",
+            rating=4.3,
+            review_count=1,
+            positive_count=1,
+            negative_count=0,
+            sentiment_score=30,
+            one_line_summary="古いサマリー",
+            issue="古い課題",
+            location_insight="古い立地示唆",
+            model_name="gpt-5-mini",
+            prompt_version="old-prompt",
+        )
         target_location = StorePlanningTargetLocation(
             slug="chapter-table",
             name="Chapter Table",
@@ -252,6 +269,8 @@ class StorePlanningReviewServiceTest(TestCase):
         mock_client.text_search.assert_called_once()
         self.assertFalse(result.skipped)
         self.assertEqual(1, result.review_count)
+        self.assertEqual(1, StorePlanningGoogleMapsReview.objects.count())
+        self.assertFalse(StorePlanningGoogleMapsPlaceSummary.objects.exists())
         self.assertTrue(
             StorePlanningGoogleMapsReview.objects.filter(
                 target_store=target_store,
@@ -523,7 +542,6 @@ class StorePlanningReviewServiceTest(TestCase):
                     negative_count=1,
                     one_line_summary="雰囲気は良いが席の狭さが課題。",
                     issue="席が狭い",
-                    next_action="席間隔を差別化要素として検討する",
                     location_insight="近隣では滞在快適性に改善余地がある",
                     raw_response={"review_id": review.id},
                 )
@@ -758,7 +776,6 @@ class StorePlanningReviewServiceTest(TestCase):
                     negative_count=0,
                     one_line_summary=f"{group['place_name']}の評判サマリー。",
                     issue="課題なし",
-                    next_action="強みを維持する",
                     location_insight="立地上の大きな懸念はない",
                     raw_response={"google_place_id": group["google_place_id"]},
                 )

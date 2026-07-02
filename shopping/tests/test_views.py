@@ -362,7 +362,6 @@ class TestView(TestCase):
             sentiment_score=-40,
             one_line_summary="雰囲気は良いが席の狭さが課題。",
             issue="席が狭い",
-            next_action="席間隔を差別化要素として検討する",
             location_insight="近隣では滞在快適性に改善余地がある",
             model_name="gpt-5-mini",
             prompt_version="test-prompt",
@@ -375,7 +374,6 @@ class TestView(TestCase):
         self.assertContains(response, "評判キャッチ")
         self.assertContains(response, "弱み")
         self.assertContains(response, "雰囲気は良いが席の狭さが課題。")
-        self.assertContains(response, "対象店舗のみ")
         self.assertContains(response, "近隣では滞在快適性に改善余地がある")
 
     def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):

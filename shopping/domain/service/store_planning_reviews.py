@@ -1,6 +1,7 @@
 from math import atan2, cos, radians, sin, sqrt
 from urllib.parse import urlencode
 
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from lib.geo.valueobject.coord import GoogleMapsCoord
@@ -150,6 +151,10 @@ class StorePlanningReviewService:
         ).first()
         if target_store is None:
             return StorePlanningReviewFetchResult(place_count=0, review_count=0)
+        scope_reviews = StorePlanningGoogleMapsReview.objects.filter(
+            target_store_slug=target_store.slug,
+            review_scope=review_scope,
+        )
         existing_reviews = cls._review_queryset(target_store, review_scope)
         if existing_reviews.exists() and not force_refetch:
             return StorePlanningReviewFetchResult(
@@ -159,6 +164,12 @@ class StorePlanningReviewService:
                 review_count=existing_reviews.count(),
                 skipped=True,
             )
+        if force_refetch:
+            cls._delete_review_scope_data(target_store, review_scope)
+        else:
+            scope_reviews.filter(
+                Q(review_text__isnull=True) | Q(review_text="")
+            ).delete()
 
         client = GoogleMapsReviewClient(api_key)
         center = GoogleMapsCoord(
@@ -209,22 +220,20 @@ class StorePlanningReviewService:
                 if not review.text:
                     continue
                 author = review.author or review.google_maps_uri or "unknown"
-                StorePlanningGoogleMapsReview.objects.update_or_create(
+                StorePlanningGoogleMapsReview.objects.create(
                     target_store=target_store,
                     target_store_slug=target_store.slug,
                     review_scope=review_scope,
                     google_place_id=place_vo.place_id,
                     author=author,
-                    defaults={
-                        "place_name": place_vo.name or place_vo.place_id,
-                        "latitude": place_vo.location.latitude,
-                        "longitude": place_vo.location.longitude,
-                        "rating": place_vo.rating,
-                        "review_text": review.text or "",
-                        "publish_time": cls._parse_publish_time(review.publish_time),
-                        "google_maps_uri": review.google_maps_uri or "",
-                        "fetched_at": timezone.now(),
-                    },
+                    place_name=place_vo.name or place_vo.place_id,
+                    latitude=place_vo.location.latitude,
+                    longitude=place_vo.location.longitude,
+                    rating=place_vo.rating,
+                    review_text=review.text or "",
+                    publish_time=cls._parse_publish_time(review.publish_time),
+                    google_maps_uri=review.google_maps_uri or "",
+                    fetched_at=timezone.now(),
                 )
                 review_count += 1
         return StorePlanningReviewFetchResult(
@@ -334,27 +343,24 @@ class StorePlanningReviewService:
                 continue
             positive_count += summary_result.positive_count
             negative_count += summary_result.negative_count
-            StorePlanningGoogleMapsPlaceSummary.objects.update_or_create(
+            StorePlanningGoogleMapsPlaceSummary.objects.create(
                 target_store=target_store,
                 target_store_slug=target_store.slug,
                 review_scope=review_scope,
                 google_place_id=summary_result.google_place_id,
-                defaults={
-                    "place_name": group["place_name"],
-                    "rating": group["rating"],
-                    "review_count": group["review_count"],
-                    "positive_count": summary_result.positive_count,
-                    "negative_count": summary_result.negative_count,
-                    "sentiment_score": summary_result.sentiment_score,
-                    "one_line_summary": summary_result.one_line_summary,
-                    "issue": summary_result.issue,
-                    "next_action": summary_result.next_action,
-                    "location_insight": summary_result.location_insight,
-                    "model_name": client.model_name,
-                    "prompt_version": client.PROMPT_VERSION,
-                    "raw_response": summary_result.raw_response,
-                    "analyzed_at": timezone.now(),
-                },
+                place_name=group["place_name"],
+                rating=group["rating"],
+                review_count=group["review_count"],
+                positive_count=summary_result.positive_count,
+                negative_count=summary_result.negative_count,
+                sentiment_score=summary_result.sentiment_score,
+                one_line_summary=summary_result.one_line_summary,
+                issue=summary_result.issue,
+                location_insight=summary_result.location_insight,
+                model_name=client.model_name,
+                prompt_version=client.PROMPT_VERSION,
+                raw_response=summary_result.raw_response,
+                analyzed_at=timezone.now(),
             )
             saved_count += 1
 
@@ -415,20 +421,17 @@ class StorePlanningReviewService:
                 positive_count += 1
             if sentiment == StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEGATIVE:
                 negative_count += 1
-            StorePlanningGoogleMapsReviewAnalysis.objects.update_or_create(
+            StorePlanningGoogleMapsReviewAnalysis.objects.create(
                 review=review,
-                defaults={
-                    "sentiment": sentiment,
-                    "sentiment_score": analysis_result.sentiment_score,
-                    "one_line_summary": analysis_result.one_line_summary,
-                    "issue": analysis_result.issue,
-                    "next_action": analysis_result.next_action,
-                    "location_insight": analysis_result.location_insight,
-                    "model_name": client.model_name,
-                    "prompt_version": client.PROMPT_VERSION,
-                    "raw_response": analysis_result.raw_response,
-                    "analyzed_at": timezone.now(),
-                },
+                sentiment=sentiment,
+                sentiment_score=analysis_result.sentiment_score,
+                one_line_summary=analysis_result.one_line_summary,
+                issue=analysis_result.issue,
+                location_insight=analysis_result.location_insight,
+                model_name=client.model_name,
+                prompt_version=client.PROMPT_VERSION,
+                raw_response=analysis_result.raw_response,
+                analyzed_at=timezone.now(),
             )
             saved_count += 1
 
@@ -486,6 +489,19 @@ class StorePlanningReviewService:
                 continue
             detail_place_vos.append(detail_place_vo)
         return detail_place_vos
+
+    @staticmethod
+    def _delete_review_scope_data(
+        target_store: StorePlanningTargetStore, review_scope: str
+    ) -> None:
+        StorePlanningGoogleMapsReview.objects.filter(
+            target_store_slug=target_store.slug,
+            review_scope=review_scope,
+        ).delete()
+        StorePlanningGoogleMapsPlaceSummary.objects.filter(
+            target_store_slug=target_store.slug,
+            review_scope=review_scope,
+        ).delete()
 
     @staticmethod
     def _unique_place_vos(place_vos: list) -> list:
@@ -671,7 +687,6 @@ class StorePlanningReviewService:
                     strength=summary.one_line_summary if summary else "",
                     weakness=summary.issue if summary else "",
                     issue=summary.issue if summary else "",
-                    next_action=summary.next_action if summary else "",
                     location_insight=summary.location_insight if summary else "",
                 )
             )

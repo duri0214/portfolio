@@ -56,12 +56,6 @@ class Migration(migrations.Migration):
                     models.CharField(blank=True, max_length=255, verbose_name="課題点"),
                 ),
                 (
-                    "next_action",
-                    models.CharField(
-                        blank=True, max_length=255, verbose_name="ネクストアクション"
-                    ),
-                ),
-                (
                     "location_insight",
                     models.CharField(
                         blank=True, max_length=255, verbose_name="立地示唆"

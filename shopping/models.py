@@ -191,7 +191,6 @@ class StorePlanningGoogleMapsReviewAnalysis(models.Model):
         sentiment_score: -100から100までの感情スコア。
         one_line_summary: 出店判断で読める1行要約。
         issue: レビューから見える課題点。
-        next_action: 出店計画で検討すべき次の行動。
         location_insight: 立地に関する示唆。
         model_name: 分析に使ったLLMモデル名。
         prompt_version: 分析プロンプトのバージョン。
@@ -231,7 +230,6 @@ class StorePlanningGoogleMapsReviewAnalysis(models.Model):
     sentiment_score = models.IntegerField("感情スコア", default=0)
     one_line_summary = models.CharField("1行要約", max_length=255, blank=True)
     issue = models.CharField("課題点", max_length=255, blank=True)
-    next_action = models.CharField("ネクストアクション", max_length=255, blank=True)
     location_insight = models.CharField("立地示唆", max_length=255, blank=True)
     model_name = models.CharField("LLMモデル名", max_length=100)
     prompt_version = models.CharField("プロンプトバージョン", max_length=50)
@@ -264,7 +262,6 @@ class StorePlanningGoogleMapsPlaceSummary(models.Model):
         sentiment_score: 店舗全体の評判スコア。
         one_line_summary: 店舗評判の1行要約。
         issue: レビュー群から見える課題点。
-        next_action: 店舗が次に取るべき改善アクション。
         location_insight: 立地に関する示唆。
         model_name: 分析に使ったLLMモデル名。
         prompt_version: 分析プロンプトのバージョン。
@@ -299,7 +296,6 @@ class StorePlanningGoogleMapsPlaceSummary(models.Model):
     sentiment_score = models.IntegerField("評判スコア", default=0)
     one_line_summary = models.CharField("1行要約", max_length=255, blank=True)
     issue = models.CharField("課題点", max_length=255, blank=True)
-    next_action = models.CharField("ネクストアクション", max_length=255, blank=True)
     location_insight = models.CharField("立地示唆", max_length=255, blank=True)
     model_name = models.CharField("LLMモデル名", max_length=100)
     prompt_version = models.CharField("プロンプトバージョン", max_length=50)

@@ -613,7 +613,6 @@ class StorePlanningView(TemplateView):
             {
                 "scope_label": "対象店舗",
                 "scope_class": "text-bg-primary",
-                "show_next_action": True,
                 "insight": insight,
             }
             for insight in target_place_insights
@@ -623,7 +622,6 @@ class StorePlanningView(TemplateView):
                 {
                     "scope_label": "周辺同業",
                     "scope_class": "text-bg-light border text-dark",
-                    "show_next_action": False,
                     "insight": insight,
                 }
                 for insight in nearby_same_business_place_insights

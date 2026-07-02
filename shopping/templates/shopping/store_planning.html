@@ -6,7 +6,7 @@
     <style>
         .store-planning-review-comparison-table {
             table-layout: fixed;
-            min-width: 1400px;
+            width: 100%;
         }
 
         .store-planning-review-comparison-table th,
@@ -481,12 +481,11 @@
                                     <table class="table table-sm align-middle mb-0 store-planning-review-comparison-table">
                                         <colgroup>
                                             <col style="width: 7%">
-                                            <col style="width: 15%">
-                                            <col style="width: 15%">
-                                            <col style="width: 15%">
-                                            <col style="width: 15%">
-                                            <col style="width: 18%">
-                                            <col style="width: 15%">
+                                            <col style="width: 17%">
+                                            <col style="width: 19%">
+                                            <col style="width: 19%">
+                                            <col style="width: 19%">
+                                            <col style="width: 19%">
                                         </colgroup>
                                         <thead>
                                         <tr>
@@ -495,7 +494,6 @@
                                             <th>評判キャッチ</th>
                                             <th>強み</th>
                                             <th>弱み</th>
-                                            <th>ネクストアクション</th>
                                             <th>立地示唆</th>
                                         </tr>
                                         </thead>
@@ -522,13 +520,6 @@
                                                 <td>{{ row.insight.one_line_summary|default:"分析待ち" }}</td>
                                                 <td>{{ row.insight.strength|default:"-"|simple_markdown }}</td>
                                                 <td>{{ row.insight.weakness|default:"-"|simple_markdown }}</td>
-                                                <td>
-                                                    {% if row.show_next_action %}
-                                                        {{ row.insight.next_action|default:"-"|simple_markdown }}
-                                                    {% else %}
-                                                        <span class="text-muted">対象店舗のみ</span>
-                                                    {% endif %}
-                                                </td>
                                                 <td>{{ row.insight.location_insight|default:"-"|simple_markdown }}</td>
                                             </tr>
                                         {% endfor %}
