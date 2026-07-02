@@ -691,9 +691,12 @@
                         if (task.batchSize && nearbyAnalysisPlaceCount) {
                             const batchCount = Math.ceil(nearbyAnalysisPlaceCount / task.batchSize);
                             for (let batchIndex = 0; batchIndex < batchCount; batchIndex += 1) {
+                                const batchStart = batchIndex * task.batchSize + 1;
+                                const batchEnd = Math.min((batchIndex + 1) * task.batchSize, nearbyAnalysisPlaceCount);
+                                const batchProgress = `${batchStart}-${batchEnd}/${nearbyAnalysisPlaceCount}店舗`;
                                 setProgress(
                                     `ステップ ${index + 1}/${reviewTasks.length}: ` +
-                                    `${task.label} ${batchIndex + 1}/${batchCount}（最大${task.batchSize}店舗ずつ）を実行中...`
+                                    `${task.label} ${batchProgress}を実行中...`
                                 );
                                 formData.set("max_places", String(task.batchSize));
                                 const batchResult = await runReviewTask(task, formData);
@@ -702,7 +705,7 @@
                                 }
                                 setProgress(
                                     `ステップ ${index + 1}/${reviewTasks.length}: ` +
-                                    `${task.label} ${batchIndex + 1}/${batchCount}完了: ${batchResult.message}`
+                                    `${task.label} ${batchProgress}完了: ${batchResult.message}`
                                 );
                                 if (batchResult.skipped) {
                                     break;
