@@ -352,32 +352,36 @@ class StorePlanningReviewService:
         saved_count = 0
         positive_count = 0
         negative_count = 0
+        place_summaries = []
         for summary_result in summary_results:
             group = group_map.get(summary_result.google_place_id)
             if group is None:
                 continue
             positive_count += summary_result.positive_count
             negative_count += summary_result.negative_count
-            StorePlanningGoogleMapsPlaceSummary.objects.create(
-                target_store=target_store,
-                target_store_slug=target_store.slug,
-                review_scope=review_scope,
-                google_place_id=summary_result.google_place_id,
-                place_name=group["place_name"],
-                rating=group["rating"],
-                review_count=group["review_count"],
-                positive_count=summary_result.positive_count,
-                negative_count=summary_result.negative_count,
-                sentiment_score=summary_result.sentiment_score,
-                one_line_summary=cls._summary_text(summary_result.one_line_summary),
-                issue=cls._summary_text(summary_result.issue),
-                location_insight=cls._summary_text(summary_result.location_insight),
-                model_name=client.model_name,
-                prompt_version=client.PROMPT_VERSION,
-                raw_response=summary_result.raw_response,
-                analyzed_at=timezone.now(),
+            place_summaries.append(
+                StorePlanningGoogleMapsPlaceSummary(
+                    target_store=target_store,
+                    target_store_slug=target_store.slug,
+                    review_scope=review_scope,
+                    google_place_id=summary_result.google_place_id,
+                    place_name=group["place_name"],
+                    rating=group["rating"],
+                    review_count=group["review_count"],
+                    positive_count=summary_result.positive_count,
+                    negative_count=summary_result.negative_count,
+                    sentiment_score=summary_result.sentiment_score,
+                    one_line_summary=cls._summary_text(summary_result.one_line_summary),
+                    issue=cls._summary_text(summary_result.issue),
+                    location_insight=cls._summary_text(summary_result.location_insight),
+                    model_name=client.model_name,
+                    prompt_version=client.PROMPT_VERSION,
+                    raw_response=summary_result.raw_response,
+                    analyzed_at=timezone.now(),
+                )
             )
             saved_count += 1
+        StorePlanningGoogleMapsPlaceSummary.objects.bulk_create(place_summaries)
 
         return StorePlanningReviewAnalysisFetchResult(
             analyzed_count=saved_count,
@@ -441,6 +445,7 @@ class StorePlanningReviewService:
         saved_count = 0
         positive_count = 0
         negative_count = 0
+        review_analyses = []
         for analysis_result in analysis_results:
             review = review_map.get(analysis_result.review_id)
             if review is None:
@@ -450,19 +455,26 @@ class StorePlanningReviewService:
                 positive_count += 1
             if sentiment == StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEGATIVE:
                 negative_count += 1
-            StorePlanningGoogleMapsReviewAnalysis.objects.create(
-                review=review,
-                sentiment=sentiment,
-                sentiment_score=analysis_result.sentiment_score,
-                one_line_summary=cls._summary_text(analysis_result.one_line_summary),
-                issue=cls._summary_text(analysis_result.issue),
-                location_insight=cls._summary_text(analysis_result.location_insight),
-                model_name=client.model_name,
-                prompt_version=client.PROMPT_VERSION,
-                raw_response=analysis_result.raw_response,
-                analyzed_at=timezone.now(),
+            review_analyses.append(
+                StorePlanningGoogleMapsReviewAnalysis(
+                    review=review,
+                    sentiment=sentiment,
+                    sentiment_score=analysis_result.sentiment_score,
+                    one_line_summary=cls._summary_text(
+                        analysis_result.one_line_summary
+                    ),
+                    issue=cls._summary_text(analysis_result.issue),
+                    location_insight=cls._summary_text(
+                        analysis_result.location_insight
+                    ),
+                    model_name=client.model_name,
+                    prompt_version=client.PROMPT_VERSION,
+                    raw_response=analysis_result.raw_response,
+                    analyzed_at=timezone.now(),
+                )
             )
             saved_count += 1
+        StorePlanningGoogleMapsReviewAnalysis.objects.bulk_create(review_analyses)
 
         return StorePlanningReviewAnalysisFetchResult(
             analyzed_count=saved_count,
