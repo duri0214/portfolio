@@ -181,6 +181,72 @@ class StorePlanningGoogleMapsReview(models.Model):
         return f"{self.target_store.name}: {self.place_name} ({self.author})"
 
 
+class StorePlanningGoogleMapsReviewAnalysis(models.Model):
+    """
+    StorePlanningGoogleMapsReview 1件ごとのLLM分析結果。
+
+    Attributes:
+        review: 分析対象のGoogle Mapsレビュー。
+        sentiment: レビュー本文から判定した感情分類。
+        sentiment_score: -100から100までの感情スコア。
+        one_line_summary: 出店判断で読める1行要約。
+        issue: レビューから見える課題点。
+        next_action: 出店計画で検討すべき次の行動。
+        location_insight: 立地に関する示唆。
+        model_name: 分析に使ったLLMモデル名。
+        prompt_version: 分析プロンプトのバージョン。
+        raw_response: LLM応答の保存用JSON。
+        analyzed_at: 分析日時。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    class Sentiment(models.TextChoices):
+        """
+        レビュー感情分類。
+
+        Attributes:
+            POSITIVE: 肯定的なレビュー。
+            NEGATIVE: 否定的なレビュー。
+            NEUTRAL: 中立または判断不能なレビュー。
+        """
+
+        POSITIVE = "positive", "ポジティブ"
+        NEGATIVE = "negative", "ネガティブ"
+        NEUTRAL = "neutral", "中立"
+
+    review = models.OneToOneField(
+        StorePlanningGoogleMapsReview,
+        verbose_name="Google Mapsレビュー",
+        on_delete=models.CASCADE,
+        related_name="analysis",
+    )
+    sentiment = models.CharField(
+        "感情分類",
+        max_length=20,
+        choices=Sentiment,
+        default=Sentiment.NEUTRAL,
+        db_index=True,
+    )
+    sentiment_score = models.IntegerField("感情スコア", default=0)
+    one_line_summary = models.CharField("1行要約", max_length=255, blank=True)
+    issue = models.CharField("課題点", max_length=255, blank=True)
+    next_action = models.CharField("ネクストアクション", max_length=255, blank=True)
+    location_insight = models.CharField("立地示唆", max_length=255, blank=True)
+    model_name = models.CharField("LLMモデル名", max_length=100)
+    prompt_version = models.CharField("プロンプトバージョン", max_length=50)
+    raw_response = models.JSONField("LLM応答", default=dict, blank=True)
+    analyzed_at = models.DateTimeField("分析日時", default=timezone.now)
+    created_at = models.DateTimeField("作成日時", default=timezone.now)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["review__place_name", "-analyzed_at"]
+
+    def __str__(self):
+        return f"{self.review.place_name}: {self.sentiment}"
+
+
 class UserAttribute(models.Model):
     """
     ショッピングアプリ特有のユーザー属性。

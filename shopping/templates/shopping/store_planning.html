@@ -512,6 +512,19 @@
                                     </button>
                                 {% endif %}
                             </form>
+                            <form method="post" action="{% url 'shp:store_planning' %}?store={{ target_location.slug }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="analyze_google_maps_nearby_same_business_reviews">
+                                {% if can_use_google_maps %}
+                                    <button class="btn btn-sm btn-outline-success" type="submit">
+                                        レビュー分析
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" disabled>
+                                        レビュー分析
+                                    </button>
+                                {% endif %}
+                            </form>
                         </div>
                     </div>
                     <div class="row g-3 mb-3">
@@ -540,6 +553,42 @@
                             </div>
                         </div>
                     </div>
+                    {% if nearby_same_business_place_insights %}
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                <tr>
+                                    <th>周辺同業店舗</th>
+                                    <th>1行インサイト</th>
+                                    <th>課題点</th>
+                                    <th>ネクストアクション</th>
+                                    <th>立地示唆</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for insight in nearby_same_business_place_insights %}
+                                    <tr>
+                                        <td class="text-nowrap">
+                                            <div class="fw-semibold">{{ insight.place_name }}</div>
+                                            <div class="small text-muted">
+                                                rating {{ insight.average_rating|default:"-" }} /
+                                                レビュー {{ insight.review_count|intcomma }}件 /
+                                                分析 {{ insight.analyzed_count|intcomma }}件
+                                            </div>
+                                            <div class="small text-muted">
+                                                ポジ {{ insight.positive_count|intcomma }} / ネガ {{ insight.negative_count|intcomma }}
+                                            </div>
+                                        </td>
+                                        <td>{{ insight.one_line_summary|default:"分析待ち" }}</td>
+                                        <td>{{ insight.issue|default:"-" }}</td>
+                                        <td>{{ insight.next_action|default:"-" }}</td>
+                                        <td>{{ insight.location_insight|default:"-" }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
                     {% if nearby_same_business_review_summary.latest_reviews %}
                         <div class="table-responsive">
                             <table class="table table-sm align-middle mb-0">

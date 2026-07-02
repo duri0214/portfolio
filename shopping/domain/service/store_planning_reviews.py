@@ -3,15 +3,24 @@ from math import atan2, cos, radians, sin, sqrt
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from lib.geo.valueobject.coord import GoogleMapsCoord
+from shopping.domain.dataprovider.google_maps_review_analysis import (
+    GoogleMapsReviewAnalysisClient,
+)
 from shopping.domain.dataprovider.google_maps_reviews import GoogleMapsReviewClient
 from shopping.domain.valueobject.store_planning import StorePlanningTargetLocation
 from shopping.domain.valueobject.store_planning_reviews import (
+    StorePlanningPlaceInsight,
+    StorePlanningReviewAnalysisFetchResult,
     StorePlanningReviewFetchResult,
     StorePlanningReview,
     StorePlanningReviewCell,
     StorePlanningReviewSummary,
 )
-from shopping.models import StorePlanningGoogleMapsReview, StorePlanningTargetStore
+from shopping.models import (
+    StorePlanningGoogleMapsReview,
+    StorePlanningGoogleMapsReviewAnalysis,
+    StorePlanningTargetStore,
+)
 
 
 class StorePlanningReviewService:
@@ -68,6 +77,7 @@ class StorePlanningReviewService:
         "reviews",
     ]
     MAX_DETAIL_PLACES = 10
+    MAX_ANALYSIS_REVIEWS = 10
     GCP_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
     TARGET_STORE_SCOPE = StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE
     NEARBY_SAME_BUSINESS_SCOPE = (
@@ -202,6 +212,86 @@ class StorePlanningReviewService:
             place_count=len(place_vo_list),
             review_count=review_count,
         )
+
+    @classmethod
+    def analyze_nearby_same_business_reviews(
+        cls, api_key: str, target_location: StorePlanningTargetLocation
+    ) -> StorePlanningReviewAnalysisFetchResult:
+        """
+        周辺同業レビューをLLMで分析し、レビュー子テーブルへ保存する。
+        """
+        target_store = StorePlanningTargetStore.objects.filter(
+            slug=target_location.slug
+        ).first()
+        if target_store is None:
+            return StorePlanningReviewAnalysisFetchResult(
+                analyzed_count=0, positive_count=0, negative_count=0, skipped=True
+            )
+
+        reviews = list(
+            cls._review_queryset(target_store, cls.NEARBY_SAME_BUSINESS_SCOPE)
+            .filter(analysis__isnull=True)
+            .order_by("-rating", "-publish_time", "-id")[: cls.MAX_ANALYSIS_REVIEWS]
+        )
+        if not reviews:
+            return StorePlanningReviewAnalysisFetchResult(
+                analyzed_count=0, positive_count=0, negative_count=0, skipped=True
+            )
+
+        client = GoogleMapsReviewAnalysisClient(api_key)
+        analysis_results = client.analyze_reviews(reviews)
+        if not analysis_results:
+            return StorePlanningReviewAnalysisFetchResult(
+                analyzed_count=0,
+                positive_count=0,
+                negative_count=0,
+                error_message="レビュー分析の結果を読み取れませんでした。",
+            )
+
+        review_map = {review.id: review for review in reviews}
+        saved_count = 0
+        positive_count = 0
+        negative_count = 0
+        for analysis_result in analysis_results:
+            review = review_map.get(analysis_result.review_id)
+            if review is None:
+                continue
+            sentiment = cls._normalized_sentiment(analysis_result.sentiment)
+            if sentiment == StorePlanningGoogleMapsReviewAnalysis.Sentiment.POSITIVE:
+                positive_count += 1
+            if sentiment == StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEGATIVE:
+                negative_count += 1
+            StorePlanningGoogleMapsReviewAnalysis.objects.update_or_create(
+                review=review,
+                defaults={
+                    "sentiment": sentiment,
+                    "sentiment_score": analysis_result.sentiment_score,
+                    "one_line_summary": analysis_result.one_line_summary,
+                    "issue": analysis_result.issue,
+                    "next_action": analysis_result.next_action,
+                    "location_insight": analysis_result.location_insight,
+                    "model_name": client.model_name,
+                    "prompt_version": client.PROMPT_VERSION,
+                    "raw_response": analysis_result.raw_response,
+                    "analyzed_at": timezone.now(),
+                },
+            )
+            saved_count += 1
+
+        return StorePlanningReviewAnalysisFetchResult(
+            analyzed_count=saved_count,
+            positive_count=positive_count,
+            negative_count=negative_count,
+        )
+
+    @staticmethod
+    def _normalized_sentiment(
+        sentiment: str,
+    ) -> StorePlanningGoogleMapsReviewAnalysis.Sentiment:
+        allowed_sentiments = StorePlanningGoogleMapsReviewAnalysis.Sentiment.values
+        if sentiment in allowed_sentiments:
+            return sentiment
+        return StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEUTRAL
 
     @staticmethod
     def _fetch_error_message(status_code: int) -> str:
@@ -353,6 +443,73 @@ class StorePlanningReviewService:
             cells=cells,
             latest_reviews=latest_reviews[:5],
         )
+
+    @classmethod
+    def build_place_insights(
+        cls, target_location: StorePlanningTargetLocation
+    ) -> list[StorePlanningPlaceInsight]:
+        target_store = StorePlanningTargetStore.objects.filter(
+            slug=target_location.slug
+        ).first()
+        if target_store is None:
+            return []
+
+        reviews = list(
+            cls._review_queryset(target_store, cls.NEARBY_SAME_BUSINESS_SCOPE)
+            .select_related("analysis")
+            .order_by("place_name", "-publish_time", "-id")
+        )
+        grouped_reviews = {}
+        for review in reviews:
+            grouped_reviews.setdefault(review.google_place_id, []).append(review)
+
+        insights = []
+        for place_reviews in grouped_reviews.values():
+            first_review = place_reviews[0]
+            analyses = [
+                review.analysis
+                for review in place_reviews
+                if hasattr(review, "analysis")
+            ]
+            positive_count = sum(
+                analysis.sentiment
+                == StorePlanningGoogleMapsReviewAnalysis.Sentiment.POSITIVE
+                for analysis in analyses
+            )
+            negative_count = sum(
+                analysis.sentiment
+                == StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEGATIVE
+                for analysis in analyses
+            )
+            insights.append(
+                StorePlanningPlaceInsight(
+                    place_name=first_review.place_name,
+                    review_count=len(place_reviews),
+                    analyzed_count=len(analyses),
+                    positive_count=positive_count,
+                    negative_count=negative_count,
+                    average_rating=first_review.rating,
+                    one_line_summary=cls._first_analysis_value(
+                        analyses, "one_line_summary"
+                    ),
+                    issue=cls._first_analysis_value(analyses, "issue"),
+                    next_action=cls._first_analysis_value(analyses, "next_action"),
+                    location_insight=cls._first_analysis_value(
+                        analyses, "location_insight"
+                    ),
+                )
+            )
+        return insights
+
+    @staticmethod
+    def _first_analysis_value(
+        analyses: list[StorePlanningGoogleMapsReviewAnalysis], field_name: str
+    ) -> str:
+        for analysis in analyses:
+            value = getattr(analysis, field_name)
+            if value:
+                return value
+        return ""
 
     @classmethod
     def _review_queryset(

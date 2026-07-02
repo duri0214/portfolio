@@ -213,6 +213,9 @@ class StorePlanningView(TemplateView):
                 review_scope=StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
             )
         )
+        context["nearby_same_business_place_insights"] = (
+            StorePlanningReviewService.build_place_insights(selected_location)
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -220,6 +223,7 @@ class StorePlanningView(TemplateView):
         allowed_actions = {
             "fetch_google_maps_reviews",
             "fetch_google_maps_nearby_same_business_reviews",
+            "analyze_google_maps_nearby_same_business_reviews",
         }
         if action not in allowed_actions:
             return HttpResponseRedirect(reverse("shp:store_planning"))
@@ -237,6 +241,11 @@ class StorePlanningView(TemplateView):
             )
             return HttpResponseRedirect(
                 self._store_planning_url(selected_location.slug)
+            )
+
+        if action == "analyze_google_maps_nearby_same_business_reviews":
+            return self._analyze_nearby_same_business_reviews(
+                request, selected_location
             )
 
         api_key = os.getenv("GOOGLE_MAPS_BE_API_KEY")
@@ -300,6 +309,44 @@ class StorePlanningView(TemplateView):
                     request,
                     f"{fetch_label}取得を実行しましたが、レビューは見つかりませんでした。{message}",
                 )
+        return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
+
+    def _analyze_nearby_same_business_reviews(
+        self, request, selected_location: StorePlanningTargetLocation
+    ) -> HttpResponseRedirect:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            messages.warning(
+                request,
+                "レビュー分析の設定が未完了のため、今回は分析できませんでした。",
+            )
+            return HttpResponseRedirect(
+                self._store_planning_url(selected_location.slug)
+            )
+
+        analysis_result = (
+            StorePlanningReviewService.analyze_nearby_same_business_reviews(
+                api_key=api_key,
+                target_location=selected_location,
+            )
+        )
+        if analysis_result.error_message:
+            messages.warning(request, analysis_result.error_message)
+        elif analysis_result.skipped:
+            messages.info(
+                request,
+                "周辺同業店舗レビューは分析対象がないか、すでに分析済みです。",
+            )
+        else:
+            messages.success(
+                request,
+                (
+                    "周辺同業店舗レビュー分析を実行しました。"
+                    f"分析件数: {analysis_result.analyzed_count}件 / "
+                    f"ポジティブ: {analysis_result.positive_count}件 / "
+                    f"ネガティブ: {analysis_result.negative_count}件"
+                ),
+            )
         return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
 
     def _selected_location(self):

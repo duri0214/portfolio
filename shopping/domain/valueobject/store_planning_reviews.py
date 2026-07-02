@@ -104,3 +104,79 @@ class StorePlanningReviewFetchResult:
     error_message: str = ""
     error_url: str = ""
     error_url_label: str = ""
+
+
+@dataclass(frozen=True)
+class StorePlanningReviewAnalysisResult:
+    """
+    LLMがレビュー1件に付与した分析結果。
+
+    Attributes:
+        review_id: 分析対象レビューのDB ID。
+        sentiment: positive, negative, neutral の感情分類。
+        sentiment_score: -100から100までの感情スコア。
+        one_line_summary: 出店判断で読める1行要約。
+        issue: レビューから見える課題点。
+        next_action: 出店計画で検討すべき次の行動。
+        location_insight: 立地に関する示唆。
+        raw_response: LLM応答の保存用データ。
+    """
+
+    review_id: int
+    sentiment: str
+    sentiment_score: int
+    one_line_summary: str
+    issue: str
+    next_action: str
+    location_insight: str
+    raw_response: dict
+
+
+@dataclass(frozen=True)
+class StorePlanningReviewAnalysisFetchResult:
+    """
+    周辺同業レビューのLLM分析実行結果。
+
+    Attributes:
+        analyzed_count: 保存した分析件数。
+        positive_count: ポジティブ候補として分析した件数。
+        negative_count: ネガティブ候補として分析した件数。
+        skipped: 分析対象がない、または分析済みでスキップしたかどうか。
+        error_message: 分析処理で表示すべきエラーがあった場合のメッセージ。
+    """
+
+    analyzed_count: int
+    positive_count: int
+    negative_count: int
+    skipped: bool = False
+    error_message: str = ""
+
+
+@dataclass(frozen=True)
+class StorePlanningPlaceInsight:
+    """
+    周辺同業店舗1件を1行で把握するためのレビュー分析集約。
+
+    Attributes:
+        place_name: Google Maps施設名。
+        review_count: 保存済みレビュー件数。
+        analyzed_count: LLM分析済みレビュー件数。
+        positive_count: ポジティブ分類件数。
+        negative_count: ネガティブ分類件数。
+        average_rating: 施設rating。
+        one_line_summary: 店舗の評判を1行に圧縮した要約。
+        issue: 課題点。
+        next_action: 出店計画の次アクション。
+        location_insight: 立地に関する示唆。
+    """
+
+    place_name: str
+    review_count: int
+    analyzed_count: int
+    positive_count: int
+    negative_count: int
+    average_rating: float | None
+    one_line_summary: str
+    issue: str
+    next_action: str
+    location_insight: str

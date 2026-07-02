@@ -11,6 +11,7 @@ from shopping.models import (
     Store,
     StorePlanningDataSourceSnapshot,
     StorePlanningGoogleMapsReview,
+    StorePlanningGoogleMapsReviewAnalysis,
     StorePlanningTargetStore,
 )
 
@@ -280,6 +281,48 @@ class TestView(TestCase):
         self.assertContains(response, "近隣同業カフェ")
         self.assertContains(response, "nearby-reviewer")
         self.assertContains(response, "周辺同業レビュー取得")
+        self.assertContains(response, "レビュー分析")
+
+    def test_store_planning_page_displays_nearby_same_business_place_insights(self):
+        """
+        シナリオ:
+        - 入力: 周辺同業レビューと、その子テーブルに保存済みのLLM分析結果。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: 周辺同業店舗ごとの1行インサイトと課題点が表示されること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        review = StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-place-1",
+            place_name="近隣同業カフェ",
+            latitude=35.7935,
+            longitude=139.8150,
+            rating=4.2,
+            author="nearby-reviewer",
+            review_text="雰囲気は良いが席が狭いです。",
+            publish_time=timezone.now(),
+        )
+        StorePlanningGoogleMapsReviewAnalysis.objects.create(
+            review=review,
+            sentiment=StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEGATIVE,
+            sentiment_score=-40,
+            one_line_summary="雰囲気は良いが席の狭さが課題。",
+            issue="席が狭い",
+            next_action="席間隔を差別化要素として検討する",
+            location_insight="近隣では滞在快適性に改善余地がある",
+            model_name="gpt-5-mini",
+            prompt_version="test-prompt",
+        )
+
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "1行インサイト")
+        self.assertContains(response, "雰囲気は良いが席の狭さが課題。")
+        self.assertContains(response, "席間隔を差別化要素として検討する")
+        self.assertContains(response, "近隣では滞在快適性に改善余地がある")
 
     def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):
         """
@@ -366,6 +409,39 @@ class TestView(TestCase):
         )
         kwargs = mock_fetch_reviews.call_args.kwargs
         self.assertEqual("dummy-key", kwargs["api_key"])
+        self.assertEqual("chapter-table", kwargs["target_location"].slug)
+
+    @patch(
+        "shopping.views.StorePlanningReviewService.analyze_nearby_same_business_reviews"
+    )
+    def test_post_store_planning_analyzes_nearby_same_business_reviews_for_superuser(
+        self, mock_analyze_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーで周辺同業レビュー分析POSTを送る。
+        - 処理: 周辺同業店舗のレビュー分析サービスを実行する。
+        - 期待値: 対象地点とOpenAI APIキーをレビュー分析サービスへ渡すこと。
+        """
+        mock_analyze_reviews.return_value.analyzed_count = 2
+        mock_analyze_reviews.return_value.positive_count = 1
+        mock_analyze_reviews.return_value.negative_count = 1
+        mock_analyze_reviews.return_value.skipped = False
+        mock_analyze_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "dummy-openai-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "analyze_google_maps_nearby_same_business_reviews"},
+            )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            fetch_redirect_response=False,
+        )
+        kwargs = mock_analyze_reviews.call_args.kwargs
+        self.assertEqual("dummy-openai-key", kwargs["api_key"])
         self.assertEqual("chapter-table", kwargs["target_location"].slug)
 
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")

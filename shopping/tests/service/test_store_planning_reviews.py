@@ -9,7 +9,14 @@ from shopping.domain.valueobject.google_maps_reviews import (
     GoogleMapsReviewData,
 )
 from shopping.domain.valueobject.store_planning import StorePlanningTargetLocation
-from shopping.models import StorePlanningGoogleMapsReview, StorePlanningTargetStore
+from shopping.domain.valueobject.store_planning_reviews import (
+    StorePlanningReviewAnalysisResult,
+)
+from shopping.models import (
+    StorePlanningGoogleMapsReview,
+    StorePlanningGoogleMapsReviewAnalysis,
+    StorePlanningTargetStore,
+)
 
 
 class StorePlanningReviewServiceTest(TestCase):
@@ -259,3 +266,82 @@ class StorePlanningReviewServiceTest(TestCase):
         )
         self.assertEqual(1, target_summary.total_review_count)
         self.assertEqual(1, nearby_summary.total_review_count)
+
+    def test_analyze_nearby_same_business_reviews_saves_child_analysis_once(self):
+        """
+        シナリオ:
+        - 入力: 未分析の周辺同業レビューが保存済みのDBとLLM分析結果。
+        - 処理: 周辺同業レビュー分析サービスを実行する。
+        - 期待値: レビュー子テーブルへ分析結果を保存し、再実行時はLLMを呼ばないこと。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        review = StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-place",
+            place_name="近隣カフェ",
+            latitude=35.7930,
+            longitude=139.8147,
+            rating=4.1,
+            author="nearby-reviewer",
+            review_text="雰囲気は良いが席が狭いです。",
+        )
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+            business_type_label="カフェ",
+            business_search_query="カフェ",
+        )
+
+        with patch(
+            "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.model_name = "gpt-5-mini"
+            mock_client.PROMPT_VERSION = "test-prompt"
+            mock_client.analyze_reviews.return_value = [
+                StorePlanningReviewAnalysisResult(
+                    review_id=review.id,
+                    sentiment="negative",
+                    sentiment_score=-40,
+                    one_line_summary="雰囲気は良いが席の狭さが課題。",
+                    issue="席が狭い",
+                    next_action="席間隔を差別化要素として検討する",
+                    location_insight="近隣では滞在快適性に改善余地がある",
+                    raw_response={"review_id": review.id},
+                )
+            ]
+
+            result = StorePlanningReviewService.analyze_nearby_same_business_reviews(
+                api_key="dummy-key",
+                target_location=target_location,
+            )
+            skipped_result = (
+                StorePlanningReviewService.analyze_nearby_same_business_reviews(
+                    api_key="dummy-key",
+                    target_location=target_location,
+                )
+            )
+
+        mock_client.analyze_reviews.assert_called_once()
+        self.assertEqual(1, result.analyzed_count)
+        self.assertEqual(0, result.positive_count)
+        self.assertEqual(1, result.negative_count)
+        self.assertTrue(skipped_result.skipped)
+        analysis = StorePlanningGoogleMapsReviewAnalysis.objects.get(review=review)
+        self.assertEqual(
+            StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEGATIVE,
+            analysis.sentiment,
+        )
+        self.assertEqual("席が狭い", analysis.issue)
+        insights = StorePlanningReviewService.build_place_insights(target_location)
+        self.assertEqual(1, len(insights))
+        self.assertEqual("近隣カフェ", insights[0].place_name)
+        self.assertEqual("席が狭い", insights[0].issue)
