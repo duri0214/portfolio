@@ -117,12 +117,16 @@ class GoogleMapsReviewAnalysisClient:
         for item in raw_items:
             if not isinstance(item, dict) or "review_id" not in item:
                 continue
-            sentiment_score = item.get("sentiment_score") or 0
+            review_id = GoogleMapsReviewAnalysisClient._to_int(item.get("review_id"))
+            if review_id is None:
+                continue
             results.append(
                 StorePlanningReviewAnalysisResult(
-                    review_id=int(item["review_id"]),
+                    review_id=review_id,
                     sentiment=item.get("sentiment") or "neutral",
-                    sentiment_score=int(sentiment_score),
+                    sentiment_score=GoogleMapsReviewAnalysisClient._to_int(
+                        item.get("sentiment_score"), default=0
+                    ),
                     one_line_summary=item.get("one_line_summary") or "",
                     issue=item.get("issue") or "",
                     location_insight=item.get("location_insight") or "",
@@ -149,9 +153,15 @@ class GoogleMapsReviewAnalysisClient:
             results.append(
                 StorePlanningPlaceSummaryResult(
                     google_place_id=str(item["google_place_id"]),
-                    sentiment_score=int(item.get("sentiment_score") or 0),
-                    positive_count=int(item.get("positive_count") or 0),
-                    negative_count=int(item.get("negative_count") or 0),
+                    sentiment_score=GoogleMapsReviewAnalysisClient._to_int(
+                        item.get("sentiment_score"), default=0
+                    ),
+                    positive_count=GoogleMapsReviewAnalysisClient._to_int(
+                        item.get("positive_count"), default=0
+                    ),
+                    negative_count=GoogleMapsReviewAnalysisClient._to_int(
+                        item.get("negative_count"), default=0
+                    ),
                     one_line_summary=item.get("one_line_summary") or "",
                     issue=item.get("issue") or "",
                     location_insight=item.get("location_insight") or "",
@@ -159,3 +169,10 @@ class GoogleMapsReviewAnalysisClient:
                 )
             )
         return results
+
+    @staticmethod
+    def _to_int(value, default=None):
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return default

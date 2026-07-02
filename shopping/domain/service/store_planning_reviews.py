@@ -12,7 +12,6 @@ from shopping.domain.dataprovider.google_maps_reviews import GoogleMapsReviewCli
 from shopping.domain.valueobject.store_planning import StorePlanningTargetLocation
 from shopping.domain.valueobject.store_planning_reviews import (
     StorePlanningPlaceInsight,
-    StorePlanningPlaceSummaryResult,
     StorePlanningReviewAnalysisFetchResult,
     StorePlanningReviewFetchResult,
     StorePlanningReview,
@@ -88,6 +87,7 @@ class StorePlanningReviewService:
     NEARBY_SAME_BUSINESS_SCOPE = (
         StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS
     )
+    SUMMARY_TEXT_MAX_LENGTH = 255
 
     @classmethod
     def fetch_reviews(
@@ -339,18 +339,16 @@ class StorePlanningReviewService:
 
         client = GoogleMapsReviewAnalysisClient(api_key)
         summary_results = client.analyze_place_summaries(target_groups)
-        if not summary_results:
-            summary_results = []
 
         group_map = {group["google_place_id"]: group for group in target_groups}
         result_place_ids = {
             summary_result.google_place_id for summary_result in summary_results
         }
-        summary_results.extend(
-            cls._fallback_place_summary_result(group)
+        missing_groups = [
+            group
             for group in target_groups
             if group["google_place_id"] not in result_place_ids
-        )
+        ]
         saved_count = 0
         positive_count = 0
         negative_count = 0
@@ -371,9 +369,9 @@ class StorePlanningReviewService:
                 positive_count=summary_result.positive_count,
                 negative_count=summary_result.negative_count,
                 sentiment_score=summary_result.sentiment_score,
-                one_line_summary=summary_result.one_line_summary,
-                issue=summary_result.issue,
-                location_insight=summary_result.location_insight,
+                one_line_summary=cls._summary_text(summary_result.one_line_summary),
+                issue=cls._summary_text(summary_result.issue),
+                location_insight=cls._summary_text(summary_result.location_insight),
                 model_name=client.model_name,
                 prompt_version=client.PROMPT_VERSION,
                 raw_response=summary_result.raw_response,
@@ -385,47 +383,20 @@ class StorePlanningReviewService:
             analyzed_count=saved_count,
             positive_count=positive_count,
             negative_count=negative_count,
+            error_message=cls._missing_analysis_message(missing_groups),
         )
 
     @classmethod
-    def _fallback_place_summary_result(
-        cls, group: dict
-    ) -> StorePlanningPlaceSummaryResult:
-        review_texts = [review["review_text"] for review in group["reviews"]]
-        positive_count = sum(
-            cls._has_keyword(review_text, cls.POSITIVE_KEYWORDS)
-            for review_text in review_texts
-        )
-        negative_count = sum(
-            cls._has_keyword(review_text, cls.NEGATIVE_KEYWORDS)
-            for review_text in review_texts
-        )
-        representative_review = next(
-            (review_text for review_text in review_texts if review_text),
-            "",
-        )
-        one_line_summary = (
-            representative_review[:120]
-            if representative_review
-            else "保存済みレビューから店舗評判を確認できます。"
-        )
-        issue = (
-            "ネガティブな表現を含むレビューがあります。"
-            if negative_count
-            else "明確な課題はレビューからは読み取れません。"
-        )
-        return StorePlanningPlaceSummaryResult(
-            google_place_id=group["google_place_id"],
-            sentiment_score=max(-100, min(100, (positive_count - negative_count) * 20)),
-            positive_count=positive_count,
-            negative_count=negative_count,
-            one_line_summary=one_line_summary,
-            issue=issue,
-            location_insight="保存済みレビューをもとに確認してください。",
-            raw_response={
-                "fallback": True,
-                "google_place_id": group["google_place_id"],
-            },
+    def _missing_analysis_message(cls, missing_groups: list[dict]) -> str:
+        if not missing_groups:
+            return ""
+        place_names = "、".join(group["place_name"] for group in missing_groups[:5])
+        if len(missing_groups) > 5:
+            place_names = f"{place_names} ほか{len(missing_groups) - 5}件"
+        return (
+            "一部店舗のレビュー分析結果を取得できませんでした。"
+            "もう一度レビュー分析を実行してください。"
+            f"未分析: {place_names}"
         )
 
     @classmethod
@@ -483,9 +454,9 @@ class StorePlanningReviewService:
                 review=review,
                 sentiment=sentiment,
                 sentiment_score=analysis_result.sentiment_score,
-                one_line_summary=analysis_result.one_line_summary,
-                issue=analysis_result.issue,
-                location_insight=analysis_result.location_insight,
+                one_line_summary=cls._summary_text(analysis_result.one_line_summary),
+                issue=cls._summary_text(analysis_result.issue),
+                location_insight=cls._summary_text(analysis_result.location_insight),
                 model_name=client.model_name,
                 prompt_version=client.PROMPT_VERSION,
                 raw_response=analysis_result.raw_response,
@@ -498,6 +469,10 @@ class StorePlanningReviewService:
             positive_count=positive_count,
             negative_count=negative_count,
         )
+
+    @classmethod
+    def _summary_text(cls, value: str) -> str:
+        return (value or "")[: cls.SUMMARY_TEXT_MAX_LENGTH]
 
     @staticmethod
     def _normalized_sentiment(
