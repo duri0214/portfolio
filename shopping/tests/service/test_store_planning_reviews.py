@@ -70,6 +70,28 @@ class GoogleMapsReviewAnalysisClientTest(TestCase):
         self.assertEqual(0, results[0].positive_count)
         self.assertEqual(0, results[0].negative_count)
 
+    def test_place_summary_prompt_requires_all_places_and_exact_place_id(self):
+        """
+        シナリオ:
+        - 入力: 店舗単位分析の対象グループ。
+        - 処理: LLMへ渡すプロンプトを作成する。
+        - 期待値: 店舗省略禁止とPlace IDの完全コピーを明示すること。
+        """
+        client = GoogleMapsReviewAnalysisClient.__new__(GoogleMapsReviewAnalysisClient)
+
+        prompt = client._place_summary_prompt(
+            [
+                {
+                    "google_place_id": "place-1",
+                    "place_name": "GRATIALLIGO",
+                    "reviews": [{"review_text": "良い店でした。"}],
+                }
+            ]
+        )
+
+        self.assertIn("全店舗について必ず1件ずつ返してください", prompt)
+        self.assertIn("google_place_id は入力の値を一字一句そのままコピー", prompt)
+
 
 class StorePlanningReviewServiceTest(TestCase):
     def test_fetch_reviews_uses_places_api_and_saves_reviews(self):

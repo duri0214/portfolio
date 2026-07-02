@@ -426,7 +426,7 @@
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
                                 <div class="small text-muted">レビュー対象施設</div>
-                                <div class="fs-5 fw-semibold">{{ combined_review_summary.total_place_count|intcomma }}件</div>
+                                <div class="fs-5 fw-semibold">{{ combined_place_insights|length|intcomma }}件</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
@@ -598,6 +598,13 @@
                 {action: "analyze_google_maps_target_reviews", label: "対象店舗レビュー分析"},
                 {action: "analyze_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー分析"},
             ];
+            let nearbyAnalysisPlaceCount = 0;
+            const taskLabel = (task) => {
+                if (task.action === "analyze_google_maps_nearby_same_business_reviews" && nearbyAnalysisPlaceCount) {
+                    return `${task.label}（${nearbyAnalysisPlaceCount}店舗分）`;
+                }
+                return task.label;
+            };
             const setProgress = (text) => {
                 progressBox.textContent = text;
             };
@@ -633,6 +640,24 @@
                     message: `${label}に失敗しました。HTTP ${response.status}: ${detail}`,
                 };
             };
+            const fetchReviewTask = async (task, formData) => {
+                try {
+                    return await fetch(reviewPostUrl, {
+                        method: "POST",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest",
+                            "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+                        },
+                        body: formData,
+                    });
+                } catch (error) {
+                    const taskError = new Error(
+                        `${taskLabel(task)}の通信が切れました。` +
+                        "LLM分析は時間がかかることがあります。画面を更新し、分析待ちが残っていればもう一度「レビュー取得・分析」を実行してください。"
+                    );
+                    throw taskError;
+                }
+            };
             reviewForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 const hasExistingReviews = reviewForm.dataset.hasExistingReviews === "1";
@@ -640,25 +665,19 @@
                     ? window.confirm("保存済みレビューがあります。再取得しますか？")
                     : false;
                 runButton.disabled = true;
-                progressBox.classList.remove("d-none", "alert-danger", "alert-success");
+                progressBox.classList.remove("d-none", "alert-danger", "alert-warning", "alert-success");
                 progressBox.classList.add("alert-info");
                 progressBox.textContent = "";
+                let warningMessage = "";
                 try {
                     for (const [index, task] of reviewTasks.entries()) {
-                        setProgress(`処理 ${index + 1}件目/${reviewTasks.length}件中: ${task.label}を実行中...`);
+                        setProgress(`ステップ ${index + 1}/${reviewTasks.length}: ${taskLabel(task)}を実行中...`);
                         const formData = new FormData(reviewForm);
                         formData.set("action", task.action);
                         if (forceRefetch) {
                             formData.set("force_refetch", "1");
                         }
-                        const response = await fetch(reviewPostUrl, {
-                            method: "POST",
-                            headers: {
-                                "X-Requested-With": "XMLHttpRequest",
-                                "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
-                            },
-                            body: formData,
-                        });
+                        const response = await fetchReviewTask(task, formData);
                         const result = await parseJsonResponse(response, task.label);
                         if (!response.ok || !result.ok) {
                             const taskError = new Error(result.message || `${task.label}に失敗しました。`);
@@ -666,14 +685,25 @@
                             taskError.errorUrlLabel = result.error_url_label || "";
                             throw taskError;
                         }
-                        setProgress(`完了 ${index + 1}件目/${reviewTasks.length}件中: ${result.message}`);
+                        if (task.action === "fetch_google_maps_nearby_same_business_reviews") {
+                            nearbyAnalysisPlaceCount = result.place_count || 0;
+                        }
+                        if (result.warning) {
+                            warningMessage = result.message;
+                        }
+                        setProgress(`ステップ ${index + 1}/${reviewTasks.length}完了: ${result.message}`);
                     }
-                    progressBox.classList.remove("alert-info");
-                    progressBox.classList.add("alert-success");
-                    setProgress("すべての処理が完了しました。画面を更新します。");
+                    progressBox.classList.remove("alert-info", "alert-danger", "alert-warning", "alert-success");
+                    if (warningMessage) {
+                        progressBox.classList.add("alert-warning");
+                        setProgress(`${warningMessage} 画面を更新します。`);
+                    } else {
+                        progressBox.classList.add("alert-success");
+                        setProgress("すべての処理が完了しました。画面を更新します。");
+                    }
                     window.location.reload();
                 } catch (error) {
-                    progressBox.classList.remove("alert-info");
+                    progressBox.classList.remove("alert-info", "alert-warning", "alert-success");
                     progressBox.classList.add("alert-danger");
                     setProgressError(error.message, error.errorUrl, error.errorUrlLabel);
                     runButton.disabled = false;

@@ -18,7 +18,7 @@ class GoogleMapsReviewAnalysisClient:
     def __init__(self, api_key: str, model_name: str = MODEL_NAME):
         self.model_name = model_name
         self.service = LlmCompletionService(
-            OpenAIGptConfig(api_key=api_key, model=model_name, max_tokens=1200)
+            OpenAIGptConfig(api_key=api_key, model=model_name, max_tokens=3000)
         )
 
     def analyze_reviews(self, reviews: list) -> list[StorePlanningReviewAnalysisResult]:
@@ -93,6 +93,8 @@ class GoogleMapsReviewAnalysisClient:
         place_json = json.dumps(place_review_groups, ensure_ascii=False)
         return (
             "次のGoogle Mapsレビューを店舗単位で集約分析してください。\n"
+            "入力された全店舗について必ず1件ずつ返してください。店舗を省略しないでください。\n"
+            "google_place_id は入力の値を一字一句そのままコピーしてください。\n"
             "各店舗について、レビュー群のポジティブ要因とネガティブ要因を比較し、"
             "店舗として何が評価され、何が課題になるかを抽出してください。\n"
             "sentiment_score は店舗全体の評判を -100 から 100 の整数にしてください。\n"

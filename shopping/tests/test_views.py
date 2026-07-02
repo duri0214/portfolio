@@ -304,6 +304,49 @@ class TestView(TestCase):
         self.assertContains(response, "error_url_label")
         self.assertContains(response, "setProgressError")
 
+    def test_store_planning_review_target_place_count_uses_displayed_places(self):
+        """
+        シナリオ:
+        - 入力: 対象店舗レビューと、半径500m外の周辺同業レビューが保存済みのDB。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: レビュー対象施設数は500m内サマリーではなく、表に出す取得店舗数と一致すること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE,
+            google_place_id="target-place-1",
+            place_name="Chapter Table",
+            latitude=35.792822,
+            longitude=139.8143238,
+            rating=4.0,
+            author="target-reviewer",
+            review_text="対象店舗のレビューです。",
+            publish_time=timezone.now(),
+        )
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-outside-place",
+            place_name="500m外の同業店",
+            latitude=35.8100,
+            longitude=139.8300,
+            rating=4.5,
+            author="nearby-reviewer",
+            review_text="遠いけれど評判の良い店です。",
+            publish_time=timezone.now(),
+        )
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "レビュー対象施設")
+        self.assertContains(response, '<div class="fs-5 fw-semibold">2件</div>')
+        self.assertContains(response, "500m外の同業店")
+
     def test_store_planning_page_distinguishes_target_reviews_from_missing_nearby_reviews(
         self,
     ):
@@ -599,6 +642,51 @@ class TestView(TestCase):
         self.assertEqual("dummy-openai-key", kwargs["api_key"])
         self.assertEqual("chapter-table", kwargs["target_location"].slug)
         self.assertEqual("target_store", kwargs["review_scope"])
+
+    @patch("shopping.views.StorePlanningReviewService.analyze_place_summaries")
+    def test_ajax_store_planning_analysis_partial_failure_returns_warning(
+        self, mock_analyze_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: Ajaxで周辺同業レビュー分析POSTを送り、一部店舗だけLLMが返さない。
+        - 処理: レビュー分析結果JSONを返す。
+        - 期待値: 保存済み分析がある場合は処理失敗にせず、warningとして返すこと。
+        """
+        mock_analyze_reviews.return_value.analyzed_count = 9
+        mock_analyze_reviews.return_value.positive_count = 6
+        mock_analyze_reviews.return_value.negative_count = 3
+        mock_analyze_reviews.return_value.skipped = False
+        mock_analyze_reviews.return_value.error_message = (
+            "一部店舗のレビュー分析結果を取得できませんでした。"
+            "もう一度レビュー分析を実行してください。未分析: GRATIALLIGO"
+        )
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "dummy-openai-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "analyze_google_maps_nearby_same_business_reviews"},
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            {
+                "ok": True,
+                "warning": True,
+                "message": (
+                    "Google Maps レビュー分析を一部実行しました。"
+                    "分析件数: 9件 / ポジティブ: 6件 / ネガティブ: 3件 / "
+                    "一部店舗のレビュー分析結果を取得できませんでした。"
+                    "もう一度レビュー分析を実行してください。未分析: GRATIALLIGO"
+                ),
+                "analyzed_count": 9,
+                "positive_count": 6,
+                "negative_count": 3,
+                "skipped": False,
+            },
+            response.json(),
+        )
 
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_fetch_reviews_shows_empty_result_message(

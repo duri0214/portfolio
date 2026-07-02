@@ -441,6 +441,24 @@ class StorePlanningView(TemplateView):
 
     def _analysis_result_json(self, analysis_result) -> JsonResponse:
         if analysis_result.error_message:
+            if analysis_result.analyzed_count:
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "warning": True,
+                        "message": (
+                            "Google Maps レビュー分析を一部実行しました。"
+                            f"分析件数: {analysis_result.analyzed_count}件 / "
+                            f"ポジティブ: {analysis_result.positive_count}件 / "
+                            f"ネガティブ: {analysis_result.negative_count}件 / "
+                            f"{analysis_result.error_message}"
+                        ),
+                        "analyzed_count": analysis_result.analyzed_count,
+                        "positive_count": analysis_result.positive_count,
+                        "negative_count": analysis_result.negative_count,
+                        "skipped": analysis_result.skipped,
+                    }
+                )
             return JsonResponse(
                 {"ok": False, "message": analysis_result.error_message}, status=400
             )
