@@ -213,6 +213,12 @@ class StorePlanningView(TemplateView):
                 review_scope=StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
             )
         )
+        context["target_place_insights"] = (
+            StorePlanningReviewService.build_place_insights(
+                selected_location,
+                review_scope=StorePlanningReviewService.TARGET_STORE_SCOPE,
+            )
+        )
         context["nearby_same_business_place_insights"] = (
             StorePlanningReviewService.build_place_insights(selected_location)
         )
@@ -273,31 +279,32 @@ class StorePlanningView(TemplateView):
             )
             fetch_label = "Google Maps レビュー"
         if fetch_result.error_message:
+            error_message = f"{fetch_label}: {fetch_result.error_message}"
             if fetch_result.error_url:
                 messages.warning(
                     request,
                     format_html(
                         '{} <a href="{}" target="_blank" rel="noopener">{}</a>',
-                        fetch_result.error_message,
+                        error_message,
                         fetch_result.error_url,
                         fetch_result.error_url_label or "確認する",
                     ),
                 )
             else:
-                messages.warning(request, fetch_result.error_message)
+                messages.warning(request, error_message)
         elif fetch_result.skipped:
             messages.info(
                 request,
                 (
-                    f"{fetch_label}は取得済みです。"
+                    f"{fetch_label}は取得済みのためAPI呼び出しを省略しました。"
                     f"施設数: {fetch_result.place_count}件 / "
-                    f"レビュー数: {fetch_result.review_count}件"
+                    f"保存レビュー数: {fetch_result.review_count}件"
                 ),
             )
         else:
             message = (
                 f"取得施設数: {fetch_result.place_count}件 / "
-                f"レビュー数: {fetch_result.review_count}件"
+                f"保存レビュー数: {fetch_result.review_count}件"
             )
             if fetch_result.review_count:
                 messages.success(
@@ -324,24 +331,22 @@ class StorePlanningView(TemplateView):
                 self._store_planning_url(selected_location.slug)
             )
 
-        analysis_result = (
-            StorePlanningReviewService.analyze_nearby_same_business_reviews(
-                api_key=api_key,
-                target_location=selected_location,
-            )
+        analysis_result = StorePlanningReviewService.analyze_all_reviews(
+            api_key=api_key,
+            target_location=selected_location,
         )
         if analysis_result.error_message:
             messages.warning(request, analysis_result.error_message)
         elif analysis_result.skipped:
             messages.info(
                 request,
-                "周辺同業店舗レビューは分析対象がないか、すでに分析済みです。",
+                "Google Maps レビューは分析対象がないか、すでに分析済みです。",
             )
         else:
             messages.success(
                 request,
                 (
-                    "周辺同業店舗レビュー分析を実行しました。"
+                    "Google Maps レビュー分析を実行しました。"
                     f"分析件数: {analysis_result.analyzed_count}件 / "
                     f"ポジティブ: {analysis_result.positive_count}件 / "
                     f"ネガティブ: {analysis_result.negative_count}件"

@@ -19,6 +19,7 @@ from shopping.domain.valueobject.store_planning_reviews import (
 from shopping.models import (
     StorePlanningGoogleMapsReview,
     StorePlanningGoogleMapsReviewAnalysis,
+    StorePlanningGoogleMapsPlaceSummary,
     StorePlanningTargetStore,
 )
 
@@ -78,6 +79,7 @@ class StorePlanningReviewService:
     ]
     MAX_DETAIL_PLACES = 10
     MAX_ANALYSIS_REVIEWS = 10
+    MAX_PLACE_INSIGHTS = 10
     GCP_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
     TARGET_STORE_SCOPE = StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE
     NEARBY_SAME_BUSINESS_SCOPE = (
@@ -138,10 +140,7 @@ class StorePlanningReviewService:
         ).first()
         if target_store is None:
             return StorePlanningReviewFetchResult(place_count=0, review_count=0)
-        existing_reviews = StorePlanningGoogleMapsReview.objects.filter(
-            target_store_slug=target_store.slug,
-            review_scope=review_scope,
-        )
+        existing_reviews = cls._review_queryset(target_store, review_scope)
         if existing_reviews.exists():
             return StorePlanningReviewFetchResult(
                 place_count=existing_reviews.values("google_place_id")
@@ -166,7 +165,11 @@ class StorePlanningReviewService:
             return StorePlanningReviewFetchResult(
                 place_count=0,
                 review_count=0,
-                error_message=cls._fetch_error_message(client.last_error_status_code),
+                error_message=cls._fetch_error_message(
+                    client.last_error_status_code,
+                    client.last_error_message,
+                    client.last_error_operation,
+                ),
                 error_url=cls._fetch_error_url(client.last_error_status_code),
                 error_url_label="GCP 認証情報を開く",
             )
@@ -180,7 +183,11 @@ class StorePlanningReviewService:
             return StorePlanningReviewFetchResult(
                 place_count=len(search_place_vos),
                 review_count=0,
-                error_message=cls._fetch_error_message(client.last_error_status_code),
+                error_message=cls._fetch_error_message(
+                    client.last_error_status_code,
+                    client.last_error_message,
+                    client.last_error_operation,
+                ),
                 error_url=cls._fetch_error_url(client.last_error_status_code),
                 error_url_label="GCP 認証情報を開く",
             )
@@ -189,6 +196,8 @@ class StorePlanningReviewService:
             if place_vo.location is None:
                 continue
             for review in place_vo.reviews:
+                if not review.text:
+                    continue
                 author = review.author or review.google_maps_uri or "unknown"
                 StorePlanningGoogleMapsReview.objects.update_or_create(
                     target_store=target_store,
@@ -218,7 +227,142 @@ class StorePlanningReviewService:
         cls, api_key: str, target_location: StorePlanningTargetLocation
     ) -> StorePlanningReviewAnalysisFetchResult:
         """
-        周辺同業レビューをLLMで分析し、レビュー子テーブルへ保存する。
+        周辺同業レビューを店舗単位でLLM分析し、サマリーテーブルへ保存する。
+        """
+        return cls.analyze_place_summaries(
+            api_key=api_key,
+            target_location=target_location,
+            review_scope=cls.NEARBY_SAME_BUSINESS_SCOPE,
+        )
+
+    @classmethod
+    def analyze_all_reviews(
+        cls, api_key: str, target_location: StorePlanningTargetLocation
+    ) -> StorePlanningReviewAnalysisFetchResult:
+        """
+        対象店舗と周辺同業レビューを同じ分析軸でLLM分析する。
+        """
+        target_result = cls.analyze_place_summaries(
+            api_key=api_key,
+            target_location=target_location,
+            review_scope=cls.TARGET_STORE_SCOPE,
+        )
+        nearby_result = cls.analyze_place_summaries(
+            api_key=api_key,
+            target_location=target_location,
+            review_scope=cls.NEARBY_SAME_BUSINESS_SCOPE,
+        )
+        error_message = target_result.error_message or nearby_result.error_message
+        return StorePlanningReviewAnalysisFetchResult(
+            analyzed_count=target_result.analyzed_count + nearby_result.analyzed_count,
+            positive_count=target_result.positive_count + nearby_result.positive_count,
+            negative_count=target_result.negative_count + nearby_result.negative_count,
+            skipped=target_result.skipped and nearby_result.skipped,
+            error_message=error_message,
+        )
+
+    @classmethod
+    def analyze_place_summaries(
+        cls,
+        api_key: str,
+        target_location: StorePlanningTargetLocation,
+        review_scope: str,
+    ) -> StorePlanningReviewAnalysisFetchResult:
+        """
+        指定されたレビュー種別を店舗単位に集約し、サマリー後レコードを保存する。
+        """
+        target_store = StorePlanningTargetStore.objects.filter(
+            slug=target_location.slug
+        ).first()
+        if target_store is None:
+            return StorePlanningReviewAnalysisFetchResult(
+                analyzed_count=0, positive_count=0, negative_count=0, skipped=True
+            )
+
+        grouped_reviews = cls._grouped_reviews_for_summary(target_store, review_scope)
+        if not grouped_reviews:
+            return StorePlanningReviewAnalysisFetchResult(
+                analyzed_count=0, positive_count=0, negative_count=0, skipped=True
+            )
+
+        summary_map = {
+            summary.google_place_id: summary
+            for summary in StorePlanningGoogleMapsPlaceSummary.objects.filter(
+                target_store_slug=target_store.slug,
+                review_scope=review_scope,
+            )
+        }
+        target_groups = [
+            group
+            for group in grouped_reviews
+            if group["google_place_id"] not in summary_map
+            or summary_map[group["google_place_id"]].review_count
+            != group["review_count"]
+        ]
+        if not target_groups:
+            return StorePlanningReviewAnalysisFetchResult(
+                analyzed_count=0, positive_count=0, negative_count=0, skipped=True
+            )
+
+        client = GoogleMapsReviewAnalysisClient(api_key)
+        summary_results = client.analyze_place_summaries(target_groups)
+        if not summary_results:
+            return StorePlanningReviewAnalysisFetchResult(
+                analyzed_count=0,
+                positive_count=0,
+                negative_count=0,
+                error_message="レビュー分析の結果を読み取れませんでした。",
+            )
+
+        group_map = {group["google_place_id"]: group for group in target_groups}
+        saved_count = 0
+        positive_count = 0
+        negative_count = 0
+        for summary_result in summary_results:
+            group = group_map.get(summary_result.google_place_id)
+            if group is None:
+                continue
+            positive_count += summary_result.positive_count
+            negative_count += summary_result.negative_count
+            StorePlanningGoogleMapsPlaceSummary.objects.update_or_create(
+                target_store=target_store,
+                target_store_slug=target_store.slug,
+                review_scope=review_scope,
+                google_place_id=summary_result.google_place_id,
+                defaults={
+                    "place_name": group["place_name"],
+                    "rating": group["rating"],
+                    "review_count": group["review_count"],
+                    "positive_count": summary_result.positive_count,
+                    "negative_count": summary_result.negative_count,
+                    "sentiment_score": summary_result.sentiment_score,
+                    "one_line_summary": summary_result.one_line_summary,
+                    "issue": summary_result.issue,
+                    "next_action": summary_result.next_action,
+                    "location_insight": summary_result.location_insight,
+                    "model_name": client.model_name,
+                    "prompt_version": client.PROMPT_VERSION,
+                    "raw_response": summary_result.raw_response,
+                    "analyzed_at": timezone.now(),
+                },
+            )
+            saved_count += 1
+
+        return StorePlanningReviewAnalysisFetchResult(
+            analyzed_count=saved_count,
+            positive_count=positive_count,
+            negative_count=negative_count,
+        )
+
+    @classmethod
+    def analyze_reviews(
+        cls,
+        api_key: str,
+        target_location: StorePlanningTargetLocation,
+        review_scope: str,
+    ) -> StorePlanningReviewAnalysisFetchResult:
+        """
+        指定されたレビュー種別をLLMで分析し、レビュー子テーブルへ保存する。
         """
         target_store = StorePlanningTargetStore.objects.filter(
             slug=target_location.slug
@@ -229,7 +373,7 @@ class StorePlanningReviewService:
             )
 
         reviews = list(
-            cls._review_queryset(target_store, cls.NEARBY_SAME_BUSINESS_SCOPE)
+            cls._review_queryset(target_store, review_scope)
             .filter(analysis__isnull=True)
             .order_by("-rating", "-publish_time", "-id")[: cls.MAX_ANALYSIS_REVIEWS]
         )
@@ -294,13 +438,23 @@ class StorePlanningReviewService:
         return StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEUTRAL
 
     @staticmethod
-    def _fetch_error_message(status_code: int) -> str:
+    def _fetch_error_message(
+        status_code: int, detail: str = "", operation: str = ""
+    ) -> str:
+        detail_message = f" Google API応答: {detail}" if detail else ""
+        operation_message = f" 失敗箇所: {operation}。" if operation else ""
         if status_code == 403:
             return (
                 "Google Maps 側でレビュー取得が拒否されました。"
-                "APIキーのIPホワイトリストを確認してください。"
+                "APIキーのアプリケーション制限、API制限、Places APIの有効化、課金状態を確認してください。"
+                f"{operation_message}"
+                f"{detail_message}"
             )
-        return "レビュー取得中にエラーが発生しました。時間をおいて再度お試しください。"
+        return (
+            "レビュー取得中にエラーが発生しました。時間をおいて再度お試しください。"
+            f"{operation_message}"
+            f"{detail_message}"
+        )
 
     @classmethod
     def _fetch_error_url(cls, status_code: int) -> str:
@@ -371,7 +525,8 @@ class StorePlanningReviewService:
             return cls._empty_summary()
 
         cell_rows = cls._empty_cell_rows()
-        latest_reviews = []
+        latest_reviews_by_place = {}
+        review_count = 0
         place_ids = set()
         total_rating = 0.0
         rated_place_ids = set()
@@ -417,7 +572,10 @@ class StorePlanningReviewService:
                 distance_meter=round(distance_meter),
             )
             cell_rows[row][col].append(planning_review)
-            latest_reviews.append(planning_review)
+            review_count += 1
+            latest_review = latest_reviews_by_place.get(review.google_place_id)
+            if cls._is_newer_review(planning_review, latest_review):
+                latest_reviews_by_place[review.google_place_id] = planning_review
 
             text = review.review_text or ""
             if cls._has_keyword(text, cls.POSITIVE_KEYWORDS):
@@ -425,6 +583,7 @@ class StorePlanningReviewService:
             if cls._has_keyword(text, cls.NEGATIVE_KEYWORDS):
                 negative_count += 1
 
+        latest_reviews = list(latest_reviews_by_place.values())
         latest_reviews.sort(
             key=lambda item: item.publish_time.timestamp() if item.publish_time else 0,
             reverse=True,
@@ -436,7 +595,7 @@ class StorePlanningReviewService:
         return StorePlanningReviewSummary(
             radius_meter=cls.RADIUS_METER,
             total_place_count=len(place_ids),
-            total_review_count=len(latest_reviews),
+            total_review_count=review_count,
             average_rating=average_rating,
             positive_count=positive_count,
             negative_count=negative_count,
@@ -444,9 +603,23 @@ class StorePlanningReviewService:
             latest_reviews=latest_reviews[:5],
         )
 
+    @staticmethod
+    def _is_newer_review(
+        review: StorePlanningReview, current_review: StorePlanningReview | None
+    ) -> bool:
+        if current_review is None:
+            return True
+        if review.publish_time is None:
+            return False
+        if current_review.publish_time is None:
+            return True
+        return review.publish_time > current_review.publish_time
+
     @classmethod
     def build_place_insights(
-        cls, target_location: StorePlanningTargetLocation
+        cls,
+        target_location: StorePlanningTargetLocation,
+        review_scope: str = NEARBY_SAME_BUSINESS_SCOPE,
     ) -> list[StorePlanningPlaceInsight]:
         target_store = StorePlanningTargetStore.objects.filter(
             slug=target_location.slug
@@ -455,7 +628,7 @@ class StorePlanningReviewService:
             return []
 
         reviews = list(
-            cls._review_queryset(target_store, cls.NEARBY_SAME_BUSINESS_SCOPE)
+            cls._review_queryset(target_store, review_scope)
             .select_related("analysis")
             .order_by("place_name", "-publish_time", "-id")
         )
@@ -463,43 +636,72 @@ class StorePlanningReviewService:
         for review in reviews:
             grouped_reviews.setdefault(review.google_place_id, []).append(review)
 
+        summary_map = {
+            summary.google_place_id: summary
+            for summary in StorePlanningGoogleMapsPlaceSummary.objects.filter(
+                target_store_slug=target_store.slug,
+                review_scope=review_scope,
+            )
+        }
+
         insights = []
-        for place_reviews in grouped_reviews.values():
+        for place_reviews in list(grouped_reviews.values())[: cls.MAX_PLACE_INSIGHTS]:
             first_review = place_reviews[0]
-            analyses = [
-                review.analysis
-                for review in place_reviews
-                if hasattr(review, "analysis")
-            ]
-            positive_count = sum(
-                analysis.sentiment
-                == StorePlanningGoogleMapsReviewAnalysis.Sentiment.POSITIVE
-                for analysis in analyses
-            )
-            negative_count = sum(
-                analysis.sentiment
-                == StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEGATIVE
-                for analysis in analyses
-            )
+            summary = summary_map.get(first_review.google_place_id)
             insights.append(
                 StorePlanningPlaceInsight(
                     place_name=first_review.place_name,
                     review_count=len(place_reviews),
-                    analyzed_count=len(analyses),
-                    positive_count=positive_count,
-                    negative_count=negative_count,
+                    analyzed_count=1 if summary else 0,
+                    positive_count=summary.positive_count if summary else 0,
+                    negative_count=summary.negative_count if summary else 0,
                     average_rating=first_review.rating,
-                    one_line_summary=cls._first_analysis_value(
-                        analyses, "one_line_summary"
-                    ),
-                    issue=cls._first_analysis_value(analyses, "issue"),
-                    next_action=cls._first_analysis_value(analyses, "next_action"),
-                    location_insight=cls._first_analysis_value(
-                        analyses, "location_insight"
-                    ),
+                    one_line_summary=summary.one_line_summary if summary else "",
+                    issue=summary.issue if summary else "",
+                    next_action=summary.next_action if summary else "",
+                    location_insight=summary.location_insight if summary else "",
                 )
             )
         return insights
+
+    @classmethod
+    def _grouped_reviews_for_summary(
+        cls, target_store: StorePlanningTargetStore, review_scope: str
+    ) -> list[dict]:
+        reviews = list(
+            cls._review_queryset(target_store, review_scope).order_by(
+                "place_name", "-publish_time", "-id"
+            )
+        )
+        grouped_reviews = {}
+        for review in reviews:
+            grouped_reviews.setdefault(review.google_place_id, []).append(review)
+
+        groups = []
+        for place_reviews in list(grouped_reviews.values())[: cls.MAX_PLACE_INSIGHTS]:
+            first_review = place_reviews[0]
+            groups.append(
+                {
+                    "google_place_id": first_review.google_place_id,
+                    "place_name": first_review.place_name,
+                    "rating": first_review.rating,
+                    "review_count": len(place_reviews),
+                    "reviews": [
+                        {
+                            "review_id": review.id,
+                            "author": review.author,
+                            "publish_time": (
+                                review.publish_time.isoformat()
+                                if review.publish_time
+                                else ""
+                            ),
+                            "review_text": review.review_text,
+                        }
+                        for review in place_reviews
+                    ],
+                }
+            )
+        return groups
 
     @staticmethod
     def _first_analysis_value(

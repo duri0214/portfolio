@@ -247,6 +247,85 @@ class StorePlanningGoogleMapsReviewAnalysis(models.Model):
         return f"{self.review.place_name}: {self.sentiment}"
 
 
+class StorePlanningGoogleMapsPlaceSummary(models.Model):
+    """
+    Google Mapsレビュー群を店舗単位に集約したLLM分析サマリー。
+
+    Attributes:
+        target_store: 出店計画の対象店舗候補。
+        target_store_slug: 店舗キー。
+        review_scope: 対象店舗レビューか周辺同業レビューかを分ける種別。
+        google_place_id: Google Maps の Place ID。
+        place_name: レビュー対象施設名。
+        rating: レビュー対象施設の Google Maps rating。
+        review_count: サマリー作成に使った保存済みレビュー件数。
+        positive_count: ポジティブ要因として扱った件数。
+        negative_count: ネガティブ要因として扱った件数。
+        sentiment_score: 店舗全体の評判スコア。
+        one_line_summary: 店舗評判の1行要約。
+        issue: レビュー群から見える課題点。
+        next_action: 店舗が次に取るべき改善アクション。
+        location_insight: 立地に関する示唆。
+        model_name: 分析に使ったLLMモデル名。
+        prompt_version: 分析プロンプトのバージョン。
+        raw_response: LLM応答の保存用JSON。
+        analyzed_at: 分析日時。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    target_store = models.ForeignKey(
+        StorePlanningTargetStore,
+        verbose_name="出店計画対象店舗",
+        on_delete=models.CASCADE,
+        related_name="google_maps_place_summaries",
+    )
+    target_store_slug = models.SlugField(
+        "店舗キー", max_length=100, blank=True, db_index=True
+    )
+    review_scope = models.CharField(
+        "レビュー種別",
+        max_length=50,
+        choices=StorePlanningGoogleMapsReview.ReviewScope,
+        default=StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE,
+        db_index=True,
+    )
+    google_place_id = models.CharField("Google Place ID", max_length=200)
+    place_name = models.CharField("施設名", max_length=255)
+    rating = models.FloatField("Google Maps rating", null=True, blank=True)
+    review_count = models.PositiveIntegerField("保存レビュー数", default=0)
+    positive_count = models.PositiveIntegerField("ポジティブ要因数", default=0)
+    negative_count = models.PositiveIntegerField("ネガティブ要因数", default=0)
+    sentiment_score = models.IntegerField("評判スコア", default=0)
+    one_line_summary = models.CharField("1行要約", max_length=255, blank=True)
+    issue = models.CharField("課題点", max_length=255, blank=True)
+    next_action = models.CharField("ネクストアクション", max_length=255, blank=True)
+    location_insight = models.CharField("立地示唆", max_length=255, blank=True)
+    model_name = models.CharField("LLMモデル名", max_length=100)
+    prompt_version = models.CharField("プロンプトバージョン", max_length=50)
+    raw_response = models.JSONField("LLM応答", default=dict, blank=True)
+    analyzed_at = models.DateTimeField("分析日時", default=timezone.now)
+    created_at = models.DateTimeField("作成日時", default=timezone.now)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["review_scope", "place_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target_store_slug", "review_scope", "google_place_id"],
+                name="unique_store_planning_google_place_summary",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.target_store_slug and self.target_store_id:
+            self.target_store_slug = self.target_store.slug
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.target_store.name}: {self.place_name}"
+
+
 class UserAttribute(models.Model):
     """
     ショッピングアプリ特有のユーザー属性。

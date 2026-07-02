@@ -133,6 +133,34 @@ class StorePlanningReviewAnalysisResult:
 
 
 @dataclass(frozen=True)
+class StorePlanningPlaceSummaryResult:
+    """
+    LLMが店舗単位に集約したGoogle Mapsレビュー分析結果。
+
+    Attributes:
+        google_place_id: Google Maps の Place ID。
+        sentiment_score: 店舗全体の評判スコア。
+        positive_count: ポジティブ要因として扱った件数。
+        negative_count: ネガティブ要因として扱った件数。
+        one_line_summary: 店舗の評判を1行で要約した内容。
+        issue: レビュー群から見える課題点。
+        next_action: 店舗が次に取るべき改善アクション。
+        location_insight: 立地に関する示唆。
+        raw_response: LLM応答の保存用データ。
+    """
+
+    google_place_id: str
+    sentiment_score: int
+    positive_count: int
+    negative_count: int
+    one_line_summary: str
+    issue: str
+    next_action: str
+    location_insight: str
+    raw_response: dict
+
+
+@dataclass(frozen=True)
 class StorePlanningReviewAnalysisFetchResult:
     """
     周辺同業レビューのLLM分析実行結果。

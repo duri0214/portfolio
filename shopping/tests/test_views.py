@@ -11,7 +11,7 @@ from shopping.models import (
     Store,
     StorePlanningDataSourceSnapshot,
     StorePlanningGoogleMapsReview,
-    StorePlanningGoogleMapsReviewAnalysis,
+    StorePlanningGoogleMapsPlaceSummary,
     StorePlanningTargetStore,
 )
 
@@ -216,7 +216,7 @@ class TestView(TestCase):
         シナリオ:
         - 入力: 対象店舗から半径500m以内にあるGoogle Maps施設レビュー。
         - 処理: 出店計画画面をGETする。
-        - 期待値: レビュー概要、3x3グリッド、代表レビューが表示されること。
+        - 期待値: レビュー概要、3x3グリッド、店舗単位の分析サマリーが表示されること。
         """
         StorePlanningGoogleMapsReview.objects.create(
             target_store=StorePlanningTargetStore.objects.get(slug="chapter-table"),
@@ -234,10 +234,13 @@ class TestView(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "Google Maps レビュー")
-        self.assertContains(response, "選択中の店舗候補に紐づく Google Maps レビュー")
+        self.assertContains(
+            response,
+            "選択中の店舗候補と周辺同業店舗の Google Maps レビューを比較する",
+        )
         self.assertContains(response, "レビュー取得")
         self.assertContains(response, "レビュー対象施設")
-        self.assertContains(response, "レビュー数")
+        self.assertContains(response, "保存レビュー数")
         self.assertContains(response, "平均 rating")
         self.assertContains(response, "キーワード件数")
         self.assertContains(response, "1件")
@@ -245,8 +248,8 @@ class TestView(TestCase):
         self.assertContains(response, "北東")
         self.assertContains(response, "score")
         self.assertContains(response, "近隣カフェ")
-        self.assertContains(response, "reviewer")
-        self.assertContains(response, "おいしいランチ")
+        self.assertContains(response, "対象店舗の分析")
+        self.assertContains(response, "分析待ち")
         self.assertNotContains(response, "Google Maps レビューはまだ取得されていません")
 
     def test_store_planning_page_displays_nearby_same_business_reviews(self):
@@ -254,7 +257,7 @@ class TestView(TestCase):
         シナリオ:
         - 入力: 周辺同業店舗のGoogle Mapsレビューが保存済みのDB。
         - 処理: 出店計画画面をGETする。
-        - 期待値: 対象店舗レビューとは別枠で周辺同業店舗の件数とレビューが表示されること。
+        - 期待値: 対象店舗レビューと同じGoogle Mapsレビュー枠で周辺同業店舗の件数とレビューが表示されること。
         """
         target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
         StorePlanningGoogleMapsReview.objects.create(
@@ -276,12 +279,42 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "業態")
         self.assertContains(response, "カフェ")
-        self.assertContains(response, "周辺同業店舗 Google Maps レビュー")
         self.assertContains(response, "周辺同業店舗")
         self.assertContains(response, "近隣同業カフェ")
-        self.assertContains(response, "nearby-reviewer")
+        self.assertContains(response, "分析待ち")
         self.assertContains(response, "周辺同業レビュー取得")
         self.assertContains(response, "レビュー分析")
+        self.assertContains(response, "周辺同業店舗の分析")
+        self.assertContains(response, "分析対象上限")
+        self.assertContains(response, "10店舗")
+
+    def test_store_planning_page_distinguishes_target_reviews_from_missing_nearby_reviews(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: 対象店舗レビューだけが保存済みで、周辺同業レビューは未保存のDB。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: 対象店舗レビュー取得済みと周辺同業レビュー未取得を混同せず、別途取得が必要だと表示されること。
+        """
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=StorePlanningTargetStore.objects.get(slug="chapter-table"),
+            google_place_id="target-place-1",
+            place_name="Chapter Table",
+            latitude=35.792822,
+            longitude=139.8143238,
+            rating=4.0,
+            author="target-reviewer",
+            review_text="対象店舗のレビューです。",
+            publish_time=timezone.now(),
+        )
+
+        response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "対象店舗レビューは取得済みですが")
+        self.assertContains(response, "周辺同業店舗レビューはまだ取得されていません")
+        self.assertContains(response, "周辺同業レビュー取得")
 
     def test_store_planning_page_displays_nearby_same_business_place_insights(self):
         """
@@ -304,9 +337,16 @@ class TestView(TestCase):
             review_text="雰囲気は良いが席が狭いです。",
             publish_time=timezone.now(),
         )
-        StorePlanningGoogleMapsReviewAnalysis.objects.create(
-            review=review,
-            sentiment=StorePlanningGoogleMapsReviewAnalysis.Sentiment.NEGATIVE,
+        StorePlanningGoogleMapsPlaceSummary.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id=review.google_place_id,
+            place_name=review.place_name,
+            rating=review.rating,
+            review_count=1,
+            positive_count=0,
+            negative_count=1,
             sentiment_score=-40,
             one_line_summary="雰囲気は良いが席の狭さが課題。",
             issue="席が狭い",
@@ -411,9 +451,36 @@ class TestView(TestCase):
         self.assertEqual("dummy-key", kwargs["api_key"])
         self.assertEqual("chapter-table", kwargs["target_location"].slug)
 
-    @patch(
-        "shopping.views.StorePlanningReviewService.analyze_nearby_same_business_reviews"
-    )
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_post_store_planning_fetch_reviews_shows_skipped_message(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーでレビュー取得POSTを送り、保存済みレビューがある状態。
+        - 処理: 出店計画画面へ戻る。
+        - 期待値: API呼び出し成功ではなく、保存済みのためAPIを省略したことが表示されること。
+        """
+        mock_fetch_reviews.return_value.place_count = 1
+        mock_fetch_reviews.return_value.review_count = 5
+        mock_fetch_reviews.return_value.skipped = True
+        mock_fetch_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews"},
+                follow=True,
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(
+            response,
+            "Google Maps レビューは取得済みのためAPI呼び出しを省略しました。",
+        )
+        self.assertContains(response, "施設数: 1件 / 保存レビュー数: 5件")
+
+    @patch("shopping.views.StorePlanningReviewService.analyze_all_reviews")
     def test_post_store_planning_analyzes_nearby_same_business_reviews_for_superuser(
         self, mock_analyze_reviews
     ):
@@ -471,7 +538,7 @@ class TestView(TestCase):
             response,
             "Google Maps レビュー取得を実行しましたが、レビューは見つかりませんでした。",
         )
-        self.assertContains(response, "取得施設数: 1件 / レビュー数: 0件")
+        self.assertContains(response, "取得施設数: 1件 / 保存レビュー数: 0件")
 
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_fetch_reviews_shows_fetch_error_message(

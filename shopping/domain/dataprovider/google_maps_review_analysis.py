@@ -4,6 +4,7 @@ from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.config import OpenAIGptConfig
 from shopping.domain.valueobject.store_planning_reviews import (
+    StorePlanningPlaceSummaryResult,
     StorePlanningReviewAnalysisResult,
 )
 
@@ -40,6 +41,31 @@ class GoogleMapsReviewAnalysisClient:
         result = self.service.retrieve_answer(messages, max_messages=2)
         return self._parse_results(result.answer)
 
+    def analyze_place_summaries(
+        self, place_review_groups: list[dict]
+    ) -> list[StorePlanningPlaceSummaryResult]:
+        """
+        店舗ごとのレビュー群を分析し、店舗単位のサマリー結果に変換する。
+        """
+        if not place_review_groups:
+            return []
+
+        messages = [
+            Message(
+                role=RoleType.SYSTEM,
+                content=(
+                    "あなたは出店計画のためにGoogle Mapsレビューを店舗単位で分析する専門家です。"
+                    "回答はJSON配列だけにしてください。"
+                ),
+            ),
+            Message(
+                role=RoleType.USER,
+                content=self._place_summary_prompt(place_review_groups),
+            ),
+        ]
+        result = self.service.retrieve_answer(messages, max_messages=2)
+        return self._parse_place_summary_results(result.answer)
+
     def _prompt(self, reviews: list) -> str:
         review_lines = []
         for review in reviews:
@@ -64,6 +90,22 @@ class GoogleMapsReviewAnalysisClient:
             f"レビュー: {review_json}"
         )
 
+    def _place_summary_prompt(self, place_review_groups: list[dict]) -> str:
+        place_json = json.dumps(place_review_groups, ensure_ascii=False)
+        return (
+            "次のGoogle Mapsレビューを店舗単位で集約分析してください。\n"
+            "各店舗について、レビュー群のポジティブ要因とネガティブ要因を比較し、"
+            "店舗として何が評価され、何が課題になるかを抽出してください。\n"
+            "sentiment_score は店舗全体の評判を -100 から 100 の整数にしてください。\n"
+            "positive_count と negative_count はレビュー群の中で主要因として扱った件数にしてください。\n"
+            "one_line_summary は店舗評判の1文要約、issue は課題点、"
+            "next_action は店舗が次に取るべき改善アクション、"
+            "location_insight は立地に関する示唆を書いてください。\n"
+            "JSON配列の各要素は google_place_id, sentiment_score, positive_count, "
+            "negative_count, one_line_summary, issue, next_action, location_insight を含めてください。\n"
+            f"店舗別レビュー: {place_json}"
+        )
+
     @staticmethod
     def _parse_results(answer: str) -> list[StorePlanningReviewAnalysisResult]:
         try:
@@ -83,6 +125,36 @@ class GoogleMapsReviewAnalysisClient:
                     review_id=int(item["review_id"]),
                     sentiment=item.get("sentiment") or "neutral",
                     sentiment_score=int(sentiment_score),
+                    one_line_summary=item.get("one_line_summary") or "",
+                    issue=item.get("issue") or "",
+                    next_action=item.get("next_action") or "",
+                    location_insight=item.get("location_insight") or "",
+                    raw_response=item,
+                )
+            )
+        return results
+
+    @staticmethod
+    def _parse_place_summary_results(
+        answer: str,
+    ) -> list[StorePlanningPlaceSummaryResult]:
+        try:
+            raw_items = json.loads(answer)
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(raw_items, list):
+            return []
+
+        results = []
+        for item in raw_items:
+            if not isinstance(item, dict) or "google_place_id" not in item:
+                continue
+            results.append(
+                StorePlanningPlaceSummaryResult(
+                    google_place_id=str(item["google_place_id"]),
+                    sentiment_score=int(item.get("sentiment_score") or 0),
+                    positive_count=int(item.get("positive_count") or 0),
+                    negative_count=int(item.get("negative_count") or 0),
                     one_line_summary=item.get("one_line_summary") or "",
                     issue=item.get("issue") or "",
                     next_action=item.get("next_action") or "",
