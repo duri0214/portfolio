@@ -481,17 +481,15 @@
                                     <table class="table table-sm align-middle mb-0 store-planning-review-comparison-table">
                                         <colgroup>
                                             <col style="width: 7%">
-                                            <col style="width: 17%">
-                                            <col style="width: 19%">
-                                            <col style="width: 19%">
-                                            <col style="width: 19%">
-                                            <col style="width: 19%">
+                                            <col style="width: 21%">
+                                            <col style="width: 24%">
+                                            <col style="width: 24%">
+                                            <col style="width: 24%">
                                         </colgroup>
                                         <thead>
                                         <tr>
                                             <th>区分</th>
                                             <th>施設</th>
-                                            <th>評判キャッチ</th>
                                             <th>強み</th>
                                             <th>弱み</th>
                                             <th>立地示唆</th>
@@ -517,7 +515,6 @@
                                                         <span class="text-danger">ネガ {{ row.insight.negative_count|intcomma }}</span>
                                                     </div>
                                                 </td>
-                                                <td>{{ row.insight.one_line_summary|default:"分析待ち" }}</td>
                                                 <td>{{ row.insight.strength|default:"-"|simple_markdown }}</td>
                                                 <td>{{ row.insight.weakness|default:"-"|simple_markdown }}</td>
                                                 <td>{{ row.insight.location_insight|default:"-"|simple_markdown }}</td>
@@ -598,7 +595,8 @@
             const reviewTasks = [
                 {action: "fetch_google_maps_reviews", label: "対象店舗レビュー取得"},
                 {action: "fetch_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー取得"},
-                {action: "analyze_google_maps_nearby_same_business_reviews", label: "レビュー分析"},
+                {action: "analyze_google_maps_target_reviews", label: "対象店舗レビュー分析"},
+                {action: "analyze_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー分析"},
             ];
             const setProgress = (text) => {
                 progressBox.textContent = text;
@@ -700,7 +698,9 @@
                         },
                     );
                     const infoWindow = new google.maps.InfoWindow();
+                    const bounds = new google.maps.LatLngBounds();
                     mapData.places.forEach((place) => {
+                        bounds.extend(place.location);
                         const pin = new google.maps.marker.PinElement({
                             background: place.pin_color,
                             borderColor: "#ffffff",
@@ -725,6 +725,11 @@
                             infoWindow.open({anchor: marker, map});
                         });
                     });
+                    if (mapData.places.length > 1) {
+                        map.fitBounds(bounds);
+                    } else {
+                        map.setZoom(14);
+                    }
                 });
             };
         </script>

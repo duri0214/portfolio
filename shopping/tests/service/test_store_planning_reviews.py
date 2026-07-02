@@ -576,6 +576,63 @@ class StorePlanningReviewServiceTest(TestCase):
         self.assertEqual("近隣カフェ", insights[0].place_name)
         self.assertEqual("席が狭い", insights[0].issue)
 
+    def test_analyze_nearby_same_business_reviews_saves_fallback_when_llm_omits_place(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: 未分析の周辺同業レビューが保存済みで、LLM分析結果が空のDB。
+        - 処理: 周辺同業レビュー分析サービスを実行する。
+        - 期待値: LLMが店舗を返さなくても、分析待ちに残さないためのフォールバックサマリーを保存すること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-omitted-place",
+            place_name="近隣ビアバー",
+            latitude=35.7930,
+            longitude=139.8147,
+            rating=4.1,
+            author="nearby-reviewer",
+            review_text="親切で美味しいクラフトビールを楽しめました。",
+        )
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+            business_type_label="カフェ",
+            business_search_query="カフェ",
+        )
+
+        with patch(
+            "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.model_name = "gpt-5-mini"
+            mock_client.PROMPT_VERSION = "test-prompt"
+            mock_client.analyze_place_summaries.return_value = []
+
+            result = StorePlanningReviewService.analyze_nearby_same_business_reviews(
+                api_key="dummy-key",
+                target_location=target_location,
+            )
+
+        self.assertEqual(1, result.analyzed_count)
+        summary = StorePlanningGoogleMapsPlaceSummary.objects.get(
+            google_place_id="nearby-omitted-place",
+            review_scope=StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
+        )
+        self.assertEqual("近隣ビアバー", summary.place_name)
+        self.assertEqual(1, summary.positive_count)
+        self.assertTrue(summary.raw_response["fallback"])
+
     def test_build_place_insights_limits_nearby_same_business_places_to_ten(self):
         """
         シナリオ:

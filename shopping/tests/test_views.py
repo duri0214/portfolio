@@ -253,7 +253,7 @@ class TestView(TestCase):
         self.assertContains(response, "ポジ 1")
         self.assertContains(response, "近隣カフェ")
         self.assertContains(response, "店舗レビュー比較")
-        self.assertContains(response, "評判キャッチ")
+        self.assertContains(response, "fitBounds")
         self.assertContains(response, "強み")
         self.assertContains(response, "弱み")
         self.assertContains(response, "分析待ち")
@@ -294,6 +294,8 @@ class TestView(TestCase):
         self.assertContains(response, "レビュー取得・分析")
         self.assertContains(response, "店舗レビュー比較")
         self.assertContains(response, "周辺同業")
+        self.assertContains(response, "対象店舗レビュー分析")
+        self.assertContains(response, "周辺同業レビュー分析")
         self.assertContains(response, "query_place_id=nearby-place-1")
         self.assertContains(response, "X-CSRFToken")
         self.assertContains(response, "POST先が見つかりませんでした")
@@ -336,7 +338,7 @@ class TestView(TestCase):
         シナリオ:
         - 入力: 周辺同業レビューと、その子テーブルに保存済みのLLM分析結果。
         - 処理: 出店計画画面をGETする。
-        - 期待値: 周辺同業店舗ごとの評判キャッチと課題点が別列で表示されること。
+        - 期待値: 周辺同業店舗ごとの強みと課題点が別列で表示されること。
         """
         target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
         review = StorePlanningGoogleMapsReview.objects.create(
@@ -374,7 +376,8 @@ class TestView(TestCase):
             response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, "評判キャッチ")
+        self.assertNotContains(response, "評判キャッチ")
+        self.assertContains(response, "強み")
         self.assertContains(response, "弱み")
         self.assertContains(response, "落ち着いた雰囲気が評価されている。")
         self.assertContains(response, "席が狭い")
@@ -533,7 +536,7 @@ class TestView(TestCase):
         )
         self.assertContains(response, "施設数: 1件 / 保存レビュー数: 5件")
 
-    @patch("shopping.views.StorePlanningReviewService.analyze_all_reviews")
+    @patch("shopping.views.StorePlanningReviewService.analyze_place_summaries")
     def test_post_store_planning_analyzes_nearby_same_business_reviews_for_superuser(
         self, mock_analyze_reviews
     ):
@@ -563,6 +566,39 @@ class TestView(TestCase):
         kwargs = mock_analyze_reviews.call_args.kwargs
         self.assertEqual("dummy-openai-key", kwargs["api_key"])
         self.assertEqual("chapter-table", kwargs["target_location"].slug)
+        self.assertEqual("nearby_same_business", kwargs["review_scope"])
+
+    @patch("shopping.views.StorePlanningReviewService.analyze_place_summaries")
+    def test_post_store_planning_analyzes_target_reviews_for_superuser(
+        self, mock_analyze_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーで対象店舗レビュー分析POSTを送る。
+        - 処理: 対象店舗のレビュー分析サービスを実行する。
+        - 期待値: 対象店舗scopeを指定してレビュー分析サービスへ渡すこと。
+        """
+        mock_analyze_reviews.return_value.analyzed_count = 1
+        mock_analyze_reviews.return_value.positive_count = 1
+        mock_analyze_reviews.return_value.negative_count = 0
+        mock_analyze_reviews.return_value.skipped = False
+        mock_analyze_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "dummy-openai-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "analyze_google_maps_target_reviews"},
+            )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            fetch_redirect_response=False,
+        )
+        kwargs = mock_analyze_reviews.call_args.kwargs
+        self.assertEqual("dummy-openai-key", kwargs["api_key"])
+        self.assertEqual("chapter-table", kwargs["target_location"].slug)
+        self.assertEqual("target_store", kwargs["review_scope"])
 
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_fetch_reviews_shows_empty_result_message(

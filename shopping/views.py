@@ -260,6 +260,7 @@ class StorePlanningView(TemplateView):
             "fetch_and_analyze_google_maps_reviews",
             "fetch_google_maps_reviews",
             "fetch_google_maps_nearby_same_business_reviews",
+            "analyze_google_maps_target_reviews",
             "analyze_google_maps_nearby_same_business_reviews",
         }
         if action not in allowed_actions:
@@ -305,9 +306,18 @@ class StorePlanningView(TemplateView):
                 request, selected_location
             )
 
+        if action == "analyze_google_maps_target_reviews":
+            return self._analyze_reviews(
+                request,
+                selected_location,
+                StorePlanningReviewService.TARGET_STORE_SCOPE,
+            )
+
         if action == "analyze_google_maps_nearby_same_business_reviews":
-            return self._analyze_nearby_same_business_reviews(
-                request, selected_location
+            return self._analyze_reviews(
+                request,
+                selected_location,
+                StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
             )
 
         api_key = os.getenv("GOOGLE_MAPS_BE_API_KEY")
@@ -560,8 +570,11 @@ class StorePlanningView(TemplateView):
                 ),
             )
 
-    def _analyze_nearby_same_business_reviews(
-        self, request, selected_location: StorePlanningTargetLocation
+    def _analyze_reviews(
+        self,
+        request,
+        selected_location: StorePlanningTargetLocation,
+        review_scope: str,
     ) -> HttpResponseRedirect:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -581,9 +594,10 @@ class StorePlanningView(TemplateView):
                 self._store_planning_url(selected_location.slug)
             )
 
-        analysis_result = StorePlanningReviewService.analyze_all_reviews(
+        analysis_result = StorePlanningReviewService.analyze_place_summaries(
             api_key=api_key,
             target_location=selected_location,
+            review_scope=review_scope,
         )
         if self._wants_json(request):
             return self._analysis_result_json(analysis_result)
