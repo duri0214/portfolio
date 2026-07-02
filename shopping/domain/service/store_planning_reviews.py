@@ -665,6 +665,7 @@ class StorePlanningReviewService:
                     positive_count=summary.positive_count if summary else 0,
                     negative_count=summary.negative_count if summary else 0,
                     average_rating=first_review.rating,
+                    google_maps_url=cls._review_google_maps_url(first_review),
                     one_line_summary=summary.one_line_summary if summary else "",
                     strength=summary.one_line_summary if summary else "",
                     weakness=summary.issue if summary else "",
@@ -699,6 +700,7 @@ class StorePlanningReviewService:
                 "pin_color": "#0d6efd",
                 "rating": None,
                 "review_count": 0,
+                "google_maps_url": target_location.google_maps_url,
                 "location": {
                     "lat": target_location.latitude,
                     "lng": target_location.longitude,
@@ -706,7 +708,9 @@ class StorePlanningReviewService:
             }
         ]
         grouped_reviews = {}
-        for review in cls._review_queryset(target_store, None):
+        for review in cls._review_queryset(
+            target_store, cls.NEARBY_SAME_BUSINESS_SCOPE
+        ):
             distance_meter = cls._distance_meter(
                 target_location.latitude,
                 target_location.longitude,
@@ -719,24 +723,15 @@ class StorePlanningReviewService:
 
         for place_reviews in grouped_reviews.values():
             first_review = place_reviews[0]
-            scope_label = (
-                "対象店舗"
-                if first_review.review_scope == cls.TARGET_STORE_SCOPE
-                else "周辺同業"
-            )
-            pin_color = (
-                "#0d6efd"
-                if first_review.review_scope == cls.TARGET_STORE_SCOPE
-                else "#dc3545"
-            )
             places.append(
                 {
                     "place_id": first_review.google_place_id,
                     "name": first_review.place_name,
-                    "scope_label": scope_label,
-                    "pin_color": pin_color,
+                    "scope_label": "周辺同業",
+                    "pin_color": "#dc3545",
                     "rating": first_review.rating,
                     "review_count": len(place_reviews),
+                    "google_maps_url": cls._review_google_maps_url(first_review),
                     "location": {
                         "lat": first_review.latitude,
                         "lng": first_review.longitude,
@@ -744,6 +739,12 @@ class StorePlanningReviewService:
                 }
             )
         return places
+
+    @staticmethod
+    def _review_google_maps_url(review: StorePlanningGoogleMapsReview) -> str:
+        if review.google_maps_uri:
+            return review.google_maps_uri
+        return f"https://www.google.com/maps?q={review.latitude},{review.longitude}"
 
     @classmethod
     def _grouped_reviews_for_summary(

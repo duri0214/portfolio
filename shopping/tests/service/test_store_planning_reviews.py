@@ -597,6 +597,64 @@ class StorePlanningReviewServiceTest(TestCase):
         self.assertEqual("近隣カフェ00", insights[0].place_name)
         self.assertEqual("近隣カフェ09", insights[-1].place_name)
 
+    def test_build_review_map_places_uses_single_target_pin_and_nearby_pins(self):
+        """
+        シナリオ:
+        - 入力: 対象店舗レビューと周辺同業レビューが保存済みのDB。
+        - 処理: レビュー取得店舗マップ用データを作成する。
+        - 期待値: 対象店舗ピンは対象地点の1件だけになり、レビュー由来ピンは周辺同業だけになること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE,
+            google_place_id="target-review-place",
+            place_name="Chapter Table Reviews",
+            latitude=35.792822,
+            longitude=139.8143238,
+            rating=4.0,
+            author="target-reviewer",
+            review_text="対象店舗のレビューです。",
+        )
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-place",
+            place_name="近隣カフェ",
+            latitude=35.7930,
+            longitude=139.8147,
+            rating=4.1,
+            author="nearby-reviewer",
+            review_text="近くで使いやすいカフェでした。",
+            google_maps_uri="https://maps.google.com/nearby-place",
+        )
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+            business_type_label="カフェ",
+            business_search_query="カフェ",
+        )
+
+        map_places = StorePlanningReviewService.build_review_map_places(target_location)
+
+        self.assertEqual(2, len(map_places))
+        self.assertEqual("Chapter Table", map_places[0]["name"])
+        self.assertEqual("対象店舗", map_places[0]["scope_label"])
+        self.assertEqual("近隣カフェ", map_places[1]["name"])
+        self.assertEqual("周辺同業", map_places[1]["scope_label"])
+        self.assertEqual(
+            "https://maps.google.com/nearby-place",
+            map_places[1]["google_maps_url"],
+        )
+
     def test_analyze_all_reviews_saves_one_target_and_ten_nearby_place_summaries(
         self,
     ):

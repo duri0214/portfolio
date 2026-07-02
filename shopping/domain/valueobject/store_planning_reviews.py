@@ -192,6 +192,7 @@ class StorePlanningPlaceInsight:
         positive_count: ポジティブ分類件数。
         negative_count: ネガティブ分類件数。
         average_rating: 施設rating。
+        google_maps_url: 施設をGoogle Mapsで確認するためのURL。
         one_line_summary: 店舗の評判を1行に圧縮した要約。
         strength: レビューから見える強み。
         weakness: レビューから見える弱み。
@@ -206,6 +207,7 @@ class StorePlanningPlaceInsight:
     positive_count: int
     negative_count: int
     average_rating: float | None
+    google_maps_url: str
     one_line_summary: str
     strength: str
     weakness: str

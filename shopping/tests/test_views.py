@@ -279,6 +279,7 @@ class TestView(TestCase):
             author="nearby-reviewer",
             review_text="近くの同業店レビューです。",
             publish_time=timezone.now(),
+            google_maps_uri="https://maps.google.com/nearby-place-1",
         )
 
         with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
@@ -293,6 +294,7 @@ class TestView(TestCase):
         self.assertContains(response, "レビュー取得・分析")
         self.assertContains(response, "店舗レビュー比較")
         self.assertContains(response, "周辺同業")
+        self.assertContains(response, "https://maps.google.com/nearby-place-1")
 
     def test_store_planning_page_distinguishes_target_reviews_from_missing_nearby_reviews(
         self,

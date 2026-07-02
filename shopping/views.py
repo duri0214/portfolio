@@ -246,7 +246,7 @@ class StorePlanningView(TemplateView):
             ensure_ascii=False,
         )
         context["google_maps_fe_api_key"] = os.getenv("GOOGLE_MAPS_FE_API_KEY")
-        context["has_review_map_places"] = len(review_map_places) > 1
+        context["has_review_map_places"] = bool(review_map_places)
         context["has_any_google_maps_reviews"] = (
             context["review_summary"].total_review_count
             + context["nearby_same_business_review_summary"].total_review_count

@@ -483,8 +483,12 @@
                                                     <div class="fw-semibold">{{ row.insight.place_name }}</div>
                                                     <div class="small text-muted">
                                                         rating {{ row.insight.average_rating|default:"-" }} /
-                                                        レビュー {{ row.insight.review_count|intcomma }}件 /
-                                                        分析 {{ row.insight.analyzed_count|intcomma }}件
+                                                        <a href="{{ row.insight.google_maps_url }}" target="_blank" rel="noopener">Google Maps</a>
+                                                        {% if row.insight.analyzed_count %}
+                                                            / 分析済み
+                                                        {% else %}
+                                                            / 分析待ち
+                                                        {% endif %}
                                                     </div>
                                                     <div class="small">
                                                         <span class="text-success">ポジ {{ row.insight.positive_count|intcomma }}</span> /
@@ -664,7 +668,7 @@
                                     <div><strong>${place.name}</strong></div>
                                     <div>${place.scope_label}</div>
                                     <div>rating ${place.rating ?? "-"}</div>
-                                    <div>レビュー ${place.review_count}件</div>
+                                    <div><a href="${place.google_maps_url}" target="_blank" rel="noopener">Google Maps</a></div>
                                 </div>
                             `);
                             infoWindow.open({anchor: marker, map});
