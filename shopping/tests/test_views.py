@@ -295,6 +295,8 @@ class TestView(TestCase):
         self.assertContains(response, "店舗レビュー比較")
         self.assertContains(response, "周辺同業")
         self.assertContains(response, "query_place_id=nearby-place-1")
+        self.assertContains(response, "X-CSRFToken")
+        self.assertContains(response, "HTMLエラーページが返りました")
 
     def test_store_planning_page_distinguishes_target_reviews_from_missing_nearby_reviews(
         self,

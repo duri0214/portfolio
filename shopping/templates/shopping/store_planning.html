@@ -614,6 +614,20 @@
                 line.textContent = text;
                 progressBox.appendChild(line);
             };
+            const parseJsonResponse = async (response, label) => {
+                const contentType = response.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                    return response.json();
+                }
+                const responseText = await response.text();
+                const detail = responseText.trim().startsWith("<!DOCTYPE")
+                    ? "HTMLエラーページが返りました。ログイン状態またはCSRFトークンを確認してください。"
+                    : responseText.trim().slice(0, 120);
+                return {
+                    ok: false,
+                    message: `${label}に失敗しました。HTTP ${response.status}: ${detail}`,
+                };
+            };
             reviewForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 const hasExistingReviews = reviewForm.dataset.hasExistingReviews === "1";
@@ -634,10 +648,13 @@
                         }
                         const response = await fetch(reviewForm.action, {
                             method: "POST",
-                            headers: {"X-Requested-With": "XMLHttpRequest"},
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest",
+                                "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+                            },
                             body: formData,
                         });
-                        const result = await response.json();
+                        const result = await parseJsonResponse(response, task.label);
                         if (!response.ok || !result.ok) {
                             throw new Error(result.message || `${task.label}に失敗しました。`);
                         }
