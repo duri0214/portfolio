@@ -1,5 +1,6 @@
 {% extends 'shopping/base.html' %}
 {% load humanize %}
+{% load simple_markdown %}
 
 {% block content %}
     <div class="container mt-4">
@@ -56,7 +57,6 @@
                         <dt class="col-sm-3">業態</dt>
                         <dd class="col-sm-9">
                             {{ target_location.business_type_label }}
-                            <span class="text-muted small">（検索語: {{ target_location.business_search_query }}）</span>
                         </dd>
                         <dt class="col-sm-3">Google Maps操作</dt>
                         <dd class="col-sm-9">
@@ -390,121 +390,112 @@
                             </p>
                         </div>
                         <div class="d-flex flex-column flex-sm-row gap-2 align-self-md-start">
-                            <span class="badge text-bg-light align-self-sm-center">対象店舗</span>
-                            <form method="post" action="{% url 'shp:store_planning' %}?store={{ target_location.slug }}">
+                            <form id="store-planning-review-form" method="post" action="{% url 'shp:store_planning' %}?store={{ target_location.slug }}"
+                                  data-has-existing-reviews="{% if has_any_google_maps_reviews %}1{% else %}0{% endif %}">
                                 {% csrf_token %}
-                                <input type="hidden" name="action" value="fetch_google_maps_reviews">
+                                <input type="hidden" name="action" value="fetch_and_analyze_google_maps_reviews">
                                 {% if can_use_google_maps %}
-                                    <button class="btn btn-sm btn-outline-primary" type="submit">
-                                        レビュー取得
+                                    <button id="store-planning-review-run-button" class="btn btn-sm btn-outline-primary" type="submit">
+                                        レビュー取得・分析
                                     </button>
                                 {% else %}
                                     <button class="btn btn-sm btn-outline-secondary" type="button" disabled>
-                                        レビュー取得
-                                    </button>
-                                {% endif %}
-                            </form>
-                            <span class="badge text-bg-light align-self-sm-center">{{ target_location.business_type_label }}</span>
-                            <form method="post" action="{% url 'shp:store_planning' %}?store={{ target_location.slug }}">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="fetch_google_maps_nearby_same_business_reviews">
-                                {% if can_use_google_maps %}
-                                    <button class="btn btn-sm btn-outline-primary" type="submit">
-                                        周辺同業レビュー取得
-                                    </button>
-                                {% else %}
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" disabled>
-                                        周辺同業レビュー取得
-                                    </button>
-                                {% endif %}
-                            </form>
-                            <form method="post" action="{% url 'shp:store_planning' %}?store={{ target_location.slug }}">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="analyze_google_maps_nearby_same_business_reviews">
-                                {% if can_use_google_maps %}
-                                    <button class="btn btn-sm btn-outline-success" type="submit">
-                                        レビュー分析
-                                    </button>
-                                {% else %}
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" disabled>
-                                        レビュー分析
+                                        レビュー取得・分析
                                     </button>
                                 {% endif %}
                             </form>
                         </div>
                     </div>
+                    <div id="store-planning-review-progress" class="alert alert-info d-none" role="status" aria-live="polite"></div>
                     <div class="row g-3 mb-3">
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
                                 <div class="small text-muted">レビュー対象施設</div>
-                                <div class="fs-5 fw-semibold">{{ review_summary.total_place_count|intcomma }}件</div>
+                                <div class="fs-5 fw-semibold">{{ combined_review_summary.total_place_count|intcomma }}件</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
                                 <div class="small text-muted">保存レビュー数</div>
-                                <div class="fs-5 fw-semibold">{{ review_summary.total_review_count|intcomma }}件</div>
+                                <div class="fs-5 fw-semibold">{{ combined_review_summary.total_review_count|intcomma }}件</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
                                 <div class="small text-muted">平均 rating</div>
-                                <div class="fs-5 fw-semibold">{{ review_summary.average_rating|default:"-" }}</div>
+                                <div class="fs-5 fw-semibold">{{ combined_review_summary.average_rating|default:"-" }}</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
-                                <div class="small text-muted">キーワード件数</div>
-                                <div class="fs-5 fw-semibold">{{ review_summary.positive_count|intcomma }} / {{ review_summary.negative_count|intcomma }}</div>
+                                <div class="small text-muted">ポジ / ネガ</div>
+                                <div class="fs-5 fw-semibold">
+                                    <span class="text-success">ポジ {{ combined_review_summary.positive_count|intcomma }}</span> /
+                                    <span class="text-danger">ネガ {{ combined_review_summary.negative_count|intcomma }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="row g-3">
                         <div class="col-lg-5">
                             <div class="d-grid gap-2" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
-                                {% for cell in review_summary.cells %}
+                                {% for cell in combined_review_summary.cells %}
                                     <div class="border rounded p-2 text-center"
                                          style="min-height: 96px; background-color: {{ cell.background_color }}; color: {{ cell.text_color }};">
                                         <div class="small fw-semibold">{{ cell.label }}</div>
                                         <div class="fs-5 fw-semibold">{{ cell.review_count }}</div>
                                         <div class="small">rating {{ cell.average_rating|default:"-" }}</div>
-                                        <div class="small">score {{ cell.score }}</div>
+                                        <div class="small">
+                                            <span class="text-success">ポジ {{ cell.positive_count }}</span> /
+                                            <span class="text-danger">ネガ {{ cell.negative_count }}</span>
+                                        </div>
                                     </div>
                                 {% endfor %}
                             </div>
                         </div>
                         <div class="col-lg-7">
-                            <h3 class="h6 mb-3">対象店舗の分析</h3>
-                            {% if target_place_insights %}
+                            <h3 class="h6 mb-3">店舗レビュー比較</h3>
+                            {% if combined_place_insights %}
                                 <div class="table-responsive">
                                     <table class="table table-sm align-middle mb-0">
                                         <thead>
                                         <tr>
+                                            <th>区分</th>
                                             <th>施設</th>
-                                            <th>1行インサイト</th>
-                                            <th>課題点</th>
+                                            <th>評判キャッチ</th>
+                                            <th>強み</th>
+                                            <th>弱み</th>
                                             <th>ネクストアクション</th>
                                             <th>立地示唆</th>
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {% for insight in target_place_insights %}
+                                        {% for row in combined_place_insights %}
                                             <tr>
+                                                <td><span class="badge {{ row.scope_class }}">{{ row.scope_label }}</span></td>
                                                 <td class="text-nowrap">
-                                                    <div class="fw-semibold">{{ insight.place_name }}</div>
+                                                    <div class="fw-semibold">{{ row.insight.place_name }}</div>
                                                     <div class="small text-muted">
-                                                        rating {{ insight.average_rating|default:"-" }} /
-                                                        レビュー {{ insight.review_count|intcomma }}件 /
-                                                        分析 {{ insight.analyzed_count|intcomma }}件
+                                                        rating {{ row.insight.average_rating|default:"-" }} /
+                                                        レビュー {{ row.insight.review_count|intcomma }}件 /
+                                                        分析 {{ row.insight.analyzed_count|intcomma }}件
                                                     </div>
-                                                    <div class="small text-muted">
-                                                        ポジ {{ insight.positive_count|intcomma }} / ネガ {{ insight.negative_count|intcomma }}
+                                                    <div class="small">
+                                                        <span class="text-success">ポジ {{ row.insight.positive_count|intcomma }}</span> /
+                                                        <span class="text-danger">ネガ {{ row.insight.negative_count|intcomma }}</span>
                                                     </div>
                                                 </td>
-                                                <td>{{ insight.one_line_summary|default:"分析待ち" }}</td>
-                                                <td>{{ insight.issue|default:"-" }}</td>
-                                                <td>{{ insight.next_action|default:"-" }}</td>
-                                                <td>{{ insight.location_insight|default:"-" }}</td>
+                                                <td>{{ row.insight.one_line_summary|default:"分析待ち" }}</td>
+                                                <td>{{ row.insight.strength|default:"-"|simple_markdown }}</td>
+                                                <td>{{ row.insight.weakness|default:"-"|simple_markdown }}</td>
+                                                <td>
+                                                    {% if row.show_next_action %}
+                                                        {{ row.insight.next_action|default:"-"|simple_markdown }}
+                                                    {% else %}
+                                                        <span class="text-muted">対象店舗のみ</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ row.insight.location_insight|default:"-"|simple_markdown }}</td>
                                             </tr>
                                         {% endfor %}
                                         </tbody>
@@ -512,8 +503,8 @@
                                 </div>
                             {% else %}
                                 <div class="alert alert-warning mb-0">
-                                    選択中の店舗候補の Google Maps レビューはまだ取得されていません。
-                                    スーパーユーザーでログインしている場合は「レビュー取得」から最新のレビューを取得できます。
+                                    選択中の店舗候補と周辺同業店舗の Google Maps レビューはまだ取得されていません。
+                                    スーパーユーザーでログインしている場合は「レビュー取得・分析」から最新のレビューを取得できます。
                                 </div>
                             {% endif %}
                         </div>
@@ -521,75 +512,7 @@
                     {% if review_summary.latest_reviews and not nearby_same_business_review_summary.latest_reviews %}
                         <div class="alert alert-warning mt-3 mb-0">
                             対象店舗レビューは取得済みですが、周辺同業店舗レビューはまだ取得されていません。
-                            「周辺同業レビュー取得」から別途取得してください。
-                        </div>
-                    {% endif %}
-                    <hr class="my-4">
-                    <div class="row g-3 mb-4">
-                        <div class="col-6 col-md-3">
-                            <div class="border rounded p-3 h-100">
-                                <div class="small text-muted">周辺同業店舗</div>
-                                <div class="fs-5 fw-semibold">{{ nearby_same_business_review_summary.total_place_count|intcomma }}件</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="border rounded p-3 h-100">
-                                <div class="small text-muted">同業保存レビュー数</div>
-                                <div class="fs-5 fw-semibold">{{ nearby_same_business_review_summary.total_review_count|intcomma }}件</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="border rounded p-3 h-100">
-                                <div class="small text-muted">同業平均 rating</div>
-                                <div class="fs-5 fw-semibold">{{ nearby_same_business_review_summary.average_rating|default:"-" }}</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="border rounded p-3 h-100">
-                                <div class="small text-muted">分析対象上限</div>
-                                <div class="fs-5 fw-semibold">10店舗</div>
-                            </div>
-                        </div>
-                    </div>
-                    <h3 class="h6 mb-3">周辺同業店舗の分析</h3>
-                    {% if nearby_same_business_place_insights %}
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle">
-                                <thead>
-                                <tr>
-                                    <th>周辺同業店舗</th>
-                                    <th>1行インサイト</th>
-                                    <th>課題点</th>
-                                    <th>ネクストアクション</th>
-                                    <th>立地示唆</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for insight in nearby_same_business_place_insights %}
-                                    <tr>
-                                        <td class="text-nowrap">
-                                            <div class="fw-semibold">{{ insight.place_name }}</div>
-                                            <div class="small text-muted">
-                                                rating {{ insight.average_rating|default:"-" }} /
-                                                レビュー {{ insight.review_count|intcomma }}件 /
-                                                分析 {{ insight.analyzed_count|intcomma }}件
-                                            </div>
-                                            <div class="small text-muted">
-                                                ポジ {{ insight.positive_count|intcomma }} / ネガ {{ insight.negative_count|intcomma }}
-                                            </div>
-                                        </td>
-                                        <td>{{ insight.one_line_summary|default:"分析待ち" }}</td>
-                                        <td>{{ insight.issue|default:"-" }}</td>
-                                        <td>{{ insight.next_action|default:"-" }}</td>
-                                        <td>{{ insight.location_insight|default:"-" }}</td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-warning mb-0">
-                            選択中の店舗候補と同じ業態の周辺店舗レビューはまだ取得されていません。
+                            「レビュー取得・分析」からまとめて取得してください。
                         </div>
                     {% endif %}
                 </section>
@@ -643,5 +566,60 @@
                 });
             });
         });
+        const reviewForm = document.getElementById("store-planning-review-form");
+        const progressBox = document.getElementById("store-planning-review-progress");
+        const runButton = document.getElementById("store-planning-review-run-button");
+        if (reviewForm && progressBox && runButton) {
+            const reviewTasks = [
+                {action: "fetch_google_maps_reviews", label: "対象店舗レビュー取得"},
+                {action: "fetch_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー取得"},
+                {action: "analyze_google_maps_nearby_same_business_reviews", label: "レビュー分析"},
+            ];
+            const appendProgress = (text) => {
+                const line = document.createElement("div");
+                line.textContent = text;
+                progressBox.appendChild(line);
+            };
+            reviewForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const hasExistingReviews = reviewForm.dataset.hasExistingReviews === "1";
+                const forceRefetch = hasExistingReviews
+                    ? window.confirm("保存済みレビューがあります。再取得しますか？")
+                    : false;
+                runButton.disabled = true;
+                progressBox.classList.remove("d-none", "alert-danger", "alert-success");
+                progressBox.classList.add("alert-info");
+                progressBox.innerHTML = "";
+                try {
+                    for (const [index, task] of reviewTasks.entries()) {
+                        appendProgress(`処理 ${index + 1}件目/${reviewTasks.length}件中: ${task.label}を実行中...`);
+                        const formData = new FormData(reviewForm);
+                        formData.set("action", task.action);
+                        if (forceRefetch) {
+                            formData.set("force_refetch", "1");
+                        }
+                        const response = await fetch(reviewForm.action, {
+                            method: "POST",
+                            headers: {"X-Requested-With": "XMLHttpRequest"},
+                            body: formData,
+                        });
+                        const result = await response.json();
+                        if (!response.ok || !result.ok) {
+                            throw new Error(result.message || `${task.label}に失敗しました。`);
+                        }
+                        appendProgress(`完了 ${index + 1}件目/${reviewTasks.length}件中: ${result.message}`);
+                    }
+                    progressBox.classList.remove("alert-info");
+                    progressBox.classList.add("alert-success");
+                    appendProgress("すべての処理が完了しました。画面を更新します。");
+                    window.location.reload();
+                } catch (error) {
+                    progressBox.classList.remove("alert-info");
+                    progressBox.classList.add("alert-danger");
+                    appendProgress(error.message);
+                    runButton.disabled = false;
+                }
+            });
+        }
     </script>
 {% endblock %}

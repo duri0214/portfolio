@@ -193,6 +193,8 @@ class StorePlanningPlaceInsight:
         negative_count: ネガティブ分類件数。
         average_rating: 施設rating。
         one_line_summary: 店舗の評判を1行に圧縮した要約。
+        strength: レビューから見える強み。
+        weakness: レビューから見える弱み。
         issue: 課題点。
         next_action: 出店計画の次アクション。
         location_insight: 立地に関する示唆。
@@ -205,6 +207,8 @@ class StorePlanningPlaceInsight:
     negative_count: int
     average_rating: float | None
     one_line_summary: str
+    strength: str
+    weakness: str
     issue: str
     next_action: str
     location_insight: str

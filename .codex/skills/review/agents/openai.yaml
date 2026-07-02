@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review"
+  short_description: "PRレビュー観点確認とコメント返信までの運用手順をまとめます"
+  default_prompt: "$review を使って、このPRをレビューし、対応済みの指摘コメントへ返信してください。"

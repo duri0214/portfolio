@@ -141,7 +141,7 @@ class TestView(TestCase):
         self.assertContains(response, "利用可")
         self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "Google Maps レビュー")
-        self.assertContains(response, "対象店舗")
+        self.assertNotContains(response, "検索語:")
         self.assertContains(response, "e-Stat 年代別人口")
         html = response.content.decode()
         self.assertLess(
@@ -238,17 +238,21 @@ class TestView(TestCase):
             response,
             "選択中の店舗候補と周辺同業店舗の Google Maps レビューを比較する",
         )
-        self.assertContains(response, "レビュー取得")
+        self.assertContains(response, "レビュー取得・分析")
+        self.assertContains(response, "store-planning-review-progress")
         self.assertContains(response, "レビュー対象施設")
         self.assertContains(response, "保存レビュー数")
         self.assertContains(response, "平均 rating")
-        self.assertContains(response, "キーワード件数")
+        self.assertContains(response, "ポジ / ネガ")
         self.assertContains(response, "1件")
         self.assertContains(response, "4.6")
         self.assertContains(response, "北東")
-        self.assertContains(response, "score")
+        self.assertContains(response, "ポジ 1")
         self.assertContains(response, "近隣カフェ")
-        self.assertContains(response, "対象店舗の分析")
+        self.assertContains(response, "店舗レビュー比較")
+        self.assertContains(response, "評判キャッチ")
+        self.assertContains(response, "強み")
+        self.assertContains(response, "弱み")
         self.assertContains(response, "分析待ち")
         self.assertNotContains(response, "Google Maps レビューはまだ取得されていません")
 
@@ -282,11 +286,9 @@ class TestView(TestCase):
         self.assertContains(response, "周辺同業店舗")
         self.assertContains(response, "近隣同業カフェ")
         self.assertContains(response, "分析待ち")
-        self.assertContains(response, "周辺同業レビュー取得")
-        self.assertContains(response, "レビュー分析")
-        self.assertContains(response, "周辺同業店舗の分析")
-        self.assertContains(response, "分析対象上限")
-        self.assertContains(response, "10店舗")
+        self.assertContains(response, "レビュー取得・分析")
+        self.assertContains(response, "店舗レビュー比較")
+        self.assertContains(response, "周辺同業")
 
     def test_store_planning_page_distinguishes_target_reviews_from_missing_nearby_reviews(
         self,
@@ -314,7 +316,7 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "対象店舗レビューは取得済みですが")
         self.assertContains(response, "周辺同業店舗レビューはまだ取得されていません")
-        self.assertContains(response, "周辺同業レビュー取得")
+        self.assertContains(response, "レビュー取得・分析")
 
     def test_store_planning_page_displays_nearby_same_business_place_insights(self):
         """
@@ -359,9 +361,10 @@ class TestView(TestCase):
         response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, "1行インサイト")
+        self.assertContains(response, "評判キャッチ")
+        self.assertContains(response, "弱み")
         self.assertContains(response, "雰囲気は良いが席の狭さが課題。")
-        self.assertContains(response, "席間隔を差別化要素として検討する")
+        self.assertContains(response, "対象店舗のみ")
         self.assertContains(response, "近隣では滞在快適性に改善余地がある")
 
     def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):
@@ -450,6 +453,43 @@ class TestView(TestCase):
         kwargs = mock_fetch_reviews.call_args.kwargs
         self.assertEqual("dummy-key", kwargs["api_key"])
         self.assertEqual("chapter-table", kwargs["target_location"].slug)
+        self.assertFalse(kwargs["force_refetch"])
+
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_ajax_store_planning_fetch_reviews_returns_json_and_force_refetch(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーでAJAXのレビュー再取得POSTを送る。
+        - 処理: 出店計画のレビュー取得サービスをforce_refetch付きで実行する。
+        - 期待値: リダイレクトではなくJSONで処理結果が返ること。
+        """
+        mock_fetch_reviews.return_value.place_count = 1
+        mock_fetch_reviews.return_value.review_count = 2
+        mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews", "force_refetch": "1"},
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            {
+                "ok": True,
+                "message": "Google Maps レビュー取得を実行しました。取得施設数: 1件 / 保存レビュー数: 2件",
+                "place_count": 1,
+                "review_count": 2,
+                "skipped": False,
+            },
+            response.json(),
+        )
+        kwargs = mock_fetch_reviews.call_args.kwargs
+        self.assertTrue(kwargs["force_refetch"])
 
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_fetch_reviews_shows_skipped_message(

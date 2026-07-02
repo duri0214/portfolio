@@ -185,6 +185,82 @@ class StorePlanningReviewServiceTest(TestCase):
         self.assertEqual(1, result.place_count)
         self.assertEqual(1, result.review_count)
 
+    def test_fetch_reviews_force_refetch_calls_api_when_reviews_already_exist(self):
+        """
+        シナリオ:
+        - 入力: 対象店舗slugに紐づくレビューが保存済みのDBと、再取得指定。
+        - 処理: 出店計画用レビュー取得サービスを実行する。
+        - 期待値: 保存済みレビューがあってもPlaces API検索を実行すること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            google_place_id="place-1",
+            place_name="Chapter Table",
+            latitude=35.792822,
+            longitude=139.8143238,
+            rating=4.3,
+            author="reviewer",
+            review_text="良いお店でした。",
+        )
+        review = GoogleMapsReviewData(
+            text="再取得したレビューです。",
+            author="new-reviewer",
+            publish_time="2026-01-03T00:00:00Z",
+            google_maps_uri="https://maps.google.com/new",
+        )
+        search_place_vo = GoogleMapsPlaceData(
+            place_id="place-1",
+            location=GoogleMapsCoord(35.792822, 139.8143238),
+            name="Chapter Table",
+            rating=4.4,
+            reviews=[],
+        )
+        detail_place_vo = GoogleMapsPlaceData(
+            place_id="place-1",
+            location=GoogleMapsCoord(35.792822, 139.8143238),
+            name="Chapter Table",
+            rating=4.4,
+            reviews=[review],
+        )
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+        )
+
+        with patch(
+            "shopping.domain.service.store_planning_reviews.GoogleMapsReviewClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.text_search.return_value = [search_place_vo]
+            mock_client.place_details.return_value = detail_place_vo
+            mock_client.last_error_status_code = None
+
+            result = StorePlanningReviewService.fetch_reviews(
+                api_key="dummy-key",
+                target_location=target_location,
+                force_refetch=True,
+            )
+
+        mock_client.text_search.assert_called_once()
+        self.assertFalse(result.skipped)
+        self.assertEqual(1, result.review_count)
+        self.assertTrue(
+            StorePlanningGoogleMapsReview.objects.filter(
+                target_store=target_store,
+                google_place_id="place-1",
+                author="new-reviewer",
+                review_text="再取得したレビューです。",
+            ).exists()
+        )
+
     def test_fetch_nearby_same_business_reviews_saves_reviews_with_separate_scope(self):
         """
         シナリオ:

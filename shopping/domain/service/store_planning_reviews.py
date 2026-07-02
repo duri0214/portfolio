@@ -88,7 +88,10 @@ class StorePlanningReviewService:
 
     @classmethod
     def fetch_reviews(
-        cls, api_key: str, target_location: StorePlanningTargetLocation
+        cls,
+        api_key: str,
+        target_location: StorePlanningTargetLocation,
+        force_refetch: bool = False,
     ) -> StorePlanningReviewFetchResult:
         """
         出店計画の対象店舗候補を検索し、取得できたレビューを保存する。
@@ -100,11 +103,15 @@ class StorePlanningReviewService:
             query=query,
             review_scope=cls.TARGET_STORE_SCOPE,
             exclude_target_store=False,
+            force_refetch=force_refetch,
         )
 
     @classmethod
     def fetch_nearby_same_business_reviews(
-        cls, api_key: str, target_location: StorePlanningTargetLocation
+        cls,
+        api_key: str,
+        target_location: StorePlanningTargetLocation,
+        force_refetch: bool = False,
     ) -> StorePlanningReviewFetchResult:
         """
         対象店舗候補と同じ業態の周辺店舗を検索し、レビューを保存する。
@@ -121,6 +128,7 @@ class StorePlanningReviewService:
             query=query,
             review_scope=cls.NEARBY_SAME_BUSINESS_SCOPE,
             exclude_target_store=True,
+            force_refetch=force_refetch,
         )
 
     @classmethod
@@ -131,6 +139,7 @@ class StorePlanningReviewService:
         query: str,
         review_scope: str,
         exclude_target_store: bool,
+        force_refetch: bool,
     ) -> StorePlanningReviewFetchResult:
         if target_location.latitude is None or target_location.longitude is None:
             return StorePlanningReviewFetchResult(place_count=0, review_count=0)
@@ -141,7 +150,7 @@ class StorePlanningReviewService:
         if target_store is None:
             return StorePlanningReviewFetchResult(place_count=0, review_count=0)
         existing_reviews = cls._review_queryset(target_store, review_scope)
-        if existing_reviews.exists():
+        if existing_reviews.exists() and not force_refetch:
             return StorePlanningReviewFetchResult(
                 place_count=existing_reviews.values("google_place_id")
                 .distinct()
@@ -519,7 +528,7 @@ class StorePlanningReviewService:
     def build_summary(
         cls,
         target_location: StorePlanningTargetLocation,
-        review_scope: str = TARGET_STORE_SCOPE,
+        review_scope: str | None = TARGET_STORE_SCOPE,
     ) -> StorePlanningReviewSummary:
         if target_location.latitude is None or target_location.longitude is None:
             return cls._empty_summary()
@@ -657,6 +666,8 @@ class StorePlanningReviewService:
                     negative_count=summary.negative_count if summary else 0,
                     average_rating=first_review.rating,
                     one_line_summary=summary.one_line_summary if summary else "",
+                    strength=summary.one_line_summary if summary else "",
+                    weakness=summary.issue if summary else "",
                     issue=summary.issue if summary else "",
                     next_action=summary.next_action if summary else "",
                     location_insight=summary.location_insight if summary else "",
@@ -715,14 +726,15 @@ class StorePlanningReviewService:
 
     @classmethod
     def _review_queryset(
-        cls, target_store: StorePlanningTargetStore, review_scope: str
+        cls, target_store: StorePlanningTargetStore, review_scope: str | None
     ):
+        queryset = StorePlanningGoogleMapsReview.objects.filter(
+            target_store_slug=target_store.slug,
+        )
+        if review_scope is not None:
+            queryset = queryset.filter(review_scope=review_scope)
         return (
-            StorePlanningGoogleMapsReview.objects.filter(
-                target_store_slug=target_store.slug,
-                review_scope=review_scope,
-            )
-            .exclude(review_text__isnull=True)
+            queryset.exclude(review_text__isnull=True)
             .exclude(review_text="")
             .order_by("-publish_time", "-id")
         )
