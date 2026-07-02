@@ -600,10 +600,8 @@
                 {action: "fetch_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー取得"},
                 {action: "analyze_google_maps_nearby_same_business_reviews", label: "レビュー分析"},
             ];
-            const appendProgress = (text) => {
-                const line = document.createElement("div");
-                line.textContent = text;
-                progressBox.appendChild(line);
+            const setProgress = (text) => {
+                progressBox.textContent = text;
             };
             const reviewPostUrl = window.location.href;
             const parseJsonResponse = async (response, label) => {
@@ -633,10 +631,10 @@
                 runButton.disabled = true;
                 progressBox.classList.remove("d-none", "alert-danger", "alert-success");
                 progressBox.classList.add("alert-info");
-                progressBox.innerHTML = "";
+                progressBox.textContent = "";
                 try {
                     for (const [index, task] of reviewTasks.entries()) {
-                        appendProgress(`処理 ${index + 1}件目/${reviewTasks.length}件中: ${task.label}を実行中...`);
+                        setProgress(`処理 ${index + 1}件目/${reviewTasks.length}件中: ${task.label}を実行中...`);
                         const formData = new FormData(reviewForm);
                         formData.set("action", task.action);
                         if (forceRefetch) {
@@ -654,16 +652,16 @@
                         if (!response.ok || !result.ok) {
                             throw new Error(result.message || `${task.label}に失敗しました。`);
                         }
-                        appendProgress(`完了 ${index + 1}件目/${reviewTasks.length}件中: ${result.message}`);
+                        setProgress(`完了 ${index + 1}件目/${reviewTasks.length}件中: ${result.message}`);
                     }
                     progressBox.classList.remove("alert-info");
                     progressBox.classList.add("alert-success");
-                    appendProgress("すべての処理が完了しました。画面を更新します。");
+                    setProgress("すべての処理が完了しました。画面を更新します。");
                     window.location.reload();
                 } catch (error) {
                     progressBox.classList.remove("alert-info");
                     progressBox.classList.add("alert-danger");
-                    appendProgress(error.message);
+                    setProgress(error.message);
                     runButton.disabled = false;
                 }
             });
