@@ -11,6 +11,7 @@ from shopping.models import (
     Store,
     StorePlanningDataSourceSnapshot,
     StorePlanningGoogleMapsReview,
+    StorePlanningGoogleMapsPlaceSummary,
     StorePlanningTargetStore,
 )
 
@@ -136,11 +137,13 @@ class TestView(TestCase):
             "https://www.google.com/maps?q=35.792822,139.8143238",
         )
         self.assertContains(response, "人口集計地域")
+        self.assertContains(response, "業態")
+        self.assertContains(response, "カフェ")
+        self.assertContains(response, "同業検索語")
         self.assertContains(response, "Google Maps操作")
         self.assertContains(response, "利用可")
         self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "Google Maps レビュー")
-        self.assertContains(response, "対象店舗")
         self.assertContains(response, "e-Stat 年代別人口")
         html = response.content.decode()
         self.assertLess(
@@ -215,7 +218,7 @@ class TestView(TestCase):
         シナリオ:
         - 入力: 対象店舗から半径500m以内にあるGoogle Maps施設レビュー。
         - 処理: 出店計画画面をGETする。
-        - 期待値: レビュー概要、3x3グリッド、代表レビューが表示されること。
+        - 期待値: レビュー概要、レビュー取得店舗マップ、店舗単位の分析サマリーが表示されること。
         """
         StorePlanningGoogleMapsReview.objects.create(
             target_store=StorePlanningTargetStore.objects.get(slug="chapter-table"),
@@ -229,24 +232,216 @@ class TestView(TestCase):
             publish_time=timezone.now(),
         )
 
-        response = self.client.get(reverse("shp:store_planning"))
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "Google Maps レビュー")
-        self.assertContains(response, "選択中の店舗候補に紐づく Google Maps レビュー")
-        self.assertContains(response, "レビュー取得")
+        self.assertContains(
+            response,
+            "選択中の店舗候補と周辺同業店舗の Google Maps レビューを比較する",
+        )
+        self.assertContains(response, "レビュー取得・分析")
+        self.assertContains(response, "store-planning-review-progress")
         self.assertContains(response, "レビュー対象施設")
-        self.assertContains(response, "レビュー数")
+        self.assertContains(response, "保存レビュー数")
         self.assertContains(response, "平均 rating")
-        self.assertContains(response, "キーワード件数")
+        self.assertContains(response, "ポジ / ネガ")
         self.assertContains(response, "1件")
         self.assertContains(response, "4.6")
-        self.assertContains(response, "北東")
-        self.assertContains(response, "score")
+        self.assertContains(response, "レビュー取得店舗マップ")
+        self.assertContains(response, 'id="store-planning-review-map"')
+        self.assertContains(response, "storePlanningReviewMapInit")
+        self.assertContains(response, "maps.googleapis.com/maps/api/js?key=")
+        self.assertContains(response, "ポジ 1")
         self.assertContains(response, "近隣カフェ")
-        self.assertContains(response, "reviewer")
-        self.assertContains(response, "おいしいランチ")
+        self.assertContains(response, "店舗レビュー比較")
+        self.assertContains(response, "fitBounds")
+        self.assertContains(response, "強み")
+        self.assertContains(response, "弱み")
+        self.assertContains(response, "分析待ち")
         self.assertNotContains(response, "Google Maps レビューはまだ取得されていません")
+
+    def test_store_planning_page_displays_nearby_same_business_reviews(self):
+        """
+        シナリオ:
+        - 入力: 周辺同業店舗のGoogle Mapsレビューが保存済みのDB。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: 対象店舗レビューと同じGoogle Mapsレビュー枠で周辺同業店舗の件数とレビューが表示されること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-place-1",
+            place_name="近隣同業カフェ",
+            latitude=35.7935,
+            longitude=139.8150,
+            rating=4.2,
+            author="nearby-reviewer",
+            review_text="近くの同業店レビューです。",
+            publish_time=timezone.now(),
+            google_maps_uri="https://maps.google.com/nearby-place-1",
+        )
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "業態")
+        self.assertContains(response, "カフェ")
+        self.assertContains(response, "周辺同業店舗")
+        self.assertContains(response, "近隣同業カフェ")
+        self.assertContains(response, "分析待ち")
+        self.assertContains(response, "レビュー取得・分析")
+        self.assertContains(response, "店舗レビュー比較")
+        self.assertContains(response, "周辺同業")
+        self.assertContains(response, "対象店舗レビュー分析")
+        self.assertContains(response, "周辺同業レビュー分析")
+        self.assertContains(response, "query_place_id=nearby-place-1")
+        self.assertContains(response, "X-CSRFToken")
+        self.assertContains(response, "POST先が見つかりませんでした")
+        self.assertContains(response, "window.location.href")
+        self.assertContains(response, "error_url")
+        self.assertContains(response, "error_url_label")
+        self.assertContains(response, "setProgressError")
+
+    def test_store_planning_review_target_place_count_uses_displayed_places(self):
+        """
+        シナリオ:
+        - 入力: 対象店舗レビューと、半径500m外の周辺同業レビューが保存済みのDB。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: レビュー対象施設数は500m内サマリーではなく、表に出す取得店舗数と一致すること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE,
+            google_place_id="target-place-1",
+            place_name="Chapter Table",
+            latitude=35.792822,
+            longitude=139.8143238,
+            rating=4.0,
+            author="target-reviewer",
+            review_text="対象店舗のレビューです。",
+            publish_time=timezone.now(),
+        )
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-outside-place",
+            place_name="500m外の同業店",
+            latitude=35.8100,
+            longitude=139.8300,
+            rating=4.5,
+            author="nearby-reviewer",
+            review_text="遠いけれど評判の良い店です。",
+            publish_time=timezone.now(),
+        )
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-outside-place",
+            place_name="500m外の同業店",
+            latitude=35.8100,
+            longitude=139.8300,
+            rating=4.5,
+            author="another-nearby-reviewer",
+            review_text="もう一件のレビューです。",
+            publish_time=timezone.now(),
+        )
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "レビュー対象施設")
+        self.assertContains(response, '<div class="fs-5 fw-semibold">2件</div>')
+        self.assertContains(response, '<div class="fs-5 fw-semibold">3件</div>')
+        self.assertContains(response, "500m外の同業店")
+
+    def test_store_planning_page_distinguishes_target_reviews_from_missing_nearby_reviews(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: 対象店舗レビューだけが保存済みで、周辺同業レビューは未保存のDB。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: 対象店舗レビュー取得済みと周辺同業レビュー未取得を混同せず、別途取得が必要だと表示されること。
+        """
+        StorePlanningGoogleMapsReview.objects.create(
+            target_store=StorePlanningTargetStore.objects.get(slug="chapter-table"),
+            google_place_id="target-place-1",
+            place_name="Chapter Table",
+            latitude=35.792822,
+            longitude=139.8143238,
+            rating=4.0,
+            author="target-reviewer",
+            review_text="対象店舗のレビューです。",
+            publish_time=timezone.now(),
+        )
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "対象店舗レビューは取得済みですが")
+        self.assertContains(response, "周辺同業店舗レビューはまだ取得されていません")
+        self.assertContains(response, "レビュー取得・分析")
+
+    def test_store_planning_page_displays_nearby_same_business_place_insights(self):
+        """
+        シナリオ:
+        - 入力: 周辺同業レビューと、その子テーブルに保存済みのLLM分析結果。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: 周辺同業店舗ごとの強みと課題点が別列で表示されること。
+        """
+        target_store = StorePlanningTargetStore.objects.get(slug="chapter-table")
+        review = StorePlanningGoogleMapsReview.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id="nearby-place-1",
+            place_name="近隣同業カフェ",
+            latitude=35.7935,
+            longitude=139.8150,
+            rating=4.2,
+            author="nearby-reviewer",
+            review_text="雰囲気は良いが席が狭いです。",
+            publish_time=timezone.now(),
+        )
+        StorePlanningGoogleMapsPlaceSummary.objects.create(
+            target_store=target_store,
+            target_store_slug=target_store.slug,
+            review_scope=StorePlanningGoogleMapsReview.ReviewScope.NEARBY_SAME_BUSINESS,
+            google_place_id=review.google_place_id,
+            place_name=review.place_name,
+            rating=review.rating,
+            review_count=1,
+            positive_count=0,
+            negative_count=1,
+            sentiment_score=-40,
+            one_line_summary="落ち着いた雰囲気が評価されている。",
+            issue="席が狭い",
+            location_insight="近隣では滞在快適性に改善余地がある",
+            model_name="gpt-5-mini",
+            prompt_version="test-prompt",
+        )
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertNotContains(response, "評判キャッチ")
+        self.assertContains(response, "強み")
+        self.assertContains(response, "弱み")
+        self.assertContains(response, "落ち着いた雰囲気が評価されている。")
+        self.assertContains(response, "席が狭い")
+        self.assertContains(response, "近隣では滞在快適性に改善余地がある")
 
     def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):
         """
@@ -303,6 +498,240 @@ class TestView(TestCase):
         self.assertEqual("dummy-key", kwargs["api_key"])
         self.assertEqual("chapter-table", kwargs["target_location"].slug)
 
+    @patch(
+        "shopping.views.StorePlanningReviewService.fetch_nearby_same_business_reviews"
+    )
+    def test_post_store_planning_fetches_nearby_same_business_reviews_for_superuser(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーで周辺同業レビュー取得POSTを送る。
+        - 処理: 周辺同業店舗のレビュー取得サービスを実行する。
+        - 期待値: 対象地点とAPIキーを周辺同業レビュー取得サービスへ渡すこと。
+        """
+        mock_fetch_reviews.return_value.place_count = 2
+        mock_fetch_reviews.return_value.review_count = 3
+        mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_nearby_same_business_reviews"},
+            )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            fetch_redirect_response=False,
+        )
+        kwargs = mock_fetch_reviews.call_args.kwargs
+        self.assertEqual("dummy-key", kwargs["api_key"])
+        self.assertEqual("chapter-table", kwargs["target_location"].slug)
+        self.assertFalse(kwargs["force_refetch"])
+
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_ajax_store_planning_fetch_reviews_returns_json_and_force_refetch(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーでAJAXのレビュー再取得POSTを送る。
+        - 処理: 出店計画のレビュー取得サービスをforce_refetch付きで実行する。
+        - 期待値: リダイレクトではなくJSONで処理結果が返ること。
+        """
+        mock_fetch_reviews.return_value.place_count = 1
+        mock_fetch_reviews.return_value.review_count = 2
+        mock_fetch_reviews.return_value.skipped = False
+        mock_fetch_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews", "force_refetch": "1"},
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            {
+                "ok": True,
+                "message": "Google Maps レビュー取得を実行しました。取得施設数: 1件 / 保存レビュー数: 2件",
+                "place_count": 1,
+                "review_count": 2,
+                "skipped": False,
+            },
+            response.json(),
+        )
+        kwargs = mock_fetch_reviews.call_args.kwargs
+        self.assertTrue(kwargs["force_refetch"])
+
+    @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
+    def test_post_store_planning_fetch_reviews_shows_skipped_message(
+        self, mock_fetch_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーでレビュー取得POSTを送り、保存済みレビューがある状態。
+        - 処理: 出店計画画面へ戻る。
+        - 期待値: API呼び出し成功ではなく、保存済みのためAPIを省略したことが表示されること。
+        """
+        mock_fetch_reviews.return_value.place_count = 1
+        mock_fetch_reviews.return_value.review_count = 5
+        mock_fetch_reviews.return_value.skipped = True
+        mock_fetch_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "dummy-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "fetch_google_maps_reviews"},
+                follow=True,
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(
+            response,
+            "Google Maps レビューは取得済みのためAPI呼び出しを省略しました。",
+        )
+        self.assertContains(response, "施設数: 1件 / 保存レビュー数: 5件")
+
+    @patch("shopping.views.StorePlanningReviewService.analyze_place_summaries")
+    def test_post_store_planning_analyzes_nearby_same_business_reviews_for_superuser(
+        self, mock_analyze_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーで周辺同業レビュー分析POSTを送る。
+        - 処理: 周辺同業店舗のレビュー分析サービスを実行する。
+        - 期待値: 対象地点とOpenAI APIキーをレビュー分析サービスへ渡すこと。
+        """
+        mock_analyze_reviews.return_value.analyzed_count = 2
+        mock_analyze_reviews.return_value.positive_count = 1
+        mock_analyze_reviews.return_value.negative_count = 1
+        mock_analyze_reviews.return_value.skipped = False
+        mock_analyze_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "dummy-openai-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "analyze_google_maps_nearby_same_business_reviews"},
+            )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            fetch_redirect_response=False,
+        )
+        kwargs = mock_analyze_reviews.call_args.kwargs
+        self.assertEqual("dummy-openai-key", kwargs["api_key"])
+        self.assertEqual("chapter-table", kwargs["target_location"].slug)
+        self.assertEqual("nearby_same_business", kwargs["review_scope"])
+
+    @patch("shopping.views.StorePlanningReviewService.analyze_place_summaries")
+    def test_post_store_planning_analyzes_target_reviews_for_superuser(
+        self, mock_analyze_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーで対象店舗レビュー分析POSTを送る。
+        - 処理: 対象店舗のレビュー分析サービスを実行する。
+        - 期待値: 対象店舗scopeを指定してレビュー分析サービスへ渡すこと。
+        """
+        mock_analyze_reviews.return_value.analyzed_count = 1
+        mock_analyze_reviews.return_value.positive_count = 1
+        mock_analyze_reviews.return_value.negative_count = 0
+        mock_analyze_reviews.return_value.skipped = False
+        mock_analyze_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "dummy-openai-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "analyze_google_maps_target_reviews"},
+            )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('shp:store_planning')}?store=chapter-table",
+            fetch_redirect_response=False,
+        )
+        kwargs = mock_analyze_reviews.call_args.kwargs
+        self.assertEqual("dummy-openai-key", kwargs["api_key"])
+        self.assertEqual("chapter-table", kwargs["target_location"].slug)
+        self.assertEqual("target_store", kwargs["review_scope"])
+
+    @patch("shopping.views.StorePlanningReviewService.analyze_place_summaries")
+    def test_ajax_store_planning_analysis_partial_failure_returns_warning(
+        self, mock_analyze_reviews
+    ):
+        """
+        シナリオ:
+        - 入力: Ajaxで周辺同業レビュー分析POSTを送り、一部店舗だけLLMが返さない。
+        - 処理: レビュー分析結果JSONを返す。
+        - 期待値: 保存済み分析がある場合は処理失敗にせず、warningとして返すこと。
+        """
+        mock_analyze_reviews.return_value.analyzed_count = 9
+        mock_analyze_reviews.return_value.positive_count = 6
+        mock_analyze_reviews.return_value.negative_count = 3
+        mock_analyze_reviews.return_value.skipped = False
+        mock_analyze_reviews.return_value.error_message = (
+            "一部店舗のレビュー分析結果を取得できませんでした。"
+            "もう一度レビュー分析を実行してください。未分析: GRATIALLIGO"
+        )
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "dummy-openai-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {"action": "analyze_google_maps_nearby_same_business_reviews"},
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            {
+                "ok": True,
+                "warning": True,
+                "message": (
+                    "Google Maps レビュー分析を一部実行しました。"
+                    "分析件数: 9件 / ポジティブ: 6件 / ネガティブ: 3件 / "
+                    "一部店舗のレビュー分析結果を取得できませんでした。"
+                    "もう一度レビュー分析を実行してください。未分析: GRATIALLIGO"
+                ),
+                "analyzed_count": 9,
+                "positive_count": 6,
+                "negative_count": 3,
+                "skipped": False,
+            },
+            response.json(),
+        )
+
+    @patch("shopping.views.StorePlanningReviewService.analyze_place_summaries")
+    def test_ajax_store_planning_analysis_passes_max_places(self, mock_analyze_reviews):
+        """
+        シナリオ:
+        - 入力: Ajaxで周辺同業レビュー分析POSTを小分け件数つきで送る。
+        - 処理: レビュー分析サービスを実行する。
+        - 期待値: max_placesをサービスへ渡すこと。
+        """
+        mock_analyze_reviews.return_value.analyzed_count = 2
+        mock_analyze_reviews.return_value.positive_count = 1
+        mock_analyze_reviews.return_value.negative_count = 1
+        mock_analyze_reviews.return_value.skipped = False
+        mock_analyze_reviews.return_value.error_message = ""
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "dummy-openai-key"}):
+            response = self.client.post(
+                f"{reverse('shp:store_planning')}?store=chapter-table",
+                {
+                    "action": "analyze_google_maps_nearby_same_business_reviews",
+                    "max_places": "2",
+                },
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(2, mock_analyze_reviews.call_args.kwargs["max_places"])
+
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_fetch_reviews_shows_empty_result_message(
         self, mock_fetch_reviews
@@ -330,7 +759,7 @@ class TestView(TestCase):
             response,
             "Google Maps レビュー取得を実行しましたが、レビューは見つかりませんでした。",
         )
-        self.assertContains(response, "取得施設数: 1件 / レビュー数: 0件")
+        self.assertContains(response, "取得施設数: 1件 / 保存レビュー数: 0件")
 
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_fetch_reviews_shows_fetch_error_message(
@@ -497,6 +926,8 @@ class TestView(TestCase):
         self.assertContains(response, "E-Stat市区町村名")
         self.assertContains(response, "E-Stat大字・町名")
         self.assertContains(response, "E-Stat字・丁目名")
+        self.assertContains(response, "業態")
+        self.assertContains(response, "Google Maps同業検索語")
         self.assertContains(response, "Googleマップ座標")
         self.assertContains(response, "e-Stat CSVの「市区町村コード」です")
         self.assertContains(response, "e-Stat CSVの「町丁字コード」です")
@@ -507,6 +938,7 @@ class TestView(TestCase):
         )
         self.assertContains(response, "e-Stat CSVの「大字・町名」です")
         self.assertContains(response, "e-Stat CSVの「字・丁目名」です")
+        self.assertContains(response, "周辺同業店舗の検索に使う語です")
         self.assertNotContains(response, "E-Stat人口集計地域")
         self.assertNotContains(response, 'name="population_area"')
         self.assertNotContains(response, 'name="latitude"')
@@ -529,6 +961,8 @@ class TestView(TestCase):
                 "google_maps_coord": "35.1, 139.1",
                 "city_code": "13113",
                 "town_code": "030002",
+                "business_type_label": "タップルーム",
+                "business_search_query": "クラフトビール",
                 "prefecture_name": "東京都",
                 "city_name": "渋谷区",
                 "large_area_name": "代々木",
@@ -546,6 +980,8 @@ class TestView(TestCase):
         self.assertEqual(35.1, store.latitude)
         self.assertEqual(139.1, store.longitude)
         self.assertEqual("東京都渋谷区代々木二丁目", store.population_area)
+        self.assertEqual("タップルーム", store.business_type_label)
+        self.assertEqual("クラフトビール", store.business_search_query)
         self.assertEqual("4", store.area_hierarchy_level)
 
     def test_post_store_planning_target_store_create_page_parses_google_maps_coord(
@@ -566,6 +1002,8 @@ class TestView(TestCase):
                 "google_maps_coord": "35.683713863354235, 139.69973314970687",
                 "city_code": "13113",
                 "town_code": "030002",
+                "business_type_label": "タップルーム",
+                "business_search_query": "クラフトビール",
                 "prefecture_name": "東京都",
                 "city_name": "渋谷区",
                 "large_area_name": "代々木",

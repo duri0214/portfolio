@@ -60,6 +60,8 @@ class StorePlanningTargetStore(models.Model):
         city_code: e-Stat CSVの市区町村コード。
         town_code: e-Stat CSVの町丁字コード。
         population_area: 人口集計に使う町丁字名。
+        business_type_label: 画面に表示する業態名。
+        business_search_query: 周辺同業店舗を検索するためのGoogle Maps検索語。
         large_area_name: e-Stat CSVの大字・町名。
         small_area_name: e-Stat CSVの字・丁目名。
         area_hierarchy_level: e-Stat CSVの地域階層レベル。
@@ -76,6 +78,10 @@ class StorePlanningTargetStore(models.Model):
     city_code = models.CharField("e-Stat市区町村コード", max_length=10)
     town_code = models.CharField("e-Stat町丁字コード", max_length=10)
     population_area = models.CharField("人口集計地域", max_length=255)
+    business_type_label = models.CharField("業態", max_length=100, default="飲食店")
+    business_search_query = models.CharField(
+        "同業検索語", max_length=255, default="レストラン"
+    )
     large_area_name = models.CharField("大字・町名", max_length=100, blank=True)
     small_area_name = models.CharField("字・丁目名", max_length=100, blank=True)
     area_hierarchy_level = models.CharField("地域階層レベル", max_length=1, default="4")
@@ -96,6 +102,7 @@ class StorePlanningGoogleMapsReview(models.Model):
 
     Attributes:
         target_store: 出店計画の対象店舗候補。
+        review_scope: 対象店舗レビューか周辺同業レビューかを分ける種別。
         google_place_id: Google Maps の Place ID。
         place_name: レビュー対象施設名。
         latitude: レビュー対象施設の緯度。
@@ -110,6 +117,18 @@ class StorePlanningGoogleMapsReview(models.Model):
         updated_at: 更新日時。
     """
 
+    class ReviewScope(models.TextChoices):
+        """
+        レビュー取得対象の種別。
+
+        Attributes:
+            TARGET_STORE: 選択中の店舗候補そのもののレビュー。
+            NEARBY_SAME_BUSINESS: 選択中店舗と同じ業態の周辺店舗レビュー。
+        """
+
+        TARGET_STORE = "target_store", "対象店舗"
+        NEARBY_SAME_BUSINESS = "nearby_same_business", "周辺同業店舗"
+
     target_store = models.ForeignKey(
         StorePlanningTargetStore,
         verbose_name="出店計画対象店舗",
@@ -118,6 +137,13 @@ class StorePlanningGoogleMapsReview(models.Model):
     )
     target_store_slug = models.SlugField(
         "店舗キー", max_length=100, blank=True, db_index=True
+    )
+    review_scope = models.CharField(
+        "レビュー種別",
+        max_length=50,
+        choices=ReviewScope,
+        default=ReviewScope.TARGET_STORE,
+        db_index=True,
     )
     google_place_id = models.CharField("Google Place ID", max_length=200)
     place_name = models.CharField("施設名", max_length=255)
@@ -136,8 +162,13 @@ class StorePlanningGoogleMapsReview(models.Model):
         ordering = ["-publish_time", "-id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["target_store_slug", "google_place_id", "author"],
-                name="unique_store_planning_google_review_author",
+                fields=[
+                    "target_store_slug",
+                    "review_scope",
+                    "google_place_id",
+                    "author",
+                ],
+                name="unique_store_planning_google_review_scope_author",
             )
         ]
 
@@ -148,6 +179,147 @@ class StorePlanningGoogleMapsReview(models.Model):
 
     def __str__(self):
         return f"{self.target_store.name}: {self.place_name} ({self.author})"
+
+
+class StorePlanningGoogleMapsReviewAnalysis(models.Model):
+    """
+    StorePlanningGoogleMapsReview 1件ごとのLLM分析結果。
+
+    Attributes:
+        review: 分析対象のGoogle Mapsレビュー。
+        sentiment: レビュー本文から判定した感情分類。
+        sentiment_score: -100から100までの感情スコア。
+        one_line_summary: 出店判断で読める1行要約。
+        issue: レビューから見える課題点。
+        location_insight: 立地に関する示唆。
+        model_name: 分析に使ったLLMモデル名。
+        prompt_version: 分析プロンプトのバージョン。
+        raw_response: LLM応答の保存用JSON。
+        analyzed_at: 分析日時。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    class Sentiment(models.TextChoices):
+        """
+        レビュー感情分類。
+
+        Attributes:
+            POSITIVE: 肯定的なレビュー。
+            NEGATIVE: 否定的なレビュー。
+            NEUTRAL: 中立または判断不能なレビュー。
+        """
+
+        POSITIVE = "positive", "ポジティブ"
+        NEGATIVE = "negative", "ネガティブ"
+        NEUTRAL = "neutral", "中立"
+
+    review = models.OneToOneField(
+        StorePlanningGoogleMapsReview,
+        verbose_name="Google Mapsレビュー",
+        on_delete=models.CASCADE,
+        related_name="analysis",
+    )
+    sentiment = models.CharField(
+        "感情分類",
+        max_length=20,
+        choices=Sentiment,
+        default=Sentiment.NEUTRAL,
+        db_index=True,
+    )
+    sentiment_score = models.IntegerField("感情スコア", default=0)
+    one_line_summary = models.CharField("1行要約", max_length=255, blank=True)
+    issue = models.CharField("課題点", max_length=255, blank=True)
+    location_insight = models.CharField("立地示唆", max_length=255, blank=True)
+    model_name = models.CharField("LLMモデル名", max_length=100)
+    prompt_version = models.CharField("プロンプトバージョン", max_length=50)
+    raw_response = models.JSONField("LLM応答", default=dict, blank=True)
+    analyzed_at = models.DateTimeField("分析日時", default=timezone.now)
+    created_at = models.DateTimeField("作成日時", default=timezone.now)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["review__place_name", "-analyzed_at"]
+
+    def __str__(self):
+        return f"{self.review.place_name}: {self.sentiment}"
+
+
+class StorePlanningGoogleMapsPlaceSummary(models.Model):
+    """
+    Google Mapsレビュー群を店舗単位に集約したLLM分析サマリー。
+
+    Attributes:
+        target_store: 出店計画の対象店舗候補。
+        target_store_slug: 店舗キー。
+        review_scope: 対象店舗レビューか周辺同業レビューかを分ける種別。
+        google_place_id: Google Maps の Place ID。
+        place_name: レビュー対象施設名。
+        rating: レビュー対象施設の Google Maps rating。
+        review_count: サマリー作成に使った保存済みレビュー件数。
+        positive_count: ポジティブ要因として扱った件数。
+        negative_count: ネガティブ要因として扱った件数。
+        sentiment_score: 店舗全体の評判スコア。
+        one_line_summary: 店舗評判の1行要約。
+        issue: レビュー群から見える課題点。
+        location_insight: 立地に関する示唆。
+        model_name: 分析に使ったLLMモデル名。
+        prompt_version: 分析プロンプトのバージョン。
+        raw_response: LLM応答の保存用JSON。
+        analyzed_at: 分析日時。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    target_store = models.ForeignKey(
+        StorePlanningTargetStore,
+        verbose_name="出店計画対象店舗",
+        on_delete=models.CASCADE,
+        related_name="google_maps_place_summaries",
+    )
+    target_store_slug = models.SlugField(
+        "店舗キー", max_length=100, blank=True, db_index=True
+    )
+    review_scope = models.CharField(
+        "レビュー種別",
+        max_length=50,
+        choices=StorePlanningGoogleMapsReview.ReviewScope,
+        default=StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE,
+        db_index=True,
+    )
+    google_place_id = models.CharField("Google Place ID", max_length=200)
+    place_name = models.CharField("施設名", max_length=255)
+    rating = models.FloatField("Google Maps rating", null=True, blank=True)
+    review_count = models.PositiveIntegerField("保存レビュー数", default=0)
+    positive_count = models.PositiveIntegerField("ポジティブ要因数", default=0)
+    negative_count = models.PositiveIntegerField("ネガティブ要因数", default=0)
+    sentiment_score = models.IntegerField("評判スコア", default=0)
+    one_line_summary = models.CharField("1行要約", max_length=255, blank=True)
+    issue = models.CharField("課題点", max_length=255, blank=True)
+    location_insight = models.CharField("立地示唆", max_length=255, blank=True)
+    model_name = models.CharField("LLMモデル名", max_length=100)
+    prompt_version = models.CharField("プロンプトバージョン", max_length=50)
+    raw_response = models.JSONField("LLM応答", default=dict, blank=True)
+    analyzed_at = models.DateTimeField("分析日時", default=timezone.now)
+    created_at = models.DateTimeField("作成日時", default=timezone.now)
+    updated_at = models.DateTimeField("更新日時", auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["review_scope", "place_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target_store_slug", "review_scope", "google_place_id"],
+                name="unique_store_planning_google_place_summary",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.target_store_slug and self.target_store_id:
+            self.target_store_slug = self.target_store.slug
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.target_store.name}: {self.place_name}"
 
 
 class UserAttribute(models.Model):

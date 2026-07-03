@@ -1,10 +1,11 @@
+import json
 import logging
 import os
 
 from django.conf import settings
 from django.contrib import messages
 from django.utils.html import format_html
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     DetailView,
@@ -152,6 +153,8 @@ class StorePlanningView(TemplateView):
             "address": selected_location.address,
             "google_maps_url": selected_location.google_maps_url,
             "population_area": selected_location.population_area,
+            "business_type_label": selected_location.business_type_label,
+            "business_search_query": selected_location.business_search_query,
             "place_google_maps_embed_url": (
                 selected_location.place_google_maps_embed_url
             ),
@@ -205,12 +208,79 @@ class StorePlanningView(TemplateView):
         context["review_summary"] = StorePlanningReviewService.build_summary(
             selected_location
         )
+        context["combined_review_summary"] = StorePlanningReviewService.build_summary(
+            selected_location,
+            review_scope=None,
+        )
+        context["nearby_same_business_review_summary"] = (
+            StorePlanningReviewService.build_summary(
+                selected_location,
+                review_scope=StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
+            )
+        )
+        context["target_place_insights"] = (
+            StorePlanningReviewService.build_place_insights(
+                selected_location,
+                review_scope=StorePlanningReviewService.TARGET_STORE_SCOPE,
+            )
+        )
+        context["nearby_same_business_place_insights"] = (
+            StorePlanningReviewService.build_place_insights(selected_location)
+        )
+        context["combined_place_insights"] = self._combined_place_insights(
+            context["target_place_insights"],
+            context["nearby_same_business_place_insights"],
+        )
+        context["combined_place_review_count"] = sum(
+            row["insight"].review_count for row in context["combined_place_insights"]
+        )
+        review_map_places = StorePlanningReviewService.build_review_map_places(
+            selected_location
+        )
+        context["review_map_data"] = json.dumps(
+            {
+                "center": {
+                    "lat": selected_location.latitude,
+                    "lng": selected_location.longitude,
+                },
+                "places": review_map_places,
+                "mapId": os.getenv("GOOGLE_MAPS_MAP_ID", "8f6a4cf0806f4732"),
+            },
+            ensure_ascii=False,
+        )
+        context["google_maps_fe_api_key"] = os.getenv("GOOGLE_MAPS_FE_API_KEY")
+        context["has_review_map_places"] = bool(review_map_places)
+        context["has_any_google_maps_reviews"] = (
+            context["review_summary"].total_review_count
+            + context["nearby_same_business_review_summary"].total_review_count
+            > 0
+        )
         return context
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("action") != "fetch_google_maps_reviews":
+        action = request.POST.get("action")
+        allowed_actions = {
+            "fetch_and_analyze_google_maps_reviews",
+            "fetch_google_maps_reviews",
+            "fetch_google_maps_nearby_same_business_reviews",
+            "analyze_google_maps_target_reviews",
+            "analyze_google_maps_nearby_same_business_reviews",
+        }
+        if action not in allowed_actions:
+            if self._wants_json(request):
+                return JsonResponse(
+                    {"ok": False, "message": "未対応のレビュー操作です。"}, status=400
+                )
             return HttpResponseRedirect(reverse("shp:store_planning"))
         if not (request.user.is_authenticated and request.user.is_superuser):
+            if self._wants_json(request):
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "message": "Google Maps レビュー取得はスーパーユーザーでログインした場合のみ実行できます。",
+                    },
+                    status=403,
+                )
             messages.warning(
                 request,
                 "Google Maps レビュー取得はスーパーユーザーでログインした場合のみ実行できます。",
@@ -219,6 +289,14 @@ class StorePlanningView(TemplateView):
 
         selected_location = self._selected_location()
         if selected_location.latitude is None or selected_location.longitude is None:
+            if self._wants_json(request):
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "message": "店舗候補の緯度経度がないためレビューを取得できません。",
+                    },
+                    status=400,
+                )
             messages.warning(
                 request, "店舗候補の緯度経度がないためレビューを取得できません。"
             )
@@ -226,8 +304,35 @@ class StorePlanningView(TemplateView):
                 self._store_planning_url(selected_location.slug)
             )
 
+        if action == "fetch_and_analyze_google_maps_reviews":
+            return self._fetch_and_analyze_google_maps_reviews(
+                request, selected_location
+            )
+
+        if action == "analyze_google_maps_target_reviews":
+            return self._analyze_reviews(
+                request,
+                selected_location,
+                StorePlanningReviewService.TARGET_STORE_SCOPE,
+            )
+
+        if action == "analyze_google_maps_nearby_same_business_reviews":
+            return self._analyze_reviews(
+                request,
+                selected_location,
+                StorePlanningReviewService.NEARBY_SAME_BUSINESS_SCOPE,
+            )
+
         api_key = os.getenv("GOOGLE_MAPS_BE_API_KEY")
         if not api_key:
+            if self._wants_json(request):
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "message": "レビュー取得の設定が未完了のため、今回は取得できませんでした。",
+                    },
+                    status=400,
+                )
             messages.warning(
                 request,
                 "レビュー取得の設定が未完了のため、今回は取得できませんでした。",
@@ -236,48 +341,339 @@ class StorePlanningView(TemplateView):
                 self._store_planning_url(selected_location.slug)
             )
 
-        fetch_result = StorePlanningReviewService.fetch_reviews(
-            api_key=api_key,
-            target_location=selected_location,
-        )
+        if action == "fetch_google_maps_nearby_same_business_reviews":
+            fetch_result = (
+                StorePlanningReviewService.fetch_nearby_same_business_reviews(
+                    api_key=api_key,
+                    target_location=selected_location,
+                    force_refetch=request.POST.get("force_refetch") == "1",
+                )
+            )
+            fetch_label = "周辺同業店舗の Google Maps レビュー"
+        else:
+            fetch_result = StorePlanningReviewService.fetch_reviews(
+                api_key=api_key,
+                target_location=selected_location,
+                force_refetch=request.POST.get("force_refetch") == "1",
+            )
+            fetch_label = "Google Maps レビュー"
+        if self._wants_json(request):
+            return self._fetch_result_json(fetch_label, fetch_result)
         if fetch_result.error_message:
+            error_message = f"{fetch_label}: {fetch_result.error_message}"
             if fetch_result.error_url:
                 messages.warning(
                     request,
                     format_html(
                         '{} <a href="{}" target="_blank" rel="noopener">{}</a>',
-                        fetch_result.error_message,
+                        error_message,
                         fetch_result.error_url,
                         fetch_result.error_url_label or "確認する",
                     ),
                 )
             else:
-                messages.warning(request, fetch_result.error_message)
+                messages.warning(request, error_message)
         elif fetch_result.skipped:
             messages.info(
                 request,
                 (
-                    "Google Maps レビューは取得済みです。"
+                    f"{fetch_label}は取得済みのためAPI呼び出しを省略しました。"
                     f"施設数: {fetch_result.place_count}件 / "
-                    f"レビュー数: {fetch_result.review_count}件"
+                    f"保存レビュー数: {fetch_result.review_count}件"
                 ),
             )
         else:
             message = (
                 f"取得施設数: {fetch_result.place_count}件 / "
-                f"レビュー数: {fetch_result.review_count}件"
+                f"保存レビュー数: {fetch_result.review_count}件"
             )
             if fetch_result.review_count:
                 messages.success(
                     request,
-                    f"Google Maps レビュー取得を実行しました。{message}",
+                    f"{fetch_label}取得を実行しました。{message}",
                 )
             else:
                 messages.warning(
                     request,
-                    f"Google Maps レビュー取得を実行しましたが、レビューは見つかりませんでした。{message}",
+                    f"{fetch_label}取得を実行しましたが、レビューは見つかりませんでした。{message}",
                 )
         return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
+
+    @staticmethod
+    def _wants_json(request) -> bool:
+        return request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+    def _fetch_result_json(self, fetch_label: str, fetch_result) -> JsonResponse:
+        if fetch_result.error_message:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": f"{fetch_label}: {fetch_result.error_message}",
+                    "error_url": fetch_result.error_url,
+                    "error_url_label": fetch_result.error_url_label,
+                },
+                status=400,
+            )
+        if fetch_result.skipped:
+            message = (
+                f"{fetch_label}は取得済みのためAPI呼び出しを省略しました。"
+                f"施設数: {fetch_result.place_count}件 / "
+                f"保存レビュー数: {fetch_result.review_count}件"
+            )
+        elif fetch_result.review_count:
+            message = (
+                f"{fetch_label}取得を実行しました。"
+                f"取得施設数: {fetch_result.place_count}件 / "
+                f"保存レビュー数: {fetch_result.review_count}件"
+            )
+        else:
+            message = (
+                f"{fetch_label}取得を実行しましたが、レビューは見つかりませんでした。"
+                f"取得施設数: {fetch_result.place_count}件 / "
+                f"保存レビュー数: {fetch_result.review_count}件"
+            )
+        return JsonResponse(
+            {
+                "ok": True,
+                "message": message,
+                "place_count": fetch_result.place_count,
+                "review_count": fetch_result.review_count,
+                "skipped": fetch_result.skipped,
+            }
+        )
+
+    def _analysis_result_json(self, analysis_result) -> JsonResponse:
+        if analysis_result.error_message:
+            if analysis_result.analyzed_count:
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "warning": True,
+                        "message": (
+                            "Google Maps レビュー分析を一部実行しました。"
+                            f"分析件数: {analysis_result.analyzed_count}件 / "
+                            f"ポジティブ: {analysis_result.positive_count}件 / "
+                            f"ネガティブ: {analysis_result.negative_count}件 / "
+                            f"{analysis_result.error_message}"
+                        ),
+                        "analyzed_count": analysis_result.analyzed_count,
+                        "positive_count": analysis_result.positive_count,
+                        "negative_count": analysis_result.negative_count,
+                        "skipped": analysis_result.skipped,
+                    }
+                )
+            return JsonResponse(
+                {"ok": False, "message": analysis_result.error_message}, status=400
+            )
+        if analysis_result.skipped:
+            message = "Google Maps レビューは分析対象がないか、すでに分析済みです。"
+        else:
+            message = (
+                "Google Maps レビュー分析を実行しました。"
+                f"分析件数: {analysis_result.analyzed_count}件 / "
+                f"ポジティブ: {analysis_result.positive_count}件 / "
+                f"ネガティブ: {analysis_result.negative_count}件"
+            )
+        return JsonResponse(
+            {
+                "ok": True,
+                "message": message,
+                "analyzed_count": analysis_result.analyzed_count,
+                "positive_count": analysis_result.positive_count,
+                "negative_count": analysis_result.negative_count,
+                "skipped": analysis_result.skipped,
+            }
+        )
+
+    def _fetch_and_analyze_google_maps_reviews(
+        self, request, selected_location: StorePlanningTargetLocation
+    ) -> HttpResponseRedirect:
+        google_maps_api_key = os.getenv("GOOGLE_MAPS_BE_API_KEY")
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        force_refetch = request.POST.get("force_refetch") == "1"
+        if not google_maps_api_key:
+            messages.warning(
+                request,
+                "レビュー取得の設定が未完了のため、今回は取得できませんでした。",
+            )
+            return HttpResponseRedirect(
+                self._store_planning_url(selected_location.slug)
+            )
+
+        target_result = StorePlanningReviewService.fetch_reviews(
+            api_key=google_maps_api_key,
+            target_location=selected_location,
+            force_refetch=force_refetch,
+        )
+        nearby_result = StorePlanningReviewService.fetch_nearby_same_business_reviews(
+            api_key=google_maps_api_key,
+            target_location=selected_location,
+            force_refetch=force_refetch,
+        )
+        for label, fetch_result in [
+            ("対象店舗レビュー", target_result),
+            ("周辺同業レビュー", nearby_result),
+        ]:
+            self._add_fetch_result_message(request, label, fetch_result)
+
+        if not openai_api_key:
+            messages.warning(
+                request,
+                "レビュー分析の設定が未完了のため、取得後の分析は実行できませんでした。",
+            )
+            return HttpResponseRedirect(
+                self._store_planning_url(selected_location.slug)
+            )
+
+        analysis_result = StorePlanningReviewService.analyze_all_reviews(
+            api_key=openai_api_key,
+            target_location=selected_location,
+        )
+        self._add_analysis_result_message(request, analysis_result)
+        return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
+
+    def _add_fetch_result_message(
+        self, request, fetch_label: str, fetch_result
+    ) -> None:
+        if fetch_result.error_message:
+            error_message = f"{fetch_label}: {fetch_result.error_message}"
+            if fetch_result.error_url:
+                messages.warning(
+                    request,
+                    format_html(
+                        '{} <a href="{}" target="_blank" rel="noopener">{}</a>',
+                        error_message,
+                        fetch_result.error_url,
+                        fetch_result.error_url_label or "確認する",
+                    ),
+                )
+            else:
+                messages.warning(request, error_message)
+            return
+        if fetch_result.skipped:
+            messages.info(
+                request,
+                (
+                    f"{fetch_label}は取得済みのためAPI呼び出しを省略しました。"
+                    f"施設数: {fetch_result.place_count}件 / "
+                    f"保存レビュー数: {fetch_result.review_count}件"
+                ),
+            )
+            return
+        message = (
+            f"取得施設数: {fetch_result.place_count}件 / "
+            f"保存レビュー数: {fetch_result.review_count}件"
+        )
+        if fetch_result.review_count:
+            messages.success(request, f"{fetch_label}取得を実行しました。{message}")
+        else:
+            messages.warning(
+                request,
+                f"{fetch_label}取得を実行しましたが、レビューは見つかりませんでした。{message}",
+            )
+
+    def _add_analysis_result_message(self, request, analysis_result) -> None:
+        if analysis_result.error_message:
+            messages.warning(request, analysis_result.error_message)
+        elif analysis_result.skipped:
+            messages.info(
+                request,
+                "Google Maps レビューは分析対象がないか、すでに分析済みです。",
+            )
+        else:
+            messages.success(
+                request,
+                (
+                    "Google Maps レビュー分析を実行しました。"
+                    f"分析件数: {analysis_result.analyzed_count}件 / "
+                    f"ポジティブ: {analysis_result.positive_count}件 / "
+                    f"ネガティブ: {analysis_result.negative_count}件"
+                ),
+            )
+
+    def _analyze_reviews(
+        self,
+        request,
+        selected_location: StorePlanningTargetLocation,
+        review_scope: str,
+    ) -> HttpResponseRedirect:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            if self._wants_json(request):
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "message": "レビュー分析の設定が未完了のため、今回は分析できませんでした。",
+                    },
+                    status=400,
+                )
+            messages.warning(
+                request,
+                "レビュー分析の設定が未完了のため、今回は分析できませんでした。",
+            )
+            return HttpResponseRedirect(
+                self._store_planning_url(selected_location.slug)
+            )
+
+        analysis_result = StorePlanningReviewService.analyze_place_summaries(
+            api_key=api_key,
+            target_location=selected_location,
+            review_scope=review_scope,
+            max_places=self._positive_int_or_none(request.POST.get("max_places")),
+        )
+        if self._wants_json(request):
+            return self._analysis_result_json(analysis_result)
+        if analysis_result.error_message:
+            messages.warning(request, analysis_result.error_message)
+        elif analysis_result.skipped:
+            messages.info(
+                request,
+                "Google Maps レビューは分析対象がないか、すでに分析済みです。",
+            )
+        else:
+            messages.success(
+                request,
+                (
+                    "Google Maps レビュー分析を実行しました。"
+                    f"分析件数: {analysis_result.analyzed_count}件 / "
+                    f"ポジティブ: {analysis_result.positive_count}件 / "
+                    f"ネガティブ: {analysis_result.negative_count}件"
+                ),
+            )
+        return HttpResponseRedirect(self._store_planning_url(selected_location.slug))
+
+    @staticmethod
+    def _positive_int_or_none(value: str | None) -> int | None:
+        try:
+            parsed_value = int(value)
+        except (TypeError, ValueError):
+            return None
+        if parsed_value < 1:
+            return None
+        return parsed_value
+
+    def _combined_place_insights(
+        self, target_place_insights: list, nearby_same_business_place_insights: list
+    ) -> list[dict]:
+        rows = [
+            {
+                "scope_label": "対象店舗",
+                "scope_class": "text-bg-primary",
+                "insight": insight,
+            }
+            for insight in target_place_insights
+        ]
+        rows.extend(
+            [
+                {
+                    "scope_label": "周辺同業",
+                    "scope_class": "text-bg-light border text-dark",
+                    "insight": insight,
+                }
+                for insight in nearby_same_business_place_insights
+            ]
+        )
+        return rows
 
     def _selected_location(self):
         requested_slug = self.request.GET.get("store")
@@ -296,6 +692,8 @@ class StorePlanningView(TemplateView):
             city_code="13121",
             town_code="073002",
             population_area="東京都足立区東保木間二丁目",
+            business_type_label="カフェ",
+            business_search_query="カフェ",
             large_area_name="東保木間",
             small_area_name="二丁目",
         )
@@ -427,6 +825,12 @@ class StorePlanningView(TemplateView):
             city_code=raw_data.get("city_code", ""),
             town_code=town_code,
             population_area=area_name,
+            business_type_label=(
+                selected_location.business_type_label if is_selected_area else ""
+            ),
+            business_search_query=(
+                selected_location.business_search_query if is_selected_area else ""
+            ),
             large_area_name=raw_data.get("large_area_name", ""),
             small_area_name=raw_data.get("small_area_name", ""),
             area_hierarchy_level=raw_data.get("area_hierarchy_level", ""),

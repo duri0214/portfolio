@@ -185,6 +185,8 @@ class StorePlanningTargetStoreRepository:
             city_code=store.city_code,
             town_code=store.town_code,
             population_area=store.population_area,
+            business_type_label=store.business_type_label,
+            business_search_query=store.business_search_query,
             large_area_name=store.large_area_name,
             small_area_name=store.small_area_name,
             area_hierarchy_level=store.area_hierarchy_level,

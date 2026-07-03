@@ -16,6 +16,8 @@ class GoogleMapsReviewClient:
         self.api_key = api_key
         self.base_url = "https://places.googleapis.com/v1/places"
         self.last_error_status_code: int | None = None
+        self.last_error_message = ""
+        self.last_error_operation = ""
 
     def text_search(
         self,
@@ -46,6 +48,7 @@ class GoogleMapsReviewClient:
             raise ValueError("fieldsパラメータは必須です")
 
         try:
+            operation = "Text Search"
             response = requests.post(
                 url=f"{self.base_url}:searchText",
                 headers=self._headers(fields),
@@ -66,9 +69,11 @@ class GoogleMapsReviewClient:
             )
             response.raise_for_status()
             self.last_error_status_code = None
+            self.last_error_message = ""
+            self.last_error_operation = ""
             return self._places_from_response(response.json().get("places", []))
         except requests.HTTPError as e:
-            self._handle_http_error(e)
+            self._handle_http_error(e, operation)
             return []
         except (KeyError, TypeError, requests.RequestException) as e:
             print(f"Google Maps review fetch error: {e}")
@@ -96,6 +101,7 @@ class GoogleMapsReviewClient:
             raise ValueError("fieldsパラメータは必須です")
 
         try:
+            operation = "Place Details"
             response = requests.get(
                 url=f"{self.base_url}/{place_id}",
                 headers=self._headers(fields),
@@ -104,10 +110,12 @@ class GoogleMapsReviewClient:
             )
             response.raise_for_status()
             self.last_error_status_code = None
+            self.last_error_message = ""
+            self.last_error_operation = ""
             place = self._place_from_response(response.json())
             return place
         except requests.HTTPError as e:
-            self._handle_http_error(e)
+            self._handle_http_error(e, operation)
             return None
         except (KeyError, TypeError, requests.RequestException) as e:
             print(f"Google Maps review fetch error: {e}")
@@ -162,9 +170,25 @@ class GoogleMapsReviewClient:
             reviews=reviews,
         )
 
-    def _handle_http_error(self, error: requests.HTTPError) -> None:
+    def _handle_http_error(self, error: requests.HTTPError, operation: str) -> None:
         response = error.response
         self.last_error_status_code = (
             response.status_code if response is not None else None
         )
-        print(f"Google Maps review fetch HTTP error: {error}")
+        self.last_error_operation = operation
+        self.last_error_message = self._error_message_from_response(response)
+        print(f"Google Maps review fetch HTTP error: {error} {self.last_error_message}")
+
+    @staticmethod
+    def _error_message_from_response(response) -> str:
+        if response is None:
+            return ""
+        try:
+            error_data = response.json().get("error", {})
+        except ValueError:
+            return response.text[:500]
+        status = error_data.get("status") or ""
+        message = error_data.get("message") or ""
+        if status and message:
+            return f"{status}: {message}"
+        return message or status

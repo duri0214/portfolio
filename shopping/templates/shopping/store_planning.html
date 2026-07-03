@@ -1,5 +1,21 @@
 {% extends 'shopping/base.html' %}
 {% load humanize %}
+{% load simple_markdown %}
+
+{% block extra_css %}
+    <style>
+        .store-planning-review-comparison-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .store-planning-review-comparison-table th,
+        .store-planning-review-comparison-table td {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
     <div class="container mt-4">
@@ -53,6 +69,14 @@
                         </dd>
                         <dt class="col-sm-3">人口集計地域</dt>
                         <dd class="col-sm-9">{{ target_location.population_area }}</dd>
+                        <dt class="col-sm-3">業態</dt>
+                        <dd class="col-sm-9">
+                            {{ target_location.business_type_label }}
+                        </dd>
+                        <dt class="col-sm-3">同業検索語</dt>
+                        <dd class="col-sm-9">
+                            {{ target_location.business_search_query }}
+                        </dd>
                         <dt class="col-sm-3">Google Maps操作</dt>
                         <dd class="col-sm-9">
                             {% if can_use_google_maps %}
@@ -381,92 +405,123 @@
                         <div>
                             <h2 class="h5 mb-1">Google Maps レビュー</h2>
                             <p class="small text-muted mb-0">
-                                選択中の店舗候補に紐づく Google Maps レビューを表示する。
+                                選択中の店舗候補と周辺同業店舗の Google Maps レビューを比較する。
                             </p>
                         </div>
                         <div class="d-flex flex-column flex-sm-row gap-2 align-self-md-start">
-                            <span class="badge text-bg-light align-self-sm-center">対象店舗</span>
-                            <form method="post" action="{% url 'shp:store_planning' %}?store={{ target_location.slug }}">
+                            <form id="store-planning-review-form" method="post" action="{% url 'shp:store_planning' %}?store={{ target_location.slug }}"
+                                  data-has-existing-reviews="{% if has_any_google_maps_reviews %}1{% else %}0{% endif %}">
                                 {% csrf_token %}
-                                <input type="hidden" name="action" value="fetch_google_maps_reviews">
+                                <input type="hidden" name="action" value="fetch_and_analyze_google_maps_reviews">
                                 {% if can_use_google_maps %}
-                                    <button class="btn btn-sm btn-outline-primary" type="submit">
-                                        レビュー取得
+                                    <button id="store-planning-review-run-button" class="btn btn-sm btn-outline-primary" type="submit">
+                                        レビュー取得・分析
                                     </button>
                                 {% else %}
                                     <button class="btn btn-sm btn-outline-secondary" type="button" disabled>
-                                        レビュー取得
+                                        レビュー取得・分析
                                     </button>
                                 {% endif %}
                             </form>
                         </div>
                     </div>
+                    <div id="store-planning-review-progress" class="alert alert-info d-none" role="status" aria-live="polite"></div>
                     <div class="row g-3 mb-3">
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
                                 <div class="small text-muted">レビュー対象施設</div>
-                                <div class="fs-5 fw-semibold">{{ review_summary.total_place_count|intcomma }}件</div>
+                                <div class="fs-5 fw-semibold">{{ combined_place_insights|length|intcomma }}件</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
-                                <div class="small text-muted">レビュー数</div>
-                                <div class="fs-5 fw-semibold">{{ review_summary.total_review_count|intcomma }}件</div>
+                                <div class="small text-muted">保存レビュー数</div>
+                                <div class="fs-5 fw-semibold">{{ combined_place_review_count|intcomma }}件</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
                                 <div class="small text-muted">平均 rating</div>
-                                <div class="fs-5 fw-semibold">{{ review_summary.average_rating|default:"-" }}</div>
+                                <div class="fs-5 fw-semibold">{{ combined_review_summary.average_rating|default:"-" }}</div>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="border rounded p-3 h-100">
-                                <div class="small text-muted">キーワード件数</div>
-                                <div class="fs-5 fw-semibold">{{ review_summary.positive_count|intcomma }} / {{ review_summary.negative_count|intcomma }}</div>
+                                <div class="small text-muted">ポジ / ネガ</div>
+                                <div class="fs-5 fw-semibold">
+                                    <span class="text-success">ポジ {{ combined_review_summary.positive_count|intcomma }}</span> /
+                                    <span class="text-danger">ネガ {{ combined_review_summary.negative_count|intcomma }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row g-3">
-                        <div class="col-lg-5">
-                            <div class="d-grid gap-2" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
-                                {% for cell in review_summary.cells %}
-                                    <div class="border rounded p-2 text-center"
-                                         style="min-height: 96px; background-color: {{ cell.background_color }}; color: {{ cell.text_color }};">
-                                        <div class="small fw-semibold">{{ cell.label }}</div>
-                                        <div class="fs-5 fw-semibold">{{ cell.review_count }}</div>
-                                        <div class="small">rating {{ cell.average_rating|default:"-" }}</div>
-                                        <div class="small">score {{ cell.score }}</div>
-                                    </div>
-                                {% endfor %}
+                    <div class="mb-3">
+                        <h3 class="h6 mb-2">レビュー取得店舗マップ</h3>
+                        {% if can_use_google_maps and google_maps_fe_api_key and has_review_map_places %}
+                            <div id="store-planning-review-map" class="border rounded" style="width: 100%; height: 420px"></div>
+                            <div class="d-flex flex-wrap gap-3 small text-muted mt-2">
+                                <span><span class="badge" style="background-color: #0d6efd;">&nbsp;</span> 対象店舗</span>
+                                <span><span class="badge" style="background-color: #dc3545;">&nbsp;</span> 周辺同業</span>
                             </div>
-                        </div>
-                        <div class="col-lg-7">
-                            {% if review_summary.latest_reviews %}
+                        {% elif can_use_google_maps and not google_maps_fe_api_key %}
+                            <div class="alert alert-warning mb-0">
+                                Google Maps JavaScript APIキーが未設定のため、レビュー取得店舗マップを表示できません。
+                            </div>
+                        {% elif can_use_google_maps %}
+                            <div class="alert alert-warning mb-0">
+                                ピン表示できるレビュー取得店舗はまだありません。
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning mb-0">
+                                Google Maps の表示はスーパーユーザーでログインした場合のみ利用できます。
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div>
+                            <h3 class="h6 mb-3">店舗レビュー比較</h3>
+                            {% if combined_place_insights %}
                                 <div class="table-responsive">
-                                    <table class="table table-sm align-middle mb-0">
+                                    <table class="table table-sm align-middle mb-0 store-planning-review-comparison-table">
+                                        <colgroup>
+                                            <col style="width: 7%">
+                                            <col style="width: 21%">
+                                            <col style="width: 24%">
+                                            <col style="width: 24%">
+                                            <col style="width: 24%">
+                                        </colgroup>
                                         <thead>
                                         <tr>
+                                            <th>区分</th>
                                             <th>施設</th>
-                                            <th>レビュー</th>
-                                            <th class="text-end">距離</th>
+                                            <th>強み</th>
+                                            <th>弱み</th>
+                                            <th>立地示唆</th>
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {% for review in review_summary.latest_reviews %}
+                                        {% for row in combined_place_insights %}
                                             <tr>
-                                                <td class="text-nowrap">
-                                                    <div class="fw-semibold">{{ review.place_name }}</div>
+                                                <td><span class="badge {{ row.scope_class }}">{{ row.scope_label }}</span></td>
+                                                <td>
+                                                    <div class="fw-semibold">{{ row.insight.place_name }}</div>
                                                     <div class="small text-muted">
-                                                        rating {{ review.rating|default:"-" }}
-                                                        {% if review.publish_time %}/ {{ review.publish_time|date:"Y-m-d" }}{% endif %}
+                                                        rating {{ row.insight.average_rating|default:"-" }} /
+                                                        <a href="{{ row.insight.google_maps_url }}" target="_blank" rel="noopener">Google Maps</a>
+                                                        {% if row.insight.analyzed_count %}
+                                                            / 分析済み
+                                                        {% else %}
+                                                            / 分析待ち
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="small">
+                                                        <span class="text-success">ポジ {{ row.insight.positive_count|intcomma }}</span> /
+                                                        <span class="text-danger">ネガ {{ row.insight.negative_count|intcomma }}</span>
                                                     </div>
                                                 </td>
-                                                <td>
-                                                    <div class="small text-muted">{{ review.author }}</div>
-                                                    {{ review.review_text|truncatechars:90 }}
-                                                </td>
-                                                <td class="text-end text-nowrap">{{ review.distance_meter|intcomma }}m</td>
+                                                <td>{{ row.insight.strength|default:"-"|simple_markdown }}</td>
+                                                <td>{{ row.insight.weakness|default:"-"|simple_markdown }}</td>
+                                                <td>{{ row.insight.location_insight|default:"-"|simple_markdown }}</td>
                                             </tr>
                                         {% endfor %}
                                         </tbody>
@@ -474,15 +529,20 @@
                                 </div>
                             {% else %}
                                 <div class="alert alert-warning mb-0">
-                                    選択中の店舗候補の Google Maps レビューはまだ取得されていません。
-                                    スーパーユーザーでログインしている場合は「レビュー取得」から最新のレビューを取得できます。
+                                    選択中の店舗候補と周辺同業店舗の Google Maps レビューはまだ取得されていません。
+                                    スーパーユーザーでログインしている場合は「レビュー取得・分析」から最新のレビューを取得できます。
                                 </div>
                             {% endif %}
                         </div>
                     </div>
+                    {% if review_summary.latest_reviews and not nearby_same_business_review_summary.latest_reviews %}
+                        <div class="alert alert-warning mt-3 mb-0">
+                            対象店舗レビューは取得済みですが、周辺同業店舗レビューはまだ取得されていません。
+                            「レビュー取得・分析」からまとめて取得してください。
+                        </div>
+                    {% endif %}
                 </section>
             </div>
-
             <div class="col-12">
                 <section class="border rounded p-3">
                     <h2 class="h6 mb-2">e-Stat CSV カバー範囲</h2>
@@ -532,5 +592,211 @@
                 });
             });
         });
+        const reviewForm = document.getElementById("store-planning-review-form");
+        const progressBox = document.getElementById("store-planning-review-progress");
+        const runButton = document.getElementById("store-planning-review-run-button");
+        if (reviewForm && progressBox && runButton) {
+            const reviewTasks = [
+                {action: "fetch_google_maps_reviews", label: "対象店舗レビュー取得"},
+                {action: "fetch_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー取得"},
+                {action: "analyze_google_maps_target_reviews", label: "対象店舗レビュー分析"},
+                {action: "analyze_google_maps_nearby_same_business_reviews", label: "周辺同業レビュー分析", batchSize: 2},
+            ];
+            let nearbyAnalysisPlaceCount = 0;
+            const taskLabel = (task) => {
+                if (task.action === "analyze_google_maps_nearby_same_business_reviews" && nearbyAnalysisPlaceCount) {
+                    return `${task.label}（${nearbyAnalysisPlaceCount}店舗分）`;
+                }
+                return task.label;
+            };
+            const setProgress = (text) => {
+                progressBox.textContent = text;
+            };
+            const setProgressError = (message, url, label) => {
+                progressBox.textContent = message;
+                if (!url) {
+                    return;
+                }
+                progressBox.appendChild(document.createTextNode(" "));
+                const link = document.createElement("a");
+                link.href = url;
+                link.target = "_blank";
+                link.rel = "noopener";
+                link.textContent = label || "確認する";
+                progressBox.appendChild(link);
+            };
+            const reviewPostUrl = window.location.href;
+            const parseJsonResponse = async (response, label) => {
+                const contentType = response.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                    return response.json();
+                }
+                const responseText = await response.text();
+                const responseUrl = response.url || reviewPostUrl;
+                let detail = responseText.trim().slice(0, 120);
+                if (responseText.trim().startsWith("<!DOCTYPE")) {
+                    detail = response.status === 404
+                        ? `POST先が見つかりませんでした: ${responseUrl}`
+                        : `HTMLエラーページが返りました: ${responseUrl}`;
+                }
+                return {
+                    ok: false,
+                    message: `${label}に失敗しました。HTTP ${response.status}: ${detail}`,
+                };
+            };
+            const fetchReviewTask = async (task, formData) => {
+                try {
+                    return await fetch(reviewPostUrl, {
+                        method: "POST",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest",
+                            "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+                        },
+                        body: formData,
+                    });
+                } catch (error) {
+                    const taskError = new Error(
+                        `${taskLabel(task)}の通信が切れました。` +
+                        "LLM分析は時間がかかることがあります。画面を更新し、分析待ちが残っていればもう一度「レビュー取得・分析」を実行してください。"
+                    );
+                    throw taskError;
+                }
+            };
+            const runReviewTask = async (task, formData) => {
+                const response = await fetchReviewTask(task, formData);
+                const result = await parseJsonResponse(response, task.label);
+                if (!response.ok || !result.ok) {
+                    const taskError = new Error(result.message || `${task.label}に失敗しました。`);
+                    taskError.errorUrl = result.error_url || "";
+                    taskError.errorUrlLabel = result.error_url_label || "";
+                    throw taskError;
+                }
+                return result;
+            };
+            reviewForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const hasExistingReviews = reviewForm.dataset.hasExistingReviews === "1";
+                const forceRefetch = hasExistingReviews
+                    ? window.confirm("保存済みレビューがあります。再取得しますか？")
+                    : false;
+                runButton.disabled = true;
+                progressBox.classList.remove("d-none", "alert-danger", "alert-warning", "alert-success");
+                progressBox.classList.add("alert-info");
+                progressBox.textContent = "";
+                let warningMessage = "";
+                try {
+                    for (const [index, task] of reviewTasks.entries()) {
+                        setProgress(`ステップ ${index + 1}/${reviewTasks.length}: ${taskLabel(task)}を実行中...`);
+                        const formData = new FormData(reviewForm);
+                        formData.set("action", task.action);
+                        if (forceRefetch) {
+                            formData.set("force_refetch", "1");
+                        }
+                        if (task.batchSize && nearbyAnalysisPlaceCount) {
+                            const batchCount = Math.ceil(nearbyAnalysisPlaceCount / task.batchSize);
+                            for (let batchIndex = 0; batchIndex < batchCount; batchIndex += 1) {
+                                const batchStart = batchIndex * task.batchSize + 1;
+                                const batchEnd = Math.min((batchIndex + 1) * task.batchSize, nearbyAnalysisPlaceCount);
+                                const batchProgress = `${batchStart}-${batchEnd}/${nearbyAnalysisPlaceCount}店舗`;
+                                setProgress(
+                                    `ステップ ${index + 1}/${reviewTasks.length}: ` +
+                                    `${task.label} ${batchProgress}を実行中...`
+                                );
+                                formData.set("max_places", String(task.batchSize));
+                                const batchResult = await runReviewTask(task, formData);
+                                if (batchResult.warning) {
+                                    warningMessage = batchResult.message;
+                                }
+                                setProgress(
+                                    `ステップ ${index + 1}/${reviewTasks.length}: ` +
+                                    `${task.label} ${batchProgress}完了: ${batchResult.message}`
+                                );
+                                if (batchResult.skipped) {
+                                    break;
+                                }
+                            }
+                            continue;
+                        }
+                        const result = await runReviewTask(task, formData);
+                        if (task.action === "fetch_google_maps_nearby_same_business_reviews") {
+                            nearbyAnalysisPlaceCount = result.place_count || 0;
+                        }
+                        if (result.warning) {
+                            warningMessage = result.message;
+                        }
+                        setProgress(`ステップ ${index + 1}/${reviewTasks.length}完了: ${result.message}`);
+                    }
+                    progressBox.classList.remove("alert-info", "alert-danger", "alert-warning", "alert-success");
+                    if (warningMessage) {
+                        progressBox.classList.add("alert-warning");
+                        setProgress(`${warningMessage} 画面を更新します。`);
+                    } else {
+                        progressBox.classList.add("alert-success");
+                        setProgress("すべての処理が完了しました。画面を更新します。");
+                    }
+                    window.location.reload();
+                } catch (error) {
+                    progressBox.classList.remove("alert-info", "alert-warning", "alert-success");
+                    progressBox.classList.add("alert-danger");
+                    setProgressError(error.message, error.errorUrl, error.errorUrlLabel);
+                    runButton.disabled = false;
+                }
+            });
+        }
     </script>
+    {% if can_use_google_maps and google_maps_fe_api_key and has_review_map_places %}
+        <script>
+            window.storePlanningReviewMapInit = () => {
+                document.addEventListener("DOMContentLoaded", () => {
+                    const mapData = JSON.parse("{{ review_map_data|escapejs }}");
+                    const map = new google.maps.Map(
+                        document.getElementById("store-planning-review-map"),
+                        {
+                            zoom: 15,
+                            center: mapData.center,
+                            mapId: mapData.mapId,
+                            mapTypeControl: false,
+                            streetViewControl: false,
+                            fullscreenControl: false,
+                        },
+                    );
+                    const infoWindow = new google.maps.InfoWindow();
+                    const bounds = new google.maps.LatLngBounds();
+                    mapData.places.forEach((place) => {
+                        bounds.extend(place.location);
+                        const pin = new google.maps.marker.PinElement({
+                            background: place.pin_color,
+                            borderColor: "#ffffff",
+                            glyphColor: "#ffffff",
+                        });
+                        const marker = new google.maps.marker.AdvancedMarkerElement({
+                            position: place.location,
+                            map,
+                            title: place.name,
+                            content: pin.element,
+                            gmpClickable: true,
+                        });
+                        marker.addEventListener("gmp-click", () => {
+                            infoWindow.setContent(`
+                                <div>
+                                    <div><strong>${place.name}</strong></div>
+                                    <div>${place.scope_label}</div>
+                                    <div>rating ${place.rating ?? "-"}</div>
+                                    <div><a href="${place.google_maps_url}" target="_blank" rel="noopener">Google Maps</a></div>
+                                </div>
+                            `);
+                            infoWindow.open({anchor: marker, map});
+                        });
+                    });
+                    if (mapData.places.length > 1) {
+                        map.fitBounds(bounds);
+                    } else {
+                        map.setZoom(14);
+                    }
+                });
+            };
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=storePlanningReviewMapInit&libraries=places,marker&v=weekly"
+                defer onerror="console.error('Google Maps API failed to load.');"></script>
+    {% endif %}
 {% endblock %}

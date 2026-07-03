@@ -55,6 +55,8 @@ class StorePlanningArea:
         city_code: e-Stat CSVの市区町村コード。
         town_code: e-Stat CSVの町丁字コード。
         population_area: 人口集計に使う町丁字名。
+        business_type_label: 画面に表示する業態名。
+        business_search_query: 周辺同業店舗を検索するためのGoogle Maps検索語。
         large_area_name: e-Stat CSVの大字・町名。
         small_area_name: e-Stat CSVの字・丁目名。
         area_hierarchy_level: e-Stat CSVの地域階層レベル。総務省統計局
@@ -72,6 +74,8 @@ class StorePlanningArea:
     city_code: str
     town_code: str
     population_area: str
+    business_type_label: str = "飲食店"
+    business_search_query: str = "レストラン"
     large_area_name: str = ""
     small_area_name: str = ""
     area_hierarchy_level: str = AREA_HIERARCHY_LEVEL_BLOCK
