@@ -193,18 +193,14 @@
                                         <div class="small text-muted">レベル {{ row.area_hierarchy_level|default:"-" }}</div>
                                     </td>
                                     <td>
-                                        {% if can_use_google_maps %}
-                                            <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
-                                                地域を開く
+                                        <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
+                                            地域を開く
+                                        </a>
+                                        <div class="small text-muted">
+                                            <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
+                                                {% if row.latitude and row.longitude %}代表地点{% else %}地域検索{% endif %}
                                             </a>
-                                            <div class="small text-muted">
-                                                <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
-                                                    {% if row.latitude and row.longitude %}代表地点{% else %}地域検索{% endif %}
-                                                </a>
-                                            </div>
-                                        {% else %}
-                                            <span class="text-muted">制限中</span>
-                                        {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                             {% endfor %}
