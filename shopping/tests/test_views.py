@@ -137,11 +137,13 @@ class TestView(TestCase):
             "https://www.google.com/maps?q=35.792822,139.8143238",
         )
         self.assertContains(response, "人口集計地域")
+        self.assertContains(response, "業態")
+        self.assertContains(response, "カフェ")
+        self.assertContains(response, "同業検索語")
         self.assertContains(response, "Google Maps操作")
         self.assertContains(response, "利用可")
         self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "Google Maps レビュー")
-        self.assertNotContains(response, "検索語:")
         self.assertContains(response, "e-Stat 年代別人口")
         html = response.content.decode()
         self.assertLess(
@@ -230,7 +232,8 @@ class TestView(TestCase):
             publish_time=timezone.now(),
         )
 
-        response = self.client.get(reverse("shp:store_planning"))
+        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+            response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "Google Maps レビュー")

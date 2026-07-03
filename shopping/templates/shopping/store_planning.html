@@ -73,6 +73,10 @@
                         <dd class="col-sm-9">
                             {{ target_location.business_type_label }}
                         </dd>
+                        <dt class="col-sm-3">同業検索語</dt>
+                        <dd class="col-sm-9">
+                            {{ target_location.business_search_query }}
+                        </dd>
                         <dt class="col-sm-3">Google Maps操作</dt>
                         <dd class="col-sm-9">
                             {% if can_use_google_maps %}
