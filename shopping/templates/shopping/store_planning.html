@@ -59,13 +59,9 @@
                     <dl class="row mb-0">
                         <dt class="col-sm-3">対象地点</dt>
                         <dd class="col-sm-9">
-                            {% if can_use_google_maps %}
-                                <a href="{{ target_location.google_maps_url }}" target="_blank" rel="noopener">
-                                    {{ target_location.name }}
-                                </a>
-                            {% else %}
+                            <a href="{{ target_location.google_maps_url }}" target="_blank" rel="noopener">
                                 {{ target_location.name }}
-                            {% endif %}
+                            </a>
                         </dd>
                         <dt class="col-sm-3">人口集計地域</dt>
                         <dd class="col-sm-9">{{ target_location.population_area }}</dd>
