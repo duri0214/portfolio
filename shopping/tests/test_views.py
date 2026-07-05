@@ -140,8 +140,6 @@ class TestView(TestCase):
         self.assertContains(response, "業態")
         self.assertContains(response, "カフェ")
         self.assertContains(response, "同業検索語")
-        self.assertContains(response, "Google Maps操作")
-        self.assertContains(response, "利用可")
         self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "Google Maps レビュー")
         self.assertContains(response, "e-Stat 年代別人口")
@@ -443,30 +441,27 @@ class TestView(TestCase):
         self.assertContains(response, "席が狭い")
         self.assertContains(response, "近隣では滞在快適性に改善余地がある")
 
-    def test_store_planning_page_restricts_google_maps_clicks_to_superuser(self):
+    def test_store_planning_page_allows_google_maps_display_for_anonymous_user(self):
         """
         シナリオ:
         - 入力: 未ログイン状態の出店計画画面URL。
         - 処理: テストクライアントでGETする。
-        - 期待値: Google Maps iframe、地図リンク、地図切替ボタンが表示されないこと。
+        - 期待値: Google Maps iframe、地図リンク、レビュー表示は表示され、レビュー取得ボタンだけ無効化されること。
         """
         self.client.logout()
 
         response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
-        self.assertContains(
-            response,
-            "Google Maps の表示と外部リンクはスーパーユーザーでログインした場合のみ利用できます。",
-        )
-        self.assertNotContains(response, "<iframe")
-        self.assertNotContains(response, 'class="btn btn-sm store-planning-map-button')
-        self.assertNotContains(response, "https://www.google.com/maps?q=35.792822")
-        self.assertContains(response, "スーパーユーザー限定")
-        self.assertContains(response, "レビュー取得")
+        self.assertContains(response, "<iframe")
+        self.assertContains(response, 'id="store-planning-area-map"')
+        self.assertContains(response, 'class="btn btn-sm store-planning-map-button')
+        self.assertContains(response, "https://www.google.com/maps?q=35.792822")
+        self.assertContains(response, "Google Maps レビュー")
+        self.assertContains(response, "レビュー取得・分析")
         self.assertContains(response, "disabled")
-        self.assertContains(response, "store-planning-map-button-disabled")
-        self.assertContains(response, "制限中")
+        self.assertNotContains(response, "スーパーユーザー限定")
+        self.assertNotContains(response, "store-planning-map-button-disabled")
 
     @patch("shopping.views.StorePlanningReviewService.fetch_reviews")
     def test_post_store_planning_fetches_google_maps_reviews_for_superuser(
@@ -1304,7 +1299,7 @@ class TestView(TestCase):
             response,
             "市区町村コード・地域階層レベル4・町丁字コード先頭2桁から抽出（境界未確認）",
         )
-        self.assertContains(response, "地域検索")
+        self.assertNotContains(response, ">地域検索</a>")
         self.assertContains(response, "e-Stat CSV カバー範囲")
         self.assertContains(response, "東京都 足立区")
         self.assertContains(response, "4件")

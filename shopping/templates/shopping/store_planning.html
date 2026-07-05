@@ -196,11 +196,13 @@
                                         <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
                                             地域を開く
                                         </a>
-                                        <div class="small text-muted">
-                                            <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
-                                                {% if row.latitude and row.longitude %}代表地点{% else %}地域検索{% endif %}
-                                            </a>
-                                        </div>
+                                        {% if row.latitude and row.longitude %}
+                                            <div class="small text-muted">
+                                                <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
+                                                    代表地点
+                                                </a>
+                                            </div>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}
