@@ -139,7 +139,7 @@ class TestView(TestCase):
         self.assertContains(response, "人口集計地域")
         self.assertContains(response, "業態")
         self.assertContains(response, "カフェ")
-        self.assertContains(response, "同業検索語")
+        self.assertNotContains(response, "同業検索語")
         self.assertContains(response, "東京都足立区東保木間二丁目")
         self.assertContains(response, "Google Maps レビュー")
         self.assertContains(response, "e-Stat 年代別人口")
@@ -460,6 +460,8 @@ class TestView(TestCase):
         self.assertContains(response, "Google Maps レビュー")
         self.assertContains(response, "レビュー取得・分析")
         self.assertContains(response, "disabled")
+        self.assertNotContains(response, "店舗登録")
+        self.assertNotContains(response, reverse("shp:store_planning_store_create"))
         self.assertNotContains(response, "スーパーユーザー限定")
         self.assertNotContains(response, "store-planning-map-button-disabled")
 
@@ -922,7 +924,7 @@ class TestView(TestCase):
         self.assertContains(response, "E-Stat大字・町名")
         self.assertContains(response, "E-Stat字・丁目名")
         self.assertContains(response, "業態")
-        self.assertContains(response, "Google Maps同業検索語")
+        self.assertNotContains(response, "Google Maps同業検索語")
         self.assertContains(response, "Googleマップ座標")
         self.assertContains(response, "e-Stat CSVの「市区町村コード」です")
         self.assertContains(response, "e-Stat CSVの「町丁字コード」です")
@@ -933,12 +935,26 @@ class TestView(TestCase):
         )
         self.assertContains(response, "e-Stat CSVの「大字・町名」です")
         self.assertContains(response, "e-Stat CSVの「字・丁目名」です")
-        self.assertContains(response, "周辺同業店舗の検索に使う語です")
+        self.assertContains(response, "周辺同業店舗の検索に使う業態名です")
         self.assertNotContains(response, "E-Stat人口集計地域")
+        self.assertNotContains(response, 'name="business_search_query"')
         self.assertNotContains(response, 'name="population_area"')
         self.assertNotContains(response, 'name="latitude"')
         self.assertNotContains(response, 'name="longitude"')
         self.assertNotContains(response, "E-Stat地域階層レベル")
+
+    def test_get_store_planning_target_store_create_page_rejects_regular_user(self):
+        """
+        シナリオ:
+        - 入力: 一般ユーザーで出店計画の店舗登録ページURL。
+        - 処理: テストクライアントでGETする。
+        - 期待値: スーパーユーザーではないため HTTP 403 が返されること。
+        """
+        self.client.force_login(User.objects.get(username="John Doe"))
+
+        response = self.client.get(reverse("shp:store_planning_store_create"))
+
+        self.assertEqual(403, response.status_code)
 
     def test_post_store_planning_target_store_create_page(self):
         """
@@ -957,7 +973,6 @@ class TestView(TestCase):
                 "city_code": "13113",
                 "town_code": "030002",
                 "business_type_label": "タップルーム",
-                "business_search_query": "クラフトビール",
                 "prefecture_name": "東京都",
                 "city_name": "渋谷区",
                 "large_area_name": "代々木",
@@ -976,7 +991,7 @@ class TestView(TestCase):
         self.assertEqual(139.1, store.longitude)
         self.assertEqual("東京都渋谷区代々木二丁目", store.population_area)
         self.assertEqual("タップルーム", store.business_type_label)
-        self.assertEqual("クラフトビール", store.business_search_query)
+        self.assertEqual("タップルーム", store.business_search_query)
         self.assertEqual("4", store.area_hierarchy_level)
 
     def test_post_store_planning_target_store_create_page_parses_google_maps_coord(
@@ -998,7 +1013,6 @@ class TestView(TestCase):
                 "city_code": "13113",
                 "town_code": "030002",
                 "business_type_label": "タップルーム",
-                "business_search_query": "クラフトビール",
                 "prefecture_name": "東京都",
                 "city_name": "渋谷区",
                 "large_area_name": "代々木",

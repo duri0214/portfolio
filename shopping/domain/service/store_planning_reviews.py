@@ -119,12 +119,12 @@ class StorePlanningReviewService:
         """
         対象店舗候補と同じ業態の周辺店舗を検索し、レビューを保存する。
         """
-        if not target_location.business_search_query:
-            return StorePlanningReviewFetchResult(place_count=0, review_count=0)
-        query = (
-            f"{target_location.business_search_query} "
-            f"{target_location.population_area}"
+        search_word = (
+            target_location.business_type_label or target_location.business_search_query
         )
+        if not search_word:
+            return StorePlanningReviewFetchResult(place_count=0, review_count=0)
+        query = f"{search_word} {target_location.population_area}"
         return cls._fetch_reviews(
             api_key=api_key,
             target_location=target_location,

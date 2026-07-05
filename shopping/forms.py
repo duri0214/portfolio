@@ -100,7 +100,6 @@ class StorePlanningTargetStoreCreateForm(forms.ModelForm):
             "city_code",
             "town_code",
             "business_type_label",
-            "business_search_query",
             "prefecture_name",
             "city_name",
             "large_area_name",
@@ -126,9 +125,6 @@ class StorePlanningTargetStoreCreateForm(forms.ModelForm):
             "business_type_label": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "カフェ"}
             ),
-            "business_search_query": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "カフェ"}
-            ),
             "large_area_name": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "代々木"}
             ),
@@ -141,7 +137,6 @@ class StorePlanningTargetStoreCreateForm(forms.ModelForm):
             "city_code": "E-Stat市区町村コード",
             "town_code": "E-Stat町丁字コード",
             "business_type_label": "業態",
-            "business_search_query": "Google Maps同業検索語",
             "large_area_name": "E-Stat大字・町名",
             "small_area_name": "E-Stat字・丁目名",
         }
@@ -151,8 +146,7 @@ class StorePlanningTargetStoreCreateForm(forms.ModelForm):
             "address": "Googleマップ検索や候補地の説明に使う住所です。",
             "city_code": "e-Stat CSVの「市区町村コード」です。例: 渋谷区は13113",
             "town_code": "e-Stat CSVの「町丁字コード」です。例: 代々木二丁目は030002",
-            "business_type_label": "出店計画画面で表示する業態名です。例: カフェ",
-            "business_search_query": "周辺同業店舗の検索に使う語です。例: カフェ、クラフトビール",
+            "business_type_label": "出店計画画面の表示と周辺同業店舗の検索に使う業態名です。例: カフェ",
             "large_area_name": "e-Stat CSVの「大字・町名」です。例: 代々木",
             "small_area_name": "e-Stat CSVの「字・丁目名」です。例: 二丁目",
             "is_active": "オンにすると出店計画画面の店舗選択に表示します。",
@@ -207,6 +201,7 @@ class StorePlanningTargetStoreCreateForm(forms.ModelForm):
         instance.latitude = google_maps_coord.latitude
         instance.longitude = google_maps_coord.longitude
         instance.population_area = self._population_area()
+        instance.business_search_query = instance.business_type_label
         instance.area_hierarchy_level = AREA_HIERARCHY_LEVEL_BLOCK
         if commit:
             instance.save()
