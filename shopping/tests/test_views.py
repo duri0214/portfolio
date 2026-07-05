@@ -460,7 +460,7 @@ class TestView(TestCase):
         self.assertContains(response, "Google Maps レビュー")
         self.assertContains(response, "レビュー取得・分析")
         self.assertContains(response, "disabled")
-        self.assertNotContains(response, "店舗登録")
+        self.assertContains(response, "店舗登録")
         self.assertNotContains(response, reverse("shp:store_planning_store_create"))
         self.assertNotContains(response, "スーパーユーザー限定")
         self.assertNotContains(response, "store-planning-map-button-disabled")

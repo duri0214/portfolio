@@ -44,6 +44,10 @@
                             <a class="btn btn-outline-primary btn-sm align-self-md-start" href="{% url 'shp:store_planning_store_create' %}">
                                 店舗登録
                             </a>
+                        {% else %}
+                            <button class="btn btn-outline-secondary btn-sm align-self-md-start" type="button" disabled>
+                                店舗登録
+                            </button>
                         {% endif %}
                     </div>
                     <form class="mb-3" method="get" action="{% url 'shp:store_planning' %}">
