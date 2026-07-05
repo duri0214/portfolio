@@ -60,8 +60,9 @@ class StorePlanningTargetStore(models.Model):
         city_code: e-Stat CSVの市区町村コード。
         town_code: e-Stat CSVの町丁字コード。
         population_area: 人口集計に使う町丁字名。
-        business_type_label: 画面に表示する業態名。
+        business_type_label: 画面表示と周辺同業店舗検索に使う業態名。
         business_search_query: 周辺同業店舗を検索するためのGoogle Maps検索語。
+            店舗登録フォームでは業態名と同じ値を保存する。
         large_area_name: e-Stat CSVの大字・町名。
         small_area_name: e-Stat CSVの字・丁目名。
         area_hierarchy_level: e-Stat CSVの地域階層レベル。

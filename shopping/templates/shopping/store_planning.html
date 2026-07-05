@@ -40,9 +40,15 @@
                 <div class="p-4 bg-light rounded shadow-sm">
                     <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
                         <h1 class="h2 mb-0">出店計画</h1>
-                        <a class="btn btn-outline-primary btn-sm align-self-md-start" href="{% url 'shp:store_planning_store_create' %}">
-                            店舗登録
-                        </a>
+                        {% if user.is_superuser %}
+                            <a class="btn btn-outline-primary btn-sm align-self-md-start" href="{% url 'shp:store_planning_store_create' %}">
+                                店舗登録
+                            </a>
+                        {% else %}
+                            <button class="btn btn-outline-secondary btn-sm align-self-md-start" type="button" disabled>
+                                店舗登録
+                            </button>
+                        {% endif %}
                     </div>
                     <form class="mb-3" method="get" action="{% url 'shp:store_planning' %}">
                         <label class="form-label fw-semibold" for="store-planning-store-select">店舗候補</label>
@@ -59,31 +65,15 @@
                     <dl class="row mb-0">
                         <dt class="col-sm-3">対象地点</dt>
                         <dd class="col-sm-9">
-                            {% if can_use_google_maps %}
-                                <a href="{{ target_location.google_maps_url }}" target="_blank" rel="noopener">
-                                    {{ target_location.name }}
-                                </a>
-                            {% else %}
+                            <a href="{{ target_location.google_maps_url }}" target="_blank" rel="noopener">
                                 {{ target_location.name }}
-                            {% endif %}
+                            </a>
                         </dd>
                         <dt class="col-sm-3">人口集計地域</dt>
                         <dd class="col-sm-9">{{ target_location.population_area }}</dd>
                         <dt class="col-sm-3">業態</dt>
                         <dd class="col-sm-9">
                             {{ target_location.business_type_label }}
-                        </dd>
-                        <dt class="col-sm-3">同業検索語</dt>
-                        <dd class="col-sm-9">
-                            {{ target_location.business_search_query }}
-                        </dd>
-                        <dt class="col-sm-3">Google Maps操作</dt>
-                        <dd class="col-sm-9">
-                            {% if can_use_google_maps %}
-                                <span class="badge text-bg-success">利用可</span>
-                            {% else %}
-                                <span class="badge text-bg-secondary">スーパーユーザー限定</span>
-                            {% endif %}
                         </dd>
                     </dl>
                 </div>
@@ -99,63 +89,38 @@
                             </p>
                             <p class="small text-muted mb-0 mt-1">
                                 <span class="fw-semibold">開発Tips:</span>
-                                Google Maps iframe は地域検索結果の領域表示をそのまま借りられる一方、Maps JavaScript API は自前の境界データがないと代表地点の制御が中心になります。
+                                Google Maps iframe は地域検索結果の領域表示をそのまま借りられる一方、Maps JavaScript API で同じ表示を再現するには自前の境界データが必要になります。
                             </p>
                         </div>
                     </div>
-                    {% if can_use_google_maps %}
-                        <div class="ratio ratio-16x9 mb-3">
-                            <iframe id="store-planning-area-map"
-                                    src="{{ target_location.initial_map_embed_url }}"
-                                    title="{{ target_location.population_area }} の地図"
-                                    loading="lazy"
-                                    referrerpolicy="no-referrer-when-downgrade"
-                                    allowfullscreen></iframe>
-                        </div>
-                        <div class="d-grid gap-3">
-                            {% for group in region_map_button_groups %}
-                                {% if group.buttons %}
-                                    <div>
-                                        <div class="small fw-semibold">{{ group.title }}</div>
-                                        <div class="small text-muted mb-1">{{ group.description }}</div>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            {% for button in group.buttons %}
-                                                <button class="btn btn-sm store-planning-map-button {% if button.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
-                                                        type="button"
-                                                        data-map-url="{{ button.map_url }}"
-                                                        data-map-title="{{ button.map_title }}">
-                                                    {{ button.label }}
-                                                </button>
-                                            {% endfor %}
-                                        </div>
+                    <div class="ratio ratio-16x9 mb-3">
+                        <iframe id="store-planning-area-map"
+                                src="{{ target_location.initial_map_embed_url }}"
+                                title="{{ target_location.population_area }} の地図"
+                                loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                allowfullscreen></iframe>
+                    </div>
+                    <div class="d-grid gap-3">
+                        {% for group in region_map_button_groups %}
+                            {% if group.buttons %}
+                                <div>
+                                    <div class="small fw-semibold">{{ group.title }}</div>
+                                    <div class="small text-muted mb-1">{{ group.description }}</div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for button in group.buttons %}
+                                            <button class="btn btn-sm store-planning-map-button {% if button.is_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                                                    type="button"
+                                                    data-map-url="{{ button.map_url }}"
+                                                    data-map-title="{{ button.map_title }}">
+                                                {{ button.label }}
+                                            </button>
+                                        {% endfor %}
                                     </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="alert alert-warning mb-3">
-                            Google Maps の表示と外部リンクはスーパーユーザーでログインした場合のみ利用できます。
-                        </div>
-                        <div class="d-grid gap-3">
-                            {% for group in region_map_button_groups %}
-                                {% if group.buttons %}
-                                    <div>
-                                        <div class="small fw-semibold">{{ group.title }}</div>
-                                        <div class="small text-muted mb-1">{{ group.description }}</div>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            {% for button in group.buttons %}
-                                                <button class="btn btn-sm btn-outline-secondary store-planning-map-button-disabled"
-                                                        type="button"
-                                                        disabled>
-                                                    {{ button.label }}
-                                                </button>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </section>
             </div>
 
@@ -230,18 +195,9 @@
                                         <div class="small text-muted">レベル {{ row.area_hierarchy_level|default:"-" }}</div>
                                     </td>
                                     <td>
-                                        {% if can_use_google_maps %}
-                                            <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
-                                                地域を開く
-                                            </a>
-                                            <div class="small text-muted">
-                                                <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
-                                                    {% if row.latitude and row.longitude %}代表地点{% else %}地域検索{% endif %}
-                                                </a>
-                                            </div>
-                                        {% else %}
-                                            <span class="text-muted">制限中</span>
-                                        {% endif %}
+                                        <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
+                                            地域を開く
+                                        </a>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -457,23 +413,19 @@
                     </div>
                     <div class="mb-3">
                         <h3 class="h6 mb-2">レビュー取得店舗マップ</h3>
-                        {% if can_use_google_maps and google_maps_fe_api_key and has_review_map_places %}
+                        {% if google_maps_fe_api_key and has_review_map_places %}
                             <div id="store-planning-review-map" class="border rounded" style="width: 100%; height: 420px"></div>
                             <div class="d-flex flex-wrap gap-3 small text-muted mt-2">
                                 <span><span class="badge" style="background-color: #0d6efd;">&nbsp;</span> 対象店舗</span>
                                 <span><span class="badge" style="background-color: #dc3545;">&nbsp;</span> 周辺同業</span>
                             </div>
-                        {% elif can_use_google_maps and not google_maps_fe_api_key %}
+                        {% elif not google_maps_fe_api_key %}
                             <div class="alert alert-warning mb-0">
                                 Google Maps JavaScript APIキーが未設定のため、レビュー取得店舗マップを表示できません。
                             </div>
-                        {% elif can_use_google_maps %}
-                            <div class="alert alert-warning mb-0">
-                                ピン表示できるレビュー取得店舗はまだありません。
-                            </div>
                         {% else %}
                             <div class="alert alert-warning mb-0">
-                                Google Maps の表示はスーパーユーザーでログインした場合のみ利用できます。
+                                ピン表示できるレビュー取得店舗はまだありません。
                             </div>
                         {% endif %}
                     </div>
@@ -744,7 +696,7 @@
             });
         }
     </script>
-    {% if can_use_google_maps and google_maps_fe_api_key and has_review_map_places %}
+    {% if google_maps_fe_api_key and has_review_map_places %}
         <script>
             window.storePlanningReviewMapInit = () => {
                 document.addEventListener("DOMContentLoaded", () => {

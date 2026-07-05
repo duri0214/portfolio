@@ -402,7 +402,7 @@ class StorePlanningReviewServiceTest(TestCase):
             town_code="073002",
             population_area="東京都足立区東保木間二丁目",
             business_type_label="カフェ",
-            business_search_query="カフェ",
+            business_search_query="レストラン",
         )
 
         with patch(
@@ -420,6 +420,7 @@ class StorePlanningReviewServiceTest(TestCase):
 
         text_kwargs = mock_client.text_search.call_args.kwargs
         self.assertIn("カフェ", text_kwargs["query"])
+        self.assertNotIn("レストラン", text_kwargs["query"])
         self.assertIn("東京都足立区東保木間二丁目", text_kwargs["query"])
         self.assertEqual(1, result.place_count)
         self.assertEqual(1, result.review_count)

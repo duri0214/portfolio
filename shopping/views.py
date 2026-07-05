@@ -4,6 +4,7 @@ import os
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.utils.html import format_html
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse_lazy, reverse
@@ -154,7 +155,6 @@ class StorePlanningView(TemplateView):
             "google_maps_url": selected_location.google_maps_url,
             "population_area": selected_location.population_area,
             "business_type_label": selected_location.business_type_label,
-            "business_search_query": selected_location.business_search_query,
             "place_google_maps_embed_url": (
                 selected_location.place_google_maps_embed_url
             ),
@@ -994,11 +994,15 @@ class StorePlanningView(TemplateView):
         return f"https://www.e-stat.go.jp/stat-search/files?stat_infid={stat_inf_id}"
 
 
-class StorePlanningTargetStoreCreateView(CreateView):
+class StorePlanningTargetStoreCreateView(UserPassesTestMixin, CreateView):
     """出店計画で選択するサンプル店舗候補を登録する。"""
 
+    raise_exception = True
     template_name = "shopping/store_planning_target_store/create.html"
     form_class = StorePlanningTargetStoreCreateForm
+
+    def test_func(self):
+        return self.request.user.is_superuser
 
     def form_valid(self, form):
         messages.success(self.request, "出店計画のサンプル店舗を登録しました。")
