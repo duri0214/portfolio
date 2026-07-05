@@ -89,7 +89,7 @@
                             </p>
                             <p class="small text-muted mb-0 mt-1">
                                 <span class="fw-semibold">開発Tips:</span>
-                                Google Maps iframe は地域検索結果の領域表示をそのまま借りられる一方、Maps JavaScript API は自前の境界データがないと代表地点の制御が中心になります。
+                                Google Maps iframe は地域検索結果の領域表示をそのまま借りられる一方、Maps JavaScript API で同じ表示を再現するには自前の境界データが必要になります。
                             </p>
                         </div>
                     </div>
@@ -198,13 +198,6 @@
                                         <a href="{{ row.area_google_maps_url }}" target="_blank" rel="noopener">
                                             地域を開く
                                         </a>
-                                        {% if row.latitude and row.longitude %}
-                                            <div class="small text-muted">
-                                                <a href="{{ row.google_maps_url }}" target="_blank" rel="noopener">
-                                                    代表地点
-                                                </a>
-                                            </div>
-                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}

@@ -193,7 +193,7 @@ class TestView(TestCase):
         self.assertContains(response, "対象地域")
         self.assertNotContains(response, "年代構成")
         self.assertContains(response, "地域を開く")
-        self.assertContains(response, "代表地点")
+        self.assertNotContains(response, "代表地点")
         self.assertContains(response, "maps/search/?api=1")
         self.assertContains(
             response,
