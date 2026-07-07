@@ -14,6 +14,10 @@ from shopping.models import (
     StorePlanningGoogleMapsPlaceSummary,
     StorePlanningTargetStore,
 )
+from shopping.domain.valueobject.store_planning_reviews import (
+    StorePlanningPlaceDensityHeatmap,
+    StorePlanningPlaceDensityPoint,
+)
 
 
 class TestView(TestCase):
@@ -39,6 +43,12 @@ class TestView(TestCase):
 
     def setUp(self):
         self.client.force_login(self.superuser)
+        self.google_maps_env_patcher = patch.dict(
+            "os.environ",
+            {"GOOGLE_MAPS_BE_API_KEY": "", "GOOGLE_MAPS_FE_API_KEY": ""},
+        )
+        self.google_maps_env_patcher.start()
+        self.addCleanup(self.google_maps_env_patcher.stop)
 
     def test_get_top_page_200(self):
         """
@@ -230,7 +240,10 @@ class TestView(TestCase):
             publish_time=timezone.now(),
         )
 
-        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+        with patch.dict(
+            "os.environ",
+            {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key", "GOOGLE_MAPS_BE_API_KEY": ""},
+        ):
             response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
@@ -255,10 +268,54 @@ class TestView(TestCase):
         self.assertContains(response, "近隣カフェ")
         self.assertContains(response, "店舗レビュー比較")
         self.assertContains(response, "fitBounds")
+        self.assertContains(response, "周辺賑わい proxy")
+        self.assertContains(response, "HeatmapLayer")
+        self.assertContains(response, "libraries=places,marker,visualization")
         self.assertContains(response, "強み")
         self.assertContains(response, "弱み")
         self.assertContains(response, "分析待ち")
         self.assertNotContains(response, "Google Maps レビューはまだ取得されていません")
+
+    @patch("shopping.views.StorePlanningReviewService.build_place_density_heatmap")
+    def test_store_planning_page_overlays_places_aggregate_heatmap(
+        self, mock_build_heatmap
+    ):
+        """
+        シナリオ:
+        - 入力: Places Aggregate API 由来の施設密度ポイントと、Google Maps JS APIキー。
+        - 処理: 出店計画画面をGETする。
+        - 期待値: レビュー取得店舗マップにヒートマップデータと施設密度proxyの注記が含まれること。
+        """
+        mock_build_heatmap.return_value = StorePlanningPlaceDensityHeatmap(
+            radius_meter=500,
+            place_types=["restaurant", "cafe", "bar", "bakery"],
+            points=[
+                StorePlanningPlaceDensityPoint(
+                    label="中心",
+                    latitude=35.792822,
+                    longitude=139.8143238,
+                    radius_meter=170,
+                    count=7,
+                    weight=7,
+                )
+            ],
+            total_count=7,
+            max_count=7,
+        )
+
+        with patch.dict(
+            "os.environ",
+            {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key", "GOOGLE_MAPS_BE_API_KEY": ""},
+        ):
+            response = self.client.get(reverse("shp:store_planning"))
+
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "周辺賑わい proxy")
+        self.assertContains(response, "人流や通行量そのものではありません")
+        self.assertContains(response, "最大 7件")
+        self.assertContains(response, "placeDensityHeatmap")
+        self.assertContains(response, "count\\u0022: 7")
+        self.assertContains(response, "HeatmapLayer")
 
     def test_store_planning_page_displays_nearby_same_business_reviews(self):
         """
@@ -283,7 +340,10 @@ class TestView(TestCase):
             google_maps_uri="https://maps.google.com/nearby-place-1",
         )
 
-        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+        with patch.dict(
+            "os.environ",
+            {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key", "GOOGLE_MAPS_BE_API_KEY": ""},
+        ):
             response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
@@ -353,7 +413,10 @@ class TestView(TestCase):
             publish_time=timezone.now(),
         )
 
-        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+        with patch.dict(
+            "os.environ",
+            {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key", "GOOGLE_MAPS_BE_API_KEY": ""},
+        ):
             response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
@@ -383,7 +446,10 @@ class TestView(TestCase):
             publish_time=timezone.now(),
         )
 
-        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+        with patch.dict(
+            "os.environ",
+            {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key", "GOOGLE_MAPS_BE_API_KEY": ""},
+        ):
             response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)
@@ -430,7 +496,10 @@ class TestView(TestCase):
             prompt_version="test-prompt",
         )
 
-        with patch.dict("os.environ", {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key"}):
+        with patch.dict(
+            "os.environ",
+            {"GOOGLE_MAPS_FE_API_KEY": "dummy-fe-key", "GOOGLE_MAPS_BE_API_KEY": ""},
+        ):
             response = self.client.get(reverse("shp:store_planning"))
 
         self.assertEqual(200, response.status_code)

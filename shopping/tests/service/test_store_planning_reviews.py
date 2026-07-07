@@ -1155,6 +1155,84 @@ class StorePlanningReviewServiceTest(TestCase):
         )
         self.assertEqual("近隣カフェ09", map_places[-1]["name"])
 
+    def test_build_place_density_heatmap_counts_nine_cells_with_aggregate_api(self):
+        """
+        シナリオ:
+        - 入力: 対象店舗候補の座標と、Places Aggregate API の小領域別件数。
+        - 処理: 周辺賑わいヒートマップ用データを作成する。
+        - 期待値: 500m圏内を3x3小領域に分け、INSIGHT_COUNTの件数を地図用ポイントへ変換すること。
+        """
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+        )
+
+        with patch(
+            "shopping.domain.service.store_planning_reviews.GooglePlacesAggregateClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.count_places.side_effect = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+            heatmap = StorePlanningReviewService.build_place_density_heatmap(
+                api_key="dummy-key",
+                target_location=target_location,
+            )
+
+        mock_client_class.assert_called_once_with("dummy-key")
+        self.assertEqual(9, mock_client.count_places.call_count)
+        first_kwargs = mock_client.count_places.call_args_list[0].kwargs
+        self.assertEqual(170, first_kwargs["radius"])
+        self.assertEqual(
+            ["restaurant", "cafe", "bar", "bakery"],
+            first_kwargs["included_types"],
+        )
+        self.assertEqual(9, len(heatmap.points))
+        self.assertEqual("北西", heatmap.points[0].label)
+        self.assertEqual(45, heatmap.total_count)
+        self.assertEqual(9, heatmap.max_count)
+        self.assertEqual(9, heatmap.points[-1].weight)
+
+    def test_build_place_density_heatmap_returns_empty_when_aggregate_api_fails(self):
+        """
+        シナリオ:
+        - 入力: Places Aggregate API が403で拒否された状態。
+        - 処理: 周辺賑わいヒートマップ用データを作成する。
+        - 期待値: 例外で画面を壊さず、空ポイントと説明用エラーメッセージを返すこと。
+        """
+        target_location = StorePlanningTargetLocation(
+            slug="chapter-table",
+            name="Chapter Table",
+            address="東京都足立区東保木間二丁目",
+            latitude=35.792822,
+            longitude=139.8143238,
+            city_code="13121",
+            town_code="073002",
+            population_area="東京都足立区東保木間二丁目",
+        )
+
+        with patch(
+            "shopping.domain.service.store_planning_reviews.GooglePlacesAggregateClient"
+        ) as mock_client_class:
+            mock_client = mock_client_class.return_value
+            mock_client.count_places.return_value = None
+            mock_client.last_error_status_code = 403
+            mock_client.last_error_message = "PERMISSION_DENIED"
+
+            heatmap = StorePlanningReviewService.build_place_density_heatmap(
+                api_key="dummy-key",
+                target_location=target_location,
+            )
+
+        self.assertEqual([], heatmap.points)
+        self.assertIn("Places Aggregate API の利用が拒否", heatmap.error_message)
+        self.assertIn("PERMISSION_DENIED", heatmap.error_message)
+
     def test_analyze_all_reviews_saves_one_target_and_ten_nearby_place_summaries(
         self,
     ):

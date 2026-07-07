@@ -107,6 +107,50 @@ class StorePlanningReviewFetchResult:
 
 
 @dataclass(frozen=True)
+class StorePlanningPlaceDensityPoint:
+    """
+    Places Aggregate API の件数を地図ヒートマップ用に変換した小領域。
+
+    Attributes:
+        label: 小領域の方角ラベル。
+        latitude: 小領域中心の緯度。
+        longitude: 小領域中心の経度。
+        radius_meter: 集計円の半径メートル。
+        count: 小領域内の施設数。
+        weight: Google Maps ヒートマップへ渡す重み。
+    """
+
+    label: str
+    latitude: float
+    longitude: float
+    radius_meter: int
+    count: int
+    weight: int
+
+
+@dataclass(frozen=True)
+class StorePlanningPlaceDensityHeatmap:
+    """
+    出店候補地周辺の賑わい proxy を表す施設密度ヒートマップ。
+
+    Attributes:
+        radius_meter: 対象店舗候補から集計対象にする半径。
+        place_types: Places Aggregate API で集計した Place Type。
+        points: 地図ヒートマップに渡す小領域別の施設件数。
+        total_count: 小領域件数の合計。
+        max_count: 小領域内の最大件数。
+        error_message: 集計できなかった場合に画面で補足するメッセージ。
+    """
+
+    radius_meter: int
+    place_types: list[str]
+    points: list[StorePlanningPlaceDensityPoint]
+    total_count: int = 0
+    max_count: int = 0
+    error_message: str = ""
+
+
+@dataclass(frozen=True)
 class StorePlanningReviewAnalysisResult:
     """
     LLMがレビュー1件に付与した分析結果。

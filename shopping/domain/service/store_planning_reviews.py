@@ -9,8 +9,13 @@ from shopping.domain.dataprovider.google_maps_review_analysis import (
     GoogleMapsReviewAnalysisClient,
 )
 from shopping.domain.dataprovider.google_maps_reviews import GoogleMapsReviewClient
+from shopping.domain.dataprovider.google_places_aggregate import (
+    GooglePlacesAggregateClient,
+)
 from shopping.domain.valueobject.store_planning import StorePlanningTargetLocation
 from shopping.domain.valueobject.store_planning_reviews import (
+    StorePlanningPlaceDensityHeatmap,
+    StorePlanningPlaceDensityPoint,
     StorePlanningPlaceInsight,
     StorePlanningReviewAnalysisFetchResult,
     StorePlanningReviewFetchResult,
@@ -82,6 +87,8 @@ class StorePlanningReviewService:
     MAX_DETAIL_PLACES = 10
     MAX_ANALYSIS_REVIEWS = 10
     MAX_PLACE_INSIGHTS = 10
+    PLACE_DENSITY_TYPES = ["restaurant", "cafe", "bar", "bakery"]
+    PLACE_DENSITY_CELL_RADIUS_METER = 170
     GCP_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
     TARGET_STORE_SCOPE = StorePlanningGoogleMapsReview.ReviewScope.TARGET_STORE
     NEARBY_SAME_BUSINESS_SCOPE = (
@@ -782,6 +789,94 @@ class StorePlanningReviewService:
                 }
             )
         return places
+
+    @classmethod
+    def build_place_density_heatmap(
+        cls, api_key: str, target_location: StorePlanningTargetLocation
+    ) -> StorePlanningPlaceDensityHeatmap:
+        """
+        対象店舗候補周辺の施設密度を3x3小領域で集計する。
+
+        Places Aggregate API の `INSIGHT_COUNT` を使い、restaurant / cafe / bar /
+        bakery の施設数を賑わい proxy として扱う。人流そのものではないため、
+        画面側では施設密度に基づく推定値として表示する。
+        """
+        empty_heatmap = StorePlanningPlaceDensityHeatmap(
+            radius_meter=cls.RADIUS_METER,
+            place_types=cls.PLACE_DENSITY_TYPES,
+            points=[],
+        )
+        if target_location.latitude is None or target_location.longitude is None:
+            return empty_heatmap
+        if not api_key:
+            return empty_heatmap
+
+        client = GooglePlacesAggregateClient(api_key)
+        points = []
+        for row in range(3):
+            for col in range(3):
+                center = cls._heatmap_cell_center(target_location, row, col)
+                count = client.count_places(
+                    center=center,
+                    radius=cls.PLACE_DENSITY_CELL_RADIUS_METER,
+                    included_types=cls.PLACE_DENSITY_TYPES,
+                )
+                if count is None:
+                    return StorePlanningPlaceDensityHeatmap(
+                        radius_meter=cls.RADIUS_METER,
+                        place_types=cls.PLACE_DENSITY_TYPES,
+                        points=[],
+                        error_message=cls._place_density_error_message(
+                            client.last_error_status_code,
+                            client.last_error_message,
+                        ),
+                    )
+                points.append(
+                    StorePlanningPlaceDensityPoint(
+                        label=cls.CELL_LABELS[row][col],
+                        latitude=center.latitude,
+                        longitude=center.longitude,
+                        radius_meter=cls.PLACE_DENSITY_CELL_RADIUS_METER,
+                        count=count,
+                        weight=count,
+                    )
+                )
+        counts = [point.count for point in points]
+        return StorePlanningPlaceDensityHeatmap(
+            radius_meter=cls.RADIUS_METER,
+            place_types=cls.PLACE_DENSITY_TYPES,
+            points=points,
+            total_count=sum(counts),
+            max_count=max(counts) if counts else 0,
+        )
+
+    @classmethod
+    def _heatmap_cell_center(
+        cls, target_location: StorePlanningTargetLocation, row: int, col: int
+    ) -> GoogleMapsCoord:
+        cell_offset_meter = cls.RADIUS_METER / 3
+        north_meter = (1 - row) * cell_offset_meter
+        east_meter = (col - 1) * cell_offset_meter
+        latitude = target_location.latitude + north_meter / 111320
+        longitude = target_location.longitude + east_meter / (
+            111320 * cos(radians(target_location.latitude))
+        )
+        return GoogleMapsCoord(latitude=latitude, longitude=longitude)
+
+    @staticmethod
+    def _place_density_error_message(status_code: int | None, detail: str = "") -> str:
+        detail_message = f" Google API応答: {detail}" if detail else ""
+        if status_code == 403:
+            return (
+                "Places Aggregate API の利用が拒否されたため、"
+                "周辺賑わいヒートマップは未表示です。"
+                "APIキーの制限、Places Aggregate APIの有効化、課金状態を確認してください。"
+                f"{detail_message}"
+            )
+        return (
+            "Places Aggregate API から周辺賑わいヒートマップを取得できませんでした。"
+            f"{detail_message}"
+        )
 
     @classmethod
     def _target_review_map_place(

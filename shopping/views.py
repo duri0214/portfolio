@@ -237,6 +237,7 @@ class StorePlanningView(TemplateView):
         review_map_places = StorePlanningReviewService.build_review_map_places(
             selected_location
         )
+        place_density_heatmap = self._build_place_density_heatmap(selected_location)
         context["review_map_data"] = json.dumps(
             {
                 "center": {
@@ -244,10 +245,27 @@ class StorePlanningView(TemplateView):
                     "lng": selected_location.longitude,
                 },
                 "places": review_map_places,
+                "placeDensityHeatmap": {
+                    "points": [
+                        {
+                            "label": point.label,
+                            "location": {
+                                "lat": point.latitude,
+                                "lng": point.longitude,
+                            },
+                            "count": point.count,
+                            "weight": point.weight,
+                        }
+                        for point in place_density_heatmap.points
+                    ],
+                    "radiusMeter": place_density_heatmap.radius_meter,
+                    "placeTypes": place_density_heatmap.place_types,
+                },
                 "mapId": os.getenv("GOOGLE_MAPS_MAP_ID", "8f6a4cf0806f4732"),
             },
             ensure_ascii=False,
         )
+        context["place_density_heatmap"] = place_density_heatmap
         context["google_maps_fe_api_key"] = os.getenv("GOOGLE_MAPS_FE_API_KEY")
         context["has_review_map_places"] = bool(review_map_places)
         context["has_any_google_maps_reviews"] = (
@@ -256,6 +274,21 @@ class StorePlanningView(TemplateView):
             > 0
         )
         return context
+
+    def _build_place_density_heatmap(self, selected_location):
+        if not os.getenv("GOOGLE_MAPS_FE_API_KEY"):
+            return StorePlanningReviewService.build_place_density_heatmap(
+                api_key="", target_location=selected_location
+            )
+        api_key = os.getenv("GOOGLE_MAPS_BE_API_KEY")
+        if not api_key:
+            return StorePlanningReviewService.build_place_density_heatmap(
+                api_key="", target_location=selected_location
+            )
+        return StorePlanningReviewService.build_place_density_heatmap(
+            api_key=api_key,
+            target_location=selected_location,
+        )
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("action")

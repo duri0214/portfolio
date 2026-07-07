@@ -418,6 +418,20 @@
                             <div class="d-flex flex-wrap gap-3 small text-muted mt-2">
                                 <span><span class="badge" style="background-color: #0d6efd;">&nbsp;</span> 対象店舗</span>
                                 <span><span class="badge" style="background-color: #dc3545;">&nbsp;</span> 周辺同業</span>
+                                <span><span class="badge" style="background-color: #f28b30;">&nbsp;</span> 周辺賑わい proxy</span>
+                            </div>
+                            <div class="small text-muted mt-2">
+                                周辺賑わい proxy は Places Aggregate API の INSIGHT_COUNT で
+                                restaurant / cafe / bar / bakery の施設密度を集計した目安です。
+                                人流や通行量そのものではありません。
+                                {% if place_density_heatmap.points %}
+                                    集計範囲 {{ place_density_heatmap.radius_meter|intcomma }}m /
+                                    最大 {{ place_density_heatmap.max_count|intcomma }}件。
+                                {% elif place_density_heatmap.error_message %}
+                                    {{ place_density_heatmap.error_message }}
+                                {% else %}
+                                    API未設定または未取得のため、ヒートマップは未表示です。
+                                {% endif %}
                             </div>
                         {% elif not google_maps_fe_api_key %}
                             <div class="alert alert-warning mb-0">
@@ -714,6 +728,19 @@
                     );
                     const infoWindow = new google.maps.InfoWindow();
                     const bounds = new google.maps.LatLngBounds();
+                    const heatmapPoints = mapData.placeDensityHeatmap.points.map((point) => ({
+                        location: new google.maps.LatLng(point.location.lat, point.location.lng),
+                        weight: point.weight,
+                    }));
+                    if (heatmapPoints.length) {
+                        const heatmap = new google.maps.visualization.HeatmapLayer({
+                            data: heatmapPoints,
+                            dissipating: true,
+                            radius: 48,
+                            opacity: 0.58,
+                        });
+                        heatmap.setMap(map);
+                    }
                     mapData.places.forEach((place) => {
                         bounds.extend(place.location);
                         const pin = new google.maps.marker.PinElement({
@@ -748,7 +775,7 @@
                 });
             };
         </script>
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=storePlanningReviewMapInit&libraries=places,marker&v=weekly"
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_fe_api_key }}&callback=storePlanningReviewMapInit&libraries=places,marker,visualization&v=weekly"
                 defer onerror="console.error('Google Maps API failed to load.');"></script>
     {% endif %}
 {% endblock %}
