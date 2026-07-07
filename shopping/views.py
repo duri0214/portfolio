@@ -234,6 +234,15 @@ class StorePlanningView(TemplateView):
         context["combined_place_review_count"] = sum(
             row["insight"].review_count for row in context["combined_place_insights"]
         )
+        context["decision_support_axes"] = self._build_decision_support_axes(
+            population_summary=context["population_summary"],
+            combined_review_summary=context["combined_review_summary"],
+            nearby_same_business_review_summary=context[
+                "nearby_same_business_review_summary"
+            ],
+            region_table_rows=context["region_table_rows"],
+            target_location=selected_location,
+        )
         review_map_places = StorePlanningReviewService.build_review_map_places(
             selected_location
         )
@@ -674,6 +683,61 @@ class StorePlanningView(TemplateView):
             ]
         )
         return rows
+
+    def _build_decision_support_axes(
+        self,
+        population_summary: dict,
+        combined_review_summary,
+        nearby_same_business_review_summary,
+        region_table_rows: list[dict],
+        target_location: StorePlanningTargetLocation,
+    ) -> list[dict]:
+        """出店判断で横並びに確認する材料を画面表示用に整理する。"""
+        total_population = population_summary.get("total_population")
+        population_status = (
+            f"{total_population:,}人"
+            if total_population
+            else population_summary.get("status", "データなし")
+        )
+        review_status = (
+            f"{combined_review_summary.total_review_count:,}件"
+            if combined_review_summary.total_review_count
+            else "未取得"
+        )
+        nearby_status = (
+            f"周辺同業 {nearby_same_business_review_summary.total_place_count:,}施設"
+            if nearby_same_business_review_summary.total_place_count
+            else "周辺同業 未取得"
+        )
+        return [
+            {
+                "title": "評判・口コミ",
+                "status": review_status,
+                "description": (
+                    "対象店舗と周辺同業店舗のレビューから、強み・弱み・"
+                    "立地示唆を比較する。"
+                ),
+                "detail": nearby_status,
+            },
+            {
+                "title": "周辺人口",
+                "status": population_status,
+                "description": (
+                    "e-Stat の町丁字別人口から、候補地周辺の住民構成と"
+                    "比較対象地域を確認する。"
+                ),
+                "detail": f"比較地域 {len(region_table_rows):,}件",
+            },
+            {
+                "title": "来店タイプ仮説",
+                "status": target_location.business_type_label,
+                "description": (
+                    "通りすがり型・目的来店型・地域密着型の観点で、"
+                    "レビューと人口情報を読み合わせる。"
+                ),
+                "detail": target_location.population_area,
+            },
+        ]
 
     def _selected_location(self):
         requested_slug = self.request.GET.get("store")

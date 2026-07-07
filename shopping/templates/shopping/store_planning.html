@@ -83,6 +83,32 @@
                 <section class="border rounded p-4 h-100">
                     <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
                         <div>
+                            <h2 class="h5 mb-1">出店判断サマリー</h2>
+                            <p class="small text-muted mb-0">
+                                評判・周辺人口・来店タイプ仮説を同じ候補地の判断材料として並べる。
+                            </p>
+                        </div>
+                        <span class="badge text-bg-light align-self-md-start">意思決定支援</span>
+                    </div>
+                    <div class="row g-3">
+                        {% for axis in decision_support_axes %}
+                            <div class="col-12 col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="small text-muted">{{ axis.title }}</div>
+                                    <div class="fs-5 fw-semibold">{{ axis.status }}</div>
+                                    <p class="small mb-2">{{ axis.description }}</p>
+                                    <div class="small text-muted">{{ axis.detail }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-12">
+                <section class="border rounded p-4 h-100">
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+                        <div>
                             <h2 class="h5 mb-1">地域マップ</h2>
                             <p class="small text-muted mb-0">
                                 対象地点と地域検索を地図上で確認します。
