@@ -132,6 +132,7 @@ python manage.py loaddata `
     taxonomy\fixtures\henGroup.json
 
 # Batches for Taxonomy master data
+python manage.py seed_taxonomy_animals
 python manage.py loaddata taxonomy\fixtures\jma_weather_code.json
 python manage.py loaddata taxonomy\fixtures\eggLedger.json
 
