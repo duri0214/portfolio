@@ -16,4 +16,5 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "taxonomy-chart-scroll")
         self.assertContains(response, "overflow-x: hidden")
         self.assertContains(response, "overflow-y: visible")
+        self.assertContains(response, "countClassificationNodes")
         self.assertContains(response, "fitClassificationChartHeight")

@@ -141,6 +141,14 @@
                                 const myChart = d3.indentedTree(dataSpec);
                                 const chart = d3.select("#chicken-classification-chart").append("div").attr("class", "chart").call(myChart);
 
+                                function countClassificationNodes(node) {
+                                    if (!node.children || node.children.length === 0) {
+                                        return 1;
+                                    }
+
+                                    return 1 + node.children.reduce((total, child) => total + countClassificationNodes(child), 0);
+                                }
+
                                 function fitClassificationChartHeight() {
                                     const chartNode = chart.node();
                                     const svg = chartNode.querySelector("svg");
@@ -148,7 +156,9 @@
                                         return;
                                     }
 
-                                    const contentHeight = Math.ceil(svg.getBBox().height + 48);
+                                    const rowHeight = 30;
+                                    const verticalPadding = 96;
+                                    const contentHeight = countClassificationNodes(dataSpec.source) * rowHeight + verticalPadding;
                                     chartNode.style.height = `${contentHeight}px`;
                                     svg.setAttribute("height", contentHeight);
                                     svg.style.height = `${contentHeight}px`;
