@@ -3,13 +3,16 @@
 {% block content %}
     <style>
         .taxonomy-chart-scroll {
-            min-height: 640px;
-            max-height: 75vh;
-            overflow: auto;
+            min-height: 1200px;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
-        #chicken-classification-chart .chart {
-            min-width: 960px;
+        #chicken-classification-chart,
+        #chicken-classification-chart .chart,
+        #chicken-classification-chart svg {
+            max-width: 100%;
+            min-height: 1200px;
         }
     </style>
     <div class="container mt-4">
