@@ -1334,6 +1334,9 @@ $ cat hello-cron.log
 
 ### Cron の設定
 
+新しい Django 管理コマンドを追加した場合は、定期実行が必要かをここで確認します。日次・月次など定期実行するものは
+crontab に追記し、初期データ投入や seed など単発実行のものは cron へ登録しません。
+
 ```bash:console
 $ crontab -e
 ```
@@ -1598,8 +1601,7 @@ $ sudo -u www-data test -w /var/www/html/portfolio/media && echo OK_media_w || e
 
 > 次のステップ
 > - ここまで完了したら、README の「2. 初期データ投入 → データのインポート手順」に従ってデータをセットアップし、Web
-    ページが正常に表示されることを確認してください（curl/ブラウザで 200 応答を確認）。Step2 では Taxonomy の
-    `seed_taxonomy_animals` も実行され、LLM生成済み動物分類候補が投入されます。これで clone ベースのセットアップは完了です。
+    ページが正常に表示されることを確認してください（curl/ブラウザで 200 応答を確認）。これで clone ベースのセットアップは完了です。
 
 ## FTP
 
