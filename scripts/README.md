@@ -96,7 +96,7 @@ Set-Content -Path "scripts\.my.cnf" -Value $content -Encoding ASCII
 2. **Vietnam Research (Batches)**: 市場データ・個別株・分析用データ生成
 3. **GMarker / Shopping / Rental Shop**: 店舗・ユーザー・商品マスタ
 4. **Soil Analysis**: 気象コード・天気予報バッチ・診断結果
-5. **Taxonomy**: 生物分類体系・卵管理
+5. **Taxonomy**: 生物分類体系・LLM生成済み動物分類候補・卵管理
 6. **Hospital / AI Agent**: 施設・市区町村・AI設定
 7. **USA Research**: 市場・財務・資産クラス長期推移 (1950年〜)
 8. **Bank**: 銀行サマリーマスタ

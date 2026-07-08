@@ -132,6 +132,7 @@ python manage.py loaddata \
     taxonomy/fixtures/henGroup.json
 
 # ここで taxonomy の master data バッチ（気象コード等）をまわす
+python manage.py seed_taxonomy_animals
 python manage.py loaddata taxonomy/fixtures/jma_weather_code.json
 python manage.py loaddata taxonomy/fixtures/eggLedger.json
 
