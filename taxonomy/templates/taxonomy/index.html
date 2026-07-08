@@ -3,16 +3,14 @@
 {% block content %}
     <style>
         .taxonomy-chart-scroll {
-            min-height: 1200px;
             overflow-x: hidden;
-            overflow-y: auto;
+            overflow-y: visible;
         }
 
         #chicken-classification-chart,
         #chicken-classification-chart .chart,
         #chicken-classification-chart svg {
             max-width: 100%;
-            min-height: 1200px;
         }
     </style>
     <div class="container mt-4">
@@ -141,7 +139,22 @@
                                     key: "name",
                                 };
                                 const myChart = d3.indentedTree(dataSpec);
-                                d3.select("#chicken-classification-chart").append("div").attr("class", "chart").call(myChart);
+                                const chart = d3.select("#chicken-classification-chart").append("div").attr("class", "chart").call(myChart);
+
+                                function fitClassificationChartHeight() {
+                                    const chartNode = chart.node();
+                                    const svg = chartNode.querySelector("svg");
+                                    if (!svg) {
+                                        return;
+                                    }
+
+                                    const contentHeight = Math.ceil(svg.getBBox().height + 48);
+                                    chartNode.style.height = `${contentHeight}px`;
+                                    svg.setAttribute("height", contentHeight);
+                                    svg.style.height = `${contentHeight}px`;
+                                }
+
+                                requestAnimationFrame(fitClassificationChartHeight);
                             </script>
                         </div>
                     </div>
