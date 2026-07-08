@@ -30,7 +30,7 @@ apply: always
 - 日次バッチは `daily_`、月次バッチは `monthly_` で始める。
 - 単発実行、初期データ投入、fixture 生成、手動調査用など、定期実行を前提にしない管理コマンドには無理に周期 prefix を付けない。
 - 既存バッチの周期を変更する場合は、コマンド名、cron 設定、README/運用ドキュメント、関連テストの呼び出し名を同じ変更で揃える。
-- 新しいバッチや定期実行管理コマンドを作成した場合は、ユーザーに確認したうえで `docs/qiita/centos_to_ubuntu_setup.md` に運用手順や cron 反映要否を追記する。
+- 新しいバッチや定期実行管理コマンドを作成した場合は、ユーザーに確認したうえで `docs/qiita/centos_to_ubuntu_setup.md` の「バッチ処理の例（自分用メモ）」に、本番サーバで `crontab -e` して登録するための cron 追加例を具体的な1行として追記する。
 - 初期データ投入、fixture 生成、seed 系の管理コマンドを作成・変更した場合は、`scripts/step2_import_data.ps1` と `scripts/step2_import_data.sh` へ組み込む必要があるか確認し、必要なら同じ変更で追加する。追加した場合は `scripts/README.md` の Step2 説明も更新する。
 
 ### アプリラベル対応表

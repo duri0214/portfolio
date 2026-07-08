@@ -1334,9 +1334,6 @@ $ cat hello-cron.log
 
 ### Cron の設定
 
-新しい Django 管理コマンドを追加した場合は、定期実行が必要かをここで確認します。日次・月次など定期実行するものは
-crontab に追記し、初期データ投入や seed など単発実行のものは cron へ登録しません。
-
 ```bash:console
 $ crontab -e
 ```
@@ -1372,6 +1369,7 @@ $ crontab -e
 20 19 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_update_msci_weights
 25 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_update_historical_assets
 30 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_update_nasdaq100_list
+35 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py seed_taxonomy_animals
 
 # ※相手先サーバ（ベトナム）の証明書がうまくなくて実行できない
 20 18 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_vietnam_statistics
