@@ -26,12 +26,12 @@
                     <h2 class="h5 border-bottom pb-2">分類階層</h2>
                 </div>
 
-                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.kingdom name_field=form.kingdom_name name_en_field=form.kingdom_name_en level_label="界" level_summary="生物を大きく分ける最上位のまとまりです。動物界・植物界のように、分類全体の入口になります。" level_tree="界 > 門 > 綱 > 科 > 属 > 種" %}
-                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.phylum name_field=form.phylum_name name_en_field=form.phylum_name_en level_label="門" level_summary="体の基本構造や進化的なまとまりを表します。脊索動物門や節足動物門のように、大きな設計図の違いを分けます。" level_tree="界 > 門 > 綱 > 科 > 属 > 種" %}
-                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.classification name_field=form.classification_name name_en_field=form.classification_name_en level_label="綱" level_summary="門の中をさらに生活様式や体の特徴で分けます。鳥綱・哺乳綱・昆虫綱など、日常的にイメージしやすいまとまりです。" level_tree="界 > 門 > 綱 > 科 > 属 > 種" %}
-                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.family name_field=form.family_name name_en_field=form.family_name_en level_label="科" level_summary="近い特徴を持つ属を束ねます。名前や用途が似た対象を探しやすくし、入力後の一覧・比較でも手がかりになります。" level_tree="界 > 門 > 綱 > 科 > 属 > 種" %}
-                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.genus name_field=form.genus_name name_en_field=form.genus_name_en level_label="属" level_summary="よく似た種をまとめる単位です。学名の前半にも使われ、種の近さを確認する重要な目印になります。" level_tree="界 > 門 > 綱 > 科 > 属 > 種" %}
-                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.species name_field=form.species_name name_en_field=form.species_name_en level_label="種" level_summary="分類対象を生物として特定する基本単位です。品種・系統は、この種に紐づけて管理します。" level_tree="界 > 門 > 綱 > 科 > 属 > 種 > 品種・系統" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.kingdom name_field=form.kingdom_name name_en_field=form.kingdom_name_en level_label="界" level_summary="生物を大きく分ける最上位のまとまりです。動物界・植物界のように、分類全体の入口になります。" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.phylum name_field=form.phylum_name name_en_field=form.phylum_name_en level_label="門" level_summary="体の基本構造や進化的なまとまりを表します。脊索動物門や節足動物門のように、大きな設計図の違いを分けます。" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.classification name_field=form.classification_name name_en_field=form.classification_name_en level_label="綱" level_summary="門の中をさらに生活様式や体の特徴で分けます。鳥綱・哺乳綱・昆虫綱など、日常的にイメージしやすいまとまりです。" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.family name_field=form.family_name name_en_field=form.family_name_en level_label="科" level_summary="近い特徴を持つ属を束ねます。名前や用途が似た対象を探しやすくし、入力後の一覧・比較でも手がかりになります。" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.genus name_field=form.genus_name name_en_field=form.genus_name_en level_label="属" level_summary="よく似た種をまとめる単位です。学名の前半にも使われ、種の近さを確認する重要な目印になります。" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.species name_field=form.species_name name_en_field=form.species_name_en level_label="種" level_summary="分類対象を生物として特定する基本単位です。品種・系統は、この種に紐づけて管理します。" %}
 
                 <div class="col-12 mt-5">
                     <h2 class="h5 border-bottom pb-2">品種・系統・分類対象</h2>
