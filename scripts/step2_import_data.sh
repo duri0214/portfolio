@@ -117,8 +117,7 @@ python manage.py loaddata soil_analysis/fixtures/samplingorder.json
 python manage.py loaddata soil_analysis/fixtures/device.json
 
 # --- Taxonomy ---
-python manage.py seed_taxonomy_initial_data
-python manage.py seed_taxonomy_animals
+python manage.py seed_taxonomy_data
 
 # --- Hospital / AI Agent ---
 python manage.py loaddata \
