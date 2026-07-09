@@ -150,20 +150,9 @@ class TaxonomyBreedCreateForm(forms.Form):
 
         self._validate_existing_relations(cleaned_data)
 
-        species = cleaned_data.get("species")
-        if not species:
-            genus = cleaned_data.get("genus")
-            species_name = cleaned_data.get("species_name")
-            if genus and species_name:
-                species = Species.objects.filter(genus=genus, name=species_name).first()
-
         breed_name = cleaned_data.get("breed_name")
-        if (
-            species
-            and breed_name
-            and Breed.objects.filter(species=species, name=breed_name).exists()
-        ):
-            self.add_error("breed_name", "この種には同じ名前の品種が登録済みです。")
+        if breed_name and Breed.objects.filter(name=breed_name).exists():
+            self.add_error("breed_name", "この名前の品種は登録済みです。")
 
         return cleaned_data
 

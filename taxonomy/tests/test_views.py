@@ -144,10 +144,10 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertEqual(breed.species.name, "フトミミズ")
         self.assertEqual(breed.species.genus.name, "フトミミズ属")
 
-    def test_rejects_duplicate_breed_name_in_same_species(self):
+    def test_rejects_duplicate_breed_name(self):
         """
         シナリオ:
-        - 入力: 同じ種にすでに登録済みの品種名。
+        - 入力: すでに登録済みの品種名。
         - 処理: 分類登録フォームをPOSTする。
         - 期待値: 重複エラーになり、品種が追加されないこと。
         """
@@ -167,7 +167,7 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, "alert alert-danger")
         self.assertContains(response, "登録できませんでした。入力内容を確認してください。")
         self.assertContains(response, "text-danger")
-        self.assertContains(response, "この種には同じ名前の品種が登録済みです。")
+        self.assertContains(response, "この名前の品種は登録済みです。")
         self.assertEqual(Breed.objects.filter(name="名古屋種").count(), 1)
 
     def _base_post_data(self, overrides=None):

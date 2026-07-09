@@ -144,7 +144,7 @@ class Breed(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["species", "name"], name="species_name_unique"
+                fields=["name"], name="breed_name_unique"
             )
         ]
 
