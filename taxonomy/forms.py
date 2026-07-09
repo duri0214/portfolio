@@ -80,7 +80,7 @@ class TaxonomyBreedCreateForm(forms.Form):
 
     breed_name = forms.CharField(label="品種・系統・分類対象名", max_length=255)
     breed_name_kana = forms.CharField(label="よみがな", max_length=255)
-    breed_image = forms.ImageField(label="画像")
+    breed_image = forms.ImageField(label="画像", required=False)
     breed_remark = forms.CharField(
         label="メモ", max_length=255, required=False, widget=forms.Textarea
     )
@@ -219,7 +219,7 @@ class TaxonomyBreedCreateForm(forms.Form):
         return Breed.objects.create(
             name=self.cleaned_data["breed_name"],
             name_kana=self.cleaned_data["breed_name_kana"],
-            image=self.cleaned_data["breed_image"],
+            image=self.cleaned_data.get("breed_image") or "",
             remark=self.cleaned_data.get("breed_remark") or None,
             natural_monument=self.cleaned_data.get("natural_monument"),
             species=species,

@@ -134,7 +134,7 @@ class Breed(models.Model):
 
     name = models.CharField(max_length=255)
     name_kana = models.CharField(max_length=255)
-    image = models.ImageField(upload_to="taxonomy/breed")
+    image = models.ImageField(upload_to="taxonomy/breed", blank=True)
     remark = models.CharField(max_length=255, null=True)
     natural_monument = models.ForeignKey(
         NaturalMonument, on_delete=models.CASCADE, null=True

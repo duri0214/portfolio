@@ -72,6 +72,8 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "分類登録")
         self.assertContains(response, "既存の界")
+        self.assertContains(response, "界 > 門 > 綱 > 科 > 属 > 種")
+        self.assertContains(response, "体の基本構造や進化的なまとまり")
         self.assertContains(response, "品種・系統・分類対象名")
         self.assertContains(response, "hierarchyOptions")
 
@@ -90,6 +92,22 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertRedirects(response, reverse("txo:index"))
         breed = Breed.objects.get(name="名古屋種")
         self.assertEqual(breed.species, self.species)
+
+    def test_create_breed_without_image(self):
+        """
+        シナリオ:
+        - 入力: 既存の分類階層と画像未添付の品種情報。
+        - 処理: 分類登録フォームをPOSTする。
+        - 期待値: 画像がなくても品種が作成され、トップページへ戻ること。
+        """
+        data = self._base_post_data({"breed_name": "写真なし系統"})
+        data.pop("breed_image")
+
+        response = self.client.post(reverse("txo:breed_new"), data=data)
+
+        self.assertRedirects(response, reverse("txo:index"))
+        breed = Breed.objects.get(name="写真なし系統")
+        self.assertEqual(breed.image.name, "")
 
     def test_create_breed_with_new_hierarchy(self):
         """

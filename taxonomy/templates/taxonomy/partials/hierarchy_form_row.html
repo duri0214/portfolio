@@ -1,14 +1,16 @@
 <div class="col-12">
     <div class="row g-3 align-items-start border-bottom pb-3">
-        <div class="col-12 col-lg-2">
+        <div class="col-12 col-lg-3">
             <h3 class="h6 mb-0">{{ level_label }}</h3>
+            <p class="small text-muted mb-1">{{ level_summary }}</p>
+            <p class="small text-muted mb-0">位置: {{ level_tree }}</p>
         </div>
         <div class="col-md-4 col-lg-3">
             <label class="form-label" for="{{ select_field.id_for_label }}">{{ select_field.label }}</label>
             {{ select_field }}
             {{ select_field.errors }}
         </div>
-        <div class="col-md-4 col-lg-4">
+        <div class="col-md-4 col-lg-3">
             <label class="form-label" for="{{ name_field.id_for_label }}">{{ name_field.label }}</label>
             {{ name_field }}
             {{ name_field.errors }}
