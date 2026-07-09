@@ -217,6 +217,12 @@ sudo tail -n 50 /var/log/apache2/error.log
 
 気象庁データに基づく予報と、土壌計測データの管理を行います。
 
+- **天気データの扱い:**
+    - `weather_fetch_forecast` は JMA API から予報を取得し、`soil_analysis.JmaWeather` に地域・日付ごとの予報レコードとして保存します。
+    - `soil_analysis.JmaWeather` は実行時に既存データを削除してから取得結果を保存するため、履歴蓄積ではなく現在取得できる予報の入れ替えとして扱います。
+    - `taxonomy` の鶏観察画面は `soil_analysis.JmaWeather` を参照しません。`taxonomy.EggLedger.weather_code` に当時記録した天気コードを保持し、そのコードから天気アイコンを表示します。
+    - `taxonomy` 側の天気は観察記録に紐づく過去の記録なので、日次の天気予報更新バッチで動的に更新する対象ではありません。
+
 - **ドメイン知識（圃場ブロック）:**
   圃場は 3x3 の 9ブロックで管理されます。計測器の配置やデータ構造は以下の通りです。
     ```text

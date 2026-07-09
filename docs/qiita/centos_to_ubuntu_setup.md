@@ -1369,7 +1369,6 @@ $ crontab -e
 20 19 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_update_msci_weights
 25 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_update_historical_assets
 30 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_update_nasdaq100_list
-35 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py seed_taxonomy_animals
 
 # ※相手先サーバ（ベトナム）の証明書がうまくなくて実行できない
 20 18 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_vietnam_statistics
