@@ -12,11 +12,13 @@ from taxonomy.views import (
     TagCreateView,
     BreedTagUpdateView,
     ObservationView,
+    TaxonomyBreedCreateView,
 )
 
 app_name = "txo"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
+    path("breeds/new/", TaxonomyBreedCreateView.as_view(), name="breed_new"),
     path("kingdom/create/", KingdomCreateView.as_view(), name="kingdom_create"),
     path("phylum/create/", PhylumCreateView.as_view(), name="phylum_create"),
     path(

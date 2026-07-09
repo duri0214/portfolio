@@ -1,0 +1,120 @@
+{% extends "taxonomy/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'txo:index' %}">分類学</a></li>
+                <li class="breadcrumb-item active" aria-current="page">分類登録</li>
+            </ol>
+        </nav>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="mb-5">
+            {% csrf_token %}
+
+            <div class="row g-4">
+                <div class="col-12">
+                    <h1 class="h3 mb-1">分類登録</h1>
+                </div>
+
+                <div class="col-12">
+                    <h2 class="h5 border-bottom pb-2">分類階層</h2>
+                </div>
+
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.kingdom name_field=form.kingdom_name name_en_field=form.kingdom_name_en level_label="界" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.phylum name_field=form.phylum_name name_en_field=form.phylum_name_en level_label="門" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.classification name_field=form.classification_name name_en_field=form.classification_name_en level_label="綱" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.family name_field=form.family_name name_en_field=form.family_name_en level_label="科" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.genus name_field=form.genus_name name_en_field=form.genus_name_en level_label="属" %}
+                {% include "taxonomy/partials/hierarchy_form_row.html" with select_field=form.species name_field=form.species_name name_en_field=form.species_name_en level_label="種" %}
+
+                <div class="col-12 mt-5">
+                    <h2 class="h5 border-bottom pb-2">品種・系統・分類対象</h2>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="{{ form.breed_name.id_for_label }}">{{ form.breed_name.label }}</label>
+                    {{ form.breed_name }}
+                    {{ form.breed_name.errors }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="{{ form.breed_name_kana.id_for_label }}">{{ form.breed_name_kana.label }}</label>
+                    {{ form.breed_name_kana }}
+                    {{ form.breed_name_kana.errors }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="{{ form.breed_image.id_for_label }}">{{ form.breed_image.label }}</label>
+                    {{ form.breed_image }}
+                    {{ form.breed_image.errors }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="{{ form.natural_monument.id_for_label }}">{{ form.natural_monument.label }}</label>
+                    {{ form.natural_monument }}
+                    {{ form.natural_monument.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="{{ form.breed_remark.id_for_label }}">{{ form.breed_remark.label }}</label>
+                    {{ form.breed_remark }}
+                    {{ form.breed_remark.errors }}
+                </div>
+
+                <div class="col-12 d-flex gap-2 justify-content-end">
+                    <a class="btn btn-outline-secondary" href="{% url 'txo:index' %}">戻る</a>
+                    <button class="btn btn-primary" type="submit">登録</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const hierarchyOptions = JSON.parse('{{ hierarchy_json|escapejs }}');
+        const hierarchyChain = [
+            {name: "phylum", parent: "kingdom"},
+            {name: "classification", parent: "phylum"},
+            {name: "family", parent: "classification"},
+            {name: "genus", parent: "family"},
+            {name: "species", parent: "genus"},
+        ];
+
+        function rebuildChildSelect(childName, parentValue) {
+            const select = document.getElementById(`id_${childName}`);
+            if (!select) {
+                return;
+            }
+
+            const currentValue = select.value;
+            select.replaceChildren(new Option("新しく作る", ""));
+            if (parentValue) {
+                hierarchyOptions[childName]
+                    .filter((option) => String(option.parent) === String(parentValue))
+                    .forEach((option) => select.add(new Option(option.name, option.id)));
+            }
+            select.value = [...select.options].some((option) => option.value === currentValue) ? currentValue : "";
+        }
+
+        function refreshDescendants(startName) {
+            const startIndex = hierarchyChain.findIndex((item) => item.parent === startName);
+            for (let index = startIndex; index < hierarchyChain.length; index += 1) {
+                if (index < 0) {
+                    continue;
+                }
+                const item = hierarchyChain[index];
+                const parent = document.getElementById(`id_${item.parent}`);
+                rebuildChildSelect(item.name, parent ? parent.value : "");
+            }
+        }
+
+        ["kingdom", "phylum", "classification", "family", "genus"].forEach((fieldName) => {
+            const select = document.getElementById(`id_${fieldName}`);
+            if (select) {
+                select.addEventListener("change", () => refreshDescendants(fieldName));
+            }
+        });
+        refreshDescendants("kingdom");
+    </script>
+{% endblock %}
