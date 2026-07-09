@@ -117,24 +117,8 @@ python manage.py loaddata soil_analysis\fixtures\samplingorder.json
 python manage.py loaddata soil_analysis\fixtures\device.json
 
 # --- Taxonomy ---
-python manage.py loaddata `
-    taxonomy\fixtures\kingdom.json `
-    taxonomy\fixtures\phylum.json `
-    taxonomy\fixtures\classification.json `
-    taxonomy\fixtures\family.json `
-    taxonomy\fixtures\genus.json `
-    taxonomy\fixtures\species.json `
-    taxonomy\fixtures\naturalMonument.json `
-    taxonomy\fixtures\tag.json `
-    taxonomy\fixtures\breed.json `
-    taxonomy\fixtures\breedTags.json `
-    taxonomy\fixtures\feedGroup.json `
-    taxonomy\fixtures\henGroup.json
-
-# Batches for Taxonomy master data
+python manage.py seed_taxonomy_initial_data
 python manage.py seed_taxonomy_animals
-python manage.py loaddata taxonomy\fixtures\jma_weather_code.json
-python manage.py loaddata taxonomy\fixtures\eggLedger.json
 
 # --- Hospital / AI Agent ---
 python manage.py loaddata `

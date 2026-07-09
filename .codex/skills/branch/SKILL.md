@@ -23,6 +23,7 @@ description: ブランチ作成、master 直接作業禁止、ブランチ作成
 - **ブランチ作成後の Issue ステータス更新**
     - トピックブランチ名は、対応する Issue 番号を先頭に付けて作成してください（例：`123-feature-name`）。
     - ブランチを作成して切り替えたら、該当 Issue の Project ステータスを `Todo` から `In progress` に更新してください。
+    - 該当 Issue が親チケットを持ち、親チケットの Project ステータスが `Todo` の場合は、初の子チケット着手とみなして親チケットも `In progress` に更新してください。
     - 該当 Issue が Project に未登録の場合は、`ticket` スキルの Issue 作成時メタ情報設定を確認してください。
     - Project ステータス操作の権限が不足している場合は、`gh auth refresh -s read:project -s project` が必要なことを伝えてください。
 
