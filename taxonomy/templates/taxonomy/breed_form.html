@@ -80,6 +80,27 @@
             {name: "genus", parent: "family"},
             {name: "species", parent: "genus"},
         ];
+        const hierarchyFieldNames = [
+            "kingdom",
+            "phylum",
+            "classification",
+            "family",
+            "genus",
+            "species",
+        ];
+
+        function updateNewFieldState(levelName) {
+            const select = document.getElementById(`id_${levelName}`);
+            const nameInput = document.getElementById(`id_${levelName}_name`);
+            const nameEnInput = document.getElementById(`id_${levelName}_name_en`);
+            const isExistingSelected = Boolean(select && select.value);
+
+            [nameInput, nameEnInput].forEach((input) => {
+                if (input) {
+                    input.disabled = isExistingSelected;
+                }
+            });
+        }
 
         function rebuildChildSelect(childName, parentValue) {
             const select = document.getElementById(`id_${childName}`);
@@ -95,26 +116,31 @@
                     .forEach((option) => select.add(new Option(option.name, option.id)));
             }
             select.value = [...select.options].some((option) => option.value === currentValue) ? currentValue : "";
+            updateNewFieldState(childName);
         }
 
         function refreshDescendants(startName) {
             const startIndex = hierarchyChain.findIndex((item) => item.parent === startName);
+            if (startIndex < 0) {
+                return;
+            }
             for (let index = startIndex; index < hierarchyChain.length; index += 1) {
-                if (index < 0) {
-                    continue;
-                }
                 const item = hierarchyChain[index];
                 const parent = document.getElementById(`id_${item.parent}`);
                 rebuildChildSelect(item.name, parent ? parent.value : "");
             }
         }
 
-        ["kingdom", "phylum", "classification", "family", "genus"].forEach((fieldName) => {
+        hierarchyFieldNames.forEach((fieldName) => {
             const select = document.getElementById(`id_${fieldName}`);
             if (select) {
-                select.addEventListener("change", () => refreshDescendants(fieldName));
+                select.addEventListener("change", () => {
+                    updateNewFieldState(fieldName);
+                    refreshDescendants(fieldName);
+                });
             }
         });
         refreshDescendants("kingdom");
+        hierarchyFieldNames.forEach(updateNewFieldState);
     </script>
 {% endblock %}

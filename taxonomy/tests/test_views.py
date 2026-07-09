@@ -76,6 +76,7 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, "体の基本構造や進化的なまとまり")
         self.assertContains(response, "品種・系統・分類対象名")
         self.assertContains(response, "hierarchyOptions")
+        self.assertContains(response, "updateNewFieldState")
 
     def test_create_breed_with_existing_hierarchy(self):
         """
