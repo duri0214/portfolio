@@ -164,6 +164,9 @@ class TaxonomyBreedCreateViewTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "alert alert-danger")
+        self.assertContains(response, "登録できませんでした。入力内容を確認してください。")
+        self.assertContains(response, "text-danger")
         self.assertContains(response, "この種には同じ名前の品種が登録済みです。")
         self.assertEqual(Breed.objects.filter(name="名古屋種").count(), 1)
 
