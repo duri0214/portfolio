@@ -1,0 +1,36 @@
+<div class="col-12">
+    <div class="row g-3 align-items-start border-bottom pb-3">
+        <div class="col-12 col-lg-3">
+            <h3 class="h6 mb-0">{{ level_label }}</h3>
+            <p class="small text-muted mb-1">{{ level_summary }}</p>
+            <div class="small" aria-label="分類の中での位置">
+                <span class="{% if level_label == '界' %}badge bg-primary{% else %}text-muted{% endif %}">界</span>
+                <span class="text-muted">&gt;</span>
+                <span class="{% if level_label == '門' %}badge bg-primary{% else %}text-muted{% endif %}">門</span>
+                <span class="text-muted">&gt;</span>
+                <span class="{% if level_label == '綱' %}badge bg-primary{% else %}text-muted{% endif %}">綱</span>
+                <span class="text-muted">&gt;</span>
+                <span class="{% if level_label == '科' %}badge bg-primary{% else %}text-muted{% endif %}">科</span>
+                <span class="text-muted">&gt;</span>
+                <span class="{% if level_label == '属' %}badge bg-primary{% else %}text-muted{% endif %}">属</span>
+                <span class="text-muted">&gt;</span>
+                <span class="{% if level_label == '種' %}badge bg-primary{% else %}text-muted{% endif %}">種</span>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <label class="form-label" for="{{ select_field.id_for_label }}">{{ select_field.label }}</label>
+            {{ select_field }}
+            <div class="text-danger small mt-1">{{ select_field.errors }}</div>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <label class="form-label" for="{{ name_field.id_for_label }}">{{ name_field.label }}</label>
+            {{ name_field }}
+            <div class="text-danger small mt-1">{{ name_field.errors }}</div>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <label class="form-label" for="{{ name_en_field.id_for_label }}">{{ name_en_field.label }}</label>
+            {{ name_en_field }}
+            <div class="text-danger small mt-1">{{ name_en_field.errors }}</div>
+        </div>
+    </div>
+</div>
