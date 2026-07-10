@@ -26,48 +26,61 @@ document.addEventListener("DOMContentLoaded", () => {
         summaryElement.replaceChildren();
 
         const comparisonCard = document.createElement("div");
-        comparisonCard.className = "livestock-comparison-card";
+        comparisonCard.className = "border rounded p-3 bg-light d-grid gap-3";
 
         const heading = document.createElement("div");
-        heading.className = "livestock-comparison-heading";
+        heading.className = "d-grid gap-1";
         const title = document.createElement("strong");
+        title.className = "text-dark";
         title.textContent = "全国羽数の内訳";
         const description = document.createElement("span");
+        description.className = "small text-muted";
         description.textContent =
             "採卵鶏とブロイラーの全国羽数を足したうち、どちらが多いかを示します。";
         heading.append(title, description);
 
         const comparisonBar = document.createElement("div");
-        comparisonBar.className = "livestock-comparison-bar";
+        comparisonBar.className = "progress";
+        comparisonBar.style.height = "2rem";
         dashboard.categories.forEach((category) => {
             const segment = document.createElement("span");
-            segment.className = `livestock-comparison-segment livestock-comparison-${category.key}`;
-            segment.style.flexBasis = `${category.share}%`;
+            const colorClass =
+                category.key === "broilers" ? "bg-warning text-dark" : "bg-primary";
+            segment.className = `progress-bar ${colorClass}`;
+            segment.style.width = `${category.share}%`;
             segment.textContent = `${category.label} ${category.share}%`;
             comparisonBar.append(segment);
         });
 
         const categoryList = document.createElement("div");
-        categoryList.className = "livestock-summary-list";
+        categoryList.className = "table-responsive";
+        const table = document.createElement("table");
+        table.className = "table table-sm align-middle mb-0";
+        const tableBody = document.createElement("tbody");
         dashboard.categories.forEach((category) => {
-            const row = document.createElement("div");
-            row.className = "livestock-summary-row";
+            const row = document.createElement("tr");
 
             const label = document.createElement("strong");
             label.textContent = category.label;
+            const labelCell = document.createElement("th");
+            labelCell.scope = "row";
+            labelCell.className = "text-nowrap";
+            labelCell.append(label);
 
-            const birds = document.createElement("span");
+            const birds = document.createElement("td");
             birds.textContent = `全国羽数 ${category.nationalBirdsLabel}`;
-            const households = document.createElement("span");
+            const households = document.createElement("td");
             households.textContent = `飼養戸数 ${category.nationalHouseholdsLabel}`;
-            const share = document.createElement("span");
+            const share = document.createElement("td");
             share.textContent = `2分類合計内の割合 ${category.share}%`;
-            const table = document.createElement("span");
-            table.textContent = `表番号 ${category.tableNumber}`;
+            const tableNumber = document.createElement("td");
+            tableNumber.textContent = `表番号 ${category.tableNumber}`;
 
-            row.append(label, birds, households, share, table);
-            categoryList.append(row);
+            row.append(labelCell, birds, households, share, tableNumber);
+            tableBody.append(row);
         });
+        table.append(tableBody);
+        categoryList.append(table);
 
         comparisonCard.append(heading, comparisonBar, categoryList);
         summaryElement.append(comparisonCard);
