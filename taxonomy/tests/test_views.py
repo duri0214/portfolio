@@ -49,6 +49,8 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "政府統計コード 00500222")
         self.assertContains(response, "採卵鶏")
         self.assertContains(response, "ブロイラー")
+        self.assertContains(response, "採卵鶏とブロイラーは、飼育目的が異なる統計分類です。")
+        self.assertContains(response, "ブロイラーの雌も生物として卵を産めます")
         self.assertContains(response, "livestock-distribution-data")
         self.assertContains(response, "livestock-prefecture-map")
         self.assertContains(response, "秘匿・該当なし")

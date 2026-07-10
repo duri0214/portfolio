@@ -63,6 +63,14 @@
                     <div class="card-body">
                         {{ livestock_distribution_json|json_script:"livestock-distribution-data" }}
                         <div class="livestock-dashboard">
+                            <div class="border rounded p-3 bg-light">
+                                <p class="fw-semibold mb-2">採卵鶏とブロイラーは、飼育目的が異なる統計分類です。</p>
+                                <p class="small text-muted mb-0">
+                                    採卵鶏は卵を産ませるための鶏、ブロイラーは肉用に短期間で大きく育つよう改良された鶏です。
+                                    ブロイラーの雌も生物として卵を産めますが、採卵を目的に飼育される鶏ではないため、
+                                    この統計では採卵鶏とは別の分類として扱われます。
+                                </p>
+                            </div>
                             <div class="livestock-summary" id="livestock-summary"></div>
                             <div class="livestock-map-panel">
                                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
