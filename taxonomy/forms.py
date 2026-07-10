@@ -18,16 +18,6 @@ BREED_FIELD_WIDGETS = {
 }
 
 
-def _breed_model_field_label(field_name):
-    field = Breed._meta.get_field(field_name)
-    return field.verbose_name
-
-
-def _breed_model_field_required(field_name):
-    field = Breed._meta.get_field(field_name)
-    return not field.blank
-
-
 class TaxonomyBreedCreateForm(forms.Form):
     """
     分類階層と品種をまとめて登録するフォーム。
@@ -93,24 +83,24 @@ class TaxonomyBreedCreateForm(forms.Form):
     species_name = forms.CharField(label="種の名前", max_length=255, required=False)
     species_name_en = forms.CharField(label="種の英名", max_length=255, required=False)
 
-    breed_name = forms.CharField(label=_breed_model_field_label("name"), max_length=255)
+    breed_name = forms.CharField(label=Breed.field_verbose_name("name"), max_length=255)
     breed_name_kana = forms.CharField(
-        label=_breed_model_field_label("name_kana"), max_length=255
+        label=Breed.field_verbose_name("name_kana"), max_length=255
     )
     breed_image = forms.ImageField(
-        label=_breed_model_field_label("image"),
-        required=_breed_model_field_required("image"),
+        label=Breed.field_verbose_name("image"),
+        required=Breed.field_required("image"),
     )
     breed_remark = forms.CharField(
-        label=_breed_model_field_label("remark"),
+        label=Breed.field_verbose_name("remark"),
         max_length=255,
-        required=_breed_model_field_required("remark"),
+        required=Breed.field_required("remark"),
         widget=BREED_FIELD_WIDGETS["remark"],
     )
     natural_monument = forms.ModelChoiceField(
-        label=_breed_model_field_label("natural_monument"),
+        label=Breed.field_verbose_name("natural_monument"),
         queryset=NaturalMonument.objects.none(),
-        required=_breed_model_field_required("natural_monument"),
+        required=Breed.field_required("natural_monument"),
         empty_label="指定なし",
     )
 

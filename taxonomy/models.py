@@ -158,6 +158,15 @@ class Breed(models.Model):
             models.UniqueConstraint(fields=["name"], name="breed_name_unique")
         ]
 
+    @classmethod
+    def field_verbose_name(cls, field_name):
+        return cls._meta.get_field(field_name).verbose_name
+
+    @classmethod
+    def field_required(cls, field_name):
+        field = cls._meta.get_field(field_name)
+        return not field.blank
+
 
 class BreedTags(models.Model):
     """
