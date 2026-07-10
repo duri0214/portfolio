@@ -1,6 +1,10 @@
 from django.urls import path
 
 from taxonomy.views import (
+    BreedDeleteView,
+    BreedDetailView,
+    BreedListView,
+    BreedUpdateView,
     IndexView,
     KingdomCreateView,
     PhylumCreateView,
@@ -18,7 +22,11 @@ from taxonomy.views import (
 app_name = "txo"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
+    path("breeds/", BreedListView.as_view(), name="breed_list"),
     path("breeds/new/", TaxonomyBreedCreateView.as_view(), name="breed_new"),
+    path("breeds/<int:pk>/", BreedDetailView.as_view(), name="breed_detail"),
+    path("breeds/<int:pk>/edit/", BreedUpdateView.as_view(), name="breed_edit"),
+    path("breeds/<int:pk>/delete/", BreedDeleteView.as_view(), name="breed_delete"),
     path("kingdom/create/", KingdomCreateView.as_view(), name="kingdom_create"),
     path("phylum/create/", PhylumCreateView.as_view(), name="phylum_create"),
     path(

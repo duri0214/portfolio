@@ -1,0 +1,69 @@
+{% extends "taxonomy/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'txo:index' %}">分類学</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'txo:breed_list' %}">品種一覧</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ breed.name }}</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
+            <div>
+                <h1 class="h3 mb-1">{{ breed.name }}</h1>
+                <p class="text-muted mb-0">{{ breed.name_kana }}</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-outline-secondary" href="{% url 'txo:breed_list' %}">一覧へ戻る</a>
+                <a class="btn btn-primary" href="{% url 'txo:breed_edit' breed.pk %}">編集</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h2 class="h5 mb-0">分類階層</h2>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-3">界</dt>
+                            <dd class="col-sm-9">{{ breed.species.genus.family.classification.phylum.kingdom.name }}</dd>
+                            <dt class="col-sm-3">門</dt>
+                            <dd class="col-sm-9">{{ breed.species.genus.family.classification.phylum.name }}</dd>
+                            <dt class="col-sm-3">綱</dt>
+                            <dd class="col-sm-9">{{ breed.species.genus.family.classification.name }}</dd>
+                            <dt class="col-sm-3">科</dt>
+                            <dd class="col-sm-9">{{ breed.species.genus.family.name }}</dd>
+                            <dt class="col-sm-3">属</dt>
+                            <dd class="col-sm-9">{{ breed.species.genus.name }}</dd>
+                            <dt class="col-sm-3">種</dt>
+                            <dd class="col-sm-9">{{ breed.species.name }}</dd>
+                            <dt class="col-sm-3">品種</dt>
+                            <dd class="col-sm-9">{{ breed.name }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h2 class="h5 mb-0">補足情報</h2>
+                    </div>
+                    <div class="card-body">
+                        {% if breed.image %}
+                            <img class="img-fluid rounded mb-3" src="{{ breed.image.url }}" alt="{{ breed.name }}">
+                        {% endif %}
+                        <dl class="mb-0">
+                            <dt>天然記念物区分</dt>
+                            <dd>{{ breed.natural_monument.name|default:"指定なし" }}</dd>
+                            <dt>メモ</dt>
+                            <dd>{{ breed.remark|default:"-" }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
