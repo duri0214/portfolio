@@ -33,7 +33,7 @@ class LivestockDistributionDashboardTest(SimpleTestCase):
         dashboard = build_livestock_distribution_dashboard()
         broilers = dashboard.categories[1]
         tochigi = next(
-            area for area in broilers.prefectures if area.prefecture == "栃木"
+            area for area in broilers.prefectures if area.prefecture == "栃木県"
         )
 
         self.assertEqual(tochigi.households, 8)
