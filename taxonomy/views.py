@@ -72,6 +72,11 @@ class IndexView(TemplateView):
         context["livestock_dashboard"] = livestock_dashboard
         if livestock_dashboard is not None:
             context["livestock_distribution_json"] = livestock_dashboard.to_payload()
+        else:
+            context["livestock_distribution_json"] = {
+                "categories": [],
+                "maps": {},
+            }
 
         return context
 

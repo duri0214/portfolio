@@ -20,8 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
         accumulator[category.key] = category;
         return accumulator;
     }, {});
-    let selectedCategoryKey = dashboard.categories[0].key;
+    let selectedCategoryKey = dashboard.categories.length ? dashboard.categories[0].key : null;
     let hasPatchedJpmapPointerEvents = false;
+    const emptyMapAreas = Array.from({ length: 47 }, (_, index) => ({
+        code: index + 1,
+        color: "#e2e8f0",
+        hoverColor: "#cbd5e1",
+    }));
 
     const patchJpmapPointerEvents = () => {
         const mapPrototype = window.jpmapInternalMap && window.jpmapInternalMap.prototype;
@@ -66,6 +71,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const renderSummary = () => {
         summaryElement.replaceChildren();
+        if (!dashboard.categories.length) {
+            const emptySummary = document.createElement("div");
+            emptySummary.className = "border rounded p-3 bg-light";
+            const title = document.createElement("strong");
+            title.className = "text-dark";
+            title.textContent = "畜産統計CSV未登録";
+            const text = document.createElement("p");
+            text.className = "small text-muted mb-0 mt-2";
+            text.textContent = "CSVを登録すると、採卵鶏・ブロイラーの全国羽数と都道府県別分布を表示します。";
+            emptySummary.append(title, text);
+            summaryElement.append(emptySummary);
+            return;
+        }
 
         const comparisonCard = document.createElement("div");
         comparisonCard.className = "border rounded p-3 bg-light d-grid gap-3";
@@ -173,6 +191,36 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const renderMap = () => {
+        if (!selectedCategoryKey) {
+            mapElement.replaceChildren();
+            detailElement.replaceChildren();
+            const emptyTitle = document.createElement("strong");
+            emptyTitle.textContent = "畜産統計CSV未登録";
+            const emptyText = document.createElement("span");
+            emptyText.textContent = "CSV登録後に、都道府県別の飼養分布を表示します。";
+            detailElement.append(emptyTitle, emptyText);
+
+            try {
+                if (window.jpmapInternalMap) {
+                    window.Map = window.jpmapInternalMap;
+                }
+                patchJpmapPointerEvents();
+                window.jpmap.japanMap(mapElement, {
+                    areas: emptyMapAreas,
+                    showsPrefectureName: true,
+                    movesIslands: true,
+                    width: Math.min(mapElement.clientWidth || 680, 720),
+                    borderLineColor: "#8795a1",
+                    borderLineWidth: 0.4,
+                });
+            } finally {
+                if (window.nativeMapBeforeJpmap) {
+                    window.Map = window.nativeMapBeforeJpmap;
+                }
+            }
+            return;
+        }
+
         const category = categoriesByKey[selectedCategoryKey];
         const areas = dashboard.maps[selectedCategoryKey];
         const areaByCode = areas.reduce((accumulator, area) => {

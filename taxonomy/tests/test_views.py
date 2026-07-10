@@ -50,7 +50,7 @@ class TaxonomyIndexViewTest(TestCase):
         シナリオ:
         - 入力: 畜産統計CSVが未登録のDB状態。
         - 処理: taxonomyトップページを表示する。
-        - 期待値: 初回データ登録に必要なCSV登録フォームと無効化された登録ボタンが表示されること。
+        - 期待値: 初回データ登録フォームと、空の日本地図用コンテナが表示されること。
         """
         response = self.client.get(reverse("txo:index"))
 
@@ -59,6 +59,9 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "畜産統計CSVが未登録です。")
         self.assertContains(response, 'name="csv_file"')
         self.assertContains(response, "disabled")
+        self.assertContains(response, "畜産統計CSV未登録")
+        self.assertContains(response, "livestock-distribution-data")
+        self.assertContains(response, "livestock-prefecture-map")
 
     def test_index_page_displays_livestock_distribution_dashboard(self):
         """

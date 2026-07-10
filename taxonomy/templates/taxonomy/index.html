@@ -89,7 +89,6 @@
                 </div>
             </div>
 
-            {% if livestock_dashboard %}
             <div class="col-12">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white border-bottom-0 pt-3">
@@ -97,18 +96,24 @@
                             <div>
                                 <h2 class="h5 mb-1">e-Stat 畜産統計による鶏の地域別飼養分布</h2>
                                 <p class="small text-muted mb-0">
-                                    {{ livestock_dashboard.source_name }} /
-                                    政府統計コード {{ livestock_dashboard.source_stat_code }} /
-                                    {{ livestock_dashboard.survey_year }}年 /
-                                    取得日 {{ livestock_dashboard.retrieved_at }}
+                                    {% if livestock_dashboard %}
+                                        {{ livestock_dashboard.source_name }} /
+                                        政府統計コード {{ livestock_dashboard.source_stat_code }} /
+                                        {{ livestock_dashboard.survey_year }}年 /
+                                        取得日 {{ livestock_dashboard.retrieved_at }}
+                                    {% else %}
+                                        畜産統計CSV未登録
+                                    {% endif %}
                                 </p>
                             </div>
-                            <a class="small text-decoration-none"
-                               href="{{ livestock_dashboard.source_url }}"
-                               target="_blank"
-                               rel="noopener noreferrer">
-                                <i class="fas fa-external-link-alt me-1"></i>e-Stat統計表
-                            </a>
+                            {% if livestock_dashboard %}
+                                <a class="small text-decoration-none"
+                                   href="{{ livestock_dashboard.source_url }}"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                    <i class="fas fa-external-link-alt me-1"></i>e-Stat統計表
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="card-body">
@@ -126,13 +131,19 @@
                             <div class="livestock-map-panel">
                                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                                     <div class="btn-group btn-group-sm" role="group" aria-label="統計分類の切り替え">
-                                        {% for category in livestock_dashboard.categories %}
-                                            <button type="button"
-                                                    class="btn btn-outline-primary livestock-category-button{% if forloop.first %} active{% endif %}"
-                                                    data-category="{{ category.key }}">
-                                                {{ category.label }}
+                                        {% if livestock_dashboard %}
+                                            {% for category in livestock_dashboard.categories %}
+                                                <button type="button"
+                                                        class="btn btn-outline-primary livestock-category-button{% if forloop.first %} active{% endif %}"
+                                                        data-category="{{ category.key }}">
+                                                    {{ category.label }}
+                                                </button>
+                                            {% endfor %}
+                                        {% else %}
+                                            <button type="button" class="btn btn-outline-secondary active" disabled>
+                                                未登録
                                             </button>
-                                        {% endfor %}
+                                        {% endif %}
                                     </div>
                                     <div class="livestock-legend">
                                         <span><i class="livestock-legend-dot livestock-low"></i>少ない</span>
@@ -151,12 +162,17 @@
                                     </div>
                                 </div>
                             </div>
-                            <p class="small text-muted mb-0">{{ livestock_dashboard.note }}</p>
+                            <p class="small text-muted mb-0">
+                                {% if livestock_dashboard %}
+                                    {{ livestock_dashboard.note }}
+                                {% else %}
+                                    CSV登録後に、都道府県別の飼養羽数・飼養戸数が地図へ反映されます。
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
-            {% endif %}
 
             <!-- Classification Chart -->
             <div class="col-12">
