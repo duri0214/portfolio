@@ -1,13 +1,7 @@
 import csv
 from dataclasses import dataclass
-from pathlib import Path
-
-
-LIVESTOCK_DISTRIBUTION_DATA_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "data"
-    / "estat_livestock_distribution_2024.csv"
-)
+from datetime import date
+from io import TextIOBase
 
 
 @dataclass(frozen=True)
@@ -148,6 +142,28 @@ class LivestockDistributionDashboard:
 
 
 @dataclass(frozen=True)
+class LivestockDistributionSource:
+    """
+    e-Stat畜産統計CSVの出典メタ情報。
+
+    Attributes:
+        source_name: データ源名。
+        source_stat_code: 政府統計コード。
+        survey_year: 対象年。
+        retrieved_at: ローカル取得日。
+        source_url: e-Statの統計表一覧URL。
+        note: 表示上の注意事項。
+    """
+
+    source_name: str
+    source_stat_code: str
+    survey_year: int
+    retrieved_at: date
+    source_url: str
+    note: str
+
+
+@dataclass(frozen=True)
 class LivestockDistributionCsvRow:
     """
     CSVに切り出したe-Stat畜産統計の1行。
@@ -173,47 +189,47 @@ class LivestockDistributionCsvRow:
     birds_thousand: int | None
 
 
-def build_livestock_distribution_dashboard() -> LivestockDistributionDashboard:
+def build_livestock_distribution_dashboard_from_rows(
+    source: LivestockDistributionSource,
+    rows: list[LivestockDistributionCsvRow],
+) -> LivestockDistributionDashboard:
     """
-    e-Stat畜産統計調査の採卵鶏・ブロイラー分布を返します。
+    登録済み畜産統計CSVの行データからダッシュボードを組み立てます。
 
-    令和6年畜産統計のExcelを2026-07-11に取得し、CSVへ転記した値を読み込みます。
     秘匿値はCSV上で空欄にしておき、推計せずNoneとして保持します。
     """
-    rows = _load_livestock_distribution_rows(LIVESTOCK_DISTRIBUTION_DATA_PATH)
     categories = _build_categories(rows)
     return LivestockDistributionDashboard(
-        source_name="e-Stat / 農林水産省 畜産統計調査",
-        source_stat_code="00500222",
-        survey_year=2024,
-        retrieved_at="2026-07-11",
-        source_url=(
-            "https://www.e-stat.go.jp/stat-search/files"
-            "?layout=datalist&lid=000001447249&page=1"
-        ),
-        note="令和6年2月1日現在。単位は千羽。e-Statの秘匿値 x と該当なし - は推計せず秘匿・該当なしとして表示します。",
+        source_name=source.source_name,
+        source_stat_code=source.source_stat_code,
+        survey_year=source.survey_year,
+        retrieved_at=source.retrieved_at.isoformat(),
+        source_url=source.source_url,
+        note=source.note,
         categories=categories,
     )
 
 
-def _load_livestock_distribution_rows(
-    data_path: Path,
+def load_livestock_distribution_rows(
+    csv_file: TextIOBase,
 ) -> list[LivestockDistributionCsvRow]:
-    with data_path.open(encoding="utf-8", newline="") as csv_file:
-        reader = csv.DictReader(csv_file)
-        return [
-            LivestockDistributionCsvRow(
-                category_key=row["category_key"],
-                category_label=row["category_label"],
-                table_number=row["table_number"],
-                table_title=row["table_title"],
-                prefecture_code=int(row["prefecture_code"]),
-                prefecture=row["prefecture"],
-                households=_parse_optional_int(row["households"]),
-                birds_thousand=_parse_optional_int(row["birds_thousand"]),
-            )
-            for row in reader
-        ]
+    """
+    畜産統計CSVのファイルオブジェクトから行データを読み込みます。
+    """
+    reader = csv.DictReader(csv_file)
+    return [
+        LivestockDistributionCsvRow(
+            category_key=row["category_key"],
+            category_label=row["category_label"],
+            table_number=row["table_number"],
+            table_title=row["table_title"],
+            prefecture_code=int(row["prefecture_code"]),
+            prefecture=row["prefecture"],
+            households=_parse_optional_int(row["households"]),
+            birds_thousand=_parse_optional_int(row["birds_thousand"]),
+        )
+        for row in reader
+    ]
 
 
 def _build_categories(

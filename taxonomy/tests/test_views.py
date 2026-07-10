@@ -14,13 +14,20 @@ from taxonomy.models import (
     Family,
     Genus,
     Kingdom,
+    LivestockDistributionDataset,
     NaturalMonument,
     Phylum,
     Species,
 )
 
 
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 class TaxonomyIndexViewTest(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls._overridden_settings["MEDIA_ROOT"], ignore_errors=True)
+        super().tearDownClass()
+
     def test_index_page_wraps_classification_chart_in_scroll_area(self):
         """
         シナリオ:
@@ -44,6 +51,8 @@ class TaxonomyIndexViewTest(TestCase):
         - 処理: taxonomyトップページを表示する。
         - 期待値: e-Stat畜産統計の採卵鶏・ブロイラー可視化に必要なメタ情報とJSONが表示されること。
         """
+        self._create_livestock_dataset()
+
         response = self.client.get(reverse("txo:index"))
 
         self.assertEqual(response.status_code, 200)
@@ -57,6 +66,25 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "livestock-prefecture-map")
         self.assertContains(response, "分類内の全国比")
         self.assertContains(response, "秘匿・該当なし")
+
+    def _create_livestock_dataset(self):
+        return LivestockDistributionDataset.objects.create(
+            title="令和6年畜産統計",
+            csv_file=SimpleUploadedFile(
+                "livestock.csv",
+                _livestock_distribution_csv().encode("utf-8"),
+                content_type="text/csv",
+            ),
+            source_name="e-Stat / 農林水産省 畜産統計調査",
+            source_stat_code="00500222",
+            survey_year=2024,
+            retrieved_at="2026-07-11",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            note=(
+                "令和6年2月1日現在。単位は千羽。e-Statの秘匿値 x と"
+                "該当なし - は推計せず秘匿・該当なしとして表示します。"
+            ),
+        )
 
 
 class LivestockDistributionStaticAssetTest(SimpleTestCase):
@@ -81,6 +109,27 @@ class LivestockDistributionStaticAssetTest(SimpleTestCase):
         self.assertIn("2分類合計内の割合", script)
         self.assertIn("分類内の全国比", script)
         self.assertIn("getBoundingClientRect", script)
+
+
+def _livestock_distribution_csv():
+    rows = [
+        "category_key,category_label,table_number,table_title,prefecture_code,prefecture,households,birds_thousand",
+        "layers,採卵鶏,1,採卵鶏の飼養戸数・羽数,0,全国,2000,170776",
+        "broilers,ブロイラー,2,ブロイラーの飼養戸数・羽数,0,全国,1000,144859",
+    ]
+    for code in range(1, 48):
+        rows.append(
+            f"layers,採卵鶏,1,採卵鶏の飼養戸数・羽数,{code},都道府県{code},10,100"
+        )
+
+    for code in range(1, 48):
+        prefecture = "栃木県" if code == 9 else f"都道府県{code}"
+        birds = "" if code == 9 else "80"
+        rows.append(
+            f"broilers,ブロイラー,2,ブロイラーの飼養戸数・羽数,{code},{prefecture},8,{birds}"
+        )
+
+    return "\n".join(rows)
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
