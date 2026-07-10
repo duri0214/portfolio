@@ -1,8 +1,10 @@
 import shutil
 import tempfile
+from pathlib import Path
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
+from django.test import SimpleTestCase
 from django.test import TestCase
 from django.urls import reverse
 
@@ -53,7 +55,31 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "ブロイラーの雌も生物として卵を産めます")
         self.assertContains(response, "livestock-distribution-data")
         self.assertContains(response, "livestock-prefecture-map")
+        self.assertContains(response, "分類内の全国比")
         self.assertContains(response, "秘匿・該当なし")
+
+
+class LivestockDistributionStaticAssetTest(SimpleTestCase):
+    def test_livestock_distribution_js_labels_comparison_bar_clearly(self):
+        """
+        シナリオ:
+        - 入力: 畜産統計ダッシュボード用のJavaScriptファイル。
+        - 処理: 静的ファイルの内容を読み込む。
+        - 期待値: 採卵鶏・ブロイラーの比率バーが何を表すか分かる文言で表示されること。
+        """
+        script_path = (
+            Path(__file__).resolve().parents[1]
+            / "static"
+            / "taxonomy"
+            / "js"
+            / "livestock_distribution.js"
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn("全国羽数の内訳", script)
+        self.assertIn("どちらが多いか", script)
+        self.assertIn("2分類合計内の割合", script)
+        self.assertIn("分類内の全国比", script)
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())

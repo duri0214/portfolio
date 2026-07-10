@@ -24,35 +24,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const renderSummary = () => {
         summaryElement.replaceChildren();
+
+        const comparisonCard = document.createElement("div");
+        comparisonCard.className = "livestock-comparison-card";
+
+        const heading = document.createElement("div");
+        heading.className = "livestock-comparison-heading";
+        const title = document.createElement("strong");
+        title.textContent = "全国羽数の内訳";
+        const description = document.createElement("span");
+        description.textContent =
+            "採卵鶏とブロイラーの全国羽数を足したうち、どちらが多いかを示します。";
+        heading.append(title, description);
+
+        const comparisonBar = document.createElement("div");
+        comparisonBar.className = "livestock-comparison-bar";
         dashboard.categories.forEach((category) => {
-            const card = document.createElement("div");
-            card.className = "livestock-summary-card";
+            const segment = document.createElement("span");
+            segment.className = `livestock-comparison-segment livestock-comparison-${category.key}`;
+            segment.style.flexBasis = `${category.share}%`;
+            segment.textContent = `${category.label} ${category.share}%`;
+            comparisonBar.append(segment);
+        });
 
-            const title = document.createElement("strong");
-            title.textContent = category.label;
+        const categoryList = document.createElement("div");
+        categoryList.className = "livestock-summary-list";
+        dashboard.categories.forEach((category) => {
+            const row = document.createElement("div");
+            row.className = "livestock-summary-row";
 
-            const shareBar = document.createElement("div");
-            shareBar.className = "livestock-share-bar";
-            const shareFill = document.createElement("span");
-            shareFill.className = "livestock-share-fill";
-            shareFill.style.width = `${category.share}%`;
-            shareBar.append(shareFill);
+            const label = document.createElement("strong");
+            label.textContent = category.label;
 
-            const meta = document.createElement("div");
-            meta.className = "livestock-summary-meta";
             const birds = document.createElement("span");
             birds.textContent = `全国羽数 ${category.nationalBirdsLabel}`;
             const households = document.createElement("span");
             households.textContent = `飼養戸数 ${category.nationalHouseholdsLabel}`;
             const share = document.createElement("span");
-            share.textContent = `全国構成比 ${category.share}%`;
+            share.textContent = `2分類合計内の割合 ${category.share}%`;
             const table = document.createElement("span");
-            table.textContent = `表番号 ${category.tableNumber}: ${category.tableTitle}`;
-            meta.append(birds, households, share, table);
+            table.textContent = `表番号 ${category.tableNumber}`;
 
-            card.append(title, shareBar, meta);
-            summaryElement.append(card);
+            row.append(label, birds, households, share, table);
+            categoryList.append(row);
         });
+
+        comparisonCard.append(heading, comparisonBar, categoryList);
+        summaryElement.append(comparisonCard);
     };
 
     const getColor = (area, maxBirds) => {
@@ -88,9 +106,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 (area.birdsThousand / category.nationalBirdsThousand) *
                 100
             ).toFixed(1);
-            share.textContent = `全国構成比 ${nationalShare}%`;
+            share.textContent = `分類内の全国比 ${nationalShare}%`;
         } else {
-            share.textContent = "全国構成比 秘匿・該当なし";
+            share.textContent = "分類内の全国比 秘匿・該当なし";
         }
 
         const year = document.createElement("span");

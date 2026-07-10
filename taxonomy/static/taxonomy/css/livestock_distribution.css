@@ -5,44 +5,78 @@
 
 .livestock-summary {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
+    gap: 10px;
 }
 
-.livestock-summary-card {
+.livestock-comparison-card {
     display: grid;
-    gap: 10px;
-    min-height: 160px;
+    gap: 14px;
     padding: 16px;
     border: 1px solid #d9e2ec;
     border-radius: 8px;
     background: #fbfdff;
 }
 
-.livestock-summary-card strong {
+.livestock-comparison-heading {
+    display: grid;
+    gap: 4px;
+}
+
+.livestock-comparison-heading strong {
     color: #102a43;
     font-size: 1.1rem;
 }
 
-.livestock-share-bar {
+.livestock-comparison-heading span {
+    color: #52616f;
+    font-size: 0.9rem;
+}
+
+.livestock-comparison-bar {
+    display: flex;
     overflow: hidden;
-    height: 14px;
-    border-radius: 999px;
+    min-height: 34px;
+    border-radius: 8px;
     background: #e2e8f0;
 }
 
-.livestock-share-fill {
-    display: block;
-    height: 100%;
-    border-radius: 999px;
-    background: #2f80ed;
+.livestock-comparison-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: 6px 8px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
 }
 
-.livestock-summary-meta {
+.livestock-comparison-layers {
+    background: #1f6f9f;
+}
+
+.livestock-comparison-broilers {
+    background: #8a5a16;
+}
+
+.livestock-summary-list {
     display: grid;
-    gap: 4px;
+    gap: 8px;
+}
+
+.livestock-summary-row {
+    display: grid;
+    grid-template-columns: minmax(88px, 0.8fr) repeat(4, minmax(120px, 1fr));
+    gap: 8px;
+    align-items: center;
     color: #52616f;
     font-size: 0.9rem;
+}
+
+.livestock-summary-row strong {
+    color: #102a43;
 }
 
 .livestock-map-panel {
@@ -131,5 +165,15 @@
 
     .livestock-prefecture-map {
         min-height: 320px;
+    }
+
+    .livestock-comparison-segment {
+        font-size: 0.76rem;
+        white-space: normal;
+    }
+
+    .livestock-summary-row {
+        grid-template-columns: 1fr;
+        gap: 3px;
     }
 }
