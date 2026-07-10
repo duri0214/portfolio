@@ -78,18 +78,11 @@ class TaxonomyBreedCreateForm(forms.Form):
     species_name = forms.CharField(label="種の名前", max_length=255, required=False)
     species_name_en = forms.CharField(label="種の英名", max_length=255, required=False)
 
-    breed_name = forms.CharField(label="品種・系統・分類対象名", max_length=255)
-    breed_name_kana = forms.CharField(label="よみがな", max_length=255)
-    breed_image = forms.ImageField(label="画像", required=False)
-    breed_remark = forms.CharField(
-        label="メモ", max_length=255, required=False, widget=forms.Textarea
-    )
-    natural_monument = forms.ModelChoiceField(
-        label="天然記念物区分",
-        queryset=NaturalMonument.objects.none(),
-        required=False,
-        empty_label="指定なし",
-    )
+    breed_name = Breed.form_field("name")
+    breed_name_kana = Breed.form_field("name_kana")
+    breed_image = Breed.form_field("image")
+    breed_remark = Breed.form_field("remark", widget=forms.Textarea(attrs={"rows": 3}))
+    natural_monument = Breed.form_field("natural_monument", empty_label="指定なし")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -128,7 +121,6 @@ class TaxonomyBreedCreateForm(forms.Form):
                 field.widget.attrs["class"] = "form-select"
             else:
                 field.widget.attrs["class"] = "form-control"
-        self.fields["breed_remark"].widget.attrs["rows"] = 3
 
     def clean(self):
         cleaned_data = super().clean()
@@ -257,14 +249,6 @@ class BreedForm(forms.ModelForm):
             "natural_monument",
             "remark",
         ]
-        labels = {
-            "species": "種",
-            "name": "品種・系統・分類対象名",
-            "name_kana": "よみがな",
-            "image": "画像",
-            "natural_monument": "天然記念物区分",
-            "remark": "メモ",
-        }
         widgets = {
             "remark": forms.Textarea(attrs={"rows": 3}),
         }
