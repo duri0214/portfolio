@@ -13,17 +13,14 @@ from taxonomy.models import (
 )
 
 
-BREED_FIELD_LABELS = {
-    "species": "種",
-    "name": "品種・系統・分類対象名",
-    "name_kana": "よみがな",
-    "image": "画像",
-    "natural_monument": "天然記念物区分",
-    "remark": "メモ",
-}
 BREED_FIELD_WIDGETS = {
     "remark": forms.Textarea(attrs={"rows": 3}),
 }
+
+
+def _breed_model_field_label(field_name):
+    field = Breed._meta.get_field(field_name)
+    return field.verbose_name
 
 
 def _breed_model_field_required(field_name):
@@ -96,22 +93,22 @@ class TaxonomyBreedCreateForm(forms.Form):
     species_name = forms.CharField(label="種の名前", max_length=255, required=False)
     species_name_en = forms.CharField(label="種の英名", max_length=255, required=False)
 
-    breed_name = forms.CharField(label=BREED_FIELD_LABELS["name"], max_length=255)
+    breed_name = forms.CharField(label=_breed_model_field_label("name"), max_length=255)
     breed_name_kana = forms.CharField(
-        label=BREED_FIELD_LABELS["name_kana"], max_length=255
+        label=_breed_model_field_label("name_kana"), max_length=255
     )
     breed_image = forms.ImageField(
-        label=BREED_FIELD_LABELS["image"],
+        label=_breed_model_field_label("image"),
         required=_breed_model_field_required("image"),
     )
     breed_remark = forms.CharField(
-        label=BREED_FIELD_LABELS["remark"],
+        label=_breed_model_field_label("remark"),
         max_length=255,
         required=_breed_model_field_required("remark"),
         widget=BREED_FIELD_WIDGETS["remark"],
     )
     natural_monument = forms.ModelChoiceField(
-        label=BREED_FIELD_LABELS["natural_monument"],
+        label=_breed_model_field_label("natural_monument"),
         queryset=NaturalMonument.objects.none(),
         required=_breed_model_field_required("natural_monument"),
         empty_label="指定なし",
@@ -282,14 +279,6 @@ class BreedForm(forms.ModelForm):
             "natural_monument",
             "remark",
         ]
-        labels = {
-            "species": BREED_FIELD_LABELS["species"],
-            "name": BREED_FIELD_LABELS["name"],
-            "name_kana": BREED_FIELD_LABELS["name_kana"],
-            "image": BREED_FIELD_LABELS["image"],
-            "natural_monument": BREED_FIELD_LABELS["natural_monument"],
-            "remark": BREED_FIELD_LABELS["remark"],
-        }
         widgets = BREED_FIELD_WIDGETS
 
     def __init__(self, *args, **kwargs):

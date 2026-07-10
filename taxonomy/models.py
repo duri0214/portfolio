@@ -129,17 +129,29 @@ class Tag(models.Model):
 
 class Breed(models.Model):
     """
-    品種
+    品種。
+
+    Attributes:
+        name: 品種・系統・分類対象名。
+        name_kana: よみがな。
+        image: 画像。
+        remark: メモ。
+        natural_monument: 天然記念物区分。
+        species: 種。
     """
 
-    name = models.CharField(max_length=255)
-    name_kana = models.CharField(max_length=255)
-    image = models.ImageField(upload_to="taxonomy/breed", blank=True)
-    remark = models.CharField(max_length=255, null=True, blank=True)
+    name = models.CharField("品種・系統・分類対象名", max_length=255)
+    name_kana = models.CharField("よみがな", max_length=255)
+    image = models.ImageField("画像", upload_to="taxonomy/breed", blank=True)
+    remark = models.CharField("メモ", max_length=255, null=True, blank=True)
     natural_monument = models.ForeignKey(
-        NaturalMonument, on_delete=models.CASCADE, null=True, blank=True
+        NaturalMonument,
+        verbose_name="天然記念物区分",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
-    species = models.ForeignKey(Species, on_delete=models.CASCADE)
+    species = models.ForeignKey(Species, verbose_name="種", on_delete=models.CASCADE)
 
     class Meta:
         constraints = [

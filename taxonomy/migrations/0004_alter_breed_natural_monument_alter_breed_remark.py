@@ -13,17 +13,48 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterField(
             model_name="breed",
+            name="image",
+            field=models.ImageField(
+                blank=True, upload_to="taxonomy/breed", verbose_name="画像"
+            ),
+        ),
+        migrations.AlterField(
+            model_name="breed",
+            name="name",
+            field=models.CharField(
+                max_length=255, verbose_name="品種・系統・分類対象名"
+            ),
+        ),
+        migrations.AlterField(
+            model_name="breed",
+            name="name_kana",
+            field=models.CharField(max_length=255, verbose_name="よみがな"),
+        ),
+        migrations.AlterField(
+            model_name="breed",
             name="natural_monument",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 to="taxonomy.naturalmonument",
+                verbose_name="天然記念物区分",
             ),
         ),
         migrations.AlterField(
             model_name="breed",
             name="remark",
-            field=models.CharField(blank=True, max_length=255, null=True),
+            field=models.CharField(
+                blank=True, max_length=255, null=True, verbose_name="メモ"
+            ),
+        ),
+        migrations.AlterField(
+            model_name="breed",
+            name="species",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="taxonomy.species",
+                verbose_name="種",
+            ),
         ),
     ]
