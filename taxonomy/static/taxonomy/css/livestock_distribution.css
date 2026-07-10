@@ -1,0 +1,98 @@
+.livestock-dashboard {
+    display: grid;
+    gap: 18px;
+}
+
+.livestock-summary {
+    display: grid;
+    gap: 10px;
+}
+
+.livestock-map-panel {
+    display: grid;
+    gap: 10px;
+}
+
+.livestock-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #52616f;
+    font-size: 0.82rem;
+}
+
+.livestock-legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+    border-radius: 50%;
+}
+
+.livestock-low {
+    background: #d8edf9;
+}
+
+.livestock-mid {
+    background: #76b6d8;
+}
+
+.livestock-high {
+    background: #1f6f9f;
+}
+
+.livestock-secret {
+    background: #e2e8f0;
+}
+
+.livestock-map-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+    gap: 14px;
+    min-height: 440px;
+    padding: 16px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #f8fbfd;
+}
+
+.livestock-prefecture-map {
+    display: flex;
+    justify-content: center;
+    min-height: 400px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.livestock-prefecture-map canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+.livestock-map-detail {
+    align-self: start;
+    display: grid;
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #fff;
+    color: #102a43;
+}
+
+.livestock-map-detail span {
+    color: #52616f;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 767.98px) {
+    .livestock-map-layout {
+        grid-template-columns: 1fr;
+        min-height: 360px;
+        padding: 12px;
+    }
+
+    .livestock-prefecture-map {
+        min-height: 320px;
+    }
+}

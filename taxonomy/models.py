@@ -177,6 +177,45 @@ class BreedTags(models.Model):
         ]
 
 
+class LivestockDistributionDataset(models.Model):
+    """
+    e-Stat畜産統計の鶏地域別飼養分布CSV。
+
+    Attributes:
+        title: 管理画面で識別するデータセット名。
+        csv_file: media配下に保存する畜産統計CSV。
+        source_name: 取得元名。
+        source_stat_code: 政府統計コード。
+        survey_year: 統計の対象年。
+        retrieved_at: ローカル取得日。
+        source_url: e-Statなどの公開統計表URL。
+        note: 画面表示用の注意事項。
+        is_active: 表示対象として有効かどうか。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    title = models.CharField("データセット名", max_length=255)
+    csv_file = models.FileField(
+        "畜産統計CSV", upload_to="taxonomy/livestock_distribution"
+    )
+    source_name = models.CharField("取得元名", max_length=255)
+    source_stat_code = models.CharField("政府統計コード", max_length=20)
+    survey_year = models.PositiveSmallIntegerField("対象年")
+    retrieved_at = models.DateField("ローカル取得日")
+    source_url = models.URLField("公開統計表URL", max_length=500)
+    note = models.TextField("注意事項", blank=True)
+    is_active = models.BooleanField("表示対象", default=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["-retrieved_at", "-created_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.survey_year})"
+
+
 class FeedGroup(models.Model):
     """
     モデル: 飼料重量マスタ

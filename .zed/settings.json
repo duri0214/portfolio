@@ -1,0 +1,17 @@
+{
+  "languages": {
+    "Python": {
+      "enable_language_server": false,
+      "format_on_save": "on",
+      "code_actions_on_format": {
+        "source.organizeImports.ruff": false
+      },
+      "formatter": {
+        "external": {
+          "command": "black",
+          "arguments": ["--stdin-filename", "{buffer_path}", "-"]
+        }
+      }
+    }
+  }
+}

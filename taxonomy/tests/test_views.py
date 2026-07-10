@@ -1,8 +1,11 @@
 import shutil
 import tempfile
+from pathlib import Path
 
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
+from django.test import SimpleTestCase
 from django.test import TestCase
 from django.urls import reverse
 
@@ -12,13 +15,20 @@ from taxonomy.models import (
     Family,
     Genus,
     Kingdom,
+    LivestockDistributionDataset,
     NaturalMonument,
     Phylum,
     Species,
 )
 
 
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 class TaxonomyIndexViewTest(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls._overridden_settings["MEDIA_ROOT"], ignore_errors=True)
+        super().tearDownClass()
+
     def test_index_page_wraps_classification_chart_in_scroll_area(self):
         """
         シナリオ:
@@ -34,6 +44,173 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "overflow-y: visible")
         self.assertContains(response, "countClassificationNodes")
         self.assertContains(response, "fitClassificationChartHeight")
+
+    def test_index_page_shows_livestock_distribution_upload_form(self):
+        """
+        シナリオ:
+        - 入力: 畜産統計CSVが未登録のDB状態。
+        - 処理: taxonomyトップページを表示する。
+        - 期待値: 初回データ登録フォームと、空の日本地図用コンテナが表示されること。
+        """
+        response = self.client.get(reverse("txo:index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "畜産統計CSV登録")
+        self.assertContains(response, "畜産統計CSVが未登録です。")
+        self.assertContains(response, 'name="csv_file"')
+        self.assertContains(response, "disabled")
+        self.assertContains(response, "畜産統計CSV未登録")
+        self.assertContains(response, "livestock-distribution-data")
+        self.assertContains(response, "livestock-prefecture-map")
+
+    def test_index_page_displays_livestock_distribution_dashboard(self):
+        """
+        シナリオ:
+        - 入力: taxonomyトップページを表示できるDB状態。
+        - 処理: taxonomyトップページを表示する。
+        - 期待値: e-Stat畜産統計の採卵鶏・ブロイラー可視化に必要なメタ情報とJSONが表示されること。
+        """
+        self._create_livestock_dataset()
+
+        response = self.client.get(reverse("txo:index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
+        self.assertContains(response, "政府統計コード 00500222")
+        self.assertContains(response, "採卵鶏")
+        self.assertContains(response, "ブロイラー")
+        self.assertContains(response, "採卵鶏とブロイラーは、飼育目的が異なる統計分類です。")
+        self.assertContains(response, "ブロイラーの雌も生物として卵を産めます")
+        self.assertContains(response, "livestock-distribution-data")
+        self.assertContains(response, "livestock-prefecture-map")
+        self.assertContains(response, "分類内の全国比")
+        self.assertContains(response, "秘匿・該当なし")
+
+    def test_superuser_can_upload_livestock_distribution_dataset(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーと畜産統計CSV登録フォームのPOSTデータ。
+        - 処理: taxonomyトップページへCSVをPOSTする。
+        - 期待値: データセットが作成され、トップページで畜産統計ダッシュボードが表示されること。
+        """
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_admin",
+            email="taxonomy_admin@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:index"),
+            data=self._livestock_dataset_post_data(),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(LivestockDistributionDataset.objects.count(), 1)
+        self.assertContains(response, "畜産統計CSVを登録しました。")
+        self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
+
+    def test_rejects_livestock_distribution_upload_without_permission(self):
+        """
+        シナリオ:
+        - 入力: 未ログインユーザーと畜産統計CSV登録フォームのPOSTデータ。
+        - 処理: taxonomyトップページへCSVをPOSTする。
+        - 期待値: データセットは作成されず、権限エラーが表示されること。
+        """
+        response = self.client.post(
+            reverse("txo:index"),
+            data=self._livestock_dataset_post_data(),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(LivestockDistributionDataset.objects.count(), 0)
+        self.assertContains(response, "畜産統計CSVを登録する権限がありません。")
+
+    def _create_livestock_dataset(self):
+        return LivestockDistributionDataset.objects.create(
+            title="令和6年畜産統計",
+            csv_file=SimpleUploadedFile(
+                "livestock.csv",
+                _livestock_distribution_csv().encode("utf-8"),
+                content_type="text/csv",
+            ),
+            source_name="e-Stat / 農林水産省 畜産統計調査",
+            source_stat_code="00500222",
+            survey_year=2024,
+            retrieved_at="2026-07-11",
+            source_url="https://www.e-stat.go.jp/stat-search/files",
+            note=(
+                "令和6年2月1日現在。単位は千羽。e-Statの秘匿値 x と"
+                "該当なし - は推計せず秘匿・該当なしとして表示します。"
+            ),
+        )
+
+    def _livestock_dataset_post_data(self):
+        return {
+            "title": "令和6年畜産統計",
+            "csv_file": SimpleUploadedFile(
+                "livestock.csv",
+                _livestock_distribution_csv().encode("utf-8"),
+                content_type="text/csv",
+            ),
+            "source_name": "e-Stat / 農林水産省 畜産統計調査",
+            "source_stat_code": "00500222",
+            "survey_year": "2024",
+            "retrieved_at": "2026-07-11",
+            "source_url": "https://www.e-stat.go.jp/stat-search/files",
+            "note": (
+                "令和6年2月1日現在。単位は千羽。e-Statの秘匿値 x と"
+                "該当なし - は推計せず秘匿・該当なしとして表示します。"
+            ),
+            "is_active": "on",
+        }
+
+
+class LivestockDistributionStaticAssetTest(SimpleTestCase):
+    def test_livestock_distribution_js_labels_comparison_bar_clearly(self):
+        """
+        シナリオ:
+        - 入力: 畜産統計ダッシュボード用のJavaScriptファイル。
+        - 処理: 静的ファイルの内容を読み込む。
+        - 期待値: 採卵鶏・ブロイラーの比率バーが何を表すか分かる文言で表示されること。
+        """
+        script_path = (
+            Path(__file__).resolve().parents[1]
+            / "static"
+            / "taxonomy"
+            / "js"
+            / "livestock_distribution.js"
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn("全国羽数の内訳", script)
+        self.assertIn("どちらが多いか", script)
+        self.assertIn("2分類合計内の割合", script)
+        self.assertIn("分類内の全国比", script)
+        self.assertIn("getBoundingClientRect", script)
+
+
+def _livestock_distribution_csv():
+    rows = [
+        "category_key,category_label,table_number,table_title,prefecture_code,prefecture,households,birds_thousand",
+        "layers,採卵鶏,1,採卵鶏の飼養戸数・羽数,0,全国,2000,170776",
+        "broilers,ブロイラー,2,ブロイラーの飼養戸数・羽数,0,全国,1000,144859",
+    ]
+    for code in range(1, 48):
+        rows.append(
+            f"layers,採卵鶏,1,採卵鶏の飼養戸数・羽数,{code},都道府県{code},10,100"
+        )
+
+    for code in range(1, 48):
+        prefecture = "栃木県" if code == 9 else f"都道府県{code}"
+        birds = "" if code == 9 else "80"
+        rows.append(
+            f"broilers,ブロイラー,2,ブロイラーの飼養戸数・羽数,{code},{prefecture},8,{birds}"
+        )
+
+    return "\n".join(rows)
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
