@@ -159,13 +159,8 @@ class Breed(models.Model):
         ]
 
     @classmethod
-    def field_verbose_name(cls, field_name):
-        return cls._meta.get_field(field_name).verbose_name
-
-    @classmethod
-    def field_required(cls, field_name):
-        field = cls._meta.get_field(field_name)
-        return not field.blank
+    def form_field(cls, field_name, **kwargs):
+        return cls._meta.get_field(field_name).formfield(**kwargs)
 
 
 class BreedTags(models.Model):

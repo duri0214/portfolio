@@ -83,26 +83,11 @@ class TaxonomyBreedCreateForm(forms.Form):
     species_name = forms.CharField(label="種の名前", max_length=255, required=False)
     species_name_en = forms.CharField(label="種の英名", max_length=255, required=False)
 
-    breed_name = forms.CharField(label=Breed.field_verbose_name("name"), max_length=255)
-    breed_name_kana = forms.CharField(
-        label=Breed.field_verbose_name("name_kana"), max_length=255
-    )
-    breed_image = forms.ImageField(
-        label=Breed.field_verbose_name("image"),
-        required=Breed.field_required("image"),
-    )
-    breed_remark = forms.CharField(
-        label=Breed.field_verbose_name("remark"),
-        max_length=255,
-        required=Breed.field_required("remark"),
-        widget=BREED_FIELD_WIDGETS["remark"],
-    )
-    natural_monument = forms.ModelChoiceField(
-        label=Breed.field_verbose_name("natural_monument"),
-        queryset=NaturalMonument.objects.none(),
-        required=Breed.field_required("natural_monument"),
-        empty_label="指定なし",
-    )
+    breed_name = Breed.form_field("name")
+    breed_name_kana = Breed.form_field("name_kana")
+    breed_image = Breed.form_field("image")
+    breed_remark = Breed.form_field("remark", widget=BREED_FIELD_WIDGETS["remark"])
+    natural_monument = Breed.form_field("natural_monument", empty_label="指定なし")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
