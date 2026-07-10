@@ -1,5 +1,8 @@
 {% extends "taxonomy/base.html" %}
 {% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'taxonomy/css/livestock_distribution.css' %}">
+{% endblock %}
 {% block content %}
     <style>
         .taxonomy-chart-scroll {
@@ -32,6 +35,65 @@
                         <a class="btn btn-primary" href="{% url 'txo:breed_new' %}">分類を登録</a>
                         <a class="btn btn-outline-primary" href="{% url 'txo:breed_list' %}">品種一覧</a>
                         <a class="btn btn-outline-primary" href="{% url 'txo:observation' %}">鶏の観察グラフ</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom-0 pt-3">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                            <div>
+                                <h2 class="h5 mb-1">e-Stat 畜産統計による鶏の地域別飼養分布</h2>
+                                <p class="small text-muted mb-0">
+                                    {{ livestock_dashboard.source_name }} /
+                                    政府統計コード {{ livestock_dashboard.source_stat_code }} /
+                                    {{ livestock_dashboard.survey_year }}年 /
+                                    取得日 {{ livestock_dashboard.retrieved_at }}
+                                </p>
+                            </div>
+                            <a class="small text-decoration-none"
+                               href="{{ livestock_dashboard.source_url }}"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                <i class="fas fa-external-link-alt me-1"></i>e-Stat統計表
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {{ livestock_distribution_json|json_script:"livestock-distribution-data" }}
+                        <div class="livestock-dashboard">
+                            <div class="livestock-summary" id="livestock-summary"></div>
+                            <div class="livestock-map-panel">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="統計分類の切り替え">
+                                        {% for category in livestock_dashboard.categories %}
+                                            <button type="button"
+                                                    class="btn btn-outline-primary livestock-category-button{% if forloop.first %} active{% endif %}"
+                                                    data-category="{{ category.key }}">
+                                                {{ category.label }}
+                                            </button>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="livestock-legend">
+                                        <span><i class="livestock-legend-dot livestock-low"></i>少ない</span>
+                                        <span><i class="livestock-legend-dot livestock-mid"></i>中位</span>
+                                        <span><i class="livestock-legend-dot livestock-high"></i>多い</span>
+                                        <span><i class="livestock-legend-dot livestock-secret"></i>秘匿・該当なし</span>
+                                    </div>
+                                </div>
+                                <div class="livestock-map-layout">
+                                    <div id="livestock-prefecture-map"
+                                         class="livestock-prefecture-map"
+                                         aria-label="採卵鶏・ブロイラーの都道府県別飼養羽数マップ"></div>
+                                    <div class="livestock-map-detail" id="livestock-map-detail" aria-live="polite">
+                                        <strong>地図から都道府県を選択</strong>
+                                        <span>選択中の統計分類について、飼養羽数・飼養戸数・全国構成比を確認できます。</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="small text-muted mb-0">{{ livestock_dashboard.note }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -84,4 +146,15 @@
             </div>
         </div>
     </div>
+{% endblock %}
+{% block extra_js %}
+    <script>
+        window.nativeMapBeforeJpmap = window.Map;
+    </script>
+    <script src="https://unpkg.com/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
+    <script>
+        window.jpmapInternalMap = window.Map;
+        window.Map = window.nativeMapBeforeJpmap;
+    </script>
+    <script src="{% static 'taxonomy/js/livestock_distribution.js' %}"></script>
 {% endblock %}

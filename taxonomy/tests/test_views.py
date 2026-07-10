@@ -35,6 +35,24 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "countClassificationNodes")
         self.assertContains(response, "fitClassificationChartHeight")
 
+    def test_index_page_displays_livestock_distribution_dashboard(self):
+        """
+        シナリオ:
+        - 入力: taxonomyトップページを表示できるDB状態。
+        - 処理: taxonomyトップページを表示する。
+        - 期待値: e-Stat畜産統計の採卵鶏・ブロイラー可視化に必要なメタ情報とJSONが表示されること。
+        """
+        response = self.client.get(reverse("txo:index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
+        self.assertContains(response, "政府統計コード 00500222")
+        self.assertContains(response, "採卵鶏")
+        self.assertContains(response, "ブロイラー")
+        self.assertContains(response, "livestock-distribution-data")
+        self.assertContains(response, "livestock-prefecture-map")
+        self.assertContains(response, "秘匿・該当なし")
+
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 class TaxonomyBreedCreateViewTest(TestCase):

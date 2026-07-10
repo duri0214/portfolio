@@ -19,6 +19,9 @@ from taxonomy.domain.repository.breed import BreedRepository
 from taxonomy.domain.repository.chicken_observations import (
     ChickenObservationsRepository,
 )
+from taxonomy.domain.valueobject.livestock_distribution import (
+    build_livestock_distribution_dashboard,
+)
 from taxonomy.forms import BreedForm, TaxonomyBreedCreateForm
 from taxonomy.models import Breed, Classification, Family, Genus, Phylum, Species
 
@@ -39,6 +42,9 @@ class IndexView(TemplateView):
             [BreedEntity(record) for record in BreedRepository.get_breed_hierarchy()]
         )
         context["data"] = json.dumps(tree.export(), ensure_ascii=False)
+        livestock_dashboard = build_livestock_distribution_dashboard()
+        context["livestock_dashboard"] = livestock_dashboard
+        context["livestock_distribution_json"] = livestock_dashboard.to_payload()
 
         return context
 
