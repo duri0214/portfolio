@@ -80,6 +80,7 @@ class LivestockDistributionStaticAssetTest(SimpleTestCase):
         self.assertIn("どちらが多いか", script)
         self.assertIn("2分類合計内の割合", script)
         self.assertIn("分類内の全国比", script)
+        self.assertIn("getBoundingClientRect", script)
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())

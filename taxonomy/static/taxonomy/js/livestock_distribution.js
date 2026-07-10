@@ -21,6 +21,48 @@ document.addEventListener("DOMContentLoaded", () => {
         return accumulator;
     }, {});
     let selectedCategoryKey = dashboard.categories[0].key;
+    let hasPatchedJpmapPointerEvents = false;
+
+    const patchJpmapPointerEvents = () => {
+        const mapPrototype = window.jpmapInternalMap && window.jpmapInternalMap.prototype;
+        if (!mapPrototype || hasPatchedJpmapPointerEvents) {
+            return;
+        }
+
+        // japan-map-js uses offsetLeft/offsetTop, which breaks inside Bootstrap grids.
+        mapPrototype.addEvent = function addEvent() {
+            const map = this;
+            const target = this.element;
+            const updatePointer = (event) => {
+                const rect = target.getBoundingClientRect();
+                map.pointer = {
+                    x: ((event.clientX - rect.left) * target.width) / rect.width,
+                    y: ((event.clientY - rect.top) * target.height) / rect.height,
+                };
+            };
+
+            target.addEventListener("mousemove", (event) => {
+                updatePointer(event);
+                map.render();
+                if (!map.isHovering()) {
+                    map.options.onHoverOut(map.data);
+                }
+            });
+            target.addEventListener("mousedown", (event) => {
+                updatePointer(event);
+                map.render();
+                if (map.data.code !== null && map.data.name !== null) {
+                    setTimeout(() => map.options.onSelect(map.data), 0);
+                }
+                map.pointer = null;
+            });
+            target.addEventListener("mouseout", () => {
+                map.pointer = null;
+                map.render();
+            });
+        };
+        hasPatchedJpmapPointerEvents = true;
+    };
 
     const renderSummary = () => {
         summaryElement.replaceChildren();
@@ -161,6 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (window.jpmapInternalMap) {
                 window.Map = window.jpmapInternalMap;
             }
+            patchJpmapPointerEvents();
             window.jpmap.japanMap(mapElement, {
                 areas: mapAreas,
                 showsPrefectureName: true,
