@@ -13,11 +13,6 @@ from taxonomy.models import (
 )
 
 
-BREED_FIELD_WIDGETS = {
-    "remark": forms.Textarea(attrs={"rows": 3}),
-}
-
-
 class TaxonomyBreedCreateForm(forms.Form):
     """
     分類階層と品種をまとめて登録するフォーム。
@@ -86,7 +81,7 @@ class TaxonomyBreedCreateForm(forms.Form):
     breed_name = Breed.form_field("name")
     breed_name_kana = Breed.form_field("name_kana")
     breed_image = Breed.form_field("image")
-    breed_remark = Breed.form_field("remark", widget=BREED_FIELD_WIDGETS["remark"])
+    breed_remark = Breed.form_field("remark", widget=forms.Textarea(attrs={"rows": 3}))
     natural_monument = Breed.form_field("natural_monument", empty_label="指定なし")
 
     def __init__(self, *args, **kwargs):
@@ -254,7 +249,9 @@ class BreedForm(forms.ModelForm):
             "natural_monument",
             "remark",
         ]
-        widgets = BREED_FIELD_WIDGETS
+        widgets = {
+            "remark": forms.Textarea(attrs={"rows": 3}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
