@@ -2,6 +2,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.test import SimpleTestCase
@@ -44,6 +45,21 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "countClassificationNodes")
         self.assertContains(response, "fitClassificationChartHeight")
 
+    def test_index_page_shows_livestock_distribution_upload_form(self):
+        """
+        シナリオ:
+        - 入力: 畜産統計CSVが未登録のDB状態。
+        - 処理: taxonomyトップページを表示する。
+        - 期待値: 初回データ登録に必要なCSV登録フォームと無効化された登録ボタンが表示されること。
+        """
+        response = self.client.get(reverse("txo:index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "畜産統計CSV登録")
+        self.assertContains(response, "畜産統計CSVが未登録です。")
+        self.assertContains(response, 'name="csv_file"')
+        self.assertContains(response, "disabled")
+
     def test_index_page_displays_livestock_distribution_dashboard(self):
         """
         シナリオ:
@@ -67,6 +83,48 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "分類内の全国比")
         self.assertContains(response, "秘匿・該当なし")
 
+    def test_superuser_can_upload_livestock_distribution_dataset(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーと畜産統計CSV登録フォームのPOSTデータ。
+        - 処理: taxonomyトップページへCSVをPOSTする。
+        - 期待値: データセットが作成され、トップページで畜産統計ダッシュボードが表示されること。
+        """
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_admin",
+            email="taxonomy_admin@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:index"),
+            data=self._livestock_dataset_post_data(),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(LivestockDistributionDataset.objects.count(), 1)
+        self.assertContains(response, "畜産統計CSVを登録しました。")
+        self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
+
+    def test_rejects_livestock_distribution_upload_without_permission(self):
+        """
+        シナリオ:
+        - 入力: 未ログインユーザーと畜産統計CSV登録フォームのPOSTデータ。
+        - 処理: taxonomyトップページへCSVをPOSTする。
+        - 期待値: データセットは作成されず、権限エラーが表示されること。
+        """
+        response = self.client.post(
+            reverse("txo:index"),
+            data=self._livestock_dataset_post_data(),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(LivestockDistributionDataset.objects.count(), 0)
+        self.assertContains(response, "畜産統計CSVを登録する権限がありません。")
+
     def _create_livestock_dataset(self):
         return LivestockDistributionDataset.objects.create(
             title="令和6年畜産統計",
@@ -85,6 +143,26 @@ class TaxonomyIndexViewTest(TestCase):
                 "該当なし - は推計せず秘匿・該当なしとして表示します。"
             ),
         )
+
+    def _livestock_dataset_post_data(self):
+        return {
+            "title": "令和6年畜産統計",
+            "csv_file": SimpleUploadedFile(
+                "livestock.csv",
+                _livestock_distribution_csv().encode("utf-8"),
+                content_type="text/csv",
+            ),
+            "source_name": "e-Stat / 農林水産省 畜産統計調査",
+            "source_stat_code": "00500222",
+            "survey_year": "2024",
+            "retrieved_at": "2026-07-11",
+            "source_url": "https://www.e-stat.go.jp/stat-search/files",
+            "note": (
+                "令和6年2月1日現在。単位は千羽。e-Statの秘匿値 x と"
+                "該当なし - は推計せず秘匿・該当なしとして表示します。"
+            ),
+            "is_active": "on",
+        }
 
 
 class LivestockDistributionStaticAssetTest(SimpleTestCase):

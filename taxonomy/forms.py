@@ -1,5 +1,11 @@
+from io import StringIO
+
 from django import forms
 from django.db import transaction
+
+from taxonomy.domain.valueobject.livestock_distribution import (
+    load_livestock_distribution_rows,
+)
 
 from taxonomy.models import (
     Breed,
@@ -7,6 +13,7 @@ from taxonomy.models import (
     Family,
     Genus,
     Kingdom,
+    LivestockDistributionDataset,
     NaturalMonument,
     Phylum,
     Species,
@@ -287,3 +294,52 @@ class BreedForm(forms.ModelForm):
             f"{kingdom.name} > {phylum.name} > {classification.name} > "
             f"{family.name} > {genus.name} > {species.name}"
         )
+
+
+class LivestockDistributionDatasetForm(forms.ModelForm):
+    """
+    畜産統計CSVデータセットを画面から登録するフォーム。
+    """
+
+    class Meta:
+        model = LivestockDistributionDataset
+        fields = [
+            "title",
+            "csv_file",
+            "source_name",
+            "source_stat_code",
+            "survey_year",
+            "retrieved_at",
+            "source_url",
+            "note",
+            "is_active",
+        ]
+        widgets = {
+            "retrieved_at": forms.DateInput(attrs={"type": "date"}),
+            "note": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs["class"] = "form-check-input"
+                continue
+            field.widget.attrs["class"] = "form-control"
+            if field_name == "csv_file":
+                field.widget.attrs["accept"] = ".csv,text/csv"
+
+    def clean_csv_file(self):
+        csv_file = self.cleaned_data["csv_file"]
+        try:
+            csv_text = csv_file.read().decode("utf-8-sig")
+            rows = load_livestock_distribution_rows(StringIO(csv_text))
+        except (KeyError, UnicodeDecodeError, ValueError) as error:
+            raise forms.ValidationError(
+                "畜産統計CSVの形式を確認してください。"
+            ) from error
+
+        csv_file.seek(0)
+        if not rows:
+            raise forms.ValidationError("畜産統計CSVにデータ行がありません。")
+        return csv_file

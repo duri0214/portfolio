@@ -1,6 +1,7 @@
 import json
 
 from django.contrib import messages
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import (
@@ -22,12 +23,34 @@ from taxonomy.domain.repository.chicken_observations import (
 from taxonomy.domain.repository.livestock_distribution import (
     LivestockDistributionDatasetRepository,
 )
-from taxonomy.forms import BreedForm, TaxonomyBreedCreateForm
+from taxonomy.forms import (
+    BreedForm,
+    LivestockDistributionDatasetForm,
+    TaxonomyBreedCreateForm,
+)
 from taxonomy.models import Breed, Classification, Family, Genus, Phylum, Species
 
 
 class IndexView(TemplateView):
     template_name = "taxonomy/index.html"
+
+    def post(self, request, *args, **kwargs):
+        """
+        Taxonomyトップから畜産統計CSVを登録します。
+        """
+        if not request.user.is_superuser:
+            messages.error(request, "畜産統計CSVを登録する権限がありません。")
+            return redirect("txo:index")
+
+        form = LivestockDistributionDatasetForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "畜産統計CSVを登録しました。")
+            return redirect("txo:index")
+
+        context = self.get_context_data(**kwargs)
+        context["livestock_dataset_form"] = form
+        return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
         """
@@ -42,6 +65,7 @@ class IndexView(TemplateView):
             [BreedEntity(record) for record in BreedRepository.get_breed_hierarchy()]
         )
         context["data"] = json.dumps(tree.export(), ensure_ascii=False)
+        context["livestock_dataset_form"] = LivestockDistributionDatasetForm()
         livestock_dashboard = (
             LivestockDistributionDatasetRepository.get_latest_dashboard()
         )

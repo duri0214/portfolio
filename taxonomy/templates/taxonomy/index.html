@@ -39,6 +39,56 @@
                 </div>
             </div>
 
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom-0 pt-3">
+                        <h2 class="h5 mb-0">畜産統計CSV登録</h2>
+                    </div>
+                    <div class="card-body">
+                        {% if not livestock_dashboard %}
+                            <div class="alert alert-warning" role="alert">
+                                畜産統計CSVが未登録です。
+                            </div>
+                        {% endif %}
+                        <form method="post" enctype="multipart/form-data" class="row g-3">
+                            {% csrf_token %}
+                            {% for field in livestock_dataset_form %}
+                                <div class="{% if field.name == 'note' %}col-12{% elif field.name == 'is_active' %}col-12{% else %}col-md-6{% endif %}">
+                                    {% if field.name == 'is_active' %}
+                                        <div class="form-check">
+                                            {{ field }}
+                                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        </div>
+                                    {% else %}
+                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            {% if livestock_dataset_form.non_field_errors %}
+                                <div class="col-12 text-danger small">
+                                    {{ livestock_dataset_form.non_field_errors|join:", " }}
+                                </div>
+                            {% endif %}
+                            <div class="col-12">
+                                {% if request.user.is_superuser %}
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-upload me-1"></i>登録
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-primary" disabled>
+                                        <i class="fas fa-upload me-1"></i>登録
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             {% if livestock_dashboard %}
             <div class="col-12">
                 <div class="card shadow-sm border-0">
