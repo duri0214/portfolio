@@ -3,7 +3,15 @@ import json
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
-from django.views.generic import CreateView, FormView, UpdateView, TemplateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    FormView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
 
 from taxonomy.domain.breed_entity import BreedEntity
 from taxonomy.domain.node import NodeTree
@@ -11,8 +19,8 @@ from taxonomy.domain.repository.breed import BreedRepository
 from taxonomy.domain.repository.chicken_observations import (
     ChickenObservationsRepository,
 )
-from taxonomy.forms import TaxonomyBreedCreateForm
-from taxonomy.models import Classification, Family, Genus, Phylum, Species
+from taxonomy.forms import BreedForm, TaxonomyBreedCreateForm
+from taxonomy.models import Breed, Classification, Family, Genus, Phylum, Species
 
 
 class IndexView(TemplateView):
@@ -61,20 +69,24 @@ class TaxonomyBreedCreateView(FormView):
     分類階層と品種を1画面で登録するビュー。
 
     既存階層の選択と不足階層の追加を同じフォームで扱い、保存後は
-    分類ツリーを確認できるトップページへ戻す。
+    登録した品種の詳細ページへ遷移する。
     """
 
     form_class = TaxonomyBreedCreateForm
     template_name = "taxonomy/breed_form.html"
-    success_url = reverse_lazy("txo:index")
 
     def form_valid(self, form):
-        breed = form.save()
-        messages.success(self.request, f"{breed.name} を登録しました。")
+        self.breed = form.save()
+        messages.success(self.request, f"{self.breed.name} を登録しました。")
         return super().form_valid(form)
 
+    def get_success_url(self):
+        return reverse_lazy("txo:breed_detail", kwargs={"pk": self.breed.pk})
+
     def form_invalid(self, form):
-        messages.error(self.request, "登録できませんでした。入力内容を確認してください。")
+        messages.error(
+            self.request, "登録できませんでした。入力内容を確認してください。"
+        )
         return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):
@@ -107,6 +119,83 @@ class TaxonomyBreedCreateView(FormView):
                 for item in Species.objects.order_by("genus_id", "name")
             ],
         }
+
+
+class BreedListView(ListView):
+    """
+    品種レコードを分類階層付きで一覧表示するビュー。
+    """
+
+    model = Breed
+    template_name = "taxonomy/breed_list.html"
+    context_object_name = "breeds"
+
+    def get_queryset(self):
+        return Breed.objects.select_related(
+            "species__genus__family__classification__phylum__kingdom",
+            "natural_monument",
+        ).order_by(
+            "species__genus__family__classification__phylum__kingdom__name",
+            "species__genus__family__classification__phylum__name",
+            "species__genus__family__classification__name",
+            "species__genus__family__name",
+            "species__genus__name",
+            "species__name",
+            "name",
+        )
+
+
+class BreedDetailView(DetailView):
+    """
+    1件の品種レコードと分類階層を表示するビュー。
+    """
+
+    model = Breed
+    template_name = "taxonomy/breed_detail.html"
+    context_object_name = "breed"
+    queryset = Breed.objects.select_related(
+        "species__genus__family__classification__phylum__kingdom",
+        "natural_monument",
+    )
+
+
+class BreedUpdateView(UpdateView):
+    """
+    既存の品種レコードを編集するビュー。
+    """
+
+    model = Breed
+    form_class = BreedForm
+    template_name = "taxonomy/breed_edit.html"
+    context_object_name = "breed"
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f"{self.object.name} を更新しました。")
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy("txo:breed_detail", kwargs={"pk": self.object.pk})
+
+
+class BreedDeleteView(DeleteView):
+    """
+    品種レコードを確認画面経由で削除するビュー。
+    """
+
+    model = Breed
+    template_name = "taxonomy/breed_confirm_delete.html"
+    context_object_name = "breed"
+    success_url = reverse_lazy("txo:breed_list")
+    queryset = Breed.objects.select_related(
+        "species__genus__family__classification__phylum__kingdom"
+    )
+
+    def form_valid(self, form):
+        name = self.object.name
+        response = super().form_valid(form)
+        messages.success(self.request, f"{name} を削除しました。")
+        return response
 
 
 class KingdomCreateView(CreateView):

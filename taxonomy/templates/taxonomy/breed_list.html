@@ -1,0 +1,54 @@
+{% extends "taxonomy/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'txo:index' %}">分類学</a></li>
+                <li class="breadcrumb-item active" aria-current="page">品種一覧</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h1 class="h3 mb-0">品種一覧</h1>
+            <a class="btn btn-primary" href="{% url 'txo:breed_new' %}">分類を登録</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th scope="col">品種</th>
+                    <th scope="col">種</th>
+                    <th scope="col">属</th>
+                    <th scope="col">科</th>
+                    <th scope="col">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for breed in breeds %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ breed.name }}</div>
+                            <div class="text-muted small">{{ breed.name_kana }}</div>
+                        </td>
+                        <td>{{ breed.species.name }}</td>
+                        <td>{{ breed.species.genus.name }}</td>
+                        <td>{{ breed.species.genus.family.name }}</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a class="btn btn-sm btn-outline-primary" href="{% url 'txo:breed_detail' breed.pk %}">詳細</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="{% url 'txo:breed_edit' breed.pk %}">編集</a>
+                                <a class="btn btn-sm btn-outline-danger" href="{% url 'txo:breed_delete' breed.pk %}">削除</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-muted text-center py-4">登録済みの品種はありません。</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

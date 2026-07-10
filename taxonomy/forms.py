@@ -240,3 +240,66 @@ class TaxonomyBreedCreateForm(forms.Form):
             defaults={"name_en": name_en},
         )
         return instance
+
+
+class BreedForm(forms.ModelForm):
+    """
+    既存の品種情報を編集するフォーム。
+    """
+
+    class Meta:
+        model = Breed
+        fields = [
+            "species",
+            "name",
+            "name_kana",
+            "image",
+            "natural_monument",
+            "remark",
+        ]
+        labels = {
+            "species": "種",
+            "name": "品種・系統・分類対象名",
+            "name_kana": "よみがな",
+            "image": "画像",
+            "natural_monument": "天然記念物区分",
+            "remark": "メモ",
+        }
+        widgets = {
+            "remark": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["species"].queryset = Species.objects.select_related(
+            "genus__family__classification__phylum__kingdom"
+        ).order_by(
+            "genus__family__classification__phylum__kingdom__name",
+            "genus__family__classification__phylum__name",
+            "genus__family__classification__name",
+            "genus__family__name",
+            "genus__name",
+            "name",
+        )
+        self.fields["natural_monument"].queryset = NaturalMonument.objects.order_by(
+            "name"
+        )
+        self.fields["species"].label_from_instance = self._species_label
+        self.fields["natural_monument"].label_from_instance = lambda obj: obj.name
+
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.Select):
+                field.widget.attrs["class"] = "form-select"
+            else:
+                field.widget.attrs["class"] = "form-control"
+
+    def _species_label(self, species):
+        genus = species.genus
+        family = genus.family
+        classification = family.classification
+        phylum = classification.phylum
+        kingdom = phylum.kingdom
+        return (
+            f"{kingdom.name} > {phylum.name} > {classification.name} > "
+            f"{family.name} > {genus.name} > {species.name}"
+        )
