@@ -113,6 +113,28 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertRedirects(response, reverse("txo:breed_detail", args=[breed.pk]))
         self.assertEqual(breed.image.name, "")
 
+    def test_create_breed_allows_empty_optional_fields(self):
+        """
+        シナリオ:
+        - 入力: 既存の分類階層と任意項目未入力の品種情報。
+        - 処理: メモと天然記念物区分を空欄にして分類登録フォームをPOSTする。
+        - 期待値: 品種が作成され、任意項目が空として保存されること。
+        """
+        data = self._base_post_data({"breed_name": "任意項目なし系統"})
+        data.update(
+            {
+                "breed_remark": "",
+                "natural_monument": "",
+            }
+        )
+
+        response = self.client.post(reverse("txo:breed_new"), data=data)
+
+        breed = Breed.objects.get(name="任意項目なし系統")
+        self.assertRedirects(response, reverse("txo:breed_detail", args=[breed.pk]))
+        self.assertIsNone(breed.remark)
+        self.assertIsNone(breed.natural_monument)
+
     def test_create_breed_with_new_hierarchy(self):
         """
         シナリオ:
@@ -224,6 +246,35 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertEqual(breed.name_kana, "こうしんしたうこっけい")
         self.assertEqual(breed.natural_monument, self.natural_monument)
         self.assertEqual(breed.remark, "編集済み")
+
+    def test_edit_breed_allows_empty_natural_monument(self):
+        """
+        シナリオ:
+        - 入力: 任意項目を持つ登録済みの品種と、任意項目未指定の更新後情報。
+        - 処理: 品種編集フォームでメモと天然記念物区分を空欄にしてPOSTする。
+        - 期待値: 品種情報が更新され、任意項目が空として保存されること。
+        """
+        breed = self._create_breed(name="区分解除対象")
+        breed.natural_monument = self.natural_monument
+        breed.remark = "解除前メモ"
+        breed.save()
+
+        response = self.client.post(
+            reverse("txo:breed_edit", args=[breed.pk]),
+            data={
+                "species": self.species.pk,
+                "name": "区分なし系統",
+                "name_kana": "くぶんなしけいとう",
+                "natural_monument": "",
+                "remark": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("txo:breed_detail", args=[breed.pk]))
+        breed.refresh_from_db()
+        self.assertEqual(breed.name, "区分なし系統")
+        self.assertIsNone(breed.natural_monument)
+        self.assertIsNone(breed.remark)
 
     def test_delete_breed_uses_confirm_page_and_redirects_to_list(self):
         """

@@ -135,17 +135,15 @@ class Breed(models.Model):
     name = models.CharField(max_length=255)
     name_kana = models.CharField(max_length=255)
     image = models.ImageField(upload_to="taxonomy/breed", blank=True)
-    remark = models.CharField(max_length=255, null=True)
+    remark = models.CharField(max_length=255, null=True, blank=True)
     natural_monument = models.ForeignKey(
-        NaturalMonument, on_delete=models.CASCADE, null=True
+        NaturalMonument, on_delete=models.CASCADE, null=True, blank=True
     )
     species = models.ForeignKey(Species, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["name"], name="breed_name_unique"
-            )
+            models.UniqueConstraint(fields=["name"], name="breed_name_unique")
         ]
 
 

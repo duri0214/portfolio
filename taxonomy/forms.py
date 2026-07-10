@@ -13,6 +13,24 @@ from taxonomy.models import (
 )
 
 
+BREED_FIELD_LABELS = {
+    "species": "種",
+    "name": "品種・系統・分類対象名",
+    "name_kana": "よみがな",
+    "image": "画像",
+    "natural_monument": "天然記念物区分",
+    "remark": "メモ",
+}
+BREED_FIELD_WIDGETS = {
+    "remark": forms.Textarea(attrs={"rows": 3}),
+}
+
+
+def _breed_model_field_required(field_name):
+    field = Breed._meta.get_field(field_name)
+    return not field.blank
+
+
 class TaxonomyBreedCreateForm(forms.Form):
     """
     分類階層と品種をまとめて登録するフォーム。
@@ -78,16 +96,24 @@ class TaxonomyBreedCreateForm(forms.Form):
     species_name = forms.CharField(label="種の名前", max_length=255, required=False)
     species_name_en = forms.CharField(label="種の英名", max_length=255, required=False)
 
-    breed_name = forms.CharField(label="品種・系統・分類対象名", max_length=255)
-    breed_name_kana = forms.CharField(label="よみがな", max_length=255)
-    breed_image = forms.ImageField(label="画像", required=False)
+    breed_name = forms.CharField(label=BREED_FIELD_LABELS["name"], max_length=255)
+    breed_name_kana = forms.CharField(
+        label=BREED_FIELD_LABELS["name_kana"], max_length=255
+    )
+    breed_image = forms.ImageField(
+        label=BREED_FIELD_LABELS["image"],
+        required=_breed_model_field_required("image"),
+    )
     breed_remark = forms.CharField(
-        label="メモ", max_length=255, required=False, widget=forms.Textarea
+        label=BREED_FIELD_LABELS["remark"],
+        max_length=255,
+        required=_breed_model_field_required("remark"),
+        widget=BREED_FIELD_WIDGETS["remark"],
     )
     natural_monument = forms.ModelChoiceField(
-        label="天然記念物区分",
+        label=BREED_FIELD_LABELS["natural_monument"],
         queryset=NaturalMonument.objects.none(),
-        required=False,
+        required=_breed_model_field_required("natural_monument"),
         empty_label="指定なし",
     )
 
@@ -128,7 +154,6 @@ class TaxonomyBreedCreateForm(forms.Form):
                 field.widget.attrs["class"] = "form-select"
             else:
                 field.widget.attrs["class"] = "form-control"
-        self.fields["breed_remark"].widget.attrs["rows"] = 3
 
     def clean(self):
         cleaned_data = super().clean()
@@ -258,16 +283,14 @@ class BreedForm(forms.ModelForm):
             "remark",
         ]
         labels = {
-            "species": "種",
-            "name": "品種・系統・分類対象名",
-            "name_kana": "よみがな",
-            "image": "画像",
-            "natural_monument": "天然記念物区分",
-            "remark": "メモ",
+            "species": BREED_FIELD_LABELS["species"],
+            "name": BREED_FIELD_LABELS["name"],
+            "name_kana": BREED_FIELD_LABELS["name_kana"],
+            "image": BREED_FIELD_LABELS["image"],
+            "natural_monument": BREED_FIELD_LABELS["natural_monument"],
+            "remark": BREED_FIELD_LABELS["remark"],
         }
-        widgets = {
-            "remark": forms.Textarea(attrs={"rows": 3}),
-        }
+        widgets = BREED_FIELD_WIDGETS
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
