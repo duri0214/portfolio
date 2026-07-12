@@ -1,8 +1,5 @@
 {% extends "taxonomy/base.html" %}
 {% load static %}
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'taxonomy/css/livestock_distribution.css' %}">
-{% endblock %}
 {% block content %}
     <style>
         .taxonomy-chart-scroll {
@@ -34,7 +31,9 @@
                     <div class="d-flex flex-wrap gap-2">
                         <a class="btn btn-primary" href="{% url 'txo:breed_new' %}">分類を登録</a>
                         <a class="btn btn-outline-primary" href="{% url 'txo:breed_list' %}">品種一覧</a>
-                        <a class="btn btn-outline-primary" href="{% url 'txo:observation' %}">鶏の観察グラフ</a>
+                        <a class="btn btn-outline-primary" href="{% url 'txo:observation' %}">
+                            <i class="fas fa-chart-area me-1"></i>鶏の観察グラフ
+                        </a>
                     </div>
                 </div>
             </div>
@@ -42,134 +41,18 @@
             <div class="col-12">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white border-bottom-0 pt-3">
-                        <h2 class="h5 mb-0">畜産統計CSV登録</h2>
+                        <h2 class="h5 mb-0">分類体系の入れ子構造</h2>
                     </div>
                     <div class="card-body">
-                        {% if not livestock_dashboard %}
-                            <div class="alert alert-warning" role="alert">
-                                畜産統計CSVが未登録です。
-                            </div>
-                        {% endif %}
-                        <form method="post" enctype="multipart/form-data" class="row g-3">
-                            {% csrf_token %}
-                            {% for field in livestock_dataset_form %}
-                                <div class="{% if field.name == 'note' %}col-12{% elif field.name == 'is_active' %}col-12{% else %}col-md-6{% endif %}">
-                                    {% if field.name == 'is_active' %}
-                                        <div class="form-check">
-                                            {{ field }}
-                                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        </div>
-                                    {% else %}
-                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {{ field }}
-                                    {% endif %}
-                                    {% if field.errors %}
-                                        <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                            {% if livestock_dataset_form.non_field_errors %}
-                                <div class="col-12 text-danger small">
-                                    {{ livestock_dataset_form.non_field_errors|join:", " }}
-                                </div>
-                            {% endif %}
-                            <div class="col-12">
-                                {% if request.user.is_superuser %}
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-upload me-1"></i>登録
-                                    </button>
-                                {% else %}
-                                    <button type="button" class="btn btn-primary" disabled>
-                                        <i class="fas fa-upload me-1"></i>登録
-                                    </button>
-                                {% endif %}
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white border-bottom-0 pt-3">
-                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-                            <div>
-                                <h2 class="h5 mb-1">e-Stat 畜産統計による鶏の地域別飼養分布</h2>
-                                <p class="small text-muted mb-0">
-                                    {% if livestock_dashboard %}
-                                        {{ livestock_dashboard.source_name }} /
-                                        政府統計コード {{ livestock_dashboard.source_stat_code }} /
-                                        {{ livestock_dashboard.survey_year }}年 /
-                                        取得日 {{ livestock_dashboard.retrieved_at }}
-                                    {% else %}
-                                        畜産統計CSV未登録
-                                    {% endif %}
-                                </p>
-                            </div>
-                            {% if livestock_dashboard %}
-                                <a class="small text-decoration-none"
-                                   href="{{ livestock_dashboard.source_url }}"
-                                   target="_blank"
-                                   rel="noopener noreferrer">
-                                    <i class="fas fa-external-link-alt me-1"></i>e-Stat統計表
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        {{ livestock_distribution_json|json_script:"livestock-distribution-data" }}
-                        <div class="livestock-dashboard">
-                            <div class="border rounded p-3 bg-light">
-                                <p class="fw-semibold mb-2">採卵鶏とブロイラーは、飼育目的が異なる統計分類です。</p>
-                                <p class="small text-muted mb-0">
-                                    採卵鶏は卵を産ませるための鶏、ブロイラーは肉用に短期間で大きく育つよう改良された鶏です。
-                                    ブロイラーの雌も生物として卵を産めますが、採卵を目的に飼育される鶏ではないため、
-                                    この統計では採卵鶏とは別の分類として扱われます。
-                                </p>
-                            </div>
-                            <div class="livestock-summary" id="livestock-summary"></div>
-                            <div class="livestock-map-panel">
-                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                                    <div class="btn-group btn-group-sm" role="group" aria-label="統計分類の切り替え">
-                                        {% if livestock_dashboard %}
-                                            {% for category in livestock_dashboard.categories %}
-                                                <button type="button"
-                                                        class="btn btn-outline-primary livestock-category-button{% if forloop.first %} active{% endif %}"
-                                                        data-category="{{ category.key }}">
-                                                    {{ category.label }}
-                                                </button>
-                                            {% endfor %}
-                                        {% else %}
-                                            <button type="button" class="btn btn-outline-secondary active" disabled>
-                                                未登録
-                                            </button>
-                                        {% endif %}
-                                    </div>
-                                    <div class="livestock-legend">
-                                        <span><i class="livestock-legend-dot livestock-low"></i>少ない</span>
-                                        <span><i class="livestock-legend-dot livestock-mid"></i>中位</span>
-                                        <span><i class="livestock-legend-dot livestock-high"></i>多い</span>
-                                        <span><i class="livestock-legend-dot livestock-secret"></i>秘匿・該当なし</span>
-                                    </div>
-                                </div>
-                                <div class="livestock-map-layout">
-                                    <div id="livestock-prefecture-map"
-                                         class="livestock-prefecture-map"
-                                         aria-label="採卵鶏・ブロイラーの都道府県別飼養羽数マップ"></div>
-                                    <div class="livestock-map-detail" id="livestock-map-detail" aria-live="polite">
-                                        <strong>地図から都道府県を選択</strong>
-                                        <span>選択中の統計分類について、飼養羽数・飼養戸数・分類内の全国比を確認できます。</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="small text-muted mb-0">
-                                {% if livestock_dashboard %}
-                                    {{ livestock_dashboard.note }}
-                                {% else %}
-                                    CSV登録後に、都道府県別の飼養羽数・飼養戸数が地図へ反映されます。
-                                {% endif %}
-                            </p>
-                        </div>
+                        <p>
+                            生物分類は、界の中に門、門の中に綱、綱の中に科・属・種が入る階層構造です。
+                            たとえば霊長類の下にヒトが紐づくように、個別の生き物は上位分類の中へ段階的に収まります。
+                        </p>
+                        <p class="mb-0">
+                            この画面では、その入れ子構造を Value Object として扱いやすい形に整理し、
+                            分類ツリーとして確認できるようにしています。鶏の飼養分布や観察記録は、
+                            鶏の観察グラフページに分けて確認できます。
+                        </p>
                     </div>
                 </div>
             </div>
@@ -222,15 +105,4 @@
             </div>
         </div>
     </div>
-{% endblock %}
-{% block extra_js %}
-    <script>
-        window.nativeMapBeforeJpmap = window.Map;
-    </script>
-    <script src="https://unpkg.com/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
-    <script>
-        window.jpmapInternalMap = window.Map;
-        window.Map = window.nativeMapBeforeJpmap;
-    </script>
-    <script src="{% static 'taxonomy/js/livestock_distribution.js' %}"></script>
 {% endblock %}

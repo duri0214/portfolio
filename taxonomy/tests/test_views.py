@@ -45,41 +45,64 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "countClassificationNodes")
         self.assertContains(response, "fitClassificationChartHeight")
 
-    def test_index_page_shows_livestock_distribution_upload_form(self):
+    def test_index_page_shows_taxonomy_hierarchy_guidance(self):
         """
         シナリオ:
-        - 入力: 畜産統計CSVが未登録のDB状態。
+        - 入力: taxonomyトップページを表示できるDB状態。
         - 処理: taxonomyトップページを表示する。
-        - 期待値: 初回データ登録フォームと、空の日本地図用コンテナが表示されること。
+        - 期待値: 分類体系の入れ子構造とValue Objectの説明が表示されること。
         """
         response = self.client.get(reverse("txo:index"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "畜産統計CSV登録")
+        self.assertContains(response, "分類体系の入れ子構造")
+        self.assertContains(response, "霊長類の下にヒトが紐づく")
+        self.assertContains(response, "Value Object")
+        self.assertContains(
+            response, '<i class="fas fa-chart-area me-1"></i>鶏の観察グラフ'
+        )
+        self.assertNotContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
+        self.assertNotContains(response, "livestock-prefecture-map")
+        self.assertNotContains(response, "鶏の観察グラフへ")
+
+    def test_observation_page_shows_livestock_distribution_upload_form(self):
+        """
+        シナリオ:
+        - 入力: 畜産統計CSVが未登録のDB状態。
+        - 処理: 鶏の観察グラフページを表示する。
+        - 期待値: 初回データ取得フォームと、空の日本地図用コンテナが表示されること。
+        """
+        response = self.client.get(reverse("txo:observation"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "畜産統計データ取得")
         self.assertContains(response, "畜産統計CSVが未登録です。")
         self.assertContains(response, 'name="csv_file"')
         self.assertContains(response, "disabled")
         self.assertContains(response, "畜産統計CSV未登録")
         self.assertContains(response, "livestock-distribution-data")
         self.assertContains(response, "livestock-prefecture-map")
+        self.assertContains(response, "e-Stat畜産統計データを取得")
 
-    def test_index_page_displays_livestock_distribution_dashboard(self):
+    def test_observation_page_displays_livestock_distribution_dashboard(self):
         """
         シナリオ:
-        - 入力: taxonomyトップページを表示できるDB状態。
-        - 処理: taxonomyトップページを表示する。
+        - 入力: 畜産統計CSVが登録済みのDB状態。
+        - 処理: 鶏の観察グラフページを表示する。
         - 期待値: e-Stat畜産統計の採卵鶏・ブロイラー可視化に必要なメタ情報とJSONが表示されること。
         """
         self._create_livestock_dataset()
 
-        response = self.client.get(reverse("txo:index"))
+        response = self.client.get(reverse("txo:observation"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
         self.assertContains(response, "政府統計コード 00500222")
         self.assertContains(response, "採卵鶏")
         self.assertContains(response, "ブロイラー")
-        self.assertContains(response, "採卵鶏とブロイラーは、飼育目的が異なる統計分類です。")
+        self.assertContains(
+            response, "採卵鶏とブロイラーは、飼育目的が異なる統計分類です。"
+        )
         self.assertContains(response, "ブロイラーの雌も生物として卵を産めます")
         self.assertContains(response, "livestock-distribution-data")
         self.assertContains(response, "livestock-prefecture-map")
@@ -90,8 +113,8 @@ class TaxonomyIndexViewTest(TestCase):
         """
         シナリオ:
         - 入力: スーパーユーザーと畜産統計CSV登録フォームのPOSTデータ。
-        - 処理: taxonomyトップページへCSVをPOSTする。
-        - 期待値: データセットが作成され、トップページで畜産統計ダッシュボードが表示されること。
+        - 処理: 鶏の観察グラフページへCSVをPOSTする。
+        - 期待値: データセットが作成され、観察ページで畜産統計ダッシュボードが表示されること。
         """
         user = get_user_model().objects.create_superuser(
             username="taxonomy_admin",
@@ -101,32 +124,32 @@ class TaxonomyIndexViewTest(TestCase):
         self.client.force_login(user)
 
         response = self.client.post(
-            reverse("txo:index"),
+            reverse("txo:observation"),
             data=self._livestock_dataset_post_data(),
             follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(LivestockDistributionDataset.objects.count(), 1)
-        self.assertContains(response, "畜産統計CSVを登録しました。")
+        self.assertContains(response, "畜産統計データを取得しました。")
         self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
 
     def test_rejects_livestock_distribution_upload_without_permission(self):
         """
         シナリオ:
         - 入力: 未ログインユーザーと畜産統計CSV登録フォームのPOSTデータ。
-        - 処理: taxonomyトップページへCSVをPOSTする。
+        - 処理: 鶏の観察グラフページへCSVをPOSTする。
         - 期待値: データセットは作成されず、権限エラーが表示されること。
         """
         response = self.client.post(
-            reverse("txo:index"),
+            reverse("txo:observation"),
             data=self._livestock_dataset_post_data(),
             follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(LivestockDistributionDataset.objects.count(), 0)
-        self.assertContains(response, "畜産統計CSVを登録する権限がありません。")
+        self.assertContains(response, "畜産統計データを取得する権限がありません。")
 
     def _create_livestock_dataset(self):
         return LivestockDistributionDataset.objects.create(
