@@ -1,6 +1,8 @@
 import json
+import os
 
 from django.contrib import messages
+from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
@@ -23,9 +25,18 @@ from taxonomy.domain.repository.chicken_observations import (
 from taxonomy.domain.repository.livestock_distribution import (
     LivestockDistributionDatasetRepository,
 )
+from taxonomy.domain.service.livestock_distribution_fetch import (
+    CURRENT_DATE,
+    LivestockDistributionApiError,
+    LivestockDistributionFetchError,
+    LivestockDistributionFetchService,
+    LivestockDistributionParseError,
+    LivestockDistributionSaveError,
+    SOURCE_STAT_CODE,
+    SOURCE_URL,
+)
 from taxonomy.forms import (
     BreedForm,
-    LivestockDistributionDatasetForm,
     TaxonomyBreedCreateForm,
 )
 from taxonomy.models import Breed, Classification, Family, Genus, Phylum, Species
@@ -56,21 +67,47 @@ class ObservationView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         """
-        鶏の観察ページから畜産統計CSVを登録します。
+        鶏の観察ページからe-Stat畜産統計を取得して登録します。
         """
         if not request.user.is_superuser:
             messages.error(request, "畜産統計データを取得する権限がありません。")
             return redirect("txo:observation")
 
-        form = LivestockDistributionDatasetForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "畜産統計データを取得しました。")
+        app_id = os.getenv("ESTAT_APP_ID")
+        if not app_id:
+            messages.error(
+                request, "ESTAT_APP_ID が未設定のため、e-Stat APIを呼び出せません。"
+            )
             return redirect("txo:observation")
 
-        context = self.get_context_data(**kwargs)
-        context["livestock_dataset_form"] = form
-        return self.render_to_response(context)
+        survey_year = self._get_posted_livestock_survey_year()
+        if survey_year is None:
+            messages.error(request, "取得年度は西暦の数値で指定してください。")
+            return redirect("txo:observation")
+
+        try:
+            result = LivestockDistributionFetchService.fetch_and_save(
+                app_id, survey_year
+            )
+        except LivestockDistributionApiError as error:
+            messages.error(request, f"API取得失敗: {error}")
+        except LivestockDistributionParseError as error:
+            messages.error(request, f"パース失敗: {error}")
+        except LivestockDistributionSaveError as error:
+            messages.error(request, f"DB登録失敗: {error}")
+        except LivestockDistributionFetchError as error:
+            messages.error(request, str(error))
+        else:
+            retrieved_at = result.dataset.retrieved_at.isoformat()
+            messages.success(
+                request,
+                (
+                    "畜産統計データを取得しました。"
+                    f"対象年: {result.dataset.survey_year}年 / "
+                    f"登録件数: {result.row_count}件 / 取得日: {retrieved_at}"
+                ),
+            )
+        return redirect("txo:observation")
 
     def get_context_data(self, **kwargs):
         """
@@ -86,9 +123,8 @@ class ObservationView(TemplateView):
         context["feed_group_laying_rate"] = (
             ChickenObservationsRepository.get_feed_group_laying_rates_table()
         )
-        context["livestock_dataset_form"] = LivestockDistributionDatasetForm()
         survey_years = LivestockDistributionDatasetRepository.get_active_survey_years()
-        selected_survey_year = self._get_selected_livestock_survey_year()
+        selected_survey_year = self._get_selected_livestock_survey_year(survey_years)
         if selected_survey_year is None:
             livestock_dashboard = (
                 LivestockDistributionDatasetRepository.get_latest_dashboard()
@@ -99,10 +135,18 @@ class ObservationView(TemplateView):
                     selected_survey_year
                 )
             )
+        default_fetch_year = CURRENT_DATE().year
+        if survey_years:
+            default_fetch_year = survey_years[0]
+        if selected_survey_year is not None:
+            default_fetch_year = selected_survey_year
 
         context["livestock_survey_years"] = survey_years
         context["selected_livestock_survey_year"] = selected_survey_year
+        context["default_livestock_fetch_year"] = default_fetch_year
         context["livestock_dashboard"] = livestock_dashboard
+        context["livestock_source_stat_code"] = SOURCE_STAT_CODE
+        context["livestock_source_url"] = SOURCE_URL
         if livestock_dashboard is not None:
             context["livestock_distribution_json"] = livestock_dashboard.to_payload()
         else:
@@ -113,8 +157,22 @@ class ObservationView(TemplateView):
 
         return context
 
-    def _get_selected_livestock_survey_year(self) -> int | None:
+    def _get_selected_livestock_survey_year(
+        self, survey_years: list[int]
+    ) -> int | None:
         survey_year = self.request.GET.get("livestock_year")
+        if not survey_year:
+            return None
+        try:
+            selected_survey_year = int(survey_year)
+        except ValueError:
+            raise Http404("対象年は数値で指定してください。")
+        if selected_survey_year not in survey_years:
+            raise Http404("指定された対象年の畜産統計データはありません。")
+        return selected_survey_year
+
+    def _get_posted_livestock_survey_year(self) -> int | None:
+        survey_year = self.request.POST.get("livestock_survey_year")
         if not survey_year:
             return None
         try:

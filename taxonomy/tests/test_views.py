@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -9,6 +10,10 @@ from django.test import SimpleTestCase
 from django.test import TestCase
 from django.urls import reverse
 
+from taxonomy.domain.service.livestock_distribution_fetch import (
+    LivestockDistributionFetchService,
+    TABLE_DEFINITIONS,
+)
 from taxonomy.models import (
     Breed,
     Classification,
@@ -68,18 +73,31 @@ class TaxonomyIndexViewTest(TestCase):
     def test_observation_page_shows_livestock_distribution_upload_form(self):
         """
         シナリオ:
-        - 入力: 畜産統計CSVが未登録のDB状態。
+        - 入力: 畜産統計データが未取得のDB状態。
         - 処理: 鶏の観察グラフページを表示する。
-        - 期待値: 初回データ取得フォームと、空の日本地図用コンテナが表示されること。
+        - 期待値: e-Stat API取得ボタンと、空の日本地図用コンテナが表示されること。
         """
         response = self.client.get(reverse("txo:observation"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "畜産統計データ取得")
-        self.assertContains(response, "畜産統計CSVが未登録です。")
-        self.assertContains(response, 'name="csv_file"')
+        self.assertContains(response, "畜産統計データはまだ取得されていません。")
+        self.assertContains(response, "政府統計コード")
+        self.assertContains(response, "00500222")
+        self.assertContains(
+            response,
+            "https://www.e-stat.go.jp/stat-search/files?toukei=00500222",
+        )
+        self.assertContains(response, "指定年度の畜産統計")
+        self.assertContains(response, "APIレスポンスを表示用CSVスナップショット")
+        self.assertContains(response, "取得年度")
+        self.assertContains(response, 'name="livestock_survey_year"')
         self.assertContains(response, "disabled")
-        self.assertContains(response, "畜産統計CSV未登録")
+        self.assertContains(
+            response,
+            "管理者権限が必要なため、データ取得ボタンは無効化されています。",
+        )
+        self.assertContains(response, "畜産統計データ未取得")
         self.assertContains(response, "livestock-distribution-data")
         self.assertContains(response, "livestock-prefecture-map")
         self.assertContains(response, "e-Stat畜産統計データを取得")
@@ -87,7 +105,7 @@ class TaxonomyIndexViewTest(TestCase):
     def test_observation_page_displays_livestock_distribution_dashboard(self):
         """
         シナリオ:
-        - 入力: 畜産統計CSVが登録済みのDB状態。
+        - 入力: 畜産統計データが取得済みのDB状態。
         - 処理: 鶏の観察グラフページを表示する。
         - 期待値: e-Stat畜産統計の採卵鶏・ブロイラー可視化に必要なメタ情報とJSONが表示されること。
         """
@@ -97,7 +115,9 @@ class TaxonomyIndexViewTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
-        self.assertContains(response, "政府統計コード 00500222")
+        self.assertContains(response, "政府統計コード")
+        self.assertContains(response, "00500222")
+        self.assertContains(response, "https://www.e-stat.go.jp/stat-search/files")
         self.assertContains(response, "採卵鶏")
         self.assertContains(response, "ブロイラー")
         self.assertContains(
@@ -112,7 +132,7 @@ class TaxonomyIndexViewTest(TestCase):
     def test_observation_page_displays_latest_livestock_distribution_by_default(self):
         """
         シナリオ:
-        - 入力: 2024年と2025年の畜産統計CSVが登録済みのDB状態。
+        - 入力: 2024年と2025年の畜産統計データが取得済みのDB状態。
         - 処理: 対象年を指定せずに鶏の観察グラフページを表示する。
         - 期待値: 最新取得日の2025年データが初期表示され、対象年選択肢が表示されること。
         """
@@ -139,7 +159,7 @@ class TaxonomyIndexViewTest(TestCase):
     def test_observation_page_can_select_past_livestock_distribution_year(self):
         """
         シナリオ:
-        - 入力: 2024年と2025年の畜産統計CSVが登録済みのDB状態。
+        - 入力: 2024年と2025年の畜産統計データが取得済みのDB状態。
         - 処理: 2024年を指定して鶏の観察グラフページを表示する。
         - 期待値: 最新年ではなく選択した2024年データが表示されること。
         """
@@ -165,12 +185,12 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "2024年 /")
         self.assertContains(response, "取得日 2026-07-10")
 
-    def test_observation_page_shows_empty_map_for_unregistered_or_inactive_year(self):
+    def test_observation_page_rejects_unregistered_or_inactive_year(self):
         """
         シナリオ:
         - 入力: 2024年の有効データと2023年の無効データが登録済みのDB状態。
-        - 処理: 無効な2023年を指定して鶏の観察グラフページを表示する。
-        - 期待値: 無効データは表示せず、空の日本地図と未登録状態が表示されること。
+        - 処理: 無効な2023年または未登録の2022年を指定して鶏の観察グラフページを表示する。
+        - 期待値: ドロップダウンに存在しない対象年として404になること。
         """
         self._create_livestock_dataset(
             title="令和6年畜産統計",
@@ -189,33 +209,103 @@ class TaxonomyIndexViewTest(TestCase):
             {"livestock_year": "2023"},
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertIsNone(response.context["livestock_dashboard"])
-        self.assertEqual(response.context["selected_livestock_survey_year"], 2023)
-        self.assertContains(response, "2023年の畜産統計CSVは未登録または無効です。")
-        self.assertContains(response, "livestock-prefecture-map")
-        self.assertContains(response, "畜産統計CSV未登録")
+        self.assertEqual(response.status_code, 404)
 
         unregistered_response = self.client.get(
             reverse("txo:observation"),
             {"livestock_year": "2022"},
         )
 
-        self.assertEqual(unregistered_response.status_code, 200)
-        self.assertIsNone(unregistered_response.context["livestock_dashboard"])
-        self.assertEqual(
-            unregistered_response.context["selected_livestock_survey_year"], 2022
-        )
-        self.assertContains(
-            unregistered_response, "2022年の畜産統計CSVは未登録または無効です。"
-        )
+        self.assertEqual(unregistered_response.status_code, 404)
 
-    def test_superuser_can_upload_livestock_distribution_dataset(self):
+    def test_observation_page_ignores_dataset_when_csv_file_is_missing(self):
         """
         シナリオ:
-        - 入力: スーパーユーザーと畜産統計CSV登録フォームのPOSTデータ。
-        - 処理: 鶏の観察グラフページへCSVをPOSTする。
-        - 期待値: データセットが作成され、観察ページで畜産統計ダッシュボードが表示されること。
+        - 入力: 有効な畜産統計データセットのDBレコードはあるが、CSV実体が欠損している状態。
+        - 処理: 鶏の観察グラフページを表示する。
+        - 期待値: FileNotFoundError にせず、未取得状態として空の地図を表示すること。
+        """
+        dataset = self._create_livestock_dataset()
+        dataset.csv_file.storage.delete(dataset.csv_file.name)
+
+        response = self.client.get(reverse("txo:observation"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["livestock_dashboard"])
+        self.assertEqual(response.context["livestock_survey_years"], [])
+        self.assertContains(response, "畜産統計データはまだ取得されていません。")
+        self.assertContains(response, "livestock-prefecture-map")
+
+    @patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"})
+    @patch("taxonomy.domain.dataprovider.estat.requests.get")
+    def test_superuser_can_fetch_livestock_distribution_dataset(self, mock_get):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーとe-Stat APIの畜産統計レスポンス。
+        - 処理: 鶏の観察グラフページの取得ボタンをPOSTする。
+        - 期待値: データセットが作成され、取得件数・対象年・取得日とダッシュボードが表示されること。
+        """
+        mock_get.side_effect = [
+            _mock_estat_list_response("layers", "0004041877"),
+            _mock_estat_response("layers", "採卵鶏", "1,640", "170,776"),
+            _mock_estat_list_response("broilers", "0004041880"),
+            _mock_estat_response("broilers", "ブロイラー", "2,050", "144,859"),
+        ]
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_admin",
+            email="taxonomy_admin@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:observation"),
+            {"livestock_survey_year": "2024"},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(LivestockDistributionDataset.objects.count(), 1)
+        self.assertContains(response, "畜産統計データを取得しました。")
+        self.assertContains(response, "対象年: 2024年")
+        self.assertContains(response, "登録件数: 96件")
+        self.assertContains(response, "取得日:")
+        self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
+        list_params = mock_get.call_args_list[0].kwargs["params"]
+        self.assertEqual(list_params["appId"], "fake-app-id")
+        self.assertEqual(list_params["surveyYears"], "20240")
+        self.assertIn("採卵鶏", list_params["searchWord"])
+        data_params = mock_get.call_args_list[1].kwargs["params"]
+        self.assertEqual(data_params["statsDataId"], "0004041877")
+
+    @patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"})
+    def test_superuser_fetch_livestock_distribution_requires_survey_year(self):
+        """
+        シナリオ:
+        - 入力: 取得年度が未入力のPOSTとスーパーユーザー。
+        - 処理: 鶏の観察グラフページの取得ボタンをPOSTする。
+        - 期待値: APIを呼び出さず、取得年度の入力エラーが表示されること。
+        """
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_admin",
+            email="taxonomy_admin@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("txo:observation"), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(LivestockDistributionDataset.objects.count(), 0)
+        self.assertContains(response, "取得年度は西暦の数値で指定してください。")
+
+    @patch.dict("os.environ", {"ESTAT_APP_ID": ""})
+    def test_superuser_fetch_livestock_distribution_requires_estat_app_id(self):
+        """
+        シナリオ:
+        - 入力: ESTAT_APP_ID が未設定の環境とスーパーユーザー。
+        - 処理: 鶏の観察グラフページの取得ボタンをPOSTする。
+        - 期待値: APIを呼び出さず、未設定エラーが表示されること。
         """
         user = get_user_model().objects.create_superuser(
             username="taxonomy_admin",
@@ -226,25 +316,105 @@ class TaxonomyIndexViewTest(TestCase):
 
         response = self.client.post(
             reverse("txo:observation"),
-            data=self._livestock_dataset_post_data(),
+            {"livestock_survey_year": "2024"},
             follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(LivestockDistributionDataset.objects.count(), 1)
-        self.assertContains(response, "畜産統計データを取得しました。")
-        self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
+        self.assertEqual(LivestockDistributionDataset.objects.count(), 0)
+        self.assertContains(response, "ESTAT_APP_ID が未設定")
+
+    @patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"})
+    @patch("taxonomy.domain.dataprovider.estat.requests.get")
+    def test_superuser_fetch_livestock_distribution_shows_api_error(self, mock_get):
+        """
+        シナリオ:
+        - 入力: e-Stat API取得で例外が発生する状態とスーパーユーザー。
+        - 処理: 鶏の観察グラフページの取得ボタンをPOSTする。
+        - 期待値: API取得失敗としてメッセージが表示され、データセットは作成されないこと。
+        """
+        mock_get.side_effect = RuntimeError("network error")
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_admin",
+            email="taxonomy_admin@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:observation"),
+            {"livestock_survey_year": "2024"},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(LivestockDistributionDataset.objects.count(), 0)
+        self.assertContains(response, "API取得失敗")
+
+    def test_livestock_distribution_fetch_parses_estat_cat01_response(self):
+        """
+        シナリオ:
+        - 入力: 実e-Statに近い @cat01 と都道府県_青森形式の畜産統計レスポンス。
+        - 処理: 採卵鶏のレスポンスを表示用CSV行へ変換する。
+        - 期待値: 県 suffix なしの地域名とcat01分類から、
+          全国・47都道府県の戸数と羽数を取得できること。
+        """
+        response = _estat_payload(
+            "layers",
+            "採卵鶏",
+            "1,640",
+            "170,776",
+            area_key="area",
+            item_key="cat01",
+            item_labels=(
+                "飼養戸数_採卵鶏",
+                "飼養羽数_計",
+            ),
+            prefecture_suffix=False,
+        )
+        statistical_data = response["GET_STATS_DATA"]["STATISTICAL_DATA"]
+        statistical_data["CLASS_INF"]["CLASS_OBJ"][1]["CLASS"].append(
+            {"@code": "003", "@name": "飼養戸数_種鶏のみ"}
+        )
+        for area in statistical_data["CLASS_INF"]["CLASS_OBJ"][0]["CLASS"]:
+            statistical_data["DATA_INF"]["VALUE"].append(
+                {"@area": area["@code"], "@cat01": "003", "$": "999"}
+            )
+
+        rows = LivestockDistributionFetchService._parse_rows(
+            TABLE_DEFINITIONS[0],
+            response,
+        )
+
+        self.assertEqual(len(rows), 48)
+        self.assertEqual(rows[0].prefecture, "全国")
+        self.assertEqual(rows[0].households, 1640)
+        self.assertEqual(rows[0].birds_thousand, 170776)
+        self.assertEqual(rows[2].prefecture, "青森県")
+        self.assertEqual(rows[2].households, 10)
+        self.assertEqual(rows[2].birds_thousand, 100)
+
+    def test_livestock_distribution_fetch_note_explains_reference_date(self):
+        """
+        シナリオ:
+        - 入力: 2024年の畜産統計取得対象年。
+        - 処理: 保存するデータセット注記を生成する。
+        - 期待値: 2月1日が畜産統計調査の調査基準日であることが説明されること。
+        """
+        note = LivestockDistributionFetchService._note(2024)
+
+        self.assertIn("令和6年2月1日現在", note)
+        self.assertIn("畜産統計調査の調査基準日", note)
 
     def test_rejects_livestock_distribution_upload_without_permission(self):
         """
         シナリオ:
-        - 入力: 未ログインユーザーと畜産統計CSV登録フォームのPOSTデータ。
-        - 処理: 鶏の観察グラフページへCSVをPOSTする。
+        - 入力: 未ログインユーザー。
+        - 処理: 鶏の観察グラフページへ取得ボタンをPOSTする。
         - 期待値: データセットは作成されず、権限エラーが表示されること。
         """
         response = self.client.post(
             reverse("txo:observation"),
-            data=self._livestock_dataset_post_data(),
             follow=True,
         )
 
@@ -272,31 +442,12 @@ class TaxonomyIndexViewTest(TestCase):
             retrieved_at=retrieved_at,
             source_url="https://www.e-stat.go.jp/stat-search/files",
             note=(
-                "令和6年2月1日現在。単位は千羽。e-Statの秘匿値 x と"
+                "令和6年2月1日現在（畜産統計調査の調査基準日）。"
+                "単位は千羽。e-Statの秘匿値 x と"
                 "該当なし - は推計せず秘匿・該当なしとして表示します。"
             ),
             is_active=is_active,
         )
-
-    def _livestock_dataset_post_data(self):
-        return {
-            "title": "令和6年畜産統計",
-            "csv_file": SimpleUploadedFile(
-                "livestock.csv",
-                _livestock_distribution_csv().encode("utf-8"),
-                content_type="text/csv",
-            ),
-            "source_name": "e-Stat / 農林水産省 畜産統計調査",
-            "source_stat_code": "00500222",
-            "survey_year": "2024",
-            "retrieved_at": "2026-07-11",
-            "source_url": "https://www.e-stat.go.jp/stat-search/files",
-            "note": (
-                "令和6年2月1日現在。単位は千羽。e-Statの秘匿値 x と"
-                "該当なし - は推計せず秘匿・該当なしとして表示します。"
-            ),
-            "is_active": "on",
-        }
 
 
 class LivestockDistributionStaticAssetTest(SimpleTestCase):
@@ -342,6 +493,144 @@ def _livestock_distribution_csv():
         )
 
     return "\n".join(rows)
+
+
+def _mock_estat_response(
+    category_key, category_label, national_households, national_birds
+):
+    response = type("Response", (), {})()
+    response.raise_for_status = lambda: None
+    response.json = lambda: _estat_payload(
+        category_key,
+        category_label,
+        national_households,
+        national_birds,
+    )
+    return response
+
+
+def _mock_estat_list_response(category_key, stats_data_id):
+    response = type("Response", (), {})()
+    response.raise_for_status = lambda: None
+    category_label = "採卵鶏" if category_key == "layers" else "ブロイラー"
+    response.json = lambda: {
+        "GET_STATS_LIST": {
+            "DATALIST_INF": {
+                "TABLE_INF": {
+                    "@id": stats_data_id,
+                    "STATISTICS_NAME": "畜産統計調査 確報 令和6年畜産統計",
+                    "TITLE": (
+                        f"{category_label}の飼養戸数・羽数"
+                        "（全国農業地域・都道府県別）"
+                    ),
+                }
+            }
+        }
+    }
+    return response
+
+
+def _estat_payload(
+    category_key,
+    category_label,
+    national_households,
+    national_birds,
+    area_key="area",
+    item_key="tab",
+    item_labels=None,
+    prefecture_suffix=True,
+):
+    item_labels = item_labels or (
+        f"{category_label}飼養戸数",
+        f"{category_label}飼養羽数",
+    )
+    values = [
+        {f"@{area_key}": "00000", f"@{item_key}": "001", "$": national_households},
+        {f"@{area_key}": "00000", f"@{item_key}": "002", "$": national_birds},
+    ]
+    class_items = [{"@code": "00000", "@name": "全国"}]
+    prefectures = [
+        "北海道",
+        "青森県",
+        "岩手県",
+        "宮城県",
+        "秋田県",
+        "山形県",
+        "福島県",
+        "茨城県",
+        "栃木県",
+        "群馬県",
+        "埼玉県",
+        "千葉県",
+        "東京都",
+        "神奈川県",
+        "新潟県",
+        "富山県",
+        "石川県",
+        "福井県",
+        "山梨県",
+        "長野県",
+        "岐阜県",
+        "静岡県",
+        "愛知県",
+        "三重県",
+        "滋賀県",
+        "京都府",
+        "大阪府",
+        "兵庫県",
+        "奈良県",
+        "和歌山県",
+        "鳥取県",
+        "島根県",
+        "岡山県",
+        "広島県",
+        "山口県",
+        "徳島県",
+        "香川県",
+        "愛媛県",
+        "高知県",
+        "福岡県",
+        "佐賀県",
+        "長崎県",
+        "熊本県",
+        "大分県",
+        "宮崎県",
+        "鹿児島県",
+        "沖縄県",
+    ]
+    for index, prefecture in enumerate(prefectures, start=1):
+        area_code = f"{index:05d}"
+        prefecture_label = prefecture
+        if not prefecture_suffix and prefecture != "北海道":
+            prefecture_label = (
+                prefecture.removesuffix("都").removesuffix("府").removesuffix("県")
+            )
+        class_items.append(
+            {"@code": area_code, "@name": f"都道府県_{prefecture_label}"}
+        )
+        values.append({f"@{area_key}": area_code, f"@{item_key}": "001", "$": "10"})
+        birds = "x" if category_key == "broilers" and prefecture == "栃木県" else "100"
+        values.append({f"@{area_key}": area_code, f"@{item_key}": "002", "$": birds})
+
+    return {
+        "GET_STATS_DATA": {
+            "STATISTICAL_DATA": {
+                "CLASS_INF": {
+                    "CLASS_OBJ": [
+                        {"@id": area_key, "CLASS": class_items},
+                        {
+                            "@id": item_key,
+                            "CLASS": [
+                                {"@code": "001", "@name": item_labels[0]},
+                                {"@code": "002", "@name": item_labels[1]},
+                            ],
+                        },
+                    ]
+                },
+                "DATA_INF": {"VALUE": values},
+            }
+        }
+    }
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())

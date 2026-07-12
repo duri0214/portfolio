@@ -52,7 +52,7 @@ class LivestockDistributionDashboardTest(SimpleTestCase):
             survey_year=2024,
             retrieved_at=date(2026, 7, 11),
             source_url="https://www.e-stat.go.jp/stat-search/files",
-            note="令和6年2月1日現在。単位は千羽。",
+            note="令和6年2月1日現在（畜産統計調査の調査基準日）。単位は千羽。",
         )
         rows = load_livestock_distribution_rows(StringIO(_livestock_csv()))
         return build_livestock_distribution_dashboard_from_rows(source, rows)

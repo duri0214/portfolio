@@ -76,10 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
             emptySummary.className = "border rounded p-3 bg-light";
             const title = document.createElement("strong");
             title.className = "text-dark";
-            title.textContent = "畜産統計CSV未登録";
+            title.textContent = "畜産統計データ未取得";
             const text = document.createElement("p");
             text.className = "small text-muted mb-0 mt-2";
-            text.textContent = "CSVを登録すると、採卵鶏・ブロイラーの全国羽数と都道府県別分布を表示します。";
+            text.textContent = "データを取得すると、採卵鶏・ブロイラーの全国羽数と都道府県別分布を表示します。";
             emptySummary.append(title, text);
             summaryElement.append(emptySummary);
             return;
@@ -195,9 +195,9 @@ document.addEventListener("DOMContentLoaded", () => {
             mapElement.replaceChildren();
             detailElement.replaceChildren();
             const emptyTitle = document.createElement("strong");
-            emptyTitle.textContent = "畜産統計CSV未登録";
+            emptyTitle.textContent = "畜産統計データ未取得";
             const emptyText = document.createElement("span");
-            emptyText.textContent = "CSV登録後に、都道府県別の飼養分布を表示します。";
+            emptyText.textContent = "データ取得後に、都道府県別の飼養分布を表示します。";
             detailElement.append(emptyTitle, emptyText);
 
             try {

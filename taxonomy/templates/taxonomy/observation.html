@@ -30,33 +30,39 @@
                     <div class="card-body">
                         {% if not livestock_dashboard %}
                             <div class="alert alert-warning" role="alert">
-                                畜産統計CSVが未登録です。
+                                畜産統計データはまだ取得されていません。
                             </div>
                         {% endif %}
-                        <form method="post" enctype="multipart/form-data" class="row g-3">
+                        <div class="border rounded p-3 bg-light mb-3">
+                            <dl class="row small mb-0">
+                                <dt class="col-sm-3">取得元</dt>
+                                <dd class="col-sm-9">e-Stat / 農林水産省 畜産統計調査</dd>
+                                <dt class="col-sm-3">政府統計コード</dt>
+                                <dd class="col-sm-9">
+                                    <a href="{{ livestock_source_url }}" target="_blank" rel="noopener noreferrer">
+                                        {{ livestock_source_stat_code }}
+                                    </a>
+                                </dd>
+                                <dt class="col-sm-3">取得対象</dt>
+                                <dd class="col-sm-9">指定年度の畜産統計、採卵鶏・ブロイラー、全国・都道府県別の飼養戸数・羽数</dd>
+                                <dt class="col-sm-3">保存形式</dt>
+                                <dd class="col-sm-9">APIレスポンスを表示用CSVスナップショットとしてローカルDBへ保存</dd>
+                            </dl>
+                        </div>
+                        <form method="post" class="row g-3 align-items-end">
                             {% csrf_token %}
-                            {% for field in livestock_dataset_form %}
-                                <div class="{% if field.name == 'note' %}col-12{% elif field.name == 'is_active' %}col-12{% else %}col-md-6{% endif %}">
-                                    {% if field.name == 'is_active' %}
-                                        <div class="form-check">
-                                            {{ field }}
-                                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        </div>
-                                    {% else %}
-                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {{ field }}
-                                    {% endif %}
-                                    {% if field.errors %}
-                                        <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                            {% if livestock_dataset_form.non_field_errors %}
-                                <div class="col-12 text-danger small">
-                                    {{ livestock_dataset_form.non_field_errors|join:", " }}
-                                </div>
-                            {% endif %}
-                            <div class="col-12">
+                            <div class="col-12 col-sm-auto">
+                                <label for="livestock-fetch-year" class="form-label small text-muted">取得年度</label>
+                                <input id="livestock-fetch-year"
+                                       name="livestock_survey_year"
+                                       type="number"
+                                       min="1960"
+                                       max="{% now 'Y' %}"
+                                       class="form-control"
+                                       value="{{ default_livestock_fetch_year }}"
+                                       {% if not request.user.is_superuser %}disabled{% endif %}>
+                            </div>
+                            <div class="col-12 col-sm-auto">
                                 {% if request.user.is_superuser %}
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-download me-1"></i>e-Stat畜産統計データを取得
@@ -65,6 +71,9 @@
                                     <button type="button" class="btn btn-primary" disabled>
                                         <i class="fas fa-download me-1"></i>e-Stat畜産統計データを取得
                                     </button>
+                                    <p class="small text-muted mt-2 mb-0">
+                                        管理者権限が必要なため、データ取得ボタンは無効化されています。
+                                    </p>
                                 {% endif %}
                             </div>
                         </form>
@@ -81,11 +90,15 @@
                                 <p class="small text-muted mb-0">
                                     {% if livestock_dashboard %}
                                         {{ livestock_dashboard.source_name }} /
-                                        政府統計コード {{ livestock_dashboard.source_stat_code }} /
+                                        政府統計コード
+                                        <a href="{{ livestock_dashboard.source_url }}"
+                                           target="_blank"
+                                           rel="noopener noreferrer">{{ livestock_dashboard.source_stat_code }}</a>
+                                        /
                                         {{ livestock_dashboard.survey_year }}年 /
                                         取得日 {{ livestock_dashboard.retrieved_at }}
                                     {% else %}
-                                        畜産統計CSV未登録
+                                        畜産統計データ未取得
                                     {% endif %}
                                 </p>
                             </div>
@@ -108,7 +121,7 @@
                                                 {{ survey_year }}年
                                             </option>
                                         {% empty %}
-                                            <option>未登録</option>
+                                            <option>未取得</option>
                                         {% endfor %}
                                     </select>
                                     <button type="submit" class="btn btn-outline-secondary btn-sm"
@@ -130,7 +143,7 @@
                     <div class="card-body">
                         {% if selected_livestock_survey_year and not livestock_dashboard %}
                             <div class="alert alert-warning" role="alert">
-                                {{ selected_livestock_survey_year }}年の畜産統計CSVは未登録または無効です。
+                                {{ selected_livestock_survey_year }}年の畜産統計データは未取得または無効です。
                             </div>
                         {% endif %}
                         {{ livestock_distribution_json|json_script:"livestock-distribution-data" }}
@@ -157,7 +170,7 @@
                                             {% endfor %}
                                         {% else %}
                                             <button type="button" class="btn btn-outline-secondary active" disabled>
-                                                未登録
+                                                未取得
                                             </button>
                                         {% endif %}
                                     </div>
@@ -182,7 +195,7 @@
                                 {% if livestock_dashboard %}
                                     {{ livestock_dashboard.note }}
                                 {% else %}
-                                    CSV登録後に、都道府県別の飼養羽数・飼養戸数が地図へ反映されます。
+                                    データ取得後に、都道府県別の飼養羽数・飼養戸数が地図へ反映されます。
                                 {% endif %}
                             </p>
                         </div>
