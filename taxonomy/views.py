@@ -34,24 +34,6 @@ from taxonomy.models import Breed, Classification, Family, Genus, Phylum, Specie
 class IndexView(TemplateView):
     template_name = "taxonomy/index.html"
 
-    def post(self, request, *args, **kwargs):
-        """
-        Taxonomyトップから畜産統計CSVを登録します。
-        """
-        if not request.user.is_superuser:
-            messages.error(request, "畜産統計CSVを登録する権限がありません。")
-            return redirect("txo:index")
-
-        form = LivestockDistributionDatasetForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "畜産統計CSVを登録しました。")
-            return redirect("txo:index")
-
-        context = self.get_context_data(**kwargs)
-        context["livestock_dataset_form"] = form
-        return self.render_to_response(context)
-
     def get_context_data(self, **kwargs):
         """
         コンテキストデータを設定。
@@ -65,24 +47,30 @@ class IndexView(TemplateView):
             [BreedEntity(record) for record in BreedRepository.get_breed_hierarchy()]
         )
         context["data"] = json.dumps(tree.export(), ensure_ascii=False)
-        context["livestock_dataset_form"] = LivestockDistributionDatasetForm()
-        livestock_dashboard = (
-            LivestockDistributionDatasetRepository.get_latest_dashboard()
-        )
-        context["livestock_dashboard"] = livestock_dashboard
-        if livestock_dashboard is not None:
-            context["livestock_distribution_json"] = livestock_dashboard.to_payload()
-        else:
-            context["livestock_distribution_json"] = {
-                "categories": [],
-                "maps": {},
-            }
 
         return context
 
 
 class ObservationView(TemplateView):
     template_name = "taxonomy/observation.html"
+
+    def post(self, request, *args, **kwargs):
+        """
+        鶏の観察ページから畜産統計CSVを登録します。
+        """
+        if not request.user.is_superuser:
+            messages.error(request, "畜産統計データを取得する権限がありません。")
+            return redirect("txo:observation")
+
+        form = LivestockDistributionDatasetForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "畜産統計データを取得しました。")
+            return redirect("txo:observation")
+
+        context = self.get_context_data(**kwargs)
+        context["livestock_dataset_form"] = form
+        return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
         """
@@ -98,6 +86,18 @@ class ObservationView(TemplateView):
         context["feed_group_laying_rate"] = (
             ChickenObservationsRepository.get_feed_group_laying_rates_table()
         )
+        context["livestock_dataset_form"] = LivestockDistributionDatasetForm()
+        livestock_dashboard = (
+            LivestockDistributionDatasetRepository.get_latest_dashboard()
+        )
+        context["livestock_dashboard"] = livestock_dashboard
+        if livestock_dashboard is not None:
+            context["livestock_distribution_json"] = livestock_dashboard.to_payload()
+        else:
+            context["livestock_distribution_json"] = {
+                "categories": [],
+                "maps": {},
+            }
 
         return context
 
