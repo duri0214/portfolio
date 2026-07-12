@@ -26,9 +26,12 @@ from taxonomy.domain.repository.livestock_distribution import (
 )
 from taxonomy.domain.service.livestock_distribution_fetch import (
     LivestockDistributionApiError,
+    LivestockDistributionFetchError,
     LivestockDistributionFetchService,
     LivestockDistributionParseError,
     LivestockDistributionSaveError,
+    SOURCE_STAT_CODE,
+    SOURCE_URL,
 )
 from taxonomy.forms import (
     BreedForm,
@@ -75,14 +78,23 @@ class ObservationView(TemplateView):
             )
             return redirect("txo:observation")
 
+        survey_year = self._get_posted_livestock_survey_year()
+        if survey_year is None:
+            messages.error(request, "取得年度は西暦の数値で指定してください。")
+            return redirect("txo:observation")
+
         try:
-            result = LivestockDistributionFetchService.fetch_and_save(app_id)
+            result = LivestockDistributionFetchService.fetch_and_save(
+                app_id, survey_year
+            )
         except LivestockDistributionApiError as error:
             messages.error(request, f"API取得失敗: {error}")
         except LivestockDistributionParseError as error:
             messages.error(request, f"パース失敗: {error}")
         except LivestockDistributionSaveError as error:
             messages.error(request, f"DB登録失敗: {error}")
+        except LivestockDistributionFetchError as error:
+            messages.error(request, str(error))
         else:
             retrieved_at = result.dataset.retrieved_at.isoformat()
             messages.success(
@@ -124,7 +136,12 @@ class ObservationView(TemplateView):
 
         context["livestock_survey_years"] = survey_years
         context["selected_livestock_survey_year"] = selected_survey_year
+        context["default_livestock_fetch_year"] = (
+            selected_survey_year or survey_years[0] if survey_years else 2024
+        )
         context["livestock_dashboard"] = livestock_dashboard
+        context["livestock_source_stat_code"] = SOURCE_STAT_CODE
+        context["livestock_source_url"] = SOURCE_URL
         if livestock_dashboard is not None:
             context["livestock_distribution_json"] = livestock_dashboard.to_payload()
         else:
@@ -137,6 +154,15 @@ class ObservationView(TemplateView):
 
     def _get_selected_livestock_survey_year(self) -> int | None:
         survey_year = self.request.GET.get("livestock_year")
+        if not survey_year:
+            return None
+        try:
+            return int(survey_year)
+        except ValueError:
+            return None
+
+    def _get_posted_livestock_survey_year(self) -> int | None:
+        survey_year = self.request.POST.get("livestock_survey_year")
         if not survey_year:
             return None
         try:

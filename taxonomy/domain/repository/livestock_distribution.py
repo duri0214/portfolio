@@ -40,9 +40,14 @@ class LivestockDistributionDatasetRepository:
         """
         画面で切り替え可能な有効データセットの対象年一覧を返します。
         """
-        years = LivestockDistributionDataset.objects.filter(is_active=True).values_list(
-            "survey_year", flat=True
+        datasets = LivestockDistributionDataset.objects.filter(is_active=True).only(
+            "csv_file", "survey_year"
         )
+        years = [
+            dataset.survey_year
+            for dataset in datasets
+            if LivestockDistributionDatasetRepository._has_csv_file(dataset)
+        ]
         return sorted(set(years), reverse=True)
 
     @staticmethod
@@ -53,6 +58,8 @@ class LivestockDistributionDatasetRepository:
         畜産統計CSVデータセットから表示用ダッシュボードを組み立てます。
         """
         if dataset is None:
+            return None
+        if not LivestockDistributionDatasetRepository._has_csv_file(dataset):
             return None
 
         source = LivestockDistributionSource(
@@ -68,3 +75,9 @@ class LivestockDistributionDatasetRepository:
                 rows = load_livestock_distribution_rows(text_file)
 
         return build_livestock_distribution_dashboard_from_rows(source, rows)
+
+    @staticmethod
+    def _has_csv_file(dataset: LivestockDistributionDataset) -> bool:
+        if not dataset.csv_file:
+            return False
+        return dataset.csv_file.storage.exists(dataset.csv_file.name)

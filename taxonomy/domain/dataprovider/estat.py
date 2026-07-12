@@ -31,6 +31,18 @@ class EstatApiClient:
             },
         )
 
+    def get_stats_list(self, params: dict) -> dict:
+        """
+        条件に合う統計表の一覧を取得します。
+
+        Args:
+            params: getStatsList に渡す検索条件。
+
+        Returns:
+            dict: e-Stat API レスポンス。
+        """
+        return self._get("getStatsList", params)
+
     def _get(self, endpoint: str, params: dict) -> dict:
         request_params = {
             "appId": self.app_id,
