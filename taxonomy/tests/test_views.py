@@ -273,10 +273,51 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
         list_params = mock_get.call_args_list[0].kwargs["params"]
         self.assertEqual(list_params["appId"], "fake-app-id")
-        self.assertEqual(list_params["surveyYears"], "20240")
+        self.assertEqual(list_params["surveyYears"], "2024")
+        self.assertEqual(list_params["searchKind"], "1")
         self.assertIn("採卵鶏", list_params["searchWord"])
         data_params = mock_get.call_args_list[1].kwargs["params"]
         self.assertEqual(data_params["statsDataId"], "0004041877")
+
+    @patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"})
+    @patch("taxonomy.domain.dataprovider.estat.requests.get")
+    def test_superuser_fetch_livestock_distribution_updates_same_source_and_year(
+        self, mock_get
+    ):
+        """
+        シナリオ:
+        - 入力: 同じ政府統計コード・対象年の既存データセットとe-Stat APIレスポンス。
+        - 処理: スーパーユーザーが同じ対象年の取得ボタンをPOSTする。
+        - 期待値: レコード数は増えず、CSV・取得日・有効フラグが更新されること。
+        """
+        dataset = self._create_livestock_dataset(is_active=False)
+        mock_get.side_effect = [
+            _mock_estat_list_response("layers", "0004041877"),
+            _mock_estat_response("layers", "採卵鶏", "2,000", "200,000"),
+            _mock_estat_list_response("broilers", "0004041880"),
+            _mock_estat_response("broilers", "ブロイラー", "3,000", "300,000"),
+        ]
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_admin",
+            email="taxonomy_admin@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:observation"),
+            {"livestock_survey_year": "2024"},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(LivestockDistributionDataset.objects.count(), 1)
+        dataset.refresh_from_db()
+        with dataset.csv_file.open("rb") as csv_file:
+            csv_text = csv_file.read().decode("utf-8")
+        self.assertIn("200000", csv_text)
+        self.assertTrue(dataset.is_active)
+        self.assertContains(response, "畜産統計データを更新しました。")
 
     @patch.dict("os.environ", {"ESTAT_APP_ID": "fake-app-id"})
     def test_superuser_fetch_livestock_distribution_requires_survey_year(self):

@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from datetime import date
 from io import StringIO
 
-from django.core.files.base import ContentFile
-from django.db import transaction
-
 from taxonomy.domain.dataprovider.estat import EstatApiClient
+from taxonomy.domain.repository.livestock_distribution import (
+    LivestockDistributionDatasetRepository,
+)
 from taxonomy.domain.valueobject.livestock_distribution import (
     LivestockDistributionCsvRow,
     load_livestock_distribution_rows,
@@ -76,10 +76,12 @@ class LivestockDistributionFetchResult:
     Attributes:
         dataset: 保存したデータセット。
         row_count: CSVへ変換した行数。
+        created: 新規作成した場合はTrue、既存データを更新した場合はFalse。
     """
 
     dataset: LivestockDistributionDataset
     row_count: int
+    created: bool
 
 
 TABLE_DEFINITIONS = (
@@ -173,8 +175,12 @@ class LivestockDistributionFetchService:
 
         csv_text = cls._build_csv_text(rows)
         cls._validate_csv(csv_text)
-        dataset = cls._save_dataset(csv_text, survey_year)
-        return LivestockDistributionFetchResult(dataset=dataset, row_count=len(rows))
+        dataset, created = cls._save_dataset(csv_text, survey_year)
+        return LivestockDistributionFetchResult(
+            dataset=dataset,
+            row_count=len(rows),
+            created=created,
+        )
 
     @classmethod
     def validate_survey_year(cls, survey_year: int) -> None:
@@ -198,8 +204,8 @@ class LivestockDistributionFetchService:
             response = client.get_stats_list(
                 {
                     "statsCode": SOURCE_STAT_CODE,
-                    "surveyYears": f"{survey_year}0",
-                    "searchKind": "3",
+                    "surveyYears": str(survey_year),
+                    "searchKind": "1",
                     "searchWord": f"{definition.category_label} 飼養戸数 羽数",
                 }
             )
@@ -471,12 +477,14 @@ class LivestockDistributionFetchService:
             )
 
     @staticmethod
-    @transaction.atomic
-    def _save_dataset(csv_text: str, survey_year: int) -> LivestockDistributionDataset:
+    def _save_dataset(
+        csv_text: str, survey_year: int
+    ) -> tuple[LivestockDistributionDataset, bool]:
         try:
             retrieved_on = CURRENT_DATE()
             era_year = LivestockDistributionFetchService._japanese_era_year(survey_year)
-            dataset = LivestockDistributionDataset(
+            return LivestockDistributionDatasetRepository.save_fetched_dataset(
+                csv_text=csv_text,
                 title=f"{era_year}畜産統計",
                 source_name=SOURCE_NAME,
                 source_stat_code=SOURCE_STAT_CODE,
@@ -484,16 +492,8 @@ class LivestockDistributionFetchService:
                 retrieved_at=retrieved_on,
                 source_url=SOURCE_URL,
                 note=LivestockDistributionFetchService._note(survey_year),
-                is_active=True,
             )
-            dataset.csv_file.save(
-                f"livestock_distribution_{survey_year}_{retrieved_on.isoformat()}.csv",
-                ContentFile(csv_text.encode("utf-8")),
-                save=False,
-            )
-            dataset.save()
         except Exception as error:
             raise LivestockDistributionSaveError(
                 "畜産統計CSVのDB保存に失敗しました。"
             ) from error
-        return dataset

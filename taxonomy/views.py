@@ -99,10 +99,11 @@ class ObservationView(TemplateView):
             messages.error(request, str(error))
         else:
             retrieved_at = result.dataset.retrieved_at.isoformat()
+            action = "取得しました" if result.created else "更新しました"
             messages.success(
                 request,
                 (
-                    "畜産統計データを取得しました。"
+                    f"畜産統計データを{action}。"
                     f"対象年: {result.dataset.survey_year}年 / "
                     f"登録件数: {result.row_count}件 / 取得日: {retrieved_at}"
                 ),
