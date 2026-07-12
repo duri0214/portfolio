@@ -1,5 +1,8 @@
 from io import TextIOWrapper
 
+from django.core.files.base import ContentFile
+from django.db import transaction
+
 from taxonomy.domain.valueobject.livestock_distribution import (
     LivestockDistributionDashboard,
     LivestockDistributionSource,
@@ -49,6 +52,48 @@ class LivestockDistributionDatasetRepository:
             if LivestockDistributionDatasetRepository._has_csv_file(dataset)
         ]
         return sorted(set(years), reverse=True)
+
+    @staticmethod
+    @transaction.atomic
+    def save_fetched_dataset(
+        *,
+        csv_text: str,
+        title: str,
+        source_name: str,
+        source_stat_code: str,
+        survey_year: int,
+        retrieved_at,
+        source_url: str,
+        note: str,
+    ) -> tuple[LivestockDistributionDataset, bool]:
+        """
+        取得済み畜産統計CSVを統計コードと対象年でupsertします。
+        """
+        dataset, created = LivestockDistributionDataset.objects.get_or_create(
+            source_stat_code=source_stat_code,
+            survey_year=survey_year,
+            defaults={
+                "title": title,
+                "source_name": source_name,
+                "retrieved_at": retrieved_at,
+                "source_url": source_url,
+                "note": note,
+                "is_active": True,
+            },
+        )
+        dataset.title = title
+        dataset.source_name = source_name
+        dataset.retrieved_at = retrieved_at
+        dataset.source_url = source_url
+        dataset.note = note
+        dataset.is_active = True
+        dataset.csv_file.save(
+            f"livestock_distribution_{survey_year}_{retrieved_at.isoformat()}.csv",
+            ContentFile(csv_text.encode("utf-8")),
+            save=False,
+        )
+        dataset.save()
+        return dataset, created
 
     @staticmethod
     def _build_dashboard(

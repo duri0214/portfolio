@@ -211,6 +211,12 @@ class LivestockDistributionDataset(models.Model):
 
     class Meta:
         ordering = ["-retrieved_at", "-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["source_stat_code", "survey_year"],
+                name="livestock_distribution_source_year_unique",
+            )
+        ]
 
     def __str__(self):
         return f"{self.title} ({self.survey_year})"
