@@ -58,8 +58,12 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "分類体系の入れ子構造")
         self.assertContains(response, "霊長類の下にヒトが紐づく")
         self.assertContains(response, "Value Object")
+        self.assertContains(
+            response, '<i class="fas fa-chart-area me-1"></i>鶏の観察グラフ'
+        )
         self.assertNotContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
         self.assertNotContains(response, "livestock-prefecture-map")
+        self.assertNotContains(response, "鶏の観察グラフへ")
 
     def test_observation_page_shows_livestock_distribution_upload_form(self):
         """

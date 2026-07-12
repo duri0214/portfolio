@@ -31,7 +31,9 @@
                     <div class="d-flex flex-wrap gap-2">
                         <a class="btn btn-primary" href="{% url 'txo:breed_new' %}">分類を登録</a>
                         <a class="btn btn-outline-primary" href="{% url 'txo:breed_list' %}">品種一覧</a>
-                        <a class="btn btn-outline-primary" href="{% url 'txo:observation' %}">鶏の観察グラフ</a>
+                        <a class="btn btn-outline-primary" href="{% url 'txo:observation' %}">
+                            <i class="fas fa-chart-area me-1"></i>鶏の観察グラフ
+                        </a>
                     </div>
                 </div>
             </div>
@@ -51,11 +53,6 @@
                             分類ツリーとして確認できるようにしています。鶏の飼養分布や観察記録は、
                             鶏の観察グラフページに分けて確認できます。
                         </p>
-                        <div class="mt-3">
-                            <a class="btn btn-outline-primary" href="{% url 'txo:observation' %}">
-                                <i class="fas fa-chart-area me-1"></i>鶏の観察グラフへ
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
