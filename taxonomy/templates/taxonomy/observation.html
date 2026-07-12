@@ -33,29 +33,20 @@
                                 畜産統計CSVが未登録です。
                             </div>
                         {% endif %}
-                        <form method="post" enctype="multipart/form-data" class="row g-3">
+                        <div class="border rounded p-3 bg-light mb-3">
+                            <dl class="row small mb-0">
+                                <dt class="col-sm-3">取得元</dt>
+                                <dd class="col-sm-9">e-Stat / 農林水産省 畜産統計調査</dd>
+                                <dt class="col-sm-3">政府統計コード</dt>
+                                <dd class="col-sm-9">00500222</dd>
+                                <dt class="col-sm-3">取得対象</dt>
+                                <dd class="col-sm-9">令和6年畜産統計、採卵鶏・ブロイラー、全国・都道府県別の飼養戸数・羽数</dd>
+                                <dt class="col-sm-3">保存形式</dt>
+                                <dd class="col-sm-9">APIレスポンスを表示用CSVスナップショットとしてローカルDBへ保存</dd>
+                            </dl>
+                        </div>
+                        <form method="post" class="row g-3">
                             {% csrf_token %}
-                            {% for field in livestock_dataset_form %}
-                                <div class="{% if field.name == 'note' %}col-12{% elif field.name == 'is_active' %}col-12{% else %}col-md-6{% endif %}">
-                                    {% if field.name == 'is_active' %}
-                                        <div class="form-check">
-                                            {{ field }}
-                                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        </div>
-                                    {% else %}
-                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {{ field }}
-                                    {% endif %}
-                                    {% if field.errors %}
-                                        <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                            {% if livestock_dataset_form.non_field_errors %}
-                                <div class="col-12 text-danger small">
-                                    {{ livestock_dataset_form.non_field_errors|join:", " }}
-                                </div>
-                            {% endif %}
                             <div class="col-12">
                                 {% if request.user.is_superuser %}
                                     <button type="submit" class="btn btn-primary">

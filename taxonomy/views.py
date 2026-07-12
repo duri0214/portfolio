@@ -1,4 +1,5 @@
 import json
+import os
 
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -23,9 +24,14 @@ from taxonomy.domain.repository.chicken_observations import (
 from taxonomy.domain.repository.livestock_distribution import (
     LivestockDistributionDatasetRepository,
 )
+from taxonomy.domain.service.livestock_distribution_fetch import (
+    LivestockDistributionApiError,
+    LivestockDistributionFetchService,
+    LivestockDistributionParseError,
+    LivestockDistributionSaveError,
+)
 from taxonomy.forms import (
     BreedForm,
-    LivestockDistributionDatasetForm,
     TaxonomyBreedCreateForm,
 )
 from taxonomy.models import Breed, Classification, Family, Genus, Phylum, Species
@@ -56,21 +62,38 @@ class ObservationView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         """
-        鶏の観察ページから畜産統計CSVを登録します。
+        鶏の観察ページからe-Stat畜産統計を取得して登録します。
         """
         if not request.user.is_superuser:
             messages.error(request, "畜産統計データを取得する権限がありません。")
             return redirect("txo:observation")
 
-        form = LivestockDistributionDatasetForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "畜産統計データを取得しました。")
+        app_id = os.getenv("ESTAT_APP_ID")
+        if not app_id:
+            messages.error(
+                request, "ESTAT_APP_ID が未設定のため、e-Stat APIを呼び出せません。"
+            )
             return redirect("txo:observation")
 
-        context = self.get_context_data(**kwargs)
-        context["livestock_dataset_form"] = form
-        return self.render_to_response(context)
+        try:
+            result = LivestockDistributionFetchService.fetch_and_save(app_id)
+        except LivestockDistributionApiError as error:
+            messages.error(request, f"API取得失敗: {error}")
+        except LivestockDistributionParseError as error:
+            messages.error(request, f"パース失敗: {error}")
+        except LivestockDistributionSaveError as error:
+            messages.error(request, f"DB登録失敗: {error}")
+        else:
+            retrieved_at = result.dataset.retrieved_at.isoformat()
+            messages.success(
+                request,
+                (
+                    "畜産統計データを取得しました。"
+                    f"対象年: {result.dataset.survey_year}年 / "
+                    f"登録件数: {result.row_count}件 / 取得日: {retrieved_at}"
+                ),
+            )
+        return redirect("txo:observation")
 
     def get_context_data(self, **kwargs):
         """
@@ -86,7 +109,6 @@ class ObservationView(TemplateView):
         context["feed_group_laying_rate"] = (
             ChickenObservationsRepository.get_feed_group_laying_rates_table()
         )
-        context["livestock_dataset_form"] = LivestockDistributionDatasetForm()
         survey_years = LivestockDistributionDatasetRepository.get_active_survey_years()
         selected_survey_year = self._get_selected_livestock_survey_year()
         if selected_survey_year is None:
