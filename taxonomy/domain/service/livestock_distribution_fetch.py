@@ -19,7 +19,7 @@ SOURCE_URL = (
     "https://www.e-stat.go.jp/stat-search/files"
     "?toukei=00500222&tstat=000001015614&tclass1=000001020206"
 )
-RETRIEVED_ON = date.today
+CURRENT_DATE = date.today
 MIN_SURVEY_YEAR = 1960
 
 
@@ -171,7 +171,7 @@ class LivestockDistributionFetchService:
         """
         取得対象年として扱える西暦か検証します。
         """
-        if survey_year < MIN_SURVEY_YEAR or survey_year > RETRIEVED_ON().year:
+        if survey_year < MIN_SURVEY_YEAR or survey_year > CURRENT_DATE().year:
             raise LivestockDistributionFetchError(
                 "取得年度は1960年から今年までの西暦で指定してください。"
             )
@@ -507,7 +507,7 @@ class LivestockDistributionFetchService:
     @transaction.atomic
     def _save_dataset(csv_text: str, survey_year: int) -> LivestockDistributionDataset:
         try:
-            retrieved_on = RETRIEVED_ON()
+            retrieved_on = CURRENT_DATE()
             era_year = LivestockDistributionFetchService._japanese_era_year(survey_year)
             dataset = LivestockDistributionDataset(
                 title=f"{era_year}畜産統計",
