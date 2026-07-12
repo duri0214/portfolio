@@ -21,6 +21,9 @@ SOURCE_URL = (
 )
 CURRENT_DATE = date.today
 MIN_SURVEY_YEAR = 1960
+LIVESTOCK_SURVEY_REFERENCE_MONTH = 2
+LIVESTOCK_SURVEY_REFERENCE_DAY = 1
+LIVESTOCK_SURVEY_REFERENCE_DESCRIPTION = "畜産統計調査の調査基準日"
 
 
 class LivestockDistributionFetchError(Exception):
@@ -393,8 +396,13 @@ class LivestockDistributionFetchService:
 
     @classmethod
     def _note(cls, survey_year: int) -> str:
+        era_year = cls._japanese_era_year(survey_year)
+        reference_date = (
+            f"{era_year}{LIVESTOCK_SURVEY_REFERENCE_MONTH}月"
+            f"{LIVESTOCK_SURVEY_REFERENCE_DAY}日現在"
+        )
         return (
-            f"{cls._japanese_era_year(survey_year)}2月1日現在。"
+            f"{reference_date}（{LIVESTOCK_SURVEY_REFERENCE_DESCRIPTION}）。"
             "単位は千羽。e-Statの秘匿値 x と"
             "該当なし - は推計せず秘匿・該当なしとして表示します。"
         )

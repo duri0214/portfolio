@@ -394,6 +394,18 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertEqual(rows[2].households, 10)
         self.assertEqual(rows[2].birds_thousand, 100)
 
+    def test_livestock_distribution_fetch_note_explains_reference_date(self):
+        """
+        シナリオ:
+        - 入力: 2024年の畜産統計取得対象年。
+        - 処理: 保存するデータセット注記を生成する。
+        - 期待値: 2月1日が畜産統計調査の調査基準日であることが説明されること。
+        """
+        note = LivestockDistributionFetchService._note(2024)
+
+        self.assertIn("令和6年2月1日現在", note)
+        self.assertIn("畜産統計調査の調査基準日", note)
+
     def test_rejects_livestock_distribution_upload_without_permission(self):
         """
         シナリオ:
@@ -430,7 +442,8 @@ class TaxonomyIndexViewTest(TestCase):
             retrieved_at=retrieved_at,
             source_url="https://www.e-stat.go.jp/stat-search/files",
             note=(
-                "令和6年2月1日現在。単位は千羽。e-Statの秘匿値 x と"
+                "令和6年2月1日現在（畜産統計調査の調査基準日）。"
+                "単位は千羽。e-Statの秘匿値 x と"
                 "該当なし - は推計せず秘匿・該当なしとして表示します。"
             ),
             is_active=is_active,
