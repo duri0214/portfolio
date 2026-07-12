@@ -87,9 +87,21 @@ class ObservationView(TemplateView):
             ChickenObservationsRepository.get_feed_group_laying_rates_table()
         )
         context["livestock_dataset_form"] = LivestockDistributionDatasetForm()
-        livestock_dashboard = (
-            LivestockDistributionDatasetRepository.get_latest_dashboard()
-        )
+        survey_years = LivestockDistributionDatasetRepository.get_active_survey_years()
+        selected_survey_year = self._get_selected_livestock_survey_year()
+        if selected_survey_year is None:
+            livestock_dashboard = (
+                LivestockDistributionDatasetRepository.get_latest_dashboard()
+            )
+        else:
+            livestock_dashboard = (
+                LivestockDistributionDatasetRepository.get_dashboard_by_survey_year(
+                    selected_survey_year
+                )
+            )
+
+        context["livestock_survey_years"] = survey_years
+        context["selected_livestock_survey_year"] = selected_survey_year
         context["livestock_dashboard"] = livestock_dashboard
         if livestock_dashboard is not None:
             context["livestock_distribution_json"] = livestock_dashboard.to_payload()
@@ -100,6 +112,15 @@ class ObservationView(TemplateView):
             }
 
         return context
+
+    def _get_selected_livestock_survey_year(self) -> int | None:
+        survey_year = self.request.GET.get("livestock_year")
+        if not survey_year:
+            return None
+        try:
+            return int(survey_year)
+        except ValueError:
+            return None
 
 
 class TaxonomyBreedCreateView(FormView):

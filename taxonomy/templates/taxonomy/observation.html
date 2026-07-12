@@ -89,17 +89,50 @@
                                     {% endif %}
                                 </p>
                             </div>
-                            {% if livestock_dashboard %}
-                                <a class="small text-decoration-none"
-                                   href="{{ livestock_dashboard.source_url }}"
-                                   target="_blank"
-                                   rel="noopener noreferrer">
-                                    <i class="fas fa-external-link-alt me-1"></i>e-Stat統計表
-                                </a>
-                            {% endif %}
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <form method="get" class="d-flex align-items-center gap-2">
+                                    <label class="small text-muted mb-0" for="livestock-year-select">対象年</label>
+                                    <select id="livestock-year-select"
+                                            name="livestock_year"
+                                            class="form-select form-select-sm w-auto"
+                                            {% if not livestock_survey_years %}disabled{% endif %}
+                                            onchange="this.form.submit()">
+                                        {% if selected_livestock_survey_year and not livestock_dashboard %}
+                                            <option value="{{ selected_livestock_survey_year }}" selected>
+                                                {{ selected_livestock_survey_year }}年
+                                            </option>
+                                        {% endif %}
+                                        {% for survey_year in livestock_survey_years %}
+                                            <option value="{{ survey_year }}"
+                                                    {% if selected_livestock_survey_year == survey_year or livestock_dashboard.survey_year == survey_year %}selected{% endif %}>
+                                                {{ survey_year }}年
+                                            </option>
+                                        {% empty %}
+                                            <option>未登録</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                            {% if not livestock_survey_years %}disabled{% endif %}>
+                                        表示
+                                    </button>
+                                </form>
+                                {% if livestock_dashboard %}
+                                    <a class="small text-decoration-none"
+                                       href="{{ livestock_dashboard.source_url }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer">
+                                        <i class="fas fa-external-link-alt me-1"></i>e-Stat統計表
+                                    </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                     <div class="card-body">
+                        {% if selected_livestock_survey_year and not livestock_dashboard %}
+                            <div class="alert alert-warning" role="alert">
+                                {{ selected_livestock_survey_year }}年の畜産統計CSVは未登録または無効です。
+                            </div>
+                        {% endif %}
                         {{ livestock_distribution_json|json_script:"livestock-distribution-data" }}
                         <div class="livestock-dashboard">
                             <div class="border rounded p-3 bg-light">

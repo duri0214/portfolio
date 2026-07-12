@@ -109,6 +109,107 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "分類内の全国比")
         self.assertContains(response, "秘匿・該当なし")
 
+    def test_observation_page_displays_latest_livestock_distribution_by_default(self):
+        """
+        シナリオ:
+        - 入力: 2024年と2025年の畜産統計CSVが登録済みのDB状態。
+        - 処理: 対象年を指定せずに鶏の観察グラフページを表示する。
+        - 期待値: 最新取得日の2025年データが初期表示され、対象年選択肢が表示されること。
+        """
+        self._create_livestock_dataset(
+            title="令和6年畜産統計",
+            survey_year=2024,
+            retrieved_at="2026-07-10",
+        )
+        self._create_livestock_dataset(
+            title="令和7年畜産統計",
+            survey_year=2025,
+            retrieved_at="2026-07-11",
+        )
+
+        response = self.client.get(reverse("txo:observation"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["livestock_dashboard"].survey_year, 2025)
+        self.assertContains(response, "対象年")
+        self.assertContains(response, 'value="2025"')
+        self.assertContains(response, 'value="2024"')
+        self.assertContains(response, "2025年 /")
+
+    def test_observation_page_can_select_past_livestock_distribution_year(self):
+        """
+        シナリオ:
+        - 入力: 2024年と2025年の畜産統計CSVが登録済みのDB状態。
+        - 処理: 2024年を指定して鶏の観察グラフページを表示する。
+        - 期待値: 最新年ではなく選択した2024年データが表示されること。
+        """
+        self._create_livestock_dataset(
+            title="令和6年畜産統計",
+            survey_year=2024,
+            retrieved_at="2026-07-10",
+        )
+        self._create_livestock_dataset(
+            title="令和7年畜産統計",
+            survey_year=2025,
+            retrieved_at="2026-07-11",
+        )
+
+        response = self.client.get(
+            reverse("txo:observation"),
+            {"livestock_year": "2024"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["livestock_dashboard"].survey_year, 2024)
+        self.assertEqual(response.context["selected_livestock_survey_year"], 2024)
+        self.assertContains(response, "2024年 /")
+        self.assertContains(response, "取得日 2026-07-10")
+
+    def test_observation_page_shows_empty_map_for_unregistered_or_inactive_year(self):
+        """
+        シナリオ:
+        - 入力: 2024年の有効データと2023年の無効データが登録済みのDB状態。
+        - 処理: 無効な2023年を指定して鶏の観察グラフページを表示する。
+        - 期待値: 無効データは表示せず、空の日本地図と未登録状態が表示されること。
+        """
+        self._create_livestock_dataset(
+            title="令和6年畜産統計",
+            survey_year=2024,
+            retrieved_at="2026-07-10",
+        )
+        self._create_livestock_dataset(
+            title="令和5年畜産統計",
+            survey_year=2023,
+            retrieved_at="2026-07-09",
+            is_active=False,
+        )
+
+        response = self.client.get(
+            reverse("txo:observation"),
+            {"livestock_year": "2023"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["livestock_dashboard"])
+        self.assertEqual(response.context["selected_livestock_survey_year"], 2023)
+        self.assertContains(response, "2023年の畜産統計CSVは未登録または無効です。")
+        self.assertContains(response, "livestock-prefecture-map")
+        self.assertContains(response, "畜産統計CSV未登録")
+
+        unregistered_response = self.client.get(
+            reverse("txo:observation"),
+            {"livestock_year": "2022"},
+        )
+
+        self.assertEqual(unregistered_response.status_code, 200)
+        self.assertIsNone(unregistered_response.context["livestock_dashboard"])
+        self.assertEqual(
+            unregistered_response.context["selected_livestock_survey_year"], 2022
+        )
+        self.assertContains(
+            unregistered_response, "2022年の畜産統計CSVは未登録または無効です。"
+        )
+
     def test_superuser_can_upload_livestock_distribution_dataset(self):
         """
         シナリオ:
@@ -151,23 +252,30 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertEqual(LivestockDistributionDataset.objects.count(), 0)
         self.assertContains(response, "畜産統計データを取得する権限がありません。")
 
-    def _create_livestock_dataset(self):
+    def _create_livestock_dataset(
+        self,
+        title="令和6年畜産統計",
+        survey_year=2024,
+        retrieved_at="2026-07-11",
+        is_active=True,
+    ):
         return LivestockDistributionDataset.objects.create(
-            title="令和6年畜産統計",
+            title=title,
             csv_file=SimpleUploadedFile(
-                "livestock.csv",
+                f"livestock_{survey_year}.csv",
                 _livestock_distribution_csv().encode("utf-8"),
                 content_type="text/csv",
             ),
             source_name="e-Stat / 農林水産省 畜産統計調査",
             source_stat_code="00500222",
-            survey_year=2024,
-            retrieved_at="2026-07-11",
+            survey_year=survey_year,
+            retrieved_at=retrieved_at,
             source_url="https://www.e-stat.go.jp/stat-search/files",
             note=(
                 "令和6年2月1日現在。単位は千羽。e-Statの秘匿値 x と"
                 "該当なし - は推計せず秘匿・該当なしとして表示します。"
             ),
+            is_active=is_active,
         )
 
     def _livestock_dataset_post_data(self):
