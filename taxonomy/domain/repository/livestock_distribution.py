@@ -20,6 +20,38 @@ class LivestockDistributionDatasetRepository:
         最新の有効な畜産統計CSVからダッシュボードを返します。
         """
         dataset = LivestockDistributionDataset.objects.filter(is_active=True).first()
+        return LivestockDistributionDatasetRepository._build_dashboard(dataset)
+
+    @staticmethod
+    def get_dashboard_by_survey_year(
+        survey_year: int,
+    ) -> LivestockDistributionDashboard | None:
+        """
+        指定した対象年の有効な畜産統計CSVからダッシュボードを返します。
+        """
+        dataset = LivestockDistributionDataset.objects.filter(
+            is_active=True,
+            survey_year=survey_year,
+        ).first()
+        return LivestockDistributionDatasetRepository._build_dashboard(dataset)
+
+    @staticmethod
+    def get_active_survey_years() -> list[int]:
+        """
+        画面で切り替え可能な有効データセットの対象年一覧を返します。
+        """
+        years = LivestockDistributionDataset.objects.filter(is_active=True).values_list(
+            "survey_year", flat=True
+        )
+        return sorted(set(years), reverse=True)
+
+    @staticmethod
+    def _build_dashboard(
+        dataset: LivestockDistributionDataset | None,
+    ) -> LivestockDistributionDashboard | None:
+        """
+        畜産統計CSVデータセットから表示用ダッシュボードを組み立てます。
+        """
         if dataset is None:
             return None
 
