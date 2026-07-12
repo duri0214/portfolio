@@ -204,8 +204,8 @@ class LivestockDistributionFetchService:
             response = client.get_stats_list(
                 {
                     "statsCode": SOURCE_STAT_CODE,
-                    "surveyYears": f"{survey_year}0",
-                    "searchKind": "3",
+                    "surveyYears": str(survey_year),
+                    "searchKind": "1",
                     "searchWord": f"{definition.category_label} 飼養戸数 羽数",
                 }
             )

@@ -273,7 +273,8 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "e-Stat 畜産統計による鶏の地域別飼養分布")
         list_params = mock_get.call_args_list[0].kwargs["params"]
         self.assertEqual(list_params["appId"], "fake-app-id")
-        self.assertEqual(list_params["surveyYears"], "20240")
+        self.assertEqual(list_params["surveyYears"], "2024")
+        self.assertEqual(list_params["searchKind"], "1")
         self.assertIn("採卵鶏", list_params["searchWord"])
         data_params = mock_get.call_args_list[1].kwargs["params"]
         self.assertEqual(data_params["statsDataId"], "0004041877")
