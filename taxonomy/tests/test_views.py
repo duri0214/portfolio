@@ -185,12 +185,12 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "2024年 /")
         self.assertContains(response, "取得日 2026-07-10")
 
-    def test_observation_page_shows_empty_map_for_unregistered_or_inactive_year(self):
+    def test_observation_page_rejects_unregistered_or_inactive_year(self):
         """
         シナリオ:
         - 入力: 2024年の有効データと2023年の無効データが登録済みのDB状態。
-        - 処理: 無効な2023年を指定して鶏の観察グラフページを表示する。
-        - 期待値: 無効データは表示せず、空の日本地図と未登録状態が表示されること。
+        - 処理: 無効な2023年または未登録の2022年を指定して鶏の観察グラフページを表示する。
+        - 期待値: ドロップダウンに存在しない対象年として404になること。
         """
         self._create_livestock_dataset(
             title="令和6年畜産統計",
@@ -209,26 +209,14 @@ class TaxonomyIndexViewTest(TestCase):
             {"livestock_year": "2023"},
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertIsNone(response.context["livestock_dashboard"])
-        self.assertEqual(response.context["selected_livestock_survey_year"], 2023)
-        self.assertContains(response, "2023年の畜産統計データは未取得または無効です。")
-        self.assertContains(response, "livestock-prefecture-map")
-        self.assertContains(response, "畜産統計データ未取得")
+        self.assertEqual(response.status_code, 404)
 
         unregistered_response = self.client.get(
             reverse("txo:observation"),
             {"livestock_year": "2022"},
         )
 
-        self.assertEqual(unregistered_response.status_code, 200)
-        self.assertIsNone(unregistered_response.context["livestock_dashboard"])
-        self.assertEqual(
-            unregistered_response.context["selected_livestock_survey_year"], 2022
-        )
-        self.assertContains(
-            unregistered_response, "2022年の畜産統計データは未取得または無効です。"
-        )
+        self.assertEqual(unregistered_response.status_code, 404)
 
     def test_observation_page_ignores_dataset_when_csv_file_is_missing(self):
         """

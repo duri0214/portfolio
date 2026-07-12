@@ -2,6 +2,7 @@ import json
 import os
 
 from django.contrib import messages
+from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
@@ -25,6 +26,7 @@ from taxonomy.domain.repository.livestock_distribution import (
     LivestockDistributionDatasetRepository,
 )
 from taxonomy.domain.service.livestock_distribution_fetch import (
+    CURRENT_DATE,
     LivestockDistributionApiError,
     LivestockDistributionFetchError,
     LivestockDistributionFetchService,
@@ -122,7 +124,7 @@ class ObservationView(TemplateView):
             ChickenObservationsRepository.get_feed_group_laying_rates_table()
         )
         survey_years = LivestockDistributionDatasetRepository.get_active_survey_years()
-        selected_survey_year = self._get_selected_livestock_survey_year()
+        selected_survey_year = self._get_selected_livestock_survey_year(survey_years)
         if selected_survey_year is None:
             livestock_dashboard = (
                 LivestockDistributionDatasetRepository.get_latest_dashboard()
@@ -133,12 +135,15 @@ class ObservationView(TemplateView):
                     selected_survey_year
                 )
             )
+        default_fetch_year = CURRENT_DATE().year
+        if survey_years:
+            default_fetch_year = survey_years[0]
+        if selected_survey_year is not None:
+            default_fetch_year = selected_survey_year
 
         context["livestock_survey_years"] = survey_years
         context["selected_livestock_survey_year"] = selected_survey_year
-        context["default_livestock_fetch_year"] = (
-            selected_survey_year or survey_years[0] if survey_years else 2024
-        )
+        context["default_livestock_fetch_year"] = default_fetch_year
         context["livestock_dashboard"] = livestock_dashboard
         context["livestock_source_stat_code"] = SOURCE_STAT_CODE
         context["livestock_source_url"] = SOURCE_URL
@@ -152,14 +157,19 @@ class ObservationView(TemplateView):
 
         return context
 
-    def _get_selected_livestock_survey_year(self) -> int | None:
+    def _get_selected_livestock_survey_year(
+        self, survey_years: list[int]
+    ) -> int | None:
         survey_year = self.request.GET.get("livestock_year")
         if not survey_year:
             return None
         try:
-            return int(survey_year)
+            selected_survey_year = int(survey_year)
         except ValueError:
-            return None
+            raise Http404("対象年は数値で指定してください。")
+        if selected_survey_year not in survey_years:
+            raise Http404("指定された対象年の畜産統計データはありません。")
+        return selected_survey_year
 
     def _get_posted_livestock_survey_year(self) -> int | None:
         survey_year = self.request.POST.get("livestock_survey_year")
