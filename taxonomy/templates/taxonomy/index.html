@@ -18,6 +18,10 @@
             stroke: #111;
             stroke-width: 1px;
         }
+
+        .taxonomy-nesting-diagram {
+            white-space: pre-wrap;
+        }
     </style>
     <div class="container mt-4">
         <!-- Breadcrumb -->
@@ -54,10 +58,44 @@
                             生物分類は、界の中に門、門の中に綱、綱の中に科・属・種が入る階層構造です。
                             たとえば霊長類の下にヒトが紐づくように、個別の生き物は上位分類の中へ段階的に収まります。
                         </p>
+                        <p>
+                            Taxonomy は、この portfolio の中でも技術的な側面を持つアプリです。
+                            分類体系そのものがマトリョーシカのような入れ子構造なので、実装でも小さな Value Object を内側に持ち、
+                            それをさらに大きな Value Object が包む形で表現します。
+                        </p>
+                        <pre class="taxonomy-nesting-diagram bg-light border rounded p-3 small mb-3"><code>TaxonomyGraph
++-- nodes: TaxonomyGraphNode[]
++-- edges: TaxonomyGraphEdge[]
+    |
+    +-- source / target は TaxonomyHierarchy の親子関係を指す
+
+BreedEntity
++-- TaxonomyHierarchy
+    +-- TaxonomyHierarchyItem(kingdom)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(phylum)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(classification)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(family)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(genus)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(species)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(breed)
+        +-- source_id
+        +-- name</code></pre>
                         <p class="mb-0">
-                            この画面では、その入れ子構造を Value Object として扱いやすい形に整理し、
-                            分類ツリーとして確認できるようにしています。鶏の飼養分布や観察記録は、
-                            鶏の観察グラフページに分けて確認できます。
+                            <code>id</code> と <code>name</code> をばらばらの値として運ぶのではなく、<code>TaxonomyHierarchyItem</code> として1つの意味を持つ値にまとめます。
+                            その item の並びを <code>TaxonomyHierarchy</code> として扱い、さらに nodes/edges 形式へ変換したものを <code>TaxonomyGraph</code> として扱います。
+                            鶏の飼養分布や観察記録は、鶏の観察グラフページに分けて確認できます。
                         </p>
                     </div>
                 </div>

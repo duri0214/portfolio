@@ -10,46 +10,6 @@ See Also: https://online-hoshujuku.info/english-classification#index_id1
 - 属(genus)
 - 種(species)
 
-## 分類体系の入れ子構造
-Taxonomy は、この portfolio の中でも技術的な側面を持つアプリとして扱う。
-分類体系そのものがマトリョーシカのような入れ子構造なので、実装でも小さな Value Object を内側に持ち、それをさらに大きな Value Object が包む形で表現する。
-
-```text
-TaxonomyGraph
-+-- nodes: TaxonomyGraphNode[]
-+-- edges: TaxonomyGraphEdge[]
-    |
-    +-- source / target は TaxonomyHierarchy の親子関係を指す
-
-BreedEntity
-+-- TaxonomyHierarchy
-    +-- TaxonomyHierarchyItem(kingdom)
-        +-- source_id
-        +-- name
-    +-- TaxonomyHierarchyItem(phylum)
-        +-- source_id
-        +-- name
-    +-- TaxonomyHierarchyItem(classification)
-        +-- source_id
-        +-- name
-    +-- TaxonomyHierarchyItem(family)
-        +-- source_id
-        +-- name
-    +-- TaxonomyHierarchyItem(genus)
-        +-- source_id
-        +-- name
-    +-- TaxonomyHierarchyItem(species)
-        +-- source_id
-        +-- name
-    +-- TaxonomyHierarchyItem(breed)
-        +-- source_id
-        +-- name
-```
-
-`id` と `name` をばらばらの値として運ぶのではなく、`TaxonomyHierarchyItem` として1つの意味を持つ値にまとめる。
-その item の並びを `TaxonomyHierarchy` として扱い、さらに nodes/edges 形式へ変換したものを `TaxonomyGraph` として扱う。
-この入れ子によって、分類階層の順序、親子関係、グラフ表示用データの責務を分ける。
-
 ## Purpose
 Taxonomy アプリは、動物分類の候補を収集し、人が確認しながら体系化して表示するためのアプリとする。
 既存のニワトリ・ミミズ分類だけでなく、蜂、メダカ、蚕、カブトムシ/クワガタ、家畜系などへ横展開できる状態を目指す。
