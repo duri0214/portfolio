@@ -71,7 +71,9 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "https://observablehq.com/@d3/indented-tree")
         self.assertContains(response, "filterClassificationTree")
         self.assertContains(response, "renderClassificationChart")
-        self.assertContains(response, "d3.indentedTree(dataSpec)")
+        self.assertContains(response, "indentedTree(dataSpec)")
+        self.assertContains(response, "nodeImageSelection")
+        self.assertContains(response, "taxonomy-node-marker")
         self.assertNotContains(response, "taxonomy-tree-collapse")
         self.assertNotContains(response, "taxonomy-tree-list")
 

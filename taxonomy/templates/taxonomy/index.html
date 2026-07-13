@@ -12,6 +12,12 @@
         #chicken-classification-chart svg {
             max-width: 100%;
         }
+
+        #chicken-classification-chart .taxonomy-node-marker {
+            fill: #111;
+            stroke: #111;
+            stroke-width: 1px;
+        }
     </style>
     <div class="container mt-4">
         <!-- Breadcrumb -->
@@ -146,6 +152,22 @@
                                     return value.toLowerCase().trim();
                                 }
 
+                                function appendClassificationNodeMarker(selection) {
+                                    selection
+                                        .append("circle")
+                                        .attr("class", "node-image taxonomy-node-marker")
+                                        .attr("r", 4)
+                                        .attr("cx", 0)
+                                        .attr("cy", 0);
+                                }
+
+                                function createIndentedTreeChart() {
+                                    return d3
+                                        .indentedTree(dataSpec)
+                                        .nodeImageSelection(appendClassificationNodeMarker)
+                                        .nodeLabelPadding(14);
+                                }
+
                                 function filterClassificationTree(node, depth, searchText, maxDepth) {
                                     const children = node.children || [];
                                     const shouldStopByDepth = maxDepth !== "all" && depth >= Number(maxDepth);
@@ -185,7 +207,7 @@
                                     chart = classificationChartRoot
                                         .append("div")
                                         .attr("class", "chart")
-                                        .call(d3.indentedTree(dataSpec));
+                                        .call(createIndentedTreeChart());
                                     requestAnimationFrame(() => fitClassificationChartHeight(dataSpec.source));
                                 }
 
