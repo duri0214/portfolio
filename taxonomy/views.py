@@ -4,7 +4,7 @@ import os
 from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import (
     CreateView,
@@ -35,6 +35,7 @@ from taxonomy.domain.service.livestock_distribution_fetch import (
     SOURCE_STAT_CODE,
     SOURCE_URL,
 )
+from taxonomy.domain.valueobject.taxonomy_graph import TaxonomyGraph
 from taxonomy.forms import (
     BreedForm,
     TaxonomyBreedCreateForm,
@@ -54,10 +55,18 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         # Breed分類ツリーの取得
-        tree = NodeTree(
-            [BreedEntity(record) for record in BreedRepository.get_breed_hierarchy()]
-        )
+        breed_entities = [
+            BreedEntity(record) for record in BreedRepository.get_breed_hierarchy()
+        ]
+        tree = NodeTree(breed_entities)
         context["data"] = json.dumps(tree.export(), ensure_ascii=False)
+        breed_detail_urls = {
+            entity.breed_id: reverse("txo:breed_detail", kwargs={"pk": entity.breed_id})
+            for entity in breed_entities
+            if entity.breed_id is not None
+        }
+        graph = TaxonomyGraph.from_breed_entities(breed_entities, breed_detail_urls)
+        context["graph_data"] = json.dumps(graph.to_payload(), ensure_ascii=False)
 
         return context
 

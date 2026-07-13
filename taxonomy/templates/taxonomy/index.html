@@ -18,6 +18,10 @@
             stroke: #111;
             stroke-width: 1px;
         }
+
+        .taxonomy-nesting-diagram {
+            white-space: pre-wrap;
+        }
     </style>
     <div class="container mt-4">
         <!-- Breadcrumb -->
@@ -51,13 +55,68 @@
                     </div>
                     <div class="card-body">
                         <p>
-                            生物分類は、界の中に門、門の中に綱、綱の中に科・属・種が入る階層構造です。
-                            たとえば霊長類の下にヒトが紐づくように、個別の生き物は上位分類の中へ段階的に収まります。
+                            生物分類は、界、門、綱、科、属、種、品種の順に親子関係をたどる階層構造です。
+                            この画面では、その分類としての正しさを <code>TaxonomyHierarchy</code> で守り、
+                            d3 に渡しやすい nodes/edges 形式を <code>TaxonomyGraph</code> として扱います。
                         </p>
+                        <p>
+                            <code>TaxonomyHierarchyItem</code> は各階層の <code>id</code> と <code>name</code> をまとめた値です。
+                            その item を固定順で包む <code>TaxonomyHierarchy</code> がドメイン側の表現で、
+                            表示するときだけ <code>TaxonomyGraph</code> へ変換します。
+                        </p>
+                        <p>
+                            <code>TaxonomyHierarchy</code> は分類ドメインの正しさを守る形です。
+                            界、門、綱、科、属、種、品種という順序を保ち、分類の親子関係を入れ子として扱います。
+                            <code>TaxonomyGraph</code> は同じ分類体系を可視化へ渡しやすい形に変換したものです。
+                        </p>
+                        <pre class="taxonomy-nesting-diagram bg-light border rounded p-3 small mb-3"><code>BreedEntity
++-- TaxonomyHierarchy
+    +-- TaxonomyHierarchyItem(kingdom)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(phylum)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(classification)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(family)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(genus)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(species)
+        +-- source_id
+        +-- name
+    +-- TaxonomyHierarchyItem(breed)
+        +-- source_id
+        +-- name
+            |
+            v
+TaxonomyGraph
++-- nodes: TaxonomyGraphNode[]
++-- edges: TaxonomyGraphEdge[]
+    |
+    +-- d3 などの表示ライブラリへ渡しやすい</code></pre>
+                        <p>
+                            <code>nodes</code> は分類名そのものを表す点で、<code>edges</code> は点と点をつなぐ親子関係の線です。
+                            たとえば「動物界」「脊索動物門」「鳥綱」はそれぞれ node になり、
+                            「動物界から脊索動物門へ」「脊索動物門から鳥綱へ」というつながりが edge になります。
+                        </p>
+                        <pre class="taxonomy-nesting-diagram bg-light border rounded p-3 small mb-3"><code>node: 動物界
+  |
+  | edge: 動物界 -> 脊索動物門
+  v
+node: 脊索動物門
+  |
+  | edge: 脊索動物門 -> 鳥綱
+  v
+node: 鳥綱</code></pre>
                         <p class="mb-0">
-                            この画面では、その入れ子構造を Value Object として扱いやすい形に整理し、
-                            分類ツリーとして確認できるようにしています。鶏の飼養分布や観察記録は、
-                            鶏の観察グラフページに分けて確認できます。
+                            <code>id</code> と <code>name</code> をばらばらの値として運ぶのではなく、<code>TaxonomyHierarchyItem</code> として1つの意味を持つ値にまとめます。
+                            その item の並びを <code>TaxonomyHierarchy</code> として扱い、必要なときだけ nodes/edges 形式の <code>TaxonomyGraph</code> へ変換します。
+                            鶏の飼養分布や観察記録は、鶏の観察グラフページに分けて確認できます。
                         </p>
                     </div>
                 </div>
