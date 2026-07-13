@@ -50,6 +50,26 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "countClassificationNodes")
         self.assertContains(response, "fitClassificationChartHeight")
 
+    def test_index_page_shows_tree_explorer_controls(self):
+        """
+        シナリオ:
+        - 入力: taxonomyの分類データが空でも表示できるDB状態。
+        - 処理: taxonomyトップページを表示する。
+        - 期待値: 大量データ時に分類を探せる検索、階層絞り込み、折りたたみ操作が表示されること。
+        """
+        response = self.client.get(reverse("txo:index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="taxonomy-tree-search"')
+        self.assertContains(response, 'id="taxonomy-tree-depth"')
+        self.assertContains(response, 'id="taxonomy-tree-list"')
+        self.assertContains(response, "分類名・品種名")
+        self.assertContains(response, "表示階層")
+        self.assertContains(response, "門まで")
+        self.assertContains(response, "全展開")
+        self.assertContains(response, "折りたたみ")
+        self.assertContains(response, "renderTaxonomyExplorer")
+
     def test_index_page_shows_taxonomy_hierarchy_guidance(self):
         """
         シナリオ:

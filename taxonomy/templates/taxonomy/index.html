@@ -12,6 +12,26 @@
         #chicken-classification-chart svg {
             max-width: 100%;
         }
+
+        .taxonomy-tree-list {
+            max-height: 36rem;
+            overflow-y: auto;
+        }
+
+        .taxonomy-tree-list details {
+            border-left: 2px solid var(--bs-border-color);
+            margin-left: 0.75rem;
+            padding-left: 0.75rem;
+        }
+
+        .taxonomy-tree-list summary {
+            cursor: pointer;
+            line-height: 1.8;
+        }
+
+        .taxonomy-tree-list mark {
+            padding: 0;
+        }
     </style>
     <div class="container mt-4">
         <!-- Breadcrumb -->
@@ -61,9 +81,48 @@
             <div class="col-12">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white border-bottom-0 pt-3">
-                        <h2 class="h5 mb-0">分類グラフ</h2>
+                        <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between">
+                            <div>
+                                <h2 class="h5 mb-1">分類グラフ</h2>
+                                <p class="text-muted small mb-0">
+                                    大量データ時は検索と階層表示を使って、目的の分類だけを絞り込めます。
+                                </p>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 align-items-end">
+                                <div>
+                                    <label class="form-label small mb-1" for="taxonomy-tree-search">検索</label>
+                                    <input
+                                            class="form-control form-control-sm"
+                                            id="taxonomy-tree-search"
+                                            type="search"
+                                            placeholder="分類名・品種名"
+                                    >
+                                </div>
+                                <div>
+                                    <label class="form-label small mb-1" for="taxonomy-tree-depth">表示階層</label>
+                                    <select class="form-select form-select-sm" id="taxonomy-tree-depth">
+                                        <option value="all">すべて</option>
+                                        <option value="2">門まで</option>
+                                        <option value="3">綱まで</option>
+                                        <option value="4">科まで</option>
+                                        <option value="5">属まで</option>
+                                        <option value="6">種まで</option>
+                                        <option value="7">品種まで</option>
+                                    </select>
+                                </div>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="分類ツリー表示切替">
+                                    <button class="btn btn-outline-secondary" id="taxonomy-tree-expand" type="button">
+                                        全展開
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="taxonomy-tree-collapse" type="button">
+                                        折りたたみ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body taxonomy-chart-scroll">
+                        <div class="taxonomy-tree-list border rounded p-3 mb-4" id="taxonomy-tree-list" aria-live="polite"></div>
                         <div id="chicken-classification-chart">
                             <div class="text">See one-liners for each transition</div>
                             <script>
@@ -98,6 +157,110 @@
                                 }
 
                                 requestAnimationFrame(fitClassificationChartHeight);
+
+                                const taxonomyTreeList = document.getElementById("taxonomy-tree-list");
+                                const taxonomyTreeSearch = document.getElementById("taxonomy-tree-search");
+                                const taxonomyTreeDepth = document.getElementById("taxonomy-tree-depth");
+                                const taxonomyTreeExpand = document.getElementById("taxonomy-tree-expand");
+                                const taxonomyTreeCollapse = document.getElementById("taxonomy-tree-collapse");
+
+                                function normalizeTaxonomyText(value) {
+                                    return value.toLowerCase().trim();
+                                }
+
+                                function nodeMatchesSearch(node, searchText) {
+                                    const ownName = normalizeTaxonomyText(node.name || "");
+                                    const childMatch = (node.children || []).some((child) => nodeMatchesSearch(child, searchText));
+                                    return ownName.includes(searchText) || childMatch;
+                                }
+
+                                function createHighlightedName(name, searchText) {
+                                    if (!searchText) {
+                                        return document.createTextNode(name);
+                                    }
+
+                                    const normalizedName = normalizeTaxonomyText(name);
+                                    const matchIndex = normalizedName.indexOf(searchText);
+                                    if (matchIndex === -1) {
+                                        return document.createTextNode(name);
+                                    }
+
+                                    const fragment = document.createDocumentFragment();
+                                    fragment.append(document.createTextNode(name.slice(0, matchIndex)));
+                                    const mark = document.createElement("mark");
+                                    mark.textContent = name.slice(matchIndex, matchIndex + searchText.length);
+                                    fragment.append(mark);
+                                    fragment.append(document.createTextNode(name.slice(matchIndex + searchText.length)));
+                                    return fragment;
+                                }
+
+                                function buildTaxonomyListNode(node, depth, searchText, maxDepth) {
+                                    if (node.name === "root") {
+                                        const fragment = document.createDocumentFragment();
+                                        (node.children || []).forEach((child) => {
+                                            const childNode = buildTaxonomyListNode(child, 1, searchText, maxDepth);
+                                            if (childNode) {
+                                                fragment.append(childNode);
+                                            }
+                                        });
+                                        return fragment;
+                                    }
+
+                                    if (searchText && !nodeMatchesSearch(node, searchText)) {
+                                        return null;
+                                    }
+
+                                    const children = node.children || [];
+                                    const canShowChildren = children.length > 0 && (maxDepth === "all" || depth < Number(maxDepth));
+                                    const details = document.createElement("details");
+                                    details.open = depth <= 2 || Boolean(searchText);
+                                    details.dataset.depth = String(depth);
+
+                                    const summary = document.createElement("summary");
+                                    summary.className = "small";
+                                    summary.append(createHighlightedName(node.name, searchText));
+                                    details.append(summary);
+
+                                    if (canShowChildren) {
+                                        children.forEach((child) => {
+                                            const childNode = buildTaxonomyListNode(child, depth + 1, searchText, maxDepth);
+                                            if (childNode) {
+                                                details.append(childNode);
+                                            }
+                                        });
+                                    }
+
+                                    return details;
+                                }
+
+                                function renderTaxonomyExplorer() {
+                                    const searchText = normalizeTaxonomyText(taxonomyTreeSearch.value);
+                                    const maxDepth = taxonomyTreeDepth.value;
+                                    taxonomyTreeList.replaceChildren();
+                                    const tree = buildTaxonomyListNode(dataSpec.source, 0, searchText, maxDepth);
+                                    if (!tree || tree.childNodes.length === 0) {
+                                        const emptyMessage = document.createElement("p");
+                                        emptyMessage.className = "text-muted small mb-0";
+                                        emptyMessage.textContent = "一致する分類がありません。";
+                                        taxonomyTreeList.append(emptyMessage);
+                                        return;
+                                    }
+                                    taxonomyTreeList.append(tree);
+                                }
+
+                                taxonomyTreeSearch.addEventListener("input", renderTaxonomyExplorer);
+                                taxonomyTreeDepth.addEventListener("change", renderTaxonomyExplorer);
+                                taxonomyTreeExpand.addEventListener("click", () => {
+                                    taxonomyTreeList.querySelectorAll("details").forEach((details) => {
+                                        details.open = true;
+                                    });
+                                });
+                                taxonomyTreeCollapse.addEventListener("click", () => {
+                                    taxonomyTreeList.querySelectorAll("details").forEach((details) => {
+                                        details.open = false;
+                                    });
+                                });
+                                renderTaxonomyExplorer();
                             </script>
                         </div>
                     </div>
