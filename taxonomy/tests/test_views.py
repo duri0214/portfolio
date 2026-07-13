@@ -94,6 +94,9 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "TaxonomyHierarchy")
         self.assertContains(response, "TaxonomyHierarchyItem(kingdom)")
         self.assertContains(response, "source_id")
+        self.assertContains(response, "分類名そのものを表す点")
+        self.assertContains(response, "点と点をつなぐ親子関係の線")
+        self.assertContains(response, "edge: 動物界 -> 脊索動物門")
         self.assertContains(response, "<code>id</code> と <code>name</code>")
         self.assertContains(
             response, '<i class="fas fa-chart-area me-1"></i>鶏の観察グラフ'

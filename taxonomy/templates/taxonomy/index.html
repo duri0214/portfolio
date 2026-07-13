@@ -92,6 +92,20 @@ BreedEntity
     +-- TaxonomyHierarchyItem(breed)
         +-- source_id
         +-- name</code></pre>
+                        <p>
+                            <code>nodes</code> は分類名そのものを表す点で、<code>edges</code> は点と点をつなぐ親子関係の線です。
+                            たとえば「動物界」「脊索動物門」「鳥綱」はそれぞれ node になり、
+                            「動物界から脊索動物門へ」「脊索動物門から鳥綱へ」というつながりが edge になります。
+                        </p>
+                        <pre class="taxonomy-nesting-diagram bg-light border rounded p-3 small mb-3"><code>node: 動物界
+  |
+  | edge: 動物界 -> 脊索動物門
+  v
+node: 脊索動物門
+  |
+  | edge: 脊索動物門 -> 鳥綱
+  v
+node: 鳥綱</code></pre>
                         <p class="mb-0">
                             <code>id</code> と <code>name</code> をばらばらの値として運ぶのではなく、<code>TaxonomyHierarchyItem</code> として1つの意味を持つ値にまとめます。
                             その item の並びを <code>TaxonomyHierarchy</code> として扱い、さらに nodes/edges 形式へ変換したものを <code>TaxonomyGraph</code> として扱います。
