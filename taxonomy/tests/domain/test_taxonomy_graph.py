@@ -6,6 +6,17 @@ from taxonomy.domain.valueobject.taxonomy_graph import TaxonomyGraph
 
 
 class TaxonomyGraphTest(TestCase):
+    def _build_chicken_hierarchy(self, breed: TaxonomyHierarchyItem):
+        return [
+            TaxonomyHierarchyItem("kingdom", 1, "動物界"),
+            TaxonomyHierarchyItem("phylum", 2, "脊索動物門"),
+            TaxonomyHierarchyItem("classification", 3, "鳥綱"),
+            TaxonomyHierarchyItem("family", 4, "キジ科"),
+            TaxonomyHierarchyItem("genus", 5, "ヤケイ属"),
+            TaxonomyHierarchyItem("species", 6, "セキショクヤケイ種"),
+            breed,
+        ]
+
     def test_builds_nodes_and_edges_from_breed_entities(self):
         """
         シナリオ:
@@ -14,47 +25,17 @@ class TaxonomyGraphTest(TestCase):
         - 期待値: 上位階層ノードは重複せず、品種までの親子edgeが生成されること。
         """
         breed_entities = [
-            BreedEntity(
-                {
-                    "kingdom_id": 1,
-                    "kingdom_name": "動物界",
-                    "phylum_id": 2,
-                    "phylum_name": "脊索動物門",
-                    "classification_id": 3,
-                    "classification_name": "鳥綱",
-                    "family_id": 4,
-                    "family_name": "キジ科",
-                    "genus_id": 5,
-                    "genus_name": "ヤケイ属",
-                    "species_id": 6,
-                    "species_name": "セキショクヤケイ種",
-                    "breed_id": 7,
-                    "breed_name": "ボリスブラウン",
-                    "breed_name_kana": "ボリスブラウン",
-                    "natural_monument_name": None,
-                    "breed_tag": None,
-                }
+            BreedEntity.from_hierarchy_items(
+                self._build_chicken_hierarchy(
+                    TaxonomyHierarchyItem("breed", 7, "ボリスブラウン")
+                ),
+                breed_kana="ボリスブラウン",
             ),
-            BreedEntity(
-                {
-                    "kingdom_id": 1,
-                    "kingdom_name": "動物界",
-                    "phylum_id": 2,
-                    "phylum_name": "脊索動物門",
-                    "classification_id": 3,
-                    "classification_name": "鳥綱",
-                    "family_id": 4,
-                    "family_name": "キジ科",
-                    "genus_id": 5,
-                    "genus_name": "ヤケイ属",
-                    "species_id": 6,
-                    "species_name": "セキショクヤケイ種",
-                    "breed_id": 8,
-                    "breed_name": "アローカナ",
-                    "breed_name_kana": "アローカナ",
-                    "natural_monument_name": None,
-                    "breed_tag": None,
-                }
+            BreedEntity.from_hierarchy_items(
+                self._build_chicken_hierarchy(
+                    TaxonomyHierarchyItem("breed", 8, "アローカナ")
+                ),
+                breed_kana="アローカナ",
             ),
         ]
 
@@ -87,19 +68,18 @@ class TaxonomyGraphTest(TestCase):
         - 処理: TaxonomyGraph.from_breed_entities を呼び出す。
         - 期待値: 階層パスを使った一意なfallback IDで nodes/edges が生成されること。
         """
-        breed_entity = BreedEntity(
-            {
-                "kingdom_name": "動物界",
-                "phylum_name": "環形動物門",
-                "classification_name": "貧毛綱",
-                "family_name": "ツリミミズ科",
-                "genus_name": "シマミミズ属",
-                "species_name": "シマミミズ種",
-                "breed_name": "シマミミズ",
-                "breed_name_kana": "シマミミズ",
-                "natural_monument_name": None,
-                "breed_tag": "コンポスト",
-            }
+        breed_entity = BreedEntity.from_hierarchy_items(
+            [
+                TaxonomyHierarchyItem("kingdom", None, "動物界"),
+                TaxonomyHierarchyItem("phylum", None, "環形動物門"),
+                TaxonomyHierarchyItem("classification", None, "貧毛綱"),
+                TaxonomyHierarchyItem("family", None, "ツリミミズ科"),
+                TaxonomyHierarchyItem("genus", None, "シマミミズ属"),
+                TaxonomyHierarchyItem("species", None, "シマミミズ種"),
+                TaxonomyHierarchyItem("breed", None, "シマミミズ"),
+            ],
+            breed_kana="シマミミズ",
+            breed_tag="コンポスト",
         )
 
         graph = TaxonomyGraph.from_breed_entities([breed_entity])
@@ -115,30 +95,15 @@ class TaxonomyGraphTest(TestCase):
     def test_breed_entity_returns_hierarchy_items_as_value_objects(self):
         """
         シナリオ:
-        - 入力: phylum_id と phylum_name を持つ品種Entity。
+        - 入力: phylum を TaxonomyHierarchyItem として持つ品種Entity。
         - 処理: get_taxonomy_items を呼び出す。
         - 期待値: id/name/rank が TaxonomyHierarchyItem として返されること。
         """
-        breed_entity = BreedEntity(
-            {
-                "kingdom_id": 1,
-                "kingdom_name": "動物界",
-                "phylum_id": 2,
-                "phylum_name": "脊索動物門",
-                "classification_id": 3,
-                "classification_name": "鳥綱",
-                "family_id": 4,
-                "family_name": "キジ科",
-                "genus_id": 5,
-                "genus_name": "ヤケイ属",
-                "species_id": 6,
-                "species_name": "セキショクヤケイ種",
-                "breed_id": 7,
-                "breed_name": "ボリスブラウン",
-                "breed_name_kana": "ボリスブラウン",
-                "natural_monument_name": None,
-                "breed_tag": None,
-            }
+        breed_entity = BreedEntity.from_hierarchy_items(
+            self._build_chicken_hierarchy(
+                TaxonomyHierarchyItem("breed", 7, "ボリスブラウン")
+            ),
+            breed_kana="ボリスブラウン",
         )
 
         taxonomy_items = breed_entity.get_taxonomy_items()
