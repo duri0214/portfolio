@@ -1,5 +1,5 @@
 from taxonomy.domain.valueobject.taxonomy_hierarchy import (
-    TAXONOMY_HIERARCHY_RANKS,
+    TaxonomyHierarchy,
     TaxonomyHierarchyItem,
 )
 
@@ -9,17 +9,14 @@ class BreedEntity:
     kingdom界 - phylum門 - classification綱 - family科 - genus属 - species腫 - breed品種
 
     Attributes:
-        hierarchy_items: 界から品種までの分類階層。
+        hierarchy: 界から品種までの分類階層。
         breed_kana: 品種・系統・分類対象名のよみがな。
         natural_monument: 天然記念物区分。
         breed_tag: 品種タグ。
     """
 
     def __init__(self, record: dict):
-        self.hierarchy_items: tuple[TaxonomyHierarchyItem, ...] = tuple(
-            TaxonomyHierarchyItem.from_record(rank, record)
-            for rank in TAXONOMY_HIERARCHY_RANKS
-        )
+        self.hierarchy = TaxonomyHierarchy.from_record(record)
         self.breed_kana: str = record.get("breed_name_kana")
         self.natural_monument: str = record.get("natural_monument_name")
         self.breed_tag: str = record.get("breed_tag")
@@ -45,7 +42,7 @@ class BreedEntity:
             分類階層を保持する BreedEntity。
         """
         entity = cls.__new__(cls)
-        entity.hierarchy_items = tuple(hierarchy_items)
+        entity.hierarchy = TaxonomyHierarchy.from_items(hierarchy_items)
         entity.breed_kana = breed_kana
         entity.natural_monument = natural_monument
         entity.breed_tag = breed_tag
@@ -53,20 +50,14 @@ class BreedEntity:
 
     @property
     def breed_id(self) -> int | str | None:
-        return self._get_hierarchy_item("breed").source_id
+        return self.hierarchy.get_item("breed").source_id
 
     @property
     def breed(self) -> str:
-        return self._get_hierarchy_item("breed").name
-
-    def _get_hierarchy_item(self, rank: str) -> TaxonomyHierarchyItem:
-        for item in self.hierarchy_items:
-            if item.rank == rank:
-                return item
-        return TaxonomyHierarchyItem(rank, None, "")
+        return self.hierarchy.get_item("breed").name
 
     def get_taxonomies(self) -> list:
-        return [item.name for item in self.hierarchy_items]
+        return self.hierarchy.names()
 
     def get_taxonomy_items(self) -> list[TaxonomyHierarchyItem]:
         """
@@ -75,4 +66,4 @@ class BreedEntity:
         Returns:
             分類階層1要素を表すValue Objectのリスト。
         """
-        return list(self.hierarchy_items)
+        return list(self.hierarchy.items)

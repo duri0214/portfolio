@@ -1,7 +1,10 @@
 from unittest import TestCase
 
 from taxonomy.domain.breed_entity import BreedEntity
-from taxonomy.domain.valueobject.taxonomy_hierarchy import TaxonomyHierarchyItem
+from taxonomy.domain.valueobject.taxonomy_hierarchy import (
+    TaxonomyHierarchy,
+    TaxonomyHierarchyItem,
+)
 from taxonomy.domain.valueobject.taxonomy_graph import TaxonomyGraph
 
 
@@ -112,3 +115,23 @@ class TaxonomyGraphTest(TestCase):
             TaxonomyHierarchyItem("phylum", 2, "脊索動物門"),
             taxonomy_items[1],
         )
+
+    def test_taxonomy_hierarchy_rejects_wrong_rank_order(self):
+        """
+        シナリオ:
+        - 入力: phylum と kingdom の順序が逆になった分類階層VO。
+        - 処理: TaxonomyHierarchy.from_items を呼び出す。
+        - 期待値: 分類階層の順序違いとして ValueError が発生すること。
+        """
+        hierarchy_items = [
+            TaxonomyHierarchyItem("phylum", 2, "脊索動物門"),
+            TaxonomyHierarchyItem("kingdom", 1, "動物界"),
+            TaxonomyHierarchyItem("classification", 3, "鳥綱"),
+            TaxonomyHierarchyItem("family", 4, "キジ科"),
+            TaxonomyHierarchyItem("genus", 5, "ヤケイ属"),
+            TaxonomyHierarchyItem("species", 6, "セキショクヤケイ種"),
+            TaxonomyHierarchyItem("breed", 7, "ボリスブラウン"),
+        ]
+
+        with self.assertRaises(ValueError):
+            TaxonomyHierarchy.from_items(hierarchy_items)
