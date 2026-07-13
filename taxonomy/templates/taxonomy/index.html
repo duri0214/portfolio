@@ -12,26 +12,6 @@
         #chicken-classification-chart svg {
             max-width: 100%;
         }
-
-        .taxonomy-tree-list {
-            max-height: 36rem;
-            overflow-y: auto;
-        }
-
-        .taxonomy-tree-list details {
-            border-left: 2px solid var(--bs-border-color);
-            margin-left: 0.75rem;
-            padding-left: 0.75rem;
-        }
-
-        .taxonomy-tree-list summary {
-            cursor: pointer;
-            line-height: 1.8;
-        }
-
-        .taxonomy-tree-list mark {
-            padding: 0;
-        }
     </style>
     <div class="container mt-4">
         <!-- Breadcrumb -->
@@ -122,16 +102,16 @@
                         </div>
                     </div>
                     <div class="card-body taxonomy-chart-scroll">
-                        <div class="taxonomy-tree-list border rounded p-3 mb-4" id="taxonomy-tree-list" aria-live="polite"></div>
                         <div id="chicken-classification-chart">
                             <div class="text">See one-liners for each transition</div>
                             <script>
+                                const originalClassificationTree = JSON.parse('{{ data|safe }}');
                                 const dataSpec = {
-                                    source: JSON.parse('{{ data|safe }}'),
+                                    source: originalClassificationTree,
                                     key: "name",
                                 };
-                                const myChart = d3.indentedTree(dataSpec);
-                                const chart = d3.select("#chicken-classification-chart").append("div").attr("class", "chart").call(myChart);
+                                const classificationChartRoot = d3.select("#chicken-classification-chart");
+                                let chart;
 
                                 function countClassificationNodes(node) {
                                     if (!node.children || node.children.length === 0) {
@@ -141,7 +121,7 @@
                                     return 1 + node.children.reduce((total, child) => total + countClassificationNodes(child), 0);
                                 }
 
-                                function fitClassificationChartHeight() {
+                                function fitClassificationChartHeight(source) {
                                     const chartNode = chart.node();
                                     const svg = chartNode.querySelector("svg");
                                     if (!svg) {
@@ -150,15 +130,12 @@
 
                                     const rowHeight = 30;
                                     const verticalPadding = 96;
-                                    const contentHeight = countClassificationNodes(dataSpec.source) * rowHeight + verticalPadding;
+                                    const contentHeight = countClassificationNodes(source) * rowHeight + verticalPadding;
                                     chartNode.style.height = `${contentHeight}px`;
                                     svg.setAttribute("height", contentHeight);
                                     svg.style.height = `${contentHeight}px`;
                                 }
 
-                                requestAnimationFrame(fitClassificationChartHeight);
-
-                                const taxonomyTreeList = document.getElementById("taxonomy-tree-list");
                                 const taxonomyTreeSearch = document.getElementById("taxonomy-tree-search");
                                 const taxonomyTreeDepth = document.getElementById("taxonomy-tree-depth");
                                 const taxonomyTreeExpand = document.getElementById("taxonomy-tree-expand");
@@ -168,99 +145,60 @@
                                     return value.toLowerCase().trim();
                                 }
 
-                                function nodeMatchesSearch(node, searchText) {
+                                function filterClassificationTree(node, depth, searchText, maxDepth) {
+                                    const children = node.children || [];
+                                    const shouldStopByDepth = maxDepth !== "all" && depth >= Number(maxDepth);
+                                    const filteredChildren = shouldStopByDepth ? [] : children
+                                        .map((child) => filterClassificationTree(child, depth + 1, searchText, maxDepth))
+                                        .filter((child) => child !== null);
                                     const ownName = normalizeTaxonomyText(node.name || "");
-                                    const childMatch = (node.children || []).some((child) => nodeMatchesSearch(child, searchText));
-                                    return ownName.includes(searchText) || childMatch;
-                                }
+                                    const ownMatch = !searchText || ownName.includes(searchText);
+                                    const childMatch = filteredChildren.length > 0;
 
-                                function createHighlightedName(name, searchText) {
-                                    if (!searchText) {
-                                        return document.createTextNode(name);
-                                    }
-
-                                    const normalizedName = normalizeTaxonomyText(name);
-                                    const matchIndex = normalizedName.indexOf(searchText);
-                                    if (matchIndex === -1) {
-                                        return document.createTextNode(name);
-                                    }
-
-                                    const fragment = document.createDocumentFragment();
-                                    fragment.append(document.createTextNode(name.slice(0, matchIndex)));
-                                    const mark = document.createElement("mark");
-                                    mark.textContent = name.slice(matchIndex, matchIndex + searchText.length);
-                                    fragment.append(mark);
-                                    fragment.append(document.createTextNode(name.slice(matchIndex + searchText.length)));
-                                    return fragment;
-                                }
-
-                                function buildTaxonomyListNode(node, depth, searchText, maxDepth) {
-                                    if (node.name === "root") {
-                                        const fragment = document.createDocumentFragment();
-                                        (node.children || []).forEach((child) => {
-                                            const childNode = buildTaxonomyListNode(child, 1, searchText, maxDepth);
-                                            if (childNode) {
-                                                fragment.append(childNode);
-                                            }
-                                        });
-                                        return fragment;
-                                    }
-
-                                    if (searchText && !nodeMatchesSearch(node, searchText)) {
+                                    if (node.name !== "root" && !ownMatch && !childMatch) {
                                         return null;
                                     }
 
-                                    const children = node.children || [];
-                                    const canShowChildren = children.length > 0 && (maxDepth === "all" || depth < Number(maxDepth));
-                                    const details = document.createElement("details");
-                                    details.open = depth <= 2 || Boolean(searchText);
-                                    details.dataset.depth = String(depth);
-
-                                    const summary = document.createElement("summary");
-                                    summary.className = "small";
-                                    summary.append(createHighlightedName(node.name, searchText));
-                                    details.append(summary);
-
-                                    if (canShowChildren) {
-                                        children.forEach((child) => {
-                                            const childNode = buildTaxonomyListNode(child, depth + 1, searchText, maxDepth);
-                                            if (childNode) {
-                                                details.append(childNode);
-                                            }
-                                        });
-                                    }
-
-                                    return details;
+                                    return {
+                                        name: node.name,
+                                        children: filteredChildren,
+                                    };
                                 }
 
-                                function renderTaxonomyExplorer() {
+                                function renderClassificationChart() {
                                     const searchText = normalizeTaxonomyText(taxonomyTreeSearch.value);
                                     const maxDepth = taxonomyTreeDepth.value;
-                                    taxonomyTreeList.replaceChildren();
-                                    const tree = buildTaxonomyListNode(dataSpec.source, 0, searchText, maxDepth);
-                                    if (!tree || tree.childNodes.length === 0) {
-                                        const emptyMessage = document.createElement("p");
-                                        emptyMessage.className = "text-muted small mb-0";
-                                        emptyMessage.textContent = "一致する分類がありません。";
-                                        taxonomyTreeList.append(emptyMessage);
+                                    const filteredTree = filterClassificationTree(originalClassificationTree, 0, searchText, maxDepth);
+                                    dataSpec.source = filteredTree || {name: "root", children: []};
+                                    classificationChartRoot.selectAll(".chart").remove();
+                                    classificationChartRoot.selectAll(".taxonomy-chart-empty").remove();
+
+                                    if (dataSpec.source.children.length === 0) {
+                                        classificationChartRoot
+                                            .append("p")
+                                            .attr("class", "taxonomy-chart-empty text-muted small mb-0")
+                                            .text("一致する分類がありません。");
                                         return;
                                     }
-                                    taxonomyTreeList.append(tree);
+
+                                    chart = classificationChartRoot
+                                        .append("div")
+                                        .attr("class", "chart")
+                                        .call(d3.indentedTree(dataSpec));
+                                    requestAnimationFrame(() => fitClassificationChartHeight(dataSpec.source));
                                 }
 
-                                taxonomyTreeSearch.addEventListener("input", renderTaxonomyExplorer);
-                                taxonomyTreeDepth.addEventListener("change", renderTaxonomyExplorer);
+                                taxonomyTreeSearch.addEventListener("input", renderClassificationChart);
+                                taxonomyTreeDepth.addEventListener("change", renderClassificationChart);
                                 taxonomyTreeExpand.addEventListener("click", () => {
-                                    taxonomyTreeList.querySelectorAll("details").forEach((details) => {
-                                        details.open = true;
-                                    });
+                                    taxonomyTreeDepth.value = "all";
+                                    renderClassificationChart();
                                 });
                                 taxonomyTreeCollapse.addEventListener("click", () => {
-                                    taxonomyTreeList.querySelectorAll("details").forEach((details) => {
-                                        details.open = false;
-                                    });
+                                    taxonomyTreeDepth.value = "3";
+                                    renderClassificationChart();
                                 });
-                                renderTaxonomyExplorer();
+                                renderClassificationChart();
                             </script>
                         </div>
                     </div>
