@@ -63,13 +63,12 @@
                             分類体系そのものがマトリョーシカのような入れ子構造なので、実装でも小さな Value Object を内側に持ち、
                             それをさらに大きな Value Object が包む形で表現します。
                         </p>
-                        <pre class="taxonomy-nesting-diagram bg-light border rounded p-3 small mb-3"><code>TaxonomyGraph
-+-- nodes: TaxonomyGraphNode[]
-+-- edges: TaxonomyGraphEdge[]
-    |
-    +-- source / target は TaxonomyHierarchy の親子関係を指す
-
-BreedEntity
+                        <p>
+                            <code>TaxonomyHierarchy</code> は分類ドメインの正しさを守る形です。
+                            界、門、綱、科、属、種、品種という順序を保ち、分類の親子関係を入れ子として扱います。
+                            <code>TaxonomyGraph</code> は同じ分類体系を可視化へ渡しやすい形に変換したものです。
+                        </p>
+                        <pre class="taxonomy-nesting-diagram bg-light border rounded p-3 small mb-3"><code>BreedEntity
 +-- TaxonomyHierarchy
     +-- TaxonomyHierarchyItem(kingdom)
         +-- source_id
@@ -91,7 +90,14 @@ BreedEntity
         +-- name
     +-- TaxonomyHierarchyItem(breed)
         +-- source_id
-        +-- name</code></pre>
+        +-- name
+            |
+            v
+TaxonomyGraph
++-- nodes: TaxonomyGraphNode[]
++-- edges: TaxonomyGraphEdge[]
+    |
+    +-- d3 などの表示ライブラリへ渡しやすい</code></pre>
                         <p>
                             <code>nodes</code> は分類名そのものを表す点で、<code>edges</code> は点と点をつなぐ親子関係の線です。
                             たとえば「動物界」「脊索動物門」「鳥綱」はそれぞれ node になり、
@@ -108,7 +114,7 @@ node: 脊索動物門
 node: 鳥綱</code></pre>
                         <p class="mb-0">
                             <code>id</code> と <code>name</code> をばらばらの値として運ぶのではなく、<code>TaxonomyHierarchyItem</code> として1つの意味を持つ値にまとめます。
-                            その item の並びを <code>TaxonomyHierarchy</code> として扱い、さらに nodes/edges 形式へ変換したものを <code>TaxonomyGraph</code> として扱います。
+                            その item の並びを <code>TaxonomyHierarchy</code> として扱い、必要なときだけ nodes/edges 形式の <code>TaxonomyGraph</code> へ変換します。
                             鶏の飼養分布や観察記録は、鶏の観察グラフページに分けて確認できます。
                         </p>
                     </div>

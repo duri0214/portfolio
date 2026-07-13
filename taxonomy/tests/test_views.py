@@ -90,6 +90,8 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "分類体系の入れ子構造")
         self.assertContains(response, "霊長類の下にヒトが紐づく")
         self.assertContains(response, "Value Object")
+        self.assertContains(response, "分類ドメインの正しさを守る形")
+        self.assertContains(response, "可視化へ渡しやすい形")
         self.assertContains(response, "TaxonomyGraph")
         self.assertContains(response, "TaxonomyHierarchy")
         self.assertContains(response, "TaxonomyHierarchyItem(kingdom)")
@@ -97,6 +99,7 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "分類名そのものを表す点")
         self.assertContains(response, "点と点をつなぐ親子関係の線")
         self.assertContains(response, "edge: 動物界 -> 脊索動物門")
+        self.assertContains(response, "必要なときだけ nodes/edges 形式")
         self.assertContains(response, "<code>id</code> と <code>name</code>")
         self.assertContains(
             response, '<i class="fas fa-chart-area me-1"></i>鶏の観察グラフ'
