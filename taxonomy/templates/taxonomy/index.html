@@ -90,14 +90,9 @@
                                         <option value="7">品種まで</option>
                                     </select>
                                 </div>
-                                <div class="btn-group btn-group-sm" role="group" aria-label="分類ツリー表示切替">
-                                    <button class="btn btn-outline-secondary" id="taxonomy-tree-expand" type="button">
-                                        全展開
-                                    </button>
-                                    <button class="btn btn-outline-secondary" id="taxonomy-tree-collapse" type="button">
-                                        折りたたみ
-                                    </button>
-                                </div>
+                                <button class="btn btn-outline-secondary btn-sm" id="taxonomy-tree-reset" type="button">
+                                    絞り込み解除
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -138,8 +133,7 @@
 
                                 const taxonomyTreeSearch = document.getElementById("taxonomy-tree-search");
                                 const taxonomyTreeDepth = document.getElementById("taxonomy-tree-depth");
-                                const taxonomyTreeExpand = document.getElementById("taxonomy-tree-expand");
-                                const taxonomyTreeCollapse = document.getElementById("taxonomy-tree-collapse");
+                                const taxonomyTreeReset = document.getElementById("taxonomy-tree-reset");
 
                                 function normalizeTaxonomyText(value) {
                                     return value.toLowerCase().trim();
@@ -190,12 +184,9 @@
 
                                 taxonomyTreeSearch.addEventListener("input", renderClassificationChart);
                                 taxonomyTreeDepth.addEventListener("change", renderClassificationChart);
-                                taxonomyTreeExpand.addEventListener("click", () => {
+                                taxonomyTreeReset.addEventListener("click", () => {
+                                    taxonomyTreeSearch.value = "";
                                     taxonomyTreeDepth.value = "all";
-                                    renderClassificationChart();
-                                });
-                                taxonomyTreeCollapse.addEventListener("click", () => {
-                                    taxonomyTreeDepth.value = "3";
                                     renderClassificationChart();
                                 });
                                 renderClassificationChart();

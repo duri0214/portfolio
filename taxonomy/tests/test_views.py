@@ -55,21 +55,22 @@ class TaxonomyIndexViewTest(TestCase):
         シナリオ:
         - 入力: taxonomyの分類データが空でも表示できるDB状態。
         - 処理: taxonomyトップページを表示する。
-        - 期待値: 既存D3分類グラフを絞り込む検索、階層絞り込み、折りたたみ操作が表示されること。
+        - 期待値: 既存D3分類グラフを絞り込む検索、階層絞り込み、解除操作が表示されること。
         """
         response = self.client.get(reverse("txo:index"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="taxonomy-tree-search"')
         self.assertContains(response, 'id="taxonomy-tree-depth"')
+        self.assertContains(response, 'id="taxonomy-tree-reset"')
         self.assertContains(response, "分類名・品種名")
         self.assertContains(response, "表示階層")
         self.assertContains(response, "門まで")
-        self.assertContains(response, "全展開")
-        self.assertContains(response, "折りたたみ")
+        self.assertContains(response, "絞り込み解除")
         self.assertContains(response, "filterClassificationTree")
         self.assertContains(response, "renderClassificationChart")
         self.assertContains(response, "d3.indentedTree(dataSpec)")
+        self.assertNotContains(response, "taxonomy-tree-collapse")
         self.assertNotContains(response, "taxonomy-tree-list")
 
     def test_index_page_shows_taxonomy_hierarchy_guidance(self):
