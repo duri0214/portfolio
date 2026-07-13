@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from taxonomy.domain.breed_entity import BreedEntity
+from taxonomy.domain.valueobject.taxonomy_hierarchy import TaxonomyHierarchyItem
 from taxonomy.domain.valueobject.taxonomy_graph import TaxonomyGraph
 
 
@@ -109,4 +110,40 @@ class TaxonomyGraphTest(TestCase):
         self.assertIn(
             "breed:動物界/環形動物門/貧毛綱/ツリミミズ科/シマミミズ属/シマミミズ種/シマミミズ",
             node_ids,
+        )
+
+    def test_breed_entity_returns_hierarchy_items_as_value_objects(self):
+        """
+        シナリオ:
+        - 入力: phylum_id と phylum_name を持つ品種Entity。
+        - 処理: get_taxonomy_items を呼び出す。
+        - 期待値: id/name/rank が TaxonomyHierarchyItem として返されること。
+        """
+        breed_entity = BreedEntity(
+            {
+                "kingdom_id": 1,
+                "kingdom_name": "動物界",
+                "phylum_id": 2,
+                "phylum_name": "脊索動物門",
+                "classification_id": 3,
+                "classification_name": "鳥綱",
+                "family_id": 4,
+                "family_name": "キジ科",
+                "genus_id": 5,
+                "genus_name": "ヤケイ属",
+                "species_id": 6,
+                "species_name": "セキショクヤケイ種",
+                "breed_id": 7,
+                "breed_name": "ボリスブラウン",
+                "breed_name_kana": "ボリスブラウン",
+                "natural_monument_name": None,
+                "breed_tag": None,
+            }
+        )
+
+        taxonomy_items = breed_entity.get_taxonomy_items()
+
+        self.assertEqual(
+            TaxonomyHierarchyItem("phylum", 2, "脊索動物門"),
+            taxonomy_items[1],
         )

@@ -93,12 +93,12 @@ class TaxonomyGraph:
             parent_id = "root:root"
             fallback_path: list[str] = []
             for item in breed_entity.get_taxonomy_items():
-                name = str(item["name"] or "")
-                if not name:
+                if not item.has_name:
                     continue
 
-                rank = str(item["rank"])
-                source_id = item["id"]
+                name = item.name
+                rank = item.rank
+                source_id = item.source_id
                 fallback_path.append(name)
                 node_id = cls._build_node_id(rank, source_id, fallback_path)
                 if node_id not in nodes_by_id:
