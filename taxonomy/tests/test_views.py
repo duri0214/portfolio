@@ -88,8 +88,9 @@ class TaxonomyIndexViewTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "分類体系の入れ子構造")
-        self.assertContains(response, "霊長類の下にヒトが紐づく")
-        self.assertContains(response, "Value Object")
+        self.assertContains(response, "分類としての正しさ")
+        self.assertContains(response, "d3 に渡しやすい nodes/edges 形式")
+        self.assertContains(response, "固定順で包む")
         self.assertContains(response, "分類ドメインの正しさを守る形")
         self.assertContains(response, "可視化へ渡しやすい形")
         self.assertContains(response, "TaxonomyGraph")

@@ -55,13 +55,14 @@
                     </div>
                     <div class="card-body">
                         <p>
-                            生物分類は、界の中に門、門の中に綱、綱の中に科・属・種が入る階層構造です。
-                            たとえば霊長類の下にヒトが紐づくように、個別の生き物は上位分類の中へ段階的に収まります。
+                            生物分類は、界、門、綱、科、属、種、品種の順に親子関係をたどる階層構造です。
+                            この画面では、その分類としての正しさを <code>TaxonomyHierarchy</code> で守り、
+                            d3 に渡しやすい nodes/edges 形式を <code>TaxonomyGraph</code> として扱います。
                         </p>
                         <p>
-                            Taxonomy は、この portfolio の中でも技術的な側面を持つアプリです。
-                            分類体系そのものがマトリョーシカのような入れ子構造なので、実装でも小さな Value Object を内側に持ち、
-                            それをさらに大きな Value Object が包む形で表現します。
+                            <code>TaxonomyHierarchyItem</code> は各階層の <code>id</code> と <code>name</code> をまとめた値です。
+                            その item を固定順で包む <code>TaxonomyHierarchy</code> がドメイン側の表現で、
+                            表示するときだけ <code>TaxonomyGraph</code> へ変換します。
                         </p>
                         <p>
                             <code>TaxonomyHierarchy</code> は分類ドメインの正しさを守る形です。
