@@ -56,10 +56,13 @@ class TaxonomyGraphTest(TestCase):
                 "id": "breed:7",
                 "name": "ボリスブラウン",
                 "rank": "breed",
+                "depth": 7,
                 "detail_url": "/taxonomy/breeds/7/",
             },
             nodes["breed:7"],
         )
+        self.assertEqual(0, nodes["root:root"]["depth"])
+        self.assertEqual(1, nodes["kingdom:1"]["depth"])
         self.assertIn(("root:root", "kingdom:1"), edges)
         self.assertIn(("species:6", "breed:7"), edges)
         self.assertIn(("species:6", "breed:8"), edges)
