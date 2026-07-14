@@ -44,10 +44,8 @@ class TaxonomyIndexViewTest(TestCase):
         response = self.client.get(reverse("txo:index"))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="/static/taxonomy/css/index.css"')
         self.assertContains(response, "taxonomy-chart-scroll")
-        self.assertContains(response, "overflow-x: hidden")
-        self.assertContains(response, "overflow-y: visible")
-        self.assertContains(response, "min-height: 560px")
         self.assertContains(response, "renderTaxonomyForceGraph")
         self.assertContains(response, "d3.forceSimulation")
 

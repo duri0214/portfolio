@@ -1,77 +1,9 @@
 {% extends "taxonomy/base.html" %}
 {% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'taxonomy/css/index.css' %}">
+{% endblock %}
 {% block content %}
-    <style>
-        .taxonomy-chart-scroll {
-            overflow-x: hidden;
-            overflow-y: visible;
-        }
-
-        #chicken-classification-chart,
-        #chicken-classification-chart svg {
-            max-width: 100%;
-        }
-
-        #chicken-classification-chart {
-            min-height: 560px;
-            position: relative;
-        }
-
-        #chicken-classification-chart svg {
-            background: #f8fafc;
-            border: 1px solid #e9ecef;
-            border-radius: 0.375rem;
-            cursor: grab;
-            min-height: 560px;
-        }
-
-        #chicken-classification-chart svg:active {
-            cursor: grabbing;
-        }
-
-        .taxonomy-force-link {
-            stroke: #adb5bd;
-            stroke-opacity: 0.72;
-            stroke-width: 1.4px;
-        }
-
-        .taxonomy-force-node {
-            cursor: grab;
-            stroke: #fff;
-            stroke-width: 1.5px;
-        }
-
-        .taxonomy-force-node:active {
-            cursor: grabbing;
-        }
-
-        .taxonomy-force-label {
-            fill: #212529;
-            font-size: 11px;
-            paint-order: stroke;
-            pointer-events: none;
-            stroke: #f8fafc;
-            stroke-linejoin: round;
-            stroke-width: 3px;
-        }
-
-        .taxonomy-force-legend-swatch {
-            display: inline-block;
-            width: 0.75rem;
-            height: 0.75rem;
-            border-radius: 50%;
-            margin-right: 0.25rem;
-            vertical-align: -0.05rem;
-        }
-
-        .taxonomy-force-legend-separator {
-            color: #6c757d;
-        }
-
-        .taxonomy-nesting-diagram {
-            white-space: pre-wrap;
-        }
-    </style>
     <div class="container mt-4">
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
