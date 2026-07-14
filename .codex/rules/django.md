@@ -62,6 +62,13 @@ python manage.py sqlmigrate <app_name> <migration_number>
 
 ## その他の Django ルール
 
+### テストDBの扱い
+
+- このプロジェクトの MySQL テストDB名は `config/settings.py` の `DATABASES["default"]["TEST"]["NAME"]` に定義された `test_portfolio_db` を使う。
+- `python manage.py test ...` を非対話で実行する前に既存の `test_portfolio_db` が残っている場合は、先に削除してからテストを実行する。
+- 既存テストDB削除は、確認プロンプトで止まることを避けるための手順であり、削除対象を `test_portfolio_db` に限定する。開発DBや本番DBは削除しない。
+- 既存テストDBを残したまま再利用したい明確な理由がある場合だけ `--keepdb` を使う。
+
 ### 設定ファイルの管理
 
 - 環境依存の設定（SECRET_KEY, データベース接続情報など）は環境変数または `.env` ファイルで管理する
