@@ -269,12 +269,6 @@ node: 鳥綱</code></pre>
                                     return Number.isFinite(node.depth) ? node.depth : 0;
                                 }
 
-                                function getNodeCollisionRadius(node) {
-                                    const labelLength = String(node.name || "").length;
-                                    const labelPadding = Math.min(48, labelLength * 6);
-                                    return node.rank === "breed" ? 34 + labelPadding : 28 + labelPadding;
-                                }
-
                                 function buildVisibleGraph(searchText, maxRank) {
                                     const maxRankNode = taxonomyGraphData.nodes.find((node) => node.rank === maxRank);
                                     const maxDepth = maxRank === "all" ? Infinity : nodeDepth(maxRankNode || {depth: 0});
@@ -365,19 +359,7 @@ node: 鳥綱</code></pre>
 
                                     const container = taxonomyForceRoot.node();
                                     const width = Math.max(container.clientWidth, 320);
-                                    const nodesByDepth = d3.group(
-                                        graph.nodes,
-                                        (node) => nodeDepth(node)
-                                    );
                                     const height = 560;
-                                    const maxDepth = Math.max(...graph.nodes.map((node) => nodeDepth(node)), 1);
-                                    nodesByDepth.forEach((nodes) => {
-                                        nodes
-                                            .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "ja"))
-                                            .forEach((node, index) => {
-                                                node.targetY = (height * (index + 1)) / (nodes.length + 1);
-                                            });
-                                    });
                                     const svg = taxonomyForceRoot
                                         .append("svg")
                                         .attr("role", "img")
@@ -394,13 +376,13 @@ node: 鳥綱</code></pre>
 
                                     const simulation = d3.forceSimulation(graph.nodes)
                                         .force("link", d3.forceLink(graph.links).id((node) => node.id).distance((link) => {
-                                            return Math.max(88, 136 - Math.min(nodeDepth(link.source), nodeDepth(link.target)) * 6);
-                                        }).strength(0.7))
-                                        .force("charge", d3.forceManyBody().strength(-360))
+                                            return Math.max(68, 118 - Math.min(nodeDepth(link.source), nodeDepth(link.target)) * 7);
+                                        }).strength(0.86))
+                                        .force("charge", d3.forceManyBody().strength(-220))
                                         .force("center", d3.forceCenter(width / 2, height / 2))
-                                        .force("x", d3.forceX((node) => width * (0.1 + (nodeDepth(node) / maxDepth) * 0.8)).strength(0.16))
-                                        .force("y", d3.forceY((node) => node.targetY || height / 2).strength(0.09))
-                                        .force("collide", d3.forceCollide().radius(getNodeCollisionRadius).iterations(4));
+                                        .force("x", d3.forceX((node) => width * (0.16 + nodeDepth(node) * 0.105)).strength(0.08))
+                                        .force("y", d3.forceY(height / 2).strength(0.05))
+                                        .force("collide", d3.forceCollide().radius((node) => node.rank === "breed" ? 28 : 22).iterations(2));
 
                                     const link = viewport
                                         .append("g")

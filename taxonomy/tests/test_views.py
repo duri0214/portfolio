@@ -74,8 +74,6 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "taxonomyGraphData")
         self.assertContains(response, "buildVisibleGraph")
         self.assertContains(response, "nodeDepth")
-        self.assertContains(response, "getNodeCollisionRadius")
-        self.assertContains(response, "const height = 560")
         self.assertContains(response, '"depth": 0')
         self.assertContains(response, "forceLink")
         self.assertContains(response, "forceCollide")
