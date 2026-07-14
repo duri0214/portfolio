@@ -208,7 +208,6 @@ class LLMTaxonomyCandidate(models.Model):
         source_url: 確認に使う出典URL。
         external_taxon_id: 外部taxonomyデータベース上のID。
         llm_note: LLM生成時の補足や元出力。
-        review_note: レビュー時の確認メモ。
         approved_breed: 承認後に作成された品種。
         reviewed_by: 承認または却下したユーザー。
         reviewed_at: 承認または却下した日時。
@@ -256,7 +255,6 @@ class LLMTaxonomyCandidate(models.Model):
     source_url = models.URLField("出典URL", max_length=500, blank=True)
     external_taxon_id = models.CharField("外部taxonomy ID", max_length=255, blank=True)
     llm_note = models.TextField("LLM生成メモ", blank=True)
-    review_note = models.TextField("レビュー確認メモ", blank=True)
     approved_breed = models.ForeignKey(
         Breed,
         verbose_name="承認後の品種",

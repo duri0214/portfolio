@@ -1137,7 +1137,9 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, "LLM生成候補をプレビュー用に保存しました。")
         self.assertContains(response, "今回生成された品種")
         self.assertContains(response, "すべて承認")
+        self.assertContains(response, "すべて却下")
         self.assertContains(response, "承認")
+        self.assertContains(response, "却下")
         self.assertContains(response, "GBIFで分類を点検")
         self.assertContains(
             response, "https://www.gbif.org/taxon/search?q=Pheretima+communissima"
@@ -1294,7 +1296,6 @@ class TaxonomyBreedCreateViewTest(TestCase):
                 "source_name": "Catalogue of Life",
                 "source_url": "https://www.catalogueoflife.org/",
                 "llm_note": "LLMメモを修正",
-                "review_note": "レビュー確認メモを修正",
             },
             follow=True,
         )
@@ -1304,11 +1305,10 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertEqual(candidate.source_name, "Catalogue of Life")
         self.assertEqual(candidate.source_url, "https://www.catalogueoflife.org/")
         self.assertEqual(candidate.llm_note, "LLMメモを修正")
-        self.assertEqual(candidate.review_note, "レビュー確認メモを修正")
         self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.APPROVED)
         breed = Breed.objects.get(name="メモ付き候補")
         self.assertRedirects(response, reverse("txo:breed_detail", args=[breed.pk]))
-        self.assertEqual(breed.remark, "レビュー確認メモを修正")
+        self.assertEqual(breed.remark, "LLMメモを修正")
 
     def test_superuser_approves_all_preview_candidates_to_taxonomy_data(self):
         """
@@ -1355,6 +1355,43 @@ class TaxonomyBreedCreateViewTest(TestCase):
             response,
             "2件のLLM生成候補を確認済みtaxonomyデータとして登録しました。",
         )
+
+    def test_superuser_rejects_all_preview_candidates_without_creating_taxonomy_data(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: プレビュー中のレビュー待ち候補2件と管理者ユーザー。
+        - 処理: すべて却下ボタンをPOSTする。
+        - 期待値: 2件とも却下され、確認済みtaxonomyデータは作成されないこと。
+        """
+        first_candidate = self._create_candidate(breed_name="まとめ却下ミミズ1")
+        second_candidate = self._create_candidate(breed_name="まとめ却下ミミズ2")
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_bulk_rejecter",
+            email="taxonomy_bulk_rejecter@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:llm_candidate_reject_all"),
+            data={"candidate_ids": f"{first_candidate.pk},{second_candidate.pk}"},
+            follow=True,
+        )
+
+        first_candidate.refresh_from_db()
+        second_candidate.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            first_candidate.status, LLMTaxonomyCandidate.ReviewStatus.REJECTED
+        )
+        self.assertEqual(
+            second_candidate.status, LLMTaxonomyCandidate.ReviewStatus.REJECTED
+        )
+        self.assertFalse(Breed.objects.filter(name="まとめ却下ミミズ1").exists())
+        self.assertFalse(Breed.objects.filter(name="まとめ却下ミミズ2").exists())
+        self.assertContains(response, "2件のLLM生成候補を却下しました。")
 
     def test_superuser_approves_llm_candidate_to_taxonomy_data(self):
         """
@@ -1481,7 +1518,6 @@ class TaxonomyBreedCreateViewTest(TestCase):
             "source_url": "https://www.catalogueoflife.org/",
             "external_taxon_id": "col:sample",
             "llm_note": "LLMが生成した候補。",
-            "review_note": "出典確認済み。",
         }
         if overrides:
             data.update(overrides)

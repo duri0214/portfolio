@@ -516,6 +516,45 @@ class LLMTaxonomyCandidateBulkApproveView(View):
         return f"{reverse('txo:llm_candidate_new')}?candidate_ids={joined_ids}"
 
 
+class LLMTaxonomyCandidateBulkRejectView(View):
+    """
+    表示中のLLM生成分類候補をまとめて却下します。
+    """
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, "LLM生成候補を却下する権限がありません。")
+            return redirect("txo:llm_candidate_list")
+
+        candidate_ids = self._get_candidate_ids(request)
+        if not candidate_ids:
+            messages.error(request, "却下対象のLLM生成候補がありません。")
+            return redirect("txo:llm_candidate_list")
+
+        try:
+            rejected_count = LLMTaxonomyCandidateReviewService.reject_many(
+                candidate_ids,
+                request.user,
+            )
+        except LLMTaxonomyCandidateReviewError as error:
+            messages.error(request, str(error))
+            return redirect(self._get_preview_url(candidate_ids))
+
+        messages.success(request, f"{rejected_count}件のLLM生成候補を却下しました。")
+        return redirect("txo:llm_candidate_list")
+
+    def _get_candidate_ids(self, request) -> list[int]:
+        candidate_ids = []
+        for raw_id in request.POST.get("candidate_ids", "").split(","):
+            if raw_id.isdigit():
+                candidate_ids.append(int(raw_id))
+        return candidate_ids
+
+    def _get_preview_url(self, candidate_ids: list[int]) -> str:
+        joined_ids = ",".join(str(candidate_id) for candidate_id in candidate_ids)
+        return f"{reverse('txo:llm_candidate_new')}?candidate_ids={joined_ids}"
+
+
 class LLMTaxonomyCandidateRejectView(View):
     """
     LLM生成分類候補を確認済みtaxonomyデータへ登録せず却下するビュー。

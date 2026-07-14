@@ -307,15 +307,14 @@ class LLMTaxonomyCandidateGenerateForm(forms.Form):
 
 class LLMTaxonomyCandidateMetadataForm(forms.ModelForm):
     """
-    LLM生成候補の出典とレビュー用メモだけを上書きするフォーム。
+    LLM生成候補の出典とメモだけを上書きするフォーム。
     """
 
     class Meta:
         model = LLMTaxonomyCandidate
-        fields = ["source_name", "source_url", "llm_note", "review_note"]
+        fields = ["source_name", "source_url", "llm_note"]
         widgets = {
             "llm_note": forms.Textarea(attrs={"rows": 3}),
-            "review_note": forms.Textarea(attrs={"rows": 3}),
         }
 
     def __init__(self, *args, **kwargs):

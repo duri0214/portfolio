@@ -54,6 +54,18 @@ class LLMTaxonomyCandidateReviewService:
         LLMTaxonomyCandidateRepository.reject(candidate, reviewer)
 
     @staticmethod
+    @transaction.atomic
+    def reject_many(candidate_ids: list[int], reviewer) -> int:
+        """
+        複数のレビュー待ち候補をまとめて却下します。
+        """
+        rejected_count = 0
+        for candidate_id in candidate_ids:
+            LLMTaxonomyCandidateReviewService.reject(candidate_id, reviewer)
+            rejected_count += 1
+        return rejected_count
+
+    @staticmethod
     def _get_candidate(candidate_id: int) -> LLMTaxonomyCandidate:
         try:
             return LLMTaxonomyCandidateRepository.get_for_review(candidate_id)

@@ -30,6 +30,13 @@
                             すべて承認
                         </button>
                     </form>
+                    <form method="post" action="{% url 'txo:llm_candidate_reject_all' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
+                        <button class="btn btn-danger" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
+                            すべて却下
+                        </button>
+                    </form>
                 {% endif %}
             </div>
 
@@ -55,9 +62,14 @@
                                         <h3 class="h5 mb-1">{{ candidate.breed_name }}</h3>
                                         <div class="text-muted small">{{ candidate.breed_name_kana|default:"よみがな未設定" }}</div>
                                     </div>
-                                    <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
-                                        承認
-                                    </button>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                            承認
+                                        </button>
+                                        <button class="btn btn-danger" type="submit" formaction="{% url 'txo:llm_candidate_reject' candidate.pk %}" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                            却下
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {% if not request.user.is_superuser %}
@@ -112,7 +124,7 @@
 
                                 <div class="row g-3">
                                     {% for field in metadata_form %}
-                                        <div class="{% if field.name == 'llm_note' or field.name == 'review_note' %}col-12{% else %}col-md-6{% endif %}">
+                                        <div class="{% if field.name == 'llm_note' %}col-12{% else %}col-md-6{% endif %}">
                                             <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                                             {{ field }}
                                             <div class="text-danger small mt-1">{{ field.errors }}</div>

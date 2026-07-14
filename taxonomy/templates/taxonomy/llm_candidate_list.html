@@ -44,13 +44,22 @@
             <section class="mb-5">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                     <h2 class="h4 mb-0">今回生成された品種</h2>
-                    <form method="post" action="{% url 'txo:llm_candidate_approve_all' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
-                        <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
-                            すべて承認
-                        </button>
-                    </form>
+                    <div class="d-flex flex-wrap gap-2">
+                        <form method="post" action="{% url 'txo:llm_candidate_approve_all' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
+                            <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                すべて承認
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'txo:llm_candidate_reject_all' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
+                            <button class="btn btn-danger" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                すべて却下
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
                 {% for preview in candidate_previews %}
@@ -64,9 +73,14 @@
                                         <h3 class="h5 mb-1">{{ candidate.breed_name }}</h3>
                                         <div class="text-muted small">{{ candidate.breed_name_kana|default:"よみがな未設定" }}</div>
                                     </div>
-                                    <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
-                                        承認
-                                    </button>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                            承認
+                                        </button>
+                                        <button class="btn btn-danger" type="submit" formaction="{% url 'txo:llm_candidate_reject' candidate.pk %}" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                            却下
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="table-responsive mb-3">
@@ -115,7 +129,7 @@
 
                                 <div class="row g-3">
                                     {% for field in metadata_form %}
-                                        <div class="{% if field.name == 'llm_note' or field.name == 'review_note' %}col-12{% else %}col-md-6{% endif %}">
+                                        <div class="{% if field.name == 'llm_note' %}col-12{% else %}col-md-6{% endif %}">
                                             <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                                             {{ field }}
                                             <div class="text-danger small mt-1">{{ field.errors }}</div>

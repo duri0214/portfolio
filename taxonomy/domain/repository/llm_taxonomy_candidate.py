@@ -104,7 +104,7 @@ class LLMTaxonomyCandidateRepository:
         candidate.updated_at = timezone.now()
         LLMTaxonomyCandidate.objects.bulk_update(
             [candidate],
-            ["source_name", "source_url", "llm_note", "review_note", "updated_at"],
+            ["source_name", "source_url", "llm_note", "updated_at"],
         )
 
     @staticmethod
@@ -152,7 +152,7 @@ class LLMTaxonomyCandidateRepository:
             name=candidate.breed_name,
             name_kana=candidate.breed_name_kana,
             image="",
-            remark=candidate.review_note or None,
+            remark=candidate.llm_note or None,
             species=species,
         )
 

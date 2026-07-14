@@ -37,8 +37,7 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             "source_name": "Catalogue of Life",
             "source_url": "https://www.catalogueoflife.org/",
             "external_taxon_id": "{long_external_id}",
-            "llm_note": "推定候補です。",
-            "review_note": "出典確認が必要です。"
+            "llm_note": "推定候補です。"
           }}
         ]
         ```
@@ -81,8 +80,7 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             "source_name": "Catalogue of Life",
             "source_url": "Catalogue of Life を参照",
             "external_taxon_id": "",
-            "llm_note": "",
-            "review_note": ""
+            "llm_note": ""
           }
         ]
         """
@@ -120,8 +118,7 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             "source_name": "Catalogue of Life",
             "source_url": "www.catalogueoflife.org/",
             "external_taxon_id": "",
-            "llm_note": "",
-            "review_note": ""
+            "llm_note": ""
           }
         ]
         """
@@ -171,8 +168,7 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             "source_name": "Catalogue of Life",
             "source_url": "https://www.catalogueoflife.org/",
             "external_taxon_id": "",
-            "llm_note": "",
-            "review_note": ""
+            "llm_note": ""
           },
           {
             "kingdom_name": "動物界",
@@ -192,8 +188,7 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             "source_name": "Catalogue of Life",
             "source_url": "https://www.catalogueoflife.org/",
             "external_taxon_id": "",
-            "llm_note": "",
-            "review_note": ""
+            "llm_note": ""
           },
           {
             "kingdom_name": "動物界",
@@ -213,8 +208,7 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             "source_name": "Catalogue of Life",
             "source_url": "https://www.catalogueoflife.org/",
             "external_taxon_id": "",
-            "llm_note": "",
-            "review_note": ""
+            "llm_note": ""
           },
           {
             "kingdom_name": "動物界",

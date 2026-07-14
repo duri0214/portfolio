@@ -113,7 +113,6 @@ class LLMTaxonomyCandidateGenerationService:
             "source_url",
             "external_taxon_id",
             "llm_note",
-            "review_note",
         ]
         field_list = ", ".join(fields)
         return (
@@ -139,7 +138,7 @@ class LLMTaxonomyCandidateGenerationService:
             "学名を併記したい場合でも、species_name と breed_name の表記は必ず一致させてください。\n"
             "breed_name_kana は日本語よみがなにしてください。\n"
             "source_name と source_url は確認元として人間が開ける値を可能な限り入れてください。\n"
-            "review_note は人間が確認すべき注意点を短く書いてください。"
+            "人間が確認すべき注意点は llm_note に短く書いてください。"
         )
 
     @classmethod
@@ -312,5 +311,4 @@ class LLMTaxonomyCandidateSaveFields:
             "source_url",
             "external_taxon_id",
             "llm_note",
-            "review_note",
         ]
