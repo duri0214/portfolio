@@ -15,25 +15,22 @@
             </div>
         {% endif %}
 
-        <h1 class="h3 mb-3">今回の生成候補</h1>
+        <h1 class="h3 mb-3">今回生成された品種</h1>
 
         <section class="mb-5">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <h2 class="h4 mb-0">属階層1本と候補</h2>
-                <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-outline-secondary" href="{% url 'txo:llm_candidate_list' %}">
-                        一覧に戻る
-                    </a>
-                    {% if candidate_previews %}
-                        <form method="post" action="{% url 'txo:llm_candidate_approve_all' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
-                            <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
-                                すべて承認
-                            </button>
-                        </form>
-                    {% endif %}
-                </div>
+            <div class="d-flex flex-wrap justify-content-end gap-2 mb-3">
+                <a class="btn btn-outline-secondary" href="{% url 'txo:llm_candidate_list' %}">
+                    一覧に戻る
+                </a>
+                {% if candidate_previews %}
+                    <form method="post" action="{% url 'txo:llm_candidate_approve_all' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
+                        <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
+                            すべて承認
+                        </button>
+                    </form>
+                {% endif %}
             </div>
 
             {% if not candidate_previews %}
@@ -103,15 +100,12 @@
                                 </div>
 
                                 <div class="d-flex flex-wrap gap-2 mb-3">
-                                    <a class="btn btn-sm btn-outline-secondary" href="https://www.gbif.org/species/search?q={{ candidate.species_name|urlencode }}" target="_blank" rel="noopener noreferrer">
-                                        GBIFで種名点検
-                                    </a>
-                                    <a class="btn btn-sm btn-outline-secondary" href="https://www.gbif.org/species/search?q={{ candidate.breed_name|urlencode }}" target="_blank" rel="noopener noreferrer">
-                                        GBIFで表示名点検
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.gbif_taxon_search_url }}" target="_blank" rel="noopener noreferrer">
+                                        GBIFで分類を点検
                                     </a>
                                     {% if candidate.source_url %}
                                         <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.source_url }}" target="_blank" rel="noopener noreferrer">
-                                            出典を開く
+                                            Wikipediaで出典を開く
                                         </a>
                                     {% endif %}
                                 </div>

@@ -1057,13 +1057,18 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "LLM生成候補")
         self.assertContains(response, candidate.breed_name)
-        self.assertContains(response, "Catalogue of Life")
         self.assertContains(response, "レビュー待ち")
         self.assertContains(response, '<span class="badge text-bg-secondary">界</span>')
         self.assertContains(response, '<span class="badge text-bg-secondary">門</span>')
         self.assertContains(response, '<span class="badge text-bg-secondary">種</span>')
-        self.assertContains(response, "GBIFで種名点検")
-        self.assertContains(response, "GBIFで表示名点検")
+        self.assertContains(response, "GBIFで分類を点検")
+        self.assertContains(
+            response, "https://www.gbif.org/taxon/search?q=Pheretima+communissima"
+        )
+        self.assertNotContains(response, "GBIFで種名点検")
+        self.assertNotContains(response, "GBIFで表示名点検")
+        self.assertContains(response, "Wikipediaで出典を開く")
+        self.assertNotContains(response, '<th scope="col">出典</th>')
         self.assertContains(response, "disabled")
         self.assertContains(
             response,
@@ -1110,12 +1115,14 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.PENDING)
         self.assertFalse(Breed.objects.filter(name="候補のミミズ").exists())
         self.assertContains(response, "LLM生成候補をプレビュー用に保存しました。")
-        self.assertContains(response, "今回の生成候補")
+        self.assertContains(response, "今回生成された品種")
         self.assertContains(response, "すべて承認")
         self.assertContains(response, "承認")
-        self.assertContains(response, "GBIFで種名点検")
-        self.assertContains(response, "GBIFで表示名点検")
-        self.assertContains(response, "出典を開く")
+        self.assertContains(response, "GBIFで分類を点検")
+        self.assertContains(
+            response, "https://www.gbif.org/taxon/search?q=Pheretima+communissima"
+        )
+        self.assertContains(response, "Wikipediaで出典を開く")
         self.assertContains(response, '<span class="badge text-bg-secondary">界</span>')
         self.assertContains(response, '<span class="badge text-bg-secondary">属</span>')
         self.assertContains(response, '<span class="badge text-bg-secondary">種</span>')
@@ -1225,7 +1232,8 @@ class TaxonomyBreedCreateViewTest(TestCase):
         response = self.client.get(reverse("txo:llm_candidate_new"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "今回の生成候補")
+        self.assertContains(response, "今回生成された品種")
+        self.assertNotContains(response, "属階層1本と候補")
         self.assertContains(
             response, "候補一覧から生成すると、今回の候補を確認できます。"
         )

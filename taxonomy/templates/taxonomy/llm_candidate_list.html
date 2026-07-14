@@ -35,7 +35,7 @@
         {% if candidate_previews %}
             <section class="mb-5">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                    <h2 class="h4 mb-0">今回の生成候補</h2>
+                    <h2 class="h4 mb-0">今回生成された品種</h2>
                     <form method="post" action="{% url 'txo:llm_candidate_approve_all' %}">
                         {% csrf_token %}
                         <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
@@ -95,15 +95,12 @@
                                 </div>
 
                                 <div class="d-flex flex-wrap gap-2 mb-3">
-                                    <a class="btn btn-sm btn-outline-secondary" href="https://www.gbif.org/species/search?q={{ candidate.species_name|urlencode }}" target="_blank" rel="noopener noreferrer">
-                                        GBIFで種名点検
-                                    </a>
-                                    <a class="btn btn-sm btn-outline-secondary" href="https://www.gbif.org/species/search?q={{ candidate.breed_name|urlencode }}" target="_blank" rel="noopener noreferrer">
-                                        GBIFで表示名点検
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.gbif_taxon_search_url }}" target="_blank" rel="noopener noreferrer">
+                                        GBIFで分類を点検
                                     </a>
                                     {% if candidate.source_url %}
                                         <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.source_url }}" target="_blank" rel="noopener noreferrer">
-                                            出典を開く
+                                            Wikipediaで出典を開く
                                         </a>
                                     {% endif %}
                                 </div>
@@ -130,7 +127,6 @@
                 <tr>
                     <th scope="col">候補</th>
                     <th scope="col">分類階層</th>
-                    <th scope="col">出典</th>
                     <th scope="col">状態</th>
                 </tr>
                 </thead>
@@ -159,22 +155,15 @@
                                 <span><span class="badge text-bg-secondary">種</span> {{ candidate.species_name }}</span>
                             </div>
                             <div class="d-flex flex-wrap gap-2 mt-2">
-                                <a class="btn btn-sm btn-outline-secondary" href="https://www.gbif.org/species/search?q={{ candidate.species_name|urlencode }}" target="_blank" rel="noopener noreferrer">
-                                    GBIFで種名点検
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.gbif_taxon_search_url }}" target="_blank" rel="noopener noreferrer">
+                                    GBIFで分類を点検
                                 </a>
-                                <a class="btn btn-sm btn-outline-secondary" href="https://www.gbif.org/species/search?q={{ candidate.breed_name|urlencode }}" target="_blank" rel="noopener noreferrer">
-                                    GBIFで表示名点検
-                                </a>
+                                {% if candidate.source_url %}
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.source_url }}" target="_blank" rel="noopener noreferrer">
+                                        Wikipediaで出典を開く
+                                    </a>
+                                {% endif %}
                             </div>
-                        </td>
-                        <td>
-                            {% if candidate.source_url %}
-                                <a href="{{ candidate.source_url }}" target="_blank" rel="noopener noreferrer">
-                                    {{ candidate.source_name|default:"出典URL" }}
-                                </a>
-                            {% else %}
-                                <span class="text-muted">{{ candidate.source_name|default:"未設定" }}</span>
-                            {% endif %}
                         </td>
                         <td>
                             <span class="badge {% if candidate.status == 'pending' %}bg-warning text-dark{% elif candidate.status == 'approved' %}bg-success{% else %}bg-secondary{% endif %}">
@@ -187,7 +176,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="4" class="text-muted text-center py-4">
+                        <td colspan="3" class="text-muted text-center py-4">
                             LLM生成候補はまだありません。
                         </td>
                     </tr>

@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.conf import settings
 from django.db import models
 
@@ -277,6 +279,12 @@ class LLMTaxonomyCandidate(models.Model):
 
     def __str__(self):
         return f"{self.breed_name} ({self.get_status_display()})"
+
+    @property
+    def gbif_taxon_search_url(self) -> str:
+        query = self.species_name_en or self.species_name
+        query_params = urlencode({"q": query})
+        return f"https://www.gbif.org/taxon/search?{query_params}"
 
 
 class LivestockDistributionDataset(models.Model):
