@@ -14,6 +14,9 @@ from taxonomy.domain.service.livestock_distribution_fetch import (
     LivestockDistributionFetchService,
     TABLE_DEFINITIONS,
 )
+from taxonomy.domain.service.llm_taxonomy_candidate_generation import (
+    LLMTaxonomyCandidateGenerationError,
+)
 from taxonomy.models import (
     Breed,
     Classification,
@@ -856,18 +859,43 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertEqual(breed.species.name, "フトミミズ")
         self.assertEqual(breed.species.genus.name, "フトミミズ属")
 
-    def test_index_page_links_to_breed_list(self):
+    def test_index_page_disables_llm_candidate_link_for_non_superuser(self):
         """
         シナリオ:
-        - 入力: taxonomyトップページを表示できるDB状態。
+        - 入力: 非管理者でtaxonomyトップページを表示できるDB状態。
         - 処理: taxonomyトップページを表示する。
-        - 期待値: 品種一覧ページとLLM生成候補ページへの導線が表示されること。
+        - 期待値: 品種一覧ページへの導線が表示され、LLM生成候補ボタンはdisabledになること。
         """
         response = self.client.get(reverse("txo:index"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("txo:breed_list"))
         self.assertContains(response, "品種一覧")
+        self.assertNotContains(response, reverse("txo:llm_candidate_list"))
+        self.assertContains(response, "LLM生成候補")
+        self.assertContains(response, "disabled")
+        self.assertContains(
+            response,
+            "管理者権限が必要なため、LLM生成候補ボタンは無効化されています。",
+        )
+
+    def test_index_page_links_to_llm_candidate_list_for_superuser(self):
+        """
+        シナリオ:
+        - 入力: 管理者ユーザーでtaxonomyトップページを表示できるDB状態。
+        - 処理: taxonomyトップページを表示する。
+        - 期待値: LLM生成候補ページへの導線がリンクとして表示されること。
+        """
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_admin",
+            email="taxonomy_admin@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("txo:index"))
+
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("txo:llm_candidate_list"))
         self.assertContains(response, "LLM生成候補")
 
@@ -1013,14 +1041,14 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, "この名前の品種は登録済みです。")
         self.assertEqual(Breed.objects.filter(name="名古屋種").count(), 1)
 
-    def test_llm_candidate_list_shows_pending_candidate_and_disabled_review_buttons(
+    def test_llm_candidate_list_shows_pending_candidate_without_review_actions(
         self,
     ):
         """
         シナリオ:
         - 入力: レビュー待ちのLLM生成候補と非管理者ユーザー。
         - 処理: LLM生成候補一覧ページを表示する。
-        - 期待値: 候補と出典が表示され、承認・却下ボタンはdisabledになること。
+        - 期待値: 候補と出典が表示され、レビュー操作ボタンは表示されないこと。
         """
         candidate = self._create_candidate()
 
@@ -1031,32 +1059,274 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, candidate.breed_name)
         self.assertContains(response, "Catalogue of Life")
         self.assertContains(response, "レビュー待ち")
-        self.assertContains(response, "承認")
-        self.assertContains(response, "却下")
+        self.assertContains(response, '<span class="badge text-bg-secondary">界</span>')
+        self.assertContains(response, '<span class="badge text-bg-secondary">門</span>')
+        self.assertContains(response, '<span class="badge text-bg-secondary">種</span>')
+        self.assertContains(response, "GBIFで種名点検")
+        self.assertContains(response, "GBIFで表示名点検")
         self.assertContains(response, "disabled")
         self.assertContains(
             response,
-            "管理者権限が必要なため、承認・却下ボタンは無効化されています。",
+            "管理者権限が必要なため、生成ボタンは無効化されています。",
         )
+        self.assertNotContains(response, '<th scope="col">操作</th>')
+        self.assertNotContains(response, "却下")
+        self.assertNotContains(response, "登録済みデータ")
+        self.assertContains(response, "今回のおすすめ候補を生成")
+        self.assertContains(response, reverse("txo:llm_candidate_list"))
+        self.assertContains(response, "属階層1本と複数の候補を生成中です。")
+        self.assertContains(response, "生成中...")
 
-    def test_create_llm_candidate(self):
+    def test_generate_llm_candidate_saves_preview_candidate(self):
         """
         シナリオ:
-        - 入力: LLMが出した分類候補と出典メタ情報。
-        - 処理: LLM生成候補登録フォームをPOSTする。
-        - 期待値: 確認済みtaxonomyデータではなくレビュー待ち候補として保存されること。
+        - 入力: LLM生成ボタンのPOST。
+        - 処理: LLM生成候補一覧ページで生成フォームをPOSTする。
+        - 期待値: 生成後のプレビュー用ページにレビュー待ち候補1件が表示されること。
         """
-        response = self.client.post(
-            reverse("txo:llm_candidate_new"),
-            data=self._candidate_post_data({"breed_name": "候補のミミズ"}),
-            follow=True,
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_generator",
+            email="taxonomy_generator@example.com",
+            password="password",
         )
+        self.client.force_login(user)
 
+        def generate_candidate():
+            return [self._create_candidate(breed_name="候補のミミズ")]
+
+        with patch(
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.generate_and_save",
+            side_effect=generate_candidate,
+        ) as mock_generate:
+            response = self.client.post(
+                reverse("txo:llm_candidate_list"),
+                data={},
+                follow=True,
+            )
+
+        mock_generate.assert_called_once_with()
         candidate = LLMTaxonomyCandidate.objects.get(breed_name="候補のミミズ")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.PENDING)
         self.assertFalse(Breed.objects.filter(name="候補のミミズ").exists())
-        self.assertContains(response, "LLM生成候補をレビュー待ちとして保存しました。")
+        self.assertContains(response, "LLM生成候補をプレビュー用に保存しました。")
+        self.assertContains(response, "今回の生成候補")
+        self.assertContains(response, "すべて承認")
+        self.assertContains(response, "承認")
+        self.assertContains(response, "GBIFで種名点検")
+        self.assertContains(response, "GBIFで表示名点検")
+        self.assertContains(response, "出典を開く")
+        self.assertContains(response, '<span class="badge text-bg-secondary">界</span>')
+        self.assertContains(response, '<span class="badge text-bg-secondary">属</span>')
+        self.assertContains(response, '<span class="badge text-bg-secondary">種</span>')
+        self.assertNotContains(response, "出典とメモを保存")
+
+    def test_generate_llm_candidate_reuses_existing_pending_candidates(self):
+        """
+        シナリオ:
+        - 入力: 既存のレビュー待ち候補2件と管理者ユーザー。
+        - 処理: LLM生成候補一覧ページで生成フォームをPOSTする。
+        - 期待値: LLMを呼ばず、既存レビュー待ち候補2件のプレビューへ遷移すること。
+        """
+        first_candidate = self._create_candidate(breed_name="既存候補1")
+        second_candidate = self._create_candidate(breed_name="既存候補2")
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_existing_pending_generator",
+            email="taxonomy_existing_pending_generator@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch(
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.generate_and_save",
+        ) as mock_generate:
+            response = self.client.post(
+                reverse("txo:llm_candidate_list"),
+                data={},
+                follow=True,
+            )
+
+        mock_generate.assert_not_called()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "レビュー待ちのLLM生成候補があるため、新規生成せず既存候補を表示します。",
+        )
+        self.assertContains(response, first_candidate.breed_name)
+        self.assertContains(response, second_candidate.breed_name)
+        self.assertContains(response, "すべて承認")
+
+    def test_generate_llm_candidate_shows_generation_error_once(self):
+        """
+        シナリオ:
+        - 入力: LLM生成サービスが保存前バリデーションエラーを返す状態。
+        - 処理: 管理者がLLM生成候補フォームをPOSTする。
+        - 期待値: 具体的な生成エラーだけが表示され、汎用エラーは重複表示されないこと。
+        """
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_generator_error",
+            email="taxonomy_generator_error@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch(
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.generate_and_save",
+            side_effect=LLMTaxonomyCandidateGenerationError(
+                "LLM生成結果を候補として保存できません。" "入力内容を見直してください。"
+            ),
+        ):
+            response = self.client.post(reverse("txo:llm_candidate_list"), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "LLM生成結果を候補として保存できません。入力内容を見直してください。",
+        )
+        self.assertNotContains(
+            response,
+            "生成できませんでした。入力内容を確認してください。",
+        )
+
+    def test_non_superuser_cannot_generate_llm_candidate(self):
+        """
+        シナリオ:
+        - 入力: 一般ユーザーによるLLM生成候補フォームのPOST。
+        - 処理: LLM生成候補フォームをPOSTする。
+        - 期待値: LLM生成サービスは呼ばれず、権限エラーが表示されること。
+        """
+        user = get_user_model().objects.create_user(
+            username="taxonomy_user",
+            email="taxonomy_user@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        with patch(
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.generate_and_save",
+        ) as mock_generate:
+            response = self.client.post(
+                reverse("txo:llm_candidate_list"),
+                data={},
+                follow=True,
+            )
+
+        mock_generate.assert_not_called()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "LLM生成候補を生成する権限がありません。")
+
+    def test_llm_candidate_preview_page_has_no_generate_action(self):
+        """
+        シナリオ:
+        - 入力: LLM生成候補がまだない状態。
+        - 処理: LLM生成候補プレビューページを表示する。
+        - 期待値: 生成アクションと承認ボタンを表示しないこと。
+        """
+        response = self.client.get(reverse("txo:llm_candidate_new"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "今回の生成候補")
+        self.assertContains(
+            response, "候補一覧から生成すると、今回の候補を確認できます。"
+        )
+        self.assertNotContains(response, "今回のおすすめ候補を生成")
+        self.assertNotContains(response, "llm-candidate-generate-form")
+        self.assertNotContains(response, "llm-candidates/generate-step/")
+        self.assertContains(response, "一覧に戻る")
+        self.assertNotContains(response, "すべて承認")
+        self.assertNotContains(response, "承認</button>")
+        self.assertNotContains(response, "disabled")
+        self.assertNotContains(response, "出典とメモを保存")
+        self.assertNotContains(response, "分類したい品種・系統・対象名")
+        self.assertNotContains(response, "外部taxonomy ID")
+
+    def test_approve_llm_candidate_saves_metadata_before_registration(self):
+        """
+        シナリオ:
+        - 入力: レビュー待ち候補と登録前に修正した出典・メモ。
+        - 処理: プレビュー画面の承認ボタンをPOSTする。
+        - 期待値: 出典とメモを保存したうえで、確認済みtaxonomyデータへ登録されること。
+        """
+        candidate = self._create_candidate(
+            breed_name="メモ付き候補",
+            source_name="",
+            source_url="",
+        )
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_metadata_reviewer",
+            email="taxonomy_metadata_reviewer@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:llm_candidate_approve", args=[candidate.pk]),
+            data={
+                "candidate_ids": str(candidate.pk),
+                "source_name": "Catalogue of Life",
+                "source_url": "https://www.catalogueoflife.org/",
+                "llm_note": "LLMメモを修正",
+                "review_note": "レビュー確認メモを修正",
+            },
+            follow=True,
+        )
+
+        candidate.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(candidate.source_name, "Catalogue of Life")
+        self.assertEqual(candidate.source_url, "https://www.catalogueoflife.org/")
+        self.assertEqual(candidate.llm_note, "LLMメモを修正")
+        self.assertEqual(candidate.review_note, "レビュー確認メモを修正")
+        self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.APPROVED)
+        breed = Breed.objects.get(name="メモ付き候補")
+        self.assertRedirects(response, reverse("txo:breed_detail", args=[breed.pk]))
+        self.assertEqual(breed.remark, "レビュー確認メモを修正")
+
+    def test_superuser_approves_all_preview_candidates_to_taxonomy_data(self):
+        """
+        シナリオ:
+        - 入力: プレビュー中のレビュー待ち候補2件と管理者ユーザー。
+        - 処理: すべて承認ボタンをPOSTする。
+        - 期待値: 2件とも確認済みtaxonomyデータとして登録されること。
+        """
+        first_candidate = self._create_candidate(
+            breed_name="まとめ登録ミミズ1",
+            species_name="まとめ登録ミミズ1",
+            species_name_en="Pheretima bulk one",
+        )
+        second_candidate = self._create_candidate(
+            breed_name="まとめ登録ミミズ2",
+            species_name="まとめ登録ミミズ2",
+            species_name_en="Pheretima bulk two",
+        )
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_bulk_reviewer",
+            email="taxonomy_bulk_reviewer@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:llm_candidate_approve_all"),
+            data={"candidate_ids": f"{first_candidate.pk},{second_candidate.pk}"},
+            follow=True,
+        )
+
+        first_candidate.refresh_from_db()
+        second_candidate.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            first_candidate.status, LLMTaxonomyCandidate.ReviewStatus.APPROVED
+        )
+        self.assertEqual(
+            second_candidate.status, LLMTaxonomyCandidate.ReviewStatus.APPROVED
+        )
+        self.assertTrue(Breed.objects.filter(name="まとめ登録ミミズ1").exists())
+        self.assertTrue(Breed.objects.filter(name="まとめ登録ミミズ2").exists())
+        self.assertContains(
+            response,
+            "2件のLLM生成候補を確認済みtaxonomyデータとして登録しました。",
+        )
 
     def test_superuser_approves_llm_candidate_to_taxonomy_data(self):
         """

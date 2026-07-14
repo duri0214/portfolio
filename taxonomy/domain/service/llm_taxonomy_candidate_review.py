@@ -1,4 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 
 from taxonomy.domain.repository.llm_taxonomy_candidate import (
     LLMTaxonomyCandidateRepository,
@@ -24,11 +25,24 @@ class LLMTaxonomyCandidateReviewService:
         """
         candidate = LLMTaxonomyCandidateReviewService._get_candidate(candidate_id)
         LLMTaxonomyCandidateReviewService._validate_pending(candidate)
-        if Breed.objects.filter(name=candidate.breed_name).exists():
+        if LLMTaxonomyCandidateRepository.breed_exists(candidate.breed_name):
             raise LLMTaxonomyCandidateReviewError(
                 "この名前の品種はすでに登録済みです。"
             )
         return LLMTaxonomyCandidateRepository.approve(candidate, reviewer)
+
+    @staticmethod
+    @transaction.atomic
+    def approve_many(candidate_ids: list[int], reviewer) -> list[Breed]:
+        """
+        複数のレビュー待ち候補をまとめて確認済み品種として登録します。
+        """
+        breeds = []
+        for candidate_id in candidate_ids:
+            breeds.append(
+                LLMTaxonomyCandidateReviewService.approve(candidate_id, reviewer)
+            )
+        return breeds
 
     @staticmethod
     def reject(candidate_id: int, reviewer) -> None:

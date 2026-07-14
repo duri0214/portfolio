@@ -7,6 +7,7 @@ from taxonomy.views import (
     BreedUpdateView,
     IndexView,
     LLMTaxonomyCandidateApproveView,
+    LLMTaxonomyCandidateBulkApproveView,
     LLMTaxonomyCandidateCreateView,
     LLMTaxonomyCandidateListView,
     LLMTaxonomyCandidateRejectView,
@@ -42,6 +43,11 @@ urlpatterns = [
         "llm-candidates/<int:pk>/approve/",
         LLMTaxonomyCandidateApproveView.as_view(),
         name="llm_candidate_approve",
+    ),
+    path(
+        "llm-candidates/approve-all/",
+        LLMTaxonomyCandidateBulkApproveView.as_view(),
+        name="llm_candidate_approve_all",
     ),
     path(
         "llm-candidates/<int:pk>/reject/",

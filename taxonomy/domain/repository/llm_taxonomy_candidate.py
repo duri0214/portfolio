@@ -29,6 +29,85 @@ class LLMTaxonomyCandidateRepository:
         ).get(pk=candidate_id)
 
     @staticmethod
+    def breed_exists(name: str) -> bool:
+        """
+        品種名が確認済みtaxonomyデータに存在するかを返します。
+        """
+        return Breed.objects.filter(name=name).exists()
+
+    @staticmethod
+    def create_pending(candidate_data: dict) -> LLMTaxonomyCandidate:
+        """
+        生成済み候補をレビュー待ちとして保存します。
+        """
+        return LLMTaxonomyCandidate.objects.create(**candidate_data)
+
+    @staticmethod
+    def create_pending_bulk(
+        candidate_data_list: list[dict],
+    ) -> list[LLMTaxonomyCandidate]:
+        """
+        生成済み候補をレビュー待ちとしてまとめて保存します。
+        """
+        return [
+            LLMTaxonomyCandidate.objects.create(**candidate_data)
+            for candidate_data in candidate_data_list
+        ]
+
+    @staticmethod
+    def pending_candidates() -> list[LLMTaxonomyCandidate]:
+        """
+        現在レビュー待ちの候補を作成順に返します。
+        """
+        return list(
+            LLMTaxonomyCandidate.objects.filter(
+                status=LLMTaxonomyCandidate.ReviewStatus.PENDING,
+            ).order_by("created_at", "pk")
+        )
+
+    @staticmethod
+    def existing_hierarchy_lines(limit: int = 80) -> list[str]:
+        """
+        LLM生成時に参照する既存taxonomy階層を返します。
+        """
+        species_list = Species.objects.select_related(
+            "genus__family__classification__phylum__kingdom"
+        ).order_by(
+            "genus__family__classification__phylum__kingdom__name",
+            "genus__family__classification__phylum__name",
+            "genus__family__classification__name",
+            "genus__family__name",
+            "genus__name",
+            "name",
+        )[
+            :limit
+        ]
+        return [
+            " > ".join(
+                [
+                    species.genus.family.classification.phylum.kingdom.name,
+                    species.genus.family.classification.phylum.name,
+                    species.genus.family.classification.name,
+                    species.genus.family.name,
+                    species.genus.name,
+                    species.name,
+                ]
+            )
+            for species in species_list
+        ]
+
+    @staticmethod
+    def update_metadata(candidate: LLMTaxonomyCandidate) -> None:
+        """
+        レビュー用に上書きされた出典とメモを保存します。
+        """
+        candidate.updated_at = timezone.now()
+        LLMTaxonomyCandidate.objects.bulk_update(
+            [candidate],
+            ["source_name", "source_url", "llm_note", "review_note", "updated_at"],
+        )
+
+    @staticmethod
     @transaction.atomic
     def approve(candidate: LLMTaxonomyCandidate, reviewer) -> Breed:
         """

@@ -2,6 +2,7 @@ import json
 import os
 
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -40,10 +41,18 @@ from taxonomy.domain.service.llm_taxonomy_candidate_review import (
     LLMTaxonomyCandidateReviewError,
     LLMTaxonomyCandidateReviewService,
 )
+from taxonomy.domain.service.llm_taxonomy_candidate_generation import (
+    LLMTaxonomyCandidateGenerationError,
+    LLMTaxonomyCandidateGenerationService,
+)
+from taxonomy.domain.repository.llm_taxonomy_candidate import (
+    LLMTaxonomyCandidateRepository,
+)
 from taxonomy.domain.valueobject.taxonomy_graph import TaxonomyGraph
 from taxonomy.forms import (
     BreedForm,
-    LLMTaxonomyCandidateForm,
+    LLMTaxonomyCandidateGenerateForm,
+    LLMTaxonomyCandidateMetadataForm,
     TaxonomyBreedCreateForm,
 )
 from taxonomy.models import (
@@ -271,32 +280,140 @@ class LLMTaxonomyCandidateListView(ListView):
     template_name = "taxonomy/llm_candidate_list.html"
     context_object_name = "candidates"
 
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, "LLM生成候補を生成する権限がありません。")
+            return redirect("txo:llm_candidate_list")
+
+        pending_candidates = LLMTaxonomyCandidateRepository.pending_candidates()
+        if pending_candidates:
+            messages.info(
+                request,
+                "レビュー待ちのLLM生成候補があるため、新規生成せず既存候補を表示します。",
+            )
+            return redirect(self._preview_url(pending_candidates))
+
+        try:
+            candidates = LLMTaxonomyCandidateGenerationService.generate_and_save()
+        except LLMTaxonomyCandidateGenerationError as error:
+            messages.error(request, str(error))
+            return redirect("txo:llm_candidate_list")
+
+        candidate_ids = ",".join(str(candidate.pk) for candidate in candidates)
+        messages.success(
+            request,
+            "LLM生成候補をプレビュー用に保存しました。内容を確認してください。",
+        )
+        return redirect(
+            f"{reverse('txo:llm_candidate_new')}?candidate_ids={candidate_ids}"
+        )
+
     def get_queryset(self):
         return LLMTaxonomyCandidate.objects.select_related(
             "approved_breed",
             "reviewed_by",
         ).order_by("status", "-created_at")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        candidate_ids = self._get_candidate_ids()
+        candidates = []
+        if candidate_ids:
+            candidates = list(
+                LLMTaxonomyCandidate.objects.filter(pk__in=candidate_ids).order_by(
+                    "created_at", "pk"
+                )
+            )
+        context["preview_candidate_ids"] = ",".join(
+            str(candidate.pk) for candidate in candidates
+        )
+        context["candidate_previews"] = [
+            {
+                "candidate": candidate,
+                "metadata_form": LLMTaxonomyCandidateMetadataForm(instance=candidate),
+            }
+            for candidate in candidates
+        ]
+        return context
 
-class LLMTaxonomyCandidateCreateView(CreateView):
+    def _get_candidate_ids(self) -> list[int]:
+        raw_ids = self.request.GET.get("candidate_ids", "")
+        candidate_ids = []
+        for raw_id in raw_ids.split(","):
+            if raw_id.isdigit():
+                candidate_ids.append(int(raw_id))
+        return candidate_ids
+
+    def _preview_url(self, candidates: list[LLMTaxonomyCandidate]) -> str:
+        candidate_ids = ",".join(str(candidate.pk) for candidate in candidates)
+        return f"{reverse('txo:llm_candidate_new')}?candidate_ids={candidate_ids}"
+
+
+class LLMTaxonomyCandidateCreateView(FormView):
     """
-    LLM生成分類候補を未確認データとして登録するビュー。
+    LLMで分類候補を生成し、プレビュー用に保存するビュー。
     """
 
-    model = LLMTaxonomyCandidate
-    form_class = LLMTaxonomyCandidateForm
+    form_class = LLMTaxonomyCandidateGenerateForm
     template_name = "taxonomy/llm_candidate_form.html"
-    success_url = reverse_lazy("txo:llm_candidate_list")
 
     def form_valid(self, form):
-        messages.success(self.request, "LLM生成候補をレビュー待ちとして保存しました。")
-        return super().form_valid(form)
+        if not self.request.user.is_superuser:
+            messages.error(self.request, "LLM生成候補を生成する権限がありません。")
+            return redirect("txo:llm_candidate_list")
+
+        try:
+            candidates = LLMTaxonomyCandidateGenerationService.generate_and_save()
+        except LLMTaxonomyCandidateGenerationError as error:
+            messages.error(self.request, str(error))
+            return self.render_to_response(self.get_context_data(form=form))
+
+        candidate_ids = ",".join(str(candidate.pk) for candidate in candidates)
+        messages.success(
+            self.request,
+            "LLM生成候補をプレビュー用に保存しました。内容を確認してください。",
+        )
+        return redirect(
+            f"{reverse('txo:llm_candidate_new')}?candidate_ids={candidate_ids}"
+        )
 
     def form_invalid(self, form):
         messages.error(
-            self.request, "保存できませんでした。入力内容を確認してください。"
+            self.request, "生成できませんでした。入力内容を確認してください。"
         )
         return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        candidate_ids = self._get_candidate_ids()
+        candidates = []
+        if candidate_ids:
+            candidates = list(
+                LLMTaxonomyCandidate.objects.filter(pk__in=candidate_ids).order_by(
+                    "created_at", "pk"
+                )
+            )
+        context["generated_candidates"] = candidates
+        context["preview_candidate_ids"] = ",".join(
+            str(candidate.pk) for candidate in candidates
+        )
+        context["candidate_previews"] = [
+            {
+                "candidate": candidate,
+                "metadata_form": LLMTaxonomyCandidateMetadataForm(instance=candidate),
+            }
+            for candidate in candidates
+        ]
+        return context
+
+    def _get_candidate_ids(self) -> list[int]:
+        raw_ids = self.request.GET.get("candidate_ids", "")
+        candidate_ids = []
+        for raw_id in raw_ids.split(","):
+            if not raw_id.isdigit():
+                continue
+            candidate_ids.append(int(raw_id))
+        return candidate_ids
 
 
 class LLMTaxonomyCandidateApproveView(View):
@@ -308,6 +425,25 @@ class LLMTaxonomyCandidateApproveView(View):
         if not request.user.is_superuser:
             messages.error(request, "LLM生成候補を承認する権限がありません。")
             return redirect("txo:llm_candidate_list")
+
+        preview_url = self._get_preview_url(request, kwargs["pk"])
+        try:
+            candidate = LLMTaxonomyCandidateRepository.get_for_review(kwargs["pk"])
+        except ObjectDoesNotExist:
+            messages.error(request, "指定された候補が見つかりません。")
+            return redirect("txo:llm_candidate_list")
+        if candidate.status != LLMTaxonomyCandidate.ReviewStatus.PENDING:
+            messages.error(request, "レビュー待ちではない候補は操作できません。")
+            return redirect("txo:llm_candidate_list")
+
+        if self._has_metadata_fields(request):
+            form = LLMTaxonomyCandidateMetadataForm(request.POST, instance=candidate)
+            if not form.is_valid():
+                messages.error(request, "出典とメモを確認してください。")
+                return redirect(preview_url)
+
+            candidate = form.save(commit=False)
+            LLMTaxonomyCandidateRepository.update_metadata(candidate)
 
         try:
             breed = LLMTaxonomyCandidateReviewService.approve(
@@ -323,6 +459,58 @@ class LLMTaxonomyCandidateApproveView(View):
             f"{breed.name} を確認済みtaxonomyデータとして登録しました。",
         )
         return redirect("txo:breed_detail", pk=breed.pk)
+
+    def _get_preview_url(self, request, candidate_id: int) -> str:
+        candidate_ids = request.POST.get("candidate_ids") or str(candidate_id)
+        return f"{reverse('txo:llm_candidate_new')}?candidate_ids={candidate_ids}"
+
+    def _has_metadata_fields(self, request) -> bool:
+        return any(
+            field_name in request.POST
+            for field_name in LLMTaxonomyCandidateMetadataForm.Meta.fields
+        )
+
+
+class LLMTaxonomyCandidateBulkApproveView(View):
+    """
+    表示中のLLM生成分類候補をまとめて確認済みtaxonomyデータへ登録するビュー。
+    """
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, "LLM生成候補を承認する権限がありません。")
+            return redirect("txo:llm_candidate_list")
+
+        candidate_ids = self._get_candidate_ids(request)
+        if not candidate_ids:
+            messages.error(request, "登録対象のLLM生成候補がありません。")
+            return redirect("txo:llm_candidate_list")
+
+        try:
+            breeds = LLMTaxonomyCandidateReviewService.approve_many(
+                candidate_ids,
+                request.user,
+            )
+        except LLMTaxonomyCandidateReviewError as error:
+            messages.error(request, str(error))
+            return redirect(self._get_preview_url(candidate_ids))
+
+        messages.success(
+            request,
+            f"{len(breeds)}件のLLM生成候補を確認済みtaxonomyデータとして登録しました。",
+        )
+        return redirect("txo:llm_candidate_list")
+
+    def _get_candidate_ids(self, request) -> list[int]:
+        candidate_ids = []
+        for raw_id in request.POST.get("candidate_ids", "").split(","):
+            if raw_id.isdigit():
+                candidate_ids.append(int(raw_id))
+        return candidate_ids
+
+    def _get_preview_url(self, candidate_ids: list[int]) -> str:
+        joined_ids = ",".join(str(candidate_id) for candidate_id in candidate_ids)
+        return f"{reverse('txo:llm_candidate_new')}?candidate_ids={joined_ids}"
 
 
 class LLMTaxonomyCandidateRejectView(View):
