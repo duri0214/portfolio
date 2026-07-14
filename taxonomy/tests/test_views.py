@@ -1315,8 +1315,9 @@ class TaxonomyBreedCreateViewTest(TestCase):
         シナリオ:
         - 入力: プレビュー中のレビュー待ち候補2件と管理者ユーザー。
         - 処理: すべて承認ボタンをPOSTする。
-        - 期待値: 2件とも確認済みtaxonomyデータとして登録されること。
+        - 期待値: 登録済み品種は再利用し、2件とも確認済みtaxonomyデータとして登録されること。
         """
+        existing_breed = self._create_breed("まとめ登録ミミズ1")
         first_candidate = self._create_candidate(
             breed_name="まとめ登録ミミズ1",
             species_name="まとめ登録ミミズ1",
@@ -1343,12 +1344,14 @@ class TaxonomyBreedCreateViewTest(TestCase):
         first_candidate.refresh_from_db()
         second_candidate.refresh_from_db()
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(first_candidate.approved_breed, existing_breed)
         self.assertEqual(
             first_candidate.status, LLMTaxonomyCandidate.ReviewStatus.APPROVED
         )
         self.assertEqual(
             second_candidate.status, LLMTaxonomyCandidate.ReviewStatus.APPROVED
         )
+        self.assertEqual(Breed.objects.filter(name="まとめ登録ミミズ1").count(), 1)
         self.assertTrue(Breed.objects.filter(name="まとめ登録ミミズ1").exists())
         self.assertTrue(Breed.objects.filter(name="まとめ登録ミミズ2").exists())
         self.assertContains(

@@ -25,10 +25,6 @@ class LLMTaxonomyCandidateReviewService:
         """
         candidate = LLMTaxonomyCandidateReviewService._get_candidate(candidate_id)
         LLMTaxonomyCandidateReviewService._validate_pending(candidate)
-        if LLMTaxonomyCandidateRepository.breed_exists(candidate.breed_name):
-            raise LLMTaxonomyCandidateReviewError(
-                "この名前の品種はすでに登録済みです。"
-            )
         return LLMTaxonomyCandidateRepository.approve(candidate, reviewer)
 
     @staticmethod

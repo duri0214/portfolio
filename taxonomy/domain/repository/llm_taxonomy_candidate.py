@@ -111,7 +111,9 @@ class LLMTaxonomyCandidateRepository:
     @transaction.atomic
     def approve(candidate: LLMTaxonomyCandidate, reviewer) -> Breed:
         """
-        候補の分類階層と品種を作成し、候補を承認済みに更新します。
+        候補の分類階層と品種を登録し、候補を承認済みに更新します。
+
+        同名の品種が既に登録済みの場合は既存品種を使い、承認操作を冪等に扱います。
         """
         kingdom = LLMTaxonomyCandidateRepository._get_or_create_root(
             Kingdom,
@@ -148,12 +150,14 @@ class LLMTaxonomyCandidateRepository:
             candidate.species_name_en,
             genus=genus,
         )
-        breed = Breed.objects.create(
+        breed, _ = Breed.objects.get_or_create(
             name=candidate.breed_name,
-            name_kana=candidate.breed_name_kana,
-            image="",
-            remark=candidate.llm_note or None,
-            species=species,
+            defaults={
+                "name_kana": candidate.breed_name_kana,
+                "image": "",
+                "remark": candidate.llm_note or None,
+                "species": species,
+            },
         )
 
         reviewed_at = timezone.now()
