@@ -67,7 +67,7 @@ Closes #<Issue番号>
 PR作成後、設定できるものを `gh` で設定する。失敗してもPR作成自体は維持し、失敗内容だけ伝える。
 
 - Assignee: `gh api user --jq .login` で取得した自分自身を設定する。
-- Label: Issueに付いているlabelをPRにも設定する。Issueにlabelがなくても、差分が `.codex/rules/` または `.codex/skills/` 配下を主対象にしており、既存の `rules-skills` ラベルがある場合はPRに設定する。
+- Label: Issueに付いているlabelをPRにも設定する。Issueにlabelがなくても、差分が `.codex/rules/` または `.codex/skills/` 配下を主対象にしており、既存の `rules-skills` ラベルがある場合は、対応 Issue とPRの両方に設定する。
 - Project: IssueのProject情報を確認し、対応するProjectへPRを追加する。
   - Issueの `projectItems` にProjectが1件だけある場合は、そのProjectを使う。
   - Issueの `projectItems` にProjectが複数ある場合は、どのProjectへPRを追加するかユーザーへ確認する。
