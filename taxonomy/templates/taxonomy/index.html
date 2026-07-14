@@ -218,7 +218,7 @@ node: 鳥綱</code></pre>
                                 Force-directed graph
                             </a>
                             を使い、親子関係を link として可視化しています。
-                            グラフの余白をドラッグすると表示位置を移動でき、点もドラッグで位置を調整できます。
+                            グラフの余白をドラッグすると表示位置を移動でき、点をドラッグすると配下の点もまとめて位置を調整できます。
                         </div>
                         <div class="d-flex flex-wrap gap-3 small text-muted mb-3" id="taxonomy-force-legend" aria-label="分類階層の凡例">
                         </div>
@@ -267,6 +267,34 @@ node: 鳥綱</code></pre>
 
                                 function nodeDepth(node) {
                                     return Number.isFinite(node.depth) ? node.depth : 0;
+                                }
+
+                                function buildDescendantMap(nodes, links) {
+                                    const nodesById = new Map(nodes.map((node) => [node.id, node]));
+                                    const childrenBySource = new Map();
+                                    links.forEach((link) => {
+                                        const sourceId = link.source.id || link.source;
+                                        const targetId = link.target.id || link.target;
+                                        if (!childrenBySource.has(sourceId)) {
+                                            childrenBySource.set(sourceId, []);
+                                        }
+                                        childrenBySource.get(sourceId).push(targetId);
+                                    });
+
+                                    return new Map(nodes.map((node) => {
+                                        const descendants = [];
+                                        const childIds = [...(childrenBySource.get(node.id) || [])];
+                                        while (childIds.length > 0) {
+                                            const childId = childIds.shift();
+                                            const childNode = nodesById.get(childId);
+                                            if (!childNode) {
+                                                continue;
+                                            }
+                                            descendants.push(childNode);
+                                            childIds.push(...(childrenBySource.get(childId) || []));
+                                        }
+                                        return [node.id, descendants];
+                                    }));
                                 }
 
                                 function buildVisibleGraph(searchText, maxRank) {
@@ -383,6 +411,11 @@ node: 鳥綱</code></pre>
                                         .force("x", d3.forceX((node) => width * (0.16 + nodeDepth(node) * 0.105)).strength(0.08))
                                         .force("y", d3.forceY(height / 2).strength(0.05))
                                         .force("collide", d3.forceCollide().radius((node) => node.rank === "breed" ? 28 : 22).iterations(2));
+                                    const descendantsByNodeId = buildDescendantMap(graph.nodes, graph.links);
+
+                                    function getDragGroup(node) {
+                                        return [node, ...(descendantsByNodeId.get(node.id) || [])];
+                                    }
 
                                     const link = viewport
                                         .append("g")
@@ -404,19 +437,27 @@ node: 鳥綱</code></pre>
                                                     if (!event.active) {
                                                         simulation.alphaTarget(0.3).restart();
                                                     }
-                                                    node.fx = node.x;
-                                                    node.fy = node.y;
+                                                    node.dragGroup = getDragGroup(node).map((groupNode) => ({
+                                                        node: groupNode,
+                                                        offsetX: (groupNode.x || 0) - event.x,
+                                                        offsetY: (groupNode.y || 0) - event.y,
+                                                    }));
+                                                    node.dragGroup.forEach(({node: groupNode}) => {
+                                                        groupNode.fx = groupNode.x;
+                                                        groupNode.fy = groupNode.y;
+                                                    });
                                                 })
                                                 .on("drag", (event, node) => {
-                                                    node.fx = event.x;
-                                                    node.fy = event.y;
+                                                    (node.dragGroup || []).forEach(({node: groupNode, offsetX, offsetY}) => {
+                                                        groupNode.fx = event.x + offsetX;
+                                                        groupNode.fy = event.y + offsetY;
+                                                    });
                                                 })
                                                 .on("end", (event, node) => {
                                                     if (!event.active) {
                                                         simulation.alphaTarget(0);
                                                     }
-                                                    node.fx = null;
-                                                    node.fy = null;
+                                                    node.dragGroup = null;
                                                 })
                                         )
                                         .on("click", (event, node) => {
