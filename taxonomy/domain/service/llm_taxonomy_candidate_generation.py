@@ -125,6 +125,8 @@ class LLMTaxonomyCandidateGenerationService:
             "species_nameは候補ごとに分類学上正しい種名にしてください。たとえばアジアミツバチならspecies_nameはアジアミツバチまたはApis ceranaにし、ニホンミツバチにしないでください。\n"
             "species_nameはJSON配列内で全件異なる値にしてください。\n"
             "breed_nameは画面に出すキャプションです。breed_nameにはspecies_nameと同じ値を入れてください。\n"
+            "species_nameやbreed_nameがBetta splendensのような学名で、species_name_enがSiamese fighting fishのような別表記の英名・通称になる場合は、llm_noteに両者が同じ種を指す根拠と確認元を短く書いてください。\n"
+            "同じ種の根拠を書けない場合は、species_name_enを空にするか、その候補を返さないでください。\n"
             "ニホンミツバチのような亜種、地域個体群、飼育系統は候補にしないでください。\n"
             "コリアナ系統 (Apis cerana koreana) のような、地域名から作った未確認の亜種名・系統名は返さないでください。\n"
             "出典で確認できる正式な種名または一般的な和名だけを返してください。\n"
