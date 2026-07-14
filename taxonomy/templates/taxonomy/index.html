@@ -8,15 +8,55 @@
         }
 
         #chicken-classification-chart,
-        #chicken-classification-chart .chart,
         #chicken-classification-chart svg {
             max-width: 100%;
         }
 
-        #chicken-classification-chart .taxonomy-node-marker {
-            fill: #111;
-            stroke: #111;
-            stroke-width: 1px;
+        #chicken-classification-chart {
+            min-height: 560px;
+            position: relative;
+        }
+
+        #chicken-classification-chart svg {
+            background: #f8fafc;
+            border: 1px solid #e9ecef;
+            border-radius: 0.375rem;
+            min-height: 560px;
+        }
+
+        .taxonomy-force-link {
+            stroke: #adb5bd;
+            stroke-opacity: 0.72;
+            stroke-width: 1.4px;
+        }
+
+        .taxonomy-force-node {
+            cursor: grab;
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+
+        .taxonomy-force-node:active {
+            cursor: grabbing;
+        }
+
+        .taxonomy-force-label {
+            fill: #212529;
+            font-size: 11px;
+            paint-order: stroke;
+            pointer-events: none;
+            stroke: #f8fafc;
+            stroke-linejoin: round;
+            stroke-width: 3px;
+        }
+
+        .taxonomy-force-legend-swatch {
+            display: inline-block;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            margin-right: 0.25rem;
+            vertical-align: -0.05rem;
         }
 
         .taxonomy-nesting-diagram {
@@ -130,32 +170,33 @@ node: 鳥綱</code></pre>
                             <div>
                                 <h2 class="h5 mb-1">分類グラフ</h2>
                                 <p class="text-muted small mb-0">
-                                    大量データ時は検索と階層表示を使って、目的の分類だけを絞り込めます。
+                                    nodes/edges 形式の分類データを Force-directed graph として表示します。
                                 </p>
                             </div>
                             <div class="d-flex flex-wrap gap-2 align-items-end">
                                 <div>
-                                    <label class="form-label small mb-1" for="taxonomy-tree-search">検索</label>
+                                    <label class="form-label small mb-1" for="taxonomy-force-search">検索</label>
                                     <input
                                             class="form-control form-control-sm"
-                                            id="taxonomy-tree-search"
+                                            id="taxonomy-force-search"
                                             type="search"
                                             placeholder="分類名・品種名"
                                     >
                                 </div>
                                 <div>
-                                    <label class="form-label small mb-1" for="taxonomy-tree-depth">表示階層</label>
-                                    <select class="form-select form-select-sm" id="taxonomy-tree-depth">
+                                    <label class="form-label small mb-1" for="taxonomy-force-depth">表示階層</label>
+                                    <select class="form-select form-select-sm" id="taxonomy-force-depth">
                                         <option value="all">すべて</option>
-                                        <option value="2">門まで</option>
-                                        <option value="3">綱まで</option>
-                                        <option value="4">科まで</option>
-                                        <option value="5">属まで</option>
-                                        <option value="6">種まで</option>
-                                        <option value="7">品種まで</option>
+                                        <option value="kingdom">界まで</option>
+                                        <option value="phylum">門まで</option>
+                                        <option value="classification">綱まで</option>
+                                        <option value="family">科まで</option>
+                                        <option value="genus">属まで</option>
+                                        <option value="species">種まで</option>
+                                        <option value="breed">品種まで</option>
                                     </select>
                                 </div>
-                                <button class="btn btn-outline-secondary btn-sm" id="taxonomy-tree-reset" type="button">
+                                <button class="btn btn-outline-secondary btn-sm" id="taxonomy-force-reset" type="button">
                                     絞り込み解除
                                 </button>
                             </div>
@@ -163,121 +204,249 @@ node: 鳥綱</code></pre>
                     </div>
                     <div class="card-body taxonomy-chart-scroll">
                         <div class="alert alert-info small" role="note">
-                            この分類グラフは
-                            <a href="https://observablehq.com/@d3/indented-tree" target="_blank" rel="noopener noreferrer">
-                                D3 Indented tree
+                            この分類グラフは D3 の
+                            <a href="https://d3js.org/d3-force" target="_blank" rel="noopener noreferrer">
+                                Force-directed graph
                             </a>
-                            を使った樹形図として表示しています。
+                            を使い、親子関係を link として可視化しています。
+                            Radial cluster / radial tree は全階層表示に向く一方、ラベルが散りやすいため今回は見送ります。
+                        </div>
+                        <div class="d-flex flex-wrap gap-3 small text-muted mb-3" id="taxonomy-force-legend" aria-label="分類階層の凡例">
                         </div>
                         <div id="chicken-classification-chart">
-                            <div class="text">See one-liners for each transition</div>
                             <script>
-                                const originalClassificationTree = JSON.parse('{{ data|safe }}');
-                                const dataSpec = {
-                                    source: originalClassificationTree,
-                                    key: "name",
+                                const taxonomyGraphData = JSON.parse('{{ graph_data|safe }}');
+                                const taxonomyRankOrder = [
+                                    "root",
+                                    "kingdom",
+                                    "phylum",
+                                    "classification",
+                                    "family",
+                                    "genus",
+                                    "species",
+                                    "breed",
+                                ];
+                                const taxonomyRankLabels = {
+                                    root: "root",
+                                    kingdom: "界",
+                                    phylum: "門",
+                                    classification: "綱",
+                                    family: "科",
+                                    genus: "属",
+                                    species: "種",
+                                    breed: "品種",
                                 };
-                                const classificationChartRoot = d3.select("#chicken-classification-chart");
-                                let chart;
-
-                                function countClassificationNodes(node) {
-                                    if (!node.children || node.children.length === 0) {
-                                        return 1;
-                                    }
-
-                                    return 1 + node.children.reduce((total, child) => total + countClassificationNodes(child), 0);
-                                }
-
-                                function fitClassificationChartHeight(source) {
-                                    const chartNode = chart.node();
-                                    const svg = chartNode.querySelector("svg");
-                                    if (!svg) {
-                                        return;
-                                    }
-
-                                    const rowHeight = 30;
-                                    const verticalPadding = 96;
-                                    const contentHeight = countClassificationNodes(source) * rowHeight + verticalPadding;
-                                    chartNode.style.height = `${contentHeight}px`;
-                                    svg.setAttribute("height", contentHeight);
-                                    svg.style.height = `${contentHeight}px`;
-                                }
-
-                                const taxonomyTreeSearch = document.getElementById("taxonomy-tree-search");
-                                const taxonomyTreeDepth = document.getElementById("taxonomy-tree-depth");
-                                const taxonomyTreeReset = document.getElementById("taxonomy-tree-reset");
+                                const taxonomyRankColors = {
+                                    root: "#495057",
+                                    kingdom: "#0d6efd",
+                                    phylum: "#20c997",
+                                    classification: "#fd7e14",
+                                    family: "#d63384",
+                                    genus: "#6f42c1",
+                                    species: "#198754",
+                                    breed: "#dc3545",
+                                };
+                                const taxonomyForceRoot = d3.select("#chicken-classification-chart");
+                                const taxonomyForceSearch = document.getElementById("taxonomy-force-search");
+                                const taxonomyForceDepth = document.getElementById("taxonomy-force-depth");
+                                const taxonomyForceReset = document.getElementById("taxonomy-force-reset");
+                                const taxonomyForceLegend = document.getElementById("taxonomy-force-legend");
 
                                 function normalizeTaxonomyText(value) {
                                     return value.toLowerCase().trim();
                                 }
 
-                                function appendClassificationNodeMarker(selection) {
-                                    selection
-                                        .append("circle")
-                                        .attr("class", "node-image taxonomy-node-marker")
-                                        .attr("r", 4)
-                                        .attr("cx", 0)
-                                        .attr("cy", 0);
+                                function rankDepth(rank) {
+                                    return taxonomyRankOrder.indexOf(rank);
                                 }
 
-                                function createIndentedTreeChart() {
-                                    return d3
-                                        .indentedTree(dataSpec)
-                                        .nodeImageSelection(appendClassificationNodeMarker)
-                                        .nodeLabelPadding(14);
-                                }
+                                function buildVisibleGraph(searchText, maxRank) {
+                                    const maxDepth = maxRank === "all" ? Infinity : rankDepth(maxRank);
+                                    const nodesById = new Map(taxonomyGraphData.nodes.map((node) => [node.id, node]));
+                                    const parentByTarget = new Map();
+                                    const childrenBySource = new Map();
 
-                                function filterClassificationTree(node, depth, searchText, maxDepth) {
-                                    const children = node.children || [];
-                                    const shouldStopByDepth = maxDepth !== "all" && depth >= Number(maxDepth);
-                                    const filteredChildren = shouldStopByDepth ? [] : children
-                                        .map((child) => filterClassificationTree(child, depth + 1, searchText, maxDepth))
-                                        .filter((child) => child !== null);
-                                    const ownName = normalizeTaxonomyText(node.name || "");
-                                    const ownMatch = !searchText || ownName.includes(searchText);
-                                    const childMatch = filteredChildren.length > 0;
+                                    taxonomyGraphData.edges.forEach((edge) => {
+                                        parentByTarget.set(edge.target, edge.source);
+                                        if (!childrenBySource.has(edge.source)) {
+                                            childrenBySource.set(edge.source, []);
+                                        }
+                                        childrenBySource.get(edge.source).push(edge.target);
+                                    });
 
-                                    if (node.name !== "root" && !ownMatch && !childMatch) {
-                                        return null;
+                                    const visibleIds = new Set();
+                                    taxonomyGraphData.nodes.forEach((node) => {
+                                        if (rankDepth(node.rank) <= maxDepth && node.rank !== "root") {
+                                            visibleIds.add(node.id);
+                                        }
+                                    });
+
+                                    if (searchText) {
+                                        const matchedIds = new Set();
+                                        taxonomyGraphData.nodes.forEach((node) => {
+                                            if (rankDepth(node.rank) <= maxDepth && normalizeTaxonomyText(node.name || "").includes(searchText)) {
+                                                matchedIds.add(node.id);
+                                            }
+                                        });
+                                        visibleIds.clear();
+                                        matchedIds.forEach((id) => {
+                                            let currentId = id;
+                                            while (currentId) {
+                                                const currentNode = nodesById.get(currentId);
+                                                if (currentNode && currentNode.rank !== "root" && rankDepth(currentNode.rank) <= maxDepth) {
+                                                    visibleIds.add(currentId);
+                                                }
+                                                currentId = parentByTarget.get(currentId);
+                                            }
+                                            (childrenBySource.get(id) || []).forEach((childId) => {
+                                                const childNode = nodesById.get(childId);
+                                                if (childNode && rankDepth(childNode.rank) <= maxDepth) {
+                                                    visibleIds.add(childId);
+                                                }
+                                            });
+                                        });
                                     }
 
-                                    return {
-                                        name: node.name,
-                                        children: filteredChildren,
-                                    };
+                                    const nodes = taxonomyGraphData.nodes
+                                        .filter((node) => visibleIds.has(node.id))
+                                        .map((node) => ({...node}));
+                                    const links = taxonomyGraphData.edges
+                                        .filter((edge) => visibleIds.has(edge.source) && visibleIds.has(edge.target))
+                                        .map((edge) => ({...edge}));
+
+                                    return {nodes, links};
                                 }
 
-                                function renderClassificationChart() {
-                                    const searchText = normalizeTaxonomyText(taxonomyTreeSearch.value);
-                                    const maxDepth = taxonomyTreeDepth.value;
-                                    const filteredTree = filterClassificationTree(originalClassificationTree, 0, searchText, maxDepth);
-                                    dataSpec.source = filteredTree || {name: "root", children: []};
-                                    classificationChartRoot.selectAll(".chart").remove();
-                                    classificationChartRoot.selectAll(".taxonomy-chart-empty").remove();
+                                function renderTaxonomyForceLegend() {
+                                    taxonomyForceLegend.innerHTML = "";
+                                    taxonomyRankOrder
+                                        .filter((rank) => rank !== "root")
+                                        .forEach((rank) => {
+                                            const item = document.createElement("span");
+                                            item.innerHTML = `<span class="taxonomy-force-legend-swatch" style="background:${taxonomyRankColors[rank]}"></span>${taxonomyRankLabels[rank]}`;
+                                            taxonomyForceLegend.appendChild(item);
+                                        });
+                                }
 
-                                    if (dataSpec.source.children.length === 0) {
-                                        classificationChartRoot
+                                function renderTaxonomyForceGraph() {
+                                    const searchText = normalizeTaxonomyText(taxonomyForceSearch.value);
+                                    const maxRank = taxonomyForceDepth.value;
+                                    const graph = buildVisibleGraph(searchText, maxRank);
+                                    taxonomyForceRoot.selectAll("*").remove();
+
+                                    if (graph.nodes.length === 0) {
+                                        taxonomyForceRoot
                                             .append("p")
                                             .attr("class", "taxonomy-chart-empty text-muted small mb-0")
                                             .text("一致する分類がありません。");
                                         return;
                                     }
 
-                                    chart = classificationChartRoot
-                                        .append("div")
-                                        .attr("class", "chart")
-                                        .call(createIndentedTreeChart());
-                                    requestAnimationFrame(() => fitClassificationChartHeight(dataSpec.source));
+                                    const container = taxonomyForceRoot.node();
+                                    const width = Math.max(container.clientWidth, 320);
+                                    const height = 560;
+                                    const svg = taxonomyForceRoot
+                                        .append("svg")
+                                        .attr("role", "img")
+                                        .attr("aria-label", "分類の Force-directed graph")
+                                        .attr("width", "100%")
+                                        .attr("height", height)
+                                        .attr("viewBox", [0, 0, width, height]);
+                                    const viewport = svg.append("g");
+                                    svg.call(
+                                        d3.zoom()
+                                            .scaleExtent([0.45, 3])
+                                            .on("zoom", (event) => viewport.attr("transform", event.transform))
+                                    );
+
+                                    const simulation = d3.forceSimulation(graph.nodes)
+                                        .force("link", d3.forceLink(graph.links).id((node) => node.id).distance((link) => {
+                                            const sourceRank = link.source.rank || "root";
+                                            const targetRank = link.target.rank || "root";
+                                            return Math.max(68, 118 - Math.min(rankDepth(sourceRank), rankDepth(targetRank)) * 7);
+                                        }).strength(0.86))
+                                        .force("charge", d3.forceManyBody().strength(-220))
+                                        .force("center", d3.forceCenter(width / 2, height / 2))
+                                        .force("x", d3.forceX((node) => width * (0.16 + rankDepth(node.rank) * 0.105)).strength(0.08))
+                                        .force("y", d3.forceY(height / 2).strength(0.05))
+                                        .force("collide", d3.forceCollide().radius((node) => node.rank === "breed" ? 28 : 22).iterations(2));
+
+                                    const link = viewport
+                                        .append("g")
+                                        .selectAll("line")
+                                        .data(graph.links)
+                                        .join("line")
+                                        .attr("class", "taxonomy-force-link");
+                                    const node = viewport
+                                        .append("g")
+                                        .selectAll("circle")
+                                        .data(graph.nodes)
+                                        .join("circle")
+                                        .attr("class", "taxonomy-force-node")
+                                        .attr("r", (node) => node.rank === "breed" ? 8 : 6)
+                                        .attr("fill", (node) => taxonomyRankColors[node.rank] || "#6c757d")
+                                        .call(
+                                            d3.drag()
+                                                .on("start", (event, node) => {
+                                                    if (!event.active) {
+                                                        simulation.alphaTarget(0.3).restart();
+                                                    }
+                                                    node.fx = node.x;
+                                                    node.fy = node.y;
+                                                })
+                                                .on("drag", (event, node) => {
+                                                    node.fx = event.x;
+                                                    node.fy = event.y;
+                                                })
+                                                .on("end", (event, node) => {
+                                                    if (!event.active) {
+                                                        simulation.alphaTarget(0);
+                                                    }
+                                                    node.fx = null;
+                                                    node.fy = null;
+                                                })
+                                        )
+                                        .on("click", (event, node) => {
+                                            if (node.detail_url) {
+                                                window.location.href = node.detail_url;
+                                            }
+                                        });
+                                    node.append("title")
+                                        .text((node) => `${taxonomyRankLabels[node.rank] || node.rank}: ${node.name}`);
+                                    const label = viewport
+                                        .append("g")
+                                        .selectAll("text")
+                                        .data(graph.nodes)
+                                        .join("text")
+                                        .attr("class", "taxonomy-force-label")
+                                        .attr("dx", 10)
+                                        .attr("dy", "0.35em")
+                                        .text((node) => node.name);
+
+                                    simulation.on("tick", () => {
+                                        link
+                                            .attr("x1", (edge) => edge.source.x)
+                                            .attr("y1", (edge) => edge.source.y)
+                                            .attr("x2", (edge) => edge.target.x)
+                                            .attr("y2", (edge) => edge.target.y);
+                                        node
+                                            .attr("cx", (node) => node.x)
+                                            .attr("cy", (node) => node.y);
+                                        label
+                                            .attr("x", (node) => node.x)
+                                            .attr("y", (node) => node.y);
+                                    });
                                 }
 
-                                taxonomyTreeSearch.addEventListener("input", renderClassificationChart);
-                                taxonomyTreeDepth.addEventListener("change", renderClassificationChart);
-                                taxonomyTreeReset.addEventListener("click", () => {
-                                    taxonomyTreeSearch.value = "";
-                                    taxonomyTreeDepth.value = "all";
-                                    renderClassificationChart();
+                                renderTaxonomyForceLegend();
+                                taxonomyForceSearch.addEventListener("input", renderTaxonomyForceGraph);
+                                taxonomyForceDepth.addEventListener("change", renderTaxonomyForceGraph);
+                                taxonomyForceReset.addEventListener("click", () => {
+                                    taxonomyForceSearch.value = "";
+                                    taxonomyForceDepth.value = "all";
+                                    renderTaxonomyForceGraph();
                                 });
-                                renderClassificationChart();
+                                renderTaxonomyForceGraph();
                             </script>
                         </div>
                     </div>

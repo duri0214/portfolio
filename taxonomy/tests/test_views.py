@@ -34,12 +34,12 @@ class TaxonomyIndexViewTest(TestCase):
         shutil.rmtree(cls._overridden_settings["MEDIA_ROOT"], ignore_errors=True)
         super().tearDownClass()
 
-    def test_index_page_wraps_classification_chart_in_scroll_area(self):
+    def test_index_page_wraps_force_graph_in_scroll_area(self):
         """
         シナリオ:
         - 入力: taxonomyの分類データが空でも表示できるDB状態。
-        - 処理: 分類グラフを含むtaxonomyトップページを表示する。
-        - 期待値: 分類グラフが途中で切れないよう、スクロール可能な領域で囲まれていること。
+        - 処理: Force-directed graphを含むtaxonomyトップページを表示する。
+        - 期待値: 分類グラフが画面幅内で表示できる領域で囲まれていること。
         """
         response = self.client.get(reverse("txo:index"))
 
@@ -47,33 +47,39 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "taxonomy-chart-scroll")
         self.assertContains(response, "overflow-x: hidden")
         self.assertContains(response, "overflow-y: visible")
-        self.assertContains(response, "countClassificationNodes")
-        self.assertContains(response, "fitClassificationChartHeight")
+        self.assertContains(response, "min-height: 560px")
+        self.assertContains(response, "renderTaxonomyForceGraph")
+        self.assertContains(response, "d3.forceSimulation")
 
-    def test_index_page_shows_d3_tree_filter_controls(self):
+    def test_index_page_shows_force_directed_graph_controls(self):
         """
         シナリオ:
         - 入力: taxonomyの分類データが空でも表示できるDB状態。
         - 処理: taxonomyトップページを表示する。
-        - 期待値: 既存D3分類グラフを絞り込む検索、階層絞り込み、解除操作が表示されること。
+        - 期待値: Force-directed graphを絞り込む検索、階層絞り込み、解除操作が表示されること。
         """
         response = self.client.get(reverse("txo:index"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'id="taxonomy-tree-search"')
-        self.assertContains(response, 'id="taxonomy-tree-depth"')
-        self.assertContains(response, 'id="taxonomy-tree-reset"')
+        self.assertContains(response, 'id="taxonomy-force-search"')
+        self.assertContains(response, 'id="taxonomy-force-depth"')
+        self.assertContains(response, 'id="taxonomy-force-reset"')
         self.assertContains(response, "分類名・品種名")
         self.assertContains(response, "表示階層")
         self.assertContains(response, "門まで")
         self.assertContains(response, "絞り込み解除")
-        self.assertContains(response, "D3 Indented tree")
-        self.assertContains(response, "https://observablehq.com/@d3/indented-tree")
-        self.assertContains(response, "filterClassificationTree")
-        self.assertContains(response, "renderClassificationChart")
-        self.assertContains(response, "indentedTree(dataSpec)")
-        self.assertContains(response, "nodeImageSelection")
-        self.assertContains(response, "taxonomy-node-marker")
+        self.assertContains(response, "Force-directed graph")
+        self.assertContains(response, "https://d3js.org/d3-force")
+        self.assertContains(response, "Radial cluster / radial tree")
+        self.assertContains(response, "taxonomyGraphData")
+        self.assertContains(response, "buildVisibleGraph")
+        self.assertContains(response, "rankDepth")
+        self.assertContains(response, "forceLink")
+        self.assertContains(response, "forceCollide")
+        self.assertContains(response, "taxonomy-force-legend")
+        self.assertContains(response, "taxonomy-force-node")
+        self.assertNotContains(response, "D3 Indented tree")
+        self.assertNotContains(response, "indentedTree(dataSpec)")
         self.assertNotContains(response, "taxonomy-tree-collapse")
         self.assertNotContains(response, "taxonomy-tree-list")
 
