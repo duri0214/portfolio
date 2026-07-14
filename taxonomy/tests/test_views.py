@@ -78,6 +78,8 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "forceLink")
         self.assertContains(response, "forceCollide")
         self.assertContains(response, "taxonomy-force-legend")
+        self.assertContains(response, "taxonomyLegendRanks")
+        self.assertContains(response, "taxonomy-force-legend-separator")
         self.assertContains(response, "taxonomy-force-node")
         self.assertNotContains(response, "D3 Indented tree")
         self.assertNotContains(response, "indentedTree(dataSpec)")

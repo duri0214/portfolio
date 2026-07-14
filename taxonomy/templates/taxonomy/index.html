@@ -59,6 +59,10 @@
             vertical-align: -0.05rem;
         }
 
+        .taxonomy-force-legend-separator {
+            color: #6c757d;
+        }
+
         .taxonomy-nesting-diagram {
             white-space: pre-wrap;
         }
@@ -320,13 +324,18 @@ node: 鳥綱</code></pre>
 
                                 function renderTaxonomyForceLegend() {
                                     taxonomyForceLegend.innerHTML = "";
-                                    taxonomyRankOrder
-                                        .filter((rank) => rank !== "root")
-                                        .forEach((rank) => {
-                                            const item = document.createElement("span");
-                                            item.innerHTML = `<span class="taxonomy-force-legend-swatch" style="background:${taxonomyRankColors[rank]}"></span>${taxonomyRankLabels[rank]}`;
-                                            taxonomyForceLegend.appendChild(item);
-                                        });
+                                    const taxonomyLegendRanks = taxonomyRankOrder.filter((rank) => rank !== "root");
+                                    taxonomyLegendRanks.forEach((rank, index) => {
+                                        const item = document.createElement("span");
+                                        item.innerHTML = `<span class="taxonomy-force-legend-swatch" style="background:${taxonomyRankColors[rank]}"></span>${taxonomyRankLabels[rank]}`;
+                                        taxonomyForceLegend.appendChild(item);
+                                        if (index < taxonomyLegendRanks.length - 1) {
+                                            const separator = document.createElement("span");
+                                            separator.className = "taxonomy-force-legend-separator";
+                                            separator.textContent = ">";
+                                            taxonomyForceLegend.appendChild(separator);
+                                        }
+                                    });
                                 }
 
                                 function renderTaxonomyForceGraph() {
