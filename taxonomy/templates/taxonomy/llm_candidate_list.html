@@ -1,0 +1,226 @@
+{% extends "taxonomy/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'txo:index' %}">分類学</a></li>
+                <li class="breadcrumb-item active" aria-current="page">LLM生成候補</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h1 class="h3 mb-1">LLM生成候補</h1>
+                <p class="text-muted mb-0">
+                    LLM出力は未確認候補として保存し、レビュー後に承認済みtaxonomyデータへ登録します。
+                </p>
+            </div>
+            <form id="llm-candidate-generate-form" method="post" action="{% url 'txo:llm_candidate_list' %}">
+                {% csrf_token %}
+                <button id="llm-candidate-generate-button" class="btn btn-primary" type="submit" data-loading-label="{% if has_pending_candidates %}表示中...{% else %}生成中...{% endif %}" {% if not request.user.is_superuser %}disabled{% endif %}>
+                    {% if has_pending_candidates %}
+                        レビュー待ちのLLM生成候補を開く
+                    {% else %}
+                        今回のおすすめ候補を生成
+                    {% endif %}
+                </button>
+                <div id="llm-candidate-generate-status" class="text-muted small text-end mt-2 d-none" aria-live="polite">
+                    {% if has_pending_candidates %}
+                        レビュー待ちのLLM生成候補を開いています。
+                    {% else %}
+                        属階層1本と複数の候補を生成中です。
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        {% if not request.user.is_superuser %}
+            <div class="alert alert-info" role="alert">
+                管理者権限が必要なため、生成ボタンは無効化されています。
+            </div>
+        {% endif %}
+
+        {% if candidate_previews %}
+            <section class="mb-5">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <h2 class="h4 mb-0">今回生成された品種</h2>
+                    <div class="d-flex flex-wrap gap-2">
+                        <form method="post" action="{% url 'txo:llm_candidate_approve_all' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
+                            <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                すべて承認
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'txo:llm_candidate_reject_all' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
+                            <button class="btn btn-danger" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                すべて却下
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {% for preview in candidate_previews %}
+                    {% with candidate=preview.candidate metadata_form=preview.metadata_form %}
+                        <div class="border rounded p-3 mb-4">
+                            <form method="post" action="{% url 'txo:llm_candidate_approve' candidate.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="candidate_ids" value="{{ preview_candidate_ids }}">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                                    <div>
+                                        <h3 class="h5 mb-1">{{ candidate.breed_name }}</h3>
+                                        <div class="text-muted small">{{ candidate.breed_name_kana|default:"よみがな未設定" }}</div>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-success" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                            承認
+                                        </button>
+                                        <button class="btn btn-danger" type="submit" formaction="{% url 'txo:llm_candidate_reject' candidate.pk %}" {% if not request.user.is_superuser %}disabled{% endif %}>
+                                            却下
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-bordered align-middle">
+                                        <tbody>
+                                        <tr>
+                                            <th scope="row" class="table-light w-25">分類階層</th>
+                                            <td>
+                                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                                    <span><span class="badge text-bg-secondary">界</span> {{ candidate.kingdom_name }}</span>
+                                                    <span class="text-muted">&gt;</span>
+                                                    <span><span class="badge text-bg-secondary">門</span> {{ candidate.phylum_name }}</span>
+                                                    <span class="text-muted">&gt;</span>
+                                                    <span><span class="badge text-bg-secondary">綱</span> {{ candidate.classification_name }}</span>
+                                                    <span class="text-muted">&gt;</span>
+                                                    <span><span class="badge text-bg-secondary">科</span> {{ candidate.family_name }}</span>
+                                                    <span class="text-muted">&gt;</span>
+                                                    <span><span class="badge text-bg-secondary">属</span> {{ candidate.genus_name }}</span>
+                                                    <span class="text-muted">&gt;</span>
+                                                    <span><span class="badge text-bg-secondary">種</span> {{ candidate.species_name }}</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row" class="table-light">英名</th>
+                                            <td>
+                                                {{ candidate.kingdom_name_en }} &gt; {{ candidate.phylum_name_en }} &gt;
+                                                {{ candidate.classification_name_en }} &gt; {{ candidate.family_name_en }} &gt;
+                                                {{ candidate.genus_name_en }} &gt; {{ candidate.species_name_en }}
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.gbif_taxon_search_url }}" target="_blank" rel="noopener noreferrer">
+                                        GBIFで分類を点検
+                                    </a>
+                                    {% if candidate.source_url %}
+                                        <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.source_url }}" target="_blank" rel="noopener noreferrer">
+                                            Wikipediaで出典を開く
+                                        </a>
+                                    {% endif %}
+                                </div>
+
+                                <div class="row g-3">
+                                    {% for field in metadata_form %}
+                                        <div class="{% if field.name == 'llm_note' %}col-12{% else %}col-md-6{% endif %}">
+                                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                            {{ field }}
+                                            <div class="text-danger small mt-1">{{ field.errors }}</div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </form>
+                        </div>
+                    {% endwith %}
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th scope="col">候補</th>
+                    <th scope="col">分類階層</th>
+                    <th scope="col">状態</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for candidate in candidates %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ candidate.breed_name }}</div>
+                            <div class="text-muted small">{{ candidate.breed_name_kana|default:"よみがな未設定" }}</div>
+                            {% if candidate.external_taxon_id %}
+                                <div class="small">外部ID: {{ candidate.external_taxon_id }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="small">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span><span class="badge text-bg-secondary">界</span> {{ candidate.kingdom_name }}</span>
+                                <span class="text-muted">&gt;</span>
+                                <span><span class="badge text-bg-secondary">門</span> {{ candidate.phylum_name }}</span>
+                                <span class="text-muted">&gt;</span>
+                                <span><span class="badge text-bg-secondary">綱</span> {{ candidate.classification_name }}</span>
+                                <span class="text-muted">&gt;</span>
+                                <span><span class="badge text-bg-secondary">科</span> {{ candidate.family_name }}</span>
+                                <span class="text-muted">&gt;</span>
+                                <span><span class="badge text-bg-secondary">属</span> {{ candidate.genus_name }}</span>
+                                <span class="text-muted">&gt;</span>
+                                <span><span class="badge text-bg-secondary">種</span> {{ candidate.species_name }}</span>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.gbif_taxon_search_url }}" target="_blank" rel="noopener noreferrer">
+                                    GBIFで分類を点検
+                                </a>
+                                {% if candidate.source_url %}
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ candidate.source_url }}" target="_blank" rel="noopener noreferrer">
+                                        Wikipediaで出典を開く
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if candidate.status == 'pending' %}bg-warning text-dark{% elif candidate.status == 'approved' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ candidate.get_status_display }}
+                            </span>
+                            {% if candidate.reviewed_at %}
+                                <div class="text-muted small">{{ candidate.reviewed_at|date:"Y-m-d H:i" }}</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-muted text-center py-4">
+                            LLM生成候補はまだありません。
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        (() => {
+            const form = document.getElementById("llm-candidate-generate-form");
+            const button = document.getElementById("llm-candidate-generate-button");
+            const status = document.getElementById("llm-candidate-generate-status");
+            if (!form || !button || !status) {
+                return;
+            }
+
+            form.addEventListener("submit", () => {
+                button.disabled = true;
+                button.textContent = button.dataset.loadingLabel || "生成中...";
+                status.classList.remove("d-none");
+            });
+        })();
+    </script>
+{% endblock %}

@@ -21,11 +21,21 @@
                     <hr class="my-4">
                     <div class="d-flex flex-wrap gap-2">
                         <a class="btn btn-primary" href="{% url 'txo:breed_new' %}">分類を登録</a>
+                        {% if request.user.is_superuser %}
+                            <a class="btn btn-outline-primary" href="{% url 'txo:llm_candidate_list' %}">LLM生成候補</a>
+                        {% else %}
+                            <button class="btn btn-outline-primary" type="button" disabled>LLM生成候補</button>
+                        {% endif %}
                         <a class="btn btn-outline-primary" href="{% url 'txo:breed_list' %}">品種一覧</a>
                         <a class="btn btn-outline-primary" href="{% url 'txo:observation' %}">
                             <i class="fas fa-chart-area me-1"></i>鶏の観察グラフ
                         </a>
                     </div>
+                    {% if not request.user.is_superuser %}
+                        <div class="text-muted small mt-2">
+                            管理者権限が必要なため、LLM生成候補ボタンは無効化されています。
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 

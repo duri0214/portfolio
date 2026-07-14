@@ -13,6 +13,7 @@ from taxonomy.models import (
     Family,
     Genus,
     Kingdom,
+    LLMTaxonomyCandidate,
     LivestockDistributionDataset,
     NaturalMonument,
     Phylum,
@@ -294,6 +295,32 @@ class BreedForm(forms.ModelForm):
             f"{kingdom.name} > {phylum.name} > {classification.name} > "
             f"{family.name} > {genus.name} > {species.name}"
         )
+
+
+class LLMTaxonomyCandidateGenerateForm(forms.Form):
+    """
+    LLMに分類候補を生成させるための実行フォーム。
+    """
+
+    pass
+
+
+class LLMTaxonomyCandidateMetadataForm(forms.ModelForm):
+    """
+    LLM生成候補の出典とメモだけを上書きするフォーム。
+    """
+
+    class Meta:
+        model = LLMTaxonomyCandidate
+        fields = ["source_name", "source_url", "llm_note"]
+        widgets = {
+            "llm_note": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
 
 
 class LivestockDistributionDatasetForm(forms.ModelForm):
