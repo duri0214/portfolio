@@ -13,6 +13,7 @@ from taxonomy.models import (
     Family,
     Genus,
     Kingdom,
+    LLMTaxonomyCandidate,
     LivestockDistributionDataset,
     NaturalMonument,
     Phylum,
@@ -294,6 +295,51 @@ class BreedForm(forms.ModelForm):
             f"{kingdom.name} > {phylum.name} > {classification.name} > "
             f"{family.name} > {genus.name} > {species.name}"
         )
+
+
+class LLMTaxonomyCandidateForm(forms.ModelForm):
+    """
+    LLM生成分類候補を未確認データとして保存するフォーム。
+    """
+
+    class Meta:
+        model = LLMTaxonomyCandidate
+        fields = [
+            "kingdom_name",
+            "kingdom_name_en",
+            "phylum_name",
+            "phylum_name_en",
+            "classification_name",
+            "classification_name_en",
+            "family_name",
+            "family_name_en",
+            "genus_name",
+            "genus_name_en",
+            "species_name",
+            "species_name_en",
+            "breed_name",
+            "breed_name_kana",
+            "source_name",
+            "source_url",
+            "external_taxon_id",
+            "llm_note",
+            "review_note",
+        ]
+        widgets = {
+            "llm_note": forms.Textarea(attrs={"rows": 4}),
+            "review_note": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
+
+    def clean_breed_name(self):
+        breed_name = self.cleaned_data["breed_name"]
+        if Breed.objects.filter(name=breed_name).exists():
+            raise forms.ValidationError("この名前の品種は登録済みです。")
+        return breed_name
 
 
 class LivestockDistributionDatasetForm(forms.ModelForm):

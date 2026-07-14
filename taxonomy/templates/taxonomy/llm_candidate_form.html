@@ -1,0 +1,55 @@
+{% extends "taxonomy/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'txo:index' %}">分類学</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'txo:llm_candidate_list' %}">LLM生成候補</a></li>
+                <li class="breadcrumb-item active" aria-current="page">候補登録</li>
+            </ol>
+        </nav>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h1 class="h3 mb-0">LLM生成候補を登録</h1>
+            <a class="btn btn-outline-secondary" href="{% url 'txo:llm_candidate_list' %}">候補一覧へ戻る</a>
+        </div>
+
+        <form method="post" class="mb-5">
+            {% csrf_token %}
+            <div class="row g-4">
+                <div class="col-12">
+                    <h2 class="h5 border-bottom pb-2">分類階層</h2>
+                </div>
+
+                {% for field in form %}
+                    {% if field.name == "breed_name" %}
+                        <div class="col-12 mt-4">
+                            <h2 class="h5 border-bottom pb-2">品種・系統・分類対象</h2>
+                        </div>
+                    {% elif field.name == "source_name" %}
+                        <div class="col-12 mt-4">
+                            <h2 class="h5 border-bottom pb-2">出典と確認メモ</h2>
+                        </div>
+                    {% endif %}
+
+                    <div class="{% if field.name == 'llm_note' or field.name == 'review_note' %}col-12{% else %}col-md-6{% endif %}">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        <div class="text-danger small mt-1">{{ field.errors }}</div>
+                    </div>
+                {% endfor %}
+
+                <div class="col-12 d-flex gap-2 justify-content-end">
+                    <a class="btn btn-outline-secondary" href="{% url 'txo:llm_candidate_list' %}">戻る</a>
+                    <button class="btn btn-primary" type="submit">レビュー待ちとして保存</button>
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock %}

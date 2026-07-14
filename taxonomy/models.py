@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -175,6 +176,107 @@ class BreedTags(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["breed", "tag"], name="breed_tag_unique")
         ]
+
+
+class LLMTaxonomyCandidate(models.Model):
+    """
+    LLMが生成した未確認の分類候補。
+
+    ユーザーがレビューする前の候補を確認済みtaxonomyデータと分けて保持し、
+    承認された候補だけをBreedと分類階層へ反映する。
+
+    Attributes:
+        status: レビュー状態。
+        kingdom_name: 界の名前。
+        kingdom_name_en: 界の英名。
+        phylum_name: 門の名前。
+        phylum_name_en: 門の英名。
+        classification_name: 綱の名前。
+        classification_name_en: 綱の英名。
+        family_name: 科の名前。
+        family_name_en: 科の英名。
+        genus_name: 属の名前。
+        genus_name_en: 属の英名。
+        species_name: 種の名前。
+        species_name_en: 種の英名。
+        breed_name: 品種・系統・分類対象名。
+        breed_name_kana: 品種・系統・分類対象名のよみがな。
+        source_name: 確認に使う出典名。
+        source_url: 確認に使う出典URL。
+        external_taxon_id: 外部taxonomyデータベース上のID。
+        llm_note: LLM生成時の補足や元出力。
+        review_note: レビュー時の確認メモ。
+        approved_breed: 承認後に作成された品種。
+        reviewed_by: 承認または却下したユーザー。
+        reviewed_at: 承認または却下した日時。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    class ReviewStatus(models.TextChoices):
+        """
+        LLM分類候補のレビュー状態。
+
+        Attributes:
+            PENDING: 未レビューの候補。
+            APPROVED: 確認済みデータへ登録された候補。
+            REJECTED: 確認済みデータへ登録しない候補。
+        """
+
+        PENDING = "pending", "レビュー待ち"
+        APPROVED = "approved", "承認済み"
+        REJECTED = "rejected", "却下"
+
+    status = models.CharField(
+        "レビュー状態",
+        max_length=20,
+        choices=ReviewStatus.choices,
+        default=ReviewStatus.PENDING,
+    )
+    kingdom_name = models.CharField("界の名前", max_length=255)
+    kingdom_name_en = models.CharField("界の英名", max_length=255, blank=True)
+    phylum_name = models.CharField("門の名前", max_length=255)
+    phylum_name_en = models.CharField("門の英名", max_length=255, blank=True)
+    classification_name = models.CharField("綱の名前", max_length=255)
+    classification_name_en = models.CharField("綱の英名", max_length=255, blank=True)
+    family_name = models.CharField("科の名前", max_length=255)
+    family_name_en = models.CharField("科の英名", max_length=255, blank=True)
+    genus_name = models.CharField("属の名前", max_length=255)
+    genus_name_en = models.CharField("属の英名", max_length=255, blank=True)
+    species_name = models.CharField("種の名前", max_length=255)
+    species_name_en = models.CharField("種の英名", max_length=255, blank=True)
+    breed_name = models.CharField("品種・系統・分類対象名", max_length=255)
+    breed_name_kana = models.CharField(
+        "品種・系統・分類対象名のよみがな", max_length=255, blank=True
+    )
+    source_name = models.CharField("出典名", max_length=255, blank=True)
+    source_url = models.URLField("出典URL", max_length=500, blank=True)
+    external_taxon_id = models.CharField("外部taxonomy ID", max_length=255, blank=True)
+    llm_note = models.TextField("LLM生成メモ", blank=True)
+    review_note = models.TextField("レビュー確認メモ", blank=True)
+    approved_breed = models.ForeignKey(
+        Breed,
+        verbose_name="承認後の品種",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="レビュー担当者",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    reviewed_at = models.DateTimeField("レビュー日時", null=True, blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["status", "-created_at"]
+
+    def __str__(self):
+        return f"{self.breed_name} ({self.get_status_display()})"
 
 
 class LivestockDistributionDataset(models.Model):

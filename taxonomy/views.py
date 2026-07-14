@@ -14,6 +14,7 @@ from django.views.generic import (
     ListView,
     TemplateView,
     UpdateView,
+    View,
 )
 
 from taxonomy.domain.breed_entity import BreedEntity
@@ -35,12 +36,25 @@ from taxonomy.domain.service.livestock_distribution_fetch import (
     SOURCE_STAT_CODE,
     SOURCE_URL,
 )
+from taxonomy.domain.service.llm_taxonomy_candidate_review import (
+    LLMTaxonomyCandidateReviewError,
+    LLMTaxonomyCandidateReviewService,
+)
 from taxonomy.domain.valueobject.taxonomy_graph import TaxonomyGraph
 from taxonomy.forms import (
     BreedForm,
+    LLMTaxonomyCandidateForm,
     TaxonomyBreedCreateForm,
 )
-from taxonomy.models import Breed, Classification, Family, Genus, Phylum, Species
+from taxonomy.models import (
+    Breed,
+    Classification,
+    Family,
+    Genus,
+    LLMTaxonomyCandidate,
+    Phylum,
+    Species,
+)
 
 
 class IndexView(TemplateView):
@@ -246,6 +260,89 @@ class TaxonomyBreedCreateView(FormView):
                 for item in Species.objects.order_by("genus_id", "name")
             ],
         }
+
+
+class LLMTaxonomyCandidateListView(ListView):
+    """
+    LLM生成分類候補をレビュー状態ごとに一覧表示するビュー。
+    """
+
+    model = LLMTaxonomyCandidate
+    template_name = "taxonomy/llm_candidate_list.html"
+    context_object_name = "candidates"
+
+    def get_queryset(self):
+        return LLMTaxonomyCandidate.objects.select_related(
+            "approved_breed",
+            "reviewed_by",
+        ).order_by("status", "-created_at")
+
+
+class LLMTaxonomyCandidateCreateView(CreateView):
+    """
+    LLM生成分類候補を未確認データとして登録するビュー。
+    """
+
+    model = LLMTaxonomyCandidate
+    form_class = LLMTaxonomyCandidateForm
+    template_name = "taxonomy/llm_candidate_form.html"
+    success_url = reverse_lazy("txo:llm_candidate_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, "LLM生成候補をレビュー待ちとして保存しました。")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(
+            self.request, "保存できませんでした。入力内容を確認してください。"
+        )
+        return super().form_invalid(form)
+
+
+class LLMTaxonomyCandidateApproveView(View):
+    """
+    LLM生成分類候補を承認し、確認済みtaxonomyデータへ登録するビュー。
+    """
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, "LLM生成候補を承認する権限がありません。")
+            return redirect("txo:llm_candidate_list")
+
+        try:
+            breed = LLMTaxonomyCandidateReviewService.approve(
+                kwargs["pk"],
+                request.user,
+            )
+        except LLMTaxonomyCandidateReviewError as error:
+            messages.error(request, str(error))
+            return redirect("txo:llm_candidate_list")
+
+        messages.success(
+            request,
+            f"{breed.name} を確認済みtaxonomyデータとして登録しました。",
+        )
+        return redirect("txo:breed_detail", pk=breed.pk)
+
+
+class LLMTaxonomyCandidateRejectView(View):
+    """
+    LLM生成分類候補を確認済みtaxonomyデータへ登録せず却下するビュー。
+    """
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, "LLM生成候補を却下する権限がありません。")
+            return redirect("txo:llm_candidate_list")
+
+        try:
+            LLMTaxonomyCandidateReviewService.reject(kwargs["pk"], request.user)
+        except LLMTaxonomyCandidateReviewError as error:
+            messages.error(request, str(error))
+            return redirect("txo:llm_candidate_list")
+
+        messages.success(request, "LLM生成候補を却下しました。")
+        return redirect("txo:llm_candidate_list")
 
 
 class BreedListView(ListView):

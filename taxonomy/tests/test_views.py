@@ -20,6 +20,7 @@ from taxonomy.models import (
     Family,
     Genus,
     Kingdom,
+    LLMTaxonomyCandidate,
     LivestockDistributionDataset,
     NaturalMonument,
     Phylum,
@@ -860,13 +861,15 @@ class TaxonomyBreedCreateViewTest(TestCase):
         シナリオ:
         - 入力: taxonomyトップページを表示できるDB状態。
         - 処理: taxonomyトップページを表示する。
-        - 期待値: 品種一覧ページへの導線が表示されること。
+        - 期待値: 品種一覧ページとLLM生成候補ページへの導線が表示されること。
         """
         response = self.client.get(reverse("txo:index"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("txo:breed_list"))
         self.assertContains(response, "品種一覧")
+        self.assertContains(response, reverse("txo:llm_candidate_list"))
+        self.assertContains(response, "LLM生成候補")
 
     def test_breed_list_shows_action_links(self):
         """
@@ -1010,6 +1013,140 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, "この名前の品種は登録済みです。")
         self.assertEqual(Breed.objects.filter(name="名古屋種").count(), 1)
 
+    def test_llm_candidate_list_shows_pending_candidate_and_disabled_review_buttons(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: レビュー待ちのLLM生成候補と非管理者ユーザー。
+        - 処理: LLM生成候補一覧ページを表示する。
+        - 期待値: 候補と出典が表示され、承認・却下ボタンはdisabledになること。
+        """
+        candidate = self._create_candidate()
+
+        response = self.client.get(reverse("txo:llm_candidate_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "LLM生成候補")
+        self.assertContains(response, candidate.breed_name)
+        self.assertContains(response, "Catalogue of Life")
+        self.assertContains(response, "レビュー待ち")
+        self.assertContains(response, "承認")
+        self.assertContains(response, "却下")
+        self.assertContains(response, "disabled")
+        self.assertContains(
+            response,
+            "管理者権限が必要なため、承認・却下ボタンは無効化されています。",
+        )
+
+    def test_create_llm_candidate(self):
+        """
+        シナリオ:
+        - 入力: LLMが出した分類候補と出典メタ情報。
+        - 処理: LLM生成候補登録フォームをPOSTする。
+        - 期待値: 確認済みtaxonomyデータではなくレビュー待ち候補として保存されること。
+        """
+        response = self.client.post(
+            reverse("txo:llm_candidate_new"),
+            data=self._candidate_post_data({"breed_name": "候補のミミズ"}),
+            follow=True,
+        )
+
+        candidate = LLMTaxonomyCandidate.objects.get(breed_name="候補のミミズ")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.PENDING)
+        self.assertFalse(Breed.objects.filter(name="候補のミミズ").exists())
+        self.assertContains(response, "LLM生成候補をレビュー待ちとして保存しました。")
+
+    def test_superuser_approves_llm_candidate_to_taxonomy_data(self):
+        """
+        シナリオ:
+        - 入力: レビュー待ち候補と管理者ユーザー。
+        - 処理: 候補の承認ボタンをPOSTする。
+        - 期待値: 分類階層と品種が作成され、候補が承認済みになること。
+        """
+        candidate = self._create_candidate(breed_name="承認するミミズ")
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_reviewer",
+            email="taxonomy_reviewer@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:llm_candidate_approve", args=[candidate.pk]),
+        )
+
+        breed = Breed.objects.select_related(
+            "species__genus__family__classification__phylum__kingdom"
+        ).get(name="承認するミミズ")
+        self.assertRedirects(response, reverse("txo:breed_detail", args=[breed.pk]))
+        candidate.refresh_from_db()
+        self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.APPROVED)
+        self.assertEqual(candidate.approved_breed, breed)
+        self.assertEqual(candidate.reviewed_by, user)
+        self.assertIsNotNone(candidate.reviewed_at)
+        self.assertEqual(breed.species.name, "フトミミズ")
+        self.assertEqual(breed.species.genus.name, "フトミミズ属")
+        self.assertEqual(
+            breed.species.genus.family.classification.phylum.kingdom.name,
+            "動物界",
+        )
+
+    def test_non_superuser_cannot_approve_llm_candidate(self):
+        """
+        シナリオ:
+        - 入力: レビュー待ち候補と一般ユーザー。
+        - 処理: 候補の承認URLへPOSTする。
+        - 期待値: 候補はレビュー待ちのまま、確認済みtaxonomyデータは作成されないこと。
+        """
+        candidate = self._create_candidate(breed_name="権限なし候補")
+        user = get_user_model().objects.create_user(
+            username="taxonomy_user",
+            email="taxonomy_user@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:llm_candidate_approve", args=[candidate.pk]),
+            follow=True,
+        )
+
+        candidate.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.PENDING)
+        self.assertFalse(Breed.objects.filter(name="権限なし候補").exists())
+        self.assertContains(response, "LLM生成候補を承認する権限がありません。")
+
+    def test_superuser_rejects_llm_candidate_without_creating_taxonomy_data(self):
+        """
+        シナリオ:
+        - 入力: レビュー待ち候補と管理者ユーザー。
+        - 処理: 候補の却下ボタンをPOSTする。
+        - 期待値: 候補は却下になり、確認済みtaxonomyデータは作成されないこと。
+        """
+        candidate = self._create_candidate(breed_name="却下する候補")
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_rejecter",
+            email="taxonomy_rejecter@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("txo:llm_candidate_reject", args=[candidate.pk]),
+            follow=True,
+        )
+
+        candidate.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.REJECTED)
+        self.assertEqual(candidate.reviewed_by, user)
+        self.assertIsNotNone(candidate.reviewed_at)
+        self.assertFalse(Breed.objects.filter(name="却下する候補").exists())
+        self.assertContains(response, "LLM生成候補を却下しました。")
+
     def _base_post_data(self, overrides=None):
         data = {
             "kingdom": self.kingdom.id,
@@ -1025,6 +1162,37 @@ class TaxonomyBreedCreateViewTest(TestCase):
         if overrides:
             data.update(overrides)
         return data
+
+    def _candidate_post_data(self, overrides=None):
+        data = {
+            "kingdom_name": "動物界",
+            "kingdom_name_en": "Animalia",
+            "phylum_name": "環形動物門",
+            "phylum_name_en": "Annelida",
+            "classification_name": "貧毛綱",
+            "classification_name_en": "Oligochaeta",
+            "family_name": "フトミミズ科",
+            "family_name_en": "Megascolecidae",
+            "genus_name": "フトミミズ属",
+            "genus_name_en": "Pheretima",
+            "species_name": "フトミミズ",
+            "species_name_en": "Pheretima communissima",
+            "breed_name": "候補ミミズ",
+            "breed_name_kana": "こうほみみず",
+            "source_name": "Catalogue of Life",
+            "source_url": "https://www.catalogueoflife.org/",
+            "external_taxon_id": "col:sample",
+            "llm_note": "LLMが生成した候補。",
+            "review_note": "出典確認済み。",
+        }
+        if overrides:
+            data.update(overrides)
+        return data
+
+    def _create_candidate(self, **overrides):
+        return LLMTaxonomyCandidate.objects.create(
+            **self._candidate_post_data(overrides)
+        )
 
     def _image(self, name):
         image = (
