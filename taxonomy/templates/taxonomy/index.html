@@ -369,10 +369,7 @@ node: 鳥綱</code></pre>
                                         graph.nodes,
                                         (node) => nodeDepth(node)
                                     );
-                                    const widestDepthNodeCount = Math.max(
-                                        ...Array.from(nodesByDepth.values(), (nodes) => nodes.length)
-                                    );
-                                    const height = Math.max(560, widestDepthNodeCount * 54 + 96);
+                                    const height = 560;
                                     const maxDepth = Math.max(...graph.nodes.map((node) => nodeDepth(node)), 1);
                                     nodesByDepth.forEach((nodes) => {
                                         nodes
@@ -402,7 +399,7 @@ node: 鳥綱</code></pre>
                                         .force("charge", d3.forceManyBody().strength(-360))
                                         .force("center", d3.forceCenter(width / 2, height / 2))
                                         .force("x", d3.forceX((node) => width * (0.1 + (nodeDepth(node) / maxDepth) * 0.8)).strength(0.16))
-                                        .force("y", d3.forceY((node) => node.targetY || height / 2).strength(0.14))
+                                        .force("y", d3.forceY((node) => node.targetY || height / 2).strength(0.09))
                                         .force("collide", d3.forceCollide().radius(getNodeCollisionRadius).iterations(4));
 
                                     const link = viewport
