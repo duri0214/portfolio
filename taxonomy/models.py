@@ -296,6 +296,83 @@ class LLMTaxonomyCandidate(models.Model):
         return re.match(r"^[A-Z][a-z]+ [a-z][a-z-]+$", name) is not None
 
 
+class LLMTaxonomyCandidateGenerationJob(models.Model):
+    """
+    LLM分類候補生成の進捗を保持するジョブ。
+
+    生成対象名のリスト作成と、対象ごとの詳細生成を別ステップとして保存し、
+    画面ポーリングで現在の対象名、成功件数、失敗件数を表示できるようにする。
+
+    Attributes:
+        status: ジョブの実行状態。
+        current_step: 現在実行中の処理名。
+        current_target: 現在生成中または最後に処理した対象名。
+        target_names: 今回詳細生成する対象名の一覧。
+        candidate_ids: 保存できたLLM分類候補IDの一覧。
+        failures: 生成または保存に失敗した対象名と理由の一覧。
+        total_count: 詳細生成対象の総数。
+        processed_count: 詳細生成を試行した対象数。
+        success_count: 保存できた候補数。
+        failed_count: 詳細生成または保存に失敗した対象数。
+        error_message: ジョブ全体を続行できないエラー。
+        created_by: ジョブを開始したユーザー。
+        started_at: ジョブ開始日時。
+        finished_at: ジョブ終了日時。
+        created_at: 作成日時。
+        updated_at: 更新日時。
+    """
+
+    class JobStatus(models.TextChoices):
+        """
+        LLM分類候補生成ジョブの実行状態。
+
+        Attributes:
+            PENDING: 対象リスト作成前の状態。
+            RUNNING: 対象リスト作成後、詳細生成を進めている状態。
+            COMPLETED: 対象を最後まで処理した状態。
+            FAILED: 対象リスト作成などでジョブ全体が失敗した状態。
+        """
+
+        PENDING = "pending", "準備中"
+        RUNNING = "running", "生成中"
+        COMPLETED = "completed", "完了"
+        FAILED = "failed", "失敗"
+
+    status = models.CharField(
+        "ジョブ状態",
+        max_length=20,
+        choices=JobStatus.choices,
+        default=JobStatus.PENDING,
+    )
+    current_step = models.CharField("現在ステップ", max_length=100, blank=True)
+    current_target = models.CharField("現在の生成対象", max_length=255, blank=True)
+    target_names = models.JSONField("生成対象名一覧", default=list, blank=True)
+    candidate_ids = models.JSONField("保存済み候補ID一覧", default=list, blank=True)
+    failures = models.JSONField("失敗対象一覧", default=list, blank=True)
+    total_count = models.PositiveSmallIntegerField("生成対象総数", default=0)
+    processed_count = models.PositiveSmallIntegerField("処理済み対象数", default=0)
+    success_count = models.PositiveSmallIntegerField("成功件数", default=0)
+    failed_count = models.PositiveSmallIntegerField("失敗件数", default=0)
+    error_message = models.TextField("エラーメッセージ", blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="作成者",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    started_at = models.DateTimeField("開始日時", null=True, blank=True)
+    finished_at = models.DateTimeField("終了日時", null=True, blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"LLM分類候補生成ジョブ {self.pk} ({self.get_status_display()})"
+
+
 class LivestockDistributionDataset(models.Model):
     """
     e-Stat畜産統計の鶏地域別飼養分布CSV。

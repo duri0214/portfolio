@@ -8,6 +8,7 @@ from taxonomy.models import (
     Genus,
     Kingdom,
     LLMTaxonomyCandidate,
+    LLMTaxonomyCandidateGenerationJob,
     Phylum,
     Species,
 )
@@ -53,6 +54,39 @@ class LLMTaxonomyCandidateRepository:
             LLMTaxonomyCandidate.objects.create(**candidate_data)
             for candidate_data in candidate_data_list
         ]
+
+    @staticmethod
+    def create_generation_job(user) -> LLMTaxonomyCandidateGenerationJob:
+        """
+        LLM分類候補生成ジョブを準備中状態で作成します。
+        """
+        return LLMTaxonomyCandidateGenerationJob.objects.create(created_by=user)
+
+    @staticmethod
+    def get_generation_job(job_id: int) -> LLMTaxonomyCandidateGenerationJob:
+        """
+        進捗表示またはステップ実行対象の生成ジョブを取得します。
+        """
+        return LLMTaxonomyCandidateGenerationJob.objects.get(pk=job_id)
+
+    @staticmethod
+    def latest_generation_job() -> LLMTaxonomyCandidateGenerationJob | None:
+        """
+        画面表示用に直近の生成ジョブを返します。
+        """
+        return LLMTaxonomyCandidateGenerationJob.objects.order_by("-created_at").first()
+
+    @staticmethod
+    def update_generation_job(
+        job: LLMTaxonomyCandidateGenerationJob,
+        fields: list[str],
+    ) -> None:
+        """
+        生成ジョブの指定フィールドだけを保存します。
+        """
+        job.updated_at = timezone.now()
+        update_fields = [*fields, "updated_at"]
+        LLMTaxonomyCandidateGenerationJob.objects.bulk_update([job], update_fields)
 
     @staticmethod
     def pending_candidates() -> list[LLMTaxonomyCandidate]:

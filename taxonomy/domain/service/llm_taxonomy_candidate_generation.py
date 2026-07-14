@@ -3,6 +3,7 @@ import os
 
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
+from django.utils import timezone
 
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
@@ -11,6 +12,7 @@ from taxonomy.domain.repository.llm_taxonomy_candidate import (
     LLMTaxonomyCandidateRepository,
 )
 from taxonomy.models import LLMTaxonomyCandidate
+from taxonomy.models import LLMTaxonomyCandidateGenerationJob
 
 
 class LLMTaxonomyCandidateGenerationError(Exception):
@@ -27,6 +29,7 @@ class LLMTaxonomyCandidateGenerationService:
     MODEL_NAME = ModelName.GPT_5_MINI
     MAX_TOKENS = 1600
     PROMPT_VERSION = "taxonomy-candidate-generation-v1"
+    TARGET_PROMPT_VERSION = "taxonomy-candidate-targets-v1"
 
     REQUIRED_FIELDS = [
         "kingdom_name",
@@ -48,28 +51,251 @@ class LLMTaxonomyCandidateGenerationService:
         """
         LLMで1本の属階層に属する複数の種候補を生成し、レビュー待ちとして保存します。
         """
+        target_names = cls._generate_target_names()
+        candidates = []
+        for target_name in target_names:
+            candidate_data_list = cls._generate_candidate_detail(target_name)
+            candidates.extend(
+                LLMTaxonomyCandidateRepository.create_pending_bulk(candidate_data_list)
+            )
+        return candidates
+
+    @classmethod
+    def start_job(cls, user) -> LLMTaxonomyCandidateGenerationJob:
+        """
+        画面からポーリング実行するための生成ジョブを作成します。
+        """
+        return LLMTaxonomyCandidateRepository.create_generation_job(user)
+
+    @classmethod
+    def process_next_job_step(
+        cls,
+        job: LLMTaxonomyCandidateGenerationJob,
+    ) -> LLMTaxonomyCandidateGenerationJob:
+        """
+        生成ジョブを1ステップだけ進め、進捗表示用の状態を保存します。
+        """
+        if job.status in [
+            LLMTaxonomyCandidateGenerationJob.JobStatus.COMPLETED,
+            LLMTaxonomyCandidateGenerationJob.JobStatus.FAILED,
+        ]:
+            return job
+
+        if job.status == LLMTaxonomyCandidateGenerationJob.JobStatus.PENDING:
+            return cls._prepare_job_targets(job)
+
+        return cls._generate_next_job_candidate(job)
+
+    @classmethod
+    def _prepare_job_targets(
+        cls,
+        job: LLMTaxonomyCandidateGenerationJob,
+    ) -> LLMTaxonomyCandidateGenerationJob:
+        job.started_at = timezone.now()
+        job.current_step = "生成対象リスト作成"
+        job.status = LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING
+        try:
+            target_names = cls._generate_target_names()
+        except LLMTaxonomyCandidateGenerationError as error:
+            job.status = LLMTaxonomyCandidateGenerationJob.JobStatus.FAILED
+            job.error_message = str(error)
+            job.finished_at = timezone.now()
+            LLMTaxonomyCandidateRepository.update_generation_job(
+                job,
+                [
+                    "status",
+                    "current_step",
+                    "error_message",
+                    "started_at",
+                    "finished_at",
+                ],
+            )
+            return job
+
+        job.target_names = target_names
+        job.total_count = len(target_names)
+        job.current_target = target_names[0] if target_names else ""
+        if not target_names:
+            job.status = LLMTaxonomyCandidateGenerationJob.JobStatus.FAILED
+            job.error_message = "生成対象リストが空でした。もう一度生成してください。"
+            job.finished_at = timezone.now()
+        LLMTaxonomyCandidateRepository.update_generation_job(
+            job,
+            [
+                "status",
+                "current_step",
+                "target_names",
+                "total_count",
+                "current_target",
+                "error_message",
+                "started_at",
+                "finished_at",
+            ],
+        )
+        return job
+
+    @classmethod
+    def _generate_next_job_candidate(
+        cls,
+        job: LLMTaxonomyCandidateGenerationJob,
+    ) -> LLMTaxonomyCandidateGenerationJob:
+        if job.processed_count >= job.total_count:
+            job.status = LLMTaxonomyCandidateGenerationJob.JobStatus.COMPLETED
+            job.current_step = "完了"
+            job.current_target = ""
+            job.finished_at = timezone.now()
+            LLMTaxonomyCandidateRepository.update_generation_job(
+                job,
+                ["status", "current_step", "current_target", "finished_at"],
+            )
+            return job
+
+        target_name = job.target_names[job.processed_count]
+        job.current_step = "候補詳細生成"
+        job.current_target = target_name
+        try:
+            candidate_data_list = cls._generate_candidate_detail(target_name)
+            candidates = LLMTaxonomyCandidateRepository.create_pending_bulk(
+                candidate_data_list
+            )
+        except LLMTaxonomyCandidateGenerationError as error:
+            failures = list(job.failures)
+            failures.append({"target": target_name, "message": str(error)})
+            job.failures = failures
+            job.failed_count = len(failures)
+        else:
+            candidate_ids = list(job.candidate_ids)
+            candidate_ids.extend(candidate.pk for candidate in candidates)
+            job.candidate_ids = candidate_ids
+            job.success_count += len(candidates)
+
+        job.processed_count += 1
+        if job.processed_count >= job.total_count:
+            job.status = LLMTaxonomyCandidateGenerationJob.JobStatus.COMPLETED
+            job.current_step = "完了"
+            job.current_target = ""
+            job.finished_at = timezone.now()
+        elif job.processed_count < len(job.target_names):
+            job.current_target = job.target_names[job.processed_count]
+
+        LLMTaxonomyCandidateRepository.update_generation_job(
+            job,
+            [
+                "status",
+                "current_step",
+                "current_target",
+                "candidate_ids",
+                "failures",
+                "processed_count",
+                "success_count",
+                "failed_count",
+                "finished_at",
+            ],
+        )
+        return job
+
+    @classmethod
+    def _generate_target_names(cls) -> list[str]:
+        service = cls._completion_service()
+        result = service.retrieve_answer(
+            [
+                Message(role=RoleType.SYSTEM, content=cls._target_system_prompt()),
+                Message(role=RoleType.USER, content=cls._target_user_prompt()),
+            ],
+            max_messages=2,
+        )
+        return cls._clean_target_names(result.answer)
+
+    @classmethod
+    def _generate_candidate_detail(cls, target_name: str) -> list[dict]:
+        service = cls._completion_service()
+        result = service.retrieve_answer(
+            [
+                Message(role=RoleType.SYSTEM, content=cls._system_prompt()),
+                Message(
+                    role=RoleType.USER, content=cls._detail_user_prompt(target_name)
+                ),
+            ],
+            max_messages=2,
+        )
+        return cls._clean_candidate_data_list(result.answer)
+
+    @classmethod
+    def _completion_service(cls) -> LlmCompletionService:
         api_key = os.getenv("OPENAI_API_KEY") or ""
         if not api_key:
             raise LLMTaxonomyCandidateGenerationError(
                 "OPENAI_API_KEY が未設定のため、LLM生成を実行できません。"
             )
-
-        service = LlmCompletionService(
+        return LlmCompletionService(
             OpenAIGptConfig(
                 api_key=api_key,
                 model=cls.MODEL_NAME,
                 max_tokens=cls.MAX_TOKENS,
             )
         )
-        result = service.retrieve_answer(
-            [
-                Message(role=RoleType.SYSTEM, content=cls._system_prompt()),
-                Message(role=RoleType.USER, content=cls._user_prompt()),
-            ],
-            max_messages=2,
+
+    @staticmethod
+    def _target_system_prompt() -> str:
+        return (
+            "あなたは生物分類学データを整理する専門家です。"
+            "回答はJSON配列だけにしてください。"
+            "配列には今回詳細生成する正式な種名または一般的な和名だけを入れてください。"
+            "亜種、品種、系統、地域個体群は候補にしないでください。"
         )
-        candidate_data_list = cls._clean_candidate_data_list(result.answer)
-        return LLMTaxonomyCandidateRepository.create_pending_bulk(candidate_data_list)
+
+    @classmethod
+    def _target_user_prompt(cls) -> str:
+        existing_lines = LLMTaxonomyCandidateRepository.existing_hierarchy_lines()
+        existing_hierarchy = "\n".join(f"- {line}" for line in existing_lines)
+        if not existing_hierarchy:
+            existing_hierarchy = "- 既存の分類階層はまだありません。"
+        return (
+            "Taxonomy アプリへ追加レビューする種候補名だけを3〜6件生成してください。\n"
+            "既存階層にあるノードはできるだけ再利用し、まだ薄い枝または未登録の枝から選んでください。\n"
+            "1回のジョブでは同じ属に属する種候補だけを返してください。\n"
+            "JSON配列の各要素は文字列にしてください。\n"
+            "既存の種までの分類階層:\n"
+            f"{existing_hierarchy}"
+        )
+
+    @classmethod
+    def _detail_user_prompt(cls, target_name: str) -> str:
+        return (
+            f"{target_name} について、Taxonomy アプリへ追加レビューする分類候補を1件だけ生成してください。\n"
+            "rootである界から始め、門、綱、科、属、種までの分類階層を埋めてください。\n"
+            "species_name と breed_name には同じ値を入れてください。\n"
+            "出典で確認できる正式な種名または一般的な和名だけを返してください。\n"
+            "JSON配列の要素数は1件にしてください。\n"
+            f"JSON配列の各要素のキーは {cls._field_list()} だけにしてください。\n"
+            "source_name と source_url は確認元として人間が開ける値を可能な限り入れてください。\n"
+            "外部taxonomy IDは確信できる場合だけ入れ、不明なら空文字にしてください。\n"
+            "人間が確認すべき注意点は llm_note に短く書いてください。"
+        )
+
+    @staticmethod
+    def _field_list() -> str:
+        fields = [
+            "kingdom_name",
+            "kingdom_name_en",
+            "phylum_name",
+            "phylum_name_en",
+            "classification_name",
+            "classification_name_en",
+            "family_name",
+            "family_name_en",
+            "genus_name",
+            "genus_name_en",
+            "species_name",
+            "species_name_en",
+            "breed_name",
+            "breed_name_kana",
+            "source_name",
+            "source_url",
+            "external_taxon_id",
+            "llm_note",
+        ]
+        return ", ".join(fields)
 
     @classmethod
     def _system_prompt(cls) -> str:
@@ -94,27 +320,7 @@ class LLMTaxonomyCandidateGenerationService:
         existing_hierarchy = "\n".join(f"- {line}" for line in existing_lines)
         if not existing_hierarchy:
             existing_hierarchy = "- 既存の分類階層はまだありません。"
-        fields = [
-            "kingdom_name",
-            "kingdom_name_en",
-            "phylum_name",
-            "phylum_name_en",
-            "classification_name",
-            "classification_name_en",
-            "family_name",
-            "family_name_en",
-            "genus_name",
-            "genus_name_en",
-            "species_name",
-            "species_name_en",
-            "breed_name",
-            "breed_name_kana",
-            "source_name",
-            "source_url",
-            "external_taxon_id",
-            "llm_note",
-        ]
-        field_list = ", ".join(fields)
+        field_list = cls._field_list()
         return (
             "Taxonomy アプリへ追加レビューする分類候補を生成してください。\n"
             "rootである界から始め、門、綱、科、属へと1本の分類階層だけをたどってください。\n"
@@ -276,6 +482,28 @@ class LLMTaxonomyCandidateGenerationService:
                 "LLM生成結果が候補配列ではありません。もう一度生成してください。"
             )
         return data
+
+    @classmethod
+    def _clean_target_names(cls, answer: str) -> list[str]:
+        raw_items = cls._load_json_array(answer)
+        target_names = []
+        seen_names = set()
+        for item in raw_items:
+            if not isinstance(item, str):
+                continue
+            target_name = item.strip()
+            if not target_name or target_name in seen_names:
+                continue
+            target_names.append(target_name[:255])
+            seen_names.add(target_name)
+            if len(target_names) >= 6:
+                break
+
+        if not target_names:
+            raise LLMTaxonomyCandidateGenerationError(
+                "LLM生成対象リストを読み取れませんでした。もう一度生成してください。"
+            )
+        return target_names
 
     @classmethod
     def _build_llm_note(cls, note: str) -> str:

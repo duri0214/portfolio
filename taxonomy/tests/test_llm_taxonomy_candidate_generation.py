@@ -1,10 +1,20 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 
 from taxonomy.domain.service.llm_taxonomy_candidate_generation import (
     LLMTaxonomyCandidateGenerationError,
     LLMTaxonomyCandidateGenerationService,
 )
-from taxonomy.models import Classification, Family, Genus, Kingdom, Phylum, Species
+from taxonomy.models import (
+    Classification,
+    Family,
+    Genus,
+    Kingdom,
+    LLMTaxonomyCandidateGenerationJob,
+    Phylum,
+    Species,
+)
 
 
 class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
@@ -293,6 +303,47 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             "LLM生成結果の種名とキャプションが一致していません。",
         ):
             LLMTaxonomyCandidateGenerationService._clean_candidate_data_list(answer)
+
+    def test_clean_target_names_deduplicates_target_list(self):
+        """
+        シナリオ:
+        - 入力: LLMが重複や空白を含む生成対象名JSONを返す。
+        - 処理: 対象名リストを保存前にクリーニングする。
+        - 期待値: 空白を除去し、重複を除いた対象名だけが返ること。
+        """
+        target_names = LLMTaxonomyCandidateGenerationService._clean_target_names(
+            '[" Apis cerana ", "Apis cerana", "", "Apis dorsata"]'
+        )
+
+        self.assertEqual(["Apis cerana", "Apis dorsata"], target_names)
+
+    def test_process_job_first_step_prepares_target_names(self):
+        """
+        シナリオ:
+        - 入力: 準備中の生成ジョブと、mockされた生成対象名。
+        - 処理: ジョブを1ステップ進める。
+        - 期待値: ジョブが生成中になり、対象名と総数が保存されること。
+        """
+        job = LLMTaxonomyCandidateGenerationJob.objects.create()
+
+        with patch(
+            "taxonomy.domain.service.llm_taxonomy_candidate_generation."
+            "LLMTaxonomyCandidateGenerationService._generate_target_names",
+            return_value=["Apis cerana", "Apis dorsata"],
+        ):
+            updated_job = LLMTaxonomyCandidateGenerationService.process_next_job_step(
+                job
+            )
+
+        updated_job.refresh_from_db()
+        self.assertEqual(
+            updated_job.status,
+            LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+        )
+        self.assertEqual(updated_job.current_step, "生成対象リスト作成")
+        self.assertEqual(updated_job.current_target, "Apis cerana")
+        self.assertEqual(updated_job.total_count, 2)
+        self.assertEqual(updated_job.target_names, ["Apis cerana", "Apis dorsata"])
 
     def test_user_prompt_includes_existing_species_hierarchy(self):
         """
