@@ -334,6 +334,9 @@ class LLMTaxonomyCandidateListView(ListView):
             }
             for candidate in candidates
         ]
+        context["has_pending_candidates"] = bool(
+            LLMTaxonomyCandidateRepository.pending_candidates()
+        )
         return context
 
     def _get_candidate_ids(self) -> list[int]:

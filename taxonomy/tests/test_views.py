@@ -1081,10 +1081,26 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertNotContains(response, '<th scope="col">操作</th>')
         self.assertNotContains(response, "却下")
         self.assertNotContains(response, "登録済みデータ")
-        self.assertContains(response, "今回のおすすめ候補を生成")
+        self.assertContains(response, "レビュー待ちのLLM生成候補を開く")
+        self.assertNotContains(response, "今回のおすすめ候補を生成")
         self.assertContains(response, reverse("txo:llm_candidate_list"))
+        self.assertContains(response, "レビュー待ちのLLM生成候補を開いています。")
+        self.assertContains(response, "表示中...")
+
+    def test_llm_candidate_list_shows_generate_button_without_pending_candidate(self):
+        """
+        シナリオ:
+        - 入力: レビュー待ちのLLM生成候補がないDB状態。
+        - 処理: LLM生成候補一覧ページを表示する。
+        - 期待値: 新規生成ボタンと生成中表示が表示されること。
+        """
+        response = self.client.get(reverse("txo:llm_candidate_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "今回のおすすめ候補を生成")
         self.assertContains(response, "属階層1本と複数の候補を生成中です。")
         self.assertContains(response, "生成中...")
+        self.assertNotContains(response, "レビュー待ちのLLM生成候補を開く")
 
     def test_generate_llm_candidate_saves_preview_candidate(self):
         """

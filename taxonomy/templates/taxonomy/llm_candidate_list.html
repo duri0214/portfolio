@@ -17,11 +17,19 @@
             </div>
             <form id="llm-candidate-generate-form" method="post" action="{% url 'txo:llm_candidate_list' %}">
                 {% csrf_token %}
-                <button id="llm-candidate-generate-button" class="btn btn-primary" type="submit" {% if not request.user.is_superuser %}disabled{% endif %}>
-                    今回のおすすめ候補を生成
+                <button id="llm-candidate-generate-button" class="btn btn-primary" type="submit" data-loading-label="{% if has_pending_candidates %}表示中...{% else %}生成中...{% endif %}" {% if not request.user.is_superuser %}disabled{% endif %}>
+                    {% if has_pending_candidates %}
+                        レビュー待ちのLLM生成候補を開く
+                    {% else %}
+                        今回のおすすめ候補を生成
+                    {% endif %}
                 </button>
                 <div id="llm-candidate-generate-status" class="text-muted small text-end mt-2 d-none" aria-live="polite">
-                    属階層1本と複数の候補を生成中です。
+                    {% if has_pending_candidates %}
+                        レビュー待ちのLLM生成候補を開いています。
+                    {% else %}
+                        属階層1本と複数の候補を生成中です。
+                    {% endif %}
                 </div>
             </form>
         </div>
@@ -196,7 +204,7 @@
 
             form.addEventListener("submit", () => {
                 button.disabled = true;
-                button.textContent = "生成中...";
+                button.textContent = button.dataset.loadingLabel || "生成中...";
                 status.classList.remove("d-none");
             });
         })();
