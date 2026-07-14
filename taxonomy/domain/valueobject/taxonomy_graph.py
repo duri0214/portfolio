@@ -1,6 +1,14 @@
 from dataclasses import dataclass
 
 from taxonomy.domain.breed_entity import BreedEntity
+from taxonomy.domain.valueobject.taxonomy_hierarchy import TAXONOMY_HIERARCHY_RANKS
+
+
+TAXONOMY_GRAPH_ROOT_RANK = "root"
+TAXONOMY_GRAPH_RANK_DEPTHS = {
+    TAXONOMY_GRAPH_ROOT_RANK: 0,
+    **{rank: index for index, rank in enumerate(TAXONOMY_HIERARCHY_RANKS, start=1)},
+}
 
 
 @dataclass(frozen=True)
@@ -12,19 +20,34 @@ class TaxonomyGraphNode:
         id: グラフ内で一意になるノードID。
         name: 画面表示や検索に使う分類名。
         rank: root、kingdom、phylum などの階層種別。
+        depth: rootを0とした分類階層の深さ。
         detail_url: 詳細ページへ遷移できる場合のURL。
     """
 
     id: str
     name: str
     rank: str
+    depth: int
     detail_url: str = ""
 
-    def to_payload(self) -> dict[str, str]:
+    @classmethod
+    def create(
+        cls, id: str, name: str, rank: str, detail_url: str = ""
+    ) -> "TaxonomyGraphNode":
+        return cls(
+            id=id,
+            name=name,
+            rank=rank,
+            depth=TAXONOMY_GRAPH_RANK_DEPTHS[rank],
+            detail_url=detail_url,
+        )
+
+    def to_payload(self) -> dict[str, str | int]:
         return {
             "id": self.id,
             "name": self.name,
             "rank": self.rank,
+            "depth": self.depth,
             "detail_url": self.detail_url,
         }
 
@@ -85,7 +108,11 @@ class TaxonomyGraph:
         """
         detail_urls = breed_detail_urls or {}
         nodes_by_id = {
-            "root:root": TaxonomyGraphNode(id="root:root", name=root_name, rank="root")
+            "root:root": TaxonomyGraphNode.create(
+                id="root:root",
+                name=root_name,
+                rank=TAXONOMY_GRAPH_ROOT_RANK,
+            )
         }
         edges_by_key: dict[tuple[str, str], TaxonomyGraphEdge] = {}
 
@@ -105,7 +132,7 @@ class TaxonomyGraph:
                     detail_url = ""
                     if rank == "breed" and isinstance(source_id, int):
                         detail_url = detail_urls.get(source_id, "")
-                    nodes_by_id[node_id] = TaxonomyGraphNode(
+                    nodes_by_id[node_id] = TaxonomyGraphNode.create(
                         id=node_id,
                         name=name,
                         rank=rank,
@@ -133,7 +160,7 @@ class TaxonomyGraph:
 
         return f"{rank}:{'/'.join(fallback_path)}"
 
-    def to_payload(self) -> dict[str, list[dict[str, str]]]:
+    def to_payload(self) -> dict[str, list[dict[str, str | int]]]:
         return {
             "nodes": [node.to_payload() for node in self.nodes],
             "edges": [edge.to_payload() for edge in self.edges],

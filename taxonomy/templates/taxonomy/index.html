@@ -256,12 +256,13 @@ node: 鳥綱</code></pre>
                                     return value.toLowerCase().trim();
                                 }
 
-                                function rankDepth(rank) {
-                                    return taxonomyRankOrder.indexOf(rank);
+                                function nodeDepth(node) {
+                                    return Number.isFinite(node.depth) ? node.depth : 0;
                                 }
 
                                 function buildVisibleGraph(searchText, maxRank) {
-                                    const maxDepth = maxRank === "all" ? Infinity : rankDepth(maxRank);
+                                    const maxRankNode = taxonomyGraphData.nodes.find((node) => node.rank === maxRank);
+                                    const maxDepth = maxRank === "all" ? Infinity : nodeDepth(maxRankNode || {depth: 0});
                                     const nodesById = new Map(taxonomyGraphData.nodes.map((node) => [node.id, node]));
                                     const parentByTarget = new Map();
                                     const childrenBySource = new Map();
@@ -276,7 +277,7 @@ node: 鳥綱</code></pre>
 
                                     const visibleIds = new Set();
                                     taxonomyGraphData.nodes.forEach((node) => {
-                                        if (rankDepth(node.rank) <= maxDepth && node.rank !== "root") {
+                                        if (nodeDepth(node) <= maxDepth && node.rank !== "root") {
                                             visibleIds.add(node.id);
                                         }
                                     });
@@ -284,7 +285,7 @@ node: 鳥綱</code></pre>
                                     if (searchText) {
                                         const matchedIds = new Set();
                                         taxonomyGraphData.nodes.forEach((node) => {
-                                            if (rankDepth(node.rank) <= maxDepth && normalizeTaxonomyText(node.name || "").includes(searchText)) {
+                                            if (nodeDepth(node) <= maxDepth && normalizeTaxonomyText(node.name || "").includes(searchText)) {
                                                 matchedIds.add(node.id);
                                             }
                                         });
@@ -293,14 +294,14 @@ node: 鳥綱</code></pre>
                                             let currentId = id;
                                             while (currentId) {
                                                 const currentNode = nodesById.get(currentId);
-                                                if (currentNode && currentNode.rank !== "root" && rankDepth(currentNode.rank) <= maxDepth) {
+                                                if (currentNode && currentNode.rank !== "root" && nodeDepth(currentNode) <= maxDepth) {
                                                     visibleIds.add(currentId);
                                                 }
                                                 currentId = parentByTarget.get(currentId);
                                             }
                                             (childrenBySource.get(id) || []).forEach((childId) => {
                                                 const childNode = nodesById.get(childId);
-                                                if (childNode && rankDepth(childNode.rank) <= maxDepth) {
+                                                if (childNode && nodeDepth(childNode) <= maxDepth) {
                                                     visibleIds.add(childId);
                                                 }
                                             });
@@ -361,13 +362,11 @@ node: 鳥綱</code></pre>
 
                                     const simulation = d3.forceSimulation(graph.nodes)
                                         .force("link", d3.forceLink(graph.links).id((node) => node.id).distance((link) => {
-                                            const sourceRank = link.source.rank || "root";
-                                            const targetRank = link.target.rank || "root";
-                                            return Math.max(68, 118 - Math.min(rankDepth(sourceRank), rankDepth(targetRank)) * 7);
+                                            return Math.max(68, 118 - Math.min(nodeDepth(link.source), nodeDepth(link.target)) * 7);
                                         }).strength(0.86))
                                         .force("charge", d3.forceManyBody().strength(-220))
                                         .force("center", d3.forceCenter(width / 2, height / 2))
-                                        .force("x", d3.forceX((node) => width * (0.16 + rankDepth(node.rank) * 0.105)).strength(0.08))
+                                        .force("x", d3.forceX((node) => width * (0.16 + nodeDepth(node) * 0.105)).strength(0.08))
                                         .force("y", d3.forceY(height / 2).strength(0.05))
                                         .force("collide", d3.forceCollide().radius((node) => node.rank === "breed" ? 28 : 22).iterations(2));
 
