@@ -1,3 +1,4 @@
+import re
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -282,9 +283,19 @@ class LLMTaxonomyCandidate(models.Model):
 
     @property
     def gbif_taxon_search_url(self) -> str:
-        query = self.species_name_en or self.species_name
+        query = self._gbif_taxon_search_query()
         query_params = urlencode({"q": query})
         return f"https://www.gbif.org/taxon/search?{query_params}"
+
+    def _gbif_taxon_search_query(self) -> str:
+        for candidate_name in [self.species_name, self.species_name_en]:
+            if self._looks_like_scientific_name(candidate_name):
+                return candidate_name
+        return self.species_name
+
+    @staticmethod
+    def _looks_like_scientific_name(name: str) -> bool:
+        return re.match(r"^[A-Z][a-z]+ [a-z][a-z-]+$", name) is not None
 
 
 class LivestockDistributionDataset(models.Model):

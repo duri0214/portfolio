@@ -1050,7 +1050,10 @@ class TaxonomyBreedCreateViewTest(TestCase):
         - 処理: LLM生成候補一覧ページを表示する。
         - 期待値: 候補と出典が表示され、レビュー操作ボタンは表示されないこと。
         """
-        candidate = self._create_candidate()
+        candidate = self._create_candidate(
+            species_name="Apis andreniformis",
+            species_name_en="Black dwarf honey bee",
+        )
 
         response = self.client.get(reverse("txo:llm_candidate_list"))
 
@@ -1063,8 +1066,9 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, '<span class="badge text-bg-secondary">種</span>')
         self.assertContains(response, "GBIFで分類を点検")
         self.assertContains(
-            response, "https://www.gbif.org/taxon/search?q=Pheretima+communissima"
+            response, "https://www.gbif.org/taxon/search?q=Apis+andreniformis"
         )
+        self.assertNotContains(response, "q=Black+dwarf+honey+bee")
         self.assertNotContains(response, "GBIFで種名点検")
         self.assertNotContains(response, "GBIFで表示名点検")
         self.assertContains(response, "Wikipediaで出典を開く")
