@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,6 +10,7 @@ from django.test import override_settings
 from django.test import SimpleTestCase
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from taxonomy.domain.service.livestock_distribution_fetch import (
     LivestockDistributionFetchService,
@@ -1101,7 +1103,39 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, "今回のおすすめ候補を生成")
         self.assertContains(response, "属階層1本と複数の候補を生成中です。")
         self.assertContains(response, "生成中...")
-        self.assertNotContains(response, "レビュー待ちのLLM生成候補を開く")
+        self.assertNotContains(response, 'data-loading-label="表示中..."')
+
+    def test_llm_candidate_list_orders_pending_approved_rejected(self):
+        """
+        シナリオ:
+        - 入力: レビュー待ち、承認済み、却下のLLM生成候補が登録済み。
+        - 処理: LLM生成候補一覧ページを表示する。
+        - 期待値: レビュー待ち、承認済み、却下の順で候補が並ぶこと。
+        """
+        approved_candidate = self._create_candidate(
+            breed_name="承認済み候補",
+            status=LLMTaxonomyCandidate.ReviewStatus.APPROVED,
+        )
+        rejected_candidate = self._create_candidate(
+            breed_name="却下候補",
+            status=LLMTaxonomyCandidate.ReviewStatus.REJECTED,
+        )
+        pending_candidate = self._create_candidate(
+            breed_name="レビュー待ち候補",
+            status=LLMTaxonomyCandidate.ReviewStatus.PENDING,
+        )
+
+        response = self.client.get(reverse("txo:llm_candidate_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [candidate.pk for candidate in response.context["candidates"]],
+            [
+                pending_candidate.pk,
+                approved_candidate.pk,
+                rejected_candidate.pk,
+            ],
+        )
 
     def test_generate_llm_candidate_starts_generation_job(self):
         """
@@ -1197,7 +1231,8 @@ class TaxonomyBreedCreateViewTest(TestCase):
             return_value=[self._candidate_post_data({"breed_name": "候補のミミズ"})],
         ):
             response = self.client.post(
-                reverse("txo:llm_candidate_generation_job_step", args=[job.pk])
+                reverse("txo:llm_candidate_generation_job_step", args=[job.pk]),
+                headers={"X-Generation-Tab-Id": "active-tab"},
             )
 
         job.refresh_from_db()
@@ -1208,6 +1243,7 @@ class TaxonomyBreedCreateViewTest(TestCase):
         )
         self.assertEqual(job.success_count, 1)
         self.assertEqual(job.processed_count, 1)
+        self.assertEqual(job.processing_token, "")
         self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.PENDING)
         self.assertEqual(response.json()["success_count"], 1)
         self.assertIn("candidate_ids=", response.json()["preview_url"])
@@ -1251,6 +1287,201 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertEqual(job.failed_count, 1)
         self.assertEqual(job.failures[0]["target"], "失敗候補")
         self.assertEqual(response.json()["failures"][0]["target"], "失敗候補")
+
+    def test_generation_job_step_returns_processing_state_without_advancing(self):
+        """
+        シナリオ:
+        - 入力: 別の管理者が処理中の生成ジョブと管理者ユーザー。
+        - 処理: 生成ジョブのステップURLへPOSTする。
+        - 期待値: ジョブを進めず、別の管理者が処理中であるJSONが返ること。
+        """
+        processing_user = get_user_model().objects.create_superuser(
+            username="taxonomy_processing_admin",
+            email="taxonomy_processing_admin@example.com",
+            password="password",
+        )
+        request_user = get_user_model().objects.create_superuser(
+            username="taxonomy_waiting_admin",
+            email="taxonomy_waiting_admin@example.com",
+            password="password",
+        )
+        self.client.force_login(request_user)
+        job = LLMTaxonomyCandidateGenerationJob.objects.create(
+            created_by=processing_user,
+            status=LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+            target_names=[
+                "処理済み候補1",
+                "処理済み候補2",
+                "処理中候補3",
+                "未処理候補4",
+                "未処理候補5",
+            ],
+            current_target="処理中候補3",
+            total_count=5,
+            processed_count=2,
+            is_processing=True,
+            processing_by=processing_user,
+            processing_token="processing-tab",
+        )
+
+        with patch(
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.process_next_job_step",
+        ) as mock_process:
+            response = self.client.post(
+                reverse("txo:llm_candidate_generation_job_step", args=[job.pk])
+            )
+
+        job.refresh_from_db()
+        mock_process.assert_not_called()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["is_processing"])
+        self.assertEqual(response.json()["processed_count"], 2)
+        self.assertEqual(
+            response.json()["processing_message"],
+            "別の管理者が生成ジョブの5件中3件目（処理中候補3）を処理中です。",
+        )
+        self.assertTrue(job.is_processing)
+
+    def test_generation_job_step_shows_other_tab_when_same_user_is_processing(self):
+        """
+        シナリオ:
+        - 入力: 同じ管理者の別タブが処理中の生成ジョブ。
+        - 処理: 別のタブIDで生成ジョブのステップURLへPOSTする。
+        - 期待値: ジョブを進めず、主語なしの処理中JSONが返ること。
+        """
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_same_user_tabs",
+            email="taxonomy_same_user_tabs@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        job = LLMTaxonomyCandidateGenerationJob.objects.create(
+            created_by=user,
+            status=LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+            target_names=["処理中候補"],
+            current_target="処理中候補",
+            total_count=1,
+            is_processing=True,
+            processing_by=user,
+            processing_token="first-tab",
+        )
+
+        with patch(
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.process_next_job_step",
+        ) as mock_process:
+            response = self.client.post(
+                reverse("txo:llm_candidate_generation_job_step", args=[job.pk]),
+                headers={"X-Generation-Tab-Id": "second-tab"},
+            )
+
+        mock_process.assert_not_called()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["processing_message"],
+            "生成ジョブの1件中1件目（処理中候補）を処理中です。",
+        )
+
+    def test_generation_job_step_omits_actor_when_same_tab_is_processing(self):
+        """
+        シナリオ:
+        - 入力: 同じ管理者の同じタブIDが処理中の生成ジョブ。
+        - 処理: 同じタブIDで生成ジョブのステップURLへPOSTする。
+        - 期待値: ジョブを進めず、主語なしの処理中JSONが返ること。
+        """
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_same_tab",
+            email="taxonomy_same_tab@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        job = LLMTaxonomyCandidateGenerationJob.objects.create(
+            created_by=user,
+            status=LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+            target_names=["処理中候補"],
+            current_target="処理中候補",
+            total_count=1,
+            is_processing=True,
+            processing_by=user,
+            processing_token="same-tab",
+        )
+
+        with patch(
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.process_next_job_step",
+        ) as mock_process:
+            response = self.client.post(
+                reverse("txo:llm_candidate_generation_job_step", args=[job.pk]),
+                headers={"X-Generation-Tab-Id": "same-tab"},
+            )
+
+        mock_process.assert_not_called()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["processing_message"],
+            "生成ジョブの1件中1件目（処理中候補）を処理中です。",
+        )
+
+    def test_generation_job_step_recovers_stale_processing_lock(self):
+        """
+        シナリオ:
+        - 入力: 処理中フラグが5分以上残った生成ジョブ。
+        - 処理: 生成ジョブのステップURLへPOSTする。
+        - 期待値: 古い処理中フラグを再取得し、ログを出して次の種候補生成が実行されること。
+        """
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_stale_processing",
+            email="taxonomy_stale_processing@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        job = LLMTaxonomyCandidateGenerationJob.objects.create(
+            created_by=user,
+            status=LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+            target_names=["古いロック候補"],
+            current_target="古いロック候補",
+            total_count=1,
+            is_processing=True,
+            processing_by=user,
+            processing_token="stale-tab",
+            processing_started_at=timezone.now() - timedelta(minutes=6),
+        )
+
+        with (
+            patch(
+                "taxonomy.domain.service.llm_taxonomy_candidate_generation."
+                "LLMTaxonomyCandidateGenerationService._generate_candidate_detail",
+                return_value=[
+                    self._candidate_post_data({"breed_name": "古いロック候補"})
+                ],
+            ),
+            patch("taxonomy.views.logger") as mock_logger,
+        ):
+            response = self.client.post(
+                reverse("txo:llm_candidate_generation_job_step", args=[job.pk]),
+                headers={"X-Generation-Tab-Id": "recovery-tab"},
+            )
+
+        job.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            job.status, LLMTaxonomyCandidateGenerationJob.JobStatus.COMPLETED
+        )
+        self.assertFalse(job.is_processing)
+        self.assertEqual(job.processing_token, "")
+        self.assertTrue(
+            LLMTaxonomyCandidate.objects.filter(breed_name="古いロック候補").exists()
+        )
+        log_kwargs = mock_logger.warning.call_args.kwargs
+        self.assertEqual(
+            "LLM分類候補生成ジョブのstale processing lockを再取得しました。",
+            mock_logger.warning.call_args.args[0],
+        )
+        self.assertEqual(log_kwargs["extra"]["job_id"], job.pk)
+        self.assertEqual(log_kwargs["extra"]["previous_processing_by_id"], user.pk)
+        self.assertEqual(log_kwargs["extra"]["reacquired_by_id"], user.pk)
+        self.assertEqual(
+            log_kwargs["extra"]["reacquired_by_username"],
+            "taxonomy_stale_processing",
+        )
 
     def test_non_superuser_cannot_generate_llm_candidate(self):
         """
