@@ -612,7 +612,12 @@ class LLMTaxonomyCandidateGenerationJobStepView(View):
             return
 
         logger.warning(
-            "LLM分類候補生成ジョブのstale processing lockを再取得しました。",
+            (
+                "LLM分類候補生成ジョブ "
+                f"#{previous_job.pk} のstale processing lockを再取得しました。"
+                f"古い開始時刻={previous_job.processing_started_at.isoformat()} / "
+                f"再取得者={getattr(reacquired_by, 'username', '')}"
+            ),
             extra={
                 "job_id": previous_job.pk,
                 "processing_started_at": previous_job.processing_started_at.isoformat(),

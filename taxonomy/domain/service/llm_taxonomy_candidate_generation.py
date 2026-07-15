@@ -71,7 +71,10 @@ class LLMTaxonomyCandidateGenerationService:
         """
         job = LLMTaxonomyCandidateRepository.create_generation_job(user)
         logger.info(
-            "LLM分類候補生成ジョブを開始しました。",
+            (
+                f"LLM分類候補生成ジョブ #{job.pk} を開始しました。"
+                f"作成者={getattr(user, 'username', '')} / 状態={job.status}"
+            ),
             extra={
                 "job_id": job.pk,
                 "created_by_id": getattr(user, "pk", None),
@@ -147,7 +150,10 @@ class LLMTaxonomyCandidateGenerationService:
             ],
         )
         logger.info(
-            "LLM分類候補生成ジョブの対象リスト作成が完了しました。",
+            (
+                f"LLM分類候補生成ジョブ #{job.pk} の対象リスト作成が完了しました。"
+                f"対象件数={job.total_count} / 先頭対象={target_names[0] if target_names else '-'}"
+            ),
             extra={
                 "job_id": job.pk,
                 "status": job.status,
@@ -179,7 +185,10 @@ class LLMTaxonomyCandidateGenerationService:
         job.current_target = target_name
         position = job.processed_count + 1
         logger.info(
-            "LLM分類候補生成ジョブの候補詳細生成を開始しました。",
+            (
+                f"LLM分類候補生成ジョブ #{job.pk} の候補詳細生成を開始しました。"
+                f"{job.total_count}件中{position}件目 / 対象={target_name}"
+            ),
             extra={
                 "job_id": job.pk,
                 "position": position,
@@ -198,7 +207,11 @@ class LLMTaxonomyCandidateGenerationService:
             job.failures = failures
             job.failed_count = len(failures)
             logger.warning(
-                "LLM分類候補生成ジョブの候補詳細生成が失敗しました。",
+                (
+                    f"LLM分類候補生成ジョブ #{job.pk} の候補詳細生成が失敗しました。"
+                    f"{job.total_count}件中{position}件目 / 対象={target_name} / "
+                    f"理由={str(error)}"
+                ),
                 extra={
                     "job_id": job.pk,
                     "position": position,
@@ -213,7 +226,11 @@ class LLMTaxonomyCandidateGenerationService:
             job.candidate_ids = candidate_ids
             job.success_count += len(candidates)
             logger.info(
-                "LLM分類候補生成ジョブの候補詳細生成が完了しました。",
+                (
+                    f"LLM分類候補生成ジョブ #{job.pk} の候補詳細生成が完了しました。"
+                    f"{job.total_count}件中{position}件目 / 対象={target_name} / "
+                    f"保存件数={len(candidates)}"
+                ),
                 extra={
                     "job_id": job.pk,
                     "position": position,
@@ -253,7 +270,11 @@ class LLMTaxonomyCandidateGenerationService:
     @staticmethod
     def _log_job_completed(job: LLMTaxonomyCandidateGenerationJob) -> None:
         logger.info(
-            "LLM分類候補生成ジョブが完了しました。",
+            (
+                f"LLM分類候補生成ジョブ #{job.pk} が完了しました。"
+                f"処理済み={job.processed_count} / 成功={job.success_count} / "
+                f"失敗={job.failed_count} / preview_url={'あり' if job.candidate_ids else 'なし'}"
+            ),
             extra={
                 "job_id": job.pk,
                 "processed_count": job.processed_count,

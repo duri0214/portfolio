@@ -1471,10 +1471,13 @@ class TaxonomyBreedCreateViewTest(TestCase):
             LLMTaxonomyCandidate.objects.filter(breed_name="古いロック候補").exists()
         )
         log_kwargs = mock_logger.warning.call_args.kwargs
-        self.assertEqual(
-            "LLM分類候補生成ジョブのstale processing lockを再取得しました。",
-            mock_logger.warning.call_args.args[0],
+        log_message = mock_logger.warning.call_args.args[0]
+        self.assertIn(
+            f"LLM分類候補生成ジョブ #{job.pk} のstale processing lockを再取得しました。",
+            log_message,
         )
+        self.assertIn("古い開始時刻=", log_message)
+        self.assertIn("再取得者=taxonomy_stale_processing", log_message)
         self.assertEqual(log_kwargs["extra"]["job_id"], job.pk)
         self.assertEqual(log_kwargs["extra"]["previous_processing_by_id"], user.pk)
         self.assertEqual(log_kwargs["extra"]["reacquired_by_id"], user.pk)

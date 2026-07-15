@@ -368,10 +368,10 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             job = LLMTaxonomyCandidateGenerationService.start_job(user)
 
         log_kwargs = mock_logger.info.call_args.kwargs
-        self.assertEqual(
-            "LLM分類候補生成ジョブを開始しました。",
-            mock_logger.info.call_args.args[0],
-        )
+        log_message = mock_logger.info.call_args.args[0]
+        self.assertIn(f"LLM分類候補生成ジョブ #{job.pk} を開始しました。", log_message)
+        self.assertIn("作成者=taxonomy_job_logger", log_message)
+        self.assertIn("状態=pending", log_message)
         self.assertEqual(log_kwargs["extra"]["job_id"], job.pk)
         self.assertEqual(log_kwargs["extra"]["created_by_id"], user.pk)
         self.assertEqual(log_kwargs["extra"]["created_by_username"], user.username)
@@ -404,10 +404,13 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             )
 
         log_kwargs = mock_logger.info.call_args.kwargs
-        self.assertEqual(
-            "LLM分類候補生成ジョブの対象リスト作成が完了しました。",
-            mock_logger.info.call_args.args[0],
+        log_message = mock_logger.info.call_args.args[0]
+        self.assertIn(
+            f"LLM分類候補生成ジョブ #{updated_job.pk} の対象リスト作成が完了しました。",
+            log_message,
         )
+        self.assertIn("対象件数=2", log_message)
+        self.assertIn("先頭対象=Apis cerana", log_message)
         self.assertEqual(log_kwargs["extra"]["job_id"], updated_job.pk)
         self.assertEqual(log_kwargs["extra"]["total_count"], 2)
         self.assertEqual(log_kwargs["extra"]["first_target"], "Apis cerana")
@@ -440,15 +443,34 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             )
 
         messages = [call.args[0] for call in mock_logger.info.call_args_list]
-        self.assertIn(
-            "LLM分類候補生成ジョブの候補詳細生成を開始しました。",
-            messages,
+        self.assertTrue(
+            any(
+                f"LLM分類候補生成ジョブ #{updated_job.pk} の候補詳細生成を開始しました。"
+                in message
+                and "1件中1件目" in message
+                and "対象=Apis cerana" in message
+                for message in messages
+            )
         )
-        self.assertIn(
-            "LLM分類候補生成ジョブの候補詳細生成が完了しました。",
-            messages,
+        self.assertTrue(
+            any(
+                f"LLM分類候補生成ジョブ #{updated_job.pk} の候補詳細生成が完了しました。"
+                in message
+                and "1件中1件目" in message
+                and "対象=Apis cerana" in message
+                and "保存件数=1" in message
+                for message in messages
+            )
         )
-        self.assertIn("LLM分類候補生成ジョブが完了しました。", messages)
+        self.assertTrue(
+            any(
+                f"LLM分類候補生成ジョブ #{updated_job.pk} が完了しました。" in message
+                and "処理済み=1" in message
+                and "成功=1" in message
+                and "preview_url=あり" in message
+                for message in messages
+            )
+        )
         completion_log = mock_logger.info.call_args_list[-1]
         self.assertEqual(completion_log.kwargs["extra"]["job_id"], updated_job.pk)
         self.assertEqual(completion_log.kwargs["extra"]["processed_count"], 1)
@@ -484,10 +506,14 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             LLMTaxonomyCandidateGenerationService.process_next_job_step(job)
 
         log_kwargs = mock_logger.warning.call_args.kwargs
-        self.assertEqual(
-            "LLM分類候補生成ジョブの候補詳細生成が失敗しました。",
-            mock_logger.warning.call_args.args[0],
+        log_message = mock_logger.warning.call_args.args[0]
+        self.assertIn(
+            f"LLM分類候補生成ジョブ #{job.pk} の候補詳細生成が失敗しました。",
+            log_message,
         )
+        self.assertIn("1件中1件目", log_message)
+        self.assertIn("対象=失敗候補", log_message)
+        self.assertIn("理由=保存できる候補がありません。", log_message)
         self.assertEqual(log_kwargs["extra"]["job_id"], job.pk)
         self.assertEqual(log_kwargs["extra"]["position"], 1)
         self.assertEqual(log_kwargs["extra"]["target_name"], "失敗候補")
