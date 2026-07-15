@@ -3,7 +3,7 @@ import os
 
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
@@ -61,6 +61,7 @@ from taxonomy.models import (
     Family,
     Genus,
     LLMTaxonomyCandidate,
+    LLMTaxonomyCandidateGenerationJob,
     Phylum,
     Species,
 )
@@ -294,19 +295,16 @@ class LLMTaxonomyCandidateListView(ListView):
             return redirect(self._preview_url(pending_candidates))
 
         try:
-            candidates = LLMTaxonomyCandidateGenerationService.generate_and_save()
+            job = LLMTaxonomyCandidateGenerationService.start_job(request.user)
         except LLMTaxonomyCandidateGenerationError as error:
             messages.error(request, str(error))
             return redirect("txo:llm_candidate_list")
 
-        candidate_ids = ",".join(str(candidate.pk) for candidate in candidates)
         messages.success(
             request,
-            "LLM生成候補をプレビュー用に保存しました。内容を確認してください。",
+            "LLM生成ジョブを開始しました。進捗を確認してください。",
         )
-        return redirect(
-            f"{reverse('txo:llm_candidate_new')}?candidate_ids={candidate_ids}"
-        )
+        return redirect(f"{reverse('txo:llm_candidate_list')}?job_id={job.pk}")
 
     def get_queryset(self):
         return LLMTaxonomyCandidate.objects.select_related(
@@ -337,6 +335,7 @@ class LLMTaxonomyCandidateListView(ListView):
         context["has_pending_candidates"] = bool(
             LLMTaxonomyCandidateRepository.pending_candidates()
         )
+        context["generation_job"] = self._get_generation_job()
         return context
 
     def _get_candidate_ids(self) -> list[int]:
@@ -350,6 +349,15 @@ class LLMTaxonomyCandidateListView(ListView):
     def _preview_url(self, candidates: list[LLMTaxonomyCandidate]) -> str:
         candidate_ids = ",".join(str(candidate.pk) for candidate in candidates)
         return f"{reverse('txo:llm_candidate_new')}?candidate_ids={candidate_ids}"
+
+    def _get_generation_job(self) -> LLMTaxonomyCandidateGenerationJob | None:
+        job_id = self.request.GET.get("job_id")
+        if job_id and job_id.isdigit():
+            try:
+                return LLMTaxonomyCandidateRepository.get_generation_job(int(job_id))
+            except ObjectDoesNotExist:
+                return None
+        return LLMTaxonomyCandidateRepository.latest_generation_job()
 
 
 class LLMTaxonomyCandidateCreateView(FormView):
@@ -366,19 +374,16 @@ class LLMTaxonomyCandidateCreateView(FormView):
             return redirect("txo:llm_candidate_list")
 
         try:
-            candidates = LLMTaxonomyCandidateGenerationService.generate_and_save()
+            job = LLMTaxonomyCandidateGenerationService.start_job(self.request.user)
         except LLMTaxonomyCandidateGenerationError as error:
             messages.error(self.request, str(error))
             return self.render_to_response(self.get_context_data(form=form))
 
-        candidate_ids = ",".join(str(candidate.pk) for candidate in candidates)
         messages.success(
             self.request,
-            "LLM生成候補をプレビュー用に保存しました。内容を確認してください。",
+            "LLM生成ジョブを開始しました。進捗を確認してください。",
         )
-        return redirect(
-            f"{reverse('txo:llm_candidate_new')}?candidate_ids={candidate_ids}"
-        )
+        return redirect(f"{reverse('txo:llm_candidate_list')}?job_id={job.pk}")
 
     def form_invalid(self, form):
         messages.error(
@@ -472,6 +477,56 @@ class LLMTaxonomyCandidateApproveView(View):
             field_name in request.POST
             for field_name in LLMTaxonomyCandidateMetadataForm.Meta.fields
         )
+
+
+class LLMTaxonomyCandidateGenerationJobStepView(View):
+    """
+    LLM分類候補生成ジョブをポーリングごとに1ステップ進めるビュー。
+    """
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return JsonResponse(
+                {"error": "LLM生成候補を生成する権限がありません。"},
+                status=403,
+            )
+
+        try:
+            job = LLMTaxonomyCandidateRepository.get_generation_job(kwargs["pk"])
+        except ObjectDoesNotExist:
+            return JsonResponse({"error": "生成ジョブが見つかりません。"}, status=404)
+
+        job = LLMTaxonomyCandidateGenerationService.process_next_job_step(job)
+        return JsonResponse(self._job_payload(job))
+
+    def _job_payload(self, job: LLMTaxonomyCandidateGenerationJob) -> dict:
+        preview_url = ""
+        if job.candidate_ids:
+            candidate_ids = ",".join(
+                str(candidate_id) for candidate_id in job.candidate_ids
+            )
+            preview_url = (
+                f"{reverse('txo:llm_candidate_new')}?candidate_ids={candidate_ids}"
+            )
+        return {
+            "id": job.pk,
+            "status": job.status,
+            "status_label": job.get_status_display(),
+            "current_step": job.current_step,
+            "current_target": job.current_target,
+            "total_count": job.total_count,
+            "processed_count": job.processed_count,
+            "success_count": job.success_count,
+            "failed_count": job.failed_count,
+            "failures": job.failures,
+            "error_message": job.error_message,
+            "preview_url": preview_url,
+            "is_finished": job.status
+            in [
+                LLMTaxonomyCandidateGenerationJob.JobStatus.COMPLETED,
+                LLMTaxonomyCandidateGenerationJob.JobStatus.FAILED,
+            ],
+        }
 
 
 class LLMTaxonomyCandidateBulkApproveView(View):

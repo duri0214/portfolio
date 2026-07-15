@@ -24,6 +24,7 @@ from taxonomy.models import (
     Genus,
     Kingdom,
     LLMTaxonomyCandidate,
+    LLMTaxonomyCandidateGenerationJob,
     LivestockDistributionDataset,
     NaturalMonument,
     Phylum,
@@ -1102,12 +1103,12 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, "生成中...")
         self.assertNotContains(response, "レビュー待ちのLLM生成候補を開く")
 
-    def test_generate_llm_candidate_saves_preview_candidate(self):
+    def test_generate_llm_candidate_starts_generation_job(self):
         """
         シナリオ:
-        - 入力: LLM生成ボタンのPOST。
+        - 入力: 管理者によるLLM生成ボタンのPOST。
         - 処理: LLM生成候補一覧ページで生成フォームをPOSTする。
-        - 期待値: 生成後のプレビュー用ページにレビュー待ち候補1件が表示されること。
+        - 期待値: 生成ジョブが作成され、進捗パネルへ遷移すること。
         """
         user = get_user_model().objects.create_superuser(
             username="taxonomy_generator",
@@ -1116,39 +1117,24 @@ class TaxonomyBreedCreateViewTest(TestCase):
         )
         self.client.force_login(user)
 
-        def generate_candidate():
-            return [self._create_candidate(breed_name="候補のミミズ")]
-
         with patch(
-            "taxonomy.views.LLMTaxonomyCandidateGenerationService.generate_and_save",
-            side_effect=generate_candidate,
-        ) as mock_generate:
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.start_job",
+            return_value=LLMTaxonomyCandidateGenerationJob.objects.create(
+                created_by=user
+            ),
+        ) as mock_start:
             response = self.client.post(
                 reverse("txo:llm_candidate_list"),
                 data={},
                 follow=True,
             )
 
-        mock_generate.assert_called_once_with()
-        candidate = LLMTaxonomyCandidate.objects.get(breed_name="候補のミミズ")
+        mock_start.assert_called_once_with(user)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.PENDING)
-        self.assertFalse(Breed.objects.filter(name="候補のミミズ").exists())
-        self.assertContains(response, "LLM生成候補をプレビュー用に保存しました。")
-        self.assertContains(response, "今回生成された品種")
-        self.assertContains(response, "すべて承認")
-        self.assertContains(response, "すべて却下")
-        self.assertContains(response, "承認")
-        self.assertContains(response, "却下")
-        self.assertContains(response, "GBIFで分類を点検")
-        self.assertContains(
-            response, "https://www.gbif.org/taxon/search?q=Pheretima+communissima"
-        )
-        self.assertContains(response, "Wikipediaで出典を開く")
-        self.assertContains(response, '<span class="badge text-bg-secondary">界</span>')
-        self.assertContains(response, '<span class="badge text-bg-secondary">属</span>')
-        self.assertContains(response, '<span class="badge text-bg-secondary">種</span>')
-        self.assertNotContains(response, "出典とメモを保存")
+        self.assertContains(response, "LLM生成ジョブを開始しました。")
+        self.assertContains(response, "生成ジョブ進捗")
+        self.assertContains(response, "対象リスト作成後、種候補ごとに詳細生成します。")
+        self.assertContains(response, "llm-candidates/jobs/")
 
     def test_generate_llm_candidate_reuses_existing_pending_candidates(self):
         """
@@ -1167,15 +1153,15 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.client.force_login(user)
 
         with patch(
-            "taxonomy.views.LLMTaxonomyCandidateGenerationService.generate_and_save",
-        ) as mock_generate:
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.start_job",
+        ) as mock_start:
             response = self.client.post(
                 reverse("txo:llm_candidate_list"),
                 data={},
                 follow=True,
             )
 
-        mock_generate.assert_not_called()
+        mock_start.assert_not_called()
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
@@ -1185,12 +1171,53 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.assertContains(response, second_candidate.breed_name)
         self.assertContains(response, "すべて承認")
 
-    def test_generate_llm_candidate_shows_generation_error_once(self):
+    def test_generation_job_step_saves_preview_candidate(self):
         """
         シナリオ:
-        - 入力: LLM生成サービスが保存前バリデーションエラーを返す状態。
-        - 処理: 管理者がLLM生成候補フォームをPOSTする。
-        - 期待値: 具体的な生成エラーだけが表示され、汎用エラーは重複表示されないこと。
+        - 入力: 対象名1件を持つ生成中ジョブと管理者ユーザー。
+        - 処理: 生成ジョブのステップURLへPOSTする。
+        - 期待値: 候補が保存され、成功件数とプレビューURLがJSONで返ること。
+        """
+        user = get_user_model().objects.create_superuser(
+            username="taxonomy_generator_step",
+            email="taxonomy_generator_step@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        job = LLMTaxonomyCandidateGenerationJob.objects.create(
+            created_by=user,
+            status=LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+            target_names=["候補のミミズ"],
+            total_count=1,
+        )
+
+        with patch(
+            "taxonomy.domain.service.llm_taxonomy_candidate_generation."
+            "LLMTaxonomyCandidateGenerationService._generate_candidate_detail",
+            return_value=[self._candidate_post_data({"breed_name": "候補のミミズ"})],
+        ):
+            response = self.client.post(
+                reverse("txo:llm_candidate_generation_job_step", args=[job.pk])
+            )
+
+        job.refresh_from_db()
+        candidate = LLMTaxonomyCandidate.objects.get(breed_name="候補のミミズ")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            job.status, LLMTaxonomyCandidateGenerationJob.JobStatus.COMPLETED
+        )
+        self.assertEqual(job.success_count, 1)
+        self.assertEqual(job.processed_count, 1)
+        self.assertEqual(candidate.status, LLMTaxonomyCandidate.ReviewStatus.PENDING)
+        self.assertEqual(response.json()["success_count"], 1)
+        self.assertIn("candidate_ids=", response.json()["preview_url"])
+
+    def test_generation_job_step_records_candidate_failure(self):
+        """
+        シナリオ:
+        - 入力: 詳細生成が保存前バリデーションエラーになる生成中ジョブ。
+        - 処理: 生成ジョブのステップURLへPOSTする。
+        - 期待値: ジョブは完了し、失敗した対象名と理由がJSONに残ること。
         """
         user = get_user_model().objects.create_superuser(
             username="taxonomy_generator_error",
@@ -1198,24 +1225,32 @@ class TaxonomyBreedCreateViewTest(TestCase):
             password="password",
         )
         self.client.force_login(user)
+        job = LLMTaxonomyCandidateGenerationJob.objects.create(
+            created_by=user,
+            status=LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+            target_names=["失敗候補"],
+            total_count=1,
+        )
 
         with patch(
-            "taxonomy.views.LLMTaxonomyCandidateGenerationService.generate_and_save",
+            "taxonomy.domain.service.llm_taxonomy_candidate_generation."
+            "LLMTaxonomyCandidateGenerationService._generate_candidate_detail",
             side_effect=LLMTaxonomyCandidateGenerationError(
-                "LLM生成結果を候補として保存できません。" "入力内容を見直してください。"
+                "種名とキャプションが一致していません。"
             ),
         ):
-            response = self.client.post(reverse("txo:llm_candidate_list"), follow=True)
+            response = self.client.post(
+                reverse("txo:llm_candidate_generation_job_step", args=[job.pk])
+            )
 
+        job.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            "LLM生成結果を候補として保存できません。入力内容を見直してください。",
+        self.assertEqual(
+            job.status, LLMTaxonomyCandidateGenerationJob.JobStatus.COMPLETED
         )
-        self.assertNotContains(
-            response,
-            "生成できませんでした。入力内容を確認してください。",
-        )
+        self.assertEqual(job.failed_count, 1)
+        self.assertEqual(job.failures[0]["target"], "失敗候補")
+        self.assertEqual(response.json()["failures"][0]["target"], "失敗候補")
 
     def test_non_superuser_cannot_generate_llm_candidate(self):
         """
@@ -1232,15 +1267,15 @@ class TaxonomyBreedCreateViewTest(TestCase):
         self.client.force_login(user)
 
         with patch(
-            "taxonomy.views.LLMTaxonomyCandidateGenerationService.generate_and_save",
-        ) as mock_generate:
+            "taxonomy.views.LLMTaxonomyCandidateGenerationService.start_job",
+        ) as mock_start:
             response = self.client.post(
                 reverse("txo:llm_candidate_list"),
                 data={},
                 follow=True,
             )
 
-        mock_generate.assert_not_called()
+        mock_start.assert_not_called()
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "LLM生成候補を生成する権限がありません。")
 

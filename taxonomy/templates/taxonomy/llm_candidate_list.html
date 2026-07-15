@@ -40,6 +40,49 @@
             </div>
         {% endif %}
 
+        {% if generation_job %}
+            <section class="border rounded p-3 mb-4" id="llm-generation-job-panel" data-step-url="{% url 'txo:llm_candidate_generation_job_step' generation_job.pk %}" data-is-active="{% if generation_job.status == 'pending' or generation_job.status == 'running' %}true{% else %}false{% endif %}">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">生成ジョブ進捗</h2>
+                        <div class="text-muted small">対象リスト作成後、種候補ごとに詳細生成します。</div>
+                    </div>
+                    <span class="badge text-bg-info" id="llm-generation-job-status">{{ generation_job.get_status_display }}</span>
+                </div>
+                <div class="progress mb-3" role="progressbar" aria-label="LLM生成ジョブ進捗">
+                    <div class="progress-bar" id="llm-generation-job-bar" style="width: {% if generation_job.total_count %}{% widthratio generation_job.processed_count generation_job.total_count 100 %}{% else %}0{% endif %}%"></div>
+                </div>
+                <div class="row g-3 small">
+                    <div class="col-md-3">
+                        <div class="text-muted">現在ステップ</div>
+                        <div class="fw-semibold" id="llm-generation-job-step">{{ generation_job.current_step|default:"生成待ち" }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted">生成中の対象</div>
+                        <div class="fw-semibold" id="llm-generation-job-target">{{ generation_job.current_target|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-muted">成功</div>
+                        <div class="fw-semibold" id="llm-generation-job-success">{{ generation_job.success_count }}</div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-muted">失敗</div>
+                        <div class="fw-semibold" id="llm-generation-job-failed">{{ generation_job.failed_count }}</div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-muted">処理済み</div>
+                        <div class="fw-semibold"><span id="llm-generation-job-processed">{{ generation_job.processed_count }}</span> / <span id="llm-generation-job-total">{{ generation_job.total_count }}</span></div>
+                    </div>
+                </div>
+                <div class="alert alert-danger mt-3 d-none" id="llm-generation-job-error" role="alert"></div>
+                <div class="mt-3 d-none" id="llm-generation-job-failures">
+                    <h3 class="h6">失敗した候補</h3>
+                    <ul class="mb-0" id="llm-generation-job-failure-list"></ul>
+                </div>
+                <a class="btn btn-outline-primary mt-3 d-none" id="llm-generation-job-preview" href="#">生成候補を確認</a>
+            </section>
+        {% endif %}
+
         {% if candidate_previews %}
             <section class="mb-5">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -212,15 +255,88 @@
             const form = document.getElementById("llm-candidate-generate-form");
             const button = document.getElementById("llm-candidate-generate-button");
             const status = document.getElementById("llm-candidate-generate-status");
-            if (!form || !button || !status) {
-                return;
-            }
-
-            form.addEventListener("submit", () => {
+            if (form && button && status) {
+                form.addEventListener("submit", () => {
                 button.disabled = true;
                 button.textContent = button.dataset.loadingLabel || "生成中...";
                 status.classList.remove("d-none");
-            });
+                });
+            }
+
+            const panel = document.getElementById("llm-generation-job-panel");
+            if (!panel || panel.dataset.isActive !== "true") {
+                return;
+            }
+
+            const csrfToken = form?.querySelector("[name=csrfmiddlewaretoken]")?.value;
+            const elements = {
+                status: document.getElementById("llm-generation-job-status"),
+                bar: document.getElementById("llm-generation-job-bar"),
+                step: document.getElementById("llm-generation-job-step"),
+                target: document.getElementById("llm-generation-job-target"),
+                success: document.getElementById("llm-generation-job-success"),
+                failed: document.getElementById("llm-generation-job-failed"),
+                processed: document.getElementById("llm-generation-job-processed"),
+                total: document.getElementById("llm-generation-job-total"),
+                error: document.getElementById("llm-generation-job-error"),
+                failures: document.getElementById("llm-generation-job-failures"),
+                failureList: document.getElementById("llm-generation-job-failure-list"),
+                preview: document.getElementById("llm-generation-job-preview"),
+            };
+
+            const renderJob = (job) => {
+                elements.status.textContent = job.status_label;
+                elements.step.textContent = job.current_step || "生成待ち";
+                elements.target.textContent = job.current_target || "-";
+                elements.success.textContent = job.success_count;
+                elements.failed.textContent = job.failed_count;
+                elements.processed.textContent = job.processed_count;
+                elements.total.textContent = job.total_count;
+                const percent = job.total_count ? Math.round((job.processed_count / job.total_count) * 100) : 0;
+                elements.bar.style.width = `${percent}%`;
+
+                if (job.error_message) {
+                    elements.error.textContent = job.error_message;
+                    elements.error.classList.remove("d-none");
+                }
+
+                elements.failureList.innerHTML = "";
+                if (job.failures.length) {
+                    job.failures.forEach((failure) => {
+                        const item = document.createElement("li");
+                        item.textContent = `${failure.target}: ${failure.message}`;
+                        elements.failureList.appendChild(item);
+                    });
+                    elements.failures.classList.remove("d-none");
+                }
+
+                if (job.preview_url) {
+                    elements.preview.href = job.preview_url;
+                    elements.preview.classList.remove("d-none");
+                }
+            };
+
+            const advanceJob = async () => {
+                const response = await fetch(panel.dataset.stepUrl, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                });
+                const job = await response.json();
+                if (!response.ok) {
+                    elements.error.textContent = job.error || "生成ジョブの進行に失敗しました。";
+                    elements.error.classList.remove("d-none");
+                    return;
+                }
+                renderJob(job);
+                if (!job.is_finished) {
+                    window.setTimeout(advanceJob, 800);
+                }
+            };
+
+            window.setTimeout(advanceJob, 500);
         })();
     </script>
 {% endblock %}

@@ -10,6 +10,7 @@ from taxonomy.views import (
     LLMTaxonomyCandidateBulkApproveView,
     LLMTaxonomyCandidateBulkRejectView,
     LLMTaxonomyCandidateCreateView,
+    LLMTaxonomyCandidateGenerationJobStepView,
     LLMTaxonomyCandidateListView,
     LLMTaxonomyCandidateRejectView,
     KingdomCreateView,
@@ -39,6 +40,11 @@ urlpatterns = [
         "llm-candidates/new/",
         LLMTaxonomyCandidateCreateView.as_view(),
         name="llm_candidate_new",
+    ),
+    path(
+        "llm-candidates/jobs/<int:pk>/step/",
+        LLMTaxonomyCandidateGenerationJobStepView.as_view(),
+        name="llm_candidate_generation_job_step",
     ),
     path(
         "llm-candidates/<int:pk>/approve/",
