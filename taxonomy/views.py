@@ -1,11 +1,15 @@
 import json
+import logging
 import os
+from datetime import timedelta
 
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Case, IntegerField, Value, When
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.generic import (
     CreateView,
@@ -65,6 +69,9 @@ from taxonomy.models import (
     Phylum,
     Species,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class IndexView(TemplateView):
@@ -310,7 +317,16 @@ class LLMTaxonomyCandidateListView(ListView):
         return LLMTaxonomyCandidate.objects.select_related(
             "approved_breed",
             "reviewed_by",
-        ).order_by("status", "-created_at")
+        ).order_by(
+            Case(
+                When(status=LLMTaxonomyCandidate.ReviewStatus.PENDING, then=Value(0)),
+                When(status=LLMTaxonomyCandidate.ReviewStatus.APPROVED, then=Value(1)),
+                When(status=LLMTaxonomyCandidate.ReviewStatus.REJECTED, then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            ),
+            "-created_at",
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -496,7 +512,32 @@ class LLMTaxonomyCandidateGenerationJobStepView(View):
         except ObjectDoesNotExist:
             return JsonResponse({"error": "生成ジョブが見つかりません。"}, status=404)
 
-        job = LLMTaxonomyCandidateGenerationService.process_next_job_step(job)
+        if job.status in [
+            LLMTaxonomyCandidateGenerationJob.JobStatus.COMPLETED,
+            LLMTaxonomyCandidateGenerationJob.JobStatus.FAILED,
+        ]:
+            return JsonResponse(self._job_payload(job))
+
+        processing_job = (
+            LLMTaxonomyCandidateRepository.acquire_generation_job_processing(
+                job.pk,
+                request.user,
+                self._processing_token(),
+            )
+        )
+        if processing_job is None:
+            job = LLMTaxonomyCandidateRepository.get_generation_job(job.pk)
+            return JsonResponse(self._job_payload(job))
+
+        self._log_stale_processing_reacquired(job, request.user)
+        job = processing_job
+        try:
+            job = LLMTaxonomyCandidateGenerationService.process_next_job_step(
+                processing_job
+            )
+        finally:
+            LLMTaxonomyCandidateRepository.release_generation_job_processing(job)
+
         return JsonResponse(self._job_payload(job))
 
     def _job_payload(self, job: LLMTaxonomyCandidateGenerationJob) -> dict:
@@ -508,10 +549,13 @@ class LLMTaxonomyCandidateGenerationJobStepView(View):
             preview_url = (
                 f"{reverse('txo:llm_candidate_new')}?candidate_ids={candidate_ids}"
             )
+        processing_message = self._processing_message(job)
         return {
             "id": job.pk,
             "status": job.status,
             "status_label": job.get_status_display(),
+            "is_processing": job.is_processing,
+            "processing_message": processing_message,
             "current_step": job.current_step,
             "current_target": job.current_target,
             "total_count": job.total_count,
@@ -527,6 +571,61 @@ class LLMTaxonomyCandidateGenerationJobStepView(View):
                 LLMTaxonomyCandidateGenerationJob.JobStatus.FAILED,
             ],
         }
+
+    def _processing_message(self, job: LLMTaxonomyCandidateGenerationJob) -> str:
+        if not job.is_processing:
+            return ""
+
+        actor = ""
+        if (
+            job.processing_by_id
+            and self.request.user.is_authenticated
+            and job.processing_by_id != self.request.user.pk
+        ):
+            actor = "別の管理者が"
+
+        if job.total_count:
+            processing_count = min(job.processed_count + 1, job.total_count)
+            target = job.current_target or "対象未設定"
+            return (
+                f"{actor}生成ジョブの{job.total_count}件中"
+                f"{processing_count}件目（{target}）を処理中です。"
+            )
+
+        step = job.current_step or "生成対象リスト作成"
+        return f"{actor}生成ジョブの{step}を処理中です。"
+
+    def _processing_token(self) -> str:
+        return self.request.headers.get("X-Generation-Tab-Id", "")[:100]
+
+    def _log_stale_processing_reacquired(
+        self,
+        previous_job: LLMTaxonomyCandidateGenerationJob,
+        reacquired_by,
+    ) -> None:
+        stale_threshold = timezone.now() - timedelta(minutes=5)
+        if (
+            not previous_job.is_processing
+            or previous_job.processing_started_at is None
+            or previous_job.processing_started_at >= stale_threshold
+        ):
+            return
+
+        logger.warning(
+            (
+                "LLM分類候補生成ジョブ "
+                f"#{previous_job.pk} のstale processing lockを再取得しました。"
+                f"古い開始時刻={previous_job.processing_started_at.isoformat()} / "
+                f"再取得者={getattr(reacquired_by, 'username', '')}"
+            ),
+            extra={
+                "job_id": previous_job.pk,
+                "processing_started_at": previous_job.processing_started_at.isoformat(),
+                "previous_processing_by_id": previous_job.processing_by_id,
+                "reacquired_by_id": getattr(reacquired_by, "pk", None),
+                "reacquired_by_username": getattr(reacquired_by, "username", ""),
+            },
+        )
 
 
 class LLMTaxonomyCandidateBulkApproveView(View):

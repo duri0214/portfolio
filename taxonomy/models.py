@@ -310,6 +310,10 @@ class LLMTaxonomyCandidateGenerationJob(models.Model):
         target_names: 今回詳細生成する対象名の一覧。
         candidate_ids: 保存できたLLM分類候補IDの一覧。
         failures: 生成または保存に失敗した対象名と理由の一覧。
+        is_processing: いずれかのリクエストが現在1ステップを実行中かどうか。
+        processing_started_at: 現在の1ステップ実行を開始した日時。
+        processing_by: 現在の1ステップ実行を開始したユーザー。
+        processing_token: 現在の1ステップ実行を開始したブラウザタブの識別子。
         total_count: 詳細生成対象の総数。
         processed_count: 詳細生成を試行した対象数。
         success_count: 保存できた候補数。
@@ -349,6 +353,17 @@ class LLMTaxonomyCandidateGenerationJob(models.Model):
     target_names = models.JSONField("生成対象名一覧", default=list, blank=True)
     candidate_ids = models.JSONField("保存済み候補ID一覧", default=list, blank=True)
     failures = models.JSONField("失敗対象一覧", default=list, blank=True)
+    is_processing = models.BooleanField("処理中", default=False)
+    processing_started_at = models.DateTimeField("処理開始日時", null=True, blank=True)
+    processing_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="処理実行者",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="processing_llm_taxonomy_generation_jobs",
+    )
+    processing_token = models.CharField("処理タブ識別子", max_length=100, blank=True)
     total_count = models.PositiveSmallIntegerField("生成対象総数", default=0)
     processed_count = models.PositiveSmallIntegerField("処理済み対象数", default=0)
     success_count = models.PositiveSmallIntegerField("成功件数", default=0)

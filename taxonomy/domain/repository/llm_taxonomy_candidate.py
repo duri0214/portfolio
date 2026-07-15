@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from taxonomy.models import (
@@ -67,7 +70,9 @@ class LLMTaxonomyCandidateRepository:
         """
         進捗表示またはステップ実行対象の生成ジョブを取得します。
         """
-        return LLMTaxonomyCandidateGenerationJob.objects.get(pk=job_id)
+        return LLMTaxonomyCandidateGenerationJob.objects.select_related(
+            "processing_by",
+        ).get(pk=job_id)
 
     @staticmethod
     def latest_generation_job() -> LLMTaxonomyCandidateGenerationJob | None:
@@ -87,6 +92,62 @@ class LLMTaxonomyCandidateRepository:
         job.updated_at = timezone.now()
         update_fields = [*fields, "updated_at"]
         LLMTaxonomyCandidateGenerationJob.objects.bulk_update([job], update_fields)
+
+    @staticmethod
+    def acquire_generation_job_processing(
+        job_id: int,
+        user,
+        processing_token: str,
+    ) -> LLMTaxonomyCandidateGenerationJob | None:
+        """
+        未処理中の生成ジョブだけを処理中に更新して取得します。
+        """
+        now = timezone.now()
+        stale_processing_started_at = now - timedelta(minutes=5)
+        updated_count = (
+            LLMTaxonomyCandidateGenerationJob.objects.filter(
+                pk=job_id,
+                status__in=[
+                    LLMTaxonomyCandidateGenerationJob.JobStatus.PENDING,
+                    LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+                ],
+            )
+            .filter(
+                Q(is_processing=False)
+                | Q(processing_started_at__lt=stale_processing_started_at)
+            )
+            .update(
+                is_processing=True,
+                processing_started_at=now,
+                processing_by=user,
+                processing_token=processing_token,
+                updated_at=now,
+            )
+        )
+        if updated_count == 0:
+            return None
+        return LLMTaxonomyCandidateRepository.get_generation_job(job_id)
+
+    @staticmethod
+    def release_generation_job_processing(
+        job: LLMTaxonomyCandidateGenerationJob,
+    ) -> None:
+        """
+        生成ジョブの1ステップ実行中フラグを解除します。
+        """
+        job.is_processing = False
+        job.processing_started_at = None
+        job.processing_by = None
+        job.processing_token = ""
+        LLMTaxonomyCandidateRepository.update_generation_job(
+            job,
+            [
+                "is_processing",
+                "processing_started_at",
+                "processing_by",
+                "processing_token",
+            ],
+        )
 
     @staticmethod
     def pending_candidates() -> list[LLMTaxonomyCandidate]:

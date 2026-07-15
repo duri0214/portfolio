@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from taxonomy.domain.service.llm_taxonomy_candidate_generation import (
@@ -326,10 +327,13 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
         """
         job = LLMTaxonomyCandidateGenerationJob.objects.create()
 
-        with patch(
-            "taxonomy.domain.service.llm_taxonomy_candidate_generation."
-            "LLMTaxonomyCandidateGenerationService._generate_target_names",
-            return_value=["Apis cerana", "Apis dorsata"],
+        with (
+            patch(
+                "taxonomy.domain.service.llm_taxonomy_candidate_generation."
+                "LLMTaxonomyCandidateGenerationService._generate_target_names",
+                return_value=["Apis cerana", "Apis dorsata"],
+            ),
+            patch("taxonomy.domain.service.llm_taxonomy_candidate_generation.logger"),
         ):
             updated_job = LLMTaxonomyCandidateGenerationService.process_next_job_step(
                 job
@@ -344,6 +348,170 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
         self.assertEqual(updated_job.current_target, "Apis cerana")
         self.assertEqual(updated_job.total_count, 2)
         self.assertEqual(updated_job.target_names, ["Apis cerana", "Apis dorsata"])
+
+    def test_start_job_logs_initial_state(self):
+        """
+        シナリオ:
+        - 入力: ジョブ開始ユーザー。
+        - 処理: LLM分類候補生成ジョブを開始する。
+        - 期待値: Job ID、作成者、初期状態がログに渡されること。
+        """
+        user = get_user_model().objects.create_user(
+            username="taxonomy_job_logger",
+            email="taxonomy_job_logger@example.com",
+            password="password",
+        )
+
+        with patch(
+            "taxonomy.domain.service.llm_taxonomy_candidate_generation.logger"
+        ) as mock_logger:
+            job = LLMTaxonomyCandidateGenerationService.start_job(user)
+
+        log_kwargs = mock_logger.info.call_args.kwargs
+        log_message = mock_logger.info.call_args.args[0]
+        self.assertIn(f"LLM分類候補生成ジョブ #{job.pk} を開始しました。", log_message)
+        self.assertIn("作成者=taxonomy_job_logger", log_message)
+        self.assertIn("状態=pending", log_message)
+        self.assertEqual(log_kwargs["extra"]["job_id"], job.pk)
+        self.assertEqual(log_kwargs["extra"]["created_by_id"], user.pk)
+        self.assertEqual(log_kwargs["extra"]["created_by_username"], user.username)
+        self.assertEqual(
+            log_kwargs["extra"]["status"],
+            LLMTaxonomyCandidateGenerationJob.JobStatus.PENDING,
+        )
+
+    def test_process_job_first_step_logs_target_summary(self):
+        """
+        シナリオ:
+        - 入力: 準備中の生成ジョブと、mockされた生成対象名。
+        - 処理: ジョブの対象リスト作成ステップを進める。
+        - 期待値: 対象件数と先頭対象名がログに渡されること。
+        """
+        job = LLMTaxonomyCandidateGenerationJob.objects.create()
+
+        with (
+            patch(
+                "taxonomy.domain.service.llm_taxonomy_candidate_generation."
+                "LLMTaxonomyCandidateGenerationService._generate_target_names",
+                return_value=["Apis cerana", "Apis dorsata"],
+            ),
+            patch(
+                "taxonomy.domain.service.llm_taxonomy_candidate_generation.logger"
+            ) as mock_logger,
+        ):
+            updated_job = LLMTaxonomyCandidateGenerationService.process_next_job_step(
+                job
+            )
+
+        log_kwargs = mock_logger.info.call_args.kwargs
+        log_message = mock_logger.info.call_args.args[0]
+        self.assertIn(
+            f"LLM分類候補生成ジョブ #{updated_job.pk} の対象リスト作成が完了しました。",
+            log_message,
+        )
+        self.assertIn("対象件数=2", log_message)
+        self.assertIn("先頭対象=Apis cerana", log_message)
+        self.assertEqual(log_kwargs["extra"]["job_id"], updated_job.pk)
+        self.assertEqual(log_kwargs["extra"]["total_count"], 2)
+        self.assertEqual(log_kwargs["extra"]["first_target"], "Apis cerana")
+
+    def test_process_job_detail_step_logs_success_and_completion(self):
+        """
+        シナリオ:
+        - 入力: 対象名1件を持つ生成中ジョブと、mockされた候補データ。
+        - 処理: ジョブの詳細生成ステップを進める。
+        - 期待値: 詳細生成成功とジョブ完了のログが渡されること。
+        """
+        job = LLMTaxonomyCandidateGenerationJob.objects.create(
+            status=LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+            target_names=["Apis cerana"],
+            total_count=1,
+        )
+
+        with (
+            patch(
+                "taxonomy.domain.service.llm_taxonomy_candidate_generation."
+                "LLMTaxonomyCandidateGenerationService._generate_candidate_detail",
+                return_value=[self._candidate_data({"breed_name": "Apis cerana"})],
+            ),
+            patch(
+                "taxonomy.domain.service.llm_taxonomy_candidate_generation.logger"
+            ) as mock_logger,
+        ):
+            updated_job = LLMTaxonomyCandidateGenerationService.process_next_job_step(
+                job
+            )
+
+        messages = [call.args[0] for call in mock_logger.info.call_args_list]
+        self.assertTrue(
+            any(
+                f"LLM分類候補生成ジョブ #{updated_job.pk} の候補詳細生成が完了しました。"
+                in message
+                and "1件中1件目" in message
+                and "対象=Apis cerana" in message
+                and "保存件数=1" in message
+                for message in messages
+            )
+        )
+        self.assertTrue(
+            any(
+                f"LLM分類候補生成ジョブ #{updated_job.pk} が完了しました。" in message
+                and "処理済み=1" in message
+                and "成功=1" in message
+                and "preview_url=あり" in message
+                for message in messages
+            )
+        )
+        completion_log = mock_logger.info.call_args_list[-1]
+        self.assertEqual(completion_log.kwargs["extra"]["job_id"], updated_job.pk)
+        self.assertEqual(completion_log.kwargs["extra"]["processed_count"], 1)
+        self.assertEqual(completion_log.kwargs["extra"]["success_count"], 1)
+        self.assertEqual(completion_log.kwargs["extra"]["failed_count"], 0)
+        self.assertTrue(completion_log.kwargs["extra"]["has_preview_url"])
+
+    def test_process_job_detail_step_logs_failure(self):
+        """
+        シナリオ:
+        - 入力: 詳細生成がエラーになる生成中ジョブ。
+        - 処理: ジョブの詳細生成ステップを進める。
+        - 期待値: 対象名、処理位置、エラー内容がwarningログに渡されること。
+        """
+        job = LLMTaxonomyCandidateGenerationJob.objects.create(
+            status=LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
+            target_names=["失敗候補"],
+            total_count=1,
+        )
+
+        with (
+            patch(
+                "taxonomy.domain.service.llm_taxonomy_candidate_generation."
+                "LLMTaxonomyCandidateGenerationService._generate_candidate_detail",
+                side_effect=LLMTaxonomyCandidateGenerationError(
+                    "保存できる候補がありません。"
+                ),
+            ),
+            patch(
+                "taxonomy.domain.service.llm_taxonomy_candidate_generation.logger"
+            ) as mock_logger,
+        ):
+            LLMTaxonomyCandidateGenerationService.process_next_job_step(job)
+
+        log_kwargs = mock_logger.warning.call_args.kwargs
+        log_message = mock_logger.warning.call_args.args[0]
+        self.assertIn(
+            f"LLM分類候補生成ジョブ #{job.pk} の候補詳細生成が失敗しました。",
+            log_message,
+        )
+        self.assertIn("1件中1件目", log_message)
+        self.assertIn("対象=失敗候補", log_message)
+        self.assertIn("理由=保存できる候補がありません。", log_message)
+        self.assertEqual(log_kwargs["extra"]["job_id"], job.pk)
+        self.assertEqual(log_kwargs["extra"]["position"], 1)
+        self.assertEqual(log_kwargs["extra"]["target_name"], "失敗候補")
+        self.assertEqual(
+            log_kwargs["extra"]["error_message"],
+            "保存できる候補がありません。",
+        )
 
     def test_user_prompt_includes_existing_species_hierarchy(self):
         """
@@ -395,3 +563,28 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
         self.assertIn("アジアミツバチならspecies_nameはアジアミツバチ", prompt)
         self.assertIn("Apis cerana koreana", prompt)
         self.assertIn("地域名から作った未確認の亜種名・系統名は返さない", prompt)
+
+    def _candidate_data(self, overrides=None):
+        data = {
+            "kingdom_name": "動物界",
+            "kingdom_name_en": "Animalia",
+            "phylum_name": "節足動物門",
+            "phylum_name_en": "Arthropoda",
+            "classification_name": "昆虫綱",
+            "classification_name_en": "Insecta",
+            "family_name": "ミツバチ科",
+            "family_name_en": "Apidae",
+            "genus_name": "Apis",
+            "genus_name_en": "Apis",
+            "species_name": "Apis cerana",
+            "species_name_en": "Apis cerana",
+            "breed_name": "Apis cerana",
+            "breed_name_kana": "あじあみつばち",
+            "source_name": "Catalogue of Life",
+            "source_url": "https://www.catalogueoflife.org/",
+            "external_taxon_id": "",
+            "llm_note": "LLMが生成した候補。",
+        }
+        if overrides:
+            data.update(overrides)
+        return data

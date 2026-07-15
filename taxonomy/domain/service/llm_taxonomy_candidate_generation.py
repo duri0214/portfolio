@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from django.core.exceptions import ValidationError
@@ -13,6 +14,9 @@ from taxonomy.domain.repository.llm_taxonomy_candidate import (
 )
 from taxonomy.models import LLMTaxonomyCandidate
 from taxonomy.models import LLMTaxonomyCandidateGenerationJob
+
+
+logger = logging.getLogger(__name__)
 
 
 class LLMTaxonomyCandidateGenerationError(Exception):
@@ -65,7 +69,20 @@ class LLMTaxonomyCandidateGenerationService:
         """
         画面からポーリング実行するための生成ジョブを作成します。
         """
-        return LLMTaxonomyCandidateRepository.create_generation_job(user)
+        job = LLMTaxonomyCandidateRepository.create_generation_job(user)
+        logger.info(
+            (
+                f"LLM分類候補生成ジョブ #{job.pk} を開始しました。"
+                f"作成者={getattr(user, 'username', '')} / 状態={job.status}"
+            ),
+            extra={
+                "job_id": job.pk,
+                "created_by_id": getattr(user, "pk", None),
+                "created_by_username": getattr(user, "username", ""),
+                "status": job.status,
+            },
+        )
+        return job
 
     @classmethod
     def process_next_job_step(
@@ -132,6 +149,18 @@ class LLMTaxonomyCandidateGenerationService:
                 "finished_at",
             ],
         )
+        logger.info(
+            (
+                f"LLM分類候補生成ジョブ #{job.pk} の対象リスト作成が完了しました。"
+                f"対象件数={job.total_count} / 先頭対象={target_names[0] if target_names else '-'}"
+            ),
+            extra={
+                "job_id": job.pk,
+                "status": job.status,
+                "total_count": job.total_count,
+                "first_target": target_names[0] if target_names else "",
+            },
+        )
         return job
 
     @classmethod
@@ -148,11 +177,13 @@ class LLMTaxonomyCandidateGenerationService:
                 job,
                 ["status", "current_step", "current_target", "finished_at"],
             )
+            cls._log_job_completed(job)
             return job
 
         target_name = job.target_names[job.processed_count]
         job.current_step = "候補詳細生成"
         job.current_target = target_name
+        position = job.processed_count + 1
         try:
             candidate_data_list = cls._generate_candidate_detail(target_name)
             candidates = LLMTaxonomyCandidateRepository.create_pending_bulk(
@@ -163,11 +194,39 @@ class LLMTaxonomyCandidateGenerationService:
             failures.append({"target": target_name, "message": str(error)})
             job.failures = failures
             job.failed_count = len(failures)
+            logger.warning(
+                (
+                    f"LLM分類候補生成ジョブ #{job.pk} の候補詳細生成が失敗しました。"
+                    f"{job.total_count}件中{position}件目 / 対象={target_name} / "
+                    f"理由={str(error)}"
+                ),
+                extra={
+                    "job_id": job.pk,
+                    "position": position,
+                    "total_count": job.total_count,
+                    "target_name": target_name,
+                    "error_message": str(error),
+                },
+            )
         else:
             candidate_ids = list(job.candidate_ids)
             candidate_ids.extend(candidate.pk for candidate in candidates)
             job.candidate_ids = candidate_ids
             job.success_count += len(candidates)
+            logger.info(
+                (
+                    f"LLM分類候補生成ジョブ #{job.pk} の候補詳細生成が完了しました。"
+                    f"{job.total_count}件中{position}件目 / 対象={target_name} / "
+                    f"保存件数={len(candidates)}"
+                ),
+                extra={
+                    "job_id": job.pk,
+                    "position": position,
+                    "total_count": job.total_count,
+                    "target_name": target_name,
+                    "saved_count": len(candidates),
+                },
+            )
 
         job.processed_count += 1
         if job.processed_count >= job.total_count:
@@ -192,7 +251,26 @@ class LLMTaxonomyCandidateGenerationService:
                 "finished_at",
             ],
         )
+        if job.status == LLMTaxonomyCandidateGenerationJob.JobStatus.COMPLETED:
+            cls._log_job_completed(job)
         return job
+
+    @staticmethod
+    def _log_job_completed(job: LLMTaxonomyCandidateGenerationJob) -> None:
+        logger.info(
+            (
+                f"LLM分類候補生成ジョブ #{job.pk} が完了しました。"
+                f"処理済み={job.processed_count} / 成功={job.success_count} / "
+                f"失敗={job.failed_count} / preview_url={'あり' if job.candidate_ids else 'なし'}"
+            ),
+            extra={
+                "job_id": job.pk,
+                "processed_count": job.processed_count,
+                "success_count": job.success_count,
+                "failed_count": job.failed_count,
+                "has_preview_url": bool(job.candidate_ids),
+            },
+        )
 
     @classmethod
     def _generate_target_names(cls) -> list[str]:
