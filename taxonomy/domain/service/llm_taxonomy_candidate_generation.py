@@ -184,18 +184,6 @@ class LLMTaxonomyCandidateGenerationService:
         job.current_step = "候補詳細生成"
         job.current_target = target_name
         position = job.processed_count + 1
-        logger.info(
-            (
-                f"LLM分類候補生成ジョブ #{job.pk} の候補詳細生成を開始しました。"
-                f"{job.total_count}件中{position}件目 / 対象={target_name}"
-            ),
-            extra={
-                "job_id": job.pk,
-                "position": position,
-                "total_count": job.total_count,
-                "target_name": target_name,
-            },
-        )
         try:
             candidate_data_list = cls._generate_candidate_detail(target_name)
             candidates = LLMTaxonomyCandidateRepository.create_pending_bulk(

@@ -420,7 +420,7 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
         シナリオ:
         - 入力: 対象名1件を持つ生成中ジョブと、mockされた候補データ。
         - 処理: ジョブの詳細生成ステップを進める。
-        - 期待値: 詳細生成開始、成功、ジョブ完了のログが渡されること。
+        - 期待値: 詳細生成成功とジョブ完了のログが渡されること。
         """
         job = LLMTaxonomyCandidateGenerationJob.objects.create(
             status=LLMTaxonomyCandidateGenerationJob.JobStatus.RUNNING,
@@ -443,15 +443,6 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
             )
 
         messages = [call.args[0] for call in mock_logger.info.call_args_list]
-        self.assertTrue(
-            any(
-                f"LLM分類候補生成ジョブ #{updated_job.pk} の候補詳細生成を開始しました。"
-                in message
-                and "1件中1件目" in message
-                and "対象=Apis cerana" in message
-                for message in messages
-            )
-        )
         self.assertTrue(
             any(
                 f"LLM分類候補生成ジョブ #{updated_job.pk} の候補詳細生成が完了しました。"
