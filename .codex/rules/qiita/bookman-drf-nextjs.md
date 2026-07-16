@@ -21,8 +21,7 @@ apply: "docs/qiita/bookman_drf_nextjs.md"
    - 2つのリポジトリにまたがる内容でも、記事管理ファイルは `docs/qiita/bookman_drf_nextjs.md` ひとつにまとめる。
 
 2) 実装との整合性
-   - 業務要件、画面の意味、API 契約を記事側だけで変えない。
-   - 実装で未対応の TODO は、完了扱いに書き換えない。
+   - 記事側だけで実装と矛盾する説明にしない。
 
 3) リポジトリ分割の前提
    - `portfolio`, `bookman_backend`, `bookman_nextjs` は同じ親フォルダにある前提で扱う。
@@ -35,5 +34,4 @@ apply: "docs/qiita/bookman_drf_nextjs.md"
 ## チェックリスト（レビュー用）
 - backend / frontend のどちらの差分に対応する記事更新か明記されているか。
 - `docs/qiita/bookman_drf_nextjs.md` のコード例が実装差分と矛盾していないか。
-- 記事内の TODO と GitHub Issue の粒度が食い違っていないか。
 - `.codex` 参照運用の前提が、Bookman 2リポジトリにまたがる作業で破綻していないか。
