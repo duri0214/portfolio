@@ -294,45 +294,56 @@
                 <section class="observation-panel">
                     <div class="observation-section-header">
                         <div>
-                            <h2>フィードグループ別の産卵率推移</h2>
-                            <p>日付、天気、産卵率を横に追えるように、グループごとに表を分けています。</p>
+                            <h2>産卵率の時系列推移</h2>
+                            <p>日付順のまま、フィードグループで必要な行だけを絞り込めます。</p>
                         </div>
                     </div>
-                    <div class="observation-table-grid">
-                        {% for group in feed_group_laying_rate %}
-                            <article class="observation-table-card">
-                                <h3>{{ group.feed_group }}</h3>
-                                <div class="observation-table-scroll">
-                                    <table class="table table-sm mb-0">
-                                        <thead>
-                                        <tr>
-                                            <th scope="col">日付</th>
-                                            <th scope="col">天気</th>
-                                            <th scope="col">産卵率</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {% for item in group.data %}
-                                            <tr>
-                                                <td>{{ item.date }}</td>
-                                                <td>
-                                                    {% if item.weather_code %}
-                                                        {% with 'soil_analysis/images/weather/svg/'|add:item.weather_code|add:'.svg' as weather_svg_path %}
-                                                            <img src="{% static weather_svg_path %}" width="24" height="24" alt="{{ item.weather_code }}">
-                                                        {% endwith %}
-                                                    {% else %}
-                                                        <span class="text-muted">-</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td><strong>{{ item.laying_rate }}%</strong></td>
-                                            </tr>
-                                        {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </article>
-                        {% endfor %}
-                    </div>
+                    <article class="observation-table-card">
+                        <div class="observation-table-filter" aria-label="フィードグループ絞り込み">
+                            <button type="button"
+                                    class="btn btn-primary btn-sm observation-feed-filter active"
+                                    data-feed-group="all">
+                                すべて
+                            </button>
+                            {% for feed_group in feed_group_laying_rate.feed_groups %}
+                                <button type="button"
+                                        class="btn btn-outline-primary btn-sm observation-feed-filter"
+                                        data-feed-group="{{ feed_group }}">
+                                    {{ feed_group }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                        <div class="observation-table-scroll">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                <tr>
+                                    <th scope="col">日付</th>
+                                    <th scope="col">フィードグループ</th>
+                                    <th scope="col">天気</th>
+                                    <th scope="col">産卵率</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for item in feed_group_laying_rate.records %}
+                                    <tr data-feed-group="{{ item.feed_group }}">
+                                        <td>{{ item.date }}</td>
+                                        <td>{{ item.feed_group }}</td>
+                                        <td>
+                                            {% if item.weather_code %}
+                                                {% with 'soil_analysis/images/weather/svg/'|add:item.weather_code|add:'.svg' as weather_svg_path %}
+                                                    <img src="{% static weather_svg_path %}" width="24" height="24" alt="{{ item.weather_code }}">
+                                                {% endwith %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><strong>{{ item.laying_rate }}%</strong></td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
                 </section>
             </div>
         </div>
@@ -349,4 +360,5 @@
     </script>
     <script src="{% static 'taxonomy/js/livestock_distribution.js' %}"></script>
     <script src="{% static 'taxonomy/js/feed_vs_egg_chart.js' %}"></script>
+    <script src="{% static 'taxonomy/js/observation_laying_rate_table.js' %}"></script>
 {% endblock %}

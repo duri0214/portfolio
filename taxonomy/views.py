@@ -163,7 +163,7 @@ class ObservationView(TemplateView):
             ChickenObservationsRepository.get_observation_summary()
         )
 
-        # Feed Group別の産卵率データを取得
+        # 産卵率の時系列テーブルデータを取得
         context["feed_group_laying_rate"] = (
             ChickenObservationsRepository.get_feed_group_laying_rates_table()
         )

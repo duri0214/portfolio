@@ -203,6 +203,15 @@
     overflow: hidden;
 }
 
+.observation-table-filter {
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+}
+
 .observation-table-card h3 {
     border-bottom: 1px solid #e2e8f0;
     color: #1f2937;

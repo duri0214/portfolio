@@ -154,29 +154,31 @@ class ChickenObservationsRepository:
     @staticmethod
     def get_feed_group_laying_rates_table():
         """
-        フィードグループ別の産卵率データをテーブル形式で返します。
-        :return: [{"feed_group": "Group Name", "data": [{"date": "2023-10-01", "weather_code": "100", "laying_rate": 0.75}, ...]}, ...]
-        """
-        queryset = EggLedger.objects.select_related("feed_group").all()
+        産卵率の時系列テーブルとフィードグループの絞り込み候補を返します。
 
-        data_by_group = {}
+        :return: {"feed_groups": ["Group Name"], "records": [{"date": "2023-10-01", "feed_group": "Group Name", "weather_code": "100", "laying_rate": 0.75}, ...]}
+        """
+        queryset = EggLedger.objects.select_related(
+            "feed_group",
+            "weather_code",
+        ).order_by("recorded_date")
+
+        feed_groups = []
+        records = []
         for ledger in queryset:
-            # フィードグループの名前を取得
-            group_name = ledger.feed_group
-            if group_name not in data_by_group:
-                data_by_group[group_name] = []
-            data_by_group[group_name].append(
+            feed_group = str(ledger.feed_group)
+            if feed_group not in feed_groups:
+                feed_groups.append(feed_group)
+            records.append(
                 {
                     "date": ledger.recorded_date.isoformat(),
+                    "feed_group": feed_group,
                     "weather_code": ledger.weather_code.summary_code,
                     "laying_rate": ledger.laying_rate(),
                 }
             )
 
-        # グループごとにデータを整形
-        result = [
-            {"feed_group": group_name, "data": sorted(records, key=lambda x: x["date"])}
-            for group_name, records in data_by_group.items()
-        ]
-
-        return result
+        return {
+            "feed_groups": feed_groups,
+            "records": records,
+        }

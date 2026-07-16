@@ -183,7 +183,21 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "625g")
         self.assertContains(response, "晴")
         self.assertContains(response, "曇")
-        self.assertContains(response, "フィードグループ別の産卵率推移")
+        self.assertContains(response, "産卵率の時系列推移")
+        self.assertContains(
+            response, "日付順のまま、フィードグループで必要な行だけを絞り込めます。"
+        )
+        self.assertContains(response, "observation-feed-filter")
+        self.assertContains(response, "フィードグループ")
+        self.assertContains(response, "taxonomy/js/observation_laying_rate_table.js")
+        self.assertEqual(
+            len(response.context["feed_group_laying_rate"]["records"]),
+            3,
+        )
+        self.assertEqual(
+            response.context["feed_group_laying_rate"]["records"][0]["date"],
+            "2017-06-14",
+        )
         self.assertEqual(response.context["observation_summary"]["record_count"], 3)
         self.assertEqual(
             response.context["observation_summary"]["feed_summaries"][0]["feed_weight"],
@@ -620,6 +634,27 @@ class TaxonomyIndexViewTest(TestCase):
 
 
 class LivestockDistributionStaticAssetTest(SimpleTestCase):
+    def test_observation_laying_rate_table_js_filters_rows_by_feed_group(self):
+        """
+        シナリオ:
+        - 入力: 産卵率時系列テーブル用のJavaScriptファイル。
+        - 処理: 静的ファイルの内容を読み込む。
+        - 期待値: フィードグループのボタン選択でテーブル行を絞り込む処理があること。
+        """
+        script_path = (
+            Path(__file__).resolve().parents[1]
+            / "static"
+            / "taxonomy"
+            / "js"
+            / "observation_laying_rate_table.js"
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn("observation-feed-filter", script)
+        self.assertIn('selectedFeedGroup === "all"', script)
+        self.assertIn("row.dataset.feedGroup === selectedFeedGroup", script)
+        self.assertIn("d-none", script)
+
     def test_feed_vs_egg_chart_focuses_on_laying_rate_without_egg_bars(self):
         """
         シナリオ:
@@ -636,7 +671,9 @@ class LivestockDistributionStaticAssetTest(SimpleTestCase):
         )
         script = script_path.read_text(encoding="utf-8")
 
-        self.assertIn("線: 産卵率 / 点線: 二次近似 / 下段色: 給餌量 / 下段文字: 天気", script)
+        self.assertIn(
+            "線: 産卵率 / 点線: 二次近似 / 下段色: 給餌量 / 下段文字: 天気", script
+        )
         self.assertIn("feed-marker", script)
         self.assertIn("buildQuadraticTrendPoints", script)
         self.assertIn("quadratic-trend-line", script)
