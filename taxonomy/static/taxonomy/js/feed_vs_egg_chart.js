@@ -12,7 +12,7 @@ function renderFeedVsEggChart(feedVsEggData) {
         date: new Date(item.recorded_date),
     }));
     const bounds = chartArea.getBoundingClientRect();
-    const margin = {top: 36, right: 56, bottom: 72, left: 52};
+    const margin = {top: 36, right: 56, bottom: 82, left: 52};
     const outerWidth = Math.max(bounds.width || 720, 720);
     const outerHeight = 420;
     const width = outerWidth - margin.left - margin.right;
@@ -22,7 +22,7 @@ function renderFeedVsEggChart(feedVsEggData) {
         .append("svg")
         .attr("viewBox", `0 0 ${outerWidth} ${outerHeight}`)
         .attr("role", "img")
-        .attr("aria-label", "給餌量、産卵数、産卵率、天気の推移");
+        .attr("aria-label", "給餌量、産卵率、天気の推移");
 
     const plot = svg.append("g")
         .attr("transform", `translate(${margin.left}, ${margin.top})`);
@@ -30,11 +30,6 @@ function renderFeedVsEggChart(feedVsEggData) {
     const x = d3.scaleTime()
         .domain(d3.extent(parsedData, (d) => d.date))
         .range([0, width]);
-    const eggMax = d3.max(parsedData, (d) => d.total_eggs) || 1;
-    const yEgg = d3.scaleLinear()
-        .domain([0, Math.ceil(eggMax + 1)])
-        .nice()
-        .range([height, 0]);
     const rateMax = d3.max(parsedData, (d) => d.laying_rate) || 1;
     const yRate = d3.scaleLinear()
         .domain([0, Math.ceil(rateMax + 10)])
@@ -43,38 +38,27 @@ function renderFeedVsEggChart(feedVsEggData) {
     const feedWeights = Array.from(new Set(parsedData.map((d) => d.total_feed))).sort((a, b) => b - a);
     const feedColor = d3.scaleOrdinal()
         .domain(feedWeights)
-        .range(["#dbeafe", "#ecfdf3", "#fff7ed", "#f3e8ff"]);
-    const barWidth = Math.max(width / parsedData.length * 0.55, 2);
+        .range(["#1d4ed8", "#15803d", "#7c2d12", "#6d28d9"]);
+    const markerWidth = Math.max(width / parsedData.length * 0.55, 3);
+    const feedMarkerHeight = 12;
 
     plot.append("g")
         .attr("class", "grid")
-        .call(d3.axisLeft(yEgg).ticks(5).tickSize(-width).tickFormat(""))
+        .call(d3.axisLeft(yRate).ticks(5).tickSize(-width).tickFormat(""))
         .call((g) => g.selectAll("line").attr("stroke", "#e5e7eb"))
         .call((g) => g.select(".domain").remove());
 
-    plot.selectAll(".feed-band")
+    plot.selectAll(".feed-marker")
         .data(parsedData)
         .enter()
         .append("rect")
-        .attr("class", "feed-band")
-        .attr("x", (d) => x(d.date) - barWidth / 2)
-        .attr("y", 0)
-        .attr("width", barWidth)
-        .attr("height", height)
+        .attr("class", "feed-marker")
+        .attr("x", (d) => x(d.date) - markerWidth / 2)
+        .attr("y", height + 14)
+        .attr("width", markerWidth)
+        .attr("height", feedMarkerHeight)
         .attr("fill", (d) => feedColor(d.total_feed))
-        .attr("opacity", 0.38);
-
-    plot.selectAll(".egg-bar")
-        .data(parsedData)
-        .enter()
-        .append("rect")
-        .attr("class", "egg-bar")
-        .attr("x", (d) => x(d.date) - barWidth / 2)
-        .attr("y", (d) => yEgg(d.total_eggs))
-        .attr("width", barWidth)
-        .attr("height", (d) => height - yEgg(d.total_eggs))
-        .attr("fill", "#f59e0b")
-        .attr("rx", 2);
+        .attr("rx", 1);
 
     const rateLine = d3.line()
         .x((d) => x(d.date))
@@ -136,12 +120,7 @@ function renderFeedVsEggChart(feedVsEggData) {
         .call((g) => g.selectAll("text").attr("fill", "#475467"));
 
     plot.append("g")
-        .call(d3.axisLeft(yEgg).ticks(5))
-        .call((g) => g.selectAll("text").attr("fill", "#475467"));
-
-    plot.append("g")
-        .attr("transform", `translate(${width}, 0)`)
-        .call(d3.axisRight(yRate).ticks(5).tickFormat((d) => `${d}%`))
+        .call(d3.axisLeft(yRate).ticks(5).tickFormat((d) => `${d}%`))
         .call((g) => g.selectAll("text").attr("fill", "#0f766e"));
 
     svg.append("text")
@@ -149,7 +128,7 @@ function renderFeedVsEggChart(feedVsEggData) {
         .attr("y", 18)
         .attr("fill", "#475467")
         .attr("font-size", 12)
-        .text("棒: 産卵数 / 線: 産卵率 / 背景色: 給餌量 / 下段文字: 天気");
+        .text("線: 産卵率 / 下段色: 給餌量 / 下段文字: 天気");
 
     const legend = svg.append("g")
         .attr("transform", `translate(${margin.left}, ${outerHeight - 18})`);

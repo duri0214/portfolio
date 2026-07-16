@@ -176,8 +176,8 @@ class TaxonomyIndexViewTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="/static/taxonomy/css/observation.css"')
-        self.assertContains(response, "餌の量と卵生産量の推移")
-        self.assertContains(response, "給餌量・産卵数・産卵率・天気で比較します。")
+        self.assertContains(response, "餌の量と産卵率の推移")
+        self.assertContains(response, "給餌量・産卵率・天気で比較します。")
         self.assertContains(response, "1250gは3件、625gは90件")
         self.assertContains(response, "1250g")
         self.assertContains(response, "625g")
@@ -620,6 +620,27 @@ class TaxonomyIndexViewTest(TestCase):
 
 
 class LivestockDistributionStaticAssetTest(SimpleTestCase):
+    def test_feed_vs_egg_chart_focuses_on_laying_rate_without_egg_bars(self):
+        """
+        シナリオ:
+        - 入力: 給餌量・産卵率チャート用のJavaScriptファイル。
+        - 処理: 静的ファイルの内容を読み込む。
+        - 期待値: 産卵数の棒グラフと給餌量の全面背景帯を描画せず、下段マーカーで給餌量を示すこと。
+        """
+        script_path = (
+            Path(__file__).resolve().parents[1]
+            / "static"
+            / "taxonomy"
+            / "js"
+            / "feed_vs_egg_chart.js"
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn("線: 産卵率 / 下段色: 給餌量 / 下段文字: 天気", script)
+        self.assertIn("feed-marker", script)
+        self.assertNotIn("egg-bar", script)
+        self.assertNotIn("feed-band", script)
+
     def test_livestock_distribution_js_labels_comparison_bar_clearly(self):
         """
         シナリオ:
