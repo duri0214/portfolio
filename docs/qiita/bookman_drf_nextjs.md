@@ -1,7 +1,5 @@
 # Django-rest-frameworkとNextJSで図書管理システムを作ってみる
 
-元記事: https://qiita.com/YoshitakaOkada/items/570c025cf235062649c8
-
 ## はじめに
 いままで作ってきたDjangoアプリケーションは、そのプロジェクトのなかにフロントエンドが含まれていた。今回フロントエンドはNext.js（＝React）でやるので、Django側はサーバーサイドの機能だけを提供する。まぁ内蔵だけになる、みたいな感じやな
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/c4650054-4a63-4f2f-acb1-1383e6aa5e48.png)
