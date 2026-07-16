@@ -150,7 +150,7 @@ python manage.py collectstatic --noinput
 python manage.py migrate
 python manage.py clearsessions
 
-# collectstatic 後の static 出力確認
+# collectstatic 後の static 出力確認（0 なら static/admin が存在）
 test -d static/admin; echo $?
 ls -la static | head
 ```
