@@ -8,7 +8,7 @@ apply: "docs/qiita/bookman_drf_nextjs.md"
 
 目的:
 - 図書管理システム（bookman_backend / bookman_nextjs）の実装変更と Qiita 記事を同期する。
-- 実装内容を変えずに最新化する方針を維持し、記事側も同じ粒度で追えるようにする。
+- backend / frontend のどちらに由来する記事変更かを追えるようにする。
 
 適用スコープ:
 - Qiita 記事「Django-rest-frameworkとNextJSで図書管理システムを作ってみる」
@@ -21,8 +21,8 @@ apply: "docs/qiita/bookman_drf_nextjs.md"
    - bookman_backend または bookman_nextjs の関連箇所を修正した場合は、記事に影響する説明・コード例・検証手順を同じ粒度で更新する。
    - 2つのリポジトリにまたがる内容でも、記事管理ファイルは `docs/qiita/bookman_drf_nextjs.md` ひとつにまとめる。
 
-2) 最小差分原則
-   - 目的は「内容を変えずに最新化」。業務要件、画面の意味、API 契約を記事側だけで変えない。
+2) 実装との整合性
+   - 業務要件、画面の意味、API 契約を記事側だけで変えない。
    - 実装で未対応の TODO は、完了扱いに書き換えない。
 
 3) リポジトリ分割の前提
