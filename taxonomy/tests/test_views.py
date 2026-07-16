@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from datetime import date
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
@@ -29,6 +30,10 @@ from taxonomy.models import (
     LLMTaxonomyCandidateGenerationJob,
     LivestockDistributionDataset,
     NaturalMonument,
+    EggLedger,
+    FeedGroup,
+    HenGroup,
+    JmaWeatherCode,
     Phylum,
     Species,
 )
@@ -157,6 +162,33 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "livestock-distribution-data")
         self.assertContains(response, "livestock-prefecture-map")
         self.assertContains(response, "e-Stat畜産統計データを取得")
+
+    def test_observation_page_displays_feed_and_weather_observation_summary(self):
+        """
+        シナリオ:
+        - 入力: 1250gと625gの給餌量、晴と曇の天気を含む産卵台帳。
+        - 処理: 鶏の観察グラフページを表示する。
+        - 期待値: 後半セクションに給餌量別・天気別の件数と平均値が表示されること。
+        """
+        self._create_egg_ledger_records()
+
+        response = self.client.get(reverse("txo:observation"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="/static/taxonomy/css/observation.css"')
+        self.assertContains(response, "餌の量と卵生産量の推移")
+        self.assertContains(response, "給餌量・産卵数・産卵率・天気で比較します。")
+        self.assertContains(response, "1250gは3件、625gは90件")
+        self.assertContains(response, "1250g")
+        self.assertContains(response, "625g")
+        self.assertContains(response, "晴")
+        self.assertContains(response, "曇")
+        self.assertContains(response, "フィードグループ別の産卵率推移")
+        self.assertEqual(response.context["observation_summary"]["record_count"], 3)
+        self.assertEqual(
+            response.context["observation_summary"]["feed_summaries"][0]["feed_weight"],
+            1250,
+        )
 
     def test_observation_page_displays_livestock_distribution_dashboard(self):
         """
@@ -544,6 +576,46 @@ class TaxonomyIndexViewTest(TestCase):
                 "該当なし - は推計せず秘匿・該当なしとして表示します。"
             ),
             is_active=is_active,
+        )
+
+    def _create_egg_ledger_records(self):
+        sunny = JmaWeatherCode.objects.create(
+            code="100",
+            summary_code="100",
+            image="100.svg",
+            name="晴",
+            name_en="CLEAR",
+        )
+        cloudy = JmaWeatherCode.objects.create(
+            code="200",
+            summary_code="200",
+            image="200.svg",
+            name="曇",
+            name_en="CLOUDY",
+        )
+        full_feed = FeedGroup.objects.create(name="通常給餌", weight=1250)
+        half_feed = FeedGroup.objects.create(name="半量給餌", weight=625)
+        hens = HenGroup.objects.create(name="第1鶏群", hen_count=5)
+        EggLedger.objects.create(
+            recorded_date=date(2017, 6, 14),
+            egg_count=4,
+            weather_code=sunny,
+            feed_group=full_feed,
+            hen_group=hens,
+        )
+        EggLedger.objects.create(
+            recorded_date=date(2017, 6, 15),
+            egg_count=3,
+            weather_code=cloudy,
+            feed_group=half_feed,
+            hen_group=hens,
+        )
+        EggLedger.objects.create(
+            recorded_date=date(2017, 6, 16),
+            egg_count=4,
+            weather_code=sunny,
+            feed_group=half_feed,
+            hen_group=hens,
         )
 
 

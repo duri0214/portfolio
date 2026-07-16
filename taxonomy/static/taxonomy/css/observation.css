@@ -1,0 +1,259 @@
+.observation-panel {
+    background: #ffffff;
+    border: 1px solid #d8dee6;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(31, 41, 55, 0.08);
+    padding: 1.5rem;
+}
+
+.observation-section-header {
+    align-items: flex-start;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.observation-section-header h2 {
+    color: #1f2937;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 0.35rem;
+}
+
+.observation-section-header p {
+    color: #667085;
+    margin: 0;
+}
+
+.observation-badge {
+    background: #e8f4f8;
+    border: 1px solid #b8dfe8;
+    border-radius: 999px;
+    color: #0f6575;
+    flex: 0 0 auto;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.35rem 0.75rem;
+}
+
+.observation-insights,
+.observation-summary-grid,
+.observation-weather-grid,
+.observation-table-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.observation-insights {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+
+.observation-insight,
+.observation-metric,
+.observation-weather-card,
+.observation-table-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fbfcfd;
+}
+
+.observation-insight {
+    padding: 1rem;
+}
+
+.observation-insight-label {
+    color: #64748b;
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+}
+
+.observation-insight strong {
+    color: #1f2937;
+    display: block;
+    font-size: 1rem;
+    line-height: 1.45;
+    margin-bottom: 0.45rem;
+}
+
+.observation-insight span:last-child {
+    color: #667085;
+    display: block;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.observation-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 1.25rem;
+}
+
+.observation-metric {
+    padding: 1rem;
+}
+
+.observation-metric > span {
+    color: #475467;
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.observation-metric > strong {
+    color: #1f2937;
+    display: block;
+    font-size: 1.8rem;
+    margin: 0.1rem 0 0.65rem;
+}
+
+.observation-metric dl,
+.observation-weather-card dl {
+    display: grid;
+    gap: 0.35rem 0.75rem;
+    grid-template-columns: auto 1fr;
+    margin: 0;
+}
+
+.observation-metric dt,
+.observation-weather-card dt {
+    color: #667085;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.observation-metric dd,
+.observation-weather-card dd {
+    color: #1f2937;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.observation-chart {
+    min-height: 360px;
+    overflow-x: auto;
+}
+
+.observation-chart svg {
+    display: block;
+    max-width: 100%;
+}
+
+.observation-chart-empty {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #667085;
+    display: flex;
+    min-height: 220px;
+    justify-content: center;
+}
+
+.observation-chart-tooltip {
+    background: #111827;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    padding: 0.5rem 0.65rem;
+    pointer-events: none;
+    position: fixed;
+    z-index: 20;
+}
+
+.observation-weather-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.observation-weather-card {
+    align-items: center;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: auto 1fr;
+    padding: 1rem;
+}
+
+.observation-weather-card strong,
+.observation-weather-card span {
+    display: block;
+}
+
+.observation-weather-card strong {
+    color: #1f2937;
+}
+
+.observation-weather-card span {
+    color: #667085;
+    font-size: 0.85rem;
+}
+
+.observation-weather-card dl {
+    grid-column: 1 / -1;
+}
+
+.observation-table-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.observation-table-card {
+    overflow: hidden;
+}
+
+.observation-table-card h3 {
+    border-bottom: 1px solid #e2e8f0;
+    color: #1f2937;
+    font-size: 1rem;
+    margin: 0;
+    padding: 0.85rem 1rem;
+}
+
+.observation-table-scroll {
+    max-height: 460px;
+    overflow: auto;
+}
+
+.observation-table-card thead th {
+    background: #f1f5f9;
+    color: #475467;
+    font-size: 0.78rem;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.observation-table-card td,
+.observation-table-card th {
+    padding: 0.55rem 0.75rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 991.98px) {
+    .observation-insights,
+    .observation-weather-grid,
+    .observation-table-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .observation-panel {
+        padding: 1rem;
+    }
+
+    .observation-section-header {
+        display: block;
+    }
+
+    .observation-badge {
+        display: inline-block;
+        margin-top: 0.75rem;
+    }
+
+    .observation-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}

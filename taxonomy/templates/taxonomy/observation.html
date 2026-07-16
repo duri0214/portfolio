@@ -2,6 +2,7 @@
 {% load static %}
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'taxonomy/css/livestock_distribution.css' %}">
+    <link rel="stylesheet" href="{% static 'taxonomy/css/observation.css' %}">
 {% endblock %}
 {% block content %}
     <div class="container mt-4">
@@ -203,46 +204,107 @@
                 </div>
             </div>
 
-            <!-- Key Insight -->
             <div class="col-12">
-                <div class="alert alert-info d-flex align-items-center mb-0" role="alert">
-                    <i class="fas fa-lightbulb me-2"></i>
-                    <span>餌の量を半分にしても卵の生産量はほとんど変わらないことがデータから確認できます。</span>
-                </div>
+                <section class="observation-panel">
+                    <div class="observation-section-header">
+                        <div>
+                            <h2>餌の量と卵生産量の推移</h2>
+                            <p>
+                                {{ observation_summary.start_date }} から {{ observation_summary.end_date }} までの
+                                {{ observation_summary.record_count }}件を、給餌量・産卵数・産卵率・天気で比較します。
+                            </p>
+                        </div>
+                        <span class="observation-badge">観察記録</span>
+                    </div>
+
+                    <div class="observation-insights" aria-label="観察データの要点">
+                        <div class="observation-insight">
+                            <span class="observation-insight-label">給餌量の比較</span>
+                            <strong>1250gは3件、625gは90件</strong>
+                            <span>条件数に偏りがあるため、差の断定ではなく傾向として読みます。</span>
+                        </div>
+                        <div class="observation-insight">
+                            <span class="observation-insight-label">産卵数の読み取り</span>
+                            <strong>半量給餌でも大きな落ち込みは見えにくい</strong>
+                            <span>時系列では給餌量の変更後も日々の産卵数が同じレンジに収まっています。</span>
+                        </div>
+                        <div class="observation-insight">
+                            <span class="observation-insight-label">天気との関係</span>
+                            <strong>天気別の平均差は限定的</strong>
+                            <span>天気アイコンと平均値を並べ、強い差があるかを確認しやすくしました。</span>
+                        </div>
+                    </div>
+
+                    <div class="observation-summary-grid">
+                        {% for summary in observation_summary.feed_summaries %}
+                            <div class="observation-metric">
+                                <span>{{ summary.feed_weight }}g</span>
+                                <strong>{{ summary.record_count }}件</strong>
+                                <dl>
+                                    <dt>平均産卵数</dt>
+                                    <dd>{{ summary.average_eggs }}個</dd>
+                                    <dt>平均産卵率</dt>
+                                    <dd>{{ summary.average_laying_rate }}%</dd>
+                                    <dt>期間</dt>
+                                    <dd>{{ summary.min_date }} - {{ summary.max_date }}</dd>
+                                </dl>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div id="feed-vs-egg-chart"
+                         class="observation-chart"
+                         data-feed-data='{{ feed_vs_egg }}'></div>
+                </section>
             </div>
 
-            <!-- Feed vs Egg Chart -->
             <div class="col-12">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white pt-3 pb-2">
-                        <h2 class="h6 mb-0 text-muted text-uppercase fw-semibold">
-                            <i class="fas fa-chart-line me-1"></i>餌の量と卵生産量の推移
-                        </h2>
+                <section class="observation-panel">
+                    <div class="observation-section-header">
+                        <div>
+                            <h2>天気別の産卵傾向</h2>
+                            <p>天気ごとの件数、平均産卵数、平均産卵率を同じ単位で比較します。</p>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div id="feed-vs-egg-chart" data-feed-data='{{ feed_vs_egg }}'></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feed Group Laying Rate -->
-            <div class="col-12">
-                <h2 class="h5 mb-3">
-                    <i class="fas fa-table me-1 text-secondary"></i>フィードグループ別の産卵率推移
-                </h2>
-                <div class="row row-cols-1 row-cols-lg-2 g-3">
-                    {% for group in feed_group_laying_rate %}
-                        <div class="col">
-                            <div class="card shadow-sm border-0 h-100">
-                                <div class="card-header bg-white pt-3 pb-2 d-flex align-items-center gap-2">
-                                    <i class="fas fa-layer-group text-secondary"></i>
-                                    <h3 class="h6 mb-0">{{ group.feed_group }}</h3>
+                    <div class="observation-weather-grid">
+                        {% for weather in observation_summary.weather_summaries %}
+                            <div class="observation-weather-card">
+                                {% with 'soil_analysis/images/weather/svg/'|add:weather.weather_code|add:'.svg' as weather_svg_path %}
+                                    <img src="{% static weather_svg_path %}" width="32" height="32" alt="{{ weather.weather_name }}">
+                                {% endwith %}
+                                <div>
+                                    <strong>{{ weather.weather_name }}</strong>
+                                    <span>{{ weather.record_count }}件</span>
                                 </div>
-                                <div class="card-body p-0">
-                                    <table class="table table-striped table-hover table-sm mb-0">
-                                        <thead class="table-light">
+                                <dl>
+                                    <dt>平均産卵数</dt>
+                                    <dd>{{ weather.average_eggs }}個</dd>
+                                    <dt>平均産卵率</dt>
+                                    <dd>{{ weather.average_laying_rate }}%</dd>
+                                </dl>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-12">
+                <section class="observation-panel">
+                    <div class="observation-section-header">
+                        <div>
+                            <h2>フィードグループ別の産卵率推移</h2>
+                            <p>日付、天気、産卵率を横に追えるように、グループごとに表を分けています。</p>
+                        </div>
+                    </div>
+                    <div class="observation-table-grid">
+                        {% for group in feed_group_laying_rate %}
+                            <article class="observation-table-card">
+                                <h3>{{ group.feed_group }}</h3>
+                                <div class="observation-table-scroll">
+                                    <table class="table table-sm mb-0">
+                                        <thead>
                                         <tr>
-                                            <th scope="col" class="ps-3">日付</th>
+                                            <th scope="col">日付</th>
                                             <th scope="col">天気</th>
                                             <th scope="col">産卵率</th>
                                         </tr>
@@ -250,26 +312,26 @@
                                         <tbody>
                                         {% for item in group.data %}
                                             <tr>
-                                                <td class="ps-3 text-muted small">{{ item.date }}</td>
+                                                <td>{{ item.date }}</td>
                                                 <td>
                                                     {% if item.weather_code %}
                                                         {% with 'soil_analysis/images/weather/svg/'|add:item.weather_code|add:'.svg' as weather_svg_path %}
-                                                            <img src="{% static weather_svg_path %}" width="24" alt="{{ item.weather_code }}">
+                                                            <img src="{% static weather_svg_path %}" width="24" height="24" alt="{{ item.weather_code }}">
                                                         {% endwith %}
                                                     {% else %}
                                                         <span class="text-muted">-</span>
                                                     {% endif %}
                                                 </td>
-                                                <td class="fw-semibold">{{ item.laying_rate }}</td>
+                                                <td><strong>{{ item.laying_rate }}%</strong></td>
                                             </tr>
                                         {% endfor %}
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
             </div>
         </div>
     </div>
