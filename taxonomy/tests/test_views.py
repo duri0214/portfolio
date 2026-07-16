@@ -636,8 +636,11 @@ class LivestockDistributionStaticAssetTest(SimpleTestCase):
         )
         script = script_path.read_text(encoding="utf-8")
 
-        self.assertIn("線: 産卵率 / 下段色: 給餌量 / 下段文字: 天気", script)
+        self.assertIn("線: 産卵率 / 点線: 二次近似 / 下段色: 給餌量 / 下段文字: 天気", script)
         self.assertIn("feed-marker", script)
+        self.assertIn("buildQuadraticTrendPoints", script)
+        self.assertIn("quadratic-trend-line", script)
+        self.assertIn('stroke-dasharray", "5 5"', script)
         self.assertNotIn("egg-bar", script)
         self.assertNotIn("feed-band", script)
 

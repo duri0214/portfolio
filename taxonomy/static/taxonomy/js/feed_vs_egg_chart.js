@@ -1,3 +1,88 @@
+function solveQuadraticCoefficients(points) {
+    const sums = points.reduce((acc, point) => {
+        const x2 = point.x * point.x;
+        acc.x += point.x;
+        acc.x2 += x2;
+        acc.x3 += x2 * point.x;
+        acc.x4 += x2 * x2;
+        acc.y += point.y;
+        acc.xy += point.x * point.y;
+        acc.x2y += x2 * point.y;
+        return acc;
+    }, {x: 0, x2: 0, x3: 0, x4: 0, y: 0, xy: 0, x2y: 0});
+
+    const matrix = [
+        [sums.x4, sums.x3, sums.x2, sums.x2y],
+        [sums.x3, sums.x2, sums.x, sums.xy],
+        [sums.x2, sums.x, points.length, sums.y],
+    ];
+
+    for (let column = 0; column < 3; column += 1) {
+        let pivotRow = column;
+        for (let row = column + 1; row < 3; row += 1) {
+            if (Math.abs(matrix[row][column]) > Math.abs(matrix[pivotRow][column])) {
+                pivotRow = row;
+            }
+        }
+        if (Math.abs(matrix[pivotRow][column]) < 1e-9) {
+            return null;
+        }
+        [matrix[column], matrix[pivotRow]] = [matrix[pivotRow], matrix[column]];
+
+        const pivot = matrix[column][column];
+        for (let cell = column; cell < 4; cell += 1) {
+            matrix[column][cell] /= pivot;
+        }
+        for (let row = 0; row < 3; row += 1) {
+            if (row === column) {
+                continue;
+            }
+            const factor = matrix[row][column];
+            for (let cell = column; cell < 4; cell += 1) {
+                matrix[row][cell] -= factor * matrix[column][cell];
+            }
+        }
+    }
+
+    return {
+        a: matrix[0][3],
+        b: matrix[1][3],
+        c: matrix[2][3],
+    };
+}
+
+function buildQuadraticTrendPoints(parsedData) {
+    if (parsedData.length < 3) {
+        return [];
+    }
+
+    const dayMs = 24 * 60 * 60 * 1000;
+    const firstTime = parsedData[0].date.getTime();
+    const points = parsedData.map((item) => ({
+        x: (item.date.getTime() - firstTime) / dayMs,
+        y: item.laying_rate,
+    }));
+    const minX = d3.min(points, (point) => point.x);
+    const maxX = d3.max(points, (point) => point.x);
+    if (minX === maxX) {
+        return [];
+    }
+
+    const coefficients = solveQuadraticCoefficients(points);
+    if (!coefficients) {
+        return [];
+    }
+
+    const stepCount = 80;
+    return d3.range(stepCount + 1).map((index) => {
+        const xValue = minX + ((maxX - minX) * index) / stepCount;
+        return {
+            date: new Date(firstTime + xValue * dayMs),
+            laying_rate: coefficients.a * xValue * xValue + coefficients.b * xValue + coefficients.c,
+        };
+    });
+}
+
 function renderFeedVsEggChart(feedVsEggData) {
     const chartArea = document.querySelector("#feed-vs-egg-chart");
     chartArea.innerHTML = "";
@@ -22,7 +107,7 @@ function renderFeedVsEggChart(feedVsEggData) {
         .append("svg")
         .attr("viewBox", `0 0 ${outerWidth} ${outerHeight}`)
         .attr("role", "img")
-        .attr("aria-label", "給餌量、産卵率、天気の推移");
+        .attr("aria-label", "給餌量、産卵率、二次近似、天気の推移");
 
     const plot = svg.append("g")
         .attr("transform", `translate(${margin.left}, ${margin.top})`);
@@ -30,7 +115,11 @@ function renderFeedVsEggChart(feedVsEggData) {
     const x = d3.scaleTime()
         .domain(d3.extent(parsedData, (d) => d.date))
         .range([0, width]);
-    const rateMax = d3.max(parsedData, (d) => d.laying_rate) || 1;
+    const trendPoints = buildQuadraticTrendPoints(parsedData);
+    const rateMax = Math.max(
+        d3.max(parsedData, (d) => d.laying_rate) || 1,
+        d3.max(trendPoints, (d) => d.laying_rate) || 0,
+    );
     const yRate = d3.scaleLinear()
         .domain([0, Math.ceil(rateMax + 10)])
         .nice()
@@ -70,6 +159,18 @@ function renderFeedVsEggChart(feedVsEggData) {
         .attr("stroke", "#0f766e")
         .attr("stroke-width", 2.5)
         .attr("d", rateLine);
+
+    if (trendPoints.length) {
+        plot.append("path")
+            .datum(trendPoints)
+            .attr("class", "quadratic-trend-line")
+            .attr("fill", "none")
+            .attr("stroke", "#334155")
+            .attr("stroke-width", 2)
+            .attr("stroke-dasharray", "5 5")
+            .attr("opacity", 0.85)
+            .attr("d", rateLine);
+    }
 
     const tooltip = d3.select("body")
         .append("div")
@@ -128,7 +229,7 @@ function renderFeedVsEggChart(feedVsEggData) {
         .attr("y", 18)
         .attr("fill", "#475467")
         .attr("font-size", 12)
-        .text("線: 産卵率 / 下段色: 給餌量 / 下段文字: 天気");
+        .text("線: 産卵率 / 点線: 二次近似 / 下段色: 給餌量 / 下段文字: 天気");
 
     const legend = svg.append("g")
         .attr("transform", `translate(${margin.left}, ${outerHeight - 18})`);
