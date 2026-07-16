@@ -13,7 +13,6 @@ apply: "docs/qiita/bookman_drf_nextjs.md"
 適用スコープ:
 - Qiita 記事「Django-rest-frameworkとNextJSで図書管理システムを作ってみる」
 - bookman_backend と bookman_nextjs のセットアップ、実装手順、検証手順
-- 非対象: 実装で未対応の新機能追加、記事だけの大幅な構成変更
 
 ## ルール
 
