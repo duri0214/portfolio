@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from datetime import date
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
@@ -29,6 +30,10 @@ from taxonomy.models import (
     LLMTaxonomyCandidateGenerationJob,
     LivestockDistributionDataset,
     NaturalMonument,
+    EggLedger,
+    FeedGroup,
+    HenGroup,
+    JmaWeatherCode,
     Phylum,
     Species,
 )
@@ -157,6 +162,47 @@ class TaxonomyIndexViewTest(TestCase):
         self.assertContains(response, "livestock-distribution-data")
         self.assertContains(response, "livestock-prefecture-map")
         self.assertContains(response, "e-Stat畜産統計データを取得")
+
+    def test_observation_page_displays_feed_and_weather_observation_summary(self):
+        """
+        シナリオ:
+        - 入力: 1250gと625gの給餌量、晴と曇の天気を含む産卵台帳。
+        - 処理: 鶏の観察グラフページを表示する。
+        - 期待値: 後半セクションに給餌量別・天気別の件数と平均値が表示されること。
+        """
+        self._create_egg_ledger_records()
+
+        response = self.client.get(reverse("txo:observation"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="/static/taxonomy/css/observation.css"')
+        self.assertContains(response, "餌の量と産卵率の推移")
+        self.assertContains(response, "給餌量・産卵率・天気で比較します。")
+        self.assertContains(response, "1250gは3件、625gは90件")
+        self.assertContains(response, "1250g")
+        self.assertContains(response, "625g")
+        self.assertContains(response, "晴")
+        self.assertContains(response, "曇")
+        self.assertContains(response, "産卵率の時系列推移")
+        self.assertContains(
+            response, "日付順のまま、フィードグループで必要な行だけを絞り込めます。"
+        )
+        self.assertContains(response, "observation-feed-filter")
+        self.assertContains(response, "フィードグループ")
+        self.assertContains(response, "taxonomy/js/observation_laying_rate_table.js")
+        self.assertEqual(
+            len(response.context["feed_group_laying_rate"]["records"]),
+            3,
+        )
+        self.assertEqual(
+            response.context["feed_group_laying_rate"]["records"][0]["date"],
+            "2017-06-14",
+        )
+        self.assertEqual(response.context["observation_summary"]["record_count"], 3)
+        self.assertEqual(
+            response.context["observation_summary"]["feed_summaries"][0]["feed_weight"],
+            1250,
+        )
 
     def test_observation_page_displays_livestock_distribution_dashboard(self):
         """
@@ -546,8 +592,95 @@ class TaxonomyIndexViewTest(TestCase):
             is_active=is_active,
         )
 
+    def _create_egg_ledger_records(self):
+        sunny = JmaWeatherCode.objects.create(
+            code="100",
+            summary_code="100",
+            image="100.svg",
+            name="晴",
+            name_en="CLEAR",
+        )
+        cloudy = JmaWeatherCode.objects.create(
+            code="200",
+            summary_code="200",
+            image="200.svg",
+            name="曇",
+            name_en="CLOUDY",
+        )
+        full_feed = FeedGroup.objects.create(name="通常給餌", weight=1250)
+        half_feed = FeedGroup.objects.create(name="半量給餌", weight=625)
+        hens = HenGroup.objects.create(name="第1鶏群", hen_count=5)
+        EggLedger.objects.create(
+            recorded_date=date(2017, 6, 14),
+            egg_count=4,
+            weather_code=sunny,
+            feed_group=full_feed,
+            hen_group=hens,
+        )
+        EggLedger.objects.create(
+            recorded_date=date(2017, 6, 15),
+            egg_count=3,
+            weather_code=cloudy,
+            feed_group=half_feed,
+            hen_group=hens,
+        )
+        EggLedger.objects.create(
+            recorded_date=date(2017, 6, 16),
+            egg_count=4,
+            weather_code=sunny,
+            feed_group=half_feed,
+            hen_group=hens,
+        )
+
 
 class LivestockDistributionStaticAssetTest(SimpleTestCase):
+    def test_observation_laying_rate_table_js_filters_rows_by_feed_group(self):
+        """
+        シナリオ:
+        - 入力: 産卵率時系列テーブル用のJavaScriptファイル。
+        - 処理: 静的ファイルの内容を読み込む。
+        - 期待値: フィードグループのボタン選択でテーブル行を絞り込む処理があること。
+        """
+        script_path = (
+            Path(__file__).resolve().parents[1]
+            / "static"
+            / "taxonomy"
+            / "js"
+            / "observation_laying_rate_table.js"
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn("observation-feed-filter", script)
+        self.assertIn('selectedFeedGroup === "all"', script)
+        self.assertIn("row.dataset.feedGroup === selectedFeedGroup", script)
+        self.assertIn("d-none", script)
+
+    def test_feed_vs_egg_chart_focuses_on_laying_rate_without_egg_bars(self):
+        """
+        シナリオ:
+        - 入力: 給餌量・産卵率チャート用のJavaScriptファイル。
+        - 処理: 静的ファイルの内容を読み込む。
+        - 期待値: 産卵数の棒グラフと給餌量の全面背景帯を描画せず、下段マーカーで給餌量を示すこと。
+        """
+        script_path = (
+            Path(__file__).resolve().parents[1]
+            / "static"
+            / "taxonomy"
+            / "js"
+            / "feed_vs_egg_chart.js"
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "線: 産卵率 / 点線: 二次近似 / 下段色: 給餌量 / 下段文字: 天気", script
+        )
+        self.assertIn("feed-marker", script)
+        self.assertIn("buildQuadraticTrendPoints", script)
+        self.assertIn("quadratic-trend-line", script)
+        self.assertIn('stroke-dasharray", "5 5"', script)
+        self.assertNotIn("egg-bar", script)
+        self.assertNotIn("feed-band", script)
+
     def test_livestock_distribution_js_labels_comparison_bar_clearly(self):
         """
         シナリオ:

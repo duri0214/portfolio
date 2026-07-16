@@ -159,8 +159,11 @@ class ObservationView(TemplateView):
         # 餌の投入量と卵生産量データを取得
         feed_vs_egg = ChickenObservationsRepository.get_feed_vs_egg_production()
         context["feed_vs_egg"] = mark_safe(json.dumps(feed_vs_egg, ensure_ascii=False))
+        context["observation_summary"] = (
+            ChickenObservationsRepository.get_observation_summary()
+        )
 
-        # Feed Group別の産卵率データを取得
+        # 産卵率の時系列テーブルデータを取得
         context["feed_group_laying_rate"] = (
             ChickenObservationsRepository.get_feed_group_laying_rates_table()
         )
