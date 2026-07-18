@@ -3,7 +3,7 @@
 ## はじめに
 いままで作ってきたDjangoアプリケーションは、そのプロジェクトのなかにフロントエンドが含まれていた。今回はフロントエンドを Next.js（React）で作り、Django 側は Django REST Framework で API を提供する構成にする。
 
-この記事の管理原稿は `portfolio` リポジトリの `docs/qiita/bookman_drf_nextjs.md` に置いている。実装リポジトリは、同じ親フォルダにある `bookman_backend` と `bookman_nextjs` という前提で進める。
+実装リポジトリは、同じ親フォルダにある `bookman_backend` と `bookman_nextjs` という前提で進める。
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/c4650054-4a63-4f2f-acb1-1383e6aa5e48.png)
 
 :::note warn
@@ -37,8 +37,6 @@ https://jestjs.io/
 graph LR
   bookman_backend
   bookman_nextjs
-  portfolio
-  portfolio -- docs/qiita --> bookman_drf_nextjs
   bookman_backend -- venv --> venv311
   bookman_backend -- django --> config
   bookman_backend -- django --> bookman
@@ -1033,6 +1031,8 @@ npm --version
 ### Testing
 まずミニマムにテスト環境を整えることを忘れるな
 #### setup jest and formatter
+`create-next-app` が生成した `package.json` に、Node.js のバージョン指定、format/test 系の scripts、Jest・Prettier・MUI・axios などの依存関係を追加し、Next.js 16 に合わせて関連パッケージのバージョンを更新する。
+
 ```json:package.json
 {
   "name": "bookman_nextjs",
