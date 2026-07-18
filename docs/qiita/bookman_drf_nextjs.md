@@ -303,7 +303,7 @@ export default function BookmanLayout({ children }: Readonly<{ children: ReactNo
 }
 ```
 
-ナビゲーションは `a href` ではなく Next.js の `Link` を使う。
+ナビゲーションは `a href` ではなく Next.js の `Link` を使う。アプリ内の画面遷移なら、ページ全体を読み直す通常リンクではなく、Next.js のクライアントサイド遷移やプリフェッチに乗せたほうが App Router の作法に合う。
 
 ```tsx:src/components/nav/listItems.tsx
 import Link from 'next/link'
