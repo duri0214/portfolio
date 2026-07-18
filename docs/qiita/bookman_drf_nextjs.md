@@ -56,6 +56,10 @@ graph TB
   dashboard --> drf
   drf --> models
   fixtures --> models
+
+  style frontend fill:#ffffff,stroke:#999999,stroke-width:1px
+  style screens fill:#ffffff,stroke:#999999,stroke-width:1px
+  style backend fill:#ffffff,stroke:#999999,stroke-width:1px
 ```
 
 フロントエンドは App Router 前提で作り直し、バックエンド未起動時の表示確認には開発用モックデータも使えるようにした。
