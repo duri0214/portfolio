@@ -503,7 +503,9 @@ export interface IBranchRequest {
 const CREATE_BRANCH_API_PATH = '/api/bookman/branches'
 
 const onCreate = async () => {
+  // 登録中フラグを立て、ダイアログ側の入力欄とボタンを disabled にする。
   setIsCreating(true)
+  // 前回の登録エラーが残らないように、送信前に消しておく。
   setCreateErrorMessage(null)
 
   try {
@@ -520,12 +522,15 @@ const onCreate = async () => {
     }
 
     onCloseDialog()
+    // Server Component 側で一覧を取り直し、登録後の支店一覧を表示する。
     router.refresh()
   } catch {
+    // このメッセージをダイアログ上の Alert に表示する。
     setCreateErrorMessage(
       '支店データの登録に失敗しました。入力内容とバックエンドの状態を確認してください。',
     )
   } finally {
+    // 成功しても失敗しても、処理が終わったら再操作できる状態に戻す。
     setIsCreating(false)
   }
 }
