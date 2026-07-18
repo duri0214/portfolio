@@ -39,12 +39,9 @@ https://jestjs.io/
 graph TB
   subgraph frontend[フロントエンド: bookman_nextjs]
     home[HOME]
-    layout[App Router 共通レイアウト]
-    branch[館管理: 一覧と登録]
-    book[書籍管理: 一覧と登録]
-    apiClient[サーバー側 API クライアント]
-    mock[開発用モックデータ]
-    tests[テスト / lint / build / audit]
+    branch[館管理]
+    book[書籍管理]
+    dashboard[ダッシュボード]
   end
 
   subgraph backend[バックエンド: bookman_backend]
@@ -54,16 +51,15 @@ graph TB
   end
 
   home --> branch
-  layout --> branch
-  layout --> book
-  branch --> apiClient
-  book --> apiClient
-  apiClient --> drf
-  mock --> branch
-  mock --> book
+  home --> book
+  branch --> drf
+  book --> drf
+  dashboard --> drf
   drf --> models
   fixtures --> models
 ```
+
+フロントエンドは App Router 前提で作り直し、バックエンド未起動時の表示確認には開発用モックデータも使えるようにした。
 
 ## Frontend part
 ### リポジトリ構成
