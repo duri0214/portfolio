@@ -216,7 +216,7 @@ export default createJestConfig(config)
 ### HOMEページ
 Bookman はもともと3年ほど前に手作りで作り、Qiita にまとめたものだ。当時の HOME は Next.js のデフォルトページを少し直してリンクを置いた程度で、図書館システムの入口としては弱かった。そこで [HOMEページのデザインを刷新](https://github.com/duri0214/bookman_nextjs/issues/16#issue-4911954164) では、HOME に絞って AI を使い、Bookman らしい見た目へ作り直した。
 
-HOMEの画面のショットをここに貼る。
+![Bookman HOME](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/da4733c0-e4d1-4bdf-b534-15976392824a.png)
 
 このとき AI に「いい感じにして」だけを渡すと、汎用的な SaaS のランディングページに寄りやすい。今回は昔の図書貸出カードをモチーフにし、少し揺れるアニメーションでノスタルジーを出す方向にした。実装済みの「図書館を管理」は `/branch` へ進める導線にし、未実装の「本をかりる」はクリックできるリンクではなく disabled 表示にする。
 
