@@ -470,7 +470,7 @@ USE_MOCK_DATA=true
 - `Branch` は React コンポーネントで表示に使う支店データ
 - `IBranchRequest` は登録時に Django API へ送るデータ
 
-これは DDD でいう Value Object の考え方でもあり、DTO の考え方でもある。支店の場合は `IBranchRaw` と `Branch` の中身がまだ同じなので、分ける意味が薄く見える。ただ、送信用、受信用、画面表示用の型を分けておくと、中身が同じでも「何のためのデータか」という目的を型名に持たせられる。
+これは DDD でいう [Value Object](https://martinfowler.com/eaaCatalog/valueObject.html) の考え方でもあり、[DTO(Data Transfer Object)](https://martinfowler.com/eaaCatalog/dataTransferObject.html) の考え方でもある。支店の場合は `IBranchRaw` と `Branch` の中身がまだ同じなので、分ける意味が薄く見える。ただ、送信用、受信用、画面表示用の型を分けておくと、中身が同じでも「何のためのデータか」という目的を型名に持たせられる。
 
 書籍管理では API の `category` や `authors` が ID で返り、画面では名前つきのオブジェクトとして扱う。支店管理でも同じ置き方にしておくと、API の返却形と画面表示用の形を混ぜずに済む。
 
