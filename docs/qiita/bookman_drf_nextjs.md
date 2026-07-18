@@ -342,9 +342,9 @@ https://nextjs.org/docs/pages/guides/environment-variables#bundling-environment-
 
 `/branch` のコードでやっていることは3つだけだ。
 
-- Django API から支店一覧を取得する
-- 取得できたら画面表示用の `Branch[]` に変換する
-- 失敗したら、開発用モックデータを返すか、画面に出すエラーメッセージを返す
+- `loadBranchList` で Django API から支店一覧を取得する
+- `convertBranchData` で画面表示用の `Branch[]` に変換する
+- `catch` で失敗時の分岐を扱い、開発用モックデータか画面に出すエラーメッセージを返す
 
 ```ts:src/app/(bookman)/branch/_components/listData.ts
 import { Branch, IBranchRaw } from '@/resource/branch'
