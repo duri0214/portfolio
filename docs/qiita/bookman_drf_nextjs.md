@@ -351,7 +351,7 @@ export const getBookmanApiUrl = (endpoint: BookmanApiEndpoint): string =>
   `${getBookmanApiBaseUrl()}/${trimLeadingSlash(BOOKMAN_API_ENDPOINTS[endpoint])}`
 ```
 
-ここで `NEXT_PUBLIC_` は付けない。`BOOKMAN_API_BASE_URL` は Server Component や Route Handler 側だけで読む値なので、ブラウザへ公開する必要がない。
+ここで `NEXT_PUBLIC_` は付けない。これは Next.js の一般的なしきたりというより、このプロジェクトでの運用ルールだ。環境変数はもともと外へ出したくない値を扱うためのものなので、バックエンドにもフロントエンドにも公開設定が散らかる状態を避けたい。`BOOKMAN_API_BASE_URL` は Server Component や Route Handler 側だけで読む値なので、ブラウザへ公開する必要がない。
 
 ### 一覧取得は Server Component 側に寄せる
 `/branch` と `/book` の初期データ取得は Server Component 側へ寄せた。クライアント側の `useEffect` で初回ロードするより、ページ単位でデータ、エラー、モック利用状態をまとめて渡せるからだ。
