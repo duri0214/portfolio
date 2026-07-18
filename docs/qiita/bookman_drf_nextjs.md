@@ -3,7 +3,10 @@
 ## はじめに
 いままで作ってきたDjangoアプリケーションは、そのプロジェクトのなかにフロントエンドが含まれていた。今回はフロントエンドを Next.js（React）で作り、Django 側は Django REST Framework で API を提供する構成にする。
 
-実装リポジトリは、同じ親フォルダにある `bookman_backend` と `bookman_nextjs` という前提で進める。
+この記事は、最初に作った Bookman を、現在の Next.js / React / MUI の環境へ追随させた作業ログとして書き直したものだ。前半は `bookman_nextjs` のフロントエンド、後半はその API を支える `bookman_backend` のバックエンド、という順番にする。
+
+実装リポジトリは、同じ親フォルダにある `bookman_nextjs` と `bookman_backend` という前提で進める。
+
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/c4650054-4a63-4f2f-acb1-1383e6aa5e48.png)
 
 :::note warn
@@ -21,28 +24,665 @@ https://mui.com/material-ui/
 
 https://jestjs.io/
 
-## Overview
-- バックエンド のプロジェクト名は `bookman_backend` にする
-  - 実際には `config` というプロジェクトを作成してプロジェクトフォルダ名を `bookman_backend` に変更する
-  - アプリケーション名は `bookman` にする
-  - venv名は `venv311` にする
-- フロントエンド のプロジェクト名は `bookman_nextjs` にする
-  - Next.js `16.2.10`
-  - React / React DOM `19.2.7`
-  - MUI `9.2.0`
-  - Jest `30.4.2`
-  - Node.js は `20.9.0` 以上
-  - コマンドは npm に統一する
+## 今回の更新範囲
+今回の主役は、`bookman_nextjs` の親チケット [duri0214/bookman_nextjs#1](https://github.com/duri0214/bookman_nextjs/issues/1) に紐づくフロントエンド更新だ。
+
+フロントエンド側では、子チケットの変更を全部織り込む。
+
+- [#2 portfolio の .codex 参照運用を bookman_nextjs に導入する](https://github.com/duri0214/bookman_nextjs/issues/2)
+- [#3 Next.js / React / MUI / Jest 依存関係を内容変更なしで最新化する](https://github.com/duri0214/bookman_nextjs/issues/3)
+- [#4 API クライアントと環境変数を整理する](https://github.com/duri0214/bookman_nextjs/issues/4)
+- [#5 支店管理画面の一覧・登録フローを最新化する](https://github.com/duri0214/bookman_nextjs/issues/5)
+- [#6 書籍管理画面の一覧・登録フローを最新化する](https://github.com/duri0214/bookman_nextjs/issues/6)
+- [#7 共通レイアウトとナビゲーションを App Router 前提で整理する](https://github.com/duri0214/bookman_nextjs/issues/7)
+- [#8 フロントエンドのテスト・lint・build を現行環境で通す](https://github.com/duri0214/bookman_nextjs/issues/8)
+- [#11 API 取得失敗時の画面表示と開発用モックデータを整理する](https://github.com/duri0214/bookman_nextjs/issues/11)
+- [#16 HOMEページのデザインを刷新](https://github.com/duri0214/bookman_nextjs/issues/16)
+
+バックエンド側は次回以降に改修する。だから今回は書き直さず、記事の最下段に旧メモとして残す。
+
 ```mermaid
-graph LR
-  bookman_backend
-  bookman_nextjs
-  bookman_backend -- venv --> venv311
-  bookman_backend -- django --> config
-  bookman_backend -- django --> bookman
-  bookman_nextjs -- next --> app_router
-  bookman_nextjs -- api --> bookman_backend
+graph TB
+  subgraph frontend[frontend: bookman_nextjs]
+    home[HOME]
+    layout[App Router common layout]
+    branch[branch list and create]
+    book[book list and create]
+    apiClient[server-only API client]
+    mock[dev mock data]
+    tests[npm test / lint / build / audit]
+  end
+
+  subgraph backend[backend: bookman_backend]
+    drf[Django REST Framework API]
+    models[Branch / Category / Author / Book]
+    fixtures[fixtures]
+  end
+
+  home --> branch
+  layout --> branch
+  layout --> book
+  branch --> apiClient
+  book --> apiClient
+  apiClient --> drf
+  mock --> branch
+  mock --> book
+  drf --> models
+  fixtures --> models
 ```
+
+## Frontend part
+### リポジトリ構成
+`bookman_nextjs` は `bookman_backend` と同じ親フォルダに置く。
+
+```text
+dev/
+  portfolio/
+  bookman_backend/
+  bookman_nextjs/
+```
+
+`bookman_nextjs` からは、同じ親フォルダにある `portfolio/.codex` を Codex 運用ルールとスキルの管理元として参照する。フロントエンド固有の Next.js ルールは `bookman_nextjs` 側に置き、共通運用は `portfolio` に寄せる。
+
+- 実装: https://github.com/duri0214/bookman_nextjs
+- 関連バックエンド: https://github.com/duri0214/bookman_backend
+- 元記事: https://qiita.com/YoshitakaOkada/items/570c025cf235062649c8
+
+### create app
+GitHub に `bookman_nextjs` リポジトリを作って clone し、Next.js アプリを作る。
+
+```console:console
+npx create-next-app@latest .
+```
+
+選択は、TypeScript / ESLint / `src/` directory / App Router を使う。Tailwind CSS は使わない。import alias は `@/*` のままにする。
+
+```text
+Would you like to use TypeScript? Yes
+Would you like to use ESLint? Yes
+Would you like to use Tailwind CSS? No
+Would you like to use `src/` directory? Yes
+Would you like to use App Router? Yes
+Would you like to customize the default import alias (@/*)? No
+```
+
+### Node.js と npm
+Next.js 16 を使うため、Node.js は `20.9.0` 以上が必要になる。この記事ではコマンドを npm に統一する。
+
+```console:console
+node --version
+npm --version
+```
+
+Windows で Node.js を1種類だけ使うなら LTS 版を入れる。通常はこちらで十分だ。
+
+```console:console
+winget install OpenJS.NodeJS.LTS
+```
+
+プロジェクトごとに Node.js を切り替えたい場合だけ `nvm-windows` を使う。
+
+```console:console
+winget install CoreyButler.NVMforWindows
+nvm install 24.18.0
+nvm use 24.18.0
+node --version
+npm --version
+```
+
+:::note
+`nvm-windows` は Python でいう `pyenv` に近い。npm は Python でいう `pip` に近い。Node.js 本体のバージョンを切り替えるのが `nvm-windows`、パッケージを入れるのが npm、という整理で考える。
+:::
+
+### package.json
+`create-next-app` が生成した `package.json` に、Node.js のバージョン指定、format/test 系の scripts、Jest・Prettier・MUI・axios などの依存関係を追加し、Next.js 16 に合わせて関連パッケージのバージョンを更新した。
+
+```json:package.json
+{
+  "name": "bookman_nextjs",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.9.0",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "axios": "1.18.1",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@mui/material": "9.2.0",
+    "@mui/x-data-grid": "9.9.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.2.10",
+    "jest": "30.4.2",
+    "prettier": "3.9.5",
+    "typescript": "5.9.3"
+  }
+}
+```
+
+Next.js 16 では `next lint` がなくなっているので、lint は ESLint CLI を直接呼ぶ。
+
+```js:eslint.config.mjs
+import { defineConfig, globalIgnores } from 'eslint/config'
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTs from 'eslint-config-next/typescript'
+
+const eslintConfig = defineConfig([
+  nextVitals,
+  nextTs,
+  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
+])
+
+export default eslintConfig
+```
+
+### Jest
+Next.js の設定を読み込むために `next/jest` を使う。App Router の route group へ移したあとも `@/app/book/...` のような import を維持するため、Jest 側にも alias を足した。
+
+```ts:jest.config.ts
+import type { Config } from 'jest'
+import nextJest from 'next/jest.js'
+
+const createJestConfig = nextJest({
+  dir: './',
+})
+
+const config: Config = {
+  coverageProvider: 'v8',
+  moduleNameMapper: {
+    '^@/app/book/(.*)$': '<rootDir>/src/app/(bookman)/book/$1',
+    '^@/app/branch/(.*)$': '<rootDir>/src/app/(bookman)/branch/$1',
+    '^@/app/dashboard/(.*)$': '<rootDir>/src/app/(bookman)/dashboard/$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  testEnvironment: 'jsdom',
+}
+
+export default createJestConfig(config)
+```
+
+テストには「入力 / 処理 / 期待値」のシナリオを残す。期間が空いたとき、何を守るテストなのかを読み返しやすくするためだ。
+
+### HOMEページ
+`create-next-app` の初期画面は、Bookman の画面としては意味が薄い。HOME は図書館システムの入口として作り直した。
+
+- 図書カード風の `LibraryCard` コンポーネントを作る
+- 図書カードの表面は8行、将来の裏面は11行として定数化する
+- 「図書館を管理」は `/branch` へリンクする
+- 「本をかりる」は未実装なので disabled にする
+- Next.js の開発用インジケーターは開発時だけのものとして扱う
+
+```tsx:src/app/page.tsx
+import Link from 'next/link'
+import LibraryCard from '@/components/LibraryCard'
+import styles from './page.module.css'
+
+export default function Home() {
+  return (
+    <main className={styles.main}>
+      <section className={styles.hero} aria-labelledby='home-title'>
+        <div className={styles.cardStage} aria-hidden='true'>
+          <LibraryCard animated />
+        </div>
+
+        <div className={styles.content}>
+          <p className={styles.kicker}>Bookman</p>
+          <h1 id='home-title'>図書館業務を、すっきり管理。</h1>
+          <p className={styles.lead}>
+            蔵書、館、貸出の導線をひとつにまとめた図書館管理システムです。
+          </p>
+
+          <div className={styles.actions} aria-label='主要機能'>
+            <Link className={styles.primaryAction} href='/branch'>
+              図書館を管理
+            </Link>
+            <button className={styles.secondaryAction} type='button' disabled>
+              本をかりる
+              <span>未実装</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  )
+}
+```
+
+ソースコード:
+https://github.com/duri0214/bookman_nextjs/blob/main/src/app/page.tsx
+
+### MUI と Bootstrap の使い分け
+この portfolio では Django テンプレートや静的寄りの画面は Bootstrap を使うことが多い。Bootstrap は、フォーム、一覧、ボタン、グリッドを素早く整えるにはかなり強い。
+
+一方で Bookman のフロントエンドは React の状態付き UI として別リポジトリに切り出している。ダッシュボード、DataGrid、Dialog、Alert、Drawer のような操作画面を React コンポーネントとして組み立てるなら、MUI のほうが作りやすい。
+
+ただし、MUI は今回の規模に対して少し重く見える場面もある。仕事で触っていた経験があり、テンプレートから状態付きUIへ進めやすかったので採用したが、単純なDjango画面なら Bootstrap へ寄せる判断も普通にありだと思う。
+
+当時レイアウトの参考にしたテンプレート:
+https://mui.com/material-ui/getting-started/templates/dashboard/
+
+https://github.com/mui/material-ui/tree/v5.15.7/docs/data/material/getting-started/templates/dashboard
+
+:::note
+上の GitHub リンクは当時参照した MUI v5 系テンプレート。現在の `bookman_nextjs` では MUI `9.2.0` 系に更新しているので、依存関係は現在の `package.json` に合わせる。
+:::
+
+### App Router のレイアウト
+`/dashboard`、`/branch`、`/book` は URL を変えずに、route group の `src/app/(bookman)` 配下へ移した。これで各画面の `layout.tsx` 重複をやめて、共通レイアウトを1か所で持てる。
+
+```text
+src/app/
+  page.tsx
+  (bookman)/
+    layout.tsx
+    dashboard/page.tsx
+    branch/page.tsx
+    book/page.tsx
+```
+
+```tsx:src/app/(bookman)/layout.tsx
+import { ReactNode } from 'react'
+import { CommonLayout } from '@/components/nav/CommonLayout'
+
+const routeTitles = {
+  '/dashboard': 'Dashboard',
+  '/branch': '館管理',
+  '/book': '書籍管理',
+} as const
+
+export default function BookmanLayout({ children }: Readonly<{ children: ReactNode }>) {
+  return <CommonLayout routeTitles={routeTitles}>{children}</CommonLayout>
+}
+```
+
+ナビゲーションは `a href` ではなく Next.js の `Link` を使う。
+
+```tsx:src/components/nav/listItems.tsx
+import Link from 'next/link'
+
+<ListItemButton component={Link} href='/branch'>
+  <ListItemText primary='館管理' />
+</ListItemButton>
+
+<ListItemButton component={Link} href='/book'>
+  <ListItemText primary='書籍管理' />
+</ListItemButton>
+```
+
+ソースコード:
+https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29
+
+### API クライアントと環境変数
+バックエンド API の base URL は `BOOKMAN_API_BASE_URL` で切り替える。未指定ならローカルの Django API を使う。
+
+```env:.env.example
+BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
+USE_MOCK_DATA=false
+```
+
+```ts:src/helpers/apiClient.ts
+const DEFAULT_BOOKMAN_API_BASE_URL = 'http://127.0.0.1:8000/bookman/api'
+
+export const BOOKMAN_API_ENDPOINTS = {
+  branches: 'branches/',
+  books: 'books/',
+  booksCreate: 'books/create/',
+  authors: 'authors/',
+  categories: 'categories/',
+} as const
+
+export type BookmanApiEndpoint = keyof typeof BOOKMAN_API_ENDPOINTS
+
+const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, '')
+const trimLeadingSlash = (value: string): string => value.replace(/^\/+/, '')
+
+export const getBookmanApiBaseUrl = (): string =>
+  trimTrailingSlash(process.env.BOOKMAN_API_BASE_URL || DEFAULT_BOOKMAN_API_BASE_URL)
+
+export const getBookmanApiUrl = (endpoint: BookmanApiEndpoint): string =>
+  `${getBookmanApiBaseUrl()}/${trimLeadingSlash(BOOKMAN_API_ENDPOINTS[endpoint])}`
+```
+
+ここで `NEXT_PUBLIC_` は付けない。`BOOKMAN_API_BASE_URL` は Server Component や Route Handler 側だけで読む値なので、ブラウザへ公開する必要がない。
+
+### 一覧取得は Server Component 側に寄せる
+`/branch` と `/book` の初期データ取得は Server Component 側へ寄せた。クライアント側の `useEffect` で初回ロードするより、ページ単位でデータ、エラー、モック利用状態をまとめて渡せるからだ。
+
+`/branch` は支店一覧を取得して表示用の形へ変換する。
+
+```ts:src/app/(bookman)/branch/_components/listData.ts
+import { Branch, IBranchRaw } from '@/resource/branch'
+import { getBookmanApiUrl } from '@/helpers/apiClient'
+
+const USE_MOCK_DATA = process.env.USE_MOCK_DATA === 'true'
+
+interface BranchListData {
+  branches: Branch[]
+  errorMessage: string | null
+  isMockData: boolean
+}
+
+const loadBranchList = async (apiUrl: string): Promise<IBranchRaw[]> => {
+  const response = await fetch(apiUrl, { method: 'GET', cache: 'no-store' })
+  if (!response.ok) {
+    throw new Error(`Failed to fetch data: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export const getBranchListData = async (): Promise<BranchListData> => {
+  try {
+    const responseData = await loadBranchList(getBookmanApiUrl('branches'))
+    return {
+      branches: convertBranchData(responseData),
+      errorMessage: null,
+      isMockData: false,
+    }
+  } catch (e) {
+    if (USE_MOCK_DATA) {
+      return {
+        branches: convertBranchData(MOCK_BRANCHES),
+        errorMessage: null,
+        isMockData: true,
+      }
+    }
+
+    return {
+      branches: [],
+      errorMessage:
+        '支店データの取得に失敗しました。バックエンドを起動してから再読み込みしてください。',
+      isMockData: false,
+    }
+  }
+}
+```
+
+`/book` は `books`、`categories`、`authors` を並列で取得し、ID の配列を表示名へ変換する。
+
+```ts:src/app/(bookman)/book/_components/listData.ts
+const convertBookData = (
+  books: IBookRaw[],
+  categories: ICategory[],
+  authors: IAuthor[],
+): Book[] => {
+  const categoriesById = new Map(categories.map((category) => [category.id, category]))
+  const authorsById = new Map(authors.map((author) => [author.id, author]))
+
+  return books.map((result: IBookRaw) => ({
+    id: result.id,
+    category: categoriesById.get(result.category) ?? null,
+    name: result.name,
+    authors: result.authors
+      .map((authorId) => authorsById.get(authorId)?.name ?? `#${authorId}`)
+      .join(', '),
+    leadText: result.lead_text,
+    publicationDate: result.publication_date,
+  }))
+}
+
+export const getBookListData = async (): Promise<BookListData> => {
+  try {
+    const [books, categories, authors] = await Promise.all([
+      loadBookmanData<IBookRaw[]>(getBookmanApiUrl('books')),
+      loadBookmanData<ICategory[]>(getBookmanApiUrl('categories')),
+      loadBookmanData<IAuthor[]>(getBookmanApiUrl('authors')),
+    ])
+
+    return {
+      books: convertBookData(books, categories, authors),
+      errorMessage: null,
+      isMockData: false,
+    }
+  } catch (e) {
+    // error または mock の表示へ落とす
+  }
+}
+```
+
+ソースコード:
+https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/branch/_components/listData.ts
+
+https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/book/_components/listData.ts
+
+### モックデータとエラー表示
+バックエンドが起動していない状態で `/branch` や `/book` を見ると、通常は画面上にデータ取得エラーを表示する。
+
+フロントエンド単体で一覧画面を確認したい場合は、開発用のモックデータへ切り替える。
+
+```console:console
+copy .env.example .env.local
+```
+
+```env:.env.local
+BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
+USE_MOCK_DATA=true
+```
+
+この状態では `/branch` と `/book` の一覧表示はモックデータで確認できる。ただし登録処理は Next.js の `/api/bookman/branches` と `/api/bookman/books` 経由でバックエンド API に POST するため、バックエンド未起動時は登録失敗になる。
+
+画面側では、取得失敗は warning Alert、モック表示は info Alert として分ける。
+
+### 支店管理
+支店管理は、一覧表示と登録ダイアログを持つ。登録処理は最初 `console.log` 止まりだったが、現在は Next.js の Route Handler 経由で Django API に POST する。
+
+```ts:src/resource/branch.ts
+export interface IBranchRaw {
+  id: number
+  name: string
+  address: string
+  phone: string
+  remark: string
+}
+
+export interface Branch {
+  id: number
+  name: string
+  address: string
+  phone: string
+  remark: string
+}
+
+export interface IBranchRequest {
+  name: string
+  address: string
+  phone: string
+  remark: string
+}
+```
+
+```ts:src/app/(bookman)/branch/_components/useCreateDialog.ts
+const CREATE_BRANCH_API_PATH = '/api/bookman/branches'
+
+const onCreate = async () => {
+  setIsCreating(true)
+  setCreateErrorMessage(null)
+
+  try {
+    const response = await fetch(CREATE_BRANCH_API_PATH, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formValues),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to create branch')
+    }
+
+    onCloseDialog()
+    router.refresh()
+  } catch {
+    setCreateErrorMessage(
+      '支店データの登録に失敗しました。入力内容とバックエンドの状態を確認してください。',
+    )
+  } finally {
+    setIsCreating(false)
+  }
+}
+```
+
+登録中は入力とボタンを無効化し、失敗時はダイアログ上にエラーを出す。成功したら `router.refresh()` で Server Component 側の一覧を再取得する。
+
+ソースコード:
+https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29/branch
+
+### 書籍管理
+書籍管理も、一覧表示と登録ダイアログを持つ。バックエンドの `BookSerializer` は `category` と `authors` をIDで受けるので、フロントエンドも登録時には文字列入力を数値へ変換して payload を作る。
+
+```ts:src/resource/book.ts
+export interface IBookRaw {
+  id: number
+  name: string
+  thumbnail: string | null
+  category: number
+  authors: number[]
+  lead_text: string
+  amount: number
+  isbn: string
+  publication_date: string
+}
+
+export interface IBookRequest {
+  category: number
+  name: string
+  authors: number[]
+  lead_text: string
+  amount: number
+  isbn: string
+  publication_date: string
+}
+```
+
+```ts:src/app/(bookman)/book/_components/useCreateDialog.ts
+const CREATE_BOOK_API_PATH = '/api/bookman/books'
+
+const toNumber = (value: string | undefined): number => Number(value ?? 0)
+
+const toAuthorIds = (value: string | undefined): number[] =>
+  (value ?? '')
+    .split(',')
+    .map((authorId) => Number(authorId.trim()))
+    .filter((authorId) => Number.isInteger(authorId) && authorId > 0)
+
+const buildBookRequest = (formValues: Partial<IBookFormValues>): IBookRequest => ({
+  category: toNumber(formValues.category),
+  name: formValues.name ?? '',
+  authors: toAuthorIds(formValues.authors),
+  lead_text: formValues.lead_text ?? '',
+  amount: toNumber(formValues.amount),
+  isbn: formValues.isbn ?? '',
+  publication_date: formValues.publication_date ?? '',
+})
+```
+
+ソースコード:
+https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29/book
+
+### Route Handler で登録を中継する
+登録処理はブラウザから直接 Django API に POST せず、Next.js の Route Handler を挟む。
+
+```ts:src/app/api/bookman/books/route.ts
+export async function POST(request: Request) {
+  try {
+    const requestBody = (await request.json()) as Partial<IBookRequest>
+    const response = await fetch(getBookmanApiUrl('booksCreate'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      cache: 'no-store',
+    })
+
+    const responseText = await response.text()
+    const responseBody = parseResponseBody(responseText)
+
+    return Response.json(responseBody, { status: response.status })
+  } catch {
+    return Response.json({ message: '書籍データの登録に失敗しました。' }, { status: 500 })
+  }
+}
+```
+
+支店登録も同じ考え方で `/api/bookman/branches` からバックエンドの `branches/` へ POST する。
+
+ソースコード:
+https://github.com/duri0214/bookman_nextjs/tree/main/src/app/api/bookman
+
+### 起動手順
+Bookman はフロントエンドとバックエンドを別ターミナルで起動して動かす。
+
+```console:console（ターミナル1: Django側サーバー起動）
+cd ../bookman_backend
+.\venv311\Scripts\Activate.ps1
+python manage.py runserver 127.0.0.1:8000
+```
+
+```console:console（ターミナル2: Next.js側サーバー起動）
+cd ../bookman_nextjs
+npm run dev
+```
+
+`npm run dev` は開発用サーバーなので、開発中だけ表示される UI や挙動がある。本番相当で確認したい場合は、ビルドしてから起動する。
+
+```console:console
+npm run build
+npm run start
+```
+
+コードを変更した後は、もう一度 `npm run build` してから `npm run start` する。
+
+### 検証コマンド
+フロントエンド側は、変更後に以下を確認する。
+
+```console:console
+npm test
+npm run lint
+npm run build
+```
+
+依存関係の脆弱性も見る場合は `npm audit` を実行する。
+
+```console:console
+npm audit
+```
+
+バックエンド側のテストは `bookman_backend` で実行する。
+
+```console:console
+cd ../bookman_backend
+.\venv311\Scripts\Activate.ps1
+python manage.py test
+```
+
+### AI に任せるときの注意
+今回のように記事と実装の両方がある場合、AI には「README と矛盾しないように」だけでは足りない。
+
+- 親チケットに紐づく子チケットを全部読むこと
+- 上段をフロントエンド、下段をバックエンドに分けること
+- ソースコードを全文掲載せず、必要なところだけ抜粋すること
+- バックエンドは次回改修対象なので、今回は書き換えず最下段に残すこと
+- バックエンド未起動時の一覧表示と登録処理の違いを説明すること
+- MUI と Bootstrap の使い分けも説明すること
+
+このあたりを明示すると、記事更新のズレを減らしやすい。
+
+## Backend part（次回以降の改修対象）
+以下は、最初に Bookman の Django REST Framework API を作ったときのメモ。バックエンドは次回以降に改修するため、今回は内容を大きく書き換えずに最下段へ移す。
 
 ## Django part
 ### create root directory
@@ -974,2458 +1614,8 @@ class BookSerializer(serializers.ModelSerializer):
 ```
 :::
 
-## Nextjs part
-### create root directory
-`bookman_nextjs` は `bookman_backend` と同じ親フォルダに作る。
 
-```console:console
-mkdir bookman_nextjs
-cd bookman_nextjs
-```
-
-### create app
-- githubにリポジトリを作ってcloneした
-```console:console
-npx create-next-app@latest .
-  √ Would you like to use TypeScript? ... No / [Yes]
-  √ Would you like to use ESLint? ... No / [Yes]
-  √ Would you like to use Tailwind CSS? ... [No] / Yes
-  √ Would you like to use `src/` directory? ... No / [Yes]
-  √ Would you like to use App Router? (recommended) ... No / [Yes]
-  √ Would you like to customize the default import alias (@/*)? ... [No] / Yes
-
-npm run dev
-```
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/8e47b158-2a3d-c50c-6454-0a3db97bd264.png)
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/30e7b247-c99b-1b82-2f06-0a4dd8e6bead.png)
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/3d4b9e0f-631f-4733-6c8b-8c12e8eb4909.png)
-
-### Node.js と npm
-Next.js 16 を使うため、Node.js は `20.9.0` 以上が必要になる。この記事では npm 前提に統一する。
-
-```console:console
-node --version
-npm --version
-```
-
-Windows で Node.js を1種類だけ使うなら LTS 版を入れる。
-
-```console:console
-winget install OpenJS.NodeJS.LTS
-```
-
-プロジェクトごとに Node.js を切り替えたい場合だけ `nvm-windows` を使う。
-
-```console:console
-winget install CoreyButler.NVMforWindows
-nvm install 24.18.0
-nvm use 24.18.0
-node --version
-npm --version
-```
-
-:::note
-`nvm-windows` は Python でいう `pyenv` に近い。npm は Python でいう `pip` に近い。Node.js 本体のバージョンを切り替えるのが `nvm-windows`、パッケージを入れるのが npm、という整理で考える。
-:::
-
-### Testing
-まずミニマムにテスト環境を整えることを忘れるな
-#### setup jest and formatter
-`create-next-app` が生成した `package.json` に、Node.js のバージョン指定、format/test 系の scripts、Jest・Prettier・MUI・axios などの依存関係を追加し、Next.js 16 に合わせて関連パッケージのバージョンを更新する。
-
-```json:package.json
-{
-  "name": "bookman_nextjs",
-  "version": "0.1.0",
-  "private": true,
-  "engines": {
-    "node": ">=20.9.0",
-    "npm": ">=10"
-  },
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "test": "jest",
-    "test:watch": "jest --watch"
-  },
-  "dependencies": {
-    "axios": "1.18.1",
-    "next": "16.2.10",
-    "react": "19.2.7",
-    "react-dom": "19.2.7"
-  },
-  "devDependencies": {
-    "@emotion/react": "11.14.0",
-    "@emotion/styled": "11.14.1",
-    "@jest/globals": "30.4.1",
-    "@mui/icons-material": "9.2.0",
-    "@mui/material": "9.2.0",
-    "@mui/x-charts": "9.9.0",
-    "@mui/x-data-grid": "9.9.0",
-    "@testing-library/jest-dom": "6.9.1",
-    "@testing-library/react": "16.3.2",
-    "@types/jest": "30.0.0",
-    "@types/node": "26.1.1",
-    "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
-    "eslint": "9.39.5",
-    "eslint-config-next": "16.2.10",
-    "jest": "30.4.2",
-    "jest-environment-jsdom": "30.4.1",
-    "prettier": "3.9.5",
-    "react-router-dom": "7.18.1",
-    "recharts": "3.9.2",
-    "typescript": "5.9.3",
-    "ts-node": "10.9.2"
-  }
-}
-
-```
-```console:console
-npm install
-```
-
-```js:prettier.config.js
-/** @type {import('prettier').Config} */
-module.exports = {
-  semi: false,
-  singleQuote: true,
-  printWidth: 100,
-  useTabs: false,
-  tabWidth: 2,
-  endOfLine: 'lf',
-  jsxSingleQuote: true,
-}
-```
-
-#### pycharmのオートフォーマッタ設定
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/2392bcfb-d3c0-a318-e6a7-bf3b21b22f54.png)
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/2add247a-e24a-b957-546e-6633b56765fa.png)
-そのあと、一回このガターコマンドで動かすと、その次からは `ctrl + s` でフォーマッタが走るっぽい
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/6a793263-6124-e4ce-ab12-33f8d45aeee3.png)
-
-#### 関数系のテストを組む
-```diff_javascript:jest.config.ts
-import type { Config } from 'jest'
-import nextJest from 'next/jest.js'
-
-const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
-  dir: './',
-})
-
-// Add any custom config to be passed to Jest
-const config: Config = {
-  coverageProvider: 'v8',
-  testEnvironment: 'jsdom',
-  // Add more setup options before each test is run
-  // setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-}
-
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-export default createJestConfig(config)
-```
-```js:src/services/sum.js
-export default function sum(a, b) {
-  return a + b
-}
-```
-```js:src/__tests__/services/sum.spec.js
-import { expect, it } from '@jest/globals'
-import sum from '../../services/sum'
-
-it('adds 1 + 2 to equal 3', () => {
-  expect(sum(1, 2)).toBe(3)
-})
-
-it('dataから!nullの値を取得できる条件文のテスト', () => {
-  const data = {
-    test1: 'a',
-    test2: [],
-    test3: ['1'],
-    test4: '',
-    test5: null,
-  }
-  const expected = {
-    test1: 'a',
-    test3: ['1'],
-  }
-  let actual = {}
-  for (let [key, val] of Object.entries(data)) {
-    if (val && val.length > 0) {
-      actual[key] = val
-    }
-  }
-  expect(actual).toEqual(expected)
-})
-```
-#### テスト実行
-```console:console
-npm test
-
-  > bookman_nextjs@0.1.0 test
-  > jest
-
-   PASS  src/__tests__/services/sum.spec.js
-    √ adds 1 + 2 to equal 3 (1 ms)
-    √ dataから!nullの値を取得できる条件文のテスト (1 ms)
-
-  Test Suites: 1 passed, 1 total
-  Tests:       2 passed, 2 total
-  Snapshots:   0 total
-  Time:        0.536 s, estimated 1 s
-  Ran all test suites
-```
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/a4b9e65a-f369-83c6-79fd-c15a67979804.png)
-
-#### package.json
-:::note
-私は package.json を `a-z` で並べているが、人によっては作るパーツごとにブロックで配置する人もいるだろうな
-:::
-
-```diff_json:package.json
-{
-    :
-  "dependencies": {
-+   "@emotion/react": "11.14.0",
-+   "@emotion/styled": "11.14.1",
-+   "@mui/material": "9.2.0",
-+   "@mui/x-data-grid": "9.9.0",
-        :
-+   "react-router-dom": "7.18.1",
-        :
-  },
-    :
-}
-```
-```console:console
-npm install
-```
-
-#### テーブルにデータを表示する
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/25ed9fef-13f4-800b-85a8-ae982249acbf.png)
-
-```react:src/components/Page404.tsx（新規）
-import React from 'react'
-import { Link } from 'react-router-dom'
-
-export default function Page404() {
-  return (
-    <>
-      <h1>404 NOT FOUND</h1>
-      <p>お探しのページが見つかりませんでした。</p>
-      <Link to='/'>Topに戻る</Link>
-    </>
-  )
-}
-```
-```react:src/resource/book.ts（新規）
-export type Book = {
-  id: number
-  name: string
-  leadText: string
-}
-```
-```react:src/app/dashboard/_components/List.tsx（新規）
-import React from 'react'
-import { Box, Typography } from '@mui/material'
-import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid'
-import { Book } from '@/resource/book'
-
-interface Props {
-  books: Book[]
-}
-
-export function List({ books }: Props) {
-  if (!books || books.length === 0) {
-    return <Typography variant='h5'>No data available.</Typography>
-  }
-  const rows: GridRowsProp = books.map((book) => ({
-    id: book.id,
-    name: book.name,
-    leadText: book.leadText,
-  }))
-  const columns: GridColDef[] = [
-    { field: 'id', headerName: '#' },
-    { field: 'name', headerName: '名前', width: 200 },
-    { field: 'leadText', headerName: 'あらすじ', width: 800 },
-  ]
-  return (
-    <>
-      <main>
-        <Box width='100%'>
-          <Typography variant='h4'>本の一覧</Typography>
-          <DataGrid columns={columns} rows={rows} />
-        </Box>
-      </main>
-    </>
-  )
-}
-```
-```react:src/app/dashboard/page.tsx（新規）
-'use client'
-import { useEffect, useState } from 'react'
-import { List } from '@/app/dashboard/_components/List'
-import { Book } from '@/resource/book'
-
-export default function Page() {
-  const [books, setBooks] = useState<Book[]>([])
-
-  useEffect(() => {
-    const fetchData = async (): Promise<Book[]> => {
-      const apiUrl = 'http://127.0.0.1:8000/bookman/api/books/'
-
-      try {
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-        })
-
-        if (response.ok) {
-          const responseData = await response.json()
-          const formattedData: Book[] = responseData.map((result: any) => ({
-            id: result.id,
-            name: result.name,
-            leadText: result.lead_text,
-          }))
-          setBooks(formattedData)
-          return formattedData
-        } else {
-          console.error('Error fetching data:', response.statusText)
-          return []
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error)
-        return []
-      }
-    }
-    fetchData()
-  }, [])
-
-  if (!books) {
-    return <div>Loading...</div>
-  }
-
-  const props = {
-    books,
-  }
-  return <List {...props} />
-}
-
-```
-
-### 確認
-Bookman はフロントエンドとバックエンドを別ターミナルで起動して動かす。
-
-```console:console（ターミナル1: Django側サーバー起動）
-cd ../bookman_backend
-.\venv311\Scripts\Activate.ps1
-python manage.py runserver 127.0.0.1:8000
-```
-
-```console:console（ターミナル2: Next.js側サーバー起動）
-cd ../bookman_nextjs
-npm run dev
-```
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/711dff6c-3b30-8ce0-e569-ac506037adfa.png)
-
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/064ac5ea-b037-248a-cad8-b37febf505b8.png)
-
-`npm run dev` は開発用サーバーなので、開発中だけ表示される UI や挙動がある。本番相当で確認したい場合は、ビルドしてから起動する。
-
-```console:console
-npm run build
-npm run start
-```
-
-コードを変更した後は、もう一度 `npm run build` してから `npm run start` する。
-
-### API 接続とモックデータ
-通常は、`/branch` と `/book` は Django REST Framework の API を参照する。
-
-- `http://127.0.0.1:8000/bookman/api/branches/`
-- `http://127.0.0.1:8000/bookman/api/books/`
-
-API の接続先は `BOOKMAN_API_BASE_URL` で変更できる。未指定の場合は `http://127.0.0.1:8000/bookman/api` を使う。
-
-```env:.env.example
-BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
-USE_MOCK_DATA=false
-```
-
-バックエンドが起動していない状態で `/branch` や `/book` を見ると、通常は画面上にデータ取得エラーが表示される。フロントエンド単体で一覧画面を確認したい場合は、開発用のモックデータへ切り替える。
-
-```console:console
-copy .env.example .env.local
-```
-
-```env:.env.local
-BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
-USE_MOCK_DATA=true
-```
-
-この状態では `/branch` と `/book` の一覧表示はモックデータで確認できる。ただし登録処理は Next.js の `/api/bookman/branches` と `/api/bookman/books` 経由でバックエンド API に POST するため、バックエンド未起動時は登録失敗になる。
-
-### 検証コマンド
-フロントエンド側は、変更後に以下を確認する。
-
-```console:console
-npm test
-npm run lint
-npm run build
-```
-
-依存関係の脆弱性も見る場合は `npm audit` を実行する。
-
-```console:console
-npm audit
-```
-
-バックエンド側のテストは `bookman_backend` で実行する。
-
-```console:console
-cd ../bookman_backend
-.\venv311\Scripts\Activate.ps1
-python manage.py test
-```
-
-:::note
-AI に任せるときは、「Next.js 16 に更新した README と矛盾しないように」「読者が同じ順序で再現できるように」「バックエンド未起動時の一覧表示と登録処理の違いが分かるように」など、確認してほしい焦点をプロンプトで明示すると記事更新のズレを減らしやすい。
-:::
-
-### デザインをMUIのダッシュボード風味にする
-まずは再現することに注力する
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/8ac3f6df-2682-943f-48e1-e7e088985faa.png)
-
-#### playground
-
-https://mui.com/material-ui/getting-started/templates/dashboard/
-
-#### source code
-
-:::note warn
-下のgithubリンクのサンプルはレイアウトページにぐっちゃりサブルーチンが書いてあったり、レイアウトページファイル（＝page.tsx）に並列配置する感じでコンポーネントファイルがおいてあったりするので、下図のようにコンポーネントにバラしながら作っていきます（tsxでやるならば不要なjs版ファイルも混ぜた状態でおいてあるので初見につらいね）
-:::
-
-https://github.com/mui/material-ui/tree/v5.15.7/docs/data/material/getting-started/templates/dashboard
-
-:::note
-このリンクは当時レイアウトを起こすときに参照したテンプレート。現在の `bookman_nextjs` では MUI `9.2.0` 系に更新しているので、依存関係は下の `package.json` に合わせる。
-:::
-
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/c71f9a5b-3dfe-979b-b076-50a8c17c8e12.png)
-
-```diff_json:package.json
-{
-    :
-  "devDependencies": {
-+   "@emotion/react": "11.14.0",
-+   "@emotion/styled": "11.14.1",
-+   "@mui/icons-material": "9.2.0",
-+   "@mui/material": "9.2.0",
-+   "@mui/x-charts": "9.9.0",
-+   "@mui/x-data-grid": "9.9.0",
-+   "recharts": "3.9.2",
-        :
-  },
-    :
-}
-```
-
-```react:src/app/dashboard/_components/AppBar.tsx（新規）
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
-import { styled } from '@mui/material'
-
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean
-}
-
-// TODO: 共通化するか引数化して（Drawer.tsx）
-const drawerWidth: number = 240
-
-export const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme, open }) => ({
-  zIndex: theme.zIndex.drawer + 1,
-  transition: theme.transitions.create(['width', 'margin'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  ...(open && {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  }),
-}))
-```
-```react:src/app/dashboard/_components/Chart.tsx（新規）
-import { useTheme } from '@mui/material/styles'
-import { axisClasses, LineChart } from '@mui/x-charts'
-import { ChartsTextStyle } from '@mui/x-charts/ChartsText'
-import Title from './Title'
-
-// Generate Sales Data
-function createData(time: string, amount?: number): { time: string; amount: number | null } {
-  return { time, amount: amount ?? null }
-}
-
-const data = [
-  createData('00:00', 0),
-  createData('03:00', 300),
-  createData('06:00', 600),
-  createData('09:00', 800),
-  createData('12:00', 1500),
-  createData('15:00', 2000),
-  createData('18:00', 2400),
-  createData('21:00', 2400),
-  createData('24:00'),
-]
-
-export default function Chart() {
-  const theme = useTheme()
-
-  return (
-    <>
-      <Title>Today</Title>
-      <div style={{ width: '100%', flexGrow: 1, overflow: 'hidden' }}>
-        <LineChart
-          dataset={data}
-          margin={{
-            top: 16,
-            right: 20,
-            left: 70,
-            bottom: 30,
-          }}
-          xAxis={[
-            {
-              scaleType: 'point',
-              dataKey: 'time',
-              tickNumber: 2,
-              tickLabelStyle: theme.typography.body2 as ChartsTextStyle,
-            },
-          ]}
-          yAxis={[
-            {
-              label: 'Sales ($)',
-              labelStyle: {
-                ...(theme.typography.body1 as ChartsTextStyle),
-                fill: theme.palette.text.primary,
-              },
-              tickLabelStyle: theme.typography.body2 as ChartsTextStyle,
-              max: 2500,
-              tickNumber: 3,
-            },
-          ]}
-          series={[
-            {
-              dataKey: 'amount',
-              showMark: false,
-              color: theme.palette.primary.light,
-            },
-          ]}
-          sx={{
-            [`.${axisClasses.root} line`]: { stroke: theme.palette.text.secondary },
-            [`.${axisClasses.root} text`]: { fill: theme.palette.text.secondary },
-            [`& .${axisClasses.left} .${axisClasses.label}`]: {
-              transform: 'translateX(-25px)',
-            },
-          }}
-        />
-      </div>
-    </>
-  )
-}
-```
-```react:src/app/dashboard/_components/Copyright.tsx（新規）
-import { Typography } from '@mui/material'
-import Link from '@mui/material/Link'
-
-export function Copyright(props: any) {
-  return (
-    <Typography variant='body2' color='text.secondary' align='center' {...props}>
-      {'Copyright © '}
-      <Link color='inherit' href='https://mui.com/'>
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  )
-}
-```
-```react:src/app/dashboard/_components/Deposits.tsx（新規）
-import Link from '@mui/material/Link'
-import Typography from '@mui/material/Typography'
-import Title from './Title'
-
-function preventDefault(event: React.MouseEvent) {
-  event.preventDefault()
-}
-
-export default function Deposits() {
-  return (
-    <>
-      <Title>Recent Deposits</Title>
-      <Typography component='p' variant='h4'>
-        $3,024.00
-      </Typography>
-      <Typography color='text.secondary' sx={{ flex: 1 }}>
-        on 15 March, 2019
-      </Typography>
-      <div>
-        <Link color='primary' href='#' onClick={preventDefault}>
-          View balance
-        </Link>
-      </div>
-    </>
-  )
-}
-```
-```react:src/app/dashboard/_components/Drawer.tsx（新規）
-import MuiDrawer from '@mui/material/Drawer'
-import { styled } from '@mui/material'
-
-// TODO: 共通化するか引数化して（AppBar.tsx）
-const drawerWidth: number = 240
-
-export const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
-    '& .MuiDrawer-paper': {
-      position: 'relative',
-      whiteSpace: 'nowrap',
-      width: drawerWidth,
-      transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
-      boxSizing: 'border-box',
-      ...(!open && {
-        overflowX: 'hidden',
-        transition: theme.transitions.create('width', {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.leavingScreen,
-        }),
-        width: theme.spacing(7),
-        [theme.breakpoints.up('sm')]: {
-          width: theme.spacing(9),
-        },
-      }),
-    },
-  }),
-)
-```
-```react:src/app/dashboard/_components/listItems.tsx（新規）
-import ListItemButton from '@mui/material/ListItemButton'
-import ListItemIcon from '@mui/material/ListItemIcon'
-import ListItemText from '@mui/material/ListItemText'
-import ListSubheader from '@mui/material/ListSubheader'
-import DashboardIcon from '@mui/icons-material/Dashboard'
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
-import PeopleIcon from '@mui/icons-material/People'
-import BarChartIcon from '@mui/icons-material/BarChart'
-import LayersIcon from '@mui/icons-material/Layers'
-import AssignmentIcon from '@mui/icons-material/Assignment'
-
-export const mainListItems = (
-  <>
-    <ListItemButton>
-      <ListItemIcon>
-        <DashboardIcon />
-      </ListItemIcon>
-      <ListItemText primary='Dashboard' />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <ShoppingCartIcon />
-      </ListItemIcon>
-      <ListItemText primary='Orders' />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <PeopleIcon />
-      </ListItemIcon>
-      <ListItemText primary='Customers' />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <BarChartIcon />
-      </ListItemIcon>
-      <ListItemText primary='Reports' />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <LayersIcon />
-      </ListItemIcon>
-      <ListItemText primary='Integrations' />
-    </ListItemButton>
-  </>
-)
-
-export const secondaryListItems = (
-  <>
-    <ListSubheader component='div' inset>
-      Saved reports
-    </ListSubheader>
-    <ListItemButton>
-      <ListItemIcon>
-        <AssignmentIcon />
-      </ListItemIcon>
-      <ListItemText primary='Current month' />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <AssignmentIcon />
-      </ListItemIcon>
-      <ListItemText primary='Last quarter' />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <AssignmentIcon />
-      </ListItemIcon>
-      <ListItemText primary='Year-end sale' />
-    </ListItemButton>
-  </>
-)
-```
-```react:src/app/dashboard/_components/Orders.tsx（新規）
-import Link from '@mui/material/Link'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import Title from './Title'
-
-// Generate Order Data
-function createData(
-  id: number,
-  date: string,
-  name: string,
-  shipTo: string,
-  paymentMethod: string,
-  amount: number,
-) {
-  return { id, date, name, shipTo, paymentMethod, amount }
-}
-
-const rows = [
-  createData(0, '16 Mar, 2019', 'Elvis Presley', 'Tupelo, MS', 'VISA ⠀•••• 3719', 312.44),
-  createData(1, '16 Mar, 2019', 'Paul McCartney', 'London, UK', 'VISA ⠀•••• 2574', 866.99),
-  createData(2, '16 Mar, 2019', 'Tom Scholz', 'Boston, MA', 'MC ⠀•••• 1253', 100.81),
-  createData(3, '16 Mar, 2019', 'Michael Jackson', 'Gary, IN', 'AMEX ⠀•••• 2000', 654.39),
-  createData(4, '15 Mar, 2019', 'Bruce Springsteen', 'Long Branch, NJ', 'VISA ⠀•••• 5919', 212.79),
-]
-
-function preventDefault(event: React.MouseEvent) {
-  event.preventDefault()
-}
-
-export default function Orders() {
-  return (
-    <>
-      <Title>Recent Orders</Title>
-      <Table size='small'>
-        <TableHead>
-          <TableRow>
-            <TableCell>Date</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Ship To</TableCell>
-            <TableCell>Payment Method</TableCell>
-            <TableCell align='right'>Sale Amount</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell>{row.date}</TableCell>
-              <TableCell>{row.name}</TableCell>
-              <TableCell>{row.shipTo}</TableCell>
-              <TableCell>{row.paymentMethod}</TableCell>
-              <TableCell align='right'>{`$${row.amount}`}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <Link color='primary' href='#' onClick={preventDefault} sx={{ mt: 3 }}>
-        See more orders
-      </Link>
-    </>
-  )
-}
-```
-```react:src/app/dashboard/_components/Title.tsx（新規）
-import Typography from '@mui/material/Typography'
-import { ReactNode } from 'react'
-
-interface TitleProps {
-  children?: ReactNode
-}
-
-export default function Title(props: TitleProps) {
-  return (
-    <Typography component='h2' variant='h6' color='primary' gutterBottom>
-      {props.children}
-    </Typography>
-  )
-}
-```
-```react:src/app/dashboard/page.tsx（編集）
-'use client'
-import { useEffect, useState } from 'react'
-import { Book } from '@/resource/book'
-import { createTheme, ThemeProvider } from '@mui/material'
-import Box from '@mui/material/Box'
-import CssBaseline from '@mui/material/CssBaseline'
-import { AppBar } from '@/app/dashboard/_components/AppBar'
-import Toolbar from '@mui/material/Toolbar'
-import IconButton from '@mui/material/IconButton'
-import MenuIcon from '@mui/icons-material/Menu'
-import Typography from '@mui/material/Typography'
-import Badge from '@mui/material/Badge'
-import NotificationsIcon from '@mui/icons-material/Notifications'
-import { Drawer } from './_components/Drawer'
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
-import Divider from '@mui/material/Divider'
-import List from '@mui/material/List'
-import Grid from '@mui/material/Grid'
-import Paper from '@mui/material/Paper'
-import Chart from '@/app/dashboard/_components/Chart'
-import Deposits from '@/app/dashboard/_components/Deposits'
-import Orders from '@/app/dashboard/_components/Orders'
-import { Copyright } from '@/app/dashboard/_components/Copyright'
-import Container from '@mui/material/Container'
-import { mainListItems, secondaryListItems } from './_components/listItems'
-import { List } from '@/app/dashboard/_components/List'
-
-// TODO remove, this demo shouldn't need to reset the theme.
-const defaultTheme = createTheme()
-export default function Page() {
-  const [books, setBooks] = useState<Book[]>([])
-  const [open, setOpen] = useState(true)
-  const toggleDrawer = () => {
-    setOpen(!open)
-  }
-
-  // TODO: dbからのデータを取得します。別のところに移したい
-  useEffect(() => {
-    const fetchData = async (): Promise<Book[]> => {
-      const apiUrl = 'http://127.0.0.1:8000/bookman/api/books/'
-
-      try {
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-        })
-
-        if (response.ok) {
-          const responseData = await response.json()
-          const formattedData: Book[] = responseData.map((result: any) => ({
-            id: result.id,
-            name: result.name,
-            leadText: result.lead_text,
-          }))
-          setBooks(formattedData)
-          return formattedData
-        } else {
-          console.error('Error fetching data:', response.statusText)
-          return []
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error)
-        return []
-      }
-    }
-    fetchData()
-  }, [])
-
-  if (!books) {
-    return <div>Loading...</div>
-  }
-
-  const props = {
-    books,
-  }
-
-  return (
-    <ThemeProvider theme={defaultTheme}>
-      <Box sx={{ display: 'flex' }}>
-        <CssBaseline />
-        <AppBar position='absolute' open={open}>
-          <Toolbar
-            sx={{
-              pr: '24px', // keep right padding when drawer closed
-            }}
-          >
-            <IconButton
-              edge='start'
-              color='inherit'
-              aria-label='open drawer'
-              onClick={toggleDrawer}
-              sx={{
-                marginRight: '36px',
-                ...(open && { display: 'none' }),
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography component='h1' variant='h6' color='inherit' noWrap sx={{ flexGrow: 1 }}>
-              Dashboard
-            </Typography>
-            <IconButton color='inherit'>
-              <Badge badgeContent={4} color='secondary'>
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-          </Toolbar>
-        </AppBar>
-        <Drawer variant='permanent' open={open}>
-          <Toolbar
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              px: [1],
-            }}
-          >
-            <IconButton onClick={toggleDrawer}>
-              <ChevronLeftIcon />
-            </IconButton>
-          </Toolbar>
-          <Divider />
-
-          {/* 左サイドメニューです */}
-          <List component='nav'>
-            {mainListItems}
-            <Divider sx={{ my: 1 }} />
-            {secondaryListItems}
-          </List>
-        </Drawer>
-        <Box
-          component='main'
-          sx={{
-            backgroundColor: (theme) =>
-              theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
-            flexGrow: 1,
-            height: '100vh',
-            overflow: 'auto',
-          }}
-        >
-          <Toolbar />
-          <Container maxWidth='lg' sx={{ mt: 4, mb: 4 }}>
-            <Grid container spacing={2}>
-              {/* Chart */}
-              <Grid item xs={12} md={8} lg={9}>
-                <Paper
-                  sx={{
-                    p: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: 240,
-                  }}
-                >
-                  <Chart />
-                </Paper>
-              </Grid>
-
-              {/* Recent Deposits */}
-              <Grid item xs={12} md={4} lg={3}>
-                <Paper
-                  sx={{
-                    p: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: 240,
-                  }}
-                >
-                  <Deposits />
-                </Paper>
-              </Grid>
-
-              {/* Recent Orders */}
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                  <Orders />
-                </Paper>
-              </Grid>
-            </Grid>
-
-            {/* ここに Django から持ってきたデータを表示するコンポーネントを統合します */}
-            <List {...props} />
-
-            <Copyright sx={{ pt: 4 }} />
-          </Container>
-        </Box>
-      </Box>
-    </ThemeProvider>
-  )
-}
-```
-
-#### 確認
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/b4c7b181-dccd-d98d-9ac6-fca1bdaab16e.png)
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/f00771c0-7a84-e072-9aff-5294e7713fff.png)
-
-### topページからダッシュボードに飛ぶようにする
-最初のページからダッシュボードに飛べると便利だよね
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/23332e95-ff59-077e-7226-313e5bc02333.png)
-
-```diff:src/app/page.tsx
-    :
-export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
--         Get started by editing&nbsp;
--         <code className={styles.code}>src/app/page.tsx</code>
-+         <a href={'/dashboard'}>Lets go to the dashboard</a>
-        </p>
-    :
-```
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/42b4db9c-5e0a-7903-a97c-ad64fe0d22de.png)
-
-ついでにダッシュボードからHomeに戻るのもやろうか
-```diff:src/app/dashboard/_components/listItems.tsx
-import ListSubheader from '@mui/material/ListSubheader'
-- import DashboardIcon from '@mui/icons-material/Dashboard'
-+ import HomeIcon from '@mui/icons-material/Home'
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
-
-export const mainListItems = (
-  <>
--   <ListItemButton>
-+   <ListItemButton component='a' href='/'>
-      <ListItemIcon>
--       <DashboardIcon />
-+       <HomeIcon />
-      </ListItemIcon>
--     <ListItemText primary='Dashboard' />
-+     <ListItemText primary='Home' />
-    </ListItemButton>
-        :
-```
-
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/3cbef61f-adfc-6567-be4b-54bab50dde37.png)
-
-### ダッシュボードになにを表示するか考える
-斜線を引いたところを共通レイアウトとして外出し、斜線を引いていないところをコンテンツ領域としよう
-
-- 貸出数の推移（全支店の集計を積み上げ棒グラフで？）
-- 最近貸し出された本
-
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/fa3153ec-8ea1-2bce-c7b9-f3b49a3f1a14.png)
-
-### layout.tsx と page.tsx にわけて役割分担する
-このあたりを見てな
-
-https://qiita.com/YoshitakaOkada/items/ef7a64aab687cee6b5db#chapter-4-creating-layouts-and-pages
-
-ダッシュボードに作ってしまったコンポーネントファイルを `src/components/nav` に移動。
-
-さらに、`src/app/dashboard/page.tsx` にぐしゃっと書かれているコードを`layout.tsx` と `page.tsx` にわけてに分離するリファクタリングをする
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/899cc158-f755-a29e-9e8e-3e3ac6d49b0e.png)
-
-ファイルの移動が済んだら、`src/app/dashboard/page.tsx` の `<Container>` のあたりからがダッシュボードのコンテンツ内容なので、その外側（下図、薄く白がかっているあたり）を `src/app/dashboard/layout.tsx` に移管する。
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/35ce8b1b-eb51-cb81-87f6-3beaef22df5c.png)
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/9cb09856-1782-85f7-b6a8-c02de89030a1.png)
-
-### layout.tsx の内容をさらにコンポーネント化する
-`layout.tsx` はあくまでレイアウト用のファイルなので複雑なコードを置く訳にはいかない。`CommonLayout` というコンポーネントを作って移そう。
-これで `layout.tsx` は、`title` を引数で受けて、シンプルにコンポーネントを呼び出すだけになった！
-
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/5ec11084-b023-7aef-0ccd-6a82d48d00cc.png)
-
-```react:src/app/dashboard/layout.tsx
-'use client'
-import { ReactNode } from 'react'
-import { CommonLayout } from '@/components/CommonLayout'
-
-export default function Layout({ children }: Readonly<{ children: ReactNode }>) {
-  return <CommonLayout title='Dashboard'>{children}</CommonLayout>
-}
-```
-```react:src/components/nav/CommonLayout.tsx（新規）
-import { ReactNode, useState } from 'react'
-import { Box, createTheme, ThemeProvider } from '@mui/material'
-import CssBaseline from '@mui/material/CssBaseline'
-import { AppBar } from '@/components/nav/AppBar'
-import Toolbar from '@mui/material/Toolbar'
-import IconButton from '@mui/material/IconButton'
-import MenuIcon from '@mui/icons-material/Menu'
-import Typography from '@mui/material/Typography'
-import Badge from '@mui/material/Badge'
-import NotificationsIcon from '@mui/icons-material/Notifications'
-import { Drawer } from '@/components/nav/Drawer'
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
-import Divider from '@mui/material/Divider'
-import List from '@mui/material/List'
-import { mainListItems, secondaryListItems } from '@/components/nav/listItems'
-
-// TODO remove, this demo shouldn't need to reset the theme.
-const defaultTheme = createTheme()
-
-interface Props {
-  title: string
-  children: ReactNode
-}
-
-export function CommonLayout({ title, children }: Props) {
-  const [open, setOpen] = useState(true)
-  const toggleDrawer = () => {
-    setOpen(!open)
-  }
-
-  return (
-    <>
-      <ThemeProvider theme={defaultTheme}>
-        <Box sx={{ display: 'flex' }}>
-          <CssBaseline />
-          <AppBar position='absolute' open={open}>
-            <Toolbar
-              sx={{
-                pr: '24px', // keep right padding when drawer closed
-              }}
-            >
-              <IconButton
-                edge='start'
-                color='inherit'
-                aria-label='open drawer'
-                onClick={toggleDrawer}
-                sx={{
-                  marginRight: '36px',
-                  ...(open && { display: 'none' }),
-                }}
-              >
-                <MenuIcon />
-              </IconButton>
-              <Typography component='h1' variant='h6' color='inherit' noWrap sx={{ flexGrow: 1 }}>
-                {title}
-              </Typography>
-              <IconButton color='inherit'>
-                <Badge badgeContent={4} color='secondary'>
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-          <Drawer variant='permanent' open={open}>
-            <Toolbar
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                px: [1],
-              }}
-            >
-              <IconButton onClick={toggleDrawer}>
-                <ChevronLeftIcon />
-              </IconButton>
-            </Toolbar>
-            <Divider />
-
-            {/* 左サイドメニューです */}
-            <List component='nav'>
-              {mainListItems}
-              <Divider sx={{ my: 1 }} />
-              {secondaryListItems}
-            </List>
-          </Drawer>
-          <Box
-            component='main'
-            sx={{
-              backgroundColor: (theme) =>
-                theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
-              flexGrow: 1,
-              height: '100vh',
-              overflow: 'auto',
-            }}
-          >
-            {children}
-          </Box>
-        </Box>
-      </ThemeProvider>
-    </>
-  )
-}
-```
-
-
-
-### リファクタリング（定数の一箇所化）
-```diff:src/components/nav/Drawer.tsx（定数はDrawerに寄せて...）
-import MuiDrawer from '@mui/material/Drawer'
-import { styled } from '@mui/material'
-
-- // TODO: 共通化するか引数化して（AppBar.tsx）
-- const drawerWidth: number = 240
-+ export const drawerWidth: number = 240
-
-export const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
-        :
-  }),
-)
-```
-```diff:src/components/nav/AppBar.tsx（exportされた定数を参照する）
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
-import { styled } from '@mui/material'
-+ import { drawerWidth } from '@/components/Drawer'
-
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean
-}
-
-- // TODO: 共通化するか引数化して（Drawer.tsx）
-- const drawerWidth: number = 240
-
-export const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme, open }) => ({
-    :
-}))
-```
-
-:::note alert
-useList.tsx はすでにありません（helpersに移管）
-### リファクタリング（ボイラープレートのHook化）
-apiにアクセスしてデータを取得し、そしてエラーハンドリングをする、というものはほぼ決まったコードだ。だから `page.tsx` でだらっと書かずに分離する
-
-https://qiita.com/pix_shimitomo/items/4b6d83febc91d0048f9d
-
-```react:src/app/dashboard/_components/useList.tsx（新規）
-import { useState } from 'react'
-import { Book } from '@/resource/book'
-
-const API_BOOK_URL = 'http://127.0.0.1:8000/bookman/api/books/'
-
-interface IAuthor {
-  name: string
-}
-
-interface ICategory {
-  name: string
-  color: string
-}
-
-/**
- * Djangoから返却される book data
- *
- * @interface IBookRaw
- */
-interface IBookRaw {
-  id: number
-  name: string
-  thumbnail: string | null
-  category: ICategory
-  authors: IAuthor[]
-  lead_text: string
-  publication_date: string
-}
-
-/**
- * IBookRawから、bookリソース に変換したもの
- *
- * @param {Array} data - The raw book data to be formatted.
- * @return {Array} - The formatted book data.
- */
-const convertBookData = (data: IBookRaw[]): Book[] =>
-  data.map((result: IBookRaw) => ({
-    id: result.id,
-    name: result.name,
-    leadText: result.lead_text,
-  }))
-
-/**
- * API fetch とエラーハンドリング
- *
- * @param {string} apiUrl - The URL of the API to fetch the book list from.
- * @returns {Promise<any[]>} - A promise that resolves to an array of book data.
- * @throws {Error} - If the API request fails or returns an error status.
- */
-const loadBookList = async (apiUrl: string): Promise<any[]> => {
-  const response = await fetch(apiUrl, { method: 'GET' })
-  if (!response.ok) {
-    throw new Error(`Failed to fetch data: ${response.statusText}`)
-  }
-  return response.json()
-}
-
-/**
- * APIにアクセスし、そして book のリストを返します
- *
- * @returns {Object} An object containing the following functions and properties:
- *   - loading: A function that loads the book list from the API and updates the state with the formatted data.
- *   - books: An array of book objects.
- * @throws {Error} If the API request fails or the data is not in the expected format.
- * @example
- * const { loading, books } = useList();
- * loading()
- *   .then((formattedData) => {
- *     console.log(formattedData);
- *     console.log(books);
- *   })
- *   .catch((error) => {
- *     console.error(error);
- *   });
- */
-export const useList = () => {
-  const [books, setBooks] = useState<Book[]>([])
-
-  const loading = async (): Promise<Book[]> => {
-    const responseData = await loadBookList(API_BOOK_URL)
-    const formattedData: Book[] = convertBookData(responseData)
-    setBooks(formattedData)
-    return formattedData
-  }
-
-  return { loading, books }
-}
-```
-:::
-
-```diff:src/app/dashboard/page.tsx
-'use client'
-- import { useEffect, useState } from 'react'
-- import { Book } from '@/resource/book'
-import Toolbar from '@mui/material/Toolbar'
-    :
-import Container from '@mui/material/Container'
-- import { List } from '@/app/dashboard/_components/List'
-
-export default function Page() {
-- const [books, setBooks] = useState<Book[]>([])
-
-- // TODO: dbからのデータを取得します。別のところに移したい
-- useEffect(() => {
--   const fetchData = async (): Promise<Book[]> => {
--       :
--   }
--   fetchData()
-- }, [])
-
-+ // 共通のスタイリングを定義
-+ const paperStyle = { p: 2, display: 'flex', flexDirection: 'column', height: 240 }
-
-- if (!books) {
--   return <div>Loading...</div>
-- }
-
-- const props = {
--   books,
-- }
-
-  return (
-    <>
-      <Toolbar />
-      <Container maxWidth='lg' sx={{ mt: 4, mb: 4 }}>
-        <Grid container spacing={3}>
-          {/* Chart */}
-          <Grid item xs={12} md={8} lg={9}>
--           <Paper
--             sx={{
--               p: 2,
--               display: 'flex',
--               flexDirection: 'column',
--               height: 240,
--             }}
--           >
-+           <Paper sx={paperStyle}>
-              <Chart />
-            </Paper>
-          </Grid>
-
-          {/* Recent Deposits */}
-          <Grid item xs={12} md={4} lg={3}>
--           <Paper
--             sx={{
--               p: 2,
--               display: 'flex',
--               flexDirection: 'column',
--               height: 240,
--             }}
--           >
-+           <Paper sx={paperStyle}>
-              <Deposits />
-            </Paper>
-          </Grid>
-
-          {/* Recent Orders */}
-          <Grid item xs={12}>
--           <Paper
--             sx={{
--               p: 2,
--               display: 'flex',
--               flexDirection: 'column',
--               height: 240,
--             }}
--           >
-+           <Paper sx={paperStyle}>
-              <Orders />
-            </Paper>
-          </Grid>
-        </Grid>
-
--       {/* ここに Django から持ってきたデータを表示するコンポーネントを統合します */}
--       <List {...props} />
-
-        <Copyright sx={{ pt: 4 }} />
-      </Container>
-    </>
-  )
-}
-```
-
-### 各機能のページを作っていく
-（支店とか書籍でも）まぁ基本はこんな構造になるだろうな...
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/0585b451-c800-41d9-d2ad-2d0aea2a6feb.png)
-
-### サイドメニューを変更
-```diff:src/components/nav/listItems.tsx
-    :
-import HomeIcon from '@mui/icons-material/Home'
-- import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
-- import PeopleIcon from '@mui/icons-material/People'
-- import BarChartIcon from '@mui/icons-material/BarChart'
-+ import DashboardIcon from '@mui/icons-material/Dashboard'
-+ import AddHomeIcon from '@mui/icons-material/AddHome'
-+ import AutoStoriesIcon from '@mui/icons-material/AutoStories'
-import LayersIcon from '@mui/icons-material/Layers'
-    :
-
-export const mainListItems = (
-  <>
-    <ListItemButton component='a' href='/'>
-      <ListItemIcon>
-        <HomeIcon />
-      </ListItemIcon>
-      <ListItemText primary='Home' />
-    </ListItemButton>
--   <ListItemButton>
-+   <ListItemButton component='a' href='/dashboard'>
-      <ListItemIcon>
--       <ShoppingCartIcon />
-+       <DashboardIcon />
-      </ListItemIcon>
--     <ListItemText primary='Orders' />
-+     <ListItemText primary='ダッシュボード' />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
--       <PeopleIcon />
-+       <AddHomeIcon />
-      </ListItemIcon>
--     <ListItemText primary='Customers' />
-+     <ListItemText primary='館管理' />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
--       <BarChartIcon />
-+       <AutoStoriesIcon />
-      </ListItemIcon>
--     <ListItemText primary='Reports' />
-+     <ListItemText primary='書籍管理' />
-    </ListItemButton>
-    :
-```
-
-### axios
-```diff_json
-    :
-  "dependencies": {
-+   "axios": "1.18.1",
-    "next": "16.2.10",
-    "react": "19.2.7",
-    "react-dom": "19.2.7"
-  },
-    :
-```
-
-### helpers: axios fetch
-```ts:src/helpers/fetchData.ts
-import axios, {AxiosResponse} from 'axios'
-
-/**
- * フェッチデータリクエストのレスポンスを表します
- *
- * @interface IFetchDataResponse
- */
-export interface IFetchDataResponse {
-  data: unknown
-  status: number
-  statusText: string
-}
-
-/**
- * 指定されたURLからデータをフェッチします
- *
- * @param {string} url - データをフェッチするURL
- * @returns {Promise<IFetchDataResponse>} フェッチしたデータのレスポンス
- * @throws object エラーの詳細を含むオブジェクト
- */
-export const fetchData = async (url: string): Promise<IFetchDataResponse> => {
-  try {
-    const response: AxiosResponse = await axios.get(url)
-    return {
-      data: response.data,
-      status: response.status,
-      statusText: response.statusText,
-    }
-  } catch (error) {
-    throw { data: null, status: 'error', statusText: 'Error occurred.' }
-  }
-}
-```
-```ts:src/__tests__/helpers/fetchData.test.ts
-import { fetchData } from '@/helpers/fetchData'
-import axios from 'axios'
-
-jest.mock('axios')
-
-describe('fetchData function', () => {
-  const testUrl = 'https://testurl.com'
-  it('successfully fetches data from an API', async () => {
-    const mockSuccessResponse = Promise.resolve({
-      data: {
-        id: 'xxx',
-        name: 'Test data',
-      },
-      status: 200,
-      statusText: 'OK',
-    })
-
-    jest.mocked(axios.get).mockResolvedValue(mockSuccessResponse)
-
-    const result = await fetchData(testUrl)
-    expect(result).toEqual(await mockSuccessResponse)
-  })
-
-  it('returns an error when the request fails', async () => {
-    const errorMessage = { data: null, status: 'error', statusText: 'Error occurred.' }
-
-    jest.mocked(axios.get).mockImplementationOnce(() => Promise.reject(errorMessage))
-
-    await expect(fetchData(testUrl)).rejects.toEqual(errorMessage)
-  })
-})
-```
-
-### 館管理
-#### サイドメニューでリンクを貼る
-```diff:src/components/nav/listItems.tsx
-        :
--   <ListItemButton>
-+   <ListItemButton component='a' href='/branch'>
-      <ListItemIcon>
-        <AddHomeIcon />
-      </ListItemIcon>
-      <ListItemText primary='館管理' />
-    </ListItemButton>
-        :
-```
-#### 一覧
-```react:src/resource/branch.ts
-/**
- * Djangoから返却される branch data
- *
- * @interface IBranchRaw
- */
-export interface IBranchRaw {
-  id: number
-  name: string
-  address: string
-  phone: string
-  remark: string
-}
-
-export interface Branch {
-  id: number
-  name: string
-  address: string
-  phone: string
-  remark: string
-}
-```
-```react:src/app/branch/_components/List.tsx
-import React from 'react'
-import { Box, Typography } from '@mui/material'
-import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid'
-import { Branch } from '@/resource/branch'
-
-interface Props {
-  branches: Branch[]
-}
-
-export function List({ branches }: Props) {
-  if (!branches || branches.length === 0) {
-    return <Typography variant='h5'>No data available.</Typography>
-  }
-  const rows: GridRowsProp = branches.map((branch) => ({
-    id: branch.id,
-    name: branch.name,
-    address: branch.address,
-    phone: branch.phone,
-    remark: branch.remark,
-  }))
-  const columns: GridColDef[] = [
-    { field: 'id', headerName: '#', width: 50 },
-    { field: 'name', headerName: '名前', width: 200 },
-    { field: 'address', headerName: '住所', width: 200 },
-    { field: 'phone', headerName: '問い合わせ先', width: 150 },
-    { field: 'remark', headerName: '備考', width: 300 },
-  ]
-  return (
-    <>
-      <main>
-        <Box width='100%'>
-          <DataGrid columns={columns} rows={rows} />
-        </Box>
-      </main>
-    </>
-  )
-}
-```
-```react:src/app/branch/_components/useList.tsx
-import { useState } from 'react'
-import { Branch, IBranchRaw } from '@/resource/branch'
-
-const API_BRANCH_URL = 'http://127.0.0.1:8000/bookman/api/branches/'
-
-/**
- * IBranchRawから、branchリソース に変換したもの
- *
- * @param {Array} data - The raw branch data to be formatted.
- * @return {Array} - The formatted branch data.
- */
-const convertBranchData = (data: IBranchRaw[]): Branch[] =>
-  data.map((result: IBranchRaw) => ({
-    id: result.id,
-    name: result.name,
-    address: result.address,
-    phone: result.phone,
-    remark: result.remark,
-  }))
-
-/**
- * API fetch とエラーハンドリング
- *
- * @param {string} apiUrl - The URL of the API to fetch the branch list from.
- * @returns {Promise<any[]>} - A promise that resolves to an array of branch data.
- * @throws {Error} - If the API request fails or returns an error status.
- */
-const loadBranchList = async (apiUrl: string): Promise<any[]> => {
-  const response = await fetch(apiUrl, { method: 'GET' })
-  if (!response.ok) {
-    throw new Error(`Failed to fetch data: ${response.statusText}`)
-  }
-  return response.json()
-}
-
-/**
- * APIにアクセスし、そして branch のリストを返します
- *
- * @returns {Object} An object containing the following functions and properties:
- *   - loading: A function that loads the branch list from the API and updates the state with the formatted data.
- *   - branches: An array of branch objects.
- * @throws {Error} If the API request fails or the data is not in the expected format.
- * @example
- * const { loading, branches } = useList();
- * loading()
- *   .then((formattedData) => {
- *     console.log(formattedData);
- *     console.log(branches);
- *   })
- *   .catch((error) => {
- *     console.error(error);
- *   });
- */
-export const useList = () => {
-  const [branches, setBranches] = useState<Branch[]>([])
-
-  const loading = async (): Promise<Branch[]> => {
-    const responseData = await loadBranchList(API_BRANCH_URL)
-    const formattedData: Branch[] = convertBranchData(responseData)
-    setBranches(formattedData)
-    return formattedData
-  }
-
-  return { loading, branches }
-}
-```
-```react:src/app/branch/layout.tsx
-'use client'
-import { ReactNode } from 'react'
-import { CommonLayout } from '@/components/nav/CommonLayout'
-
-export default function Layout({ children }: Readonly<{ children: ReactNode }>) {
-  return <CommonLayout title='館管理'>{children}</CommonLayout>
-}
-```
-```react:src/app/branch/page.tsx
-'use client'
-import { useEffect } from 'react'
-import Toolbar from '@mui/material/Toolbar'
-import { Copyright } from '@/components/Copyright'
-import Container from '@mui/material/Container'
-import { useList } from './_components/useList'
-import Grid from '@mui/material/Grid'
-import Paper from '@mui/material/Paper'
-import { List } from './_components/List'
-
-export default function Page() {
-  const { loading, branches } = useList()
-  useEffect(() => {
-    loading().catch((e) => console.error('データの取得に失敗しました: ', e))
-  }, [])
-
-  if (!branches) {
-    return <div>Loading...</div>
-  }
-
-  const branchListProps = {
-    branches,
-  }
-
-  return (
-    <>
-      <Toolbar />
-      <Container maxWidth='lg' sx={{ mt: 4, mb: 4 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-              <List {...branchListProps} />
-            </Paper>
-          </Grid>
-        </Grid>
-        <Copyright sx={{ pt: 4 }} />
-      </Container>
-    </>
-  )
-}
-```
-
-#### 登録
-```react:src/resource/branch.ts（追記）
-    :
-export interface IBranchRequest {
-  name: string
-  address: string
-  phone: string
-  remark: string
-}
-```
-```diff_tsx:src/app/branch/page.tsx
-'use client'
-import { useEffect } from 'react'
-+import { Button } from '@mui/material'
-import Toolbar from '@mui/material/Toolbar'
-import { Copyright } from '@/components/Copyright'
-import Container from '@mui/material/Container'
-import { useList } from './_components/useList'
-import Grid from '@mui/material/Grid'
-import Paper from '@mui/material/Paper'
-import { List } from './_components/List'
-+import { CreateDialog } from './_components/CreateDialog'
-+import { useCreateDialog } from './_components/useCreateDialog'
-
-export default function Page() {
-  const { loading, branches } = useList()
-+ const { isDialogOpen, openDialog, onCloseDialog, onInputChange, onCreate } = useCreateDialog()
-
-  useEffect(() => {
-    loading().catch((e) => console.error('データの取得に失敗しました: ', e))
-  }, [])
-
-  if (!branches) {
-    return <div>Loading...</div>
-  }
-
-- const props = {
-+ const branchListProps = {
-    branches,
-  }
-
-+ const dialogProps = {
-+   isDialogOpen,
-+   onCloseDialog,
-+   onInputChange,
-+   onCreate,
-+ }
-
-  return (
-    <>
-      <Toolbar />
-      <Container maxWidth='lg' sx={{ mt: 4, mb: 4 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
--             <List {...props} />
-+             <Button variant='contained' color='primary' onClick={openDialog} sx={{ mb: 5 }}>
-+               新規登録
-+             </Button>
-+             <List {...branchListProps} />
-+             <CreateDialog {...dialogProps} />
-            </Paper>
-          </Grid>
-        </Grid>
-        <Copyright sx={{ pt: 4 }} />
-      </Container>
-    </>
-  )
-}
-```
-```react:src/app/branch/_components/CreateDialog.tsx（新規）
-import { Button, TextField } from '@mui/material'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
-import { ChangeEvent } from 'react'
-
-interface CreateDialogProps {
-  isDialogOpen: boolean
-  onCloseDialog: () => void
-  onInputChange: (event: ChangeEvent<HTMLInputElement>) => void
-  onCreate: () => void
-}
-
-export const CreateDialog = ({
-  isDialogOpen,
-  onCloseDialog,
-  onInputChange,
-  onCreate,
-}: CreateDialogProps) => {
-  return (
-    <Dialog open={isDialogOpen} onClose={onCloseDialog}>
-      <DialogTitle>新規登録</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin='dense'
-          id='name'
-          name='name'
-          label='図書館の名前'
-          fullWidth
-          onChange={onInputChange}
-        />
-        <TextField
-          margin='dense'
-          id='address'
-          name='address'
-          label='図書館の住所'
-          fullWidth
-          onChange={onInputChange}
-        />
-        <TextField
-          margin='dense'
-          id='phone'
-          name='phone'
-          label='図書館の電話番号'
-          fullWidth
-          onChange={onInputChange}
-        />
-        <TextField
-          margin='dense'
-          id='remark'
-          name='remark'
-          label='備考'
-          multiline
-          fullWidth
-          onChange={onInputChange}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onCloseDialog} color='primary'>
-          キャンセル
-        </Button>
-        <Button onClick={onCreate} color='primary'>
-          登録
-        </Button>
-      </DialogActions>
-    </Dialog>
-  )
-}
-```
-```react:src/app/branch/_components/useCreateDialog.ts（新規）
-import { ChangeEvent, useState } from 'react'
-import { IBranchRequest } from '@/resource/branch'
-
-export function useCreateDialog() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [formValues, setFormValues] = useState<Partial<IBranchRequest>>({})
-
-  const openDialog = () => {
-    setIsDialogOpen(true)
-  }
-
-  const onCloseDialog = () => {
-    setIsDialogOpen(false)
-    setFormValues({})
-  }
-
-  /**
-   * Updates the values of the branch state based on the input change.
-   *
-   * @param {ChangeEvent<HTMLInputElement>} event - The input change event.
-   * @returns {void}
-   */
-  const onInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    setFormValues((formValues) => ({
-      ...formValues,
-      [event.target.name]: event.target.value,
-    }))
-  }
-
-  const onCreate = () => {
-    // ... create branch logic
-    console.log(formValues)
-    onCloseDialog()
-  }
-
-  return { isDialogOpen, openDialog, onCloseDialog, formValues, onInputChange, onCreate }
-}
-```
-```react:src/__tests__/app/branch/_components/useCreateDialog.ts（新規）
-import { ChangeEvent } from 'react'
-import { act, renderHook } from '@testing-library/react'
-import { useCreateDialog } from '@/app/branch/_components/useCreateDialog'
-
-describe('useCreateDialog', () => {
-  test('openDialogが呼び出された時にダイアログが開くべき', () => {
-    const { result } = renderHook(useCreateDialog)
-    act(() => {
-      result.current.openDialog()
-    })
-    expect(result.current.isDialogOpen).toBe(true)
-  })
-
-  test('closeDialogが呼び出された時にダイアログが閉じるべき', () => {
-    const { result } = renderHook(useCreateDialog)
-    act(() => {
-      result.current.onCloseDialog()
-    })
-    expect(result.current.isDialogOpen).toBe(false)
-  })
-
-  test('handleInputChangeが呼び出された時にformValuesが更新されるべき', () => {
-    const { result } = renderHook(useCreateDialog)
-    const inputEvent = {
-      target: { name: 'testName', value: 'testValue' },
-    } as ChangeEvent<HTMLInputElement>
-    act(() => {
-      result.current.onInputChange(inputEvent)
-    })
-    expect(result.current.formValues).toEqual({ testName: 'testValue' })
-  })
-
-  test('handleInputChangeが複数回呼び出されたときにformValuesが複数回更新されるべき', () => {
-    const { result } = renderHook(useCreateDialog)
-    act(() => {
-      result.current.onInputChange({
-        target: { name: 'firstName', value: 'John' },
-      } as ChangeEvent<HTMLInputElement>)
-      result.current.onInputChange({
-        target: { name: 'lastName', value: 'Doe' },
-      } as ChangeEvent<HTMLInputElement>)
-    })
-    expect(result.current.formValues).toEqual({ firstName: 'John', lastName: 'Doe' })
-  })
-})
-```
-
-:::note warn
-ここまで終わった
-:::
-
-#### 編集
-#### 削除
-
-### 書籍管理
-#### サイドメニューでリンクを貼る
-```diff:src/components/nav/listItems.tsx
-        :
--   <ListItemButton>
-+   <ListItemButton component='a' href='/book'>
-      <ListItemIcon>
-        <AutoStoriesIcon />
-      </ListItemIcon>
-      <ListItemText primary='書籍管理' />
-    </ListItemButton>
-
-        :
-```
-
-#### 一覧
-:::note warn
-ダッシュボードに表示していた「本の一覧」をここに移管する
-:::
-
-```diff:src/app/dashboard/page.tsx
-    :
-import Container from '@mui/material/Container'
-- import { List } from '@/app/dashboard/_components/List'
-import { useList } from '@/app/dashboard/_components/useList'
-
-export default function Page() {
-    :
-
-- const bookListProps = {
--   books,
-- }
-
-  return (
-    <>
-      <Toolbar />
-      <Container maxWidth='lg' sx={{ mt: 4, mb: 4 }}>
-            :
--       {/* ここに Django から持ってきたデータを表示するコンポーネントを統合します */}
--       <List {...bookListProps} />
-
-        <Copyright sx={{ pt: 4 }} />
-      </Container>
-    </>
-  )
-}
-```
-```react:src/resource/book.ts（全消しして上書き）
-export interface IAuthor {
-  name: string
-}
-
-export interface ICategory {
-  name: string
-  color: string
-}
-
-/**
- * Djangoから返却される book data
- *
- * @interface IBookRaw
- */
-export interface IBookRaw {
-  id: number
-  name: string
-  thumbnail: string | null
-  category: ICategory
-  authors: IAuthor[]
-  lead_text: string
-  publication_date: string
-}
-
-export interface Book {
-  id: number
-  category: ICategory
-  name: string
-  authors: string
-  leadText: string
-}
-```
-```react:src/app/book/_components/List.tsx（全消しして上書き）
-import React from 'react'
-import { Box, Typography } from '@mui/material'
-import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid'
-import { Book } from '@/resource/book'
-
-interface Props {
-  books: Book[]
-}
-
-export function List({ books }: Props) {
-  if (!books || books.length === 0) {
-    return <Typography variant='h5'>No data available.</Typography>
-  }
-  const rows: GridRowsProp = books.map((book, index) => ({
-    id: index + 1,
-    name: book.name,
-    authors: book.authors,
-    category: book.category.name,
-    leadText: book.leadText,
-  }))
-  const columns: GridColDef[] = [
-    { field: 'id', headerName: '#', width: 50 },
-    { field: 'category', headerName: 'カテゴリ', width: 100 },
-    { field: 'name', headerName: '名前', width: 200 },
-    { field: 'authors', headerName: '著者', width: 150 },
-    { field: 'leadText', headerName: 'あらすじ', width: 400 },
-  ]
-  return (
-    <>
-      <main>
-        <Box width='100%'>
-          <DataGrid columns={columns} rows={rows} />
-        </Box>
-      </main>
-    </>
-  )
-}
-```
-```react:src/app/book/_components/useList.tsx（全消しして上書き）
-import { useState } from 'react'
-import { Book, IBookRaw } from '@/resource/book'
-
-const API_BOOK_URL = 'http://127.0.0.1:8000/bookman/api/books/'
-
-/**
- * IBookRawから、bookリソース に変換したもの
- *
- * @param {Array} data - The raw book data to be formatted.
- * @return {Array} - The formatted book data.
- */
-const convertBookData = (data: IBookRaw[]): Book[] =>
-  data.map((result: IBookRaw) => ({
-    id: result.id,
-    category: result.category,
-    authors: result.authors.map((author) => author.name).join(', '),
-    name: result.name,
-    leadText: result.lead_text,
-  }))
-
-/**
- * API fetch とエラーハンドリング
- *
- * @param {string} apiUrl - The URL of the API to fetch the book list from.
- * @returns {Promise<any[]>} - A promise that resolves to an array of book data.
- * @throws {Error} - If the API request fails or returns an error status.
- */
-const loadBookList = async (apiUrl: string): Promise<any[]> => {
-  const response = await fetch(apiUrl, { method: 'GET' })
-  if (!response.ok) {
-    throw new Error(`Failed to fetch data: ${response.statusText}`)
-  }
-  return response.json()
-}
-
-/**
- * APIにアクセスし、そして book のリストを返します
- *
- * @returns {Object} An object containing the following functions and properties:
- *   - loading: A function that loads the book list from the API and updates the state with the formatted data.
- *   - books: An array of book objects.
- * @throws {Error} If the API request fails or the data is not in the expected format.
- * @example
- * const { loading, books } = useList();
- * loading()
- *   .then((formattedData) => {
- *     console.log(formattedData);
- *     console.log(books);
- *   })
- *   .catch((error) => {
- *     console.error(error);
- *   });
- */
-export const useList = () => {
-  const [books, setBooks] = useState<Book[]>([])
-
-  const loading = async (): Promise<Book[]> => {
-    const responseData = await loadBookList(API_BOOK_URL)
-    const formattedData: Book[] = convertBookData(responseData)
-    setBooks(formattedData)
-    return formattedData
-  }
-
-  return { loading, books }
-}
-```
-```react:src/app/book/layout.tsx
-'use client'
-import { ReactNode } from 'react'
-import { CommonLayout } from '@/components/nav/CommonLayout'
-
-export default function Layout({ children }: Readonly<{ children: ReactNode }>) {
-  return <CommonLayout title='書籍管理'>{children}</CommonLayout>
-}
-```
-```react:src/app/book/page.tsx
-'use client'
-import { useEffect } from 'react'
-import Toolbar from '@mui/material/Toolbar'
-import { Copyright } from '@/components/Copyright'
-import Container from '@mui/material/Container'
-import { useList } from '@/app/book/_components/useList'
-import { List } from './_components/List'
-import Grid from '@mui/material/Grid'
-import Paper from '@mui/material/Paper'
-
-export default function Page() {
-  const { loading, books } = useList()
-  useEffect(() => {
-    loading().catch((e) => console.error('データの取得に失敗しました: ', e))
-  }, [])
-
-  if (!books) {
-    return <div>Loading...</div>
-  }
-
-  const props = {
-    books,
-  }
-
-  return (
-    <>
-      <Toolbar />
-      <Container maxWidth='lg' sx={{ mt: 4, mb: 4 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-              <List {...props} />
-            </Paper>
-          </Grid>
-        </Grid>
-        <Copyright sx={{ pt: 4 }} />
-      </Container>
-    </>
-  )
-}
-```
-
-#### 登録
-```ts:src/resource/book.ts
-    :
-export interface IBookRequest {
-  category: string
-  name: string
-  authors: string
-  leadText: string
-}
-```
-```diff_tsx:src/app/book/page.tsx
-'use client'
-import { useEffect } from 'react'
-+import { Button } from '@mui/material'
-import Toolbar from '@mui/material/Toolbar'
-import { Copyright } from '@/components/Copyright'
-import Container from '@mui/material/Container'
-import { useList } from '@/app/book/_components/useList'
-import Grid from '@mui/material/Grid'
-import Paper from '@mui/material/Paper'
-import { List } from './_components/List'
-+import { CreateDialog } from './_components/CreateDialog'
-+import { useCreateDialog } from './_components/useCreateDialog'
-
-export default function Page() {
-  const { loading, books } = useList()
-+ const { isDialogOpen, openDialog, onCloseDialog, onInputChange, onCreate } = useCreateDialog()
-
-  useEffect(() => {
-    loading().catch((e) => console.error('データの取得に失敗しました: ', e))
-  }, [])
-
-  if (!books) {
-    return <div>Loading...</div>
-  }
-
-  const branchListProps = {
-    books,
-  }
-
-+ const dialogProps = {
-+   isDialogOpen,
-+   onCloseDialog,
-+   onInputChange,
-+   onCreate,
-+ }
-
-  return (
-    <>
-      <Toolbar />
-      <Container maxWidth='lg' sx={{ mt: 4, mb: 4 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
--             <List {...branchListProps} />
-+             <Button variant='contained' color='primary' onClick={openDialog} sx={{ mb: 5 }}>
-+               新規登録
-+             </Button>
-+             <List {...branchListProps} />
-+             <CreateDialog {...dialogProps} />
-            </Paper>
-          </Grid>
-        </Grid>
-        <Copyright sx={{ pt: 4 }} />
-      </Container>
-    </>
-  )
-}
-```
-```tsx:src/app/book/_components/CreateDialog.tsx
-import { Button, TextField } from '@mui/material'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
-import { ChangeEvent } from 'react'
-
-interface CreateDialogProps {
-  isDialogOpen: boolean
-  onCloseDialog: () => void
-  onInputChange: (event: ChangeEvent<HTMLInputElement>) => void
-  onCreate: () => void
-}
-
-export const CreateDialog = ({
-  isDialogOpen,
-  onCloseDialog,
-  onInputChange,
-  onCreate,
-}: CreateDialogProps) => {
-  return (
-    <Dialog open={isDialogOpen} onClose={onCloseDialog}>
-      <DialogTitle>新規登録</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin='dense'
-          id='category'
-          name='category'
-          label='カテゴリー'
-          fullWidth
-          onChange={onInputChange}
-        />
-        <TextField
-          autoFocus
-          margin='dense'
-          id='name'
-          name='name'
-          label='名前'
-          fullWidth
-          onChange={onInputChange}
-        />
-        <TextField
-          autoFocus
-          margin='dense'
-          id='author'
-          name='author'
-          label='著者'
-          fullWidth
-          onChange={onInputChange}
-        />
-        <TextField
-          margin='dense'
-          id='leadText'
-          name='leadText'
-          label='あらすじ'
-          fullWidth
-          onChange={onInputChange}
-        />
-        <TextField
-          margin='dense'
-          id='publication_date'
-          name='publication_date'
-          label='出版年月日'
-          fullWidth
-          onChange={onInputChange}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onCloseDialog} color='primary'>
-          キャンセル
-        </Button>
-        <Button onClick={onCreate} color='primary'>
-          登録
-        </Button>
-      </DialogActions>
-    </Dialog>
-  )
-}
-```
-```ts:src/app/book/_components/useCreateDialog.ts
-import { ChangeEvent, useState } from 'react'
-import { IBookRequest } from '@/resource/book'
-
-export function useCreateDialog() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [formValues, setFormValues] = useState<Partial<IBookRequest>>({})
-
-  const openDialog = () => {
-    setIsDialogOpen(true)
-  }
-
-  const onCloseDialog = () => {
-    setIsDialogOpen(false)
-    setFormValues({})
-  }
-
-  /**
-   * Updates the values of the book state based on the input change.
-   *
-   * @param {ChangeEvent<HTMLInputElement>} event - The input change event.
-   * @returns {void}
-   */
-  const onInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    setFormValues((formValues) => ({
-      ...formValues,
-      [event.target.name]: event.target.value,
-    }))
-  }
-
-  const onCreate = () => {
-    // ... create book logic
-    console.log(formValues)
-    onCloseDialog()
-  }
-
-  return { isDialogOpen, openDialog, onCloseDialog, formValues, onInputChange, onCreate }
-}
-```
-```tsx:src/__tests__/app/book/_components/useCreateDialog.ts
-import { ChangeEvent } from 'react'
-import { act, renderHook } from '@testing-library/react'
-import { useCreateDialog } from '@/app/book/_components/useCreateDialog'
-
-describe('useCreateDialog', () => {
-  test('openDialogが呼び出された時にダイアログが開くべき', () => {
-    const { result } = renderHook(useCreateDialog)
-    act(() => {
-      result.current.openDialog()
-    })
-    expect(result.current.isDialogOpen).toBe(true)
-  })
-
-  test('closeDialogが呼び出された時にダイアログが閉じるべき', () => {
-    const { result } = renderHook(useCreateDialog)
-    act(() => {
-      result.current.onCloseDialog()
-    })
-    expect(result.current.isDialogOpen).toBe(false)
-  })
-
-  test('handleInputChangeが呼び出された時にformValuesが更新されるべき', () => {
-    const { result } = renderHook(useCreateDialog)
-    const inputEvent = {
-      target: { name: 'testName', value: 'testValue' },
-    } as ChangeEvent<HTMLInputElement>
-    act(() => {
-      result.current.onInputChange(inputEvent)
-    })
-    expect(result.current.formValues).toEqual({ testName: 'testValue' })
-  })
-
-  test('handleInputChangeが複数回呼び出されたときにformValuesが複数回更新されるべき', () => {
-    const { result } = renderHook(useCreateDialog)
-    act(() => {
-      result.current.onInputChange({
-        target: { name: 'firstName', value: 'John' },
-      } as ChangeEvent<HTMLInputElement>)
-      result.current.onInputChange({
-        target: { name: 'lastName', value: 'Doe' },
-      } as ChangeEvent<HTMLInputElement>)
-    })
-    expect(result.current.formValues).toEqual({ firstName: 'John', lastName: 'Doe' })
-  })
-})
-
-```
-
-#### 編集
-#### 削除
-#### 貸出
-#### 返却
-#### 延長
-
-# TODO
+## 次回以降 TODO
 - [ ] ひとりのユーザが同じ本を2冊以上借りることはできない
 - [ ] 休館日設定画面とかは機能が大きいから気が向いたら
 - [ ] 書籍管理（自治体∋支店）
