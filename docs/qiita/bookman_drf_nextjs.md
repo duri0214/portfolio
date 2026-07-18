@@ -124,7 +124,9 @@ npm --version
 :::
 
 ### package.json
-`create-next-app` が生成した `package.json` に、Node.js のバージョン指定、format/test 系の scripts、Jest・Prettier・MUI・axios などの依存関係を追加し、Next.js 16 に合わせて関連パッケージのバージョンを更新した。
+`package.json` は全文をそのまま上書きするのではなく、`create-next-app` が生成した内容をベースに差分を確認しながら更新する。Node.js のバージョン指定、format/test 系の scripts、Jest・Prettier・MUI・axios などの依存関係を追加し、Next.js 16 に合わせて関連パッケージのバージョンを更新した。
+
+下は最終形の要点だけを抜粋している。実際に反映するときは、既存の `package.json` と見比べて、必要なキーを追加・更新する。ここに出していない MUI 関連、Testing Library、型定義などの devDependencies もあるので、実際の全体は `bookman_nextjs` の `package.json` を見る。
 
 ```json:package.json
 {
@@ -158,6 +160,10 @@ npm --version
     "jest": "30.4.2",
     "prettier": "3.9.5",
     "typescript": "5.9.3"
+  },
+  "overrides": {
+    "nanoid": "3.3.11",
+    "postcss": "8.5.10"
   }
 }
 ```
