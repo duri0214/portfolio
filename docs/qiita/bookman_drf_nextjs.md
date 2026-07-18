@@ -353,7 +353,11 @@ https://nextjs.org/docs/pages/guides/environment-variables#bundling-environment-
 
 クライアント側の `useEffect` で初回ロードするより、ページ単位でデータ、エラー、モック利用状態をまとめて渡せるのも扱いやすい。
 
-`/branch` は支店一覧を取得して表示用の形へ変換する。
+`/branch` のコードでやっていることは3つだけだ。
+
+- Django API から支店一覧を取得する
+- 取得できたら画面表示用の `Branch[]` に変換する
+- 失敗したら、開発用モックデータを返すか、画面に出すエラーメッセージを返す
 
 ```ts:src/app/(bookman)/branch/_components/listData.ts
 import { Branch, IBranchRaw } from '@/resource/branch'
@@ -377,6 +381,7 @@ const loadBranchList = async (apiUrl: string): Promise<IBranchRaw[]> => {
 
 export const getBranchListData = async (): Promise<BranchListData> => {
   try {
+    // 通常は Django API から実データを取得する。
     const responseData = await loadBranchList(getBookmanApiUrl('branches'))
     return {
       branches: convertBranchData(responseData),
@@ -385,6 +390,7 @@ export const getBranchListData = async (): Promise<BranchListData> => {
     }
   } catch (e) {
     if (USE_MOCK_DATA) {
+      // フロントエンドだけ確認したいときは開発用モックデータへ切り替える。
       return {
         branches: convertBranchData(MOCK_BRANCHES),
         errorMessage: null,
@@ -402,7 +408,7 @@ export const getBranchListData = async (): Promise<BranchListData> => {
 }
 ```
 
-`/book` は `books`、`categories`、`authors` を並列で取得し、ID の配列を表示名へ変換する。
+`/book` は少し複雑で、`books`、`categories`、`authors` を並列で取得する。Django API から返る書籍データは、カテゴリや著者をIDで持っているので、画面表示用に名前へ変換する必要がある。
 
 ```ts:src/app/(bookman)/book/_components/listData.ts
 const convertBookData = (
@@ -427,6 +433,7 @@ const convertBookData = (
 
 export const getBookListData = async (): Promise<BookListData> => {
   try {
+    // 書籍一覧、カテゴリ、著者をまとめて取得してから表示用データへ変換する。
     const [books, categories, authors] = await Promise.all([
       loadBookmanData<IBookRaw[]>(getBookmanApiUrl('books')),
       loadBookmanData<ICategory[]>(getBookmanApiUrl('categories')),
