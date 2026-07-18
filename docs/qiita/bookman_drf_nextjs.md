@@ -37,20 +37,20 @@ https://jestjs.io/
 
 ```mermaid
 graph TB
-  subgraph frontend[frontend: bookman_nextjs]
+  subgraph frontend[フロントエンド: bookman_nextjs]
     home[HOME]
-    layout[App Router common layout]
-    branch[branch list and create]
-    book[book list and create]
-    apiClient[server-only API client]
-    mock[dev mock data]
-    tests[npm test / lint / build / audit]
+    layout[App Router 共通レイアウト]
+    branch[館管理: 一覧と登録]
+    book[書籍管理: 一覧と登録]
+    apiClient[サーバー側 API クライアント]
+    mock[開発用モックデータ]
+    tests[テスト / lint / build / audit]
   end
 
-  subgraph backend[backend: bookman_backend]
+  subgraph backend[バックエンド: bookman_backend]
     drf[Django REST Framework API]
-    models[Branch / Category / Author / Book]
-    fixtures[fixtures]
+    models[支店 / カテゴリ / 著者 / 書籍]
+    fixtures[初期データ]
   end
 
   home --> branch
