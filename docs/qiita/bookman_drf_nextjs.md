@@ -24,22 +24,16 @@ https://mui.com/material-ui/
 
 https://jestjs.io/
 
-## 今回の更新範囲
-今回の主役は、`bookman_nextjs` の親チケット [duri0214/bookman_nextjs#1](https://github.com/duri0214/bookman_nextjs/issues/1) に紐づくフロントエンド更新だ。
+## GitHub で記事ごと管理する
+今回から、Bookman のフロントエンド更新は親チケット [duri0214/bookman_nextjs#1](https://github.com/duri0214/bookman_nextjs/issues/1) を起点にして進めることにした。
 
-フロントエンド側では、子チケットの変更を全部織り込む。
+記事の管理原稿も GitHub に置き、実装の作業履歴と記事更新の履歴を追えるようにする。Qiita に直接書き足していくと、時間が空いたときに「どの実装変更を受けて、どこを書き換えたのか」が分からなくなる。だから、記事もコードと同じように Issue、branch、PR の流れに乗せる。
 
-- [#2 portfolio の .codex 参照運用を bookman_nextjs に導入する](https://github.com/duri0214/bookman_nextjs/issues/2)
-- [#3 Next.js / React / MUI / Jest 依存関係を内容変更なしで最新化する](https://github.com/duri0214/bookman_nextjs/issues/3)
-- [#4 API クライアントと環境変数を整理する](https://github.com/duri0214/bookman_nextjs/issues/4)
-- [#5 支店管理画面の一覧・登録フローを最新化する](https://github.com/duri0214/bookman_nextjs/issues/5)
-- [#6 書籍管理画面の一覧・登録フローを最新化する](https://github.com/duri0214/bookman_nextjs/issues/6)
-- [#7 共通レイアウトとナビゲーションを App Router 前提で整理する](https://github.com/duri0214/bookman_nextjs/issues/7)
-- [#8 フロントエンドのテスト・lint・build を現行環境で通す](https://github.com/duri0214/bookman_nextjs/issues/8)
-- [#11 API 取得失敗時の画面表示と開発用モックデータを整理する](https://github.com/duri0214/bookman_nextjs/issues/11)
-- [#16 HOMEページのデザインを刷新](https://github.com/duri0214/bookman_nextjs/issues/16)
+- フロントエンド実装: https://github.com/duri0214/bookman_nextjs
+- バックエンド実装: https://github.com/duri0214/bookman_backend
+- 記事管理原稿: https://github.com/duri0214/portfolio/blob/master/docs/qiita/bookman_drf_nextjs.md
 
-バックエンド側は次回以降に改修する。だから今回は書き直さず、記事の最下段に旧メモとして残す。
+この記事では、現在のフロントエンド構成を上段にまとめる。バックエンド側は次回以降に改修するため、今回は書き直さず、記事の最下段に旧メモとして残す。
 
 ```mermaid
 graph TB
@@ -672,7 +666,7 @@ python manage.py test
 ### AI に任せるときの注意
 今回のように記事と実装の両方がある場合、AI には「README と矛盾しないように」だけでは足りない。
 
-- 親チケットに紐づく子チケットを全部読むこと
+- 親チケットと関連PRの履歴を確認すること
 - 上段をフロントエンド、下段をバックエンドに分けること
 - ソースコードを全文掲載せず、必要なところだけ抜粋すること
 - バックエンドは次回改修対象なので、今回は書き換えず最下段に残すこと
