@@ -321,7 +321,7 @@ import Link from 'next/link'
 https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29
 
 ### API クライアントと環境変数
-バックエンド API の base URL は `BOOKMAN_API_BASE_URL` で切り替える。未指定ならローカルの Django API を使う。
+フロントエンドとバックエンドは別サーバーで動くので、フロントエンド側から見たバックエンド API の接続先を明示する必要がある。バックエンド API の base URL は `BOOKMAN_API_BASE_URL` で切り替える。未指定ならローカルの Django API を使う。
 
 ```env:.env.example
 BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
