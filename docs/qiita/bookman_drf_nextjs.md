@@ -25,7 +25,7 @@ https://mui.com/material-ui/
 https://jestjs.io/
 
 ## GitHub で記事ごと管理する
-今回から、Bookman のフロントエンド更新は親チケット [duri0214/bookman_nextjs#1](https://github.com/duri0214/bookman_nextjs/issues/1) を起点にして進めることにした。
+今回の大改修では、[duri0214/bookman_nextjs#1](https://github.com/duri0214/bookman_nextjs/issues/1) を起点にしてフロントエンド更新を進めた。
 
 記事の管理原稿も GitHub に置き、実装の作業履歴と記事更新の履歴を追えるようにする。Qiita に直接書き足していくと、時間が空いたときに「どの実装変更を受けて、どこを書き換えたのか」が分からなくなる。だから、記事もコードと同じように Issue、branch、PR の流れに乗せる。
 
@@ -666,7 +666,7 @@ python manage.py test
 ### AI に任せるときの注意
 今回のように記事と実装の両方がある場合、AI には「README と矛盾しないように」だけでは足りない。
 
-- 親チケットと関連PRの履歴を確認すること
+- 今回の改修起点になったIssueと関連PRの履歴を確認すること
 - 上段をフロントエンド、下段をバックエンドに分けること
 - ソースコードを全文掲載せず、必要なところだけ抜粋すること
 - バックエンドは次回改修対象なので、今回は書き換えず最下段に残すこと
