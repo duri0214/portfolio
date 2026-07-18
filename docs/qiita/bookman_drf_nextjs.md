@@ -25,7 +25,7 @@ https://mui.com/material-ui/
 https://jestjs.io/
 
 ## GitHub で記事ごと管理する
-今回の大改修では、[duri0214/bookman_nextjs#1](https://github.com/duri0214/bookman_nextjs/issues/1) を起点にしてフロントエンド更新を進めた。
+今回の最新化では、[duri0214/bookman_nextjs#1](https://github.com/duri0214/bookman_nextjs/issues/1) を起点にしてフロントエンド更新を進めた。機能内容は基本的に変えず、依存関係、実行環境、画面構成、記事管理の流れを現在の状態に合わせて整理している。
 
 記事の管理原稿も GitHub に置き、実装の作業履歴と記事更新の履歴を追えるようにする。Qiita に直接書き足していくと、時間が空いたときに「どの実装変更を受けて、どこを書き換えたのか」が分からなくなる。だから、記事もコードと同じように Issue、branch、PR の流れに乗せる。
 
@@ -60,7 +60,7 @@ graph TB
   style bookScreen fill:#ffffff,stroke:#999999,stroke-width:1px,color:#222222
 ```
 
-フロントエンドは App Router 前提で作り直し、バックエンド未起動時の表示確認には開発用モックデータも使えるようにした。
+フロントエンドは App Router 前提で整理し、バックエンド未起動時の表示確認には開発用モックデータも使えるようにした。
 
 ## Frontend part
 ### リポジトリ構成
@@ -661,7 +661,7 @@ python manage.py test
 ### AI に任せるときの注意
 今回のように記事と実装の両方がある場合、AI には「README と矛盾しないように」だけでは足りない。
 
-- 今回の改修起点になったIssueと関連PRの履歴を確認すること
+- 今回の最新化の起点になったIssueと関連PRの履歴を確認すること
 - 上段をフロントエンド、下段をバックエンドに分けること
 - ソースコードを全文掲載せず、必要なところだけ抜粋すること
 - バックエンドは次回改修対象なので、今回は書き換えず最下段に残すこと
