@@ -128,6 +128,8 @@ npm --version
 
 下は最終形の要点だけを抜粋している。実際に反映するときは、既存の `package.json` と見比べて、必要なキーを追加・更新する。ここに出していない MUI 関連、Testing Library、型定義などの devDependencies もあるので、実際の全体は `bookman_nextjs` の `package.json` を見る。
 
+https://github.com/duri0214/bookman_nextjs/blob/main/package.json
+
 ```json:package.json
 {
   "name": "bookman_nextjs",
