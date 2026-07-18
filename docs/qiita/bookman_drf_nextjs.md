@@ -29,8 +29,6 @@ https://jestjs.io/
 
 記事の管理原稿も GitHub に置き、実装の作業履歴と記事更新の履歴を追えるようにする。Qiita に直接書き足していくと、時間が空いたときに「どの実装変更を受けて、どこを書き換えたのか」が分からなくなる。だから、記事もコードと同じように Issue、branch、PR の流れに乗せる。
 
-- フロントエンド実装: https://github.com/duri0214/bookman_nextjs
-- バックエンド実装: https://github.com/duri0214/bookman_backend
 - 記事管理原稿: https://github.com/duri0214/portfolio/blob/master/docs/qiita/bookman_drf_nextjs.md
 
 この記事では、現在のフロントエンド構成を上段にまとめる。バックエンド側は次回以降に改修するため、今回は書き直さず、記事の最下段に旧メモとして残す。
