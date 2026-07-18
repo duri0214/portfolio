@@ -643,7 +643,12 @@ graph LR
   nextApi --> djangoApi
 ```
 
-前の支店管理・書籍管理の例では、登録ダイアログの処理を `useCreateDialog` に置いた。このブラウザ側の登録処理は、まず Next.js の `/api/bookman/books` や `/api/bookman/branches` にリクエストを投げる。Route Handler 側では `getBookmanApiUrl('booksCreate')` のように `BOOKMAN_API_ENDPOINTS` から endpoint を選び、`BOOKMAN_API_BASE_URL` と組み合わせて Django REST Framework の API へ中継する。
+関連するソースは以下。
+
+- ブラウザ側: [branch/_components/useCreateDialog.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/branch/_components/useCreateDialog.ts)、[book/_components/useCreateDialog.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/book/_components/useCreateDialog.ts)
+- Route Handler 側: [api/bookman/branches/route.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/api/bookman/branches/route.ts)、[api/bookman/books/route.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/api/bookman/books/route.ts)
+
+この `useCreateDialog` は登録ダイアログから呼ばれるブラウザ側の処理で、まず Next.js の `/api/bookman/books` や `/api/bookman/branches` にリクエストを投げる。Route Handler 側では `getBookmanApiUrl('booksCreate')` のように `BOOKMAN_API_ENDPOINTS` から endpoint を選び、`BOOKMAN_API_BASE_URL` と組み合わせて Django REST Framework の API へ中継する。
 
 このように、フロントエンド専用のバックエンド層を挟む構成は BFF（Backend for Frontend）と呼ばれる。今回は大げさなBFFを作っているわけではないが、ブラウザから直接バックエンドAPIへ書き込みに行かせず、Next.js 側で中継する小さなBFFとして扱っている。
 
