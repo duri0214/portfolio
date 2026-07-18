@@ -170,7 +170,7 @@ https://github.com/duri0214/bookman_nextjs/blob/main/package.json
 }
 ```
 
-Next.js 16 では `next lint` がなくなっているので、lint は ESLint CLI を直接呼ぶ。
+Next.js 16 では `next lint` がなくなっているので、lint は ESLint CLI を直接呼ぶ。設定ファイルの `eslint.config.mjs` は、`bookman_nextjs` のプロジェクトルート、つまり `package.json` と同じ階層に置く。
 
 ```js:eslint.config.mjs
 import { defineConfig, globalIgnores } from 'eslint/config'
