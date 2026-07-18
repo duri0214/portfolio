@@ -328,28 +328,17 @@ BOOKMAN_API_BASE_URL=http://example.com:8000/bookman/api
 USE_MOCK_DATA=false
 ```
 
-```ts:src/helpers/apiClient.ts
+たとえば、環境変数を読むだけならこういう形になる。
+
+```ts:環境変数を読む最小例
 const DEFAULT_BOOKMAN_API_BASE_URL = 'http://127.0.0.1:8000/bookman/api'
 
-export const BOOKMAN_API_ENDPOINTS = {
-  branches: 'branches/',
-  books: 'books/',
-  booksCreate: 'books/create/',
-  authors: 'authors/',
-  categories: 'categories/',
-} as const
+const bookmanApiBaseUrl = process.env.BOOKMAN_API_BASE_URL || DEFAULT_BOOKMAN_API_BASE_URL
 
-export type BookmanApiEndpoint = keyof typeof BOOKMAN_API_ENDPOINTS
-
-const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, '')
-const trimLeadingSlash = (value: string): string => value.replace(/^\/+/, '')
-
-export const getBookmanApiBaseUrl = (): string =>
-  trimTrailingSlash(process.env.BOOKMAN_API_BASE_URL || DEFAULT_BOOKMAN_API_BASE_URL)
-
-export const getBookmanApiUrl = (endpoint: BookmanApiEndpoint): string =>
-  `${getBookmanApiBaseUrl()}/${trimLeadingSlash(BOOKMAN_API_ENDPOINTS[endpoint])}`
+console.log(bookmanApiBaseUrl)
 ```
+
+実際のコードでは、この base URL と endpoint 名を組み合わせて Django API の URL を作っている。登録処理のようにブラウザ、Next.js API、Django API の2段階になるところは、後ろの「Route Handler で登録を中継する」で整理する。
 
 Next.js では、ブラウザ側のコードから参照できる環境変数にする場合、変数名に `NEXT_PUBLIC_` を付ける。公式ドキュメントでは、`NEXT_PUBLIC_` を付けた値は build 時にブラウザへ送られる JavaScript bundle へ埋め込まれる、と説明されている。
 
