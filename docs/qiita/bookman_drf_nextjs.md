@@ -268,7 +268,7 @@ https://mui.com/material-ui/getting-started/templates/dashboard/
 :::
 
 ### App Router のレイアウト
-`/dashboard`、`/branch`、`/book` は URL を変えずに、route group の `src/app/(bookman)` 配下へ移した。これで各画面の `layout.tsx` 重複をやめて、共通レイアウトを1か所で持てる。
+`/dashboard`、`/branch`、`/book` は URL を変えずに、route group の `src/app/(bookman)` 配下へ移した。App Router では、フォルダ名を `()` で囲むと URL には出ないグルーピング用フォルダとして扱える。これで各画面の `layout.tsx` 重複をやめて、共通レイアウトを1か所で持てる。
 
 ```text
 src/app/
