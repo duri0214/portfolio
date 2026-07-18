@@ -344,7 +344,7 @@ console.log(bookmanApiBaseUrl)
 
 https://nextjs.org/docs/pages/guides/environment-variables#bundling-environment-variables-for-the-browser
 
-ここで `NEXT_PUBLIC_` は付けない。これは Next.js の一般的なしきたりというより、このプロジェクトでの運用ルールだ。環境変数はもともと外へ出したくない値を扱うためのものなので、バックエンドにもフロントエンドにも公開設定が散らかる状態を避けたい。`BOOKMAN_API_BASE_URL` は Server Component や Route Handler 側だけで読む値なので、ブラウザへ公開する必要がない。
+ここで `NEXT_PUBLIC_` は付けない。これは Next.js の一般的なしきたりというより、このプロジェクトでの運用ルールだ。ブラウザへ渡してよい値なら、フロントエンド側の設定やコードに書けばよい。環境変数はもともと外へ出したくない値を扱うためのものなので、バックエンドにもフロントエンドにも公開用の環境変数が散らかる状態を避けたい。`BOOKMAN_API_BASE_URL` は Server Component や Route Handler 側だけで読む値なので、ブラウザへ公開する必要がない。
 
 ### 一覧取得は Server Component 側に寄せる
 `/branch` と `/book` の初期データ取得は Server Component 側へ寄せた。Next.js はフロントエンド側から始まる構成に見えるが、いままで堅牢とされてきたWebの作りは、バックエンド側で必要なデータを用意してフロント、つまり HTML に渡す形だった。初期表示に必要なデータは Server Component 側で取るほうが、その考え方に近い。
