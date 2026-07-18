@@ -464,6 +464,14 @@ USE_MOCK_DATA=true
 ### 支店管理
 支店管理は、一覧表示と登録ダイアログを持つ。登録処理は最初 `console.log` 止まりだったが、現在は Next.js の Route Handler 経由で Django API に POST する。
 
+支店データの型は、API から返る形と画面で扱う形を分けている。
+
+- `IBranchRaw` は Django API から返ってくる支店データ
+- `Branch` は React コンポーネントで表示に使う支店データ
+- `IBranchRequest` は登録時に Django API へ送るデータ
+
+支店の場合は `IBranchRaw` と `Branch` の中身がまだ同じなので、分ける意味が薄く見える。ただ、書籍管理では API の `category` や `authors` が ID で返り、画面では名前つきのオブジェクトとして扱う。支店管理でも同じ置き方にしておくと、API の返却形と画面表示用の形を混ぜずに済む。
+
 ```ts:src/resource/branch.ts
 export interface IBranchRaw {
   id: number
