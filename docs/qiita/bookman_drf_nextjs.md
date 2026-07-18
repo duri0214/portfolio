@@ -187,7 +187,7 @@ export default eslintConfig
 ```
 
 ### Jest
-Next.js の設定を読み込むために `next/jest` を使う。App Router の route group へ移したあとも `@/app/book/...` のような import を維持するため、Jest 側にも alias を足した。
+Next.js の設定を読み込むために `next/jest` を使う。設定ファイルの `jest.config.ts` は、`bookman_nextjs` のプロジェクトルート、つまり `package.json` と同じ階層に置く。App Router の route group へ移したあとも `@/app/book/...` のような import を維持するため、Jest 側にも alias を足した。
 
 ```ts:jest.config.ts
 import type { Config } from 'jest'
