@@ -39,7 +39,7 @@ graph TB
     home[HOME]
     subgraph screens[機能画面]
       branch[館管理]
-      book[書籍管理]
+      bookScreen[書籍管理]
       dashboard[ダッシュボード]
     end
   end
@@ -52,21 +52,13 @@ graph TB
 
   home --> branch
   branch --> drf
-  book --> drf
+  bookScreen --> drf
   dashboard --> drf
   drf --> models
   fixtures --> models
 
-  style frontend fill:#ffffff,stroke:#999999,stroke-width:1px
-  style screens fill:#ffffff,stroke:#999999,stroke-width:1px
-  style backend fill:#ffffff,stroke:#999999,stroke-width:1px
-  style home fill:#ffffff,stroke:#999999,stroke-width:1px
-  style branch fill:#ffffff,stroke:#999999,stroke-width:1px
-  style book fill:#ffffff,stroke:#999999,stroke-width:1px
-  style dashboard fill:#ffffff,stroke:#999999,stroke-width:1px
-  style drf fill:#ffffff,stroke:#999999,stroke-width:1px
-  style models fill:#ffffff,stroke:#999999,stroke-width:1px
-  style fixtures fill:#ffffff,stroke:#999999,stroke-width:1px
+  classDef plain fill:#ffffff,stroke:#999999,stroke-width:1px,color:#222222
+  class frontend,screens,backend,home,branch,bookScreen,dashboard,drf,models,fixtures plain
 ```
 
 フロントエンドは App Router 前提で作り直し、バックエンド未起動時の表示確認には開発用モックデータも使えるようにした。
