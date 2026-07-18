@@ -256,7 +256,7 @@ https://github.com/duri0214/bookman_nextjs/blob/main/src/app/page.tsx
 ### MUI と Bootstrap の使い分け
 普段メインで触っている `portfolio` は Django 標準の画面が中心なので、Bootstrap を使うことが多い。フォーム、一覧、ボタン、グリッドを素早く整えるなら Bootstrap で十分に進められる。
 
-ただ、Next.js と Django REST Framework の組み合わせは、`portfolio` の Django テンプレートへそのまま組み込めるものではない。だから Bookman はリポジトリを分けて、フロントエンドを `bookman_nextjs`、バックエンドを `bookman_backend` として作っている。
+ただ、Next.js と Django REST Framework の組み合わせは、`portfolio` の Django テンプレートへ組み込めるものではない。だから Bookman はリポジトリを分けて、フロントエンドを `bookman_nextjs`、バックエンドを `bookman_backend` として作っている。
 
 Bookman 側では、ダッシュボード、DataGrid、Dialog、Alert、Drawer のような操作画面を React コンポーネントとして組み立てるために MUI を使った。仕事で触っていた経験があり、テンプレートから状態付き UI へ進めやすかったのも理由だ。ただし、単純な Django 画面なら Bootstrap へ寄せる判断も普通にありだと思う。
 
