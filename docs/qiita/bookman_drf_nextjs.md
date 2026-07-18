@@ -260,13 +260,11 @@ https://github.com/duri0214/bookman_nextjs/blob/main/src/app/page.tsx
 
 Bookman 側では、ダッシュボード、DataGrid、Dialog、Alert、Drawer のような操作画面を React コンポーネントとして組み立てるために MUI を使った。仕事で触っていた経験があり、テンプレートから状態付き UI へ進めやすかったのも理由だ。ただし、単純な Django 画面なら Bootstrap へ寄せる判断も普通にありだと思う。
 
-当時レイアウトの参考にしたテンプレート:
+当時レイアウトの参考にしたビジュアル:
 https://mui.com/material-ui/getting-started/templates/dashboard/
 
-https://github.com/mui/material-ui/tree/v5.15.7/docs/data/material/getting-started/templates/dashboard
-
 :::note
-上の GitHub リンクは当時参照した MUI v5 系テンプレート。現在の `bookman_nextjs` では MUI `9.2.0` 系に更新しているので、依存関係は現在の `package.json` に合わせる。
+上のリンクは見た目の参考として残している。現在の `bookman_nextjs` では MUI `9.2.0` 系に更新しているので、依存関係は現在の `package.json` に合わせる。
 :::
 
 ### App Router のレイアウト
