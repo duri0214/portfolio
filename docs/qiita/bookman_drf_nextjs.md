@@ -1,11 +1,13 @@
 # Django-rest-frameworkとNextJSで図書管理システムを作ってみる
 
 ## はじめに
-いままで作ってきたDjangoアプリケーションは、そのプロジェクトのなかにフロントエンドが含まれていた。今回フロントエンドはNext.js（＝React）でやるので、Django側はサーバーサイドの機能だけを提供する。まぁ内蔵だけになる、みたいな感じやな
+いままで作ってきたDjangoアプリケーションは、そのプロジェクトのなかにフロントエンドが含まれていた。今回はフロントエンドを Next.js（React）で作り、Django 側は Django REST Framework で API を提供する構成にする。
+
+この記事の管理原稿は `portfolio` リポジトリの `docs/qiita/bookman_drf_nextjs.md` に置いている。実装リポジトリは、同じ親フォルダにある `bookman_backend` と `bookman_nextjs` という前提で進める。
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/c4650054-4a63-4f2f-acb1-1383e6aa5e48.png)
 
 :::note warn
-基本に忠実にするためにすっぴんの React を使おうかとも思ったけどルーティングがなくて癖が強かったので Next.js にした。仕事で使ってもいるし（しかしバックエンドもNext.jsでやっているためにつくりが複雑）、ルーティングが直感的だ
+基本に忠実にするためにすっぴんの React を使おうかとも思ったけど、ルーティングや画面単位の整理を考えると Next.js のほうが追いやすかった。仕事で触っている技術でもあり、App Router で画面を増やしていく流れが直感的だった。
 :::
 
 ## 参考サイト
@@ -13,19 +15,35 @@ https://www.django-rest-framework.org/
 
 https://nextjs.org/docs
 
+https://react.dev/
+
+https://mui.com/material-ui/
+
+https://jestjs.io/
+
 ## Overview
 - バックエンド のプロジェクト名は `bookman_backend` にする
   - 実際には `config` というプロジェクトを作成してプロジェクトフォルダ名を `bookman_backend` に変更する
   - アプリケーション名は `bookman` にする
   - venv名は `venv311` にする
 - フロントエンド のプロジェクト名は `bookman_nextjs` にする
+  - Next.js `16.2.10`
+  - React / React DOM `19.2.7`
+  - MUI `9.2.0`
+  - Jest `30.4.2`
+  - Node.js は `20.9.0` 以上
+  - コマンドは npm に統一する
 ```mermaid
 graph LR
   bookman_backend
   bookman_nextjs
+  portfolio
+  portfolio -- docs/qiita --> bookman_drf_nextjs
   bookman_backend -- venv --> venv311
   bookman_backend -- django --> config
   bookman_backend -- django --> bookman
+  bookman_nextjs -- next --> app_router
+  bookman_nextjs -- api --> bookman_backend
 ```
 
 ## Django part
@@ -960,6 +978,8 @@ class BookSerializer(serializers.ModelSerializer):
 
 ## Nextjs part
 ### create root directory
+`bookman_nextjs` は `bookman_backend` と同じ親フォルダに作る。
+
 ```console:console
 mkdir bookman_nextjs
 cd bookman_nextjs
@@ -982,44 +1002,84 @@ npm run dev
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/30e7b247-c99b-1b82-2f06-0a4dd8e6bead.png)
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/3d4b9e0f-631f-4733-6c8b-8c12e8eb4909.png)
 
+### Node.js と npm
+Next.js 16 を使うため、Node.js は `20.9.0` 以上が必要になる。この記事では npm 前提に統一する。
+
+```console:console
+node --version
+npm --version
+```
+
+Windows で Node.js を1種類だけ使うなら LTS 版を入れる。
+
+```console:console
+winget install OpenJS.NodeJS.LTS
+```
+
+プロジェクトごとに Node.js を切り替えたい場合だけ `nvm-windows` を使う。
+
+```console:console
+winget install CoreyButler.NVMforWindows
+nvm install 24.18.0
+nvm use 24.18.0
+node --version
+npm --version
+```
+
+:::note
+`nvm-windows` は Python でいう `pyenv` に近い。npm は Python でいう `pip` に近い。Node.js 本体のバージョンを切り替えるのが `nvm-windows`、パッケージを入れるのが npm、という整理で考える。
+:::
 
 ### Testing
 まずミニマムにテスト環境を整えることを忘れるな
 #### setup jest and formatter
-```diff_json:package.json
+```json:package.json
 {
   "name": "bookman_nextjs",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0",
+    "npm": ">=10"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-+   "format": "prettier --write .",
-+   "test": "jest",
-+   "test:watch": "jest --watch"
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
-    "react": "^18",
-    "react-dom": "^18",
-    "next": "14.1.0"
+    "axios": "1.18.1",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
-+   "@jest/globals": "^29.7.0",
-+   "@testing-library/jest-dom": "^6.4.2",
-+   "@testing-library/react": "^14.2.1",
-+   "@types/jest": "^29.5.12",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.1.0",
-+   "jest": "^29.7.0",
-+   "jest-environment-jsdom": "^29.7.0",
-+   "prettier": "^3.2.4",
-+   "typescript": "^5.3.3",
-+   "ts-node": "^10.9.2",
+    "@emotion/react": "11.14.0",
+    "@emotion/styled": "11.14.1",
+    "@jest/globals": "30.4.1",
+    "@mui/icons-material": "9.2.0",
+    "@mui/material": "9.2.0",
+    "@mui/x-charts": "9.9.0",
+    "@mui/x-data-grid": "9.9.0",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/jest": "30.0.0",
+    "@types/node": "26.1.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.2.10",
+    "jest": "30.4.2",
+    "jest-environment-jsdom": "30.4.1",
+    "prettier": "3.9.5",
+    "react-router-dom": "7.18.1",
+    "recharts": "3.9.2",
+    "typescript": "5.9.3",
+    "ts-node": "10.9.2"
   }
 }
 
@@ -1130,12 +1190,12 @@ npm test
 {
     :
   "dependencies": {
-+   "@emotion/react": "^11.11.3",
-+   "@emotion/styled": "^11.11.0",
-+   "@mui/material": "^5.15.7",
-+   "@mui/x-data-grid": "^6.19.3",
++   "@emotion/react": "11.14.0",
++   "@emotion/styled": "11.14.1",
++   "@mui/material": "9.2.0",
++   "@mui/x-data-grid": "9.9.0",
         :
-+   "react-router-dom": "^6.11.2",
++   "react-router-dom": "7.18.1",
         :
   },
     :
@@ -1257,17 +1317,83 @@ export default function Page() {
 ```
 
 ### 確認
-```console:console（Next.js側サーバー起動）
+Bookman はフロントエンドとバックエンドを別ターミナルで起動して動かす。
+
+```console:console（ターミナル1: Django側サーバー起動）
+cd ../bookman_backend
+.\venv311\Scripts\Activate.ps1
+python manage.py runserver 127.0.0.1:8000
+```
+
+```console:console（ターミナル2: Next.js側サーバー起動）
 cd ../bookman_nextjs
 npm run dev
-```
-```console:console（Django側サーバー起動）
-cd ../bookman_backend
-python manage.py runserver
 ```
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/711dff6c-3b30-8ce0-e569-ac506037adfa.png)
 
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/064ac5ea-b037-248a-cad8-b37febf505b8.png)
+
+`npm run dev` は開発用サーバーなので、開発中だけ表示される UI や挙動がある。本番相当で確認したい場合は、ビルドしてから起動する。
+
+```console:console
+npm run build
+npm run start
+```
+
+コードを変更した後は、もう一度 `npm run build` してから `npm run start` する。
+
+### API 接続とモックデータ
+通常は、`/branch` と `/book` は Django REST Framework の API を参照する。
+
+- `http://127.0.0.1:8000/bookman/api/branches/`
+- `http://127.0.0.1:8000/bookman/api/books/`
+
+API の接続先は `BOOKMAN_API_BASE_URL` で変更できる。未指定の場合は `http://127.0.0.1:8000/bookman/api` を使う。
+
+```env:.env.example
+BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
+USE_MOCK_DATA=false
+```
+
+バックエンドが起動していない状態で `/branch` や `/book` を見ると、通常は画面上にデータ取得エラーが表示される。フロントエンド単体で一覧画面を確認したい場合は、開発用のモックデータへ切り替える。
+
+```console:console
+copy .env.example .env.local
+```
+
+```env:.env.local
+BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
+USE_MOCK_DATA=true
+```
+
+この状態では `/branch` と `/book` の一覧表示はモックデータで確認できる。ただし登録処理は Next.js の `/api/bookman/branches` と `/api/bookman/books` 経由でバックエンド API に POST するため、バックエンド未起動時は登録失敗になる。
+
+### 検証コマンド
+フロントエンド側は、変更後に以下を確認する。
+
+```console:console
+npm test
+npm run lint
+npm run build
+```
+
+依存関係の脆弱性も見る場合は `npm audit` を実行する。
+
+```console:console
+npm audit
+```
+
+バックエンド側のテストは `bookman_backend` で実行する。
+
+```console:console
+cd ../bookman_backend
+.\venv311\Scripts\Activate.ps1
+python manage.py test
+```
+
+:::note
+AI に任せるときは、「Next.js 16 に更新した README と矛盾しないように」「読者が同じ順序で再現できるように」「バックエンド未起動時の一覧表示と登録処理の違いが分かるように」など、確認してほしい焦点をプロンプトで明示すると記事更新のズレを減らしやすい。
+:::
 
 ### デザインをMUIのダッシュボード風味にする
 まずは再現することに注力する
@@ -1285,51 +1411,26 @@ https://mui.com/material-ui/getting-started/templates/dashboard/
 
 https://github.com/mui/material-ui/tree/v5.15.7/docs/data/material/getting-started/templates/dashboard
 
+:::note
+このリンクは当時レイアウトを起こすときに参照したテンプレート。現在の `bookman_nextjs` では MUI `9.2.0` 系に更新しているので、依存関係は下の `package.json` に合わせる。
+:::
+
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/c71f9a5b-3dfe-979b-b076-50a8c17c8e12.png)
 
 ```diff_json:package.json
 {
-  "name": "bookman_nextjs",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "prettier --write .",
-    "test": "jest",
-    "test:watch": "jest --watch"
-  },
-  "dependencies": {
-    "react": "^18",
-    "react-dom": "^18",
-    "next": "14.1.0"
-  },
+    :
   "devDependencies": {
-    "@emotion/react": "^11.11.3",
-    "@emotion/styled": "^11.11.0",
-+   "@mui/icons-material": "^5.15.9",
-    "@mui/material": "^5.15.7",
-+   "@mui/x-charts": "^6.19.4",
-    "@mui/x-data-grid": "^6.19.3",
-    "@jest/globals": "^29.7.0",
-    "@testing-library/jest-dom": "^6.4.2",
-    "@testing-library/react": "^14.2.1",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.1.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "prettier": "^3.2.4",
-    "react-router-dom": "^6.11.2",
-+   "recharts": "^2.12.0",
-    "typescript": "^5.3.3",
-    "ts-node": "^10.9.2"
-  }
++   "@emotion/react": "11.14.0",
++   "@emotion/styled": "11.14.1",
++   "@mui/icons-material": "9.2.0",
++   "@mui/material": "9.2.0",
++   "@mui/x-charts": "9.9.0",
++   "@mui/x-data-grid": "9.9.0",
++   "recharts": "3.9.2",
+        :
+  },
+    :
 }
 ```
 
@@ -2335,10 +2436,10 @@ export const mainListItems = (
 ```diff_json
     :
   "dependencies": {
-+   "axios": "^1.6.7",
-    "react": "^18",
-    "react-dom": "^18",
-    "next": "14.1.0"
++   "axios": "1.18.1",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
     :
 ```
