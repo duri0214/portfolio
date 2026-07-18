@@ -74,7 +74,6 @@ dev/
 `bookman_nextjs` からは、同じ親フォルダにある `portfolio/.codex` を Codex 運用ルールとスキルの管理元として参照する。フロントエンド固有の Next.js ルールは `bookman_nextjs` 側に置き、共通運用は `portfolio` に寄せる。
 
 - 実装: https://github.com/duri0214/bookman_nextjs
-- 関連バックエンド: https://github.com/duri0214/bookman_backend
 - 元記事: https://qiita.com/YoshitakaOkada/items/570c025cf235062649c8
 
 ### create app
