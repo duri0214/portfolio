@@ -351,6 +351,10 @@ export const getBookmanApiUrl = (endpoint: BookmanApiEndpoint): string =>
   `${getBookmanApiBaseUrl()}/${trimLeadingSlash(BOOKMAN_API_ENDPOINTS[endpoint])}`
 ```
 
+Next.js では、ブラウザ側のコードから参照できる環境変数にする場合、変数名に `NEXT_PUBLIC_` を付ける。公式ドキュメントでは、`NEXT_PUBLIC_` を付けた値は build 時にブラウザへ送られる JavaScript bundle へ埋め込まれる、と説明されている。
+
+https://nextjs.org/docs/pages/guides/environment-variables#bundling-environment-variables-for-the-browser
+
 ここで `NEXT_PUBLIC_` は付けない。これは Next.js の一般的なしきたりというより、このプロジェクトでの運用ルールだ。環境変数はもともと外へ出したくない値を扱うためのものなので、バックエンドにもフロントエンドにも公開設定が散らかる状態を避けたい。`BOOKMAN_API_BASE_URL` は Server Component や Route Handler 側だけで読む値なので、ブラウザへ公開する必要がない。
 
 ### 一覧取得は Server Component 側に寄せる
