@@ -39,9 +39,11 @@ https://jestjs.io/
 graph TB
   subgraph frontend[フロントエンド: bookman_nextjs]
     home[HOME]
-    branch[館管理]
-    book[書籍管理]
-    dashboard[ダッシュボード]
+    subgraph screens[機能画面]
+      branch[館管理]
+      book[書籍管理]
+      dashboard[ダッシュボード]
+    end
   end
 
   subgraph backend[バックエンド: bookman_backend]
@@ -51,7 +53,6 @@ graph TB
   end
 
   home --> branch
-  home --> book
   branch --> drf
   book --> drf
   dashboard --> drf
