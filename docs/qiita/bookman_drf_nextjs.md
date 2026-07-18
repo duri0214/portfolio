@@ -288,20 +288,7 @@ src/app/
     book/page.tsx
 ```
 
-```tsx:src/app/(bookman)/layout.tsx
-import { ReactNode } from 'react'
-import { CommonLayout } from '@/components/nav/CommonLayout'
-
-const routeTitles = {
-  '/dashboard': 'Dashboard',
-  '/branch': '館管理',
-  '/book': '書籍管理',
-} as const
-
-export default function BookmanLayout({ children }: Readonly<{ children: ReactNode }>) {
-  return <CommonLayout routeTitles={routeTitles}>{children}</CommonLayout>
-}
-```
+`(bookman)/layout.tsx` には、`/dashboard`、`/branch`、`/book` に共通するナビゲーションと画面枠だけを置いた。個別画面ごとに同じレイアウトを持たせるのではなく、同じ層の画面を route group の layout でまとめる。
 
 ナビゲーションは `a href` ではなく Next.js の `Link` を使う。アプリ内の画面遷移なら、ページ全体を読み直す通常リンクではなく、Next.js のクライアントサイド遷移やプリフェッチに乗せたほうが App Router の作法に合う。
 
