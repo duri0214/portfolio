@@ -34,6 +34,7 @@ https://jestjs.io/
 この記事では、現在のフロントエンド構成を上段にまとめる。バックエンド側は次回以降に改修するため、今回は書き直さず、記事の最下段に旧メモとして残す。
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#222222', 'primaryBorderColor': '#999999', 'lineColor': '#666666', 'clusterBkg': '#ffffff', 'clusterBorder': '#999999', 'secondaryColor': '#ffffff', 'tertiaryColor': '#ffffff'}}}%%
 graph TB
   subgraph frontend[フロントエンド: bookman_nextjs]
     home[HOME]
@@ -57,8 +58,7 @@ graph TB
   drf --> models
   fixtures --> models
 
-  classDef plain fill:#ffffff,stroke:#999999,stroke-width:1px,color:#222222
-  class frontend,screens,backend,home,branch,bookScreen,dashboard,drf,models,fixtures plain
+  classDef default fill:#ffffff,stroke:#999999,stroke-width:1px,color:#222222;
 ```
 
 フロントエンドは App Router 前提で作り直し、バックエンド未起動時の表示確認には開発用モックデータも使えるようにした。
