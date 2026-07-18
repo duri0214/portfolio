@@ -60,6 +60,13 @@ graph TB
   style frontend fill:#ffffff,stroke:#999999,stroke-width:1px
   style screens fill:#ffffff,stroke:#999999,stroke-width:1px
   style backend fill:#ffffff,stroke:#999999,stroke-width:1px
+  style home fill:#ffffff,stroke:#999999,stroke-width:1px
+  style branch fill:#ffffff,stroke:#999999,stroke-width:1px
+  style book fill:#ffffff,stroke:#999999,stroke-width:1px
+  style dashboard fill:#ffffff,stroke:#999999,stroke-width:1px
+  style drf fill:#ffffff,stroke:#999999,stroke-width:1px
+  style models fill:#ffffff,stroke:#999999,stroke-width:1px
+  style fixtures fill:#ffffff,stroke:#999999,stroke-width:1px
 ```
 
 フロントエンドは App Router 前提で作り直し、バックエンド未起動時の表示確認には開発用モックデータも使えるようにした。
