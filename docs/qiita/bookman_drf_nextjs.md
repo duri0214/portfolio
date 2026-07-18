@@ -340,7 +340,7 @@ console.log(bookmanApiBaseUrl)
 
 実際のコードでは、この base URL と endpoint 名を組み合わせて Django API の URL を作っている。登録処理のようにブラウザ、Next.js API、Django API の2段階になるところは、後ろの「Route Handler で登録を中継する」で整理する。
 
-Next.js では、ブラウザ側のコードから参照できる環境変数にする場合、変数名に `NEXT_PUBLIC_` を付ける。公式ドキュメントでは、`NEXT_PUBLIC_` を付けた値は build 時にブラウザへ送られる JavaScript bundle へ埋め込まれる、と説明されている。
+ブラウザで動くコードは、サーバー側の環境変数を実行時に直接読めない。だから Next.js には、ブラウザへ渡してよい値だけを明示的に公開する仕組みがある。ブラウザ側のコードから参照できる環境変数にする場合、変数名に `NEXT_PUBLIC_` を付ける。公式ドキュメントでは、`NEXT_PUBLIC_` を付けた値は build 時にブラウザへ送られる JavaScript bundle へ埋め込まれる、と説明されている。
 
 https://nextjs.org/docs/pages/guides/environment-variables#bundling-environment-variables-for-the-browser
 
