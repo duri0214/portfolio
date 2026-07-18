@@ -594,6 +594,22 @@ https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29/book
 ### Route Handler で登録を中継する
 登録処理はブラウザから直接 Django API に POST せず、Next.js の Route Handler を挟む。
 
+ここは2段階になっているので、最初は少し分かりにくい。
+
+```mermaid
+graph LR
+  browser[ブラウザ]
+  nextApi[Next.js API: /api/bookman/books]
+  djangoApi[Django API: books/create]
+
+  browser --> nextApi
+  nextApi --> djangoApi
+```
+
+ブラウザ側の `useCreateDialog` は、まず Next.js の `/api/bookman/books` や `/api/bookman/branches` にリクエストを投げる。Route Handler 側では `getBookmanApiUrl('booksCreate')` のように `BOOKMAN_API_ENDPOINTS` から endpoint を選び、`BOOKMAN_API_BASE_URL` と組み合わせて Django REST Framework の API へ中継する。
+
+このように、フロントエンド専用のバックエンド層を挟む構成は BFF（Backend for Frontend）と呼ばれる。今回は大げさなBFFを作っているわけではないが、ブラウザから直接バックエンドAPIへ書き込みに行かせず、Next.js 側で中継する小さなBFFとして扱っている。
+
 ```ts:src/app/api/bookman/books/route.ts
 export async function POST(request: Request) {
   try {
