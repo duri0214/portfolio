@@ -573,12 +573,14 @@ const CREATE_BOOK_API_PATH = '/api/bookman/books'
 
 const toNumber = (value: string | undefined): number => Number(value ?? 0)
 
+// 著者IDは "1,2,3" のような入力を想定し、DRF が受け取る number[] に変換する。
 const toAuthorIds = (value: string | undefined): number[] =>
   (value ?? '')
     .split(',')
     .map((authorId) => Number(authorId.trim()))
     .filter((authorId) => Number.isInteger(authorId) && authorId > 0)
 
+// フォーム上の文字列を、BookSerializer が受け取る登録用 payload に詰め替える。
 const buildBookRequest = (formValues: Partial<IBookFormValues>): IBookRequest => ({
   category: toNumber(formValues.category),
   name: formValues.name ?? '',
@@ -588,6 +590,39 @@ const buildBookRequest = (formValues: Partial<IBookFormValues>): IBookRequest =>
   isbn: formValues.isbn ?? '',
   publication_date: formValues.publication_date ?? '',
 })
+
+const onCreate = async () => {
+  // 登録中フラグを立て、ダイアログ側の入力欄とボタンを disabled にする。
+  setIsCreating(true)
+  // 前回の登録エラーが残らないように、送信前に消しておく。
+  setCreateErrorMessage(null)
+
+  try {
+    const response = await fetch(CREATE_BOOK_API_PATH, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(buildBookRequest(formValues)),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to create book')
+    }
+
+    onCloseDialog()
+    // Server Component 側で一覧を取り直し、登録後の書籍一覧を表示する。
+    router.refresh()
+  } catch {
+    // このメッセージをダイアログ上の Alert に表示する。
+    setCreateErrorMessage(
+      '書籍データの登録に失敗しました。入力内容とバックエンドの状態を確認してください。',
+    )
+  } finally {
+    // 成功しても失敗しても、処理が終わったら再操作できる状態に戻す。
+    setIsCreating(false)
+  }
+}
 ```
 
 ソースコード:
